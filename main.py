@@ -1,12 +1,13 @@
 import os
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
 from strip_audio import strip_audio
 from transcribe import transcribe_audio
 from summarize import summarize
 
-
+load_dotenv()
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 
