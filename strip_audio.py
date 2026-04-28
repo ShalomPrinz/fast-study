@@ -15,7 +15,7 @@ def strip_audio(video_path: str, audio_path: str):
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python strip_audio.py <video.mp4> [output.mp3]")
+        print("Usage: python3 strip_audio.py <video.mp4> [output.mp3]")
         sys.exit(1)
 
     video = sys.argv[1]

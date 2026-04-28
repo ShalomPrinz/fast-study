@@ -4,8 +4,10 @@ import math
 import subprocess
 import tempfile
 from pathlib import Path
+from dotenv import load_dotenv
 from groq import Groq
 
+load_dotenv()
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 CHUNK_MINUTES = 10
 
@@ -61,7 +63,7 @@ def transcribe_audio(audio_path: str, api_key: str) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python transcribe.py <audio.mp3> [api_key]")
+        print("Usage: python3 transcribe.py <audio.mp3> [api_key]")
         sys.exit(1)
 
     audio_path = sys.argv[1]

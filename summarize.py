@@ -25,7 +25,7 @@ def summarize(transcript: str) -> str:
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python summarize.py <transcript.txt>")
+        print("Usage: python3 summarize.py <transcript.txt>")
         sys.exit(1)
 
     transcript_path = Path(sys.argv[1])

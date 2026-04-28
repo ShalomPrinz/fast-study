@@ -13,7 +13,7 @@ GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python main.py <video.mp4> [groq_api_key]")
+        print("Usage: python3 main.py <video.mp4> [groq_api_key]")
         sys.exit(1)
 
     video_path = sys.argv[1]
