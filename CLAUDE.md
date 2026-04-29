@@ -27,6 +27,14 @@ python3 transcribe.py  lecture.mp3 gsk_...      # → lecture_transcript.txt
 python3 summarize.py   lecture_transcript.txt   # → lecture_summary.md
 ```
 
+## Converting a summary to PDF
+
+```bash
+python3 to_pdf.py lecture_summary.md   # → lecture_summary.pdf
+```
+
+Requires `pandoc` and `xelatex` (`texlive-xetex`) installed system-wide. The Hebrew font (Noto Serif Hebrew) is bundled in `fonts/` — no system font installation needed. Math expressions written in LaTeX syntax (`$...$`, `$$...$$`) render correctly in the PDF.
+
 ## Key design decisions
 
 - Audio is extracted at 16kHz mono 32kbps — minimal size, sufficient for speech recognition.
