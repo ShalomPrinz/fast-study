@@ -24,6 +24,25 @@ LATEX_HEADER = r"""
 
 
 LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
+# Matches 2+ consecutive Latin words (with optional digits/hyphens) separated by spaces.
+# Single Latin words form their own LTR run naturally; only multi-word runs reverse.
+MULTI_LATIN_RE = re.compile(r'([A-Za-z][A-Za-z0-9\-]*(?:[ \t]+[A-Za-z][A-Za-z0-9\-]*)+)')
+
+
+def wrap_english_phrases(text: str) -> str:
+    """Wrap multi-word Latin runs in \\LR{} so bidi doesn't reverse word order."""
+    result = []
+    for line in text.splitlines(keepends=True):
+        # Split on code spans to avoid touching backtick-enclosed content
+        parts = re.split(r'(`[^`]*`)', line)
+        out = []
+        for i, part in enumerate(parts):
+            if i % 2 == 1:  # inside a code span — leave untouched
+                out.append(part)
+            else:
+                out.append(MULTI_LATIN_RE.sub(r'\\LR{\1}', part))
+        result.append(''.join(out))
+    return ''.join(result)
 
 
 def ensure_blank_before_lists(text: str) -> str:
@@ -49,7 +68,8 @@ def convert_to_pdf(md_path: str) -> str:
     fonts_dir = str(FONTS_DIR) + "/"
     header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", fonts_dir)
 
-    fixed_md = ensure_blank_before_lists(input_path.read_text(encoding="utf-8"))
+    raw_md = input_path.read_text(encoding="utf-8")
+    fixed_md = wrap_english_phrases(ensure_blank_before_lists(raw_md))
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".tex", delete=False) as f:
         f.write(header)
