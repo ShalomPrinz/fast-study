@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Convert a Markdown summary file to PDF with Hebrew/RTL support and math rendering."""
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -17,6 +18,21 @@ LATEX_HEADER = r"""
 """
 
 
+LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
+
+
+def ensure_blank_before_lists(text: str) -> str:
+    lines = text.splitlines(keepends=True)
+    result = []
+    for i, line in enumerate(lines):
+        if i > 0 and LIST_ITEM_RE.match(line):
+            prev = lines[i - 1]
+            if prev.strip() and not LIST_ITEM_RE.match(prev):
+                result.append('\n')
+        result.append(line)
+    return ''.join(result)
+
+
 def convert_to_pdf(md_path: str) -> str:
     input_path = Path(md_path)
     if not input_path.exists():
@@ -28,12 +44,18 @@ def convert_to_pdf(md_path: str) -> str:
     fonts_dir = str(FONTS_DIR) + "/"
     header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", fonts_dir)
 
+    fixed_md = ensure_blank_before_lists(input_path.read_text(encoding="utf-8"))
+
     with tempfile.NamedTemporaryFile(mode="w", suffix=".tex", delete=False) as f:
         f.write(header)
         header_path = f.name
 
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
+        f.write(fixed_md)
+        md_temp_path = f.name
+
     cmd = [
-        "pandoc", str(input_path),
+        "pandoc", md_temp_path,
         "-o", str(output_path),
         "--pdf-engine=xelatex",
         "-V", "geometry:margin=2.5cm",
@@ -44,6 +66,7 @@ def convert_to_pdf(md_path: str) -> str:
 
     result = subprocess.run(cmd, capture_output=True, text=True)
     Path(header_path).unlink(missing_ok=True)
+    Path(md_temp_path).unlink(missing_ok=True)
 
     if result.returncode != 0:
         raise RuntimeError(f"pandoc failed:\n{result.stderr}")
