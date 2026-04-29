@@ -11,10 +11,15 @@ FONTS_DIR = Path(__file__).parent / "fonts"
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 
 LATEX_HEADER = r"""
-\usepackage{fontspec}
-\setmainfont[Path=FONTS_DIR_PLACEHOLDER,Extension=.ttf]{NotoSansHebrew-Regular}
-\usepackage{bidi}
-\setRTL
+\usepackage{polyglossia}
+\setmainlanguage{hebrew}
+\setotherlanguage{english}
+\newfontfamily\hebrewfont{Noto Sans Hebrew}[Script=Hebrew]
+\newfontfamily\hebrewfontsf{Noto Sans Hebrew}[Script=Hebrew]
+\newfontfamily\hebrewfonttt{Noto Sans Hebrew}[Script=Hebrew]
+\newfontfamily\englishfont{Noto Sans Hebrew}
+\newfontfamily\englishfontsf{Noto Sans Hebrew}
+\newfontfamily\englishfonttt{Noto Sans Mono}
 """
 
 
@@ -54,10 +59,13 @@ def convert_to_pdf(md_path: str) -> str:
         f.write(fixed_md)
         md_temp_path = f.name
 
+    template_path = Path(__file__).parent / "pandoc_template.tex"
+
     cmd = [
         "pandoc", md_temp_path,
         "-o", str(output_path),
         "--pdf-engine=xelatex",
+        f"--template={template_path}",
         "-V", "geometry:margin=2.5cm",
         "-V", "linestretch=1.3",
         f"--include-in-header={header_path}",
