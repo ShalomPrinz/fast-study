@@ -24,13 +24,19 @@ LATEX_HEADER = r"""
 
 
 LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
-# Matches 2+ consecutive Latin words (with optional digits/hyphens) separated by spaces.
-# Single Latin words form their own LTR run naturally; only multi-word runs reverse.
-MULTI_LATIN_RE = re.compile(r'([A-Za-z][A-Za-z0-9\-]*(?:[ \t]+[A-Za-z][A-Za-z0-9\-]*)+)')
+MULTI_LATIN_RE = re.compile(r'([A-Za-z][A-Za-z0-9\-]*(?:[ \t]+[A-Za-z][A-Za-z0-9\-]*)*)([.,;:!?]*)')
 
 
 def wrap_english_phrases(text: str) -> str:
-    """Wrap multi-word Latin runs in \\LR{} so bidi doesn't reverse word order."""
+    """Wrap multi-word Latin runs in \\LR{}; explicitly wrap trailing punctuation in \\RL{}
+    so the TeX bidi engine keeps it on the correct RTL side."""
+    def replace(m: re.Match) -> str:
+        phrase, punct = m.group(1), m.group(2)
+        result = r'\LR{' + phrase + '}'
+        if punct:
+            result += r'\RL{' + punct + '}'
+        return result
+
     result = []
     for line in text.splitlines(keepends=True):
         # Split on code spans to avoid touching backtick-enclosed content
@@ -40,7 +46,7 @@ def wrap_english_phrases(text: str) -> str:
             if i % 2 == 1:  # inside a code span — leave untouched
                 out.append(part)
             else:
-                out.append(MULTI_LATIN_RE.sub(r'\\LR{\1}', part))
+                out.append(MULTI_LATIN_RE.sub(replace, part))
         result.append(''.join(out))
     return ''.join(result)
 
@@ -84,6 +90,7 @@ def convert_to_pdf(md_path: str) -> str:
     cmd = [
         "pandoc", md_temp_path,
         "-o", str(output_path),
+        "--from=markdown-smart",
         "--pdf-engine=xelatex",
         f"--template={template_path}",
         "-V", "geometry:margin=2.5cm",
