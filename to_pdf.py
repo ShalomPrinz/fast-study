@@ -7,11 +7,11 @@ import tempfile
 from pathlib import Path
 
 FONTS_DIR = Path(__file__).parent / "fonts"
-HEBREW_FONT = FONTS_DIR / "NotoSerifHebrew-Regular.ttf"
+HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 
 LATEX_HEADER = r"""
 \usepackage{fontspec}
-\setmainfont[Path=FONTS_DIR_PLACEHOLDER,Extension=.ttf]{NotoSerifHebrew-Regular}
+\setmainfont[Path=FONTS_DIR_PLACEHOLDER,Extension=.ttf]{NotoSansHebrew-Regular}
 \usepackage{bidi}
 \setRTL
 """
