@@ -64,11 +64,18 @@ html, body, #root {
   margin-bottom: 4px;
 }
 
+.course-header {
+  display: flex;
+  align-items: center;
+  margin: 0 4px;
+}
+
 .course-toggle {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 7px 14px;
   background: none;
   border: none;
@@ -79,12 +86,36 @@ html, body, #root {
   text-align: left;
   cursor: pointer;
   border-radius: 6px;
-  margin: 0 4px;
-  width: calc(100% - 8px);
 }
 
 .course-toggle:hover {
   background: var(--sidebar-hover);
+}
+
+.course-add-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--sidebar-muted);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s, background 0.1s;
+}
+
+.course-header:hover .course-add-btn {
+  opacity: 1;
+}
+
+.course-add-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-fg);
 }
 
 .chevron {
@@ -123,6 +154,20 @@ html, body, #root {
   background: var(--sidebar-selected);
   color: #fff;
   opacity: 1;
+}
+
+.lecture-add-input {
+  display: block;
+  width: calc(100% - 8px);
+  margin: 1px 4px;
+  padding: 5px 12px;
+  background: var(--sidebar-hover);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--sidebar-fg);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
 }
 
 

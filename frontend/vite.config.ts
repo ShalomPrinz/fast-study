@@ -43,6 +43,24 @@ function fsPlugin(dataRoot: string): Plugin {
       server.middlewares.use('/api/tree', (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         const suffix = req.url ?? '/'
+
+        if (req.method === 'POST') {
+          const courseName = decodeURIComponent(suffix.slice(1))
+          let body = ''
+          req.on('data', (chunk) => { body += chunk })
+          req.on('end', () => {
+            try {
+              const { name } = JSON.parse(body)
+              fs.mkdirSync(path.join(dataRoot, courseName, name), { recursive: true })
+              res.end(JSON.stringify({ ok: true }))
+            } catch (e) {
+              res.statusCode = 400
+              res.end(JSON.stringify({ ok: false, error: String(e) }))
+            }
+          })
+          return
+        }
+
         if (suffix === '/' || suffix === '') {
           res.end(JSON.stringify(readTree()))
         } else {

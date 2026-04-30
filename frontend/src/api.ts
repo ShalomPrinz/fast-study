@@ -30,6 +30,14 @@ export async function fetchCourse(course: string): Promise<Course | null> {
   return res.json()
 }
 
+export async function createLecture(course: string, name: string): Promise<void> {
+  await fetch(`/api/tree/${encodeURIComponent(course)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+}
+
 export async function runStep(course: string, lecture: string, step: Step): Promise<StepResult> {
   const res = await fetch(
     `${API_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/run/${step}`,
