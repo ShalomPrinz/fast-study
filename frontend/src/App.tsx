@@ -16,12 +16,22 @@ export interface ReqState {
 
 export default function App() {
   const [courses, setCourses] = useState<Course[]>([])
+  const [sortedCourses, setSortedCourses] = useState<Course[]>([])
   const [selected, setSelected] = useState<Selected | null>(null)
   const [reqState, setReqState] = useState<ReqState | null>(null)
 
   useEffect(() => {
     fetchTree().then(setCourses)
   }, [])
+
+  useEffect(() => {
+    setSortedCourses(
+      courses.map((c) => ({
+        ...c,
+        lectures: [...c.lectures].sort((a, b) => a.name.localeCompare(b.name)),
+      }))
+    )
+  }, [courses])
 
   const files = useMemo<FileStatus | null>(() => {
     if (!selected) return null
@@ -57,7 +67,7 @@ export default function App() {
   return (
     <div className="layout">
       <Sidebar
-        courses={courses}
+        courses={sortedCourses}
         selected={selected}
         onSelect={handleSelect}
         onCourseClick={handleCourseClick}
