@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { fetchTree, runStep, Step, FileStatus, Lecture, Course } from './api'
+import { fetchTree, fetchCourse, runStep, Step, FileStatus, Lecture, Course } from './api'
 import Sidebar from './components/Sidebar'
 import MainView from './components/MainView'
 
@@ -30,6 +30,13 @@ export default function App() {
     return lecture?.files ?? null
   }, [courses, selected])
 
+  function handleCourseClick(courseName: string) {
+    fetchCourse(courseName).then((updated) => {
+      if (!updated) return
+      setCourses((prev) => prev.map((c) => (c.name === courseName ? updated : c)))
+    })
+  }
+
   function handleSelect(course: string, lecture: string) {
     setSelected({ course, lecture })
     setReqState(null)
@@ -53,6 +60,7 @@ export default function App() {
         courses={courses}
         selected={selected}
         onSelect={handleSelect}
+        onCourseClick={handleCourseClick}
       />
       <MainView
         selected={selected}

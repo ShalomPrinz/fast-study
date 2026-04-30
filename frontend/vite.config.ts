@@ -7,32 +7,48 @@ import path from 'node:path'
 const PREDEFINED_FILES = ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']
 
 function fsPlugin(dataRoot: string): Plugin {
+  function readLectures(courseDir: string) {
+    return fs
+      .readdirSync(courseDir, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((l) => {
+        const lectureDir = path.join(courseDir, l.name)
+        const files = Object.fromEntries(
+          PREDEFINED_FILES.map((f) => [f, fs.existsSync(path.join(lectureDir, f))])
+        )
+        return { name: l.name, files }
+      })
+  }
+
   function readTree() {
     if (!dataRoot || !fs.existsSync(dataRoot)) return []
     return fs
       .readdirSync(dataRoot, { withFileTypes: true })
       .filter((e) => e.isDirectory())
-      .map((course) => {
-        const lectures = fs
-          .readdirSync(path.join(dataRoot, course.name), { withFileTypes: true })
-          .filter((e) => e.isDirectory())
-          .map((l) => {
-            const lectureDir = path.join(dataRoot, course.name, l.name)
-            const files = Object.fromEntries(
-              PREDEFINED_FILES.map((f) => [f, fs.existsSync(path.join(lectureDir, f))])
-            )
-            return { name: l.name, files }
-          })
-        return { name: course.name, lectures }
-      })
+      .map((course) => ({
+        name: course.name,
+        lectures: readLectures(path.join(dataRoot, course.name)),
+      }))
+  }
+
+  function readCourse(name: string) {
+    const courseDir = path.join(dataRoot, name)
+    if (!fs.existsSync(courseDir)) return null
+    return { name, lectures: readLectures(courseDir) }
   }
 
   return {
     name: 'vite-fs',
     configureServer(server) {
-      server.middlewares.use('/api/tree', (_req, res) => {
+      server.middlewares.use('/api/tree', (req, res) => {
         res.setHeader('Content-Type', 'application/json')
-        res.end(JSON.stringify(readTree()))
+        const suffix = req.url ?? '/'
+        if (suffix === '/' || suffix === '') {
+          res.end(JSON.stringify(readTree()))
+        } else {
+          const courseName = decodeURIComponent(suffix.slice(1))
+          res.end(JSON.stringify(readCourse(courseName)))
+        }
       })
     },
   }

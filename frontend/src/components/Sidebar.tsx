@@ -6,13 +6,17 @@ interface Props {
   courses: Course[]
   selected: Selected | null
   onSelect: (course: string, lecture: string) => void
+  onCourseClick: (course: string) => void
 }
 
-export default function Sidebar({ courses, selected, onSelect }: Props) {
+export default function Sidebar({ courses, selected, onSelect, onCourseClick }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    setExpanded(new Set(courses.map((c) => c.name)))
+    setExpanded((prev) => {
+      const names = new Set(courses.map((c) => c.name))
+      return new Set([...prev].filter((n) => names.has(n)))
+    })
   }, [courses])
 
   function toggleCourse(name: string) {
@@ -21,6 +25,7 @@ export default function Sidebar({ courses, selected, onSelect }: Props) {
       next.has(name) ? next.delete(name) : next.add(name)
       return next
     })
+    onCourseClick(name)
   }
 
   return (
