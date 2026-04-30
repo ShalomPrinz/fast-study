@@ -1,8 +1,16 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
+export type FileName = 'video.mp4' | 'audio.mp3' | 'transcript.txt' | 'summary.md' | 'summary.pdf'
+export type FileStatus = Record<FileName, boolean>
+
+export interface Lecture {
+  name: string
+  files: FileStatus
+}
+
 export interface Course {
   name: string
-  lectures: string[]
+  lectures: Lecture[]
 }
 
 export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'all'

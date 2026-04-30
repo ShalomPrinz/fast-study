@@ -7,6 +7,8 @@ import path from 'node:path'
 const VIRTUAL_ID = 'virtual:tree'
 const RESOLVED_ID = '\0' + VIRTUAL_ID
 
+const PREDEFINED_FILES = ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']
+
 function fsPlugin(dataRoot: string): Plugin {
   function readTree() {
     if (!dataRoot) return []
@@ -17,7 +19,13 @@ function fsPlugin(dataRoot: string): Plugin {
         const lectures = fs
           .readdirSync(path.join(dataRoot, course.name), { withFileTypes: true })
           .filter((e) => e.isDirectory())
-          .map((l) => l.name)
+          .map((l) => {
+            const lectureDir = path.join(dataRoot, course.name, l.name)
+            const files = Object.fromEntries(
+              PREDEFINED_FILES.map((f) => [f, fs.existsSync(path.join(lectureDir, f))])
+            )
+            return { name: l.name, files }
+          })
         return { name: course.name, lectures }
       })
   }

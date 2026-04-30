@@ -1,24 +1,14 @@
 import { useState, useEffect } from 'react'
-import { Course, Step } from '../api'
+import { Course } from '../api'
 import { Selected } from '../App'
-
-const ACTIONS: { step: Step; label: string }[] = [
-  { step: 'audio', label: 'Extract Audio' },
-  { step: 'transcribe', label: 'Transcribe' },
-  { step: 'summarize', label: 'Summarize' },
-  { step: 'pdf', label: 'Export PDF' },
-  { step: 'all', label: 'Run All' },
-]
 
 interface Props {
   courses: Course[]
   selected: Selected | null
   onSelect: (course: string, lecture: string) => void
-  onRun: (step: Step) => void
-  inflight: boolean
 }
 
-export default function Sidebar({ courses, selected, onSelect, onRun, inflight }: Props) {
+export default function Sidebar({ courses, selected, onSelect }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -52,31 +42,16 @@ export default function Sidebar({ courses, selected, onSelect, onRun, inflight }
               <ul className="lecture-list">
                 {course.lectures.map((lecture) => {
                   const isSelected =
-                    selected?.course === course.name && selected?.lecture === lecture
+                    selected?.course === course.name && selected?.lecture === lecture.name
                   return (
-                    <li key={lecture}>
+                    <li key={lecture.name}>
                       <button
                         className={`lecture-btn${isSelected ? ' selected' : ''}`}
-                        onClick={() => onSelect(course.name, lecture)}
+                        onClick={() => onSelect(course.name, lecture.name)}
                         dir="auto"
                       >
-                        {lecture}
+                        {lecture.name}
                       </button>
-
-                      {isSelected && (
-                        <div className="action-buttons">
-                          {ACTIONS.map(({ step, label }) => (
-                            <button
-                              key={step}
-                              className={`action-btn${step === 'all' ? ' action-btn--all' : ''}`}
-                              onClick={() => onRun(step)}
-                              disabled={inflight}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </li>
                   )
                 })}
