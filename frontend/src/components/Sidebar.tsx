@@ -18,9 +18,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   useEffect(() => {
     setExpanded((prev) => {
       const names = new Set(courses.map((c) => c.name))
-      const next = new Set([...prev].filter((n) => names.has(n)))
-      courses.forEach((c) => { if (!prev.has(c.name)) next.add(c.name) })
-      return next
+      return new Set([...prev].filter((n) => names.has(n)))
     })
   }, [courses])
 
