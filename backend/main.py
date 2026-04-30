@@ -32,6 +32,8 @@ def lecture_dir(course: str, lecture: str) -> Path:
 def run_audio(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
+        if not (d / "video.mp4").exists():
+            return {"status": "error", "message": "video.mp4 is required"}
         strip_audio(str(d / "video.mp4"), str(d / "audio.mp3"))
         return {"status": "done"}
     except Exception as e:
@@ -42,6 +44,8 @@ def run_audio(course: str, lecture: str):
 def run_transcribe(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
+        if not (d / "audio.mp3").exists():
+            return {"status": "error", "message": "audio.mp3 is required — run Extract Audio first"}
         transcript = transcribe_audio(str(d / "audio.mp3"), GROQ_API_KEY)
         (d / "transcript.txt").write_text(transcript, encoding="utf-8")
         return {"status": "done"}
@@ -53,6 +57,8 @@ def run_transcribe(course: str, lecture: str):
 def run_summarize(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
+        if not (d / "transcript.txt").exists():
+            return {"status": "error", "message": "transcript.txt is required — run Transcribe first"}
         transcript = (d / "transcript.txt").read_text(encoding="utf-8")
         summary = summarize(transcript)
         (d / "summary.md").write_text(summary, encoding="utf-8")
@@ -65,6 +71,8 @@ def run_summarize(course: str, lecture: str):
 def run_pdf(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
+        if not (d / "summary.md").exists():
+            return {"status": "error", "message": "summary.md is required — run Summarize first"}
         convert_to_pdf(str(d / "summary.md"))
         return {"status": "done"}
     except Exception as e:

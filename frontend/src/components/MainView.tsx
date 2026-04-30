@@ -1,12 +1,12 @@
 import { FileStatus, FileName, Step } from '../api'
 import { Selected, ReqState } from '../App'
 
-const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string }> = [
+const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },
-  { file: 'audio.mp3', step: 'audio', actionLabel: 'Extract Audio' },
-  { file: 'transcript.txt', step: 'transcribe', actionLabel: 'Transcribe' },
-  { file: 'summary.md', step: 'summarize', actionLabel: 'Summarize' },
-  { file: 'summary.pdf', step: 'pdf', actionLabel: 'Export PDF' },
+  { file: 'audio.mp3',     step: 'audio',     actionLabel: 'Extract Audio', prereq: 'video.mp4'    },
+  { file: 'transcript.txt', step: 'transcribe', actionLabel: 'Transcribe',   prereq: 'audio.mp3'   },
+  { file: 'summary.md',    step: 'summarize', actionLabel: 'Summarize',     prereq: 'transcript.txt' },
+  { file: 'summary.pdf',   step: 'pdf',       actionLabel: 'Export PDF',    prereq: 'summary.md'   },
 ]
 
 const STEP_FILE: Partial<Record<Step, FileName>> = {
@@ -52,9 +52,10 @@ export default function MainView({ selected, files, reqState, onRun, inflight }:
         <h2 className="lecture-panel-title" dir="auto">{selected.lecture}</h2>
 
         <div className="file-list">
-          {PIPELINE.map(({ file, step, actionLabel }) => {
+          {PIPELINE.map(({ file, step, actionLabel, prereq }) => {
             const exists = files[file]
             const isRunning = runningFile === file || (runningAll && !!step)
+            const prereqMet = !prereq || files[prereq]
 
             return (
               <div key={file} className={`file-row${exists ? ' file-row--present' : ''}`}>
@@ -67,7 +68,7 @@ export default function MainView({ selected, files, reqState, onRun, inflight }:
                   <button
                     className="file-action-btn"
                     onClick={() => onRun(step)}
-                    disabled={inflight}
+                    disabled={inflight || !prereqMet}
                   >
                     {actionLabel}
                   </button>
