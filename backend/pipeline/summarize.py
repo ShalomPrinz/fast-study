@@ -1,7 +1,7 @@
 import subprocess
 from pathlib import Path
 
-PROMPT_FILE = Path(__file__).parent.parent.parent / "summarize.md"
+PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summarize.md"
 
 
 def summarize(transcript: str) -> str:

@@ -32,7 +32,7 @@ def lecture_dir(course: str, lecture: str) -> Path:
 def run_audio(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
-        strip_audio(str(d / "original.mp4"), str(d / "lecture.mp3"))
+        strip_audio(str(d / "video.mp4"), str(d / "audio.mp3"))
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -42,8 +42,8 @@ def run_audio(course: str, lecture: str):
 def run_transcribe(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
-        transcript = transcribe_audio(str(d / "lecture.mp3"), GROQ_API_KEY)
-        (d / "lecture_transcript.txt").write_text(transcript, encoding="utf-8")
+        transcript = transcribe_audio(str(d / "audio.mp3"), GROQ_API_KEY)
+        (d / "transcript.txt").write_text(transcript, encoding="utf-8")
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -53,9 +53,9 @@ def run_transcribe(course: str, lecture: str):
 def run_summarize(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
-        transcript = (d / "lecture_transcript.txt").read_text(encoding="utf-8")
+        transcript = (d / "transcript.txt").read_text(encoding="utf-8")
         summary = summarize(transcript)
-        (d / "lecture_summary.md").write_text(summary, encoding="utf-8")
+        (d / "summary.md").write_text(summary, encoding="utf-8")
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -65,7 +65,7 @@ def run_summarize(course: str, lecture: str):
 def run_pdf(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
-        convert_to_pdf(str(d / "lecture_summary.md"))
+        convert_to_pdf(str(d / "summary.md"))
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -75,12 +75,12 @@ def run_pdf(course: str, lecture: str):
 def run_all(course: str, lecture: str):
     try:
         d = lecture_dir(course, lecture)
-        strip_audio(str(d / "original.mp4"), str(d / "lecture.mp3"))
-        transcript = transcribe_audio(str(d / "lecture.mp3"), GROQ_API_KEY)
-        (d / "lecture_transcript.txt").write_text(transcript, encoding="utf-8")
+        strip_audio(str(d / "video.mp4"), str(d / "audio.mp3"))
+        transcript = transcribe_audio(str(d / "audio.mp3"), GROQ_API_KEY)
+        (d / "transcript.txt").write_text(transcript, encoding="utf-8")
         summary = summarize(transcript)
-        (d / "lecture_summary.md").write_text(summary, encoding="utf-8")
-        convert_to_pdf(str(d / "lecture_summary.md"))
+        (d / "summary.md").write_text(summary, encoding="utf-8")
+        convert_to_pdf(str(d / "summary.md"))
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}

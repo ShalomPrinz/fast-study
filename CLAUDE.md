@@ -22,15 +22,15 @@ python3 main.py lecture.mp4
 
 Each step can also be run independently:
 ```bash
-python3 strip_audio.py lecture.mp4              # → lecture.mp3
-python3 transcribe.py  lecture.mp3 gsk_...      # → lecture_transcript.txt
-python3 summarize.py   lecture_transcript.txt   # → lecture_summary.md
+python3 strip_audio.py lecture.mp4              # → audio.mp3
+python3 transcribe.py  audio.mp3 gsk_...      # → transcript.txt
+python3 summarize.py   transcript.txt   # → summary.md
 ```
 
 ## Converting a summary to PDF
 
 ```bash
-python3 to_pdf.py lecture_summary.md   # → lecture_summary.pdf
+python3 to_pdf.py summary.md   # → summary.pdf
 ```
 
 Requires `pandoc` and `xelatex` (`texlive-xetex`) installed system-wide. The Hebrew font (Noto Serif Hebrew) is bundled in `fonts/` — no system font installation needed. Math expressions written in LaTeX syntax (`$...$`, `$$...$$`) render correctly in the PDF.

@@ -3,7 +3,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-FONTS_DIR = Path(__file__).parent.parent.parent / "fonts"
+FONTS_DIR = Path(__file__).parent.parent / "assets" / "fonts"
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 
 LATEX_HEADER = r"""
@@ -82,7 +82,7 @@ def convert_to_pdf(md_path: str) -> str:
         f.write(fixed_md)
         md_temp_path = f.name
 
-    template_path = Path(__file__).parent.parent.parent / "pandoc_template.tex"
+    template_path = Path(__file__).parent.parent / "assets" / "templates" / "pandoc_template.tex"
 
     cmd = [
         "pandoc", md_temp_path,

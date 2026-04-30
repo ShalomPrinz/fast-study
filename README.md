@@ -22,17 +22,17 @@ Or set `GROQ_API_KEY` as an env var and omit it from the command.
 **Outputs** (saved next to the script):
 | File | Content |
 |---|---|
-| `lecture.mp3` | Extracted audio |
-| `lecture_transcript.txt` | Raw Hebrew transcript |
-| `lecture_summary.md` | Structured summary |
+| `audio.mp3` | Extracted audio |
+| `transcript.txt` | Raw Hebrew transcript |
+| `summary.md` | Structured summary |
 
 ## Converting the summary to PDF
 
 ```bash
-python3 to_pdf.py lecture_summary.md
+python3 to_pdf.py summary.md
 ```
 
-Produces `lecture_summary.pdf` alongside the input file, with Hebrew/RTL layout and math expressions rendered. The Hebrew font (Noto Serif Hebrew) is bundled in `fonts/` — no system font installation needed.
+Produces `summary.pdf` alongside the input file, with Hebrew/RTL layout and math expressions rendered. The Hebrew font (Noto Serif Hebrew) is bundled in `fonts/` — no system font installation needed.
 
 **Additional requirements for PDF export:**
 - `pandoc` — `sudo apt install pandoc`
