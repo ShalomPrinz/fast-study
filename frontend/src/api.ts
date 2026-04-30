@@ -20,6 +20,11 @@ export interface StepResult {
   message?: string
 }
 
+export async function fetchTree(): Promise<Course[]> {
+  const res = await fetch('/api/tree')
+  return res.json()
+}
+
 export async function runStep(course: string, lecture: string, step: Step): Promise<StepResult> {
   const res = await fetch(
     `${API_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/run/${step}`,

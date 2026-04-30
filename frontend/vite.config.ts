@@ -4,14 +4,11 @@ import react from '@vitejs/plugin-react'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const VIRTUAL_ID = 'virtual:tree'
-const RESOLVED_ID = '\0' + VIRTUAL_ID
-
 const PREDEFINED_FILES = ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']
 
 function fsPlugin(dataRoot: string): Plugin {
   function readTree() {
-    if (!dataRoot) return []
+    if (!dataRoot || !fs.existsSync(dataRoot)) return []
     return fs
       .readdirSync(dataRoot, { withFileTypes: true })
       .filter((e) => e.isDirectory())
@@ -32,13 +29,11 @@ function fsPlugin(dataRoot: string): Plugin {
 
   return {
     name: 'vite-fs',
-    resolveId(id) {
-      if (id === VIRTUAL_ID) return RESOLVED_ID
-    },
-    load(id) {
-      if (id === RESOLVED_ID) {
-        return `export const tree = ${JSON.stringify(readTree())}`
-      }
+    configureServer(server) {
+      server.middlewares.use('/api/tree', (_req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        res.end(JSON.stringify(readTree()))
+      })
     },
   }
 }

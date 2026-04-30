@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
-import { tree } from 'virtual:tree'
-import { runStep, Step, FileStatus, FileName, Lecture } from './api'
+import { useState, useEffect, useMemo } from 'react'
+import { fetchTree, runStep, Step, FileStatus, Lecture, Course } from './api'
 import Sidebar from './components/Sidebar'
 import MainView from './components/MainView'
 
@@ -15,25 +14,21 @@ export interface ReqState {
   message?: string
 }
 
-const STEP_PRODUCES: Partial<Record<Step, FileName[]>> = {
-  audio: ['audio.mp3'],
-  transcribe: ['transcript.txt'],
-  summarize: ['summary.md'],
-  pdf: ['summary.pdf'],
-  all: ['audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf'],
-}
-
 export default function App() {
+  const [courses, setCourses] = useState<Course[]>([])
   const [selected, setSelected] = useState<Selected | null>(null)
   const [reqState, setReqState] = useState<ReqState | null>(null)
-  const [files, setFiles] = useState<FileStatus | null>(null)
 
   useEffect(() => {
-    if (!selected) { setFiles(null); return }
-    const course = tree.find((c) => c.name === selected.course)
+    fetchTree().then(setCourses)
+  }, [])
+
+  const files = useMemo<FileStatus | null>(() => {
+    if (!selected) return null
+    const course = courses.find((c) => c.name === selected.course)
     const lecture = course?.lectures.find((l: Lecture) => l.name === selected.lecture)
-    setFiles(lecture?.files ?? null)
-  }, [selected])
+    return lecture?.files ?? null
+  }, [courses, selected])
 
   function handleSelect(course: string, lecture: string) {
     setSelected({ course, lecture })
@@ -46,15 +41,7 @@ export default function App() {
     const result = await runStep(selected.course, selected.lecture, step)
     if (result.status === 'done') {
       setReqState(null)
-      const produced = STEP_PRODUCES[step]
-      if (produced) {
-        setFiles((prev) => {
-          if (!prev) return prev
-          const next = { ...prev }
-          produced.forEach((f) => { next[f] = true })
-          return next
-        })
-      }
+      fetchTree().then(setCourses)
     } else {
       setReqState({ step, status: 'error', message: result.message })
     }
@@ -63,7 +50,7 @@ export default function App() {
   return (
     <div className="layout">
       <Sidebar
-        courses={tree}
+        courses={courses}
         selected={selected}
         onSelect={handleSelect}
       />

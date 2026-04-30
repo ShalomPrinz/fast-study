@@ -43,8 +43,8 @@ frontend/
 
 ## Key design decisions
 
-- **Filesystem access** — the browser can't read the local filesystem. A custom Vite plugin (`fsPlugin` in `vite.config.ts`) reads `VITE_DATA_ROOT` with Node's `fs` at dev-server startup and exposes the result as the virtual module `virtual:tree`. The app imports it directly (`import { tree } from 'virtual:tree'`) — no HTTP call involved. The tree is static for the lifetime of the dev server; restart Vite to pick up new courses/lectures.
-- **No API calls for filesystem state** — file existence is read once by the Vite plugin and embedded in `virtual:tree` (`Lecture.files: FileStatus`). After a pipeline step succeeds, the frontend updates its local `files` state directly (marking the produced file as present) without any re-fetch. Never add a backend or Vite dev-server endpoint to query which files exist.
+- **Filesystem access** — the browser can't read the local filesystem. A custom Vite plugin (`fsPlugin` in `vite.config.ts`) registers a `GET /api/tree` middleware on the Vite dev server. It reads `VITE_DATA_ROOT` with Node's `fs` on every request, returning `Course[]` where each `Lecture` includes a `files: FileStatus` map of which pre-defined files exist on disk. The app fetches this on mount and after every successful pipeline step — no Vite restart needed to see updated file status.
+- **No API calls for filesystem state to the FastAPI backend** — all filesystem reads go through the Vite dev-server `/api/tree` endpoint, never through FastAPI. After a pipeline step succeeds, re-fetch `/api/tree` to get ground-truth file status from disk. Never add a FastAPI endpoint to query which files exist.
 - **No routing library** — selected lecture is plain React state in `App.tsx`.
 - **Single CSS file** — all styles in `index.css` with CSS custom properties. No CSS modules or styled-components.
 - **Hebrew rendering** — folder name labels use `dir="auto"` so the browser auto-detects RTL. Font stack includes Noto Sans Hebrew (loaded from Google Fonts) with system-font fallbacks that support Hebrew (Segoe UI, Arial).
