@@ -25,8 +25,20 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   }, [courses])
 
   useEffect(() => {
-    if (adding) inputRef.current?.focus()
+    if (adding) {
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
   }, [adding])
+
+  function suggestName(courseName: string): string {
+    const course = courses.find((c) => c.name === courseName)
+    if (!course) return ''
+    const nums = course.lectures
+      .map((l) => { const m = l.name.match(/^Lecture\s+(\d+)$/i); return m ? parseInt(m[1], 10) : null })
+      .filter((n): n is number => n !== null)
+    return `Lecture ${nums.length ? Math.max(...nums) + 1 : 1}`
+  }
 
   function toggleCourse(name: string) {
     setExpanded((prev) => {
@@ -40,7 +52,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   function startAdding(e: React.MouseEvent, courseName: string) {
     e.stopPropagation()
     setAdding(courseName)
-    setNewName('')
+    setNewName(suggestName(courseName))
     setExpanded((prev) => new Set([...prev, courseName]))
   }
 
@@ -109,7 +121,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      onBlur={commitAdd}
+                      onBlur={() => { setAdding(null); setNewName('') }}
                       placeholder="Lecture name…"
                       dir="auto"
                     />

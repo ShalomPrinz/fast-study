@@ -105,12 +105,7 @@ html, body, #root {
   color: var(--sidebar-muted);
   font-size: 16px;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.1s, background 0.1s;
-}
-
-.course-header:hover .course-add-btn {
-  opacity: 1;
+  transition: background 0.1s;
 }
 
 .course-add-btn:hover {
