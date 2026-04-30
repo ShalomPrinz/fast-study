@@ -38,6 +38,14 @@ export async function createLecture(course: string, name: string): Promise<void>
   })
 }
 
+export async function renameLecture(course: string, oldName: string, newName: string): Promise<void> {
+  await fetch(`/api/tree/${encodeURIComponent(course)}/${encodeURIComponent(oldName)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: newName }),
+  })
+}
+
 export async function runStep(course: string, lecture: string, step: Step): Promise<StepResult> {
   const res = await fetch(
     `${API_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/run/${step}`,

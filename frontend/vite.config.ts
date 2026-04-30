@@ -61,6 +61,26 @@ function fsPlugin(dataRoot: string): Plugin {
           return
         }
 
+        if (req.method === 'PATCH') {
+          const [courseName, lectureName] = suffix.slice(1).split('/').map(decodeURIComponent)
+          let body = ''
+          req.on('data', (chunk) => { body += chunk })
+          req.on('end', () => {
+            try {
+              const { name } = JSON.parse(body)
+              fs.renameSync(
+                path.join(dataRoot, courseName, lectureName),
+                path.join(dataRoot, courseName, name),
+              )
+              res.end(JSON.stringify({ ok: true }))
+            } catch (e) {
+              res.statusCode = 400
+              res.end(JSON.stringify({ ok: false, error: String(e) }))
+            }
+          })
+          return
+        }
+
         if (suffix === '/' || suffix === '') {
           res.end(JSON.stringify(readTree()))
         } else {

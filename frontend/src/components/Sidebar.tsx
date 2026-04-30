@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Course, createLecture } from '../api'
+import { Course, createLecture, renameLecture } from '../api'
 import { Selected } from '../App'
 
 interface Props {
@@ -13,7 +13,10 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [adding, setAdding] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [renaming, setRenaming] = useState<{ course: string; lecture: string } | null>(null)
+  const [renameName, setRenameName] = useState('')
+  const addInputRef = useRef<HTMLInputElement>(null)
+  const renameInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setExpanded((prev) => {
@@ -23,11 +26,12 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   }, [courses])
 
   useEffect(() => {
-    if (adding) {
-      inputRef.current?.focus()
-      inputRef.current?.select()
-    }
+    if (adding) { addInputRef.current?.focus(); addInputRef.current?.select() }
   }, [adding])
+
+  useEffect(() => {
+    if (renaming) { renameInputRef.current?.focus(); renameInputRef.current?.select() }
+  }, [renaming])
 
   function suggestName(courseName: string): string {
     const course = courses.find((c) => c.name === courseName)
@@ -64,9 +68,20 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
     onCourseClick(course)
   }
 
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === 'Enter') commitAdd()
-    if (e.key === 'Escape') { setAdding(null); setNewName('') }
+  function startRenaming(e: React.MouseEvent, courseName: string, lectureName: string) {
+    e.preventDefault()
+    setRenaming({ course: courseName, lecture: lectureName })
+    setRenameName(lectureName)
+  }
+
+  async function commitRename() {
+    const name = renameName.trim()
+    const info = renaming!
+    setRenaming(null)
+    setRenameName('')
+    if (!name || name === info.lecture) return
+    await renameLecture(info.course, info.lecture, name)
+    onCourseClick(info.course)
   }
 
   return (
@@ -98,15 +113,36 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
                 {course.lectures.map((lecture) => {
                   const isSelected =
                     selected?.course === course.name && selected?.lecture === lecture.name
+                  const isRenaming =
+                    renaming?.course === course.name && renaming?.lecture === lecture.name
+
                   return (
                     <li key={lecture.name}>
-                      <button
-                        className={`lecture-btn${isSelected ? ' selected' : ''}`}
-                        onClick={() => onSelect(course.name, lecture.name)}
-                        dir="auto"
-                      >
-                        {lecture.name}
-                      </button>
+                      {isRenaming ? (
+                        <input
+                          ref={renameInputRef}
+                          className="lecture-add-input"
+                          value={renameName}
+                          onChange={(e) => setRenameName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') commitRename()
+                            if (e.key === 'Escape') { setRenaming(null); setRenameName('') }
+                          }}
+                          onBlur={() => { setRenaming(null); setRenameName('') }}
+                          dir="auto"
+                        />
+                      ) : (
+                        <button
+                          className={`lecture-btn${isSelected ? ' selected' : ''}`}
+                          onClick={(e) => {
+                            if (e.shiftKey) startRenaming(e, course.name, lecture.name)
+                            else onSelect(course.name, lecture.name)
+                          }}
+                          dir="auto"
+                        >
+                          {lecture.name}
+                        </button>
+                      )}
                     </li>
                   )
                 })}
@@ -114,11 +150,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
                 {adding === course.name && (
                   <li>
                     <input
-                      ref={inputRef}
+                      ref={addInputRef}
                       className="lecture-add-input"
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
-                      onKeyDown={handleKeyDown}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitAdd()
+                        if (e.key === 'Escape') { setAdding(null); setNewName('') }
+                      }}
                       onBlur={() => { setAdding(null); setNewName('') }}
                       placeholder="Lecture name…"
                       dir="auto"
