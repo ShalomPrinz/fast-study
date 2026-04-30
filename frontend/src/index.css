@@ -1,0 +1,230 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --sidebar-width: 280px;
+  --sidebar-bg: #1e1e2e;
+  --sidebar-fg: #cdd6f4;
+  --sidebar-muted: #7f849c;
+  --sidebar-hover: #313244;
+  --sidebar-selected: #45475a;
+  --accent: #89b4fa;
+  --accent-dim: #1e3a5f;
+  --border: #313244;
+  --main-bg: #ffffff;
+  --text: #1e1e2e;
+  --text-muted: #6c7086;
+  --green: #a6e3a1;
+  --red: #f38ba8;
+  font-family: 'Inter', 'Noto Sans Hebrew', 'Segoe UI', Arial, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+.layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ── Sidebar ── */
+
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  color: var(--sidebar-fg);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+
+.sidebar-header {
+  padding: 18px 16px 14px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  padding: 8px 0;
+  flex: 1;
+}
+
+.course-group {
+  margin-bottom: 4px;
+}
+
+.course-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px 14px;
+  background: none;
+  border: none;
+  color: var(--sidebar-fg);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 0 4px;
+  width: calc(100% - 8px);
+}
+
+.course-toggle:hover {
+  background: var(--sidebar-hover);
+}
+
+.chevron {
+  font-size: 10px;
+  color: var(--sidebar-muted);
+  flex-shrink: 0;
+}
+
+.lecture-list {
+  list-style: none;
+  padding-left: 8px;
+}
+
+.lecture-btn {
+  display: block;
+  width: calc(100% - 8px);
+  margin: 1px 4px;
+  padding: 6px 12px;
+  background: none;
+  border: none;
+  color: var(--sidebar-fg);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  opacity: 0.85;
+}
+
+.lecture-btn:hover {
+  background: var(--sidebar-hover);
+  opacity: 1;
+}
+
+.lecture-btn.selected {
+  background: var(--sidebar-selected);
+  color: #fff;
+  opacity: 1;
+}
+
+/* ── Action buttons ── */
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 12px 8px 24px;
+}
+
+.action-btn {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sidebar-fg);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.action-btn:hover:not(:disabled) {
+  background: var(--sidebar-hover);
+  border-color: var(--accent);
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.action-btn--all {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.action-btn--all:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+/* ── Main view ── */
+
+.main-view {
+  flex: 1;
+  background: var(--main-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+.empty-state {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.main-idle {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.main-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ── Spinner ── */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.status-label {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.status-done {
+  font-size: 22px;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.status-error {
+  font-size: 15px;
+  color: #dc2626;
+  max-width: 500px;
+  text-align: center;
+  line-height: 1.5;
+}
