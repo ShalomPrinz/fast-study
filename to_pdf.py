@@ -24,7 +24,8 @@ LATEX_HEADER = r"""
 
 
 LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
-MULTI_LATIN_RE = re.compile(r'([A-Za-z][A-Za-z0-9\-]*(?:[ \t]+[A-Za-z][A-Za-z0-9\-]*)*)([.,;:!?]*)')
+_WORD = r'(?:[0-9]+\-)?[A-Za-z][A-Za-z0-9\-]*'
+MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
 
 
 def wrap_english_phrases(text: str) -> str:
@@ -51,6 +52,12 @@ def wrap_english_phrases(text: str) -> str:
     return ''.join(result)
 
 
+def normalize_dashes(text: str) -> str:
+    """Replace em-dashes and en-dashes with a plain hyphen-space so pandoc never
+    encodes them as --- / -- in LaTeX (which would render oddly without TeX ligatures)."""
+    return text.replace('—', ' - ').replace('–', '-')
+
+
 def ensure_blank_before_lists(text: str) -> str:
     lines = text.splitlines(keepends=True)
     result = []
@@ -75,7 +82,7 @@ def convert_to_pdf(md_path: str) -> str:
     header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", fonts_dir)
 
     raw_md = input_path.read_text(encoding="utf-8")
-    fixed_md = wrap_english_phrases(ensure_blank_before_lists(raw_md))
+    fixed_md = wrap_english_phrases(ensure_blank_before_lists(normalize_dashes(raw_md)))
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".tex", delete=False) as f:
         f.write(header)
