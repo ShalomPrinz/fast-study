@@ -1,14 +1,10 @@
-import os
-import sys
 import math
+import os
 import subprocess
 import tempfile
-from pathlib import Path
-from dotenv import load_dotenv
+
 from groq import Groq
 
-load_dotenv()
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "")
 CHUNK_MINUTES = 10
 
 
@@ -59,27 +55,3 @@ def transcribe_audio(audio_path: str, api_key: str) -> str:
             parts.append(response.strip())
 
     return "\n\n".join(parts)
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python3 transcribe.py <audio.mp3> [api_key]")
-        sys.exit(1)
-
-    audio_path = sys.argv[1]
-    if not os.path.exists(audio_path):
-        print(f"File not found: {audio_path}")
-        sys.exit(1)
-
-    api_key = sys.argv[2] if len(sys.argv) > 2 else GROQ_API_KEY
-    if not api_key:
-        print("Error: GROQ_API_KEY not set. Pass it as second argument or set the env var.")
-        sys.exit(1)
-
-    transcript = transcribe_audio(audio_path, api_key)
-
-    output_path = Path(audio_path).stem + "_transcript.txt"
-    with open(output_path, "w", encoding="utf-8") as f:
-        f.write(transcript)
-
-    print(f"Transcript saved to: {output_path}")

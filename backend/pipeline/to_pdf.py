@@ -1,13 +1,9 @@
-#!/usr/bin/env python3
-"""Convert a Markdown summary file to PDF with Hebrew/RTL support and math rendering."""
-
 import re
 import subprocess
-import sys
 import tempfile
 from pathlib import Path
 
-FONTS_DIR = Path(__file__).parent / "fonts"
+FONTS_DIR = Path(__file__).parent.parent.parent / "fonts"
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 
 LATEX_HEADER = r"""
@@ -22,15 +18,12 @@ LATEX_HEADER = r"""
 \newfontfamily\englishfonttt{Noto Sans Mono}
 """
 
-
 LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
 _WORD = r'(?:[0-9]+\-)?[A-Za-z][A-Za-z0-9\-]*'
 MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
 
 
 def wrap_english_phrases(text: str) -> str:
-    """Wrap multi-word Latin runs in \\LR{}; explicitly wrap trailing punctuation in \\RL{}
-    so the TeX bidi engine keeps it on the correct RTL side."""
     def replace(m: re.Match) -> str:
         phrase, punct = m.group(1), m.group(2)
         result = r'\LR{' + phrase + '}'
@@ -40,11 +33,10 @@ def wrap_english_phrases(text: str) -> str:
 
     result = []
     for line in text.splitlines(keepends=True):
-        # Split on code spans to avoid touching backtick-enclosed content
         parts = re.split(r'(`[^`]*`)', line)
         out = []
         for i, part in enumerate(parts):
-            if i % 2 == 1:  # inside a code span — leave untouched
+            if i % 2 == 1:
                 out.append(part)
             else:
                 out.append(MULTI_LATIN_RE.sub(replace, part))
@@ -53,8 +45,6 @@ def wrap_english_phrases(text: str) -> str:
 
 
 def normalize_dashes(text: str) -> str:
-    """Replace em-dashes and en-dashes with a plain hyphen-space so pandoc never
-    encodes them as --- / -- in LaTeX (which would render oddly without TeX ligatures)."""
     return text.replace('—', ' - ').replace('–', '-')
 
 
@@ -92,7 +82,7 @@ def convert_to_pdf(md_path: str) -> str:
         f.write(fixed_md)
         md_temp_path = f.name
 
-    template_path = Path(__file__).parent / "pandoc_template.tex"
+    template_path = Path(__file__).parent.parent.parent / "pandoc_template.tex"
 
     cmd = [
         "pandoc", md_temp_path,
@@ -114,16 +104,3 @@ def convert_to_pdf(md_path: str) -> str:
         raise RuntimeError(f"pandoc failed:\n{result.stderr}")
 
     return str(output_path)
-
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python3 to_pdf.py <summary.md>")
-        sys.exit(1)
-
-    try:
-        output = convert_to_pdf(sys.argv[1])
-        print(f"PDF created: {output}")
-    except (FileNotFoundError, RuntimeError) as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
