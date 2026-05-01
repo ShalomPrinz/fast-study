@@ -261,6 +261,33 @@ html, body, #root {
   background: var(--accent-dim);
 }
 
+.modal-btn--danger {
+  border-color: #dc2626;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.modal-btn--danger:hover {
+  background: #fef2f2;
+}
+
+.modal-file-list {
+  list-style: none;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.modal-file-list li {
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  color: #dc2626;
+  padding: 3px 8px;
+  background: #fef2f2;
+  border-radius: 4px;
+}
+
 /* ── Lecture panel ── */
 
 .lecture-panel {
@@ -302,10 +329,36 @@ html, body, #root {
   color: var(--text);
 }
 
+.file-row-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .file-check {
   color: #16a34a;
   font-size: 14px;
   font-weight: 600;
+}
+
+.file-rotate-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--text-muted);
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.12s;
+}
+
+.file-rotate-btn:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.file-rotate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .file-missing {

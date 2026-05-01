@@ -59,6 +59,13 @@ export async function renameLecture(course: string, oldName: string, newName: st
   })
 }
 
+export async function deleteFile(course: string, lecture: string, file: FileName): Promise<void> {
+  await fetch(
+    `/api/tree/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}/${encodeURIComponent(file)}`,
+    { method: 'DELETE' },
+  )
+}
+
 export async function runStep(course: string, lecture: string, step: Step): Promise<StepResult> {
   const res = await fetch(
     `${API_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/run/${step}`,

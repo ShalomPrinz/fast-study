@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { ToastContainer } from 'react-toastify'
-import { fetchTree, fetchCourse, runStep, fetchTimingStats, Step, FileName, FileStatus, TimingStats, Lecture, Course } from './api'
+import { fetchTree, fetchCourse, runStep, deleteFile, fetchTimingStats, Step, FileName, FileStatus, TimingStats, Lecture, Course } from './api'
 import Sidebar from './components/Sidebar'
 import MainView from './components/MainView'
 
@@ -107,6 +107,14 @@ export default function App() {
     await executeStep(step, files)
   }
 
+  async function handleRotate(step: Step, filesToDelete: FileName[]) {
+    if (!selected) return
+    await Promise.all(filesToDelete.map((file) => deleteFile(selected.course, selected.lecture, file)))
+    const updated = await fetchTree()
+    setCourses(updated)
+    await handleRun(step)
+  }
+
   async function handleRunRemaining() {
     if (!selected || !files) return
 
@@ -142,6 +150,7 @@ export default function App() {
         runAllState={runAllState}
         onRun={handleRun}
         onRunRemaining={handleRunRemaining}
+        onRotate={handleRotate}
         inflight={reqState?.status === 'inflight'}
       />
       <ToastContainer position="top-right" autoClose={3000} />

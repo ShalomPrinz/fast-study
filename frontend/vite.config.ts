@@ -86,6 +86,19 @@ function fsPlugin(dataRoot: string): Plugin {
           return
         }
 
+        if (req.method === 'DELETE') {
+          const [courseName, lectureName, fileName] = suffix.slice(1).split('/').map(decodeURIComponent)
+          try {
+            const filePath = path.join(dataRoot, courseName, lectureName, fileName)
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+            res.end(JSON.stringify({ ok: true }))
+          } catch (e) {
+            res.statusCode = 400
+            res.end(JSON.stringify({ ok: false, error: String(e) }))
+          }
+          return
+        }
+
         if (req.method === 'PATCH') {
           const [courseName, lectureName] = suffix.slice(1).split('/').map(decodeURIComponent)
           let body = ''

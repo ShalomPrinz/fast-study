@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 import { FileStatus, FileName, Step, TimingStats } from '../api'
 import { Selected, ReqState, RunAllState } from '../App'
 
+interface RotateTarget {
+  file: FileName
+  step: Step
+  toDelete: FileName[]
+}
+
 const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },
   { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio', prereq: 'video.mp4'      },
@@ -74,10 +80,25 @@ interface Props {
   runAllState: RunAllState | null
   onRun: (step: Step) => void
   onRunRemaining: () => void
+  onRotate: (step: Step, filesToDelete: FileName[]) => void
   inflight: boolean
 }
 
-export default function MainView({ selected, files, reqState, runAllState, onRun, onRunRemaining, inflight }: Props) {
+export default function MainView({ selected, files, reqState, runAllState, onRun, onRunRemaining, onRotate, inflight }: Props) {
+  const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
+
+  function openRotateModal(file: FileName, step: Step) {
+    const idx = PIPELINE.findIndex((p) => p.file === file)
+    const toDelete = PIPELINE.slice(idx).map((p) => p.file)
+    setRotateTarget({ file, step, toDelete })
+  }
+
+  function confirmRotate() {
+    if (!rotateTarget) return
+    const { step, toDelete } = rotateTarget
+    setRotateTarget(null)
+    onRotate(step, toDelete)
+  }
   if (!selected) {
     return (
       <main className="main-view main-view--empty">
@@ -113,7 +134,17 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
                 <div className="file-row-header">
                   <span className="file-name">{file}</span>
                   {exists ? (
-                    <span className="file-check">✓</span>
+                    <span className="file-row-right">
+                      <span className="file-check">✓</span>
+                      {step && (
+                        <button
+                          className="file-rotate-btn"
+                          title={`Rotate ${file}`}
+                          onClick={() => openRotateModal(file, step)}
+                          disabled={inflight}
+                        >↺</button>
+                      )}
+                    </span>
                   ) : isRunning ? (
                     <div className="spinner spinner--sm" />
                   ) : step ? (
@@ -145,7 +176,7 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
         {runAllState && (
           <div className="run-all-overall-progress">
             <p className="run-all-overall-label">
-              {runAllState.currentIndex + 1}/{runAllState.steps.length} — {STEP_LABEL[runAllState.steps[runAllState.currentIndex]]}
+              {runAllState.currentIndex + 1}/{runAllState.steps.length} - {STEP_LABEL[runAllState.steps[runAllState.currentIndex]]}
             </p>
             <div className="progress-track">
               <div
@@ -160,6 +191,25 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
           <p className="file-error">Error: {reqState.message}</p>
         )}
       </div>
+
+      {rotateTarget && (
+        <div className="modal-overlay" onClick={() => setRotateTarget(null)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <p className="modal-message">
+              The following files will be <strong>deleted</strong>, then <strong>{rotateTarget.file}</strong> will be regenerated:
+            </p>
+            <ul className="modal-file-list">
+              {rotateTarget.toDelete.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+            <div className="modal-actions">
+              <button className="modal-btn" onClick={() => setRotateTarget(null)}>Cancel</button>
+              <button className="modal-btn modal-btn--danger" onClick={confirmRotate}>Rotate</button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
