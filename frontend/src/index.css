@@ -332,7 +332,25 @@ html, body, #root {
 .file-row-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+}
+
+.file-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-slot--status {
+  min-width: 28px;
+  justify-content: flex-end;
+}
+
+.file-slot--rotate {
+  width: 24px;
+}
+
+.file-slot--open {
+  width: 22px;
 }
 
 .file-check {

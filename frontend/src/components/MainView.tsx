@@ -117,6 +117,8 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
 
   const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
   const runningFile = inflight ? STEP_FILE[reqState!.step] : null
+  const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)
+  const pdfExists = files['summary.pdf'].exists
 
   return (
     <main className="main-view main-view--panel">
@@ -133,47 +135,57 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
               <div key={file} className={`file-row${exists ? ' file-row--present' : ''}${isRunning ? ' file-row--running' : ''}`}>
                 <div className="file-row-header">
                   <span className="file-name">{file}</span>
-                  {exists ? (
-                    <span className="file-row-right">
-                      <span className="file-check">✓</span>
-                      {step && (
+                  <span className="file-row-right">
+                    <span className="file-slot file-slot--status">
+                      {exists ? (
+                        <span className="file-check">✓</span>
+                      ) : isRunning ? (
+                        <div className="spinner spinner--sm" />
+                      ) : step ? (
                         <button
-                          className="file-rotate-btn"
-                          title={`Rotate ${file}`}
-                          onClick={() => openRotateModal(file, step)}
-                          disabled={inflight}
-                        >↺</button>
-                      )}
-                      {file === 'summary.pdf' && (
-                        <button
-                          className="file-open-btn"
-                          title="Open PDF in new tab"
-                          onClick={() => window.open(
-                            `/api/files/${encodeURIComponent(selected.course)}/${encodeURIComponent(selected.lecture)}/summary.pdf`,
-                            '_blank'
-                          )}
+                          className="file-action-btn"
+                          onClick={() => onRun(step)}
+                          disabled={inflight || !prereqMet}
                         >
-                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                            <path d="M8 1h4v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M12 1L6.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                          </svg>
+                          {actionLabel}
                         </button>
+                      ) : (
+                        <span className="file-missing">not provided</span>
                       )}
                     </span>
-                  ) : isRunning ? (
-                    <div className="spinner spinner--sm" />
-                  ) : step ? (
-                    <button
-                      className="file-action-btn"
-                      onClick={() => onRun(step)}
-                      disabled={inflight || !prereqMet}
-                    >
-                      {actionLabel}
-                    </button>
-                  ) : (
-                    <span className="file-missing">not provided</span>
-                  )}
+                    {hasAnyStepFile && (
+                      <span className="file-slot file-slot--rotate">
+                        {exists && step && (
+                          <button
+                            className="file-rotate-btn"
+                            title={`Rotate ${file}`}
+                            onClick={() => openRotateModal(file, step)}
+                            disabled={inflight}
+                          >↺</button>
+                        )}
+                      </span>
+                    )}
+                    {pdfExists && (
+                      <span className="file-slot file-slot--open">
+                        {file === 'summary.pdf' && (
+                          <button
+                            className="file-open-btn"
+                            title="Open PDF in new tab"
+                            onClick={() => window.open(
+                              `/api/files/${encodeURIComponent(selected.course)}/${encodeURIComponent(selected.lecture)}/summary.pdf`,
+                              '_blank'
+                            )}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                              <path d="M8 1h4v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M12 1L6.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                            </svg>
+                          </button>
+                        )}
+                      </span>
+                    )}
+                  </span>
                 </div>
                 {isRunning && (
                   <ProgressBar stats={reqState!.timingStats} startedAt={reqState!.startedAt!} />
