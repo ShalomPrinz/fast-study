@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { ToastContainer } from 'react-toastify'
-import { fetchTree, fetchCourse, runStep, Step, FileStatus, Lecture, Course } from './api'
+import { fetchTree, fetchCourse, runStep, fetchTimingStats, Step, FileName, FileStatus, TimingStats, Lecture, Course } from './api'
 import Sidebar from './components/Sidebar'
 import MainView from './components/MainView'
 
@@ -13,6 +13,15 @@ export interface ReqState {
   step: Step
   status: 'inflight' | 'error'
   message?: string
+  startedAt?: number
+  timingStats?: TimingStats | null
+}
+
+const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = {
+  audio: 'video.mp4',
+  transcribe: 'audio.mp3',
+  summarize: 'transcript.txt',
+  pdf: 'summary.md',
 }
 
 export default function App() {
@@ -55,7 +64,21 @@ export default function App() {
 
   async function handleRun(step: Step) {
     if (!selected) return
-    setReqState({ step, status: 'inflight' })
+    const startedAt = Date.now()
+    const inputFile = STEP_INPUT_FILE[step]
+    const fileSizeBytes = inputFile ? (files?.[inputFile]?.size ?? 0) : 0
+
+    if (step !== 'all') {
+      setReqState({ step, status: 'inflight', startedAt, timingStats: null })
+      if (fileSizeBytes > 0) {
+        fetchTimingStats(step, fileSizeBytes).then((stats) =>
+          setReqState((prev) => prev?.status === 'inflight' ? { ...prev, timingStats: stats } : prev)
+        )
+      }
+    } else {
+      setReqState({ step, status: 'inflight' })
+    }
+
     const result = await runStep(selected.course, selected.lecture, step)
     if (result.status === 'done') {
       setReqState(null)

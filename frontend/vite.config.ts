@@ -14,7 +14,11 @@ function fsPlugin(dataRoot: string): Plugin {
       .map((l) => {
         const lectureDir = path.join(courseDir, l.name)
         const files = Object.fromEntries(
-          PREDEFINED_FILES.map((f) => [f, fs.existsSync(path.join(lectureDir, f))])
+          PREDEFINED_FILES.map((f) => {
+            const p = path.join(lectureDir, f)
+            const stat = fs.existsSync(p) ? fs.statSync(p) : null
+            return [f, { exists: !!stat, size: stat?.size ?? null }]
+          })
         )
         return { name: l.name, files }
       })

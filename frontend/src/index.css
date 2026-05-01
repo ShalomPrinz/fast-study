@@ -283,7 +283,6 @@ html, body, #root {
 }
 
 .file-row {
-  display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
@@ -396,4 +395,56 @@ html, body, #root {
   width: 18px;
   height: 18px;
   border-width: 2px;
+}
+
+/* ── Progress bar ── */
+
+.file-row--running {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.file-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.progress-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.progress-track {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s linear;
+}
+
+.progress-fill--overflow {
+  background: #f59e0b;
+}
+
+.progress-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 5px;
+}
+
+.progress-label--overflow {
+  color: #d97706;
+}
+
+.progress-label--muted {
+  font-style: italic;
 }

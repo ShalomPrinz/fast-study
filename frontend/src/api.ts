@@ -1,7 +1,12 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 export type FileName = 'video.mp4' | 'audio.mp3' | 'transcript.txt' | 'summary.md' | 'summary.pdf'
-export type FileStatus = Record<FileName, boolean>
+export type FileInfo = { exists: boolean; size: number | null }
+export type FileStatus = Record<FileName, FileInfo>
+
+export type TimingStats =
+  | { message: 'not-enough-data' }
+  | { shortest: number; longest: number; average: number; estimated: number }
 
 export interface Lecture {
   name: string
@@ -59,5 +64,10 @@ export async function runStep(course: string, lecture: string, step: Step): Prom
     `${API_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/run/${step}`,
     { method: 'POST' },
   )
+  return res.json()
+}
+
+export async function fetchTimingStats(operation: string, fileSizeBytes: number): Promise<TimingStats> {
+  const res = await fetch(`${API_URL}/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
   return res.json()
 }

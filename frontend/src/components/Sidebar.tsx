@@ -98,7 +98,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
     }
     const course = courses.find((c) => c.name === courseName)
     const lecture = course?.lectures.find((l) => l.name === lectureName)
-    if (lecture?.files['video.mp4']) {
+    if (lecture?.files['video.mp4'].exists) {
       setPendingUpload({ course: courseName, lecture: lectureName, file })
     } else {
       doUpload(courseName, lectureName, file)
