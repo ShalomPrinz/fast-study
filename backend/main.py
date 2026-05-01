@@ -61,8 +61,7 @@ def run_summarize(course: str, lecture: str):
         d = lecture_dir(course, lecture)
         if not (d / "transcript.txt").exists():
             return {"status": "error", "message": "transcript.txt is required — run Transcribe first"}
-        transcript = (d / "transcript.txt").read_text(encoding="utf-8")
-        summary = summarize(transcript)
+        summary = summarize(d / "transcript.txt")
         (d / "summary.md").write_text(summary, encoding="utf-8")
         return {"status": "done"}
     except Exception as e:

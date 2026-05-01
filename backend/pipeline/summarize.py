@@ -7,12 +7,12 @@ PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summar
 
 
 @timed_pipeline("summarize")
-def summarize(transcript: str) -> str:
+def summarize(transcript_path: Path) -> str:
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
+    full_prompt = f"{prompt}\n\nThe transcript is in the file: {transcript_path}"
 
     result = subprocess.run(
-        ["gemini", "--output-format", "text", "-p", prompt],
-        input=transcript,
+        ["gemini", "--output-format", "text", "-p", full_prompt],
         capture_output=True,
         text=True,
         encoding="utf-8",
