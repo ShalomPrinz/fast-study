@@ -61,6 +61,25 @@ function fsPlugin(dataRoot: string): Plugin {
           return
         }
 
+        if (req.method === 'PUT') {
+          const [courseName, lectureName] = suffix.slice(1).split('/').map(decodeURIComponent)
+          const chunks: Buffer[] = []
+          req.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
+          req.on('end', () => {
+            try {
+              fs.writeFileSync(
+                path.join(dataRoot, courseName, lectureName, 'video.mp4'),
+                Buffer.concat(chunks),
+              )
+              res.end(JSON.stringify({ ok: true }))
+            } catch (e) {
+              res.statusCode = 400
+              res.end(JSON.stringify({ ok: false, error: String(e) }))
+            }
+          })
+          return
+        }
+
         if (req.method === 'PATCH') {
           const [courseName, lectureName] = suffix.slice(1).split('/').map(decodeURIComponent)
           let body = ''

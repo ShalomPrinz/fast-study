@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { ToastContainer } from 'react-toastify'
 import { fetchTree, fetchCourse, runStep, Step, FileStatus, Lecture, Course } from './api'
 import Sidebar from './components/Sidebar'
 import MainView from './components/MainView'
@@ -79,6 +80,7 @@ export default function App() {
         onRun={handleRun}
         inflight={reqState?.status === 'inflight'}
       />
+      <ToastContainer position="top-right" autoClose={3000} />
     </div>
   )
 }

@@ -38,6 +38,14 @@ export async function createLecture(course: string, name: string): Promise<void>
   })
 }
 
+export async function uploadVideo(course: string, lecture: string, file: File): Promise<void> {
+  const res = await fetch(
+    `/api/tree/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}`,
+    { method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: file },
+  )
+  if (!res.ok) throw new Error('Upload failed')
+}
+
 export async function renameLecture(course: string, oldName: string, newName: string): Promise<void> {
   await fetch(`/api/tree/${encodeURIComponent(course)}/${encodeURIComponent(oldName)}`, {
     method: 'PATCH',

@@ -151,6 +151,12 @@ html, body, #root {
   opacity: 1;
 }
 
+.lecture-btn.drag-over {
+  background: var(--sidebar-hover);
+  opacity: 1;
+  outline: 1px solid var(--accent);
+}
+
 .lecture-add-input {
   display: block;
   width: calc(100% - 8px);

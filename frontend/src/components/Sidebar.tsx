@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { Course, createLecture, renameLecture } from '../api'
+import { toast } from 'react-toastify'
+import { Course, createLecture, renameLecture, uploadVideo } from '../api'
 import { Selected } from '../App'
 
 interface Props {
@@ -15,6 +16,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   const [newName, setNewName] = useState('')
   const [renaming, setRenaming] = useState<{ course: string; lecture: string } | null>(null)
   const [renameName, setRenameName] = useState('')
+  const [dragOver, setDragOver] = useState<{ course: string; lecture: string } | null>(null)
   const addInputRef = useRef<HTMLInputElement>(null)
   const renameInputRef = useRef<HTMLInputElement>(null)
 
@@ -68,6 +70,23 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
     onCourseClick(course)
   }
 
+  async function handleDrop(e: React.DragEvent, courseName: string, lectureName: string) {
+    e.preventDefault()
+    setDragOver(null)
+    const file = e.dataTransfer.files[0]
+    if (!file) return
+    if (!file.name.toLowerCase().endsWith('.mp4') && file.type !== 'video/mp4') {
+      toast.error('Only .mp4 files are allowed')
+      return
+    }
+    await toast.promise(uploadVideo(courseName, lectureName, file), {
+      pending: 'Uploading video…',
+      success: `Saved to ${lectureName}`,
+      error: 'Upload failed',
+    })
+    onCourseClick(courseName)
+  }
+
   function startRenaming(e: React.MouseEvent, courseName: string, lectureName: string) {
     e.preventDefault()
     setRenaming({ course: courseName, lecture: lectureName })
@@ -115,6 +134,8 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
                     selected?.course === course.name && selected?.lecture === lecture.name
                   const isRenaming =
                     renaming?.course === course.name && renaming?.lecture === lecture.name
+                  const isDragOver =
+                    dragOver?.course === course.name && dragOver?.lecture === lecture.name
 
                   return (
                     <li key={lecture.name}>
@@ -133,11 +154,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
                         />
                       ) : (
                         <button
-                          className={`lecture-btn${isSelected ? ' selected' : ''}`}
+                          className={`lecture-btn${isSelected ? ' selected' : ''}${isDragOver ? ' drag-over' : ''}`}
                           onClick={(e) => {
                             if (e.shiftKey) startRenaming(e, course.name, lecture.name)
                             else onSelect(course.name, lecture.name)
                           }}
+                          onDragOver={(e) => { e.preventDefault(); setDragOver({ course: course.name, lecture: lecture.name }) }}
+                          onDragLeave={() => setDragOver(null)}
+                          onDrop={(e) => handleDrop(e, course.name, lecture.name)}
                           dir="auto"
                         >
                           {lecture.name}
