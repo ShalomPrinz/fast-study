@@ -12,7 +12,12 @@ def summarize(transcript_path: Path) -> str:
     full_prompt = f"{prompt}\n\nThe transcript is in the file: {transcript_path}"
 
     result = subprocess.run(
-        ["gemini", "--output-format", "text", "-p", full_prompt],
+        [
+            "gemini",
+            "--output-format", "text",
+            "--include-directories", str(transcript_path.parent),
+            "-p", full_prompt,
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",
