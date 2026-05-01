@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { FileStatus, FileName, Step, TimingStats } from '../api'
-import { Selected, ReqState } from '../App'
+import { Selected, ReqState, RunAllState } from '../App'
 
 const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },
-  { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio', prereq: 'video.mp4'     },
-  { file: 'transcript.txt', step: 'transcribe',  actionLabel: 'Transcribe',    prereq: 'audio.mp3'    },
+  { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio', prereq: 'video.mp4'      },
+  { file: 'transcript.txt', step: 'transcribe',  actionLabel: 'Transcribe',    prereq: 'audio.mp3'      },
   { file: 'summary.md',     step: 'summarize',   actionLabel: 'Summarize',     prereq: 'transcript.txt' },
-  { file: 'summary.pdf',    step: 'pdf',         actionLabel: 'Export PDF',    prereq: 'summary.md'   },
+  { file: 'summary.pdf',    step: 'pdf',         actionLabel: 'Export PDF',    prereq: 'summary.md'     },
 ]
 
 const STEP_FILE: Partial<Record<Step, FileName>> = {
@@ -15,6 +15,13 @@ const STEP_FILE: Partial<Record<Step, FileName>> = {
   transcribe: 'transcript.txt',
   summarize: 'summary.md',
   pdf: 'summary.pdf',
+}
+
+const STEP_LABEL: Partial<Record<Step, string>> = {
+  audio: 'Extract Audio',
+  transcribe: 'Transcribe',
+  summarize: 'Summarize',
+  pdf: 'Export PDF',
 }
 
 function formatDuration(seconds: number): string {
@@ -64,11 +71,13 @@ interface Props {
   selected: Selected | null
   files: FileStatus | null
   reqState: ReqState | null
+  runAllState: RunAllState | null
   onRun: (step: Step) => void
+  onRunRemaining: () => void
   inflight: boolean
 }
 
-export default function MainView({ selected, files, reqState, onRun, inflight }: Props) {
+export default function MainView({ selected, files, reqState, runAllState, onRun, onRunRemaining, inflight }: Props) {
   if (!selected) {
     return (
       <main className="main-view main-view--empty">
@@ -86,8 +95,7 @@ export default function MainView({ selected, files, reqState, onRun, inflight }:
   }
 
   const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
-  const runningFile = inflight && reqState!.step !== 'all' ? STEP_FILE[reqState!.step] : null
-  const runningAll = inflight && reqState!.step === 'all'
+  const runningFile = inflight ? STEP_FILE[reqState!.step] : null
 
   return (
     <main className="main-view main-view--panel">
@@ -97,7 +105,7 @@ export default function MainView({ selected, files, reqState, onRun, inflight }:
         <div className="file-list">
           {PIPELINE.map(({ file, step, actionLabel, prereq }) => {
             const exists = files[file].exists
-            const isRunning = runningFile === file || (runningAll && !!step)
+            const isRunning = runningFile === file
             const prereqMet = !prereq || files[prereq].exists
 
             return (
@@ -120,7 +128,7 @@ export default function MainView({ selected, files, reqState, onRun, inflight }:
                     <span className="file-missing">not provided</span>
                   )}
                 </div>
-                {isRunning && !runningAll && (
+                {isRunning && (
                   <ProgressBar stats={reqState!.timingStats} startedAt={reqState!.startedAt!} />
                 )}
               </div>
@@ -128,16 +136,23 @@ export default function MainView({ selected, files, reqState, onRun, inflight }:
           })}
         </div>
 
-        {hasActions && !runningAll && (
-          <button className="run-all-btn" onClick={() => onRun('all')} disabled={inflight}>
-            Run All
+        {hasActions && (
+          <button className="run-all-btn" onClick={onRunRemaining} disabled={inflight}>
+            Run Remaining
           </button>
         )}
 
-        {runningAll && (
-          <div className="file-running-all">
-            <div className="spinner spinner--sm" />
-            <span>Running pipeline…</span>
+        {runAllState && (
+          <div className="run-all-overall-progress">
+            <p className="run-all-overall-label">
+              {runAllState.currentIndex + 1}/{runAllState.steps.length} — {STEP_LABEL[runAllState.steps[runAllState.currentIndex]]}
+            </p>
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{ width: `${(runAllState.currentIndex / runAllState.steps.length) * 100}%` }}
+              />
+            </div>
           </div>
         )}
 

@@ -17,6 +17,11 @@ export interface ReqState {
   timingStats?: TimingStats | null
 }
 
+export interface RunAllState {
+  steps: Step[]
+  currentIndex: number
+}
+
 const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = {
   audio: 'video.mp4',
   transcribe: 'audio.mp3',
@@ -24,11 +29,19 @@ const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = {
   pdf: 'summary.md',
 }
 
+const PIPELINE_STEPS: Array<{ file: FileName; step: Step }> = [
+  { file: 'audio.mp3',      step: 'audio'     },
+  { file: 'transcript.txt', step: 'transcribe' },
+  { file: 'summary.md',     step: 'summarize'  },
+  { file: 'summary.pdf',    step: 'pdf'        },
+]
+
 export default function App() {
   const [courses, setCourses] = useState<Course[]>([])
   const [sortedCourses, setSortedCourses] = useState<Course[]>([])
   const [selected, setSelected] = useState<Selected | null>(null)
   const [reqState, setReqState] = useState<ReqState | null>(null)
+  const [runAllState, setRunAllState] = useState<RunAllState | null>(null)
 
   useEffect(() => {
     fetchTree().then(setCourses)
@@ -60,32 +73,58 @@ export default function App() {
   function handleSelect(course: string, lecture: string) {
     setSelected({ course, lecture })
     setReqState(null)
+    setRunAllState(null)
   }
 
-  async function handleRun(step: Step) {
-    if (!selected) return
+  async function executeStep(step: Step, currentFiles: FileStatus | null): Promise<boolean> {
+    if (!selected) return false
     const startedAt = Date.now()
     const inputFile = STEP_INPUT_FILE[step]
-    const fileSizeBytes = inputFile ? (files?.[inputFile]?.size ?? 0) : 0
+    const fileSizeBytes = inputFile ? (currentFiles?.[inputFile]?.size ?? 0) : 0
 
-    if (step !== 'all') {
-      setReqState({ step, status: 'inflight', startedAt, timingStats: null })
-      if (fileSizeBytes > 0) {
-        fetchTimingStats(step, fileSizeBytes).then((stats) =>
-          setReqState((prev) => prev?.status === 'inflight' ? { ...prev, timingStats: stats } : prev)
+    setReqState({ step, status: 'inflight', startedAt, timingStats: null })
+    if (fileSizeBytes > 0) {
+      fetchTimingStats(step, fileSizeBytes).then((stats) =>
+        setReqState((prev) =>
+          prev?.status === 'inflight' && prev.step === step ? { ...prev, timingStats: stats } : prev
         )
-      }
-    } else {
-      setReqState({ step, status: 'inflight' })
+      )
     }
 
     const result = await runStep(selected.course, selected.lecture, step)
     if (result.status === 'done') {
       setReqState(null)
       fetchTree().then(setCourses)
+      return true
     } else {
       setReqState({ step, status: 'error', message: result.message })
+      return false
     }
+  }
+
+  async function handleRun(step: Step) {
+    if (!selected) return
+    await executeStep(step, files)
+  }
+
+  async function handleRunRemaining() {
+    if (!selected || !files) return
+
+    const remainingSteps = PIPELINE_STEPS
+      .filter(({ file }) => !files[file].exists)
+      .map(({ step }) => step)
+
+    if (remainingSteps.length === 0) return
+
+    setRunAllState({ steps: remainingSteps, currentIndex: 0 })
+
+    for (let i = 0; i < remainingSteps.length; i++) {
+      setRunAllState((prev) => prev ? { ...prev, currentIndex: i } : null)
+      const success = await executeStep(remainingSteps[i], files)
+      if (!success) break
+    }
+
+    setRunAllState(null)
   }
 
   return (
@@ -100,7 +139,9 @@ export default function App() {
         selected={selected}
         files={files}
         reqState={reqState}
+        runAllState={runAllState}
         onRun={handleRun}
+        onRunRemaining={handleRunRemaining}
         inflight={reqState?.status === 'inflight'}
       />
       <ToastContainer position="top-right" autoClose={3000} />

@@ -81,20 +81,6 @@ def run_pdf(course: str, lecture: str):
         return {"status": "error", "message": str(e)}
 
 
-@app.post("/courses/{course}/lectures/{lecture}/run/all")
-def run_all(course: str, lecture: str):
-    try:
-        d = lecture_dir(course, lecture)
-        strip_audio(str(d / "video.mp4"), str(d / "audio.mp3"))
-        transcript = transcribe_audio(str(d / "audio.mp3"), GROQ_API_KEY)
-        (d / "transcript.txt").write_text(transcript, encoding="utf-8")
-        summary = summarize(transcript)
-        (d / "summary.md").write_text(summary, encoding="utf-8")
-        convert_to_pdf(str(d / "summary.md"))
-        return {"status": "done"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
-
 
 @app.get("/timing/{operation}")
 def timing_stats(operation: str, file_size_bytes: int = Query(...)):

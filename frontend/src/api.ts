@@ -18,7 +18,7 @@ export interface Course {
   lectures: Lecture[]
 }
 
-export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'all'
+export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf'
 
 export interface StepResult {
   status: 'done' | 'error'
