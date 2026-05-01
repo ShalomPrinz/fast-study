@@ -5,6 +5,8 @@ import tempfile
 
 from groq import Groq
 
+from timing import timed_pipeline
+
 CHUNK_MINUTES = 10
 
 
@@ -34,6 +36,7 @@ def split_audio(audio_path: str, tmpdir: str, chunk_seconds: int) -> list[str]:
     return chunks
 
 
+@timed_pipeline("transcribe")
 def transcribe_audio(audio_path: str, api_key: str) -> str:
     client = Groq(api_key=api_key)
     chunk_seconds = CHUNK_MINUTES * 60

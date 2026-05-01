@@ -1,6 +1,9 @@
 import subprocess
 
+from timing import timed_pipeline
 
+
+@timed_pipeline("audio")
 def strip_audio(video_path: str, audio_path: str):
     print(f"Extracting audio from {video_path}...")
     subprocess.run([

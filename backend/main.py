@@ -2,19 +2,21 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from pipeline.strip_audio import strip_audio
 from pipeline.transcribe import transcribe_audio
 from pipeline.summarize import summarize
 from pipeline.to_pdf import convert_to_pdf
+from timing import init_db, get_stats
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 
 app = FastAPI()
+init_db()
 
 app.add_middleware(
     CORSMiddleware,
@@ -92,6 +94,11 @@ def run_all(course: str, lecture: str):
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.get("/timing/{operation}")
+def timing_stats(operation: str, file_size_bytes: int = Query(...)):
+    return get_stats(operation, file_size_bytes)
 
 
 if __name__ == "__main__":

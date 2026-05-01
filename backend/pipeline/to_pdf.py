@@ -3,6 +3,8 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from timing import timed_pipeline
+
 FONTS_DIR = Path(__file__).parent.parent / "assets" / "fonts"
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 
@@ -60,6 +62,7 @@ def ensure_blank_before_lists(text: str) -> str:
     return ''.join(result)
 
 
+@timed_pipeline("pdf")
 def convert_to_pdf(md_path: str) -> str:
     input_path = Path(md_path)
     if not input_path.exists():
