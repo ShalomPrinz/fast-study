@@ -17,6 +17,7 @@
   --main-bg: #ffffff;
   --text: #1e1e2e;
   --text-muted: #6c7086;
+  --text-warning: #d51313;
   --green: #a6e3a1;
   --red: #f38ba8;
   font-family: 'Inter', 'Noto Sans Hebrew', 'Segoe UI', Arial, sans-serif;
@@ -217,6 +218,13 @@ html, body, #root {
 .modal-message {
   font-size: 15px;
   color: var(--text);
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.modal-warning {
+  font-size: 13px;
+  color: var(--text-warning);
   margin-bottom: 20px;
   line-height: 1.5;
 }

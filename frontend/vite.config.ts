@@ -67,10 +67,12 @@ function fsPlugin(dataRoot: string): Plugin {
           req.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
           req.on('end', () => {
             try {
-              fs.writeFileSync(
-                path.join(dataRoot, courseName, lectureName, 'video.mp4'),
-                Buffer.concat(chunks),
-              )
+              const lectureDir = path.join(dataRoot, courseName, lectureName)
+              fs.writeFileSync(path.join(lectureDir, 'video.mp4'), Buffer.concat(chunks))
+              for (const derived of ['audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']) {
+                const p = path.join(lectureDir, derived)
+                if (fs.existsSync(p)) fs.unlinkSync(p)
+              }
               res.end(JSON.stringify({ ok: true }))
             } catch (e) {
               res.statusCode = 400

@@ -215,6 +215,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
       {pendingUpload && (
         <ConfirmModal
           message={`Replace existing video.mp4 in "${pendingUpload.lecture}"?`}
+          warning={`Note: This will delete all files in this lecture.`}
           onConfirm={() => {
             const { course, lecture, file } = pendingUpload
             setPendingUpload(null)
