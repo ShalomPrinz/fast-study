@@ -341,6 +341,22 @@ html, body, #root {
   font-weight: 600;
 }
 
+.file-open-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 2px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.12s;
+}
+
+.file-open-btn:hover {
+  color: var(--accent);
+}
+
 .file-rotate-btn {
   background: none;
   border: none;

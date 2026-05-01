@@ -144,6 +144,22 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
                           disabled={inflight}
                         >↺</button>
                       )}
+                      {file === 'summary.pdf' && (
+                        <button
+                          className="file-open-btn"
+                          title="Open PDF in new tab"
+                          onClick={() => window.open(
+                            `/api/files/${encodeURIComponent(selected.course)}/${encodeURIComponent(selected.lecture)}/summary.pdf`,
+                            '_blank'
+                          )}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                            <path d="M8 1h4v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 1L6.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                          </svg>
+                        </button>
+                      )}
                     </span>
                   ) : isRunning ? (
                     <div className="spinner spinner--sm" />

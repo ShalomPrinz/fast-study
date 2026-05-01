@@ -44,6 +44,19 @@ function fsPlugin(dataRoot: string): Plugin {
   return {
     name: 'vite-fs',
     configureServer(server) {
+      server.middlewares.use('/api/files', (req, res) => {
+        const suffix = req.url ?? '/'
+        const [courseName, lectureName, fileName] = suffix.slice(1).split('/').map(decodeURIComponent)
+        const filePath = path.join(dataRoot, courseName, lectureName, fileName)
+        if (!fs.existsSync(filePath)) {
+          res.statusCode = 404
+          res.end('Not found')
+          return
+        }
+        if (fileName.endsWith('.pdf')) res.setHeader('Content-Type', 'application/pdf')
+        fs.createReadStream(filePath).pipe(res as unknown as NodeJS.WritableStream)
+      })
+
       server.middlewares.use('/api/tree', (req, res) => {
         res.setHeader('Content-Type', 'application/json')
         const suffix = req.url ?? '/'
