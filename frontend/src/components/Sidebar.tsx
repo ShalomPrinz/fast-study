@@ -2,12 +2,19 @@ import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { Course, createLecture, renameLecture, uploadVideo } from '../api'
 import { Selected } from '../App'
+import ConfirmModal from './ConfirmModal'
 
 interface Props {
   courses: Course[]
   selected: Selected | null
   onSelect: (course: string, lecture: string) => void
   onCourseClick: (course: string) => void
+}
+
+interface PendingUpload {
+  course: string
+  lecture: string
+  file: File
 }
 
 export default function Sidebar({ courses, selected, onSelect, onCourseClick }: Props) {
@@ -17,6 +24,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   const [renaming, setRenaming] = useState<{ course: string; lecture: string } | null>(null)
   const [renameName, setRenameName] = useState('')
   const [dragOver, setDragOver] = useState<{ course: string; lecture: string } | null>(null)
+  const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null)
   const addInputRef = useRef<HTMLInputElement>(null)
   const renameInputRef = useRef<HTMLInputElement>(null)
 
@@ -70,7 +78,16 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
     onCourseClick(course)
   }
 
-  async function handleDrop(e: React.DragEvent, courseName: string, lectureName: string) {
+  async function doUpload(courseName: string, lectureName: string, file: File) {
+    await toast.promise(uploadVideo(courseName, lectureName, file), {
+      pending: 'Uploading video…',
+      success: `Saved to ${lectureName}`,
+      error: 'Upload failed',
+    })
+    onCourseClick(courseName)
+  }
+
+  function handleDrop(e: React.DragEvent, courseName: string, lectureName: string) {
     e.preventDefault()
     setDragOver(null)
     const file = e.dataTransfer.files[0]
@@ -79,12 +96,13 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
       toast.error('Only .mp4 files are allowed')
       return
     }
-    await toast.promise(uploadVideo(courseName, lectureName, file), {
-      pending: 'Uploading video…',
-      success: `Saved to ${lectureName}`,
-      error: 'Upload failed',
-    })
-    onCourseClick(courseName)
+    const course = courses.find((c) => c.name === courseName)
+    const lecture = course?.lectures.find((l) => l.name === lectureName)
+    if (lecture?.files['video.mp4']) {
+      setPendingUpload({ course: courseName, lecture: lectureName, file })
+    } else {
+      doUpload(courseName, lectureName, file)
+    }
   }
 
   function startRenaming(e: React.MouseEvent, courseName: string, lectureName: string) {
@@ -193,6 +211,18 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
           </div>
         ))}
       </nav>
+
+      {pendingUpload && (
+        <ConfirmModal
+          message={`Replace existing video.mp4 in "${pendingUpload.lecture}"?`}
+          onConfirm={() => {
+            const { course, lecture, file } = pendingUpload
+            setPendingUpload(null)
+            doUpload(course, lecture, file)
+          }}
+          onCancel={() => setPendingUpload(null)}
+        />
+      )}
     </aside>
   )
 }

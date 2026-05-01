@@ -193,6 +193,66 @@ html, body, #root {
   font-size: 15px;
 }
 
+/* ── Confirmation modal ── */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px 28px;
+  min-width: 300px;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.modal-message {
+  font-size: 15px;
+  color: var(--text);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.modal-btn {
+  padding: 7px 20px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  background: transparent;
+  color: var(--text);
+  transition: background 0.12s;
+}
+
+.modal-btn:hover {
+  background: #f3f4f6;
+}
+
+.modal-btn--no {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.modal-btn--no:hover {
+  background: var(--accent-dim);
+}
+
 /* ── Lecture panel ── */
 
 .lecture-panel {
