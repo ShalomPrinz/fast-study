@@ -25,5 +25,11 @@ def summarize(transcript_path: Path) -> str:
 
     if result.returncode != 0:
         raise RuntimeError(f"Gemini error:\n{result.stderr}")
+    
+    clean_result = result.stdout.strip()
 
-    return result.stdout
+    # Find the first occurrence of the Markdown H1 header
+    if "#" in clean_result:
+        clean_result = clean_result[clean_result.find("#"):]
+
+    return clean_result
