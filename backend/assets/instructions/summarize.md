@@ -1,8 +1,6 @@
 # Recording Article Instructions
 
-You have received a transcript of a video/audio recording. Your task is to reorganize the content into a well-written, readable article.
-
-**Return only the formatted text — no introduction, no explanation of what you are about to do, no meta-comments. The very first output must be the main title line.**
+You have received a transcript of a video/audio recording. Your task is to reorganize the content into a well-written, readable, long and descriptive article.
 
 ---
 
@@ -11,8 +9,9 @@ You have received a transcript of a video/audio recording. Your task is to reorg
 These requirements are mandatory and must be followed without exception:
 
 1. **Keep the original transcription language.** The transcript is most likely in Hebrew and may include English terms, phrases, or proper nouns — preserve them as-is. Write the entire article in Hebrew.
-2. **Do not shorten the content.** The article must be faithful to the source and contain all information, details, examples, and reasoning from the transcript — only better organized and phrased. A long and complete article is preferable to a short one that misses content.
+2. **Do not shorten the content.** The article must be faithful to the source and contain all information, details, examples, and reasoning from the transcript — only better organized and phrased. A long and complete article is a requirement. *Expected output should be long and descriptive, to fill up to 10 text pages, based on the given text length*
 3. **Do not add information from any external source or prior knowledge.** Your only source of information is the content of the transcript. If you have a crucial note on something, say it in braces shortly and tell me that you added the note, why you did it, and shortly exlain the issue in the original transcription.
+4. **Clean Output.** Return ONLY the article text. The very first character of your response must be '#'. If you include any introductory text like "I will read..." or "Certainly," the output will be rejected. Proceed directly to the title.
 
 ---
 
@@ -41,10 +40,10 @@ These requirements are mandatory and must be followed without exception:
 
 # [Suggested title based on content]
 
-## ‏General Overview
+## ‏תקציר
 One paragraph of 3–5 sentences describing the overall topic of the recording.
 
-## ‏Topics Covered
+## ‏רשימת הנושאים
 A short list of the main topics covered (for navigation purposes only).
 
 ---
@@ -57,16 +56,18 @@ Full content of this topic, phrased clearly and readably. Paragraphs separated b
 
 Full content...
 
+For a long topic, add more paragraphs under the same heading. Remember - keep it long as it's in the original transcription.
+
 ## ‏[Continue as needed]
 
 ...
 
 ---
 
-## ‏Key Points and Conclusions
+## ‏סיכום הנקודות העיקריות
 One or two paragraphs covering the most important insights and conclusions from the content, in continuous and flowing language.
 
-## ‏Required Actions / Tasks (if mentioned)
+## ‏משימות נדרשות
 - If tasks, assignments, or action items were mentioned — list them here
 - If none were mentioned — omit this section entirely
 
