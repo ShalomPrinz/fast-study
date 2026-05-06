@@ -22,19 +22,13 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
-type DriveState =
-  | { status: 'idle' }
-  | { status: 'inflight' }
-  | { status: 'done'; url: string }
-  | { status: 'stale'; url: string }
-  | { status: 'error'; message: string }
-
 const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },
-  { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio', prereq: 'video.mp4'      },
-  { file: 'transcript.txt', step: 'transcribe',  actionLabel: 'Transcribe',    prereq: 'audio.mp3'      },
-  { file: 'summary.md',     step: 'summarize',   actionLabel: 'Summarize',     prereq: 'transcript.txt' },
-  { file: 'summary.pdf',    step: 'pdf',         actionLabel: 'Export PDF',    prereq: 'summary.md'     },
+  { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio',   prereq: 'video.mp4'      },
+  { file: 'transcript.txt', step: 'transcribe',  actionLabel: 'Transcribe',      prereq: 'audio.mp3'      },
+  { file: 'summary.md',     step: 'summarize',   actionLabel: 'Summarize',       prereq: 'transcript.txt' },
+  { file: 'summary.pdf',    step: 'pdf',         actionLabel: 'Export PDF',      prereq: 'summary.md'     },
+  { file: 'drive_url.txt',  step: 'drive',       actionLabel: 'Upload to Drive', prereq: 'summary.pdf'    },
 ]
 
 const STEP_FILE = Object.fromEntries(
@@ -100,12 +94,10 @@ export default function MainView() {
   const [reqState, setReqState] = useState<ReqState | null>(null)
   const [runAllState, setRunAllState] = useState<RunAllState | null>(null)
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
-  const [driveState, setDriveState] = useState<DriveState>({ status: 'idle' })
 
   useEffect(() => {
     setReqState(null)
     setRunAllState(null)
-    setDriveState({ status: 'idle' })
   }, [params.course, params.lecture])
 
   if (!params.course || !params.lecture) return null
@@ -123,9 +115,9 @@ export default function MainView() {
   const runningFile = inflight ? STEP_FILE[reqState!.step] : null
   const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)
   const pdfExists = files['summary.pdf'].exists
-  const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists) ||
-    (pdfExists && driveState.status !== 'done' && driveState.status !== 'inflight')
+  const pdfUploaded = files['drive_url.txt'].exists
   const summaryExists = files['summary.md'].exists
+  const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
 
   async function executeStep(step: Step): Promise<boolean> {
     const startedAt = Date.now()
@@ -156,22 +148,7 @@ export default function MainView() {
     await executeStep(step)
   }
 
-  async function handleUploadToDrive() {
-    setDriveState({ status: 'inflight' })
-    const result = await runStep(course, lecture, 'drive')
-    if (result.status === 'done' && result.url) {
-      setDriveState({ status: 'done', url: result.url })
-    } else {
-      setDriveState({ status: 'error', message: result.message ?? 'Unknown error' })
-    }
-  }
-
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
-    if (driveState.status === 'done') {
-      setDriveState({ status: 'stale', url: driveState.url })
-    } else if (driveState.status === 'stale') {
-      // keep stale url intact
-    }
     await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file)))
     refreshCourses()
     await handleRun(step)
@@ -186,22 +163,15 @@ export default function MainView() {
 
     setRunAllState({ steps: remainingSteps, currentIndex: 0 })
 
-    let allSucceeded = true
     for (let i = 0; i < remainingSteps.length; i++) {
       setRunAllState((prev) => prev ? { ...prev, currentIndex: i } : null)
       const success = await executeStep(remainingSteps[i])
       if (!success) {
-        allSucceeded = false
         break
       }
     }
 
     setRunAllState(null)
-    if (!allSucceeded) return
-
-    if (pdfExists || remainingSteps.includes('pdf')) {
-      await handleUploadToDrive()
-    }
   }
 
   function openRotateModal(file: FileName, step: Step) {
@@ -250,19 +220,19 @@ export default function MainView() {
                         <span className="file-missing">not provided</span>
                       )}
                     </span>
-                    {hasAnyStepFile && (
+                    {hasAnyStepFile && exists && step && (
                       <span className="file-slot file-slot--rotate">
-                        {exists && step && (
-                          <button
-                            className="file-rotate-btn"
-                            title={`Rotate ${file}`}
-                            onClick={() => openRotateModal(file, step)}
-                            disabled={inflight}
-                          >↺</button>
-                        )}
+                        <button
+                          className="file-rotate-btn"
+                          title={`Rotate ${file}`}
+                          onClick={() => openRotateModal(file, step)}
+                          disabled={inflight}
+                        >↺</button>
                       </span>
                     )}
-                    {(pdfExists || summaryExists) && (
+                    {((file === 'summary.pdf' && pdfExists) ||
+                      (file === 'summary.md' && summaryExists) ||
+                      (file === 'drive_url.txt' && pdfUploaded)) && (
                       <span className="file-slot file-slot--open">
                         {file === 'summary.pdf' && pdfExists && (
                           <button
@@ -292,6 +262,19 @@ export default function MainView() {
                             </svg>
                           </button>
                         )}
+                        {file === 'drive_url.txt' && exists && (
+                          <button
+                            className="file-open-btn"
+                            title="Open in Drive"
+                            onClick={() => window.open(files['drive_url.txt'].url, '_blank')}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                              <path d="M8 1h4v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M12 1L6.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                            </svg>
+                          </button>
+                        )}
                       </span>
                     )}
                   </span>
@@ -303,53 +286,6 @@ export default function MainView() {
             )
           })}
 
-          {pdfExists && (
-            <div className={`file-row${driveState.status === 'inflight' ? ' file-row--running' : ''}${driveState.status === 'done' ? ' file-row--present' : ''}`}>
-              <div className="file-row-header">
-                <span className="file-name">Google Drive</span>
-                <span className="file-row-right">
-                  <span className="file-slot file-slot--status">
-                    {driveState.status === 'idle' && (
-                      <button
-                        className="file-action-btn"
-                        onClick={handleUploadToDrive}
-                        disabled={inflight}
-                      >
-                        Upload to Drive
-                      </button>
-                    )}
-                    {driveState.status === 'inflight' && <div className="spinner spinner--sm" />}
-                    {driveState.status === 'done' && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <a href={driveState.url} target="_blank" rel="noreferrer" className="file-check">
-                          ✓ Open in Drive
-                        </a>
-                        <button className="file-rotate-btn" title="Re-upload to Drive" onClick={handleUploadToDrive} disabled={inflight}>↺</button>
-                      </span>
-                    )}
-                    {driveState.status === 'stale' && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <a href={driveState.url} target="_blank" rel="noreferrer" className="file-missing">
-                          Open in Drive
-                        </a>
-                        <button className="file-action-btn" onClick={handleUploadToDrive} disabled={inflight}>
-                          Re-upload
-                        </button>
-                      </span>
-                    )}
-                    {driveState.status === 'error' && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span className="file-missing">{driveState.message}</span>
-                        <button className="file-action-btn" onClick={handleUploadToDrive} disabled={inflight}>
-                          Retry
-                        </button>
-                      </span>
-                    )}
-                  </span>
-                </span>
-              </div>
-            </div>
-          )}
         </div>
 
         {hasActions && (

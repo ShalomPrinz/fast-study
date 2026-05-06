@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const PREDEFINED_FILES = ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']
+const PREDEFINED_FILES = ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf', 'drive_url.txt']
 
 function fsPlugin(dataRoot: string): Plugin {
   function readLectures(courseDir: string) {
@@ -17,7 +17,8 @@ function fsPlugin(dataRoot: string): Plugin {
           PREDEFINED_FILES.map((f) => {
             const p = path.join(lectureDir, f)
             const stat = fs.existsSync(p) ? fs.statSync(p) : null
-            return [f, { exists: !!stat, size: stat?.size ?? null }]
+            const url = (f === 'drive_url.txt' && stat) ? fs.readFileSync(p, 'utf-8').trim() : undefined
+            return [f, { exists: !!stat, size: stat?.size ?? null, url }]
           })
         )
         return { name: l.name, files }
@@ -143,7 +144,7 @@ function fsPlugin(dataRoot: string): Plugin {
             try {
               const lectureDir = path.join(dataRoot, courseName, lectureName)
               fs.writeFileSync(path.join(lectureDir, 'video.mp4'), Buffer.concat(chunks))
-              for (const derived of ['audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf']) {
+              for (const derived of ['audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf', 'drive_url.txt']) {
                 const p = path.join(lectureDir, derived)
                 if (fs.existsSync(p)) fs.unlinkSync(p)
               }

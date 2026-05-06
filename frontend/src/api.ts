@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
-export type FileName = 'video.mp4' | 'audio.mp3' | 'transcript.txt' | 'summary.md' | 'summary.pdf'
-export type FileInfo = { exists: boolean; size: number | null }
+export type FileName = 'video.mp4' | 'audio.mp3' | 'transcript.txt' | 'summary.md' | 'summary.pdf' | 'drive_url.txt'
+export type FileInfo = { exists: boolean; size: number | null; url?: string }
 export type FileStatus = Record<FileName, FileInfo>
 
 export type TimingStats =
