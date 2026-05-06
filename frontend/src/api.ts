@@ -18,11 +18,12 @@ export interface Course {
   lectures: Lecture[]
 }
 
-export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf'
+export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'drive'
 
 export interface StepResult {
   status: 'done' | 'error'
   message?: string
+  url?: string
 }
 
 export async function fetchTree(): Promise<Course[]> {

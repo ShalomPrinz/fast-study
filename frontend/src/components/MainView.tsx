@@ -22,6 +22,13 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
+type DriveState =
+  | { status: 'idle' }
+  | { status: 'inflight' }
+  | { status: 'done'; url: string }
+  | { status: 'stale'; url: string }
+  | { status: 'error'; message: string }
+
 const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },
   { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio', prereq: 'video.mp4'      },
@@ -93,10 +100,12 @@ export default function MainView() {
   const [reqState, setReqState] = useState<ReqState | null>(null)
   const [runAllState, setRunAllState] = useState<RunAllState | null>(null)
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
+  const [driveState, setDriveState] = useState<DriveState>({ status: 'idle' })
 
   useEffect(() => {
     setReqState(null)
     setRunAllState(null)
+    setDriveState({ status: 'idle' })
   }, [params.course, params.lecture])
 
   if (!params.course || !params.lecture) return null
@@ -111,6 +120,12 @@ export default function MainView() {
   }
 
   const inflight = reqState?.status === 'inflight'
+  const runningFile = inflight ? STEP_FILE[reqState!.step] : null
+  const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)
+  const pdfExists = files['summary.pdf'].exists
+  const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists) ||
+    (pdfExists && driveState.status !== 'done' && driveState.status !== 'inflight')
+  const summaryExists = files['summary.md'].exists
 
   async function executeStep(step: Step): Promise<boolean> {
     const startedAt = Date.now()
@@ -141,30 +156,52 @@ export default function MainView() {
     await executeStep(step)
   }
 
+  async function handleUploadToDrive() {
+    setDriveState({ status: 'inflight' })
+    const result = await runStep(course, lecture, 'drive')
+    if (result.status === 'done' && result.url) {
+      setDriveState({ status: 'done', url: result.url })
+    } else {
+      setDriveState({ status: 'error', message: result.message ?? 'Unknown error' })
+    }
+  }
+
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
+    if (driveState.status === 'done') {
+      setDriveState({ status: 'stale', url: driveState.url })
+    } else if (driveState.status === 'stale') {
+      // keep stale url intact
+    }
     await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file)))
     refreshCourses()
     await handleRun(step)
   }
 
   async function handleRunRemaining() {
-    if (!files) return
+    if (!files || !hasActions) return
 
     const remainingSteps = PIPELINE
       .filter(({ file }) => !files[file].exists)
       .flatMap(({ step }) => step ? [step] : [])
 
-    if (remainingSteps.length === 0) return
-
     setRunAllState({ steps: remainingSteps, currentIndex: 0 })
 
+    let allSucceeded = true
     for (let i = 0; i < remainingSteps.length; i++) {
       setRunAllState((prev) => prev ? { ...prev, currentIndex: i } : null)
       const success = await executeStep(remainingSteps[i])
-      if (!success) break
+      if (!success) {
+        allSucceeded = false
+        break
+      }
     }
 
     setRunAllState(null)
+    if (!allSucceeded) return
+
+    if (pdfExists || remainingSteps.includes('pdf')) {
+      await handleUploadToDrive()
+    }
   }
 
   function openRotateModal(file: FileName, step: Step) {
@@ -179,12 +216,6 @@ export default function MainView() {
     setRotateTarget(null)
     handleRotate(step, toDelete)
   }
-
-  const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
-  const runningFile = inflight ? STEP_FILE[reqState!.step] : null
-  const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)
-  const pdfExists = files['summary.pdf'].exists
-  const summaryExists = files['summary.md'].exists
 
   return (
     <main className="main-view main-view--panel">
@@ -271,6 +302,54 @@ export default function MainView() {
               </div>
             )
           })}
+
+          {pdfExists && (
+            <div className={`file-row${driveState.status === 'inflight' ? ' file-row--running' : ''}${driveState.status === 'done' ? ' file-row--present' : ''}`}>
+              <div className="file-row-header">
+                <span className="file-name">Google Drive</span>
+                <span className="file-row-right">
+                  <span className="file-slot file-slot--status">
+                    {driveState.status === 'idle' && (
+                      <button
+                        className="file-action-btn"
+                        onClick={handleUploadToDrive}
+                        disabled={inflight}
+                      >
+                        Upload to Drive
+                      </button>
+                    )}
+                    {driveState.status === 'inflight' && <div className="spinner spinner--sm" />}
+                    {driveState.status === 'done' && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <a href={driveState.url} target="_blank" rel="noreferrer" className="file-check">
+                          ✓ Open in Drive
+                        </a>
+                        <button className="file-rotate-btn" title="Re-upload to Drive" onClick={handleUploadToDrive} disabled={inflight}>↺</button>
+                      </span>
+                    )}
+                    {driveState.status === 'stale' && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <a href={driveState.url} target="_blank" rel="noreferrer" className="file-missing">
+                          Open in Drive
+                        </a>
+                        <button className="file-action-btn" onClick={handleUploadToDrive} disabled={inflight}>
+                          Re-upload
+                        </button>
+                      </span>
+                    )}
+                    {driveState.status === 'error' && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="file-missing">{driveState.message}</span>
+                        <button className="file-action-btn" onClick={handleUploadToDrive} disabled={inflight}>
+                          Retry
+                        </button>
+                      </span>
+                    )}
+                  </span>
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {hasActions && (
