@@ -14,6 +14,12 @@ TOKEN_PATH = str(Path(__file__).parent.parent / "token.json")
 
 
 def _get_service():
+    if not Path(CREDENTIALS_PATH).exists():
+        raise RuntimeError(
+            f"Google credentials file not found at {CREDENTIALS_PATH}. "
+            "Download credentials.json from Google Cloud Console and place it there."
+        )
+
     creds = None
     if Path(TOKEN_PATH).exists():
         creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
@@ -23,7 +29,7 @@ def _get_service():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+            creds = flow.run_local_server(port=0, open_browser=False)
         Path(TOKEN_PATH).write_text(creds.to_json())
 
     return build("drive", "v3", credentials=creds)
@@ -57,7 +63,7 @@ def upload_to_drive(pdf_path: str, course: str, root_folder_name: str) -> str:
 
         root_id = _find_folder(service, root_folder_name)
         if not root_id:
-            raise RuntimeError(f"Root Drive folder '{root_folder_name}' not found")
+            root_id = _create_folder(service, root_folder_name, "root")
 
         course_id = _find_folder(service, course, root_id)
         if not course_id:
