@@ -137,6 +137,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     setRenameName('')
     if (!name || name === info.lecture) return
     await renameLecture(info.course, info.lecture, name)
+    if (selected?.course === info.course && selected?.lecture === info.lecture) {
+      onSelect(info.course, name)
+    }
     onCourseClick(info.course)
   }
 
@@ -162,6 +165,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     setRenameCourseVal('')
     if (!name || name === old) return
     await renameCourse(old, name)
+    if (selected?.course === old) {
+      onSelect(name, selected.lecture)
+    }
     onRefresh()
   }
 
