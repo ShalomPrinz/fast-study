@@ -89,7 +89,7 @@ def run_drive(course: str, lecture: str):
         d = lecture_dir(course, lecture)
         if not (d / "summary.pdf").exists():
             return {"status": "error", "message": "summary.pdf is required — run PDF first"}
-        url = upload_to_drive(str(d / "summary.pdf"), course, GDRIVE_ROOT_FOLDER)
+        url = upload_to_drive(str(d / "summary.pdf"), course, GDRIVE_ROOT_FOLDER, f"{lecture}.pdf")
         return {"status": "done", "url": url}
     except Exception as e:
         return {"status": "error", "message": str(e)}

@@ -56,7 +56,7 @@ def _create_folder(service, name: str, parent_id: str) -> str:
     return folder["id"]
 
 
-def upload_to_drive(pdf_path: str, course: str, root_folder_name: str) -> str:
+def upload_to_drive(pdf_path: str, course: str, root_folder_name: str, file_name: str | None = None) -> str:
     """Upload pdf_path to Drive at root_folder_name/course/. Returns the Drive file URL."""
     try:
         service = _get_service()
@@ -69,7 +69,7 @@ def upload_to_drive(pdf_path: str, course: str, root_folder_name: str) -> str:
         if not course_id:
             course_id = _create_folder(service, course, root_id)
 
-        file_name = Path(pdf_path).name
+        file_name = file_name or Path(pdf_path).name
         media = MediaFileUpload(pdf_path, mimetype="application/pdf")
         response = (
             service.files()
