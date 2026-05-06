@@ -77,9 +77,9 @@ def timed_pipeline(operation: str):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             input_val = args[0] if args else None
-            if input_val and isinstance(input_val, str):
+            if input_val and isinstance(input_val, (str, Path)):
                 p = Path(input_val)
-                file_size = p.stat().st_size if p.exists() else len(input_val.encode())
+                file_size = p.stat().st_size if p.exists() else len(str(input_val).encode())
             else:
                 file_size = 0
 

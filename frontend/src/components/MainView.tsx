@@ -125,13 +125,19 @@ export default function MainView() {
     const fileSizeBytes = inputFile ? (files?.[inputFile]?.size ?? 0) : 0
 
     setReqState({ step, status: 'inflight', startedAt, timingStats: null })
-    if (fileSizeBytes > 0) {
-      fetchTimingStats(step, fileSizeBytes).then((stats) =>
+    fetchTimingStats(step, fileSizeBytes)
+      .then((stats) =>
         setReqState((prev) =>
           prev?.status === 'inflight' && prev.step === step ? { ...prev, timingStats: stats } : prev
         )
       )
-    }
+      .catch(() =>
+        setReqState((prev) =>
+          prev?.status === 'inflight' && prev.step === step
+            ? { ...prev, timingStats: { message: 'not-enough-data' } }
+            : prev
+        )
+      )
 
     const result = await runStep(course, lecture, step)
     if (result.status === 'done') {
