@@ -22,13 +22,6 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
-const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = {
-  audio: 'video.mp4',
-  transcribe: 'audio.mp3',
-  summarize: 'transcript.txt',
-  pdf: 'summary.md',
-}
-
 const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },
   { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio', prereq: 'video.mp4'      },
@@ -37,19 +30,17 @@ const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prere
   { file: 'summary.pdf',    step: 'pdf',         actionLabel: 'Export PDF',    prereq: 'summary.md'     },
 ]
 
-const STEP_FILE: Partial<Record<Step, FileName>> = {
-  audio: 'audio.mp3',
-  transcribe: 'transcript.txt',
-  summarize: 'summary.md',
-  pdf: 'summary.pdf',
-}
+const STEP_FILE = Object.fromEntries(
+  PIPELINE.flatMap(p => p.step ? [[p.step, p.file]] : [])
+) as Partial<Record<Step, FileName>>
 
-const STEP_LABEL: Partial<Record<Step, string>> = {
-  audio: 'Extract Audio',
-  transcribe: 'Transcribe',
-  summarize: 'Summarize',
-  pdf: 'Export PDF',
-}
+const STEP_INPUT_FILE = Object.fromEntries(
+  PIPELINE.flatMap(p => p.step && p.prereq ? [[p.step, p.prereq]] : [])
+) as Partial<Record<Step, FileName>>
+
+const STEP_LABEL = Object.fromEntries(
+  PIPELINE.flatMap(p => p.step && p.actionLabel ? [[p.step, p.actionLabel]] : [])
+) as Partial<Record<Step, string>>
 
 function formatDuration(seconds: number): string {
   const s = Math.round(seconds)
