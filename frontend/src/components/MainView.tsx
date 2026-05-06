@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
-import { fetchTimingStats, runStep, deleteFile, Step, FileName, TimingStats } from '../api'
+import { fetchCourse, fetchTimingStats, runStep, deleteFile, Step, FileName, TimingStats } from '../api'
 import { LayoutContext } from './Layout'
 
 interface ReqState {
@@ -120,9 +120,14 @@ export default function MainView() {
   const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
 
   async function executeStep(step: Step): Promise<boolean> {
-    const startedAt = Date.now()
     const inputFile = STEP_INPUT_FILE[step]
-    const fileSizeBytes = inputFile ? (files?.[inputFile]?.size ?? 0) : 0
+    let fileSizeBytes = 0
+    if (inputFile) {
+      const fresh = await fetchCourse(course)
+      const lec = fresh?.lectures.find((l) => l.name === lecture)
+      fileSizeBytes = lec?.files[inputFile]?.size ?? 0
+    }
+    const startedAt = Date.now()
 
     setReqState({ step, status: 'inflight', startedAt, timingStats: null })
     fetchTimingStats(step, fileSizeBytes)
