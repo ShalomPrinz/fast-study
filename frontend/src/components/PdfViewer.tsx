@@ -1,0 +1,82 @@
+import { useState, useEffect, useRef } from 'react'
+import { Document, Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css'
+import 'react-pdf/dist/Page/TextLayer.css'
+
+pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.mjs',
+  import.meta.url,
+).toString()
+
+interface Props {
+  url: string
+  show: boolean
+}
+
+export default function PdfViewer({ url, show }: Props) {
+  const [numPages, setNumPages] = useState(0)
+  const [scale, setScale] = useState(1.2)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const capturedScrollRef = useRef({ top: 0, left: 0 })
+  const prevUrlRef = useRef(url)
+
+  // Capture scroll in the render phase, before React commits DOM changes for the new url.
+  // At this point the old pages are still mounted and scrollTop is the real user position.
+  if (prevUrlRef.current !== url) {
+    const container = scrollContainerRef.current
+    if (container) {
+      capturedScrollRef.current = { top: container.scrollTop, left: container.scrollLeft }
+    }
+    prevUrlRef.current = url
+  }
+
+  useEffect(() => {
+    const container = scrollContainerRef.current
+    const { top, left } = capturedScrollRef.current
+    if (!container || (!top && !left)) return
+
+    // Re-apply scroll on every DOM mutation until it sticks (pages need to render first).
+    const observer = new MutationObserver(() => {
+      container.scrollTop = top
+      container.scrollLeft = left
+      if (container.scrollTop === top) observer.disconnect()
+    })
+    observer.observe(container, { childList: true, subtree: true })
+    return () => observer.disconnect()
+  }, [url])
+
+  if (!show) {
+    return (
+      <div className="pdf-placeholder">
+        <p>No PDF yet — click "Generate PDF" to create one.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="pdf-viewer">
+      <div className="pdf-zoom-bar">
+        <button className="pdf-zoom-btn" onClick={() => setScale(s => Math.max(s - 0.2, 0.4))}>−</button>
+        <span className="pdf-zoom-label">{Math.round(scale * 100)}%</span>
+        <button className="pdf-zoom-btn" onClick={() => setScale(s => Math.min(s + 0.2, 4))}>+</button>
+      </div>
+      <div className="pdf-scroll-container" ref={scrollContainerRef}>
+        <Document
+          file={url}
+          onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+          loading={<div className="pdf-doc-loading"><div className="spinner" /></div>}
+        >
+          {Array.from({ length: numPages }, (_, i) => (
+            <Page
+              key={i}
+              pageNumber={i + 1}
+              scale={scale}
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
+            />
+          ))}
+        </Document>
+      </div>
+    </div>
+  )
+}

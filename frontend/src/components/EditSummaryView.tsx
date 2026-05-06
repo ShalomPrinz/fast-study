@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, runStep, deleteFile } from '../api'
 import { LayoutContext } from './Layout'
+import PdfViewer from './PdfViewer'
 
 export default function EditSummaryView() {
   const { course, lecture } = useParams<{ course: string; lecture: string }>()
@@ -62,7 +63,7 @@ export default function EditSummaryView() {
 
   if (!course || !lecture) return null
 
-  const pdfUrl = `/api/files/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}/summary.pdf`
+  const pdfUrl = `/api/files/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}/summary.pdf?t=${pdfKey}`
 
   return (
     <div className="edit-view">
@@ -92,18 +93,7 @@ export default function EditSummaryView() {
 
       <div className="edit-panels">
         <div className="edit-panel edit-panel--pdf">
-          {showPdf ? (
-            <iframe
-              key={pdfKey}
-              src={`${pdfUrl}?t=${pdfKey}`}
-              className="pdf-frame"
-              title="Summary PDF"
-            />
-          ) : (
-            <div className="pdf-placeholder">
-              <p>No PDF yet — click "Generate PDF" to create one.</p>
-            </div>
-          )}
+          <PdfViewer url={pdfUrl} show={showPdf} />
         </div>
 
         <div className="edit-panel edit-panel--text">

@@ -649,10 +649,71 @@ html, body, #root {
   border-right: 1px solid #e5e7eb;
 }
 
-.pdf-frame {
-  width: 100%;
+.pdf-viewer {
   flex: 1;
-  border: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pdf-zoom-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-bottom: 1px solid #e5e7eb;
+  background: var(--sidebar-bg);
+  flex-shrink: 0;
+}
+
+.pdf-zoom-btn {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  background: var(--main-bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.pdf-zoom-btn:hover {
+  background: #f3f4f6;
+}
+
+.pdf-zoom-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: center;
+}
+
+.pdf-scroll-container {
+  flex: 1;
+  overflow: auto;
+  background: #525659;
+  display: flex;
+  flex-direction: column;
+  align-items: safe center;
+  padding: 12px 0;
+  gap: 8px;
+}
+
+.pdf-scroll-container .react-pdf__Page {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+.pdf-doc-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  width: 100%;
 }
 
 .pdf-placeholder {
@@ -679,8 +740,8 @@ html, body, #root {
   border: none;
   outline: none;
   resize: none;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
+  font-family: 'Noto Sans Hebrew', sans-serif;
+  font-size: 15px;
   line-height: 1.65;
   padding: 20px;
   color: var(--text);
