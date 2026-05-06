@@ -1,11 +1,32 @@
 import { useState, useEffect } from 'react'
-import { FileStatus, FileName, Step, TimingStats } from '../api'
-import { Selected, ReqState, RunAllState } from '../App'
+import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { fetchTimingStats, runStep, deleteFile, Step, FileName, TimingStats } from '../api'
+import { LayoutContext } from './Layout'
+
+interface ReqState {
+  step: Step
+  status: 'inflight' | 'error'
+  message?: string
+  startedAt?: number
+  timingStats?: TimingStats | null
+}
+
+interface RunAllState {
+  steps: Step[]
+  currentIndex: number
+}
 
 interface RotateTarget {
   file: FileName
   step: Step
   toDelete: FileName[]
+}
+
+const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = {
+  audio: 'video.mp4',
+  transcribe: 'audio.mp3',
+  summarize: 'transcript.txt',
+  pdf: 'summary.md',
 }
 
 const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
@@ -73,19 +94,87 @@ function ProgressBar({ stats, startedAt }: { stats: TimingStats | null | undefin
   )
 }
 
-interface Props {
-  selected: Selected | null
-  files: FileStatus | null
-  reqState: ReqState | null
-  runAllState: RunAllState | null
-  onRun: (step: Step) => void
-  onRunRemaining: () => void
-  onRotate: (step: Step, filesToDelete: FileName[]) => void
-  inflight: boolean
-}
+export default function MainView() {
+  const params = useParams<{ course: string; lecture: string }>()
+  const { files, refreshCourses } = useOutletContext<LayoutContext>()
+  const navigate = useNavigate()
 
-export default function MainView({ selected, files, reqState, runAllState, onRun, onRunRemaining, onRotate, inflight }: Props) {
+  const [reqState, setReqState] = useState<ReqState | null>(null)
+  const [runAllState, setRunAllState] = useState<RunAllState | null>(null)
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
+
+  useEffect(() => {
+    setReqState(null)
+    setRunAllState(null)
+  }, [params.course, params.lecture])
+
+  if (!params.course || !params.lecture) return null
+  const course = params.course
+  const lecture = params.lecture
+  if (!files) {
+    return (
+      <main className="main-view">
+        <div className="spinner" />
+      </main>
+    )
+  }
+
+  const inflight = reqState?.status === 'inflight'
+
+  async function executeStep(step: Step): Promise<boolean> {
+    const startedAt = Date.now()
+    const inputFile = STEP_INPUT_FILE[step]
+    const fileSizeBytes = inputFile ? (files?.[inputFile]?.size ?? 0) : 0
+
+    setReqState({ step, status: 'inflight', startedAt, timingStats: null })
+    if (fileSizeBytes > 0) {
+      fetchTimingStats(step, fileSizeBytes).then((stats) =>
+        setReqState((prev) =>
+          prev?.status === 'inflight' && prev.step === step ? { ...prev, timingStats: stats } : prev
+        )
+      )
+    }
+
+    const result = await runStep(course, lecture, step)
+    if (result.status === 'done') {
+      setReqState(null)
+      refreshCourses()
+      return true
+    } else {
+      setReqState({ step, status: 'error', message: result.message })
+      return false
+    }
+  }
+
+  async function handleRun(step: Step) {
+    await executeStep(step)
+  }
+
+  async function handleRotate(step: Step, filesToDelete: FileName[]) {
+    await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file)))
+    refreshCourses()
+    await handleRun(step)
+  }
+
+  async function handleRunRemaining() {
+    if (!files) return
+
+    const remainingSteps = PIPELINE
+      .filter(({ file }) => !files[file].exists)
+      .flatMap(({ step }) => step ? [step] : [])
+
+    if (remainingSteps.length === 0) return
+
+    setRunAllState({ steps: remainingSteps, currentIndex: 0 })
+
+    for (let i = 0; i < remainingSteps.length; i++) {
+      setRunAllState((prev) => prev ? { ...prev, currentIndex: i } : null)
+      const success = await executeStep(remainingSteps[i])
+      if (!success) break
+    }
+
+    setRunAllState(null)
+  }
 
   function openRotateModal(file: FileName, step: Step) {
     const idx = PIPELINE.findIndex((p) => p.file === file)
@@ -97,33 +186,19 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
     if (!rotateTarget) return
     const { step, toDelete } = rotateTarget
     setRotateTarget(null)
-    onRotate(step, toDelete)
-  }
-  if (!selected) {
-    return (
-      <main className="main-view main-view--empty">
-        <p className="empty-state">Select a lecture to get started</p>
-      </main>
-    )
-  }
-
-  if (!files) {
-    return (
-      <main className="main-view">
-        <div className="spinner" />
-      </main>
-    )
+    handleRotate(step, toDelete)
   }
 
   const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
   const runningFile = inflight ? STEP_FILE[reqState!.step] : null
   const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)
   const pdfExists = files['summary.pdf'].exists
+  const summaryExists = files['summary.md'].exists
 
   return (
     <main className="main-view main-view--panel">
       <div className="lecture-panel">
-        <h2 className="lecture-panel-title" dir="auto">{selected.lecture}</h2>
+        <h2 className="lecture-panel-title" dir="auto">{lecture}</h2>
 
         <div className="file-list">
           {PIPELINE.map(({ file, step, actionLabel, prereq }) => {
@@ -144,7 +219,7 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
                       ) : step ? (
                         <button
                           className="file-action-btn"
-                          onClick={() => onRun(step)}
+                          onClick={() => handleRun(step)}
                           disabled={inflight || !prereqMet}
                         >
                           {actionLabel}
@@ -165,14 +240,14 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
                         )}
                       </span>
                     )}
-                    {pdfExists && (
+                    {(pdfExists || summaryExists) && (
                       <span className="file-slot file-slot--open">
-                        {file === 'summary.pdf' && (
+                        {file === 'summary.pdf' && pdfExists && (
                           <button
                             className="file-open-btn"
                             title="Open PDF in new tab"
                             onClick={() => window.open(
-                              `/api/files/${encodeURIComponent(selected.course)}/${encodeURIComponent(selected.lecture)}/summary.pdf`,
+                              `/api/files/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}/summary.pdf`,
                               '_blank'
                             )}
                           >
@@ -180,6 +255,18 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
                               <path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
                               <path d="M8 1h4v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M12 1L6.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                            </svg>
+                          </button>
+                        )}
+                        {file === 'summary.md' && summaryExists && (
+                          <button
+                            className="file-open-btn"
+                            title="Edit summary"
+                            onClick={() => navigate('edit')}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9.5 2L11 3.5L4.5 10H3V8.5L9.5 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M8 3.5L9.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
                             </svg>
                           </button>
                         )}
@@ -196,7 +283,7 @@ export default function MainView({ selected, files, reqState, runAllState, onRun
         </div>
 
         {hasActions && (
-          <button className="run-all-btn" onClick={onRunRemaining} disabled={inflight}>
+          <button className="run-all-btn" onClick={handleRunRemaining} disabled={inflight}>
             Run Remaining
           </button>
         )}

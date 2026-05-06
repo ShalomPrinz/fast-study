@@ -78,3 +78,26 @@ export async function fetchTimingStats(operation: string, fileSizeBytes: number)
   const res = await fetch(`${API_URL}/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
   return res.json()
 }
+
+export async function fetchSummaryContent(course: string, lecture: string): Promise<{ content: string; hasOriginal: boolean }> {
+  const res = await fetch(`/api/summary/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}`)
+  return res.json()
+}
+
+export async function saveSummaryContent(course: string, lecture: string, content: string): Promise<boolean> {
+  const res = await fetch(
+    `/api/summary/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}`,
+    { method: 'PUT', headers: { 'Content-Type': 'text/plain; charset=utf-8' }, body: content },
+  )
+  const data = await res.json()
+  return data.ok
+}
+
+export async function revertSummary(course: string, lecture: string): Promise<boolean> {
+  const res = await fetch(
+    `/api/summary/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}`,
+    { method: 'DELETE' },
+  )
+  const data = await res.json()
+  return data.ok
+}

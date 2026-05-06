@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { Course, createLecture, renameLecture, uploadVideo } from '../api'
-import { Selected } from '../App'
+
+interface Selected {
+  course: string
+  lecture: string
+}
 import ConfirmModal from './ConfirmModal'
 
 interface Props {

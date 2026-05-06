@@ -44,6 +44,63 @@ function fsPlugin(dataRoot: string): Plugin {
   return {
     name: 'vite-fs',
     configureServer(server) {
+      server.middlewares.use('/api/summary', (req, res) => {
+        res.setHeader('Content-Type', 'application/json')
+        const suffix = req.url ?? '/'
+        const [courseName, lectureName] = suffix.slice(1).split('/').map(decodeURIComponent)
+        const lectureDir = path.join(dataRoot, courseName, lectureName)
+        const summaryPath = path.join(lectureDir, 'summary.md')
+        const originalPath = path.join(lectureDir, 'original_summary.md')
+
+        if (req.method === 'GET') {
+          try {
+            const content = fs.existsSync(summaryPath) ? fs.readFileSync(summaryPath, 'utf-8') : ''
+            const hasOriginal = fs.existsSync(originalPath)
+            res.end(JSON.stringify({ content, hasOriginal }))
+          } catch (e) {
+            res.statusCode = 500
+            res.end(JSON.stringify({ ok: false, error: String(e) }))
+          }
+          return
+        }
+
+        if (req.method === 'PUT') {
+          const chunks: Buffer[] = []
+          req.on('data', (chunk) => chunks.push(Buffer.from(chunk)))
+          req.on('end', () => {
+            try {
+              const content = Buffer.concat(chunks).toString('utf-8')
+              if (!fs.existsSync(originalPath) && fs.existsSync(summaryPath)) {
+                fs.renameSync(summaryPath, originalPath)
+              }
+              fs.writeFileSync(summaryPath, content, 'utf-8')
+              res.end(JSON.stringify({ ok: true }))
+            } catch (e) {
+              res.statusCode = 500
+              res.end(JSON.stringify({ ok: false, error: String(e) }))
+            }
+          })
+          return
+        }
+
+        if (req.method === 'DELETE') {
+          try {
+            if (fs.existsSync(originalPath)) {
+              fs.copyFileSync(originalPath, summaryPath)
+              fs.unlinkSync(originalPath)
+            }
+            res.end(JSON.stringify({ ok: true }))
+          } catch (e) {
+            res.statusCode = 500
+            res.end(JSON.stringify({ ok: false, error: String(e) }))
+          }
+          return
+        }
+
+        res.statusCode = 405
+        res.end(JSON.stringify({ error: 'Method not allowed' }))
+      })
+
       server.middlewares.use('/api/files', (req, res) => {
         const suffix = req.url ?? '/'
         const [courseName, lectureName, fileName] = suffix.slice(1).split('/').map(decodeURIComponent)

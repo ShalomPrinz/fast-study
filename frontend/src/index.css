@@ -539,3 +539,150 @@ html, body, #root {
 .progress-label--muted {
   font-style: italic;
 }
+
+/* ── Edit Summary view ── */
+
+.edit-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--main-bg);
+}
+
+.edit-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.edit-back-btn {
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 5px 12px;
+  cursor: pointer;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+
+.edit-back-btn:hover {
+  background: #f3f4f6;
+}
+
+.edit-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.edit-toolbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.edit-action-btn {
+  padding: 5px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.edit-action-btn:hover:not(:disabled) {
+  background: #f3f4f6;
+}
+
+.edit-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.edit-action-btn--primary {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.edit-action-btn--primary:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.edit-error {
+  padding: 8px 20px;
+  color: #dc2626;
+  font-size: 13px;
+  background: #fef2f2;
+  border-bottom: 1px solid #fecaca;
+  flex-shrink: 0;
+}
+
+.edit-panels {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.edit-panel {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-panel--pdf {
+  border-right: 1px solid #e5e7eb;
+}
+
+.pdf-frame {
+  width: 100%;
+  flex: 1;
+  border: none;
+}
+
+.pdf-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+}
+
+.edit-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summary-editor {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.65;
+  padding: 20px;
+  color: var(--text);
+  background: var(--main-bg);
+}
