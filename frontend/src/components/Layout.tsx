@@ -64,6 +64,7 @@ export default function Layout() {
         selected={selected}
         onSelect={handleSelect}
         onCourseClick={handleCourseClick}
+        onRefresh={refreshCourses}
       />
       <Outlet context={context} />
       <ToastContainer position="top-right" autoClose={3000} />

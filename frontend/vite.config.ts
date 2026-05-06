@@ -126,7 +126,10 @@ function fsPlugin(dataRoot: string): Plugin {
           req.on('end', () => {
             try {
               const { name } = JSON.parse(body)
-              fs.mkdirSync(path.join(dataRoot, courseName, name), { recursive: true })
+              const target = courseName
+                ? path.join(dataRoot, courseName, name)
+                : path.join(dataRoot, name)
+              fs.mkdirSync(target, { recursive: true })
               res.end(JSON.stringify({ ok: true }))
             } catch (e) {
               res.statusCode = 400
@@ -177,10 +180,17 @@ function fsPlugin(dataRoot: string): Plugin {
           req.on('end', () => {
             try {
               const { name } = JSON.parse(body)
-              fs.renameSync(
-                path.join(dataRoot, courseName, lectureName),
-                path.join(dataRoot, courseName, name),
-              )
+              if (lectureName) {
+                fs.renameSync(
+                  path.join(dataRoot, courseName, lectureName),
+                  path.join(dataRoot, courseName, name),
+                )
+              } else {
+                fs.renameSync(
+                  path.join(dataRoot, courseName),
+                  path.join(dataRoot, name),
+                )
+              }
               res.end(JSON.stringify({ ok: true }))
             } catch (e) {
               res.statusCode = 400

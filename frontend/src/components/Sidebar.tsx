@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
-import { Course, createLecture, renameLecture, uploadVideo } from '../api'
+import { Course, createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../api'
 
 interface Selected {
   course: string
@@ -13,6 +13,7 @@ interface Props {
   selected: Selected | null
   onSelect: (course: string, lecture: string) => void
   onCourseClick: (course: string) => void
+  onRefresh: () => void
 }
 
 interface PendingUpload {
@@ -21,7 +22,7 @@ interface PendingUpload {
   file: File
 }
 
-export default function Sidebar({ courses, selected, onSelect, onCourseClick }: Props) {
+export default function Sidebar({ courses, selected, onSelect, onCourseClick, onRefresh }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [adding, setAdding] = useState<string | null>(null)
   const [newName, setNewName] = useState('')
@@ -29,8 +30,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   const [renameName, setRenameName] = useState('')
   const [dragOver, setDragOver] = useState<{ course: string; lecture: string } | null>(null)
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null)
+  const [addingCourse, setAddingCourse] = useState(false)
+  const [newCourseName, setNewCourseName] = useState('')
+  const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
+  const [renameCourseVal, setRenameCourseVal] = useState('')
   const addInputRef = useRef<HTMLInputElement>(null)
   const renameInputRef = useRef<HTMLInputElement>(null)
+  const addCourseInputRef = useRef<HTMLInputElement>(null)
+  const renameCourseInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setExpanded((prev) => {
@@ -46,6 +53,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
   useEffect(() => {
     if (renaming) { renameInputRef.current?.focus(); renameInputRef.current?.select() }
   }, [renaming])
+
+  useEffect(() => {
+    if (addingCourse) { addCourseInputRef.current?.focus() }
+  }, [addingCourse])
+
+  useEffect(() => {
+    if (renamingCourse) { renameCourseInputRef.current?.focus(); renameCourseInputRef.current?.select() }
+  }, [renamingCourse])
 
   function suggestName(courseName: string): string {
     const course = courses.find((c) => c.name === courseName)
@@ -125,28 +140,94 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick }: 
     onCourseClick(info.course)
   }
 
+  async function commitAddCourse() {
+    const name = newCourseName.trim()
+    setAddingCourse(false)
+    setNewCourseName('')
+    if (!name) return
+    await createCourse(name)
+    onRefresh()
+  }
+
+  function startRenamingCourse(e: React.MouseEvent, courseName: string) {
+    e.preventDefault()
+    setRenamingCourse(courseName)
+    setRenameCourseVal(courseName)
+  }
+
+  async function commitRenameCourse() {
+    const name = renameCourseVal.trim()
+    const old = renamingCourse!
+    setRenamingCourse(null)
+    setRenameCourseVal('')
+    if (!name || name === old) return
+    await renameCourse(old, name)
+    onRefresh()
+  }
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">Fast Study</div>
+      <div className="new-course-row">
+        {addingCourse ? (
+          <input
+            ref={addCourseInputRef}
+            className="new-course-input"
+            value={newCourseName}
+            onChange={(e) => setNewCourseName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitAddCourse()
+              if (e.key === 'Escape') { setAddingCourse(false); setNewCourseName('') }
+            }}
+            onBlur={() => { setAddingCourse(false); setNewCourseName('') }}
+            placeholder="Course name…"
+            dir="auto"
+          />
+        ) : (
+          <button className="new-course-btn" onClick={() => setAddingCourse(true)}>
+            + New Course
+          </button>
+        )}
+      </div>
       <nav className="sidebar-nav">
         {courses.map((course) => (
           <div key={course.name} className="course-group">
             <div className="course-header">
+              {renamingCourse === course.name ? (
+                <input
+                  ref={renameCourseInputRef}
+                  className="lecture-add-input"
+                  value={renameCourseVal}
+                  onChange={(e) => setRenameCourseVal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') commitRenameCourse()
+                    if (e.key === 'Escape') { setRenamingCourse(null); setRenameCourseVal('') }
+                  }}
+                  onBlur={() => { setRenamingCourse(null); setRenameCourseVal('') }}
+                  dir="auto"
+                />
+              ) : (
               <button
                 className="course-toggle"
-                onClick={() => toggleCourse(course.name)}
+                onClick={(e) => {
+                  if (e.shiftKey) startRenamingCourse(e, course.name)
+                  else toggleCourse(course.name)
+                }}
                 dir="auto"
               >
                 <span className="chevron">{expanded.has(course.name) ? '▾' : '▸'}</span>
                 <span>{course.name}</span>
               </button>
-              <button
-                className="course-add-btn"
-                onClick={(e) => startAdding(e, course.name)}
-                title="Add lecture"
-              >
-                +
-              </button>
+              )}
+              {renamingCourse !== course.name && (
+                <button
+                  className="course-add-btn"
+                  onClick={(e) => startAdding(e, course.name)}
+                  title="Add lecture"
+                >
+                  +
+                </button>
+              )}
             </div>
 
             {expanded.has(course.name) && (

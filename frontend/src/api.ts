@@ -36,6 +36,22 @@ export async function fetchCourse(course: string): Promise<Course | null> {
   return res.json()
 }
 
+export async function createCourse(name: string): Promise<void> {
+  await fetch('/api/tree', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+}
+
+export async function renameCourse(oldName: string, newName: string): Promise<void> {
+  await fetch(`/api/tree/${encodeURIComponent(oldName)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: newName }),
+  })
+}
+
 export async function createLecture(course: string, name: string): Promise<void> {
   await fetch(`/api/tree/${encodeURIComponent(course)}`, {
     method: 'POST',
