@@ -18,7 +18,7 @@ export default function EditSummaryView() {
 
   useEffect(() => {
     if (files) setShowPdf(files['summary.pdf'].exists)
-  }, [])
+  }, [files])
 
   useEffect(() => {
     if (course && lecture) loadContent()

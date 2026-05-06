@@ -102,7 +102,7 @@ function fsPlugin(dataRoot: string): Plugin {
       })
 
       server.middlewares.use('/api/files', (req, res) => {
-        const suffix = req.url ?? '/'
+        const suffix = (req.url ?? '/').split('?')[0]
         const [courseName, lectureName, fileName] = suffix.slice(1).split('/').map(decodeURIComponent)
         const filePath = path.join(dataRoot, courseName, lectureName, fileName)
         if (!fs.existsSync(filePath)) {
