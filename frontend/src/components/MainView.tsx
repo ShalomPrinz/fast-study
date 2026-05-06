@@ -79,7 +79,7 @@ function ProgressBar({ stats, startedAt }: { stats: TimingStats | null | undefin
       </div>
       <p className={`progress-label${overflowing ? ' progress-label--overflow' : ''}`}>
         {overflowing
-          ? `Taking longer than expected · longest recorded: ${formatDuration(longest)}`
+          ? `Taking longer than expected · ${formatDuration(elapsed)} · longest recorded: ${formatDuration(longest)}`
           : `${formatDuration(Math.max(estimated - elapsed, 0))} remaining`}
       </p>
     </div>
