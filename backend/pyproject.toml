@@ -7,4 +7,6 @@ dependencies = [
     "uvicorn[standard]>=0.29",
     "python-dotenv>=1.0",
     "groq>=0.9",
+    "google-api-python-client>=2.0",
+    "google-auth-oauthlib>=1.0",
 ]

@@ -20,10 +20,11 @@ backend/
     instructions/     — summarize.md (Hebrew prompt sent to Gemini)
     templates/        — pandoc_template.tex (XeLaTeX template for PDF output)
   pipeline/           — pure functions, one module per step
-    strip_audio.py    — strip_audio(video_path, audio_path)
-    transcribe.py     — transcribe_audio(audio_path, api_key) → str
-    summarize.py      — summarize(transcript) → str
-    to_pdf.py         — convert_to_pdf(md_path) → str (output path)
+    strip_audio.py       — strip_audio(video_path, audio_path)
+    transcribe.py        — transcribe_audio(audio_path, api_key) → str
+    summarize.py         — summarize(transcript) → str
+    to_pdf.py            — convert_to_pdf(md_path) → str (output path)
+    upload_to_drive.py   — upload_to_drive(pdf_path, course, root_folder_name) → str (webViewLink)
   tests/
     conftest.py       — adds pipeline/ to sys.path so tests can import pipeline modules
     test_to_pdf.py
@@ -42,18 +43,20 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/` with these files:
 | `transcript.txt` | `/run/transcribe` |
 | `summary.md` | `/run/summarize` |
 | `summary.pdf` | `/run/pdf` |
+| (Drive upload) | `/run/drive` |
 
 ## API endpoints
 
 All endpoints: `POST /courses/{course}/lectures/{lecture}/run/{step}`
 
-Steps: `audio`, `transcribe`, `summarize`, `pdf`, `all`
+Steps: `audio`, `transcribe`, `summarize`, `pdf`, `drive`
 
 ## Environment
 
 `.env` (at repo root or backend root) must define:
 - `DATA_ROOT` — absolute path to the data directory
 - `GROQ_API_KEY` — Groq API key for Whisper transcription
+- `GDRIVE_ROOT_FOLDER` — name of the root Google Drive folder
 
 ## Running
 

@@ -3,3 +3,7 @@ lecture*
 *.pyc
 
 TODOS.md
+prompt-*.md
+
+credentials.json
+token.json

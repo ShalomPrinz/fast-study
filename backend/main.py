@@ -9,11 +9,13 @@ from pipeline.strip_audio import strip_audio
 from pipeline.transcribe import transcribe_audio
 from pipeline.summarize import summarize
 from pipeline.to_pdf import convert_to_pdf
+from pipeline.upload_to_drive import upload_to_drive
 from timing import init_db, get_stats
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
+GDRIVE_ROOT_FOLDER = os.environ["GDRIVE_ROOT_FOLDER"]
 
 app = FastAPI()
 init_db()
@@ -79,6 +81,18 @@ def run_pdf(course: str, lecture: str):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
+
+
+@app.post("/courses/{course}/lectures/{lecture}/run/drive")
+def run_drive(course: str, lecture: str):
+    try:
+        d = lecture_dir(course, lecture)
+        if not (d / "summary.pdf").exists():
+            return {"status": "error", "message": "summary.pdf is required — run PDF first"}
+        url = upload_to_drive(str(d / "summary.pdf"), course, GDRIVE_ROOT_FOLDER)
+        return {"status": "done", "url": url}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 @app.get("/timing/{operation}")
