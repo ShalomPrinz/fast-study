@@ -47,7 +47,7 @@ frontend/
     components/
       Sidebar.tsx        — collapsible course tree, lecture selection, action buttons
       MainView.tsx       — spinner / Done ✓ / error display
-  vite.config.ts         — includes fsPlugin: serves GET /api/tree from VITE_DATA_ROOT
+  vite.config.ts         — imports fsPlugin from ./fs-api and wires it into defineConfig
   tsconfig.json          — single config covering src/ and vite.config.ts
   index.html             — loads Inter + Noto Sans Hebrew from Google Fonts
 ```
