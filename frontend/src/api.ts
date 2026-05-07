@@ -2,6 +2,10 @@ import type { FileName, Course, Step, StepResult, TimingStats } from './types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
+export function fileUrl(course: string, lecture: string, file: FileName): string {
+  return `/api/files/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}/${encodeURIComponent(file)}`
+}
+
 export async function fetchTree(): Promise<Course[]> {
   const res = await fetch('/api/tree')
   return res.json()

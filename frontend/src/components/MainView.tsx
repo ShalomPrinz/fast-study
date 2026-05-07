@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import type { Step, FileName, TimingStats } from '../types'
-import { fetchCourse, fetchTimingStats, runStep, deleteFile } from '../api'
+import { fetchCourse, fetchTimingStats, runStep, deleteFile, fileUrl } from '../api'
 import { LayoutContext } from './Layout'
 
 interface ReqState {
@@ -260,10 +260,7 @@ export default function MainView() {
                           <button
                             className="file-open-btn"
                             title="Open PDF in new tab"
-                            onClick={() => window.open(
-                              `/api/files/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}/summary.pdf`,
-                              '_blank'
-                            )}
+                            onClick={() => window.open(fileUrl(course, lecture, 'summary.pdf'), '_blank')}
                           >
                             <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
                               <path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>

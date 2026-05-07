@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { fetchSummaryContent, saveSummaryContent, revertSummary, runStep, deleteFile } from '../api'
+import { fetchSummaryContent, saveSummaryContent, revertSummary, runStep, deleteFile, fileUrl } from '../api'
 import { LayoutContext } from './Layout'
 import PdfViewer from './PdfViewer'
 
@@ -66,7 +66,7 @@ export default function EditSummaryView() {
 
   if (!course || !lecture) return null
 
-  const pdfUrl = `/api/files/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}/summary.pdf?t=${pdfKey}`
+  const pdfUrl = `${fileUrl(course, lecture, 'summary.pdf')}?t=${pdfKey}`
 
   return (
     <div className="edit-view">
