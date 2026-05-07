@@ -13,7 +13,6 @@ export interface LayoutContext {
 
 export default function Layout() {
   const [courses, setCourses] = useState<Course[]>([])
-  const [sortedCourses, setSortedCourses] = useState<Course[]>([])
   const navigate = useNavigate()
 
   const match = useMatch('/:course/:lecture/*')
@@ -25,14 +24,10 @@ export default function Layout() {
     fetchTree().then(setCourses)
   }, [])
 
-  useEffect(() => {
-    setSortedCourses(
-      courses.map((c) => ({
-        ...c,
-        lectures: [...c.lectures].sort((a, b) => a.name.localeCompare(b.name)),
-      }))
-    )
-  }, [courses])
+  const sortedCourses = useMemo(
+    () => courses.map((c) => ({ ...c, lectures: [...c.lectures].sort((a, b) => a.name.localeCompare(b.name)) })),
+    [courses]
+  )
 
   const files = useMemo<FileStatus | null>(() => {
     if (!selected) return null
