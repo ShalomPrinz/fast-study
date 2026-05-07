@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, runStep, deleteFile } from '../api'
 import { LayoutContext } from './Layout'
 import PdfViewer from './PdfViewer'
@@ -44,6 +45,7 @@ export default function EditSummaryView() {
     setError('')
     const saved = await saveSummaryContent(course!, lecture!, content)
     if (!saved) {
+      toast.error('Failed to save summary')
       setError('Failed to save summary')
       setGenerating(false)
       return
@@ -56,6 +58,7 @@ export default function EditSummaryView() {
       setShowPdf(true)
       setPdfKey((k) => k + 1)
     } else {
+      toast.error('Failed to generate PDF')
       setError('Failed to generate PDF')
     }
     setGenerating(false)

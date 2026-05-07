@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { toast } from 'react-toastify'
 import { fetchCourse, fetchTimingStats, runStep, deleteFile, Step, FileName, TimingStats } from '../api'
 import { LayoutContext } from './Layout'
 
@@ -42,6 +43,14 @@ const STEP_INPUT_FILE = Object.fromEntries(
 const STEP_LABEL = Object.fromEntries(
   PIPELINE.flatMap(p => p.step && p.actionLabel ? [[p.step, p.actionLabel]] : [])
 ) as Partial<Record<Step, string>>
+
+const STEP_ERROR_LABEL: Record<Step, string> = {
+  audio:      'Audio extraction failed',
+  transcribe: 'Transcription failed',
+  summarize:  'Summarization failed',
+  pdf:        'PDF export failed',
+  drive:      'Drive upload failed',
+}
 
 function formatDuration(seconds: number): string {
   const s = Math.round(seconds)
@@ -150,6 +159,7 @@ export default function MainView() {
       refreshCourses()
       return true
     } else {
+      toast.error(STEP_ERROR_LABEL[step])
       setReqState({ step, status: 'error', message: result.message })
       return false
     }
