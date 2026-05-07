@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import type { Step, FileName, TimingStats } from '../types'
 import { fetchCourse, fetchTimingStats, runStep, deleteFile, fileUrl } from '../api'
 import { LayoutContext } from './Layout'
+import ConfirmModal from './ConfirmModal'
 
 interface ReqState {
   step: Step
@@ -333,22 +334,18 @@ export default function MainView() {
       </div>
 
       {rotateTarget && (
-        <div className="modal-overlay" onClick={() => setRotateTarget(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <p className="modal-message">
-              The following files will be <strong>deleted</strong>, then <strong>{rotateTarget.file}</strong> will be regenerated:
-            </p>
+        <ConfirmModal
+          message={`The following files will be deleted, then ${rotateTarget.file} will be regenerated:`}
+          detail={
             <ul className="modal-file-list">
               {rotateTarget.toDelete.map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>
-            <div className="modal-actions">
-              <button className="modal-btn" onClick={() => setRotateTarget(null)}>Cancel</button>
-              <button className="modal-btn modal-btn--danger" onClick={confirmRotate}>Rotate</button>
-            </div>
-          </div>
-        </div>
+          }
+          onConfirm={confirmRotate}
+          onCancel={() => setRotateTarget(null)}
+        />
       )}
     </main>
   )

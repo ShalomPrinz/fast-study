@@ -1,14 +1,15 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom'
 
 interface Props {
   message: string
   warning?: string
+  detail?: React.ReactNode
   onConfirm: () => void
   onCancel: () => void
 }
 
-export default function ConfirmModal({ message, warning, onConfirm, onCancel }: Props) {
+export default function ConfirmModal({ message, warning, detail, onConfirm, onCancel }: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onCancel()
@@ -22,6 +23,7 @@ export default function ConfirmModal({ message, warning, onConfirm, onCancel }: 
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <p className="modal-message">{message}</p>
         {warning && <p className="modal-warning">{warning}</p>}
+        {detail}
         <div className="modal-actions">
           <button className="modal-btn modal-btn--yes" onClick={onConfirm}>Yes</button>
           <button className="modal-btn modal-btn--no" autoFocus onClick={onCancel}>No</button>
