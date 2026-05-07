@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import type { Course, Selected } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../api'
 import ConfirmModal from './ConfirmModal'
+import { useInlineEdit } from '../hooks/useInlineEdit'
 
 interface Props {
   courses: Course[]
@@ -21,19 +22,16 @@ interface PendingUpload {
 export default function Sidebar({ courses, selected, onSelect, onCourseClick, onRefresh }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [adding, setAdding] = useState<string | null>(null)
-  const [newName, setNewName] = useState('')
   const [renaming, setRenaming] = useState<{ course: string; lecture: string } | null>(null)
-  const [renameName, setRenameName] = useState('')
   const [dragOver, setDragOver] = useState<{ course: string; lecture: string } | null>(null)
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null)
   const [addingCourse, setAddingCourse] = useState(false)
-  const [newCourseName, setNewCourseName] = useState('')
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
-  const [renameCourseVal, setRenameCourseVal] = useState('')
-  const addInputRef = useRef<HTMLInputElement>(null)
-  const renameInputRef = useRef<HTMLInputElement>(null)
-  const addCourseInputRef = useRef<HTMLInputElement>(null)
-  const renameCourseInputRef = useRef<HTMLInputElement>(null)
+
+  const addLectureEdit = useInlineEdit(adding)
+  const renameLectureEdit = useInlineEdit(renaming)
+  const addCourseEdit = useInlineEdit(addingCourse || null)
+  const renameCourseEdit = useInlineEdit(renamingCourse)
 
   useEffect(() => {
     setExpanded((prev) => {
@@ -41,22 +39,6 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
       return new Set([...prev].filter((n) => names.has(n)))
     })
   }, [courses])
-
-  useEffect(() => {
-    if (adding) { addInputRef.current?.focus(); addInputRef.current?.select() }
-  }, [adding])
-
-  useEffect(() => {
-    if (renaming) { renameInputRef.current?.focus(); renameInputRef.current?.select() }
-  }, [renaming])
-
-  useEffect(() => {
-    if (addingCourse) { addCourseInputRef.current?.focus() }
-  }, [addingCourse])
-
-  useEffect(() => {
-    if (renamingCourse) { renameCourseInputRef.current?.focus(); renameCourseInputRef.current?.select() }
-  }, [renamingCourse])
 
   function suggestName(courseName: string): string {
     const course = courses.find((c) => c.name === courseName)
@@ -79,15 +61,15 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   function startAdding(e: React.MouseEvent, courseName: string) {
     e.stopPropagation()
     setAdding(courseName)
-    setNewName(suggestName(courseName))
+    addLectureEdit.setValue(suggestName(courseName))
     setExpanded((prev) => new Set([...prev, courseName]))
   }
 
   async function commitAdd() {
-    const name = newName.trim()
+    const name = addLectureEdit.value.trim()
     const course = adding!
     setAdding(null)
-    setNewName('')
+    addLectureEdit.setValue('')
     if (!name) return
     await createLecture(course, name)
     onCourseClick(course)
@@ -123,14 +105,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   function startRenaming(e: React.MouseEvent, courseName: string, lectureName: string) {
     e.preventDefault()
     setRenaming({ course: courseName, lecture: lectureName })
-    setRenameName(lectureName)
+    renameLectureEdit.setValue(lectureName)
   }
 
   async function commitRename() {
-    const name = renameName.trim()
+    const name = renameLectureEdit.value.trim()
     const info = renaming!
     setRenaming(null)
-    setRenameName('')
+    renameLectureEdit.setValue('')
     if (!name || name === info.lecture) return
     await renameLecture(info.course, info.lecture, name)
     if (selected?.course === info.course && selected?.lecture === info.lecture) {
@@ -140,9 +122,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   }
 
   async function commitAddCourse() {
-    const name = newCourseName.trim()
+    const name = addCourseEdit.value.trim()
     setAddingCourse(false)
-    setNewCourseName('')
+    addCourseEdit.setValue('')
     if (!name) return
     await createCourse(name)
     onRefresh()
@@ -151,14 +133,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   function startRenamingCourse(e: React.MouseEvent, courseName: string) {
     e.preventDefault()
     setRenamingCourse(courseName)
-    setRenameCourseVal(courseName)
+    renameCourseEdit.setValue(courseName)
   }
 
   async function commitRenameCourse() {
-    const name = renameCourseVal.trim()
+    const name = renameCourseEdit.value.trim()
     const old = renamingCourse!
     setRenamingCourse(null)
-    setRenameCourseVal('')
+    renameCourseEdit.setValue('')
     if (!name || name === old) return
     await renameCourse(old, name)
     if (selected?.course === old) {
@@ -173,15 +155,15 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
       <div className="new-course-row">
         {addingCourse ? (
           <input
-            ref={addCourseInputRef}
+            ref={addCourseEdit.ref}
             className="new-course-input"
-            value={newCourseName}
-            onChange={(e) => setNewCourseName(e.target.value)}
+            value={addCourseEdit.value}
+            onChange={(e) => addCourseEdit.setValue(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') commitAddCourse()
-              if (e.key === 'Escape') { setAddingCourse(false); setNewCourseName('') }
+              if (e.key === 'Escape') { setAddingCourse(false); addCourseEdit.setValue('') }
             }}
-            onBlur={() => { setAddingCourse(false); setNewCourseName('') }}
+            onBlur={() => { setAddingCourse(false); addCourseEdit.setValue('') }}
             placeholder="Course name…"
             dir="auto"
           />
@@ -197,15 +179,15 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
             <div className="course-header">
               {renamingCourse === course.name ? (
                 <input
-                  ref={renameCourseInputRef}
+                  ref={renameCourseEdit.ref}
                   className="lecture-add-input"
-                  value={renameCourseVal}
-                  onChange={(e) => setRenameCourseVal(e.target.value)}
+                  value={renameCourseEdit.value}
+                  onChange={(e) => renameCourseEdit.setValue(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') commitRenameCourse()
-                    if (e.key === 'Escape') { setRenamingCourse(null); setRenameCourseVal('') }
+                    if (e.key === 'Escape') { setRenamingCourse(null); renameCourseEdit.setValue('') }
                   }}
-                  onBlur={() => { setRenamingCourse(null); setRenameCourseVal('') }}
+                  onBlur={() => { setRenamingCourse(null); renameCourseEdit.setValue('') }}
                   dir="auto"
                 />
               ) : (
@@ -246,15 +228,15 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
                     <li key={lecture.name}>
                       {isRenaming ? (
                         <input
-                          ref={renameInputRef}
+                          ref={renameLectureEdit.ref}
                           className="lecture-add-input"
-                          value={renameName}
-                          onChange={(e) => setRenameName(e.target.value)}
+                          value={renameLectureEdit.value}
+                          onChange={(e) => renameLectureEdit.setValue(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter') commitRename()
-                            if (e.key === 'Escape') { setRenaming(null); setRenameName('') }
+                            if (e.key === 'Escape') { setRenaming(null); renameLectureEdit.setValue('') }
                           }}
-                          onBlur={() => { setRenaming(null); setRenameName('') }}
+                          onBlur={() => { setRenaming(null); renameLectureEdit.setValue('') }}
                           dir="auto"
                         />
                       ) : (
@@ -279,15 +261,15 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
                 {adding === course.name && (
                   <li>
                     <input
-                      ref={addInputRef}
+                      ref={addLectureEdit.ref}
                       className="lecture-add-input"
-                      value={newName}
-                      onChange={(e) => setNewName(e.target.value)}
+                      value={addLectureEdit.value}
+                      onChange={(e) => addLectureEdit.setValue(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') commitAdd()
-                        if (e.key === 'Escape') { setAdding(null); setNewName('') }
+                        if (e.key === 'Escape') { setAdding(null); addLectureEdit.setValue('') }
                       }}
-                      onBlur={() => { setAdding(null); setNewName('') }}
+                      onBlur={() => { setAdding(null); addLectureEdit.setValue('') }}
                       placeholder="Lecture name…"
                       dir="auto"
                     />

@@ -34,6 +34,8 @@ frontend/
     index.css            — all styles (single flat file, CSS variables for theming)
     main.tsx             — React entry point
     vite-env.d.ts        — /// <reference types="vite/client" /> for import.meta.env
+    hooks/
+      useInlineEdit.ts   — generic hook: value state + ref + auto-focus/select for inline input editing
     components/
       Sidebar.tsx        — collapsible course tree, lecture selection, action buttons
       MainView.tsx       — spinner / Done ✓ / error display
