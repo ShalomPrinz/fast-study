@@ -175,14 +175,10 @@ export default function MainView() {
     }
   }
 
-  async function handleRun(step: Step) {
-    await executeStep(step)
-  }
-
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
     await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file)))
     refreshCourses()
-    await handleRun(step)
+    await executeStep(step)
   }
 
   async function handleRunRemaining() {
@@ -242,7 +238,7 @@ export default function MainView() {
                       ) : step ? (
                         <button
                           className="file-action-btn"
-                          onClick={() => handleRun(step)}
+                          onClick={() => executeStep(step)}
                           disabled={inflight || !prereqMet}
                         >
                           {actionLabel}
