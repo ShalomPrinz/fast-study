@@ -3,7 +3,7 @@ import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import type { Step, FileName, TimingStats } from '../types'
 import { fetchCourse, fetchTimingStats, runStep, deleteFile, fileUrl } from '../api'
-import { LayoutContext } from './Layout'
+import type { LayoutContext } from '../contexts/LayoutContext'
 import ConfirmModal from './ConfirmModal'
 
 interface ReqState {

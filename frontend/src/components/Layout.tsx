@@ -4,12 +4,7 @@ import { ToastContainer } from 'react-toastify'
 import type { Course, Lecture, FileStatus } from '../types'
 import { fetchTree, fetchCourse } from '../api'
 import Sidebar from './Sidebar'
-
-export interface LayoutContext {
-  courses: Course[]
-  files: FileStatus | null
-  refreshCourses: () => void
-}
+import type { LayoutContext } from '../contexts/LayoutContext'
 
 export default function Layout() {
   const [courses, setCourses] = useState<Course[]>([])

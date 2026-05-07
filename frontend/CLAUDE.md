@@ -36,6 +36,8 @@ frontend/
     vite-env.d.ts        — /// <reference types="vite/client" /> for import.meta.env
     hooks/
       useInlineEdit.ts   — generic hook: value state + ref + auto-focus/select for inline input editing
+    contexts/
+      LayoutContext.ts   — LayoutContext interface (courses, files, refreshCourses)
     components/
       Sidebar.tsx        — collapsible course tree, lecture selection, action buttons
       MainView.tsx       — spinner / Done ✓ / error display

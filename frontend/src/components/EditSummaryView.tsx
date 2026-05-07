@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, runStep, deleteFile, fileUrl } from '../api'
-import { LayoutContext } from './Layout'
+import type { LayoutContext } from '../contexts/LayoutContext'
 import PdfViewer from './PdfViewer'
 
 export default function EditSummaryView() {
