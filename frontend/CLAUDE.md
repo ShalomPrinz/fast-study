@@ -27,6 +27,8 @@ npm run build    # production build → dist/
 
 ```
 frontend/
+  fs-api/
+    fs-reader.ts         — pure Node fs, no HTTP
   src/
     api.ts               — fetch functions only (fetchTree, runStep, etc.); no types
     types.ts             — all domain types: FileName, FileStatus, Course, Lecture, etc.
