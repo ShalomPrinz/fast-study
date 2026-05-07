@@ -28,7 +28,8 @@ npm run build    # production build → dist/
 ```
 frontend/
   src/
-    api.ts               — fetchTree(), runStep(); all backend/tree calls go here
+    api.ts               — fetch functions only (fetchTree, runStep, etc.); no types
+    types.ts             — all domain types: FileName, FileStatus, Course, Lecture, etc.
     App.tsx              — top-level state: courses, selected lecture, request state
     index.css            — all styles (single flat file, CSS variables for theming)
     main.tsx             — React entry point

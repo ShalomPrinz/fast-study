@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import { fetchCourse, fetchTimingStats, runStep, deleteFile, Step, FileName, TimingStats } from '../api'
+import type { Step, FileName, TimingStats } from '../types'
+import { fetchCourse, fetchTimingStats, runStep, deleteFile } from '../api'
 import { LayoutContext } from './Layout'
 
 interface ReqState {

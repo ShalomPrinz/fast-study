@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
-import { Course, createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../api'
+import type { Course, Selected } from '../types'
+import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../api'
 import ConfirmModal from './ConfirmModal'
-
-interface Selected {
-  course: string
-  lecture: string
-}
 
 interface Props {
   courses: Course[]

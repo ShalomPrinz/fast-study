@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Outlet, useMatch, useNavigate } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import { fetchTree, fetchCourse, Course, Lecture, FileStatus } from '../api'
+import type { Course, Lecture, FileStatus } from '../types'
+import { fetchTree, fetchCourse } from '../api'
 import Sidebar from './Sidebar'
 
 export interface LayoutContext {
