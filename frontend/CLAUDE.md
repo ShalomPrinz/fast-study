@@ -29,6 +29,10 @@ npm run build    # production build → dist/
 frontend/
   fs-api/
     fs-reader.ts         — pure Node fs, no HTTP
+    handlers/
+      tree.ts            — treeHandler(dataRoot): all /api/tree CRUD routes
+      summary.ts         — summaryHandler(dataRoot): GET/PUT/DELETE /api/summary
+      files.ts           — filesHandler(dataRoot): GET /api/files static streaming
   src/
     api.ts               — fetch functions only (fetchTree, runStep, etc.); no types
     types.ts             — all domain types: FileName, FileStatus, Course, Lecture, etc.
