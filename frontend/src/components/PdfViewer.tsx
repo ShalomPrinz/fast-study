@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -30,20 +30,19 @@ export default function PdfViewer({ url, show }: Props) {
     prevUrlRef.current = url
   }
 
-  useEffect(() => {
+  // Each page's onRenderSuccess fires when the canvas is laid out at real size.
+  // Restore captured scroll, or snap to RTL right edge on first load. Idempotent across pages.
+  const handlePageRendered = () => {
     const container = scrollContainerRef.current
+    if (!container) return
     const { top, left } = capturedScrollRef.current
-    if (!container || (!top && !left)) return
-
-    // Re-apply scroll on every DOM mutation until it sticks (pages need to render first).
-    const observer = new MutationObserver(() => {
+    if (top || left) {
       container.scrollTop = top
       container.scrollLeft = left
-      if (container.scrollTop === top) observer.disconnect()
-    })
-    observer.observe(container, { childList: true, subtree: true })
-    return () => observer.disconnect()
-  }, [url])
+    } else {
+      container.scrollLeft = container.scrollWidth
+    }
+  }
 
   if (!show) {
     return (
@@ -73,6 +72,7 @@ export default function PdfViewer({ url, show }: Props) {
               scale={scale}
               renderTextLayer={false}
               renderAnnotationLayer={false}
+              onRenderSuccess={handlePageRendered}
             />
           ))}
         </Document>
