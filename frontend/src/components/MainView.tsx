@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import type { Step, FileName, TimingStats } from '../types'
+import type { Step, FileName, TimingStats, LectureContext } from '../types'
 import { fetchCourse, fetchTimingStats, runStep, deleteFile, fileUrl } from '../api'
-import type { LayoutContext } from '../contexts/LayoutContext'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 
@@ -101,7 +100,7 @@ function ProgressBar({ stats, startedAt }: { stats: TimingStats | null | undefin
 
 export default function MainView() {
   const params = useParams<{ course: string; lecture: string }>()
-  const { files, refreshCourses } = useOutletContext<LayoutContext>()
+  const { files, refreshCourses } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
 
   const [reqState, setReqState] = useState<ReqState | null>(null)

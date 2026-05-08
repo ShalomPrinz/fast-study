@@ -28,3 +28,8 @@ export interface Selected {
   course: string
   lecture: string
 }
+
+export interface LectureContext {
+  files: FileStatus | null
+  refreshCourses: () => void
+}

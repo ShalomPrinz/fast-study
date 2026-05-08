@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, runStep, deleteFile, fileUrl } from '../api'
-import type { LayoutContext } from '../contexts/LayoutContext'
+import type { LectureContext } from '../types'
 import PdfViewer from './PdfViewer'
 
 export default function EditSummaryView() {
   const { course, lecture } = useParams<{ course: string; lecture: string }>()
-  const { files, refreshCourses } = useOutletContext<LayoutContext>()
+  const { files, refreshCourses } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
 
   const [content, setContent] = useState('')

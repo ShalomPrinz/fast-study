@@ -1,13 +1,10 @@
-import { useState, useEffect, useMemo } from 'react'
 import { Outlet, useMatch, useNavigate } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import type { Course, Lecture, FileStatus } from '../types'
-import { fetchTree, fetchCourse } from '../api'
+import type { LectureContext } from '../types'
+import { useCourseTree } from '../hooks/useCourseTree'
 import Sidebar from './Sidebar'
-import type { LayoutContext } from '../contexts/LayoutContext'
 
 export default function Layout() {
-  const [courses, setCourses] = useState<Course[]>([])
   const navigate = useNavigate()
 
   const match = useMatch('/:course/:lecture/*')
@@ -15,46 +12,21 @@ export default function Layout() {
     ? { course: match.params.course, lecture: match.params.lecture }
     : null
 
-  useEffect(() => {
-    fetchTree().then(setCourses)
-  }, [])
-
-  const sortedCourses = useMemo(
-    () => courses.map((c) => ({ ...c, lectures: [...c.lectures].sort((a, b) => a.name.localeCompare(b.name)) })),
-    [courses]
-  )
-
-  const files = useMemo<FileStatus | null>(() => {
-    if (!selected) return null
-    const course = courses.find((c) => c.name === selected.course)
-    const lecture = course?.lectures.find((l: Lecture) => l.name === selected.lecture)
-    return lecture?.files ?? null
-  }, [courses, selected])
-
-  function refreshCourses() {
-    fetchTree().then(setCourses)
-  }
-
-  function handleCourseClick(courseName: string) {
-    fetchCourse(courseName).then((updated) => {
-      if (!updated) return
-      setCourses((prev) => prev.map((c) => (c.name === courseName ? updated : c)))
-    })
-  }
+  const { courses, files, refreshCourses, onCourseClick } = useCourseTree(selected)
 
   function handleSelect(course: string, lecture: string) {
     navigate(`/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}`)
   }
 
-  const context: LayoutContext = { courses, files, refreshCourses }
+  const context: LectureContext = { files, refreshCourses }
 
   return (
     <div className="layout">
       <Sidebar
-        courses={sortedCourses}
+        courses={courses}
         selected={selected}
         onSelect={handleSelect}
-        onCourseClick={handleCourseClick}
+        onCourseClick={onCourseClick}
         onRefresh={refreshCourses}
       />
       <Outlet context={context} />
