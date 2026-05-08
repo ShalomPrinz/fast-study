@@ -7,16 +7,17 @@ from timing import timed_pipeline
 
 FONTS_DIR = Path(__file__).parent.parent / "assets" / "fonts"
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
+HEBREW_FONT_BOLD = FONTS_DIR / "NotoSansHebrew-Bold.ttf"
 
 LATEX_HEADER = r"""
 \usepackage{polyglossia}
 \setmainlanguage{hebrew}
 \setotherlanguage{english}
-\newfontfamily\hebrewfont{Noto Sans Hebrew}[Script=Hebrew]
-\newfontfamily\hebrewfontsf{Noto Sans Hebrew}[Script=Hebrew]
-\newfontfamily\hebrewfonttt{Noto Sans Hebrew}[Script=Hebrew]
-\newfontfamily\englishfont{Noto Sans Hebrew}
-\newfontfamily\englishfontsf{Noto Sans Hebrew}
+\newfontfamily\hebrewfont{NotoSansHebrew-Regular}[Script=Hebrew, Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\hebrewfontsf{NotoSansHebrew-Regular}[Script=Hebrew, Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\hebrewfonttt{NotoSansHebrew-Regular}[Script=Hebrew, Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\englishfont{NotoSansHebrew-Regular}[Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
+\newfontfamily\englishfontsf{NotoSansHebrew-Regular}[Path=FONTS_DIR_PLACEHOLDER, Extension=.ttf, BoldFont=NotoSansHebrew-Bold]
 \newfontfamily\englishfonttt{Noto Sans Mono}
 """
 
@@ -33,9 +34,14 @@ def wrap_english_phrases(text: str) -> str:
             result += r'\RL{' + punct + '}'
         return result
 
+    # Split on math/code spans so they are never touched by MULTI_LATIN_RE.
+    # The capturing group makes re.split keep delimiters in the list: even
+    # indices are plain text (substituted), odd indices are protected (passed
+    # through). $$ before $ so display math isn't parsed as two inline spans.
+    _PROTECTED_RE = re.compile(r'(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$|`[^`]*`)')
     result = []
     for line in text.splitlines(keepends=True):
-        parts = re.split(r'(`[^`]*`)', line)
+        parts = _PROTECTED_RE.split(line)
         out = []
         for i, part in enumerate(parts):
             if i % 2 == 1:
@@ -69,6 +75,8 @@ def convert_to_pdf(md_path: str) -> str:
         raise FileNotFoundError(f"File not found: {md_path}")
     if not HEBREW_FONT.exists():
         raise FileNotFoundError(f"Font not found: {HEBREW_FONT}")
+    if not HEBREW_FONT_BOLD.exists():
+        raise FileNotFoundError(f"Font not found: {HEBREW_FONT_BOLD}")
 
     output_path = input_path.with_suffix(".pdf")
     fonts_dir = str(FONTS_DIR) + "/"

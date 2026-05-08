@@ -152,9 +152,10 @@ class TestWrapEnglishPhrases:
         result = wrap_english_phrases("## Pull Request")
         assert result.startswith("##")
 
-    def test_bold_markers_preserved(self):
+    def test_bold_english_phrase_wrapped_and_markers_preserved(self):
         result = wrap_english_phrases("**Pull Request:**")
         assert "**" in result
+        assert r"\LR{Pull Request}" in result
 
     def test_multiline_text(self):
         text = "שורה ראשונה\nPull Request עם Merge\nשורה שלישית\n"
@@ -163,3 +164,22 @@ class TestWrapEnglishPhrases:
         assert r"\LR{Merge}" in result
         assert "שורה ראשונה" in result
         assert "שורה שלישית" in result
+
+    # --- Math spans left untouched ---
+
+    def test_inline_math_not_wrapped(self):
+        result = wrap_english_phrases("ערך $4 \\times 4 = 16$ נכון")
+        assert "$4 \\times 4 = 16$" in result
+        assert r"\LR{times}" not in result
+
+    def test_display_math_not_wrapped(self):
+        result = wrap_english_phrases("$$a \\times b = c$$")
+        assert "$$a \\times b = c$$" in result
+        assert r"\LR{times}" not in result
+
+    def test_math_and_english_outside_wrapped(self):
+        result = wrap_english_phrases("ראה $x \\times y$ ואז Pull Request")
+        assert "$x \\times y$" in result
+        assert r"\LR{Pull Request}" in result
+        assert r"\LR{times}" not in result
+
