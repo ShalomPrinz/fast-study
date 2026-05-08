@@ -5,6 +5,7 @@ import type { Step, FileName, TimingStats } from '../types'
 import { fetchCourse, fetchTimingStats, runStep, deleteFile, fileUrl } from '../api'
 import type { LayoutContext } from '../contexts/LayoutContext'
 import ConfirmModal from './ConfirmModal'
+import Icon from './Icon'
 
 interface ReqState {
   step: Step
@@ -25,13 +26,6 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
-const ExternalLinkIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M5 2H2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-    <path d="M8 1h4v4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-    <path d="M12 1L6.5 6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-  </svg>
-)
 
 const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },
@@ -267,7 +261,7 @@ export default function MainView() {
                             title="Open PDF in new tab"
                             onClick={() => window.open(fileUrl(course, lecture, 'summary.pdf'), '_blank')}
                           >
-                            <ExternalLinkIcon />
+                            <Icon icon="external-link" />
                           </button>
                         )}
                         {file === 'summary.md' && summaryExists && (
@@ -276,10 +270,7 @@ export default function MainView() {
                             title="Edit summary"
                             onClick={() => navigate('edit')}
                           >
-                            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M9.5 2L11 3.5L4.5 10H3V8.5L9.5 2Z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M8 3.5L9.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-                            </svg>
+                            <Icon icon="edit" />
                           </button>
                         )}
                         {file === 'drive_url.txt' && exists && (
@@ -288,7 +279,7 @@ export default function MainView() {
                             title="Open in Drive"
                             onClick={() => window.open(files['drive_url.txt'].url, '_blank')}
                           >
-                            <ExternalLinkIcon />
+                            <Icon icon="external-link" />
                           </button>
                         )}
                       </span>
