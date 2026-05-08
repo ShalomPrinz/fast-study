@@ -43,10 +43,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   function suggestName(courseName: string): string {
     const course = courses.find((c) => c.name === courseName)
     if (!course) return ''
-    const nums = course.lectures
-      .map((l) => { const m = l.name.match(/^Lecture\s+(\d+)$/i); return m ? parseInt(m[1], 10) : null })
-      .filter((n): n is number => n !== null)
-    return `Lecture ${nums.length ? Math.max(...nums) + 1 : 1}`
+    const matches = course.lectures
+      .map((l) => { const m = l.name.match(/^Lecture\s+(\d+)(?:\.(\d+))?$/i); return m ? { n: parseInt(m[1], 10), sub: m[2] ? parseInt(m[2], 10) : 0 } : null })
+      .filter((x): x is { n: number; sub: number } => x !== null)
+    if (!matches.length) return 'Lecture 1'
+    const latest = matches.reduce((a, b) => a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b)
+    if (latest.sub === 0) return `Lecture ${latest.n + 1}`
+    if (latest.sub === 1) return `Lecture ${latest.n}.2`
+    return `Lecture ${latest.n + 1}`
   }
 
   function toggleCourse(name: string) {
