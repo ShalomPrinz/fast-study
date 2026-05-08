@@ -24,6 +24,7 @@ LATEX_HEADER = r"""
 LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
 _WORD = r'(?:[0-9]+\-)?[A-Za-z][A-Za-z0-9\-]*'
 MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
+LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
 
 
 def wrap_english_phrases(text: str) -> str:
@@ -47,7 +48,18 @@ def wrap_english_phrases(text: str) -> str:
             if i % 2 == 1:
                 out.append(part)
             else:
-                out.append(MULTI_LATIN_RE.sub(replace, part))
+                # If this plain-text part directly follows a protected span
+                # (code/math) and starts with punctuation, that punctuation
+                # would otherwise attach to the LTR span via bidi and render
+                # LTR. Wrap it in \RL{} explicitly — but only AFTER the Latin
+                # sub, otherwise MULTI_LATIN_RE matches the literal "RL".
+                leading = ''
+                if i > 0:
+                    m = LEADING_PUNCT_RE.match(part)
+                    if m:
+                        leading = r'\RL{' + m.group(1) + '}'
+                        part = part[m.end():]
+                out.append(leading + MULTI_LATIN_RE.sub(replace, part))
         result.append(''.join(out))
     return ''.join(result)
 
