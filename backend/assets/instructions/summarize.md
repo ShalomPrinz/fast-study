@@ -10,10 +10,9 @@ These requirements are mandatory and must be followed without exception:
 
 1. **Keep the original transcription language.** The transcript is most likely in Hebrew and may include English terms, phrases, or proper nouns — preserve them as-is. Write the entire article in Hebrew.
 2. **Do not shorten the content.** The article must be faithful to the source and contain all information, details, examples, and reasoning from the transcript — only better organized and phrased. A long and complete article is a requirement. *Expected output must be long and highly detailed, up to 10 text pages. Include all explanations, examples, derivations, analogies, and elaborations. Never compress or omit.*
-3. **Preserve professor terminology.** Use the exact terms, phrases, and names that the professor uses. Do not substitute synonyms or paraphrase technical vocabulary.
-4. **Bold professor notes and personal opinions.** Whenever the speaker expresses a personal view, emphasizes something from their own experience, warns the class, or shares a non-textbook insight — render that sentence or clause in **bold**.
-5. **Do not add information from any external source or prior knowledge.** Your only source of information is the content of the transcript. If you have a crucial note on something, say it in braces shortly and tell me that you added the note, why you did it, and shortly explain the issue in the original transcription.
-6. **Clean Output.** Return ONLY the article text. The very first character of your response must be '#'. If you include any introductory text like "I will read..." or "Certainly," the output will be rejected. Proceed directly to the title.
+3. **Professor notes and personal opinions.** Whenever the speaker expresses a personal view, emphasizes something from their own experience, warns the class, or shares a non-textbook insight — keep that sentence or clause
+4. **Do not add information from any external source or prior knowledge.** Your only source of information is the content of the transcript. If you have a crucial note on something, say it in braces shortly and tell me that you added the note, why you did it, and shortly explain the issue in the original transcription.
+5. **Clean Output.** Return ONLY the article text. The very first character of your response must be '#'. If you include any introductory text like "I will read..." or "Certainly," the output will be rejected. Proceed directly to the title.
 
 ---
 
@@ -45,7 +44,7 @@ These requirements are mandatory and must be followed without exception:
 ## ‏תקציר
 One paragraph of 3–5 sentences describing the overall topic of the recording.
 
----
+--- [Required line separator]
 
 ## ‏[First Topic — clear heading]
 
@@ -61,16 +60,14 @@ For a long topic, add more paragraphs under the same heading. Remember - keep it
 
 ...
 
----
-
-## ‏סיכום הנקודות העיקריות
-One or two paragraphs covering the most important insights and conclusions from the content, in continuous and flowing language.
+--- [Required line separator]
 
 ## ‏הערות אישיות והדגשות המרצה
-A dedicated paragraph (or paragraphs) collecting all the professor's personal opinions, non-textbook insights, warnings, and emphases from throughout the lecture — phrased in flowing prose. These same sentences should also appear in **bold** in their original context above; this section serves as a consolidated reference.
+A dedicated paragraph (or paragraphs) collecting all the professor's personal opinions, non-textbook insights, warnings, and emphases from throughout the lecture.
+
+## ‏סיכום
+One or two paragraphs covering the most important insights and conclusions from the content, in continuous and flowing language.
 
 ## ‏משימות נדרשות
 - If tasks, assignments, or action items were mentioned — list them here
 - If none were mentioned — omit this section entirely
-
----
