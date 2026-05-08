@@ -196,7 +196,9 @@ export default function MainView() {
 
   function openRotateModal(file: FileName, step: Step) {
     const idx = PIPELINE.findIndex((p) => p.file === file)
-    const toDelete = PIPELINE.slice(idx).map((p) => p.file)
+    const toDelete = PIPELINE.slice(idx)
+      .map((p) => p.file)
+      .filter((f) => files![f].exists)
     setRotateTarget({ file, step, toDelete })
   }
 
@@ -321,7 +323,8 @@ export default function MainView() {
 
       {rotateTarget && (
         <ConfirmModal
-          message={`The following files will be deleted, then ${rotateTarget.file} will be regenerated:`}
+          message="The following files will be deleted:"
+          postMessage={`Then ${rotateTarget.file} will be regenerated.`}
           detail={
             <ul className="modal-file-list">
               {rotateTarget.toDelete.map((f) => (

@@ -257,6 +257,7 @@ html, body, #root {
 .modal-message {
   font-size: 15px;
   color: var(--text);
+  margin-top: 0;
   margin-bottom: 15px;
   line-height: 1.5;
 }
@@ -312,7 +313,9 @@ html, body, #root {
 
 .modal-file-list {
   list-style: none;
-  margin-bottom: 20px;
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-left: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
