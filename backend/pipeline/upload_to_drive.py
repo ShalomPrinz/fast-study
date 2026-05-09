@@ -7,6 +7,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+from timing import timed_pipeline
+
 SCOPES = ["https://www.googleapis.com/auth/drive.file"]
 
 CREDENTIALS_PATH = str(Path(__file__).parent.parent / "credentials.json")
@@ -56,6 +58,7 @@ def _create_folder(service, name: str, parent_id: str) -> str:
     return folder["id"]
 
 
+@timed_pipeline("drive")
 def upload_to_drive(pdf_path: str, course: str, root_folder_name: str, file_name: str | None = None) -> str:
     """Upload pdf_path to Drive at root_folder_name/course/. Returns the Drive file URL."""
     try:
