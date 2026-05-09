@@ -29,6 +29,11 @@ These requirements are mandatory and must be followed without exception:
 - **Prefer continuous paragraphs and flowing prose over lists.** Convert lists into well-written, naturally phrased prose. Use lists only when there is no practical alternative — for example, a sequence of ordered technical steps where order is critical, or a set of items that cannot be naturally linked together.
 - Leave at least one blank line before every list (whether bullet `-` or numbered `1.`), even if the list immediately follows a heading or paragraph.
 
+### Separators
+- The output must contain **exactly two** horizontal-rule separators, and only at the two positions shown in the Required Output Structure: (1) between the תקציר section and the first topic, and (2) between the last topic and the הערות אישיות section.
+- Each separator is a line containing only three hyphens (`---`) with a blank line above and below. It is a Markdown horizontal rule — never write the words "Required line separator" or any description of it.
+- Do **not** insert `---` anywhere else: not between paragraphs, not between topics, not between subsections, not before/after the title, תקציר, סיכום, or משימות נדרשות.
+
 ### Headings
 - In every heading, add the Unicode character (RLM, U+200F) **after** the Markdown symbol and **before** the text. Example: `## ‏Heading`. Never place it before the symbol, as Markdown will not recognize it as a heading.
 
@@ -44,7 +49,7 @@ These requirements are mandatory and must be followed without exception:
 ## ‏תקציר
 One paragraph of 3–5 sentences describing the overall topic of the recording.
 
---- [Required line separator]
+---
 
 ## ‏[First Topic — clear heading]
 
@@ -60,7 +65,7 @@ For a long topic, add more paragraphs under the same heading. Remember - keep it
 
 ...
 
---- [Required line separator]
+---
 
 ## ‏הערות אישיות והדגשות המרצה
 A dedicated paragraph (or paragraphs) collecting all the professor's personal opinions, non-textbook insights, warnings, and emphases from throughout the lecture.
