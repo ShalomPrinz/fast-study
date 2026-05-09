@@ -1,13 +1,25 @@
+import json
 import math
 import os
+import re
 import subprocess
 import tempfile
+from pathlib import Path
 
+import groq
 from groq import Groq
 
 from timing import timed_pipeline
 
 CHUNK_MINUTES = 10
+PARTIAL_TXT = "transcript.partial.txt"
+PARTIAL_META = "transcript.partial.meta.json"
+
+
+class TranscribeRateLimitError(Exception):
+    def __init__(self, info: dict):
+        self.info = info
+        super().__init__(info.get("message", ""))
 
 
 def get_duration(audio_path: str) -> float:
@@ -18,43 +30,168 @@ def get_duration(audio_path: str) -> float:
     return float(result.stdout.strip())
 
 
-def split_audio(audio_path: str, tmpdir: str, chunk_seconds: int) -> list[str]:
-    duration = get_duration(audio_path)
-    num_chunks = math.ceil(duration / chunk_seconds)
-    print(f"Duration: {duration/60:.1f} min → {num_chunks} chunks")
+def split_one_chunk(audio_path: str, tmpdir: str, index: int, chunk_seconds: int) -> str:
+    chunk_path = os.path.join(tmpdir, f"chunk_{index:04d}.mp3")
+    subprocess.run([
+        "ffmpeg", "-y", "-i", audio_path,
+        "-ss", str(index * chunk_seconds), "-t", str(chunk_seconds),
+        "-ar", "16000", "-ac", "1", "-b:a", "32k",
+        chunk_path
+    ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return chunk_path
 
-    chunks = []
-    for i in range(num_chunks):
-        chunk_path = os.path.join(tmpdir, f"chunk_{i:04d}.mp3")
-        subprocess.run([
-            "ffmpeg", "-y", "-i", audio_path,
-            "-ss", str(i * chunk_seconds), "-t", str(chunk_seconds),
-            "-ar", "16000", "-ac", "1", "-b:a", "32k",
-            chunk_path
-        ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        chunks.append(chunk_path)
-    return chunks
+
+def parse_rate_limit_message(msg: str) -> dict:
+    def _int(pattern: str):
+        m = re.search(pattern, msg)
+        return int(m.group(1)) if m else None
+
+    limit = _int(r"Limit\s+(\d+)")
+    used = _int(r"Used\s+(\d+)")
+    requested = _int(r"Requested\s+(\d+)")
+
+    retry_after_seconds = None
+    m = re.search(r"try again in (?:(\d+)m)?\s*(\d+(?:\.\d+)?)s", msg)
+    if m:
+        minutes = int(m.group(1)) if m.group(1) else 0
+        seconds = float(m.group(2))
+        retry_after_seconds = minutes * 60 + seconds
+
+    upgrade_url = None
+    m = re.search(r"https?://\S+", msg)
+    if m:
+        upgrade_url = m.group(0).rstrip(".,)")
+
+    return {
+        "limit": limit,
+        "used": used,
+        "requested": requested,
+        "retry_after_seconds": retry_after_seconds,
+        "upgrade_url": upgrade_url,
+        "message": msg,
+    }
+
+
+def _extract_groq_message(err: groq.RateLimitError) -> str:
+    body = getattr(err, "body", None) or getattr(err, "response", None)
+    if isinstance(body, dict):
+        inner = body.get("error", body)
+        if isinstance(inner, dict) and "message" in inner:
+            return inner["message"]
+    try:
+        data = err.response.json()
+        return data.get("error", {}).get("message", str(err))
+    except Exception:
+        return str(err)
+
+
+def _load_resume_state(audio_path: str) -> dict:
+    """Return dict with completed_chunks, total_chunks, chunk_seconds, fresh (bool).
+    If meta exists and matches current audio, returns the resumable state.
+    Otherwise returns a fresh-start state and removes any stale partial files.
+    """
+    lecture_dir = Path(audio_path).parent
+    meta_path = lecture_dir / PARTIAL_META
+    partial_path = lecture_dir / PARTIAL_TXT
+
+    stat = os.stat(audio_path)
+    chunk_seconds = CHUNK_MINUTES * 60
+    duration = get_duration(audio_path)
+    total_chunks = math.ceil(duration / chunk_seconds)
+
+    if meta_path.exists():
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            if (
+                meta.get("audio_size") == stat.st_size
+                and meta.get("audio_mtime") == stat.st_mtime
+                and meta.get("chunk_seconds") == chunk_seconds
+                and meta.get("total_chunks") == total_chunks
+                and isinstance(meta.get("completed_chunks"), int)
+                and 0 <= meta["completed_chunks"] <= total_chunks
+            ):
+                return {
+                    "completed_chunks": meta["completed_chunks"],
+                    "total_chunks": total_chunks,
+                    "chunk_seconds": chunk_seconds,
+                    "fresh": False,
+                }
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    partial_path.unlink(missing_ok=True)
+    meta_path.unlink(missing_ok=True)
+    return {
+        "completed_chunks": 0,
+        "total_chunks": total_chunks,
+        "chunk_seconds": chunk_seconds,
+        "fresh": True,
+    }
+
+
+def _write_meta_atomic(lecture_dir: Path, meta: dict) -> None:
+    tmp = lecture_dir / (PARTIAL_META + ".tmp")
+    tmp.write_text(json.dumps(meta), encoding="utf-8")
+    os.replace(tmp, lecture_dir / PARTIAL_META)
 
 
 @timed_pipeline("transcribe")
 def transcribe_audio(audio_path: str, api_key: str) -> str:
     client = Groq(api_key=api_key)
-    chunk_seconds = CHUNK_MINUTES * 60
+    lecture_dir = Path(audio_path).parent
+    partial_path = lecture_dir / PARTIAL_TXT
+    stat = os.stat(audio_path)
+
+    state = _load_resume_state(audio_path)
+    completed = state["completed_chunks"]
+    total = state["total_chunks"]
+    chunk_seconds = state["chunk_seconds"]
+
+    if state["fresh"]:
+        partial_path.write_text("", encoding="utf-8")
+        _write_meta_atomic(lecture_dir, {
+            "audio_size": stat.st_size,
+            "audio_mtime": stat.st_mtime,
+            "chunk_seconds": chunk_seconds,
+            "completed_chunks": 0,
+            "total_chunks": total,
+        })
+
+    duration = get_duration(audio_path)
+    print(f"Duration: {duration/60:.1f} min → {total} chunks (resuming from {completed})")
+    print(f"Transcribing with Groq (whisper-large-v3, Hebrew)...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        chunks = split_audio(audio_path, tmpdir, chunk_seconds)
-        print(f"Transcribing {len(chunks)} chunks with Groq (whisper-large-v3, Hebrew)...")
+        for i in range(completed, total):
+            print(f"  Chunk {i + 1}/{total}...")
+            chunk_path = split_one_chunk(audio_path, tmpdir, i, chunk_seconds)
+            try:
+                with open(chunk_path, "rb") as f:
+                    response = client.audio.transcriptions.create(
+                        model="whisper-large-v3",
+                        file=f,
+                        language="he",
+                        response_format="text",
+                    )
+            except groq.RateLimitError as e:
+                msg = _extract_groq_message(e)
+                info = parse_rate_limit_message(msg)
+                info["completed_chunks"] = i
+                info["total_chunks"] = total
+                raise TranscribeRateLimitError(info) from e
 
-        parts = []
-        for i, chunk in enumerate(chunks):
-            print(f"  Chunk {i + 1}/{len(chunks)}...")
-            with open(chunk, "rb") as f:
-                response = client.audio.transcriptions.create(
-                    model="whisper-large-v3",
-                    file=f,
-                    language="he",
-                    response_format="text",
-                )
-            parts.append(response.strip())
+            text = response.strip() if isinstance(response, str) else str(response).strip()
+            with open(partial_path, "a", encoding="utf-8") as f:
+                f.write(text + "\n\n")
+                f.flush()
+                os.fsync(f.fileno())
 
-    return "\n\n".join(parts)
+            _write_meta_atomic(lecture_dir, {
+                "audio_size": stat.st_size,
+                "audio_mtime": stat.st_mtime,
+                "chunk_seconds": chunk_seconds,
+                "completed_chunks": i + 1,
+                "total_chunks": total,
+            })
+
+    return partial_path.read_text(encoding="utf-8").strip()

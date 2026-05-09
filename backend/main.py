@@ -6,7 +6,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from pipeline.strip_audio import strip_audio
-from pipeline.transcribe import transcribe_audio
+from pipeline.transcribe import transcribe_audio, TranscribeRateLimitError
 from pipeline.summarize import summarize
 from pipeline.to_pdf import convert_to_pdf
 from pipeline.upload_to_drive import upload_to_drive
@@ -52,7 +52,25 @@ def run_transcribe(course: str, lecture: str):
             return {"status": "error", "message": "audio.mp3 is required — run Extract Audio first"}
         transcript = transcribe_audio(str(d / "audio.mp3"), GROQ_API_KEY)
         (d / "transcript.txt").write_text(transcript, encoding="utf-8")
+        (d / "transcript.partial.txt").unlink(missing_ok=True)
+        (d / "transcript.partial.meta.json").unlink(missing_ok=True)
         return {"status": "done"}
+    except TranscribeRateLimitError as e:
+        return {
+            "status": "rate_limited",
+            "rateLimit": {
+                "limit":             e.info.get("limit"),
+                "used":              e.info.get("used"),
+                "requested":         e.info.get("requested"),
+                "retryAfterSeconds": e.info.get("retry_after_seconds"),
+                "message":           e.info.get("message"),
+                "upgradeUrl":        e.info.get("upgrade_url"),
+            },
+            "progress": {
+                "completed": e.info.get("completed_chunks"),
+                "total":     e.info.get("total_chunks"),
+            },
+        }
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
