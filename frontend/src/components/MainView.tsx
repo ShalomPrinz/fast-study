@@ -162,16 +162,6 @@ function RateLimitPanel({
         </p>
       )}
       <pre className="rate-limit-message">{rateLimit.message}</pre>
-      {rateLimit.upgradeUrl && (
-        <a
-          className="rate-limit-upgrade"
-          href={rateLimit.upgradeUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Upgrade to Dev Tier
-        </a>
-      )}
     </div>
   )
 }

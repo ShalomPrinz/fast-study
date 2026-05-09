@@ -32,7 +32,6 @@ export interface RateLimitInfo {
   requested: number | null
   retryAfterSeconds: number | null
   message: string
-  upgradeUrl: string | null
 }
 
 export interface RateLimitProgress {

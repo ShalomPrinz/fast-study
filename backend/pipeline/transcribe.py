@@ -57,17 +57,11 @@ def parse_rate_limit_message(msg: str) -> dict:
         seconds = float(m.group(2))
         retry_after_seconds = minutes * 60 + seconds
 
-    upgrade_url = None
-    m = re.search(r"https?://\S+", msg)
-    if m:
-        upgrade_url = m.group(0).rstrip(".,)")
-
     return {
         "limit": limit,
         "used": used,
         "requested": requested,
         "retry_after_seconds": retry_after_seconds,
-        "upgrade_url": upgrade_url,
         "message": msg,
     }
 

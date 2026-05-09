@@ -64,7 +64,6 @@ def run_transcribe(course: str, lecture: str):
                 "requested":         e.info.get("requested"),
                 "retryAfterSeconds": e.info.get("retry_after_seconds"),
                 "message":           e.info.get("message"),
-                "upgradeUrl":        e.info.get("upgrade_url"),
             },
             "progress": {
                 "completed": e.info.get("completed_chunks"),

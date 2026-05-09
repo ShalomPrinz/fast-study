@@ -583,13 +583,6 @@ html, body, #root {
   font-family: inherit;
 }
 
-.rate-limit-upgrade {
-  align-self: flex-start;
-  color: #dc2626;
-  text-decoration: underline;
-  font-weight: 500;
-}
-
 /* ── Spinner ── */
 
 @keyframes spin {

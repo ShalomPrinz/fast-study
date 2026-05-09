@@ -28,7 +28,6 @@ def test_parse_rate_limit_message_full():
     assert info["used"] == 7019
     assert info["requested"] == 600
     assert info["retry_after_seconds"] == pytest.approx(209.5)
-    assert info["upgrade_url"] == "https://console.groq.com/settings/billing"
     assert info["message"] == GROQ_429_MESSAGE
 
 
@@ -36,7 +35,6 @@ def test_parse_rate_limit_message_seconds_only():
     info = parse_rate_limit_message("try again in 12s")
     assert info["retry_after_seconds"] == pytest.approx(12.0)
     assert info["limit"] is None
-    assert info["upgrade_url"] is None
 
 
 def test_parse_rate_limit_message_empty():
@@ -45,7 +43,6 @@ def test_parse_rate_limit_message_empty():
     assert info["used"] is None
     assert info["requested"] is None
     assert info["retry_after_seconds"] is None
-    assert info["upgrade_url"] is None
     assert info["message"] == ""
 
 
