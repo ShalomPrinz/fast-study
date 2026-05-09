@@ -3,7 +3,21 @@ import fs from 'node:fs'
 import path from 'node:path'
 import type { Course, Lecture } from '../src/types'
 
-export const PREDEFINED_FILES = ['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md', 'summary.pdf', 'drive_url.txt']
+export const PREDEFINED_FILES = ['video.mp4', 'audio.mp3', 'transcript.txt', 'transcript.partial.txt', 'summary.md', 'summary.pdf', 'drive_url.txt']
+
+function readTranscribePartial(lectureDir: string): { completed: number; total: number } | null {
+  const metaPath = path.join(lectureDir, 'transcript.partial.meta.json')
+  if (!fs.existsSync(metaPath)) return null
+  try {
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'))
+    if (typeof meta.completed_chunks === 'number' && typeof meta.total_chunks === 'number') {
+      return { completed: meta.completed_chunks, total: meta.total_chunks }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
 
 export function readLectures(courseDir: string): Lecture[] {
   return fs
@@ -19,7 +33,7 @@ export function readLectures(courseDir: string): Lecture[] {
           return [f, { exists: !!stat, size: stat?.size ?? null, url }]
         })
       )
-      return { name: l.name, files } as Lecture
+      return { name: l.name, files, transcribePartial: readTranscribePartial(lectureDir) } as Lecture
     })
 }
 

@@ -507,6 +507,89 @@ html, body, #root {
   line-height: 1.5;
 }
 
+.rate-limit-panel {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #7f1d1d;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.rate-limit-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.rate-limit-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.rate-limit-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rate-limit-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.rate-limit-stat-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #7f1d1d;
+}
+
+.rate-limit-units {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.rate-limit-progress {
+  margin: 0;
+  font-weight: 500;
+}
+
+.rate-limit-countdown {
+  margin: 0;
+  font-weight: 600;
+  color: #b91c1c;
+}
+
+.rate-limit-message {
+  margin: 0;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #4b5563;
+  font-family: inherit;
+}
+
+.rate-limit-upgrade {
+  align-self: flex-start;
+  color: #dc2626;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
 /* ── Spinner ── */
 
 @keyframes spin {

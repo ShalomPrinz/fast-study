@@ -21,6 +21,13 @@ export function useCourseTree(selected: { course: string; lecture: string } | nu
     return lecture?.files ?? null
   }, [courses, selected])
 
+  const transcribePartial = useMemo(() => {
+    if (!selected) return null
+    const course = courses.find((c) => c.name === selected.course)
+    const lecture = course?.lectures.find((l: Lecture) => l.name === selected.lecture)
+    return lecture?.transcribePartial ?? null
+  }, [courses, selected])
+
   function refreshCourses() {
     fetchTree().then(setCourses)
   }
@@ -32,5 +39,5 @@ export function useCourseTree(selected: { course: string; lecture: string } | nu
     })
   }
 
-  return { courses: sortedCourses, files, refreshCourses, onCourseClick: handleCourseClick }
+  return { courses: sortedCourses, files, transcribePartial, refreshCourses, onCourseClick: handleCourseClick }
 }

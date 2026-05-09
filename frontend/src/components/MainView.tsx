@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import type { Step, FileName, TimingStats, LectureContext } from '../types'
+import type { Step, FileName, TimingStats, LectureContext, RateLimitInfo, RateLimitProgress } from '../types'
 import { fetchCourse, fetchTimingStats, runStep, deleteFile, fileUrl } from '../api'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 
 interface ReqState {
   step: Step
-  status: 'inflight' | 'error'
+  status: 'inflight' | 'error' | 'rate_limited'
   message?: string
   startedAt?: number
   timingStats?: TimingStats | null
+  completedFraction?: number
+  rateLimit?: RateLimitInfo
+  progress?: RateLimitProgress
+  rateLimitReceivedAt?: number
 }
 
 interface RunAllState {
@@ -61,7 +65,15 @@ function formatDuration(seconds: number): string {
   return `${Math.floor(s / 60)}m ${s % 60}s`
 }
 
-function ProgressBar({ stats, startedAt }: { stats: TimingStats | null | undefined; startedAt: number }) {
+function ProgressBar({
+  stats,
+  startedAt,
+  completedFraction = 0,
+}: {
+  stats: TimingStats | null | undefined
+  startedAt: number
+  completedFraction?: number
+}) {
   const [elapsed, setElapsed] = useState(() => (Date.now() - startedAt) / 1000)
 
   useEffect(() => {
@@ -78,29 +90,95 @@ function ProgressBar({ stats, startedAt }: { stats: TimingStats | null | undefin
   }
 
   const { estimated, longest } = stats
-  const progress = Math.min((elapsed / estimated) * 100, 100)
-  const overflowing = elapsed >= estimated
+  const effectiveElapsed = completedFraction * estimated + elapsed
+  const fillPct = Math.min((effectiveElapsed / estimated) * 100, 100)
+  const remaining = Math.max(estimated - effectiveElapsed, 0)
+  const overflowing = effectiveElapsed >= estimated
 
   return (
     <div className="progress-wrap">
       <div className="progress-track">
         <div
           className={`progress-fill${overflowing ? ' progress-fill--overflow' : ''}`}
-          style={{ width: `${progress}%` }}
+          style={{ width: `${fillPct}%` }}
         />
       </div>
       <p className={`progress-label${overflowing ? ' progress-label--overflow' : ''}`}>
         {overflowing
           ? `Taking longer than expected · ${formatDuration(elapsed)} · longest recorded: ${formatDuration(longest)}`
-          : `${formatDuration(Math.max(estimated - elapsed, 0))} remaining`}
+          : `${formatDuration(remaining)} remaining`}
       </p>
+    </div>
+  )
+}
+
+function RateLimitPanel({
+  rateLimit,
+  progress,
+  receivedAt,
+}: {
+  rateLimit: RateLimitInfo
+  progress: RateLimitProgress
+  receivedAt: number
+}) {
+  const initial = rateLimit.retryAfterSeconds
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    if (initial === null) return
+    const id = setInterval(() => setNow(Date.now()), 500)
+    return () => clearInterval(id)
+  }, [initial])
+
+  const remaining =
+    initial === null ? null : Math.max(initial - (now - receivedAt) / 1000, 0)
+
+  return (
+    <div className="rate-limit-panel">
+      <h4 className="rate-limit-title">Groq rate limit reached</h4>
+      <div className="rate-limit-stats">
+        <div>
+          <span className="rate-limit-stat-label">Limit</span>
+          <span className="rate-limit-stat-value">{rateLimit.limit ?? '—'}</span>
+        </div>
+        <div>
+          <span className="rate-limit-stat-label">Used</span>
+          <span className="rate-limit-stat-value">{rateLimit.used ?? '—'}</span>
+        </div>
+        <div>
+          <span className="rate-limit-stat-label">Requested</span>
+          <span className="rate-limit-stat-value">{rateLimit.requested ?? '—'}</span>
+        </div>
+      </div>
+      <p className="rate-limit-units">seconds of audio per hour</p>
+      {(progress.completed !== null && progress.total !== null) && (
+        <p className="rate-limit-progress">
+          {progress.completed}/{progress.total} chunks transcribed so far
+        </p>
+      )}
+      {remaining !== null && (
+        <p className="rate-limit-countdown">
+          {remaining > 0 ? `Retry in ${formatDuration(remaining)}` : 'Ready to retry'}
+        </p>
+      )}
+      <pre className="rate-limit-message">{rateLimit.message}</pre>
+      {rateLimit.upgradeUrl && (
+        <a
+          className="rate-limit-upgrade"
+          href={rateLimit.upgradeUrl}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Upgrade to Dev Tier
+        </a>
+      )}
     </div>
   )
 }
 
 export default function MainView() {
   const params = useParams<{ course: string; lecture: string }>()
-  const { files, refreshCourses } = useOutletContext<LectureContext>()
+  const { files, transcribePartial, refreshCourses } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
 
   const [reqState, setReqState] = useState<ReqState | null>(null)
@@ -141,7 +219,12 @@ export default function MainView() {
     }
     const startedAt = Date.now()
 
-    setReqState({ step, status: 'inflight', startedAt, timingStats: null })
+    let completedFraction = 0
+    if (step === 'transcribe' && files?.['transcript.partial.txt'].exists && transcribePartial && transcribePartial.total > 0) {
+      completedFraction = transcribePartial.completed / transcribePartial.total
+    }
+
+    setReqState({ step, status: 'inflight', startedAt, timingStats: null, completedFraction })
     fetchTimingStats(step, fileSizeBytes)
       .then((stats) =>
         setReqState((prev) =>
@@ -161,6 +244,17 @@ export default function MainView() {
       setReqState(null)
       refreshCourses()
       return true
+    } else if (result.status === 'rate_limited') {
+      toast.error('Groq rate limit reached')
+      setReqState({
+        step,
+        status: 'rate_limited',
+        rateLimit: result.rateLimit,
+        progress: result.progress,
+        rateLimitReceivedAt: Date.now(),
+      })
+      refreshCourses()
+      return false
     } else {
       toast.error(STEP_ERROR_LABEL[step])
       setReqState({ step, status: 'error', message: result.message })
@@ -219,6 +313,11 @@ export default function MainView() {
             const exists = files[file].exists
             const isRunning = runningFile === file
             const prereqMet = !prereq || files[prereq].exists
+            const isResumeTranscribe =
+              file === 'transcript.txt' &&
+              !exists &&
+              files['transcript.partial.txt'].exists
+            const buttonLabel = isResumeTranscribe ? 'Continue transcription' : actionLabel
 
             return (
               <div key={file} className={`file-row${exists ? ' file-row--present' : ''}${isRunning ? ' file-row--running' : ''}`}>
@@ -236,7 +335,7 @@ export default function MainView() {
                           onClick={() => executeStep(step)}
                           disabled={inflight || !prereqMet}
                         >
-                          {actionLabel}
+                          {buttonLabel}
                         </button>
                       ) : (
                         <span className="file-missing">not provided</span>
@@ -288,7 +387,11 @@ export default function MainView() {
                   </span>
                 </div>
                 {isRunning && (
-                  <ProgressBar stats={reqState!.timingStats} startedAt={reqState!.startedAt!} />
+                  <ProgressBar
+                    stats={reqState!.timingStats}
+                    startedAt={reqState!.startedAt!}
+                    completedFraction={reqState!.completedFraction}
+                  />
                 )}
               </div>
             )
@@ -318,6 +421,14 @@ export default function MainView() {
 
         {reqState?.status === 'error' && (
           <p className="file-error">Error: {reqState.message}</p>
+        )}
+
+        {reqState?.status === 'rate_limited' && reqState.rateLimit && reqState.progress && (
+          <RateLimitPanel
+            rateLimit={reqState.rateLimit}
+            progress={reqState.progress}
+            receivedAt={reqState.rateLimitReceivedAt!}
+          />
         )}
       </div>
 

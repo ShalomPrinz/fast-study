@@ -12,13 +12,13 @@ export default function Layout() {
     ? { course: match.params.course, lecture: match.params.lecture }
     : null
 
-  const { courses, files, refreshCourses, onCourseClick } = useCourseTree(selected)
+  const { courses, files, transcribePartial, refreshCourses, onCourseClick } = useCourseTree(selected)
 
   function handleSelect(course: string, lecture: string) {
     navigate(`/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}`)
   }
 
-  const context: LectureContext = { files, refreshCourses }
+  const context: LectureContext = { files, transcribePartial, refreshCourses }
 
   return (
     <div className="layout">
