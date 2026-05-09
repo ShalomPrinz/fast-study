@@ -229,9 +229,9 @@ export default function MainView() {
       )
 
     const result = await runStep(course, lecture, step)
+    refreshCourses()
     if (result.status === 'done') {
       setReqState(null)
-      refreshCourses()
       return true
     } else if (result.status === 'rate_limited') {
       toast.error('Groq rate limit reached')
@@ -242,7 +242,6 @@ export default function MainView() {
         progress: result.progress,
         rateLimitReceivedAt: Date.now(),
       })
-      refreshCourses()
       return false
     } else {
       toast.error(STEP_ERROR_LABEL[step])
