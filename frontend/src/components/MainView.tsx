@@ -161,7 +161,6 @@ function RateLimitPanel({
           {remaining > 0 ? `Retry in ${formatDuration(remaining)}` : 'Ready to retry'}
         </p>
       )}
-      <pre className="rate-limit-message">{rateLimit.message}</pre>
     </div>
   )
 }

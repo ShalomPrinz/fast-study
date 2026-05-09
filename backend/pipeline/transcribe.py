@@ -62,7 +62,6 @@ def parse_rate_limit_message(msg: str) -> dict:
         "used": used,
         "requested": requested,
         "retry_after_seconds": retry_after_seconds,
-        "message": msg,
     }
 
 

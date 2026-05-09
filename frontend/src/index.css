@@ -570,18 +570,6 @@ html, body, #root {
   color: #b91c1c;
 }
 
-.rate-limit-message {
-  margin: 0;
-  padding: 8px;
-  background: #fff;
-  border: 1px solid #fecaca;
-  border-radius: 4px;
-  font-size: 12px;
-  white-space: pre-wrap;
-  word-break: break-word;
-  color: #4b5563;
-  font-family: inherit;
-}
 
 /* ── Spinner ── */
 

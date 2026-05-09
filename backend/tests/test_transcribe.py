@@ -28,7 +28,6 @@ def test_parse_rate_limit_message_full():
     assert info["used"] == 7019
     assert info["requested"] == 600
     assert info["retry_after_seconds"] == pytest.approx(209.5)
-    assert info["message"] == GROQ_429_MESSAGE
 
 
 def test_parse_rate_limit_message_seconds_only():
@@ -43,7 +42,6 @@ def test_parse_rate_limit_message_empty():
     assert info["used"] is None
     assert info["requested"] is None
     assert info["retry_after_seconds"] is None
-    assert info["message"] == ""
 
 
 def _make_audio(tmp_path: Path, size: int = 1024) -> Path:
