@@ -59,8 +59,14 @@ def _create_folder(service, name: str, parent_id: str) -> str:
 
 
 @timed_pipeline("drive")
-def upload_to_drive(pdf_path: str, course: str, root_folder_name: str, file_name: str | None = None) -> str:
-    """Upload pdf_path to Drive at root_folder_name/course/. Returns the Drive file URL."""
+def upload_to_drive(
+    pdf_path: str,
+    course: str,
+    root_folder_name: str,
+    file_name: str | None = None,
+    subfolder: str | None = None,
+) -> str:
+    """Upload pdf_path to Drive at root_folder_name/course/[subfolder/]. Returns the Drive file URL."""
     try:
         service = _get_service()
 
@@ -72,12 +78,19 @@ def upload_to_drive(pdf_path: str, course: str, root_folder_name: str, file_name
         if not course_id:
             course_id = _create_folder(service, course, root_id)
 
+        parent_id = course_id
+        if subfolder:
+            sub_id = _find_folder(service, subfolder, course_id)
+            if not sub_id:
+                sub_id = _create_folder(service, subfolder, course_id)
+            parent_id = sub_id
+
         file_name = file_name or Path(pdf_path).name
         media = MediaFileUpload(pdf_path, mimetype="application/pdf")
         response = (
             service.files()
             .create(
-                body={"name": file_name, "parents": [course_id]},
+                body={"name": file_name, "parents": [parent_id]},
                 media_body=media,
                 fields="id,webViewLink",
             )

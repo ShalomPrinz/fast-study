@@ -17,6 +17,8 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
 GDRIVE_ROOT_FOLDER = os.environ["GDRIVE_ROOT_FOLDER"]
 
+RECITATIONS_DIR = "Recitations"
+
 app = FastAPI()
 init_db()
 
@@ -28,14 +30,23 @@ app.add_middleware(
 )
 
 
-def lecture_dir(course: str, lecture: str) -> Path:
+def lecture_dir(course: str, lecture: str, kind: str = "lecture") -> Path:
+    if kind == "recitation":
+        return Path(DATA_ROOT) / course / RECITATIONS_DIR / lecture
     return Path(DATA_ROOT) / course / lecture
 
 
+def _validate_kind(kind: str):
+    if kind not in {"lecture", "recitation"}:
+        return {"status": "error", "message": f"invalid kind: {kind}"}
+    return None
+
+
 @app.post("/courses/{course}/lectures/{lecture}/run/audio")
-def run_audio(course: str, lecture: str):
+def run_audio(course: str, lecture: str, kind: str = Query("lecture")):
+    if err := _validate_kind(kind): return err
     try:
-        d = lecture_dir(course, lecture)
+        d = lecture_dir(course, lecture, kind)
         if not (d / "video.mp4").exists():
             return {"status": "error", "message": "video.mp4 is required"}
         strip_audio(str(d / "video.mp4"), str(d / "audio.mp3"))
@@ -45,9 +56,10 @@ def run_audio(course: str, lecture: str):
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/transcribe")
-def run_transcribe(course: str, lecture: str):
+def run_transcribe(course: str, lecture: str, kind: str = Query("lecture")):
+    if err := _validate_kind(kind): return err
     try:
-        d = lecture_dir(course, lecture)
+        d = lecture_dir(course, lecture, kind)
         if not (d / "audio.mp3").exists():
             return {"status": "error", "message": "audio.mp3 is required — run Extract Audio first"}
         transcript = transcribe_audio(str(d / "audio.mp3"), GROQ_API_KEY)
@@ -74,9 +86,10 @@ def run_transcribe(course: str, lecture: str):
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/summarize")
-def run_summarize(course: str, lecture: str):
+def run_summarize(course: str, lecture: str, kind: str = Query("lecture")):
+    if err := _validate_kind(kind): return err
     try:
-        d = lecture_dir(course, lecture)
+        d = lecture_dir(course, lecture, kind)
         if not (d / "transcript.txt").exists():
             return {"status": "error", "message": "transcript.txt is required — run Transcribe first"}
         summary = summarize(d / "transcript.txt")
@@ -87,9 +100,10 @@ def run_summarize(course: str, lecture: str):
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/pdf")
-def run_pdf(course: str, lecture: str):
+def run_pdf(course: str, lecture: str, kind: str = Query("lecture")):
+    if err := _validate_kind(kind): return err
     try:
-        d = lecture_dir(course, lecture)
+        d = lecture_dir(course, lecture, kind)
         if not (d / "summary.md").exists():
             return {"status": "error", "message": "summary.md is required — run Summarize first"}
         convert_to_pdf(str(d / "summary.md"))
@@ -100,12 +114,20 @@ def run_pdf(course: str, lecture: str):
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/drive")
-def run_drive(course: str, lecture: str):
+def run_drive(course: str, lecture: str, kind: str = Query("lecture")):
+    if err := _validate_kind(kind): return err
     try:
-        d = lecture_dir(course, lecture)
+        d = lecture_dir(course, lecture, kind)
         if not (d / "summary.pdf").exists():
             return {"status": "error", "message": "summary.pdf is required — run PDF first"}
-        url = upload_to_drive(str(d / "summary.pdf"), course, GDRIVE_ROOT_FOLDER, f"{lecture}.pdf")
+        subfolder = RECITATIONS_DIR if kind == "recitation" else None
+        url = upload_to_drive(
+            str(d / "summary.pdf"),
+            course,
+            GDRIVE_ROOT_FOLDER,
+            f"{lecture}.pdf",
+            subfolder=subfolder,
+        )
         (d / "drive_url.txt").write_text(url, encoding="utf-8")
         return {"status": "done", "url": url}
     except Exception as e:
