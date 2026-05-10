@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: system-ui, sans-serif; width: 350px; padding: 15px; background: #1a1a1a; color: #ffffff; margin: 0; }
+    h3 { margin-top: 0; color: #2d8cff; }
+    .status { font-size: 13px; color: #aaaaaa; margin-bottom: 10px; }
+    textarea { width: 100%; box-sizing: border-box; height: 90px; background: #2d2d2d; color: #00ff66; border: 1px solid #555; padding: 8px; font-family: monospace; font-size: 11px; resize: none; border-radius: 4px; }
+    
+    /* Button Styles */
+    button { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: white; transition: background 0.2s; }
+    #nodeBtn { background: #9d2bba; margin-top: 10px; } 
+    #nodeBtn:hover { background: #7a2291; }
+    #copyBtn { background: #333333; margin-top: 10px;} 
+    #copyBtn:hover { background: #555555; }
+
+    /* Instruction Box Styles */
+    .server-instruction {
+      font-size: 11px;
+      color: #aaaaaa;
+      background: #222222;
+      border: 1px dashed #444;
+      border-radius: 4px;
+      padding: 8px;
+      margin-top: 6px;
+      text-align: center;
+    }
+    .server-instruction code {
+      display: block;
+      color: #ffcc00;
+      background: #111111;
+      padding: 5px;
+      margin-top: 5px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 8px;
+      word-break: break-all;
+      user-select: all; /* Allows 1-click highlighting of the path */
+    }
+  </style>
+</head>
+<body>
+  <h3>Video Interceptor</h3>
+  <div class="status" id="status">Waiting for video stream... (Press Play)</div>
+  <textarea id="curlCommand" readonly placeholder="Waiting..."></textarea>
+  <button id="nodeBtn">Download</button>
+  <script src="popup.js"></script>
+</body>
+</html>
