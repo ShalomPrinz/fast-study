@@ -1,72 +1,53 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // Fetch the saved request from background.js
-  chrome.storage.local.get(['lastVideoRequest'], (result) => {
-    if (result.lastVideoRequest) {
-      const req = result.lastVideoRequest;
-      document.getElementById('status').innerText = "Video intercepted successfully!";
-      document.getElementById('status').style.color = "#00ff66";
-      
-      // Clear the notification badge
-      chrome.action.setBadgeText({ text: "" });
+const SERVER_URL = 'http://localhost:3052/download';
 
-      // Build the cURL command
-      let curl = `curl "${req.url}"`;
-      if (req.headers) {
-        req.headers.forEach(h => {
-          // Escape any double quotes in the headers
-          let val = h.value.replace(/"/g, '\\"');
-          curl += ` -H "${h.name}: ${val}"`;
-        });
-      }
-      
-      // Give the output file a unique timestamped name
-      curl += ` --output "recording_${Date.now()}.mp4"`;
+function buildCurl(req) {
+  let curl = `curl "${req.url}"`;
+  for (const h of req.headers ?? []) {
+    const val = h.value.replace(/"/g, '\\"');
+    curl += ` -H "${h.name}: ${val}"`;
+  }
+  curl += ` --output "recording_${Date.now()}.mp4"`;
+  return curl;
+}
 
-      document.getElementById('curlCommand').value = curl;
-    }
-  });
+function setStatus(text, color) {
+  const el = document.getElementById('status');
+  el.innerText = text;
+  if (color) el.style.color = color;
+}
 
-  // Handle the Copy Button
-  document.getElementById('copyBtn').addEventListener('click', () => {
-    const text = document.getElementById('curlCommand').value;
-    if (!text) return;
-    
-    navigator.clipboard.writeText(text).then(() => {
-      const btn = document.getElementById('copyBtn');
-      btn.innerText = "Copied to Clipboard!";
-      btn.style.background = "#00cc52";
-      
-      setTimeout(() => { 
-        btn.innerText = "Copy cURL Command"; 
-        btn.style.background = "#2d8cff";
-      }, 2000);
-    });
-  });
-});
+async function loadIntercepted() {
+  const { lastVideoRequest } = await chrome.storage.local.get(['lastVideoRequest']);
+  if (!lastVideoRequest) return;
 
-// --- NEW: Handle the Send to Node Button ---
-document.getElementById('nodeBtn').addEventListener('click', () => {
+  setStatus('Video intercepted successfully!', '#00ff66');
+  chrome.action.setBadgeText({ text: '' });
+  document.getElementById('curlCommand').value = buildCurl(lastVideoRequest);
+}
+
+async function sendToServer() {
   const text = document.getElementById('curlCommand').value;
   if (!text) return;
 
   const btn = document.getElementById('nodeBtn');
-  btn.innerText = "Sending...";
+  btn.innerText = 'Sending...';
 
-  fetch('http://localhost:3052/download', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ command: text })
-  })
-  .then(response => {
-    if (response.ok) {
-      btn.innerText = "Downloading in background!";
-      btn.style.background = "#00cc52";
-    } else {
-      throw new Error('Server rejected');
-    }
-  })
-  .catch(err => {
-    alert("Could not connect! Is your node_server.js running?");
-    btn.innerText = "Download";
-  });
+  try {
+    const res = await fetch(SERVER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: text }),
+    });
+    if (!res.ok) throw new Error('Server rejected');
+    btn.innerText = 'Downloading in background!';
+    btn.style.background = '#00cc52';
+  } catch {
+    alert('Could not connect! Is your server.js running?');
+    btn.innerText = 'Download';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadIntercepted();
+  document.getElementById('nodeBtn').addEventListener('click', sendToServer);
 });
