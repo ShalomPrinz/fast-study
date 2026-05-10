@@ -1,24 +1,27 @@
-import { Outlet, useMatch, useNavigate } from 'react-router-dom'
+import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
-import type { LectureContext } from '../types'
+import type { LectureContext, Kind } from '../types'
 import { useCourseTree } from '../hooks/useCourseTree'
 import Sidebar from './Sidebar'
 
 export default function Layout() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
 
   const match = useMatch('/:course/:lecture/*')
+  const kind: Kind = searchParams.get('kind') === 'recitation' ? 'recitation' : 'lecture'
   const selected = match?.params.course && match?.params.lecture
-    ? { course: match.params.course, lecture: match.params.lecture }
+    ? { course: match.params.course, lecture: match.params.lecture, kind }
     : null
 
   const { courses, files, transcribePartial, refreshCourses, onCourseClick } = useCourseTree(selected)
 
-  function handleSelect(course: string, lecture: string) {
-    navigate(`/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}`)
+  function handleSelect(course: string, lecture: string, k: Kind) {
+    const suffix = k === 'recitation' ? '?kind=recitation' : ''
+    navigate(`/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}${suffix}`)
   }
 
-  const context: LectureContext = { files, transcribePartial, refreshCourses }
+  const context: LectureContext = { files, transcribePartial, refreshCourses, kind }
 
   return (
     <div className="layout">

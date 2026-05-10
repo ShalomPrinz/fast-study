@@ -7,7 +7,7 @@ import PdfViewer from './PdfViewer'
 
 export default function EditSummaryView() {
   const { course, lecture } = useParams<{ course: string; lecture: string }>()
-  const { files, refreshCourses } = useOutletContext<LectureContext>()
+  const { files, refreshCourses, kind } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
 
   const [content, setContent] = useState('')
@@ -24,11 +24,11 @@ export default function EditSummaryView() {
 
   useEffect(() => {
     if (course && lecture) loadContent()
-  }, [course, lecture])
+  }, [course, lecture, kind])
 
   async function loadContent() {
     setLoading(true)
-    const data = await fetchSummaryContent(course!, lecture!)
+    const data = await fetchSummaryContent(course!, lecture!, kind)
     setContent(data.content)
     setHasOriginal(data.hasOriginal)
     setLoading(false)
@@ -36,14 +36,14 @@ export default function EditSummaryView() {
 
   async function handleRevert() {
     setError('')
-    await revertSummary(course!, lecture!)
+    await revertSummary(course!, lecture!, kind)
     await loadContent()
   }
 
   async function handleGeneratePdf() {
     setGenerating(true)
     setError('')
-    const saved = await saveSummaryContent(course!, lecture!, content)
+    const saved = await saveSummaryContent(course!, lecture!, content, kind)
     if (!saved) {
       toast.error('Failed to save summary')
       setError('Failed to save summary')
@@ -51,8 +51,8 @@ export default function EditSummaryView() {
       return
     }
     setHasOriginal(true)
-    await deleteFile(course!, lecture!, 'summary.pdf')
-    const result = await runStep(course!, lecture!, 'pdf')
+    await deleteFile(course!, lecture!, 'summary.pdf', kind)
+    const result = await runStep(course!, lecture!, 'pdf', kind)
     if (result.status === 'done') {
       refreshCourses()
       setShowPdf(true)
@@ -66,7 +66,8 @@ export default function EditSummaryView() {
 
   if (!course || !lecture) return null
 
-  const pdfUrl = `${fileUrl(course, lecture, 'summary.pdf')}?t=${pdfKey}`
+  const baseUrl = fileUrl(course, lecture, 'summary.pdf', kind)
+  const pdfUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}t=${pdfKey}`
 
   return (
     <div className="edit-view">

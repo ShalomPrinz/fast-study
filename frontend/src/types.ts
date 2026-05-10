@@ -22,7 +22,10 @@ export interface Lecture {
 export interface Course {
   name: string
   lectures: Lecture[]
+  recitations: Lecture[]
 }
+
+export type Kind = 'lecture' | 'recitation'
 
 export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'drive'
 
@@ -46,10 +49,12 @@ export type StepResult =
 export interface Selected {
   course: string
   lecture: string
+  kind: Kind
 }
 
 export interface LectureContext {
   files: FileStatus | null
   transcribePartial: { completed: number; total: number } | null
   refreshCourses: () => void
+  kind: Kind
 }

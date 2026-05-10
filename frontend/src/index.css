@@ -197,6 +197,28 @@ html, body, #root {
   outline: 1px solid var(--accent);
 }
 
+.recitations-group {
+  list-style: none;
+  margin-top: 2px;
+}
+
+.recitations-header {
+  display: flex;
+  align-items: center;
+  margin: 0 4px;
+}
+
+.recitations-toggle {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.85;
+  padding: 5px 12px;
+}
+
+.recitation-list {
+  padding-left: 12px;
+}
+
 .lecture-add-input {
   display: block;
   width: calc(100% - 8px);

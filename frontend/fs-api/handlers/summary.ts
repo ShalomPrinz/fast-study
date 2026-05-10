@@ -2,6 +2,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
+import { RECITATIONS_DIR } from '../fs-reader'
 
 function handleGet(summaryPath: string, originalPath: string, res: ServerResponse) {
   try {
@@ -48,8 +49,13 @@ function handleDelete(summaryPath: string, originalPath: string, res: ServerResp
 export function summaryHandler(dataRoot: string) {
   return (req: IncomingMessage, res: ServerResponse) => {
     res.setHeader('Content-Type', 'application/json')
-    const [courseName, lectureName] = (req.url ?? '/').slice(1).split('/').map(decodeURIComponent)
-    const lectureDir = path.join(dataRoot, courseName, lectureName)
+    const [pathPart, queryPart = ''] = (req.url ?? '/').split('?')
+    const params = new URLSearchParams(queryPart)
+    const isRecitation = params.get('kind') === 'recitation'
+    const [courseName, lectureName] = pathPart.slice(1).split('/').map(decodeURIComponent)
+    const lectureDir = isRecitation
+      ? path.join(dataRoot, courseName, RECITATIONS_DIR, lectureName)
+      : path.join(dataRoot, courseName, lectureName)
     const summaryPath = path.join(lectureDir, 'summary.md')
     const originalPath = path.join(lectureDir, 'original_summary.md')
 

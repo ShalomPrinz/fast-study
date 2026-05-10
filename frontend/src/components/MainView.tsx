@@ -167,7 +167,7 @@ function RateLimitPanel({
 
 export default function MainView() {
   const params = useParams<{ course: string; lecture: string }>()
-  const { files, transcribePartial, refreshCourses } = useOutletContext<LectureContext>()
+  const { files, transcribePartial, refreshCourses, kind } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
 
   const [reqState, setReqState] = useState<ReqState | null>(null)
@@ -177,7 +177,7 @@ export default function MainView() {
   useEffect(() => {
     setReqState(null)
     setRunAllState(null)
-  }, [params.course, params.lecture])
+  }, [params.course, params.lecture, kind])
 
   if (!params.course || !params.lecture) return null
   const course = params.course
@@ -203,7 +203,8 @@ export default function MainView() {
     let fileSizeBytes = 0
     if (inputFile) {
       const fresh = await fetchCourse(course)
-      const lec = fresh?.lectures.find((l) => l.name === lecture)
+      const list = kind === 'recitation' ? fresh?.recitations : fresh?.lectures
+      const lec = list?.find((l) => l.name === lecture)
       fileSizeBytes = lec?.files[inputFile]?.size ?? 0
     }
     const startedAt = Date.now()
@@ -228,7 +229,7 @@ export default function MainView() {
         )
       )
 
-    const result = await runStep(course, lecture, step)
+    const result = await runStep(course, lecture, step, kind)
     refreshCourses()
     if (result.status === 'done') {
       setReqState(null)
@@ -251,7 +252,7 @@ export default function MainView() {
   }
 
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
-    await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file)))
+    await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file, kind)))
     refreshCourses()
     await executeStep(step)
   }
@@ -347,7 +348,7 @@ export default function MainView() {
                           <button
                             className="file-open-btn"
                             title="Open PDF in new tab"
-                            onClick={() => window.open(fileUrl(course, lecture, 'summary.pdf'), '_blank')}
+                            onClick={() => window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank')}
                           >
                             <Icon icon="external-link" />
                           </button>
@@ -356,7 +357,7 @@ export default function MainView() {
                           <button
                             className="file-open-btn"
                             title="Edit summary"
-                            onClick={() => navigate('edit')}
+                            onClick={() => navigate({ pathname: 'edit', search: kind === 'recitation' ? '?kind=recitation' : '' })}
                           >
                             <Icon icon="edit" />
                           </button>

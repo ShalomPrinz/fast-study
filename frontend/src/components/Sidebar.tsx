@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
-import type { Course, Selected } from '../types'
+import type { Course, Lecture, Selected, Kind } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../api'
 import ConfirmModal from './ConfirmModal'
 import { useInlineEdit } from '../hooks/useInlineEdit'
@@ -8,7 +8,7 @@ import { useInlineEdit } from '../hooks/useInlineEdit'
 interface Props {
   courses: Course[]
   selected: Selected | null
-  onSelect: (course: string, lecture: string) => void
+  onSelect: (course: string, lecture: string, kind: Kind) => void
   onCourseClick: (course: string) => void
   onRefresh: () => void
 }
@@ -17,19 +17,29 @@ interface PendingUpload {
   course: string
   lecture: string
   file: File
+  kind: Kind
+}
+
+interface AddTarget { course: string; kind: Kind }
+interface RenameTarget { course: string; lecture: string; kind: Kind }
+interface DragTarget { course: string; lecture: string; kind: Kind }
+
+function recitationGroupKey(courseName: string): string {
+  return `${courseName}::recitations`
 }
 
 export default function Sidebar({ courses, selected, onSelect, onCourseClick, onRefresh }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
-  const [adding, setAdding] = useState<string | null>(null)
-  const [renaming, setRenaming] = useState<{ course: string; lecture: string } | null>(null)
-  const [dragOver, setDragOver] = useState<{ course: string; lecture: string } | null>(null)
+  const [recitationsExpanded, setRecitationsExpanded] = useState<Set<string>>(new Set())
+  const [adding, setAdding] = useState<AddTarget | null>(null)
+  const [renaming, setRenaming] = useState<RenameTarget | null>(null)
+  const [dragOver, setDragOver] = useState<DragTarget | null>(null)
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null)
   const [addingCourse, setAddingCourse] = useState(false)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
 
-  const addLectureEdit = useInlineEdit(adding)
-  const renameLectureEdit = useInlineEdit(renaming)
+  const addLectureEdit = useInlineEdit(adding ? `${adding.course}::${adding.kind}` : null)
+  const renameLectureEdit = useInlineEdit(renaming ? `${renaming.course}/${renaming.kind}/${renaming.lecture}` : null)
   const addCourseEdit = useInlineEdit(addingCourse || null)
   const renameCourseEdit = useInlineEdit(renamingCourse)
 
@@ -38,9 +48,13 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
       const names = new Set(courses.map((c) => c.name))
       return new Set([...prev].filter((n) => names.has(n)))
     })
+    setRecitationsExpanded((prev) => {
+      const keys = new Set(courses.map((c) => recitationGroupKey(c.name)))
+      return new Set([...prev].filter((k) => keys.has(k)))
+    })
   }, [courses])
 
-  function suggestName(courseName: string): string {
+  function suggestLectureName(courseName: string): string {
     const course = courses.find((c) => c.name === courseName)
     if (!course) return ''
     const matches = course.lectures
@@ -53,6 +67,20 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     return `Lecture ${latest.n + 1}`
   }
 
+  function suggestRecitationName(courseName: string): string {
+    const course = courses.find((c) => c.name === courseName)
+    if (!course) return 'Recitation 1'
+    const nums = (course.recitations ?? [])
+      .map((l) => { const m = l.name.match(/^Recitation\s+(\d+)$/i); return m ? parseInt(m[1], 10) : null })
+      .filter((x): x is number => x !== null)
+    if (!nums.length) return 'Recitation 1'
+    return `Recitation ${Math.max(...nums) + 1}`
+  }
+
+  function suggestName(courseName: string, kind: Kind): string {
+    return kind === 'recitation' ? suggestRecitationName(courseName) : suggestLectureName(courseName)
+  }
+
   function toggleCourse(name: string) {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -62,25 +90,37 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     onCourseClick(name)
   }
 
-  function startAdding(e: React.MouseEvent, courseName: string) {
+  function toggleRecitations(courseName: string) {
+    const key = recitationGroupKey(courseName)
+    setRecitationsExpanded((prev) => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+
+  function startAdding(e: React.MouseEvent, courseName: string, kind: Kind) {
     e.stopPropagation()
-    setAdding(courseName)
-    addLectureEdit.setValue(suggestName(courseName))
+    setAdding({ course: courseName, kind })
+    addLectureEdit.setValue(suggestName(courseName, kind))
     setExpanded((prev) => new Set([...prev, courseName]))
+    if (kind === 'recitation') {
+      setRecitationsExpanded((prev) => new Set([...prev, recitationGroupKey(courseName)]))
+    }
   }
 
   async function commitAdd() {
     const name = addLectureEdit.value.trim()
-    const course = adding!
+    const target = adding!
     setAdding(null)
     addLectureEdit.setValue('')
     if (!name) return
-    await createLecture(course, name)
-    onCourseClick(course)
+    await createLecture(target.course, name, target.kind)
+    onCourseClick(target.course)
   }
 
-  async function doUpload(courseName: string, lectureName: string, file: File) {
-    await toast.promise(uploadVideo(courseName, lectureName, file), {
+  async function doUpload(courseName: string, lectureName: string, file: File, kind: Kind) {
+    await toast.promise(uploadVideo(courseName, lectureName, file, kind), {
       pending: 'Uploading video…',
       success: `Saved to ${lectureName}`,
       error: 'Upload failed',
@@ -88,7 +128,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     onCourseClick(courseName)
   }
 
-  function handleDrop(e: React.DragEvent, courseName: string, lectureName: string) {
+  function handleDrop(e: React.DragEvent, courseName: string, lectureName: string, kind: Kind) {
     e.preventDefault()
     setDragOver(null)
     const file = e.dataTransfer.files[0]
@@ -98,17 +138,18 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
       return
     }
     const course = courses.find((c) => c.name === courseName)
-    const lecture = course?.lectures.find((l) => l.name === lectureName)
+    const list = kind === 'recitation' ? course?.recitations : course?.lectures
+    const lecture = list?.find((l) => l.name === lectureName)
     if (lecture?.files['video.mp4'].exists) {
-      setPendingUpload({ course: courseName, lecture: lectureName, file })
+      setPendingUpload({ course: courseName, lecture: lectureName, file, kind })
     } else {
-      doUpload(courseName, lectureName, file)
+      doUpload(courseName, lectureName, file, kind)
     }
   }
 
-  function startRenaming(e: React.MouseEvent, courseName: string, lectureName: string) {
+  function startRenaming(e: React.MouseEvent, courseName: string, lectureName: string, kind: Kind) {
     e.preventDefault()
-    setRenaming({ course: courseName, lecture: lectureName })
+    setRenaming({ course: courseName, lecture: lectureName, kind })
     renameLectureEdit.setValue(lectureName)
   }
 
@@ -118,9 +159,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     setRenaming(null)
     renameLectureEdit.setValue('')
     if (!name || name === info.lecture) return
-    await renameLecture(info.course, info.lecture, name)
-    if (selected?.course === info.course && selected?.lecture === info.lecture) {
-      onSelect(info.course, name)
+    await renameLecture(info.course, info.lecture, name, info.kind)
+    if (selected?.course === info.course && selected?.lecture === info.lecture && selected?.kind === info.kind) {
+      onSelect(info.course, name, info.kind)
     }
     onCourseClick(info.course)
   }
@@ -148,9 +189,51 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     if (!name || name === old) return
     await renameCourse(old, name)
     if (selected?.course === old) {
-      onSelect(name, selected.lecture)
+      onSelect(name, selected.lecture, selected.kind)
     }
     onRefresh()
+  }
+
+  function renderLectureItem(courseName: string, lecture: Lecture, kind: Kind) {
+    const isSelected =
+      selected?.course === courseName && selected?.lecture === lecture.name && selected?.kind === kind
+    const isRenaming =
+      renaming?.course === courseName && renaming?.lecture === lecture.name && renaming?.kind === kind
+    const isDragOver =
+      dragOver?.course === courseName && dragOver?.lecture === lecture.name && dragOver?.kind === kind
+
+    return (
+      <li key={`${kind}::${lecture.name}`}>
+        {isRenaming ? (
+          <input
+            ref={renameLectureEdit.ref}
+            className="lecture-add-input"
+            value={renameLectureEdit.value}
+            onChange={(e) => renameLectureEdit.setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commitRename()
+              if (e.key === 'Escape') { setRenaming(null); renameLectureEdit.setValue('') }
+            }}
+            onBlur={() => { setRenaming(null); renameLectureEdit.setValue('') }}
+            dir="auto"
+          />
+        ) : (
+          <button
+            className={`lecture-btn${isSelected ? ' selected' : ''}${isDragOver ? ' drag-over' : ''}`}
+            onClick={(e) => {
+              if (e.shiftKey) startRenaming(e, courseName, lecture.name, kind)
+              else onSelect(courseName, lecture.name, kind)
+            }}
+            onDragOver={(e) => { e.preventDefault(); setDragOver({ course: courseName, lecture: lecture.name, kind }) }}
+            onDragLeave={() => setDragOver(null)}
+            onDrop={(e) => handleDrop(e, courseName, lecture.name, kind)}
+            dir="auto"
+          >
+            {lecture.name}
+          </button>
+        )}
+      </li>
+    )
   }
 
   return (
@@ -178,111 +261,119 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
         )}
       </div>
       <nav className="sidebar-nav">
-        {courses.map((course) => (
-          <div key={course.name} className="course-group">
-            <div className="course-header">
-              {renamingCourse === course.name ? (
-                <input
-                  ref={renameCourseEdit.ref}
-                  className="lecture-add-input"
-                  value={renameCourseEdit.value}
-                  onChange={(e) => renameCourseEdit.setValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') commitRenameCourse()
-                    if (e.key === 'Escape') { setRenamingCourse(null); renameCourseEdit.setValue('') }
-                  }}
-                  onBlur={() => { setRenamingCourse(null); renameCourseEdit.setValue('') }}
-                  dir="auto"
-                />
-              ) : (
-              <button
-                className="course-toggle"
-                onClick={(e) => {
-                  if (e.shiftKey) startRenamingCourse(e, course.name)
-                  else toggleCourse(course.name)
-                }}
-                dir="auto"
-              >
-                <span className="chevron">{expanded.has(course.name) ? '▾' : '▸'}</span>
-                <span>{course.name}</span>
-              </button>
-              )}
-              {renamingCourse !== course.name && (
+        {courses.map((course) => {
+          const recKey = recitationGroupKey(course.name)
+          const recExpanded = recitationsExpanded.has(recKey)
+          const isAddingLecture = adding?.course === course.name && adding.kind === 'lecture'
+          const isAddingRecitation = adding?.course === course.name && adding.kind === 'recitation'
+          return (
+            <div key={course.name} className="course-group">
+              <div className="course-header">
+                {renamingCourse === course.name ? (
+                  <input
+                    ref={renameCourseEdit.ref}
+                    className="lecture-add-input"
+                    value={renameCourseEdit.value}
+                    onChange={(e) => renameCourseEdit.setValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') commitRenameCourse()
+                      if (e.key === 'Escape') { setRenamingCourse(null); renameCourseEdit.setValue('') }
+                    }}
+                    onBlur={() => { setRenamingCourse(null); renameCourseEdit.setValue('') }}
+                    dir="auto"
+                  />
+                ) : (
                 <button
-                  className="course-add-btn"
-                  onClick={(e) => startAdding(e, course.name)}
-                  title="Add lecture"
+                  className="course-toggle"
+                  onClick={(e) => {
+                    if (e.shiftKey) startRenamingCourse(e, course.name)
+                    else toggleCourse(course.name)
+                  }}
+                  dir="auto"
                 >
-                  +
+                  <span className="chevron">{expanded.has(course.name) ? '▾' : '▸'}</span>
+                  <span>{course.name}</span>
                 </button>
+                )}
+                {renamingCourse !== course.name && (
+                  <button
+                    className="course-add-btn"
+                    onClick={(e) => startAdding(e, course.name, 'lecture')}
+                    title="Add lecture"
+                  >
+                    +
+                  </button>
+                )}
+              </div>
+
+              {expanded.has(course.name) && (
+                <ul className="lecture-list">
+                  {course.lectures.map((lecture) => renderLectureItem(course.name, lecture, 'lecture'))}
+
+                  {isAddingLecture && (
+                    <li>
+                      <input
+                        ref={addLectureEdit.ref}
+                        className="lecture-add-input"
+                        value={addLectureEdit.value}
+                        onChange={(e) => addLectureEdit.setValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') commitAdd()
+                          if (e.key === 'Escape') { setAdding(null); addLectureEdit.setValue('') }
+                        }}
+                        onBlur={() => { setAdding(null); addLectureEdit.setValue('') }}
+                        placeholder="Lecture name…"
+                        dir="auto"
+                      />
+                    </li>
+                  )}
+
+                  <li className="recitations-group">
+                    <div className="recitations-header">
+                      <button
+                        className="course-toggle recitations-toggle"
+                        onClick={() => toggleRecitations(course.name)}
+                        dir="auto"
+                      >
+                        <span className="chevron">{recExpanded ? '▾' : '▸'}</span>
+                        <span>Recitations</span>
+                      </button>
+                      <button
+                        className="course-add-btn"
+                        onClick={(e) => startAdding(e, course.name, 'recitation')}
+                        title="Add recitation"
+                      >
+                        +
+                      </button>
+                    </div>
+                    {recExpanded && (
+                      <ul className="lecture-list recitation-list">
+                        {(course.recitations ?? []).map((rec) => renderLectureItem(course.name, rec, 'recitation'))}
+                        {isAddingRecitation && (
+                          <li>
+                            <input
+                              ref={addLectureEdit.ref}
+                              className="lecture-add-input"
+                              value={addLectureEdit.value}
+                              onChange={(e) => addLectureEdit.setValue(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitAdd()
+                                if (e.key === 'Escape') { setAdding(null); addLectureEdit.setValue('') }
+                              }}
+                              onBlur={() => { setAdding(null); addLectureEdit.setValue('') }}
+                              placeholder="Recitation name…"
+                              dir="auto"
+                            />
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </li>
+                </ul>
               )}
             </div>
-
-            {expanded.has(course.name) && (
-              <ul className="lecture-list">
-                {course.lectures.map((lecture) => {
-                  const isSelected =
-                    selected?.course === course.name && selected?.lecture === lecture.name
-                  const isRenaming =
-                    renaming?.course === course.name && renaming?.lecture === lecture.name
-                  const isDragOver =
-                    dragOver?.course === course.name && dragOver?.lecture === lecture.name
-
-                  return (
-                    <li key={lecture.name}>
-                      {isRenaming ? (
-                        <input
-                          ref={renameLectureEdit.ref}
-                          className="lecture-add-input"
-                          value={renameLectureEdit.value}
-                          onChange={(e) => renameLectureEdit.setValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') commitRename()
-                            if (e.key === 'Escape') { setRenaming(null); renameLectureEdit.setValue('') }
-                          }}
-                          onBlur={() => { setRenaming(null); renameLectureEdit.setValue('') }}
-                          dir="auto"
-                        />
-                      ) : (
-                        <button
-                          className={`lecture-btn${isSelected ? ' selected' : ''}${isDragOver ? ' drag-over' : ''}`}
-                          onClick={(e) => {
-                            if (e.shiftKey) startRenaming(e, course.name, lecture.name)
-                            else onSelect(course.name, lecture.name)
-                          }}
-                          onDragOver={(e) => { e.preventDefault(); setDragOver({ course: course.name, lecture: lecture.name }) }}
-                          onDragLeave={() => setDragOver(null)}
-                          onDrop={(e) => handleDrop(e, course.name, lecture.name)}
-                          dir="auto"
-                        >
-                          {lecture.name}
-                        </button>
-                      )}
-                    </li>
-                  )
-                })}
-
-                {adding === course.name && (
-                  <li>
-                    <input
-                      ref={addLectureEdit.ref}
-                      className="lecture-add-input"
-                      value={addLectureEdit.value}
-                      onChange={(e) => addLectureEdit.setValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') commitAdd()
-                        if (e.key === 'Escape') { setAdding(null); addLectureEdit.setValue('') }
-                      }}
-                      onBlur={() => { setAdding(null); addLectureEdit.setValue('') }}
-                      placeholder="Lecture name…"
-                      dir="auto"
-                    />
-                  </li>
-                )}
-              </ul>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </nav>
 
       {pendingUpload && (
@@ -290,9 +381,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
           message={`Replace existing video.mp4 in "${pendingUpload.lecture}"?`}
           warning={`Note: This will delete all files in this lecture.`}
           onConfirm={() => {
-            const { course, lecture, file } = pendingUpload
+            const { course, lecture, file, kind } = pendingUpload
             setPendingUpload(null)
-            doUpload(course, lecture, file)
+            doUpload(course, lecture, file, kind)
           }}
           onCancel={() => setPendingUpload(null)}
         />
