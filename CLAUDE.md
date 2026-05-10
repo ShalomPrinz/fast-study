@@ -35,6 +35,10 @@ python3 to_pdf.py summary.md   # → summary.pdf
 
 Requires `pandoc` and `xelatex` (`texlive-xetex`) installed system-wide. The Hebrew font (Noto Serif Hebrew) is bundled in `fonts/` — no system font installation needed. Math expressions written in LaTeX syntax (`$...$`, `$$...$$`) render correctly in the PDF.
 
+## Acquiring source videos (`downloader/`)
+
+A Chrome extension + tiny Node server in `downloader/` captures `.mp4` streams from any web page and saves them straight into this root folder, where `main.py` can pick them up. Run `npm start` inside `downloader/` to launch the local server (port 3052); load the extension unpacked in Chrome, hit Play on a video, then click the extension's Download button. See `downloader/CLAUDE.md` for the architecture and the hardcoded extension-ID gotcha.
+
 ## Key design decisions
 
 - Audio is extracted at 16kHz mono 32kbps — minimal size, sufficient for speech recognition.
