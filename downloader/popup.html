@@ -2,47 +2,39 @@
 <html>
 <head>
   <style>
-    body { font-family: system-ui, sans-serif; width: 350px; padding: 15px; background: #1a1a1a; color: #ffffff; margin: 0; }
-    h3 { margin-top: 0; color: #2d8cff; }
-    .status { font-size: 13px; color: #aaaaaa; margin-bottom: 10px; }
-    textarea { width: 100%; box-sizing: border-box; height: 90px; background: #2d2d2d; color: #00ff66; border: 1px solid #555; padding: 8px; font-family: monospace; font-size: 11px; resize: none; border-radius: 4px; }
-    
-    /* Button Styles */
-    button { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: white; transition: background 0.2s; }
-    #nodeBtn { background: #9d2bba; margin-top: 10px; } 
-    #nodeBtn:hover { background: #7a2291; }
-    #copyBtn { background: #333333; margin-top: 10px;} 
-    #copyBtn:hover { background: #555555; }
-
-    /* Instruction Box Styles */
-    .server-instruction {
-      font-size: 11px;
-      color: #aaaaaa;
-      background: #222222;
-      border: 1px dashed #444;
-      border-radius: 4px;
-      padding: 8px;
-      margin-top: 6px;
-      text-align: center;
-    }
-    .server-instruction code {
-      display: block;
-      color: #ffcc00;
-      background: #111111;
-      padding: 5px;
-      margin-top: 5px;
-      border-radius: 3px;
-      font-family: monospace;
-      font-size: 8px;
-      word-break: break-all;
-      user-select: all; /* Allows 1-click highlighting of the path */
-    }
+    body { font-family: system-ui, sans-serif; width: 350px; padding: 15px; background: #1a1a1a; color: #fff; margin: 0; }
+    h3 { margin: 0 0 8px; color: #2d8cff; }
+    .status { font-size: 13px; color: #aaa; margin-bottom: 10px; }
+    label { display: block; font-size: 11px; color: #aaa; margin: 8px 0 3px; }
+    input, textarea { width: 100%; box-sizing: border-box; background: #2d2d2d; color: #fff; border: 1px solid #555; padding: 7px; border-radius: 4px; font-family: inherit; font-size: 12px; }
+    textarea { height: 70px; color: #00ff66; font-family: monospace; font-size: 11px; resize: none; }
+    .row { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 12px; color: #ccc; }
+    .row label { margin: 0; color: #ccc; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+    button { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: #fff; background: #9d2bba; margin-top: 12px; transition: background 0.2s; }
+    button:hover { background: #7a2291; }
+    button:disabled { background: #555; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <h3>Video Interceptor</h3>
-  <div class="status" id="status">Waiting for video stream... (Press Play)</div>
+  <div class="status" id="status">Waiting for video stream...</div>
+
+  <label for="course">Course</label>
+  <input id="course" list="courses-list" placeholder="e.g. Calculus" autocomplete="off" />
+  <datalist id="courses-list"></datalist>
+
+  <label for="lecture">Lecture</label>
+  <input id="lecture" list="lectures-list" placeholder="e.g. Lecture 3" autocomplete="off" />
+  <datalist id="lectures-list"></datalist>
+
+  <div class="row">
+    <label><input type="radio" name="kind" value="lecture" checked /> Lecture</label>
+    <label><input type="radio" name="kind" value="recitation" /> Recitation</label>
+  </div>
+
+  <label for="curlCommand">cURL command</label>
   <textarea id="curlCommand" readonly placeholder="Waiting..."></textarea>
+
   <button id="nodeBtn">Download</button>
   <script src="popup.js"></script>
 </body>
