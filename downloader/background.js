@@ -1,21 +1,35 @@
-chrome.webRequest.onSendHeaders.addListener(
-  (details) => {
-    // Look for media requests or URLs specifically containing .mp4
-    if (details.type === 'media' || details.url.includes('.mp4')) {
-      
-      // Save the intercepted data to local storage
-      chrome.storage.local.set({
-        lastVideoRequest: {
-          url: details.url,
-          headers: details.requestHeaders
-        }
-      });
+const MAX_HISTORY = 5;
 
-      // Add a red "1" badge to the extension icon so you know it caught the video
-      chrome.action.setBadgeText({ text: "1" });
-      chrome.action.setBadgeBackgroundColor({ color: "#FF0000" });
-    }
+function isVideoUrl(url) {
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith('.mp4');
+  } catch {
+    return false;
+  }
+}
+
+chrome.webRequest.onSendHeaders.addListener(
+  async (details) => {
+    if (!isVideoUrl(details.url)) return;
+
+    const entry = {
+      url: details.url,
+      headers: details.requestHeaders,
+      capturedAt: Date.now(),
+    };
+
+    const { videoRequests = [] } = await chrome.storage.local.get(['videoRequests']);
+    const deduped = videoRequests.filter((e) => e.url !== entry.url);
+    const next = [entry, ...deduped].slice(0, MAX_HISTORY);
+
+    await chrome.storage.local.set({
+      videoRequests: next,
+      lastVideoRequest: entry,
+    });
+
+    chrome.action.setBadgeText({ text: String(next.length) });
+    chrome.action.setBadgeBackgroundColor({ color: '#FF0000' });
   },
-  { urls: ["<all_urls>"] },
-  ["requestHeaders", "extraHeaders"]
+  { urls: ['<all_urls>'] },
+  ['requestHeaders', 'extraHeaders']
 );
