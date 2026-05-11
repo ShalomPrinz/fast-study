@@ -25,7 +25,7 @@ function suggestLectureName(course) {
   const latest = matches.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b));
   if (latest.sub === 0) return `Lecture ${latest.n + 1}`;
   if (latest.sub === 1) return `Lecture ${latest.n}.2`;
-  return `Lecture ${latest.n + 1}`;
+  return `Lecture ${latest.n + 1}.1`;
 }
 
 function suggestRecitationName(course) {
