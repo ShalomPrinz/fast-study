@@ -179,6 +179,11 @@ async function sendToServer() {
     if (!res.ok) throw new Error((await res.json()).error ?? 'Server rejected');
     btn.innerText = 'Downloading in background!';
     btn.style.background = '#00cc52';
+    setTimeout(() => {
+      btn.innerText = 'Download';
+      btn.style.background = '';
+      btn.disabled = false;
+    }, 2000);
   } catch (e) {
     alert(`Could not start download: ${e.message ?? e}`);
     btn.innerText = 'Download';
