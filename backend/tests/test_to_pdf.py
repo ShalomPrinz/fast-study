@@ -1,5 +1,5 @@
 import pytest
-from to_pdf import normalize_dashes, ensure_blank_before_lists, wrap_english_phrases
+from to_pdf import normalize_dashes, ensure_blank_before_lists, wrap_english_phrases, normalize_math_spans
 
 
 # ---------------------------------------------------------------------------
@@ -182,4 +182,56 @@ class TestWrapEnglishPhrases:
         assert "$x \\times y$" in result
         assert r"\LR{Pull Request}" in result
         assert r"\LR{times}" not in result
+
+
+# ---------------------------------------------------------------------------
+# normalize_math_spans
+# ---------------------------------------------------------------------------
+
+class TestNormalizeMathSpans:
+    def test_leading_space_inside_inline_math_stripped(self):
+        # The bug: pandoc requires no space after the opening $.
+        assert normalize_math_spans("($ \\geq 0$)") == "($\\geq 0$)"
+
+    def test_trailing_space_inside_inline_math_stripped(self):
+        assert normalize_math_spans("$x + 1 $") == "$x + 1$"
+
+    def test_both_sides_padded_inline_math_stripped(self):
+        assert normalize_math_spans("$ a + b $") == "$a + b$"
+
+    def test_clean_inline_math_unchanged(self):
+        assert normalize_math_spans("$x^2$") == "$x^2$"
+
+    def test_inner_spaces_preserved(self):
+        # Only edge whitespace is trimmed; internal spacing must survive.
+        assert normalize_math_spans("$ a + b + c $") == "$a + b + c$"
+
+    def test_display_math_with_inner_padding_unchanged(self):
+        # $$...$$ has different parsing rules; don't touch it.
+        text = "$$ a + b $$"
+        assert normalize_math_spans(text) == text
+
+    def test_display_math_multiline_unchanged(self):
+        text = "$$\na + b = c\n$$"
+        assert normalize_math_spans(text) == text
+
+    def test_multiple_inline_math_spans(self):
+        result = normalize_math_spans("$ a $ ו-$ b $")
+        assert result == "$a$ ו-$b$"
+
+    def test_hebrew_text_with_math_real_example(self):
+        # The actual failing snippet from the issue.
+        text = "אם התוצאה יכולה להיות גם אפס ($ \\geq 0$), המטריצה"
+        result = normalize_math_spans(text)
+        assert "($\\geq 0$)" in result
+        assert "$ \\geq" not in result
+
+    def test_no_math_unchanged(self):
+        text = "טקסט ללא מתמטיקה"
+        assert normalize_math_spans(text) == text
+
+    def test_lone_dollar_unchanged(self):
+        # A single $ with no closing partner is not a math span.
+        text = "price is $5 today"
+        assert normalize_math_spans(text) == text
 

@@ -22,6 +22,7 @@ LATEX_HEADER = r"""
 """
 
 LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
+MATH_SPAN_RE = re.compile(r'\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$')
 _WORD = r'(?:[0-9]+\-)?[A-Za-z][A-Za-z0-9\-]*'
 MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
 LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
@@ -68,6 +69,18 @@ def normalize_dashes(text: str) -> str:
     return text.replace('—', ' - ').replace('–', '-')
 
 
+def normalize_math_spans(text: str) -> str:
+    # Pandoc's inline math requires next to math `$`.
+    # No normalization: `$ \geq 0$`     -> Error: "Missing $ inserted"
+    # Normalization:    `$ \geq 0 $`    -> "$\geq 0$"
+    def replace(m: re.Match) -> str:
+        s = m.group(0)
+        if s.startswith('$$'):
+            return s
+        return '$' + s[1:-1].strip() + '$'
+    return MATH_SPAN_RE.sub(replace, text)
+
+
 def ensure_blank_before_lists(text: str) -> str:
     lines = text.splitlines(keepends=True)
     result = []
@@ -95,7 +108,7 @@ def convert_to_pdf(md_path: str) -> str:
     header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", fonts_dir)
 
     raw_md = input_path.read_text(encoding="utf-8")
-    fixed_md = wrap_english_phrases(ensure_blank_before_lists(normalize_dashes(raw_md)))
+    fixed_md = wrap_english_phrases(ensure_blank_before_lists(normalize_math_spans(normalize_dashes(raw_md))))
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".tex", delete=False) as f:
         f.write(header)
