@@ -1,5 +1,12 @@
 import pytest
-from to_pdf import normalize_dashes, ensure_blank_before_lists, wrap_english_phrases, normalize_math_spans
+from to_pdf import (
+    normalize_dashes,
+    ensure_blank_before_lists,
+    wrap_english_phrases,
+    normalize_math_spans,
+    force_ltr_inline_code,
+    apply_outside_fences,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -234,4 +241,156 @@ class TestNormalizeMathSpans:
         # A single $ with no closing partner is not a math span.
         text = "price is $5 today"
         assert normalize_math_spans(text) == text
+
+
+# ---------------------------------------------------------------------------
+# force_ltr_inline_code
+# ---------------------------------------------------------------------------
+
+class TestForceLtrInlineCode:
+    def test_two_word_code_wrapped_in_lr_texttt(self):
+        # The bug: "void execute" rendered as "execute void" in RTL paragraphs.
+        result = force_ltr_inline_code("הפקודה `void execute` מבצעת")
+        assert r"\LR{\texttt{void execute}}" in result
+        assert "`void execute`" not in result
+
+    def test_single_word_code_wrapped(self):
+        result = force_ltr_inline_code("פקודה `push` כאן")
+        assert r"\LR{\texttt{push}}" in result
+
+    def test_multiple_code_spans_each_wrapped(self):
+        result = force_ltr_inline_code("`git push` ואז `git pull`")
+        assert r"\LR{\texttt{git push}}" in result
+        assert r"\LR{\texttt{git pull}}" in result
+
+    def test_latex_special_underscore_escaped(self):
+        result = force_ltr_inline_code("`my_var`")
+        assert r"\LR{\texttt{my\_var}}" in result
+
+    def test_latex_special_hash_escaped(self):
+        result = force_ltr_inline_code("`#include`")
+        assert r"\LR{\texttt{\#include}}" in result
+
+    def test_latex_special_dollar_escaped(self):
+        result = force_ltr_inline_code("`$var`")
+        assert r"\LR{\texttt{\$var}}" in result
+
+    def test_latex_special_backslash_escaped(self):
+        result = force_ltr_inline_code("`a\\b`")
+        assert r"\LR{\texttt{a\textbackslash{}b}}" in result
+
+    def test_latex_special_braces_escaped(self):
+        result = force_ltr_inline_code("`{x}`")
+        assert r"\LR{\texttt{\{x\}}}" in result
+
+    def test_latex_special_caret_and_tilde_escaped(self):
+        result = force_ltr_inline_code("`a^b~c`")
+        assert r"\textasciicircum{}" in result
+        assert r"\textasciitilde{}" in result
+
+    def test_no_backticks_unchanged(self):
+        text = "טקסט ללא קוד"
+        assert force_ltr_inline_code(text) == text
+
+    def test_fenced_code_block_not_touched(self):
+        # Triple-backtick fences span newlines; the regex only matches inline.
+        text = "```\nvoid execute\n```\n"
+        assert force_ltr_inline_code(text) == text
+
+    def test_empty_backticks_unchanged(self):
+        # An empty `` is not a code span (needs at least one char).
+        text = "before `` after"
+        assert force_ltr_inline_code(text) == text
+
+    def test_backslash_does_not_re_escape_inserted_underscore(self):
+        # If escape order is wrong, `\\` -> `\textbackslash{}` -> the `_`
+        # inside that replacement gets escaped again. Guard against that.
+        result = force_ltr_inline_code("`\\`")
+        assert result == r"\LR{\texttt{\textbackslash{}}}"
+
+
+# ---------------------------------------------------------------------------
+# apply_outside_fences
+# ---------------------------------------------------------------------------
+
+class TestApplyOutsideFences:
+    def test_transform_runs_outside_fence(self):
+        text = "hello\n```\nworld\n```\n"
+        # Transform that uppercases — easy to assert "what ran where".
+        result = apply_outside_fences(text, str.upper)
+        assert result == "HELLO\n```\nworld\n```\n"
+
+    def test_fence_content_untouched(self):
+        text = "```\nimport socket\n```\n"
+        result = apply_outside_fences(text, str.upper)
+        # Fence content preserved exactly.
+        assert "import socket" in result
+        assert "IMPORT SOCKET" not in result
+
+    def test_language_tag_fence_recognized(self):
+        text = "before\n```python\nimport socket\n```\nafter\n"
+        result = apply_outside_fences(text, str.upper)
+        assert "import socket" in result
+        assert "BEFORE" in result
+        assert "AFTER" in result
+
+    def test_tilde_fence_recognized(self):
+        text = "before\n~~~\nimport socket\n~~~\nafter\n"
+        result = apply_outside_fences(text, str.upper)
+        assert "import socket" in result
+        assert "BEFORE" in result
+
+    def test_multiple_fences(self):
+        text = "a\n```\nx\n```\nb\n```\ny\n```\nc\n"
+        result = apply_outside_fences(text, str.upper)
+        assert result == "A\n```\nx\n```\nB\n```\ny\n```\nC\n"
+
+    def test_no_fence_full_transform(self):
+        text = "plain prose"
+        assert apply_outside_fences(text, str.upper) == "PLAIN PROSE"
+
+    def test_unterminated_fence_keeps_tail_untouched(self):
+        # If the closing fence is missing, treat the tail as inside-fence
+        # rather than leaking the transform into code.
+        text = "before\n```\nimport socket\n"
+        result = apply_outside_fences(text, str.upper)
+        assert "import socket" in result
+        assert "BEFORE" in result
+
+    def test_full_pipeline_does_not_mangle_python_block(self):
+        # Regression for the actual bug: \LR{...}, \texttt{...}, dash/math
+        # normalization all leaked into fenced code. Compose the real pipeline
+        # exactly as convert_to_pdf does.
+        md = (
+            "מימוש בסיסי של שרת UDP ב-Python נראה כך:\n"
+            "```python\n"
+            "from socket import socket, AF_INET, SOCK_DGRAM\n"
+            "\n"
+            "s = socket(AF_INET, SOCK_DGRAM)\n"
+            "s.bind(('', 19345))\n"
+            "```\n"
+        )
+
+        def pipeline(t):
+            return force_ltr_inline_code(
+                wrap_english_phrases(
+                    ensure_blank_before_lists(
+                        normalize_math_spans(normalize_dashes(t))
+                    )
+                )
+            )
+
+        result = apply_outside_fences(md, pipeline)
+        # Code-block contents stay verbatim.
+        assert "from socket import socket, AF_INET, SOCK_DGRAM" in result
+        assert "s = socket(AF_INET, SOCK_DGRAM)" in result
+        assert "s.bind(('', 19345))" in result
+        # No LaTeX wrappers leaked into the code block.
+        fence_start = result.index("```python")
+        fence_end = result.index("```", fence_start + 3)
+        code_section = result[fence_start:fence_end]
+        assert r"\LR{" not in code_section
+        assert r"\texttt{" not in code_section
+        # But the surrounding Hebrew prose still got Python wrapped LTR.
+        assert r"\LR{Python}" in result
 

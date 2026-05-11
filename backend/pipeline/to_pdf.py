@@ -23,6 +23,19 @@ LATEX_HEADER = r"""
 
 LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
 MATH_SPAN_RE = re.compile(r'\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$')
+INLINE_CODE_RE = re.compile(r'`([^`\n]+)`')
+
+_LATEX_SPECIAL = {
+    '{': r'\{',
+    '}': r'\}',
+    '$': r'\$',
+    '%': r'\%',
+    '&': r'\&',
+    '#': r'\#',
+    '_': r'\_',
+    '^': r'\textasciicircum{}',
+    '~': r'\textasciitilde{}',
+}
 _WORD = r'(?:[0-9]+\-)?[A-Za-z][A-Za-z0-9\-]*'
 MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
 LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
@@ -81,6 +94,47 @@ def normalize_math_spans(text: str) -> str:
     return MATH_SPAN_RE.sub(replace, text)
 
 
+def _latex_escape(s: str) -> str:
+    # Sentinel for backslash so the replacement isn't re-escaped.
+    s = s.replace('\\', '\x00')
+    for ch, esc in _LATEX_SPECIAL.items():
+        s = s.replace(ch, esc)
+    return s.replace('\x00', r'\textbackslash{}')
+
+
+def force_ltr_inline_code(text: str) -> str:
+    # RTL paragraph + plain \texttt{} = bidi reverses multi-word code spans.
+    # No wrap: `void execute`         -> rendered as "execute void"
+    # Wrap:    \LR{\texttt{void execute}} -> rendered as "void execute"
+    return INLINE_CODE_RE.sub(
+        lambda m: r'\LR{\texttt{' + _latex_escape(m.group(1)) + '}}',
+        text,
+    )
+
+
+def apply_outside_fences(text: str, transform):
+    # Other markdown helpers treats input as prose without ```...``` fences, this function clears the fences.
+    # Before: ```\nimport socket\n```        -> rendered text shows "\LR{import socket}"
+    # After:  ```\nimport socket\n```        -> rendered as a clean code block
+    out, buf, in_fence = [], [], False
+    for line in text.splitlines(keepends=True):
+        stripped = line.lstrip()
+        is_fence = stripped.startswith('```') or stripped.startswith('~~~')
+        if is_fence:
+            if buf:
+                joined = ''.join(buf)
+                out.append(joined if in_fence else transform(joined))
+                buf = []
+            out.append(line)
+            in_fence = not in_fence
+        else:
+            buf.append(line)
+    if buf:
+        joined = ''.join(buf)
+        out.append(joined if in_fence else transform(joined))
+    return ''.join(out)
+
+
 def ensure_blank_before_lists(text: str) -> str:
     lines = text.splitlines(keepends=True)
     result = []
@@ -108,7 +162,11 @@ def convert_to_pdf(md_path: str) -> str:
     header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", fonts_dir)
 
     raw_md = input_path.read_text(encoding="utf-8")
-    fixed_md = wrap_english_phrases(ensure_blank_before_lists(normalize_math_spans(normalize_dashes(raw_md))))
+
+    def preprocess(t: str) -> str:
+        return force_ltr_inline_code(wrap_english_phrases(ensure_blank_before_lists(normalize_math_spans(normalize_dashes(t)))))
+
+    fixed_md = apply_outside_fences(raw_md, preprocess)
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".tex", delete=False) as f:
         f.write(header)
