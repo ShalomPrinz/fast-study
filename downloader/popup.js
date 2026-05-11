@@ -1,7 +1,14 @@
 const SERVER = 'http://localhost:3052';
 
+const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
+
 let courses = [];
 let interceptedRequest = null;
+let youtubeUrl = null;
+
+function isYouTubeUrl(url) {
+  try { return YOUTUBE_HOSTS.has(new URL(url).hostname); } catch { return false; }
+}
 
 function $(id) { return document.getElementById(id); }
 
@@ -104,6 +111,19 @@ async function loadIntercepted() {
   const { videoRequests: allRequests = [] } = await chrome.storage.local.get(['videoRequests']);
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const pageUrl = tab?.url ?? null;
+
+  if (pageUrl && isYouTubeUrl(pageUrl)) {
+    youtubeUrl = pageUrl;
+    $('videoSelectLabel').style.display = 'none';
+    $('videoSelect').style.display = 'none';
+    $('youtubeUrlLabel').style.display = '';
+    $('youtubeUrl').style.display = '';
+    $('youtubeUrl').value = pageUrl;
+    setStatus('YouTube page detected - yt-dlp will be used.', '#00ff66');
+    if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' });
+    return;
+  }
+
   const videoRequests = allRequests.filter((r) => r.pageUrl === pageUrl);
   const select = $('videoSelect');
   select.innerHTML = '';
@@ -140,20 +160,21 @@ async function sendToServer() {
   const kind = getKind();
   const btn = $('nodeBtn');
 
-  if (!interceptedRequest) return alert('No video intercepted yet.');
+  if (!youtubeUrl && !interceptedRequest) return alert('No video intercepted yet.');
   if (!course || !lecture) return alert('Pick a course and lecture first.');
+
+  const endpoint = youtubeUrl ? '/download-youtube' : '/download';
+  const payload = youtubeUrl
+    ? { url: youtubeUrl, course, lecture, kind }
+    : { url: interceptedRequest.url, headers: interceptedRequest.headers, course, lecture, kind };
 
   btn.disabled = true;
   btn.innerText = 'Sending...';
   try {
-    const res = await fetch(`${SERVER}/download`, {
+    const res = await fetch(`${SERVER}${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url: interceptedRequest.url,
-        headers: interceptedRequest.headers,
-        course, lecture, kind,
-      }),
+      body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error((await res.json()).error ?? 'Server rejected');
     btn.innerText = 'Downloading in background!';

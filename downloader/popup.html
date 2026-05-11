@@ -31,8 +31,11 @@
     <label><input type="radio" name="kind" value="recitation" /> Recitation</label>
   </div>
 
-  <label for="videoSelect">Intercepted video</label>
+  <label for="videoSelect" id="videoSelectLabel">Intercepted video</label>
   <select id="videoSelect"></select>
+
+  <label for="youtubeUrl" id="youtubeUrlLabel" style="display:none">YouTube page</label>
+  <input id="youtubeUrl" readonly style="display:none" />
 
   <button id="nodeBtn">Download</button>
   <script src="popup.js"></script>

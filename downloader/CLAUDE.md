@@ -24,9 +24,16 @@ Four pieces, one flow:
    - Reads `videoRequests` from storage and **filters by exact-match `pageUrl === activeTab.url`** so captures from other pages/tabs never leak in.
    - Renders each capture in a `<select>` prefixed with its size (`[412.3 MB] host … file.mp4`). Sizes are probed lazily with a HEAD request, falling back to a `Range: bytes=0-0` GET to read `Content-Range` when HEAD is blocked. Failures render as `[?]`; pending probes show `[…]`.
    - On submit, POSTs `{url, headers, course, lecture, kind}` (raw URL + captured headers — not a prebuilt curl string) to `/download`.
-3. **`server.js`** — two endpoints:
+3. **`server.js`** — three endpoints:
    - `GET /courses` → `[{name, lectures, recitations}]` by scanning `DATA_ROOT`.
    - `POST /download` → validates inputs (`isSafeName` rejects `/`, `\`, `.`, `..`), `mkdir -p`s the lecture folder, builds curl args from the captured headers (stripping `Range`, `If-Range`, `If-None-Match`, `If-Modified-Since`, `Host`, `Content-Length` — see `SKIP_HEADERS`), forces `--output video.mp4`, and `execFile`s curl (no shell) with `cwd` set to the lecture folder. Recitations live at `{course}/Recitations/{name}/` to match the backend's `lecture_dir()` convention.
+   - `POST /download-youtube` → same input validation + `lectureDir`, but `execFile`s `yt-dlp` with `-o video.%(ext)s --merge-output-format mp4 --no-playlist` so DASH-segmented YouTube streams are muxed into a single `video.mp4`. No captured headers — yt-dlp manages its own session.
+
+### YouTube path
+
+YouTube serves video via DASH-segmented streams (separate audio/video tracks behind signed URLs), so the standard `.mp4`-capture flow gets nothing usable. Instead: `popup.js` hostname-checks `activeTab.url` against `{youtube.com, www.youtube.com, m.youtube.com, youtu.be}`; if it matches, the popup hides the captured-requests `<select>`, shows the page URL as a readonly field, and POSTs `{url, course, lecture, kind}` (no headers) to `/download-youtube`, which `execFile`s `yt-dlp`.
+
+**Prerequisite:** `yt-dlp` must be installed system-wide (e.g. `pipx install yt-dlp` or `apt install yt-dlp`) — same kind of external CLI dependency as `ffmpeg` in the backend. The server doesn't install it.
 4. **`.env` loader** — `server.js` reads `../.env` at startup (no dotenv dep — tiny inline parser) to pick up `DATA_ROOT`, the same env file the backend uses.
 
 The header-replay approach is the whole point: streaming sites gate `.mp4` URLs behind short-lived tokens and Referer/Origin checks, so naive downloading fails. By cloning the browser's exact headers we reuse the live session.

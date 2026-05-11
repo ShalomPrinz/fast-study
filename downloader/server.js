@@ -108,6 +108,53 @@ function runDownload(args, cwd) {
   });
 }
 
+function runYoutubeDownload(url, cwd) {
+  console.log(`\n📥 yt-dlp downloading to: ${cwd}`);
+  // -o video.%(ext)s + --merge-output-format mp4 -> final file is `video.mp4`.
+  // --no-playlist keeps a playlist-context URL to the single current video.
+  // Recent yt-dlp needs a JS runtime to evaluate YouTube's player script;
+  // only `deno` is auto-enabled, so point it at the `node` we already have.
+  const args = [
+    '--no-playlist',
+    '--merge-output-format', 'mp4',
+    '--js-runtimes', 'node',
+    '--remote-components', 'ejs:github',
+    '-o', 'video.%(ext)s',
+    url,
+  ];
+  execFile('yt-dlp', args, { cwd, maxBuffer: 10 * 1024 * 1024 }, (error, _stdout, stderr) => {
+    if (error) {
+      console.error(`❌ yt-dlp failed: ${error.message}`);
+      if (stderr) console.error(stderr);
+      return;
+    }
+    console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
+  });
+}
+
+const YOUTUBE_HOST_RE = /(^|\.)youtube\.com$|^youtu\.be$/i;
+
+async function handleDownloadYoutube(req, res) {
+  const { url, course, lecture, kind = 'lecture' } = JSON.parse(await readBody(req));
+
+  let host = '';
+  try { host = new URL(url).hostname; } catch {}
+  if (!host || !YOUTUBE_HOST_RE.test(host)) {
+    return send(res, 400, { error: 'valid youtube url required' });
+  }
+  if (!isSafeName(course) || !isSafeName(lecture)) {
+    return send(res, 400, { error: 'course and lecture are required' });
+  }
+  if (kind !== 'lecture' && kind !== 'recitation') {
+    return send(res, 400, { error: `invalid kind: ${kind}` });
+  }
+
+  const dir = lectureDir(course, lecture, kind);
+  fs.mkdirSync(dir, { recursive: true });
+  runYoutubeDownload(url, dir);
+  send(res, 200, { status: 'Downloading in background...', target: dir });
+}
+
 async function handleDownload(req, res) {
   const { url, headers, course, lecture, kind = 'lecture' } = JSON.parse(await readBody(req));
 
@@ -143,6 +190,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && req.url === '/download') {
       return await handleDownload(req, res);
+    }
+    if (req.method === 'POST' && req.url === '/download-youtube') {
+      return await handleDownloadYoutube(req, res);
     }
     res.writeHead(404).end();
   } catch (e) {
