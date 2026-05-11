@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { execFile } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -84,7 +84,7 @@ function buildCurlArgs(url, headers) {
   // surfaces this as `SSL_read: unexpected eof`. Retry on any error so a flaky
   // connection doesn't abort the whole download.
   const args = [
-    '-L', '--fail', '--compressed', '--silent', '--show-error',
+    '-L', '--fail', '--compressed', '--progress-bar', '--show-error',
     '--retry', '3', '--retry-delay', '2', '--retry-all-errors',
     '--output', VIDEO_FILENAME,
   ];
@@ -98,13 +98,12 @@ function buildCurlArgs(url, headers) {
 
 function runDownload(args, cwd) {
   console.log(`\n📥 Downloading to: ${cwd}`);
-  execFile('curl', args, { cwd, maxBuffer: 10 * 1024 * 1024 }, (error, _stdout, stderr) => {
-    if (error) {
-      console.error(`❌ Download failed: ${error.message}`);
-      if (stderr) console.error(stderr);
-      return;
-    }
-    console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
+  // spawn + inherited stdio so curl's --progress-bar updates the terminal live.
+  const child = spawn('curl', args, { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
+  child.on('error', (err) => console.error(`❌ Download failed: ${err.message}`));
+  child.on('close', (code) => {
+    if (code === 0) console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
+    else console.error(`❌ Download failed: curl exited with code ${code}`);
   });
 }
 
@@ -122,13 +121,12 @@ function runYoutubeDownload(url, cwd) {
     '-o', 'video.%(ext)s',
     url,
   ];
-  execFile('yt-dlp', args, { cwd, maxBuffer: 10 * 1024 * 1024 }, (error, _stdout, stderr) => {
-    if (error) {
-      console.error(`❌ yt-dlp failed: ${error.message}`);
-      if (stderr) console.error(stderr);
-      return;
-    }
-    console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
+  // spawn + inherited stdio so yt-dlp's `[download] X%` lines stream live.
+  const child = spawn('yt-dlp', args, { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
+  child.on('error', (err) => console.error(`❌ yt-dlp failed: ${err.message}`));
+  child.on('close', (code) => {
+    if (code === 0) console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
+    else console.error(`❌ yt-dlp failed: exited with code ${code}`);
   });
 }
 
