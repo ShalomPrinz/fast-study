@@ -1,20 +1,12 @@
 const SERVER = 'http://localhost:3052';
 
 let courses = [];
+let interceptedRequest = null;
 
 function $(id) { return document.getElementById(id); }
 
 function getKind() {
   return document.querySelector('input[name="kind"]:checked').value;
-}
-
-function buildCurl(req) {
-  let curl = `curl "${req.url}"`;
-  for (const h of req.headers ?? []) {
-    const val = h.value.replace(/"/g, '\\"');
-    curl += ` -H "${h.name}: ${val}"`;
-  }
-  return curl;
 }
 
 function setStatus(text, color) {
@@ -69,22 +61,51 @@ async function loadCourses() {
   }
 }
 
+function shortenUrl(url) {
+  try {
+    const u = new URL(url);
+    const file = u.pathname.split('/').pop();
+    return `${u.hostname} … ${file}`;
+  } catch {
+    return url.slice(0, 80);
+  }
+}
+
+function selectVideo(req) {
+  interceptedRequest = req;
+}
+
 async function loadIntercepted() {
-  const { lastVideoRequest } = await chrome.storage.local.get(['lastVideoRequest']);
-  if (!lastVideoRequest) return;
-  setStatus('Video intercepted successfully!', '#00ff66');
+  const { videoRequests = [] } = await chrome.storage.local.get(['videoRequests']);
+  const select = $('videoSelect');
+  select.innerHTML = '';
+
+  if (!videoRequests.length) {
+    setStatus('Waiting for video stream — hit Play in the player.', '#aaaaaa');
+    select.innerHTML = '<option>(none captured)</option>';
+    return;
+  }
+
+  setStatus(`${videoRequests.length} video request(s) intercepted.`, '#00ff66');
   chrome.action.setBadgeText({ text: '' });
-  $('curlCommand').value = buildCurl(lastVideoRequest);
+
+  for (const [i, req] of videoRequests.entries()) {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = shortenUrl(req.url);
+    select.appendChild(opt);
+  }
+  select.addEventListener('change', () => selectVideo(videoRequests[+select.value]));
+  selectVideo(videoRequests[0]);
 }
 
 async function sendToServer() {
-  const command = $('curlCommand').value.trim();
   const course = $('course').value.trim();
   const lecture = $('lecture').value.trim();
   const kind = getKind();
   const btn = $('nodeBtn');
 
-  if (!command) return alert('No video intercepted yet.');
+  if (!interceptedRequest) return alert('No video intercepted yet.');
   if (!course || !lecture) return alert('Pick a course and lecture first.');
 
   btn.disabled = true;
@@ -93,7 +114,11 @@ async function sendToServer() {
     const res = await fetch(`${SERVER}/download`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ command, course, lecture, kind }),
+      body: JSON.stringify({
+        url: interceptedRequest.url,
+        headers: interceptedRequest.headers,
+        course, lecture, kind,
+      }),
     });
     if (!res.ok) throw new Error((await res.json()).error ?? 'Server rejected');
     btn.innerText = 'Downloading in background!';

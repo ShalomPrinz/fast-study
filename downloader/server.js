@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { exec } from 'node:child_process';
+import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -72,15 +72,29 @@ function lectureDir(course, lecture, kind) {
     : path.join(DATA_ROOT, course, lecture);
 }
 
-function rewriteCurl(cmd) {
-  return cmd.replace(/\s+--output\s+(?:"[^"]*"|'[^']*'|\S+)/g, '') + ` --output "${VIDEO_FILENAME}"`;
+// Range/conditional headers cause curl to fetch a partial body — the file
+// then lacks the MP4 header at offset 0 and is unplayable.
+const SKIP_HEADERS = new Set([
+  'range', 'if-range', 'if-none-match', 'if-modified-since',
+  'host', 'content-length',
+]);
+
+function buildCurlArgs(url, headers) {
+  const args = ['-L', '--fail', '--compressed', '--silent', '--show-error', '--output', VIDEO_FILENAME];
+  for (const h of headers ?? []) {
+    if (SKIP_HEADERS.has(h.name.toLowerCase())) continue;
+    args.push('-H', `${h.name}: ${h.value}`);
+  }
+  args.push(url);
+  return args;
 }
 
-function runDownload(cmd, cwd) {
+function runDownload(args, cwd) {
   console.log(`\n📥 Downloading to: ${cwd}`);
-  exec(cmd, { cwd, maxBuffer: 10 * 1024 * 1024 }, (error) => {
+  execFile('curl', args, { cwd, maxBuffer: 10 * 1024 * 1024 }, (error, _stdout, stderr) => {
     if (error) {
       console.error(`❌ Download failed: ${error.message}`);
+      if (stderr) console.error(stderr);
       return;
     }
     console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
@@ -88,10 +102,10 @@ function runDownload(cmd, cwd) {
 }
 
 async function handleDownload(req, res) {
-  const { command, course, lecture, kind = 'lecture' } = JSON.parse(await readBody(req));
+  const { url, headers, course, lecture, kind = 'lecture' } = JSON.parse(await readBody(req));
 
-  if (!command || !command.startsWith('curl')) {
-    return send(res, 400, { error: 'Invalid curl command' });
+  if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
+    return send(res, 400, { error: 'valid url required' });
   }
   if (!isSafeName(course) || !isSafeName(lecture)) {
     return send(res, 400, { error: 'course and lecture are required' });
@@ -102,7 +116,7 @@ async function handleDownload(req, res) {
 
   const dir = lectureDir(course, lecture, kind);
   fs.mkdirSync(dir, { recursive: true });
-  runDownload(rewriteCurl(command), dir);
+  runDownload(buildCurlArgs(url, headers), dir);
   send(res, 200, { status: 'Downloading in background...', target: dir });
 }
 
