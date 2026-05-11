@@ -80,7 +80,14 @@ const SKIP_HEADERS = new Set([
 ]);
 
 function buildCurlArgs(url, headers) {
-  const args = ['-L', '--fail', '--compressed', '--silent', '--show-error', '--output', VIDEO_FILENAME];
+  // Video CDNs sometimes close TLS without close_notify mid-stream; OpenSSL 3
+  // surfaces this as `SSL_read: unexpected eof`. Retry on any error so a flaky
+  // connection doesn't abort the whole download.
+  const args = [
+    '-L', '--fail', '--compressed', '--silent', '--show-error',
+    '--retry', '3', '--retry-delay', '2', '--retry-all-errors',
+    '--output', VIDEO_FILENAME,
+  ];
   for (const h of headers ?? []) {
     if (SKIP_HEADERS.has(h.name.toLowerCase())) continue;
     args.push('-H', `${h.name}: ${h.value}`);
