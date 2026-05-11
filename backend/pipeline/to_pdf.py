@@ -164,7 +164,12 @@ def convert_to_pdf(md_path: str) -> str:
     raw_md = input_path.read_text(encoding="utf-8")
 
     def preprocess(t: str) -> str:
-        return force_ltr_inline_code(wrap_english_phrases(ensure_blank_before_lists(normalize_math_spans(normalize_dashes(t)))))
+        t = normalize_dashes(t)
+        t = normalize_math_spans(t)
+        t = ensure_blank_before_lists(t)
+        t = wrap_english_phrases(t)
+        t = force_ltr_inline_code(t)
+        return t
 
     fixed_md = apply_outside_fences(raw_md, preprocess)
 
