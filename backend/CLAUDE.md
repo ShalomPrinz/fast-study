@@ -73,6 +73,16 @@ cd backend
 python3 -m pytest tests/ -q
 ```
 
+## Testing after every logic update
+
+Whenever pipeline logic changes (anything under `pipeline/`, or any helper invoked by it), this is non-negotiable:
+
+1. **Run the existing tests first** — `python3 -m pytest tests/ -q`. A green baseline confirms the change didn't break adjacent behavior. If a test fails, fix the code or update the test deliberately — never silently delete or skip it.
+2. **Add tests for the new logic** in the matching `tests/test_<module>.py`. Cover: the bug case (a regression test that fails without the fix), the happy path, and at least one edge case (empty input, escape/special chars, boundary between protected and unprotected regions). See `TestNormalizeMathSpans` and `TestForceLtrInlineCode` in `tests/test_to_pdf.py` for the shape.
+3. **Re-run the full suite** after adding tests. The PR / commit is not done until `pytest tests/ -q` is green.
+
+This applies even to "small" or "obvious" changes — preprocessing helpers in `to_pdf.py` look trivial but interact with bidi/LaTeX in surprising ways, which is exactly why every helper there has a dedicated test class.
+
 ## Key design decisions
 
 - Pipeline functions are pure: they take file paths / strings, no global state.

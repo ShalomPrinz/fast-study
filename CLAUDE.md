@@ -39,6 +39,17 @@ Requires `pandoc` and `xelatex` (`texlive-xetex`) installed system-wide. The Heb
 
 A Chrome extension + tiny Node server in `downloader/` captures `.mp4` streams from any web page and saves them as `video.mp4` directly into `{DATA_ROOT}/{course}/{lecture}/` (or `{course}/Recitations/{name}/`), ready for the backend's `/run/audio` step. The popup auto-completes course/lecture names from the existing folders under `DATA_ROOT` and suggests the next lecture name using the same logic as the frontend sidebar. Run `npm start` inside `downloader/` to launch the local server (port 3052); load the extension unpacked in Chrome, hit Play on a video, then click Download. See `downloader/CLAUDE.md` for the architecture and the hardcoded extension-ID gotcha.
 
+## Documentation and code style
+
+- Document the non-obvious WHY — a hidden constraint, a subtle invariant, a workaround for a specific bug, or behavior that would surprise a reader.
+- For non-trivial helpers, prefer a 2-3 line comment that contrasts the failure mode with the fix. Show, don't explain. See `normalize_math_spans` and `force_ltr_inline_code` in `backend/pipeline/to_pdf.py` for the canonical pattern:
+  ```python
+  # One sentence stating the failure condition.
+  # Before: <concrete input>  -> <bad output / error>
+  # After:  <concrete input>  -> <good output>
+  ```
+- Never write multi-paragraph docstrings or multi-line comment blocks just to fill space — one short line is the default, the before/after pattern is the upgrade when the WHY is non-obvious.
+
 ## Key design decisions
 
 - Audio is extracted at 16kHz mono 32kbps — minimal size, sufficient for speech recognition.
