@@ -101,7 +101,10 @@ function selectVideo(req) {
 }
 
 async function loadIntercepted() {
-  const { videoRequests = [] } = await chrome.storage.local.get(['videoRequests']);
+  const { videoRequests: allRequests = [] } = await chrome.storage.local.get(['videoRequests']);
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const pageUrl = tab?.url ?? null;
+  const videoRequests = allRequests.filter((r) => r.pageUrl === pageUrl);
   const select = $('videoSelect');
   select.innerHTML = '';
 
@@ -112,7 +115,7 @@ async function loadIntercepted() {
   }
 
   setStatus(`${videoRequests.length} video request(s) intercepted.`, '#00ff66');
-  chrome.action.setBadgeText({ text: '' });
+  if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' });
 
   const opts = [];
   for (const [i, req] of videoRequests.entries()) {
