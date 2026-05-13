@@ -14,6 +14,7 @@ export interface Client {
   get<T>(path: string, init?: RequestOptions): Promise<T>
   post<T>(path: string, init?: RequestOptions): Promise<T>
   put<T>(path: string, init?: RequestOptions): Promise<T>
+  patch<T>(path: string, init?: RequestOptions): Promise<T>
   delete<T>(path: string, init?: RequestOptions): Promise<T>
   request(path: string, init?: RequestOptions): Promise<Response>
   url(path: string): string
@@ -53,6 +54,7 @@ export function createClient(baseUrl: string): Client {
     get: (path, init) => json(path, 'GET', init),
     post: (path, init) => json(path, 'POST', init),
     put: (path, init) => json(path, 'PUT', init),
+    patch: (path, init) => json(path, 'PATCH', init),
     delete: (path, init) => json(path, 'DELETE', init),
     request,
     url,

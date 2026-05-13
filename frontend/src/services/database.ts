@@ -1,5 +1,5 @@
 import type { FileName, Course, Kind } from '../types'
-import { createClient, httpError, kindQuery } from './http'
+import { createClient, kindQuery } from './http'
 
 const database = createClient(import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001')
 
@@ -24,11 +24,7 @@ export async function createCourse(name: string): Promise<void> {
 }
 
 export async function renameCourse(oldName: string, newName: string): Promise<void> {
-  const res = await database.request(`/courses/${encodeURIComponent(oldName)}`, {
-    method: 'PATCH',
-    json: { name: newName },
-  })
-  if (!res.ok) throw httpError(res)
+  await database.patch<unknown>(`/courses/${encodeURIComponent(oldName)}`, { json: { name: newName } })
 }
 
 export async function createLecture(course: string, name: string, kind?: Kind): Promise<void> {
@@ -47,11 +43,10 @@ export async function uploadVideo(course: string, lecture: string, file: File, k
 }
 
 export async function renameLecture(course: string, oldName: string, newName: string, kind?: Kind): Promise<void> {
-  const res = await database.request(
+  await database.patch<unknown>(
     `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(oldName)}${kindQuery(kind)}`,
-    { method: 'PATCH', json: { name: newName } },
+    { json: { name: newName } },
   )
-  if (!res.ok) throw httpError(res)
 }
 
 export async function deleteFile(course: string, lecture: string, file: FileName, kind?: Kind): Promise<void> {
