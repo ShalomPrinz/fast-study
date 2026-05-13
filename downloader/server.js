@@ -174,7 +174,7 @@ async function runDownload(url, headers, cwd) {
 function notifyFrontend() {
   try {
     const req = http.request(
-      'http://localhost:5173/api/notify',
+      'http://localhost:8001/notify',
       { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': 2 } },
     );
     req.on('error', () => {});

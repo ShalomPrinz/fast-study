@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { toast } from 'react-toastify'
 import type { Course, Lecture, Selected, Kind } from '../types'
-import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../api'
+import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../services/database'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 import { useInlineEdit } from '../hooks/useInlineEdit'

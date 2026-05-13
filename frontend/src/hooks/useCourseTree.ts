@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Course, Lecture, FileStatus, Selected } from '../types'
-import { fetchTree, fetchCourse } from '../api'
+import { fetchTree, fetchCourse, databaseUrl } from '../services/database'
 
 export function useCourseTree(selected: Selected | null) {
   const [courses, setCourses] = useState<Course[]>([])
@@ -14,7 +14,7 @@ export function useCourseTree(selected: Selected | null) {
   }, [])
 
   useEffect(() => {
-    const es = new EventSource('/api/events')
+    const es = new EventSource(`${databaseUrl}/events`)
     const onNotify = () => { refreshCourses() }
     es.addEventListener('notify', onNotify)
     return () => {

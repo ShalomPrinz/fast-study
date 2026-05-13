@@ -4,35 +4,36 @@ Top-level guidance for Claude Code in this repo. Service-specific docs live next
 
 ## What this project is
 
-A three-service app that turns a Hebrew video lecture into a structured written summary (and uploads it to Google Drive). The video → audio → transcript → summary → PDF → Drive pipeline lives in `backend/`; a web UI for driving it lives in `frontend/`; and a Chrome extension + helper server for grabbing source videos off lecture sites lives in `downloader/`.
+A four-service app that turns a Hebrew video lecture into a structured written summary (and uploads it to Google Drive). The video → audio → transcript → summary → PDF → Drive pipeline lives in `backend/`; a web UI for driving it lives in `frontend/`; a Chrome extension + helper server for grabbing source videos off lecture sites lives in `downloader/`; and all filesystem reads/writes under `DATA_ROOT` (plus the cross-service SSE notify channel) are owned by `database/`.
 
 ## Repository layout
 
 ```
 backend/      FastAPI app + pipeline modules (Python).        See backend/CLAUDE.md
-frontend/     React + Vite + TS UI with a Vite-plugin fs API. See frontend/CLAUDE.md
+frontend/     React + Vite + TS UI (talks to database/).      See frontend/CLAUDE.md
 downloader/   Chrome MV3 extension + small Node server.       See downloader/CLAUDE.md
+database/     FastAPI service owning all DATA_ROOT I/O + SSE. See database/CLAUDE.md
 .env          Shared env file — DATA_ROOT, GROQ_API_KEY, GDRIVE_ROOT_FOLDER
 ```
 
-All three services read the same `.env` at the repo root and share one on-disk layout under `DATA_ROOT`:
+All services read the same `.env` at the repo root and share one on-disk layout under `DATA_ROOT`:
 
 ```
 {DATA_ROOT}/{course}/{lecture}/...                  # lectures
 {DATA_ROOT}/{course}/Recitations/{name}/...         # recitations
 ```
 
-When changing anything that touches paths, file names, or course/recitation conventions, update **all three** services — they each encode this layout independently.
+When changing anything that touches paths, file names, or course/recitation conventions, update `database/` plus every service that still re-encodes the layout (`backend/main.py::lecture_dir`, `downloader/server.js::lectureDir`) — they each encode this layout independently until they migrate to the database service.
 
 ## Running the dev stack
 
-All three services boot in one terminal via `concurrently`:
+All four services boot in one terminal via `concurrently`:
 
 ```bash
 npm run dev
 ```
 
-Logs are prefixed `Backend` / `Frontend` / `Downloader` and color-coded; Ctrl-C kills all three. The script is defined in the root `package.json`. Per-service commands and ports are documented in each service's CLAUDE.md.
+Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-coded; Ctrl-C kills all four. The script is defined in the root `package.json`. Per-service commands and ports are documented in each service's CLAUDE.md.
 
 ## Always use `python3`
 
