@@ -160,9 +160,26 @@ async function runDownload(url, headers, cwd) {
   const child = spawn('curl', buildCurlArgs(url, headers), { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
   child.on('error', (err) => console.error(`❌ Download failed: ${err.message}`));
   child.on('close', (code) => {
-    if (code === 0) console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
-    else console.error(`❌ Download failed: curl exited with code ${code}`);
+    if (code === 0) {
+      console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
+      notifyFrontend();
+    } else {
+      console.error(`❌ Download failed: curl exited with code ${code}`);
+    }
   });
+}
+
+// Non-blocking ping to the Vite dev server so the sidebar refetches its tree.
+// Failure is silent: if the frontend isn't running the download must still succeed.
+function notifyFrontend() {
+  try {
+    const req = http.request(
+      'http://localhost:5173/api/notify',
+      { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': 2 } },
+    );
+    req.on('error', () => {});
+    req.end('{}');
+  } catch {}
 }
 
 // Probe the merged-mp4 size by asking yt-dlp to print filesize fields without
@@ -216,8 +233,12 @@ async function runYoutubeDownload(url, cwd) {
   const child = spawn('yt-dlp', args, { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
   child.on('error', (err) => console.error(`❌ yt-dlp failed: ${err.message}`));
   child.on('close', (code) => {
-    if (code === 0) console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
-    else console.error(`❌ yt-dlp failed: exited with code ${code}`);
+    if (code === 0) {
+      console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
+      notifyFrontend();
+    } else {
+      console.error(`❌ yt-dlp failed: exited with code ${code}`);
+    }
   });
 }
 
