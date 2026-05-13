@@ -6,6 +6,11 @@ from .paths import data_root, RECITATIONS_DIR, PREDEFINED_FILES
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
+    """
+    Return partial-transcription progress {completed, total}, or None if absent or malformed.
+    Swallows read/parse errors so a corrupt meta file doesn't break the tree listing.
+    """
+
     meta_path = lecture_path / "transcript.partial.meta.json"
     if not meta_path.exists():
         return None
@@ -21,6 +26,8 @@ def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
 
 
 def _read_lecture(lecture_path: Path, name: str) -> dict:
+    """Build the tree entry for one lecture: existence/size for each predefined file, plus partial-transcript progress."""
+
     files = {}
     for f in PREDEFINED_FILES:
         p = lecture_path / f
@@ -41,6 +48,8 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
 
 
 def _read_lectures(course_path: Path) -> list[dict]:
+    """List lecture entries directly under a course dir, skipping the Recitations folder."""
+
     if not course_path.exists():
         return []
     return [
@@ -51,6 +60,8 @@ def _read_lectures(course_path: Path) -> list[dict]:
 
 
 def _read_recitations(course_path: Path) -> list[dict]:
+    """List recitation entries from the course's Recitations subdirectory."""
+
     rec_dir = course_path / RECITATIONS_DIR
     if not rec_dir.exists():
         return []
@@ -62,6 +73,8 @@ def _read_recitations(course_path: Path) -> list[dict]:
 
 
 def read_course(name: str) -> Optional[dict]:
+    """Return the full tree for a single course (lectures + recitations), or None if it doesn't exist."""
+
     course_path = data_root() / name
     if not course_path.exists():
         return None
@@ -73,6 +86,8 @@ def read_course(name: str) -> Optional[dict]:
 
 
 def read_tree() -> list[dict]:
+    """Return every course under DATA_ROOT with its lecture and recitation tree."""
+
     root = data_root()
     if not root.exists():
         return []

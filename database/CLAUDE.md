@@ -69,3 +69,9 @@ python3 main.py                          # also works, same port
 - **SSE lives here.** `/events` is a long-lived `text/event-stream` response; each subscriber gets its own `asyncio.Queue`. `/notify` fans an `event: notify` message out to every queue. Producers (today: the downloader, after a successful download) fire-and-forget — failure to deliver is silent and non-blocking, same contract as the previous Vite-plugin handler.
 - **CORS open to `http://localhost:5173`.** Backend and downloader call this service server-to-server, so no CORS entry is needed for them.
 - **No auth.** Localhost-only trust model.
+
+## Documentation
+
+Every `def` / `async def` across database servoce `*.py` files has a one-line docstring as its first statement describing intent (not mechanics). A few carry an extra line when the WHY isn't obvious from the code — e.g. `_read_transcribe_partial` swallowing parse errors, `write_summary` snapshotting the pre-edit original on first write, `write_video` wiping derived artifacts, `broadcast_notify` being fire-and-forget.
+
+**Maintain documentation on each change.** When adding a new function, give it a docstring in the same style. When changing a function's behavior, update its docstring.

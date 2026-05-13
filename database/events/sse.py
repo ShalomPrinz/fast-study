@@ -5,6 +5,8 @@ _subscribers: set[asyncio.Queue] = set()
 
 
 async def subscribe() -> AsyncIterator[str]:
+    """Yield SSE-formatted messages for one subscriber until the client disconnects."""
+
     queue: asyncio.Queue = asyncio.Queue()
     _subscribers.add(queue)
     try:
@@ -17,6 +19,8 @@ async def subscribe() -> AsyncIterator[str]:
 
 
 def broadcast_notify() -> None:
+    """Fan a `notify` event out to every subscriber; per-queue failures are swallowed (fire-and-forget)."""
+
     msg = "event: notify\ndata: {}\n\n"
     for q in list(_subscribers):
         try:
