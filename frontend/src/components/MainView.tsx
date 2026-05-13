@@ -3,7 +3,7 @@ import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import type { Step, FileName, TimingStats, LectureContext, RateLimitInfo, RateLimitProgress } from '../types'
 import { fetchCourse, deleteFile, fileUrl } from '../services/database'
-import { fetchTimingStats, runStep } from '../api'
+import { fetchTimingStats, runStep } from '../services/backend'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 

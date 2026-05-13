@@ -31,8 +31,9 @@ npm run build    # tsc -b && vite build → dist/
 ```
 frontend/
   src/
-    api.ts                   HTTP client for the FastAPI backend (runStep, fetchTimingStats)
     services/
+      http.ts                  typed fetch client + shared `httpError` / `kindQuery`
+      backend.ts               HTTP client for the FastAPI backend (runStep, fetchTimingStats)
       database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL)
     types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, StepResult, …
     App.tsx                  React Router routes; renders Layout + the three views
@@ -92,7 +93,9 @@ frontend/
 
 ## API split
 
-- `src/api.ts` → `${VITE_API_URL}` (FastAPI backend). Only `runStep` and `fetchTimingStats`.
+- `src/services/backend.ts` → `${VITE_API_URL}` (FastAPI backend). Only `runStep` and `fetchTimingStats`.
 - `src/services/database.ts` → `${VITE_DATABASE_URL}` (database service). Everything else: tree CRUD, summary CRUD, `uploadVideo`, `fileUrl`, and the `databaseUrl` export used to build the SSE EventSource URL.
 
-Course / lecture / file names are `encodeURIComponent`-encoded in URLs to handle Hebrew folder names. `kind === 'recitation'` is appended as `?kind=recitation` via a shared `kindQuery` helper in each module.
+Both clients are built from `createClient(baseUrl)` in `src/services/http.ts`, which centralizes the `if (!res.ok) throw httpError(res)` / JSON-encode / `Content-Type` boilerplate and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status").
+
+Course / lecture / file names are `encodeURIComponent`-encoded in URLs to handle Hebrew folder names. `kind === 'recitation'` is appended as `?kind=recitation` via the shared `kindQuery` helper in `services/http.ts`.
