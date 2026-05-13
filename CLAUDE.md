@@ -9,6 +9,16 @@ Converts a video file into a structured Hebrew summary via a 3-step pipeline:
 2. **transcribe** — splits audio into 10-min chunks and transcribes each via Groq's `whisper-large-v3` API (Hebrew)
 3. **summarize** — pipes the transcript into Gemini CLI using the prompt defined in `summarize.md`
 
+## Running the dev stack
+
+All three services (backend, frontend, downloader) boot in one terminal via `concurrently`:
+
+```bash
+npm run dev
+```
+
+Logs are prefixed `Backend` / `Frontend` / `Downloader` and color-coded; Ctrl-C kills all three. The script is defined in the root `package.json`; per-service commands match what each subproject's CLAUDE.md documents (`uvicorn main:app --reload` for backend, `vite` for frontend, `node server.js` for downloader).
+
 ## Running the pipeline
 
 ```bash

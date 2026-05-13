@@ -1,0 +1,10 @@
+{
+  "name": "fast-study",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -k -n Backend,Frontend,Downloader -c blue,green,magenta \"cd backend && uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader start\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
