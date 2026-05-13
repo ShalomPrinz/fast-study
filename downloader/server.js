@@ -1,5 +1,6 @@
 import http from 'node:http';
-import { spawn } from 'node:child_process';
+import https from 'node:https';
+import { spawn, execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -79,6 +80,61 @@ const SKIP_HEADERS = new Set([
   'host', 'content-length',
 ]);
 
+// Mirrors popup.js::formatSize — duplicated locally to keep server.js
+// dependency-free and decoupled from the extension code.
+function formatBytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '?';
+  const mb = bytes / (1024 * 1024);
+  if (mb >= 1024) return `${(mb / 1024).toFixed(2)} GB`;
+  return `${mb.toFixed(1)} MB`;
+}
+
+function headersToObject(headers) {
+  const out = {};
+  for (const h of headers ?? []) {
+    if (SKIP_HEADERS.has(h.name.toLowerCase())) continue;
+    out[h.name] = h.value;
+  }
+  return out;
+}
+
+function requestHead(url, headers, method, extraHeaders) {
+  return new Promise((resolve) => {
+    let u;
+    try { u = new URL(url); } catch { return resolve(null); }
+    const lib = u.protocol === 'http:' ? http : https;
+    const req = lib.request(
+      url,
+      { method, headers: { ...headersToObject(headers), ...(extraHeaders ?? {}) } },
+      (res) => {
+        res.resume(); // drain
+        resolve(res);
+      },
+    );
+    req.on('error', () => resolve(null));
+    req.setTimeout(10000, () => { req.destroy(); resolve(null); });
+    req.end();
+  });
+}
+
+// HEAD often works on signed video URLs (token is in the query string).
+// Before: HEAD blocked by CDN -> no size shown.
+// After:  fall back to a single-byte ranged GET and read Content-Range's total.
+async function probeContentLength(url, headers) {
+  const head = await requestHead(url, headers, 'HEAD');
+  if (head) {
+    const len = head.headers['content-length'];
+    if (head.statusCode && head.statusCode < 400 && len) return +len;
+  }
+  const ranged = await requestHead(url, headers, 'GET', { Range: 'bytes=0-0' });
+  if (ranged) {
+    const cr = ranged.headers['content-range'];
+    const m = cr && cr.match(/\/(\d+)\s*$/);
+    if (m) return +m[1];
+  }
+  return null;
+}
+
 function buildCurlArgs(url, headers) {
   // Video CDNs sometimes close TLS without close_notify mid-stream; OpenSSL 3
   // surfaces this as `SSL_read: unexpected eof`. Retry on any error so a flaky
@@ -96,10 +152,12 @@ function buildCurlArgs(url, headers) {
   return args;
 }
 
-function runDownload(args, cwd) {
+async function runDownload(url, headers, cwd) {
   console.log(`\n📥 Downloading to: ${cwd}`);
+  const bytes = await probeContentLength(url, headers);
+  console.log(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
   // spawn + inherited stdio so curl's --progress-bar updates the terminal live.
-  const child = spawn('curl', args, { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
+  const child = spawn('curl', buildCurlArgs(url, headers), { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
   child.on('error', (err) => console.error(`❌ Download failed: ${err.message}`));
   child.on('close', (code) => {
     if (code === 0) console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
@@ -107,21 +165,54 @@ function runDownload(args, cwd) {
   });
 }
 
-function runYoutubeDownload(url, cwd) {
+// Probe the merged-mp4 size by asking yt-dlp to print filesize fields without
+// downloading. `bv*+ba/b` matches the same format selection the real download
+// uses, so the printed sizes sum to the final mp4's approximate byte count.
+function probeYoutubeSize(url) {
+  return new Promise((resolve) => {
+    execFile(
+      'yt-dlp',
+      [
+        '--no-playlist', '--no-warnings', '--quiet',
+        '--skip-download',
+        '-f', 'bv*+ba/b',
+        '--print', '%(filesize,filesize_approx)s',
+        url,
+      ],
+      { timeout: 20000 },
+      (err, stdout) => {
+        if (err) return resolve(null);
+        let total = 0;
+        for (const line of (stdout ?? '').split('\n')) {
+          const n = parseInt(line.trim(), 10);
+          if (Number.isFinite(n)) total += n;
+        }
+        resolve(total > 0 ? total : null);
+      },
+    );
+  });
+}
+
+async function runYoutubeDownload(url, cwd) {
   console.log(`\n📥 yt-dlp downloading to: ${cwd}`);
+  const bytes = await probeYoutubeSize(url);
+  console.log(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
   // -o video.%(ext)s + --merge-output-format mp4 -> final file is `video.mp4`.
   // --no-playlist keeps a playlist-context URL to the single current video.
   // Recent yt-dlp needs a JS runtime to evaluate YouTube's player script;
   // only `deno` is auto-enabled, so point it at the `node` we already have.
+  // `--quiet --no-warnings --progress --newline` is the documented combo for
+  // "suppress [youtube]/[info]/[Merger] chatter but still stream the progress bar."
   const args = [
     '--no-playlist',
     '--merge-output-format', 'mp4',
     '--js-runtimes', 'node',
     '--remote-components', 'ejs:github',
+    '--quiet', '--no-warnings', '--progress',
     '-o', 'video.%(ext)s',
     url,
   ];
-  // spawn + inherited stdio so yt-dlp's `[download] X%` lines stream live.
+  // spawn + inherited stdio so yt-dlp's progress bar streams live.
   const child = spawn('yt-dlp', args, { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
   child.on('error', (err) => console.error(`❌ yt-dlp failed: ${err.message}`));
   child.on('close', (code) => {
@@ -168,7 +259,8 @@ async function handleDownload(req, res) {
 
   const dir = lectureDir(course, lecture, kind);
   fs.mkdirSync(dir, { recursive: true });
-  runDownload(buildCurlArgs(url, headers), dir);
+  // Fire-and-forget so a slow size probe doesn't delay the HTTP response.
+  runDownload(url, headers, dir);
   send(res, 200, { status: 'Downloading in background...', target: dir });
 }
 
