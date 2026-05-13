@@ -3,6 +3,7 @@ import { toast } from 'react-toastify'
 import type { Course, Lecture, Selected, Kind } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../api'
 import ConfirmModal from './ConfirmModal'
+import Icon from './Icon'
 import { useInlineEdit } from '../hooks/useInlineEdit'
 
 interface Props {
@@ -10,7 +11,7 @@ interface Props {
   selected: Selected | null
   onSelect: (course: string, lecture: string, kind: Kind) => void
   onCourseClick: (course: string) => void
-  onRefresh: () => void
+  onRefresh: () => Promise<void> | void
 }
 
 interface PendingUpload {
@@ -37,6 +38,13 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null)
   const [addingCourse, setAddingCourse] = useState(false)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
+
+  async function handleRefreshClick() {
+    if (refreshing) return
+    setRefreshing(true)
+    try { await onRefresh() } finally { setRefreshing(false) }
+  }
 
   const addLectureEdit = useInlineEdit(adding ? `${adding.course}::${adding.kind}` : null)
   const renameLectureEdit = useInlineEdit(renaming ? `${renaming.course}/${renaming.kind}/${renaming.lecture}` : null)
@@ -238,7 +246,18 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">Fast Study</div>
+      <div className="sidebar-header">
+        <span>Fast Study</span>
+        <button
+          className={`sidebar-refresh-btn${refreshing ? ' spinning' : ''}`}
+          onClick={handleRefreshClick}
+          disabled={refreshing}
+          title="Refresh Courses Tree"
+          aria-label="Refresh Courses Tree"
+        >
+          <Icon icon="refresh" />
+        </button>
+      </div>
       <div className="new-course-row">
         {addingCourse ? (
           <input

@@ -47,13 +47,49 @@ html, body, #root {
 }
 
 .sidebar-header {
-  padding: 18px 16px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 12px 14px 16px;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.02em;
   color: var(--accent);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.sidebar-refresh-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--sidebar-muted);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.sidebar-refresh-btn:hover:not(:disabled) {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-fg);
+}
+
+.sidebar-refresh-btn:disabled {
+  cursor: default;
+}
+
+.sidebar-refresh-btn.spinning svg {
+  animation: sidebar-refresh-spin 0.8s linear infinite;
+}
+
+@keyframes sidebar-refresh-spin {
+  to { transform: rotate(360deg); }
 }
 
 .sidebar-nav {

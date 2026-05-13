@@ -5,8 +5,22 @@ import { fetchTree, fetchCourse } from '../api'
 export function useCourseTree(selected: Selected | null) {
   const [courses, setCourses] = useState<Course[]>([])
 
+  function refreshCourses() {
+    return fetchTree().then(setCourses)
+  }
+
   useEffect(() => {
-    fetchTree().then(setCourses)
+    refreshCourses()
+  }, [])
+
+  useEffect(() => {
+    const es = new EventSource('/api/events')
+    const onNotify = () => { refreshCourses() }
+    es.addEventListener('notify', onNotify)
+    return () => {
+      es.removeEventListener('notify', onNotify)
+      es.close()
+    }
   }, [])
 
   const sortedCourses = useMemo(
@@ -33,10 +47,6 @@ export function useCourseTree(selected: Selected | null) {
     const lecture = list?.find((l: Lecture) => l.name === selected.lecture)
     return lecture?.transcribePartial ?? null
   }, [courses, selected])
-
-  function refreshCourses() {
-    fetchTree().then(setCourses)
-  }
 
   function handleCourseClick(courseName: string) {
     fetchCourse(courseName).then((updated) => {
