@@ -8,6 +8,18 @@ export function kindQuery(kind: Kind | undefined): string {
   return kind === 'recitation' ? '?kind=recitation' : ''
 }
 
+export function path(strings: TemplateStringsArray, ...values: unknown[]): string {
+  let out = strings[0]
+  for (let i = 0; i < values.length; i++) {
+    out += encodeURIComponent(String(values[i])) + strings[i + 1]
+  }
+  return out
+}
+
+export function lectureBase(course: string, lecture: string): string {
+  return `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}`
+}
+
 export type RequestOptions = Omit<RequestInit, 'body'> & { json?: unknown; body?: BodyInit }
 
 export interface Client {
