@@ -2,7 +2,7 @@
 
 ## What this is
 
-FastAPI service that owns every read, write, and listing under `DATA_ROOT`, plus the cross-service SSE notify channel. The frontend talks to this service for filesystem state instead of touching disk itself. Backend and downloader still touch disk directly (they will migrate in a follow-up); the downloader's notify ping is the only thing routed through here today.
+FastAPI service that owns every read, write, and listing under `DATA_ROOT`, plus the cross-service SSE notify channel. The frontend and downloader both talk to this service for filesystem state instead of touching disk themselves. Backend still touches disk directly (it will migrate in a follow-up).
 
 Behavior is a verbatim port of the old `frontend/fs-api/handlers/*` middleware — same path conventions, same response shapes, same error semantics. No logic changes vs. the pre-refactor implementation.
 
@@ -65,7 +65,7 @@ python3 main.py                          # also works, same port
 
 ## Key design decisions
 
-- **All path conventions live here.** `lecture_dir(course, lecture, kind)` in `fs/paths.py` is the single source of truth for resolving paths under `DATA_ROOT` from this service's side. The on-disk layout (`{DATA_ROOT}/{course}/{lecture}/...` and `{DATA_ROOT}/{course}/Recitations/{name}/...`) matches what backend and downloader still re-encode locally — keep them in sync until they migrate.
+- **All path conventions live here.** `lecture_dir(course, lecture, kind)` in `fs/paths.py` is the single source of truth for resolving paths under `DATA_ROOT` from this service's side. The on-disk layout (`{DATA_ROOT}/{course}/{lecture}/...` and `{DATA_ROOT}/{course}/Recitations/{name}/...`) matches what `backend/main.py::lecture_dir` still re-encodes locally — keep them in sync until it also migrates.
 - **SSE lives here.** `/events` is a long-lived `text/event-stream` response; each subscriber gets its own `asyncio.Queue`. `/notify` fans an `event: notify` message out to every queue. Producers (today: the downloader, after a successful download) fire-and-forget — failure to deliver is silent and non-blocking, same contract as the previous Vite-plugin handler.
 - **CORS open to `http://localhost:5173`.** Backend and downloader call this service server-to-server, so no CORS entry is needed for them.
 - **No auth.** Localhost-only trust model.

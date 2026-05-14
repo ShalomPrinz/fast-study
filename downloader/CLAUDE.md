@@ -2,7 +2,7 @@
 
 ## What this is
 
-A Chrome extension (Manifest V3) plus a tiny local Node server that together capture video streams from web pages and save them directly into `{DATA_ROOT}/{course}/{lecture}/video.mp4` so the backend's `/run/audio` step can pick them up with no manual file moves. Two source paths:
+A Chrome extension (Manifest V3) plus a tiny local Node server that together capture video streams from web pages and hand them off to the database service, which writes `{DATA_ROOT}/{course}/{lecture}/video.mp4` so the backend's `/run/audio` step can pick them up with no manual file moves. Two source paths:
 
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
 - **YouTube** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing.
@@ -15,7 +15,7 @@ npm start         # starts server.js on port 3052 (no deps; uses Node stdlib onl
 
 The Chrome extension is loaded unpacked from this folder. `server.js` only accepts requests from one hardcoded extension ID (`EXTENSION_ID`); if you reload the extension and Chrome assigns a new ID, update that constant or CORS will block the popup.
 
-`server.js` reads `../.env` at startup (no `dotenv` dep — tiny inline parser) to pick up `DATA_ROOT`, the same env file the backend uses.
+`server.js` reads `../.env` at startup (no `dotenv` dep — tiny inline parser) to pick up `DATABASE_URL` (default `http://localhost:8001`). It no longer touches `DATA_ROOT` itself — all filesystem I/O goes through the database service.
 
 ## Architecture
 
@@ -29,15 +29,15 @@ Four pieces, one flow:
      - **YouTube path:** hides the captured-requests `<select>`, shows the page URL as a readonly field, POSTs `{url, course, lecture, kind}` to `/download-youtube`.
      - **Generic path:** reads `videoRequests` from storage and **filters by exact-match `pageUrl === activeTab.url`** so captures from other pages/tabs never leak in. Renders each capture in a `<select>` prefixed with its size (`[412.3 MB] host … file.mp4`). Sizes are probed lazily with a HEAD request, falling back to `Range: bytes=0-0` GET reading `Content-Range` when HEAD is blocked. Failures render `[?]`; pending probes show `[…]`. On submit, POSTs `{url, headers, course, lecture, kind}` (raw URL + captured headers — not a prebuilt curl string) to `/download`.
 
-3. **`server.js`** — four endpoints:
-   - `GET /courses` → `[{name, lectures, recitations}]` by scanning `DATA_ROOT`.
-   - `POST /download` → validates inputs (`isSafeName` rejects `/`, `\`, `.`, `..`), `mkdir -p`s the lecture folder, builds curl args from the captured headers (stripping `Range`, `If-Range`, `If-None-Match`, `If-Modified-Since`, `Host`, `Content-Length` — see `SKIP_HEADERS`), forces `--output video.mp4`, and `spawn`s curl (no shell) with `cwd` set to the lecture folder. `--retry 3 --retry-all-errors` covers flaky CDNs that close TLS without `close_notify` mid-stream.
-   - `POST /download-youtube` → same input validation + `lectureDir`, but `spawn`s `yt-dlp` with `-o video.%(ext)s --merge-output-format mp4 --no-playlist --js-runtimes node`. No captured headers — yt-dlp manages its own session. Recent yt-dlp needs a JS runtime for YouTube's player script; we point it at the `node` we already have.
-   - (On successful download from either path) `notifyFrontend()` fires a non-blocking `POST http://localhost:5173/api/notify` so the Vite SSE handler tells all connected sidebars to re-fetch `/api/tree`. Failure is silent — downloads must succeed even when the frontend isn't running.
+3. **`server.js`** — three endpoints, all I/O routed through the database service (`DATABASE_URL`, default `localhost:8001`):
+   - `GET /courses` → fetches `${DATABASE_URL}/tree`, then reshapes to `[{name, lectures, recitations}]` where `lectures`/`recitations` are plain name arrays. `/tree` returns rich lecture objects (`{name, files, transcribePartial}`); popup.js only needs the names, so the reshape happens here rather than in the database service contract (which the frontend depends on).
+   - `POST /download` → validates inputs (`isSafeName` rejects `/`, `\`, `.`, `..`), `mkdtemp`s a private temp dir under the OS temp root, builds curl args from the captured headers (stripping `Range`, `If-Range`, `If-None-Match`, `If-Modified-Since`, `Host`, `Content-Length` — see `SKIP_HEADERS`), forces `--output video.mp4`, and `spawn`s curl (no shell) with `cwd` set to the temp dir. `--retry 3 --retry-all-errors` covers flaky CDNs that close TLS without `close_notify` mid-stream. On `child.on('close', code === 0)`, the temp `video.mp4` is streamed via `PUT ${DATABASE_URL}/courses/{course}/lectures/{lecture}/video?kind=...` (which also wipes any derived `audio.mp3`/`transcript.txt`/`summary.*` — correct for a fresh video). Temp dir is removed on success or failure.
+   - `POST /download-youtube` → same input validation + temp dir, but `spawn`s `yt-dlp` with `-o video.%(ext)s --merge-output-format mp4 --no-playlist --js-runtimes node`. No captured headers — yt-dlp manages its own session. Recent yt-dlp needs a JS runtime for YouTube's player script; we point it at the `node` we already have. Same temp-dir → database PUT flow as `/download`.
+   - (On successful upload from either path) `notifyFrontend()` fires a non-blocking `POST ${DATABASE_URL}/notify` so the database's SSE bus tells all connected sidebars to re-fetch the tree. Failure (HTTP 4xx/5xx, `{ok: false}`, or network error) is logged to the server console — same surface as today's curl/mkdir failures — and `notifyFrontend()` is skipped.
 
 4. **Size probes** — `probeContentLength` (curl path, HEAD → ranged-GET fallback) and `probeYoutubeSize` (yt-dlp `--skip-download --print %(filesize,filesize_approx)s` summed across the `bv*+ba/b` format selection) print an expected size to the server log before each download.
 
-Recitations live at `{course}/Recitations/{name}/` to match the backend's `lecture_dir()` convention.
+Recitations are routed via the database PUT endpoint's `?kind=recitation` query — the database service owns the on-disk layout (`{course}/Recitations/{name}/`).
 
 ## Why these specific hacks
 

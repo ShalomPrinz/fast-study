@@ -2,19 +2,19 @@ import http from 'node:http';
 import https from 'node:https';
 import { spawn, execFile } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 
 loadEnv(path.join(REPO_ROOT, '.env'));
-const DATA_ROOT = process.env.DATA_ROOT;
-if (!DATA_ROOT) throw new Error('DATA_ROOT is not set in .env');
+const DATABASE_URL = process.env.DATABASE_URL ?? 'http://localhost:8001';
 
 const PORT = 3052;
 const EXTENSION_ID = 'kebkiehjoihdofnobkbifjcihnifibdo';
-const RECITATIONS_DIR = 'Recitations';
 const VIDEO_FILENAME = 'video.mp4';
 
 function loadEnv(file) {
@@ -42,20 +42,19 @@ function readBody(req) {
   });
 }
 
-function listDirs(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true })
-    .filter((d) => d.isDirectory())
-    .map((d) => d.name);
-}
-
-function listCourses() {
-  return listDirs(DATA_ROOT).map((course) => {
-    const coursePath = path.join(DATA_ROOT, course);
-    const lectures = listDirs(coursePath).filter((n) => n !== RECITATIONS_DIR);
-    const recitations = listDirs(path.join(coursePath, RECITATIONS_DIR));
-    return { name: course, lectures, recitations };
-  });
+// database `/tree` returns lectures/recitations as rich objects
+// ({name, files, transcribePartial}); popup.js only wants the names.
+// Before: course.lectures = [{name, files, ...}, ...]  -> autocomplete shows "[object Object]"
+// After:  course.lectures = ["Lecture 1", ...]         -> autocomplete works
+async function listCourses() {
+  const res = await fetch(`${DATABASE_URL}/tree`);
+  if (!res.ok) throw new Error(`database /tree returned ${res.status}`);
+  const tree = await res.json();
+  return tree.map((c) => ({
+    name: c.name,
+    lectures: (c.lectures ?? []).map((l) => l.name),
+    recitations: (c.recitations ?? []).map((r) => r.name),
+  }));
 }
 
 function isSafeName(name) {
@@ -65,12 +64,6 @@ function isSafeName(name) {
     && !name.includes('\\')
     && name !== '.'
     && name !== '..';
-}
-
-function lectureDir(course, lecture, kind) {
-  return kind === 'recitation'
-    ? path.join(DATA_ROOT, course, RECITATIONS_DIR, lecture)
-    : path.join(DATA_ROOT, course, lecture);
 }
 
 // Range/conditional headers cause curl to fetch a partial body — the file
@@ -152,29 +145,64 @@ function buildCurlArgs(url, headers) {
   return args;
 }
 
-async function runDownload(url, headers, cwd) {
-  console.log(`\n📥 Downloading to: ${cwd}`);
+// Stream the just-downloaded video.mp4 from a temp dir to the database
+// service. Cleans up the temp dir whether the upload succeeded or not.
+// On failure (network, {ok:false}, or non-2xx), logs and skips notifyFrontend
+// — same surface as today's curl/mkdir failures.
+async function uploadAndCleanup(tempDir, course, lecture, kind, label) {
+  const file = path.join(tempDir, VIDEO_FILENAME);
+  try {
+    const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/video?kind=${encodeURIComponent(kind)}`;
+    const stream = fs.createReadStream(file);
+    // duplex: 'half' is required when fetch body is a stream (undici).
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      body: Readable.toWeb(stream),
+      duplex: 'half',
+    });
+    let body = null;
+    try { body = await res.json(); } catch {}
+    if (!res.ok || body?.ok === false) {
+      const msg = body?.error ?? `HTTP ${res.status}`;
+      console.error(`❌ ${label} upload to database failed: ${msg}`);
+      return;
+    }
+    console.log(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
+    notifyFrontend();
+  } catch (err) {
+    console.error(`❌ ${label} upload to database failed: ${err.message}`);
+  } finally {
+    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+  }
+}
+
+async function runDownload(url, headers, tempDir, course, lecture, kind) {
+  console.log(`\n📥 Downloading to temp: ${tempDir}`);
   const bytes = await probeContentLength(url, headers);
   console.log(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
   // spawn + inherited stdio so curl's --progress-bar updates the terminal live.
-  const child = spawn('curl', buildCurlArgs(url, headers), { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
-  child.on('error', (err) => console.error(`❌ Download failed: ${err.message}`));
+  const child = spawn('curl', buildCurlArgs(url, headers), { cwd: tempDir, stdio: ['ignore', 'inherit', 'inherit'] });
+  child.on('error', (err) => {
+    console.error(`❌ Download failed: ${err.message}`);
+    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+  });
   child.on('close', (code) => {
     if (code === 0) {
-      console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
-      notifyFrontend();
+      uploadAndCleanup(tempDir, course, lecture, kind, 'curl');
     } else {
       console.error(`❌ Download failed: curl exited with code ${code}`);
+      try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
     }
   });
 }
 
-// Non-blocking ping to the Vite dev server so the sidebar refetches its tree.
+// Non-blocking ping to the database service so subscribed sidebars refetch the tree.
 // Failure is silent: if the frontend isn't running the download must still succeed.
 function notifyFrontend() {
   try {
     const req = http.request(
-      'http://localhost:8001/notify',
+      `${DATABASE_URL}/notify`,
       { method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': 2 } },
     );
     req.on('error', () => {});
@@ -210,8 +238,8 @@ function probeYoutubeSize(url) {
   });
 }
 
-async function runYoutubeDownload(url, cwd) {
-  console.log(`\n📥 yt-dlp downloading to: ${cwd}`);
+async function runYoutubeDownload(url, tempDir, course, lecture, kind) {
+  console.log(`\n📥 yt-dlp downloading to temp: ${tempDir}`);
   const bytes = await probeYoutubeSize(url);
   console.log(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
   // -o video.%(ext)s + --merge-output-format mp4 -> final file is `video.mp4`.
@@ -230,16 +258,23 @@ async function runYoutubeDownload(url, cwd) {
     url,
   ];
   // spawn + inherited stdio so yt-dlp's progress bar streams live.
-  const child = spawn('yt-dlp', args, { cwd, stdio: ['ignore', 'inherit', 'inherit'] });
-  child.on('error', (err) => console.error(`❌ yt-dlp failed: ${err.message}`));
+  const child = spawn('yt-dlp', args, { cwd: tempDir, stdio: ['ignore', 'inherit', 'inherit'] });
+  child.on('error', (err) => {
+    console.error(`❌ yt-dlp failed: ${err.message}`);
+    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+  });
   child.on('close', (code) => {
     if (code === 0) {
-      console.log(`✅ Saved ${VIDEO_FILENAME} in ${cwd}`);
-      notifyFrontend();
+      uploadAndCleanup(tempDir, course, lecture, kind, 'yt-dlp');
     } else {
       console.error(`❌ yt-dlp failed: exited with code ${code}`);
+      try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
     }
   });
+}
+
+function makeTempDir() {
+  return fs.mkdtempSync(path.join(os.tmpdir(), 'fast-study-dl-'));
 }
 
 const YOUTUBE_HOST_RE = /(^|\.)youtube\.com$|^youtu\.be$/i;
@@ -259,10 +294,9 @@ async function handleDownloadYoutube(req, res) {
     return send(res, 400, { error: `invalid kind: ${kind}` });
   }
 
-  const dir = lectureDir(course, lecture, kind);
-  fs.mkdirSync(dir, { recursive: true });
-  runYoutubeDownload(url, dir);
-  send(res, 200, { status: 'Downloading in background...', target: dir });
+  const tempDir = makeTempDir();
+  runYoutubeDownload(url, tempDir, course, lecture, kind);
+  send(res, 200, { status: 'Downloading in background...', target: `${course}/${lecture}` });
 }
 
 async function handleDownload(req, res) {
@@ -278,11 +312,10 @@ async function handleDownload(req, res) {
     return send(res, 400, { error: `invalid kind: ${kind}` });
   }
 
-  const dir = lectureDir(course, lecture, kind);
-  fs.mkdirSync(dir, { recursive: true });
+  const tempDir = makeTempDir();
   // Fire-and-forget so a slow size probe doesn't delay the HTTP response.
-  runDownload(url, headers, dir);
-  send(res, 200, { status: 'Downloading in background...', target: dir });
+  runDownload(url, headers, tempDir, course, lecture, kind);
+  send(res, 200, { status: 'Downloading in background...', target: `${course}/${lecture}` });
 }
 
 function send(res, status, body) {
@@ -297,7 +330,7 @@ const server = http.createServer(async (req, res) => {
 
   try {
     if (req.method === 'GET' && req.url === '/courses') {
-      return send(res, 200, listCourses());
+      return send(res, 200, await listCourses());
     }
     if (req.method === 'POST' && req.url === '/download') {
       return await handleDownload(req, res);
@@ -315,6 +348,6 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`\n==========================================`);
   console.log(`🎧 Downloader listening on port ${PORT}`);
-  console.log(`📁 DATA_ROOT: ${DATA_ROOT}`);
+  console.log(`📁 DATABASE_URL: ${DATABASE_URL}`);
   console.log(`==========================================\n`);
 });
