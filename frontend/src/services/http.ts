@@ -16,7 +16,6 @@ export interface Client {
   put<T>(path: string, init?: RequestOptions): Promise<T>
   patch<T>(path: string, init?: RequestOptions): Promise<T>
   delete<T>(path: string, init?: RequestOptions): Promise<T>
-  request(path: string, init?: RequestOptions): Promise<Response>
   url(path: string): string
 }
 
@@ -39,11 +38,6 @@ function buildInit(init: RequestOptions | undefined, method: string): RequestIni
 export function createClient(baseUrl: string): Client {
   const url = (path: string) => `${baseUrl}${path}`
 
-  const request = (path: string, init?: RequestOptions) => {
-    const method = init?.method ?? 'GET'
-    return fetch(url(path), buildInit(init, method))
-  }
-
   const json = async <T>(path: string, method: string, init?: RequestOptions): Promise<T> => {
     const res = await fetch(url(path), buildInit(init, method))
     if (!res.ok) throw httpError(res)
@@ -56,7 +50,6 @@ export function createClient(baseUrl: string): Client {
     put: (path, init) => json(path, 'PUT', init),
     patch: (path, init) => json(path, 'PATCH', init),
     delete: (path, init) => json(path, 'DELETE', init),
-    request,
     url,
   }
 }

@@ -35,11 +35,10 @@ export async function createLecture(course: string, name: string, kind?: Kind): 
 }
 
 export async function uploadVideo(course: string, lecture: string, file: File, kind?: Kind): Promise<void> {
-  const res = await database.request(
+  await database.put(
     `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/video${kindQuery(kind)}`,
-    { method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: file },
+    { headers: { 'Content-Type': 'video/mp4' }, body: file },
   )
-  if (!res.ok) throw new Error('Upload failed')
 }
 
 export async function renameLecture(course: string, oldName: string, newName: string, kind?: Kind): Promise<void> {
