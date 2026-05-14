@@ -44,10 +44,12 @@ export default function EditSummaryView() {
   async function handleGeneratePdf() {
     setGenerating(true)
     setError('')
-    const saved = await saveSummaryContent(course!, lecture!, content, kind)
-    if (!saved) {
-      toast.error('Failed to save summary')
-      setError('Failed to save summary')
+    try {
+      await saveSummaryContent(course!, lecture!, content, kind)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to save summary'
+      toast.error(message)
+      setError(message)
       setGenerating(false)
       return
     }

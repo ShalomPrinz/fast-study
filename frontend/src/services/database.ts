@@ -20,15 +20,15 @@ export async function fetchCourse(course: string): Promise<Course | null> {
 }
 
 export async function createCourse(name: string): Promise<void> {
-  await database.post<unknown>('/courses', { json: { name } })
+  await database.post('/courses', { json: { name } })
 }
 
 export async function renameCourse(oldName: string, newName: string): Promise<void> {
-  await database.patch<unknown>(`/courses/${encodeURIComponent(oldName)}`, { json: { name: newName } })
+  await database.patch(`/courses/${encodeURIComponent(oldName)}`, { json: { name: newName } })
 }
 
 export async function createLecture(course: string, name: string, kind?: Kind): Promise<void> {
-  await database.post<unknown>(
+  await database.post(
     `/courses/${encodeURIComponent(course)}/lectures${kindQuery(kind)}`,
     { json: { name } },
   )
@@ -43,14 +43,14 @@ export async function uploadVideo(course: string, lecture: string, file: File, k
 }
 
 export async function renameLecture(course: string, oldName: string, newName: string, kind?: Kind): Promise<void> {
-  await database.patch<unknown>(
+  await database.patch(
     `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(oldName)}${kindQuery(kind)}`,
     { json: { name: newName } },
   )
 }
 
 export async function deleteFile(course: string, lecture: string, file: FileName, kind?: Kind): Promise<void> {
-  await database.delete<{ ok: boolean }>(
+  await database.delete(
     `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/files/${encodeURIComponent(file)}${kindQuery(kind)}`,
   )
 }
@@ -61,17 +61,15 @@ export async function fetchSummaryContent(course: string, lecture: string, kind?
   )
 }
 
-export async function saveSummaryContent(course: string, lecture: string, content: string, kind?: Kind): Promise<boolean> {
-  const data = await database.put<{ ok: boolean }>(
+export async function saveSummaryContent(course: string, lecture: string, content: string, kind?: Kind): Promise<void> {
+  await database.put(
     `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/summary${kindQuery(kind)}`,
     { headers: { 'Content-Type': 'text/plain; charset=utf-8' }, body: content },
   )
-  return data.ok
 }
 
-export async function revertSummary(course: string, lecture: string, kind?: Kind): Promise<boolean> {
-  const data = await database.delete<{ ok: boolean }>(
+export async function revertSummary(course: string, lecture: string, kind?: Kind): Promise<void> {
+  await database.delete(
     `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/summary${kindQuery(kind)}`,
   )
-  return data.ok
 }
