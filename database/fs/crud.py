@@ -34,6 +34,8 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source."""
 
     d = lecture_dir(course, lecture, kind)
+    # The downloader uploads here for brand-new lectures, so create the dir if missing.
+    d.mkdir(parents=True, exist_ok=True)
     # Wipe everything from the previous video before writing the new one
     for f in (*PREDEFINED_FILES, "transcript.partial.meta.json"):
         p = d / f
