@@ -115,6 +115,28 @@ def delete_file_endpoint(course: str, lecture: str, name: str, kind: str = Query
         return _ok(str(e), 400)
 
 
+@app.put("/courses/{course}/lectures/{lecture}/files/{name}")
+async def put_file(course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")):
+    """Write raw body bytes to a single file in a lecture dir. Neutral write — does NOT wipe derived artifacts (unlike PUT /video)."""
+
+    try:
+        data = await request.body()
+        crud.write_file(course, lecture, name, kind, data)
+        return _ok()
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
+@app.head("/courses/{course}/lectures/{lecture}/files/{name}")
+def head_file(course: str, lecture: str, name: str, kind: str = Query("lecture")):
+    """Return 200 if the file exists, 404 otherwise. Cheap existence check for backend pipeline preconditions."""
+
+    p = file_path(course, lecture, name, kind)
+    if not p.exists():
+        return Response(status_code=404)
+    return Response(status_code=200)
+
+
 @app.get("/courses/{course}/lectures/{lecture}/summary")
 def get_summary(course: str, lecture: str, kind: str = Query("lecture")):
     """Return summary.md content plus a flag for whether an unedited original is preserved."""

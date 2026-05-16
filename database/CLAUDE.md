@@ -2,7 +2,7 @@
 
 ## What this is
 
-FastAPI service that owns every read, write, and listing under `DATA_ROOT`, plus the cross-service SSE notify channel. The frontend and downloader both talk to this service for filesystem state instead of touching disk themselves. Backend still touches disk directly (it will migrate in a follow-up).
+FastAPI service that owns every read, write, and listing under `DATA_ROOT`, plus the cross-service SSE notify channel. The frontend, downloader, and backend all talk to this service for filesystem state — no other service touches disk directly.
 
 Behavior is a verbatim port of the old `frontend/fs-api/handlers/*` middleware — same path conventions, same response shapes, same error semantics. No logic changes vs. the pre-refactor implementation.
 
@@ -52,7 +52,9 @@ python3 main.py                          # also works, same port
 | `PATCH  /courses/{course}`                                               | rename course (body: `{name}`)           |
 | `POST   /courses/{course}/lectures?kind=lecture\|recitation`             | create lecture (body: `{name}`)          |
 | `PATCH  /courses/{course}/lectures/{lecture}?kind=...`                   | rename lecture (body: `{name}`)          |
-| `PUT    /courses/{course}/lectures/{lecture}/video?kind=...`             | upload `video.mp4` (raw body)            |
+| `PUT    /courses/{course}/lectures/{lecture}/video?kind=...`             | upload `video.mp4` (raw body), wipes derived artifacts |
+| `PUT    /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | write a single file (raw body); neutral — no artifact wipe |
+| `HEAD   /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | 200 if file exists, 404 otherwise        |
 | `DELETE /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | delete a single file in the lecture dir  |
 | `GET    /courses/{course}/lectures/{lecture}/summary?kind=...`           | read `summary.md` + `hasOriginal` flag   |
 | `PUT    /courses/{course}/lectures/{lecture}/summary?kind=...`           | write `summary.md` (raw utf-8 body)      |
@@ -65,7 +67,8 @@ python3 main.py                          # also works, same port
 
 ## Key design decisions
 
-- **All path conventions live here.** `lecture_dir(course, lecture, kind)` in `fs/paths.py` is the single source of truth for resolving paths under `DATA_ROOT` from this service's side. The on-disk layout (`{DATA_ROOT}/{course}/{lecture}/...` and `{DATA_ROOT}/{course}/Recitations/{name}/...`) matches what `backend/main.py::lecture_dir` still re-encodes locally — keep them in sync until it also migrates.
+- **All path conventions live here.** `lecture_dir(course, lecture, kind)` in `fs/paths.py` is the single source of truth for resolving paths under `DATA_ROOT`. The on-disk layout (`{DATA_ROOT}/{course}/{lecture}/...` and `{DATA_ROOT}/{course}/Recitations/{name}/...`) is not re-encoded anywhere else — other services pass `(course, lecture, kind)` tuples and let this service resolve them.
+- **`PUT /…/video` wipes derived artifacts; `PUT /…/files/{name}` does not.** The video endpoint is the downloader's fresh-upload path and intentionally erases stale audio/transcript/summary. The generic files endpoint is the backend pipeline's write path for `audio.mp3`, `transcript.txt`, `transcript.partial.*`, `summary.pdf`, `drive_url.txt` — wiping would erase prior pipeline outputs mid-run. Summary writes go through the dedicated `/summary` endpoint, which snapshots the pre-edit original on first write.
 - **SSE lives here.** `/events` is a long-lived `text/event-stream` response; each subscriber gets its own `asyncio.Queue`. `/notify` fans an `event: notify` message out to every queue. Producers (today: the downloader, after a successful download) fire-and-forget — failure to deliver is silent and non-blocking, same contract as the previous Vite-plugin handler.
 - **CORS open to `http://localhost:5173`.** Backend and downloader call this service server-to-server, so no CORS entry is needed for them.
 - **No auth.** Localhost-only trust model.

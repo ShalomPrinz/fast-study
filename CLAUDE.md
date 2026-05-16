@@ -23,7 +23,7 @@ All services read the same `.env` at the repo root and share one on-disk layout 
 {DATA_ROOT}/{course}/Recitations/{name}/...         # recitations
 ```
 
-When changing anything that touches paths, file names, or course/recitation conventions, update `database/` plus the one remaining service that still re-encodes the layout: `backend/main.py::lecture_dir`. It encodes this layout independently until it also migrates to the database service.
+`database/` is the single source of truth for this layout. When changing paths, file names, or course/recitation conventions, update it there — the other services hold no path conventions and reach disk only by calling the database service.
 
 ## Running the dev stack
 

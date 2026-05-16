@@ -32,9 +32,11 @@ backend/
     __init__.py          init_db, get_stats, _record, @timed_pipeline decorator
     timing.db            persistent store of (operation, file_size_bytes, duration_seconds)
   tests/
-    conftest.py       adds pipeline/ to sys.path so tests can import pipeline modules
+    conftest.py       adds pipeline/ and backend/ to sys.path so tests can import modules
     test_to_pdf.py
     test_transcribe.py
+    test_db_client.py
+  db_client.py        thin HTTP client for the database service (every read/write goes through here)
   main.py             FastAPI app + uvicorn entry point
   credentials.json    Google OAuth client (gitignored)
   token.json          Google OAuth token cache (gitignored)
@@ -56,7 +58,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/` (or `{DATA_ROOT}/{course
 | `summary.pdf`                   | `/run/pdf`          |
 | `drive_url.txt`                 | `/run/drive`        |
 
-`lecture_dir(course, lecture, kind)` in `main.py` is the single source of truth for resolving these paths — `kind="recitation"` injects the `Recitations/` segment.
+Paths under `DATA_ROOT` are not resolved here — every read/write goes through `db_client.py` (HTTP to the `database/` service on port 8001). The `(course, lecture, kind)` tuple is the only identifier the backend carries; `kind="recitation"` is forwarded as a query string so the database service injects the `Recitations/` segment.
 
 ## API endpoints
 
@@ -70,9 +72,9 @@ Timing: `GET /timing/{operation}?file_size_bytes=N` → linear-regression estima
 
 Reads `.env` (repo root). Required:
 
-- `DATA_ROOT` — absolute path to the data directory
 - `GROQ_API_KEY` — Groq API key for Whisper transcription
 - `GDRIVE_ROOT_FOLDER` — name of the root Google Drive folder
+- `DATABASE_URL` (optional, default `http://localhost:8001`) — the database service base URL
 
 ## Running
 
@@ -101,6 +103,7 @@ This applies even to "small" or "obvious" changes — preprocessing helpers in `
 
 ## Key design decisions
 
+- **All filesystem access goes through the database service.** `db_client.py` is responsible to call database API - get/put/exists/delete file, get/put summary. Endpoints download inputs to a `tempfile.TemporaryDirectory`, run the pipeline, and upload outputs back — keeping `pipeline/*` untouched as pure path-taking functions.
 - Pipeline functions are pure: they take file paths / strings, no global state.
 - Asset paths (`fonts/`, `summarize.md`, `pandoc_template.tex`) are resolved relative to `__file__` inside each pipeline module — they point to `backend/assets/`.
 - CORS is open to `http://localhost:5173` only.

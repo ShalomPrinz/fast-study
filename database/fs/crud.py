@@ -50,3 +50,14 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
     p = lecture_dir(course, lecture, kind) / file
     if p.exists():
         p.unlink()
+
+
+def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> None:
+    """
+    Write raw bytes to a single file in a lecture dir.
+    Neutral write — does NOT wipe derived artifacts (use write_video for that).
+    """
+
+    d = lecture_dir(course, lecture, kind)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / file).write_bytes(data)
