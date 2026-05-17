@@ -233,6 +233,9 @@ export default function MainView() {
     const result = await runStep(course, lecture, step, kind)
     refreshCourses()
     if (result.status === 'done') {
+      if (step === 'summarize') {
+        toast.info(result.usedMaterial ? 'Summarized with material.pdf' : 'Summarized without material.pdf (not found)')
+      }
       setReqState(null)
       return true
     } else if (result.status === 'rate_limited') {

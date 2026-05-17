@@ -159,10 +159,11 @@ def run_summarize(course: str, lecture: str, kind: str = Query("lecture")):
         has_material = db_client.file_exists(course, lecture, kind, "material.pdf")
         if has_material:
             download.append("material.pdf")
+        print(f"Summarize: material.pdf {'found — passing to Gemini' if has_material else 'not found — transcript only'}")
         with db_workspace(course, lecture, kind, download=download) as ws:
             summary = summarize(ws["transcript.txt"], ws.get("material.pdf") if has_material else None)
         db_client.put_summary(course, lecture, kind, summary)
-        return {"status": "done"}
+        return {"status": "done", "usedMaterial": has_material}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 

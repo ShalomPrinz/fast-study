@@ -42,7 +42,7 @@ export interface RateLimitProgress {
 }
 
 export type StepResult =
-  | { status: 'done'; url?: string }
+  | { status: 'done'; url?: string; usedMaterial?: boolean }
   | { status: 'error'; message: string }
   | { status: 'rate_limited'; rateLimit: RateLimitInfo; progress: RateLimitProgress }
 
