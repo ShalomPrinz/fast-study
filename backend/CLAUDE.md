@@ -36,7 +36,8 @@ backend/
     test_to_pdf.py
     test_transcribe.py
     test_db_client.py
-  db_client.py        thin HTTP client for the database service (every read/write goes through here)
+  services/
+    db_client.py      thin HTTP client for the database service (every read/write goes through here)
   main.py             FastAPI app + uvicorn entry point
   credentials.json    Google OAuth client (gitignored)
   token.json          Google OAuth token cache (gitignored)
@@ -58,7 +59,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/` (or `{DATA_ROOT}/{course
 | `summary.pdf`                   | `/run/pdf`          |
 | `drive_url.txt`                 | `/run/drive`        |
 
-Paths under `DATA_ROOT` are not resolved here — every read/write goes through `db_client.py` (HTTP to the `database/` service on port 8001). The `(course, lecture, kind)` tuple is the only identifier the backend carries; `kind="recitation"` is forwarded as a query string so the database service injects the `Recitations/` segment.
+Paths under `DATA_ROOT` are not resolved here — every read/write goes through `services/db_client.py` (HTTP to the `database/` service on port 8001). The `(course, lecture, kind)` tuple is the only identifier the backend carries; `kind="recitation"` is forwarded as a query string so the database service injects the `Recitations/` segment.
 
 ## API endpoints
 
@@ -103,7 +104,7 @@ This applies even to "small" or "obvious" changes — preprocessing helpers in `
 
 ## Key design decisions
 
-- **All filesystem access goes through the database service.** `db_client.py` is responsible to call database API - get/put/exists/delete file, get/put summary. Endpoints download inputs to a `tempfile.TemporaryDirectory`, run the pipeline, and upload outputs back — keeping `pipeline/*` untouched as pure path-taking functions.
+- **All filesystem access goes through the database service.** `services/db_client.py` is responsible to call database API - get/put/exists/delete file, get/put summary. Endpoints download inputs to a `tempfile.TemporaryDirectory`, run the pipeline, and upload outputs back — keeping `pipeline/*` untouched as pure path-taking functions.
 - Pipeline functions are pure: they take file paths / strings, no global state.
 - Asset paths (`fonts/`, `summarize.md`, `pandoc_template.tex`) are resolved relative to `__file__` inside each pipeline module — they point to `backend/assets/`.
 - CORS is open to `http://localhost:5173` only.

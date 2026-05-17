@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-import db_client
+from services import db_client
 from pipeline.strip_audio import strip_audio
 from pipeline.transcribe import transcribe_audio, TranscribeRateLimitError, PARTIAL_TXT, PARTIAL_META
 from pipeline.summarize import summarize
