@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -38,18 +39,30 @@ def _validate_kind(kind: str):
     return None
 
 
+@contextmanager
+def db_workspace(course: str, lecture: str, kind: str, *, download=(), upload=()):
+    """Tempdir scoped to one pipeline step: pre-downloads named inputs from the
+    database service and uploads named outputs on clean exit. Pipeline binaries
+    (ffmpeg/pandoc/Gemini) need real filesystem paths, so bytes have to land
+    somewhere — this just centralizes the round-trip."""
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp_path = Path(tmp)
+        paths = {name: tmp_path / name for name in set(download) | set(upload)}
+        for name in download:
+            paths[name].write_bytes(db_client.get_file_bytes(course, lecture, kind, name))
+        yield paths
+        for name in upload:
+            db_client.put_file_bytes(course, lecture, kind, name, paths[name].read_bytes())
+
+
 @app.post("/courses/{course}/lectures/{lecture}/run/audio")
 def run_audio(course: str, lecture: str, kind: str = Query("lecture")):
     if err := _validate_kind(kind): return err
     try:
         if not db_client.file_exists(course, lecture, kind, "video.mp4"):
             return {"status": "error", "message": "video.mp4 is required"}
-        with tempfile.TemporaryDirectory() as tmp:
-            video_path = os.path.join(tmp, "video.mp4")
-            audio_path = os.path.join(tmp, "audio.mp3")
-            Path(video_path).write_bytes(db_client.get_file_bytes(course, lecture, kind, "video.mp4"))
-            strip_audio(video_path, audio_path)
-            db_client.put_file_bytes(course, lecture, kind, "audio.mp3", Path(audio_path).read_bytes())
+        with db_workspace(course, lecture, kind, download=["video.mp4"], upload=["audio.mp3"]) as ws:
+            strip_audio(str(ws["video.mp4"]), str(ws["audio.mp3"]))
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -126,11 +139,9 @@ def run_summarize(course: str, lecture: str, kind: str = Query("lecture")):
     try:
         if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
             return {"status": "error", "message": "transcript.txt is required — run Transcribe first"}
-        with tempfile.TemporaryDirectory() as tmp:
-            transcript_path = Path(tmp) / "transcript.txt"
-            transcript_path.write_bytes(db_client.get_file_bytes(course, lecture, kind, "transcript.txt"))
-            summary = summarize(transcript_path)
-            db_client.put_summary(course, lecture, kind, summary)
+        with db_workspace(course, lecture, kind, download=["transcript.txt"]) as ws:
+            summary = summarize(ws["transcript.txt"])
+        db_client.put_summary(course, lecture, kind, summary)
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -142,12 +153,12 @@ def run_pdf(course: str, lecture: str, kind: str = Query("lecture")):
     try:
         if not db_client.file_exists(course, lecture, kind, "summary.md"):
             return {"status": "error", "message": "summary.md is required — run Summarize first"}
-        with tempfile.TemporaryDirectory() as tmp:
-            md_path = Path(tmp) / "summary.md"
+        with db_workspace(course, lecture, kind, upload=["summary.pdf"]) as ws:
+            # summary.md comes from get_summary (envelope-wrapped), not get_file_bytes,
+            # so write it into the workspace dir manually next to the pandoc output.
+            md_path = ws["summary.pdf"].parent / "summary.md"
             md_path.write_text(db_client.get_summary(course, lecture, kind), encoding="utf-8")
             convert_to_pdf(str(md_path))
-            pdf_path = md_path.with_suffix(".pdf")
-            db_client.put_file_bytes(course, lecture, kind, "summary.pdf", pdf_path.read_bytes())
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
@@ -160,18 +171,16 @@ def run_drive(course: str, lecture: str, kind: str = Query("lecture")):
     try:
         if not db_client.file_exists(course, lecture, kind, "summary.pdf"):
             return {"status": "error", "message": "summary.pdf is required — run PDF first"}
-        with tempfile.TemporaryDirectory() as tmp:
-            pdf_path = Path(tmp) / "summary.pdf"
-            pdf_path.write_bytes(db_client.get_file_bytes(course, lecture, kind, "summary.pdf"))
-            subfolder = RECITATIONS_DIR if kind == "recitation" else None
+        subfolder = RECITATIONS_DIR if kind == "recitation" else None
+        with db_workspace(course, lecture, kind, download=["summary.pdf"], upload=["drive_url.txt"]) as ws:
             url = upload_to_drive(
-                str(pdf_path),
+                str(ws["summary.pdf"]),
                 course,
                 GDRIVE_ROOT_FOLDER,
                 f"{lecture}.pdf",
                 subfolder=subfolder,
             )
-        db_client.put_file_bytes(course, lecture, kind, "drive_url.txt", url.encode("utf-8"))
+            ws["drive_url.txt"].write_bytes(url.encode("utf-8"))
         return {"status": "done", "url": url}
     except Exception as e:
         return {"status": "error", "message": str(e)}
