@@ -427,6 +427,30 @@ html, body, #root {
   color: var(--text);
 }
 
+.file-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.material-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.material-indicator-symbol {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.material-indicator--will-use { color: #2563eb; }
+.material-indicator--used { color: #16a34a; }
+.material-indicator--missing { color: #d97706; }
+.material-indicator--was-missing { color: #6b7280; }
+
 .file-row-right {
   display: flex;
   align-items: center;

@@ -32,11 +32,13 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
     for f in PREDEFINED_FILES:
         p = lecture_path / f
         exists = p.exists()
-        size = p.stat().st_size if exists else None
+        stat = p.stat() if exists else None
+        size = stat.st_size if stat else None
+        mtime = stat.st_mtime if stat else None
         url = None
         if f == "drive_url.txt" and exists:
             url = p.read_text(encoding="utf-8").strip()
-        entry = {"exists": exists, "size": size}
+        entry = {"exists": exists, "size": size, "mtime": mtime}
         if url is not None:
             entry["url"] = url
         files[f] = entry

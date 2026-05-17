@@ -197,7 +197,23 @@ export default function MainView() {
   const pdfExists = files['summary.pdf'].exists
   const pdfUploaded = files['drive_url.txt'].exists
   const summaryExists = files['summary.md'].exists
+  const materialExists = files['material.pdf'].exists
   const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
+
+  const summaryMtime = files['summary.md'].mtime
+  const materialMtime = files['material.pdf'].mtime
+  const materialWasUsed =
+    summaryExists && materialExists &&
+    materialMtime !== null && summaryMtime !== null &&
+    materialMtime <= summaryMtime
+
+  const materialIndicator = summaryExists
+    ? materialWasUsed
+      ? { symbol: '📎', text: 'material.pdf was used', cls: 'material-indicator--used' }
+      : { symbol: '⊘', text: 'summary did not use material.pdf', cls: 'material-indicator--was-missing' }
+    : materialExists
+      ? { symbol: '📎', text: 'material.pdf will be used', cls: 'material-indicator--will-use' }
+      : { symbol: '⚠', text: 'material.pdf not found', cls: 'material-indicator--missing' }
 
   async function executeStep(step: Step): Promise<boolean> {
     const inputFile = STEP_INPUT_FILE[step]
@@ -315,7 +331,15 @@ export default function MainView() {
             return (
               <div key={file} className={`file-row${exists ? ' file-row--present' : ''}${isRunning ? ' file-row--running' : ''}`}>
                 <div className="file-row-header">
-                  <span className="file-name">{file}</span>
+                  <span className="file-name-wrap">
+                    <span className="file-name">{file}</span>
+                    {file === 'summary.md' && (
+                      <span className={`material-indicator ${materialIndicator.cls}`}>
+                        <span className="material-indicator-symbol">{materialIndicator.symbol}</span>
+                        <span className="material-indicator-text">{materialIndicator.text}</span>
+                      </span>
+                    )}
+                  </span>
                   <span className="file-row-right">
                     <span className="file-slot file-slot--status">
                       {exists ? (

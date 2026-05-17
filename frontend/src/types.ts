@@ -6,7 +6,8 @@ export type FileName =
   | 'summary.md'
   | 'summary.pdf'
   | 'drive_url.txt'
-export type FileInfo = { exists: boolean; size: number | null; url?: string }
+  | 'material.pdf'
+export type FileInfo = { exists: boolean; size: number | null; mtime: number | null; url?: string }
 export type FileStatus = Record<FileName, FileInfo>
 
 export type TimingStats =

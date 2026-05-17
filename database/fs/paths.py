@@ -13,6 +13,7 @@ PREDEFINED_FILES = (
     "summary.md",
     "summary.pdf",
     "drive_url.txt",
+    "material.pdf",
 )
 
 
