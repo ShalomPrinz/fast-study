@@ -5,6 +5,7 @@ import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo }
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 import { useInlineEdit } from '../hooks/useInlineEdit'
+import { useResumeStatus } from '../hooks/useResumeStatus'
 
 interface Props {
   courses: Course[]
@@ -39,6 +40,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [addingCourse, setAddingCourse] = useState(false)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
+  const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus((msg) => toast.error(msg))
 
   async function handleRefreshClick() {
     if (refreshing) return
@@ -276,6 +278,21 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
         ) : (
           <button className="new-course-btn" onClick={() => setAddingCourse(true)}>
             + New Course
+          </button>
+        )}
+      </div>
+      <div className="new-course-row">
+        {resumeStatus?.running ? (
+          <div className="new-course-btn" style={{ cursor: 'default' }} dir="auto">
+            {resumeStatus.sleepingUntil
+              ? `Rate-limited, resuming at ${new Date(resumeStatus.sleepingUntil).toLocaleTimeString()}`
+              : resumeStatus.current
+                ? `Running: ${resumeStatus.current.course} / ${resumeStatus.current.lecture} — ${resumeStatus.current.step} (${resumeStatus.done}/${resumeStatus.total})`
+                : `Resuming pipelines… (${resumeStatus.done}/${resumeStatus.total})`}
+          </div>
+        ) : (
+          <button className="new-course-btn" onClick={handleResumeClick}>
+            ⟳ Run incomplete pipelines
           </button>
         )}
       </div>

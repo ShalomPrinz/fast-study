@@ -52,6 +52,15 @@ export interface Selected {
   kind: Kind
 }
 
+export interface ResumeStatus {
+  running: boolean
+  total: number
+  done: number
+  current: { course: string; lecture: string; kind: Kind; step: string } | null
+  sleepingUntil: string | null
+  lastError: string | null
+}
+
 export interface LectureContext {
   files: FileStatus | null
   transcribePartial: { completed: number; total: number } | null
