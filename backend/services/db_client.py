@@ -76,6 +76,15 @@ def delete_file(course: str, lecture: str, kind: str, filename: str) -> None:
     _raise_for_envelope(r)
 
 
+def get_tree() -> list[dict]:
+    """Fetch the full course tree (courses → lectures + recitations)."""
+
+    r = requests.get(f"{DATABASE_URL}/tree")
+    if not r.ok:
+        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    return r.json()
+
+
 def get_summary(course: str, lecture: str, kind: str) -> str:
     """Fetch summary.md content, unwrapping the {content, hasOriginal} envelope."""
 

@@ -1,9 +1,12 @@
+import asyncio
 import json
 import os
 import tempfile
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from pathlib import Path
 
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,6 +18,7 @@ from pipeline.summarize import summarize
 from pipeline.to_pdf import convert_to_pdf
 from pipeline.upload_to_drive import upload_to_drive
 from timing import init_db, get_stats
+import resume as resume_module
 
 load_dotenv()
 GROQ_API_KEY = os.environ["GROQ_API_KEY"]
@@ -22,7 +26,19 @@ GDRIVE_ROOT_FOLDER = os.environ["GDRIVE_ROOT_FOLDER"]
 
 RECITATIONS_DIR = "Recitations"
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(resume_module.resume_all, CronTrigger(hour=3, minute=0), id="resume_all_daily")
+    scheduler.start()
+    try:
+        yield
+    finally:
+        scheduler.shutdown(wait=False)
+
+
+app = FastAPI(lifespan=lifespan)
 init_db()
 
 app.add_middleware(
@@ -184,6 +200,23 @@ def run_drive(course: str, lecture: str, kind: str = Query("lecture")):
         return {"status": "done", "url": url}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+@app.post("/resume-all")
+async def resume_all_endpoint():
+    """Kick off (or report) the resume runner. Returns immediately — actual work
+    runs as a background task. A second call while running returns the live
+    status with running=True instead of erroring."""
+    if resume_module._lock.locked():
+        return {"status": "already_running", **resume_module.get_status()}
+    asyncio.create_task(resume_module.resume_all())
+    return {"status": "started", **resume_module.get_status()}
+
+
+@app.get("/resume-status")
+def resume_status_endpoint():
+    """Live status snapshot for the resume runner. Cheap; polled by the UI."""
+    return resume_module.get_status()
 
 
 @app.get("/timing/{operation}")
