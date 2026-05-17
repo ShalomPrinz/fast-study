@@ -7,10 +7,16 @@ each one through the pipeline sequentially. The transcribe step's
 (Groq enforces an hourly ASR quota; nothing else will succeed sooner)."""
 
 import asyncio
+import logging
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from services import db_client
+
+log = logging.getLogger("resume")
+if not log.handlers:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
+log.setLevel(logging.INFO)
 
 
 STEP_ORDER = ["audio", "transcribe", "summarize", "pdf", "drive"]
@@ -127,23 +133,30 @@ async def run_pipeline_for(course: str, lecture: str, kind: str) -> None:
         files = await _fetch_files(course, lecture, kind)
         step = next_step(files)
         if step is None:
+            log.info("pipeline complete: %s/%s (%s)", course, lecture, kind)
             return
+        log.info("running step '%s' for %s/%s (%s)", step, course, lecture, kind)
         _status["current"] = {"course": course, "lecture": lecture, "kind": kind, "step": step}
         result = await _call_step(course, lecture, kind, step)
         status = result.get("status")
+        log.info("step '%s' for %s/%s -> %s", step, course, lecture, status)
         if status == "done":
             continue
         if status == "rate_limited":
             wake = datetime.now(timezone.utc) + timedelta(seconds=RATE_LIMIT_SLEEP_SECONDS)
             _status["sleeping_until"] = wake.isoformat()
+            log.info("rate limited on '%s' for %s/%s; sleeping %ds until %s", step, course, lecture, RATE_LIMIT_SLEEP_SECONDS, wake.isoformat())
             try:
                 await asyncio.sleep(RATE_LIMIT_SLEEP_SECONDS)
             finally:
                 _status["sleeping_until"] = None
+            log.info("waking up; retrying step '%s' for %s/%s", step, course, lecture)
             # retry same step on same lecture
             continue
         # error or unknown
-        _status["last_error"] = f"{course}/{lecture} [{step}]: {result.get('message') or status}"
+        msg = result.get("message") or status
+        log.error("step '%s' for %s/%s failed: %s", step, course, lecture, msg)
+        _status["last_error"] = f"{course}/{lecture} [{step}]: {msg}"
         return
 
 
@@ -152,9 +165,11 @@ async def resume_all() -> dict:
     return the current status with running=True instead of starting again."""
 
     if _lock.locked():
+        log.info("resume_all called but already running; returning status")
         return {"status": "already_running", **get_status()}
 
     async with _lock:
+        log.info("resume_all starting")
         _status["running"] = True
         _status["started_at"] = _now_iso()
         _status["done"] = 0
@@ -165,12 +180,16 @@ async def resume_all() -> dict:
         try:
             queue = await scan_pending()
             _status["total"] = len(queue)
+            log.info("scan_pending found %d pending lecture(s): %s", len(queue), [f"{c}/{l} ({k})" for c, l, k in queue])
             for (course, lecture, kind) in queue:
+                log.info("=== starting pipeline %d/%d: %s/%s (%s) ===", _status["done"] + 1, _status["total"], course, lecture, kind)
                 try:
                     await run_pipeline_for(course, lecture, kind)
                 except Exception as e:
+                    log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
                     _status["last_error"] = f"{course}/{lecture}: {e}"
                 _status["done"] += 1
+            log.info("resume_all completed: %d/%d done, last_error=%s", _status["done"], _status["total"], _status["last_error"])
             return {"status": "completed", **get_status()}
         finally:
             _status["running"] = False
