@@ -102,3 +102,13 @@ def put_summary(course: str, lecture: str, kind: str, content: str) -> None:
 
     r = requests.put(_summary_url(course, lecture), params={"kind": kind}, data=content.encode("utf-8"))
     _raise_for_envelope(r)
+
+
+def notify() -> None:
+    """Fire-and-forget broadcast on the database SSE notify channel. Failure is swallowed —
+    the channel is for liveness pings, not for correctness."""
+
+    try:
+        requests.post(f"{DATABASE_URL}/notify", timeout=2)
+    except Exception:
+        pass

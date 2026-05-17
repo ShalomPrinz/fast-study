@@ -137,26 +137,31 @@ async def run_pipeline_for(course: str, lecture: str, kind: str) -> None:
             return
         log.info("running step '%s' for %s/%s (%s)", step, course, lecture, kind)
         _status["current"] = {"course": course, "lecture": lecture, "kind": kind, "step": step}
+        db_client.notify()
         result = await _call_step(course, lecture, kind, step)
         status = result.get("status")
         log.info("step '%s' for %s/%s -> %s", step, course, lecture, status)
         if status == "done":
+            db_client.notify()
             continue
         if status == "rate_limited":
             wake = datetime.now(timezone.utc) + timedelta(seconds=RATE_LIMIT_SLEEP_SECONDS)
             _status["sleeping_until"] = wake.isoformat()
             log.info("rate limited on '%s' for %s/%s; sleeping %ds until %s", step, course, lecture, RATE_LIMIT_SLEEP_SECONDS, wake.isoformat())
+            db_client.notify()
             try:
                 await asyncio.sleep(RATE_LIMIT_SLEEP_SECONDS)
             finally:
                 _status["sleeping_until"] = None
             log.info("waking up; retrying step '%s' for %s/%s", step, course, lecture)
+            db_client.notify()
             # retry same step on same lecture
             continue
         # error or unknown
         msg = result.get("message") or status
         log.error("step '%s' for %s/%s failed: %s", step, course, lecture, msg)
         _status["last_error"] = f"{course}/{lecture} [{step}]: {msg}"
+        db_client.notify()
         return
 
 
@@ -177,10 +182,12 @@ async def resume_all() -> dict:
         _status["current"] = None
         _status["last_error"] = None
         _status["sleeping_until"] = None
+        db_client.notify()
         try:
             queue = await scan_pending()
             _status["total"] = len(queue)
             log.info("scan_pending found %d pending lecture(s): %s", len(queue), [f"{c}/{l} ({k})" for c, l, k in queue])
+            db_client.notify()
             for (course, lecture, kind) in queue:
                 log.info("=== starting pipeline %d/%d: %s/%s (%s) ===", _status["done"] + 1, _status["total"], course, lecture, kind)
                 try:
@@ -189,9 +196,11 @@ async def resume_all() -> dict:
                     log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
                     _status["last_error"] = f"{course}/{lecture}: {e}"
                 _status["done"] += 1
+                db_client.notify()
             log.info("resume_all completed: %d/%d done, last_error=%s", _status["done"], _status["total"], _status["last_error"])
             return {"status": "completed", **get_status()}
         finally:
             _status["running"] = False
             _status["current"] = None
             _status["sleeping_until"] = None
+            db_client.notify()
