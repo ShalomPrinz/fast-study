@@ -24,29 +24,35 @@ function setStatus(text, color) {
 }
 
 // Mirrors Sidebar.tsx::suggestName so popup choices stay consistent with the app.
-function suggestLectureName(course) {
+// mode='next' suggests the next-to-create name (video flow — fresh lecture).
+// mode='latest' returns the most recent existing name (PDF flow — attach material
+// to the lecture the user just watched).
+function suggestLectureName(course, mode) {
   const names = course?.lectures ?? [];
   const matches = names
-    .map((n) => { const m = n.match(/^Lecture\s+(\d+)(?:\.(\d+))?$/i); return m ? { n: +m[1], sub: m[2] ? +m[2] : 0 } : null; })
+    .map((n) => { const m = n.match(/^Lecture\s+(\d+)(?:\.(\d+))?$/i); return m ? { n: +m[1], sub: m[2] ? +m[2] : 0, raw: n } : null; })
     .filter(Boolean);
-  if (!matches.length) return 'Lecture 1';
+  if (!matches.length) return mode === 'latest' ? '' : 'Lecture 1';
   const latest = matches.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b));
+  if (mode === 'latest') return latest.raw;
   if (latest.sub === 0) return `Lecture ${latest.n + 1}`;
   if (latest.sub === 1) return `Lecture ${latest.n}.2`;
   return `Lecture ${latest.n + 1}.1`;
 }
 
-function suggestRecitationName(course) {
-  const nums = (course?.recitations ?? [])
-    .map((n) => { const m = n.match(/^Recitation\s+(\d+)$/i); return m ? +m[1] : null; })
-    .filter((x) => x !== null);
-  if (!nums.length) return 'Recitation 1';
-  return `Recitation ${Math.max(...nums) + 1}`;
+function suggestRecitationName(course, mode) {
+  const entries = (course?.recitations ?? [])
+    .map((n) => { const m = n.match(/^Recitation\s+(\d+)$/i); return m ? { n: +m[1], raw: n } : null; })
+    .filter(Boolean);
+  if (!entries.length) return mode === 'latest' ? '' : 'Recitation 1';
+  const latest = entries.reduce((a, b) => (a.n > b.n ? a : b));
+  if (mode === 'latest') return latest.raw;
+  return `Recitation ${latest.n + 1}`;
 }
 
-function suggestName(courseName, kind) {
+function suggestName(courseName, kind, mode) {
   const course = courses.find((c) => c.name === courseName);
-  return kind === 'recitation' ? suggestRecitationName(course) : suggestLectureName(course);
+  return kind === 'recitation' ? suggestRecitationName(course, mode) : suggestLectureName(course, mode);
 }
 
 function refreshLectureSuggestions() {
@@ -55,7 +61,8 @@ function refreshLectureSuggestions() {
   const kind = getKind();
   const items = kind === 'recitation' ? (course?.recitations ?? []) : (course?.lectures ?? []);
   $('lectures-list').innerHTML = items.map((n) => `<option value="${n}"></option>`).join('');
-  $('lecture').value = suggestName(courseName, kind);
+  const isPdfMode = !youtubeUrl && !interceptedRequest && !!pdfPageUrl;
+  $('lecture').value = suggestName(courseName, kind, isPdfMode ? 'latest' : 'next');
 }
 
 async function loadCourses() {
