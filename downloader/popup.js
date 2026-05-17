@@ -129,11 +129,7 @@ async function loadIntercepted() {
   const select = $('videoSelect');
   select.innerHTML = '';
 
-  if (!videoRequests.length) {
-    setStatus('Waiting for video stream - hit Play in the player.', '#aaaaaa');
-    select.innerHTML = '<option>(none captured)</option>';
-    return;
-  }
+  if (!videoRequests.length) return;
 
   setStatus(`${videoRequests.length} video request(s) intercepted.`, '#00ff66');
   if (tab?.id != null) chrome.action.setBadgeText({ tabId: tab.id, text: '' });
@@ -167,8 +163,20 @@ async function loadActivePagePdf() {
   const pageUrl = tab?.url ?? null;
   if (!pageUrl || !isPdfUrl(pageUrl)) return;
   pdfPageUrl = pageUrl;
-  $('pdfSection').style.display = '';
   $('pdfUrl').value = pageUrl;
+}
+
+// Show exactly one of {video, pdf, empty}. Video wins if both exist — captured
+// `.mp4` requests are rarer / harder to get than a public PDF URL.
+function applyVisibility() {
+  const hasVideo = !!youtubeUrl || !!interceptedRequest;
+  const hasPdf = !!pdfPageUrl;
+  $('videoSection').style.display = hasVideo ? '' : 'none';
+  $('pdfSection').style.display = !hasVideo && hasPdf ? '' : 'none';
+  $('targetSection').style.display = hasVideo || hasPdf ? '' : 'none';
+  $('emptyMsg').style.display = !hasVideo && !hasPdf ? '' : 'none';
+  if (!hasVideo && hasPdf) setStatus('PDF detected on this page.', '#00ff66');
+  if (!hasVideo && !hasPdf) setStatus('Nothing to download here.', '#aaaaaa');
 }
 
 async function sendToServer() {
@@ -253,6 +261,7 @@ async function sendPdfToServer() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadCourses(), loadIntercepted(), loadActivePagePdf()]);
+  applyVisibility();
   $('course').addEventListener('input', refreshLectureSuggestions);
   document.querySelectorAll('input[name="kind"]').forEach((el) =>
     el.addEventListener('change', refreshLectureSuggestions)
