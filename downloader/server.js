@@ -16,6 +16,7 @@ const DATABASE_URL = process.env.DATABASE_URL ?? 'http://localhost:8001';
 const PORT = 3052;
 const EXTENSION_ID = 'kebkiehjoihdofnobkbifjcihnifibdo';
 const VIDEO_FILENAME = 'video.mp4';
+const MATERIAL_FILENAME = 'material.pdf';
 
 function loadEnv(file) {
   if (!fs.existsSync(file)) return;
@@ -318,6 +319,53 @@ async function handleDownload(req, res) {
   send(res, 200, { status: 'Downloading in background...', target: `${course}/${lecture}` });
 }
 
+// The popup downloads the PDF itself (so the user's browser session cookies
+// authenticate the fetch) and streams the bytes here; we forward them to the
+// database's neutral `/files/material.pdf` endpoint (no derived-artifact wipe).
+async function handleUploadPdf(req, res) {
+  const u = new URL(req.url, 'http://x');
+  const course = u.searchParams.get('course') ?? '';
+  const lecture = u.searchParams.get('lecture') ?? '';
+  const kind = u.searchParams.get('kind') ?? 'lecture';
+
+  if (!isSafeName(course) || !isSafeName(lecture)) {
+    return send(res, 400, { error: 'course and lecture are required' });
+  }
+  if (kind !== 'lecture' && kind !== 'recitation') {
+    return send(res, 400, { error: `invalid kind: ${kind}` });
+  }
+
+  const chunks = [];
+  for await (const c of req) chunks.push(c);
+  const buf = Buffer.concat(chunks);
+  console.log(`\n📥 PDF upload received: ${formatBytes(buf.length)} for ${course}/${lecture} (kind=${kind})`);
+  if (buf.length === 0) {
+    return send(res, 400, { error: 'empty body' });
+  }
+
+  const dbUrl = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/files/${MATERIAL_FILENAME}?kind=${encodeURIComponent(kind)}`;
+  try {
+    const dbRes = await fetch(dbUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/pdf' },
+      body: buf,
+    });
+    let body = null;
+    try { body = await dbRes.json(); } catch {}
+    if (!dbRes.ok || body?.ok === false) {
+      const msg = body?.error ?? `HTTP ${dbRes.status}`;
+      console.error(`❌ PDF upload to database failed: ${msg}`);
+      return send(res, 502, { error: msg });
+    }
+    console.log(`✅ Uploaded ${MATERIAL_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
+    notifyFrontend();
+    send(res, 200, { status: 'PDF uploaded', target: `${course}/${lecture}` });
+  } catch (err) {
+    console.error(`❌ PDF upload to database failed: ${err.message}`);
+    send(res, 500, { error: err.message });
+  }
+}
+
 function send(res, status, body) {
   res.writeHead(status, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify(body));
@@ -337,6 +385,9 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && req.url === '/download-youtube') {
       return await handleDownloadYoutube(req, res);
+    }
+    if (req.method === 'POST' && req.url?.startsWith('/upload-pdf')) {
+      return await handleUploadPdf(req, res);
     }
     res.writeHead(404).end();
   } catch (e) {

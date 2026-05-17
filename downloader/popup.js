@@ -4,6 +4,7 @@ const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com'
 
 let courses = [];
 let interceptedRequest = null;
+let pdfPageUrl = null;
 let youtubeUrl = null;
 
 function isYouTubeUrl(url) {
@@ -129,7 +130,7 @@ async function loadIntercepted() {
   select.innerHTML = '';
 
   if (!videoRequests.length) {
-    setStatus('Waiting for video stream — hit Play in the player.', '#aaaaaa');
+    setStatus('Waiting for video stream - hit Play in the player.', '#aaaaaa');
     select.innerHTML = '<option>(none captured)</option>';
     return;
   }
@@ -152,6 +153,22 @@ async function loadIntercepted() {
     const bytes = await probeSize(req.url);
     opts[i].textContent = `[${formatSize(bytes)}] ${shortenUrl(req.url)}`;
   });
+}
+
+// PDFs aren't gated like .mp4 streams — Chrome just renders them at the tab
+// URL, so we can grab the URL straight off the active tab instead of sniffing
+// network requests + replaying headers.
+function isPdfUrl(url) {
+  try { return new URL(url).pathname.toLowerCase().endsWith('.pdf'); } catch { return false; }
+}
+
+async function loadActivePagePdf() {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const pageUrl = tab?.url ?? null;
+  if (!pageUrl || !isPdfUrl(pageUrl)) return;
+  pdfPageUrl = pageUrl;
+  $('pdfSection').style.display = '';
+  $('pdfUrl').value = pageUrl;
 }
 
 async function sendToServer() {
@@ -191,11 +208,55 @@ async function sendToServer() {
   }
 }
 
+async function sendPdfToServer() {
+  const course = $('course').value.trim();
+  const lecture = $('lecture').value.trim();
+  const kind = getKind();
+  const btn = $('pdfBtn');
+
+  if (!pdfPageUrl) return alert('Open a PDF page first.');
+  if (!course || !lecture) return alert('Pick a course and lecture first.');
+
+  btn.disabled = true;
+  btn.innerText = 'Sending...';
+  try {
+    // Fetch the PDF here in the popup so Chrome includes the user's session
+    // cookies automatically — works for any site the user is logged into,
+    // and avoids re-implementing auth/header-replay on the server.
+    const pdfRes = await fetch(pdfPageUrl, { credentials: 'include' });
+    if (!pdfRes.ok) throw new Error(`Fetch PDF failed: HTTP ${pdfRes.status}`);
+    const blob = await pdfRes.blob();
+    console.log('[downloader] PDF blob', { size: blob.size, type: blob.type });
+    const qs = new URLSearchParams({ course, lecture, kind }).toString();
+    const res = await fetch(`${SERVER}/upload-pdf?${qs}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/pdf' },
+      body: blob,
+    });
+    if (!res.ok) {
+      const txt = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status}: ${txt || 'no body'}`);
+    }
+    btn.innerText = 'Downloading in background!';
+    btn.style.background = '#00cc52';
+    setTimeout(() => {
+      btn.innerText = 'Download PDF';
+      btn.style.background = '';
+      btn.disabled = false;
+    }, 2000);
+  } catch (e) {
+    alert(`Could not start PDF download: ${e.message ?? e}`);
+    btn.innerText = 'Download PDF';
+    btn.disabled = false;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
-  await Promise.all([loadCourses(), loadIntercepted()]);
+  await Promise.all([loadCourses(), loadIntercepted(), loadActivePagePdf()]);
   $('course').addEventListener('input', refreshLectureSuggestions);
   document.querySelectorAll('input[name="kind"]').forEach((el) =>
     el.addEventListener('change', refreshLectureSuggestions)
   );
   $('nodeBtn').addEventListener('click', sendToServer);
+  $('pdfBtn').addEventListener('click', sendPdfToServer);
 });
