@@ -7,9 +7,11 @@ PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summar
 
 
 @timed_pipeline("summarize")
-def summarize(transcript_path: Path) -> str:
+def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
     full_prompt = f"{prompt}\n\nThe transcript is in the file: {transcript_path}"
+    if material_path is not None:
+        full_prompt += f"\nAdditional course material for this lecture (PDF): {material_path}"
 
     result = subprocess.run(
         [

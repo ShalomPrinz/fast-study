@@ -155,8 +155,12 @@ def run_summarize(course: str, lecture: str, kind: str = Query("lecture")):
     try:
         if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
             return {"status": "error", "message": "transcript.txt is required — run Transcribe first"}
-        with db_workspace(course, lecture, kind, download=["transcript.txt"]) as ws:
-            summary = summarize(ws["transcript.txt"])
+        download = ["transcript.txt"]
+        has_material = db_client.file_exists(course, lecture, kind, "material.pdf")
+        if has_material:
+            download.append("material.pdf")
+        with db_workspace(course, lecture, kind, download=download) as ws:
+            summary = summarize(ws["transcript.txt"], ws.get("material.pdf") if has_material else None)
         db_client.put_summary(course, lecture, kind, summary)
         return {"status": "done"}
     except Exception as e:
