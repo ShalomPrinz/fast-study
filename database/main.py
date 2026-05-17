@@ -1,4 +1,7 @@
+import asyncio
 import os
+import urllib.parse
+import urllib.request
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request
@@ -11,6 +14,7 @@ from events.sse import subscribe, broadcast_notify
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
 app = FastAPI()
 
@@ -92,13 +96,40 @@ async def patch_lecture(course: str, lecture: str, request: Request, kind: str =
         return _ok(str(e), 400)
 
 
+def _post_run_audio(course: str, lecture: str, kind: str) -> None:
+    """Blocking POST to backend's /run/audio; runs in a worker thread via asyncio.to_thread."""
+
+    url = (
+        f"{BACKEND_URL}/courses/{urllib.parse.quote(course, safe='')}"
+        f"/lectures/{urllib.parse.quote(lecture, safe='')}"
+        f"/run/audio?kind={urllib.parse.quote(kind, safe='')}"
+    )
+    try:
+        # strip_audio can take a while; no upper bound on the wait.
+        with urllib.request.urlopen(urllib.request.Request(url, method="POST"), timeout=None) as resp:
+            resp.read()
+    except Exception as e:
+        print(f"auto run/audio failed for {course}/{lecture} ({kind}): {e}", flush=True)
+
+
+async def _trigger_audio(course: str, lecture: str, kind: str) -> None:
+    """Fire-and-forget bridge that hands the blocking POST off to a worker thread."""
+
+    await asyncio.to_thread(_post_run_audio, course, lecture, kind)
+
+
 @app.put("/courses/{course}/lectures/{lecture}/video")
 async def put_video(course: str, lecture: str, request: Request, kind: str = Query("lecture")):
-    """Upload video.mp4 from a raw request body, wiping any derived artifacts."""
+    """Upload video.mp4 from a raw request body, wiping any derived artifacts.
+
+    On success, fire-and-forget triggers backend's /run/audio so a downloader
+    upload automatically kicks off the audio-extraction step — the response
+    returns as soon as the file is on disk, not when audio is done."""
 
     try:
         data = await request.body()
         crud.write_video(course, lecture, kind, data)
+        asyncio.create_task(_trigger_audio(course, lecture, kind))
         return _ok()
     except Exception as e:
         return _ok(str(e), 400)
