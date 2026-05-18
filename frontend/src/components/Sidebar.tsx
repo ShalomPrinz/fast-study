@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-toastify'
 import type { Course, Lecture, Selected, Kind } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../services/database'
@@ -41,6 +41,18 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus((msg) => toast.error(msg))
+  const didAutoExpandRef = useRef(false)
+
+  useEffect(() => {
+    if (didAutoExpandRef.current) return
+    if (!selected) return
+    if (!courses.find((c) => c.name === selected.course)) return
+    didAutoExpandRef.current = true
+    setExpanded((prev) => new Set([...prev, selected.course]))
+    if (selected.kind === 'recitation') {
+      setRecitationsExpanded((prev) => new Set([...prev, recitationGroupKey(selected.course)]))
+    }
+  }, [selected, courses])
 
   async function handleRefreshClick() {
     if (refreshing) return
