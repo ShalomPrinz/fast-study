@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { toast } from 'react-toastify'
 import type { ResumeStatus } from '../types'
 import { resumeAll, fetchResumeStatus } from '../services/backend'
 import { databaseUrl } from '../services/database'
@@ -63,6 +64,10 @@ export function ResumeStatusProvider({ onError, children }: ProviderProps) {
   async function trigger() {
     try {
       const s = await resumeAll()
+      if (s === 'empty_queue') {
+        toast.info('Nothing to run — all pipelines are complete')
+        return
+      }
       setStatus(s)
     } catch (err) {
       onErrorRef.current?.(`Resume failed: ${err}`)

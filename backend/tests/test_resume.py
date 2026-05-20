@@ -70,22 +70,19 @@ def test_scan_pending_filters_no_video_and_finished():
     assert len(result) == 2
 
 
-# ---- resume_all lock ----
+# ---- _scheduled_resume lock guard ----
 
-def test_resume_all_already_running_returns_status():
+def test_scheduled_resume_skips_when_locked():
+    """_scheduled_resume must not call scan_pending or resume_all if the lock is held."""
+    scan_calls: list = []
+
     async def go():
         async with resume._lock:
-            # simulate "in flight"
-            resume._status["running"] = True
-            try:
-                result = await resume.resume_all()
-            finally:
-                resume._status["running"] = False
-        return result
+            with patch.object(resume, "scan_pending", side_effect=lambda: scan_calls.append(1)):
+                await resume._scheduled_resume()
 
-    result = asyncio.run(go())
-    assert result["status"] == "already_running"
-    assert result["running"] is True
+    asyncio.run(go())
+    assert scan_calls == [], "scan_pending should not be called while lock is held"
 
 
 # ---- rate-limit branch ----

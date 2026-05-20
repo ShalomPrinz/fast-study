@@ -165,31 +165,23 @@ async def run_pipeline_for(course: str, lecture: str, kind: str) -> None:
         return
 
 
-async def resume_all() -> dict:
-    """Scan pending lectures and finish each one sequentially. If already running,
-    return the current status with running=True instead of starting again."""
-
-    if _lock.locked():
-        log.info("resume_all called but already running; returning status")
-        return {"status": "already_running", **get_status()}
+async def resume_all(queue: list[tuple[str, str, str]]) -> dict:
+    """Run every lecture in queue to completion sequentially. Caller is responsible
+    for scanning and passing a non-empty queue; this function never re-scans."""
 
     async with _lock:
-        log.info("resume_all starting")
+        log.info("resume_all starting with %d pending lecture(s): %s", len(queue), [f"\n{c}/{l} ({k})" for c, l, k in queue])
         _status["running"] = True
         _status["started_at"] = _now_iso()
         _status["done"] = 0
-        _status["total"] = 0
+        _status["total"] = len(queue)
         _status["current"] = None
         _status["last_error"] = None
         _status["sleeping_until"] = None
-        # No notify here: the first useful frontend state is when `current` is set inside
-        # run_pipeline_for. Firing notifies for the intermediate `current=None` states
-        # creates a rapid-fire burst whose parallel refreshes can reorder on the client
-        # and overwrite the fresh snapshot with a stale one
+        # No notify here: first useful frontend state is when `current` is set inside
+        # run_pipeline_for. Earlier notifies (current=None) create a rapid-fire burst
+        # whose parallel refreshes can reorder and overwrite the fresh snapshot.
         try:
-            queue = await scan_pending()
-            _status["total"] = len(queue)
-            log.info("scan_pending found %d pending lecture(s): %s", len(queue), [f"{c}/{l} ({k})" for c, l, k in queue])
             for (course, lecture, kind) in queue:
                 log.info("=== starting pipeline %d/%d: %s/%s (%s) ===", _status["done"] + 1, _status["total"], course, lecture, kind)
                 try:
@@ -206,3 +198,16 @@ async def resume_all() -> dict:
             _status["current"] = None
             _status["sleeping_until"] = None
             db_client.notify()
+
+
+async def _scheduled_resume() -> None:
+    """Cron entry point: already running - skip. Otherwise scan, then run if anything pending."""
+
+    if _lock.locked():
+        log.info("cron: resume already running, skipping")
+        return
+    queue = await scan_pending()
+    if not queue:
+        log.info("cron: nothing pending")
+        return
+    await resume_all(queue)

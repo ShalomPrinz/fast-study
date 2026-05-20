@@ -28,7 +28,7 @@ RECITATIONS_DIR = "Recitations"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(resume_module.resume_all, CronTrigger(hour=3, minute=0), id="resume_all_daily")
+    scheduler.add_job(resume_module._scheduled_resume, CronTrigger(hour=3, minute=0), id="resume_all_daily")
     scheduler.start()
     try:
         yield
@@ -206,12 +206,13 @@ def run_drive(course: str, lecture: str, kind: str = Query("lecture")):
 
 @app.post("/resume-all")
 async def resume_all_endpoint():
-    """Kick off (or report) the resume runner. Returns immediately — actual work
-    runs as a background task. A second call while running returns the live
-    status with running=True instead of erroring."""
+    """Resume all: Already running or no pending lectures - skip. Otherwise call resume_all with scanned queue."""
     if resume_module._lock.locked():
         return {"status": "already_running", **resume_module.get_status()}
-    asyncio.create_task(resume_module.resume_all())
+    queue = await resume_module.scan_pending()
+    if not queue:
+        return {"status": "empty_queue"}
+    asyncio.create_task(resume_module.resume_all(queue))
     return {"status": "started", **resume_module.get_status()}
 
 

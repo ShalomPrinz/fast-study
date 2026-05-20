@@ -39,9 +39,10 @@ function normalizeResume(raw: ResumeStatusRaw): ResumeStatus {
   }
 }
 
-export async function resumeAll(): Promise<ResumeStatus> {
-  const raw = await backend.post<ResumeStatusRaw>('/resume-all')
-  return normalizeResume(raw)
+export async function resumeAll(): Promise<ResumeStatus | 'empty_queue'> {
+  const raw = await backend.post<ResumeStatusRaw | { status: 'empty_queue' }>('/resume-all')
+  if ('status' in raw && raw.status === 'empty_queue') return 'empty_queue'
+  return normalizeResume(raw as ResumeStatusRaw)
 }
 
 export async function fetchResumeStatus(): Promise<ResumeStatus> {
