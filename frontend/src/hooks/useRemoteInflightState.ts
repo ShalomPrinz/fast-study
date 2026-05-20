@@ -1,6 +1,6 @@
 import type { Step, TimingStats, Kind, FileStatus } from '../types'
 import { STEP_INPUT_FILE, STEP_SET } from '../constants/pipeline'
-import { useResumeStatus } from './useResumeStatus'
+import { useResumeStatus } from '../contexts/ResumeStatusContext'
 import { useTimingStats } from './useTimingStats'
 
 export interface RemoteInflight {

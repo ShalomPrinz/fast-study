@@ -1,7 +1,8 @@
 import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
-import { ToastContainer } from 'react-toastify'
+import { ToastContainer, toast } from 'react-toastify'
 import type { LectureContext, Kind } from '../types'
 import { useCourseTree } from '../hooks/useCourseTree'
+import { ResumeStatusProvider } from '../contexts/ResumeStatusContext'
 import Sidebar from './Sidebar'
 
 export default function Layout() {
@@ -24,16 +25,18 @@ export default function Layout() {
   const context: LectureContext = { files, transcribePartial, refreshCourses, kind }
 
   return (
-    <div className="layout">
-      <Sidebar
-        courses={courses}
-        selected={selected}
-        onSelect={handleSelect}
-        onCourseClick={onCourseClick}
-        onRefresh={refreshCourses}
-      />
-      <Outlet context={context} />
-      <ToastContainer position="top-right" autoClose={3000} />
-    </div>
+    <ResumeStatusProvider onError={(msg) => toast.error(msg)}>
+      <div className="layout">
+        <Sidebar
+          courses={courses}
+          selected={selected}
+          onSelect={handleSelect}
+          onCourseClick={onCourseClick}
+          onRefresh={refreshCourses}
+        />
+        <Outlet context={context} />
+        <ToastContainer position="top-right" autoClose={3000} />
+      </div>
+    </ResumeStatusProvider>
   )
 }

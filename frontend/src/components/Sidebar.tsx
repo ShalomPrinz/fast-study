@@ -5,7 +5,7 @@ import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo }
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 import { useInlineEdit } from '../hooks/useInlineEdit'
-import { useResumeStatus } from '../hooks/useResumeStatus'
+import { useResumeStatus } from '../contexts/ResumeStatusContext'
 
 interface Props {
   courses: Course[]
@@ -40,7 +40,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [addingCourse, setAddingCourse] = useState(false)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus((msg) => toast.error(msg))
+  const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus()
   const didAutoExpandRef = useRef(false)
 
   useEffect(() => {

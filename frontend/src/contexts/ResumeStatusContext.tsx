@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { ResumeStatus } from '../types'
 import { resumeAll, fetchResumeStatus } from '../services/backend'
 import { databaseUrl } from '../services/database'
@@ -6,7 +6,26 @@ import { databaseUrl } from '../services/database'
 // Architecture: Backend fires a database `/notify` SSE ping at every meaningful
 // state change in resume.py (step start, step done, rate-limit start, wake, error,
 // run start/complete). We refetch once per ping; that's it.
-export function useResumeStatus(onError?: (message: string) => void) {
+//
+// Exposed as a provider so Sidebar + MainView share a single EventSource and a
+// single `lastReportedError` dedupe ref — see frontend/CLAUDE.md.
+
+interface ResumeStatusValue {
+  status: ResumeStatus | null
+  trigger: () => Promise<void>
+}
+
+const ResumeStatusContext = createContext<ResumeStatusValue>({
+  status: null,
+  trigger: async () => {},
+})
+
+interface ProviderProps {
+  onError?: (message: string) => void
+  children: ReactNode
+}
+
+export function ResumeStatusProvider({ onError, children }: ProviderProps) {
   const [status, setStatus] = useState<ResumeStatus | null>(null)
   const lastReportedErrorRef = useRef<string | null>(null)
   const onErrorRef = useRef(onError)
@@ -50,5 +69,13 @@ export function useResumeStatus(onError?: (message: string) => void) {
     }
   }
 
-  return { status, trigger }
+  return (
+    <ResumeStatusContext.Provider value={{ status, trigger }}>
+      {children}
+    </ResumeStatusContext.Provider>
+  )
+}
+
+export function useResumeStatus() {
+  return useContext(ResumeStatusContext)
 }
