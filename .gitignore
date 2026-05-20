@@ -1,5 +1,4 @@
 .env
-lecture*
 *.pyc
 
 TODOS.md

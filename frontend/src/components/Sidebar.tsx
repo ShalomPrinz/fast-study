@@ -7,6 +7,7 @@ import Icon from './Icon'
 import NewCourseRow from './NewCourseRow'
 import ResumePipelineRow from './ResumePipelineRow'
 import { useInlineEdit } from '../hooks/useInlineEdit'
+import { recitationGroupKey, suggestName } from '../utils/lectureNaming'
 
 interface Props {
   courses: Course[]
@@ -26,10 +27,6 @@ interface PendingUpload {
 interface AddTarget { course: string; kind: Kind }
 interface RenameTarget { course: string; lecture: string; kind: Kind }
 interface DragTarget { course: string; lecture: string; kind: Kind }
-
-function recitationGroupKey(courseName: string): string {
-  return `${courseName}::recitations`
-}
 
 export default function Sidebar({ courses, selected, onSelect, onCourseClick, onRefresh }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
@@ -76,33 +73,6 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     })
   }, [courses])
 
-  function suggestLectureName(courseName: string): string {
-    const course = courses.find((c) => c.name === courseName)
-    if (!course) return ''
-    const matches = course.lectures
-      .map((l) => { const m = l.name.match(/^Lecture\s+(\d+)(?:\.(\d+))?$/i); return m ? { n: parseInt(m[1], 10), sub: m[2] ? parseInt(m[2], 10) : 0 } : null })
-      .filter((x): x is { n: number; sub: number } => x !== null)
-    if (!matches.length) return 'Lecture 1'
-    const latest = matches.reduce((a, b) => a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b)
-    if (latest.sub === 0) return `Lecture ${latest.n + 1}`
-    if (latest.sub === 1) return `Lecture ${latest.n}.2`
-    return `Lecture ${latest.n + 1}`
-  }
-
-  function suggestRecitationName(courseName: string): string {
-    const course = courses.find((c) => c.name === courseName)
-    if (!course) return 'Recitation 1'
-    const nums = (course.recitations ?? [])
-      .map((l) => { const m = l.name.match(/^Recitation\s+(\d+)$/i); return m ? parseInt(m[1], 10) : null })
-      .filter((x): x is number => x !== null)
-    if (!nums.length) return 'Recitation 1'
-    return `Recitation ${Math.max(...nums) + 1}`
-  }
-
-  function suggestName(courseName: string, kind: Kind): string {
-    return kind === 'recitation' ? suggestRecitationName(courseName) : suggestLectureName(courseName)
-  }
-
   function toggleCourse(name: string) {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -124,7 +94,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   function startAdding(e: React.MouseEvent, courseName: string, kind: Kind) {
     e.stopPropagation()
     setAdding({ course: courseName, kind })
-    addLectureEdit.setValue(suggestName(courseName, kind))
+    addLectureEdit.setValue(suggestName(courses, courseName, kind))
     setExpanded((prev) => new Set([...prev, courseName]))
     if (kind === 'recitation') {
       setRecitationsExpanded((prev) => new Set([...prev, recitationGroupKey(courseName)]))
