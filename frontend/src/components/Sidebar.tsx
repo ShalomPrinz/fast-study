@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import type { Course, Lecture, Selected, Kind } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../services/database'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
+import NewCourseRow from './NewCourseRow'
+import ResumePipelineRow from './ResumePipelineRow'
 import { useInlineEdit } from '../hooks/useInlineEdit'
-import { useResumeStatus } from '../contexts/ResumeStatusContext'
 
 interface Props {
   courses: Course[]
@@ -41,8 +41,6 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [addingCourse, setAddingCourse] = useState(false)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
-  const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus()
-  const navigate = useNavigate()
   const didAutoExpandRef = useRef(false)
 
   useEffect(() => {
@@ -274,54 +272,14 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
           <Icon icon="refresh" />
         </button>
       </div>
-      <div className="new-course-row">
-        {addingCourse ? (
-          <input
-            ref={addCourseEdit.ref}
-            className="new-course-input"
-            value={addCourseEdit.value}
-            onChange={(e) => addCourseEdit.setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitAddCourse()
-              if (e.key === 'Escape') { setAddingCourse(false); addCourseEdit.setValue('') }
-            }}
-            onBlur={() => { setAddingCourse(false); addCourseEdit.setValue('') }}
-            placeholder="Course name…"
-            dir="auto"
-          />
-        ) : (
-          <button className="new-course-btn" onClick={() => setAddingCourse(true)}>
-            + New Course
-          </button>
-        )}
-      </div>
-      <div className="new-course-row">
-        {resumeStatus?.running ? (() => {
-          const current = resumeStatus.current
-          const clickable = !!current && !resumeStatus.sleepingUntil
-          return (
-            <button
-              className="new-course-btn"
-              style={{ cursor: clickable ? 'pointer' : 'default' }}
-              disabled={!clickable}
-              onClick={clickable ? () => navigate(
-                `/${encodeURIComponent(current!.course)}/${encodeURIComponent(current!.lecture)}${current!.kind === 'recitation' ? '?kind=recitation' : ''}`
-              ) : undefined}
-              dir="auto"
-            >
-              {resumeStatus.sleepingUntil
-                ? `Rate-limited, resuming at ${new Date(resumeStatus.sleepingUntil).toLocaleTimeString()}`
-                : current
-                  ? `Running: ${current.course} / ${current.lecture} — ${current.step} (${resumeStatus.done}/${resumeStatus.total})`
-                  : `Resuming pipelines… (${resumeStatus.done}/${resumeStatus.total})`}
-            </button>
-          )
-        })() : (
-          <button className="new-course-btn" onClick={handleResumeClick}>
-            ⟳ Run incomplete pipelines
-          </button>
-        )}
-      </div>
+      <NewCourseRow
+        addingCourse={addingCourse}
+        addCourseEdit={addCourseEdit}
+        onStart={() => setAddingCourse(true)}
+        onCommit={commitAddCourse}
+        onCancel={() => { setAddingCourse(false); addCourseEdit.setValue('') }}
+      />
+      <ResumePipelineRow />
       <nav className="sidebar-nav">
         {courses.map((course) => {
           const recKey = recitationGroupKey(course.name)
