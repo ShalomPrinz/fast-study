@@ -83,3 +83,39 @@ sqlite3 backend/timing/timing.db "DELETE FROM timing WHERE id = 3;"
 # Wipe all rows
 sqlite3 backend/timing/timing.db "DELETE FROM timing;"
 ```
+
+## Maintenance scripts (`scripts/`)
+
+Both scripts read `timing.db` directly — no service needs to be running.
+
+### `plot_timing.py` — visualize the data
+
+Generates one scatter plot per operation (`file_size` vs `duration`) with the linear-regression line that `get_stats` uses for ETA prediction. Points whose residual exceeds 2σ are marked red and labelled with their row id and signed residual — these are the records distorting the estimate.
+
+```bash
+python3 backend/timing/scripts/plot_timing.py
+```
+
+Outputs:
+- `backend/timing/plots/_all.png` — combined grid, one subplot per operation
+- `backend/timing/plots/<operation>.png` — one PNG per operation
+
+### `clean_outliers.py` — remove distorting rows
+
+Per operation, fits the same line as `get_stats` and deletes rows whose residual exceeds `K * σ` (default `K = 2`).
+
+```bash
+# dry run — prints what would be deleted, changes nothing
+python3 backend/timing/scripts/clean_outliers.py
+
+# actually delete
+python3 backend/timing/scripts/clean_outliers.py --apply
+
+# tune the threshold (lower = more aggressive)
+python3 backend/timing/scripts/clean_outliers.py --apply --k 2.5
+
+# limit to specific operations (repeatable)
+python3 backend/timing/scripts/clean_outliers.py --apply --op summarize --op pdf
+```
+
+Typical workflow: run `plot_timing.py` to eyeball outliers → run `clean_outliers.py` (dry-run) to see what it would drop → re-run with `--apply` → re-plot to confirm tighter σ.
