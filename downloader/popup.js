@@ -93,17 +93,26 @@ function formatSize(bytes) {
   return `${mb.toFixed(1)} MB`;
 }
 
+const PROBE_SKIP = new Set(['range', 'if-range', 'if-none-match', 'if-modified-since', 'host', 'content-length']);
+
 // HEAD often works on signed video URLs (token is in the query string).
 // Fall back to a single-byte ranged GET to read Content-Range when HEAD is
 // blocked or returns no Content-Length.
-async function probeSize(url) {
+// Zoom (and other auth-gated CDNs) return no Content-Length without the
+// original request's cookies/auth headers — pass them through so the probe
+// sees the same session as the captured request.
+async function probeSize(url, capturedHeaders) {
+  const hdrs = {};
+  for (const h of capturedHeaders ?? []) {
+    if (!PROBE_SKIP.has(h.name.toLowerCase())) hdrs[h.name] = h.value;
+  }
   try {
-    const head = await fetch(url, { method: 'HEAD' });
+    const head = await fetch(url, { method: 'HEAD', headers: hdrs });
     const len = head.headers.get('content-length');
     if (head.ok && len) return +len;
   } catch {}
   try {
-    const res = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-0' } });
+    const res = await fetch(url, { method: 'GET', headers: { ...hdrs, Range: 'bytes=0-0' } });
     const range = res.headers.get('content-range');
     const m = range && range.match(/\/(\d+)\s*$/);
     if (m) return +m[1];
@@ -153,7 +162,7 @@ async function loadIntercepted() {
   selectVideo(videoRequests[0]);
 
   videoRequests.forEach(async (req, i) => {
-    const bytes = await probeSize(req.url);
+    const bytes = await probeSize(req.url, req.headers);
     opts[i].textContent = `[${formatSize(bytes)}] ${shortenUrl(req.url)}`;
   });
 }
