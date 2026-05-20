@@ -27,6 +27,7 @@ database/
 Reads the repo-root `.env` (via `python-dotenv`). Required:
 
 - `DATA_ROOT` — absolute path to the data directory.
+- `BACKEND_URL` (optional, default `http://localhost:8000`) — used by the auto-trigger after a video upload. See `_post_run_audio` in `main.py`.
 
 ## Running
 

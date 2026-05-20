@@ -24,24 +24,27 @@ backend/
     templates/        pandoc_template.tex (XeLaTeX template for PDF output)
   pipeline/           pure functions, one module per step
     strip_audio.py       strip_audio(video_path, audio_path)
-    transcribe.py        transcribe_audio(audio_path, api_key) -> str  (raises TranscribeRateLimitError)
-    summarize.py         summarize(transcript_path) -> str             (raises RuntimeError on Gemini API failure)
+    transcribe.py        transcribe_audio(audio_path) -> str            (raises TranscribeRateLimitError)
+    summarize.py         summarize(transcript_path, material_pdf=None) -> str (raises RuntimeError on Gemini API failure)
     to_pdf.py            convert_to_pdf(md_path) -> str (output path)
-    upload_to_drive.py   upload_to_drive(pdf_path, course, root_folder_name, filename, subfolder=None) -> str (webViewLink)
+    upload_to_drive.py   upload_to_drive(pdf_path, course, file_name=None, subfolder=None) -> str (webViewLink)
+  resume.py           background runner that finishes lectures whose pipelines stopped mid-way
   timing/             SQLite-backed per-operation duration log
     __init__.py          init_db, get_stats, _record, @timed_pipeline decorator
     timing.db            persistent store of (operation, file_size_bytes, duration_seconds)
+    README.md
   tests/
     conftest.py       adds pipeline/ and backend/ to sys.path so tests can import modules
     test_to_pdf.py
     test_transcribe.py
-    test_db_client.py
+    test_summarize.py
+    test_resume.py
   services/
     db_client.py      thin HTTP client for the database service (every read/write goes through here)
-    google_auth.py    shared OAuth helper — loads credentials.json/token.json, returns Credentials for a given scope set
+    google_auth.py    shared OAuth helper — loads credentials.json/token_drive.json, returns Credentials for a given scope set
   main.py             FastAPI app + uvicorn entry point
   credentials.json    Google OAuth client (gitignored)
-  token.json          Google OAuth token cache (gitignored)
+  token_drive.json    Google OAuth token cache (gitignored)
   pyproject.toml
 ```
 
@@ -56,6 +59,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/` (or `{DATA_ROOT}/{course
 | `transcript.txt`                | `/run/transcribe`   |
 | `transcript.partial.txt`        | `/run/transcribe` (on rate-limit) |
 | `transcript.partial.meta.json`  | `/run/transcribe` (on rate-limit) |
+| `material.pdf` (optional)       | user                |
 | `summary.md`                    | `/run/summarize`    |
 | `summary.pdf`                   | `/run/pdf`          |
 | `drive_url.txt`                 | `/run/drive`        |
@@ -66,7 +70,9 @@ Paths under `DATA_ROOT` are not resolved here — every read/write goes through 
 
 All pipeline endpoints: `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}` where `step ∈ {audio, transcribe, summarize, pdf, drive}`. `kind` defaults to `lecture`.
 
-Each endpoint validates that its prerequisite file exists and returns `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise.
+Each endpoint validates that its prerequisite file exists and returns `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise. `/run/summarize` additionally returns `usedMaterial: true` when an optional `material.pdf` was found in the lecture dir and passed to Gemini alongside the transcript.
+
+Resume runner: `POST /resume-all` kicks off `resume.resume_all()` as a background task (or returns `{status: "already_running", ...}` if a run is in progress). `GET /resume-status` returns a snapshot of the live status dict (`running`, `total`, `done`, `current`, `sleeping_until`, `last_error`). The runner also fires on a daily APScheduler cron at 03:00 (configured in `main.py`'s `lifespan`).
 
 Timing: `GET /timing/{operation}?file_size_bytes=N` → linear-regression estimate from past runs (or `{"message": "not-enough-data"}`).
 
@@ -112,5 +118,7 @@ This applies even to "small" or "obvious" changes — preprocessing helpers in `
 - CORS is open to `http://localhost:5173` only.
 - No background tasks, no job polling — every endpoint blocks until done.
 - `summarize.py` raises `RuntimeError` on Gemini API failure (not `sys.exit`) so the endpoint can catch and return `{"status": "error"}`. Auth uses `GEMINI_API_KEY` from the environment — the `google-genai` SDK silently ignores OAuth `credentials=` outside of Vertex AI mode.
-- `transcribe.py` raises `TranscribeRateLimitError` carrying `{limit, used, requested, retry_after_seconds, completed_chunks, total_chunks}` and writes partial state to disk; the next `/run/transcribe` call picks up from `transcript.partial.txt`.
+- `transcribe.py` raises `TranscribeRateLimitError` carrying `{limit, used, requested, retry_after_seconds, completed_chunks, total_chunks}` and writes partial state to disk; the next `/run/transcribe` call picks up from `transcript.partial.txt`. The transcribe endpoint round-trips the partial via the database service AND restores `audio.mp3`'s mtime from `transcript.partial.meta.json` — re-downloading audio.mp3 gives it a fresh mtime which would otherwise invalidate the resume meta and force a full restart.
 - `timing/` records every pipeline operation's `(file_size, duration)` so the frontend can show calibrated ETAs.
+- `resume.py` walks the tree looking for lectures that have `video.mp4` but lack `drive_url.txt` and runs them sequentially through every missing step. It fires a `database/notify` SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend can react without polling. On `rate_limited`, it sleeps `RATE_LIMIT_SLEEP_SECONDS` (3600s — Groq's hourly ASR window) and retries the same step.
+- `summarize.py` accepts an optional `material_pdf` path — when the lecture dir contains `material.pdf`, the endpoint downloads it into the workspace and passes it to Gemini alongside the transcript.
