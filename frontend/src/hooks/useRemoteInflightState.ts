@@ -39,7 +39,8 @@ export function useRemoteInflightState({ course, lecture, kind, files, transcrib
     status.singleAutoCurrent.kind === kind &&
     STEP_SET.has(status.singleAutoCurrent.step)
 
-  const matches = resumeMatch || singleAutoMatch
+  // Pause inflight state during rate-limit sleep (when sleepingUntil is set)
+  const matches = (resumeMatch || singleAutoMatch) && !status?.sleepingUntil
   const current = resumeMatch ? status!.current! : singleAutoMatch ? status!.singleAutoCurrent! : null
 
   const step = matches ? (current!.step as Step) : null
