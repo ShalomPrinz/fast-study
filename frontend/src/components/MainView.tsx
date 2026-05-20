@@ -5,6 +5,7 @@ import type { Step, FileName, TimingStats, LectureContext, RateLimitInfo, RateLi
 import { fetchCourse, deleteFile, fileUrl } from '../services/database'
 import { fetchTimingStats, runStep } from '../services/backend'
 import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
+import { PIPELINE, STEP_FILE, STEP_INPUT_FILE, STEP_LABEL, STEP_ERROR_LABEL } from '../constants/pipeline'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 
@@ -31,35 +32,6 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
-
-const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
-  { file: 'video.mp4' },
-  { file: 'audio.mp3',      step: 'audio',      actionLabel: 'Extract Audio',   prereq: 'video.mp4'      },
-  { file: 'transcript.txt', step: 'transcribe',  actionLabel: 'Transcribe',      prereq: 'audio.mp3'      },
-  { file: 'summary.md',     step: 'summarize',   actionLabel: 'Summarize',       prereq: 'transcript.txt' },
-  { file: 'summary.pdf',    step: 'pdf',         actionLabel: 'Export PDF',      prereq: 'summary.md'     },
-  { file: 'drive_url.txt',  step: 'drive',       actionLabel: 'Upload to Drive', prereq: 'summary.pdf'    },
-]
-
-const STEP_FILE = Object.fromEntries(
-  PIPELINE.flatMap(p => p.step ? [[p.step, p.file]] : [])
-) as Partial<Record<Step, FileName>>
-
-const STEP_INPUT_FILE = Object.fromEntries(
-  PIPELINE.flatMap(p => p.step && p.prereq ? [[p.step, p.prereq]] : [])
-) as Partial<Record<Step, FileName>>
-
-const STEP_LABEL = Object.fromEntries(
-  PIPELINE.flatMap(p => p.step && p.actionLabel ? [[p.step, p.actionLabel]] : [])
-) as Partial<Record<Step, string>>
-
-const STEP_ERROR_LABEL: Record<Step, string> = {
-  audio:      'Audio extraction failed',
-  transcribe: 'Transcription failed',
-  summarize:  'Summarization failed',
-  pdf:        'PDF export failed',
-  drive:      'Drive upload failed',
-}
 
 function formatDuration(seconds: number): string {
   const s = Math.round(seconds)

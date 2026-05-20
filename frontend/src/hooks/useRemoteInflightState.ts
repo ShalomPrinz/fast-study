@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Step, FileName, TimingStats, Kind, FileStatus } from '../types'
+import type { Step, TimingStats, Kind, FileStatus } from '../types'
 import { fetchTimingStats } from '../services/backend'
+import { STEP_INPUT_FILE, STEP_SET } from '../constants/pipeline'
 import { useResumeStatus } from './useResumeStatus'
 
 export interface RemoteInflight {
@@ -9,16 +10,6 @@ export interface RemoteInflight {
   timingStats: TimingStats | null
   completedFraction: number
 }
-
-const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = {
-  audio: 'video.mp4',
-  transcribe: 'audio.mp3',
-  summarize: 'transcript.txt',
-  pdf: 'summary.md',
-  drive: 'summary.pdf',
-}
-
-const STEP_SET: Set<string> = new Set(['audio', 'transcribe', 'summarize', 'pdf', 'drive'])
 
 interface Args {
   course: string
