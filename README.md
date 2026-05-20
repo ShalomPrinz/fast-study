@@ -1,45 +1,80 @@
 # Fast Study
 
-Turns a Hebrew video lecture into a structured written summary.
+Turns a Hebrew video lecture into a structured written summary and uploads it to Google Drive.
 
-**Pipeline:** video → audio → transcript → summary
+**Pipeline:** video → audio → transcript → summary (Markdown) → PDF → Google Drive
+
+## Architecture
+
+Four services share one `.env` and one on-disk layout under `DATA_ROOT`:
+
+| Service       | Stack                    | Port  | Role                                                                 |
+|---------------|--------------------------|-------|----------------------------------------------------------------------|
+| `backend/`    | FastAPI (Python)         | 8000  | Runs the pipeline steps; serves timing stats and the resume runner   |
+| `database/`   | FastAPI (Python)         | 8001  | Owns every read/write under `DATA_ROOT` + the cross-service SSE bus  |
+| `frontend/`   | React + Vite + TS        | 5173  | Web UI that drives the pipeline                                      |
+| `downloader/` | Chrome MV3 + Node server | 3052  | Captures source videos from lecture sites and hands them to database |
+
+On-disk layout (single source of truth: `database/fs/paths.py`):
+
+```
+{DATA_ROOT}/{course}/{lecture}/...                  # lectures
+{DATA_ROOT}/{course}/Recitations/{name}/...         # recitations
+```
+
+Per-service docs live next to each service in `CLAUDE.md`.
 
 ## Requirements
 
-- python 3.10+
-- `ffmpeg` installed system-wide
-- [Groq API key](https://console.groq.com) (free)
-- [Gemini CLI](https://github.com/google-gemini/gemini-cli) installed and authenticated
-
-## Usage
-
-```bash
-python main.py lecture.mp4 gsk_your_key
-```
-
-Or set `GROQ_API_KEY` as an env var and omit it from the command.
-
-**Outputs** (saved next to the script):
-| File | Content |
-|---|---|
-| `audio.mp3` | Extracted audio |
-| `transcript.txt` | Raw Hebrew transcript |
-| `summary.md` | Structured summary |
-
-## Converting the summary to PDF
-
-```bash
-python3 to_pdf.py summary.md
-```
-
-Produces `summary.pdf` alongside the input file, with Hebrew/RTL layout and math expressions rendered. The Hebrew font (Noto Serif Hebrew) is bundled in `fonts/` — no system font installation needed.
-
-**Additional requirements for PDF export:**
+- Python 3.10+
+- Node.js 18+
+- `ffmpeg` — `sudo apt install ffmpeg`
 - `pandoc` — `sudo apt install pandoc`
 - XeLaTeX — `sudo apt install texlive-xetex texlive-lang-arabic`
+- `yt-dlp` (only if you'll download from YouTube) — `pipx install yt-dlp` or `sudo apt install yt-dlp`
+- [Groq API key](https://console.groq.com) — Whisper transcription
+- [Gemini API key](https://aistudio.google.com/apikey) — summary generation
+- Google OAuth client (`backend/credentials.json`) — Drive upload
 
-Math expressions in the summary (`$...$` inline, `$$...$$` block) are rendered as proper formulas in the PDF.
+The Hebrew font (Noto Serif Hebrew) is bundled in `backend/assets/fonts/` — no system font install needed.
+
+## Environment
+
+Single `.env` at the repo root, shared by all services:
+
+```
+DATA_ROOT=/absolute/path/to/data
+GROQ_API_KEY=gsk_...
+GEMINI_API_KEY=...
+GDRIVE_ROOT_FOLDER=FastStudy
+# Optional overrides
+DATABASE_URL=http://localhost:8001
+BACKEND_URL=http://localhost:8000
+```
+
+The frontend has its own `frontend/.env` for `VITE_API_URL` / `VITE_DATABASE_URL` (both optional — defaults match the ports above).
+
+## Running
+
+All four services boot in one terminal:
+
+```bash
+npm install        # one-time, installs concurrently
+npm run dev
+```
+
+Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-coded; Ctrl-C kills all four. Per-service commands live in each service's `CLAUDE.md`.
+
+The Chrome extension is loaded unpacked from `downloader/`. After loading, copy the assigned extension ID into the `EXTENSION_ID` constant in `downloader/server.js` or CORS will block the popup.
+
+## Tests
+
+```bash
+cd backend && python3 -m pytest tests/ -q
+```
+
+> Always invoke `python3` explicitly on this WSL setup — `python` is not aliased.
 
 ## Customizing the summary format
 
-Edit `summarize.md` to change how the summary is structured — it's the prompt sent to Gemini. The default output includes a title, section-by-section content (nearly everything from the transcript, just cleaned up), key takeaways, and action items.
+Edit `backend/assets/instructions/summarize.md` — it's the Hebrew prompt sent to Gemini alongside the transcript (and the optional `material.pdf` if present in the lecture dir). No code change needed.
