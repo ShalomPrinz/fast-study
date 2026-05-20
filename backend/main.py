@@ -70,13 +70,15 @@ def db_workspace(course: str, lecture: str, kind: str, *, download=(), upload=()
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/audio")
-def run_audio(course: str, lecture: str, kind: str = Query("lecture")):
+def run_audio(course: str, lecture: str, kind: str = Query("lecture"), notify: bool = Query(False)):
     if err := _validate_kind(kind): return err
     try:
         if not db_client.file_exists(course, lecture, kind, "video.mp4"):
             return {"status": "error", "message": "video.mp4 is required"}
         with db_workspace(course, lecture, kind, download=["video.mp4"], upload=["audio.mp3"]) as ws:
             strip_audio(str(ws["video.mp4"]), str(ws["audio.mp3"]))
+        if notify:
+            db_client.notify()
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}

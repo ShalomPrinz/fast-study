@@ -102,7 +102,7 @@ def _post_run_audio(course: str, lecture: str, kind: str) -> None:
     url = (
         f"{BACKEND_URL}/courses/{urllib.parse.quote(course, safe='')}"
         f"/lectures/{urllib.parse.quote(lecture, safe='')}"
-        f"/run/audio?kind={urllib.parse.quote(kind, safe='')}"
+        f"/run/audio?kind={urllib.parse.quote(kind, safe='')}&notify=true"
     )
     try:
         # strip_audio can take a while; no upper bound on the wait.
