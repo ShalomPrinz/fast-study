@@ -68,6 +68,21 @@ class TestEnsureBlankBeforeLists:
         result = ensure_blank_before_lists(text)
         assert result == text
 
+    def test_inserts_blank_before_star_list_after_paragraph(self):
+        text = "פסקה\n* פריט\n"
+        result = ensure_blank_before_lists(text)
+        assert "\n\n* פריט" in result
+
+    def test_inserts_blank_before_plus_list_after_paragraph(self):
+        text = "פסקה\n+ פריט\n"
+        result = ensure_blank_before_lists(text)
+        assert "\n\n+ פריט" in result
+
+    def test_star_consecutive_items_not_separated(self):
+        text = "* אחד\n* שניים\n"
+        result = ensure_blank_before_lists(text)
+        assert result == text
+
     def test_empty_text(self):
         assert ensure_blank_before_lists("") == ""
 

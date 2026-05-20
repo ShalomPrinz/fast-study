@@ -21,7 +21,7 @@ LATEX_HEADER = r"""
 \newfontfamily\englishfonttt{Noto Sans Mono}
 """
 
-LIST_ITEM_RE = re.compile(r'^(\s*(?:-|\d+\.)\s)')
+LIST_ITEM_RE = re.compile(r'^(\s*(?:[-*+]|\d+\.)\s)')
 MATH_SPAN_RE = re.compile(r'\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$')
 INLINE_CODE_RE = re.compile(r'`([^`\n]+)`')
 
