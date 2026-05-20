@@ -53,11 +53,20 @@ export interface Selected {
   kind: Kind
 }
 
+interface CurrentRun {
+  course: string
+  lecture: string
+  kind: Kind
+  step: string
+  startedAt: string
+}
+
 export interface ResumeStatus {
   running: boolean
   total: number
   done: number
-  current: { course: string; lecture: string; kind: Kind; step: string; startedAt: string } | null
+  current: CurrentRun | null
+  singleAutoCurrent: CurrentRun | null
   sleepingUntil: string | null
   lastError: string | null
 }

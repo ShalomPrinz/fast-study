@@ -39,6 +39,7 @@ _status: dict = {
     "total": 0,
     "done": 0,
     "current": None,
+    "single_auto_current": None,
     "last_error": None,
     "sleeping_until": None,
 }
@@ -50,13 +51,13 @@ def get_status() -> dict:
 
 
 def set_current(course: str, lecture: str, kind: str, step: str) -> None:
-    """Mark a step as in-flight without starting the live resume runner."""
-    _status["current"] = {"course": course, "lecture": lecture, "kind": kind, "step": step, "started_at": _now_iso()}
+    """Mark a single auto-triggered step as in-flight (separate from the resume runner's current)."""
+    _status["single_auto_current"] = {"course": course, "lecture": lecture, "kind": kind, "step": step, "started_at": _now_iso()}
 
 
 def clear_current() -> None:
-    """Clear the in-flight marker set by set_current. No-op if resume_all owns current."""
-    _status["current"] = None
+    """Clear the in-flight marker set by set_current."""
+    _status["single_auto_current"] = None
 
 
 def next_step(files: dict) -> Optional[str]:

@@ -11,11 +11,20 @@ export async function fetchTimingStats(operation: string, fileSizeBytes: number)
   return backend.get<TimingStats>(`/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
 }
 
+type CurrentStatus = {
+  course: string
+  lecture: string
+  kind: Kind
+  step: string
+  started_at: string
+}
+
 type ResumeStatusRaw = {
   running: boolean
   total: number
   done: number
-  current: { course: string; lecture: string; kind: Kind; step: string; started_at: string } | null
+  current: CurrentStatus | null
+  single_auto_current: CurrentStatus | null
   sleeping_until: string | null
   last_error: string | null
 }
@@ -32,6 +41,15 @@ function normalizeResume(raw: ResumeStatusRaw): ResumeStatus {
           kind: raw.current.kind,
           step: raw.current.step,
           startedAt: raw.current.started_at,
+        }
+      : null,
+    singleAutoCurrent: raw.single_auto_current
+      ? {
+          course: raw.single_auto_current.course,
+          lecture: raw.single_auto_current.lecture,
+          kind: raw.single_auto_current.kind,
+          step: raw.single_auto_current.step,
+          startedAt: raw.single_auto_current.started_at,
         }
       : null,
     sleepingUntil: raw.sleeping_until,

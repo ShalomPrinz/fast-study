@@ -24,17 +24,26 @@ interface Args {
 export function useRemoteInflightState({ course, lecture, kind, files, transcribePartial }: Args): RemoteInflight | null {
   const { status } = useResumeStatus()
 
-  // `running` guards the full resume queue; `current` is also set for
-  // auto-triggered steps (e.g. audio after video upload) where running=false.
-  const matches =
-    !!status?.current &&
+  const resumeMatch =
+    !!status?.running &&
+    !!status.current &&
     status.current.course === course &&
     status.current.lecture === lecture &&
     status.current.kind === kind &&
     STEP_SET.has(status.current.step)
 
-  const step = matches ? (status!.current!.step as Step) : null
-  const startedAtIso = matches ? status!.current!.startedAt : null
+  const singleAutoMatch =
+    !!status?.singleAutoCurrent &&
+    status.singleAutoCurrent.course === course &&
+    status.singleAutoCurrent.lecture === lecture &&
+    status.singleAutoCurrent.kind === kind &&
+    STEP_SET.has(status.singleAutoCurrent.step)
+
+  const matches = resumeMatch || singleAutoMatch
+  const current = resumeMatch ? status!.current! : singleAutoMatch ? status!.singleAutoCurrent! : null
+
+  const step = matches ? (current!.step as Step) : null
+  const startedAtIso = matches ? current!.startedAt : null
 
   const inputFile = step ? STEP_INPUT_FILE[step] : null
   const fileSizeBytes = step && inputFile && files ? files[inputFile]?.size ?? 0 : 0
