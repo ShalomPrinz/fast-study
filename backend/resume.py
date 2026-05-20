@@ -49,6 +49,16 @@ def get_status() -> dict:
     return dict(_status)
 
 
+def set_current(course: str, lecture: str, kind: str, step: str) -> None:
+    """Mark a step as in-flight without starting the live resume runner."""
+    _status["current"] = {"course": course, "lecture": lecture, "kind": kind, "step": step, "started_at": _now_iso()}
+
+
+def clear_current() -> None:
+    """Clear the in-flight marker set by set_current. No-op if resume_all owns current."""
+    _status["current"] = None
+
+
 def next_step(files: dict) -> Optional[str]:
     """Given a {filename: {exists: bool, ...}} mapping for one lecture, return
     the next pipeline step name to run, or None if drive_url.txt already exists.

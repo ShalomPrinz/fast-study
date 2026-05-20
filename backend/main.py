@@ -69,16 +69,32 @@ def db_workspace(course: str, lecture: str, kind: str, *, download=(), upload=()
             db_client.put_file_bytes(course, lecture, kind, name, paths[name].read_bytes())
 
 
+@contextmanager
+def db_workspace_tracked(course: str, lecture: str, kind: str, step: str, *, download=(), upload=()):
+    """db_workspace + live status tracking: notifies the frontend that a step
+    is in-flight before yielding and clears the status after (success or error)."""
+    resume_module.set_current(course, lecture, kind, step)
+    db_client.notify()
+    try:
+        with db_workspace(course, lecture, kind, download=download, upload=upload) as ws:
+            yield ws
+    finally:
+        resume_module.clear_current()
+        db_client.notify()
+
+
 @app.post("/courses/{course}/lectures/{lecture}/run/audio")
 def run_audio(course: str, lecture: str, kind: str = Query("lecture"), notify: bool = Query(False)):
     if err := _validate_kind(kind): return err
     try:
         if not db_client.file_exists(course, lecture, kind, "video.mp4"):
             return {"status": "error", "message": "video.mp4 is required"}
-        with db_workspace(course, lecture, kind, download=["video.mp4"], upload=["audio.mp3"]) as ws:
-            strip_audio(str(ws["video.mp4"]), str(ws["audio.mp3"]))
         if notify:
-            db_client.notify()
+            ctx = db_workspace_tracked(course, lecture, kind, "audio", download=["video.mp4"], upload=["audio.mp3"])
+        else:
+            ctx = db_workspace(course, lecture, kind, download=["video.mp4"], upload=["audio.mp3"])
+        with ctx as ws:
+            strip_audio(str(ws["video.mp4"]), str(ws["audio.mp3"]))
         return {"status": "done"}
     except Exception as e:
         return {"status": "error", "message": str(e)}

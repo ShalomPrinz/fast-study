@@ -24,9 +24,10 @@ interface Args {
 export function useRemoteInflightState({ course, lecture, kind, files, transcribePartial }: Args): RemoteInflight | null {
   const { status } = useResumeStatus()
 
+  // `running` guards the full resume queue; `current` is also set for
+  // auto-triggered steps (e.g. audio after video upload) where running=false.
   const matches =
-    !!status?.running &&
-    !!status.current &&
+    !!status?.current &&
     status.current.course === course &&
     status.current.lecture === lecture &&
     status.current.kind === kind &&
