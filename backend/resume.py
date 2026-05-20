@@ -182,12 +182,14 @@ async def resume_all() -> dict:
         _status["current"] = None
         _status["last_error"] = None
         _status["sleeping_until"] = None
-        db_client.notify()
+        # No notify here: the first useful frontend state is when `current` is set inside
+        # run_pipeline_for. Firing notifies for the intermediate `current=None` states
+        # creates a rapid-fire burst whose parallel refreshes can reorder on the client
+        # and overwrite the fresh snapshot with a stale one
         try:
             queue = await scan_pending()
             _status["total"] = len(queue)
             log.info("scan_pending found %d pending lecture(s): %s", len(queue), [f"{c}/{l} ({k})" for c, l, k in queue])
-            db_client.notify()
             for (course, lecture, kind) in queue:
                 log.info("=== starting pipeline %d/%d: %s/%s (%s) ===", _status["done"] + 1, _status["total"], course, lecture, kind)
                 try:
