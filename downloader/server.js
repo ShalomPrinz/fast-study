@@ -380,6 +380,11 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/courses') {
       return send(res, 200, await listCourses());
     }
+    if (req.method === 'POST' && req.url === '/probe-size') {
+      const { url, headers } = JSON.parse(await readBody(req));
+      const bytes = await probeContentLength(url, headers);
+      return send(res, 200, { bytes });
+    }
     if (req.method === 'POST' && req.url === '/download') {
       return await handleDownload(req, res);
     }

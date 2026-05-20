@@ -93,31 +93,22 @@ function formatSize(bytes) {
   return `${mb.toFixed(1)} MB`;
 }
 
-const PROBE_SKIP = new Set(['range', 'if-range', 'if-none-match', 'if-modified-since', 'host', 'content-length']);
-
-// HEAD often works on signed video URLs (token is in the query string).
-// Fall back to a single-byte ranged GET to read Content-Range when HEAD is
-// blocked or returns no Content-Length.
-// Zoom (and other auth-gated CDNs) return no Content-Length without the
-// original request's cookies/auth headers — pass them through so the probe
-// sees the same session as the captured request.
+// Cookie is a forbidden header — the browser silently strips it from fetch(),
+// so auth-gated CDNs (e.g. Zoom) return no Content-Length from the popup.
+// Before: fetch(url, {method:'HEAD'}) -> Cookie stripped -> 401/no size -> [?]
+// After:  POST /probe-size -> server uses Node http (no header restrictions) -> size
 async function probeSize(url, capturedHeaders) {
-  const hdrs = {};
-  for (const h of capturedHeaders ?? []) {
-    if (!PROBE_SKIP.has(h.name.toLowerCase())) hdrs[h.name] = h.value;
+  try {
+    const res = await fetch(`${SERVER}/probe-size`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, headers: capturedHeaders ?? [] }),
+    });
+    const { bytes } = await res.json();
+    return bytes ?? null;
+  } catch {
+    return null;
   }
-  try {
-    const head = await fetch(url, { method: 'HEAD', headers: hdrs });
-    const len = head.headers.get('content-length');
-    if (head.ok && len) return +len;
-  } catch {}
-  try {
-    const res = await fetch(url, { method: 'GET', headers: { ...hdrs, Range: 'bytes=0-0' } });
-    const range = res.headers.get('content-range');
-    const m = range && range.match(/\/(\d+)\s*$/);
-    if (m) return +m[1];
-  } catch {}
-  return null;
 }
 
 function selectVideo(req) {
