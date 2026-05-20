@@ -9,6 +9,13 @@ PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summar
 
 MODEL = "gemini-2.5-flash"
 
+# Appended to every request — keeps the page budget tunable without editing the prompt file.
+LENGTH_BUDGET_SUFFIX = (
+    "\n\nLENGTH BUDGET: aim for 2-4 PDF pages."
+    "Never exceed 5 pages, and only approach 5 for unusually dense lectures."
+    "If a draft is running long, tighten phrasing and drop filler before adding more content."
+)
+
 # Appended to the base prompt when a supplementary PDF is attached.
 PDF_INSTRUCTION_SUFFIX = (
     "\n\nA supplementary PDF has been attached alongside the transcript. "
@@ -51,6 +58,7 @@ def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
             contents += ["--- SUPPLEMENTARY PDF DOCUMENT ---", material_file]
             prompt += PDF_INSTRUCTION_SUFFIX
 
+        prompt += LENGTH_BUDGET_SUFFIX
         contents += ["--- INSTRUCTIONS ---", prompt]
 
         response = client.models.generate_content(model=MODEL, contents=contents)

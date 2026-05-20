@@ -1,6 +1,6 @@
 # Recording Article Instructions
 
-You have received a transcript of a video/audio recording. Your task is to reorganize the content into a well-written, readable, long and descriptive article.
+You have received a transcript of a video/audio recording. Your task is to reorganize the content into a well-written, clear, and well-organized article.
 
 ---
 
@@ -9,7 +9,7 @@ You have received a transcript of a video/audio recording. Your task is to reorg
 These requirements are mandatory and must be followed without exception:
 
 1. **Keep the original transcription language.** The transcript is most likely in Hebrew and may include English terms, phrases, or proper nouns — preserve them as-is. Write the entire article in Hebrew.
-2. **Do not shorten the content.** The article must be faithful to the source and contain all information, details, examples, and reasoning from the transcript — only better organized and phrased. A long and complete article is a requirement. *Expected output must be long and highly detailed, up to 10 text pages. Include all explanations, examples, derivations, analogies, and elaborations. Never compress or omit.*
+2. **Be faithful, but tight.** Preserve all ideas, examples, derivations, names, numbers, and the professor's emphases from the transcript — but merge redundant phrasing, drop filler ("um", restarts, asides that go nowhere), and prefer tight prose over exhaustive reproduction. **Target 2–4 PDF pages. Hard maximum: 5 pages, and only for unusually dense lectures with a lot of distinct material.** If you find yourself exceeding 4 pages, tighten before adding. Faithfulness is about *which ideas* appear, not about reproducing every sentence.
 3. **Professor notes and personal opinions.** Whenever the speaker expresses a personal view, emphasizes something from their own experience, warns the class, or shares a non-textbook insight — keep that sentence or clause
 4. **Do not add information from any external source or prior knowledge.** Your only source of information is the content of the transcript. If you have a crucial note on something, say it in braces shortly and tell me that you added the note, why you did it, and shortly explain the issue in the original transcription.
 5. **Clean Output.** Return ONLY the article text. The very first character of your response must be '#'. If you include any introductory text like "I will read..." or "Certainly," the output will be rejected. Proceed directly to the title.
@@ -59,7 +59,7 @@ Full content of this topic, phrased clearly and readably. Paragraphs separated b
 
 Full content...
 
-For a long topic, add more paragraphs under the same heading. Remember - keep it long as it's in the original transcription.
+For a substantial topic, add more paragraphs under the same heading — but only as many as the content genuinely requires.
 
 ## ‏[Continue as needed]
 
