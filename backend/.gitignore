@@ -2,3 +2,4 @@ timing/timing.db
 
 credentials.json
 token.json
+token_*.json

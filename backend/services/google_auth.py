@@ -14,7 +14,6 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 CREDENTIALS_PATH = str(Path(__file__).parent.parent / "credentials.json")
-TOKEN_PATH = str(Path(__file__).parent.parent / "token.json")
 
 SCOPES_MAP = {
     "drive": ["https://www.googleapis.com/auth/drive.file"],
@@ -33,9 +32,12 @@ def get_credentials(scope_key: ScopeKey) -> Credentials:
             "Download credentials.json from Google Cloud Console and place it there."
         )
 
+    # Per-scope token file to prevent token collision due to different scopes
+    token_path = str(Path(__file__).parent.parent / f"token_{scope_key}.json")
+
     creds: Credentials | None = None
-    if Path(TOKEN_PATH).exists():
-        creds = Credentials.from_authorized_user_file(TOKEN_PATH, scopes)
+    if Path(token_path).exists():
+        creds = Credentials.from_authorized_user_file(token_path, scopes)
 
     # A cached token issued for a different scope set is silently unusable —
     # the API call later fails with an opaque 403. Detect the mismatch up front
@@ -49,6 +51,6 @@ def get_credentials(scope_key: ScopeKey) -> Credentials:
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, scopes)
             creds = flow.run_local_server(port=0, open_browser=False)
-        Path(TOKEN_PATH).write_text(creds.to_json())
+        Path(token_path).write_text(creds.to_json())
 
     return creds
