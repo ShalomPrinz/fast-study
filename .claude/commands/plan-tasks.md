@@ -70,7 +70,8 @@ One sentence. The end state after this prompt is executed.
 
 **Deliverables:**
 - Bullet list of concrete outcomes that must be true when this prompt is complete
-- Always ends with: `tsc --noEmit` passes and `vitest run --coverage` is ≥90% for `src/logic/` and `src/storage/`
+- If new logic implemented - test it
+- Always ends with running tests (depends on programming language and context of current task)
 
 ---
 
