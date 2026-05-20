@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import type { Course, Lecture, Selected, Kind } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../services/database'
@@ -41,6 +42,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
   const [refreshing, setRefreshing] = useState(false)
   const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus()
+  const navigate = useNavigate()
   const didAutoExpandRef = useRef(false)
 
   useEffect(() => {
@@ -294,15 +296,27 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
         )}
       </div>
       <div className="new-course-row">
-        {resumeStatus?.running ? (
-          <div className="new-course-btn" style={{ cursor: 'default' }} dir="auto">
-            {resumeStatus.sleepingUntil
-              ? `Rate-limited, resuming at ${new Date(resumeStatus.sleepingUntil).toLocaleTimeString()}`
-              : resumeStatus.current
-                ? `Running: ${resumeStatus.current.course} / ${resumeStatus.current.lecture} — ${resumeStatus.current.step} (${resumeStatus.done}/${resumeStatus.total})`
-                : `Resuming pipelines… (${resumeStatus.done}/${resumeStatus.total})`}
-          </div>
-        ) : (
+        {resumeStatus?.running ? (() => {
+          const current = resumeStatus.current
+          const clickable = !!current && !resumeStatus.sleepingUntil
+          return (
+            <button
+              className="new-course-btn"
+              style={{ cursor: clickable ? 'pointer' : 'default' }}
+              disabled={!clickable}
+              onClick={clickable ? () => navigate(
+                `/${encodeURIComponent(current!.course)}/${encodeURIComponent(current!.lecture)}${current!.kind === 'recitation' ? '?kind=recitation' : ''}`
+              ) : undefined}
+              dir="auto"
+            >
+              {resumeStatus.sleepingUntil
+                ? `Rate-limited, resuming at ${new Date(resumeStatus.sleepingUntil).toLocaleTimeString()}`
+                : current
+                  ? `Running: ${current.course} / ${current.lecture} — ${current.step} (${resumeStatus.done}/${resumeStatus.total})`
+                  : `Resuming pipelines… (${resumeStatus.done}/${resumeStatus.total})`}
+            </button>
+          )
+        })() : (
           <button className="new-course-btn" onClick={handleResumeClick}>
             ⟳ Run incomplete pipelines
           </button>
