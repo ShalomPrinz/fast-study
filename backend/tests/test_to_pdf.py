@@ -199,6 +199,24 @@ class TestWrapEnglishPhrases:
         assert "$$a \\times b = c$$" in result
         assert r"\LR{times}" not in result
 
+    def test_multiline_display_math_not_wrapped(self):
+        # Regression: line-by-line splitting used to leak Latin tokens inside
+        # multi-line $$...$$ blocks, producing \LR{W} inside math mode →
+        # LaTeX "Missing $ inserted" via pandoc.
+        block = (
+            "טקסט\n"
+            "$$\n"
+            "W = (X^T X + \\lambda I)^{-1} X^T Y \\\\\n"
+            "= V (D^2 + \\lambda I)^{-1} D U^T Y\n"
+            "$$\n"
+            "המשך"
+        )
+        result = wrap_english_phrases(block)
+        assert r"\LR{W}" not in result
+        assert r"\LR{V}" not in result
+        assert r"\LR{D U" not in result
+        assert "W = (X^T X" in result
+
     def test_math_and_english_outside_wrapped(self):
         result = wrap_english_phrases("ראה $x \\times y$ ואז Pull Request")
         assert "$x \\times y$" in result

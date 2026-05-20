@@ -53,29 +53,29 @@ def wrap_english_phrases(text: str) -> str:
     # The capturing group makes re.split keep delimiters in the list: even
     # indices are plain text (substituted), odd indices are protected (passed
     # through). $$ before $ so display math isn't parsed as two inline spans.
+    # Split across the WHOLE text — splitting line-by-line first would break
+    # multi-line $$...$$ blocks, leaking their Latin contents into MULTI_LATIN_RE
+    # and yielding `\LR{W}` inside math mode → "Missing $ inserted" from LaTeX.
     _PROTECTED_RE = re.compile(r'(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$|`[^`]*`)')
-    result = []
-    for line in text.splitlines(keepends=True):
-        parts = _PROTECTED_RE.split(line)
-        out = []
-        for i, part in enumerate(parts):
-            if i % 2 == 1:
-                out.append(part)
-            else:
-                # If this plain-text part directly follows a protected span
-                # (code/math) and starts with punctuation, that punctuation
-                # would otherwise attach to the LTR span via bidi and render
-                # LTR. Wrap it in \RL{} explicitly — but only AFTER the Latin
-                # sub, otherwise MULTI_LATIN_RE matches the literal "RL".
-                leading = ''
-                if i > 0:
-                    m = LEADING_PUNCT_RE.match(part)
-                    if m:
-                        leading = r'\RL{' + m.group(1) + '}'
-                        part = part[m.end():]
-                out.append(leading + MULTI_LATIN_RE.sub(replace, part))
-        result.append(''.join(out))
-    return ''.join(result)
+    parts = _PROTECTED_RE.split(text)
+    out = []
+    for i, part in enumerate(parts):
+        if i % 2 == 1:
+            out.append(part)
+        else:
+            # If this plain-text part directly follows a protected span
+            # (code/math) and starts with punctuation, that punctuation
+            # would otherwise attach to the LTR span via bidi and render
+            # LTR. Wrap it in \RL{} explicitly — but only AFTER the Latin
+            # sub, otherwise MULTI_LATIN_RE matches the literal "RL".
+            leading = ''
+            if i > 0:
+                m = LEADING_PUNCT_RE.match(part)
+                if m:
+                    leading = r'\RL{' + m.group(1) + '}'
+                    part = part[m.end():]
+            out.append(leading + MULTI_LATIN_RE.sub(replace, part))
+    return ''.join(out)
 
 
 def normalize_dashes(text: str) -> str:
