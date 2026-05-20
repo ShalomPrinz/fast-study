@@ -12,9 +12,15 @@ def _make_client(response_text: str = "# Title\nbody"):
     """Build a fake genai client whose files.upload returns a sentinel handle
     and whose models.generate_content returns the given text."""
     client = MagicMock()
-    client.files.upload.side_effect = lambda file, config: SimpleNamespace(
-        _path=file, _mime=config["mime_type"]
-    )
+    counter = {"n": 0}
+
+    def _upload(file, config):
+        counter["n"] += 1
+        return SimpleNamespace(
+            _path=file, _mime=config["mime_type"], name=f"files/handle{counter['n']}"
+        )
+
+    client.files.upload.side_effect = _upload
     client.models.generate_content.return_value = SimpleNamespace(text=response_text)
     return client
 
@@ -42,9 +48,12 @@ def test_summarize_without_material(tmp_path):
 
     call = _generate_call(fake)
     contents = call.kwargs["contents"]
-    assert contents[0] == summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
+    # Order: label, transcript, label, prompt — context first, instructions last.
+    assert contents[0] == "--- MAIN TRANSCRIPT DOCUMENT ---"
     assert getattr(contents[1], "_mime", None) == "text/plain"
-    assert len(contents) == 2  # no PDF part
+    assert contents[2] == "--- INSTRUCTIONS ---"
+    assert contents[3] == summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
+    assert len(contents) == 4
     assert call.kwargs["model"] == summarize_mod.MODEL
     assert result == "# Title\nbody"
 
@@ -67,9 +76,16 @@ def test_summarize_with_material(tmp_path):
     assert uploads[1].kwargs["file"] == str(material)
 
     contents = _generate_call(fake).kwargs["contents"]
-    assert len(contents) == 3
-    mimes = [getattr(c, "_mime", None) for c in contents[1:]]
-    assert mimes == ["text/plain", "application/pdf"]
+    # Order: transcript-label, transcript, pdf-label, pdf, instr-label, prompt.
+    assert len(contents) == 6
+    assert contents[0] == "--- MAIN TRANSCRIPT DOCUMENT ---"
+    assert getattr(contents[1], "_mime", None) == "text/plain"
+    assert contents[2] == "--- SUPPLEMENTARY PDF DOCUMENT ---"
+    assert getattr(contents[3], "_mime", None) == "application/pdf"
+    assert contents[4] == "--- INSTRUCTIONS ---"
+    base_prompt = summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
+    assert contents[5].startswith(base_prompt)
+    assert contents[5].endswith(summarize_mod.PDF_INSTRUCTION_SUFFIX)
 
 
 def test_summarize_raises_on_api_failure(tmp_path):
