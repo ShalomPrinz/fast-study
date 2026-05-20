@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import { toast } from 'react-toastify'
 import type { ResumeStatus } from '../types'
 import { resumeAll, fetchResumeStatus } from '../services/backend'
 import { databaseUrl } from '../services/database'
@@ -21,21 +20,23 @@ const ResumeStatusContext = createContext<ResumeStatusValue>({
   trigger: async () => {},
 })
 
+type ToastKind = 'info' | 'error'
+
 interface ProviderProps {
-  onError?: (message: string) => void
+  sendUpdate?: (kind: ToastKind, message: string) => void
   children: ReactNode
 }
 
-export function ResumeStatusProvider({ onError, children }: ProviderProps) {
+export function ResumeStatusProvider({ sendUpdate, children }: ProviderProps) {
   const [status, setStatus] = useState<ResumeStatus | null>(null)
   const lastReportedErrorRef = useRef<string | null>(null)
-  const onErrorRef = useRef(onError)
-  useEffect(() => { onErrorRef.current = onError }, [onError])
+  const sendUpdateRef = useRef(sendUpdate)
+  useEffect(() => { sendUpdateRef.current = sendUpdate }, [sendUpdate])
 
   function reportIfNew(err: string | null) {
     if (err && err !== lastReportedErrorRef.current) {
       lastReportedErrorRef.current = err
-      onErrorRef.current?.(err)
+      sendUpdateRef.current?.('error', err)
     }
   }
 
@@ -65,12 +66,12 @@ export function ResumeStatusProvider({ onError, children }: ProviderProps) {
     try {
       const s = await resumeAll()
       if (s === 'empty_queue') {
-        toast.info('Nothing to run — all pipelines are complete')
+        sendUpdateRef.current?.('info', 'Nothing to run - All pipelines complete')
         return
       }
       setStatus(s)
     } catch (err) {
-      onErrorRef.current?.(`Resume failed: ${err}`)
+      sendUpdateRef.current?.('error', `Resume failed: ${err}`)
     }
   }
 

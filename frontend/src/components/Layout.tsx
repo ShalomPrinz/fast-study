@@ -25,7 +25,7 @@ export default function Layout() {
   const context: LectureContext = { files, transcribePartial, refreshCourses, kind }
 
   return (
-    <ResumeStatusProvider onError={(msg) => toast.error(msg)}>
+    <ResumeStatusProvider sendUpdate={(kind, msg) => toast[kind](msg)}>
       <div className="layout">
         <Sidebar
           courses={courses}

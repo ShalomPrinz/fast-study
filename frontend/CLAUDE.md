@@ -85,7 +85,7 @@ frontend/
 - **Pipeline steps are declared once.** `constants/pipeline.ts` is the single source of truth for the step list, prereq chain, action labels, and error labels. Don't hard-code a step name or input file anywhere else — derive from `PIPELINE` / `STEP_*` maps.
 - **Single CSS file.** All styles in `index.css` with CSS custom properties. No CSS modules / styled-components.
 - **Hebrew rendering.** Folder name labels use `dir="auto"` so the browser auto-detects RTL. Font stack includes Noto Sans Hebrew (Google Fonts) with system fallbacks (Segoe UI, Arial).
-- **Toast notifications.** `react-toastify`'s `ToastContainer` is mounted once in `Layout`. Surface non-blocking errors via `toast.error(...)` rather than alerts or inline banners.
+- **Toast notifications.** `react-toastify`'s `ToastContainer` is mounted once in `Layout`. Surface non-blocking errors via `toast.error(...)` rather than alerts or inline banners. **UI belongs in components, not contexts / hooks etc.** Contexts and hooks communicate events upward via callbacks (e.g. `sendUpdate(kind, message)`) — callers decide how to render them. Never import `toast` inside a context or hook.
 - **tsconfig.** One `tsconfig.json` covers `src/` and `vite.config.ts`.
 
 ## State (App + hooks)
