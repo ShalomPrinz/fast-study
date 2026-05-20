@@ -15,7 +15,7 @@ type ResumeStatusRaw = {
   running: boolean
   total: number
   done: number
-  current: { course: string; lecture: string; kind: Kind; step: string } | null
+  current: { course: string; lecture: string; kind: Kind; step: string; started_at: string } | null
   sleeping_until: string | null
   last_error: string | null
 }
@@ -25,7 +25,15 @@ function normalizeResume(raw: ResumeStatusRaw): ResumeStatus {
     running: raw.running,
     total: raw.total,
     done: raw.done,
-    current: raw.current,
+    current: raw.current
+      ? {
+          course: raw.current.course,
+          lecture: raw.current.lecture,
+          kind: raw.current.kind,
+          step: raw.current.step,
+          startedAt: raw.current.started_at,
+        }
+      : null,
     sleepingUntil: raw.sleeping_until,
     lastError: raw.last_error,
   }

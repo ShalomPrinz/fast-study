@@ -136,7 +136,7 @@ async def run_pipeline_for(course: str, lecture: str, kind: str) -> None:
             log.info("pipeline complete: %s/%s (%s)", course, lecture, kind)
             return
         log.info("running step '%s' for %s/%s (%s)", step, course, lecture, kind)
-        _status["current"] = {"course": course, "lecture": lecture, "kind": kind, "step": step}
+        _status["current"] = {"course": course, "lecture": lecture, "kind": kind, "step": step, "started_at": _now_iso()}
         db_client.notify()
         result = await _call_step(course, lecture, kind, step)
         status = result.get("status")

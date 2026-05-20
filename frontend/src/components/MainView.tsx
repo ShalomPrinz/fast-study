@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import type { Step, FileName, TimingStats, LectureContext, RateLimitInfo, RateLimitProgress } from '../types'
 import { fetchCourse, deleteFile, fileUrl } from '../services/database'
 import { fetchTimingStats, runStep } from '../services/backend'
+import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 
@@ -171,18 +172,23 @@ export default function MainView() {
   const { files, transcribePartial, refreshCourses, kind } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
 
-  const [reqState, setReqState] = useState<ReqState | null>(null)
+  const [localState, setLocalState] = useState<ReqState | null>(null)
   const [runAllState, setRunAllState] = useState<RunAllState | null>(null)
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
 
   useEffect(() => {
-    setReqState(null)
+    setLocalState(null)
     setRunAllState(null)
   }, [params.course, params.lecture, kind])
 
+  const course = params.course ?? ''
+  const lecture = params.lecture ?? ''
+  const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
+
+  // Local run wins while active; otherwise fall back to the resume-runner's view.
+  const reqState: ReqState | null = localState ?? (remote ? { ...remote, status: 'inflight' } : null)
+
   if (!params.course || !params.lecture) return null
-  const course = params.course
-  const lecture = params.lecture
   if (!files) {
     return (
       <main className="main-view">
@@ -215,7 +221,7 @@ export default function MainView() {
       ? { symbol: '📎', text: 'material.pdf will be used', cls: 'material-indicator--will-use' }
       : { symbol: '⚠', text: 'material.pdf not found', cls: 'material-indicator--missing' }
 
-  async function executeStep(step: Step): Promise<boolean> {
+  async function runLocal(step: Step): Promise<boolean> {
     const inputFile = STEP_INPUT_FILE[step]
     let fileSizeBytes = 0
     if (inputFile) {
@@ -231,15 +237,15 @@ export default function MainView() {
       completedFraction = transcribePartial.completed / transcribePartial.total
     }
 
-    setReqState({ step, status: 'inflight', startedAt, timingStats: null, completedFraction })
+    setLocalState({ step, status: 'inflight', startedAt, timingStats: null, completedFraction })
     fetchTimingStats(step, fileSizeBytes)
       .then((stats) =>
-        setReqState((prev) =>
+        setLocalState((prev) =>
           prev?.status === 'inflight' && prev.step === step ? { ...prev, timingStats: stats } : prev
         )
       )
       .catch(() =>
-        setReqState((prev) =>
+        setLocalState((prev) =>
           prev?.status === 'inflight' && prev.step === step
             ? { ...prev, timingStats: { message: 'not-enough-data' } }
             : prev
@@ -252,11 +258,11 @@ export default function MainView() {
       if (step === 'summarize') {
         toast.info(result.usedMaterial ? 'Summarized with material.pdf' : 'Summarized without material.pdf (not found)')
       }
-      setReqState(null)
+      setLocalState(null)
       return true
     } else if (result.status === 'rate_limited') {
       toast.error('Groq rate limit reached')
-      setReqState({
+      setLocalState({
         step,
         status: 'rate_limited',
         rateLimit: result.rateLimit,
@@ -266,7 +272,7 @@ export default function MainView() {
       return false
     } else {
       toast.error(STEP_ERROR_LABEL[step])
-      setReqState({ step, status: 'error', message: result.message })
+      setLocalState({ step, status: 'error', message: result.message })
       return false
     }
   }
@@ -274,7 +280,7 @@ export default function MainView() {
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
     await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file, kind)))
     refreshCourses()
-    await executeStep(step)
+    await runLocal(step)
   }
 
   async function handleRunRemaining() {
@@ -288,7 +294,7 @@ export default function MainView() {
 
     for (let i = 0; i < remainingSteps.length; i++) {
       setRunAllState((prev) => prev ? { ...prev, currentIndex: i } : null)
-      const success = await executeStep(remainingSteps[i])
+      const success = await runLocal(remainingSteps[i])
       if (!success) {
         break
       }
@@ -349,7 +355,7 @@ export default function MainView() {
                       ) : step ? (
                         <button
                           className="file-action-btn"
-                          onClick={() => executeStep(step)}
+                          onClick={() => runLocal(step)}
                           disabled={inflight || !prereqMet}
                         >
                           {buttonLabel}
