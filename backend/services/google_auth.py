@@ -1,9 +1,5 @@
-"""Shared OAuth helper for Google APIs. Both the Drive uploader and the Gemini
-summarizer obtain `Credentials` through here so the on-disk credential/token
-files live in one place.
-
-Note: the OAuth client behind `credentials.json` must have the Google APIs you
-request scopes for (Drive, Generative Language) enabled in the same Cloud project.
+"""Shared OAuth helper for Google APIs. The Drive uploader obtains `Credentials`
+through here so the on-disk credential/token files live in one place.
 """
 
 from pathlib import Path
@@ -17,9 +13,8 @@ CREDENTIALS_PATH = str(Path(__file__).parent.parent / "credentials.json")
 
 SCOPES_MAP = {
     "drive": ["https://www.googleapis.com/auth/drive.file"],
-    "gemini": ["https://www.googleapis.com/auth/generative-language.retriever"],
 }
-ScopeKey = Literal["drive", "gemini"]
+ScopeKey = Literal["drive"]
 
 def get_credentials(scope_key: ScopeKey) -> Credentials:
     scopes = SCOPES_MAP.get(scope_key)

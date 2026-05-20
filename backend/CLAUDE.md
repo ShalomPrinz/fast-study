@@ -10,7 +10,7 @@ FastAPI app exposing the lecture-processing pipeline as HTTP endpoints. Each end
 
 1. **strip_audio** — ffmpeg → mono 16 kHz 32 kbps MP3. Minimal size, enough for ASR.
 2. **transcribe** — splits audio into 10-min chunks and calls Groq `whisper-large-v3` per chunk (Hebrew). Chunks because Groq enforces 25 MB per request. On a rate-limit interrupt, partial state is persisted as `transcript.partial.txt` + `transcript.partial.meta.json` so the next call resumes.
-3. **summarize** — calls the Gemini API (`google-genai`) authenticated via Google OAuth (shared `services/google_auth.py` helper, same `credentials.json`/`token.json` as Drive). The transcript (and optional material PDF) are uploaded as file parts; the Hebrew prompt at `assets/instructions/summarize.md` is sent alongside. Edit the prompt file to change output structure — no code change needed.
+3. **summarize** — calls the Gemini API (`google-genai`) authenticated via `GEMINI_API_KEY`. The SDK only honors OAuth credentials in Vertex AI mode; the Developer API path used here requires an API key. The transcript (and optional material PDF) are uploaded as file parts; the Hebrew prompt at `assets/instructions/summarize.md` is sent alongside. Edit the prompt file to change output structure — no code change needed.
 4. **to_pdf** — pandoc + XeLaTeX render to PDF. Hebrew font (Noto Serif Hebrew) is bundled in `assets/fonts/`. Math expressions (`$...$`, `$$...$$`) render correctly.
 5. **upload_to_drive** — uploads the PDF to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]` in Google Drive and writes the share link to `drive_url.txt`.
 
@@ -75,6 +75,7 @@ Timing: `GET /timing/{operation}?file_size_bytes=N` → linear-regression estima
 Reads `.env` (repo root). Required:
 
 - `GROQ_API_KEY` — Groq API key for Whisper transcription
+- `GEMINI_API_KEY` — Gemini API key for the summarize step
 - `GDRIVE_ROOT_FOLDER` — name of the root Google Drive folder
 - `DATABASE_URL` (optional, default `http://localhost:8001`) — the database service base URL
 
@@ -110,6 +111,6 @@ This applies even to "small" or "obvious" changes — preprocessing helpers in `
 - Asset paths (`fonts/`, `summarize.md`, `pandoc_template.tex`) are resolved relative to `__file__` inside each pipeline module — they point to `backend/assets/`.
 - CORS is open to `http://localhost:5173` only.
 - No background tasks, no job polling — every endpoint blocks until done.
-- `summarize.py` raises `RuntimeError` on Gemini API failure (not `sys.exit`) so the endpoint can catch and return `{"status": "error"}`. Auth uses the shared `services/google_auth.py` OAuth helper (same `credentials.json`/`token.json` as Drive); scope mismatch invalidates the cached token and triggers a fresh consent flow.
+- `summarize.py` raises `RuntimeError` on Gemini API failure (not `sys.exit`) so the endpoint can catch and return `{"status": "error"}`. Auth uses `GEMINI_API_KEY` from the environment — the `google-genai` SDK silently ignores OAuth `credentials=` outside of Vertex AI mode.
 - `transcribe.py` raises `TranscribeRateLimitError` carrying `{limit, used, requested, retry_after_seconds, completed_chunks, total_chunks}` and writes partial state to disk; the next `/run/transcribe` call picks up from `transcript.partial.txt`.
 - `timing/` records every pipeline operation's `(file_size, duration)` so the frontend can show calibrated ETAs.

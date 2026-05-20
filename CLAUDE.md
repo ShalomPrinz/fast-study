@@ -13,7 +13,7 @@ backend/      FastAPI app + pipeline modules (Python).        See backend/CLAUDE
 frontend/     React + Vite + TS UI (talks to database/).      See frontend/CLAUDE.md
 downloader/   Chrome MV3 extension + small Node server.       See downloader/CLAUDE.md
 database/     FastAPI service owning all DATA_ROOT I/O + SSE. See database/CLAUDE.md
-.env          Shared env file — DATA_ROOT, GROQ_API_KEY, GDRIVE_ROOT_FOLDER
+.env          Shared env file — DATA_ROOT, GROQ_API_KEY, GEMINI_API_KEY, GDRIVE_ROOT_FOLDER
 ```
 
 All services read the same `.env` at the repo root and share one on-disk layout under `DATA_ROOT`:

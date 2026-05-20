@@ -1,13 +1,13 @@
+import os
 from pathlib import Path
 
 from google import genai
 
-from services.google_auth import get_credentials
 from timing import timed_pipeline
 
 PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summarize.md"
 
-MODEL = "gemini-3.1-pro-preview"
+MODEL = "gemini-2.5-flash"
 
 # Appended to the base prompt when a supplementary PDF is attached.
 PDF_INSTRUCTION_SUFFIX = (
@@ -17,8 +17,10 @@ PDF_INSTRUCTION_SUFFIX = (
 
 
 def _build_client() -> genai.Client:
-    creds = get_credentials("gemini")
-    return genai.Client(credentials=creds)
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is not set in the environment")
+    return genai.Client(api_key=api_key)
 
 
 @timed_pipeline("summarize")
