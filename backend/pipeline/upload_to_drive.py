@@ -1,39 +1,14 @@
-import os
 from pathlib import Path
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+from services.google_auth import get_credentials
 from timing import timed_pipeline
-
-SCOPES = ["https://www.googleapis.com/auth/drive.file"]
-
-CREDENTIALS_PATH = str(Path(__file__).parent.parent / "credentials.json")
-TOKEN_PATH = str(Path(__file__).parent.parent / "token.json")
 
 
 def _get_service():
-    if not Path(CREDENTIALS_PATH).exists():
-        raise RuntimeError(
-            f"Google credentials file not found at {CREDENTIALS_PATH}. "
-            "Download credentials.json from Google Cloud Console and place it there."
-        )
-
-    creds = None
-    if Path(TOKEN_PATH).exists():
-        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0, open_browser=False)
-        Path(TOKEN_PATH).write_text(creds.to_json())
-
+    creds = get_credentials("drive")
     return build("drive", "v3", credentials=creds)
 
 

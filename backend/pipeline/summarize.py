@@ -1,37 +1,45 @@
-import subprocess
 from pathlib import Path
 
+from google import genai
+
+from services.google_auth import get_credentials
 from timing import timed_pipeline
 
 PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summarize.md"
+
+MODEL = "gemini-3.1-pro-preview"
+
+
+def _build_client() -> genai.Client:
+    creds = get_credentials("gemini")
+    return genai.Client(credentials=creds)
 
 
 @timed_pipeline("summarize")
 def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
-    full_prompt = f"{prompt}\n\nThe transcript is in the file: {transcript_path}"
-    if material_path is not None:
-        full_prompt += f"\nAdditional course material for this lecture (PDF): {material_path}"
 
-    result = subprocess.run(
-        [
-            "gemini",
-            "--output-format", "text",
-            "--include-directories", str(transcript_path.parent),
-            "-p", full_prompt,
-        ],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-    )
+    try:
+        client = _build_client()
 
-    if result.returncode != 0:
-        raise RuntimeError(f"Gemini error:\n{result.stderr}")
-    
-    clean_result = result.stdout.strip()
+        transcript_file = client.files.upload(
+            file=str(transcript_path),
+            config={"mime_type": "text/plain"},
+        )
 
-    # Find the first occurrence of the Markdown H1 header
-    if "#" in clean_result:
-        clean_result = clean_result[clean_result.find("#"):]
+        contents = [prompt, transcript_file]
+        if material_path is not None:
+            material_file = client.files.upload(
+                file=str(material_path),
+                config={"mime_type": "application/pdf"},
+            )
+            contents.append(material_file)
 
-    return clean_result
+        response = client.models.generate_content(
+            model=MODEL,
+            contents=contents,
+        )
+    except Exception as e:
+        raise RuntimeError(str(e)) from e
+
+    return (response.text or "").strip()

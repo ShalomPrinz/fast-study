@@ -1,39 +1,52 @@
 from pathlib import Path
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
+import summarize as summarize_mod
 from summarize import summarize
 
 
-def _fake_run_ok(stdout: str = "# Title\nbody"):
-    return SimpleNamespace(returncode=0, stdout=stdout, stderr="")
+def _make_client(response_text: str = "# Title\nbody"):
+    """Build a fake genai client whose files.upload returns a sentinel handle
+    and whose models.generate_content returns the given text."""
+    client = MagicMock()
+    client.files.upload.side_effect = lambda file, config: SimpleNamespace(
+        _path=file, _mime=config["mime_type"]
+    )
+    client.models.generate_content.return_value = SimpleNamespace(text=response_text)
+    return client
 
 
-def _extract_prompt(call_args) -> str:
-    cmd = call_args.args[0]
-    return cmd[cmd.index("-p") + 1]
+def _generate_call(client):
+    return client.models.generate_content.call_args
 
 
-def _extract_include_dir(call_args) -> str:
-    cmd = call_args.args[0]
-    return cmd[cmd.index("--include-directories") + 1]
+def _upload_calls(client):
+    return client.files.upload.call_args_list
 
 
 def test_summarize_without_material(tmp_path):
     transcript = tmp_path / "transcript.txt"
     transcript.write_text("hello")
 
-    with patch("summarize.subprocess.run", return_value=_fake_run_ok()) as mock_run:
+    fake = _make_client()
+    with patch.object(summarize_mod, "_build_client", return_value=fake):
         result = summarize(transcript)
 
-    prompt = _extract_prompt(mock_run.call_args)
-    assert f"The transcript is in the file: {transcript}" in prompt
-    assert "material.pdf" not in prompt
-    assert "Additional course material" not in prompt
-    assert _extract_include_dir(mock_run.call_args) == str(transcript.parent)
-    assert result.startswith("#")
+    uploads = _upload_calls(fake)
+    assert len(uploads) == 1
+    assert uploads[0].kwargs["file"] == str(transcript)
+    assert uploads[0].kwargs["config"] == {"mime_type": "text/plain"}
+
+    call = _generate_call(fake)
+    contents = call.kwargs["contents"]
+    assert contents[0] == summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
+    assert getattr(contents[1], "_mime", None) == "text/plain"
+    assert len(contents) == 2  # no PDF part
+    assert call.kwargs["model"] == summarize_mod.MODEL
+    assert result == "# Title\nbody"
 
 
 def test_summarize_with_material(tmp_path):
@@ -42,33 +55,43 @@ def test_summarize_with_material(tmp_path):
     material = tmp_path / "material.pdf"
     material.write_bytes(b"%PDF-1.4\n")
 
-    with patch("summarize.subprocess.run", return_value=_fake_run_ok()) as mock_run:
+    fake = _make_client()
+    with patch.object(summarize_mod, "_build_client", return_value=fake):
         summarize(transcript, material)
 
-    prompt = _extract_prompt(mock_run.call_args)
-    assert f"The transcript is in the file: {transcript}" in prompt
-    assert str(material) in prompt
-    assert "Additional course material" in prompt
-    assert _extract_include_dir(mock_run.call_args) == str(transcript.parent)
+    uploads = _upload_calls(fake)
+    assert len(uploads) == 2
+    assert uploads[0].kwargs["config"] == {"mime_type": "text/plain"}
+    assert uploads[0].kwargs["file"] == str(transcript)
+    assert uploads[1].kwargs["config"] == {"mime_type": "application/pdf"}
+    assert uploads[1].kwargs["file"] == str(material)
+
+    contents = _generate_call(fake).kwargs["contents"]
+    assert len(contents) == 3
+    mimes = [getattr(c, "_mime", None) for c in contents[1:]]
+    assert mimes == ["text/plain", "application/pdf"]
 
 
-def test_summarize_raises_on_gemini_failure_without_material(tmp_path):
+def test_summarize_raises_on_api_failure(tmp_path):
     transcript = tmp_path / "transcript.txt"
     transcript.write_text("hello")
 
-    fail = SimpleNamespace(returncode=1, stdout="", stderr="boom")
-    with patch("summarize.subprocess.run", return_value=fail):
+    fake = MagicMock()
+    fake.files.upload.side_effect = Exception("boom")
+    with patch.object(summarize_mod, "_build_client", return_value=fake):
         with pytest.raises(RuntimeError, match="boom"):
             summarize(transcript)
 
 
-def test_summarize_raises_on_gemini_failure_with_material(tmp_path):
+def test_summarize_strips_but_preserves_leading_prose(tmp_path):
+    """The old CLI implementation trimmed everything before the first '#'.
+    Regression: that workaround must be gone — leading prose stays put,
+    only outer whitespace is stripped."""
     transcript = tmp_path / "transcript.txt"
     transcript.write_text("hello")
-    material = tmp_path / "material.pdf"
-    material.write_bytes(b"%PDF-1.4\n")
 
-    fail = SimpleNamespace(returncode=1, stdout="", stderr="boom")
-    with patch("summarize.subprocess.run", return_value=fail):
-        with pytest.raises(RuntimeError, match="boom"):
-            summarize(transcript, material)
+    fake = _make_client(response_text="  \n\nintro paragraph\n# Title\nbody\n  ")
+    with patch.object(summarize_mod, "_build_client", return_value=fake):
+        result = summarize(transcript)
+
+    assert result == "intro paragraph\n# Title\nbody"

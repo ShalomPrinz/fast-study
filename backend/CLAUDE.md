@@ -10,7 +10,7 @@ FastAPI app exposing the lecture-processing pipeline as HTTP endpoints. Each end
 
 1. **strip_audio** — ffmpeg → mono 16 kHz 32 kbps MP3. Minimal size, enough for ASR.
 2. **transcribe** — splits audio into 10-min chunks and calls Groq `whisper-large-v3` per chunk (Hebrew). Chunks because Groq enforces 25 MB per request. On a rate-limit interrupt, partial state is persisted as `transcript.partial.txt` + `transcript.partial.meta.json` so the next call resumes.
-3. **summarize** — pipes the transcript into Gemini CLI using the Hebrew prompt at `assets/instructions/summarize.md`. Edit that file to change output structure — no code change needed.
+3. **summarize** — calls the Gemini API (`google-genai`) authenticated via Google OAuth (shared `services/google_auth.py` helper, same `credentials.json`/`token.json` as Drive). The transcript (and optional material PDF) are uploaded as file parts; the Hebrew prompt at `assets/instructions/summarize.md` is sent alongside. Edit the prompt file to change output structure — no code change needed.
 4. **to_pdf** — pandoc + XeLaTeX render to PDF. Hebrew font (Noto Serif Hebrew) is bundled in `assets/fonts/`. Math expressions (`$...$`, `$$...$$`) render correctly.
 5. **upload_to_drive** — uploads the PDF to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]` in Google Drive and writes the share link to `drive_url.txt`.
 
@@ -25,7 +25,7 @@ backend/
   pipeline/           pure functions, one module per step
     strip_audio.py       strip_audio(video_path, audio_path)
     transcribe.py        transcribe_audio(audio_path, api_key) -> str  (raises TranscribeRateLimitError)
-    summarize.py         summarize(transcript_path) -> str             (raises RuntimeError on Gemini failure)
+    summarize.py         summarize(transcript_path) -> str             (raises RuntimeError on Gemini API failure)
     to_pdf.py            convert_to_pdf(md_path) -> str (output path)
     upload_to_drive.py   upload_to_drive(pdf_path, course, root_folder_name, filename, subfolder=None) -> str (webViewLink)
   timing/             SQLite-backed per-operation duration log
@@ -38,6 +38,7 @@ backend/
     test_db_client.py
   services/
     db_client.py      thin HTTP client for the database service (every read/write goes through here)
+    google_auth.py    shared OAuth helper — loads credentials.json/token.json, returns Credentials for a given scope set
   main.py             FastAPI app + uvicorn entry point
   credentials.json    Google OAuth client (gitignored)
   token.json          Google OAuth token cache (gitignored)
@@ -109,6 +110,6 @@ This applies even to "small" or "obvious" changes — preprocessing helpers in `
 - Asset paths (`fonts/`, `summarize.md`, `pandoc_template.tex`) are resolved relative to `__file__` inside each pipeline module — they point to `backend/assets/`.
 - CORS is open to `http://localhost:5173` only.
 - No background tasks, no job polling — every endpoint blocks until done.
-- `summarize.py` raises `RuntimeError` on Gemini failure (not `sys.exit`) so the endpoint can catch and return `{"status": "error"}`.
+- `summarize.py` raises `RuntimeError` on Gemini API failure (not `sys.exit`) so the endpoint can catch and return `{"status": "error"}`. Auth uses the shared `services/google_auth.py` OAuth helper (same `credentials.json`/`token.json` as Drive); scope mismatch invalidates the cached token and triggers a fresh consent flow.
 - `transcribe.py` raises `TranscribeRateLimitError` carrying `{limit, used, requested, retry_after_seconds, completed_chunks, total_chunks}` and writes partial state to disk; the next `/run/transcribe` call picks up from `transcript.partial.txt`.
 - `timing/` records every pipeline operation's `(file_size, duration)` so the frontend can show calibrated ETAs.

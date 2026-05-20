@@ -10,5 +10,6 @@ dependencies = [
     "requests>=2.31",
     "google-api-python-client>=2.0",
     "google-auth-oauthlib>=1.0",
+    "google-genai>=0.3",
     "apscheduler>=3.10",
 ]
