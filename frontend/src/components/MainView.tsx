@@ -3,8 +3,9 @@ import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import type { Step, FileName, TimingStats, LectureContext, RateLimitInfo, RateLimitProgress } from '../types'
 import { fetchCourse, deleteFile, fileUrl } from '../services/database'
-import { fetchTimingStats, runStep } from '../services/backend'
+import { runStep } from '../services/backend'
 import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
+import { useTimingStats } from '../hooks/useTimingStats'
 import { PIPELINE, STEP_FILE, STEP_INPUT_FILE, STEP_LABEL, STEP_ERROR_LABEL } from '../constants/pipeline'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
@@ -14,7 +15,7 @@ interface ReqState {
   status: 'inflight' | 'error' | 'rate_limited'
   message?: string
   startedAt?: number
-  timingStats?: TimingStats | null
+  fileSizeBytes?: number
   completedFraction?: number
   rateLimit?: RateLimitInfo
   progress?: RateLimitProgress
@@ -157,8 +158,12 @@ export default function MainView() {
   const lecture = params.lecture ?? ''
   const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
 
+  const localTimingStep = localState?.status === 'inflight' ? localState.step : null
+  const localTimingStats = useTimingStats(localTimingStep, localState?.fileSizeBytes ?? 0)
+
   // Local run wins while active; otherwise fall back to the resume-runner's view.
   const reqState: ReqState | null = localState ?? (remote ? { ...remote, status: 'inflight' } : null)
+  const timingStats: TimingStats | null = localState ? localTimingStats : remote?.timingStats ?? null
 
   if (!params.course || !params.lecture) return null
   if (!files) {
@@ -209,20 +214,7 @@ export default function MainView() {
       completedFraction = transcribePartial.completed / transcribePartial.total
     }
 
-    setLocalState({ step, status: 'inflight', startedAt, timingStats: null, completedFraction })
-    fetchTimingStats(step, fileSizeBytes)
-      .then((stats) =>
-        setLocalState((prev) =>
-          prev?.status === 'inflight' && prev.step === step ? { ...prev, timingStats: stats } : prev
-        )
-      )
-      .catch(() =>
-        setLocalState((prev) =>
-          prev?.status === 'inflight' && prev.step === step
-            ? { ...prev, timingStats: { message: 'not-enough-data' } }
-            : prev
-        )
-      )
+    setLocalState({ step, status: 'inflight', startedAt, fileSizeBytes, completedFraction })
 
     const result = await runStep(course, lecture, step, kind)
     refreshCourses()
@@ -383,7 +375,7 @@ export default function MainView() {
                 </div>
                 {isRunning && (
                   <ProgressBar
-                    stats={reqState!.timingStats}
+                    stats={timingStats}
                     startedAt={reqState!.startedAt!}
                     completedFraction={reqState!.completedFraction}
                   />

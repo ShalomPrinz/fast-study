@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
 import type { Step, TimingStats, Kind, FileStatus } from '../types'
-import { fetchTimingStats } from '../services/backend'
 import { STEP_INPUT_FILE, STEP_SET } from '../constants/pipeline'
 import { useResumeStatus } from './useResumeStatus'
+import { useTimingStats } from './useTimingStats'
 
 export interface RemoteInflight {
   step: Step
@@ -36,25 +35,9 @@ export function useRemoteInflightState({ course, lecture, kind, files, transcrib
   const step = matches ? (status!.current!.step as Step) : null
   const startedAtIso = matches ? status!.current!.startedAt : null
 
-  const [timing, setTiming] = useState<{ key: string; stats: TimingStats | null } | null>(null)
-  const reqKeyRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (!step || !files) {
-      reqKeyRef.current = null
-      setTiming(null)
-      return
-    }
-    const inputFile = STEP_INPUT_FILE[step]
-    const fileSizeBytes = inputFile ? files[inputFile]?.size ?? 0 : 0
-    const key = `${step}:${fileSizeBytes}`
-    if (reqKeyRef.current === key) return
-    reqKeyRef.current = key
-    setTiming({ key, stats: null })
-    fetchTimingStats(step, fileSizeBytes)
-      .then((stats) => { if (reqKeyRef.current === key) setTiming({ key, stats }) })
-      .catch(() => { if (reqKeyRef.current === key) setTiming({ key, stats: { message: 'not-enough-data' } }) })
-  }, [step, files])
+  const inputFile = step ? STEP_INPUT_FILE[step] : null
+  const fileSizeBytes = step && inputFile && files ? files[inputFile]?.size ?? 0 : 0
+  const timingStats = useTimingStats(files ? step : null, fileSizeBytes)
 
   if (!step || !startedAtIso) return null
 
@@ -69,13 +52,10 @@ export function useRemoteInflightState({ course, lecture, kind, files, transcrib
     completedFraction = transcribePartial.completed / transcribePartial.total
   }
 
-  const inputFile = STEP_INPUT_FILE[step]
-  const expectedKey = `${step}:${inputFile ? files?.[inputFile]?.size ?? 0 : 0}`
-
   return {
     step,
     startedAt: Number.isFinite(startedAtMs) ? startedAtMs : Date.now(),
-    timingStats: timing && timing.key === expectedKey ? timing.stats : null,
+    timingStats,
     completedFraction,
   }
 }
