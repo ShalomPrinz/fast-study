@@ -129,7 +129,10 @@ def _write_meta_atomic(lecture_dir: Path, meta: dict) -> None:
 
 
 @timed_pipeline("transcribe")
-def transcribe_audio(audio_path: str, api_key: str) -> str:
+def transcribe_audio(audio_path: str) -> str:
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY is not set in the environment")
     client = Groq(api_key=api_key)
     lecture_dir = Path(audio_path).parent
     partial_path = lecture_dir / PARTIAL_TXT

@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from googleapiclient.discovery import build
@@ -37,11 +38,13 @@ def _create_folder(service, name: str, parent_id: str) -> str:
 def upload_to_drive(
     pdf_path: str,
     course: str,
-    root_folder_name: str,
     file_name: str | None = None,
     subfolder: str | None = None,
 ) -> str:
-    """Upload pdf_path to Drive at root_folder_name/course/[subfolder/]. Returns the Drive file URL."""
+    """Upload pdf_path to Drive at GDRIVE_ROOT_FOLDER/course/[subfolder/]. Returns the Drive file URL."""
+    root_folder_name = os.environ.get("GDRIVE_ROOT_FOLDER")
+    if not root_folder_name:
+        raise RuntimeError("GDRIVE_ROOT_FOLDER is not set in the environment")
     try:
         service = _get_service()
 

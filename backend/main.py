@@ -21,8 +21,6 @@ from timing import init_db, get_stats
 import resume as resume_module
 
 load_dotenv()
-GROQ_API_KEY = os.environ["GROQ_API_KEY"]
-GDRIVE_ROOT_FOLDER = os.environ["GDRIVE_ROOT_FOLDER"]
 
 RECITATIONS_DIR = "Recitations"
 
@@ -118,7 +116,7 @@ def run_transcribe(course: str, lecture: str, kind: str = Query("lecture")):
                     pass
 
             try:
-                transcript = transcribe_audio(str(audio_path), GROQ_API_KEY)
+                transcript = transcribe_audio(str(audio_path))
             except TranscribeRateLimitError as e:
                 # Persist partial state so the next call can resume.
                 partial_txt = Path(tmp) / PARTIAL_TXT
@@ -197,7 +195,6 @@ def run_drive(course: str, lecture: str, kind: str = Query("lecture")):
             url = upload_to_drive(
                 str(ws["summary.pdf"]),
                 course,
-                GDRIVE_ROOT_FOLDER,
                 f"{lecture}.pdf",
                 subfolder=subfolder,
             )
