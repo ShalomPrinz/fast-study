@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from timing import init_db, get_stats
@@ -36,6 +36,15 @@ app.add_middleware(
 )
 
 
+_STEP_CONFIG: dict[str, tuple[str, str]] = {
+    "audio":      ("video.mp4",      "Download"),
+    "transcribe": ("audio.mp3",      "Extract Audio"),
+    "summarize":  ("transcript.txt", "Transcribe"),
+    "pdf":        ("summary.md",     "Summarize"),
+    "drive":      ("summary.pdf",    "PDF"),
+}
+
+
 def _validate_kind(kind: str):
     """Guard used by every route handler; 'recitation' routes files under a Recitations/ subdir."""
     if kind not in {"lecture", "recitation"}:
@@ -43,34 +52,28 @@ def _validate_kind(kind: str):
     return None
 
 
-@app.post("/courses/{course}/lectures/{lecture}/run/audio")
-def run_audio(course: str, lecture: str, kind: str = Query("lecture")):
+@app.post("/courses/{course}/lectures/{lecture}/run/{step}")
+async def run_step(course: str, lecture: str, step: str, kind: str = Query("lecture")):
+    # Allowed steps are stricrly defined in STEP_CONFIG
+    if step not in _STEP_CONFIG:
+        raise HTTPException(status_code=404, detail=f"Unknown step: {step}")
+    
+    # Validate lecture kind
     if err := _validate_kind(kind): return err
-    return runner.execute_step(course, lecture, kind, "audio")
+
+    # Each step depends on the previous step's output file; check existence before running.
+    required_file, prev_step = _STEP_CONFIG[step]
+    if not await asyncio.to_thread(runner.db_client.file_exists, course, lecture, kind, required_file):
+        return {"status": "error", "message": f"{required_file} is required — run {prev_step} first"}
+    
+    # Run step and immidiately return status (started / busy)
+    return {"status": runner.try_run_step(course, lecture, kind, step)}
 
 
-@app.post("/courses/{course}/lectures/{lecture}/run/transcribe")
-def run_transcribe(course: str, lecture: str, kind: str = Query("lecture")):
+@app.post("/courses/{course}/lectures/{lecture}/pipeline")
+async def run_pipeline(course: str, lecture: str, kind: str = Query("lecture")):
     if err := _validate_kind(kind): return err
-    return runner.execute_step(course, lecture, kind, "transcribe")
-
-
-@app.post("/courses/{course}/lectures/{lecture}/run/summarize")
-def run_summarize(course: str, lecture: str, kind: str = Query("lecture")):
-    if err := _validate_kind(kind): return err
-    return runner.execute_step(course, lecture, kind, "summarize")
-
-
-@app.post("/courses/{course}/lectures/{lecture}/run/pdf")
-def run_pdf(course: str, lecture: str, kind: str = Query("lecture")):
-    if err := _validate_kind(kind): return err
-    return runner.execute_step(course, lecture, kind, "pdf")
-
-
-@app.post("/courses/{course}/lectures/{lecture}/run/drive")
-def run_drive(course: str, lecture: str, kind: str = Query("lecture")):
-    if err := _validate_kind(kind): return err
-    return runner.execute_step(course, lecture, kind, "drive")
+    return {"status": runner.try_run_pipeline(course, lecture, kind)}
 
 
 @app.post("/resume-all")
@@ -85,6 +88,7 @@ async def resume_all_endpoint():
     return {"status": "started", **runner.get_status()}
 
 
+@app.get("/status")
 @app.get("/resume-status")
 def resume_status_endpoint():
     """Live status snapshot for the resume runner. Cheap; polled by the UI."""
