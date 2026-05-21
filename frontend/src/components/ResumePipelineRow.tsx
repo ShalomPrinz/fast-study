@@ -1,22 +1,28 @@
 import { useNavigate } from 'react-router-dom'
 import { useResumeStatus } from '../contexts/ResumeStatusContext'
 
+function RunnerInactive({ onClick }: { onClick: () => void }) {
+  return (
+    <div className="new-course-row">
+      <button className="new-course-btn" onClick={onClick}>
+        ⟳ Run incomplete pipelines
+      </button>
+    </div>
+  )
+}
+
 export default function ResumePipelineRow() {
   const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus()
   const navigate = useNavigate()
 
-  if (!resumeStatus?.running) {
-    return (
-      <div className="new-course-row">
-        <button className="new-course-btn" onClick={handleResumeClick}>
-          ⟳ Run incomplete pipelines
-        </button>
-      </div>
-    )
+  if (!resumeStatus?.resume.running) {
+    return <RunnerInactive onClick={handleResumeClick} />
   }
 
-  const current = resumeStatus.current
-  const clickable = !!current && !resumeStatus.sleepingUntil
+  // TODO: if multiple pipelines are in-flight, show a list of them instead of just the first
+  const current = resumeStatus.inFlight[0] ?? null
+  const sleeping = current?.sleepingUntil ?? null
+  const clickable = !!current && !sleeping
   return (
     <div className="new-course-row">
       <button
@@ -28,11 +34,11 @@ export default function ResumePipelineRow() {
         ) : undefined}
         dir="auto"
       >
-        {resumeStatus.sleepingUntil
-          ? `Rate-limited, resuming at ${new Date(resumeStatus.sleepingUntil).toLocaleTimeString()}`
+        {sleeping
+          ? `Rate-limited, resuming at ${new Date(sleeping).toLocaleTimeString()}`
           : current
-            ? `Running: ${current.course} / ${current.lecture} — ${current.step} (${resumeStatus.done}/${resumeStatus.total})`
-            : `Resuming pipelines… (${resumeStatus.done}/${resumeStatus.total})`}
+            ? `Running: ${current.course} / ${current.lecture} — ${current.step} (${resumeStatus.resume.done}/${resumeStatus.resume.total})`
+            : `Resuming pipelines… (${resumeStatus.resume.done}/${resumeStatus.resume.total})`}
       </button>
     </div>
   )

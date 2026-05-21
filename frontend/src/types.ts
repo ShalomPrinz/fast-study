@@ -42,10 +42,10 @@ export interface RateLimitProgress {
   total: number | null
 }
 
-export type StepResult =
-  | { status: 'done'; url?: string; usedMaterial?: boolean }
+export type RunInitResult =
+  | { status: 'started' }
+  | { status: 'busy' }
   | { status: 'error'; message: string }
-  | { status: 'rate_limited'; rateLimit: RateLimitInfo; progress: RateLimitProgress }
 
 export interface Selected {
   course: string
@@ -53,22 +53,22 @@ export interface Selected {
   kind: Kind
 }
 
-interface CurrentRun {
+export interface InFlightEntry {
   course: string
   lecture: string
   kind: Kind
   step: string
   startedAt: string
+  sleepingUntil: string | null
+  progress: { completed: number; total: number } | null
 }
 
 export interface ResumeStatus {
-  running: boolean
-  total: number
-  done: number
-  current: CurrentRun | null
-  singleAutoCurrent: CurrentRun | null
-  sleepingUntil: string | null
-  lastError: string | null
+  // resume.lastError: unexpected exception that aborted a lecture's pipeline mid-sweep
+  resume: { running: boolean; total: number; done: number; lastError: string | null }
+  inFlight: InFlightEntry[]
+  // expected step-level failures, per lecture, from any trigger
+  errors: Record<string, string>
 }
 
 export interface LectureContext {

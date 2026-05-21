@@ -1,31 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import type { Step, FileName, TimingStats, LectureContext, RateLimitInfo, RateLimitProgress } from '../types'
-import { fetchCourse, deleteFile, fileUrl } from '../services/database'
-import { runStep } from '../services/backend'
+import type { Step, FileName, TimingStats, LectureContext } from '../types'
+import { deleteFile, fileUrl } from '../services/database'
+import { runStep, runPipeline } from '../services/backend'
 import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
-import { useTimingStats } from '../hooks/useTimingStats'
-import { PIPELINE, STEP_FILE, STEP_INPUT_FILE, STEP_LABEL, STEP_ERROR_LABEL } from '../constants/pipeline'
+import { useResumeStatus } from '../contexts/ResumeStatusContext'
+import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
-
-interface ReqState {
-  step: Step
-  status: 'inflight' | 'error' | 'rate_limited'
-  message?: string
-  startedAt?: number
-  fileSizeBytes?: number
-  completedFraction?: number
-  rateLimit?: RateLimitInfo
-  progress?: RateLimitProgress
-  rateLimitReceivedAt?: number
-}
-
-interface RunAllState {
-  steps: Step[]
-  currentIndex: number
-}
 
 interface RotateTarget {
   file: FileName
@@ -88,84 +71,56 @@ function ProgressBar({
 }
 
 function RateLimitPanel({
-  rateLimit,
+  sleepingUntil,
   progress,
-  receivedAt,
 }: {
-  rateLimit: RateLimitInfo
-  progress: RateLimitProgress
-  receivedAt: number
+  sleepingUntil: string
+  progress: { completed: number; total: number } | null
 }) {
-  const initial = rateLimit.retryAfterSeconds
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
-    if (initial === null) return
     const id = setInterval(() => setNow(Date.now()), 500)
     return () => clearInterval(id)
-  }, [initial])
+  }, [])
 
-  const remaining =
-    initial === null ? null : Math.max(initial - (now - receivedAt) / 1000, 0)
+  const remaining = Math.max((new Date(sleepingUntil).getTime() - now) / 1000, 0)
 
   return (
     <div className="rate-limit-panel">
       <h4 className="rate-limit-title">Groq rate limit reached</h4>
-      <div className="rate-limit-stats">
-        <div>
-          <span className="rate-limit-stat-label">Limit</span>
-          <span className="rate-limit-stat-value">{rateLimit.limit ?? '—'}</span>
-        </div>
-        <div>
-          <span className="rate-limit-stat-label">Used</span>
-          <span className="rate-limit-stat-value">{rateLimit.used ?? '—'}</span>
-        </div>
-        <div>
-          <span className="rate-limit-stat-label">Requested</span>
-          <span className="rate-limit-stat-value">{rateLimit.requested ?? '—'}</span>
-        </div>
-      </div>
-      <p className="rate-limit-units">seconds of audio per hour</p>
-      {(progress.completed !== null && progress.total !== null) && (
+      {progress && (
         <p className="rate-limit-progress">
           {progress.completed}/{progress.total} chunks transcribed so far
         </p>
       )}
-      {remaining !== null && (
-        <p className="rate-limit-countdown">
-          {remaining > 0 ? `Retry in ${formatDuration(remaining)}` : 'Ready to retry'}
-        </p>
-      )}
+      <p className="rate-limit-countdown">
+        {remaining > 0 ? `Retry in ${formatDuration(remaining)}` : 'Ready to retry'}
+      </p>
     </div>
   )
 }
 
 export default function MainView() {
+  // Derive course + lecture from URL
   const params = useParams<{ course: string; lecture: string }>()
-  const { files, transcribePartial, refreshCourses, kind } = useOutletContext<LectureContext>()
-  const navigate = useNavigate()
-
-  const [localState, setLocalState] = useState<ReqState | null>(null)
-  const [runAllState, setRunAllState] = useState<RunAllState | null>(null)
-  const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
-
-  useEffect(() => {
-    setLocalState(null)
-    setRunAllState(null)
-  }, [params.course, params.lecture, kind])
-
   const course = params.course ?? ''
   const lecture = params.lecture ?? ''
+
+  // Component general context and state
+  const { files, transcribePartial, refreshCourses, kind } = useOutletContext<LectureContext>()
+  const navigate = useNavigate()
+  const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
+
+  // Derive inflight state from backend context
+  const { isInFlight } = useResumeStatus()
+  const inflight = isInFlight(course, lecture, kind)
   const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
 
-  const localTimingStep = localState?.status === 'inflight' ? localState.step : null
-  const localTimingStats = useTimingStats(localTimingStep, localState?.fileSizeBytes ?? 0)
-
-  // Local run wins while active; otherwise fall back to the resume-runner's view.
-  const reqState: ReqState | null = localState ?? (remote ? { ...remote, status: 'inflight' } : null)
-  const timingStats: TimingStats | null = localState ? localTimingStats : remote?.timingStats ?? null
-
+  // MainView shows course and lecture details. No course or lecture in URL -> show nothing
   if (!params.course || !params.lecture) return null
+
+  // Still loading course details (files, etc.) -> show spinner
   if (!files) {
     return (
       <main className="main-view">
@@ -174,8 +129,7 @@ export default function MainView() {
     )
   }
 
-  const inflight = reqState?.status === 'inflight'
-  const runningFile = inflight ? STEP_FILE[reqState!.step] : null
+  const runningFile = remote ? STEP_FILE[remote.step] : null
   const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)
   const pdfExists = files['summary.pdf'].exists
   const pdfUploaded = files['drive_url.txt'].exists
@@ -198,73 +152,26 @@ export default function MainView() {
       ? { symbol: '📎', text: 'material.pdf will be used', cls: 'material-indicator--will-use' }
       : { symbol: '⚠', text: 'material.pdf not found', cls: 'material-indicator--missing' }
 
-  async function runLocal(step: Step): Promise<boolean> {
-    const inputFile = STEP_INPUT_FILE[step]
-    let fileSizeBytes = 0
-    if (inputFile) {
-      const fresh = await fetchCourse(course)
-      const list = kind === 'recitation' ? fresh?.recitations : fresh?.lectures
-      const lec = list?.find((l) => l.name === lecture)
-      fileSizeBytes = lec?.files[inputFile]?.size ?? 0
-    }
-    const startedAt = Date.now()
-
-    let completedFraction = 0
-    if (step === 'transcribe' && files?.['transcript.partial.txt'].exists && transcribePartial && transcribePartial.total > 0) {
-      completedFraction = transcribePartial.completed / transcribePartial.total
-    }
-
-    setLocalState({ step, status: 'inflight', startedAt, fileSizeBytes, completedFraction })
-
-    const result = await runStep(course, lecture, step, kind)
+  async function handleStep(step: Step) {
+    const initResult = await runStep(course, lecture, step, kind)
     refreshCourses()
-    if (result.status === 'done') {
-      if (step === 'summarize') {
-        toast.info(result.usedMaterial ? 'Summarized with material.pdf' : 'Summarized without material.pdf (not found)')
-      }
-      setLocalState(null)
-      return true
-    } else if (result.status === 'rate_limited') {
-      toast.error('Groq rate limit reached')
-      setLocalState({
-        step,
-        status: 'rate_limited',
-        rateLimit: result.rateLimit,
-        progress: result.progress,
-        rateLimitReceivedAt: Date.now(),
-      })
-      return false
-    } else {
-      toast.error(STEP_ERROR_LABEL[step])
-      setLocalState({ step, status: 'error', message: result.message })
-      return false
-    }
+    if (initResult.status === 'busy') toast.error('Step already running')
+    else if (initResult.status === 'error') toast.error(initResult.message ?? STEP_ERROR_LABEL[step])
+    // 'started': no action — SSE fires when done, tree refreshes
   }
 
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
     await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file, kind)))
     refreshCourses()
-    await runLocal(step)
+    handleStep(step)
   }
 
   async function handleRunRemaining() {
-    if (!files || !hasActions) return
-
-    const remainingSteps = PIPELINE
-      .filter(({ file }) => !files[file].exists)
-      .flatMap(({ step }) => step ? [step] : [])
-
-    setRunAllState({ steps: remainingSteps, currentIndex: 0 })
-
-    for (let i = 0; i < remainingSteps.length; i++) {
-      setRunAllState((prev) => prev ? { ...prev, currentIndex: i } : null)
-      const success = await runLocal(remainingSteps[i])
-      if (!success) {
-        break
-      }
-    }
-
-    setRunAllState(null)
+    const result = await runPipeline(course, lecture, kind)
+    refreshCourses()
+    if (result.status === 'busy') toast.error('Pipeline already running')
+    else if (result.status === 'error') toast.error(result.message ?? 'Pipeline failed to start')
+    // 'started': no action — SSE fires each step run updates, tree refreshes
   }
 
   function openRotateModal(file: FileName, step: Step) {
@@ -319,7 +226,7 @@ export default function MainView() {
                       ) : step ? (
                         <button
                           className="file-action-btn"
-                          onClick={() => runLocal(step)}
+                          onClick={() => handleStep(step)}
                           disabled={inflight || !prereqMet}
                         >
                           {buttonLabel}
@@ -373,11 +280,11 @@ export default function MainView() {
                     )}
                   </span>
                 </div>
-                {isRunning && (
+                {isRunning && remote && (
                   <ProgressBar
-                    stats={timingStats}
-                    startedAt={reqState!.startedAt!}
-                    completedFraction={reqState!.completedFraction}
+                    stats={remote.timingStats}
+                    startedAt={remote.startedAt}
+                    completedFraction={remote.completedFraction}
                   />
                 )}
               </div>
@@ -392,29 +299,10 @@ export default function MainView() {
           </button>
         )}
 
-        {runAllState && (
-          <div className="run-all-overall-progress">
-            <p className="run-all-overall-label">
-              {runAllState.currentIndex + 1}/{runAllState.steps.length} - {STEP_LABEL[runAllState.steps[runAllState.currentIndex]]}
-            </p>
-            <div className="progress-track">
-              <div
-                className="progress-fill"
-                style={{ width: `${(runAllState.currentIndex / runAllState.steps.length) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
-
-        {reqState?.status === 'error' && (
-          <p className="file-error">Error: {reqState.message}</p>
-        )}
-
-        {reqState?.status === 'rate_limited' && reqState.rateLimit && reqState.progress && (
+        {remote?.sleepingUntil != null && (
           <RateLimitPanel
-            rateLimit={reqState.rateLimit}
-            progress={reqState.progress}
-            receivedAt={reqState.rateLimitReceivedAt!}
+            sleepingUntil={remote.sleepingUntil}
+            progress={remote.progress}
           />
         )}
       </div>

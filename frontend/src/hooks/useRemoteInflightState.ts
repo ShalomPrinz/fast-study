@@ -8,6 +8,8 @@ export interface RemoteInflight {
   startedAt: number
   timingStats: TimingStats | null
   completedFraction: number
+  sleepingUntil: string | null
+  progress: { completed: number; total: number } | null
 }
 
 interface Args {
@@ -18,43 +20,28 @@ interface Args {
   transcribePartial: { completed: number; total: number } | null
 }
 
-// Synthesizes an inflight descriptor when the backend resume runner is processing
-// the currently-open lecture. Returns null otherwise. The caller is responsible
-// for deciding whether a concurrent local run preempts this.
+// Synthesizes an inflight descriptor from the in_flight entry for this lecture.
+// Returns null when this lecture is not in-flight (including when still running
 export function useRemoteInflightState({ course, lecture, kind, files, transcribePartial }: Args): RemoteInflight | null {
-  const { status } = useResumeStatus()
+  // Derive entry & step from resume status context
+  const { getInFlight } = useResumeStatus()
+  const entry = getInFlight(course, lecture, kind)
+  const step = entry && STEP_SET.has(entry.step) ? (entry.step as Step) : null
 
-  const resumeMatch =
-    !!status?.running &&
-    !!status.current &&
-    status.current.course === course &&
-    status.current.lecture === lecture &&
-    status.current.kind === kind &&
-    STEP_SET.has(status.current.step)
-
-  const singleAutoMatch =
-    !!status?.singleAutoCurrent &&
-    status.singleAutoCurrent.course === course &&
-    status.singleAutoCurrent.lecture === lecture &&
-    status.singleAutoCurrent.kind === kind &&
-    STEP_SET.has(status.singleAutoCurrent.step)
-
-  // Pause inflight state during rate-limit sleep (when sleepingUntil is set)
-  const matches = (resumeMatch || singleAutoMatch) && !status?.sleepingUntil
-  const current = resumeMatch ? status!.current! : singleAutoMatch ? status!.singleAutoCurrent! : null
-
-  const step = matches ? (current!.step as Step) : null
-  const startedAtIso = matches ? current!.startedAt : null
-
+  // Derive timing stats using the step + input file size
   const inputFile = step ? STEP_INPUT_FILE[step] : null
   const fileSizeBytes = step && inputFile && files ? files[inputFile]?.size ?? 0 : 0
   const timingStats = useTimingStats(files ? step : null, fileSizeBytes)
 
-  if (!step || !startedAtIso) return null
+  // No valid step or entry -> return null to indicate no inflight state
+  if (!step || !entry) return null
 
-  const startedAtMs = Date.parse(startedAtIso)
+  const startedAtMs = Date.parse(entry.startedAt)
+
   let completedFraction = 0
-  if (
+  if (entry.progress && entry.progress.total > 0) {
+    completedFraction = entry.progress.completed / entry.progress.total
+  } else if (
     step === 'transcribe' &&
     files?.['transcript.partial.txt'].exists &&
     transcribePartial &&
@@ -68,5 +55,7 @@ export function useRemoteInflightState({ course, lecture, kind, files, transcrib
     startedAt: Number.isFinite(startedAtMs) ? startedAtMs : Date.now(),
     timingStats,
     completedFraction,
+    sleepingUntil: entry.sleepingUntil,
+    progress: entry.progress,
   }
 }
