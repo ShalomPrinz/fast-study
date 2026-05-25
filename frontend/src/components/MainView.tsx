@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
-import type { Step, FileName, TimingStats, LectureContext } from '../types'
+import type { Step, FileName, TimingStats } from '../types'
 import { deleteFile, fileUrl } from '../services/database'
 import { runStep, runPipeline } from '../services/backend'
 import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
+import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import { inFlightKey } from '../utils/inFlightKey'
@@ -104,13 +105,7 @@ function RateLimitPanel({
 }
 
 export default function MainView() {
-  // Derive course + lecture from URL
-  const params = useParams<{ course: string; lecture: string }>()
-  const course = params.course ?? ''
-  const lecture = params.lecture ?? ''
-
-  // Component general context and state
-  const { files, transcribePartial, refreshCourses, kind } = useOutletContext<LectureContext>()
+  const { course, lecture, kind, files, transcribePartial, refreshCourses } = useLectureRoute()
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
 
@@ -121,7 +116,7 @@ export default function MainView() {
   const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
 
   // MainView shows course and lecture details. No course or lecture in URL -> show nothing
-  if (!params.course || !params.lecture) return null
+  if (!course || !lecture) return null
 
   // Still loading course details (files, etc.) -> show spinner
   if (!files) {

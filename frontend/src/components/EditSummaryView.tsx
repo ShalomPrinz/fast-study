@@ -1,16 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '../services/database'
 import { runStep } from '../services/backend'
-import type { LectureContext } from '../types'
+import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import PdfViewer from './PdfViewer'
 import { inFlightKey } from '../utils/inFlightKey'
 
 export default function EditSummaryView() {
-  const { course, lecture } = useParams<{ course: string; lecture: string }>()
-  const { files, kind } = useOutletContext<LectureContext>()
+  const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
   const { status } = useRunnerStatus()
 
@@ -30,7 +29,7 @@ export default function EditSummaryView() {
     const pdfExists = files['summary.pdf'].exists
     setShowPdf(pdfExists)
     if (!pdfFiredRef.current) return
-    const stepError = status?.errors[inFlightKey(course!, lecture!, kind)]
+    const stepError = status?.errors[inFlightKey(course, lecture, kind)]
     if (stepError) {
       pdfFiredRef.current = false
       setGenerating(false)
@@ -49,7 +48,7 @@ export default function EditSummaryView() {
 
   async function loadContent() {
     setLoading(true)
-    const data = await fetchSummaryContent(course!, lecture!, kind)
+    const data = await fetchSummaryContent(course, lecture, kind)
     setContent(data.content)
     setHasOriginal(data.hasOriginal)
     setLoading(false)
@@ -57,7 +56,7 @@ export default function EditSummaryView() {
 
   async function handleRevert() {
     setError('')
-    await revertSummary(course!, lecture!, kind)
+    await revertSummary(course, lecture, kind)
     await loadContent()
   }
 
@@ -65,7 +64,7 @@ export default function EditSummaryView() {
     setGenerating(true)
     setError('')
     try {
-      await saveSummaryContent(course!, lecture!, content, kind)
+      await saveSummaryContent(course, lecture, content, kind)
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to save summary'
       toast.error(message)
@@ -74,8 +73,8 @@ export default function EditSummaryView() {
       return
     }
     setHasOriginal(true)
-    await deleteFile(course!, lecture!, 'summary.pdf', kind)
-    const result = await runStep(course!, lecture!, 'pdf', kind)
+    await deleteFile(course, lecture, 'summary.pdf', kind)
+    const result = await runStep(course, lecture, 'pdf', kind)
     if (result.status === 'busy') {
       toast.error('Step already running')
       setGenerating(false)

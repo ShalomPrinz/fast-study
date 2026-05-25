@@ -52,6 +52,7 @@ frontend/
     hooks/
       useCourseTree.ts         courses state, SSE-driven refresh (against ${VITE_DATABASE_URL}/events)
       useInlineEdit.ts         generic inline-input editing
+      useLectureRoute.ts       reads { course, lecture, kind, files, transcribePartial, refreshCourses } from useParams + LectureContext outlet
       useToggleSet.ts          string-keyed expand/collapse set with toggle/add + auto-prune to valid keys
       useTimingStats.ts        (step, fileSize) -> TimingStats, with staleness guard for late responses
       useRemoteInflightState.ts  synthesizes an inflight descriptor when the runner is processing the open lecture
