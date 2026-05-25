@@ -21,10 +21,10 @@ const RunnerStatusContext = createContext<RunnerStatusValue>({
   getError: () => null,
 })
 
-type ToastKind = 'info' | 'error'
+type UpdateKind = 'info' | 'error'
 
 interface ProviderProps {
-  sendUpdate?: (kind: ToastKind, message: string) => void
+  sendUpdate?: (kind: UpdateKind, message: string) => void
   children: ReactNode
 }
 
