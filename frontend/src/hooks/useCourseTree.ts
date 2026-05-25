@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
-import type { Course, Lecture, FileStatus, Selected } from '../types'
+import type { Course, FileStatus, Selected } from '../types'
 import { fetchTree, fetchCourse, databaseUrl } from '../services/database'
+import { findLecture } from '../utils/courseTree'
 
 export function useCourseTree(selected: Selected | null) {
   const [courses, setCourses] = useState<Course[]>([])
@@ -34,17 +35,13 @@ export function useCourseTree(selected: Selected | null) {
 
   const files = useMemo<FileStatus | null>(() => {
     if (!selected) return null
-    const course = courses.find((c) => c.name === selected.course)
-    const list = selected.kind === 'recitation' ? course?.recitations : course?.lectures
-    const lecture = list?.find((l: Lecture) => l.name === selected.lecture)
+    const lecture = findLecture(courses, selected.course, selected.lecture, selected.kind)
     return lecture?.files ?? null
   }, [courses, selected])
 
   const transcribePartial = useMemo(() => {
     if (!selected) return null
-    const course = courses.find((c) => c.name === selected.course)
-    const list = selected.kind === 'recitation' ? course?.recitations : course?.lectures
-    const lecture = list?.find((l: Lecture) => l.name === selected.lecture)
+    const lecture = findLecture(courses, selected.course, selected.lecture, selected.kind)
     return lecture?.transcribePartial ?? null
   }, [courses, selected])
 

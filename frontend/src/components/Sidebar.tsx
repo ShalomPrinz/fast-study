@@ -8,6 +8,7 @@ import NewCourseRow from './NewCourseRow'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import { useInlineEdit } from '../hooks/useInlineEdit'
 import { suggestName } from '../utils/namingSuggestion'
+import { findLecture } from '../utils/courseTree'
 
 interface Props {
   courses: Course[]
@@ -133,9 +134,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
       toast.error('Only .mp4 files are allowed')
       return
     }
-    const course = courses.find((c) => c.name === courseName)
-    const list = kind === 'recitation' ? course?.recitations : course?.lectures
-    const lecture = list?.find((l) => l.name === lectureName)
+    const lecture = findLecture(courses, courseName, lectureName, kind)
     if (lecture?.files['video.mp4'].exists) {
       setPendingUpload({ course: courseName, lecture: lectureName, file, kind })
     } else {

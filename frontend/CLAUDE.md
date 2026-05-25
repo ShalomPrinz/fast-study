@@ -48,6 +48,7 @@ frontend/
       inFlightKey.ts
       namingSuggestion.ts
       route.ts                 lectureRoute() / kindSearch() — router-side URL builders, shared by Layout, RunnerPipelineRow, MainView
+      courseTree.ts            findLecture(courses, course, lecture, kind)
     hooks/
       useCourseTree.ts         courses state, SSE-driven refresh (against ${VITE_DATABASE_URL}/events)
       useInlineEdit.ts         generic inline-input editing
