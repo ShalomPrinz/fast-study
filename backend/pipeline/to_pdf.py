@@ -8,6 +8,7 @@ from timing import timed_pipeline
 FONTS_DIR = Path(__file__).parent.parent / "assets" / "fonts"
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 HEBREW_FONT_BOLD = FONTS_DIR / "NotoSansHebrew-Bold.ttf"
+LTR_CODE_FILTER = Path(__file__).parent.parent / "assets" / "filters" / "ltr_code.lua"
 
 LATEX_HEADER = r"""
 \usepackage{polyglossia}
@@ -36,7 +37,12 @@ _LATEX_SPECIAL = {
     '^': r'\textasciicircum{}',
     '~': r'\textasciitilde{}',
 }
-_WORD = r'(?:[0-9]+\-)?[A-Za-z][A-Za-z0-9\-]*'
+# A "Latin token" for bidi-wrapping: starts with an optional digit-hyphen
+# prefix (3-way) and/or a leading slash (/index.html), then a letter, then any
+# mix of alnum/underscore/hyphen/slash and dots that are followed by more
+# alnum (HTTP/1.1, Node.js, /api/v2). Trailing sentence dots are excluded by
+# the lookahead so they fall into the punctuation capture group instead.
+_WORD = r'(?:[0-9]+\-)?/?[A-Za-z](?:[A-Za-z0-9_\-/]|\.(?=[A-Za-z0-9]))*'
 MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
 LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
 
@@ -156,6 +162,8 @@ def convert_to_pdf(md_path: str) -> str:
         raise FileNotFoundError(f"Font not found: {HEBREW_FONT}")
     if not HEBREW_FONT_BOLD.exists():
         raise FileNotFoundError(f"Font not found: {HEBREW_FONT_BOLD}")
+    if not LTR_CODE_FILTER.exists():
+        raise FileNotFoundError(f"Lua filter not found: {LTR_CODE_FILTER}")
 
     output_path = input_path.with_suffix(".pdf")
     fonts_dir = str(FONTS_DIR) + "/"
@@ -192,6 +200,7 @@ def convert_to_pdf(md_path: str) -> str:
         "-V", "geometry:margin=2.5cm",
         "-V", "linestretch=1.3",
         f"--include-in-header={header_path}",
+        f"--lua-filter={LTR_CODE_FILTER}",
         "--standalone",
     ]
 
