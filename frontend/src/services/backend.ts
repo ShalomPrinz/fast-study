@@ -15,7 +15,23 @@ export async function fetchTimingStats(operation: string, fileSizeBytes: number)
   return backend.get<TimingStats>(`/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
 }
 
-function normalizeRunner(raw: any): RunnerStatus {
+interface RawInFlightEntry {
+  course: string
+  lecture: string
+  kind: Kind
+  step: string
+  started_at: string
+  sleeping_until: string | null
+  progress: { completed: number; total: number } | null
+}
+
+interface RawRunnerStatus {
+  runner: { running: boolean; total: number; done: number; last_error: string | null }
+  in_flight?: RawInFlightEntry[]
+  errors?: Record<string, string>
+}
+
+function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
   return {
     runner: {
       running: raw.runner.running,
@@ -23,7 +39,7 @@ function normalizeRunner(raw: any): RunnerStatus {
       done: raw.runner.done,
       lastError: raw.runner.last_error,
     },
-    inFlight: (raw.in_flight ?? []).map((e: any) => ({
+    inFlight: (raw.in_flight ?? []).map((e) => ({
       course: e.course,
       lecture: e.lecture,
       kind: e.kind,
@@ -37,11 +53,11 @@ function normalizeRunner(raw: any): RunnerStatus {
 }
 
 export async function runAll(): Promise<RunnerStatus | 'empty_queue'> {
-  const raw = await backend.post<{ status: string }>('/run-all')
+  const raw = await backend.post<RawRunnerStatus & { status?: string }>('/run-all')
   if (raw.status === 'empty_queue') return 'empty_queue'
   return normalizeRunner(raw)
 }
 
 export async function fetchRunnerStatus(): Promise<RunnerStatus> {
-  return normalizeRunner(await backend.get('/status'))
+  return normalizeRunner(await backend.get<RawRunnerStatus>('/status'))
 }
