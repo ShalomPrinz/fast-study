@@ -568,6 +568,21 @@ html, body, #root {
   cursor: not-allowed;
 }
 
+.lecture-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--error, #d33);
+  border-radius: 8px;
+  background: rgba(211, 51, 51, 0.08);
+  color: var(--error, #d33);
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.lecture-error strong {
+  margin-right: 6px;
+}
+
 .run-all-overall-progress {
   margin-top: 10px;
   display: flex;

@@ -7,6 +7,7 @@ import { runStep, runPipeline } from '../services/backend'
 import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
+import { inFlightKey } from '../utils/inFlightKey'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 
@@ -113,8 +114,9 @@ export default function MainView() {
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
 
   // Derive inflight state from backend context
-  const { isInFlight } = useRunnerStatus()
+  const { isInFlight, status: runnerStatus } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
+  const lectureError = runnerStatus?.errors[inFlightKey(course, lecture, kind)] ?? null
   const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
 
   // MainView shows course and lecture details. No course or lecture in URL -> show nothing
@@ -297,6 +299,12 @@ export default function MainView() {
           <button className="run-all-btn" onClick={handleRunRemaining} disabled={inflight}>
             Run Remaining
           </button>
+        )}
+
+        {lectureError && (
+          <div className="lecture-error" role="alert">
+            <strong>Last error:</strong> {lectureError}
+          </div>
         )}
 
         {remote?.sleepingUntil != null && (
