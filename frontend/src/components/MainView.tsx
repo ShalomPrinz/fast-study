@@ -8,6 +8,7 @@ import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import { kindSearch } from '../utils/route'
+import { formatDuration } from '../utils/format'
 import { toastInitResult } from '../services/toaster'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
@@ -18,12 +19,6 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
-
-function formatDuration(seconds: number): string {
-  const s = Math.round(seconds)
-  if (s < 60) return `${s}s`
-  return `${Math.floor(s / 60)}m ${s % 60}s`
-}
 
 function ProgressBar({
   stats,
