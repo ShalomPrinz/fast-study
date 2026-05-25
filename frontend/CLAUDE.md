@@ -58,6 +58,7 @@ frontend/
       Layout.tsx                routes outlet + RunnerStatusProvider + ToastContainer
       Sidebar.tsx               course/lecture tree
       NewCourseRow.tsx          inline "new course" input row
+      InlineEditInput.tsx       shared inline-edit input (Enter=commit, Escape/Blur=cancel)
       RunnerPipelineRow.tsx     runner status/CTA row; click while running to jump to current lecture
       MainView.tsx
       EditSummaryView.tsx

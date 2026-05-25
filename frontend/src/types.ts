@@ -1,3 +1,11 @@
+import type { RefObject } from 'react'
+
+export interface InlineEdit {
+  value: string
+  setValue: (v: string) => void
+  ref: RefObject<HTMLInputElement>
+}
+
 export type FileName =
   | 'video.mp4'
   | 'audio.mp3'

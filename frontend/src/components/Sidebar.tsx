@@ -4,6 +4,7 @@ import type { Course, Lecture, Selected, Kind } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../services/database'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
+import InlineEditInput from './InlineEditInput'
 import NewCourseRow from './NewCourseRow'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import { useInlineEdit } from '../hooks/useInlineEdit'
@@ -200,17 +201,10 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     return (
       <li key={`${kind}::${lecture.name}`}>
         {isRenaming ? (
-          <input
-            ref={renameLectureEdit.ref}
-            className="lecture-add-input"
-            value={renameLectureEdit.value}
-            onChange={(e) => renameLectureEdit.setValue(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') commitRename()
-              if (e.key === 'Escape') { setRenaming(null); renameLectureEdit.setValue('') }
-            }}
-            onBlur={() => { setRenaming(null); renameLectureEdit.setValue('') }}
-            dir="auto"
+          <InlineEditInput
+            edit={renameLectureEdit}
+            onCommit={commitRename}
+            onCancel={() => { setRenaming(null); renameLectureEdit.setValue('') }}
           />
         ) : (
           <button
@@ -263,17 +257,10 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
             <div key={course.name} className="course-group">
               <div className="course-header">
                 {renamingCourse === course.name ? (
-                  <input
-                    ref={renameCourseEdit.ref}
-                    className="lecture-add-input"
-                    value={renameCourseEdit.value}
-                    onChange={(e) => renameCourseEdit.setValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') commitRenameCourse()
-                      if (e.key === 'Escape') { setRenamingCourse(null); renameCourseEdit.setValue('') }
-                    }}
-                    onBlur={() => { setRenamingCourse(null); renameCourseEdit.setValue('') }}
-                    dir="auto"
+                  <InlineEditInput
+                    edit={renameCourseEdit}
+                    onCommit={commitRenameCourse}
+                    onCancel={() => { setRenamingCourse(null); renameCourseEdit.setValue('') }}
                   />
                 ) : (
                 <button
@@ -305,18 +292,11 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
 
                   {isAddingLecture && (
                     <li>
-                      <input
-                        ref={addLectureEdit.ref}
-                        className="lecture-add-input"
-                        value={addLectureEdit.value}
-                        onChange={(e) => addLectureEdit.setValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') commitAdd()
-                          if (e.key === 'Escape') { setAdding(null); addLectureEdit.setValue('') }
-                        }}
-                        onBlur={() => { setAdding(null); addLectureEdit.setValue('') }}
+                      <InlineEditInput
+                        edit={addLectureEdit}
+                        onCommit={commitAdd}
+                        onCancel={() => { setAdding(null); addLectureEdit.setValue('') }}
                         placeholder="Lecture name…"
-                        dir="auto"
                       />
                     </li>
                   )}
@@ -344,18 +324,11 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
                         {(course.recitations ?? []).map((rec) => renderLectureItem(course.name, rec, 'recitation'))}
                         {isAddingRecitation && (
                           <li>
-                            <input
-                              ref={addLectureEdit.ref}
-                              className="lecture-add-input"
-                              value={addLectureEdit.value}
-                              onChange={(e) => addLectureEdit.setValue(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') commitAdd()
-                                if (e.key === 'Escape') { setAdding(null); addLectureEdit.setValue('') }
-                              }}
-                              onBlur={() => { setAdding(null); addLectureEdit.setValue('') }}
+                            <InlineEditInput
+                              edit={addLectureEdit}
+                              onCommit={commitAdd}
+                              onCancel={() => { setAdding(null); addLectureEdit.setValue('') }}
                               placeholder="Recitation name…"
-                              dir="auto"
                             />
                           </li>
                         )}
