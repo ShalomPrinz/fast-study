@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
 import { toast } from 'react-toastify'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '../services/database'
 import { runStep } from '../services/backend'
 import type { LectureContext } from '../types'
+import { useResumeStatus } from '../contexts/ResumeStatusContext'
 import PdfViewer from './PdfViewer'
 
 export default function EditSummaryView() {
   const { course, lecture } = useParams<{ course: string; lecture: string }>()
-  const { files, refreshCourses, kind } = useOutletContext<LectureContext>()
+  const { files, kind } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
+  const { status } = useResumeStatus()
 
   const [content, setContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)
@@ -19,9 +21,27 @@ export default function EditSummaryView() {
   const [pdfKey, setPdfKey] = useState(0)
   const [showPdf, setShowPdf] = useState(false)
 
+  // Gates the completion-detection logic: true only while we're waiting for our own pdf step.
+  const pdfFiredRef = useRef(false)
+
   useEffect(() => {
-    if (files) setShowPdf(files['summary.pdf'].exists)
-  }, [files])
+    if (!files) return
+    const pdfExists = files['summary.pdf'].exists
+    setShowPdf(pdfExists)
+    if (!pdfFiredRef.current) return
+    const skey = `${course}||${lecture}||${kind}`
+    const stepError = status?.errors[skey]
+    if (stepError) {
+      pdfFiredRef.current = false
+      setGenerating(false)
+      setError(stepError)
+      toast.error(stepError)
+    } else if (pdfExists) {
+      pdfFiredRef.current = false
+      setGenerating(false)
+      setPdfKey((k) => k + 1)
+    }
+  }, [files, status, course, lecture, kind])
 
   useEffect(() => {
     if (course && lecture) loadContent()
@@ -56,15 +76,20 @@ export default function EditSummaryView() {
     setHasOriginal(true)
     await deleteFile(course!, lecture!, 'summary.pdf', kind)
     const result = await runStep(course!, lecture!, 'pdf', kind)
-    if (result.status === 'done') {
-      refreshCourses()
-      setShowPdf(true)
-      setPdfKey((k) => k + 1)
-    } else {
-      toast.error('Failed to generate PDF')
-      setError('Failed to generate PDF')
+    if (result.status === 'busy') {
+      toast.error('Step already running')
+      setGenerating(false)
+      return
     }
-    setGenerating(false)
+    if (result.status === 'error') {
+      const message = result.message ?? 'Failed to generate PDF'
+      toast.error(message)
+      setError(message)
+      setGenerating(false)
+      return
+    }
+    // status === 'started': wait for SSE-driven files update to confirm completion
+    pdfFiredRef.current = true
   }
 
   if (!course || !lecture) return null
