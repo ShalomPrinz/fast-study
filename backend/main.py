@@ -59,9 +59,9 @@ def _validate_kind(kind: str):
 
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
 async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
-    # Allowed steps are stricrly defined in STEP_CONFIG
+    # Allowed steps are strictly defined in STEP_CONFIG
     if step not in _STEP_CONFIG:
-        raise HTTPException(status_code=404, detail=f"Unknown step: {step}")
+        return {"status": "error", "message": f"Unknown step: {step}"}
     
     # Validate lecture kind
     if err := _validate_kind(kind): return err

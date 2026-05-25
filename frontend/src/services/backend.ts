@@ -8,7 +8,7 @@ export async function runStep(course: string, lecture: string, step: Step, kind?
 }
 
 export async function runPipeline(course: string, lecture: string, kind?: Kind): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/run/pipeline${kindQuery(kind)}`)
+  return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/pipeline${kindQuery(kind)}`)
 }
 
 export async function fetchTimingStats(operation: string, fileSizeBytes: number): Promise<TimingStats> {
