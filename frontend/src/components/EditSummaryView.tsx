@@ -6,6 +6,7 @@ import { runStep } from '../services/backend'
 import type { LectureContext } from '../types'
 import { useResumeStatus } from '../contexts/ResumeStatusContext'
 import PdfViewer from './PdfViewer'
+import { inFlightKey } from '../utils/inFlightKey'
 
 export default function EditSummaryView() {
   const { course, lecture } = useParams<{ course: string; lecture: string }>()
@@ -29,8 +30,7 @@ export default function EditSummaryView() {
     const pdfExists = files['summary.pdf'].exists
     setShowPdf(pdfExists)
     if (!pdfFiredRef.current) return
-    const skey = `${course}||${lecture}||${kind}`
-    const stepError = status?.errors[skey]
+    const stepError = status?.errors[inFlightKey(course!, lecture!, kind)]
     if (stepError) {
       pdfFiredRef.current = false
       setGenerating(false)

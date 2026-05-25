@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { ResumeStatus, InFlightEntry, Kind } from '../types'
 import { resumeAll, fetchResumeStatus } from '../services/backend'
 import { databaseUrl } from '../services/database'
+import { inFlightKey } from '../utils/inFlightKey'
 
 
 interface ResumeStatusValue {
@@ -23,10 +24,6 @@ type ToastKind = 'info' | 'error'
 interface ProviderProps {
   sendUpdate?: (kind: ToastKind, message: string) => void
   children: ReactNode
-}
-
-function inFlightKey(course: string, lecture: string, kind: Kind) {
-  return `${course}||${lecture}||${kind}`
 }
 
 export function ResumeStatusProvider({ sendUpdate, children }: ProviderProps) {
