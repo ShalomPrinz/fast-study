@@ -1,5 +1,6 @@
 import asyncio
 from contextlib import asynccontextmanager
+from typing import Literal, get_args
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -45,15 +46,19 @@ _STEP_CONFIG: dict[str, tuple[str, str]] = {
 }
 
 
+Kind = Literal["lecture", "recitation"]
+_VALID_KINDS = set(get_args(Kind))
+
+
 def _validate_kind(kind: str):
     """Guard used by every route handler; 'recitation' routes files under a Recitations/ subdir."""
-    if kind not in {"lecture", "recitation"}:
+    if kind not in _VALID_KINDS:
         return {"status": "error", "message": f"invalid kind: {kind}"}
     return None
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
-async def run_step(course: str, lecture: str, step: str, kind: str = Query("lecture")):
+async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
     # Allowed steps are stricrly defined in STEP_CONFIG
     if step not in _STEP_CONFIG:
         raise HTTPException(status_code=404, detail=f"Unknown step: {step}")
@@ -71,7 +76,7 @@ async def run_step(course: str, lecture: str, step: str, kind: str = Query("lect
 
 
 @app.post("/courses/{course}/lectures/{lecture}/pipeline")
-async def run_pipeline(course: str, lecture: str, kind: str = Query("lecture")):
+async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture")):
     if err := _validate_kind(kind): return err
     return {"status": runner.try_run_pipeline(course, lecture, kind)}
 
