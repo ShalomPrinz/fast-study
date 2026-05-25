@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { RunnerStatus, InFlightEntry, Kind } from '../types'
 import { runAll, fetchRunnerStatus } from '../services/backend'
-import { databaseUrl } from '../services/database'
 import { inFlightKey } from '../utils/inFlightKey'
 import { useReportOnce } from '../hooks/useReportOnce'
+import { useNotify } from '../hooks/useNotify'
 
 
 interface RunnerStatusValue {
@@ -55,16 +55,13 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     }
   }
 
+  // Refresh status on mount
   useEffect(() => {
     refresh()
-    const es = new EventSource(`${databaseUrl}/events`)
-    const onNotify = () => { refresh() }
-    es.addEventListener('notify', onNotify)
-    return () => {
-      es.removeEventListener('notify', onNotify)
-      es.close()
-    }
   }, [])
+
+  // Refresh status when SSE 'notify' events are received
+  useNotify(refresh)
 
   async function trigger() {
     try {

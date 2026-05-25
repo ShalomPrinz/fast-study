@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { Course, LectureDerived, Selected } from '../types'
-import { fetchTree, fetchCourse, databaseUrl } from '../services/database'
+import { fetchTree, fetchCourse } from '../services/database'
 import { findLecture } from '../utils/courseTree'
+import { useNotify } from './useNotify'
 
 export function useCourseTree(selected: Selected | null) {
   const [courses, setCourses] = useState<Course[]>([])
@@ -10,19 +11,13 @@ export function useCourseTree(selected: Selected | null) {
     return fetchTree().then(setCourses)
   }
 
+  // Refresh courses on mount
   useEffect(() => {
     refreshCourses()
   }, [])
 
-  useEffect(() => {
-    const es = new EventSource(`${databaseUrl}/events`)
-    const onNotify = () => { refreshCourses() }
-    es.addEventListener('notify', onNotify)
-    return () => {
-      es.removeEventListener('notify', onNotify)
-      es.close()
-    }
-  }, [])
+  // Refresh courses when SSE 'notify' events are received
+  useNotify(refreshCourses)
 
   const sortedCourses = useMemo(
     () => courses.map((c) => ({

@@ -35,6 +35,7 @@ frontend/
       http.ts                  typed fetch client + shared `httpError` / `kindQuery`
       backend.ts               HTTP client for the FastAPI backend (runStep, fetchTimingStats, runAll, fetchRunnerStatus)
       database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL)
+      events.ts         singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
       toaster.ts               single boundary around react-toastify — exports toastError/toastInfo/toastByKind/toastPromise/toastInitResult + ToastContainer
     constants/
       pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
@@ -52,9 +53,10 @@ frontend/
       courseTree.ts            findLecture(courses, course, lecture, kind)
       format.ts                formatDuration(seconds) — human-readable duration strings
     hooks/
-      useCourseTree.ts         courses state, SSE-driven refresh (against ${VITE_DATABASE_URL}/events)
+      useCourseTree.ts         courses state, SSE-driven refresh via useNotify
       useInlineEdit.ts         generic inline-input editing
       useLectureRoute.ts       reads { course, lecture, kind, files, transcribePartial, refreshCourses } from useParams + LectureContext outlet
+      useNotify.ts             subscribes to SSE notify events via services/events.ts singleton; callback stays fresh via ref
       useToggleSet.ts          string-keyed expand/collapse set with toggle/add + auto-prune to valid keys
       useTimingStats.ts        (step, fileSize) -> TimingStats, with staleness guard for late responses
       useRemoteInflightState.ts  synthesizes an inflight descriptor when the runner is processing the open lecture
@@ -92,8 +94,8 @@ frontend/
 ## Key design decisions
 
 - **Filesystem access lives in the database service, not the frontend.** Every URL pointing at filesystem state is built in `src/services/database.ts` against `VITE_DATABASE_URL`. The browser still can't read local files; the Vite dev server no longer pretends to. After a pipeline step succeeds, just re-fetch the tree from the database service.
-- **Server-Sent Events for cross-service refresh.** `useCourseTree.ts` opens `${VITE_DATABASE_URL}/events` and listens for `notify` events. When the downloader finishes a download it POSTs `${database}/notify` (see `downloader/server.js::notifyFrontend`), which fans an SSE message out to all subscribed sidebars so they re-fetch the tree. Failure is silent — downloads must work even when the frontend isn't running.
-- **Runner status is SSE-driven, not polled.** `RunnerStatusContext` opens the same `${VITE_DATABASE_URL}/events` stream and refetches `GET /status` once per `notify` ping. The backend's `runner.py` fires a notify on every meaningful state change (step start/done, rate-limit, error, run complete). The provider also de-dupes `lastError` toasts via a ref so the same error doesn't fire twice. Sidebar and MainView share one EventSource by reading from the context.
+- **Server-Sent Events for cross-service refresh.** All SSE subscriptions go through `services/events.ts`, which lazily opens one shared `EventSource(${VITE_DATABASE_URL}/events)` and ref-counts subscribers — the stream is closed when the last subscriber unmounts. `useNotify(cb)` is the hook interface; `useCourseTree` and `RunnerStatusContext` both call it. When the downloader finishes a download it POSTs `${database}/notify` (see `downloader/server.js::notifyFrontend`), which fans an SSE message out to all subscribed listeners so they re-fetch. Failure is silent — downloads must work even when the frontend isn't running.
+- **Runner status is SSE-driven, not polled.** `RunnerStatusContext` calls `useNotify(refresh)` to refetch `GET /status` on each `notify` ping. The backend's `runner.py` fires a notify on every meaningful state change (step start/done, rate-limit, error, run complete). The provider also de-dupes `lastError` toasts via a ref so the same error doesn't fire twice. Sidebar and MainView share runner state by reading from the context.
 - **No FastAPI calls for filesystem state.** Don't add a backend endpoint to query "does file X exist." That belongs in the database service.
 - **Pipeline steps are declared once.** `constants/pipeline.ts` is the single source of truth for the step list, prereq chain, action labels, and error labels. Don't hard-code a step name or input file anywhere else — derive from `PIPELINE` / `STEP_*` maps.
 - **Single CSS file.** All styles in `index.css` with CSS custom properties. No CSS modules / styled-components.
