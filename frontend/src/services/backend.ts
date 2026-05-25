@@ -37,12 +37,11 @@ function normalizeRunner(raw: any): RunnerStatus {
 }
 
 export async function runAll(): Promise<RunnerStatus | 'empty_queue'> {
-  const raw = await backend.post<any>('/run-all')
+  const raw = await backend.post<{ status: string }>('/run-all')
   if (raw.status === 'empty_queue') return 'empty_queue'
   return normalizeRunner(raw)
 }
 
 export async function fetchRunnerStatus(): Promise<RunnerStatus> {
-  const raw = await backend.get<any>('/status')
-  return normalizeRunner(raw)
+  return normalizeRunner(await backend.get('/status'))
 }
