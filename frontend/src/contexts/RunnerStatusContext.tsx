@@ -64,7 +64,6 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       es.removeEventListener('notify', onNotify)
       es.close()
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   async function trigger() {

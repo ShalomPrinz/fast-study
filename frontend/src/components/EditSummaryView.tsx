@@ -25,6 +25,8 @@ export default function EditSummaryView() {
   // Gates the completion-detection logic: true only while we're waiting for our own pdf step.
   const pdfFiredRef = useRef(false)
 
+  // Runs on every SSE-driven files/lectureError change; pdfFiredRef gates the completion branch
+  // so unrelated refreshes (sibling files, other lectures' errors) don't toggle generating state.
   useEffect(() => {
     if (!files) return
     const pdfExists = files['summary.pdf'].exists
