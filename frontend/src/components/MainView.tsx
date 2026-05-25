@@ -67,6 +67,40 @@ function ProgressBar({
   )
 }
 
+type MaterialIndicatorProps = {
+  summaryExists: boolean
+  materialExists: boolean
+  summaryMtime: number | null
+  materialMtime: number | null
+}
+
+function MaterialIndicator({
+  summaryExists,
+  materialExists,
+  summaryMtime,
+  materialMtime,
+}: MaterialIndicatorProps) {
+  const materialWasUsed =
+    summaryExists && materialExists &&
+    materialMtime !== null && summaryMtime !== null &&
+    materialMtime <= summaryMtime
+
+  const { symbol, text, cls } = summaryExists
+    ? materialWasUsed
+      ? { symbol: '📎', text: 'material.pdf was used', cls: 'material-indicator--used' }
+      : { symbol: '⊘', text: 'summary did not use material.pdf', cls: 'material-indicator--was-missing' }
+    : materialExists
+      ? { symbol: '📎', text: 'material.pdf will be used', cls: 'material-indicator--will-use' }
+      : { symbol: '⚠', text: 'material.pdf not found', cls: 'material-indicator--missing' }
+
+  return (
+    <span className={`material-indicator ${cls}`}>
+      <span className="material-indicator-symbol">{symbol}</span>
+      <span className="material-indicator-text">{text}</span>
+    </span>
+  )
+}
+
 function RateLimitPanel({
   sleepingUntil,
   progress,
@@ -131,18 +165,6 @@ export default function MainView() {
 
   const summaryMtime = files['summary.md'].mtime
   const materialMtime = files['material.pdf'].mtime
-  const materialWasUsed =
-    summaryExists && materialExists &&
-    materialMtime !== null && summaryMtime !== null &&
-    materialMtime <= summaryMtime
-
-  const materialIndicator = summaryExists
-    ? materialWasUsed
-      ? { symbol: '📎', text: 'material.pdf was used', cls: 'material-indicator--used' }
-      : { symbol: '⊘', text: 'summary did not use material.pdf', cls: 'material-indicator--was-missing' }
-    : materialExists
-      ? { symbol: '📎', text: 'material.pdf will be used', cls: 'material-indicator--will-use' }
-      : { symbol: '⚠', text: 'material.pdf not found', cls: 'material-indicator--missing' }
 
   async function handleStep(step: Step) {
     const initResult = await runStep(course, lecture, step, kind)
@@ -199,10 +221,12 @@ export default function MainView() {
                   <span className="file-name-wrap">
                     <span className="file-name">{file}</span>
                     {file === 'summary.md' && (
-                      <span className={`material-indicator ${materialIndicator.cls}`}>
-                        <span className="material-indicator-symbol">{materialIndicator.symbol}</span>
-                        <span className="material-indicator-text">{materialIndicator.text}</span>
-                      </span>
+                      <MaterialIndicator
+                        summaryExists={summaryExists}
+                        materialExists={materialExists}
+                        summaryMtime={summaryMtime}
+                        materialMtime={materialMtime}
+                      />
                     )}
                   </span>
                   <span className="file-row-right">
