@@ -8,6 +8,7 @@ import InlineEditInput from './InlineEditInput'
 import NewCourseRow from './NewCourseRow'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import { useInlineEdit } from '../hooks/useInlineEdit'
+import { useToggleSet } from '../hooks/useToggleSet'
 import { suggestName } from '../utils/namingSuggestion'
 import { findLecture } from '../utils/courseTree'
 
@@ -35,8 +36,8 @@ function recitationGroupKey(courseName: string): string {
 }
 
 export default function Sidebar({ courses, selected, onSelect, onCourseClick, onRefresh }: Props) {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set())
-  const [recitationsExpanded, setRecitationsExpanded] = useState<Set<string>>(new Set())
+  const expanded = useToggleSet(courses.map((c) => c.name))
+  const recitationsExpanded = useToggleSet(courses.map((c) => recitationGroupKey(c.name)))
   const [adding, setAdding] = useState<AddTarget | null>(null)
   const [renaming, setRenaming] = useState<RenameTarget | null>(null)
   const [dragOver, setDragOver] = useState<DragTarget | null>(null)
@@ -51,9 +52,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     if (!selected) return
     if (!courses.find((c) => c.name === selected.course)) return
     didAutoExpandRef.current = true
-    setExpanded((prev) => new Set([...prev, selected.course]))
+    expanded.add(selected.course)
     if (selected.kind === 'recitation') {
-      setRecitationsExpanded((prev) => new Set([...prev, recitationGroupKey(selected.course)]))
+      recitationsExpanded.add(recitationGroupKey(selected.course))
     }
   }, [selected, courses])
 
@@ -68,42 +69,22 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const addCourseEdit = useInlineEdit(addingCourse || null)
   const renameCourseEdit = useInlineEdit(renamingCourse)
 
-  useEffect(() => {
-    setExpanded((prev) => {
-      const names = new Set(courses.map((c) => c.name))
-      return new Set([...prev].filter((n) => names.has(n)))
-    })
-    setRecitationsExpanded((prev) => {
-      const keys = new Set(courses.map((c) => recitationGroupKey(c.name)))
-      return new Set([...prev].filter((k) => keys.has(k)))
-    })
-  }, [courses])
-
   function toggleCourse(name: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      next.has(name) ? next.delete(name) : next.add(name)
-      return next
-    })
+    expanded.toggle(name)
     onCourseClick(name)
   }
 
   function toggleRecitations(courseName: string) {
-    const key = recitationGroupKey(courseName)
-    setRecitationsExpanded((prev) => {
-      const next = new Set(prev)
-      next.has(key) ? next.delete(key) : next.add(key)
-      return next
-    })
+    recitationsExpanded.toggle(recitationGroupKey(courseName))
   }
 
   function startAdding(e: React.MouseEvent, courseName: string, kind: Kind) {
     e.stopPropagation()
     setAdding({ course: courseName, kind })
     addLectureEdit.setValue(suggestName(courses, courseName, kind))
-    setExpanded((prev) => new Set([...prev, courseName]))
+    expanded.add(courseName)
     if (kind === 'recitation') {
-      setRecitationsExpanded((prev) => new Set([...prev, recitationGroupKey(courseName)]))
+      recitationsExpanded.add(recitationGroupKey(courseName))
     }
   }
 
