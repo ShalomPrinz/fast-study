@@ -52,7 +52,10 @@ def test_summarize_without_material(tmp_path):
     assert contents[0] == "--- MAIN TRANSCRIPT DOCUMENT ---"
     assert getattr(contents[1], "_mime", None) == "text/plain"
     assert contents[2] == "--- INSTRUCTIONS ---"
-    assert contents[3] == summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
+    base_prompt = summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
+    assert contents[3].startswith(base_prompt)
+    assert contents[3].endswith(summarize_mod.LENGTH_BUDGET_SUFFIX)
+    assert summarize_mod.PDF_INSTRUCTION_SUFFIX not in contents[3]
     assert len(contents) == 4
     assert call.kwargs["model"] == summarize_mod.MODEL
     assert result == "# Title\nbody"
@@ -85,7 +88,10 @@ def test_summarize_with_material(tmp_path):
     assert contents[4] == "--- INSTRUCTIONS ---"
     base_prompt = summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
     assert contents[5].startswith(base_prompt)
-    assert contents[5].endswith(summarize_mod.PDF_INSTRUCTION_SUFFIX)
+    # PDF suffix is appended before the length budget, so it lives in the middle.
+    assert summarize_mod.PDF_INSTRUCTION_SUFFIX in contents[5]
+    assert contents[5].endswith(summarize_mod.LENGTH_BUDGET_SUFFIX)
+    assert contents[5].index(summarize_mod.PDF_INSTRUCTION_SUFFIX) < contents[5].index(summarize_mod.LENGTH_BUDGET_SUFFIX)
 
 
 def test_summarize_raises_on_api_failure(tmp_path):
