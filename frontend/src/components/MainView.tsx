@@ -8,7 +8,6 @@ import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
 import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
-import { inFlightKey } from '../utils/inFlightKey'
 import { kindSearch } from '../utils/route'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
@@ -110,9 +109,9 @@ export default function MainView() {
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
 
   // Derive inflight state from backend context
-  const { isInFlight, status: runnerStatus } = useRunnerStatus()
+  const { isInFlight, getError } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
-  const lectureError = runnerStatus?.errors[inFlightKey(course, lecture, kind)] ?? null
+  const lectureError = getError(course, lecture, kind)
   const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
 
   // MainView shows course and lecture details. No course or lecture in URL -> show nothing

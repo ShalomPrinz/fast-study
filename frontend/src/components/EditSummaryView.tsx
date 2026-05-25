@@ -6,13 +6,14 @@ import { runStep } from '../services/backend'
 import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import PdfViewer from './PdfViewer'
-import { inFlightKey } from '../utils/inFlightKey'
 
 export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
-  const { status } = useRunnerStatus()
+  const { getError } = useRunnerStatus()
+  const lectureError = getError(course, lecture, kind)
 
+  // Internal state management
   const [content, setContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -29,18 +30,17 @@ export default function EditSummaryView() {
     const pdfExists = files['summary.pdf'].exists
     setShowPdf(pdfExists)
     if (!pdfFiredRef.current) return
-    const stepError = status?.errors[inFlightKey(course, lecture, kind)]
-    if (stepError) {
+    if (lectureError) {
       pdfFiredRef.current = false
       setGenerating(false)
-      setError(stepError)
-      toast.error(stepError)
+      setError(lectureError)
+      toast.error(lectureError)
     } else if (pdfExists) {
       pdfFiredRef.current = false
       setGenerating(false)
       setPdfKey((k) => k + 1)
     }
-  }, [files, status, course, lecture, kind])
+  }, [files, lectureError])
 
   useEffect(() => {
     if (course && lecture) loadContent()

@@ -10,6 +10,7 @@ interface RunnerStatusValue {
   trigger: () => Promise<void>
   isInFlight: (course: string, lecture: string, kind: Kind) => boolean
   getInFlight: (course: string, lecture: string, kind: Kind) => InFlightEntry | null
+  getError: (course: string, lecture: string, kind: Kind) => string | null
 }
 
 const RunnerStatusContext = createContext<RunnerStatusValue>({
@@ -17,6 +18,7 @@ const RunnerStatusContext = createContext<RunnerStatusValue>({
   trigger: async () => {},
   isInFlight: () => false,
   getInFlight: () => null,
+  getError: () => null,
 })
 
 type ToastKind = 'info' | 'error'
@@ -103,8 +105,12 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     return status?.inFlight.find(e => inFlightKey(e.course, e.lecture, e.kind) === key) ?? null
   }
 
+  function getError(course: string, lecture: string, kind: Kind): string | null {
+    return status?.errors[inFlightKey(course, lecture, kind)] ?? null
+  }
+
   return (
-    <RunnerStatusContext.Provider value={{ status, trigger, isInFlight, getInFlight }}>
+    <RunnerStatusContext.Provider value={{ status, trigger, isInFlight, getInFlight, getError }}>
       {children}
     </RunnerStatusContext.Provider>
   )
