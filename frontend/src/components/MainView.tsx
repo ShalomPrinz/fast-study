@@ -8,6 +8,7 @@ import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import { inFlightKey } from '../utils/inFlightKey'
+import { kindSearch } from '../utils/route'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 
@@ -264,7 +265,7 @@ export default function MainView() {
                           <button
                             className="file-open-btn"
                             title="Edit summary"
-                            onClick={() => navigate({ pathname: 'edit', search: kind === 'recitation' ? '?kind=recitation' : '' })}
+                            onClick={() => navigate({ pathname: 'edit', search: kindSearch(kind) })}
                           >
                             <Icon icon="edit" />
                           </button>

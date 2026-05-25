@@ -3,6 +3,7 @@ import { ToastContainer, toast } from 'react-toastify'
 import type { LectureContext, Kind } from '../types'
 import { useCourseTree } from '../hooks/useCourseTree'
 import { RunnerStatusProvider } from '../contexts/RunnerStatusContext'
+import { lectureRoute } from '../utils/route'
 import Sidebar from './Sidebar'
 
 export default function Layout() {
@@ -18,8 +19,7 @@ export default function Layout() {
   const { courses, files, transcribePartial, refreshCourses, onCourseClick } = useCourseTree(selected)
 
   function handleSelect(course: string, lecture: string, k: Kind) {
-    const suffix = k === 'recitation' ? '?kind=recitation' : ''
-    navigate(`/${encodeURIComponent(course)}/${encodeURIComponent(lecture)}${suffix}`)
+    navigate(lectureRoute(course, lecture, k))
   }
 
   const context: LectureContext = { files, transcribePartial, refreshCourses, kind }

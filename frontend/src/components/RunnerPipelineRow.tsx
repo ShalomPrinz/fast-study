@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
+import { lectureRoute } from '../utils/route'
 import type { InFlightEntry } from '../types'
 
 function RunnerInactive({ onClick }: { onClick: () => void }) {
@@ -15,9 +16,7 @@ function RunnerInactive({ onClick }: { onClick: () => void }) {
 function InFlightRow({ entry }: { entry: InFlightEntry }) {
   const navigate = useNavigate()
   const sleeping = entry.sleepingUntil
-  const onClick = () => navigate(
-    `/${encodeURIComponent(entry.course)}/${encodeURIComponent(entry.lecture)}${entry.kind === 'recitation' ? '?kind=recitation' : ''}`
-  )
+  const onClick = () => navigate(lectureRoute(entry.course, entry.lecture, entry.kind))
   return (
     <button className="runner-inflight-row" onClick={onClick} dir="auto">
       <span className="runner-inflight-lecture">{entry.course} / {entry.lecture}</span>

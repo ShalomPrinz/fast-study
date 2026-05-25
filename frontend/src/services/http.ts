@@ -1,11 +1,12 @@
 import type { Kind } from '../types'
+import { kindSearch } from '../utils/route'
 
 export function httpError(res: Response): Error {
   return new Error(`${res.status} ${res.statusText}`)
 }
 
 export function kindQuery(kind: Kind | undefined): string {
-  return kind === 'recitation' ? '?kind=recitation' : ''
+  return kindSearch(kind)
 }
 
 export function path(strings: TemplateStringsArray, ...values: unknown[]): string {
