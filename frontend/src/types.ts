@@ -63,9 +63,9 @@ export interface InFlightEntry {
   progress: { completed: number; total: number } | null
 }
 
-export interface ResumeStatus {
-  // resume.lastError: unexpected exception that aborted a lecture's pipeline mid-sweep
-  resume: { running: boolean; total: number; done: number; lastError: string | null }
+export interface RunnerStatus {
+  // runner.lastError: unexpected exception that aborted a lecture's pipeline mid-sweep
+  runner: { running: boolean; total: number; done: number; lastError: string | null }
   inFlight: InFlightEntry[]
   // expected step-level failures, per lecture, from any trigger
   errors: Record<string, string>

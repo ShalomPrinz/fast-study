@@ -5,7 +5,7 @@ import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo }
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 import NewCourseRow from './NewCourseRow'
-import ResumePipelineRow from './ResumePipelineRow'
+import RunnerPipelineRow from './RunnerPipelineRow'
 import { useInlineEdit } from '../hooks/useInlineEdit'
 import { recitationGroupKey, suggestName } from '../utils/lectureNaming'
 
@@ -249,7 +249,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
         onCommit={commitAddCourse}
         onCancel={() => { setAddingCourse(false); addCourseEdit.setValue('') }}
       />
-      <ResumePipelineRow />
+      <RunnerPipelineRow />
       <nav className="sidebar-nav">
         {courses.map((course) => {
           const recKey = recitationGroupKey(course.name)

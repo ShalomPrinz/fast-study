@@ -70,22 +70,22 @@ def test_scan_pending_filters_no_video_and_finished():
     assert len(result) == 2
 
 
-# ---- _scheduled_resume guard ----
+# ---- _scheduled_run guard ----
 
-def test_scheduled_resume_skips_when_locked():
-    """_scheduled_resume must not call scan_pending or resume_all if already running."""
+def test_scheduled_run_skips_when_locked():
+    """_scheduled_run must not call scan_pending or run_all if already running."""
     scan_calls: list = []
 
     async def go():
-        runner._resume_status["running"] = True
+        runner._runner_status["running"] = True
         try:
             with patch.object(runner, "scan_pending", side_effect=lambda: scan_calls.append(1)):
-                await runner._scheduled_resume()
+                await runner._scheduled_run()
         finally:
-            runner._resume_status["running"] = False
+            runner._runner_status["running"] = False
 
     asyncio.run(go())
-    assert scan_calls == [], "scan_pending should not be called while resume is running"
+    assert scan_calls == [], "scan_pending should not be called while runner is running"
 
 
 # ---- rate-limit branch ----

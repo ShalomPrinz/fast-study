@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '../services/database'
 import { runStep } from '../services/backend'
 import type { LectureContext } from '../types'
-import { useResumeStatus } from '../contexts/ResumeStatusContext'
+import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import PdfViewer from './PdfViewer'
 import { inFlightKey } from '../utils/inFlightKey'
 
@@ -12,7 +12,7 @@ export default function EditSummaryView() {
   const { course, lecture } = useParams<{ course: string; lecture: string }>()
   const { files, kind } = useOutletContext<LectureContext>()
   const navigate = useNavigate()
-  const { status } = useResumeStatus()
+  const { status } = useRunnerStatus()
 
   const [content, setContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)

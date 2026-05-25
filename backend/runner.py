@@ -1,4 +1,4 @@
-"""Unified execution engine: step executors, in-flight tracking, and resume orchestration.
+"""Unified execution engine: step executors, in-flight tracking, and runner orchestration.
 All state, logic and scheduling lives here."""
 
 import asyncio
@@ -39,7 +39,7 @@ RATE_LIMIT_SLEEP_SECONDS = 3600
 _locks: dict[tuple[str, str, str], asyncio.Lock] = {}  # per-lecture; created lazily via setdefault
 _in_flight: dict[str, dict] = {}    # skey → entry; cleared on step completion or error
 _errors: dict[str, str] = {}        # skey → last error message; survives after _in_flight clears
-_resume_status: dict = {"running": False, "total": 0, "done": 0, "last_error": None}
+_runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": None}
 
 
 def _lkey(course: str, lecture: str, kind: str) -> tuple[str, str, str]:
@@ -48,7 +48,7 @@ def _lkey(course: str, lecture: str, kind: str) -> tuple[str, str, str]:
 
 
 def _skey(course: str, lecture: str, kind: str) -> str:
-    """String key into _in_flight and _errors. String form appears verbatim in /resume-status output."""
+    """String key into _in_flight and _errors. String form appears verbatim in /status output."""
     return f"{course}||{lecture}||{kind}"
 
 
@@ -57,9 +57,9 @@ def _now_iso() -> str:
 
 
 def get_status() -> dict:
-    """Snapshot of all live state; returned verbatim by GET /resume-status."""
+    """Snapshot of all live state; returned verbatim by GET /status."""
     return {
-        "resume":    dict(_resume_status),
+        "runner":    dict(_runner_status),
         "in_flight": list(_in_flight.values()),
         "errors":    dict(_errors),
     }
@@ -140,7 +140,7 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
                 if partial_meta.exists():
                     db_client.put_file_bytes(course, lecture, kind, PARTIAL_META, partial_meta.read_bytes())
                 # The frontend no longer reads rateLimit details from HTTP responses;
-                # rate-limit display comes from _in_flight state via /resume-status.
+                # rate-limit display comes from _in_flight state via /status.
                 return {
                     "status": "rate_limited",
                     "progress": {
@@ -368,50 +368,50 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
     return "started"
 
 
-# ---- Resume orchestration ----
+# ---- Runner orchestration ----
 
-async def resume_all(queue: list[tuple[str, str, str]]) -> dict:
+async def run_all(queue: list[tuple[str, str, str]]) -> dict:
     """Run every lecture in queue to completion sequentially. Caller is responsible
     for scanning and passing a non-empty queue; this function never re-scans."""
-    log.info("resume_all starting with %d pending lecture(s): %s", len(queue), [f"\n{c}/{l} ({k})" for c, l, k in queue])
-    _resume_status["running"] = True
-    _resume_status["done"] = 0
-    _resume_status["total"] = len(queue)
-    _resume_status["last_error"] = None
+    log.info("run_all starting with %d pending lecture(s): %s", len(queue), [f"\n{c}/{l} ({k})" for c, l, k in queue])
+    _runner_status["running"] = True
+    _runner_status["done"] = 0
+    _runner_status["total"] = len(queue)
+    _runner_status["last_error"] = None
     # No notify here: first useful frontend state is when first step is in-flight.
     # Earlier notifies (in_flight still empty) create a rapid-fire burst whose
     # parallel refreshes can reorder and overwrite the fresh snapshot.
     try:
         for (course, lecture, kind) in queue:
-            log.info("=== starting pipeline %d/%d: %s/%s (%s) ===", _resume_status["done"] + 1, _resume_status["total"], course, lecture, kind)
+            log.info("=== starting pipeline %d/%d: %s/%s (%s) ===", _runner_status["done"] + 1, _runner_status["total"], course, lecture, kind)
             lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
             if lock.locked():
                 # Skip if a concurrent trigger (e.g. a manual step run) already owns this lecture.
                 log.info("lecture %s/%s (%s) already in flight, skipping", course, lecture, kind)
-                _resume_status["done"] += 1
+                _runner_status["done"] += 1
                 db_client.notify()
                 continue
             try:
                 await run_pipeline_for(course, lecture, kind)
             except Exception as e:
                 log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
-                _resume_status["last_error"] = f"{course}/{lecture}: {e}"
-            _resume_status["done"] += 1
+                _runner_status["last_error"] = f"{course}/{lecture}: {e}"
+            _runner_status["done"] += 1
             db_client.notify()
-        log.info("resume_all completed: %d/%d done, last_error=%s", _resume_status["done"], _resume_status["total"], _resume_status["last_error"])
+        log.info("run_all completed: %d/%d done, last_error=%s", _runner_status["done"], _runner_status["total"], _runner_status["last_error"])
         return {"status": "completed", **get_status()}
     finally:
-        _resume_status["running"] = False
+        _runner_status["running"] = False
         db_client.notify()
 
 
-async def _scheduled_resume() -> None:
+async def _scheduled_run() -> None:
     """Cron entry point: already running — skip. Otherwise scan, then run if anything pending."""
-    if _resume_status["running"]:
-        log.info("cron: resume already running, skipping")
+    if _runner_status["running"]:
+        log.info("cron: runner already running, skipping")
         return
     queue = await scan_pending()
     if not queue:
         log.info("cron: nothing pending")
         return
-    await resume_all(queue)
+    await run_all(queue)

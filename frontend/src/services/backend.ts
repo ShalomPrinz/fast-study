@@ -1,4 +1,4 @@
-import type { Step, RunInitResult, TimingStats, Kind, ResumeStatus } from '../types'
+import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus } from '../types'
 import { createClient, kindQuery, lectureBase } from './http'
 
 const backend = createClient(import.meta.env.VITE_API_URL ?? 'http://localhost:8000')
@@ -15,13 +15,13 @@ export async function fetchTimingStats(operation: string, fileSizeBytes: number)
   return backend.get<TimingStats>(`/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
 }
 
-function normalizeResume(raw: any): ResumeStatus {
+function normalizeRunner(raw: any): RunnerStatus {
   return {
-    resume: {
-      running: raw.resume.running,
-      total: raw.resume.total,
-      done: raw.resume.done,
-      lastError: raw.resume.last_error,
+    runner: {
+      running: raw.runner.running,
+      total: raw.runner.total,
+      done: raw.runner.done,
+      lastError: raw.runner.last_error,
     },
     inFlight: (raw.in_flight ?? []).map((e: any) => ({
       course: e.course,
@@ -36,13 +36,13 @@ function normalizeResume(raw: any): ResumeStatus {
   }
 }
 
-export async function resumeAll(): Promise<ResumeStatus | 'empty_queue'> {
-  const raw = await backend.post<any>('/resume-all')
+export async function runAll(): Promise<RunnerStatus | 'empty_queue'> {
+  const raw = await backend.post<any>('/run-all')
   if (raw.status === 'empty_queue') return 'empty_queue'
-  return normalizeResume(raw)
+  return normalizeRunner(raw)
 }
 
-export async function fetchResumeStatus(): Promise<ResumeStatus> {
+export async function fetchRunnerStatus(): Promise<RunnerStatus> {
   const raw = await backend.get<any>('/status')
-  return normalizeResume(raw)
+  return normalizeRunner(raw)
 }

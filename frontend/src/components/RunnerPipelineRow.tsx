@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { useResumeStatus } from '../contexts/ResumeStatusContext'
+import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 
 function RunnerInactive({ onClick }: { onClick: () => void }) {
   return (
@@ -11,16 +11,16 @@ function RunnerInactive({ onClick }: { onClick: () => void }) {
   )
 }
 
-export default function ResumePipelineRow() {
-  const { status: resumeStatus, trigger: handleResumeClick } = useResumeStatus()
+export default function RunnerPipelineRow() {
+  const { status: runnerStatus, trigger: handleRunClick } = useRunnerStatus()
   const navigate = useNavigate()
 
-  if (!resumeStatus?.resume.running) {
-    return <RunnerInactive onClick={handleResumeClick} />
+  if (!runnerStatus?.runner.running) {
+    return <RunnerInactive onClick={handleRunClick} />
   }
 
   // TODO: if multiple pipelines are in-flight, show a list of them instead of just the first
-  const current = resumeStatus.inFlight[0] ?? null
+  const current = runnerStatus.inFlight[0] ?? null
   const sleeping = current?.sleepingUntil ?? null
   const clickable = !!current && !sleeping
   return (
@@ -37,8 +37,8 @@ export default function ResumePipelineRow() {
         {sleeping
           ? `Rate-limited, resuming at ${new Date(sleeping).toLocaleTimeString()}`
           : current
-            ? `Running: ${current.course} / ${current.lecture} — ${current.step} (${resumeStatus.resume.done}/${resumeStatus.resume.total})`
-            : `Resuming pipelines… (${resumeStatus.resume.done}/${resumeStatus.resume.total})`}
+            ? `Running: ${current.course} / ${current.lecture} — ${current.step} (${runnerStatus.runner.done}/${runnerStatus.runner.total})`
+            : `Running pipelines… (${runnerStatus.runner.done}/${runnerStatus.runner.total})`}
       </button>
     </div>
   )

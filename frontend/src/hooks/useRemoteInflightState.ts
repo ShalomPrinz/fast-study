@@ -1,6 +1,6 @@
 import type { Step, TimingStats, Kind, FileStatus } from '../types'
 import { STEP_INPUT_FILE, STEP_SET } from '../constants/pipeline'
-import { useResumeStatus } from '../contexts/ResumeStatusContext'
+import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { useTimingStats } from './useTimingStats'
 
 export interface RemoteInflight {
@@ -23,8 +23,8 @@ interface Args {
 // Synthesizes an inflight descriptor from the in_flight entry for this lecture.
 // Returns null when this lecture is not in-flight (including when still running
 export function useRemoteInflightState({ course, lecture, kind, files, transcribePartial }: Args): RemoteInflight | null {
-  // Derive entry & step from resume status context
-  const { getInFlight } = useResumeStatus()
+  // Derive entry & step from runner status context
+  const { getInFlight } = useRunnerStatus()
   const entry = getInFlight(course, lecture, kind)
   const step = entry && STEP_SET.has(entry.step) ? (entry.step as Step) : null
 

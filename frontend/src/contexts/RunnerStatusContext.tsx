@@ -1,18 +1,18 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { ResumeStatus, InFlightEntry, Kind } from '../types'
-import { resumeAll, fetchResumeStatus } from '../services/backend'
+import type { RunnerStatus, InFlightEntry, Kind } from '../types'
+import { runAll, fetchRunnerStatus } from '../services/backend'
 import { databaseUrl } from '../services/database'
 import { inFlightKey } from '../utils/inFlightKey'
 
 
-interface ResumeStatusValue {
-  status: ResumeStatus | null
+interface RunnerStatusValue {
+  status: RunnerStatus | null
   trigger: () => Promise<void>
   isInFlight: (course: string, lecture: string, kind: Kind) => boolean
   getInFlight: (course: string, lecture: string, kind: Kind) => InFlightEntry | null
 }
 
-const ResumeStatusContext = createContext<ResumeStatusValue>({
+const RunnerStatusContext = createContext<RunnerStatusValue>({
   status: null,
   trigger: async () => {},
   isInFlight: () => false,
@@ -26,21 +26,21 @@ interface ProviderProps {
   children: ReactNode
 }
 
-export function ResumeStatusProvider({ sendUpdate, children }: ProviderProps) {
-  const [status, setStatus] = useState<ResumeStatus | null>(null)
-  const lastReportedResumeCrashRef = useRef<string | null>(null)
+export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
+  const [status, setStatus] = useState<RunnerStatus | null>(null)
+  const lastReportedRunnerCrashRef = useRef<string | null>(null)
   const lastReportedStepErrorsRef = useRef<Set<string>>(new Set())
   const sendUpdateRef = useRef(sendUpdate)
   useEffect(() => { sendUpdateRef.current = sendUpdate }, [sendUpdate])
 
-  function reportResumeError(err: string | null) {
-    if (err && err !== lastReportedResumeCrashRef.current) {
-      lastReportedResumeCrashRef.current = err
+  function reportRunnerError(err: string | null) {
+    if (err && err !== lastReportedRunnerCrashRef.current) {
+      lastReportedRunnerCrashRef.current = err
       sendUpdateRef.current?.('error', err)
     }
   }
 
-  function reportPerLectureErrors(s: ResumeStatus) {
+  function reportPerLectureErrors(s: RunnerStatus) {
     // Clear stale keys so they can fire again on the next run
     const currentKeys = new Set(Object.keys(s.errors))
     for (const k of lastReportedStepErrorsRef.current) {
@@ -59,9 +59,9 @@ export function ResumeStatusProvider({ sendUpdate, children }: ProviderProps) {
 
   async function refresh() {
     try {
-      const s = await fetchResumeStatus()
+      const s = await fetchRunnerStatus()
       setStatus(s)
-      if (!s.resume.running) reportResumeError(s.resume.lastError)
+      if (!s.runner.running) reportRunnerError(s.runner.lastError)
       reportPerLectureErrors(s)
     } catch {
       // SSE will fire again on the next backend transition; nothing to do.
@@ -82,14 +82,14 @@ export function ResumeStatusProvider({ sendUpdate, children }: ProviderProps) {
 
   async function trigger() {
     try {
-      const s = await resumeAll()
+      const s = await runAll()
       if (s === 'empty_queue') {
         sendUpdateRef.current?.('info', 'Nothing to run - All pipelines complete')
         return
       }
       setStatus(s)
     } catch (err) {
-      sendUpdateRef.current?.('error', `Resume failed: ${err}`)
+      sendUpdateRef.current?.('error', `Runner failed: ${err}`)
     }
   }
 
@@ -104,12 +104,12 @@ export function ResumeStatusProvider({ sendUpdate, children }: ProviderProps) {
   }
 
   return (
-    <ResumeStatusContext.Provider value={{ status, trigger, isInFlight, getInFlight }}>
+    <RunnerStatusContext.Provider value={{ status, trigger, isInFlight, getInFlight }}>
       {children}
-    </ResumeStatusContext.Provider>
+    </RunnerStatusContext.Provider>
   )
 }
 
-export function useResumeStatus() {
-  return useContext(ResumeStatusContext)
+export function useRunnerStatus() {
+  return useContext(RunnerStatusContext)
 }

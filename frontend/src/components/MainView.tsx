@@ -5,7 +5,7 @@ import type { Step, FileName, TimingStats, LectureContext } from '../types'
 import { deleteFile, fileUrl } from '../services/database'
 import { runStep, runPipeline } from '../services/backend'
 import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
-import { useResumeStatus } from '../contexts/ResumeStatusContext'
+import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
@@ -113,7 +113,7 @@ export default function MainView() {
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
 
   // Derive inflight state from backend context
-  const { isInFlight } = useResumeStatus()
+  const { isInFlight } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
   const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
 
