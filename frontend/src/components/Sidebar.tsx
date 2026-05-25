@@ -7,7 +7,7 @@ import Icon from './Icon'
 import NewCourseRow from './NewCourseRow'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import { useInlineEdit } from '../hooks/useInlineEdit'
-import { recitationGroupKey, suggestName } from '../utils/lectureNaming'
+import { suggestName } from '../utils/namingSuggestion'
 
 interface Props {
   courses: Course[]
@@ -27,6 +27,10 @@ interface PendingUpload {
 interface AddTarget { course: string; kind: Kind }
 interface RenameTarget { course: string; lecture: string; kind: Kind }
 interface DragTarget { course: string; lecture: string; kind: Kind }
+
+function recitationGroupKey(courseName: string): string {
+  return `${courseName}::recitations`
+}
 
 export default function Sidebar({ courses, selected, onSelect, onCourseClick, onRefresh }: Props) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())

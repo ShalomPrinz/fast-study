@@ -1,9 +1,5 @@
 import type { Course, Kind } from '../types'
 
-export function recitationGroupKey(courseName: string): string {
-  return `${courseName}::recitations`
-}
-
 export function suggestLectureName(courses: Course[], courseName: string): string {
   const course = courses.find((c) => c.name === courseName)
   if (!course) return ''
