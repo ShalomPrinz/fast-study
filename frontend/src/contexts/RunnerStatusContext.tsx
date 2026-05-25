@@ -3,6 +3,7 @@ import type { RunnerStatus, InFlightEntry, Kind } from '../types'
 import { runAll, fetchRunnerStatus } from '../services/backend'
 import { databaseUrl } from '../services/database'
 import { inFlightKey } from '../utils/inFlightKey'
+import { useReportOnce } from '../hooks/useReportOnce'
 
 
 interface RunnerStatusValue {
@@ -30,41 +31,25 @@ interface ProviderProps {
 
 export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
   const [status, setStatus] = useState<RunnerStatus | null>(null)
-  const lastReportedRunnerCrashRef = useRef<string | null>(null)
-  const lastReportedStepErrorsRef = useRef<Set<string>>(new Set())
   const sendUpdateRef = useRef(sendUpdate)
   useEffect(() => { sendUpdateRef.current = sendUpdate }, [sendUpdate])
-
-  function reportRunnerError(err: string | null) {
-    if (err && err !== lastReportedRunnerCrashRef.current) {
-      lastReportedRunnerCrashRef.current = err
-      sendUpdateRef.current?.('error', err)
-    }
-  }
-
-  function reportPerLectureErrors(s: RunnerStatus) {
-    // Clear stale keys so they can fire again on the next run
-    const currentKeys = new Set(Object.keys(s.errors))
-    for (const k of lastReportedStepErrorsRef.current) {
-      if (!currentKeys.has(k)) lastReportedStepErrorsRef.current.delete(k)
-    }
-
-    // Send errors update for any new errors that haven't been reported yet
-    for (const [key, message] of Object.entries(s.errors)) {
-      const token = `${key}:${message}`
-      if (!lastReportedStepErrorsRef.current.has(token)) {
-        lastReportedStepErrorsRef.current.add(token)
-        sendUpdateRef.current?.('error', message)
-      }
-    }
-  }
+  const { report: reportError, prune: pruneErrors } = useReportOnce(
+    (msg) => sendUpdateRef.current?.('error', msg),
+  )
 
   async function refresh() {
     try {
       const s = await fetchRunnerStatus()
       setStatus(s)
-      if (!s.runner.running) reportRunnerError(s.runner.lastError)
-      reportPerLectureErrors(s)
+      const validKeys = new Set(Object.keys(s.errors))
+      validKeys.add('runner-crash')
+      pruneErrors(validKeys)
+      if (!s.runner.running && s.runner.lastError) {
+        reportError('runner-crash', s.runner.lastError)
+      }
+      for (const [key, message] of Object.entries(s.errors)) {
+        reportError(key, message)
+      }
     } catch {
       // SSE will fire again on the next backend transition; nothing to do.
     }

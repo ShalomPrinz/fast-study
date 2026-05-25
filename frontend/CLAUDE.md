@@ -58,6 +58,7 @@ frontend/
       useToggleSet.ts          string-keyed expand/collapse set with toggle/add + auto-prune to valid keys
       useTimingStats.ts        (step, fileSize) -> TimingStats, with staleness guard for late responses
       useRemoteInflightState.ts  synthesizes an inflight descriptor when the runner is processing the open lecture
+      useReportOnce.ts         dedupes `(key, msg)` pairs sent to a callback; backs RunnerStatusContext's per-lecture + runner-crash error fan-out
     components/
       Layout.tsx                routes outlet + RunnerStatusProvider + ToastContainer
       Sidebar.tsx               course/lecture tree
