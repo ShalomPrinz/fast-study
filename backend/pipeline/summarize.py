@@ -7,7 +7,7 @@ from timing import timed_pipeline
 
 PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summarize.md"
 
-MODEL = "gemini-2.5-flash"
+MODEL = "gemini-3.5-flash"
 
 # Appended to every request — keeps the page budget tunable without editing the prompt file.
 LENGTH_BUDGET_SUFFIX = (
