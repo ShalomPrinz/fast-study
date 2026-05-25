@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '../services/database'
 import { runStep } from '../services/backend'
 import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
+import { toast, toastInitResult } from '../services/toaster'
 import PdfViewer from './PdfViewer'
 
 export default function EditSummaryView() {
@@ -34,7 +34,7 @@ export default function EditSummaryView() {
       pdfFiredRef.current = false
       setGenerating(false)
       setError(lectureError)
-      toast.error(lectureError)
+      toast('error', lectureError)
     } else if (pdfExists) {
       pdfFiredRef.current = false
       setGenerating(false)
@@ -67,27 +67,20 @@ export default function EditSummaryView() {
       await saveSummaryContent(course, lecture, content, kind)
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to save summary'
-      toast.error(message)
+      toast('error', message)
       setError(message)
       setGenerating(false)
       return
     }
     setHasOriginal(true)
     await deleteFile(course, lecture, 'summary.pdf', kind)
-    const result = await runStep(course, lecture, 'pdf', kind)
-    if (result.status === 'busy') {
-      toast.error('Step already running')
+    const initResult = await runStep(course, lecture, 'pdf', kind)
+    if (initResult.status !== 'started') {
+      toastInitResult(initResult, { busy: 'Step already running', error: 'Failed to generate PDF' })
+      if (initResult.status === 'error') setError(initResult.message ?? 'Failed to generate PDF')
       setGenerating(false)
       return
     }
-    if (result.status === 'error') {
-      const message = result.message ?? 'Failed to generate PDF'
-      toast.error(message)
-      setError(message)
-      setGenerating(false)
-      return
-    }
-    // status === 'started': wait for SSE-driven files update to confirm completion
     pdfFiredRef.current = true
   }
 

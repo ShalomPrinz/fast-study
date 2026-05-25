@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
 import type { Step, FileName, TimingStats } from '../types'
 import { deleteFile, fileUrl } from '../services/database'
 import { runStep, runPipeline } from '../services/backend'
@@ -9,6 +8,7 @@ import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import { kindSearch } from '../utils/route'
+import { toastInitResult } from '../services/toaster'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 
@@ -151,10 +151,8 @@ export default function MainView() {
 
   async function handleStep(step: Step) {
     const initResult = await runStep(course, lecture, step, kind)
+    toastInitResult(initResult, { busy: 'Step already running', error: STEP_ERROR_LABEL[step] })
     refreshCourses()
-    if (initResult.status === 'busy') toast.error('Step already running')
-    else if (initResult.status === 'error') toast.error(initResult.message ?? STEP_ERROR_LABEL[step])
-    // 'started': no action — SSE fires when done, tree refreshes
   }
 
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
@@ -165,10 +163,8 @@ export default function MainView() {
 
   async function handleRunRemaining() {
     const result = await runPipeline(course, lecture, kind)
+    toastInitResult(result, { busy: 'Pipeline already running', error: 'Pipeline failed to start' })
     refreshCourses()
-    if (result.status === 'busy') toast.error('Pipeline already running')
-    else if (result.status === 'error') toast.error(result.message ?? 'Pipeline failed to start')
-    // 'started': no action — SSE fires each step run updates, tree refreshes
   }
 
   function openRotateModal(file: FileName, step: Step) {

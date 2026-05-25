@@ -35,6 +35,7 @@ frontend/
       http.ts                  typed fetch client + shared `httpError` / `kindQuery`
       backend.ts               HTTP client for the FastAPI backend (runStep, fetchTimingStats, runAll, fetchRunnerStatus)
       database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL)
+      toaster.ts               single boundary around react-toastify — exports toastError/toastInfo/toastByKind/toastPromise/toastInitResult + ToastContainer
     constants/
       pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
     contexts/
@@ -124,11 +125,34 @@ frontend/
 }
 ```
 
-## API split
+## Services (`src/services/`)
 
-- `src/services/backend.ts` → `${VITE_API_URL}` (FastAPI backend). `runStep`, `fetchTimingStats`, `runAll`, `fetchRunnerStatus` (the last two normalize `snake_case` → `camelCase`).
-- `src/services/database.ts` → `${VITE_DATABASE_URL}` (database service). Everything else: tree CRUD, summary CRUD, `uploadVideo`, `fileUrl`, and the `databaseUrl` export used to build the SSE EventSource URL.
+Each file under `src/services/` is the **single boundary** for one external concern. Components and hooks must go through these — no component should talk to `fetch`, `react-toastify`, or any other external library directly when a service already wraps it.
 
-Both clients are built from `createClient(baseUrl)` in `src/services/http.ts`, which centralizes the `if (!res.ok) throw httpError(res)` / JSON-encode / `Content-Type` boilerplate and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status").
+### `http.ts` — typed fetch client factory
+
+`createClient(baseUrl)` builds the per-service HTTP clients used by `backend.ts` and `database.ts`. Centralizes `if (!res.ok) throw httpError(res)` / JSON encoding / `Content-Type` headers, and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status"). Also exports the shared `kindQuery` helper for `?kind=recitation`.
+
+### `backend.ts` — FastAPI backend client → `${VITE_API_URL}`
+
+Exposes `runStep`, `runPipeline`, `fetchTimingStats`, `runAll`, `fetchRunnerStatus`. The last two normalize the wire `snake_case` shape to camelCase.
+
+### `database.ts` — Database service client → `${VITE_DATABASE_URL}`
+
+Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, and the `databaseUrl` export used to build the SSE EventSource URL in `useCourseTree` and `RunnerStatusContext`.
+
+### `toaster.ts` — the only `react-toastify` import site
+
+Nothing else in the codebase imports from `react-toastify`. All toasts go through this service. Exports:
+
+- `toastError(msg)` — typed wrappers around `toast.error` / `toast.info`.
+- `toastByKind(kind, msg)` where `kind: 'info' | 'error'` — used by `Layout` to bridge `RunnerStatusProvider`'s `sendUpdate(kind, message)` callback to the toast layer (the context itself does not import this service — UI lives in components).
+- `toastPromise(promise, { pending, success, error })` — `toast.promise` wrapper for fire-and-track async work like `uploadVideo`.
+- `toastInitResult(result, { busy, error })` — folds a `RunInitResult` ('started' | 'busy' | 'error') into the right toast; 'started' is a no-op because completion arrives via SSE.
+- `ToastContainer` re-export — `Layout` mounts it once. The `react-toastify` CSS is also imported here, not in `main.tsx`.
+
+When you need a new toast shape, add a helper here and import it from this service — do not reach for `toast` directly.
+
+### URL encoding convention
 
 Course / lecture / file names are `encodeURIComponent`-encoded in URLs to handle Hebrew folder names. `kind === 'recitation'` is appended as `?kind=recitation` via the shared `kindQuery` helper in `services/http.ts`.

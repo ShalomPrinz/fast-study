@@ -1,9 +1,9 @@
 import { Outlet, useMatch, useNavigate, useSearchParams } from 'react-router-dom'
-import { ToastContainer, toast } from 'react-toastify'
 import type { LectureContext, Kind } from '../types'
 import { useCourseTree } from '../hooks/useCourseTree'
 import { RunnerStatusProvider } from '../contexts/RunnerStatusContext'
 import { lectureRoute } from '../utils/route'
+import { ToastContainer, toast } from '../services/toaster'
 import Sidebar from './Sidebar'
 
 export default function Layout() {
@@ -25,7 +25,7 @@ export default function Layout() {
   const context: LectureContext = { files, transcribePartial, refreshCourses, kind }
 
   return (
-    <RunnerStatusProvider sendUpdate={(kind, msg) => toast[kind](msg)}>
+    <RunnerStatusProvider sendUpdate={toast}>
       <div className="layout">
         <Sidebar
           courses={courses}

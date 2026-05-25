@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { toast } from 'react-toastify'
 import type { Course, Lecture, Selected, Kind } from '../types'
 import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../services/database'
+import { toast, toastPromise } from '../services/toaster'
 import ConfirmModal from './ConfirmModal'
 import Icon from './Icon'
 import InlineEditInput from './InlineEditInput'
@@ -99,7 +99,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   }
 
   async function doUpload(courseName: string, lectureName: string, file: File, kind: Kind) {
-    await toast.promise(uploadVideo(courseName, lectureName, file, kind), {
+    await toastPromise(uploadVideo(courseName, lectureName, file, kind), {
       pending: 'Uploading video…',
       success: `Saved to ${lectureName}`,
       error: 'Upload failed',
@@ -113,7 +113,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     const file = e.dataTransfer.files[0]
     if (!file) return
     if (!file.name.toLowerCase().endsWith('.mp4') && file.type !== 'video/mp4') {
-      toast.error('Only .mp4 files are allowed')
+      toast('error', 'Only .mp4 files are allowed')
       return
     }
     const lecture = findLecture(courses, courseName, lectureName, kind)
