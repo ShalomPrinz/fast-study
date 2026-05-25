@@ -10,6 +10,13 @@ export type FileName =
 export type FileInfo = { exists: boolean; size: number | null; mtime: number | null; url?: string }
 export type FileStatus = Record<FileName, FileInfo>
 
+export type TranscribePartial = { completed: number; total: number }
+
+export type LectureDerived = {
+  files: FileStatus | null
+  transcribePartial: TranscribePartial | null
+}
+
 export type TimingStats =
   | { message: 'not-enough-data' }
   | { shortest: number; longest: number; average: number; estimated: number }
@@ -17,7 +24,7 @@ export type TimingStats =
 export interface Lecture {
   name: string
   files: FileStatus
-  transcribePartial: { completed: number; total: number } | null
+  transcribePartial: TranscribePartial | null
 }
 
 export interface Course {
@@ -73,7 +80,7 @@ export interface RunnerStatus {
 
 export interface LectureContext {
   files: FileStatus | null
-  transcribePartial: { completed: number; total: number } | null
+  transcribePartial: TranscribePartial | null
   refreshCourses: () => void
   kind: Kind
 }

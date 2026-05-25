@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import type { Course, FileStatus, Selected } from '../types'
+import type { Course, LectureDerived, Selected } from '../types'
 import { fetchTree, fetchCourse, databaseUrl } from '../services/database'
 import { findLecture } from '../utils/courseTree'
 
@@ -33,16 +33,13 @@ export function useCourseTree(selected: Selected | null) {
     [courses]
   )
 
-  const files = useMemo<FileStatus | null>(() => {
-    if (!selected) return null
+  const { files, transcribePartial } = useMemo<LectureDerived>(() => {
+    if (!selected) return { files: null, transcribePartial: null }
     const lecture = findLecture(courses, selected.course, selected.lecture, selected.kind)
-    return lecture?.files ?? null
-  }, [courses, selected])
-
-  const transcribePartial = useMemo(() => {
-    if (!selected) return null
-    const lecture = findLecture(courses, selected.course, selected.lecture, selected.kind)
-    return lecture?.transcribePartial ?? null
+    return {
+      files: lecture?.files ?? null,
+      transcribePartial: lecture?.transcribePartial ?? null,
+    }
   }, [courses, selected])
 
   function handleCourseClick(courseName: string) {
