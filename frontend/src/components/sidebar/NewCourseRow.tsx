@@ -1,5 +1,5 @@
-import type { InlineEdit } from '../types'
-import InlineEditInput from './InlineEditInput'
+import type { InlineEdit } from '../../types'
+import InlineEditInput from '../InlineEditInput'
 
 interface Props {
   addingCourse: boolean

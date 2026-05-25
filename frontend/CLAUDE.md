@@ -59,14 +59,16 @@ frontend/
       useTimingStats.ts        (step, fileSize) -> TimingStats, with staleness guard for late responses
       useRemoteInflightState.ts  synthesizes an inflight descriptor when the runner is processing the open lecture
       useReportOnce.ts         dedupes `(key, msg)` pairs sent to a callback; backs RunnerStatusContext's per-lecture + runner-crash error fan-out
-    components/
+    routes/
       Layout.tsx                routes outlet + RunnerStatusProvider + ToastContainer
-      Sidebar.tsx               course/lecture tree
-      NewCourseRow.tsx          inline "new course" input row
-      InlineEditInput.tsx       shared inline-edit input (Enter=commit, Escape/Blur=cancel)
-      RunnerPipelineRow.tsx     runner status/CTA row; click while running to jump to current lecture
       MainView.tsx
       EditSummaryView.tsx
+    components/
+      sidebar/
+        Sidebar.tsx             course/lecture tree
+        NewCourseRow.tsx        inline "new course" input row
+        RunnerPipelineRow.tsx   runner status/CTA row; click while running to jump to current lecture
+      InlineEditInput.tsx       shared inline-edit input (Enter=commit, Escape/Blur=cancel)
       PdfViewer.tsx
       ConfirmModal.tsx
       Icon.tsx

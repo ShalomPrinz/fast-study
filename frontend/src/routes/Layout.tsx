@@ -4,7 +4,7 @@ import { useCourseTree } from '../hooks/useCourseTree'
 import { RunnerStatusProvider } from '../contexts/RunnerStatusContext'
 import { lectureRoute } from '../utils/route'
 import { ToastContainer, toast } from '../services/toaster'
-import Sidebar from './Sidebar'
+import Sidebar from '../components/sidebar/Sidebar'
 
 export default function Layout() {
   const navigate = useNavigate()

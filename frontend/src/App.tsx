@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
-import Layout from './components/Layout'
-import MainView from './components/MainView'
-import EditSummaryView from './components/EditSummaryView'
+import Layout from './routes/Layout'
+import MainView from './routes/MainView'
+import EditSummaryView from './routes/EditSummaryView'
 
 function EmptyState() {
   return (

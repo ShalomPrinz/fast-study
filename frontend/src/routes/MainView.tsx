@@ -10,8 +10,8 @@ import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import { kindSearch } from '../utils/route'
 import { formatDuration } from '../utils/format'
 import { toastInitResult } from '../services/toaster'
-import ConfirmModal from './ConfirmModal'
-import Icon from './Icon'
+import ConfirmModal from '../components/ConfirmModal'
+import Icon from '../components/Icon'
 
 interface RotateTarget {
   file: FileName
