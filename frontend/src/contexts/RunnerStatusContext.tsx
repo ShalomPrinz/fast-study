@@ -37,9 +37,15 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     (msg) => sendUpdateRef.current?.('error', msg),
   )
 
+  // Backend fires several notifies in quick succession around step boundaries.
+  // Solution: Drop late-arriving /status responses when a newer fetch is already in flight.
+  const reqIdRef = useRef(0)
+
   async function refresh() {
+    const id = ++reqIdRef.current
     try {
       const s = await fetchRunnerStatus()
+      if (id !== reqIdRef.current) return
       setStatus(s)
       const validKeys = new Set(Object.keys(s.errors))
       validKeys.add('runner-crash')

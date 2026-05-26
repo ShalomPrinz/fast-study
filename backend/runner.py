@@ -397,7 +397,8 @@ async def run_all(queue: list[tuple[str, str, str]]) -> dict:
                 log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
                 _runner_status["last_error"] = f"{course}/{lecture}: {e}"
             _runner_status["done"] += 1
-            db_client.notify()
+            # No notify here to prevent race condition.
+            # Next step will notify, or if on last lecture, final status update after the loop.
         log.info("run_all completed: %d/%d done, last_error=%s", _runner_status["done"], _runner_status["total"], _runner_status["last_error"])
         return {"status": "completed", **get_status()}
     finally:

@@ -39,11 +39,15 @@ export default function RunnerPipelineRow() {
     return <RunnerInactive onClick={handleRunClick} />
   }
 
+  // done is 0-indexed but we want to show 1-indexed progress, so add 1 - but cap at total.
+  const runnerCurrent = Math.min(status!.runner.done + 1, status!.runner.total)
+  const runnerCurrentDisplay = `(${runnerCurrent}/${status!.runner.total})`
+
   return (
     <div className="runner-panel">
       {running && (
         <div className="runner-panel-header">
-          Running pipelines… ({status!.runner.done}/{status!.runner.total})
+          Running pipelines… {runnerCurrentDisplay}
         </div>
       )}
       {inFlight.map((entry) => (
