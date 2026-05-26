@@ -1,27 +1,42 @@
-import type { InlineEdit } from '../../types'
+import { useState } from 'react'
+import { createCourse } from '../../services/database'
+import { useInlineEdit } from '../../hooks/useInlineEdit'
 import InlineEditInput from '../InlineEditInput'
 
 interface Props {
-  addingCourse: boolean
-  addCourseEdit: InlineEdit
-  onStart: () => void
-  onCommit: () => void
-  onCancel: () => void
+  onCreated: () => void | Promise<void>
 }
 
-export default function NewCourseRow({ addingCourse, addCourseEdit, onStart, onCommit, onCancel }: Props) {
+export default function NewCourseRow({ onCreated }: Props) {
+  const [addingCourse, setAddingCourse] = useState(false)
+  const addCourseEdit = useInlineEdit(addingCourse || null)
+
+  async function commit() {
+    const name = addCourseEdit.value.trim()
+    setAddingCourse(false)
+    addCourseEdit.setValue('')
+    if (!name) return
+    await createCourse(name)
+    await onCreated()
+  }
+
+  function cancel() {
+    setAddingCourse(false)
+    addCourseEdit.setValue('')
+  }
+
   return (
     <div className="new-course-row">
       {addingCourse ? (
         <InlineEditInput
           edit={addCourseEdit}
-          onCommit={onCommit}
-          onCancel={onCancel}
+          onCommit={commit}
+          onCancel={cancel}
           placeholder="Course name…"
           className="new-course-input"
         />
       ) : (
-        <button className="new-course-btn" onClick={onStart}>
+        <button className="new-course-btn" onClick={() => setAddingCourse(true)}>
           + New Course
         </button>
       )}

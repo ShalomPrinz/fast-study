@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Course, Lecture, Selected, Kind } from '../../types'
-import { createCourse, createLecture, renameCourse, renameLecture, uploadVideo } from '../../services/database'
-import { toast, toastPromise } from '../../services/toaster'
-import ConfirmModal from '../ConfirmModal'
-import Icon from '../Icon'
+import { createLecture, renameCourse, renameLecture } from '../../services/database'
+import { toast } from '../../services/toaster'
 import InlineEditInput from '../InlineEditInput'
+import RefreshCoursesButton from './RefreshCoursesButton'
 import NewCourseRow from './NewCourseRow'
+import { usePendingUpload } from './PendingUploadModal'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import { useInlineEdit } from '../../hooks/useInlineEdit'
 import { useToggleSet } from '../../hooks/useToggleSet'
@@ -18,13 +18,6 @@ interface Props {
   onSelect: (course: string, lecture: string, kind: Kind) => void
   onCourseClick: (course: string) => void
   onRefresh: () => Promise<void> | void
-}
-
-interface PendingUpload {
-  course: string
-  lecture: string
-  file: File
-  kind: Kind
 }
 
 interface AddTarget { course: string; kind: Kind }
@@ -41,11 +34,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [adding, setAdding] = useState<AddTarget | null>(null)
   const [renaming, setRenaming] = useState<RenameTarget | null>(null)
   const [dragOver, setDragOver] = useState<DragTarget | null>(null)
-  const [pendingUpload, setPendingUpload] = useState<PendingUpload | null>(null)
-  const [addingCourse, setAddingCourse] = useState(false)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
-  const [refreshing, setRefreshing] = useState(false)
   const didAutoExpandRef = useRef(false)
+  const upload = usePendingUpload({ onUploaded: onCourseClick })
 
   useEffect(() => {
     if (didAutoExpandRef.current) return
@@ -58,15 +49,8 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     }
   }, [selected, courses])
 
-  async function handleRefreshClick() {
-    if (refreshing) return
-    setRefreshing(true)
-    try { await onRefresh() } finally { setRefreshing(false) }
-  }
-
   const addLectureEdit = useInlineEdit(adding ? `${adding.course}::${adding.kind}` : null)
   const renameLectureEdit = useInlineEdit(renaming ? `${renaming.course}/${renaming.kind}/${renaming.lecture}` : null)
-  const addCourseEdit = useInlineEdit(addingCourse || null)
   const renameCourseEdit = useInlineEdit(renamingCourse)
 
   function toggleCourse(name: string) {
@@ -98,15 +82,6 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     onCourseClick(target.course)
   }
 
-  async function doUpload(courseName: string, lectureName: string, file: File, kind: Kind) {
-    await toastPromise(uploadVideo(courseName, lectureName, file, kind), {
-      pending: 'Uploading video…',
-      success: `Saved to ${lectureName}`,
-      error: 'Upload failed',
-    })
-    onCourseClick(courseName)
-  }
-
   function handleDrop(e: React.DragEvent, courseName: string, lectureName: string, kind: Kind) {
     e.preventDefault()
     setDragOver(null)
@@ -118,9 +93,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     }
     const lecture = findLecture(courses, courseName, lectureName, kind)
     if (lecture?.files['video.mp4'].exists) {
-      setPendingUpload({ course: courseName, lecture: lectureName, file, kind })
+      upload.confirm(courseName, lectureName, file, kind)
     } else {
-      doUpload(courseName, lectureName, file, kind)
+      upload.trigger(courseName, lectureName, file, kind)
     }
   }
 
@@ -141,15 +116,6 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
       onSelect(info.course, name, info.kind)
     }
     onCourseClick(info.course)
-  }
-
-  async function commitAddCourse() {
-    const name = addCourseEdit.value.trim()
-    setAddingCourse(false)
-    addCourseEdit.setValue('')
-    if (!name) return
-    await createCourse(name)
-    onRefresh()
   }
 
   function startRenamingCourse(e: React.MouseEvent, courseName: string) {
@@ -210,23 +176,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     <aside className="sidebar">
       <div className="sidebar-header">
         <span>Fast Study</span>
-        <button
-          className={`sidebar-refresh-btn${refreshing ? ' spinning' : ''}`}
-          onClick={handleRefreshClick}
-          disabled={refreshing}
-          title="Refresh Courses Tree"
-          aria-label="Refresh Courses Tree"
-        >
-          <Icon icon="refresh" />
-        </button>
+        <RefreshCoursesButton onRefresh={onRefresh} />
       </div>
-      <NewCourseRow
-        addingCourse={addingCourse}
-        addCourseEdit={addCourseEdit}
-        onStart={() => setAddingCourse(true)}
-        onCommit={commitAddCourse}
-        onCancel={() => { setAddingCourse(false); addCourseEdit.setValue('') }}
-      />
+      <NewCourseRow onCreated={onRefresh} />
       <RunnerPipelineRow />
       <nav className="sidebar-nav">
         {courses.map((course) => {
@@ -323,18 +275,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
         })}
       </nav>
 
-      {pendingUpload && (
-        <ConfirmModal
-          message={`Replace existing video.mp4 in "${pendingUpload.lecture}"?`}
-          warning={`Note: This will delete all files in this lecture.`}
-          onConfirm={() => {
-            const { course, lecture, file, kind } = pendingUpload
-            setPendingUpload(null)
-            doUpload(course, lecture, file, kind)
-          }}
-          onCancel={() => setPendingUpload(null)}
-        />
-      )}
+      {upload.modal}
     </aside>
   )
 }
