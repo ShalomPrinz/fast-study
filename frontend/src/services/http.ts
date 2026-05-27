@@ -1,5 +1,5 @@
-import type { Kind } from '../types'
-import { kindSearch } from '../utils/route'
+import type { Kind } from '@/types'
+import { kindSearch } from '@/utils/route'
 
 export function httpError(res: Response): Error {
   return new Error(`${res.status} ${res.statusText}`)

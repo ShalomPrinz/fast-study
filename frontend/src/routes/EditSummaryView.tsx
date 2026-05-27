@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '../services/database'
-import { runStep } from '../services/backend'
-import { useLectureRoute } from '../hooks/useLectureRoute'
-import { useRunnerStatus } from '../contexts/RunnerStatusContext'
-import { toast, toastInitResult } from '../services/toaster'
-import PdfViewer from '../components/PdfViewer'
+import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '@/services/database'
+import { runStep } from '@/services/backend'
+import { useLectureRoute } from '@/hooks/useLectureRoute'
+import { useRunnerStatus } from '@/contexts/RunnerStatusContext'
+import { toast, toastInitResult } from '@/services/toaster'
+import PdfViewer from '@/components/PdfViewer'
 
 export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()

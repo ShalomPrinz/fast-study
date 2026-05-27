@@ -1,4 +1,4 @@
-import type { FileName, Course, Kind } from '../types'
+import type { FileName, Course, Kind } from '@/types'
 import { createClient, kindQuery, lectureBase, path } from './http'
 
 const database = createClient(import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001')

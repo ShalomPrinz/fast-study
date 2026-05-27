@@ -1,4 +1,4 @@
-import type { InlineEdit } from '../types'
+import type { InlineEdit } from '@/types'
 
 interface Props {
   edit: InlineEdit

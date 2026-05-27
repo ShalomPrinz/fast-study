@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import type { Kind } from '../../types'
-import { uploadVideo } from '../../services/database'
-import { toastPromise } from '../../services/toaster'
-import { useCourseTreeContext } from '../../contexts/CourseTreeContext'
-import ConfirmModal from '../ConfirmModal'
+import type { Kind } from '@/types'
+import { uploadVideo } from '@/services/database'
+import { toastPromise } from '@/services/toaster'
+import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface PendingUpload {
   course: string

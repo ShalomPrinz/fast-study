@@ -1,9 +1,9 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
-import type { RunnerStatus, InFlightEntry, Kind } from '../types'
-import { runAll, fetchRunnerStatus } from '../services/backend'
-import { inFlightKey } from '../utils/inFlightKey'
-import { useReportOnce } from '../hooks/useReportOnce'
-import { useNotify } from '../hooks/useNotify'
+import type { RunnerStatus, InFlightEntry, Kind } from '@/types'
+import { runAll, fetchRunnerStatus } from '@/services/backend'
+import { inFlightKey } from '@/utils/inFlightKey'
+import { useReportOnce } from '@/hooks/useReportOnce'
+import { useNotify } from '@/hooks/useNotify'
 
 
 interface RunnerStatusValue {

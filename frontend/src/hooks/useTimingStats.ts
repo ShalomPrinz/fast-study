@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Step, TimingStats } from '../types'
-import { fetchTimingStats } from '../services/backend'
+import type { Step, TimingStats } from '@/types'
+import { fetchTimingStats } from '@/services/backend'
 
 // Async (step, size) -> TimingStats with a staleness guard: late responses
 // for a (step, size) the caller has moved on from are dropped.

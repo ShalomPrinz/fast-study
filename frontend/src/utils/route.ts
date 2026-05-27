@@ -1,4 +1,4 @@
-import type { Kind } from '../types'
+import type { Kind } from '@/types'
 
 export function kindSearch(kind: Kind | undefined): string {
   return kind === 'recitation' ? '?kind=recitation' : ''

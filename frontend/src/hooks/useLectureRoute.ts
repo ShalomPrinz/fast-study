@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
-import { useCourseTreeContext } from '../contexts/CourseTreeContext'
+import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
 import { useKindParam } from './useKindParam'
-import { findLecture } from '../utils/courseTree'
+import { findLecture } from '@/utils/courseTree'
 
 export function useLectureRoute() {
   const params = useParams<{ course: string; lecture: string }>()

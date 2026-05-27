@@ -1,4 +1,4 @@
-import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus } from '../types'
+import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus } from '@/types'
 import { createClient, kindQuery, lectureBase } from './http'
 
 const backend = createClient(import.meta.env.VITE_API_URL ?? 'http://localhost:8000')

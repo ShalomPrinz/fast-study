@@ -1,4 +1,4 @@
-import type { Course, Lecture, Kind } from '../types'
+import type { Course, Lecture, Kind } from '@/types'
 
 export function findLecture(
   courses: Course[],

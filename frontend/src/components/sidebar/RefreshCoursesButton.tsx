@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import Icon from '../Icon'
-import { useCourseTreeContext } from '../../contexts/CourseTreeContext'
+import Icon from '@/components/Icon'
+import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
 
 export default function RefreshCoursesButton() {
   const { refreshCourses } = useCourseTreeContext()

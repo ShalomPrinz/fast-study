@@ -1,8 +1,8 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
-import type { Course } from '../types'
-import { fetchTree, fetchCourse } from '../services/database'
-import { useNotify } from '../hooks/useNotify'
+import type { Course } from '@/types'
+import { fetchTree, fetchCourse } from '@/services/database'
+import { useNotify } from '@/hooks/useNotify'
 
 interface CourseTreeValue {
   courses: Course[]

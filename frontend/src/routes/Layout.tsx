@@ -1,11 +1,11 @@
 import { Outlet, useMatch, useNavigate } from 'react-router-dom'
-import type { Kind } from '../types'
-import { RunnerStatusProvider } from '../contexts/RunnerStatusContext'
-import { CourseTreeProvider } from '../contexts/CourseTreeContext'
-import { useKindParam } from '../hooks/useKindParam'
-import { lectureRoute } from '../utils/route'
-import { ToastContainer, toast } from '../services/toaster'
-import Sidebar from '../components/sidebar/Sidebar'
+import type { Kind } from '@/types'
+import { RunnerStatusProvider } from '@/contexts/RunnerStatusContext'
+import { CourseTreeProvider } from '@/contexts/CourseTreeContext'
+import { useKindParam } from '@/hooks/useKindParam'
+import { lectureRoute } from '@/utils/route'
+import { ToastContainer, toast } from '@/services/toaster'
+import Sidebar from '@/components/sidebar/Sidebar'
 
 export default function Layout() {
   const navigate = useNavigate()

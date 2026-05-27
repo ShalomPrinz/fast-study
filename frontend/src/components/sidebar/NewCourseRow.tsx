@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { createCourse } from '../../services/database'
-import { useInlineEdit } from '../../hooks/useInlineEdit'
-import { useCourseTreeContext } from '../../contexts/CourseTreeContext'
-import InlineEditInput from '../InlineEditInput'
+import { createCourse } from '@/services/database'
+import { useInlineEdit } from '@/hooks/useInlineEdit'
+import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
+import InlineEditInput from '@/components/InlineEditInput'
 
 export default function NewCourseRow() {
   const { refreshCourses } = useCourseTreeContext()

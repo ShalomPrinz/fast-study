@@ -1,4 +1,4 @@
-import type { Step, FileName } from '../types'
+import type { Step, FileName } from '@/types'
 
 export const PIPELINE: Array<{ file: FileName; step?: Step; actionLabel?: string; prereq?: FileName }> = [
   { file: 'video.mp4' },

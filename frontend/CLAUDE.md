@@ -103,6 +103,7 @@ frontend/
 - **Hebrew rendering.** Folder name labels use `dir="auto"` so the browser auto-detects RTL. Font stack includes Noto Sans Hebrew (Google Fonts) with system fallbacks (Segoe UI, Arial).
 - **Toast notifications.** `react-toastify`'s `ToastContainer` is mounted once in `Layout`. Surface non-blocking errors via `toast.error(...)` rather than alerts or inline banners. **UI belongs in components, not contexts / hooks etc.** Contexts and hooks communicate events upward via callbacks (e.g. `sendUpdate(kind, message)`) — callers decide how to render them. Never import `toast` inside a context or hook.
 - **tsconfig.** One `tsconfig.json` covers `src/` and `vite.config.ts`.
+- **Imports use the `@/` alias for anything under `src/`.** `@/*` maps to `src/*` (configured in `tsconfig.json` `paths` and `vite.config.ts` `resolve.alias`). Write `import x from '@/services/database'`, never `'../../services/database'`. Sibling-only imports (same directory) may stay relative.
 
 ## State (App + hooks)
 

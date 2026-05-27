@@ -2,7 +2,7 @@
 // helpers — they must not import from `react-toastify` directly.
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import type { RunInitResult } from '../types'
+import type { RunInitResult } from '@/types'
 
 export { ToastContainer }
 
