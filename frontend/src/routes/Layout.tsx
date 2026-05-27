@@ -5,7 +5,7 @@ import { CourseTreeProvider } from '@/contexts/CourseTreeContext'
 import { useKindParam } from '@/hooks/useKindParam'
 import { lectureRoute } from '@/utils/route'
 import { ToastContainer, toast } from '@/services/toaster'
-import Sidebar from '@/components/sidebar/Sidebar'
+import Sidebar from '@/components/sidebar'
 
 export default function Layout() {
   const navigate = useNavigate()
