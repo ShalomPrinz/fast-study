@@ -1,13 +1,11 @@
 import { useState } from 'react'
 import { createCourse } from '../../services/database'
 import { useInlineEdit } from '../../hooks/useInlineEdit'
+import { useCourseTreeContext } from '../../contexts/CourseTreeContext'
 import InlineEditInput from '../InlineEditInput'
 
-interface Props {
-  onCreated: () => void | Promise<void>
-}
-
-export default function NewCourseRow({ onCreated }: Props) {
+export default function NewCourseRow() {
+  const { refreshCourses } = useCourseTreeContext()
   const [addingCourse, setAddingCourse] = useState(false)
   const addCourseEdit = useInlineEdit(addingCourse || null)
 
@@ -17,7 +15,7 @@ export default function NewCourseRow({ onCreated }: Props) {
     addCourseEdit.setValue('')
     if (!name) return
     await createCourse(name)
-    await onCreated()
+    await refreshCourses()
   }
 
   function cancel() {

@@ -6,6 +6,7 @@ import { runStep, runPipeline } from '../services/backend'
 import { useRemoteInflightState } from '../hooks/useRemoteInflightState'
 import { useLectureRoute } from '../hooks/useLectureRoute'
 import { useRunnerStatus } from '../contexts/RunnerStatusContext'
+import { useCourseTreeContext } from '../contexts/CourseTreeContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '../constants/pipeline'
 import { kindSearch } from '../utils/route'
 import { formatDuration } from '../utils/format'
@@ -133,7 +134,8 @@ function RateLimitPanel({
 }
 
 export default function MainView() {
-  const { course, lecture, kind, files, transcribePartial, refreshCourses } = useLectureRoute()
+  const { course, lecture, kind, files, transcribePartial } = useLectureRoute()
+  const { refreshCourses } = useCourseTreeContext()
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
 

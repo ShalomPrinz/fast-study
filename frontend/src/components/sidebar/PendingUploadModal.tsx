@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Kind } from '../../types'
 import { uploadVideo } from '../../services/database'
 import { toastPromise } from '../../services/toaster'
+import { useCourseTreeContext } from '../../contexts/CourseTreeContext'
 import ConfirmModal from '../ConfirmModal'
 
 interface PendingUpload {
@@ -11,11 +12,8 @@ interface PendingUpload {
   kind: Kind
 }
 
-interface Options {
-  onUploaded: (course: string) => void
-}
-
-export function usePendingUpload({ onUploaded }: Options) {
+export function usePendingUpload() {
+  const { onCourseClick } = useCourseTreeContext()
   const [pending, setPending] = useState<PendingUpload | null>(null)
 
   async function trigger(course: string, lecture: string, file: File, kind: Kind) {
@@ -24,7 +22,7 @@ export function usePendingUpload({ onUploaded }: Options) {
       success: `Saved to ${lecture}`,
       error: 'Upload failed',
     })
-    onUploaded(course)
+    onCourseClick(course)
   }
 
   function confirm(course: string, lecture: string, file: File, kind: Kind) {

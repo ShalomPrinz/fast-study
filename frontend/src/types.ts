@@ -86,9 +86,3 @@ export interface RunnerStatus {
   errors: Record<string, string>
 }
 
-export interface LectureContext {
-  files: FileStatus | null
-  transcribePartial: TranscribePartial | null
-  refreshCourses: () => void
-  kind: Kind
-}

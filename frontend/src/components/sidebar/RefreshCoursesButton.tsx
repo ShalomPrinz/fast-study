@@ -1,17 +1,15 @@
 import { useState } from 'react'
 import Icon from '../Icon'
+import { useCourseTreeContext } from '../../contexts/CourseTreeContext'
 
-interface Props {
-  onRefresh: () => void | Promise<void>
-}
-
-export default function RefreshCoursesButton({ onRefresh }: Props) {
+export default function RefreshCoursesButton() {
+  const { refreshCourses } = useCourseTreeContext()
   const [refreshing, setRefreshing] = useState(false)
 
   async function handleClick() {
     if (refreshing) return
     setRefreshing(true)
-    try { await onRefresh() } finally { setRefreshing(false) }
+    try { await refreshCourses() } finally { setRefreshing(false) }
   }
 
   return (

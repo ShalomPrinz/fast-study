@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Course, Lecture, Selected, Kind } from '../../types'
+import type { Lecture, Selected, Kind } from '../../types'
 import { createLecture, renameCourse, renameLecture } from '../../services/database'
 import { toast } from '../../services/toaster'
 import InlineEditInput from '../InlineEditInput'
@@ -9,15 +9,13 @@ import { usePendingUpload } from './PendingUploadModal'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import { useInlineEdit } from '../../hooks/useInlineEdit'
 import { useToggleSet } from '../../hooks/useToggleSet'
+import { useCourseTreeContext } from '../../contexts/CourseTreeContext'
 import { suggestName } from '../../utils/namingSuggestion'
 import { findLecture } from '../../utils/courseTree'
 
 interface Props {
-  courses: Course[]
   selected: Selected | null
   onSelect: (course: string, lecture: string, kind: Kind) => void
-  onCourseClick: (course: string) => void
-  onRefresh: () => Promise<void> | void
 }
 
 interface AddTarget { course: string; kind: Kind }
@@ -28,7 +26,8 @@ function recitationGroupKey(courseName: string): string {
   return `${courseName}::recitations`
 }
 
-export default function Sidebar({ courses, selected, onSelect, onCourseClick, onRefresh }: Props) {
+export default function Sidebar({ selected, onSelect }: Props) {
+  const { courses, refreshCourses, onCourseClick } = useCourseTreeContext()
   const expanded = useToggleSet(courses.map((c) => c.name))
   const recitationsExpanded = useToggleSet(courses.map((c) => recitationGroupKey(c.name)))
   const [adding, setAdding] = useState<AddTarget | null>(null)
@@ -36,7 +35,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
   const [dragOver, setDragOver] = useState<DragTarget | null>(null)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
   const didAutoExpandRef = useRef(false)
-  const upload = usePendingUpload({ onUploaded: onCourseClick })
+  const upload = usePendingUpload()
 
   useEffect(() => {
     if (didAutoExpandRef.current) return
@@ -134,7 +133,7 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     if (selected?.course === old) {
       onSelect(name, selected.lecture, selected.kind)
     }
-    onRefresh()
+    refreshCourses()
   }
 
   function renderLectureItem(courseName: string, lecture: Lecture, kind: Kind) {
@@ -176,9 +175,9 @@ export default function Sidebar({ courses, selected, onSelect, onCourseClick, on
     <aside className="sidebar">
       <div className="sidebar-header">
         <span>Fast Study</span>
-        <RefreshCoursesButton onRefresh={onRefresh} />
+        <RefreshCoursesButton />
       </div>
-      <NewCourseRow onCreated={onRefresh} />
+      <NewCourseRow />
       <RunnerPipelineRow />
       <nav className="sidebar-nav">
         {courses.map((course) => {

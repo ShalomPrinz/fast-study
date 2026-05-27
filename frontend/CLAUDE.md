@@ -41,7 +41,8 @@ frontend/
       pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
-    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, StepResult, RunnerStatus, LectureContext, …
+      CourseTreeContext.tsx    Owns courses state + refreshCourses + onCourseClick; SSE-driven refresh via useNotify
+    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, StepResult, RunnerStatus, …
     App.tsx                  React Router routes; renders Layout + the three views
     main.tsx                 React entry point
     index.css                Single flat stylesheet, CSS variables for theming
@@ -53,9 +54,9 @@ frontend/
       courseTree.ts            findLecture(courses, course, lecture, kind)
       format.ts                formatDuration(seconds) — human-readable duration strings
     hooks/
-      useCourseTree.ts         courses state, SSE-driven refresh via useNotify
       useInlineEdit.ts         generic inline-input editing
-      useLectureRoute.ts       reads { course, lecture, kind, files, transcribePartial, refreshCourses } from useParams + LectureContext outlet
+      useKindParam.ts          reads ?kind=recitation from useSearchParams, returns a Kind
+      useLectureRoute.ts       reads { course, lecture, kind } from useParams + useKindParam and derives { files, transcribePartial } from CourseTreeContext
       useNotify.ts             subscribes to SSE notify events via services/events.ts singleton; callback stays fresh via ref
       useToggleSet.ts          string-keyed expand/collapse set with toggle/add + auto-prune to valid keys
       useTimingStats.ts        (step, fileSize) -> TimingStats, with staleness guard for late responses
@@ -94,7 +95,7 @@ frontend/
 ## Key design decisions
 
 - **Filesystem access lives in the database service, not the frontend.** Every URL pointing at filesystem state is built in `src/services/database.ts` against `VITE_DATABASE_URL`. The browser still can't read local files; the Vite dev server no longer pretends to. After a pipeline step succeeds, just re-fetch the tree from the database service.
-- **Server-Sent Events for cross-service refresh.** All SSE subscriptions go through `services/events.ts`, which lazily opens one shared `EventSource(${VITE_DATABASE_URL}/events)` and ref-counts subscribers — the stream is closed when the last subscriber unmounts. `useNotify(cb)` is the hook interface; `useCourseTree` and `RunnerStatusContext` both call it. When the downloader finishes a download it POSTs `${database}/notify` (see `downloader/server.js::notifyFrontend`), which fans an SSE message out to all subscribed listeners so they re-fetch. Failure is silent — downloads must work even when the frontend isn't running.
+- **Server-Sent Events for cross-service refresh.** All SSE subscriptions go through `services/events.ts`, which lazily opens one shared `EventSource(${VITE_DATABASE_URL}/events)` and ref-counts subscribers — the stream is closed when the last subscriber unmounts. `useNotify(cb)` is the hook interface; `CourseTreeContext` and `RunnerStatusContext` both call it. When the downloader finishes a download it POSTs `${database}/notify` (see `downloader/server.js::notifyFrontend`), which fans an SSE message out to all subscribed listeners so they re-fetch. Failure is silent — downloads must work even when the frontend isn't running.
 - **Runner status is SSE-driven, not polled.** `RunnerStatusContext` calls `useNotify(refresh)` to refetch `GET /status` on each `notify` ping. The backend's `runner.py` fires a notify on every meaningful state change (step start/done, rate-limit, error, run complete). The provider also de-dupes `lastError` toasts via a ref so the same error doesn't fire twice. Sidebar and MainView share runner state by reading from the context.
 - **No FastAPI calls for filesystem state.** Don't add a backend endpoint to query "does file X exist." That belongs in the database service.
 - **Pipeline steps are declared once.** `constants/pipeline.ts` is the single source of truth for the step list, prereq chain, action labels, and error labels. Don't hard-code a step name or input file anywhere else — derive from `PIPELINE` / `STEP_*` maps.
@@ -105,7 +106,7 @@ frontend/
 
 ## State (App + hooks)
 
-`useCourseTree(selected)` owns the course tree and derives the currently selected `files: FileStatus` and `transcribePartial` from it. It refreshes on SSE `notify` events and exposes `refreshCourses` + `onCourseClick` (lazy per-course refresh). `Layout` calls it and passes `{ files, transcribePartial, refreshCourses, kind }` to the child route as a typed outlet context (`LectureContext`).
+`CourseTreeContext` owns the course tree. The provider holds `courses` state, refreshes on SSE `notify` events, and exposes `{ courses, refreshCourses, onCourseClick }` via `useCourseTreeContext()` — no props needed. `Sidebar`, `RefreshCoursesButton`, `NewCourseRow`, `usePendingUpload`, and `MainView` all read from the context directly; `Layout` just wraps the provider. The currently selected lecture's `files` / `transcribePartial` are derived inside `useLectureRoute` from the context's `courses` plus the route params — there is no outlet context.
 
 `useRemoteInflightState({ course, lecture, kind, files, transcribePartial })` reads `RunnerStatusContext` and, if the runner is currently working on the open lecture, returns an inflight descriptor `{ step, startedAt, timingStats, completedFraction }`. Callers decide whether a local run preempts this.
 
@@ -145,7 +146,7 @@ Exposes `runStep`, `runPipeline`, `fetchTimingStats`, `runAll`, `fetchRunnerStat
 
 ### `database.ts` — Database service client → `${VITE_DATABASE_URL}`
 
-Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, and the `databaseUrl` export used to build the SSE EventSource URL in `useCourseTree` and `RunnerStatusContext`.
+Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, and the `databaseUrl` export used to build the SSE EventSource URL in `CourseTreeContext` and `RunnerStatusContext`.
 
 ### `toaster.ts` — the only `react-toastify` import site
 
