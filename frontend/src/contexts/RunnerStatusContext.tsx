@@ -4,6 +4,7 @@ import { runAll, fetchRunnerStatus } from '@/services/backend'
 import { inFlightKey } from '@/utils/inFlightKey'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { useNotify } from '@/hooks/useNotify'
+import { useLatestRequest } from '@/hooks/useLatestRequest'
 
 
 interface RunnerStatusValue {
@@ -37,15 +38,12 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     (msg) => sendUpdateRef.current?.('error', msg),
   )
 
-  // Backend fires several notifies in quick succession around step boundaries.
-  // Solution: Drop late-arriving /status responses when a newer fetch is already in flight.
-  const reqIdRef = useRef(0)
+  const latest = useLatestRequest()
 
   async function refresh() {
-    const id = ++reqIdRef.current
     try {
-      const s = await fetchRunnerStatus()
-      if (id !== reqIdRef.current) return
+      const s = await latest(fetchRunnerStatus())
+      if (!s) return
       setStatus(s)
       const validKeys = new Set(Object.keys(s.errors))
       validKeys.add('runner-crash')

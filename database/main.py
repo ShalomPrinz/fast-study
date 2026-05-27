@@ -41,13 +41,6 @@ def get_tree():
     return tree.read_tree()
 
 
-@app.get("/courses/{course}")
-def get_course(course: str):
-    """Return the tree for a single course (used for targeted refreshes)."""
-
-    return tree.read_course(course)
-
-
 @app.post("/courses")
 async def post_course(request: Request):
     """Create a new course directory."""

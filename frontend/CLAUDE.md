@@ -41,7 +41,7 @@ frontend/
       pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
-      CourseTreeContext.tsx    Owns courses state + refreshCourses + onCourseClick; SSE-driven refresh via useNotify
+      CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
     types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, StepResult, RunnerStatus, …
     App.tsx                  React Router routes; renders Layout + the three views
     main.tsx                 React entry point
@@ -107,7 +107,7 @@ frontend/
 
 ## State (App + hooks)
 
-`CourseTreeContext` owns the course tree. The provider holds `courses` state, refreshes on SSE `notify` events, and exposes `{ courses, refreshCourses, onCourseClick }` via `useCourseTreeContext()` — no props needed. `Sidebar`, `RefreshCoursesButton`, `NewCourseRow`, `usePendingUpload`, and `MainView` all read from the context directly; `Layout` just wraps the provider. The currently selected lecture's `files` / `transcribePartial` are derived inside `useLectureRoute` from the context's `courses` plus the route params — there is no outlet context.
+`CourseTreeContext` owns the course tree. The provider holds `courses` state, refreshes on SSE `notify` events, and exposes `{ courses, refreshCourses }` via `useCourseTreeContext()` — no props needed. `Sidebar`, `RefreshCoursesButton`, `NewCourseRow`, `usePendingUpload`, and `MainView` all read from the context directly; `Layout` just wraps the provider. The currently selected lecture's `files` / `transcribePartial` are derived inside `useLectureRoute` from the context's `courses` plus the route params — there is no outlet context.
 
 `useRemoteInflightState({ course, lecture, kind, files, transcribePartial })` reads `RunnerStatusContext` and, if the runner is currently working on the open lecture, returns an inflight descriptor `{ step, startedAt, timingStats, completedFraction }`. Callers decide whether a local run preempts this.
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '@/services/database'
 import { runStep } from '@/services/backend'
 import { useLectureRoute } from '@/hooks/useLectureRoute'
+import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useRunnerStatus } from '@/contexts/RunnerStatusContext'
 import { toast, toastInitResult } from '@/services/toaster'
 import PdfViewer from '@/components/PdfViewer'
@@ -24,6 +25,7 @@ export default function EditSummaryView() {
 
   // Gates the completion-detection logic: true only while we're waiting for our own pdf step.
   const pdfFiredRef = useRef(false)
+  const latest = useLatestRequest()
 
   // Runs on every SSE-driven files/lectureError change; pdfFiredRef gates the completion branch
   // so unrelated refreshes (sibling files, other lectures' errors) don't toggle generating state.
@@ -50,7 +52,8 @@ export default function EditSummaryView() {
 
   async function loadContent() {
     setLoading(true)
-    const data = await fetchSummaryContent(course, lecture, kind)
+    const data = await latest(fetchSummaryContent(course, lecture, kind))
+    if (!data) return
     setContent(data.content)
     setHasOriginal(data.hasOriginal)
     setLoading(false)

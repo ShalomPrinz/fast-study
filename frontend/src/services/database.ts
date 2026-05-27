@@ -13,10 +13,6 @@ export async function fetchTree(): Promise<Course[]> {
   return database.get<Course[]>('/tree')
 }
 
-export async function fetchCourse(course: string): Promise<Course | null> {
-  return database.get<Course | null>(path`/courses/${course}`)
-}
-
 export async function createCourse(name: string): Promise<void> {
   await database.post('/courses', { json: { name } })
 }

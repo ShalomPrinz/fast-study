@@ -27,7 +27,7 @@ function recitationGroupKey(courseName: string): string {
 }
 
 export default function Sidebar({ selected, onSelect }: Props) {
-  const { courses, refreshCourses, onCourseClick } = useCourseTreeContext()
+  const { courses, refreshCourses } = useCourseTreeContext()
   const expanded = useToggleSet(courses.map((c) => c.name))
   const recitationsExpanded = useToggleSet(courses.map((c) => recitationGroupKey(c.name)))
   const [adding, setAdding] = useState<AddTarget | null>(null)
@@ -54,7 +54,7 @@ export default function Sidebar({ selected, onSelect }: Props) {
 
   function toggleCourse(name: string) {
     expanded.toggle(name)
-    onCourseClick(name)
+    refreshCourses()
   }
 
   function toggleRecitations(courseName: string) {
@@ -78,7 +78,7 @@ export default function Sidebar({ selected, onSelect }: Props) {
     addLectureEdit.setValue('')
     if (!name) return
     await createLecture(target.course, name, target.kind)
-    onCourseClick(target.course)
+    refreshCourses()
   }
 
   function handleDrop(e: React.DragEvent, courseName: string, lectureName: string, kind: Kind) {
@@ -114,7 +114,7 @@ export default function Sidebar({ selected, onSelect }: Props) {
     if (selected?.course === info.course && selected?.lecture === info.lecture && selected?.kind === info.kind) {
       onSelect(info.course, name, info.kind)
     }
-    onCourseClick(info.course)
+    refreshCourses()
   }
 
   function startRenamingCourse(e: React.MouseEvent, courseName: string) {

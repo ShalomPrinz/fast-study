@@ -1,22 +1,24 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import type { Course } from '@/types'
-import { fetchTree, fetchCourse } from '@/services/database'
+import { fetchTree } from '@/services/database'
 import { useNotify } from '@/hooks/useNotify'
+import { useLatestRequest } from '@/hooks/useLatestRequest'
 
 interface CourseTreeValue {
   courses: Course[]
   refreshCourses: () => Promise<void>
-  onCourseClick: (course: string) => void
 }
 
 const CourseTreeContext = createContext<CourseTreeValue | null>(null)
 
 export function CourseTreeProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([])
+  const latest = useLatestRequest()
 
-  function refreshCourses() {
-    return fetchTree().then(setCourses)
+  async function refreshCourses() {
+    const c = await latest(fetchTree())
+    if (c) setCourses(c)
   }
 
   useEffect(() => {
@@ -34,15 +36,8 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
     [courses]
   )
 
-  function onCourseClick(courseName: string) {
-    fetchCourse(courseName).then((updated) => {
-      if (!updated) return
-      setCourses((prev) => prev.map((c) => (c.name === courseName ? updated : c)))
-    })
-  }
-
   return (
-    <CourseTreeContext.Provider value={{ courses: sortedCourses, refreshCourses, onCourseClick }}>
+    <CourseTreeContext.Provider value={{ courses: sortedCourses, refreshCourses }}>
       {children}
     </CourseTreeContext.Provider>
   )

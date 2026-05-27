@@ -48,7 +48,6 @@ python3 main.py                          # also works, same port
 | Method+Path                                                              | Purpose                                  |
 |--------------------------------------------------------------------------|------------------------------------------|
 | `GET    /tree`                                                           | full course tree                         |
-| `GET    /courses/{course}`                                               | single course refresh                    |
 | `POST   /courses`                                                        | create course (body: `{name}`)           |
 | `PATCH  /courses/{course}`                                               | rename course (body: `{name}`)           |
 | `POST   /courses/{course}/lectures?kind=lecture\|recitation`             | create lecture (body: `{name}`)          |

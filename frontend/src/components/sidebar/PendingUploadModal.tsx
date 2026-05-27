@@ -13,7 +13,7 @@ interface PendingUpload {
 }
 
 export function usePendingUpload() {
-  const { onCourseClick } = useCourseTreeContext()
+  const { refreshCourses } = useCourseTreeContext()
   const [pending, setPending] = useState<PendingUpload | null>(null)
 
   async function trigger(course: string, lecture: string, file: File, kind: Kind) {
@@ -22,7 +22,7 @@ export function usePendingUpload() {
       success: `Saved to ${lecture}`,
       error: 'Upload failed',
     })
-    onCourseClick(course)
+    refreshCourses()
   }
 
   function confirm(course: string, lecture: string, file: File, kind: Kind) {
