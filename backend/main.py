@@ -103,8 +103,3 @@ def runner_status_endpoint():
 def timing_stats(operation: str, file_size_bytes: int = Query(...)):
     """Return a calibrated ETA estimate for the given operation and file size."""
     return get_stats(operation, file_size_bytes)
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

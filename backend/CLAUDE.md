@@ -92,26 +92,30 @@ Reads `.env` (repo root). Required:
 
 ## Running
 
+Dependencies and the Python version (3.12, pinned in `.python-version`) are managed by [uv](https://docs.astral.sh/uv/). `uv run` auto-creates/syncs `backend/.venv` from `pyproject.toml` + `uv.lock` — no manual activation.
+
 ```bash
 cd backend
-uvicorn main:app --reload        # dev (port 8000)
-python3 main.py                  # also works, same port
+uv sync --extra test             # one-time / after dep changes: build the venv
+uv run uvicorn main:app --reload # dev (port 8000)
 ```
 
 ## Running tests
 
 ```bash
 cd backend
-python3 -m pytest tests/ -q
+uv run pytest tests/ -q
 ```
+
+CI runs exactly this on every push to `main` and every PR — see `.github/workflows/ci.yml` (installs uv + pandoc 2.9.2.1, then `uv sync --extra test` + `uv run pytest`).
 
 ## Testing after every logic update
 
 Whenever pipeline logic changes (anything under `pipeline/`, or any helper invoked by it), this is non-negotiable:
 
-1. **Run existing tests first** — `python3 -m pytest tests/ -q`. Green baseline confirms the change didn't break adjacent behavior. If a test fails, fix the code or update the test deliberately — never silently delete or skip it.
+1. **Run existing tests first** — `uv run pytest tests/ -q`. Green baseline confirms the change didn't break adjacent behavior. If a test fails, fix the code or update the test deliberately — never silently delete or skip it.
 2. **Add tests for the new logic** in the matching `tests/test_<module>.py`. Cover: the regression case (a test that fails without the fix), the happy path, and at least one edge case (empty input, escape/special chars, boundary between protected and unprotected regions). See `TestNormalizeMathSpans` and `TestForceLtrInlineCode` in `tests/test_to_pdf.py` for the shape.
-3. **Re-run the full suite** after adding tests. The change isn't done until `pytest tests/ -q` is green.
+3. **Re-run the full suite** after adding tests. The change isn't done until `uv run pytest tests/ -q` is green.
 
 This applies even to "small" or "obvious" changes — preprocessing helpers in `to_pdf.py` look trivial but interact with bidi/LaTeX in surprising ways, which is exactly why every helper there has a dedicated test class.
 

@@ -69,11 +69,11 @@ The Chrome extension is loaded unpacked from `downloader/`. After loading, copy 
 
 ## Tests
 
-```bash
-cd backend && python3 -m pytest tests/ -q
-```
+The backend uses [uv](https://docs.astral.sh/uv/) (manages Python 3.12 + deps); CI runs the same command on every push/PR.
 
-> Always invoke `python3` explicitly on this WSL setup — `python` is not aliased.
+```bash
+cd backend && uv run pytest tests/ -q
+```
 
 ## Customizing the summary format
 

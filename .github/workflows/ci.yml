@@ -14,10 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          # match local python version
-          python-version: "3.10.12"
+      - uses: astral-sh/setup-uv@v5
 
       # pandoc drives the ltr_code.lua integration tests in test_to_pdf.py;
       # without it those tests skip instead of running. Pin to 2.9.2.1 to match
@@ -28,8 +25,10 @@ jobs:
           sudo dpkg -i pandoc.deb
           pandoc --version | head -1
 
-      - name: Install backend
-        run: pip install -e ".[test]"
+      # uv reads .python-version + pyproject.toml; fetches Python 3.12 and builds
+      # the venv with the test extra.
+      - name: Sync dependencies
+        run: uv sync --extra test
 
       - name: Run tests
-        run: python3 -m pytest tests/ -q
+        run: uv run pytest tests/ -q
