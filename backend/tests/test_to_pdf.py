@@ -12,6 +12,7 @@ from to_pdf import (
     normalize_math_spans,
     force_ltr_inline_code,
     apply_outside_fences,
+    unwrap_math_code,
 )
 
 
@@ -241,6 +242,56 @@ class TestWrapEnglishPhrases:
         assert "$x \\times y$" in result
         assert r"\LR{Pull Request}" in result
         assert r"\LR{times}" not in result
+
+
+# ---------------------------------------------------------------------------
+# unwrap_math_code
+# ---------------------------------------------------------------------------
+
+class TestUnwrapMathCode:
+    def test_backtick_math_unwrapped(self):
+        # Regression: the LLM wraps math in backticks, so force_ltr_inline_code
+        # escaped the $ into literal \texttt text instead of rendering math.
+        assert unwrap_math_code(r"`$RDI \leftarrow RSI$`") == r"$RDI \leftarrow RSI$"
+
+    def test_list_item_with_backtick_math(self):
+        text = r"1. `$A \oplus B = C$`"
+        assert unwrap_math_code(text) == r"1. $A \oplus B = C$"
+
+    def test_real_register_code_left_untouched(self):
+        # A code span that is NOT pure math (a register name) stays as code.
+        text = "את הערך של `RSI` כאן"
+        assert unwrap_math_code(text) == text
+
+    def test_mixed_line_only_math_span_unwrapped(self):
+        # On a line with both math-in-code and real code, only the math is
+        # unwrapped; the register backticks survive.
+        text = r"`$A \oplus B$` ואז `RSI`"
+        assert unwrap_math_code(text) == r"$A \oplus B$ ואז `RSI`"
+
+    def test_display_math_in_code_unwrapped(self):
+        assert unwrap_math_code(r"`$$a + b$$`") == r"$$a + b$$"
+
+    def test_surrounding_whitespace_in_code_stripped(self):
+        assert unwrap_math_code(r"` $x^2$ `") == r"$x^2$"
+
+    def test_code_with_text_after_math_not_unwrapped(self):
+        # The closing backtick must follow the closing $ — code that mixes a
+        # math span with trailing prose is left as a real code span.
+        text = r"`$x$ and more`"
+        assert unwrap_math_code(text) == text
+
+    def test_plain_code_without_dollar_unchanged(self):
+        text = "`git push` כאן"
+        assert unwrap_math_code(text) == text
+
+    def test_no_backticks_unchanged(self):
+        text = "טקסט רגיל ללא קוד"
+        assert unwrap_math_code(text) == text
+
+    def test_multiple_math_code_spans_each_unwrapped(self):
+        text = r"`$a$` ו-`$b$`"
+        assert unwrap_math_code(text) == r"$a$ ו-$b$"
 
 
 # ---------------------------------------------------------------------------

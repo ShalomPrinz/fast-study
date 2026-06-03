@@ -25,6 +25,10 @@ LATEX_HEADER = r"""
 LIST_ITEM_RE = re.compile(r'^(\s*(?:[-*+]|\d+\.)\s)')
 MATH_SPAN_RE = re.compile(r'\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$')
 INLINE_CODE_RE = re.compile(r'`([^`\n]+)`')
+# A code span whose entire body is one math expression: the LLM wraps math in
+# backticks (`$...$`). The trailing ` must follow the closing $ (only whitespace
+# between) so spans mixing code and prose — `RSI` — are left as real code.
+MATH_IN_CODE_RE = re.compile(r'`\s*(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)\s*`')
 
 _LATEX_SPECIAL = {
     '{': r'\{',
@@ -90,6 +94,15 @@ def wrap_english_phrases(text: str) -> str:
 
 def normalize_dashes(text: str) -> str:
     return text.replace('—', ' - ').replace('–', '-')
+
+
+def unwrap_math_code(text: str) -> str:
+    # Math the LLM wrapped in backticks renders as literal text otherwise:
+    # force_ltr_inline_code escapes the `$`/`\` into \texttt, so the source
+    # `$RDI \leftarrow RSI$` shows verbatim instead of as a formula.
+    # Before: `$RDI \leftarrow RSI$`  -> "$RDI \leftarrow RSI$" (literal)
+    # After:  `$RDI \leftarrow RSI$`  -> RDI ← RSI (rendered math)
+    return MATH_IN_CODE_RE.sub(lambda m: m.group(1), text)
 
 
 def normalize_math_spans(text: str) -> str:
@@ -177,6 +190,7 @@ def convert_to_pdf(md_path: str) -> str:
 
     def preprocess(t: str) -> str:
         t = normalize_dashes(t)
+        t = unwrap_math_code(t)
         t = normalize_math_spans(t)
         t = ensure_blank_before_lists(t)
         t = wrap_english_phrases(t)
