@@ -1,7 +1,7 @@
 [project]
 name = "fast-study-backend"
 version = "0.1.0"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.111",
     "uvicorn[standard]>=0.29",
@@ -13,3 +13,18 @@ dependencies = [
     "google-genai>=0.3",
     "apscheduler>=3.10",
 ]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Flat layout with multiple top-level dirs — list packages explicitly so
+# setuptools doesn't refuse the build on ambiguous auto-discovery (assets/ is
+# data, not a package).
+[tool.setuptools]
+packages = ["pipeline", "services", "timing"]
