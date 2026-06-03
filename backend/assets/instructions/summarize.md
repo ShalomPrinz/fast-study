@@ -40,6 +40,10 @@ These requirements are mandatory and must be followed without exception:
 ### Math
 - If mathematical formulas appear, write them in LaTeX syntax: `$...$` for inline formulas (e.g. `$E = mc^2$`) and `$$...$$` for a separate centered formula. These will render correctly in the PDF output.
 
+### Code blocks
+- Inside fenced code blocks (` ``` `), write **English only** — code *and* comments. This applies even when the lecture used Hebrew: translate any in-code comment to English.
+- If a code line needs a Hebrew explanation, put it in the prose **around** the block, not inside it. The block holds code; the explanation lives in the surrounding paragraph.
+
 ---
 
 ## Required Output Structure
