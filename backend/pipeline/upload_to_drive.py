@@ -34,6 +34,40 @@ def _create_folder(service, name: str, parent_id: str) -> str:
     return folder["id"]
 
 
+def _find_file(service, name: str, parent_id: str) -> str | None:
+    # Escape single quotes so a name like "ת'רגול" doesn't break the query string.
+    safe_name = name.replace("'", "\\'")
+    q = (
+        f"name='{safe_name}' and mimeType!='application/vnd.google-apps.folder' "
+        f"and '{parent_id}' in parents and trashed=false"
+    )
+    results = service.files().list(q=q, fields="files(id)", pageSize=1).execute()
+    files = results.get("files", [])
+    return files[0]["id"] if files else None
+
+
+def _create_file(service, name: str, parent_id: str, media: MediaFileUpload) -> str:
+    response = (
+        service.files()
+        .create(
+            body={"name": name, "parents": [parent_id]},
+            media_body=media,
+            fields="id,webViewLink",
+        )
+        .execute()
+    )
+    return response["webViewLink"]
+
+
+def _update_file(service, file_id: str, media: MediaFileUpload) -> str:
+    response = (
+        service.files()
+        .update(fileId=file_id, media_body=media, fields="id,webViewLink")
+        .execute()
+    )
+    return response["webViewLink"]
+
+
 @timed_pipeline("drive")
 def upload_to_drive(
     pdf_path: str,
@@ -65,16 +99,12 @@ def upload_to_drive(
 
         file_name = file_name or Path(pdf_path).name
         media = MediaFileUpload(pdf_path, mimetype="application/pdf")
-        response = (
-            service.files()
-            .create(
-                body={"name": file_name, "parents": [parent_id]},
-                media_body=media,
-                fields="id,webViewLink",
-            )
-            .execute()
-        )
-        return response["webViewLink"]
+
+        # Re-running a lecture should replace its PDF in place
+        existing_id = _find_file(service, file_name, parent_id)
+        if existing_id:
+            return _update_file(service, existing_id, media)
+        return _create_file(service, file_name, parent_id, media)
     except RuntimeError:
         raise
     except Exception as e:
