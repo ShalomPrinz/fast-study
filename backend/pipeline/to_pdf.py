@@ -50,7 +50,11 @@ LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
 def wrap_english_phrases(text: str) -> str:
     def replace(m: re.Match) -> str:
         phrase, punct = m.group(1), m.group(2)
-        result = r'\LR{' + phrase + '}'
+        # Latin tokens can contain LaTeX-special chars (e.g. the _ in x86_64).
+        # Unescaped, _ enters math mode inside \LR{}.
+        # Before: x86_64  -> \LR{x86_64}   -> "! Missing $ inserted"
+        # After:  x86_64  -> \LR{x86\_64}  -> renders "x86_64"
+        result = r'\LR{' + _latex_escape(phrase) + '}'
         if punct:
             result += r'\RL{' + punct + '}'
         return result

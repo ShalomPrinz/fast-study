@@ -147,6 +147,19 @@ class TestWrapEnglishPhrases:
         assert r"\LR{Merge}" in result
         assert r"\RL{.}" in result
 
+    # --- LaTeX-special chars inside the phrase are escaped ---
+
+    def test_underscore_in_word_escaped(self):
+        # Regression: x86_64 -> \LR{x86_64} fed a bare _ into math mode →
+        # "! Missing $ inserted". The _ must be escaped inside \LR{}.
+        result = wrap_english_phrases("מעבד x86_64 הוא")
+        assert r"\LR{x86\_64}" in result
+        assert r"\LR{x86_64}" not in result
+
+    def test_multiple_underscores_in_phrase_escaped(self):
+        result = wrap_english_phrases("המשתנה my_var_name חשוב")
+        assert r"\LR{my\_var\_name}" in result
+
     # --- Code spans left untouched ---
 
     def test_backtick_code_span_not_wrapped(self):
@@ -480,8 +493,10 @@ class TestWrapEnglishPhrasesExtended:
     # --- Underscore identifiers ---
 
     def test_underscore_identifier_wrapped(self):
+        # The _ must be escaped — a bare _ inside \LR{} enters math mode and
+        # XeLaTeX fails with "! Missing $ inserted".
         result = wrap_english_phrases("משתנה my_variable")
-        assert r"\LR{my_variable}" in result
+        assert r"\LR{my\_variable}" in result
 
     # --- Trailing-dot still ends up in \\RL{} ---
 
