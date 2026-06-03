@@ -30,6 +30,10 @@ The XeLaTeX in this TeX Live build (`xelatex 3.141592653-2.6-0.999993`, TeX Live
 
 This is the only approach I've found that works on this engine. Don't replace it with `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\pardir TLT...}`, `\renewenvironment{Shaded}{}{}`, per-token `\LR{}` wraps, or `--listings` — all of these were tried and each failed in a different way. See the comment block in `ltr_code.lua` for the rationale.
 
+#### The code-block mono font must cover Hebrew
+
+`fancyvrb`'s `Verbatim` uses the **global `\ttfamily`**, NOT polyglossia's `\englishfonttt` gloss — even inside `\begin{english}`. So a Latin-only mono leaves Hebrew comments (`# שמירת...`) as notdef boxes (`￿`). XeLaTeX has **no per-glyph font fallback** (that's LuaTeX/luaotfload), so a single dual-script monospace must be set globally. We bundle **Miriam Mono CLM** (Culmus, dual-script + true monospace, all advances 600) in `assets/fonts/` and point `\setmonofont` at it in `LATEX_HEADER`. Setting only `\englishfonttt` does nothing — Verbatim never consults it. Don't revert to `Noto Sans Mono` / Latin Modern Mono (no Hebrew glyphs).
+
 ### Dead ends to remember
 
 - **`Shaded` env is already empty in pandoc 2.9**: `\newenvironment{Shaded}{}{}`. There is no gray background to "remove" and overriding `Shaded` accomplishes nothing.

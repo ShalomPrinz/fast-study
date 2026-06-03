@@ -19,7 +19,7 @@ FastAPI app exposing the lecture-processing pipeline as HTTP endpoints. Each end
 ```
 backend/
   assets/
-    fonts/            NotoSansHebrew-Regular.ttf (bundled, no system install needed)
+    fonts/            NotoSansHebrew-*.ttf (body) + MiriamMonoCLM-*.ttf (dual-script mono for code blocks); all bundled, no system install
     instructions/     summarize.md (Hebrew prompt sent to Gemini)
     templates/        pandoc_template.tex (XeLaTeX template for PDF output)
   pipeline/           pure functions, one module per step

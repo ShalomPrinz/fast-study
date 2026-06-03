@@ -5,7 +5,10 @@ import tempfile
 
 import pytest
 from to_pdf import (
+    FONTS_DIR,
+    LATEX_HEADER,
     LTR_CODE_FILTER,
+    convert_to_pdf,
     normalize_dashes,
     ensure_blank_before_lists,
     wrap_english_phrases,
@@ -674,4 +677,85 @@ class TestLuaFilterLtrCodeBlock:
 
     def test_filter_file_exists(self):
         assert LTR_CODE_FILTER.exists(), f"filter missing: {LTR_CODE_FILTER}"
+
+
+# ---------------------------------------------------------------------------
+# Mono font for code blocks — must cover Hebrew
+#
+# Code blocks are wrapped in \begin{english} (ltr_code.lua), and fancyvrb's
+# Verbatim uses the GLOBAL \ttfamily — NOT polyglossia's \englishfonttt gloss.
+# A Latin-only mono (Noto Sans Mono / Latin Modern Mono) makes Hebrew comments
+# render as notdef boxes. The fix bundles the dual-script monospace Miriam Mono
+# CLM and points \setmonofont at it. These guard against a silent regression to
+# a Hebrew-less mono.
+# ---------------------------------------------------------------------------
+
+class TestMonoFontWiring:
+    def test_miriam_mono_files_bundled(self):
+        for name in ("MiriamMonoCLM-Book.ttf", "MiriamMonoCLM-Bold.ttf"):
+            assert (FONTS_DIR / name).exists(), f"missing bundled mono font: {name}"
+
+    def test_setmonofont_points_at_miriam(self):
+        # Verbatim picks up the global mono font, so it must be set explicitly.
+        assert r"\setmonofont{MiriamMonoCLM-Book}" in LATEX_HEADER
+
+    def test_no_hebrewless_system_mono(self):
+        # Noto Sans Mono has no Hebrew glyphs — must not be the code font.
+        assert "Noto Sans Mono" not in LATEX_HEADER
+
+
+# ---------------------------------------------------------------------------
+# Full PDF render — the canonical bidi/font verification (see docs/PDF.md).
+# Glyph fallback happens at XeLaTeX render time; string-level tests cannot catch
+# a missing-Hebrew mono. Gated on the real toolchain (xelatex + pandoc + fitz).
+# ---------------------------------------------------------------------------
+
+def _xelatex_available():
+    return shutil.which("xelatex") is not None
+
+
+def _pymupdf_available():
+    try:
+        import fitz  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+@pytest.mark.skipif(
+    not (_xelatex_available() and _pandoc_available() and _pymupdf_available()),
+    reason="needs xelatex + pandoc + pymupdf to render and inspect a real PDF",
+)
+class TestHebrewInCodeBlockRenders:
+    # Hebrew comment inside an assembly block — the exact regression report.
+    MD = (
+        "הפרולוג מייצר את מסגרת המחסנית החדשה עם כניסתנו לפונקציה:\n"
+        "```assembly\n"
+        "pushq %rbp          # שמירת בסיס המחסנית הישן של הפונקציה הקוראת\n"
+        "movq %rsp, %rbp     # הגדרת בסיס המחסנית החדש במיקום הנוכחי של RSP\n"
+        "```\n"
+    )
+
+    def _render_text(self) -> str:
+        import fitz
+        with tempfile.TemporaryDirectory() as d:
+            md_path = os.path.join(d, "snippet.md")
+            with open(md_path, "w", encoding="utf-8") as f:
+                f.write(self.MD)
+            pdf_path = convert_to_pdf(md_path)
+            try:
+                return fitz.open(pdf_path).load_page(0).get_text()
+            finally:
+                os.unlink(pdf_path)
+
+    def test_no_notdef_glyphs_in_code_block(self):
+        # ￿ is what pymupdf emits for a notdef (missing) glyph — the bug.
+        assert "￿" not in self._render_text()
+
+    def test_hebrew_comment_words_rendered(self):
+        text = self._render_text()
+        # Words from the Hebrew comments must be present (PDF text order is
+        # visual, so check membership of whole words, not the full line).
+        for word in ("שמירת", "בסיס", "המחסנית", "הגדרת"):
+            assert word in text, f"Hebrew word {word!r} missing from rendered code block"
 
