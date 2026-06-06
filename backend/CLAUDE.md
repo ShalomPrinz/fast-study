@@ -100,6 +100,8 @@ uv sync --extra test             # one-time / after dep changes: build the venv
 uv run uvicorn main:app --reload # dev (port 8000)
 ```
 
+`--reload` watches the cwd (`backend/`), and the runner writes `timing/timing.db` there each run — so watchfiles logs a steady stream of "N changes detected" (SQLite touches the `.db` plus its journal). It's only noise (non-`.py`, so no actual restart), but to mute it `npm run dev` sets `UVICORN_RELOAD_EXCLUDE='*.db timing/*'` (uvicorn reads `UVICORN_`-prefixed env vars; it has no config-file support). Set the same env var if you launch uvicorn by hand.
+
 ## Running tests
 
 ```bash
