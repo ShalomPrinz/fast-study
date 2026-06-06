@@ -2,7 +2,7 @@
   "name": "fast-study",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n Backend,Frontend,Downloader,Database -c blue,green,magenta,yellow \"cd backend && UVICORN_RELOAD_EXCLUDE='*.db timing/*' uv run uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader start\" \"cd database && uvicorn main:app --reload --port 8001\""
+    "dev": "concurrently -k -t 'HH:mm:ss' -p '[{time}] {name}' -n Backend,Frontend,Downloader,Database -c blue,green,magenta,yellow \"cd backend && UVICORN_RELOAD_EXCLUDE='*.db timing/*' uv run uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader start\" \"cd database && uvicorn main:app --reload --port 8001\""
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

@@ -20,7 +20,7 @@ from pipeline.upload_to_drive import upload_to_drive
 
 log = logging.getLogger("runner")
 if not log.handlers:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message)s")
+    logging.basicConfig(level=logging.INFO, format="[%(name)s] %(message)s")
 log.setLevel(logging.INFO)
 
 RECITATIONS_DIR = "Recitations"
