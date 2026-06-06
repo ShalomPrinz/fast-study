@@ -7,6 +7,7 @@ import RefreshCoursesButton from './RefreshCoursesButton'
 import NewCourseRow from './NewCourseRow'
 import { usePendingUpload } from './PendingUploadModal'
 import RunnerPipelineRow from './RunnerPipelineRow'
+import PaginatedList from './PaginatedList'
 import { useInlineEdit } from '@/hooks/useInlineEdit'
 import { useToggleSet } from '@/hooks/useToggleSet'
 import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
@@ -220,7 +221,10 @@ export default function Sidebar({ selected, onSelect }: Props) {
 
               {expanded.has(course.name) && (
                 <ul className="lecture-list">
-                  {course.lectures.map((lecture) => renderLectureItem(course.name, lecture, 'lecture'))}
+                  <PaginatedList
+                    items={course.lectures}
+                    renderItem={(lecture) => renderLectureItem(course.name, lecture, 'lecture')}
+                  />
 
                   {isAddingLecture && (
                     <li>
@@ -253,7 +257,10 @@ export default function Sidebar({ selected, onSelect }: Props) {
                     </div>
                     {recExpanded && (
                       <ul className="lecture-list recitation-list">
-                        {(course.recitations ?? []).map((rec) => renderLectureItem(course.name, rec, 'recitation'))}
+                        <PaginatedList
+                          items={course.recitations ?? []}
+                          renderItem={(rec) => renderLectureItem(course.name, rec, 'recitation')}
+                        />
                         {isAddingRecitation && (
                           <li>
                             <InlineEditInput
