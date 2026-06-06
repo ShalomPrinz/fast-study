@@ -88,6 +88,88 @@ def test_scheduled_run_skips_when_locked():
     assert scan_calls == [], "scan_pending should not be called while runner is running"
 
 
+# ---- empty-file guard ----
+
+def test_require_nonempty_raises_on_empty():
+    with pytest.raises(RuntimeError, match="is empty"):
+        runner._require_nonempty("summary.md", b"")
+
+
+def test_require_nonempty_allows_content():
+    runner._require_nonempty("summary.md", b"x")  # no raise
+
+
+def test_require_nonempty_appends_known_cause():
+    """For a known file, the message borrows EMPTY_FILE_ISSUES for the 'why'
+    (no exception was raised by the failing tool to derive it from)."""
+    with pytest.raises(RuntimeError, match="summary.md is empty — Gemini returned no text"):
+        runner._require_nonempty("summary.md", b"")
+
+
+def test_require_nonempty_unknown_file_is_generic():
+    """An unmapped filename gets the bare 'is empty' with no trailing hint."""
+    with pytest.raises(RuntimeError) as exc:
+        runner._require_nonempty("mystery.bin", b"")
+    assert str(exc.value) == "mystery.bin is empty"
+
+
+def test_db_workspace_rejects_empty_upload():
+    """Output side: the shared upload path (audio/pdf/drive) must refuse a 0-byte
+    output and never write it to the database service."""
+    with patch.object(runner.db_client, "put_file_bytes") as put:
+        with pytest.raises(RuntimeError, match="is empty"):
+            with runner._db_workspace("C1", "L1", "lecture", upload=["audio.mp3"]) as ws:
+                ws["audio.mp3"].write_bytes(b"")
+    put.assert_not_called()
+
+
+def test_db_workspace_allows_nonempty_upload():
+    with patch.object(runner.db_client, "put_file_bytes") as put:
+        with runner._db_workspace("C1", "L1", "lecture", upload=["audio.mp3"]) as ws:
+            ws["audio.mp3"].write_bytes(b"data")
+    put.assert_called_once()
+
+
+def test_db_workspace_rejects_empty_download():
+    """Input side: a 0-byte prerequisite halts the step before it runs, so the
+    body of the `with` never executes."""
+    entered = {"yes": False}
+    with patch.object(runner.db_client, "get_file_bytes", return_value=b""):
+        with pytest.raises(RuntimeError, match="transcript.txt is empty"):
+            with runner._db_workspace("C1", "L1", "lecture", download=["transcript.txt"]):
+                entered["yes"] = True
+    assert entered["yes"] is False
+
+
+def test_exec_transcribe_rejects_empty_transcript():
+    """An empty Whisper result must halt the step, not write a 0-byte transcript."""
+    with patch.object(runner.db_client, "file_exists", return_value=True), \
+         patch.object(runner.db_client, "get_file_bytes", return_value=b"audio"), \
+         patch.object(runner, "transcribe_audio", return_value=""), \
+         patch.object(runner.db_client, "put_file_bytes") as put:
+        result = runner._exec_transcribe("C1", "L1", "lecture")
+    assert result["status"] == "error"
+    assert "transcript.txt is empty" in result["message"]
+    # transcript.txt must never be written; only partial files may be touched.
+    assert all(c.args[3] != "transcript.txt" for c in put.call_args_list)
+
+
+def test_exec_summarize_rejects_empty_summary():
+    """Output guard: an empty Gemini response is rejected with its known cause,
+    and no 0-byte summary.md is written."""
+    def _exists(course, lecture, kind, name):
+        return name == "transcript.txt"  # transcript present, material absent
+
+    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
+         patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"), \
+         patch.object(runner, "summarize", return_value=""), \
+         patch.object(runner.db_client, "put_summary") as put_summary:
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    assert result["status"] == "error"
+    assert "summary.md is empty — Gemini returned no text" in result["message"]
+    put_summary.assert_not_called()
+
+
 # ---- rate-limit branch ----
 
 def test_rate_limit_sleeps_then_retries_same_step():

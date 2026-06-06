@@ -105,6 +105,18 @@ def test_summarize_raises_on_api_failure(tmp_path):
             summarize(transcript)
 
 
+def test_summarize_returns_empty_on_empty_response(tmp_path):
+    """summarize() does NOT special-case an empty Gemini response — it returns ""
+    and lets the runner's generic empty-file guard reject it. (Keeps all
+    empty-output policy in one place; see runner._require_nonempty.)"""
+    transcript = tmp_path / "transcript.txt"
+    transcript.write_text("hello")
+
+    fake = _make_client(response_text=None)
+    with patch.object(summarize_mod, "_build_client", return_value=fake):
+        assert summarize(transcript) == ""
+
+
 def test_summarize_strips_but_preserves_leading_prose(tmp_path):
     """The old CLI implementation trimmed everything before the first '#'.
     Regression: that workaround must be gone — leading prose stays put,

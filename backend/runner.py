@@ -65,6 +65,39 @@ def get_status() -> dict:
     }
 
 
+# ---- empty-file guard ----
+
+# A pipeline file is never legitimately 0 bytes. When one is, the producing step
+# (or an out-of-band write) failed silently — but the failure mode is usually a
+# tool returning success with no content, so no exception was raised to explain
+# it. This maps a file to its likely cause so _require_nonempty can report the
+# *why* even though there's no raised error to derive it from. The fallback is
+# the generic "is empty" with no hint.
+EMPTY_FILE_ISSUES: dict[str, str] = {
+    "video.mp4":      "the source video is empty or was not fully uploaded",
+    "audio.mp3":      "ffmpeg produced no audio — the video may have no audio track or be corrupt",
+    "transcript.txt": "Whisper returned no text — the audio may be silent or corrupt",
+    "summary.md":     "Gemini returned no text — often finish_reason MALFORMED_RESPONSE, a safety block, or a token-limit cutoff",
+    "summary.pdf":    "pandoc produced an empty PDF — summary.md may be empty or malformed",
+    "drive_url.txt":  "the Drive upload returned no share URL",
+    "material.pdf":   "the attached material PDF is empty",
+}
+
+
+def _require_nonempty(filename: str, data: bytes) -> None:
+    """The generic guard: a 0-byte pipeline file is always a silent failure, so
+    refuse it at every input read and output write. Halting here keeps a 0-byte
+    file from being written or consumed, instead of advancing on it (which
+    `next_step` counts as "exists") and surfacing a misleading downstream error.
+    Before: 0-byte summary.md consumed -> pdf step crashes with "pandoc failed"
+    After:  0-byte summary.md rejected -> "summary.md is empty — Gemini returned no text ..."
+    The message borrows EMPTY_FILE_ISSUES for the cause, since the failing tool
+    raised nothing to derive it from."""
+    if not data:
+        hint = EMPTY_FILE_ISSUES.get(filename)
+        raise RuntimeError(f"{filename} is empty" + (f" — {hint}" if hint else ""))
+
+
 # ---- db_workspace ----
 
 @contextmanager
@@ -72,15 +105,21 @@ def _db_workspace(course: str, lecture: str, kind: str, *, download=(), upload=(
     """Tempdir scoped to one pipeline step: pre-downloads named inputs from the
     database service and uploads named outputs on clean exit. Pipeline binaries
     (ffmpeg/pandoc/Gemini) need real filesystem paths, so bytes have to land
-    somewhere — this just centralizes the round-trip."""
+    somewhere — this just centralizes the round-trip. Inputs are guarded on the
+    way in and outputs on the way out, so no step ever consumes or emits a
+    0-byte file."""
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         paths = {name: tmp_path / name for name in set(download) | set(upload)}
         for name in download:
-            paths[name].write_bytes(db_client.get_file_bytes(course, lecture, kind, name))
+            data = db_client.get_file_bytes(course, lecture, kind, name)
+            _require_nonempty(name, data)
+            paths[name].write_bytes(data)
         yield paths
         for name in upload:
-            db_client.put_file_bytes(course, lecture, kind, name, paths[name].read_bytes())
+            data = paths[name].read_bytes()
+            _require_nonempty(name, data)
+            db_client.put_file_bytes(course, lecture, kind, name, data)
 
 
 # ---- Step executors ----
@@ -106,7 +145,9 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
 
         with tempfile.TemporaryDirectory() as tmp:
             audio_path = Path(tmp) / "audio.mp3"
-            audio_path.write_bytes(db_client.get_file_bytes(course, lecture, kind, "audio.mp3"))
+            audio_bytes = db_client.get_file_bytes(course, lecture, kind, "audio.mp3")
+            _require_nonempty("audio.mp3", audio_bytes)
+            audio_path.write_bytes(audio_bytes)
 
             # Resume support: pipeline writes partial.txt/meta next to audio_path and
             # validates audio mtime+size against the meta. Re-downloading audio.mp3 each
@@ -149,7 +190,9 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
                     },
                 }
 
-            db_client.put_file_bytes(course, lecture, kind, "transcript.txt", transcript.encode("utf-8"))
+            transcript_bytes = transcript.encode("utf-8")
+            _require_nonempty("transcript.txt", transcript_bytes)
+            db_client.put_file_bytes(course, lecture, kind, "transcript.txt", transcript_bytes)
             db_client.delete_file(course, lecture, kind, PARTIAL_TXT)
             db_client.delete_file(course, lecture, kind, PARTIAL_META)
             return {"status": "done"}
@@ -169,6 +212,10 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
         print(f"Summarize: material.pdf {'found — passing to Gemini' if has_material else 'not found — transcript only'}")
         with _db_workspace(course, lecture, kind, download=download) as ws:
             summary = summarize(ws["transcript.txt"], ws.get("material.pdf") if has_material else None)
+        # Gemini can return HTTP 200 with no text (e.g. finish_reason
+        # MALFORMED_RESPONSE) — the generic guard turns that into a clear error
+        # instead of a 0-byte summary.md.
+        _require_nonempty("summary.md", summary.encode("utf-8"))
         db_client.put_summary(course, lecture, kind, summary)
         return {"status": "done", "usedMaterial": has_material}
     except Exception as e:
@@ -184,7 +231,9 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
             # summary.md comes from get_summary (envelope-wrapped), not get_file_bytes,
             # so write it into the workspace dir manually next to the pandoc output.
             md_path = ws["summary.pdf"].parent / "summary.md"
-            md_path.write_text(db_client.get_summary(course, lecture, kind), encoding="utf-8")
+            md = db_client.get_summary(course, lecture, kind)
+            _require_nonempty("summary.md", md.encode("utf-8"))
+            md_path.write_text(md, encoding="utf-8")
             convert_to_pdf(str(md_path))
         return {"status": "done"}
     except Exception as e:
