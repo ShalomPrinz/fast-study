@@ -38,4 +38,28 @@ This is the only approach I've found that works on this engine. Don't replace it
 
 - **`Shaded` env is already empty in pandoc 2.9**: `\newenvironment{Shaded}{}{}`. There is no gray background to "remove" and overriding `Shaded` accomplishes nothing.
 - **Inline code (` `` `) is separate**: `force_ltr_inline_code` in `to_pdf.py` wraps backtick code in `\LR{\texttt{...}}`. This is enough for inline because no `fancyvrb`/`Verbatim` is involved — it's a regular LaTeX `\texttt` token in an RTL paragraph, and `\LR{}` IS enough to fix that.
-- **Verifying a PDF fix is non-negotiable**: tests on the LaTeX string output only verify structure. Bracket mirroring happens at XeLaTeX render time. Compile the actual PDF and extract text (`pip install --user pymupdf`; `python3 -c "import fitz; print(fitz.open(p).load_page(0).get_text())"`) before claiming any bidi fix works.
+- **Verifying a PDF fix is non-negotiable**: tests on the LaTeX string output only verify structure. Bracket mirroring happens at XeLaTeX render time. Compile the actual PDF and extract text before claiming any bidi fix works — but read the PyMuPDF caveat below first, because the naive `get_text()` extraction lies about RTL.
+
+### PyMuPDF `get_text()` returns RTL in VISUAL order — don't substring-match it
+
+When verifying a bidi/dash/order fix, the obvious check is `fitz.open(p).load_page(0).get_text()` followed by `"NP-ש" in text`. **This gives false positives and false negatives on Hebrew lines.** PyMuPDF emits glyphs in *visual* (left-to-right on the page) order, not *logical* (reading) order. For an RTL line each Hebrew word comes out reversed, and Latin/neutral fragments land wherever they sit visually — so a correctly-rendered `כ-NP-שלמה` extracts as `המלש-NP-כ`, and a search for the bug signature `NPש` matches purely as an artifact of that reversal (the `ה` of a reversed `למחלקה` lands next to `NP`). I wasted a verification cycle trusting this.
+
+**When it bites:** any time the line mixes RTL (Hebrew) with an LTR island (English term, code, math) AND you care about the *order/adjacency* of characters across that boundary — exactly the dash/bidi bugs this file is about. It does NOT bite when you only care about presence/absence of a glyph, or for pure-LTR code blocks.
+
+**Reliable check — inspect true visual order via glyph x-coordinates:**
+
+```python
+import fitz
+from collections import defaultdict
+d = fitz.open(p).load_page(0).get_text("rawdict")
+lines = defaultdict(list)
+for b in d["blocks"]:
+    for l in b.get("lines", []):
+        for s in l["spans"]:
+            for c in s["chars"]:
+                lines[round(c["origin"][1])].append((c["origin"][0], c["c"]))
+for y in sorted(lines):
+    print(repr("".join(ch for _, ch in sorted(lines[y]))))  # sorted by x = true L→R
+```
+
+Then read the boundary by eye: Hebrew runs are reversed (e.g. `שלמה`→`המלש`), but the *relative placement* of the LTR island and the dashes is faithful. `.תומלש-NP` is visually `NP-שלמות.` (hyphen between NP and Hebrew = correct); a fused `NPשלמות` with no dash would be the real bug. Verify dash/order fixes this way, not with `in` on `get_text()`.
