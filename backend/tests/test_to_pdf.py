@@ -191,6 +191,33 @@ class TestWrapEnglishPhrases:
         assert r"\LR{Git}" in result
         assert "ב-" in result
 
+    # --- Trailing hyphen/slash binds to following text, not the LTR run ---
+
+    def test_trailing_hyphen_before_hebrew_excluded(self):
+        # Regression: a hyphen between Latin and Hebrew used to be swallowed
+        # into \LR{NP-}, so at render time it jumped to the left of NP and
+        # collided with the preceding hyphen ("-NPשלמות"). It must stay outside.
+        result = wrap_english_phrases("NP-שלמות")
+        assert r"\LR{NP}" in result
+        assert r"\LR{NP-}" not in result
+        assert "}-שלמות" in result
+
+    def test_hyphen_both_sides_binds_to_hebrew(self):
+        # כ-NP-שלמה: only "NP" is wrapped; both hyphens stay as Hebrew-side text.
+        result = wrap_english_phrases("כ-NP-שלמה")
+        assert result == r"כ-\LR{NP}-שלמה"
+
+    def test_internal_hyphen_kept(self):
+        # NP-hard: hyphen between two Latin runs stays inside the LTR span.
+        result = wrap_english_phrases("בעיית NP-hard קשה")
+        assert r"\LR{NP-hard}" in result
+
+    def test_trailing_slash_before_hebrew_excluded(self):
+        # A trailing slash before Hebrew must not be pulled into the LTR run.
+        result = wrap_english_phrases("ה-API/שלו")
+        assert r"\LR{API}" in result
+        assert r"\LR{API/}" not in result
+
     # --- Markdown structure preserved ---
 
     def test_heading_marker_preserved(self):

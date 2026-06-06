@@ -44,10 +44,10 @@ _LATEX_SPECIAL = {
 }
 # A "Latin token" for bidi-wrapping: starts with an optional digit-hyphen
 # prefix (3-way) and/or a leading slash (/index.html), then a letter, then any
-# mix of alnum/underscore/hyphen/slash and dots that are followed by more
-# alnum (HTTP/1.1, Node.js, /api/v2). Trailing sentence dots are excluded by
-# the lookahead so they fall into the punctuation capture group instead.
-_WORD = r'(?:[0-9]+\-)?/?[A-Za-z](?:[A-Za-z0-9_\-/]|\.(?=[A-Za-z0-9]))*'
+# mix of alnum/underscore plus dot/hyphen/slash that are followed by more alnum
+# (HTTP/1.1, Node.js, /api/v2, NP-hard). The lookahead on -/./ excludes a
+# TRAILING separator so it stays with the following text instead of the LTR run.
+_WORD = r'(?:[0-9]+\-)?/?[A-Za-z](?:[A-Za-z0-9_]|[\-/.](?=[A-Za-z0-9]))*'
 MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
 LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
 
