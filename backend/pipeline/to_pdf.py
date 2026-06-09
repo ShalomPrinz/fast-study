@@ -42,12 +42,23 @@ _LATEX_SPECIAL = {
     '^': r'\textasciicircum{}',
     '~': r'\textasciitilde{}',
 }
+# Latin letters incl. accented forms (Scheffé, café): Latin-1 Supplement +
+# Latin Extended-A/B, minus the × (U+00D7) and ÷ (U+00F7) signs sitting in that
+# block. ASCII-only [A-Za-z] used to cut "Scheffé" -> \LR{Scheff}+é, orphaning
+# the é in the RTL run so it rendered as "éScheff".
+_LATIN = r'A-Za-zÀ-ÖØ-öø-ɏ'
 # A "Latin token" for bidi-wrapping: starts with an optional digit-hyphen
 # prefix (3-way) and/or a leading slash (/index.html), then a letter, then any
-# mix of alnum/underscore plus dot/hyphen/slash that are followed by more alnum
-# (HTTP/1.1, Node.js, /api/v2, NP-hard). The lookahead on -/./ excludes a
-# TRAILING separator so it stays with the following text instead of the LTR run.
-_WORD = r'(?:[0-9]+\-)?/?[A-Za-z](?:[A-Za-z0-9_]|[\-/.](?=[A-Za-z0-9]))*'
+# mix of letters/digits/underscore plus separators (dot/hyphen/slash and the
+# apostrophes '/’) that are FOLLOWED by more letters/digits (HTTP/1.1, Node.js,
+# /api/v2, NP-hard, Tukey’s). The lookahead excludes a TRAILING separator so it
+# stays with the following text instead of the LTR run — and so a possessive
+# apostrophe keeps "Tukey’s" as ONE \LR run instead of \LR{Tukey}’\LR{s} (which
+# left the neutral ’ in RTL, reordering to "s HSD'Tukey").
+_WORD = (
+    r'(?:[0-9]+\-)?/?[' + _LATIN + r']'
+    r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r'0-9]))*'
+)
 MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
 LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
 

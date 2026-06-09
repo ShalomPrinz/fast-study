@@ -218,6 +218,46 @@ class TestWrapEnglishPhrases:
         assert r"\LR{API}" in result
         assert r"\LR{API/}" not in result
 
+    # --- Accented Latin letters stay inside the run ---
+
+    def test_accented_letter_kept_in_run(self):
+        # Regression: ASCII-only [A-Za-z] cut "Scheffé" -> \LR{Scheff}é, leaving
+        # é in the RTL run so it rendered reordered as "éScheff".
+        result = wrap_english_phrases("מבחן Scheffé כאן")
+        assert r"\LR{Scheffé}" in result
+        assert r"\LR{Scheff}é" not in result
+
+    def test_accented_leading_letter_starts_run(self):
+        # An accented letter must also be a valid run START, not just a body char.
+        result = wrap_english_phrases("העיר Évian יפה")
+        assert r"\LR{Évian}" in result
+
+    def test_division_sign_not_treated_as_letter(self):
+        # × (U+00D7) and ÷ (U+00F7) sit inside the Latin-1 block but are NOT
+        # letters — they must not extend or start a run.
+        result = wrap_english_phrases("ביטוי a÷b כאן")
+        assert r"\LR{a÷b}" not in result
+
+    # --- Apostrophe possessives/contractions kept as one run ---
+
+    def test_curly_apostrophe_possessive_kept_in_run(self):
+        # Regression: Tukey’s used to split into \LR{Tukey}’\LR{s}, leaving the
+        # neutral ’ in RTL so it reordered ("s HSD'Tukey"). Must be one run.
+        result = wrap_english_phrases("מבחן Tukey’s HSD כאן")
+        assert r"\LR{Tukey’s HSD}" in result
+        assert r"\LR{Tukey}’" not in result
+
+    def test_straight_apostrophe_contraction_kept_in_run(self):
+        result = wrap_english_phrases("the user can't do it")
+        assert r"\LR{the user can't do it}" in result
+
+    def test_trailing_apostrophe_before_hebrew_excluded(self):
+        # An apostrophe NOT followed by a letter/digit (here a closing quote
+        # before Hebrew) must stay outside the LTR run.
+        result = wrap_english_phrases("ה-class’ שלו")
+        assert r"\LR{class}" in result
+        assert r"\LR{class’}" not in result
+
     # --- Markdown structure preserved ---
 
     def test_heading_marker_preserved(self):
