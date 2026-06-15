@@ -3,6 +3,7 @@
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import type { RunInitResult } from '@/types'
+import type { ConnectionError } from '@/services/http'
 
 export { ToastContainer }
 
@@ -13,6 +14,11 @@ function appToast(kind: ToastKind, message: string): void {
   toast[kind](message)
 }
 export { appToast as toast }
+
+// Surface a "service is down" error, toastId is keyed per service (using its url)
+export function toastConnectionError(err: ConnectionError): void {
+  toast.error(err.message, { toastId: `conn:${err.baseUrl}` })
+}
 
 // Pass-through for the toastify promise lifecycle. Returns the original promise.
 export function toastPromise<T>(

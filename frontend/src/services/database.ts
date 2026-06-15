@@ -1,7 +1,7 @@
 import type { FileName, Course, Kind } from '@/types'
 import { createClient, kindQuery, lectureBase, path } from './http'
 
-const database = createClient(import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001')
+const database = createClient(import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001', 'database service')
 
 export const databaseUrl = database.url('')
 

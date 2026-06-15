@@ -1,7 +1,7 @@
 import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus } from '@/types'
 import { createClient, kindQuery, lectureBase } from './http'
 
-const backend = createClient(import.meta.env.VITE_API_URL ?? 'http://localhost:8000')
+const backend = createClient(import.meta.env.VITE_API_URL ?? 'http://localhost:8000', 'backend service')
 
 export async function runStep(course: string, lecture: string, step: Step, kind?: Kind): Promise<RunInitResult> {
   return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/run/${step}${kindQuery(kind)}`)

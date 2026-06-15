@@ -1,8 +1,17 @@
 import type { Kind } from '@/types'
 import { kindSearch } from '@/utils/route'
+import { toastConnectionError } from '@/services/toaster'
 
 export function httpError(res: Response): Error {
   return new Error(`${res.status} ${res.statusText}`)
+}
+
+// Thrown when a request never reaches the server (connection refused / service down)
+export class ConnectionError extends Error {
+  constructor(public serviceName: string, public baseUrl: string, public cause?: unknown) {
+    super(`Can't reach ${serviceName} at ${baseUrl}. Make sure it's running.`)
+    this.name = 'ConnectionError'
+  }
 }
 
 export function kindQuery(kind: Kind | undefined): string {
@@ -48,11 +57,23 @@ function buildInit(init: RequestOptions | undefined, method: string): RequestIni
   return { ...rest, method, headers, body }
 }
 
-export function createClient(baseUrl: string): Client {
+export function createClient(baseUrl: string, serviceName: string): Client {
   const url = (path: string) => `${baseUrl}${path}`
 
   const json = async <T>(path: string, method: string, init?: RequestOptions): Promise<T> => {
-    const res = await fetch(url(path), buildInit(init, method))
+    const reqInit = buildInit(init, method)
+    let res: Response
+    try {
+      res = await fetch(url(path), reqInit)
+    } catch (err) {
+      // Per the Fetch spec, only network failures (server unreachable) reject as a TypeError
+      if (err instanceof TypeError) {
+        const ce = new ConnectionError(serviceName, baseUrl, err)
+        toastConnectionError(ce)
+        throw ce
+      }
+      throw err
+    }
     if (!res.ok) throw httpError(res)
     return res.json() as Promise<T>
   }
