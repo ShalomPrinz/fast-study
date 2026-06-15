@@ -34,9 +34,18 @@ export default function RunnerPipelineRow() {
   const running = status?.runner.running ?? false
   const inFlight = status?.inFlight ?? []
 
-  // Nothing running and nothing in-flight — show the CTA to kick off a sweep.
-  if (!running && inFlight.length === 0) {
-    return <RunnerInactive onClick={handleRunClick} />
+  const inFlightRows = inFlight.map((entry) => (
+    <InFlightRow key={`${entry.course}||${entry.lecture}||${entry.kind}`} entry={entry} />
+  ))
+
+  // Show the "Run incomplete pipelines" button if automated runner is not running
+  if (!running) {
+    return (
+      <>
+        <RunnerInactive onClick={handleRunClick} />
+        {inFlight.length > 0 && <div className="runner-panel">{inFlightRows}</div>}
+      </>
+    )
   }
 
   // done is 0-indexed but we want to show 1-indexed progress, so add 1 - but cap at total.
@@ -45,14 +54,10 @@ export default function RunnerPipelineRow() {
 
   return (
     <div className="runner-panel">
-      {running && (
-        <div className="runner-panel-header">
-          Running pipelines… {runnerCurrentDisplay}
-        </div>
-      )}
-      {inFlight.map((entry) => (
-        <InFlightRow key={`${entry.course}||${entry.lecture}||${entry.kind}`} entry={entry} />
-      ))}
+      <div className="runner-panel-header">
+        Running pipelines… {runnerCurrentDisplay}
+      </div>
+      {inFlightRows}
     </div>
   )
 }
