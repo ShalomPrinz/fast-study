@@ -117,6 +117,19 @@ def unwrap_math_code(text: str) -> str:
     return MATH_IN_CODE_RE.sub(lambda m: m.group(1), text)
 
 
+_TEXT_WRAPPED_MACRO_RE = re.compile(r'\\text\s*\{\s*(\\[A-Za-z]+)\s*\}')
+
+
+def unwrap_math_text_macros(text: str) -> str:
+    # The LLM sometimes wraps a math-only macro in \text{}, e.g. \text{\Pi}_k.
+    # \text switches to text mode where \Pi is undefined -> "Missing $ inserted".
+    # Only fires when \text{}'s whole body is a single macro (real text like
+    # \text{ s.t. } is left untouched).
+    # Before: \text{\Pi}_k  -> pandoc/XeLaTeX error "Missing $ inserted"
+    # After:  \Pi_k         -> renders as Π_k
+    return _TEXT_WRAPPED_MACRO_RE.sub(lambda m: m.group(1), text)
+
+
 def normalize_math_spans(text: str) -> str:
     # Pandoc's inline math requires next to math `$`.
     # No normalization: `$ \geq 0$`     -> Error: "Missing $ inserted"
@@ -203,6 +216,7 @@ def convert_to_pdf(md_path: str) -> str:
     def preprocess(t: str) -> str:
         t = normalize_dashes(t)
         t = unwrap_math_code(t)
+        t = unwrap_math_text_macros(t)
         t = normalize_math_spans(t)
         t = ensure_blank_before_lists(t)
         t = wrap_english_phrases(t)

@@ -16,6 +16,7 @@ from to_pdf import (
     force_ltr_inline_code,
     apply_outside_fences,
     unwrap_math_code,
+    unwrap_math_text_macros,
 )
 
 
@@ -362,6 +363,35 @@ class TestUnwrapMathCode:
     def test_multiple_math_code_spans_each_unwrapped(self):
         text = r"`$a$` ו-`$b$`"
         assert unwrap_math_code(text) == r"$a$ ו-$b$"
+
+
+# ---------------------------------------------------------------------------
+# unwrap_math_text_macros
+# ---------------------------------------------------------------------------
+
+class TestUnwrapMathTextMacros:
+    def test_lone_macro_unwrapped(self):
+        # Regression: \text{\Pi}_k errors with "Missing $ inserted" because
+        # \Pi is undefined in \text's text mode.
+        assert unwrap_math_text_macros(r"$\text{\Pi}_k = co\Sigma_k$") == \
+            r"$\Pi_k = co\Sigma_k$"
+
+    def test_multiple_occurrences_unwrapped(self):
+        text = r"המחלקה $\text{\Pi}_k$ והמחלקה $\text{\Pi}_2$"
+        assert unwrap_math_text_macros(text) == \
+            r"המחלקה $\Pi_k$ והמחלקה $\Pi_2$"
+
+    def test_real_text_left_untouched(self):
+        # \text wrapping actual prose must survive — only lone macros are unwrapped.
+        text = r"$\dots Q_k y_k \text{ s.t. } V(x) = 1$"
+        assert unwrap_math_text_macros(text) == text
+
+    def test_whitespace_inside_braces_tolerated(self):
+        assert unwrap_math_text_macros(r"$\text{ \Pi }_k$") == r"$\Pi_k$"
+
+    def test_no_text_macro_is_noop(self):
+        text = r"$\Sigma_k = co\Pi_k$"
+        assert unwrap_math_text_macros(text) == text
 
 
 # ---------------------------------------------------------------------------
