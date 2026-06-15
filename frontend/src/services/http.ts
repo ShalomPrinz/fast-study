@@ -14,6 +14,10 @@ export class ConnectionError extends Error {
   }
 }
 
+export function isConnectionError(err: unknown): err is ConnectionError {
+  return err instanceof ConnectionError
+}
+
 export function kindQuery(kind: Kind | undefined): string {
   return kindSearch(kind)
 }

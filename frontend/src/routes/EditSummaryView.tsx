@@ -6,6 +6,7 @@ import { useLectureRoute } from '@/hooks/useLectureRoute'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useRunnerStatus } from '@/contexts/RunnerStatusContext'
 import { toast, toastInitResult } from '@/services/toaster'
+import { isConnectionError } from '@/services/http'
 import PdfViewer from '@/components/PdfViewer'
 
 export default function EditSummaryView() {
@@ -72,7 +73,7 @@ export default function EditSummaryView() {
       await saveSummaryContent(course, lecture, content, kind)
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to save summary'
-      toast('error', message)
+      if (!isConnectionError(e)) toast('error', message) // connection errors are toasted centrally
       setError(message)
       setGenerating(false)
       return

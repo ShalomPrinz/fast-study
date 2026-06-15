@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { RunnerStatus, InFlightEntry, Kind } from '@/types'
 import { runAll, fetchRunnerStatus } from '@/services/backend'
+import { isConnectionError } from '@/services/http'
 import { inFlightKey } from '@/utils/inFlightKey'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { useNotify } from '@/hooks/useNotify'
@@ -76,6 +77,7 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       }
       setStatus(s)
     } catch (err) {
+      if (isConnectionError(err)) return // already toasted centrally by the http client
       sendUpdateRef.current?.('error', `Runner failed: ${err}`)
     }
   }
