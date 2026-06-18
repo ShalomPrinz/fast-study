@@ -24,12 +24,19 @@ LATEX_HEADER = r"""
 """
 
 LIST_ITEM_RE = re.compile(r'^(\s*(?:[-*+]|\d+\.)\s)')
-MATH_SPAN_RE = re.compile(r'\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$')
+# Inline math body excludes the backtick: a `$` inside inline code (`$`, `$myvar`)
+# is a LITERAL dollar, never a math delimiter, and pandoc won't let math cross a
+# code span. Without the exclusion the pattern pairs a `$` in one code span with
+# a `$` in another, swallowing the Hebrew between them as "math".
+# Before: `$` לפני שמו. ללא הסימן `$`  -> \(\LR{\texttt{ לפני... }}\) "Missing $ inserted"
+# After:  same input                   -> two literal code spans, no false math
+_INLINE_MATH = r'\$[^\$\n`]+?\$'
+MATH_SPAN_RE = re.compile(r'\$\$[\s\S]*?\$\$|' + _INLINE_MATH)
 INLINE_CODE_RE = re.compile(r'`([^`\n]+)`')
 # A code span whose entire body is one math expression: the LLM wraps math in
 # backticks (`$...$`). The trailing ` must follow the closing $ (only whitespace
 # between) so spans mixing code and prose — `RSI` — are left as real code.
-MATH_IN_CODE_RE = re.compile(r'`\s*(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$)\s*`')
+MATH_IN_CODE_RE = re.compile(r'`\s*(\$\$[\s\S]*?\$\$|' + _INLINE_MATH + r')\s*`')
 
 _LATEX_SPECIAL = {
     '{': r'\{',
@@ -82,7 +89,7 @@ def wrap_english_phrases(text: str) -> str:
     # Split across the WHOLE text — splitting line-by-line first would break
     # multi-line $$...$$ blocks, leaking their Latin contents into MULTI_LATIN_RE
     # and yielding `\LR{W}` inside math mode → "Missing $ inserted" from LaTeX.
-    _PROTECTED_RE = re.compile(r'(\$\$[\s\S]*?\$\$|\$[^\$\n]+?\$|`[^`]*`)')
+    _PROTECTED_RE = re.compile(r'(\$\$[\s\S]*?\$\$|' + _INLINE_MATH + r'|`[^`]*`)')
     parts = _PROTECTED_RE.split(text)
     out = []
     for i, part in enumerate(parts):

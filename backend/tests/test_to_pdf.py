@@ -314,6 +314,14 @@ class TestWrapEnglishPhrases:
         assert r"\LR{Pull Request}" in result
         assert r"\LR{times}" not in result
 
+    def test_dollar_code_spans_protected_as_code_not_math(self):
+        # Regression: the protection regex paired `$` across two code spans,
+        # protecting the Hebrew between them as a fake math span. The backtick
+        # code spans must survive so force_ltr_inline_code can escape them.
+        result = wrap_english_phrases("הסימן `$` לפני שמו. ללא הסימן `$` סוף")
+        assert "`$`" in result
+        assert r"\LR{$" not in result
+
 
 # ---------------------------------------------------------------------------
 # unwrap_math_code
@@ -363,6 +371,13 @@ class TestUnwrapMathCode:
     def test_multiple_math_code_spans_each_unwrapped(self):
         text = r"`$a$` ו-`$b$`"
         assert unwrap_math_code(text) == r"$a$ ו-$b$"
+
+    def test_literal_dollar_code_spans_not_fused_across_backticks(self):
+        # Regression: two separate inline-code spans each holding a literal `$`
+        # were fused into one fake `$...$` math span swallowing the Hebrew
+        # between them, producing \(\LR{\texttt{...}}\) -> "Missing $ inserted".
+        text = "הסימן `$` לפני שמו. ללא הסימן `$`,"
+        assert unwrap_math_code(text) == text
 
 
 # ---------------------------------------------------------------------------
@@ -443,6 +458,12 @@ class TestNormalizeMathSpans:
     def test_lone_dollar_unchanged(self):
         # A single $ with no closing partner is not a math span.
         text = "price is $5 today"
+        assert normalize_math_spans(text) == text
+
+    def test_dollars_in_separate_code_spans_not_paired(self):
+        # A `$` inside inline code is a literal dollar, not a math delimiter:
+        # the inline-math pattern must not pair `$` across a backtick boundary.
+        text = "הסימן `$` לפני שמו. ללא הסימן `$`,"
         assert normalize_math_spans(text) == text
 
 
