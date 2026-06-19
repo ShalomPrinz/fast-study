@@ -258,13 +258,15 @@ export default function Sidebar({ selected, onSelect }: Props) {
                   <span className="chevron">{recExpanded ? '▾' : '▸'}</span>
                   <span>Recitations</span>
                 </button>
-                <button
-                  className="course-add-btn"
-                  onClick={(e) => startAdding(e, course.name, 'recitation')}
-                  title="Add recitation"
-                >
-                  +
-                </button>
+                {!shiftHeld && (
+                  <button
+                    className="course-add-btn"
+                    onClick={(e) => startAdding(e, course.name, 'recitation')}
+                    title="Add recitation"
+                  >
+                    +
+                  </button>
+                )}
               </div>
               {recExpanded && (
                 <ul className="lecture-list recitation-list">
