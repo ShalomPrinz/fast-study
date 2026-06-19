@@ -21,6 +21,10 @@ export async function renameCourse(oldName: string, newName: string): Promise<vo
   await database.patch(path`/courses/${oldName}`, { json: { name: newName } })
 }
 
+export async function setCourseArchived(course: string, archived: boolean): Promise<void> {
+  await database.patch(path`/courses/${course}/archived`, { json: { archived } })
+}
+
 export async function createLecture(course: string, name: string, kind?: Kind): Promise<void> {
   await database.post(
     path`/courses/${course}/lectures` + kindQuery(kind),

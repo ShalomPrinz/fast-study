@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Lecture, Selected, Kind } from '@/types'
-import { createLecture, renameCourse, renameLecture } from '@/services/database'
+import type { Course, Lecture, Selected, Kind } from '@/types'
+import { createLecture, renameCourse, renameLecture, setCourseArchived } from '@/services/database'
 import { toast } from '@/services/toaster'
+import { useShiftHeld } from '@/hooks/useShiftHeld'
+import Icon from '@/components/Icon'
 import InlineEditInput from '@/components/InlineEditInput'
 import RefreshCoursesButton from './RefreshCoursesButton'
 import NewCourseRow from './NewCourseRow'
@@ -35,8 +37,10 @@ export default function Sidebar({ selected, onSelect }: Props) {
   const [renaming, setRenaming] = useState<RenameTarget | null>(null)
   const [dragOver, setDragOver] = useState<DragTarget | null>(null)
   const [renamingCourse, setRenamingCourse] = useState<string | null>(null)
+  const [showArchived, setShowArchived] = useState(false)
   const didAutoExpandRef = useRef(false)
   const upload = usePendingUpload()
+  const shiftHeld = useShiftHeld()
 
   useEffect(() => {
     if (didAutoExpandRef.current) return
@@ -137,6 +141,12 @@ export default function Sidebar({ selected, onSelect }: Props) {
     refreshCourses()
   }
 
+  async function toggleArchived(e: React.MouseEvent, course: Course) {
+    e.stopPropagation()
+    await setCourseArchived(course.name, !course.archived)
+    refreshCourses()
+  }
+
   function renderLectureItem(courseName: string, lecture: Lecture, kind: Kind) {
     const isSelected =
       selected?.course === courseName && selected?.lecture === lecture.name && selected?.kind === kind
@@ -172,6 +182,118 @@ export default function Sidebar({ selected, onSelect }: Props) {
     )
   }
 
+  function renderCourse(course: Course) {
+    const recKey = recitationGroupKey(course.name)
+    const recExpanded = recitationsExpanded.has(recKey)
+    const isAddingLecture = adding?.course === course.name && adding.kind === 'lecture'
+    const isAddingRecitation = adding?.course === course.name && adding.kind === 'recitation'
+    return (
+      <div key={course.name} className="course-group">
+        <div className="course-header">
+          {renamingCourse === course.name ? (
+            <InlineEditInput
+              edit={renameCourseEdit}
+              onCommit={commitRenameCourse}
+              onCancel={() => { setRenamingCourse(null); renameCourseEdit.setValue('') }}
+            />
+          ) : (
+          <button
+            className="course-toggle"
+            onClick={(e) => {
+              if (e.shiftKey) startRenamingCourse(e, course.name)
+              else toggleCourse(course.name)
+            }}
+            dir="auto"
+          >
+            <span className="chevron">{expanded.has(course.name) ? '▾' : '▸'}</span>
+            <span>{course.name}</span>
+          </button>
+          )}
+          {renamingCourse !== course.name && (
+            shiftHeld ? (
+              <button
+                className="course-add-btn course-archive-btn"
+                onClick={(e) => toggleArchived(e, course)}
+                title={course.archived ? 'Unarchive course' : 'Archive course'}
+              >
+                <Icon icon={course.archived ? 'unarchive' : 'archive'} />
+              </button>
+            ) : (
+              <button
+                className="course-add-btn"
+                onClick={(e) => startAdding(e, course.name, 'lecture')}
+                title="Add lecture"
+              >
+                +
+              </button>
+            )
+          )}
+        </div>
+
+        {expanded.has(course.name) && (
+          <ul className="lecture-list">
+            <PaginatedList
+              items={course.lectures}
+              renderItem={(lecture) => renderLectureItem(course.name, lecture, 'lecture')}
+            />
+
+            {isAddingLecture && (
+              <li>
+                <InlineEditInput
+                  edit={addLectureEdit}
+                  onCommit={commitAdd}
+                  onCancel={() => { setAdding(null); addLectureEdit.setValue('') }}
+                  placeholder="Lecture name…"
+                />
+              </li>
+            )}
+
+            <li className="recitations-group">
+              <div className="recitations-header">
+                <button
+                  className="course-toggle recitations-toggle"
+                  onClick={() => toggleRecitations(course.name)}
+                  dir="auto"
+                >
+                  <span className="chevron">{recExpanded ? '▾' : '▸'}</span>
+                  <span>Recitations</span>
+                </button>
+                <button
+                  className="course-add-btn"
+                  onClick={(e) => startAdding(e, course.name, 'recitation')}
+                  title="Add recitation"
+                >
+                  +
+                </button>
+              </div>
+              {recExpanded && (
+                <ul className="lecture-list recitation-list">
+                  <PaginatedList
+                    items={course.recitations ?? []}
+                    renderItem={(rec) => renderLectureItem(course.name, rec, 'recitation')}
+                  />
+                  {isAddingRecitation && (
+                    <li>
+                      <InlineEditInput
+                        edit={addLectureEdit}
+                        onCommit={commitAdd}
+                        onCancel={() => { setAdding(null); addLectureEdit.setValue('') }}
+                        placeholder="Recitation name…"
+                      />
+                    </li>
+                  )}
+                </ul>
+              )}
+            </li>
+          </ul>
+        )}
+      </div>
+    )
+  }
+
+  const active = courses.filter((c) => !c.archived)
+  const archived = courses.filter((c) => c.archived)
+
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -181,105 +303,26 @@ export default function Sidebar({ selected, onSelect }: Props) {
       <NewCourseRow />
       <RunnerPipelineRow />
       <nav className="sidebar-nav">
-        {courses.map((course) => {
-          const recKey = recitationGroupKey(course.name)
-          const recExpanded = recitationsExpanded.has(recKey)
-          const isAddingLecture = adding?.course === course.name && adding.kind === 'lecture'
-          const isAddingRecitation = adding?.course === course.name && adding.kind === 'recitation'
-          return (
-            <div key={course.name} className="course-group">
-              <div className="course-header">
-                {renamingCourse === course.name ? (
-                  <InlineEditInput
-                    edit={renameCourseEdit}
-                    onCommit={commitRenameCourse}
-                    onCancel={() => { setRenamingCourse(null); renameCourseEdit.setValue('') }}
-                  />
-                ) : (
-                <button
-                  className="course-toggle"
-                  onClick={(e) => {
-                    if (e.shiftKey) startRenamingCourse(e, course.name)
-                    else toggleCourse(course.name)
-                  }}
-                  dir="auto"
-                >
-                  <span className="chevron">{expanded.has(course.name) ? '▾' : '▸'}</span>
-                  <span>{course.name}</span>
-                </button>
-                )}
-                {renamingCourse !== course.name && (
-                  <button
-                    className="course-add-btn"
-                    onClick={(e) => startAdding(e, course.name, 'lecture')}
-                    title="Add lecture"
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-
-              {expanded.has(course.name) && (
-                <ul className="lecture-list">
-                  <PaginatedList
-                    items={course.lectures}
-                    renderItem={(lecture) => renderLectureItem(course.name, lecture, 'lecture')}
-                  />
-
-                  {isAddingLecture && (
-                    <li>
-                      <InlineEditInput
-                        edit={addLectureEdit}
-                        onCommit={commitAdd}
-                        onCancel={() => { setAdding(null); addLectureEdit.setValue('') }}
-                        placeholder="Lecture name…"
-                      />
-                    </li>
-                  )}
-
-                  <li className="recitations-group">
-                    <div className="recitations-header">
-                      <button
-                        className="course-toggle recitations-toggle"
-                        onClick={() => toggleRecitations(course.name)}
-                        dir="auto"
-                      >
-                        <span className="chevron">{recExpanded ? '▾' : '▸'}</span>
-                        <span>Recitations</span>
-                      </button>
-                      <button
-                        className="course-add-btn"
-                        onClick={(e) => startAdding(e, course.name, 'recitation')}
-                        title="Add recitation"
-                      >
-                        +
-                      </button>
-                    </div>
-                    {recExpanded && (
-                      <ul className="lecture-list recitation-list">
-                        <PaginatedList
-                          items={course.recitations ?? []}
-                          renderItem={(rec) => renderLectureItem(course.name, rec, 'recitation')}
-                        />
-                        {isAddingRecitation && (
-                          <li>
-                            <InlineEditInput
-                              edit={addLectureEdit}
-                              onCommit={commitAdd}
-                              onCancel={() => { setAdding(null); addLectureEdit.setValue('') }}
-                              placeholder="Recitation name…"
-                            />
-                          </li>
-                        )}
-                      </ul>
-                    )}
-                  </li>
-                </ul>
-              )}
-            </div>
-          )
-        })}
+        {active.map(renderCourse)}
       </nav>
+
+      <button
+        className={`archived-footer-btn${showArchived ? ' active' : ''}`}
+        onClick={() => setShowArchived((v) => !v)}
+      >
+        <Icon icon="archive-box" />
+        <span>Archived ({archived.length})</span>
+      </button>
+
+      {showArchived && (
+        <nav className="sidebar-nav archived-panel">
+          {archived.length === 0 ? (
+            <div className="archived-empty">No archived courses</div>
+          ) : (
+            archived.map(renderCourse)
+          )}
+        </nav>
+      )}
 
       {upload.modal}
     </aside>
