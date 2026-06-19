@@ -65,6 +65,18 @@ async def patch_course(course: str, request: Request):
         return _ok(str(e), 400)
 
 
+@app.patch("/courses/{course}/archived")
+async def patch_course_archived(course: str, request: Request):
+    """Archive or unarchive a course (toggles its .archived marker)."""
+
+    try:
+        body = await request.json()
+        crud.set_course_archived(course, body["archived"])
+        return _ok()
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
 @app.post("/courses/{course}/lectures")
 async def post_lecture(course: str, request: Request, kind: str = Query("lecture")):
     """Create a lecture or recitation under the given course."""

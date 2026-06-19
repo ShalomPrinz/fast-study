@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from .paths import data_root, RECITATIONS_DIR, PREDEFINED_FILES
+from .paths import data_root, RECITATIONS_DIR, PREDEFINED_FILES, ARCHIVED_MARKER
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
@@ -82,6 +82,7 @@ def read_course(name: str) -> Optional[dict]:
         return None
     return {
         "name": name,
+        "archived": (course_path / ARCHIVED_MARKER).exists(),
         "lectures": _read_lectures(course_path),
         "recitations": _read_recitations(course_path),
     }

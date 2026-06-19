@@ -50,6 +50,7 @@ python3 main.py                          # also works, same port
 | `GET    /tree`                                                           | full course tree                         |
 | `POST   /courses`                                                        | create course (body: `{name}`)           |
 | `PATCH  /courses/{course}`                                               | rename course (body: `{name}`)           |
+| `PATCH  /courses/{course}/archived`                                      | archive/unarchive course (body: `{archived}`) |
 | `POST   /courses/{course}/lectures?kind=lecture\|recitation`             | create lecture (body: `{name}`)          |
 | `PATCH  /courses/{course}/lectures/{lecture}?kind=...`                   | rename lecture (body: `{name}`)          |
 | `PUT    /courses/{course}/lectures/{lecture}/video?kind=...`             | upload `video.mp4` (raw body), wipes derived artifacts |

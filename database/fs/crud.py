@@ -1,10 +1,20 @@
-from .paths import data_root, lecture_dir, RECITATIONS_DIR, PREDEFINED_FILES
+from .paths import data_root, course_dir, lecture_dir, RECITATIONS_DIR, PREDEFINED_FILES, ARCHIVED_MARKER
 
 
 def create_course(name: str) -> None:
     """Create a new course directory under DATA_ROOT (idempotent)."""
 
     (data_root() / name).mkdir(parents=True, exist_ok=True)
+
+
+def set_course_archived(name: str, archived: bool) -> None:
+    """Create or remove the .archived marker inside a course dir (idempotent)."""
+
+    marker = course_dir(name) / ARCHIVED_MARKER
+    if archived:
+        marker.touch(exist_ok=True)
+    elif marker.exists():
+        marker.unlink()
 
 
 def rename_course(old: str, new: str) -> None:

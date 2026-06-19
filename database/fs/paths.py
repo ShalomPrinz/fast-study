@@ -3,6 +3,9 @@ from pathlib import Path
 
 RECITATIONS_DIR = "Recitations"
 
+# Empty marker file inside a course dir flagging it as archived. Survives renames.
+ARCHIVED_MARKER = ".archived"
+
 # Every file the frontend cares about in a lecture dir. Single source of truth —
 # tree responses surface all of these, and re-uploading video.mp4 wipes the rest.
 PREDEFINED_FILES = (
