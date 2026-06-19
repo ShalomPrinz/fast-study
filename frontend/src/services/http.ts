@@ -1,5 +1,3 @@
-import type { Kind } from '@/types'
-import { kindSearch } from '@/utils/route'
 import { toastConnectionError } from '@/services/toaster'
 
 export function httpError(res: Response): Error {
@@ -16,22 +14,6 @@ export class ConnectionError extends Error {
 
 export function isConnectionError(err: unknown): err is ConnectionError {
   return err instanceof ConnectionError
-}
-
-export function kindQuery(kind: Kind | undefined): string {
-  return kindSearch(kind)
-}
-
-export function path(strings: TemplateStringsArray, ...values: unknown[]): string {
-  let out = strings[0]
-  for (let i = 0; i < values.length; i++) {
-    out += encodeURIComponent(String(values[i])) + strings[i + 1]
-  }
-  return out
-}
-
-export function lectureBase(course: string, lecture: string): string {
-  return `/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}`
 }
 
 export type RequestOptions = Omit<RequestInit, 'body'> & { json?: unknown; body?: BodyInit }

@@ -1,12 +1,13 @@
 import type { FileName, Course, Kind } from '@/types'
-import { createClient, kindQuery, lectureBase, path } from './http'
+import { path, kindQuery, lectureBase } from '@/utils/url'
+import { createClient } from './http'
 
 const database = createClient(import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001', 'database service')
 
 export const databaseUrl = database.url('')
 
 export function fileUrl(course: string, lecture: string, file: FileName, kind?: Kind): string {
-  return database.url(`${lectureBase(course, lecture)}/files/${encodeURIComponent(file)}${kindQuery(kind)}`)
+  return database.url(lectureBase(course, lecture) + path`/files/${file}` + kindQuery(kind))
 }
 
 export async function fetchTree(): Promise<Course[]> {
@@ -47,7 +48,7 @@ export async function renameLecture(course: string, oldName: string, newName: st
 }
 
 export async function deleteFile(course: string, lecture: string, file: FileName, kind?: Kind): Promise<void> {
-  await database.delete(`${lectureBase(course, lecture)}/files/${encodeURIComponent(file)}${kindQuery(kind)}`)
+  await database.delete(lectureBase(course, lecture) + path`/files/${file}` + kindQuery(kind))
 }
 
 export async function fetchSummaryContent(course: string, lecture: string, kind?: Kind): Promise<{ content: string; hasOriginal: boolean }> {

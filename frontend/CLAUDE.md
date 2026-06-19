@@ -32,7 +32,7 @@ npm run build    # tsc -b && vite build → dist/
 frontend/
   src/
     services/
-      http.ts                  typed fetch client + shared `httpError` / `kindQuery`
+      http.ts                  typed fetch client + shared `httpError`
       backend.ts               HTTP client for the FastAPI backend (runStep, fetchTimingStats, runAll, fetchRunnerStatus)
       database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL)
       events.ts         singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
@@ -50,7 +50,7 @@ frontend/
     utils/
       inFlightKey.ts
       namingSuggestion.ts
-      route.ts                 lectureRoute() / kindSearch() — router-side URL builders, shared by Layout, RunnerPipelineRow, MainView
+      url.ts                   all URL/path string building: path`` encode-by-default tagged template, kindQuery() query suffix, lectureRoute() browser route, lectureBase() API path
       courseTree.ts            findLecture(courses, course, lecture, kind)
       format.ts                formatDuration(seconds) — human-readable duration strings
     hooks/
@@ -140,7 +140,7 @@ Each file under `src/services/` is the **single boundary** for one external conc
 
 ### `http.ts` — typed fetch client factory
 
-`createClient(baseUrl)` builds the per-service HTTP clients used by `backend.ts` and `database.ts`. Centralizes `if (!res.ok) throw httpError(res)` / JSON encoding / `Content-Type` headers, and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status"). Also exports the shared `kindQuery` helper for `?kind=recitation`.
+`createClient(baseUrl)` builds the per-service HTTP clients used by `backend.ts` and `database.ts`. Centralizes `if (!res.ok) throw httpError(res)` / JSON encoding / `Content-Type` headers, and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status"). URL/path string building lives in `utils/url.ts`, not here.
 
 ### `backend.ts` — FastAPI backend client → `${VITE_API_URL}`
 
@@ -164,4 +164,4 @@ When you need a new toast shape, add a helper here and import it from this servi
 
 ### URL encoding convention
 
-Course / lecture / file names are `encodeURIComponent`-encoded in URLs to handle Hebrew folder names. `kind === 'recitation'` is appended as `?kind=recitation` via the shared `kindQuery` helper in `services/http.ts`.
+Course / lecture / file names must be `encodeURIComponent`-encoded in URLs to handle Hebrew folder names. Don't call `encodeURIComponent` directly — use the `` path`` `` tagged template in `utils/url.ts`, which encodes every interpolated value by default (`` path`/courses/${course}` ``). Its output is already encoded, so never feed `path` (or `lectureBase`, built from it) back into another `path` — that double-encodes. `kind === 'recitation'` is appended as `?kind=recitation` via the shared `kindQuery` helper, also in `utils/url.ts`.

@@ -8,7 +8,7 @@ import { useLectureRoute } from '@/hooks/useLectureRoute'
 import { useRunnerStatus } from '@/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '@/constants/pipeline'
-import { kindSearch } from '@/utils/route'
+import { kindQuery } from '@/utils/url'
 import { formatDuration } from '@/utils/format'
 import { toastInitResult } from '@/services/toaster'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -276,7 +276,7 @@ export default function MainView() {
                           <button
                             className="file-open-btn"
                             title="Edit summary"
-                            onClick={() => navigate({ pathname: 'edit', search: kindSearch(kind) })}
+                            onClick={() => navigate({ pathname: 'edit', search: kindQuery(kind) })}
                           >
                             <Icon icon="edit" />
                           </button>

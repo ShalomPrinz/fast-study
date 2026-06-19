@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useRunnerStatus } from '@/contexts/RunnerStatusContext'
-import { lectureRoute } from '@/utils/route'
+import { lectureRoute } from '@/utils/url'
 import type { InFlightEntry } from '@/types'
 
 function RunnerInactive({ onClick }: { onClick: () => void }) {

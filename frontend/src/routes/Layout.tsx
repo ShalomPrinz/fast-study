@@ -3,7 +3,7 @@ import type { Kind } from '@/types'
 import { RunnerStatusProvider } from '@/contexts/RunnerStatusContext'
 import { CourseTreeProvider } from '@/contexts/CourseTreeContext'
 import { useKindParam } from '@/hooks/useKindParam'
-import { lectureRoute } from '@/utils/route'
+import { lectureRoute } from '@/utils/url'
 import { ToastContainer, toast } from '@/services/toaster'
 import Sidebar from '@/components/sidebar'
 
