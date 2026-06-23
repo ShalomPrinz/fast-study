@@ -137,6 +137,26 @@ def unwrap_math_text_macros(text: str) -> str:
     return _TEXT_WRAPPED_MACRO_RE.sub(lambda m: m.group(1), text)
 
 
+_TEXT_EDGE_SPACE_RE = re.compile(r'\\text\s*\{([^{}]*)\}')
+
+
+def normalize_math_text_spaces(text: str) -> str:
+    # XeLaTeX trims a leading/trailing space INSIDE \text{} at the RTL/LTR bidi
+    # boundary, fusing the adjacent math token onto the word.
+    # Before: 1 \text{ within } t \text{ steps}  -> "within tsteps"
+    # After:  1 \text{within}\  t \text{steps}\  -> "within t steps"
+    # Move the edge spaces OUT of \text{} as math control spaces (\ ), which the
+    # bidi layer preserves.
+    def repl(m: re.Match) -> str:
+        body = m.group(1)
+        if not body.strip():
+            return r'\ '
+        lead = r'\ ' if body[:1].isspace() else ''
+        trail = r'\ ' if body[-1:].isspace() else ''
+        return lead + r'\text{' + body.strip() + '}' + trail
+    return _TEXT_EDGE_SPACE_RE.sub(repl, text)
+
+
 def normalize_math_spans(text: str) -> str:
     # Pandoc's inline math requires next to math `$`.
     # No normalization: `$ \geq 0$`     -> Error: "Missing $ inserted"
@@ -224,6 +244,7 @@ def convert_to_pdf(md_path: str) -> str:
         t = normalize_dashes(t)
         t = unwrap_math_code(t)
         t = unwrap_math_text_macros(t)
+        t = normalize_math_text_spaces(t)
         t = normalize_math_spans(t)
         t = ensure_blank_before_lists(t)
         t = wrap_english_phrases(t)

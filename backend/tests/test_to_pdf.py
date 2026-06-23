@@ -17,6 +17,7 @@ from to_pdf import (
     apply_outside_fences,
     unwrap_math_code,
     unwrap_math_text_macros,
+    normalize_math_text_spaces,
 )
 
 
@@ -407,6 +408,69 @@ class TestUnwrapMathTextMacros:
     def test_no_text_macro_is_noop(self):
         text = r"$\Sigma_k = co\Pi_k$"
         assert unwrap_math_text_macros(text) == text
+
+
+# ---------------------------------------------------------------------------
+# normalize_math_text_spaces
+# ---------------------------------------------------------------------------
+
+class TestNormalizeMathTextSpaces:
+    def test_leading_space_moved_out(self):
+        # Regression: \text{ steps}'s leading space is trimmed at the bidi
+        # boundary, fusing onto the preceding token -> "tsteps".
+        assert normalize_math_text_spaces(r"t \text{ steps}") == \
+            r"t \ \text{steps}"
+
+    def test_trailing_space_only_moved_out(self):
+        # Only the trailing edge has a space — only a trailing \  is emitted,
+        # the leading side stays fused as the source intended.
+        assert normalize_math_text_spaces(r"\text{steps } b") == \
+            r"\text{steps}\  b"
+
+    def test_leading_and_trailing_space_moved_out(self):
+        assert normalize_math_text_spaces(r"1 \text{ within } t") == \
+            r"1 \ \text{within}\  t"
+
+    def test_no_edge_space_left_untouched(self):
+        text = r"V(x) = 1 \text{within} t"
+        assert normalize_math_text_spaces(text) == text
+
+    def test_inner_space_preserved(self):
+        assert normalize_math_text_spaces(r"\text{ s.t. }") == \
+            r"\ \text{s.t.}\ "
+
+    def test_whitespace_only_body_collapses_to_space(self):
+        assert normalize_math_text_spaces(r"a \text{ } b") == r"a \  b"
+
+    def test_full_issue_expression_renders_space(self):
+        # The original bug report: both \text{} edge spaces must survive.
+        text = r"$$V(x, y_1, y_2) = 1 \text{ within } t \text{ steps}$$"
+        assert normalize_math_text_spaces(text) == \
+            r"$$V(x, y_1, y_2) = 1 \ \text{within}\  t \ \text{steps}$$"
+
+    # --- false positives: don't inject spaces where none are needed ---
+
+    def test_no_edge_space_multiword_untouched(self):
+        # A \text{} with no leading/trailing space already renders fine — must
+        # NOT gain spurious \  around it just because it sits between tokens.
+        text = r"a \text{if and only if} b"
+        assert normalize_math_text_spaces(text) == text
+
+    def test_sibling_text_macros_untouched(self):
+        # \textbf / \texttt / \textit are NOT \text — the regex must not match
+        # them and strip their formatting.
+        for macro in (r"\textbf", r"\texttt", r"\textit", r"\textrm", r"\textsf"):
+            text = macro + r"{ x }"
+            assert normalize_math_text_spaces(text) == text
+
+    def test_idempotent(self):
+        # Running twice must not pile on more control spaces.
+        once = normalize_math_text_spaces(r"1 \text{ within } t \text{ steps}")
+        assert normalize_math_text_spaces(once) == once
+
+    def test_no_text_macro_is_noop(self):
+        text = r"המחלקה $\Sigma_k = co\Pi_k$ סגורה"
+        assert normalize_math_text_spaces(text) == text
 
 
 # ---------------------------------------------------------------------------
