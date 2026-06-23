@@ -4,6 +4,7 @@ import type { Course } from '@/types'
 import { fetchTree } from '@/services/database'
 import { useNotify } from '@/hooks/useNotify'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
+import { sortLectures } from '@/utils/lectureSort'
 
 interface CourseTreeValue {
   courses: Course[]
@@ -30,8 +31,8 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
   const sortedCourses = useMemo(
     () => courses.map((c) => ({
       ...c,
-      lectures: [...c.lectures].sort((a, b) => a.name.localeCompare(b.name)),
-      recitations: [...(c.recitations ?? [])].sort((a, b) => a.name.localeCompare(b.name)),
+      lectures: sortLectures(c.lectures),
+      recitations: sortLectures(c.recitations),
     })),
     [courses]
   )
