@@ -323,6 +323,44 @@ class TestWrapEnglishPhrases:
         assert "`$`" in result
         assert r"\LR{$" not in result
 
+    # --- Abbreviation period kept inside the run ---
+
+    def test_abbreviation_period_kept_in_run(self):
+        # Regression: "vs." split into \LR{SMP vs}\RL{.} \LR{AMP}, leaving the
+        # neutral period in RTL so it reordered. The whole phrase is one run.
+        result = wrap_english_phrases("המושג SMP vs. AMP כאן")
+        assert r"\LR{SMP vs. AMP}" in result
+        assert r"\RL{.}" not in result
+
+    def test_sentence_final_period_before_hebrew_stays_rl(self):
+        # The abbreviation rule must NOT absorb a real sentence period that is
+        # followed by Hebrew — it stays RTL so it renders in reading order.
+        result = wrap_english_phrases("ראה Foo. עברית")
+        assert r"\LR{Foo}" in result
+        assert r"\RL{.}" in result
+
+    # --- Parenthesized acronym kept inside the run ---
+
+    def test_parenthesized_acronym_kept_in_run(self):
+        # Regression: the parens fell outside the \LR runs, so the two LTR
+        # islands and the neutral ( ) reordered to "Multiprocessing Symmetric) SMP".
+        result = wrap_english_phrases('כגון "Symmetric Multiprocessing (SMP)" שם')
+        assert r"\LR{Symmetric Multiprocessing (SMP)}" in result
+
+    def test_leading_and_trailing_parens_group_wrapped(self):
+        # A whole parenthetical English phrase (incl. an abbreviation period)
+        # is wrapped as one group; the trailing colon stays in \RL{}.
+        result = wrap_english_phrases("עבודה (SMP vs. AMP): המרצה")
+        assert r"\LR{(SMP vs. AMP)}" in result
+        assert r"\RL{:}" in result
+
+    def test_unbalanced_close_paren_not_swallowed(self):
+        # Edge: the ( belongs to the Hebrew side; the matching ) must NOT be
+        # pulled into the LTR run (that would orphan a paren in the run).
+        result = wrap_english_phrases("טקסט (ראה Pull Request) כאן")
+        assert r"\LR{Pull Request}" in result
+        assert r"\LR{Pull Request)}" not in result
+
 
 # ---------------------------------------------------------------------------
 # unwrap_math_code

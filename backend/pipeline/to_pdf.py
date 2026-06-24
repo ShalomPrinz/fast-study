@@ -66,7 +66,23 @@ _WORD = (
     r'(?:[0-9]+\-)?/?[' + _LATIN + r']'
     r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r'0-9]))*'
 )
-MULTI_LATIN_RE = re.compile(r'(' + _WORD + r'(?:[ \t]+' + _WORD + r')*)([.,;:!?]*)')
+# Separator between Latin tokens kept INSIDE one \LR run: a plain space, or an
+# abbreviation period+space ("SMP vs. AMP", "i.e. foo"). The period is glue only
+# when another Latin token follows (the (?:_SEP _ITEM)* loop demands it) — a
+# sentence-final period (end of line / before Hebrew) is left for the trailing
+# \RL{} group so it stays RTL.
+# Before: SMP vs. AMP  -> \LR{SMP vs}\RL{.} \LR{AMP}  -> ". SMP vs AMP" (reordered)
+# After:  SMP vs. AMP  -> \LR{SMP vs. AMP}             -> "SMP vs. AMP"
+_SEP = r'(?:[ \t]+|\.[ \t]+)'
+# A balanced parenthesized acronym/group attached to the phrase. Wrapping the
+# WHOLE group — parens included — in \LR stops the neutral ( ) from reordering
+# under RTL bidi. Requiring a matching ) means a lone ) on the Hebrew side is
+# never swallowed into the run.
+# Before: Symmetric Multiprocessing (SMP) -> \LR{Symmetric Multiprocessing} (\LR{SMP}) -> "Multiprocessing Symmetric) SMP"
+# After:  Symmetric Multiprocessing (SMP) -> \LR{Symmetric Multiprocessing (SMP)}       -> "Symmetric Multiprocessing (SMP)"
+_GROUP = r'\(' + _WORD + r'(?:' + _SEP + _WORD + r')*\)'
+_ITEM = r'(?:' + _GROUP + r'|' + _WORD + r')'
+MULTI_LATIN_RE = re.compile(r'(' + _ITEM + r'(?:' + _SEP + _ITEM + r')*)([.,;:!?]*)')
 LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
 
 
