@@ -54,6 +54,7 @@ _LATEX_SPECIAL = {
 # block. ASCII-only [A-Za-z] used to cut "Scheffé" -> \LR{Scheff}+é, orphaning
 # the é in the RTL run so it rendered as "éScheff".
 _LATIN = r'A-Za-zÀ-ÖØ-öø-ɏ'
+_HEBREW = '֐-׿'
 # A "Latin token" for bidi-wrapping: starts with an optional digit-hyphen
 # prefix (3-way) and/or a leading slash (/index.html), then a letter, then any
 # mix of letters/digits/underscore plus separators (dot/hyphen/slash and the
@@ -62,10 +63,22 @@ _LATIN = r'A-Za-zÀ-ÖØ-öø-ɏ'
 # stays with the following text instead of the LTR run — and so a possessive
 # apostrophe keeps "Tukey’s" as ONE \LR run instead of \LR{Tukey}’\LR{s} (which
 # left the neutral ’ in RTL, reordering to "s HSD'Tukey").
+# The leading slash is only glued when NOT directly attached to a preceding
+# Hebrew letter: a slash bridging Hebrew→English ("גרעינים/kernels") is a word
+# SEPARATOR, and pulling it into the \LR run moves it to the run's far (left)
+# edge so it reads "גרעינים kernels/". A real path slash ("/index.html") is
+# preceded by a space or line start, so it is still glued.
+# Before: גרעינים/kernels -> ...\LR{/kernels} -> slash after the word
+# After:  גרעינים/kernels -> .../\LR{kernels} -> slash between the words
 _WORD = (
-    r'(?:[0-9]+\-)?/?[' + _LATIN + r']'
+    r'(?:[0-9]+\-)?(?:(?<![' + _HEBREW + r'])/)?[' + _LATIN + r']'
     r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r'0-9]))*'
 )
+# A number token (1.0, 3.14, 2,5) joins an English phrase as a CONTINUATION
+# only — never an anchor. So "Software 1.0" wraps as one \LR run (else the lone
+# "1.0" stays a neutral and RTL bidi reorders it to "1.0 Software"), while a
+# Hebrew-adjacent number ("5 שקלים") is left untouched in the RTL run.
+_NUM = r'[0-9]+(?:[.,][0-9]+)*'
 # Separator between Latin tokens kept INSIDE one \LR run: a plain space, or an
 # abbreviation period+space ("SMP vs. AMP", "i.e. foo"). The period is glue only
 # when another Latin token follows (the (?:_SEP _ITEM)* loop demands it) — a
@@ -80,10 +93,19 @@ _SEP = r'(?:[ \t]+|\.[ \t]+)'
 # never swallowed into the run.
 # Before: Symmetric Multiprocessing (SMP) -> \LR{Symmetric Multiprocessing} (\LR{SMP}) -> "Multiprocessing Symmetric) SMP"
 # After:  Symmetric Multiprocessing (SMP) -> \LR{Symmetric Multiprocessing (SMP)}       -> "Symmetric Multiprocessing (SMP)"
-_GROUP = r'\(' + _WORD + r'(?:' + _SEP + _WORD + r')*\)'
+_GROUP = r'\(' + _WORD + r'(?:' + _SEP + r'(?:' + _WORD + r'|' + _NUM + r'))*\)'
 _ITEM = r'(?:' + _GROUP + r'|' + _WORD + r')'
-MULTI_LATIN_RE = re.compile(r'(' + _ITEM + r'(?:' + _SEP + _ITEM + r')*)([.,;:!?]*)')
+# Continuation items may be numbers; the anchor (_ITEM) may not, so a phrase
+# always starts on a Latin word/group.
+_CONT = r'(?:' + _GROUP + r'|' + _WORD + r'|' + _NUM + r')'
+MULTI_LATIN_RE = re.compile(r'(' + _ITEM + r'(?:' + _SEP + _CONT + r')*)([.,;:!?]*)')
 LEADING_PUNCT_RE = re.compile(r'^([.,;:!?]+)')
+# A whole-phrase that is a single balanced parenthetical ending in a digit:
+# "(Software 1.0)". A `)` right after a digit, INSIDE \LR{} in an RTL document,
+# mirrors to `(` ("(Software (1.0"). Letter-terminated groups don't, so they
+# stay inside the run as before. Keep only digit-terminated groups' parens
+# OUTSIDE the run — verified to render unmirrored.
+_DIGIT_PAREN_GROUP_RE = re.compile(r'^\([^()]*[0-9]\)$')
 
 
 def wrap_english_phrases(text: str) -> str:
@@ -93,7 +115,12 @@ def wrap_english_phrases(text: str) -> str:
         # Unescaped, _ enters math mode inside \LR{}.
         # Before: x86_64  -> \LR{x86_64}   -> "! Missing $ inserted"
         # After:  x86_64  -> \LR{x86\_64}  -> renders "x86_64"
-        result = r'\LR{' + _latex_escape(phrase) + '}'
+        if _DIGIT_PAREN_GROUP_RE.match(phrase):
+            # Before: \LR{(Software 1.0)}  -> "(Software (1.0" (close paren flips)
+            # After:  (\LR{Software 1.0})  -> "(Software 1.0)"
+            result = '(' + r'\LR{' + _latex_escape(phrase[1:-1]) + '}' + ')'
+        else:
+            result = r'\LR{' + _latex_escape(phrase) + '}'
         if punct:
             result += r'\RL{' + punct + '}'
         return result
@@ -171,6 +198,94 @@ def normalize_math_text_spaces(text: str) -> str:
         trail = r'\ ' if body[-1:].isspace() else ''
         return lead + r'\text{' + body.strip() + '}' + trail
     return _TEXT_EDGE_SPACE_RE.sub(repl, text)
+
+
+_MATH_TEXT_BODY_RE = re.compile(r'\\text\s*\{([^{}]*)\}')
+
+
+def wrap_math_text_ltr(text: str) -> str:
+    # English inside \text{} in math renders RTL (words reversed): \text switches
+    # to text mode, which inherits the document's RTL base direction. Wrap the
+    # body in \LR{} so the run is laid out left-to-right.
+    # Before: \text{is an undirected graph}  -> "graph undirected an is"
+    # After:  \text{\LR{is an undirected graph}} -> "is an undirected graph"
+    def repl(m: re.Match) -> str:
+        body = m.group(1)
+        if not body.strip():
+            return m.group(0)
+        return r'\text{\LR{' + body + '}}'
+    return _MATH_TEXT_BODY_RE.sub(repl, text)
+
+
+_INLINE_MATH_ONLY_RE = re.compile(_INLINE_MATH)
+
+
+def _lr_block_end(text: str, start: int) -> int:
+    # start points at the backslash of a "\LR{". Return the index just past its
+    # matching "}", counting nested braces and skipping escaped ones (\{ \} \\).
+    i = start + 4  # past "\LR{"
+    depth = 1
+    n = len(text)
+    while i < n and depth:
+        c = text[i]
+        if c == '\\':
+            i += 2
+            continue
+        if c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+        i += 1
+    return i
+
+
+def merge_ltr_math(text: str) -> str:
+    # An inline-code span (now \LR{\texttt{...}}) and an adjacent inline math
+    # $...$ are two SEPARATE LTR islands; RTL bidi orders the islands right-to-
+    # left, reversing "current ← v" to "← v current". Merge a \LR{...} and an
+    # adjacent inline $...$ (either order, whitespace between) into ONE \LR run.
+    # Before: \LR{\texttt{current}} $\leftarrow v$  -> "← v current"
+    # After:  \LR{\texttt{current} $\leftarrow v$}  -> "current ← v"
+    out = []
+    i = 0
+    n = len(text)
+    while i < n:
+        # Skip display math wholesale — never reorder or descend into it.
+        if text.startswith('$$', i):
+            j = text.find('$$', i + 2)
+            j = (j + 2) if j != -1 else n
+            out.append(text[i:j])
+            i = j
+            continue
+        if text.startswith(r'\LR{', i):
+            end = _lr_block_end(text, i)
+            inner = text[i + 4:end - 1]
+            k = end
+            while k < n and text[k] in ' \t':
+                k += 1
+            m = _INLINE_MATH_ONLY_RE.match(text, k) if k < n and text[k] == '$' else None
+            if m:
+                out.append(r'\LR{' + inner + ' ' + m.group(0) + '}')
+                i = m.end()
+                continue
+            out.append(text[i:end])
+            i = end
+            continue
+        if text[i] == '$':
+            m = _INLINE_MATH_ONLY_RE.match(text, i)
+            if m:
+                k = m.end()
+                while k < n and text[k] in ' \t':
+                    k += 1
+                if text.startswith(r'\LR{', k):
+                    end = _lr_block_end(text, k)
+                    inner = text[k + 4:end - 1]
+                    out.append(r'\LR{' + m.group(0) + ' ' + inner + '}')
+                    i = end
+                    continue
+        out.append(text[i])
+        i += 1
+    return ''.join(out)
 
 
 def normalize_math_spans(text: str) -> str:
@@ -261,10 +376,12 @@ def convert_to_pdf(md_path: str) -> str:
         t = unwrap_math_code(t)
         t = unwrap_math_text_macros(t)
         t = normalize_math_text_spaces(t)
+        t = wrap_math_text_ltr(t)
         t = normalize_math_spans(t)
         t = ensure_blank_before_lists(t)
         t = wrap_english_phrases(t)
         t = force_ltr_inline_code(t)
+        t = merge_ltr_math(t)
         return t
 
     fixed_md = apply_outside_fences(raw_md, preprocess)

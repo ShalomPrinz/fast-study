@@ -18,6 +18,8 @@ from to_pdf import (
     unwrap_math_code,
     unwrap_math_text_macros,
     normalize_math_text_spaces,
+    wrap_math_text_ltr,
+    merge_ltr_math,
 )
 
 
@@ -570,6 +572,93 @@ class TestNormalizeMathSpans:
 
 
 # ---------------------------------------------------------------------------
+# wrap_math_text_ltr
+# ---------------------------------------------------------------------------
+
+class TestWrapMathTextLtr:
+    def test_text_body_wrapped_in_lr(self):
+        # Regression: English inside \text{} in math renders RTL (words reversed)
+        # because text mode inherits the document's RTL base direction.
+        text = r"$$cyclic = \{G \mid G \text{is an undirected graph}\}$$"
+        result = wrap_math_text_ltr(text)
+        assert r"\text{\LR{is an undirected graph}}" in result
+
+    def test_short_text_wrapped(self):
+        assert wrap_math_text_ltr(r"\text{steps}") == r"\text{\LR{steps}}"
+
+    def test_text_with_spaces_around_macro(self):
+        # The space between \text and { is cosmetic in LaTeX; collapsing it is fine.
+        assert wrap_math_text_ltr(r"\text {within}") == r"\text{\LR{within}}"
+
+    def test_multiple_text_macros_each_wrapped(self):
+        result = wrap_math_text_ltr(r"\text{from} a \text{to} b")
+        assert result == r"\text{\LR{from}} a \text{\LR{to}} b"
+
+    def test_whitespace_only_body_untouched(self):
+        # normalize_math_text_spaces turns edge-only \text{} into \ ; a body that
+        # is only whitespace must not be wrapped (an empty \LR is pointless).
+        assert wrap_math_text_ltr(r"\text{ }") == r"\text{ }"
+
+    def test_no_text_macro_unchanged(self):
+        text = "טקסט עברי $x^2 + 1$ רגיל"
+        assert wrap_math_text_ltr(text) == text
+
+    def test_nested_braces_body_left_alone(self):
+        # The regex deliberately excludes inner braces; a \text{} containing a
+        # macro group is not a plain-text run and is left as-is.
+        text = r"\text{\alpha{}}"
+        assert wrap_math_text_ltr(text) == text
+
+
+# ---------------------------------------------------------------------------
+# merge_ltr_math
+# ---------------------------------------------------------------------------
+
+class TestMergeLtrMath:
+    def test_code_then_math_merged(self):
+        # Regression: \LR{\texttt{current}} and $\leftarrow v$ are separate LTR
+        # islands; RTL bidi reverses them to "← v current".
+        text = r"\LR{\texttt{current}} $\leftarrow v$"
+        assert merge_ltr_math(text) == r"\LR{\texttt{current} $\leftarrow v$}"
+
+    def test_math_then_code_merged(self):
+        text = r"$\leftarrow v$ \LR{\texttt{current}}"
+        assert merge_ltr_math(text) == r"\LR{$\leftarrow v$ \texttt{current}}"
+
+    def test_word_lr_then_math_merged(self):
+        text = r"\LR{RDI} $\oplus$"
+        assert merge_ltr_math(text) == r"\LR{RDI $\oplus$}"
+
+    def test_no_space_between_still_merged(self):
+        text = r"\LR{\texttt{x}}$+1$"
+        assert merge_ltr_math(text) == r"\LR{\texttt{x} $+1$}"
+
+    def test_lr_with_escaped_braces_matched(self):
+        # _lr_block_end must count nested/escaped braces — \texttt body can hold
+        # escaped braces so the matching close is the second-to-last brace.
+        text = r"\LR{\texttt{a\{b\}}} $x$"
+        assert merge_ltr_math(text) == r"\LR{\texttt{a\{b\}} $x$}"
+
+    def test_lone_math_untouched(self):
+        text = r"עברית $A$ עברית"
+        assert merge_ltr_math(text) == text
+
+    def test_lone_lr_untouched(self):
+        text = r"עברית \LR{Word} עברית"
+        assert merge_ltr_math(text) == text
+
+    def test_display_math_not_descended_into(self):
+        # $$...$$ holds its own \LR (from wrap_math_text_ltr); merge must skip it
+        # wholesale and never pull an adjacent inline $ into it.
+        text = r"$$a \text{\LR{x}} b$$ $y$"
+        assert merge_ltr_math(text) == text
+
+    def test_lr_separated_by_hebrew_not_merged(self):
+        text = r"\LR{Word} עברית $A$"
+        assert merge_ltr_math(text) == text
+
+
+# ---------------------------------------------------------------------------
 # force_ltr_inline_code
 # ---------------------------------------------------------------------------
 
@@ -800,6 +889,50 @@ class TestWrapEnglishPhrasesExtended:
         result = wrap_english_phrases("ב-Git")
         assert r"\LR{Git}" in result
         assert "ב-" in result
+
+    # --- Numbers joining a phrase (Software 1.0) ---
+
+    def test_word_then_number_wrapped_together(self):
+        # Regression: a lone "1.0" stays a neutral and RTL bidi reorders
+        # "Software 1.0" to "1.0 Software".
+        result = wrap_english_phrases("גרסת Software 1.0 חדשה")
+        assert r"\LR{Software 1.0}" in result
+
+    def test_lone_number_after_hebrew_not_wrapped(self):
+        # A number that is not preceded by a Latin word must stay in the RTL run.
+        result = wrap_english_phrases("יש 5 סטודנטים")
+        assert r"\LR" not in result
+
+    def test_digit_paren_group_keeps_parens_outside_run(self):
+        # A ) right after a digit mirrors to ( inside \LR{} in an RTL doc, so a
+        # digit-terminated parenthetical keeps its parens OUTSIDE the run.
+        result = wrap_english_phrases("תוכנה (Software 1.0): טקסט")
+        assert r"(\LR{Software 1.0})" in result
+        assert r"\LR{(Software 1.0)}" not in result
+        assert r"\RL{:}" in result
+
+    def test_letter_paren_group_keeps_parens_inside_run(self):
+        # Letter-terminated groups don't mirror — parens stay inside as before.
+        result = wrap_english_phrases("עבודה (SMP vs. AMP): המרצה")
+        assert r"\LR{(SMP vs. AMP)}" in result
+
+    def test_number_inside_paren_group_with_preceding_word(self):
+        result = wrap_english_phrases("המודל (test 1.0) שלנו")
+        assert r"(\LR{test 1.0})" in result
+
+    # --- Slash bridging Hebrew and English is a separator, not glued ---
+
+    def test_hebrew_slash_english_keeps_slash_in_rtl(self):
+        # Regression: \LR{/kernels} put the slash on the run's far edge so it
+        # read "גרעינים kernels/". The slash must stay outside the run.
+        result = wrap_english_phrases("גרעינים/kernels")
+        assert r"/\LR{kernels}" in result
+        assert r"\LR{/kernels}" not in result
+
+    def test_space_separated_leading_slash_still_glued(self):
+        # A real path slash is preceded by a space, not a Hebrew letter.
+        result = wrap_english_phrases("נתיב /kernels")
+        assert r"\LR{/kernels}" in result
 
 
 # ---------------------------------------------------------------------------
