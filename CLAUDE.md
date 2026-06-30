@@ -25,6 +25,17 @@ All services read the same `.env` at the repo root and share one on-disk layout 
 
 `database/` is the single source of truth for this layout. When changing paths, file names, or course/recitation conventions, update it there — the other services hold no path conventions and reach disk only by calling the database service.
 
+## Service subagents
+
+Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent:
+
+| Subagent          | Owns         | Stack                              |
+|-------------------|--------------|------------------------------------|
+| `backend-dev`     | `backend/`   | FastAPI pipeline (Python, uv)      |
+| `frontend-dev`    | `frontend/`  | React + Vite + TS SPA              |
+| `downloader-dev`  | `downloader/`| Chrome MV3 extension + Node server |
+| `database-dev`    | `database/`  | FastAPI DATA_ROOT I/O + SSE        |
+
 ## Running the dev stack
 
 All four services boot in one terminal via `concurrently`:
