@@ -51,11 +51,13 @@ async function listCourses() {
   const res = await fetch(`${DATABASE_URL}/tree`);
   if (!res.ok) throw new Error(`database /tree returned ${res.status}`);
   const tree = await res.json();
-  return tree.map((c) => ({
-    name: c.name,
-    lectures: (c.lectures ?? []).map((l) => l.name),
-    recitations: (c.recitations ?? []).map((r) => r.name),
-  }));
+  return tree
+    .filter((c) => !c.archived) // Archived courses are dropped
+    .map((c) => ({
+      name: c.name,
+      lectures: (c.lectures ?? []).map((l) => l.name),
+      recitations: (c.recitations ?? []).map((r) => r.name),
+    }));
 }
 
 function isSafeName(name) {
