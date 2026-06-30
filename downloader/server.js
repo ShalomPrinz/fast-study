@@ -85,6 +85,115 @@ function formatBytes(bytes) {
   return `${mb.toFixed(1)} MB`;
 }
 
+// ── Active-download progress ────────────────────────────────────────────────
+// failure: curl's --progress-bar / yt-dlp's --progress write \r-repainted lines;
+// two parallel downloads share one terminal line and stomp each other (and our
+// console.logs) -> overwrite + flicker.
+// Before: each child writes its own \r bar to the inherited terminal.
+// After:  children run silent; the server is the SOLE terminal writer — it polls
+//         each temp file's size against the probed total and emits whole lines.
+const activeDownloads = new Map();
+let renderTimer = null;
+let paintedLines = 0; // TTY only: number of lines in the last repainted block
+const RENDER_INTERVAL_MS = 1500;
+const NEWLINE_PCT_STEP = 5;           // non-TTY: re-print once percent advances this much…
+const NEWLINE_MIN_INTERVAL_MS = 8000; // …or this long elapses, whichever comes first
+
+function registerDownload(key, entry) {
+  activeDownloads.set(key, entry);
+  // Only run the timer while something is in flight — don't leave it idling.
+  if (!renderTimer) renderTimer = setInterval(renderProgress, RENDER_INTERVAL_MS);
+}
+
+function deregisterDownload(key) {
+  clearPainted(); // wipe the live block so the final ✅/❌ line lands clean
+  activeDownloads.delete(key);
+  if (activeDownloads.size === 0 && renderTimer) {
+    clearInterval(renderTimer);
+    renderTimer = null;
+  }
+}
+
+// failure: yt-dlp writes separate audio+video temp files and merges them, so the
+// single output file doesn't exist yet mid-download.
+// Before: stat video.mp4 -> 0 bytes for most of a yt-dlp run.
+// After:  sum every file in the temp dir for yt-dlp; stat the lone video.mp4 for curl.
+function measureBytes(entry) {
+  try {
+    if (entry.measure === 'dir') {
+      let sum = 0;
+      for (const name of fs.readdirSync(entry.tempDir)) {
+        try { sum += fs.statSync(path.join(entry.tempDir, name)).size; } catch {}
+      }
+      return sum;
+    }
+    return fs.statSync(path.join(entry.tempDir, VIDEO_FILENAME)).size;
+  } catch { return 0; }
+}
+
+function progressSnapshot(entry) {
+  const got = measureBytes(entry);
+  if (!entry.expected) {
+    // Unknown probe -> a byte count is the most we can honestly show.
+    return { pct: null, line: `📥 [${entry.label}] ${formatBytes(got)} downloading…` };
+  }
+  // Clamp <99% until exit: yt-dlp's merge can transiently overshoot the probed sum.
+  const pct = Math.max(0, Math.min(99, Math.floor((got / entry.expected) * 100)));
+  return { pct, line: `📥 [${entry.label}] ${pct}% (${formatBytes(got)}/${formatBytes(entry.expected)})` };
+}
+
+function clearPainted() {
+  if (process.stdout.isTTY && paintedLines > 0) {
+    process.stdout.write(`\x1b[${paintedLines}A\x1b[0J`); // cursor up N lines, clear to end of screen
+    paintedLines = 0;
+  }
+}
+
+// Route every download-lifecycle log through these so the TTY progress block is
+// wiped before a permanent line prints (otherwise the next repaint overwrites it).
+function emitLog(line) { clearPainted(); console.log(line); }
+function emitError(line) { clearPainted(); console.error(line); }
+
+function renderProgress() {
+  const entries = [...activeDownloads.values()];
+  if (entries.length === 0) return;
+  if (process.stdout.isTTY) {
+    // Real terminal (npm start): repaint a compact block in place via ANSI.
+    let out = paintedLines > 0 ? `\x1b[${paintedLines}A` : '';
+    for (const e of entries) out += `\x1b[2K${progressSnapshot(e).line}\n`; // clear line + content
+    process.stdout.write(out);
+    paintedLines = entries.length;
+    return;
+  }
+  // failure: under `concurrently` (npm run dev) stdout is a PIPE, not a TTY, and
+  // every line is prefixed `Downloader |` — ANSI cursor repaint is meaningless.
+  // Before: \x1b cursor codes -> garbage in the aggregated log.
+  // After:  emit a throttled newline-terminated line; whole-line console.logs
+  //         from sibling processes can't interleave mid-line -> flicker-free.
+  const now = Date.now();
+  for (const e of entries) {
+    const { pct, line } = progressSnapshot(e);
+    const advanced = pct != null && e.lastPercent != null && pct - e.lastPercent >= NEWLINE_PCT_STEP;
+    if (!e.emitted || advanced || now - e.lastEmit >= NEWLINE_MIN_INTERVAL_MS) {
+      console.log(line);
+      e.emitted = true;
+      if (pct != null) e.lastPercent = pct;
+      e.lastEmit = now;
+    }
+  }
+}
+
+// Keep the last few KB of a child's stderr so a non-zero exit can still log the
+// real error — we no longer inherit stderr, so this tail is our only error surface.
+function makeStderrTail(child, maxLines = 15) {
+  let buf = '';
+  child.stderr?.on('data', (c) => {
+    buf += c;
+    if (buf.length > 65536) buf = buf.slice(-65536);
+  });
+  return () => buf.split('\n').map((l) => l.trimEnd()).filter(Boolean).slice(-maxLines).join('\n');
+}
+
 function headersToObject(headers) {
   const out = {};
   for (const h of headers ?? []) {
@@ -135,8 +244,10 @@ function buildCurlArgs(url, headers) {
   // Video CDNs sometimes close TLS without close_notify mid-stream; OpenSSL 3
   // surfaces this as `SSL_read: unexpected eof`. Retry on any error so a flaky
   // connection doesn't abort the whole download.
+  // --silent --show-error: no live progress bar (the server polls size itself),
+  // but a failed transfer still writes its reason to stderr for the tail buffer.
   const args = [
-    '-L', '--fail', '--compressed', '--progress-bar', '--show-error',
+    '-L', '--fail', '--compressed', '--silent', '--show-error',
     '--retry', '3', '--retry-delay', '2', '--retry-all-errors',
     '--output', VIDEO_FILENAME,
   ];
@@ -168,33 +279,40 @@ async function uploadAndCleanup(tempDir, course, lecture, kind, label) {
     try { body = await res.json(); } catch {}
     if (!res.ok || body?.ok === false) {
       const msg = body?.error ?? `HTTP ${res.status}`;
-      console.error(`❌ ${label} upload to database failed: ${msg}`);
+      emitError(`❌ ${label} upload to database failed: ${msg}`);
       return;
     }
-    console.log(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
+    emitLog(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
   } catch (err) {
-    console.error(`❌ ${label} upload to database failed: ${err.message}`);
+    emitError(`❌ ${label} upload to database failed: ${err.message}`);
   } finally {
     try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
   }
 }
 
 async function runDownload(url, headers, tempDir, course, lecture, kind) {
-  console.log(`\n📥 Downloading to temp: ${tempDir}`);
+  const label = `${course}/${lecture}`;
+  emitLog(`\n📥 Downloading to temp: ${tempDir}`);
   const bytes = await probeContentLength(url, headers);
-  console.log(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
-  // spawn + inherited stdio so curl's --progress-bar updates the terminal live.
-  const child = spawn('curl', buildCurlArgs(url, headers), { cwd: tempDir, stdio: ['ignore', 'inherit', 'inherit'] });
+  emitLog(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
+  // stdio ignore/ignore/pipe: curl stays silent (server polls video.mp4's size
+  // and renders progress); stderr is captured so a failed exit still has detail.
+  const child = spawn('curl', buildCurlArgs(url, headers), { cwd: tempDir, stdio: ['ignore', 'ignore', 'pipe'] });
+  const tail = makeStderrTail(child);
+  registerDownload(tempDir, { label, tempDir, measure: 'file', expected: bytes, tool: 'curl', lastPercent: null, lastEmit: 0, emitted: false });
   child.on('error', (err) => {
-    console.error(`❌ Download failed: ${err.message}`);
+    deregisterDownload(tempDir);
+    emitError(`❌ Download failed: ${err.message}`);
     try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
   });
   child.on('close', (code) => {
+    deregisterDownload(tempDir);
     if (code === 0) {
       uploadAndCleanup(tempDir, course, lecture, kind, 'curl');
     } else {
-      console.error(`❌ Download failed: curl exited with code ${code}`);
+      const detail = tail();
+      emitError(`❌ Download failed: curl exited with code ${code}${detail ? `\n${detail}` : ''}`);
       try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
     }
   });
@@ -242,35 +360,41 @@ function probeYoutubeSize(url) {
 }
 
 async function runYoutubeDownload(url, tempDir, course, lecture, kind) {
-  console.log(`\n📥 yt-dlp downloading to temp: ${tempDir}`);
+  const label = `${course}/${lecture}`;
+  emitLog(`\n📥 yt-dlp downloading to temp: ${tempDir}`);
   const bytes = await probeYoutubeSize(url);
-  console.log(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
+  emitLog(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
   // -o video.%(ext)s + --merge-output-format mp4 -> final file is `video.mp4`.
   // --no-playlist keeps a playlist-context URL to the single current video.
   // Recent yt-dlp needs a JS runtime to evaluate YouTube's player script;
   // only `deno` is auto-enabled, so point it at the `node` we already have.
-  // `--quiet --no-warnings --progress --newline` is the documented combo for
-  // "suppress [youtube]/[info]/[Merger] chatter but still stream the progress bar."
+  // `--quiet --no-warnings --no-progress`: silent run; the server polls the temp
+  // dir's total size and renders progress, so no live bar fights other downloads.
   const args = [
     '--no-playlist',
     '--merge-output-format', 'mp4',
     '--js-runtimes', 'node',
     '--remote-components', 'ejs:github',
-    '--quiet', '--no-warnings', '--progress',
+    '--quiet', '--no-warnings', '--no-progress',
     '-o', 'video.%(ext)s',
     url,
   ];
-  // spawn + inherited stdio so yt-dlp's progress bar streams live.
-  const child = spawn('yt-dlp', args, { cwd: tempDir, stdio: ['ignore', 'inherit', 'inherit'] });
+  // stdio ignore/ignore/pipe: capture stderr for error reporting (see makeStderrTail).
+  const child = spawn('yt-dlp', args, { cwd: tempDir, stdio: ['ignore', 'ignore', 'pipe'] });
+  const tail = makeStderrTail(child);
+  registerDownload(tempDir, { label, tempDir, measure: 'dir', expected: bytes, tool: 'yt-dlp', lastPercent: null, lastEmit: 0, emitted: false });
   child.on('error', (err) => {
-    console.error(`❌ yt-dlp failed: ${err.message}`);
+    deregisterDownload(tempDir);
+    emitError(`❌ yt-dlp failed: ${err.message}`);
     try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
   });
   child.on('close', (code) => {
+    deregisterDownload(tempDir);
     if (code === 0) {
       uploadAndCleanup(tempDir, course, lecture, kind, 'yt-dlp');
     } else {
-      console.error(`❌ yt-dlp failed: exited with code ${code}`);
+      const detail = tail();
+      emitError(`❌ yt-dlp failed: exited with code ${code}${detail ? `\n${detail}` : ''}`);
       try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
     }
   });
@@ -340,7 +464,7 @@ async function handleUploadPdf(req, res) {
   const chunks = [];
   for await (const c of req) chunks.push(c);
   const buf = Buffer.concat(chunks);
-  console.log(`\n📥 PDF upload received: ${formatBytes(buf.length)} for ${course}/${lecture} (kind=${kind})`);
+  emitLog(`\n📥 PDF upload received: ${formatBytes(buf.length)} for ${course}/${lecture} (kind=${kind})`);
   if (buf.length === 0) {
     return send(res, 400, { error: 'empty body' });
   }
@@ -356,14 +480,14 @@ async function handleUploadPdf(req, res) {
     try { body = await dbRes.json(); } catch {}
     if (!dbRes.ok || body?.ok === false) {
       const msg = body?.error ?? `HTTP ${dbRes.status}`;
-      console.error(`❌ PDF upload to database failed: ${msg}`);
+      emitError(`❌ PDF upload to database failed: ${msg}`);
       return send(res, 502, { error: msg });
     }
-    console.log(`✅ Uploaded ${MATERIAL_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
+    emitLog(`✅ Uploaded ${MATERIAL_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
     send(res, 200, { status: 'PDF uploaded', target: `${course}/${lecture}` });
   } catch (err) {
-    console.error(`❌ PDF upload to database failed: ${err.message}`);
+    emitError(`❌ PDF upload to database failed: ${err.message}`);
     send(res, 500, { error: err.message });
   }
 }
@@ -398,7 +522,7 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(404).end();
   } catch (e) {
-    console.error(e);
+    emitError(e?.stack ?? String(e));
     send(res, 500, { error: e.message ?? 'Server error' });
   }
 });
