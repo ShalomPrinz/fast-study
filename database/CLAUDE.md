@@ -12,11 +12,11 @@ Behavior is a verbatim port of the old `frontend/fs-api/handlers/*` middleware �
 database/
   main.py              FastAPI app + uvicorn entry
   fs/
-    paths.py             data_root, course_dir, lecture_dir(course, lecture, kind), RECITATIONS_DIR
+    paths.py             data_root, course_dir, lecture_dir(course, lecture, kind), RECITATIONS_DIR, ARCHIVED_MARKER, PREDEFINED_FILES
     tree.py              read_tree, read_course (port of frontend fs-reader.ts)
     summary.py           read/write/revert summary.md
     files.py             resolve a lecture file path for streaming
-    crud.py              create/rename course / lecture, upload video, delete file
+    crud.py              create/rename/archive course, create/rename lecture, upload video, write/delete file
   events/
     sse.py               in-memory pub/sub: subscribe() async generator + broadcast_notify()
   pyproject.toml
@@ -77,6 +77,6 @@ python3 main.py                          # also works, same port
 
 ## Documentation
 
-Every `def` / `async def` across database servoce `*.py` files has a one-line docstring as its first statement describing intent (not mechanics). A few carry an extra line when the WHY isn't obvious from the code — e.g. `_read_transcribe_partial` swallowing parse errors, `write_summary` snapshotting the pre-edit original on first write, `write_video` wiping derived artifacts, `broadcast_notify` being fire-and-forget.
+Every `def` / `async def` across database service `*.py` files has a one-line docstring as its first statement describing intent (not mechanics). A few carry an extra line when the WHY isn't obvious from the code — e.g. `_read_transcribe_partial` swallowing parse errors, `write_summary` snapshotting the pre-edit original on first write, `write_video` wiping derived artifacts, `broadcast_notify` being fire-and-forget.
 
 **Maintain documentation on each change.** When adding a new function, give it a docstring in the same style. When changing a function's behavior, update its docstring.

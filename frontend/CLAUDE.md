@@ -33,16 +33,16 @@ frontend/
   src/
     services/
       http.ts                  typed fetch client + shared `httpError`
-      backend.ts               HTTP client for the FastAPI backend (runStep, fetchTimingStats, runAll, fetchRunnerStatus)
+      backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus)
       database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL)
       events.ts         singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
-      toaster.ts               single boundary around react-toastify — exports toastError/toastInfo/toastByKind/toastPromise/toastInitResult + ToastContainer
+      toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
     constants/
       pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
       CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
-    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, StepResult, RunnerStatus, …
+    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, …
     App.tsx                  React Router routes; renders Layout + the three views
     main.tsx                 React entry point
     index.css                Single flat stylesheet, CSS variables for theming
@@ -53,6 +53,7 @@ frontend/
       url.ts                   all URL/path string building: path`` encode-by-default tagged template, kindQuery() query suffix, lectureRoute() browser route, lectureBase() API path
       courseTree.ts            findLecture(courses, course, lecture, kind)
       format.ts                formatDuration(seconds) — human-readable duration strings
+      lectureSort.ts           sortLectures(items) — natural-order sort of lectures/recitations by name
     hooks/
       useInlineEdit.ts         generic inline-input editing
       useKindParam.ts          reads ?kind=recitation from useSearchParams, returns a Kind
@@ -62,15 +63,21 @@ frontend/
       useTimingStats.ts        (step, fileSize) -> TimingStats, with staleness guard for late responses
       useRemoteInflightState.ts  synthesizes an inflight descriptor when the runner is processing the open lecture
       useReportOnce.ts         dedupes `(key, msg)` pairs sent to a callback; backs RunnerStatusContext's per-lecture + runner-crash error fan-out
+      useLatestRequest.ts      returns a wrapper that resolves only the most recent in-flight promise, dropping superseded responses
+      useShiftHeld.ts          tracks whether the Shift key is currently held
     routes/
-      Layout.tsx                routes outlet + RunnerStatusProvider + ToastContainer
+      Layout.tsx                routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
       MainView.tsx
       EditSummaryView.tsx
     components/
       sidebar/
+        index.ts                re-exports Sidebar as the default
         Sidebar.tsx             course/lecture tree
         NewCourseRow.tsx        inline "new course" input row
         RunnerPipelineRow.tsx   runner status/CTA row; click while running to jump to current lecture
+        RefreshCoursesButton.tsx  manual tree-refresh button (reads CourseTreeContext)
+        PaginatedList.tsx       generic "show more" chunked list
+        PendingUploadModal.tsx  pending-video upload modal + usePendingUpload hook
       InlineEditInput.tsx       shared inline-edit input (Enter=commit, Escape/Blur=cancel)
       PdfViewer.tsx
       ConfirmModal.tsx
@@ -110,19 +117,19 @@ frontend/
 
 `CourseTreeContext` owns the course tree. The provider holds `courses` state, refreshes on SSE `notify` events, and exposes `{ courses, refreshCourses }` via `useCourseTreeContext()` — no props needed. `Sidebar`, `RefreshCoursesButton`, `NewCourseRow`, `usePendingUpload`, and `MainView` all read from the context directly; `Layout` just wraps the provider. The currently selected lecture's `files` / `transcribePartial` are derived inside `useLectureRoute` from the context's `courses` plus the route params — there is no outlet context.
 
-`useRemoteInflightState({ course, lecture, kind, files, transcribePartial })` reads `RunnerStatusContext` and, if the runner is currently working on the open lecture, returns an inflight descriptor `{ step, startedAt, timingStats, completedFraction }`. Callers decide whether a local run preempts this.
+`useRemoteInflightState({ course, lecture, kind, files, transcribePartial })` reads `RunnerStatusContext` and, if the runner is currently working on the open lecture, returns an inflight descriptor `{ step, startedAt, timingStats, completedFraction, sleepingUntil, progress }`. Callers decide whether a local run preempts this.
 
 `useTimingStats(step, fileSizeBytes)` returns the FastAPI `/timing/{step}` linear-regression estimate, ignoring late responses for `(step, size)` keys the caller has moved on from.
 
-`StepResult` is one of:
+Triggering a run (`runStep` / `runPipeline`) returns `RunInitResult`:
 
 ```ts
-{ status: 'done'; url?: string; usedMaterial?: boolean }
+{ status: 'started' }
+{ status: 'busy' }
 { status: 'error'; message: string }
-{ status: 'rate_limited'; rateLimit: RateLimitInfo; progress: RateLimitProgress }
 ```
 
-`rate_limited` is unique to the transcribe step — the UI should surface `retryAfterSeconds` and `progress.{completed,total}` (chunks done so far) rather than treating it as an error. `usedMaterial` is returned by the summarize step when an optional `material.pdf` was found and handed to Gemini alongside the transcript.
+Step progress and rate-limit state are not in the trigger result — they arrive via `RunnerStatus.inFlight[]` (`InFlightEntry`, with `sleepingUntil` and `progress`). When a transcribe step is rate-limited the runner sets `sleepingUntil`; `MainView`'s `RateLimitPanel` renders the countdown and `progress.{completed,total}` chunks from that entry rather than treating it as an error.
 
 `RunnerStatus` (from `GET /status`, normalized in `services/backend.ts`):
 
@@ -140,7 +147,7 @@ Each file under `src/services/` is the **single boundary** for one external conc
 
 ### `http.ts` — typed fetch client factory
 
-`createClient(baseUrl)` builds the per-service HTTP clients used by `backend.ts` and `database.ts`. Centralizes `if (!res.ok) throw httpError(res)` / JSON encoding / `Content-Type` headers, and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status"). URL/path string building lives in `utils/url.ts`, not here.
+`createClient(baseUrl, serviceName)` builds the per-service HTTP clients used by `backend.ts` and `database.ts`. Centralizes `if (!res.ok) throw httpError(res)` / JSON encoding / `Content-Type` headers, and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status"). URL/path string building lives in `utils/url.ts`, not here.
 
 ### `backend.ts` — FastAPI backend client → `${VITE_API_URL}`
 
@@ -154,8 +161,8 @@ Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/
 
 Nothing else in the codebase imports from `react-toastify`. All toasts go through this service. Exports:
 
-- `toastError(msg)` — typed wrappers around `toast.error` / `toast.info`.
-- `toastByKind(kind, msg)` where `kind: 'info' | 'error'` — used by `Layout` to bridge `RunnerStatusProvider`'s `sendUpdate(kind, message)` callback to the toast layer (the context itself does not import this service — UI lives in components).
+- `toast(kind, message)` where `kind: 'info' | 'error'` — the core helper; `Layout` passes it as `RunnerStatusProvider`'s `sendUpdate(kind, message)` callback to bridge context updates to the toast layer (the context itself does not import this service — UI lives in components).
+- `toastConnectionError(err)` — surfaces a `ConnectionError`, keyed by `toastId: conn:<baseUrl>` so a downed service reuses one toast instead of stacking.
 - `toastPromise(promise, { pending, success, error })` — `toast.promise` wrapper for fire-and-track async work like `uploadVideo`.
 - `toastInitResult(result, { busy, error })` — folds a `RunInitResult` ('started' | 'busy' | 'error') into the right toast; 'started' is a no-op because completion arrives via SSE.
 - `ToastContainer` re-export — `Layout` mounts it once. The `react-toastify` CSS is also imported here, not in `main.tsx`.

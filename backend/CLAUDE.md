@@ -4,7 +4,7 @@ Guidance for Claude Code when working inside `backend/`.
 
 ## What this is
 
-FastAPI app exposing the lecture-processing pipeline as HTTP endpoints. Each endpoint runs synchronously (no background tasks, no job polling) and returns `{"status": "done"}` / `{"status": "error", "message": ...}`. The transcribe endpoint additionally returns `{"status": "rate_limited", ...}` when Groq throttles mid-run.
+FastAPI app exposing the lecture-processing pipeline as HTTP endpoints. Endpoints are fire-and-forget: they kick off a step (or the whole pipeline) as a background asyncio task and return `{"status": "started"}` immediately (or `{"status": "busy"}` if the lecture is already running). Progress and per-step outcomes (done / error / rate_limited) live in the runner's in-flight + error state, which the frontend reads via `GET /status`.
 
 ## Pipeline stages
 
@@ -22,10 +22,11 @@ backend/
     fonts/            NotoSansHebrew-*.ttf (body) + MiriamMonoCLM-*.ttf (dual-script mono for code blocks); all bundled, no system install
     instructions/     summarize.md (Hebrew prompt sent to Gemini)
     templates/        pandoc_template.tex (XeLaTeX template for PDF output)
+    filters/          ltr_code.lua (pandoc Lua filter wrapping code blocks in \begin{english} for LTR)
   pipeline/           pure functions, one module per step
     strip_audio.py       strip_audio(video_path, audio_path)
     transcribe.py        transcribe_audio(audio_path) -> str            (raises TranscribeRateLimitError)
-    summarize.py         summarize(transcript_path, material_pdf=None) -> str (raises RuntimeError on Gemini API failure)
+    summarize.py         summarize(transcript_path, material_path=None) -> str (raises RuntimeError on Gemini API failure)
     to_pdf.py            convert_to_pdf(md_path) -> str (output path)
     upload_to_drive.py   upload_to_drive(pdf_path, course, file_name=None, subfolder=None) -> str (webViewLink)
   runner.py           unified execution engine — step executors, in-flight tracking & orchestration
@@ -39,6 +40,7 @@ backend/
     test_transcribe.py
     test_summarize.py
     test_runner.py
+    test_upload_to_drive.py
   services/
     db_client.py      thin HTTP client for the database service (every read/write goes through here)
     google_auth.py    shared OAuth helper — loads credentials.json/token_drive.json, returns Credentials for a given scope set
@@ -73,9 +75,9 @@ Folder is at: @docs , and it contains:
 
 ## API endpoints
 
-All pipeline endpoints: `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}` where `step ∈ {audio, transcribe, summarize, pdf, drive}`. `kind` defaults to `lecture`.
+Per-step: `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}` where `step ∈ {audio, transcribe, summarize, pdf, drive}`. `kind` defaults to `lecture`. The route validates that the step's prerequisite file exists, returning `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise; on success it fires the step as a background task and returns `{"status": "started"|"busy"}`. Step results (e.g. `usedMaterial` for summarize, the `drive` URL, rate-limit progress) live in the runner's in-flight/error state, not the HTTP response.
 
-Each endpoint validates that its prerequisite file exists and returns `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise. `/run/summarize` additionally returns `usedMaterial: true` when an optional `material.pdf` was found in the lecture dir and passed to Gemini alongside the transcript.
+Whole-lecture: `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...` advances the lecture through every remaining step in the background; returns `{"status": "started"|"busy"}`.
 
 Runner: `POST /run-all` kicks off `runner.run_all()` as a background task (or returns `{status: "already_running", ...}` if a run is in progress, or `{status: "empty_queue"}` if nothing is pending). `GET /status` returns a snapshot from `runner.get_status()` — `{runner: {running, total, done, last_error}, in_flight: [...], errors: {...}}`. The runner also fires on a daily APScheduler cron at 03:00 (configured in `main.py`'s `lifespan`).
 
@@ -109,7 +111,7 @@ cd backend
 uv run pytest tests/ -q
 ```
 
-CI runs exactly this on every push to `main` and every PR — see `.github/workflows/ci.yml` (installs uv + pandoc 2.9.2.1, then `uv sync --extra test` + `uv run pytest`).
+CI runs exactly this on every push (any branch) — see `.github/workflows/ci.yml` (installs uv + pandoc 2.9.2.1, then `uv sync --extra test` + `uv run pytest`).
 
 ## Testing after every logic update
 
@@ -127,7 +129,7 @@ This applies even to "small" or "obvious" changes — preprocessing helpers in `
 - Pipeline functions are pure: they take file paths / strings, no global state.
 - Asset paths (`fonts/`, `summarize.md`, `pandoc_template.tex`) are resolved relative to `__file__` inside each pipeline module — they point to `backend/assets/`.
 - CORS is open to `http://localhost:5173` only.
-- No background tasks, no job polling — every endpoint blocks until done.
+- Pipeline steps run as fire-and-forget asyncio tasks; endpoints return immediately (`started`/`busy`) and the frontend polls `GET /status`. A per-lecture `asyncio.Lock` serializes concurrent triggers for the same lecture.
 - `summarize.py` raises `RuntimeError` on Gemini API failure (not `sys.exit`) so the endpoint can catch and return `{"status": "error"}`. Auth uses `GEMINI_API_KEY` from the environment — the `google-genai` SDK silently ignores OAuth `credentials=` outside of Vertex AI mode.
 - `transcribe.py` raises `TranscribeRateLimitError` carrying `{limit, used, requested, retry_after_seconds, completed_chunks, total_chunks}` and writes partial state to disk; the next `/run/transcribe` call picks up from `transcript.partial.txt`. The transcribe endpoint round-trips the partial via the database service AND restores `audio.mp3`'s mtime from `transcript.partial.meta.json` — re-downloading audio.mp3 gives it a fresh mtime which would otherwise invalidate the resume meta and force a full restart.
 - `timing/` records every pipeline operation's `(file_size, duration)` so the frontend can show calibrated ETAs.

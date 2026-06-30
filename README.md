@@ -13,7 +13,7 @@ Four services share one `.env` and one on-disk layout under `DATA_ROOT`:
 | `backend/`    | FastAPI (Python)         | 8000  | Runs the pipeline steps; serves timing stats and the resume runner   |
 | `database/`   | FastAPI (Python)         | 8001  | Owns every read/write under `DATA_ROOT` + the cross-service SSE bus  |
 | `frontend/`   | React + Vite + TS        | 5173  | Web UI that drives the pipeline                                      |
-| `downloader/` | Chrome MV3 + Node server | 3052  | Captures source videos from lecture sites and hands them to database |
+| `downloader/` | Chrome MV3 + Node server | 3052  | Captures source videos (and PDFs) from lecture sites and hands them to database |
 
 On-disk layout (single source of truth: `database/fs/paths.py`):
 
