@@ -9,10 +9,10 @@ import { useReportOnce } from '@/hooks/useReportOnce'
 import { toast, toastInitResult } from '@/services/toaster'
 import { formatSize } from '@/utils/format'
 
-// todo - create a constants file similar to constants/pipeline.ts, name it overview.ts
-// Phase 1 (extract) writes {name}.txt, phase 2 (analyze) turns it into {name}-analyzed.md.
-function stageFileName(name: string, phase: CoursePhase): string {
-  return phase === 'extract' ? `${name}.txt` : `${name}-analyzed.md`
+// Phase 1 (extract) writes {slug}.txt, phase 2 (analyze) turns it into {slug}-analyzed.md.
+// The slug is the on-disk file stem the backend writes — never the display title.
+function stageFileName(slug: string, phase: CoursePhase): string {
+  return phase === 'extract' ? `${slug}.txt` : `${slug}-analyzed.md`
 }
 
 interface StageInfo {
@@ -89,18 +89,20 @@ export default function CourseView() {
   // Refresh status and files on each backend notify event
   useNotify(refresh)
 
-  // Toast each extractor error once per (course, message) pair
+  // Toast each extractor error once per (course, slug, message). Status is keyed by
+  // slug; show the friendlier title when we have the extractor list loaded.
   useEffect(() => {
     if (!status) return
+    const titleBySlug = new Map(extractors?.map((e) => [e.slug, e.title]))
     const valid = new Set<string>()
-    for (const [name, st] of Object.entries(status.extractors)) {
+    for (const [slug, st] of Object.entries(status.extractors)) {
       if (st.status !== 'error') continue
-      const key = `${course}/${name}`
+      const key = `${course}/${slug}`
       valid.add(key)
-      reportError(key, `${name}: ${st.message ?? 'failed'}`)
+      reportError(key, `${titleBySlug.get(slug) ?? slug}: ${st.message ?? 'failed'}`)
     }
     pruneErrors(valid)
-  }, [status, course])
+  }, [status, course, extractors])
 
   if (!course) return null
 
@@ -110,9 +112,9 @@ export default function CourseView() {
     return files.find((f) => f.name === name) ?? null
   }
 
-  function stageFor(name: string, phase: CoursePhase): StageInfo {
-    const fileName = stageFileName(name, phase)
-    const st = status?.extractors[name]
+  function stageFor(slug: string, phase: CoursePhase): StageInfo {
+    const fileName = stageFileName(slug, phase)
+    const st = status?.extractors[slug]
     // Errors attribute to the phase the run was in — the extractors map always
     // describes the current/last run, whose phase is status.phase.
     return {
@@ -135,8 +137,8 @@ export default function CourseView() {
     refresh()
   }
 
-  const allTxt = extractors?.every((e) => findFile(stageFileName(e.name, 'extract'))) ?? false
-  const allMd = extractors?.every((e) => findFile(stageFileName(e.name, 'analyze'))) ?? false
+  const allTxt = extractors?.every((e) => findFile(stageFileName(e.slug, 'extract'))) ?? false
+  const allMd = extractors?.every((e) => findFile(stageFileName(e.slug, 'analyze'))) ?? false
   const globalLabel = !allTxt ? 'Extract all' : allMd ? 'Regenerate notes' : 'Generate notes'
 
   return (
@@ -157,27 +159,27 @@ export default function CourseView() {
           <div className="spinner" />
         ) : (
           <div className="file-list">
-            {extractors.map(({ name }) => {
-              const snippets = stageFor(name, 'extract')
-              const notes = stageFor(name, 'analyze')
+            {extractors.map(({ slug, title }) => {
+              const snippets = stageFor(slug, 'extract')
+              const notes = stageFor(slug, 'analyze')
               return (
                 <div
-                  key={name}
+                  key={slug}
                   className={`file-row course-branch${snippets.file && notes.file ? ' file-row--present' : ''}${snippets.isRunning || notes.isRunning ? ' file-row--running' : ''}`}
                 >
                   <div className="course-branch-header">
-                    <span className="course-branch-name">{name}</span>
+                    <span className="course-branch-name">{title}</span>
                     <span className="course-branch-actions">
                       <button
                         className="file-action-btn"
-                        onClick={() => handleExtract([name])}
+                        onClick={() => handleExtract([slug])}
                         disabled={running}
                       >
                         Extract
                       </button>
                       <button
                         className="file-action-btn"
-                        onClick={() => handleAnalyze([name])}
+                        onClick={() => handleAnalyze([slug])}
                         disabled={running || !snippets.file}
                       >
                         Generate

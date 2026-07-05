@@ -91,7 +91,8 @@ export interface RunnerStatus {
 export type AppMode = 'lectures' | 'courses'
 
 export interface OverviewExtractor {
-  name: string
+  slug: string
+  title: string
 }
 
 export type CoursePhase = 'extract' | 'analyze'
