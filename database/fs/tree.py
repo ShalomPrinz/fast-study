@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from .paths import data_root, RECITATIONS_DIR, PREDEFINED_FILES, ARCHIVED_MARKER
+from .paths import data_root, RECITATIONS_DIR, OVERVIEW_DIR, PREDEFINED_FILES, ARCHIVED_MARKER
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
@@ -50,14 +50,14 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
 
 
 def _read_lectures(course_path: Path) -> list[dict]:
-    """List lecture entries directly under a course dir, skipping the Recitations folder."""
+    """List lecture entries directly under a course dir, skipping the Recitations and overview folders."""
 
     if not course_path.exists():
         return []
     return [
         _read_lecture(course_path / entry.name, entry.name)
         for entry in course_path.iterdir()
-        if entry.is_dir() and entry.name != RECITATIONS_DIR
+        if entry.is_dir() and entry.name not in (RECITATIONS_DIR, OVERVIEW_DIR)
     ]
 
 

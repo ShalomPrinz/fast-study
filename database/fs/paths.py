@@ -3,6 +3,9 @@ from pathlib import Path
 
 RECITATIONS_DIR = "Recitations"
 
+# Course-level dir for overview pipeline outputs (files belong to the course, not a lecture).
+OVERVIEW_DIR = "overview"
+
 # Empty marker file inside a course dir flagging it as archived. Survives renames.
 ARCHIVED_MARKER = ".archived"
 
@@ -30,6 +33,12 @@ def course_dir(course: str) -> Path:
     """Return the directory for a single course."""
 
     return data_root() / course
+
+
+def overview_dir(course: str) -> Path:
+    """Return the course-level overview directory holding cross-lecture study files."""
+
+    return data_root() / course / OVERVIEW_DIR
 
 
 def lecture_dir(course: str, lecture: str, kind: str = "lecture") -> Path:

@@ -8,7 +8,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 
-from fs import crud, summary as summary_fs, tree
+from fs import crud, overview, summary as summary_fs, tree
 from fs.files import file_path
 from events.sse import subscribe, broadcast_notify
 
@@ -211,6 +211,44 @@ def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture"))
     """Stream a single lecture file (PDFs get the right media type for inline viewing)."""
 
     p = file_path(course, lecture, name, kind)
+    if not p.exists():
+        return Response("Not found", status_code=404)
+    media_type = "application/pdf" if name.endswith(".pdf") else None
+    return FileResponse(str(p), media_type=media_type)
+
+
+@app.put("/courses/{course}/overview/files/{name}")
+async def put_overview_file(course: str, name: str, request: Request):
+    """Write raw body bytes to a course-level overview file; 404 if the course doesn't exist."""
+
+    try:
+        data = await request.body()
+        overview.write_overview_file(course, name, data)
+        return _ok()
+    except FileNotFoundError as e:
+        return _ok(str(e), 404)
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
+@app.get("/courses/{course}/overview/files")
+def list_overview_files(course: str):
+    """List {name, size, mtime} entries in a course's overview dir (empty list if absent)."""
+
+    try:
+        return {"files": overview.list_overview_files(course)}
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
+@app.get("/courses/{course}/overview/files/{name}")
+def get_overview_file(course: str, name: str):
+    """Stream a single course-level overview file (PDFs get the right media type for inline viewing)."""
+
+    try:
+        p = overview.overview_file_path(course, name)
+    except Exception as e:
+        return _ok(str(e), 400)
     if not p.exists():
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None

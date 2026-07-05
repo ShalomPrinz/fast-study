@@ -12,11 +12,12 @@ Behavior is a verbatim port of the old `frontend/fs-api/handlers/*` middleware �
 database/
   main.py              FastAPI app + uvicorn entry
   fs/
-    paths.py             data_root, course_dir, lecture_dir(course, lecture, kind), RECITATIONS_DIR, ARCHIVED_MARKER, PREDEFINED_FILES
+    paths.py             data_root, course_dir, overview_dir, lecture_dir(course, lecture, kind), RECITATIONS_DIR, OVERVIEW_DIR, ARCHIVED_MARKER, PREDEFINED_FILES
     tree.py              read_tree, read_course (port of frontend fs-reader.ts)
     summary.py           read/write/revert summary.md
     files.py             resolve a lecture file path for streaming
     crud.py              create/rename/archive course, create/rename lecture, upload video, write/delete file
+    overview.py          course-level overview files: resolve path, write, list
   events/
     sse.py               in-memory pub/sub: subscribe() async generator + broadcast_notify()
   pyproject.toml
@@ -61,6 +62,9 @@ python3 main.py                          # also works, same port
 | `PUT    /courses/{course}/lectures/{lecture}/summary?kind=...`           | write `summary.md` (raw utf-8 body)      |
 | `DELETE /courses/{course}/lectures/{lecture}/summary?kind=...`           | revert to `original_summary.md`          |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | stream a lecture file                    |
+| `PUT    /courses/{course}/overview/files/{name}`                        | write a course-level overview file (raw body); neutral, 404 if course missing |
+| `GET    /courses/{course}/overview/files`                               | list overview files: `{files: [{name, size, mtime}]}` (empty if dir absent) |
+| `GET    /courses/{course}/overview/files/{name}`                        | stream a course-level overview file     |
 | `GET    /events`                                                         | SSE stream of `notify` events            |
 | `POST   /notify`                                                         | broadcast a `notify` event to subscribers|
 
@@ -69,6 +73,7 @@ python3 main.py                          # also works, same port
 ## Key design decisions
 
 - **All path conventions live here.** `lecture_dir(course, lecture, kind)` in `fs/paths.py` is the single source of truth for resolving paths under `DATA_ROOT`. The on-disk layout (`{DATA_ROOT}/{course}/{lecture}/...` and `{DATA_ROOT}/{course}/Recitations/{name}/...`) is not re-encoded anywhere else — other services pass `(course, lecture, kind)` tuples and let this service resolve them.
+- **`overview/` is a course-level file area, not a lecture.** Backend's overview step writes cross-lecture study files (e.g. `exam-hints.txt`) to `{DATA_ROOT}/{course}/overview/{name}` via `overview_dir(course)`. `fs/tree.py` skips this directory (like `Recitations`) so it never appears as a lecture in the tree. Writes are neutral (no artifact wipe, no side effects) and 404 if the course doesn't exist.
 - **`PUT /…/video` auto-triggers backend's `/run/audio`.** After a successful video write, the endpoint fire-and-forgets a POST to `${BACKEND_URL}/courses/{c}/lectures/{l}/run/audio?kind=...` (default `BACKEND_URL=http://localhost:8000`) so a downloader upload starts the audio-extraction step without a frontend click. Failures are logged and swallowed; the PUT response returns as soon as bytes hit disk.
 - **`PUT /…/video` wipes derived artifacts; `PUT /…/files/{name}` does not.** The video endpoint is the downloader's fresh-upload path and intentionally erases stale audio/transcript/summary. The generic files endpoint is the backend pipeline's write path for `audio.mp3`, `transcript.txt`, `transcript.partial.*`, `summary.pdf`, `drive_url.txt` — wiping would erase prior pipeline outputs mid-run. Summary writes go through the dedicated `/summary` endpoint, which snapshots the pre-edit original on first write.
 - **SSE lives here.** `/events` is a long-lived `text/event-stream` response; each subscriber gets its own `asyncio.Queue`. `/notify` fans an `event: notify` message out to every queue. Producers (today: the downloader, after a successful download) fire-and-forget — failure to deliver is silent and non-blocking, same contract as the previous Vite-plugin handler.
