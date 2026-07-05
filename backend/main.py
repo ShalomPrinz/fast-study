@@ -9,6 +9,9 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from timing import init_db, get_stats
+from course import overview
+from course import runner as course_runner
+from services import db_client
 import runner
 
 load_dotenv()
@@ -79,6 +82,53 @@ async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lec
 async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture")):
     if err := _validate_kind(kind): return err
     return {"status": runner.try_run_pipeline(course, lecture, kind)}
+
+
+# ---- Overview (course-level, not per-lecture — state lives in course/runner.py) ----
+
+async def _find_course(course: str) -> tuple[dict | None, dict | None]:
+    """Locate a course node in the tree; returns (node, error envelope)."""
+    tree = await asyncio.to_thread(db_client.get_tree)
+    node = next((c for c in tree if c.get("name") == course), None)
+    if node is None:
+        return None, {"status": "error", "message": f"course not found: {course}"}
+    return node, None
+
+
+@app.post("/courses/{course}/overview/extract")
+async def overview_extract(course: str, extractors: str | None = Query(None)):
+    """Extraction phase: scan every transcript in the course, write {slug}.txt per selected extractor."""
+    slugs, err = course_runner.resolve_slugs(extractors)
+    if err:
+        return {"status": "error", "message": err}
+    course_node, err = await _find_course(course)
+    if course_node is None or err is not None:
+        return err
+    return {"status": course_runner.try_run_extract(course, course_node, slugs)}
+
+
+@app.post("/courses/{course}/overview/analyze")
+async def overview_analyze(course: str, extractors: str | None = Query(None)):
+    """Analysis phase: send each selected extractor's {slug}.txt to an LLM and write {slug}-analyzed.md."""
+    slugs, err = course_runner.resolve_slugs(extractors)
+    if err:
+        return {"status": "error", "message": err}
+    _, err = await _find_course(course)
+    if err:
+        return err
+    return {"status": course_runner.try_run_analyze(course, slugs)}
+
+
+@app.get("/courses/{course}/overview/status")
+def overview_status(course: str):
+    """Status of the latest overview run for a course (phase + per-extractor outcome)."""
+    return course_runner.get_status(course)
+
+
+@app.get("/overview/extractors")
+def overview_extractors():
+    """Static extractor listing. `slug` is the stable id, `title` is the label."""
+    return {"extractors": [{"slug": e.slug, "title": e.title} for e in overview.EXTRACTORS]}
 
 
 @app.post("/run-all")
