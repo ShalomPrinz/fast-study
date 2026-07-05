@@ -1,5 +1,5 @@
-import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus } from '@/types'
-import { kindQuery, lectureBase } from '@/utils/url'
+import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus, OverviewExtractor, CoursePhase, CourseExtractorState, CourseStatus } from '@/types'
+import { kindQuery, lectureBase, courseOverviewBase, extractorsQuery } from '@/utils/url'
 import { createClient } from './http'
 
 const backend = createClient(import.meta.env.VITE_API_URL ?? 'http://localhost:8000', 'backend service')
@@ -61,4 +61,34 @@ export async function runAll(): Promise<RunnerStatus | 'empty_queue'> {
 
 export async function fetchRunnerStatus(): Promise<RunnerStatus> {
   return normalizeRunner(await backend.get<RawRunnerStatus>('/status'))
+}
+
+export async function fetchOverviewExtractors(): Promise<OverviewExtractor[]> {
+  const raw = await backend.get<{ extractors: OverviewExtractor[] }>('/overview/extractors')
+  return raw.extractors
+}
+
+export async function runOverviewExtract(course: string, extractors?: string[]): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(courseOverviewBase(course) + '/extract' + extractorsQuery(extractors))
+}
+
+export async function runOverviewAnalyze(course: string, extractors?: string[]): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(courseOverviewBase(course) + '/analyze' + extractorsQuery(extractors))
+}
+
+interface RawCourseStatus {
+  running: boolean
+  phase: CoursePhase | null
+  started_at: string | null
+  extractors?: Record<string, CourseExtractorState>
+}
+
+export async function fetchCourseStatus(course: string): Promise<CourseStatus> {
+  const raw = await backend.get<RawCourseStatus>(courseOverviewBase(course) + '/status')
+  return {
+    running: raw.running,
+    phase: raw.phase,
+    startedAt: raw.started_at,
+    extractors: raw.extractors ?? {},
+  }
 }

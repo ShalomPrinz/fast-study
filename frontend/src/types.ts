@@ -87,3 +87,30 @@ export interface RunnerStatus {
   errors: Record<string, string>
 }
 
+// Sidebar mode: normal lecture tree vs the flat courses list.
+export type AppMode = 'lectures' | 'courses'
+
+export interface OverviewExtractor {
+  name: string
+}
+
+export type CoursePhase = 'extract' | 'analyze'
+
+export interface CourseExtractorState {
+  status: 'pending' | 'running' | 'done' | 'skipped' | 'error'
+  message?: string
+}
+
+export interface CourseStatus {
+  running: boolean
+  phase: CoursePhase | null
+  startedAt: string | null
+  extractors: Record<string, CourseExtractorState>
+}
+
+export interface CourseFile {
+  name: string
+  size: number
+  mtime: number
+}
+

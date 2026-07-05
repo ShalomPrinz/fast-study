@@ -33,8 +33,8 @@ frontend/
   src/
     services/
       http.ts                  typed fetch client + shared `httpError`
-      backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus)
-      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL)
+      backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus, overview: fetchOverviewExtractors, runOverviewExtract, runOverviewAnalyze, fetchCourseStatus)
+      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + file URL)
       events.ts         singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
       toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
     constants/
@@ -42,7 +42,7 @@ frontend/
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
       CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
-    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, …
+    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, …
     App.tsx                  React Router routes; renders Layout + the three views
     main.tsx                 React entry point
     index.css                Single flat stylesheet, CSS variables for theming
@@ -50,9 +50,9 @@ frontend/
     utils/
       inFlightKey.ts
       namingSuggestion.ts
-      url.ts                   all URL/path string building: path`` encode-by-default tagged template, kindQuery() query suffix, lectureRoute() browser route, lectureBase() API path
+      url.ts                   all URL/path string building: path`` encode-by-default tagged template, kindQuery() query suffix, lectureRoute() browser route, lectureBase() API path, overviewRoute()/overviewBase()/extractorsQuery() for the course overview feature
       courseTree.ts            findLecture(courses, course, lecture, kind)
-      format.ts                formatDuration(seconds) — human-readable duration strings
+      format.ts                formatDuration(seconds) + formatSize(bytes) — human-readable strings
       lectureSort.ts           sortLectures(items) — natural-order sort of lectures/recitations by name
     hooks/
       useInlineEdit.ts         generic inline-input editing
@@ -69,10 +69,14 @@ frontend/
       Layout.tsx                routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
       MainView.tsx
       EditSummaryView.tsx
+      CourseView.tsx          per-course overview view: five extractor branches, each Snippets (.txt) → Study notes (-analyzed.md), SSE-refreshed
     components/
       sidebar/
         index.ts                re-exports Sidebar as the default
-        Sidebar.tsx             course/lecture tree
+        Sidebar.tsx             header + ModeToggle; declares the mode→{label, Component} map, no state/branching
+        LecturesSidebar.tsx     lecture/course tree body, no props — derives selection via useMatch + useKindParam, navigates via lectureRoute()
+        ModeToggle.tsx          owns the localStorage-persisted AppMode; renders the "Lectures"/"Courses" segments and the selected mode's body from the map
+        CoursesList.tsx         overview sidebar body: flat list of non-archived courses → /overview/:course
         NewCourseRow.tsx        inline "new course" input row
         RunnerPipelineRow.tsx   runner status/CTA row; click while running to jump to current lecture
         RefreshCoursesButton.tsx  manual tree-refresh button (reads CourseTreeContext)
@@ -94,10 +98,11 @@ frontend/
 | Path                          | View                |
 |-------------------------------|---------------------|
 | `/`                           | empty state         |
+| `/overview/:course`          | `CourseView`      |
 | `/:course/:lecture`           | `MainView`          |
 | `/:course/:lecture/edit`      | `EditSummaryView`   |
 
-`kind` (lecture vs recitation) is a query param (`?kind=recitation`) propagated everywhere it's needed.
+`kind` (lecture vs recitation) is a query param (`?kind=recitation`) propagated everywhere it's needed. The static `overview` segment outranks the dynamic `/:course/:lecture` pattern in v7 route ranking, so the two never collide.
 
 ## Key design decisions
 
@@ -106,6 +111,7 @@ frontend/
 - **Runner status is SSE-driven, not polled.** `RunnerStatusContext` calls `useNotify(refresh)` to refetch `GET /status` on each `notify` ping. The backend's `runner.py` fires a notify on every meaningful state change (step start/done, rate-limit, error, run complete). The provider also de-dupes `lastError` toasts via a ref so the same error doesn't fire twice. Sidebar and MainView share runner state by reading from the context.
 - **No FastAPI calls for filesystem state.** Don't add a backend endpoint to query "does file X exist." That belongs in the database service.
 - **Connection-refused errors are handled centrally in the http client.** When a `fetch` rejects with a `TypeError` (the Fetch spec's signal for a network failure — server unreachable; aborts are `DOMException` and propagate untouched), `createClient(baseUrl, serviceName)` wraps it in a typed `ConnectionError` (in `services/http.ts`) carrying the friendly service name ("backend service" / "database service"), toasts it via `toastConnectionError`, and rethrows. So every request surfaces "which service is down" in one place, and existing per-call error handling is unaffected. `toastConnectionError` (in `toaster.ts`) uses a `toastId` keyed per service so polling a downed service reuses one toast instead of stacking. Don't add connection-error handling at call sites — it belongs in this one catch.
+- **Courses is a sidebar mode, not a separate app.** `Sidebar` declares a `Record<AppMode, { label, Component }>` map (order = segment order: Lectures then Courses) and hands it to `ModeToggle`, which owns the `AppMode` (`'lectures' | 'courses'`) as component state persisted to `localStorage` (`fastStudyMode`, falling back to the default for a stale key), renders the segment buttons from the map, and renders the selected mode's body (`LecturesSidebar` / `CoursesList`) itself — both take no props, each deriving its own selection/navigation via `useMatch` + `useKindParam` + `lectureRoute()`/`overviewRoute()`. `CourseView` (the per-course overview feature) refreshes files (database) + status (backend) on mount/course change and on each SSE notify; the backend notifies after every extractor and at run end, so there is no polling. Extractor errors toast once per `(course, extractor, message)` via `useReportOnce`.
 - **Pipeline steps are declared once.** `constants/pipeline.ts` is the single source of truth for the step list, prereq chain, action labels, and error labels. Don't hard-code a step name or input file anywhere else — derive from `PIPELINE` / `STEP_*` maps.
 - **Single CSS file.** All styles in `index.css` with CSS custom properties. No CSS modules / styled-components.
 - **Hebrew rendering.** Folder name labels use `dir="auto"` so the browser auto-detects RTL. Font stack includes Noto Sans Hebrew (Google Fonts) with system fallbacks (Segoe UI, Arial).
@@ -151,11 +157,11 @@ Each file under `src/services/` is the **single boundary** for one external conc
 
 ### `backend.ts` — FastAPI backend client → `${VITE_API_URL}`
 
-Exposes `runStep`, `runPipeline`, `fetchTimingStats`, `runAll`, `fetchRunnerStatus`. The last two normalize the wire `snake_case` shape to camelCase.
+Exposes `runStep`, `runPipeline`, `fetchTimingStats`, `runAll`, `fetchRunnerStatus` (the last two normalize the wire `snake_case` shape to camelCase), plus the course overview feature: `fetchOverviewExtractors`, `runOverviewExtract(course, extractors?)`, `runOverviewAnalyze(course, extractors?)` (both return `RunInitResult`; omitted extractors = all), and `fetchCourseStatus(course)` (normalizes `started_at` → `startedAt`).
 
 ### `database.ts` — Database service client → `${VITE_DATABASE_URL}`
 
-Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, and the `databaseUrl` export used to build the SSE EventSource URL in `CourseTreeContext` and `RunnerStatusContext`.
+Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, `fetchCourseFiles(course)` / `overviewFileUrl(course, file)` for the course-level `overview/` area, and the `databaseUrl` export used to build the SSE EventSource URL in `CourseTreeContext` and `RunnerStatusContext`.
 
 ### `toaster.ts` — the only `react-toastify` import site
 

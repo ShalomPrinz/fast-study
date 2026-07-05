@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './routes/Layout'
 import MainView from './routes/MainView'
 import EditSummaryView from './routes/EditSummaryView'
+import CourseView from './routes/CourseView'
 
 function EmptyState() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<EmptyState />} />
+        <Route path="course/:course" element={<CourseView />} />
         <Route path=":course/:lecture" element={<MainView />} />
         <Route path=":course/:lecture/edit" element={<EditSummaryView />} />
       </Route>

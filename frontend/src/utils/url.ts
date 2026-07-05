@@ -31,3 +31,19 @@ export function lectureRoute(course: string, lecture: string, kind: Kind | undef
 export function lectureBase(course: string, lecture: string): string {
   return path`/courses/${course}/lectures/${lecture}`
 }
+
+// Browser route: the in-app URL for course overview.
+export function courseRoute(course: string): string {
+  return path`/course/${course}`
+}
+
+// API path: the overview endpoint prefix shared by the backend and database services.
+export function courseOverviewBase(course: string): string {
+  return path`/courses/${course}/overview`
+}
+
+// `?extractors=a,b` CSV suffix for overview triggers; omitted/empty selects all
+// extractors server-side, so the default is the empty string.
+export function extractorsQuery(names?: string[]): string {
+  return names?.length ? `?extractors=${names.map(encodeURIComponent).join(',')}` : ''
+}

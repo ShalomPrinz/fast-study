@@ -1072,3 +1072,138 @@ html, body, #root {
   color: var(--text);
   background: var(--main-bg);
 }
+
+/* ── courses mode ── */
+
+/* Sidebar mode toggle: compact two-segment switch below the "Fast Study" title */
+.mode-toggle {
+  display: flex;
+  gap: 2px;
+  margin: 8px 12px 4px;
+  padding: 2px;
+  background: var(--sidebar-hover);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.mode-toggle-btn {
+  flex: 1;
+  padding: 5px 8px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--sidebar-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.mode-toggle-btn:hover {
+  color: var(--sidebar-fg);
+}
+
+.mode-toggle-btn.active {
+  background: var(--sidebar-selected);
+  color: #fff;
+}
+
+/* Flat course list — no tree indent */
+.course-list {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+/* Course view */
+
+.course-global-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.course-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.course-branch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.course-branch-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.course-branch-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.course-stages {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.course-stage {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.course-stage--done {
+  color: var(--text);
+}
+
+/* Empty-stage placeholder marker, sized to line up with the ✓ / spinner slot */
+.course-stage-dot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.course-stage-error {
+  color: var(--text-warning);
+  font-size: 13px;
+  cursor: help;
+}
+
+.course-stage-arrow {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.course-stage-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.course-stage-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.course-stage-size {
+  font-size: 11px;
+  color: var(--text-muted);
+}

@@ -1,5 +1,5 @@
-import type { FileName, Course, Kind } from '@/types'
-import { path, kindQuery, lectureBase } from '@/utils/url'
+import type { FileName, Course, Kind, CourseFile } from '@/types'
+import { path, kindQuery, lectureBase, courseOverviewBase } from '@/utils/url'
 import { createClient } from './http'
 
 const database = createClient(import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001', 'database service')
@@ -66,4 +66,13 @@ export async function saveSummaryContent(course: string, lecture: string, conten
 
 export async function revertSummary(course: string, lecture: string, kind?: Kind): Promise<void> {
   await database.delete(`${lectureBase(course, lecture)}/summary${kindQuery(kind)}`)
+}
+
+export async function fetchCourseFiles(course: string): Promise<CourseFile[]> {
+  const raw = await database.get<{ files: CourseFile[] }>(courseOverviewBase(course) + '/files')
+  return raw.files
+}
+
+export function overviewFileUrl(course: string, file: string): string {
+  return database.url(courseOverviewBase(course) + path`/files/${file}`)
 }
