@@ -1,8 +1,6 @@
-import os
 from pathlib import Path
 
-from google import genai
-
+from services.llm_client import LLMClient
 from timing import timed_pipeline
 
 PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summarize.md"
@@ -23,25 +21,15 @@ PDF_INSTRUCTION_SUFFIX = (
 )
 
 
-def _build_client() -> genai.Client:
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set in the environment")
-    return genai.Client(api_key=api_key)
-
-
 @timed_pipeline("summarize")
 def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
 
-    client = _build_client()
+    client = LLMClient(model=MODEL)
     uploaded = []
     try:
         # Context first, instructions last
-        transcript_file = client.files.upload(
-            file=str(transcript_path),
-            config={"mime_type": "text/plain"},
-        )
+        transcript_file = client.upload_file(transcript_path, "text/plain")
         uploaded.append(transcript_file)
 
         contents: list = [
@@ -50,10 +38,7 @@ def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
         ]
 
         if material_path is not None:
-            material_file = client.files.upload(
-                file=str(material_path),
-                config={"mime_type": "application/pdf"},
-            )
+            material_file = client.upload_file(material_path, "application/pdf")
             uploaded.append(material_file)
             contents += ["--- SUPPLEMENTARY PDF DOCUMENT ---", material_file]
             prompt += PDF_INSTRUCTION_SUFFIX
@@ -61,16 +46,8 @@ def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
         prompt += LENGTH_BUDGET_SUFFIX
         contents += ["--- INSTRUCTIONS ---", prompt]
 
-        response = client.models.generate_content(model=MODEL, contents=contents)
-    except Exception as e:
-        raise RuntimeError(str(e)) from e
+        return client.generate(contents)
     finally:
-        # Uploaded files persist server-side until deleted; clean up to avoid
-        # leaking quota. Swallow delete errors — the original exception wins.
+        # Clean up uploaded files
         for handle in uploaded:
-            try:
-                client.files.delete(name=handle.name)
-            except Exception:
-                pass
-
-    return (response.text or "").strip()
+            client.delete_file(handle.name)
