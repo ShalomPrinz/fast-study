@@ -39,6 +39,7 @@ frontend/
       toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
     constants/
       pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
+      overview.ts              OVERVIEW_PHASES list + derived PHASE_SUFFIX / PHASE_LABEL maps + stageFileName(slug, phase)
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
       CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify

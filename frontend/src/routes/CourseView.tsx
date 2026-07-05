@@ -8,12 +8,7 @@ import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { toast, toastInitResult } from '@/services/toaster'
 import { formatSize } from '@/utils/format'
-
-// Phase 1 (extract) writes {slug}.txt, phase 2 (analyze) turns it into {slug}-analyzed.md.
-// The slug is the on-disk file stem the backend writes — never the display title.
-function stageFileName(slug: string, phase: CoursePhase): string {
-  return phase === 'extract' ? `${slug}.txt` : `${slug}-analyzed.md`
-}
+import { PHASE_LABEL, stageFileName } from '@/constants/overview'
 
 interface StageInfo {
   fileName: string
@@ -187,9 +182,9 @@ export default function CourseView() {
                     </span>
                   </div>
                   <div className="course-stages">
-                    <StageChip course={course} label="Snippets" stage={snippets} />
+                    <StageChip course={course} label={PHASE_LABEL.extract} stage={snippets} />
                     <span className="course-stage-arrow">→</span>
-                    <StageChip course={course} label="Study notes" stage={notes} />
+                    <StageChip course={course} label={PHASE_LABEL.analyze} stage={notes} />
                   </div>
                 </div>
               )
