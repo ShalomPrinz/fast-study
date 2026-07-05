@@ -76,6 +76,37 @@ def delete_file(course: str, lecture: str, kind: str, filename: str) -> None:
     _raise_for_envelope(r)
 
 
+def _overview_url(course: str, name: str) -> str:
+    return f"{DATABASE_URL}/courses/{_q(course)}/overview/files/{_q(name)}"
+
+
+def put_overview_file(course: str, filename: str, data: bytes) -> None:
+    """Write one file into the course-level overview dir (created server-side on demand)."""
+
+    r = requests.put(_overview_url(course, filename), data=data)
+    _raise_for_envelope(r)
+
+
+def get_overview_file(course: str, filename: str) -> bytes:
+    """Fetch one course-level overview file as raw bytes. Raises if missing."""
+
+    r = requests.get(_overview_url(course, filename))
+    if r.status_code == 404:
+        raise DbClientError(f"{filename} not found in {course}/overview")
+    if not r.ok:
+        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    return r.content
+
+
+def list_overview_files(course: str) -> list[dict]:
+    """List a course's overview files as [{name, size, mtime}]."""
+
+    r = requests.get(f"{DATABASE_URL}/courses/{_q(course)}/overview/files")
+    if not r.ok:
+        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    return r.json().get("files", [])
+
+
 def get_tree() -> list[dict]:
     """Fetch the full course tree (courses → lectures + recitations)."""
 
