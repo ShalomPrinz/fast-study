@@ -7,7 +7,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import runner
+from pipeline import runner
 
 
 def _files(**existing) -> dict:

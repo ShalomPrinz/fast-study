@@ -1,5 +1,5 @@
 """Course-level overview orchestrator. Phase boundaries live here, while actual work in separate modules.
-Mirrors the per-lecture `runner.py` at backend root, but keyed by course alone."""
+Mirrors the per-lecture `pipeline/runner.py`, but keyed by course alone."""
 
 import asyncio
 from datetime import datetime, timezone

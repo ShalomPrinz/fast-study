@@ -12,7 +12,7 @@ from timing import init_db, get_stats
 from course import overview
 from course import runner as course_runner
 from services import db_client
-import runner
+from pipeline import runner
 
 load_dotenv()
 
