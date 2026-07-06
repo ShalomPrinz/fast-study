@@ -34,7 +34,7 @@ frontend/
     services/
       http.ts                  typed fetch client + shared `httpError`
       backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus, overview: fetchOverviewExtractors, runOverview, fetchCourseStatus)
-      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list)
+      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file)
       events.ts         singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
       toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
     constants/
@@ -70,7 +70,7 @@ frontend/
       Layout.tsx                routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
       MainView.tsx
       EditSummaryView.tsx
-      CourseView.tsx          per-course overview view: one "Generate" button per extractor + a "Generate All" button; SSE-refreshed status/notes (no per-phase UI, no file links)
+      CourseView.tsx          per-course overview view: one "Generate" button per extractor (+ an open-PDF button when its {slug}-analyzed.pdf exists) + a "Generate All" button; SSE-refreshed status (no per-phase UI, no file links)
     components/
       sidebar/
         index.ts                re-exports Sidebar as the default
@@ -162,7 +162,7 @@ Exposes `runStep`, `runPipeline`, `fetchTimingStats`, `runAll`, `fetchRunnerStat
 
 ### `database.ts` — Database service client → `${VITE_DATABASE_URL}`
 
-Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, `fetchCourseFiles(course)` for the course-level `overview/` area (existence/metadata only — the UI no longer links to individual overview files), and the `databaseUrl` export used to build the SSE EventSource URL in `CourseTreeContext` and `RunnerStatusContext`.
+Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, `fetchCourseFiles(course)` for the course-level `overview/` area plus `overviewFileUrl(course, file)` (used only to open an extractor's generated PDF in a new tab — no broader file-browser UI), and the `databaseUrl` export used to build the SSE EventSource URL in `CourseTreeContext` and `RunnerStatusContext`.
 
 ### `toaster.ts` — the only `react-toastify` import site
 

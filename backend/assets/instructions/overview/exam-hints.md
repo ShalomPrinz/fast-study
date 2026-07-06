@@ -19,15 +19,15 @@ You have received transcripts or excerpts from a lecture where the lecturer hint
 
 ## ‏רמזים מפורשים
 
-**[Hint Title]:** ([source: lecture/recitation X])  
+**[Hint Title]:** (הרצאה X)  
 [Rephrasing of a hint. Short, Readable, Fluent.]
 
-**[Hint Title]:** ([source: lecture/recitation Y])  
+**[Hint Title]:** (תרגול Y)  
 [Rephrasing of a hint. Short, Readable, Fluent.]
 
 ## ‏דגשים ועקרונות
 
-**[Emphasis Title]:** ([source: lecture/recitation Z])  
+**[Emphasis Title]:** (הרצאה Z)  
 [Rephrasing of an emphasis. Short, Readable, Fluent.] 
 
 ...

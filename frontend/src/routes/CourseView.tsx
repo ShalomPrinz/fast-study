@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import type { OverviewExtractor, CourseFile, CourseStatus } from '@/types'
 import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
-import { fetchCourseFiles } from '@/services/database'
+import { fetchCourseFiles, overviewFileUrl } from '@/services/database'
 import { useNotify } from '@/hooks/useNotify'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { toast, toastInitResult } from '@/services/toaster'
 import { lastGeneratedFile } from '@/constants/overview'
+import Icon from '@/components/Icon'
 
 interface BranchStatus {
   running: boolean
@@ -126,6 +127,15 @@ export default function CourseView() {
                     <span className="course-branch-name">{title}</span>
                     <span className="course-branch-actions">
                       <BranchIndicator status={bs} />
+                      {bs.done && (
+                        <button
+                          className="file-open-btn"
+                          title="Open PDF in new tab"
+                          onClick={() => window.open(overviewFileUrl(course, lastGeneratedFile(slug)), '_blank')}
+                        >
+                          <Icon icon="external-link" />
+                        </button>
+                      )}
                       <button
                         className="file-action-btn"
                         onClick={() => handleGenerate([slug])}

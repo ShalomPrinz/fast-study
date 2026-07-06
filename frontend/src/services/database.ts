@@ -72,3 +72,7 @@ export async function fetchCourseFiles(course: string): Promise<CourseFile[]> {
   const raw = await database.get<{ files: CourseFile[] }>(courseOverviewBase(course) + '/files')
   return raw.files
 }
+
+export function overviewFileUrl(course: string, file: string): string {
+  return database.url(courseOverviewBase(course) + path`/files/${file}`)
+}
