@@ -2,9 +2,12 @@
 Mirrors the per-lecture `runner.py` at backend root, but keyed by course alone."""
 
 import asyncio
+import tempfile
 from datetime import datetime, timezone
+from pathlib import Path
 
 from course import overview
+from pipeline.to_pdf import convert_to_pdf
 from services import db_client
 
 # One lock per course
@@ -31,7 +34,7 @@ def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
 
 
 def try_run_generate(course: str, course_node: dict, slugs: list[str]) -> str:
-    """Run extract then analyze sequentially in the background. Returns "started" or "busy"."""
+    """Run all 'slugs' course overview sequentially in the background. Returns "started" or "busy"."""
     lock = _locks.setdefault(course, asyncio.Lock())
     if lock.locked():
         return "busy"
@@ -51,20 +54,28 @@ def _new_run(phase: str, slugs: list[str]) -> dict:
 
 
 async def _run_generate(lock: asyncio.Lock, course: str, course_node: dict, slugs: list[str]) -> None:
-    """Hold the course lock across BOTH phases so nothing else runs in between, and keep
-    `running` True the whole time — the UI shows one spinner until analyze ends, not a
-    false "done" flicker between extract and analyze. Phases are pure blocking I/O → thread."""
+    """Hold the course lock across all phases so nothing else runs in between."""
     async with lock:
         try:
             await asyncio.to_thread(_extract_phase, course, course_node, slugs)
-            status = _status[course]
-            status["phase"] = "analyze"
-            status["extractors"] = {s: {"status": "pending"} for s in slugs}
-            db_client.notify()  # phase boundary: UI re-reads and shows the analyze pass
+            slugs = _advance_phase(course, "analyze", slugs)
             await asyncio.to_thread(_analyze_phase, course, slugs)
+            slugs = _advance_phase(course, "to_pdf", slugs)
+            await asyncio.to_thread(_to_pdf_phase, course, slugs)
         finally:
             _status[course]["running"] = False
             db_client.notify()
+
+
+def _advance_phase(course: str, phase: str, slugs: list[str]) -> list[str]:
+    """Phase boundary: switch phase, reset each not-yet-errored extractor to pending."""
+    status = _status[course]
+    status["phase"] = phase
+    surviving = [s for s in slugs if status["extractors"][s].get("status") != "error"]
+    for s in surviving:
+        status["extractors"][s] = {"status": "pending"}
+    db_client.notify()
+    return surviving
 
 
 def _extract_phase(course: str, course_node: dict, slugs: list[str]) -> None:
@@ -125,3 +136,33 @@ def _analyze_phase(course: str, slugs: list[str]) -> None:
             entry_status.update({"status": "error", "message": str(e)})
         finally:
             db_client.notify()  # per-extractor ping, same as the extract phase
+
+
+def _to_pdf_phase(course: str, slugs: list[str]) -> None:
+    """Blocking PDF render: per extractor, read the analyzed {slug}-analyzed.md, render it via
+    the pipeline's convert_to_pdf, write {slug}-analyzed.pdf. A missing analyzed .md (analyze
+    skipped/failed it) just skips that extractor. `running` is owned by the generate driver."""
+    status = _status[course]
+    for slug in slugs:
+        entry_status = status["extractors"][slug]
+        entry_status["status"] = "running"
+        try:
+            md_name = f"{slug}-analyzed.md"
+            try:
+                md_bytes = db_client.get_overview_file(course, md_name)
+            except db_client.DbClientError:
+                entry_status.update({"status": "skipped", "message": "no analyzed markdown — run analyze first"})
+                continue
+            # convert_to_pdf needs the .md on disk and drops the .pdf beside it (same stem),
+            # so round-trip through a temp dir: db bytes → file → convert → db bytes.
+            with tempfile.TemporaryDirectory() as tmp:
+                md_path = Path(tmp) / md_name
+                md_path.write_bytes(md_bytes)
+                pdf_path = convert_to_pdf(str(md_path))
+                pdf_bytes = Path(pdf_path).read_bytes()
+            db_client.put_overview_file(course, f"{slug}-analyzed.pdf", pdf_bytes)
+            entry_status["status"] = "done"
+        except Exception as e:
+            entry_status.update({"status": "error", "message": str(e)})
+        finally:
+            db_client.notify()  # per-extractor ping, same as the other phases

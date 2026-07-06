@@ -7,13 +7,14 @@ db_client and Gemini (`overview.analyze`) are fully mocked — no network, no
 database service. The two route-only concerns (CSV parsing, course-not-found
 wiring) are covered via the pure `resolve_slugs` / `main._find_course`.
 
-`try_run_generate` runs BOTH phases (extract → analyze) sequentially under one
-per-course lock; the in-memory `db` fixture chains them by returning from
-`get_overview_file` whatever `put_overview_file` wrote, so a real extract→analyze
-handoff is exercised end to end."""
+`try_run_generate` runs all THREE phases (extract → analyze → to_pdf) sequentially
+under one per-course lock; the in-memory `db` fixture chains them by returning from
+`get_overview_file` whatever `put_overview_file` wrote, so a real extract→analyze→
+to_pdf handoff is exercised end to end. `convert_to_pdf` is stubbed (no pandoc)."""
 
 import asyncio
 import threading
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -83,6 +84,15 @@ def db(monkeypatch):
     monkeypatch.setattr(db_client, "notify", notify)
     # Analyze is glue over Gemini — stub it so no network; per-slug prefix keeps asserts readable.
     monkeypatch.setattr(ep, "analyze", lambda ext, report, course: f"ניתוח:{ext.slug}")
+
+    # to_pdf reuses pipeline.convert_to_pdf; stub it (no pandoc/XeLaTeX) — it drops a .pdf
+    # beside the input md and returns that path, which the phase reads back and uploads.
+    def fake_convert(md_path):
+        out = Path(md_path).with_suffix(".pdf")
+        out.write_bytes(b"%PDF-1.4 stub")
+        return str(out)
+
+    monkeypatch.setattr(course_runner, "convert_to_pdf", fake_convert)
     return calls
 
 
@@ -97,7 +107,7 @@ async def _wait_done(course=COURSE, timeout=5.0):
 
 
 class TestGenerateAll:
-    def test_runs_extract_then_analyze_for_all_extractors(self, db):
+    def test_runs_extract_then_analyze_then_to_pdf_for_all_extractors(self, db):
         slugs, err = course_runner.resolve_slugs(None)  # None ⇒ all
         assert err is None
 
@@ -106,37 +116,41 @@ class TestGenerateAll:
             return await _wait_done()
 
         status = asyncio.run(go())
-        # Final phase is analyze — the run ends there, not at extract.
-        assert status["phase"] == "analyze"
+        # Final phase is to_pdf — the run ends there, not at extract/analyze.
+        assert status["phase"] == "to_pdf"
         assert status["started_at"] is not None
         assert list(status["extractors"]) == [e.slug for e in ep.EXTRACTORS]
-        # exam-hints matched → extract wrote its .txt, analyze wrote its -analyzed.md.
+        # exam-hints matched → extract .txt → analyze .md → to_pdf .pdf, all done.
         assert status["extractors"]["exam-hints"] == {"status": "done"}
-        # No match → extract skipped, so analyze has no .txt to read → skipped too.
+        # No match → extract skipped, so nothing downstream to analyze/render → skipped throughout.
         assert status["extractors"]["student-qa"]["status"] == "skipped"
         assert status["extractors"]["pitfalls"]["status"] == "skipped"
 
-    def test_writes_snippet_txt_then_analyzed_md(self, db):
+    def test_writes_txt_then_md_then_pdf(self, db):
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
             return await _wait_done()
 
         asyncio.run(go())
-        # Order matters: extract's {slug}.txt must land before analyze's {slug}-analyzed.md.
-        assert [(f) for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints-analyzed.md"]
+        # Order matters: extract's .txt, then analyze's -analyzed.md, then to_pdf's -analyzed.pdf.
+        assert [f for _, f, _ in db.puts] == [
+            "exam-hints.txt", "exam-hints-analyzed.md", "exam-hints-analyzed.pdf",
+        ]
         report = db.puts[0][2]
         assert "Exam Hints" in report and "=== Lecture 1 ===" in report
         assert db.puts[1][2] == "ניתוח:exam-hints"
+        # The PDF the to_pdf phase uploaded is exactly what convert_to_pdf produced from the .md.
+        assert db.overview_store["exam-hints-analyzed.pdf"] == b"%PDF-1.4 stub"
 
-    def test_notify_fires_per_extractor_both_phases_plus_boundary_and_end(self, db):
-        # 3 extractors: extract pings ×3 + phase boundary ×1 + analyze pings ×3 + run end ×1.
+    def test_notify_fires_per_extractor_all_phases_plus_boundaries_and_end(self, db):
+        # 3 extractors, 3 phases: extract ×3 + boundary + analyze ×3 + boundary + to_pdf ×3 + end.
         async def go():
             slugs, _ = course_runner.resolve_slugs(None)
             course_runner.try_run_generate(COURSE, _course_node(), slugs)
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 8
+        assert db.notifies == 12
 
 
 class TestGenerateSubset:
@@ -148,19 +162,21 @@ class TestGenerateSubset:
         status = asyncio.run(go())
         assert list(status["extractors"]) == ["exam-hints"]
         assert status["extractors"]["exam-hints"] == {"status": "done"}
-        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints-analyzed.md"]
+        assert [f for _, f, _ in db.puts] == [
+            "exam-hints.txt", "exam-hints-analyzed.md", "exam-hints-analyzed.pdf",
+        ]
 
-    def test_no_match_subset_skips_both_phases(self, db):
+    def test_no_match_subset_skips_all_phases(self, db):
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["student-qa"])
             return await _wait_done()
 
         status = asyncio.run(go())
-        # Extract finds nothing → skipped; analyze then finds no .txt → skipped again.
+        # Extract finds nothing → skipped; analyze finds no .txt, to_pdf finds no .md → skipped throughout.
         assert status["extractors"]["student-qa"]["status"] == "skipped"
         assert db.puts == []
-        # extract ping + boundary + analyze ping + run end.
-        assert db.notifies == 4
+        # 1 ping per phase (×3) + 2 boundaries + run end.
+        assert db.notifies == 6
 
     def test_unknown_extractor_is_error(self):
         # Route glue returns {"status": "error", "message": err} from this pair.
@@ -202,7 +218,7 @@ class TestPhaseTransitions:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["phase"] == "analyze"
+        assert status["phase"] == "to_pdf"
 
     def test_running_stays_true_through_analyze(self, db, monkeypatch):
         release = threading.Event()
@@ -246,7 +262,8 @@ class TestErrors:
             return await _wait_done()
 
         status = asyncio.run(go())
-        # Extract succeeded (wrote .txt); analyze is what blew up.
+        # Extract wrote .txt; analyze blew up → the error survives to_pdf (which skips an
+        # already-errored extractor) instead of being masked as a downstream "skipped".
         assert status["extractors"]["exam-hints"] == {"status": "error", "message": "gemini exploded"}
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt"]
 
@@ -266,6 +283,74 @@ class TestErrors:
         status = asyncio.run(go())
         assert status["extractors"]["exam-hints"]["status"] == "error"
         assert status["extractors"]["pitfalls"]["status"] == "skipped"  # no snippets → no .txt
+
+
+class TestToPdfPhase:
+    # A transcript matching TWO extractors (exam-hints "במבחן" + pitfalls "שימו לב"), so both
+    # reach the to_pdf phase with an analyzed .md and PDF error isolation can be exercised.
+    TWO_MATCH = "משפט פתיחה. זה יהיה במבחן בטוח. שימו לב לזה. משפט סיום."
+
+    def test_renders_pdf_from_analyzed_md(self, db):
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["phase"] == "to_pdf"
+        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        # The pdf's input was the analyzed .md written a phase earlier (chained via overview_store).
+        assert "exam-hints-analyzed.pdf" in db.overview_store
+        assert db.overview_store["exam-hints-analyzed.pdf"] == b"%PDF-1.4 stub"
+
+    def test_missing_analyzed_md_skips(self, db):
+        # student-qa never matches → no .txt, no .md → to_pdf has nothing to render.
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["student-qa"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["student-qa"] == {
+            "status": "skipped", "message": "no analyzed markdown — run analyze first",
+        }
+
+    def test_pdf_failure_marks_error(self, db, monkeypatch):
+        def boom(md_path):
+            raise RuntimeError("pandoc boom")
+
+        monkeypatch.setattr(course_runner, "convert_to_pdf", boom)
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["exam-hints"] == {"status": "error", "message": "pandoc boom"}
+        # analyze still wrote the .md; only the .pdf upload was skipped.
+        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints-analyzed.md"]
+
+    def test_one_pdf_failure_does_not_abort_others(self, db, monkeypatch):
+        monkeypatch.setattr(db_client, "get_file_bytes",
+                            lambda *a: self.TWO_MATCH.encode("utf-8"))
+
+        def selective(md_path):
+            if "exam-hints" in md_path:
+                raise RuntimeError("pandoc boom")
+            out = Path(md_path).with_suffix(".pdf")
+            out.write_bytes(b"%PDF-1.4 stub")
+            return str(out)
+
+        monkeypatch.setattr(course_runner, "convert_to_pdf", selective)
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints", "pitfalls"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["exam-hints"]["status"] == "error"
+        assert status["extractors"]["pitfalls"] == {"status": "done"}
+        # exam-hints failed to render → no pdf; pitfalls rendered → pdf uploaded.
+        assert "exam-hints-analyzed.pdf" not in db.overview_store
+        assert db.overview_store["pitfalls-analyzed.pdf"] == b"%PDF-1.4 stub"
 
 
 class TestSharedLock:

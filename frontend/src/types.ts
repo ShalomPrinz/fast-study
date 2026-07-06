@@ -95,7 +95,7 @@ export interface OverviewExtractor {
   title: string
 }
 
-export type CoursePhase = 'extract' | 'analyze'
+export type CoursePhase = 'extract' | 'analyze' | 'to_pdf'
 
 export interface CourseExtractorState {
   status: 'pending' | 'running' | 'done' | 'skipped' | 'error'
