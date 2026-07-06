@@ -1152,25 +1152,7 @@ html, body, #root {
   flex-shrink: 0;
 }
 
-.course-stages {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.course-stage {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.course-stage--done {
-  color: var(--text);
-}
-
-/* Empty-stage placeholder marker, sized to line up with the ✓ / spinner slot */
+/* Per-extractor status marker (empty-state dot), sized to line up with the ✓ / spinner slot */
 .course-stage-dot {
   width: 8px;
   height: 8px;
@@ -1183,27 +1165,4 @@ html, body, #root {
   color: var(--text-warning);
   font-size: 13px;
   cursor: help;
-}
-
-.course-stage-arrow {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.course-stage-link {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  color: var(--text);
-  text-decoration: none;
-}
-
-.course-stage-link:hover {
-  color: var(--accent);
-  text-decoration: underline;
-}
-
-.course-stage-size {
-  font-size: 11px;
-  color: var(--text-muted);
 }

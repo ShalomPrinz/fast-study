@@ -68,12 +68,8 @@ export async function fetchOverviewExtractors(): Promise<OverviewExtractor[]> {
   return raw.extractors
 }
 
-export async function runOverviewExtract(course: string, extractors?: string[]): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(courseOverviewBase(course) + '/extract' + extractorsQuery(extractors))
-}
-
-export async function runOverviewAnalyze(course: string, extractors?: string[]): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(courseOverviewBase(course) + '/analyze' + extractorsQuery(extractors))
+export async function runOverview(course: string, extractors?: string[]): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(courseOverviewBase(course) + '/generate' + extractorsQuery(extractors))
 }
 
 interface RawCourseStatus {

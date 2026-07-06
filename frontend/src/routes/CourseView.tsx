@@ -1,50 +1,25 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import type { OverviewExtractor, CourseFile, CourseStatus, CoursePhase } from '@/types'
-import { fetchOverviewExtractors, fetchCourseStatus, runOverviewExtract, runOverviewAnalyze } from '@/services/backend'
-import { fetchCourseFiles, overviewFileUrl } from '@/services/database'
+import type { OverviewExtractor, CourseFile, CourseStatus } from '@/types'
+import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
+import { fetchCourseFiles } from '@/services/database'
 import { useNotify } from '@/hooks/useNotify'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { toast, toastInitResult } from '@/services/toaster'
-import { formatSize } from '@/utils/format'
-import { PHASE_LABEL, stageFileName } from '@/constants/overview'
+import { lastGeneratedFile } from '@/constants/overview'
 
-interface StageInfo {
-  fileName: string
-  file: CourseFile | null
-  isRunning: boolean
+interface BranchStatus {
+  running: boolean
+  done: boolean
   error: string | null
 }
 
-function StageChip({ course, label, stage }: { course: string; label: string; stage: StageInfo }) {
-  const { fileName, file, isRunning, error } = stage
-  return (
-    <span className={`course-stage${file ? ' course-stage--done' : ''}`}>
-      {isRunning ? (
-        <span className="spinner spinner--sm" />
-      ) : error ? (
-        <span className="course-stage-error" title={error}>⚠</span>
-      ) : file ? (
-        <span className="file-check">✓</span>
-      ) : (
-        <span className="course-stage-dot" />
-      )}
-      {file ? (
-        <a
-          className="course-stage-link"
-          href={overviewFileUrl(course, fileName)}
-          target="_blank"
-          rel="noreferrer"
-        >
-          {label}
-          <span className="course-stage-size">{formatSize(file.size)}</span>
-        </a>
-      ) : (
-        <span className="course-stage-label">{label}</span>
-      )}
-    </span>
-  )
+function BranchIndicator({ status }: { status: BranchStatus }) {
+  if (status.running) return <span className="spinner spinner--sm" />
+  if (status.error) return <span className="course-stage-error" title={status.error}>⚠</span>
+  if (status.done) return <span className="file-check">✓</span>
+  return <span className="course-stage-dot" />
 }
 
 export default function CourseView() {
@@ -103,38 +78,24 @@ export default function CourseView() {
 
   const running = status?.running ?? false
 
-  function findFile(name: string): CourseFile | null {
-    return files.find((f) => f.name === name) ?? null
-  }
-
-  function stageFor(slug: string, phase: CoursePhase): StageInfo {
-    const fileName = stageFileName(slug, phase)
+  function branchStatus(slug: string): BranchStatus {
     const st = status?.extractors[slug]
-    // Errors attribute to the phase the run was in — the extractors map always
-    // describes the current/last run, whose phase is status.phase.
     return {
-      fileName,
-      file: findFile(fileName),
-      isRunning: running && status?.phase === phase && st?.status === 'running',
-      error: st?.status === 'error' && status?.phase === phase ? (st.message ?? 'failed') : null,
+      running: running && st?.status === 'running',
+      done: files.some((f) => f.name === lastGeneratedFile(slug)),
+      error: st?.status === 'error' ? (st.message ?? 'failed') : null,
     }
   }
 
-  async function handleExtract(names?: string[]) {
-    const result = await runOverviewExtract(course, names)
-    toastInitResult(result, { busy: 'Overview is already running for this course', error: 'Extraction failed to start' })
+  // A single trigger runs both phases sequentially server-side; omitting names = all.
+  async function handleGenerate(names?: string[]) {
+    const result = await runOverview(course, names)
+    toastInitResult(result, {
+      busy: 'Overview is already running for this course',
+      error: 'Overview failed to start',
+    })
     refresh()
   }
-
-  async function handleAnalyze(names?: string[]) {
-    const result = await runOverviewAnalyze(course, names)
-    toastInitResult(result, { busy: 'Overview is already running for this course', error: 'Analysis failed to start' })
-    refresh()
-  }
-
-  const allTxt = extractors?.every((e) => findFile(stageFileName(e.slug, 'extract'))) ?? false
-  const allMd = extractors?.every((e) => findFile(stageFileName(e.slug, 'analyze'))) ?? false
-  const globalLabel = !allTxt ? 'Extract all' : allMd ? 'Regenerate notes' : 'Generate notes'
 
   return (
     <main className="main-view main-view--panel">
@@ -143,11 +104,11 @@ export default function CourseView() {
 
         <button
           className="run-all-btn course-global-btn"
-          onClick={() => (allTxt ? handleAnalyze() : handleExtract())}
+          onClick={() => handleGenerate()}
           disabled={running || extractors === null}
         >
           {running && <span className="spinner spinner--sm" />}
-          {running ? (status?.phase === 'analyze' ? 'Generating notes…' : 'Extracting…') : globalLabel}
+          {running ? 'Generating…' : 'Generate All'}
         </button>
 
         {extractors === null ? (
@@ -155,36 +116,24 @@ export default function CourseView() {
         ) : (
           <div className="file-list">
             {extractors.map(({ slug, title }) => {
-              const snippets = stageFor(slug, 'extract')
-              const notes = stageFor(slug, 'analyze')
+              const bs = branchStatus(slug)
               return (
                 <div
                   key={slug}
-                  className={`file-row course-branch${snippets.file && notes.file ? ' file-row--present' : ''}${snippets.isRunning || notes.isRunning ? ' file-row--running' : ''}`}
+                  className={`file-row course-branch${bs.done ? ' file-row--present' : ''}${bs.running ? ' file-row--running' : ''}`}
                 >
                   <div className="course-branch-header">
                     <span className="course-branch-name">{title}</span>
                     <span className="course-branch-actions">
+                      <BranchIndicator status={bs} />
                       <button
                         className="file-action-btn"
-                        onClick={() => handleExtract([slug])}
+                        onClick={() => handleGenerate([slug])}
                         disabled={running}
-                      >
-                        Extract
-                      </button>
-                      <button
-                        className="file-action-btn"
-                        onClick={() => handleAnalyze([slug])}
-                        disabled={running || !snippets.file}
                       >
                         Generate
                       </button>
                     </span>
-                  </div>
-                  <div className="course-stages">
-                    <StageChip course={course} label={PHASE_LABEL.extract} stage={snippets} />
-                    <span className="course-stage-arrow">→</span>
-                    <StageChip course={course} label={PHASE_LABEL.analyze} stage={notes} />
                   </div>
                 </div>
               )
