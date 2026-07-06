@@ -20,10 +20,12 @@ def get_status(course: str) -> dict:
 
 def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
     """Parse the optional `extractors` CSV into extractor slugs (default: all)."""
-    if csv:
-        slugs = [s.strip() for s in csv.split(",") if s.strip()]
-    else:
-        slugs = [e.slug for e in overview.EXTRACTORS]
+    # default - all extractors
+    if not csv:
+        return overview.ALL_SLUGS, None
+    
+    # parse slugs from csv
+    slugs = [s.strip() for s in csv.split(",") if s.strip()]
     unknown = [s for s in slugs if s not in overview.EXTRACTORS_BY_SLUG]
     if unknown:
         return slugs, f"unknown extractor(s): {', '.join(unknown)}"

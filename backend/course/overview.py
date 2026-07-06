@@ -44,3 +44,6 @@ EXTRACTORS: tuple[Extractor, ...] = (
 )
 
 EXTRACTORS_BY_SLUG: dict[str, Extractor] = {e.slug: e for e in EXTRACTORS}
+
+ALL_SLUGS = [e.slug for e in EXTRACTORS]
+    
