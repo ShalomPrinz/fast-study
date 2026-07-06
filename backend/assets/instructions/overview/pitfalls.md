@@ -1,6 +1,6 @@
 # Pitfalls Sheet Extraction Instructions
 
-You have received transcripts or excerpts from a recording where the lecturer warns against common mistakes or confusion. Each excerpt includes its source or lecture number. Your task is to extract and reorganize these warnings into a highly structured "Pitfalls Sheet."
+You have received transcripts or excerpts from a lecture where the lecturer warns against common mistakes or confusion. Your task is to extract and reorganize these warnings into a highly structured "Pitfalls Sheet."
 
 ---
 
