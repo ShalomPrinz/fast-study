@@ -105,5 +105,5 @@ def _analyze_phase(course: str, slugs: list[str]) -> None:
 
 
 def _to_pdf_phase(course: str, slugs: list[str]) -> None:
-    """PDF render: per extractor, render {slug}-analyzed.md to {slug}-analyzed.pdf."""
+    """PDF render: per extractor, render {slug}.md to {slug}.pdf."""
     _run_phase(course, slugs, lambda slug: to_pdf.run_to_pdf(course, slug))

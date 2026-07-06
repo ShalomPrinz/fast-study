@@ -135,15 +135,15 @@ class TestGenerateAll:
             return await _wait_done()
 
         asyncio.run(go())
-        # Order matters: extract's .txt, then analyze's -analyzed.md, then to_pdf's -analyzed.pdf.
+        # Order matters: extract's .txt, then analyze's .md, then to_pdf's .pdf.
         assert [f for _, f, _ in db.puts] == [
-            "exam-hints.txt", "exam-hints-analyzed.md", "exam-hints-analyzed.pdf",
+            "exam-hints.txt", "exam-hints.md", "exam-hints.pdf",
         ]
         report = db.puts[0][2]
         assert "Exam Hints" in report and "=== Lecture 1 ===" in report
         assert db.puts[1][2] == "ניתוח:exam-hints"
         # The PDF the to_pdf phase uploaded is exactly what convert_to_pdf produced from the .md.
-        assert db.overview_store["exam-hints-analyzed.pdf"] == b"%PDF-1.4 stub"
+        assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
 
     def test_notify_fires_per_extractor_all_phases_plus_boundaries_and_end(self, db):
         # 3 extractors, 3 phases: extract ×3 + boundary + analyze ×3 + boundary + to_pdf ×3 + end.
@@ -166,7 +166,7 @@ class TestGenerateSubset:
         assert list(status["extractors"]) == ["exam-hints"]
         assert status["extractors"]["exam-hints"] == {"status": "done"}
         assert [f for _, f, _ in db.puts] == [
-            "exam-hints.txt", "exam-hints-analyzed.md", "exam-hints-analyzed.pdf",
+            "exam-hints.txt", "exam-hints.md", "exam-hints.pdf",
         ]
 
     def test_no_match_subset_skips_all_phases(self, db):
@@ -302,8 +302,8 @@ class TestToPdfPhase:
         assert status["phase"] == "to_pdf"
         assert status["extractors"]["exam-hints"] == {"status": "done"}
         # The pdf's input was the analyzed .md written a phase earlier (chained via overview_store).
-        assert "exam-hints-analyzed.pdf" in db.overview_store
-        assert db.overview_store["exam-hints-analyzed.pdf"] == b"%PDF-1.4 stub"
+        assert "exam-hints.pdf" in db.overview_store
+        assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
 
     def test_missing_analyzed_md_skips(self, db):
         # student-qa never matches → no .txt, no .md → to_pdf has nothing to render.
@@ -329,7 +329,7 @@ class TestToPdfPhase:
         status = asyncio.run(go())
         assert status["extractors"]["exam-hints"] == {"status": "error", "message": "pandoc boom"}
         # analyze still wrote the .md; only the .pdf upload was skipped.
-        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints-analyzed.md"]
+        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md"]
 
     def test_one_pdf_failure_does_not_abort_others(self, db, monkeypatch):
         monkeypatch.setattr(db_client, "get_file_bytes",
@@ -352,8 +352,8 @@ class TestToPdfPhase:
         assert status["extractors"]["exam-hints"]["status"] == "error"
         assert status["extractors"]["pitfalls"] == {"status": "done"}
         # exam-hints failed to render → no pdf; pitfalls rendered → pdf uploaded.
-        assert "exam-hints-analyzed.pdf" not in db.overview_store
-        assert db.overview_store["pitfalls-analyzed.pdf"] == b"%PDF-1.4 stub"
+        assert "exam-hints.pdf" not in db.overview_store
+        assert db.overview_store["pitfalls.pdf"] == b"%PDF-1.4 stub"
 
 
 class TestSharedLock:
@@ -450,7 +450,7 @@ class TestPhaseWorkerSeam:
         monkeypatch.setattr(db_client, "put_overview_file",
                             lambda c, f, d: puts.append(f))
         assert course_analyze.run_analyze(COURSE, self.EXAM) == {"status": "done"}
-        assert puts == ["exam-hints-analyzed.md"]
+        assert puts == ["exam-hints.md"]
 
     def test_to_pdf_skips_when_no_md(self, monkeypatch):
         def missing(course, filename):
@@ -472,4 +472,4 @@ class TestPhaseWorkerSeam:
 
         monkeypatch.setattr(course_to_pdf, "convert_to_pdf", fake_convert)
         assert course_to_pdf.run_to_pdf(COURSE, "exam-hints") == {"status": "done"}
-        assert puts["exam-hints-analyzed.pdf"] == b"%PDF-1.4 stub"
+        assert puts["exam-hints.pdf"] == b"%PDF-1.4 stub"
