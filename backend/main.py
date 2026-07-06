@@ -95,28 +95,16 @@ async def _find_course(course: str) -> tuple[dict | None, dict | None]:
     return node, None
 
 
-@app.post("/courses/{course}/overview/extract")
-async def overview_extract(course: str, extractors: str | None = Query(None)):
-    """Extraction phase: scan every transcript in the course, write {slug}.txt per selected extractor."""
+@app.post("/courses/{course}/overview/generate")
+async def overview_generate(course: str, extractors: str | None = Query(None)):
+    """Generate course overview for given extractors (comma-separated slugs)."""
     slugs, err = course_runner.resolve_slugs(extractors)
     if err:
         return {"status": "error", "message": err}
     course_node, err = await _find_course(course)
     if course_node is None or err is not None:
         return err
-    return {"status": course_runner.try_run_extract(course, course_node, slugs)}
-
-
-@app.post("/courses/{course}/overview/analyze")
-async def overview_analyze(course: str, extractors: str | None = Query(None)):
-    """Analysis phase: send each selected extractor's {slug}.txt to an LLM and write {slug}-analyzed.md."""
-    slugs, err = course_runner.resolve_slugs(extractors)
-    if err:
-        return {"status": "error", "message": err}
-    _, err = await _find_course(course)
-    if err:
-        return err
-    return {"status": course_runner.try_run_analyze(course, slugs)}
+    return {"status": course_runner.try_run_generate(course, course_node, slugs)}
 
 
 @app.get("/courses/{course}/overview/status")
