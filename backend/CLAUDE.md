@@ -30,8 +30,11 @@ backend/
     to_pdf.py            convert_to_pdf(md_path) -> str (output path)
     upload_to_drive.py   upload_to_drive(pdf_path, course, file_name=None, subfolder=None) -> str (webViewLink)
   course/             per-COURSE logic (aggregates across a course's lectures — never belongs in pipeline/)
-    overview.py          snippet extraction: Extractor registry (EXTRACTORS, keyed by kebab-case `slug` with a display `title`), EXTRACTORS_BY_SLUG, split_sentences, extract_snippets, build_report, analyze(extractor, report, course) (raises RuntimeError on Gemini API failure)
-    runner.py            overview execution engine — try_run_generate schedules the sequential extract→analyze→to_pdf driver under ONE per-course lock (held across all three phases), run status, the three phase workers (all keyed by extractor slug); to_pdf reuses pipeline/to_pdf.py's convert_to_pdf
+    overview.py          registry ONLY: Extractor dataclass (with the `prompt_file` property), EXTRACTORS (keyed by kebab-case `slug` with a display `title`), EXTRACTORS_BY_SLUG. The extract/analyze logic that consumes it lives in the phase modules below
+    runner.py            thin overview driver — try_run_generate schedules the sequential extract→analyze→to_pdf run under ONE per-course lock (held across all three phases); owns run status, phase advancement, notify cadence, and the per-extractor loop (`_run_phase`) that isolates one extractor's failure as "error" without aborting the rest
+    extract.py           extraction logic + extract phase worker: split_sentences, extract_snippets, build_report, fetch_sources(course, course_node), run_extractor(course, extractor, sources) → {slug}.txt snippet report (status dict; raises on I/O error)
+    analyze.py           analysis logic + analyze phase worker: MODEL/PROMPT_DIR + analyze(extractor, report, course) (LLMClient glue; raises RuntimeError on Gemini API failure), run_analyze(course, extractor) → {slug}-analyzed.md (status dict; raises on Gemini/I/O error)
+    to_pdf.py            to_pdf phase worker: run_to_pdf(course, slug) → {slug}-analyzed.pdf via pipeline/to_pdf.py's convert_to_pdf (status dict; raises on render error). Distinct from pipeline/to_pdf.py — this is the per-course phase worker, that is the per-lecture md→PDF primitive it reuses. Each worker returns a "skipped"/"done" dict the runner folds into status; run-level state (running, notify) stays in the runner
   runner.py           unified per-lecture execution engine — step executors, in-flight tracking & orchestration
   timing/             SQLite-backed per-operation duration log
     __init__.py          init_db, get_stats, _record, @timed_pipeline decorator
@@ -42,6 +45,8 @@ backend/
     test_to_pdf.py
     test_transcribe.py
     test_overview.py
+    test_extract.py
+    test_analyze.py
     test_course_runner.py
     test_summarize.py
     test_runner.py
@@ -49,7 +54,7 @@ backend/
   services/
     db_client.py      thin HTTP client for the database service (every read/write goes through here)
     google_auth.py    shared OAuth helper — loads credentials.json/token_drive.json, returns Credentials for a given scope set
-    llm_client.py     shared Gemini client — LLMClient(model): generate(contents)/upload_file/delete_file, GEMINI_API_KEY auth, SDK errors → RuntimeError (used by summarize.py + course/overview.py)
+    llm_client.py     shared Gemini client — LLMClient(model): generate(contents)/upload_file/delete_file, GEMINI_API_KEY auth, SDK errors → RuntimeError (used by summarize.py + course/analyze.py)
   main.py             FastAPI app + uvicorn entry point
   credentials.json    Google OAuth client (gitignored)
   token_drive.json    Google OAuth token cache (gitignored)
@@ -148,6 +153,6 @@ This applies even to "small" or "obvious" changes — preprocessing helpers in `
 - `runner.py` walks the tree looking for lectures that have `video.mp4` but lack `drive_url.txt` (`scan_pending`) and runs them sequentially through every missing step via `run_all(queue)`. It fires a `database/notify` SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend can react without polling. On `rate_limited`, it sleeps `RATE_LIMIT_SLEEP_SECONDS` (3600s — Groq's hourly ASR window) and retries the same step.
 - All in-flight state is tracked uniformly in `_in_flight` (skey → entry) regardless of trigger source — the runner, `/pipeline`, and individual `/run/{step}` calls all populate the same map. The frontend reads from `inFlight[]` and doesn't care which path queued the entry.
 - **`pipeline/` is per-LECTURE logic; `course/` is per-COURSE logic.** Anything that aggregates across a course's lectures (the course overview feature) lives under `course/`, never `pipeline/`. `course/runner.py` mirrors the backend-root per-lecture `runner.py`: overview doesn't fit the `(course, lecture, kind)`-keyed `_in_flight` map, so its state is a per-course status dict + lock there, keeping `main.py` thin route glue.
-- The course overview feature aggregates every transcript in a course and writes to `{DATA_ROOT}/{course}/overview/` via the database service's overview endpoints (`db_client.put_overview_file` / `get_overview_file`). Whisper transcripts are near-unbroken blobs, so `course/overview.py` windows by sentence, never by line; one extractor's failure is recorded and the rest continue. `db_client.notify()` fires after EACH extractor finishes (done/skipped/error) in all three phases (extract, analyze, to_pdf), once at each phase boundary (extract→analyze, analyze→to_pdf), and once at run end, so the frontend refreshes per ping.
+- The course overview feature aggregates every transcript in a course and writes to `{DATA_ROOT}/{course}/overview/` via the database service's overview endpoints (`db_client.put_overview_file` / `get_overview_file`). Whisper transcripts are near-unbroken blobs, so `course/extract.py` windows by sentence, never by line; one extractor's failure is recorded and the rest continue. `db_client.notify()` fires after EACH extractor finishes (done/skipped/error) in all three phases (extract, analyze, to_pdf), once at each phase boundary (extract→analyze, analyze→to_pdf), and once at run end, so the frontend refreshes per ping.
 - **Extractor identity is the `slug`, not the display name.** Each `Extractor` carries a kebab-case `slug` (the on-disk file stem, the status-map key, and the `?extractors=` CSV value) plus a human `title` used only in the UI and the report header. Its Gemini prompt lives at `assets/instructions/overview/{slug}.md` (a `prompt_file` property derives the name). Historically the display name doubled as the file stem, which desynced on-disk `exam-hints.txt` from the frontend's lookup of `Exam Hints.txt` — the slug split fixes that; keep filenames slug-based across backend, database, and frontend.
 - `summarize.py` accepts an optional `material_pdf` path — when the lecture dir contains `material.pdf`, the endpoint downloads it into the workspace and passes it to Gemini alongside the transcript.

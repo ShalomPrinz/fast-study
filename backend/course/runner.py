@@ -1,13 +1,10 @@
-"""Course-level overview execution engine - course overview generation driver.
+"""Course-level overview orchestrator. Phase boundaries live here, while actual work in separate modules.
 Mirrors the per-lecture `runner.py` at backend root, but keyed by course alone."""
 
 import asyncio
-import tempfile
 from datetime import datetime, timezone
-from pathlib import Path
 
-from course import overview
-from pipeline.to_pdf import convert_to_pdf
+from course import analyze, extract, overview, to_pdf
 from services import db_client
 
 # One lock per course
@@ -78,91 +75,33 @@ def _advance_phase(course: str, phase: str, slugs: list[str]) -> list[str]:
     return surviving
 
 
-def _extract_phase(course: str, course_node: dict, slugs: list[str]) -> None:
-    """Blocking extraction: fetch every transcript once (tree-driven), run each selected
-    extractor over all of them, write {slug}.txt per extractor. One extractor's failure
-    never aborts the others. `running` is owned by the generate driver, not here."""
+def _run_phase(course: str, slugs: list[str], process) -> None:
+    """Loop the per-extractor work of one phase: mark running, run `process(slug)`, ping per phase."""
     status = _status[course]
-    sources: list[tuple[str, str]] = []  # (source label, transcript text)
-    groups = [("lecture", "", course_node.get("lectures") or []),
-              ("recitation", "Recitations/", course_node.get("recitations") or [])]
-    for kind, prefix, entries in groups:
-        for entry in entries:
-            # The tree already reports file existence — trust it, no HEAD round-trips.
-            if not ((entry.get("files") or {}).get("transcript.txt") or {}).get("exists"):
-                continue
-            data = db_client.get_file_bytes(course, entry["name"], kind, "transcript.txt")
-            sources.append((f"{prefix}{entry['name']}", data.decode("utf-8")))
-
     for slug in slugs:
-        extractor = overview.EXTRACTORS_BY_SLUG[slug]
         entry_status = status["extractors"][slug]
         entry_status["status"] = "running"
         try:
-            sections = [(label, overview.extract_snippets(extractor, text)) for label, text in sources]
-            report = overview.build_report(extractor, course, sections)
-            if not report:
-                entry_status.update({"status": "skipped", "message": "no snippets found"})
-                continue
-            db_client.put_overview_file(course, f"{slug}.txt", report.encode("utf-8"))
-            entry_status["status"] = "done"
+            entry_status.update(process(slug))
         except Exception as e:
             entry_status.update({"status": "error", "message": str(e)})
         finally:
             db_client.notify()
 
 
+def _extract_phase(course: str, course_node: dict, slugs: list[str]) -> None:
+    """Extraction: fetch every transcript once, then run each selected extractor."""
+    sources = extract.fetch_sources(course, course_node)
+    _run_phase(course, slugs,
+               lambda slug: extract.run_extractor(course, overview.EXTRACTORS_BY_SLUG[slug], sources))
+
+
 def _analyze_phase(course: str, slugs: list[str]) -> None:
-    """Blocking analysis: per extractor, read the existing {slug}.txt from the overview area,
-    send it to Gemini, write {slug}-analyzed.md. No transcript fetching, no re-extraction —
-    a missing .txt just skips that extractor. `running` is owned by the generate driver."""
-    status = _status[course]
-    for slug in slugs:
-        extractor = overview.EXTRACTORS_BY_SLUG[slug]
-        entry_status = status["extractors"][slug]
-        entry_status["status"] = "running"
-        try:
-            try:
-                report = db_client.get_overview_file(course, f"{slug}.txt").decode("utf-8")
-            except db_client.DbClientError:
-                entry_status.update({"status": "skipped", "message": "no snippets file — run extract first"})
-                continue
-            analyzed = overview.analyze(extractor, report, course)
-            if not analyzed:
-                raise RuntimeError("Gemini returned no text")
-            db_client.put_overview_file(course, f"{slug}-analyzed.md", analyzed.encode("utf-8"))
-            entry_status["status"] = "done"
-        except Exception as e:
-            entry_status.update({"status": "error", "message": str(e)})
-        finally:
-            db_client.notify()  # per-extractor ping, same as the extract phase
+    """Analysis: per extractor, read {slug}.txt and send it to Gemini."""
+    _run_phase(course, slugs,
+               lambda slug: analyze.run_analyze(course, overview.EXTRACTORS_BY_SLUG[slug]))
 
 
 def _to_pdf_phase(course: str, slugs: list[str]) -> None:
-    """Blocking PDF render: per extractor, read the analyzed {slug}-analyzed.md, render it via
-    the pipeline's convert_to_pdf, write {slug}-analyzed.pdf. A missing analyzed .md (analyze
-    skipped/failed it) just skips that extractor. `running` is owned by the generate driver."""
-    status = _status[course]
-    for slug in slugs:
-        entry_status = status["extractors"][slug]
-        entry_status["status"] = "running"
-        try:
-            md_name = f"{slug}-analyzed.md"
-            try:
-                md_bytes = db_client.get_overview_file(course, md_name)
-            except db_client.DbClientError:
-                entry_status.update({"status": "skipped", "message": "no analyzed markdown — run analyze first"})
-                continue
-            # convert_to_pdf needs the .md on disk and drops the .pdf beside it (same stem),
-            # so round-trip through a temp dir: db bytes → file → convert → db bytes.
-            with tempfile.TemporaryDirectory() as tmp:
-                md_path = Path(tmp) / md_name
-                md_path.write_bytes(md_bytes)
-                pdf_path = convert_to_pdf(str(md_path))
-                pdf_bytes = Path(pdf_path).read_bytes()
-            db_client.put_overview_file(course, f"{slug}-analyzed.pdf", pdf_bytes)
-            entry_status["status"] = "done"
-        except Exception as e:
-            entry_status.update({"status": "error", "message": str(e)})
-        finally:
-            db_client.notify()  # per-extractor ping, same as the other phases
+    """PDF render: per extractor, render {slug}-analyzed.md to {slug}-analyzed.pdf."""
+    _run_phase(course, slugs, lambda slug: to_pdf.run_to_pdf(course, slug))

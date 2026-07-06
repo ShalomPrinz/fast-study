@@ -3,7 +3,7 @@
 The overview run is fire-and-forget: `try_run_generate` schedules the work via
 `asyncio.create_task`, so every test body runs inside an inner `async def go()`
 executed with `asyncio.run(go())` — same pattern as `tests/test_runner.py`.
-db_client and Gemini (`overview.analyze`) are fully mocked — no network, no
+db_client and Gemini (`analyze.analyze`) are fully mocked — no network, no
 database service. The two route-only concerns (CSV parsing, course-not-found
 wiring) are covered via the pure `resolve_slugs` / `main._find_course`.
 
@@ -20,8 +20,11 @@ from types import SimpleNamespace
 import pytest
 
 import main
+from course import analyze as course_analyze
+from course import extract as course_extract
 from course import overview as ep
 from course import runner as course_runner
+from course import to_pdf as course_to_pdf
 from services import db_client
 from services.db_client import DbClientError
 
@@ -83,7 +86,7 @@ def db(monkeypatch):
     monkeypatch.setattr(db_client, "get_overview_file", get_overview_file)
     monkeypatch.setattr(db_client, "notify", notify)
     # Analyze is glue over Gemini — stub it so no network; per-slug prefix keeps asserts readable.
-    monkeypatch.setattr(ep, "analyze", lambda ext, report, course: f"ניתוח:{ext.slug}")
+    monkeypatch.setattr(course_analyze, "analyze", lambda ext, report, course: f"ניתוח:{ext.slug}")
 
     # to_pdf reuses pipeline.convert_to_pdf; stub it (no pandoc/XeLaTeX) — it drops a .pdf
     # beside the input md and returns that path, which the phase reads back and uploads.
@@ -92,7 +95,7 @@ def db(monkeypatch):
         out.write_bytes(b"%PDF-1.4 stub")
         return str(out)
 
-    monkeypatch.setattr(course_runner, "convert_to_pdf", fake_convert)
+    monkeypatch.setattr(course_to_pdf, "convert_to_pdf", fake_convert)
     return calls
 
 
@@ -227,7 +230,7 @@ class TestPhaseTransitions:
             release.wait(timeout=5)
             return "ניתוח"
 
-        monkeypatch.setattr(ep, "analyze", slow_analyze)
+        monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
 
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
@@ -255,7 +258,7 @@ class TestErrors:
         def boom(ext, report, course):
             raise RuntimeError("gemini exploded")
 
-        monkeypatch.setattr(ep, "analyze", boom)
+        monkeypatch.setattr(course_analyze, "analyze", boom)
 
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
@@ -274,7 +277,7 @@ class TestErrors:
                 raise RuntimeError("boom")
             return "ניתוח"
 
-        monkeypatch.setattr(ep, "analyze", selective)
+        monkeypatch.setattr(course_analyze, "analyze", selective)
 
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints", "pitfalls"])
@@ -317,7 +320,7 @@ class TestToPdfPhase:
         def boom(md_path):
             raise RuntimeError("pandoc boom")
 
-        monkeypatch.setattr(course_runner, "convert_to_pdf", boom)
+        monkeypatch.setattr(course_to_pdf, "convert_to_pdf", boom)
 
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
@@ -339,7 +342,7 @@ class TestToPdfPhase:
             out.write_bytes(b"%PDF-1.4 stub")
             return str(out)
 
-        monkeypatch.setattr(course_runner, "convert_to_pdf", selective)
+        monkeypatch.setattr(course_to_pdf, "convert_to_pdf", selective)
 
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints", "pitfalls"])
@@ -403,3 +406,70 @@ class TestStatusAndListing:
         assert [x["title"] for x in listing] == [
             "Exam Hints", "Student QA", "Pitfalls",
         ]
+
+
+class TestPhaseWorkerSeam:
+    """The runner↔worker seam: each worker returns a "skipped"/"done" status dict (which the
+    runner folds in via entry_status.update) and RAISES on failure (so the runner marks "error").
+    Workers must not touch run-level state (`running`, notify) — only the runner owns that."""
+
+    EXAM = ep.EXTRACTORS_BY_SLUG["exam-hints"]
+
+    def test_extract_skips_when_no_snippets(self, monkeypatch):
+        monkeypatch.setattr(db_client, "put_overview_file",
+                            lambda *a: pytest.fail("must not write when nothing matched"))
+        # A source with no matching sentence yields no report → skipped, not done.
+        result = course_extract.run_extractor(COURSE, self.EXAM, [("Lecture 1", "משפט רגיל.")])
+        assert result == {"status": "skipped", "message": "no snippets found"}
+
+    def test_extract_done_writes_txt(self, monkeypatch):
+        puts = []
+        monkeypatch.setattr(db_client, "put_overview_file",
+                            lambda c, f, d: puts.append((c, f, d.decode("utf-8"))))
+        result = course_extract.run_extractor(COURSE, self.EXAM, [("Lecture 1", TRANSCRIPT)])
+        assert result == {"status": "done"}
+        assert [f for _, f, _ in puts] == ["exam-hints.txt"]
+
+    def test_analyze_skips_when_no_txt(self, monkeypatch):
+        def missing(course, filename):
+            raise DbClientError("nope")
+        monkeypatch.setattr(db_client, "get_overview_file", missing)
+        result = course_analyze.run_analyze(COURSE, self.EXAM)
+        assert result == {"status": "skipped", "message": "no snippets file — run extract first"}
+
+    def test_analyze_raises_on_empty_gemini(self, monkeypatch):
+        monkeypatch.setattr(db_client, "get_overview_file", lambda c, f: b"report")
+        monkeypatch.setattr(course_analyze, "analyze", lambda ext, report, course: "")
+        with pytest.raises(RuntimeError, match="Gemini returned no text"):
+            course_analyze.run_analyze(COURSE, self.EXAM)
+
+    def test_analyze_done_writes_md(self, monkeypatch):
+        puts = []
+        monkeypatch.setattr(db_client, "get_overview_file", lambda c, f: b"report")
+        monkeypatch.setattr(course_analyze, "analyze", lambda ext, report, course: "ניתוח")
+        monkeypatch.setattr(db_client, "put_overview_file",
+                            lambda c, f, d: puts.append(f))
+        assert course_analyze.run_analyze(COURSE, self.EXAM) == {"status": "done"}
+        assert puts == ["exam-hints-analyzed.md"]
+
+    def test_to_pdf_skips_when_no_md(self, monkeypatch):
+        def missing(course, filename):
+            raise DbClientError("nope")
+        monkeypatch.setattr(db_client, "get_overview_file", missing)
+        result = course_to_pdf.run_to_pdf(COURSE, "exam-hints")
+        assert result == {"status": "skipped", "message": "no analyzed markdown — run analyze first"}
+
+    def test_to_pdf_done_writes_pdf(self, monkeypatch):
+        puts = {}
+        monkeypatch.setattr(db_client, "get_overview_file", lambda c, f: b"# md")
+        monkeypatch.setattr(db_client, "put_overview_file",
+                            lambda c, f, d: puts.__setitem__(f, d))
+
+        def fake_convert(md_path):
+            out = Path(md_path).with_suffix(".pdf")
+            out.write_bytes(b"%PDF-1.4 stub")
+            return str(out)
+
+        monkeypatch.setattr(course_to_pdf, "convert_to_pdf", fake_convert)
+        assert course_to_pdf.run_to_pdf(COURSE, "exam-hints") == {"status": "done"}
+        assert puts["exam-hints-analyzed.pdf"] == b"%PDF-1.4 stub"

@@ -1,10 +1,8 @@
-from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+"""Extraction logic tests — split_sentences / extract_snippets / build_report now live in
+course/extract.py (moved out of overview.py, which is registry-only)."""
 
-import pytest
-
-from course import overview as ep
-from course.overview import Extractor, split_sentences, extract_snippets, build_report, analyze
+from course.overview import Extractor
+from course.extract import split_sentences, extract_snippets, build_report
 
 
 def _pattern_extractor(patterns, before=1, after=1, slug="test", title="Test"):
@@ -138,61 +136,3 @@ class TestBuildReport:
         snippet = "--- [patterns: במבחן] ---\nקטע."
         report = build_report(self.EXT, "קורס", [("Recitations/תרגול 3", [snippet])])
         assert "=== Recitations/תרגול 3 ===" in report
-
-
-class TestExtractorsRegistry:
-    def test_all_defined(self):
-        assert [e.slug for e in ep.EXTRACTORS] == [
-            "exam-hints", "student-qa", "pitfalls",
-        ]
-        assert [e.title for e in ep.EXTRACTORS] == [
-            "Exam Hints", "Student QA", "Pitfalls",
-        ]
-
-    def test_slugs_are_kebab_case(self):
-        # The slug is the on-disk file stem and the wire identifier — spaces or
-        # uppercase would desync filenames across services. Guard the invariant.
-        for e in ep.EXTRACTORS:
-            assert e.slug == e.slug.lower() and " " not in e.slug, e.slug
-
-    def test_prompt_file_derives_from_slug(self):
-        for ext in ep.EXTRACTORS:
-            assert ext.prompt_file == f"{ext.slug}.md"
-
-    def test_prompt_files_exist(self):
-        for ext in ep.EXTRACTORS:
-            assert (ep.PROMPT_DIR / ext.prompt_file).is_file(), ext.slug
-
-    def test_before_after_are_fixed_window(self):
-        # Every extractor keeps the same 1-before / 3-after window.
-        for e in ep.EXTRACTORS:
-            assert (e.before, e.after) == (1, 3), e.slug
-
-
-class TestAnalyze:
-    """analyze() is glue over LLMClient — mocked client only, no network."""
-
-    def _fake_client(self, text="ניתוח"):
-        client = MagicMock()
-        client.generate.return_value = text
-        return client
-
-    def test_contents_order_prompt_course_report(self):
-        ext = ep.EXTRACTORS_BY_SLUG["pitfalls"]
-        fake = self._fake_client()
-        with patch.object(ep, "LLMClient", return_value=fake) as ctor:
-            result = analyze(ext, "REPORT TEXT", "מבני נתונים")
-
-        ctor.assert_called_once_with(model=ep.MODEL)
-        contents = fake.generate.call_args.args[0]
-        assert contents[0] == (ep.PROMPT_DIR / ext.prompt_file).read_text(encoding="utf-8")
-        assert "מבני נתונים" in contents[1]
-        assert contents[2] == "REPORT TEXT"
-        assert result == "ניתוח"
-
-    def test_raises_runtime_error_on_api_failure(self):
-        fake = MagicMock()
-        fake.generate.side_effect = RuntimeError("boom")
-        with patch.object(ep, "LLMClient", return_value=fake):
-            with pytest.raises(RuntimeError, match="boom"):
-                analyze(ep.EXTRACTORS[0], "report", "קורס")
