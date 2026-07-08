@@ -7,7 +7,8 @@ import { useNotify } from '@/hooks/useNotify'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { toast, toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile, generatedFiles } from '@/constants/overview'
+import { lastGeneratedFile, generatedFiles, startedSlug } from '@/constants/overview'
+import type { StartedSlug } from '@/constants/overview'
 import Icon from '@/components/Icon'
 import ConfirmModal from '@/components/ConfirmModal'
 
@@ -30,6 +31,7 @@ export default function CourseView() {
   const [files, setFiles] = useState<CourseFile[]>([])
   const [status, setStatus] = useState<CourseStatus | null>(null)
   const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string } | null>(null)
+  const [generateAllWarning, setGenerateAllWarning] = useState<(StartedSlug & { title: string })[] | null>(null)
   const latestFiles = useLatestRequest()
   const latestStatus = useLatestRequest()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
@@ -107,6 +109,19 @@ export default function CourseView() {
     handleGenerate([slug])
   }
 
+  function handleGenerateAll() {
+    const existing = new Set(files.map((f) => f.name))
+    const started = (extractors ?? []).flatMap(({ slug, title }) => {
+      const st = startedSlug(slug, existing)
+      return st ? [{ title, ...st }] : []
+    })
+    if (started.length === 0) {
+      handleGenerate()
+    } else {
+      setGenerateAllWarning(started)
+    }
+  }
+
   return (
     <main className="main-view main-view--panel">
       <div className="lecture-panel">
@@ -114,7 +129,7 @@ export default function CourseView() {
 
         <button
           className="run-all-btn course-global-btn"
-          onClick={() => handleGenerate()}
+          onClick={handleGenerateAll}
           disabled={running || extractors === null}
         >
           {running && <span className="spinner spinner--sm" />}
@@ -182,6 +197,32 @@ export default function CourseView() {
           }
           onConfirm={confirmRegenerate}
           onCancel={() => setRegenerateTarget(null)}
+        />
+      )}
+
+      {generateAllWarning && (
+        <ConfirmModal
+          message="Generating all will re-generate:"
+          postMessage="Are you sure you want to re-generate everything?"
+          detail={
+            <ul className="modal-slug-list">
+              {generateAllWarning.map(({ title, willRegenerate }) => (
+                <li key={title} className="modal-slug-item">
+                  <span className="modal-slug-title">{title}</span>
+                  <ul className="modal-file-list">
+                    {willRegenerate.map((f) => (
+                      <li key={f}>{f}</li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          }
+          onConfirm={() => {
+            setGenerateAllWarning(null)
+            handleGenerate()
+          }}
+          onCancel={() => setGenerateAllWarning(null)}
         />
       )}
     </main>
