@@ -136,6 +136,14 @@ def _exec_audio(course: str, lecture: str, kind: str) -> dict:
         return {"status": "error", "message": str(e)}
 
 
+def _persist_transcribe_partial(course: str, lecture: str, kind: str, tmp: Path) -> None:
+    """Persists transcription partial state. Runs on any transcribe mid-run failure."""
+    for name in (PARTIAL_TXT, PARTIAL_META):
+        p = tmp / name
+        if p.exists():
+            db_client.put_file_bytes(course, lecture, kind, name, p.read_bytes())
+
+
 def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
     """Transcribe audio.mp3 → transcript.txt via Groq Whisper, resuming from partial state if present.
     Returns {status: done|error|rate_limited}; on rate_limited, progress chunk counts are included."""
@@ -174,14 +182,7 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
             try:
                 transcript = transcribe_audio(str(audio_path))
             except TranscribeRateLimitError as e:
-                partial_txt = Path(tmp) / PARTIAL_TXT
-                partial_meta = Path(tmp) / PARTIAL_META
-                if partial_txt.exists():
-                    db_client.put_file_bytes(course, lecture, kind, PARTIAL_TXT, partial_txt.read_bytes())
-                if partial_meta.exists():
-                    db_client.put_file_bytes(course, lecture, kind, PARTIAL_META, partial_meta.read_bytes())
-                # The frontend no longer reads rateLimit details from HTTP responses;
-                # rate-limit display comes from _in_flight state via /status.
+                _persist_transcribe_partial(course, lecture, kind, Path(tmp))
                 return {
                     "status": "rate_limited",
                     "progress": {
@@ -189,6 +190,9 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
                         "total":     e.info["total_chunks"],
                     },
                 }
+            except Exception as e:
+                _persist_transcribe_partial(course, lecture, kind, Path(tmp))
+                return {"status": "error", "message": str(e)}
 
             transcript_bytes = transcript.encode("utf-8")
             _require_nonempty("transcript.txt", transcript_bytes)
@@ -369,7 +373,9 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
             # loop → retry same step
         else:  # error
             _in_flight.pop(skey, None)
-            _errors[skey] = result.get("message") or result.get("status") or "unknown error"
+            msg = result.get("message") or result.get("status") or "unknown error"
+            _errors[skey] = msg
+            log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
             db_client.notify()
             return
 

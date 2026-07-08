@@ -170,6 +170,82 @@ def test_exec_summarize_rejects_empty_summary():
     put_summary.assert_not_called()
 
 
+# ---- transcribe partial persistence ----
+
+def _fake_transcribe_writing_partial(exc):
+    """Return a transcribe_audio stand-in that writes partial files into the workspace
+    (mimicking chunks completed this run) and then raises `exc`."""
+    def _fake(audio_path):
+        d = Path(audio_path).parent
+        (d / runner.PARTIAL_TXT).write_text("chunk 1 text\n\n")
+        (d / runner.PARTIAL_META).write_text('{"completed_chunks": 1, "total_chunks": 9}')
+        raise exc
+    return _fake
+
+
+def test_exec_transcribe_persists_partial_on_generic_error():
+    """A non-rate-limit failure (e.g. Groq HTTP 500 after the SDK's own retries) must
+    still upload the partial so the next attempt resumes instead of restarting at 0."""
+    puts: list[str] = []
+
+    def _exists(course, lecture, kind, name):
+        return name == "audio.mp3"  # only audio present; no prior partial to restore
+
+    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
+         patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"), \
+         patch.object(runner.db_client, "put_file_bytes", side_effect=lambda c, l, k, n, d: puts.append(n)), \
+         patch.object(runner, "transcribe_audio",
+                      side_effect=_fake_transcribe_writing_partial(RuntimeError("Internal Server Error"))):
+        result = runner._exec_transcribe("C1", "L1", "lecture")
+
+    assert result["status"] == "error"
+    assert "Internal Server Error" in result["message"]
+    assert runner.PARTIAL_TXT in puts and runner.PARTIAL_META in puts
+    assert "transcript.txt" not in puts  # a failed run must never write the final transcript
+
+
+def test_exec_transcribe_persists_partial_on_rate_limit():
+    """Regression for the _persist_transcribe_partial refactor: the rate-limit branch
+    still round-trips the partial and reports progress."""
+    puts: list[str] = []
+    err = runner.TranscribeRateLimitError({"completed_chunks": 1, "total_chunks": 9})
+
+    def _exists(course, lecture, kind, name):
+        return name == "audio.mp3"
+
+    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
+         patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"), \
+         patch.object(runner.db_client, "put_file_bytes", side_effect=lambda c, l, k, n, d: puts.append(n)), \
+         patch.object(runner, "transcribe_audio", side_effect=_fake_transcribe_writing_partial(err)):
+        result = runner._exec_transcribe("C1", "L1", "lecture")
+
+    assert result["status"] == "rate_limited"
+    assert result["progress"] == {"completed": 1, "total": 9}
+    assert runner.PARTIAL_TXT in puts and runner.PARTIAL_META in puts
+
+
+# ---- error is logged, not just stored ----
+
+def test_run_step_logs_error(caplog):
+    """An error outcome is logged (not only stored in _errors), so the terminal shows
+    the failure instead of a silent jump to the next lecture."""
+    async def fake_call(course, lecture, kind, step):
+        return {"status": "error", "message": "boom"}
+
+    async def go():
+        with patch.object(runner, "_call_step", fake_call), \
+             patch.object(runner.db_client, "notify"):
+            await runner._run_step_unlocked("C1", "L1", "lecture", "transcribe")
+
+    with caplog.at_level("ERROR", logger="runner"):
+        asyncio.run(go())
+
+    skey = runner._skey("C1", "L1", "lecture")
+    stored = runner._errors.pop(skey, None)  # capture + clean up module-global state
+    assert stored == "boom"
+    assert any("step transcribe failed" in r.getMessage() for r in caplog.records)
+
+
 # ---- rate-limit branch ----
 
 def test_rate_limit_sleeps_then_retries_same_step():
