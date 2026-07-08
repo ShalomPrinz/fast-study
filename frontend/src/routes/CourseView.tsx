@@ -7,8 +7,9 @@ import { useNotify } from '@/hooks/useNotify'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { toast, toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile } from '@/constants/overview'
+import { lastGeneratedFile, generatedFiles } from '@/constants/overview'
 import Icon from '@/components/Icon'
+import ConfirmModal from '@/components/ConfirmModal'
 
 interface BranchStatus {
   running: boolean
@@ -28,6 +29,7 @@ export default function CourseView() {
   const [extractors, setExtractors] = useState<OverviewExtractor[] | null>(null)
   const [files, setFiles] = useState<CourseFile[]>([])
   const [status, setStatus] = useState<CourseStatus | null>(null)
+  const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string } | null>(null)
   const latestFiles = useLatestRequest()
   const latestStatus = useLatestRequest()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
@@ -98,6 +100,13 @@ export default function CourseView() {
     refresh()
   }
 
+  function confirmRegenerate() {
+    if (!regenerateTarget) return
+    const { slug } = regenerateTarget
+    setRegenerateTarget(null)
+    handleGenerate([slug])
+  }
+
   return (
     <main className="main-view main-view--panel">
       <div className="lecture-panel">
@@ -136,13 +145,22 @@ export default function CourseView() {
                           <Icon icon="external-link" />
                         </button>
                       )}
-                      <button
-                        className="file-action-btn"
-                        onClick={() => handleGenerate([slug])}
-                        disabled={running}
-                      >
-                        Generate
-                      </button>
+                      {bs.done ? (
+                        <button
+                          className="file-rotate-btn"
+                          title={`Re-generate ${title}`}
+                          onClick={() => setRegenerateTarget({ slug, title })}
+                          disabled={running}
+                        >↺</button>
+                      ) : (
+                        <button
+                          className="file-action-btn"
+                          onClick={() => handleGenerate([slug])}
+                          disabled={running}
+                        >
+                          Generate
+                        </button>
+                      )}
                     </span>
                   </div>
                 </div>
@@ -151,6 +169,21 @@ export default function CourseView() {
           </div>
         )}
       </div>
+
+      {regenerateTarget && (
+        <ConfirmModal
+          message="The following files will be re-generated:"
+          detail={
+            <ul className="modal-file-list">
+              {generatedFiles(regenerateTarget.slug).map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          }
+          onConfirm={confirmRegenerate}
+          onCancel={() => setRegenerateTarget(null)}
+        />
+      )}
     </main>
   )
 }
