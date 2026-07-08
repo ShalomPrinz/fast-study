@@ -1,4 +1,18 @@
-export const GENERATED_SUFFIXES = ['.txt', '.md', '.pdf'] as const
+import type { CoursePhase } from '@/types'
+
+export interface OverviewStep {
+  phase: CoursePhase
+  suffix: string // the file {slug}{suffix} this phase produces
+  label: string  // human-readable action name (UI only)
+}
+
+export const OVERVIEW_STEPS: readonly OverviewStep[] = [
+  { phase: 'extract', suffix: '.txt', label: 'Extract' },
+  { phase: 'analyze', suffix: '.md',  label: 'Analyze' },
+  { phase: 'to_pdf',  suffix: '.pdf', label: 'Export PDF' },
+]
+
+export const GENERATED_SUFFIXES = OVERVIEW_STEPS.map((s) => s.suffix)
 
 export const LAST_FILE_SUFFIX = GENERATED_SUFFIXES[GENERATED_SUFFIXES.length - 1]
 

@@ -1,4 +1,4 @@
-import type { Kind } from '@/types'
+import type { Kind, CoursePhase } from '@/types'
 
 // Tagged template that percent-encodes every interpolated value while leaving the
 // literal segments untouched, so Hebrew course/lecture names stay URL-safe.
@@ -46,4 +46,11 @@ export function courseOverviewBase(course: string): string {
 // extractors server-side, so the default is the empty string.
 export function extractorsQuery(names?: string[]): string {
   return names?.length ? `?extractors=${names.map(encodeURIComponent).join(',')}` : ''
+}
+
+// Query for an overview /generate trigger: optional extractor CSV + optional start phase.
+export function overviewGenerateQuery(names?: string[], fromPhase?: CoursePhase): string {
+  const base = extractorsQuery(names)
+  if (!fromPhase) return base
+  return `${base}${base ? '&' : '?'}from_phase=${fromPhase}`
 }

@@ -1,5 +1,5 @@
 import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus, OverviewExtractor, CoursePhase, CourseExtractorState, CourseStatus } from '@/types'
-import { kindQuery, lectureBase, courseOverviewBase, extractorsQuery } from '@/utils/url'
+import { kindQuery, lectureBase, courseOverviewBase, overviewGenerateQuery } from '@/utils/url'
 import { createClient } from './http'
 
 const backend = createClient(import.meta.env.VITE_API_URL ?? 'http://localhost:8000', 'backend service')
@@ -68,8 +68,8 @@ export async function fetchOverviewExtractors(): Promise<OverviewExtractor[]> {
   return raw.extractors
 }
 
-export async function runOverview(course: string, extractors?: string[]): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(courseOverviewBase(course) + '/generate' + extractorsQuery(extractors))
+export async function runOverview(course: string, extractors?: string[], fromPhase?: CoursePhase): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(courseOverviewBase(course) + '/generate' + overviewGenerateQuery(extractors, fromPhase))
 }
 
 interface RawCourseStatus {

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import type { OverviewExtractor, CourseFile, CourseStatus } from '@/types'
+import type { OverviewExtractor, CourseFile, CourseStatus, CoursePhase } from '@/types'
 import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
 import { fetchCourseFiles, overviewFileUrl } from '@/services/database'
 import { useNotify } from '@/hooks/useNotify'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
+import { useToggleSet } from '@/hooks/useToggleSet'
 import { toast, toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile, generatedFiles, startedSlug } from '@/constants/overview'
+import { lastGeneratedFile, generatedFiles, startedSlug, OVERVIEW_STEPS } from '@/constants/overview'
 import type { StartedSlug } from '@/constants/overview'
 import Icon from '@/components/Icon'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -31,7 +32,9 @@ export default function CourseView() {
   const [files, setFiles] = useState<CourseFile[]>([])
   const [status, setStatus] = useState<CourseStatus | null>(null)
   const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string } | null>(null)
+  const [regenerateStep, setRegenerateStep] = useState<{ slug: string; title: string; phase: CoursePhase; label: string; rebuilds: string[] } | null>(null)
   const [generateAllWarning, setGenerateAllWarning] = useState<(StartedSlug & { title: string })[] | null>(null)
+  const expanded = useToggleSet(extractors?.map((e) => e.slug) ?? [])
   const latestFiles = useLatestRequest()
   const latestStatus = useLatestRequest()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
@@ -92,9 +95,9 @@ export default function CourseView() {
     }
   }
 
-  // A single trigger runs both phases sequentially server-side; omitting names = all.
-  async function handleGenerate(names?: string[]) {
-    const result = await runOverview(course, names)
+  // A single trigger runs the phases sequentially server-side; omitting names = all.
+  async function handleGenerate(names?: string[], fromPhase?: CoursePhase) {
+    const result = await runOverview(course, names, fromPhase)
     toastInitResult(result, {
       busy: 'Overview is already running for this course',
       error: 'Overview failed to start',
@@ -107,6 +110,13 @@ export default function CourseView() {
     const { slug } = regenerateTarget
     setRegenerateTarget(null)
     handleGenerate([slug])
+  }
+
+  function confirmRegenerateStep() {
+    if (!regenerateStep) return
+    const { slug, phase } = regenerateStep
+    setRegenerateStep(null)
+    handleGenerate([slug], phase)
   }
 
   function handleGenerateAll() {
@@ -145,10 +155,17 @@ export default function CourseView() {
               return (
                 <div
                   key={slug}
-                  className={`file-row course-branch${bs.done ? ' file-row--present' : ''}${bs.running ? ' file-row--running' : ''}`}
+                  className={`file-row course-branch${bs.done ? ' file-row--present' : ''}`}
                 >
                   <div className="course-branch-header">
-                    <span className="course-branch-name">{title}</span>
+                    <button
+                      className="course-branch-toggle"
+                      onClick={() => expanded.toggle(slug)}
+                      aria-expanded={expanded.has(slug)}
+                    >
+                      <span className="course-branch-caret">{expanded.has(slug) ? '▾' : '▸'}</span>
+                      <span className="course-branch-name">{title}</span>
+                    </button>
                     <span className="course-branch-actions">
                       <BranchIndicator status={bs} />
                       {bs.done && (
@@ -178,6 +195,60 @@ export default function CourseView() {
                       )}
                     </span>
                   </div>
+
+                  {expanded.has(slug) && (
+                    <div className="course-steps">
+                      {OVERVIEW_STEPS.map((step, idx) => {
+                        const fileName = `${slug}${step.suffix}`
+                        const exists = files.some((f) => f.name === fileName)
+                        const stepRunning = bs.running && status?.phase === step.phase
+                        const isPdf = step.phase === 'to_pdf'
+                        const rebuilds = OVERVIEW_STEPS.slice(idx).map((s) => `${slug}${s.suffix}`)
+                        return (
+                          <div
+                            key={step.phase}
+                            className={`file-row${exists ? ' file-row--present' : ''}${stepRunning ? ' file-row--running' : ''}`}
+                          >
+                            <div className="file-row-header">
+                              <span className="file-name">{fileName}</span>
+                              <span className="file-row-right">
+                                <span className="file-slot file-slot--status">
+                                  {stepRunning ? (
+                                    <div className="spinner spinner--sm" />
+                                  ) : exists ? (
+                                    <span className="file-check">✓</span>
+                                  ) : (
+                                    <span className="course-stage-dot" />
+                                  )}
+                                </span>
+                                <span className="file-slot file-slot--open">
+                                  {isPdf && exists && (
+                                    <button
+                                      className="file-open-btn"
+                                      title="Open PDF in new tab"
+                                      onClick={() => window.open(overviewFileUrl(course, fileName), '_blank')}
+                                    >
+                                      <Icon icon="external-link" />
+                                    </button>
+                                  )}
+                                </span>
+                                <span className="file-slot file-slot--rotate">
+                                  {exists && (
+                                    <button
+                                      className="file-rotate-btn"
+                                      title={`Re-generate from ${step.label}`}
+                                      onClick={() => setRegenerateStep({ slug, title, phase: step.phase, label: step.label, rebuilds })}
+                                      disabled={running}
+                                    >↺</button>
+                                  )}
+                                </span>
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -197,6 +268,22 @@ export default function CourseView() {
           }
           onConfirm={confirmRegenerate}
           onCancel={() => setRegenerateTarget(null)}
+        />
+      )}
+
+      {regenerateStep && (
+        <ConfirmModal
+          message={`Generating from ${regenerateStep.label} step will rebuild:`}
+          postMessage="Are you sure you want to re-generate?"
+          detail={
+            <ul className="modal-file-list">
+              {regenerateStep.rebuilds.map((f) => (
+                <li key={f}>{f}</li>
+              ))}
+            </ul>
+          }
+          onConfirm={confirmRegenerateStep}
+          onCancel={() => setRegenerateStep(null)}
         />
       )}
 

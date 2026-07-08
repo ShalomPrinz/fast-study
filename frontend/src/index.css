@@ -1166,6 +1166,36 @@ html, body, #root {
   color: var(--text);
 }
 
+/* Caret + title act as one clickable expand/collapse toggle, filling the row's left side */
+.course-branch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.course-branch-caret {
+  font-size: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Per-slug pipeline breakdown revealed under the header (one file-row per phase) */
+.course-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 18px;
+}
+
 .course-branch-actions {
   display: flex;
   align-items: center;
