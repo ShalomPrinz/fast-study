@@ -13,6 +13,9 @@ _status: dict[str, dict] = {}          # course → latest run's status (survive
 
 _EMPTY_STATUS = {"running": False, "phase": None, "started_at": None, "extractors": {}}
 
+PHASE_ORDER = ("extract", "analyze", "to_pdf")
+DEFAULT_FROM_PHASE = PHASE_ORDER[0]
+
 
 def get_status(course: str) -> dict:
     """Status of the latest overview run; the never-run shape for unknown courses."""
@@ -32,14 +35,14 @@ def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
     return slugs, None
 
 
-def try_run_generate(course: str, course_node: dict, slugs: list[str]) -> str:
-    """Run all 'slugs' course overview sequentially in the background. Returns "started" or "busy"."""
+def try_run_generate(course: str, course_node: dict, slugs: list[str], from_phase: str = DEFAULT_FROM_PHASE) -> str:
+    """Run all 'slugs' course overview sequentially in the background, starting from `from_phase`."""
     lock = _locks.setdefault(course, asyncio.Lock())
     if lock.locked():
         return "busy"
     # Status must be installed before the task is scheduled so the first poll sees the run.
-    _status[course] = _new_run("extract", slugs)
-    asyncio.create_task(_run_generate(lock, course, course_node, slugs))
+    _status[course] = _new_run(from_phase, slugs)
+    asyncio.create_task(_run_generate(lock, course, course_node, slugs, from_phase))
     return "started"
 
 
@@ -52,15 +55,20 @@ def _new_run(phase: str, slugs: list[str]) -> dict:
     }
 
 
-async def _run_generate(lock: asyncio.Lock, course: str, course_node: dict, slugs: list[str]) -> None:
-    """Hold the course lock across all phases so nothing else runs in between."""
+async def _run_generate(lock: asyncio.Lock, course: str, course_node: dict, slugs: list[str], from_phase: str) -> None:
+    """Hold the course lock across all phases so nothing else runs in between. Skips phases before given `from_phase`."""
+    start = PHASE_ORDER.index(from_phase)
+    workers = {
+        "extract": lambda s: _extract_phase(course, course_node, s),
+        "analyze": lambda s: _analyze_phase(course, s),
+        "to_pdf":  lambda s: _to_pdf_phase(course, s),
+    }
     async with lock:
         try:
-            await asyncio.to_thread(_extract_phase, course, course_node, slugs)
-            slugs = _advance_phase(course, "analyze", slugs)
-            await asyncio.to_thread(_analyze_phase, course, slugs)
-            slugs = _advance_phase(course, "to_pdf", slugs)
-            await asyncio.to_thread(_to_pdf_phase, course, slugs)
+            for i, phase in enumerate(PHASE_ORDER[start:], start=start):
+                if i > start:
+                    slugs = _advance_phase(course, phase, slugs)
+                await asyncio.to_thread(workers[phase], slugs)
         finally:
             _status[course]["running"] = False
             db_client.notify()

@@ -356,6 +356,62 @@ class TestToPdfPhase:
         assert db.overview_store["pitfalls.pdf"] == b"%PDF-1.4 stub"
 
 
+class TestFromPhase:
+    """A run may START from a chosen phase and run through to_pdf, leaving earlier-phase
+    files untouched (kept, never re-run). from_phase seeds the run's initial phase."""
+
+    def _seed(self, db, filename, data):
+        """Pre-populate overview_store as if an earlier phase already produced its file."""
+        db.overview_store[filename] = data
+
+    def test_from_analyze_runs_analyze_and_to_pdf_only_txt_untouched(self, db):
+        # Pretend extract already wrote exam-hints.txt; starting from analyze must not re-run it.
+        self._seed(db, "exam-hints.txt", b"report")
+
+        async def go():
+            assert course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], "analyze") == "started"
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["phase"] == "to_pdf"
+        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        # Extract skipped → only analyze's .md and to_pdf's .pdf written; the seeded .txt is kept as-is.
+        assert [f for _, f, _ in db.puts] == ["exam-hints.md", "exam-hints.pdf"]
+        assert db.overview_store["exam-hints.txt"] == b"report"
+
+    def test_from_to_pdf_runs_to_pdf_only_txt_and_md_untouched(self, db):
+        # Pretend extract + analyze already ran; starting from to_pdf must not re-run either.
+        self._seed(db, "exam-hints.txt", b"report")
+        self._seed(db, "exam-hints.md", b"# analyzed")
+
+        async def go():
+            assert course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], "to_pdf") == "started"
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["phase"] == "to_pdf"
+        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        # Only the .pdf is written; the seeded .txt and .md are kept untouched.
+        assert [f for _, f, _ in db.puts] == ["exam-hints.pdf"]
+        assert db.overview_store["exam-hints.txt"] == b"report"
+        assert db.overview_store["exam-hints.md"] == b"# analyzed"
+
+    def test_from_analyze_seeds_initial_phase_analyze(self, db):
+        # try_run_generate installs status synchronously; the first poll must see phase "analyze".
+        self._seed(db, "exam-hints.txt", b"report")
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "analyze")
+            # Status is seeded before the background task runs → phase is the start phase.
+            phase = course_runner.get_status(COURSE)["phase"]
+            await _wait_done()
+            return phase
+
+        assert asyncio.run(go()) == "analyze"
+
+
 class TestSharedLock:
     def test_busy_while_running_and_status_not_clobbered(self, db, monkeypatch):
         release = threading.Event()
