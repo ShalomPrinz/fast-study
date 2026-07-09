@@ -8,7 +8,7 @@ import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { useToggleSet } from '@/hooks/useToggleSet'
 import { toast, toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile, generatedFiles, startedSlug, OVERVIEW_STEPS } from '@/constants/overview'
+import { lastGeneratedFile, generatedFiles, startedSlug, stepsFor } from '@/constants/overview'
 import type { StartedSlug } from '@/constants/overview'
 import Icon from '@/components/Icon'
 import ConfirmModal from '@/components/ConfirmModal'
@@ -31,7 +31,7 @@ export default function CourseView() {
   const [extractors, setExtractors] = useState<OverviewExtractor[] | null>(null)
   const [files, setFiles] = useState<CourseFile[]>([])
   const [status, setStatus] = useState<CourseStatus | null>(null)
-  const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string } | null>(null)
+  const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string; phases: CoursePhase[] } | null>(null)
   const [regenerateStep, setRegenerateStep] = useState<{ slug: string; title: string; phase: CoursePhase; label: string; rebuilds: string[] } | null>(null)
   const [generateAllWarning, setGenerateAllWarning] = useState<(StartedSlug & { title: string })[] | null>(null)
   const expanded = useToggleSet(extractors?.map((e) => e.slug) ?? [])
@@ -86,11 +86,11 @@ export default function CourseView() {
 
   const running = status?.running ?? false
 
-  function branchStatus(slug: string): BranchStatus {
+  function branchStatus(slug: string, phases: CoursePhase[]): BranchStatus {
     const st = status?.extractors[slug]
     return {
       running: running && st?.status === 'running',
-      done: files.some((f) => f.name === lastGeneratedFile(slug)),
+      done: files.some((f) => f.name === lastGeneratedFile(slug, phases)),
       error: st?.status === 'error' ? (st.message ?? 'failed') : null,
     }
   }
@@ -121,8 +121,8 @@ export default function CourseView() {
 
   function handleGenerateAll() {
     const existing = new Set(files.map((f) => f.name))
-    const started = (extractors ?? []).flatMap(({ slug, title }) => {
-      const st = startedSlug(slug, existing)
+    const started = (extractors ?? []).flatMap(({ slug, title, phases }) => {
+      const st = startedSlug(slug, phases, existing)
       return st ? [{ title, ...st }] : []
     })
     if (started.length === 0) {
@@ -150,8 +150,9 @@ export default function CourseView() {
           <div className="spinner" />
         ) : (
           <div className="file-list">
-            {extractors.map(({ slug, title }) => {
-              const bs = branchStatus(slug)
+            {extractors.map(({ slug, title, phases }) => {
+              const bs = branchStatus(slug, phases)
+              const steps = stepsFor(phases)
               return (
                 <div
                   key={slug}
@@ -172,7 +173,7 @@ export default function CourseView() {
                         <button
                           className="file-open-btn"
                           title="Open PDF in new tab"
-                          onClick={() => window.open(overviewFileUrl(course, lastGeneratedFile(slug)), '_blank')}
+                          onClick={() => window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')}
                         >
                           <Icon icon="external-link" />
                         </button>
@@ -181,7 +182,7 @@ export default function CourseView() {
                         <button
                           className="file-rotate-btn"
                           title={`Re-generate ${title}`}
-                          onClick={() => setRegenerateTarget({ slug, title })}
+                          onClick={() => setRegenerateTarget({ slug, title, phases })}
                           disabled={running}
                         >↺</button>
                       ) : (
@@ -198,12 +199,12 @@ export default function CourseView() {
 
                   {expanded.has(slug) && (
                     <div className="course-steps">
-                      {OVERVIEW_STEPS.map((step, idx) => {
+                      {steps.map((step, idx) => {
                         const fileName = `${slug}${step.suffix}`
                         const exists = files.some((f) => f.name === fileName)
                         const stepRunning = bs.running && status?.phase === step.phase
                         const isPdf = step.phase === 'to_pdf'
-                        const rebuilds = OVERVIEW_STEPS.slice(idx).map((s) => `${slug}${s.suffix}`)
+                        const rebuilds = steps.slice(idx).map((s) => `${slug}${s.suffix}`)
                         return (
                           <div
                             key={step.phase}
@@ -261,7 +262,7 @@ export default function CourseView() {
           message="The following files will be re-generated:"
           detail={
             <ul className="modal-file-list">
-              {generatedFiles(regenerateTarget.slug).map((f) => (
+              {generatedFiles(regenerateTarget.slug, regenerateTarget.phases).map((f) => (
                 <li key={f}>{f}</li>
               ))}
             </ul>

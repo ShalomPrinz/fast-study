@@ -63,9 +63,15 @@ export async function fetchRunnerStatus(): Promise<RunnerStatus> {
   return normalizeRunner(await backend.get<RawRunnerStatus>('/status'))
 }
 
+interface RawOverviewExtractor {
+  slug: string
+  title: string
+  phases?: CoursePhase[]
+}
+
 export async function fetchOverviewExtractors(): Promise<OverviewExtractor[]> {
-  const raw = await backend.get<{ extractors: OverviewExtractor[] }>('/overview/extractors')
-  return raw.extractors
+  const raw = await backend.get<{ extractors: RawOverviewExtractor[] }>('/overview/extractors')
+  return raw.extractors.map((e) => ({ slug: e.slug, title: e.title, phases: e.phases ?? [] }))
 }
 
 export async function runOverview(course: string, extractors?: string[], fromPhase?: CoursePhase): Promise<RunInitResult> {

@@ -119,7 +119,7 @@ def overview_status(course: str):
 @app.get("/overview/extractors")
 def overview_extractors():
     """Static extractor listing. `slug` is the stable id, `title` is the label."""
-    return {"extractors": [{"slug": e.slug, "title": e.title} for e in overview.EXTRACTORS]}
+    return {"extractors": [{"slug": e.slug, "title": e.title, "phases": list(e.phases)} for e in overview.EXTRACTORS]}
 
 
 @app.post("/run-all")

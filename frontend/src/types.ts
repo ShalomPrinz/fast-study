@@ -90,12 +90,13 @@ export interface RunnerStatus {
 // Sidebar mode: normal lecture tree vs the flat courses list.
 export type AppMode = 'lectures' | 'courses'
 
+export type CoursePhase = 'extract' | 'analyze' | 'topics' | 'to_pdf'
+
 export interface OverviewExtractor {
   slug: string
   title: string
+  phases: CoursePhase[]
 }
-
-export type CoursePhase = 'extract' | 'analyze' | 'to_pdf'
 
 export interface CourseExtractorState {
   status: 'pending' | 'running' | 'done' | 'skipped' | 'error'

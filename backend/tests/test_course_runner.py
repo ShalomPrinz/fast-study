@@ -569,13 +569,21 @@ class TestStatusAndListing:
         }
 
     def test_extractors_listing_in_declaration_order(self):
-        listing = [{"slug": e.slug, "title": e.title} for e in ep.EXTRACTORS]
+        listing = main.overview_extractors()["extractors"]
         assert [x["slug"] for x in listing] == [
             "exam-hints", "student-qa", "pitfalls", "topics",
         ]
         assert [x["title"] for x in listing] == [
             "Exam Hints", "Student QA", "Pitfalls", "Topics",
         ]
+
+    def test_extractors_listing_includes_phases(self):
+        by_slug = {x["slug"]: x for x in main.overview_extractors()["extractors"]}
+        # Pattern extractor → the three-phase pipeline; topics (immediate) → collect then render.
+        assert by_slug["exam-hints"]["phases"] == ["extract", "analyze", "to_pdf"]
+        assert by_slug["topics"]["phases"] == ["topics", "to_pdf"]
+        # phases is a plain JSON list, not the ClassVar tuple.
+        assert isinstance(by_slug["topics"]["phases"], list)
 
 
 class TestPhaseWorkerSeam:
