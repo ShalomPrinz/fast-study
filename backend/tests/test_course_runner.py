@@ -21,6 +21,7 @@ import pytest
 
 import main
 from course import analyze as course_analyze
+from course import collect as course_collect
 from course import extract as course_extract
 from course import overview as ep
 from course import runner as course_runner
@@ -33,6 +34,11 @@ COURSE = "מבני נתונים"
 # Matches Exam Hints ("במבחן") but no student-qa/pitfalls pattern — one run yields
 # both a done extractor and skipped ones.
 TRANSCRIPT = "משפט פתיחה של השיעור. זה יהיה במבחן בטוח. משפט סיום."
+
+# The three pattern extractors (topics is the immediate one, filtered out of extract/analyze).
+PATTERN_SLUGS = ["exam-hints", "student-qa", "pitfalls"]
+
+SUMMARY = "# ‏כותרת\n\n## ‏נושא ראשון\n\n- פריט אחד\n"
 
 
 def _tree():
@@ -81,6 +87,12 @@ def db(monkeypatch):
     def notify():
         calls.notifies += 1
 
+    def get_summary(course, lecture, kind):
+        calls.summary_gets.append((course, lecture, kind))
+        return SUMMARY
+
+    calls.summary_gets = []
+    monkeypatch.setattr(db_client, "get_summary", get_summary)
     monkeypatch.setattr(db_client, "get_file_bytes", get_file_bytes)
     monkeypatch.setattr(db_client, "put_overview_file", put_overview_file)
     monkeypatch.setattr(db_client, "get_overview_file", get_overview_file)
@@ -119,7 +131,7 @@ class TestGenerateAll:
             return await _wait_done()
 
         status = asyncio.run(go())
-        # Final phase is to_pdf — the run ends there, not at extract/analyze.
+        # Final phase is to_pdf — the run ends there, not at extract/analyze/topics.
         assert status["phase"] == "to_pdf"
         assert status["started_at"] is not None
         assert list(status["extractors"]) == [e.slug for e in ep.EXTRACTORS]
@@ -128,6 +140,8 @@ class TestGenerateAll:
         # No match → extract skipped, so nothing downstream to analyze/render → skipped throughout.
         assert status["extractors"]["student-qa"]["status"] == "skipped"
         assert status["extractors"]["pitfalls"]["status"] == "skipped"
+        # topics has no summaries in this tree → collect skips, then to_pdf finds no topics.md → skipped.
+        assert status["extractors"]["topics"]["status"] == "skipped"
 
     def test_writes_txt_then_md_then_pdf(self, db):
         async def go():
@@ -146,14 +160,19 @@ class TestGenerateAll:
         assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
 
     def test_notify_fires_per_extractor_all_phases_plus_boundaries_and_end(self, db):
-        # 3 extractors, 3 phases: extract ×3 + boundary + analyze ×3 + boundary + to_pdf ×3 + end.
+        # All 4 extractors (3 pattern + topics). This tree has transcripts but no summaries, so:
+        #   extract  : 3 pattern extractors    → 3 (first active phase, no boundary ping)
+        #   analyze  : boundary + 3 pattern    → 4
+        #   topics   : boundary + 1 collect    → 2
+        #   to_pdf   : boundary + 4 extractors → 5
+        #   run end                            → 1
         async def go():
             slugs, _ = course_runner.resolve_slugs(None)
             course_runner.try_run_generate(COURSE, _course_node(), slugs)
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 12
+        assert db.notifies == 15
 
 
 class TestGenerateSubset:
@@ -411,6 +430,29 @@ class TestFromPhase:
 
         assert asyncio.run(go()) == "analyze"
 
+    def test_bogus_from_phase_degrades_to_default_without_raising(self, db):
+        # An invalid from_phase must not raise (would be an unhandled 500 in try_run_generate);
+        # the runner defends its boundary and behaves as if starting from the default (extract).
+        async def go():
+            # Synchronous _new_run seeds the initial phase — bogus must not blow up here.
+            result = course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "bogus")
+            seeded = course_runner.get_status(COURSE)["phase"]
+            status = await _wait_done()
+            return result, seeded, status
+
+        result, seeded, status = asyncio.run(go())
+        assert result == "started"
+        # Default start (extract) → exam-hints participates from extract, so extract is seeded, not "bogus".
+        assert seeded == "extract"
+        assert status["phase"] == "to_pdf"
+        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        # Started from the default → extract wrote .txt, analyze .md, to_pdf .pdf (all phases ran).
+        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md", "exam-hints.pdf"]
+
+    def test_start_index_helper_unknown_is_zero(self):
+        assert course_runner._start_index("bogus") == 0
+        assert course_runner._start_index("analyze") == course_runner.PHASE_ORDER.index("analyze")
+
 
 class TestSharedLock:
     def test_busy_while_running_and_status_not_clobbered(self, db, monkeypatch):
@@ -448,6 +490,78 @@ class TestSharedLock:
         asyncio.run(go())
 
 
+class TestPhaseFiltering:
+    """The immediate `topics` extractor declares only ("topics", "to_pdf"); the three pattern
+    extractors declare ("extract", "analyze", "to_pdf"). A phase runs only its participants,
+    and a phase with none is skipped entirely (no fetch, no notify, no advance)."""
+
+    def _node_with_summary(self):
+        return {
+            "name": COURSE,
+            "lectures": [{"name": "Lecture 1", "files": {
+                "transcript.txt": {"exists": True}, "summary.md": {"exists": True}}}],
+            "recitations": [],
+        }
+
+    def test_topics_only_run_never_enters_extract_or_analyze(self, db, monkeypatch):
+        # A Topics-only run must not fetch transcripts: extract/analyze have zero participants.
+        monkeypatch.setattr(course_extract, "fetch_sources",
+                            lambda *a: pytest.fail("extract phase must be skipped for topics-only run"))
+
+        async def go():
+            course_runner.try_run_generate(COURSE, self._node_with_summary(), ["topics"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["phase"] == "to_pdf"
+        assert status["extractors"]["topics"] == {"status": "done"}
+        # collect wrote topics.md, to_pdf rendered topics.pdf — nothing else.
+        assert [f for _, f, _ in db.puts] == ["topics.md", "topics.pdf"]
+        assert db.transcript_gets == []  # never touched a transcript
+
+    def test_topics_only_notify_cadence_skips_empty_phases(self, db):
+        # No pings for the empty extract/analyze phases:
+        #   topics ×1 (first active, no boundary) + boundary+to_pdf ×1 (=2) + run end = 4.
+        async def go():
+            course_runner.try_run_generate(COURSE, self._node_with_summary(), ["topics"])
+            await _wait_done()
+
+        asyncio.run(go())
+        assert db.notifies == 4
+
+    def test_pattern_only_run_never_enters_topics(self, db, monkeypatch):
+        monkeypatch.setattr(course_collect, "run_collect",
+                            lambda *a: pytest.fail("topics phase must be skipped for a pattern-only run"))
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), PATTERN_SLUGS)
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["phase"] == "to_pdf"
+        assert "topics" not in status["extractors"]
+
+    def test_error_isolation_holds_across_new_phase_list(self, db, monkeypatch):
+        # exam-hints (pattern) errors in analyze; topics (immediate) still runs its own phases.
+        def boom(ext, report, course):
+            raise RuntimeError("gemini boom")
+
+        monkeypatch.setattr(course_analyze, "analyze", boom)
+
+        async def go():
+            course_runner.try_run_generate(
+                COURSE, self._node_with_summary(), ["exam-hints", "topics"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        # exam-hints error survives to the end (not masked as a downstream skip).
+        assert status["extractors"]["exam-hints"] == {"status": "error", "message": "gemini boom"}
+        # topics is unaffected by the pattern extractor's failure.
+        assert status["extractors"]["topics"] == {"status": "done"}
+        assert "topics.pdf" in db.overview_store
+        assert "exam-hints.pdf" not in db.overview_store
+
+
 class TestStatusAndListing:
     def test_never_run_course_shape(self):
         assert course_runner.get_status("קורס-חדש") == {
@@ -457,10 +571,10 @@ class TestStatusAndListing:
     def test_extractors_listing_in_declaration_order(self):
         listing = [{"slug": e.slug, "title": e.title} for e in ep.EXTRACTORS]
         assert [x["slug"] for x in listing] == [
-            "exam-hints", "student-qa", "pitfalls",
+            "exam-hints", "student-qa", "pitfalls", "topics",
         ]
         assert [x["title"] for x in listing] == [
-            "Exam Hints", "Student QA", "Pitfalls",
+            "Exam Hints", "Student QA", "Pitfalls", "Topics",
         ]
 
 

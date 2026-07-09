@@ -1,13 +1,13 @@
 """Extraction logic tests — split_sentences / extract_snippets / build_report now live in
 course/extract.py (moved out of overview.py, which is registry-only)."""
 
-from course.overview import Extractor
+from course.overview import PatternExtractor
 from course.extract import split_sentences, extract_snippets, build_report
 
 
 def _pattern_extractor(patterns, before=1, after=1, slug="test", title="Test"):
-    return Extractor(slug=slug, title=title,
-                     patterns=tuple(patterns), before=before, after=after)
+    return PatternExtractor(slug=slug, title=title,
+                            patterns=tuple(patterns), before=before, after=after)
 
 
 class TestSplitSentences:

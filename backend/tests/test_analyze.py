@@ -7,13 +7,16 @@ import pytest
 
 from course import analyze as ca
 from course import overview as ep
+from course.overview import PatternExtractor
 
 
 class TestPromptFiles:
     def test_prompt_files_exist(self):
-        # Each registry extractor must have a prompt file where analyze looks for it.
+        # Each pattern extractor must have a prompt file where analyze looks for it
+        # (immediate extractors have no Gemini prompt / prompt_file).
         for ext in ep.EXTRACTORS:
-            assert (ca.PROMPT_DIR / ext.prompt_file).is_file(), ext.slug
+            if isinstance(ext, PatternExtractor):
+                assert (ca.PROMPT_DIR / ext.prompt_file).is_file(), ext.slug
 
 
 class TestAnalyze:
