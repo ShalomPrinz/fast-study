@@ -37,6 +37,12 @@ class Extractor:
 
     phases: ClassVar[tuple[Phase, ...]] = ()
 
+    @property
+    def phase_ids(self) -> tuple[str, ...]:
+        """The wire/CSV string ids of this extractor's phases — so callers serialize the
+        extractor without reaching into `phases` to pull each `Phase.id` themselves."""
+        return tuple(p.id for p in self.phases)
+
     def phases_from(self, from_phase: "Phase | None") -> tuple[Phase, ...]:
         """The sub-chain to run: this extractor's phases starting at `from_phase`.
         None → the full chain. A `from_phase` this extractor doesn't declare → the full chain too

@@ -96,3 +96,8 @@ class TestPhasesFrom:
         assert exam.output_file(Phase.ANALYZE) == "exam-hints.md"
         topics = EXTRACTORS_BY_SLUG["topics"]
         assert topics.output_file(Phase.TO_PDF) == "topics.pdf"
+
+    def test_phase_ids_are_the_wire_strings(self):
+        # phase_ids serializes the phase chain without callers reaching into Phase.id themselves.
+        assert EXTRACTORS_BY_SLUG["exam-hints"].phase_ids == ("extract", "analyze", "to_pdf")
+        assert EXTRACTORS_BY_SLUG["topics"].phase_ids == ("topics", "to_pdf")
