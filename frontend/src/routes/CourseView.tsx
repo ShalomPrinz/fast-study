@@ -84,7 +84,9 @@ export default function CourseView() {
       valid.add(key)
       reportError(key, `${titleBySlug.get(slug) ?? slug}: ${st.message ?? 'failed'}`)
     }
-    pruneErrors(valid)
+    // Prune only this course's keys; other courses' remembered errors must survive a
+    // switch away, or returning to them would re-toast an error already shown.
+    pruneErrors(valid, (k) => k.startsWith(`${course}/`))
   }, [status, course, extractors])
 
   if (!course) return null
