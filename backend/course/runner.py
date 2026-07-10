@@ -30,10 +30,6 @@ _locks: dict[tuple[str, str], asyncio.Lock] = {}
 # writer of a given slug's entry; survives after the run finishes so `get_status` can read it.
 _status: dict[str, dict[str, dict]] = {}
 
-PHASE_ORDER = ("extract", "analyze", "topics", "to_pdf")
-DEFAULT_FROM_PHASE = PHASE_ORDER[0]
-_PHASE_SUFFIX = {"extract": ".txt", "analyze": ".md", "topics": ".md", "to_pdf": ".pdf"}
-
 
 def get_status(course: str) -> dict:
     """Aggregate the shared per-slug store for a course. `running` is DERIVED (any entry running);
@@ -58,8 +54,18 @@ def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
     return slugs, None
 
 
+def resolve_from_phase(from_phase: str | None) -> tuple[overview.Phase | None, str | None]:
+    """Parse the optional from_phase id into a Phase (None = full chain / not provided)."""
+    if from_phase is None:
+        return None, None
+    phase = overview.Phase.from_id(from_phase)
+    if phase is None:
+        return None, f"unknown phase: {from_phase}"
+    return phase, None
+
+
 def try_run_generate(course: str, course_node: dict, slugs: list[str],
-                     from_phase: str = DEFAULT_FROM_PHASE, skip_existing: bool = False) -> str:
+                     from_phase: "overview.Phase | None" = None, skip_existing: bool = False) -> str:
     """Schedule an overview run over `slugs` (slug-by-slug, each under its own (course, slug) lock).
     Seeds pending status synchronously so the first poll sees the run — but only for slugs NOT already
     in flight under another run (never clobber a live entry). Returns "busy" iff EVERY requested slug's
@@ -79,11 +85,6 @@ def try_run_generate(course: str, course_node: dict, slugs: list[str],
     return "started"
 
 
-def _start_index(from_phase: str) -> int:
-    """Phase index of PHASE_ORDER to start from."""
-    return PHASE_ORDER.index(from_phase) if from_phase in PHASE_ORDER else 0
-
-
 class OverviewRun:
     """One overview 'generate' trigger. Owns run-scoped selection (slugs, from_phase, skip_existing)
     and the transcript `sources` (fetched ONCE, lazily, the first time any slug enters extract, then
@@ -92,13 +93,13 @@ class OverviewRun:
     slugs SLUG-BY-SLUG (declaration order): each extractor runs its own phase chain from `from_phase`
     through to_pdf under its own lock before the next starts."""
 
-    def __init__(self, course: str, course_node: dict, slugs: list[str], from_phase: str, skip_existing: bool):
+    def __init__(self, course: str, course_node: dict, slugs: list[str],
+                 from_phase: "overview.Phase | None", skip_existing: bool):
         self.course = course
         self.course_node = course_node
         self.slugs = slugs
         self.from_phase = from_phase
         self.skip_existing = skip_existing
-        self.start = _start_index(from_phase)
         self._sources = None  # in-memory, filled on first `sources` access
 
     @property
@@ -108,10 +109,6 @@ class OverviewRun:
             self._sources = extract.fetch_sources(self.course, self.course_node)
         return self._sources
 
-    def _slug_phases(self, slug: str) -> list[str]:
-        """This extractor's declared phases at/after `from_phase`, in PHASE_ORDER order."""
-        return [p for p in overview.EXTRACTORS_BY_SLUG[slug].phases if PHASE_ORDER.index(p) >= self.start]
-
     async def execute(self) -> None:
         """Walk the selected slugs in declaration order. For each, grab its OWN (course, slug) lock and
         run its phase chain from `from_phase` through to_pdf; earlier phases are skipped (files kept).
@@ -120,6 +117,7 @@ class OverviewRun:
         # Snapshot the overview dir once at run start (continue mode reads only this snapshot).
         existing = self._existing_outputs() if self.skip_existing else set()
         for slug in self.slugs:
+            extractor = overview.EXTRACTORS_BY_SLUG[slug]
             lock = _locks.setdefault((self.course, slug), asyncio.Lock())
             # Acquiring an un-held asyncio.Lock completes WITHOUT yielding to the event loop (CPython
             # sets _locked=True and returns immediately when there are no waiters), so between this
@@ -128,11 +126,11 @@ class OverviewRun:
             if lock.locked():
                 continue  # another run owns this slug right now — skip, don't touch its entry
             async with lock:
-                for phase in self._slug_phases(slug):
+                for phase in extractor.phases_from(self.from_phase):
                     self._set_phase(slug, phase)
 
                     # continue mode: keep an output already on disk at run start; run the rest normally.
-                    if self.skip_existing and f"{slug}{_PHASE_SUFFIX[phase]}" in existing:
+                    if self.skip_existing and extractor.output_file(phase) in existing:
                         self._mark_kept(slug)
                         db_client.notify()
                         continue
@@ -150,41 +148,45 @@ class OverviewRun:
         """The shared status entry for this run's slug (created on demand under the store's course dict)."""
         return _status.setdefault(self.course, {}).setdefault(slug, {})
 
-    def _set_phase(self, slug: str, phase: str) -> None:
-        """Mark the slug's current phase in the shared store (creates the entry if needed)."""
-        self._entry(slug)["phase"] = phase
+    def _set_phase(self, slug: str, phase: overview.Phase) -> None:
+        """Mark the slug's current phase in the shared store (creates the entry if needed).
+        Stores the STRING `phase.id` — a Phase object must never reach the JSON-serialized store."""
+        self._entry(slug)["phase"] = phase.id
 
     def _mark_kept(self, slug: str) -> None:
         """A kept (already-on-disk) participant: non-error status; keeps the phase _set_phase stamped."""
         self._entry(slug).update({"status": "skipped", "message": "already generated"})
 
-    def _run_slug_phase(self, slug: str, phase: str) -> bool:
+    def _run_slug_phase(self, slug: str, phase: overview.Phase) -> bool:
         """Run one extractor's single phase in a worker thread: mark running, run its worker, fold the
         result dict into the shared entry, notify. Returns True if it raised (caller stops the chain).
         Keeps `phase` on the entry across the running→result transition so the UI's per-step spinner
-        stays correct; a fresh dict on running so a prior phase's message can't linger."""
+        stays correct; a fresh dict on running so a prior phase's message can't linger. The stored
+        `phase` is always the STRING `phase.id` — the store is serialized straight to JSON."""
         entries = _status.setdefault(self.course, {})
-        entries[slug] = {"status": "running", "phase": phase}  # fresh dict, phase preserved
+        entries[slug] = {"status": "running", "phase": phase.id}  # fresh dict, phase preserved
         try:
-            entries[slug] = {**self._phase_worker(slug, phase), "phase": phase}
+            entries[slug] = {**self._phase_worker(slug, phase), "phase": phase.id}
             errored = False
         except Exception as e:
-            entries[slug] = {"status": "error", "message": str(e), "phase": phase}
+            entries[slug] = {"status": "error", "message": str(e), "phase": phase.id}
             errored = True
         finally:
             db_client.notify()
         return errored
 
-    def _phase_worker(self, slug: str, phase: str) -> dict:
-        """Dispatch one (slug, phase) to its worker; each returns a "done"/"skipped" status dict."""
+    def _phase_worker(self, slug: str, phase: overview.Phase) -> dict:
+        """Dispatch one (slug, phase) to its worker; each returns a "done"/"skipped" status dict.
+        The phase list comes from each `Extractor.phases`; dispatch stays here (importing the worker
+        modules that import `overview` back would be a cycle)."""
         extractor = overview.EXTRACTORS_BY_SLUG[slug]
-        if phase == "extract":
+        if phase is overview.Phase.EXTRACT:
             return extract.run_extractor(self.course, extractor, self.sources)
-        if phase == "analyze":
+        if phase is overview.Phase.ANALYZE:
             return analyze.run_analyze(self.course, extractor)
-        if phase == "topics":
+        if phase is overview.Phase.TOPICS:
             # topics ignores the slug: it distills every lecture/recitation summary into topics.md.
             return collect.run_collect(self.course, self.course_node)
-        if phase == "to_pdf":
+        if phase is overview.Phase.TO_PDF:
             return to_pdf.run_to_pdf(self.course, slug)
-        raise ValueError(f"unknown phase: {phase}")  # unreachable — phases come from PHASE_ORDER
+        raise ValueError(f"unknown phase: {phase}")

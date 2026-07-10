@@ -97,21 +97,24 @@ async def _find_course(course: str) -> tuple[dict | None, dict | None]:
 
 @app.post("/courses/{course}/overview/generate")
 async def overview_generate(course: str, extractors: str | None = Query(None),
-                            from_phase: str = Query(course_runner.DEFAULT_FROM_PHASE),
+                            from_phase: str | None = Query(None),
                             skip_existing: bool = Query(False)):
     """Generate course overview for given extractors (comma-separated slugs), starting from `from_phase` through to_pdf.
-    Runs slug-by-slug, each under its own (course, slug) lock, so a separate trigger for a different slug runs in
-    parallel; `busy` means every requested slug is already in flight. `skip_existing=true` is a "continue": phase
-    outputs already on disk at run start are kept, only missing ones generated."""
-    if from_phase not in course_runner.PHASE_ORDER:
-        return {"status": "error", "message": f"unknown phase: {from_phase}"}
+    `from_phase` not provided → each extractor's full chain. Runs slug-by-slug, each under its own (course, slug) lock,
+    so a separate trigger for a different slug runs in parallel; `busy` means every requested slug is already in flight.
+    `skip_existing=true` is a "continue": phase outputs already on disk at run start are kept, only missing ones generated."""
+    phase, err = course_runner.resolve_from_phase(from_phase)
+    if err:
+        return {"status": "error", "message": err}
+
     slugs, err = course_runner.resolve_slugs(extractors)
     if err:
         return {"status": "error", "message": err}
+
     course_node, err = await _find_course(course)
     if course_node is None or err is not None:
         return err
-    return {"status": course_runner.try_run_generate(course, course_node, slugs, from_phase, skip_existing)}
+    return {"status": course_runner.try_run_generate(course, course_node, slugs, phase, skip_existing)}
 
 
 @app.get("/courses/{course}/overview/status")
@@ -125,7 +128,7 @@ def overview_status(course: str):
 @app.get("/overview/extractors")
 def overview_extractors():
     """Static extractor listing. `slug` is the stable id, `title` is the label."""
-    return {"extractors": [{"slug": e.slug, "title": e.title, "phases": list(e.phases)} for e in overview.EXTRACTORS]}
+    return {"extractors": [{"slug": e.slug, "title": e.title, "phases": [p.id for p in e.phases]} for e in overview.EXTRACTORS]}
 
 
 @app.post("/run-all")

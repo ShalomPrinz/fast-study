@@ -424,7 +424,7 @@ class TestFromPhase:
 
         async def go():
             assert course_runner.try_run_generate(
-                COURSE, _course_node(), ["exam-hints"], "analyze") == "started"
+                COURSE, _course_node(), ["exam-hints"], ep.Phase.ANALYZE) == "started"
             return await _wait_done()
 
         status = asyncio.run(go())
@@ -440,7 +440,7 @@ class TestFromPhase:
 
         async def go():
             assert course_runner.try_run_generate(
-                COURSE, _course_node(), ["exam-hints"], "to_pdf") == "started"
+                COURSE, _course_node(), ["exam-hints"], ep.Phase.TO_PDF) == "started"
             return await _wait_done()
 
         status = asyncio.run(go())
@@ -456,32 +456,27 @@ class TestFromPhase:
         self._seed(db, "exam-hints.txt", b"report")
 
         async def go():
-            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "analyze")
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], ep.Phase.ANALYZE)
             seeded = dict(course_runner.get_status(COURSE)["extractors"]["exam-hints"])
             await _wait_done()
             return seeded
 
         assert asyncio.run(go()) == {"status": "pending"}
 
-    def test_bogus_from_phase_degrades_to_default_without_raising(self, db):
-        # An invalid from_phase must not raise (would be an unhandled 500 in try_run_generate);
-        # the runner defends its boundary and behaves as if starting from the default (extract).
-        async def go():
-            result = course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "bogus")
-            seeded = dict(course_runner.get_status(COURSE)["extractors"]["exam-hints"])
-            status = await _wait_done()
-            return result, seeded, status
+    def test_none_from_phase_runs_full_chain(self):
+        # from_phase=None (the try_run_generate default / omitted query param) = each extractor's full chain.
+        assert course_runner.resolve_from_phase(None) == (None, None)
 
-        result, seeded, status = asyncio.run(go())
-        assert result == "started"
-        assert seeded == {"status": "pending"}
-        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
-        # Started from the default → extract wrote .txt, analyze .md, to_pdf .pdf (all phases ran).
-        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md", "exam-hints.pdf"]
+    def test_resolve_from_phase_parses_known_id(self):
+        # The boundary parser mirrors resolve_slugs' (value, error) shape; a known id → its Phase.
+        assert course_runner.resolve_from_phase("analyze") == (ep.Phase.ANALYZE, None)
 
-    def test_start_index_helper_unknown_is_zero(self):
-        assert course_runner._start_index("bogus") == 0
-        assert course_runner._start_index("analyze") == course_runner.PHASE_ORDER.index("analyze")
+    def test_resolve_from_phase_rejects_unknown(self):
+        # An invalid from_phase is now rejected at the boundary (before any run is scheduled),
+        # rather than defended inside try_run_generate.
+        phase, err = course_runner.resolve_from_phase("bogus")
+        assert phase is None
+        assert err == "unknown phase: bogus"
 
 
 class TestSkipExisting:
@@ -809,7 +804,7 @@ class TestSlugBySlug:
         monkeypatch.setattr(course_extract, "fetch_sources", lambda *a: calls.append(1) or [])
 
         async def go():
-            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "analyze")
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], ep.Phase.ANALYZE)
             return await _wait_done()
 
         asyncio.run(go())
