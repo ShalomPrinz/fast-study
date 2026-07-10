@@ -167,18 +167,30 @@ class TestRunCollect:
     def test_skipped_when_no_summaries(self, monkeypatch):
         monkeypatch.setattr(db_client, "put_overview_file",
                             lambda *a: (_ for _ in ()).throw(AssertionError("must not write")))
+        monkeypatch.setattr(db_client, "patch_overview_meta",
+                            lambda *a: (_ for _ in ()).throw(AssertionError("must not patch meta")))
         node = self._node(lectures=[("Lecture 1", False)])
         assert run_collect(self.COURSE, node) == {"status": "skipped", "message": "no summaries found"}
 
     def test_done_writes_topics_md(self, monkeypatch):
         puts = {}
+        patches = []
         monkeypatch.setattr(db_client, "get_summary",
                             lambda c, l, k: "# ‏כותרת\n\n## ‏נושא\n")
         monkeypatch.setattr(db_client, "put_overview_file",
                             lambda c, f, d: puts.__setitem__(f, d.decode("utf-8")))
-        node = self._node(lectures=[("Lecture 1", True)])
+        monkeypatch.setattr(db_client, "patch_overview_meta",
+                            lambda c, s, e: patches.append((c, s, e)))
+        node = self._node(lectures=[("Lecture 1", True)], recitations=[("Recitation 2", True)])
         assert run_collect(self.COURSE, node) == {"status": "done"}
         assert "topics.md" in puts
+        # Meta patched for the topics slug from the collected lecture/recitation names.
+        assert len(patches) == 1
+        course, slug, entry = patches[0]
+        assert (course, slug) == (self.COURSE, "topics")
+        assert entry["lectures"] == {"start": "1", "end": "1"}
+        assert entry["recitations"] == {"start": "2", "end": "2"}
+        assert "generated_at" in entry
         # Entry heading is the Hebrew display label, not the English folder name.
         assert f"# {RLM}הרצאה 1" in puts["topics.md"]
         assert "# Lecture 1" not in puts["topics.md"]
@@ -189,6 +201,7 @@ class TestRunCollect:
         monkeypatch.setattr(db_client, "get_summary",
                             lambda c, l, k: gets.append((l, k)) or "# T\n\n## X\n")
         monkeypatch.setattr(db_client, "put_overview_file", lambda *a: None)
+        monkeypatch.setattr(db_client, "patch_overview_meta", lambda *a: None)
         node = self._node(
             lectures=[("Lecture 1", True), ("Lecture 2", False)],
             recitations=[("Recitation 1", True)])

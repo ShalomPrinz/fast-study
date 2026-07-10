@@ -6,7 +6,9 @@ Pure work: parsing/formatting are standalone helpers (no run-level state, no not
 run_collect only fetches summaries and writes the result. The runner owns loop/status/isolation."""
 
 import re
+from datetime import datetime
 
+from course import ranges
 from services import db_client
 
 RLM = "‏"  # right-to-left mark
@@ -152,4 +154,11 @@ def run_collect(course: str, course_node: dict) -> dict:
     # Build topics.md and write it to the course overview
     md = build_topics_md(collected["lecture"], collected["recitation"])
     db_client.put_overview_file(course, "topics.md", md.encode("utf-8"))
+
+    # Snapshot the source range at generation time. Re-runs from a later phase don't change this metadata
+    db_client.patch_overview_meta(course, "topics", {
+        "lectures": ranges.name_range([n for n, _ in collected["lecture"]]),
+        "recitations": ranges.name_range([n for n, _ in collected["recitation"]]),
+        "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+    })
     return {"status": "done"}

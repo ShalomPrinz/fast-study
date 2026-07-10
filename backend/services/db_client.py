@@ -107,6 +107,28 @@ def list_overview_files(course: str) -> list[dict]:
     return r.json().get("files", [])
 
 
+def _overview_meta_url(course: str) -> str:
+    return f"{DATABASE_URL}/courses/{_q(course)}/overview/meta"
+
+
+def get_overview_meta(course: str) -> dict:
+    """Fetch the course's overview meta map (slug -> entry), unwrapping the {meta} envelope.
+    Returns {} when the course has no meta.json yet."""
+
+    r = requests.get(_overview_meta_url(course))
+    if not r.ok:
+        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    return r.json().get("meta", {})
+
+
+def patch_overview_meta(course: str, slug: str, entry: dict) -> None:
+    """Merge one slug's entry into the course's overview meta.json. The merge is server-side
+    (atomic across concurrent per-slug PATCHes from parallel overview runs of the same course)."""
+
+    r = requests.patch(_overview_meta_url(course), json={"slug": slug, "entry": entry})
+    _raise_for_envelope(r)
+
+
 def get_tree() -> list[dict]:
     """Fetch the full course tree (courses → lectures + recitations)."""
 

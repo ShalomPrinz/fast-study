@@ -2,7 +2,8 @@
 course/extract.py (moved out of overview.py, which is registry-only)."""
 
 from course.overview import PatternExtractor
-from course.extract import split_sentences, extract_snippets, build_report
+from course.extract import split_sentences, extract_snippets, build_report, run_extractor
+from services import db_client
 
 
 def _pattern_extractor(patterns, before=1, after=1, slug="test", title="Test"):
@@ -136,3 +137,46 @@ class TestBuildReport:
         snippet = "--- [patterns: במבחן] ---\nקטע."
         report = build_report(self.EXT, "קורס", [("Recitations/תרגול 3", [snippet])])
         assert "=== Recitations/תרגול 3 ===" in report
+
+
+class TestRunExtractorMeta:
+    """run_extractor patches overview meta only on a successful write ("done")."""
+
+    # A pattern that matches every source so build_report always yields a non-empty report.
+    EXT = _pattern_extractor(["x"], before=0, after=0, slug="exam-hints", title="Exam Hints")
+
+    def _mock(self, monkeypatch):
+        puts, patches = [], []
+        monkeypatch.setattr(db_client, "put_overview_file",
+                            lambda c, f, d: puts.append((f, d)))
+        monkeypatch.setattr(db_client, "patch_overview_meta",
+                            lambda c, s, e: patches.append((c, s, e)))
+        return puts, patches
+
+    def test_meta_written_on_done_with_split_ranges(self, monkeypatch):
+        _, patches = self._mock(monkeypatch)
+        sources = [("Lecture 2", "x."), ("Lecture 9", "x."),
+                   ("Recitations/Recitation 1", "x."), ("Recitations/Recitation 4", "x.")]
+        assert run_extractor("קורס", self.EXT, sources) == {"status": "done"}
+        assert len(patches) == 1
+        course, slug, entry = patches[0]
+        assert (course, slug) == ("קורס", "exam-hints")
+        assert entry["lectures"] == {"start": "2", "end": "9"}
+        # Recitation prefix stripped before extracting the number.
+        assert entry["recitations"] == {"start": "1", "end": "4"}
+        assert "generated_at" in entry
+
+    def test_recitations_null_when_absent(self, monkeypatch):
+        _, patches = self._mock(monkeypatch)
+        assert run_extractor("קורס", self.EXT, [("Lecture 5", "x.")]) == {"status": "done"}
+        entry = patches[0][2]
+        assert entry["lectures"] == {"start": "5", "end": "5"}
+        assert entry["recitations"] is None
+
+    def test_no_meta_on_skip(self, monkeypatch):
+        puts, patches = self._mock(monkeypatch)
+        # No sentence matches "x" -> empty report -> skipped, no write, no meta.
+        result = run_extractor("קורס", self.EXT, [("Lecture 1", "no match here.")])
+        assert result["status"] == "skipped"
+        assert puts == []
+        assert patches == []

@@ -82,7 +82,7 @@ def db(monkeypatch):
 
     Extract's writes feed analyze's reads via `overview_store`, so `get_overview_file`
     raises DbClientError exactly when extract wrote no {slug}.txt (skipped extractor)."""
-    calls = SimpleNamespace(puts=[], transcript_gets=[], notifies=0, overview_store={})
+    calls = SimpleNamespace(puts=[], transcript_gets=[], notifies=0, overview_store={}, meta_patches=[])
     monkeypatch.setattr(db_client, "get_tree", lambda: _tree())
 
     def get_file_bytes(course, lecture, kind, filename):
@@ -106,6 +106,9 @@ def db(monkeypatch):
     def notify():
         calls.notifies += 1
 
+    def patch_overview_meta(course, slug, entry):
+        calls.meta_patches.append((course, slug, entry))
+
     def get_summary(course, lecture, kind):
         calls.summary_gets.append((course, lecture, kind))
         return SUMMARY
@@ -117,6 +120,7 @@ def db(monkeypatch):
     monkeypatch.setattr(db_client, "get_overview_file", get_overview_file)
     monkeypatch.setattr(db_client, "list_overview_files", list_overview_files)
     monkeypatch.setattr(db_client, "notify", notify)
+    monkeypatch.setattr(db_client, "patch_overview_meta", patch_overview_meta)
     # Analyze is glue over Gemini — stub it so no network; per-slug prefix keeps asserts readable.
     monkeypatch.setattr(course_analyze, "analyze", lambda ext, report, course: f"ניתוח:{ext.slug}")
 
@@ -952,6 +956,7 @@ class TestPhaseWorkerSeam:
         puts = []
         monkeypatch.setattr(db_client, "put_overview_file",
                             lambda c, f, d: puts.append((c, f, d.decode("utf-8"))))
+        monkeypatch.setattr(db_client, "patch_overview_meta", lambda *a: None)
         result = course_extract.run_extractor(COURSE, self.EXAM, [("Lecture 1", TRANSCRIPT)])
         assert result == {"status": "done"}
         assert [f for _, f, _ in puts] == ["exam-hints.txt"]

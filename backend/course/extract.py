@@ -3,9 +3,13 @@ and assemble a per-extractor report. Also the phase worker the runner drives —
 run_extractor. Pure work: no run-level state, no notify; the runner owns loop/status/isolation."""
 
 import re
+from datetime import datetime
 
+from course import ranges
 from course.overview import Extractor
 from services import db_client
+
+_RECITATION_PREFIX = "Recitations/"
 
 
 # A sentence is either a run ending in ./?/! (terminator kept attached) or a
@@ -98,4 +102,13 @@ def run_extractor(course: str, extractor: Extractor, sources: list[tuple[str, st
     if not report:
         return {"status": "skipped", "message": "no snippets found"}
     db_client.put_overview_file(course, f"{extractor.slug}.txt", report.encode("utf-8"))
+
+    # Snapshot the source range at generation time. Re-runs from a later phase don't change this metadata
+    lec = [label for label, _ in sources if not label.startswith(_RECITATION_PREFIX)]
+    rec = [label[len(_RECITATION_PREFIX):] for label, _ in sources if label.startswith(_RECITATION_PREFIX)]
+    db_client.patch_overview_meta(course, extractor.slug, {
+        "lectures": ranges.name_range(lec),
+        "recitations": ranges.name_range(rec),
+        "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+    })
     return {"status": "done"}
