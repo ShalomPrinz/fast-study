@@ -20,6 +20,16 @@ test = [
     "pymupdf>=1.24",
 ]
 
+[tool.pytest.ini_options]
+# Tests are grouped into per-package subdirs (tests/course, tests/pipeline,
+# tests/services) that mirror the source layout, so two modules can share a
+# basename (pipeline/test_runner.py + course/test_runner.py). The default
+# "prepend" import mode errors on duplicate basenames and would also shadow the
+# real course/pipeline/services packages if the test dirs had __init__.py;
+# importlib keys modules by full path and needs no __init__.py, avoiding both.
+testpaths = ["tests"]
+addopts = "--import-mode=importlib"
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

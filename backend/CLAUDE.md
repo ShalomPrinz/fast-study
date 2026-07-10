@@ -42,19 +42,11 @@ backend/
     __init__.py          init_db, get_stats, _record, @timed_pipeline decorator
     timing.db            persistent store of (operation, file_size_bytes, duration_seconds)
     README.md
-  tests/
+  tests/              subdirs mirror the source packages; import-mode=importlib (pyproject) so pipeline/ + course/ can share a basename (test_runner.py) — no __init__.py
     conftest.py       adds pipeline/ and backend/ to sys.path so tests can import modules
-    test_to_pdf.py
-    test_transcribe.py
-    test_overview.py
-    test_ranges.py
-    test_extract.py
-    test_analyze.py
-    test_collect.py
-    test_course_runner.py
-    test_summarize.py
-    test_runner.py
-    test_upload_to_drive.py
+    course/           tests for course/ (test_analyze, test_collect, test_extract, test_overview, test_ranges, test_runner)
+    pipeline/         tests for pipeline/ (test_runner, test_summarize, test_transcribe, test_to_pdf, test_upload_to_drive)
+    services/         tests for services/ (test_llm_client)
   services/
     db_client.py      thin HTTP client for the database service (every read/write goes through here)
     google_auth.py    shared OAuth helper — loads credentials.json/token_drive.json, returns Credentials for a given scope set
@@ -139,7 +131,7 @@ CI runs exactly this on every push (any branch) — see `.github/workflows/ci.ym
 Whenever pipeline logic changes (anything under `pipeline/`, or any helper invoked by it), this is non-negotiable:
 
 1. **Run existing tests first** — `uv run pytest tests/ -q`. Green baseline confirms the change didn't break adjacent behavior. If a test fails, fix the code or update the test deliberately — never silently delete or skip it.
-2. **Add tests for the new logic** in the matching `tests/test_<module>.py`. Cover: the regression case (a test that fails without the fix), the happy path, and at least one edge case (empty input, escape/special chars, boundary between protected and unprotected regions). See `TestNormalizeMathSpans` and `TestForceLtrInlineCode` in `tests/test_to_pdf.py` for the shape.
+2. **Add tests for the new logic** in the matching `tests/{pipeline,course,services}/test_<module>.py` (mirrors the source package). Cover: the regression case (a test that fails without the fix), the happy path, and at least one edge case (empty input, escape/special chars, boundary between protected and unprotected regions). See `TestNormalizeMathSpans` and `TestForceLtrInlineCode` in `tests/pipeline/test_to_pdf.py` for the shape.
 3. **Re-run the full suite** after adding tests. The change isn't done until `uv run pytest tests/ -q` is green.
 
 This applies even to "small" or "obvious" changes — preprocessing helpers in `to_pdf.py` look trivial but interact with bidi/LaTeX in surprising ways, which is exactly why every helper there has a dedicated test class.
