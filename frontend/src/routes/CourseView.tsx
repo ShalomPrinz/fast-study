@@ -87,7 +87,7 @@ export default function CourseView() {
   function branchStatus(slug: string, phases: CoursePhase[]): BranchStatus {
     const st = status?.extractors[slug]
     return {
-      running: running && st?.status === 'running',
+      running: st?.status === 'running',
       done: files.some((f) => f.name === lastGeneratedFile(slug, phases)),
       error: st?.status === 'error' ? (st.message ?? 'failed') : null,
     }
@@ -174,13 +174,13 @@ export default function CourseView() {
                           className="file-rotate-btn"
                           title={`Re-generate ${title}`}
                           onClick={() => setRegenerateTarget({ slug, title, phases })}
-                          disabled={running}
+                          disabled={bs.running}
                         >↺</button>
                       ) : (
                         <button
                           className="file-action-btn"
                           onClick={() => handleGenerate([slug])}
-                          disabled={running}
+                          disabled={bs.running}
                         >
                           Generate
                         </button>
@@ -193,7 +193,8 @@ export default function CourseView() {
                       {steps.map((step, idx) => {
                         const fileName = `${slug}${step.suffix}`
                         const exists = files.some((f) => f.name === fileName)
-                        const stepRunning = bs.running && status?.phase === step.phase
+                        const st = status?.extractors[slug]
+                        const stepRunning = st?.status === 'running' && st?.phase === step.phase
                         const isPdf = step.phase === 'to_pdf'
                         const rebuilds = steps.slice(idx).map((s) => `${slug}${s.suffix}`)
                         return (
@@ -230,7 +231,7 @@ export default function CourseView() {
                                       className="file-rotate-btn"
                                       title={`Re-generate from ${step.label}`}
                                       onClick={() => setRegenerateStep({ slug, title, phase: step.phase, label: step.label, rebuilds })}
-                                      disabled={running}
+                                      disabled={bs.running}
                                     >↺</button>
                                   )}
                                 </span>

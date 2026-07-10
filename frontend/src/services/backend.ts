@@ -80,8 +80,6 @@ export async function runOverview(course: string, extractors?: string[], fromPha
 
 interface RawCourseStatus {
   running: boolean
-  phase: CoursePhase | null
-  started_at: string | null
   extractors?: Record<string, CourseExtractorState>
 }
 
@@ -89,8 +87,6 @@ export async function fetchCourseStatus(course: string): Promise<CourseStatus> {
   const raw = await backend.get<RawCourseStatus>(courseOverviewBase(course) + '/status')
   return {
     running: raw.running,
-    phase: raw.phase,
-    startedAt: raw.started_at,
     extractors: raw.extractors ?? {},
   }
 }

@@ -7,9 +7,14 @@ db_client and Gemini (`analyze.analyze`) are fully mocked — no network, no
 database service. The two route-only concerns (CSV parsing, course-not-found
 wiring) are covered via the pure `resolve_slugs` / `main._find_course`.
 
-`try_run_generate` runs SLUG-BY-SLUG under one per-course lock: each extractor runs its
-own phase chain (extract → analyze → to_pdf, or topics → to_pdf) to completion before the
-next extractor starts. The in-memory `db` fixture chains phases by returning from
+Locks are per-(course, slug): a run holds ONLY the current slug's lock, so a
+SEPARATE trigger can run a DIFFERENT slug of the same course in parallel, and a
+trigger reaching a slug whose lock is already held by another run SKIPS it
+(first-come keeps it). Status lives in the shared `_status` store (course →
+{slug → entry}); `get_status` aggregates it (`running` = any entry running).
+Within one run it is SLUG-BY-SLUG: each extractor runs its own phase chain
+(extract → analyze → to_pdf, or topics → to_pdf) to completion before the next
+starts. The in-memory `db` fixture chains phases by returning from
 `get_overview_file` whatever `put_overview_file` wrote, so a real extract→analyze→
 to_pdf handoff is exercised end to end. `convert_to_pdf` is stubbed (no pandoc)."""
 
@@ -54,13 +59,21 @@ def _course_node():
     return _tree()[0]
 
 
+def _course_node_for(name):
+    return {
+        "name": name,
+        "lectures": [{"name": "Lecture 1", "files": {"transcript.txt": {"exists": True}}}],
+        "recitations": [],
+    }
+
+
 @pytest.fixture(autouse=True)
 def reset_course_runner_state():
     course_runner._locks.clear()
-    course_runner._runs.clear()
+    course_runner._status.clear()
     yield
     course_runner._locks.clear()
-    course_runner._runs.clear()
+    course_runner._status.clear()
 
 
 @pytest.fixture
@@ -119,13 +132,24 @@ def db(monkeypatch):
 
 
 async def _wait_done(course=COURSE, timeout=5.0):
-    """Poll runner status on the running loop until the background run finishes."""
+    """Poll the shared store until every entry for `course` is in a terminal state (done/skipped/error).
+    `running` alone can't gate this (it starts false before the task runs); a fully-terminal store is
+    the reliable "run finished" signal."""
+    terminal = {"done", "skipped", "error"}
     for _ in range(int(timeout / 0.01)):
-        status = course_runner.get_status(course)
-        if status["phase"] is not None and not status["running"]:
-            return status
+        entries = course_runner.get_status(course)["extractors"]
+        if entries and all(e["status"] in terminal for e in entries.values()):
+            return course_runner.get_status(course)
         await asyncio.sleep(0.01)
     raise AssertionError("overview run did not finish in time")
+
+
+def _entry(course, slug):
+    return course_runner.get_status(course)["extractors"].get(slug, {})
+
+
+def _phase(course, slug):
+    return _entry(course, slug).get("phase")
 
 
 class TestGenerateAll:
@@ -138,12 +162,11 @@ class TestGenerateAll:
             return await _wait_done()
 
         status = asyncio.run(go())
-        # Final phase is to_pdf — the run ends there, not at extract/analyze/topics.
-        assert status["phase"] == "to_pdf"
-        assert status["started_at"] is not None
+        # Every slug ran through its last phase (to_pdf) — phase now lives per entry, not top-level.
+        assert _phase(COURSE, "topics") == "to_pdf"
         assert list(status["extractors"]) == [e.slug for e in ep.EXTRACTORS]
         # exam-hints matched → extract .txt → analyze .md → to_pdf .pdf, all done.
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         # No match → extract skipped, so nothing downstream to analyze/render → skipped throughout.
         assert status["extractors"]["student-qa"]["status"] == "skipped"
         assert status["extractors"]["pitfalls"]["status"] == "skipped"
@@ -191,7 +214,7 @@ class TestGenerateSubset:
 
         status = asyncio.run(go())
         assert list(status["extractors"]) == ["exam-hints"]
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         assert [f for _, f, _ in db.puts] == [
             "exam-hints.txt", "exam-hints.md", "exam-hints.pdf",
         ]
@@ -235,20 +258,22 @@ class TestPhaseTransitions:
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
             try:
-                # Blocked inside extract → phase is "extract" and running stays True.
-                st = course_runner.get_status(COURSE)
+                # Blocked inside extract → the slug's phase is "extract" and running stays True.
+                ext = {}
                 for _ in range(500):
                     st = course_runner.get_status(COURSE)
-                    if course_runner._locks[COURSE].locked() and st["phase"] == "extract":
+                    ext = st["extractors"].get("exam-hints", {})
+                    lock = course_runner._locks.get((COURSE, "exam-hints"))
+                    if lock and lock.locked() and ext.get("phase") == "extract":
                         break
                     await asyncio.sleep(0.01)
-                assert st["phase"] == "extract" and st["running"] is True
+                assert ext.get("phase") == "extract" and st["running"] is True
             finally:
                 release.set()
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["phase"] == "to_pdf"
+        assert status["extractors"]["exam-hints"]["phase"] == "to_pdf"
 
     def test_running_stays_true_through_analyze(self, db, monkeypatch):
         release = threading.Event()
@@ -263,15 +288,16 @@ class TestPhaseTransitions:
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
             try:
                 # No false "done" flicker between phases: while analyze blocks, the run is
-                # still marked running with phase "analyze" and the extractor "running".
+                # still running with the slug at phase "analyze" and the extractor "running".
                 st = course_runner.get_status(COURSE)
                 for _ in range(500):
                     st = course_runner.get_status(COURSE)
-                    if st["phase"] == "analyze" and st["extractors"]["exam-hints"]["status"] == "running":
+                    ext = st["extractors"].get("exam-hints", {})
+                    if ext.get("phase") == "analyze" and ext.get("status") == "running":
                         break
                     await asyncio.sleep(0.01)
                 assert st["running"] is True
-                assert st["phase"] == "analyze"
+                assert st["extractors"]["exam-hints"]["phase"] == "analyze"
                 assert st["extractors"]["exam-hints"]["status"] == "running"
             finally:
                 release.set()
@@ -294,7 +320,8 @@ class TestErrors:
         status = asyncio.run(go())
         # Extract wrote .txt; analyze blew up → the error survives to_pdf (which skips an
         # already-errored extractor) instead of being masked as a downstream "skipped".
-        assert status["extractors"]["exam-hints"] == {"status": "error", "message": "gemini exploded"}
+        assert status["extractors"]["exam-hints"] == {
+            "status": "error", "message": "gemini exploded", "phase": "analyze"}
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt"]
 
     def test_one_extractor_error_does_not_abort_others(self, db, monkeypatch):
@@ -326,8 +353,7 @@ class TestToPdfPhase:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["phase"] == "to_pdf"
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         # The pdf's input was the analyzed .md written a phase earlier (chained via overview_store).
         assert "exam-hints.pdf" in db.overview_store
         assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
@@ -340,7 +366,7 @@ class TestToPdfPhase:
 
         status = asyncio.run(go())
         assert status["extractors"]["student-qa"] == {
-            "status": "skipped", "message": "no analyzed markdown — run analyze first",
+            "status": "skipped", "message": "no analyzed markdown — run analyze first", "phase": "to_pdf",
         }
 
     def test_pdf_failure_marks_error(self, db, monkeypatch):
@@ -354,7 +380,8 @@ class TestToPdfPhase:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["extractors"]["exam-hints"] == {"status": "error", "message": "pandoc boom"}
+        assert status["extractors"]["exam-hints"] == {
+            "status": "error", "message": "pandoc boom", "phase": "to_pdf"}
         # analyze still wrote the .md; only the .pdf upload was skipped.
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md"]
 
@@ -377,7 +404,7 @@ class TestToPdfPhase:
 
         status = asyncio.run(go())
         assert status["extractors"]["exam-hints"]["status"] == "error"
-        assert status["extractors"]["pitfalls"] == {"status": "done"}
+        assert status["extractors"]["pitfalls"] == {"status": "done", "phase": "to_pdf"}
         # exam-hints failed to render → no pdf; pitfalls rendered → pdf uploaded.
         assert "exam-hints.pdf" not in db.overview_store
         assert db.overview_store["pitfalls.pdf"] == b"%PDF-1.4 stub"
@@ -385,7 +412,7 @@ class TestToPdfPhase:
 
 class TestFromPhase:
     """A run may START from a chosen phase and run through to_pdf, leaving earlier-phase
-    files untouched (kept, never re-run). from_phase seeds the run's initial phase."""
+    files untouched (kept, never re-run)."""
 
     def _seed(self, db, filename, data):
         """Pre-populate overview_store as if an earlier phase already produced its file."""
@@ -401,8 +428,7 @@ class TestFromPhase:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["phase"] == "to_pdf"
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         # Extract skipped → only analyze's .md and to_pdf's .pdf written; the seeded .txt is kept as-is.
         assert [f for _, f, _ in db.puts] == ["exam-hints.md", "exam-hints.pdf"]
         assert db.overview_store["exam-hints.txt"] == b"report"
@@ -418,42 +444,38 @@ class TestFromPhase:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["phase"] == "to_pdf"
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         # Only the .pdf is written; the seeded .txt and .md are kept untouched.
         assert [f for _, f, _ in db.puts] == ["exam-hints.pdf"]
         assert db.overview_store["exam-hints.txt"] == b"report"
         assert db.overview_store["exam-hints.md"] == b"# analyzed"
 
-    def test_from_analyze_seeds_initial_phase_analyze(self, db):
-        # try_run_generate installs status synchronously; the first poll must see phase "analyze".
+    def test_seeds_pending_synchronously(self, db):
+        # try_run_generate seeds status synchronously; the first poll must see the pending slug
+        # (a plain {"status": "pending"} — phase is now stamped only once the run reaches it).
         self._seed(db, "exam-hints.txt", b"report")
 
         async def go():
             course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "analyze")
-            # Status is seeded before the background task runs → phase is the start phase.
-            phase = course_runner.get_status(COURSE)["phase"]
+            seeded = dict(course_runner.get_status(COURSE)["extractors"]["exam-hints"])
             await _wait_done()
-            return phase
+            return seeded
 
-        assert asyncio.run(go()) == "analyze"
+        assert asyncio.run(go()) == {"status": "pending"}
 
     def test_bogus_from_phase_degrades_to_default_without_raising(self, db):
         # An invalid from_phase must not raise (would be an unhandled 500 in try_run_generate);
         # the runner defends its boundary and behaves as if starting from the default (extract).
         async def go():
-            # Synchronous OverviewRun._initial_status seeds the phase — bogus must not blow up here.
             result = course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "bogus")
-            seeded = course_runner.get_status(COURSE)["phase"]
+            seeded = dict(course_runner.get_status(COURSE)["extractors"]["exam-hints"])
             status = await _wait_done()
             return result, seeded, status
 
         result, seeded, status = asyncio.run(go())
         assert result == "started"
-        # Default start (extract) → exam-hints participates from extract, so extract is seeded, not "bogus".
-        assert seeded == "extract"
-        assert status["phase"] == "to_pdf"
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert seeded == {"status": "pending"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         # Started from the default → extract wrote .txt, analyze .md, to_pdf .pdf (all phases ran).
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md", "exam-hints.pdf"]
 
@@ -488,7 +510,8 @@ class TestSkipExisting:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["extractors"]["exam-hints"] == {"status": "skipped", "message": "already generated"}
+        assert status["extractors"]["exam-hints"] == {
+            "status": "skipped", "message": "already generated", "phase": "to_pdf"}
         assert db.puts == []  # nothing overwritten
         # Seeded files are byte-for-byte untouched.
         assert db.overview_store["exam-hints.txt"] == b"report"
@@ -506,7 +529,7 @@ class TestSkipExisting:
 
         status = asyncio.run(go())
         # Final status reflects the LAST phase (to_pdf ran) → done, not the earlier "kept" skip.
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         assert [f for _, f, _ in db.puts] == ["exam-hints.md", "exam-hints.pdf"]
         assert db.overview_store["exam-hints.txt"] == b"report"  # kept, not rewritten
 
@@ -518,7 +541,7 @@ class TestSkipExisting:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md", "exam-hints.pdf"]
 
     def test_skip_existing_false_still_overwrites_everything(self, db):
@@ -533,7 +556,7 @@ class TestSkipExisting:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md", "exam-hints.pdf"]
         # Every output was regenerated, not left as the seeded sentinel.
         assert db.overview_store["exam-hints.txt"] != b"OLD txt"
@@ -552,15 +575,19 @@ class TestSkipExisting:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["extractors"]["exam-hints"] == {"status": "done"}  # to_pdf ran, not skipped
+        assert status["extractors"]["exam-hints"] == {"status": "done", "phase": "to_pdf"}  # to_pdf ran
         assert [f for _, f, _ in db.puts] == ["exam-hints.pdf"]
         assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
         assert db.overview_store["exam-hints.txt"] == b"report"     # kept
         assert db.overview_store["exam-hints.md"] == b"# analyzed"  # kept
 
 
-class TestSharedLock:
-    def test_busy_while_running_and_status_not_clobbered(self, db, monkeypatch):
+class TestConcurrency:
+    """Locks are per-(course, slug): a run holds only the current slug's lock, so different slugs of
+    a course run in parallel, the same slug in different courses runs in parallel, and a run reaching
+    a slug whose lock is already held by ANOTHER run SKIPS it (first-come keeps it, no clobber)."""
+
+    def test_same_single_slug_is_busy_and_status_not_clobbered(self, db, monkeypatch):
         release = threading.Event()
 
         def blocking_get_file_bytes(course, lecture, kind, filename):
@@ -572,24 +599,160 @@ class TestSharedLock:
         async def go():
             assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "started"
             try:
-                for _ in range(500):  # wait until the run actually holds the course lock
-                    if course_runner._locks[COURSE].locked():
+                for _ in range(500):  # wait until the run holds the (course, slug) lock, in extract
+                    lock = course_runner._locks.get((COURSE, "exam-hints"))
+                    if lock and lock.locked() and _phase(COURSE, "exam-hints") == "extract":
                         break
                     await asyncio.sleep(0.01)
-                assert course_runner._locks[COURSE].locked()
+                assert course_runner._locks[(COURSE, "exam-hints")].locked()
 
-                # Same course while a run is in flight → busy.
+                # Same course + same (only) slug while it's in flight → every requested slug held → busy.
                 assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "busy"
 
-                # A busy trigger must not clobber the in-flight run's status.
-                status = course_runner.get_status(COURSE)
-                assert status["running"] is True and status["phase"] == "extract"
+                # A busy trigger must not clobber the in-flight run's entry.
+                st = course_runner.get_status(COURSE)
+                assert st["running"] is True
+                assert st["extractors"]["exam-hints"] == {"status": "running", "phase": "extract"}
             finally:
                 release.set()
             await _wait_done()
 
             # Lock released → a fresh generate starts normally on the same loop.
             assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "started"
+            await _wait_done()
+
+        asyncio.run(go())
+
+    def test_two_triggers_different_slugs_same_course_run_in_parallel(self, db, monkeypatch):
+        # Distinct (course, slug) locks ⇒ neither run is skipped; both hold their own lock at once.
+        release = threading.Event()
+
+        def blocking(*a):
+            release.wait(timeout=5)
+            return TRANSCRIPT.encode("utf-8")
+
+        monkeypatch.setattr(db_client, "get_file_bytes", blocking)
+
+        async def go():
+            assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "started"
+            assert course_runner.try_run_generate(COURSE, _course_node(), ["pitfalls"]) == "started"
+            try:
+                for _ in range(500):
+                    la = course_runner._locks.get((COURSE, "exam-hints"))
+                    lp = course_runner._locks.get((COURSE, "pitfalls"))
+                    exs = course_runner.get_status(COURSE)["extractors"]
+                    if (la and lp and la.locked() and lp.locked()
+                            and exs.get("exam-hints", {}).get("status") == "running"
+                            and exs.get("pitfalls", {}).get("status") == "running"):
+                        break
+                    await asyncio.sleep(0.01)
+                # Both slug locks held at the same instant → genuinely parallel, neither skipped.
+                assert la.locked() and lp.locked()
+                st = course_runner.get_status(COURSE)
+                assert st["running"] is True
+                assert st["extractors"]["exam-hints"]["status"] == "running"
+                assert st["extractors"]["pitfalls"]["status"] == "running"
+            finally:
+                release.set()
+            await _wait_done()
+
+        asyncio.run(go())
+
+    def test_collision_skip_does_not_overwrite_holder_entry(self, db, monkeypatch):
+        # Run1 holds exam-hints (blocked in analyze). Run2 = [exam-hints, pitfalls]: it must SKIP the
+        # held exam-hints (leaving Run1's entry intact) and still run its free slug pitfalls.
+        release = threading.Event()
+
+        def slow_analyze(ext, report, course):
+            release.wait(timeout=5)
+            return "ניתוח"
+
+        monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
+
+        async def go():
+            assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "started"
+            # Wait until Run1 holds exam-hints and is parked in analyze.
+            for _ in range(500):
+                lock = course_runner._locks.get((COURSE, "exam-hints"))
+                ext = _entry(COURSE, "exam-hints")
+                if lock and lock.locked() and ext.get("phase") == "analyze" and ext.get("status") == "running":
+                    break
+                await asyncio.sleep(0.01)
+            assert course_runner._locks[(COURSE, "exam-hints")].locked()
+            holder = dict(_entry(COURSE, "exam-hints"))
+            assert holder == {"status": "running", "phase": "analyze"}
+
+            # Run2 includes the held slug (skipped) + a free slug (runs) → started, not busy.
+            assert course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints", "pitfalls"]) == "started"
+            # Wait until Run2 finishes its free slug.
+            for _ in range(500):
+                if _entry(COURSE, "pitfalls").get("status") in ("done", "skipped", "error"):
+                    break
+                await asyncio.sleep(0.01)
+
+            # Run1 still blocked → its entry is byte-for-byte what it was; Run2 did NOT touch it.
+            assert _entry(COURSE, "exam-hints") == holder
+            release.set()
+            await _wait_done()
+            # Run1 finished exam-hints itself.
+            assert _entry(COURSE, "exam-hints")["status"] == "done"
+
+        asyncio.run(go())
+
+    def test_same_slug_different_courses_run_in_parallel(self, db, monkeypatch):
+        # (course, slug) keying ⇒ the same slug in two courses uses two locks ⇒ fully parallel.
+        COURSE2 = "אלגברה לינארית"
+        release = threading.Event()
+
+        def blocking(*a):
+            release.wait(timeout=5)
+            return TRANSCRIPT.encode("utf-8")
+
+        monkeypatch.setattr(db_client, "get_file_bytes", blocking)
+
+        async def go():
+            assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "started"
+            assert course_runner.try_run_generate(
+                COURSE2, _course_node_for(COURSE2), ["exam-hints"]) == "started"
+            try:
+                for _ in range(500):
+                    l1 = course_runner._locks.get((COURSE, "exam-hints"))
+                    l2 = course_runner._locks.get((COURSE2, "exam-hints"))
+                    if l1 and l2 and l1.locked() and l2.locked():
+                        break
+                    await asyncio.sleep(0.01)
+                assert l1.locked() and l2.locked()  # different keys → both live at once
+            finally:
+                release.set()
+            await _wait_done(COURSE)
+            await _wait_done(COURSE2)
+
+        asyncio.run(go())
+
+    def test_busy_only_when_every_requested_slug_in_flight(self, db, monkeypatch):
+        # "busy" ⇔ ALL requested slugs are currently in flight; a request that includes any free slug starts.
+        release = threading.Event()
+
+        def slow_analyze(ext, report, course):
+            release.wait(timeout=5)
+            return "ניתוח"
+
+        monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
+
+        async def go():
+            assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "started"
+            for _ in range(500):
+                lock = course_runner._locks.get((COURSE, "exam-hints"))
+                if lock and lock.locked():
+                    break
+                await asyncio.sleep(0.01)
+            # All requested slugs (just exam-hints) held → busy.
+            assert course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"]) == "busy"
+            # Includes a free slug (pitfalls) → started.
+            assert course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints", "pitfalls"]) == "started"
+            release.set()
             await _wait_done()
 
         asyncio.run(go())
@@ -670,10 +833,11 @@ class TestSlugBySlug:
 
         status = asyncio.run(go())
         # exam-hints errors at analyze → its to_pdf never runs, and the error survives to the end.
-        assert status["extractors"]["exam-hints"] == {"status": "error", "message": "boom"}
+        assert status["extractors"]["exam-hints"] == {
+            "status": "error", "message": "boom", "phase": "analyze"}
         assert "exam-hints.pdf" not in db.overview_store
         # pitfalls is unaffected — full chain through its .pdf.
-        assert status["extractors"]["pitfalls"] == {"status": "done"}
+        assert status["extractors"]["pitfalls"] == {"status": "done", "phase": "to_pdf"}
         assert db.overview_store["pitfalls.pdf"] == b"%PDF-1.4 stub"
         # exam-hints wrote only .txt (analyze failed before .md); pitfalls wrote all three.
         assert [f for _, f, _ in db.puts] == [
@@ -704,8 +868,7 @@ class TestPhaseFiltering:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["phase"] == "to_pdf"
-        assert status["extractors"]["topics"] == {"status": "done"}
+        assert status["extractors"]["topics"] == {"status": "done", "phase": "to_pdf"}
         # collect wrote topics.md, to_pdf rendered topics.pdf — nothing else.
         assert [f for _, f, _ in db.puts] == ["topics.md", "topics.pdf"]
         assert db.transcript_gets == []  # never touched a transcript
@@ -729,7 +892,7 @@ class TestPhaseFiltering:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert status["phase"] == "to_pdf"
+        assert _phase(COURSE, "pitfalls") == "to_pdf"
         assert "topics" not in status["extractors"]
 
     def test_error_isolation_holds_across_new_phase_list(self, db, monkeypatch):
@@ -746,18 +909,17 @@ class TestPhaseFiltering:
 
         status = asyncio.run(go())
         # exam-hints error survives to the end (not masked as a downstream skip).
-        assert status["extractors"]["exam-hints"] == {"status": "error", "message": "gemini boom"}
+        assert status["extractors"]["exam-hints"] == {
+            "status": "error", "message": "gemini boom", "phase": "analyze"}
         # topics is unaffected by the pattern extractor's failure.
-        assert status["extractors"]["topics"] == {"status": "done"}
+        assert status["extractors"]["topics"] == {"status": "done", "phase": "to_pdf"}
         assert "topics.pdf" in db.overview_store
         assert "exam-hints.pdf" not in db.overview_store
 
 
 class TestStatusAndListing:
     def test_never_run_course_shape(self):
-        assert course_runner.get_status("קורס-חדש") == {
-            "running": False, "phase": None, "started_at": None, "extractors": {},
-        }
+        assert course_runner.get_status("קורס-חדש") == {"running": False, "extractors": {}}
 
     def test_extractors_listing_in_declaration_order(self):
         listing = main.overview_extractors()["extractors"]
@@ -779,8 +941,8 @@ class TestStatusAndListing:
 
 class TestPhaseWorkerSeam:
     """The runner↔worker seam: each worker returns a "skipped"/"done" status dict (which the
-    runner folds in via entry_status.update) and RAISES on failure (so the runner marks "error").
-    Workers must not touch run-level state (`running`, notify) — only the runner owns that."""
+    runner folds in) and RAISES on failure (so the runner marks "error"). Workers must not touch
+    run-level state (notify) — only the runner owns that."""
 
     EXAM = ep.EXTRACTORS_BY_SLUG["exam-hints"]
 

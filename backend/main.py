@@ -100,7 +100,9 @@ async def overview_generate(course: str, extractors: str | None = Query(None),
                             from_phase: str = Query(course_runner.DEFAULT_FROM_PHASE),
                             skip_existing: bool = Query(False)):
     """Generate course overview for given extractors (comma-separated slugs), starting from `from_phase` through to_pdf.
-    `skip_existing=true` is a "continue": phase outputs already on disk at run start are kept, only missing ones generated."""
+    Runs slug-by-slug, each under its own (course, slug) lock, so a separate trigger for a different slug runs in
+    parallel; `busy` means every requested slug is already in flight. `skip_existing=true` is a "continue": phase
+    outputs already on disk at run start are kept, only missing ones generated."""
     if from_phase not in course_runner.PHASE_ORDER:
         return {"status": "error", "message": f"unknown phase: {from_phase}"}
     slugs, err = course_runner.resolve_slugs(extractors)
@@ -114,7 +116,9 @@ async def overview_generate(course: str, extractors: str | None = Query(None),
 
 @app.get("/courses/{course}/overview/status")
 def overview_status(course: str):
-    """Status of the latest overview run for a course (phase + per-extractor outcome)."""
+    """Overview status for a course, aggregated over the shared per-(course, slug) store:
+    `{"running": <any extractor running>, "extractors": {slug: {"status", "phase"?, "message"?}}}`.
+    `phase` now lives per-extractor (no top-level phase/started_at); never-run → `{running: false, extractors: {}}`."""
     return course_runner.get_status(course)
 
 

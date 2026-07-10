@@ -101,12 +101,11 @@ export interface OverviewExtractor {
 export interface CourseExtractorState {
   status: 'pending' | 'running' | 'done' | 'skipped' | 'error'
   message?: string
+  phase?: CoursePhase | null
 }
 
 export interface CourseStatus {
   running: boolean
-  phase: CoursePhase | null
-  startedAt: string | null
   extractors: Record<string, CourseExtractorState>
 }
 
