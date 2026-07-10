@@ -7,8 +7,9 @@ db_client and Gemini (`analyze.analyze`) are fully mocked — no network, no
 database service. The two route-only concerns (CSV parsing, course-not-found
 wiring) are covered via the pure `resolve_slugs` / `main._find_course`.
 
-`try_run_generate` runs all THREE phases (extract → analyze → to_pdf) sequentially
-under one per-course lock; the in-memory `db` fixture chains them by returning from
+`try_run_generate` runs SLUG-BY-SLUG under one per-course lock: each extractor runs its
+own phase chain (extract → analyze → to_pdf, or topics → to_pdf) to completion before the
+next extractor starts. The in-memory `db` fixture chains phases by returning from
 `get_overview_file` whatever `put_overview_file` wrote, so a real extract→analyze→
 to_pdf handoff is exercised end to end. `convert_to_pdf` is stubbed (no pandoc)."""
 
@@ -56,10 +57,10 @@ def _course_node():
 @pytest.fixture(autouse=True)
 def reset_course_runner_state():
     course_runner._locks.clear()
-    course_runner._status.clear()
+    course_runner._runs.clear()
     yield
     course_runner._locks.clear()
-    course_runner._status.clear()
+    course_runner._runs.clear()
 
 
 @pytest.fixture
@@ -165,20 +166,21 @@ class TestGenerateAll:
         # The PDF the to_pdf phase uploaded is exactly what convert_to_pdf produced from the .md.
         assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
 
-    def test_notify_fires_per_extractor_all_phases_plus_boundaries_and_end(self, db):
-        # All 4 extractors (3 pattern + topics). This tree has transcripts but no summaries, so:
-        #   extract  : 3 pattern extractors    → 3 (first active phase, no boundary ping)
-        #   analyze  : boundary + 3 pattern    → 4
-        #   topics   : boundary + 1 collect    → 2
-        #   to_pdf   : boundary + 4 extractors → 5
-        #   run end                            → 1
+    def test_notify_fires_per_slug_phase_plus_run_end(self, db):
+        # One ping per (slug, phase) work unit + one at run end (no separate phase-boundary pings).
+        # All 4 extractors (3 pattern + topics); tree has transcripts but no summaries, so:
+        #   exam-hints : extract done + analyze done + to_pdf done      → 3
+        #   student-qa : extract skip + analyze skip + to_pdf skip      → 3
+        #   pitfalls   : extract skip + analyze skip + to_pdf skip      → 3
+        #   topics     : topics skip + to_pdf skip                      → 2
+        #   run end                                                     → 1
         async def go():
             slugs, _ = course_runner.resolve_slugs(None)
             course_runner.try_run_generate(COURSE, _course_node(), slugs)
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 15
+        assert db.notifies == 12
 
 
 class TestGenerateSubset:
@@ -203,8 +205,8 @@ class TestGenerateSubset:
         # Extract finds nothing → skipped; analyze finds no .txt, to_pdf finds no .md → skipped throughout.
         assert status["extractors"]["student-qa"]["status"] == "skipped"
         assert db.puts == []
-        # 1 ping per phase (×3) + 2 boundaries + run end.
-        assert db.notifies == 6
+        # 1 ping per (slug, phase): extract + analyze + to_pdf = 3, plus run end = 4.
+        assert db.notifies == 4
 
     def test_unknown_extractor_is_error(self):
         # Route glue returns {"status": "error", "message": err} from this pair.
@@ -440,7 +442,7 @@ class TestFromPhase:
         # An invalid from_phase must not raise (would be an unhandled 500 in try_run_generate);
         # the runner defends its boundary and behaves as if starting from the default (extract).
         async def go():
-            # Synchronous _new_run seeds the initial phase — bogus must not blow up here.
+            # Synchronous OverviewRun._initial_status seeds the phase — bogus must not blow up here.
             result = course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "bogus")
             seeded = course_runner.get_status(COURSE)["phase"]
             status = await _wait_done()
@@ -593,6 +595,92 @@ class TestSharedLock:
         asyncio.run(go())
 
 
+class TestSlugBySlug:
+    """The run is slug-by-slug: each extractor finishes its whole chain (through its .pdf) before
+    the next begins, and the transcripts are fetched once and cached for the whole run."""
+
+    # Matches BOTH exam-hints ("במבחן") and pitfalls ("שימו לב"), so both run all three phases.
+    TWO_MATCH = "משפט פתיחה. זה יהיה במבחן בטוח. שימו לב לזה. משפט סיום."
+
+    def _seed(self, db, filename, data):
+        db.overview_store[filename] = data
+
+    def test_slug_a_full_chain_before_slug_b_extract(self, db, monkeypatch):
+        # Slug-by-slug ⇒ exam-hints writes .txt/.md/.pdf before pitfalls writes its first .txt
+        # (the old phase-by-phase order would interleave: all .txt, then all .md, then all .pdf).
+        monkeypatch.setattr(db_client, "get_file_bytes",
+                            lambda *a: self.TWO_MATCH.encode("utf-8"))
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints", "pitfalls"])
+            return await _wait_done()
+
+        asyncio.run(go())
+        assert [f for _, f, _ in db.puts] == [
+            "exam-hints.txt", "exam-hints.md", "exam-hints.pdf",
+            "pitfalls.txt", "pitfalls.md", "pitfalls.pdf",
+        ]
+
+    def test_fetch_sources_called_once_across_multi_extractor_run(self, db, monkeypatch):
+        # Both slugs enter extract, but the transcripts must be fetched exactly once and cached —
+        # NOT once per slug (that would re-read every transcript in the course N times).
+        calls = []
+
+        def counting_fetch(course, course_node):
+            calls.append(course)
+            return [("Lecture 1", self.TWO_MATCH)]
+
+        monkeypatch.setattr(course_extract, "fetch_sources", counting_fetch)
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints", "pitfalls"])
+            return await _wait_done()
+
+        asyncio.run(go())
+        assert len(calls) == 1
+
+    def test_fetch_sources_not_called_when_no_slug_reaches_extract(self, db, monkeypatch):
+        # from_phase past extract ⇒ no slug enters the extract phase ⇒ transcripts never fetched.
+        self._seed(db, "exam-hints.txt", b"report")
+        calls = []
+        monkeypatch.setattr(course_extract, "fetch_sources", lambda *a: calls.append(1) or [])
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"], "analyze")
+            return await _wait_done()
+
+        asyncio.run(go())
+        assert calls == []
+
+    def test_errored_slug_skips_its_to_pdf_next_slug_runs_fully(self, db, monkeypatch):
+        # exam-hints errors at analyze; slug-by-slug isolation ⇒ pitfalls still runs its whole chain.
+        monkeypatch.setattr(db_client, "get_file_bytes",
+                            lambda *a: self.TWO_MATCH.encode("utf-8"))
+
+        def selective(ext, report, course):
+            if ext.slug == "exam-hints":
+                raise RuntimeError("boom")
+            return "ניתוח"
+
+        monkeypatch.setattr(course_analyze, "analyze", selective)
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints", "pitfalls"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        # exam-hints errors at analyze → its to_pdf never runs, and the error survives to the end.
+        assert status["extractors"]["exam-hints"] == {"status": "error", "message": "boom"}
+        assert "exam-hints.pdf" not in db.overview_store
+        # pitfalls is unaffected — full chain through its .pdf.
+        assert status["extractors"]["pitfalls"] == {"status": "done"}
+        assert db.overview_store["pitfalls.pdf"] == b"%PDF-1.4 stub"
+        # exam-hints wrote only .txt (analyze failed before .md); pitfalls wrote all three.
+        assert [f for _, f, _ in db.puts] == [
+            "exam-hints.txt", "pitfalls.txt", "pitfalls.md", "pitfalls.pdf",
+        ]
+
+
 class TestPhaseFiltering:
     """The immediate `topics` extractor declares only ("topics", "to_pdf"); the three pattern
     extractors declare ("extract", "analyze", "to_pdf"). A phase runs only its participants,
@@ -623,14 +711,14 @@ class TestPhaseFiltering:
         assert db.transcript_gets == []  # never touched a transcript
 
     def test_topics_only_notify_cadence_skips_empty_phases(self, db):
-        # No pings for the empty extract/analyze phases:
-        #   topics ×1 (first active, no boundary) + boundary+to_pdf ×1 (=2) + run end = 4.
+        # topics never enters extract/analyze, so its only work units are its own phases:
+        #   topics done + to_pdf done = 2, plus run end = 3.
         async def go():
             course_runner.try_run_generate(COURSE, self._node_with_summary(), ["topics"])
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 4
+        assert db.notifies == 3
 
     def test_pattern_only_run_never_enters_topics(self, db, monkeypatch):
         monkeypatch.setattr(course_collect, "run_collect",
