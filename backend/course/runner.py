@@ -22,6 +22,7 @@ finishes so `get_status` reads it)."""
 import asyncio
 
 from course import analyze, collect, extract, overview, to_pdf
+from course.overview import Phase
 from services import db_client
 
 # Per-(course, slug); created lazily via setdefault, persists across runs so same-slug triggers serialize.
@@ -54,18 +55,18 @@ def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
     return slugs, None
 
 
-def resolve_from_phase(from_phase: str | None) -> tuple[overview.Phase | None, str | None]:
+def resolve_from_phase(from_phase: str | None) -> tuple[Phase | None, str | None]:
     """Parse the optional from_phase id into a Phase (None = full chain / not provided)."""
     if from_phase is None:
         return None, None
-    phase = overview.Phase.from_id(from_phase)
+    phase = Phase.from_id(from_phase)
     if phase is None:
         return None, f"unknown phase: {from_phase}"
     return phase, None
 
 
 def try_run_generate(course: str, course_node: dict, slugs: list[str],
-                     from_phase: "overview.Phase | None" = None, skip_existing: bool = False) -> str:
+                     from_phase: "Phase | None" = None, skip_existing: bool = False) -> str:
     """Schedule an overview run over `slugs` (slug-by-slug, each under its own (course, slug) lock).
     Seeds pending status synchronously so the first poll sees the run — but only for slugs NOT already
     in flight under another run (never clobber a live entry). Returns "busy" iff EVERY requested slug's
@@ -94,7 +95,7 @@ class OverviewRun:
     through to_pdf under its own lock before the next starts."""
 
     def __init__(self, course: str, course_node: dict, slugs: list[str],
-                 from_phase: "overview.Phase | None", skip_existing: bool):
+                 from_phase: "Phase | None", skip_existing: bool):
         self.course = course
         self.course_node = course_node
         self.slugs = slugs
@@ -148,7 +149,7 @@ class OverviewRun:
         """The shared status entry for this run's slug (created on demand under the store's course dict)."""
         return _status.setdefault(self.course, {}).setdefault(slug, {})
 
-    def _set_phase(self, slug: str, phase: overview.Phase) -> None:
+    def _set_phase(self, slug: str, phase: Phase) -> None:
         """Mark the slug's current phase in the shared store (creates the entry if needed).
         Stores the STRING `phase.id` — a Phase object must never reach the JSON-serialized store."""
         self._entry(slug)["phase"] = phase.id
@@ -157,7 +158,7 @@ class OverviewRun:
         """A kept (already-on-disk) participant: non-error status; keeps the phase _set_phase stamped."""
         self._entry(slug).update({"status": "skipped", "message": "already generated"})
 
-    def _run_slug_phase(self, slug: str, phase: overview.Phase) -> bool:
+    def _run_slug_phase(self, slug: str, phase: Phase) -> bool:
         """Run one extractor's single phase in a worker thread: mark running, run its worker, fold the
         result dict into the shared entry, notify. Returns True if it raised (caller stops the chain).
         Keeps `phase` on the entry across the running→result transition so the UI's per-step spinner
@@ -175,18 +176,18 @@ class OverviewRun:
             db_client.notify()
         return errored
 
-    def _phase_worker(self, slug: str, phase: overview.Phase) -> dict:
+    def _phase_worker(self, slug: str, phase: Phase) -> dict:
         """Dispatch one (slug, phase) to its worker; each returns a "done"/"skipped" status dict.
         The phase list comes from each `Extractor.phases`; dispatch stays here (importing the worker
         modules that import `overview` back would be a cycle)."""
         extractor = overview.EXTRACTORS_BY_SLUG[slug]
-        if phase is overview.Phase.EXTRACT:
+        if phase is Phase.EXTRACT:
             return extract.run_extractor(self.course, extractor, self.sources)
-        if phase is overview.Phase.ANALYZE:
+        if phase is Phase.ANALYZE:
             return analyze.run_analyze(self.course, extractor)
-        if phase is overview.Phase.TOPICS:
+        if phase is Phase.TOPICS:
             # topics ignores the slug: it distills every lecture/recitation summary into topics.md.
             return collect.run_collect(self.course, self.course_node)
-        if phase is overview.Phase.TO_PDF:
+        if phase is Phase.TO_PDF:
             return to_pdf.run_to_pdf(self.course, slug)
         raise ValueError(f"unknown phase: {phase}")
