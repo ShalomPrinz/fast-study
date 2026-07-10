@@ -34,7 +34,7 @@ frontend/
     services/
       http.ts                  typed fetch client + shared `httpError`
       backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus, overview: fetchOverviewExtractors, runOverview, fetchCourseStatus)
-      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file)
+      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file, fetchCourseMeta for the per-slug overview meta/ranges)
       events.ts         singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
       toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
     constants/
@@ -43,7 +43,7 @@ frontend/
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
       CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
-    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, …
+    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, OverviewMeta ({slug → {lectures/recitations: {start,end}|null, generatedAt}}), …
     App.tsx                  React Router routes; renders Layout + the three views
     main.tsx                 React entry point
     index.css                Single flat stylesheet, CSS variables for theming
@@ -53,7 +53,8 @@ frontend/
       namingSuggestion.ts
       url.ts                   all URL/path string building: path`` encode-by-default tagged template, kindQuery() query suffix, lectureRoute() browser route, lectureBase() API path, courseRoute() browser route + courseOverviewBase() API path + extractorsQuery() CSV suffix + overviewGenerateQuery() (extractors CSV + optional from_phase + optional skip_existing) for the course overview feature
       courseTree.ts            findLecture(courses, course, lecture, kind)
-      format.ts                formatDuration(seconds) — human-readable duration string
+      overview.ts              formatRange(entry) — "Lectures 2-9, Recitations 1-4" / "No Lectures"/"No Recitations" from an OverviewMeta entry
+      format.ts                formatDuration(seconds) + formatMonthDate(iso) ("10th July") / formatFullTimestamp(iso) ("Friday, 10 July 2026, 14:32") for overview meta subtitle
       lectureSort.ts           sortLectures(items) — natural-order sort of lectures/recitations by name
     hooks/
       useInlineEdit.ts         generic inline-input editing
@@ -162,7 +163,7 @@ Exposes `runStep`, `runPipeline`, `fetchTimingStats`, `runAll`, `fetchRunnerStat
 
 ### `database.ts` — Database service client → `${VITE_DATABASE_URL}`
 
-Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, `fetchCourseFiles(course)` for the course-level `overview/` area plus `overviewFileUrl(course, file)` (used only to open an extractor's generated PDF in a new tab — no broader file-browser UI), and the `databaseUrl` export used to build the SSE EventSource URL in `CourseTreeContext` and `RunnerStatusContext`.
+Everything filesystem-backed: tree CRUD, course/lecture CRUD, summary read/save/revert, `uploadVideo`, `fileUrl`, `fetchCourseFiles(course)` for the course-level `overview/` area plus `overviewFileUrl(course, file)` (used only to open an extractor's generated PDF in a new tab — no broader file-browser UI), `fetchCourseMeta(course)` (GET `overview/meta`, unwraps `{ meta }` and normalizes each slug's `generated_at` → `generatedAt`; `lectures`/`recitations` stay `{start,end}|null`) driving the slug-row subtitle, and the `databaseUrl` export used to build the SSE EventSource URL in `CourseTreeContext` and `RunnerStatusContext`.
 
 ### `toaster.ts` — the only `react-toastify` import site
 

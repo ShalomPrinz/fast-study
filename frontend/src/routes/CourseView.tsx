@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import type { OverviewExtractor, CourseFile, CourseStatus, CoursePhase } from '@/types'
+import type { OverviewExtractor, CourseFile, CourseStatus, CoursePhase, OverviewMeta } from '@/types'
 import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
-import { fetchCourseFiles, overviewFileUrl } from '@/services/database'
+import { fetchCourseFiles, fetchCourseMeta, overviewFileUrl } from '@/services/database'
+import { formatMonthDate, formatFullTimestamp } from '@/utils/format'
+import { formatRange } from '@/utils/overview'
 import { useNotify } from '@/hooks/useNotify'
 import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
@@ -29,11 +31,13 @@ export default function CourseView() {
   const { course = '' } = useParams()
   const [extractors, setExtractors] = useState<OverviewExtractor[] | null>(null)
   const [files, setFiles] = useState<CourseFile[]>([])
+  const [meta, setMeta] = useState<OverviewMeta>({})
   const [status, setStatus] = useState<CourseStatus | null>(null)
   const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string; phases: CoursePhase[] } | null>(null)
   const [regenerateStep, setRegenerateStep] = useState<{ slug: string; title: string; phase: CoursePhase; label: string; rebuilds: string[] } | null>(null)
   const expanded = useToggleSet(extractors?.map((e) => e.slug) ?? [])
   const latestFiles = useLatestRequest()
+  const latestMeta = useLatestRequest()
   const latestStatus = useLatestRequest()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
 
@@ -45,11 +49,13 @@ export default function CourseView() {
 
   async function refresh() {
     try {
-      const [f, s] = await Promise.all([
+      const [f, m, s] = await Promise.all([
         latestFiles(fetchCourseFiles(course)),
+        latestMeta(fetchCourseMeta(course)),
         latestStatus(fetchCourseStatus(course)),
       ])
       if (f) setFiles(f)
+      if (m) setMeta(m)
       if (s) setStatus(s)
     } catch {
       // connection errors are toasted centrally; SSE fires again on the next transition
@@ -58,6 +64,7 @@ export default function CourseView() {
 
   useEffect(() => {
     setFiles([])
+    setMeta({})
     setStatus(null)
     refresh()
   }, [course])
@@ -144,6 +151,7 @@ export default function CourseView() {
             {extractors.map(({ slug, title, phases }) => {
               const bs = branchStatus(slug, phases)
               const steps = stepsFor(phases)
+              const entry = meta[slug]
               return (
                 <div
                   key={slug}
@@ -156,7 +164,15 @@ export default function CourseView() {
                       aria-expanded={expanded.has(slug)}
                     >
                       <span className="course-branch-caret">{expanded.has(slug) ? '▾' : '▸'}</span>
-                      <span className="course-branch-name">{title}</span>
+                      <span className="course-branch-heading">
+                        <span className="course-branch-name">{title}</span>
+                        {entry && (
+                          <span className="course-branch-subtitle">
+                            {formatRange(entry)} ·{' '}
+                            <span title={formatFullTimestamp(entry.generatedAt)}>{formatMonthDate(entry.generatedAt)}</span>
+                          </span>
+                        )}
+                      </span>
                     </button>
                     <span className="course-branch-actions">
                       <BranchIndicator status={bs} />

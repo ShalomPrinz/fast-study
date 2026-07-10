@@ -1,4 +1,4 @@
-import type { FileName, Course, Kind, CourseFile } from '@/types'
+import type { FileName, Course, Kind, CourseFile, OverviewMetaRaw, OverviewMeta } from '@/types'
 import { path, kindQuery, lectureBase, courseOverviewBase } from '@/utils/url'
 import { createClient } from './http'
 
@@ -71,6 +71,15 @@ export async function revertSummary(course: string, lecture: string, kind?: Kind
 export async function fetchCourseFiles(course: string): Promise<CourseFile[]> {
   const raw = await database.get<{ files: CourseFile[] }>(courseOverviewBase(course) + '/files')
   return raw.files
+}
+
+export async function fetchCourseMeta(course: string): Promise<OverviewMeta> {
+  const raw = await database.get<{ meta: OverviewMetaRaw }>(courseOverviewBase(course) + '/meta')
+  const meta: OverviewMeta = {}
+  for (const [slug, entry] of Object.entries(raw.meta)) {
+    meta[slug] = { lectures: entry.lectures, recitations: entry.recitations, generatedAt: entry.generated_at }
+  }
+  return meta
 }
 
 export function overviewFileUrl(course: string, file: string): string {

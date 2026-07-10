@@ -115,3 +115,15 @@ export interface CourseFile {
   mtime: number
 }
 
+export type OverviewRange = { start: string; end: string } | null
+
+export type OverviewMetaRaw = Record<
+  string, /* slug */
+  { lectures: OverviewRange; recitations: OverviewRange; generated_at: string }
+>
+
+export type OverviewMeta = Record<
+  string /* slug */,
+  { lectures: OverviewRange; recitations: OverviewRange; generatedAt: string }
+>
+
