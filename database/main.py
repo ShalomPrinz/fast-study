@@ -241,6 +241,30 @@ def list_overview_files(course: str):
         return _ok(str(e), 400)
 
 
+@app.get("/courses/{course}/overview/meta")
+def get_overview_meta(course: str):
+    """Return the per-extractor course overview meta map."""
+
+    try:
+        return {"meta": overview.read_overview_meta(course)}
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
+@app.patch("/courses/{course}/overview/meta")
+async def patch_overview_meta(course: str, request: Request):
+    """Merge one extractor's entry into a course's overview meta.json (body: {slug, entry})."""
+
+    try:
+        body = await request.json()
+        overview.merge_overview_meta(course, body["slug"], body["entry"])
+        return _ok()
+    except FileNotFoundError as e:
+        return _ok(str(e), 404)
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
 @app.get("/courses/{course}/overview/files/{name}")
 def get_overview_file(course: str, name: str):
     """Stream a single course-level overview file (PDFs get the right media type for inline viewing)."""
