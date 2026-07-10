@@ -39,6 +39,8 @@ These requirements are mandatory and must be followed without exception:
 
 ### Math
 - If mathematical formulas appear, write them in LaTeX syntax: `$...$` for inline formulas (e.g. `$E = mc^2$`) and `$$...$$` for a separate centered formula. These will render correctly in the PDF output.
+- Math `$...$` is **only** for actual formulas/expressions. Function names, system calls, and identifiers (e.g. `_exit`, `_Exit`, `malloc`, `O_RDONLY`, `x86_64`) are **code**, not math — wrap them using the "Code blocks" section rules, never with `$...$`.
+- Note: inside math, a leading underscore is the subscript operator, so `$_exit$` would render as a subscript "e" followed by "xit".
 
 ### Code blocks
 - Inside fenced code blocks (` ``` `), write **English only** — code *and* comments. This applies even when the lecture used Hebrew: translate any in-code comment to English.

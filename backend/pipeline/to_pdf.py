@@ -55,8 +55,9 @@ _LATEX_SPECIAL = {
 # the é in the RTL run so it rendered as "éScheff".
 _LATIN = r'A-Za-zÀ-ÖØ-öø-ɏ'
 _HEBREW = '֐-׿'
-# A "Latin token" for bidi-wrapping: starts with an optional digit-hyphen
-# prefix (3-way) and/or a leading slash (/index.html), then a letter, then any
+# A "Latin token" for bidi-wrapping: starts with an optional numeric prefix
+# (digits, optionally then a hyphen) that is GLUED to the following letter
+# (3-way, 4KB, 64GB) and/or a leading slash (/index.html), then a letter, then any
 # mix of letters/digits/underscore plus separators (dot/hyphen/slash and the
 # apostrophes '/’) that are FOLLOWED by more letters/digits (HTTP/1.1, Node.js,
 # /api/v2, NP-hard, Tukey’s). The lookahead excludes a TRAILING separator so it
@@ -70,8 +71,15 @@ _HEBREW = '֐-׿'
 # preceded by a space or line start, so it is still glued.
 # Before: גרעינים/kernels -> ...\LR{/kernels} -> slash after the word
 # After:  גרעינים/kernels -> .../\LR{kernels} -> slash between the words
+# The numeric prefix's hyphen is OPTIONAL so a number glued directly to a Latin
+# token stays in the LTR run; otherwise the token starts at the letter, leaving
+# the neutral number to reorder after it under RTL ("4KB" -> "KB4"). A number
+# with a SPACE before the letter ("4 שקלים") is not glued — the prefix must be
+# immediately followed by the letter.
+# Before: 4KB  -> 4\LR{KB} -> "KB4"
+# After:  4KB  -> \LR{4KB} -> "4KB"
 _WORD = (
-    r'(?:[0-9]+\-)?(?:(?<![' + _HEBREW + r'])/)?[' + _LATIN + r']'
+    r'(?:[0-9]+-?)?(?:(?<![' + _HEBREW + r'])/)?[' + _LATIN + r']'
     r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r'0-9]))*'
 )
 # A number token (1.0, 3.14, 2,5) joins an English phrase as a CONTINUATION
@@ -79,14 +87,15 @@ _WORD = (
 # "1.0" stays a neutral and RTL bidi reorders it to "1.0 Software"), while a
 # Hebrew-adjacent number ("5 שקלים") is left untouched in the RTL run.
 _NUM = r'[0-9]+(?:[.,][0-9]+)*'
-# Separator between Latin tokens kept INSIDE one \LR run: a plain space, or an
-# abbreviation period+space ("SMP vs. AMP", "i.e. foo"). The period is glue only
-# when another Latin token follows (the (?:_SEP _ITEM)* loop demands it) — a
-# sentence-final period (end of line / before Hebrew) is left for the trailing
-# \RL{} group so it stays RTL.
-# Before: SMP vs. AMP  -> \LR{SMP vs}\RL{.} \LR{AMP}  -> ". SMP vs AMP" (reordered)
-# After:  SMP vs. AMP  -> \LR{SMP vs. AMP}             -> "SMP vs. AMP"
-_SEP = r'(?:[ \t]+|\.[ \t]+)'
+# Separator between Latin tokens kept INSIDE one \LR run: a plain space, an
+# abbreviation period+space ("SMP vs. AMP", "i.e. foo"), a spaced hyphen
+# (" - ", as in "FIFO - First-In"), or a comma+space (", ", as in
+# "First-In, First-Out"). Each is glue ONLY when another Latin token follows
+# (the (?:_SEP _CONT)* loop demands it) — a sentence-final period/comma or a
+# dash before Hebrew is left for the trailing \RL{} group so it stays RTL.
+# Before: (FIFO - First-In, First-Out) -> \LR{FIFO} - \LR{First-In}\RL{,} \LR{First-Out} -> "(First-Out, First-In - FIFO)"
+# After:  (FIFO - First-In, First-Out) -> \LR{(FIFO - First-In, First-Out)}               -> "(FIFO - First-In, First-Out)"
+_SEP = r'(?:[ \t]+-[ \t]+|,[ \t]+|[ \t]+|\.[ \t]+)'
 # A balanced parenthesized acronym/group attached to the phrase. Wrapping the
 # WHOLE group — parens included — in \LR stops the neutral ( ) from reordering
 # under RTL bidi. Requiring a matching ) means a lone ) on the Hebrew side is
@@ -165,6 +174,25 @@ def unwrap_math_code(text: str) -> str:
     # Before: `$RDI \leftarrow RSI$`  -> "$RDI \leftarrow RSI$" (literal)
     # After:  `$RDI \leftarrow RSI$`  -> RDI ← RSI (rendered math)
     return MATH_IN_CODE_RE.sub(lambda m: m.group(1), text)
+
+
+# An inline $...$ whose WHOLE body is an underscore-led identifier (_ + letter +
+# 1+ more ident chars): a C syscall / name like _exit, _Exit. The lookarounds
+# exclude $$-display delimiters. The body shape excludes real math — $x_i$
+# (no leading _), $_2F_1$ (digit after _), $a_{ij}$ (has a brace).
+_MATH_IDENTIFIER_RE = re.compile(
+    r'(?<!\$)\$\s*(_[A-Za-z][A-Za-z0-9_]+)\s*\$(?!\$)'
+)
+
+
+def demote_math_identifier(text: str) -> str:
+    # An underscore-led identifier in math $...$ makes the leading _ a subscript
+    # operator, so "_exit" renders as a subscript "e" + "xit". These are CODE,
+    # not math — rewrite the span as a backtick code span so it flows through the
+    # working inline-code path (force_ltr_inline_code -> \LR{\texttt{\_exit}}).
+    # Before: $_exit$  -> subscript "e" then "xit"
+    # After:  `_exit`  -> "_exit"
+    return _MATH_IDENTIFIER_RE.sub(lambda m: '`' + m.group(1) + '`', text)
 
 
 _TEXT_WRAPPED_MACRO_RE = re.compile(r'\\text\s*\{\s*(\\[A-Za-z]+)\s*\}')
@@ -308,14 +336,26 @@ def _latex_escape(s: str) -> str:
     return s.replace('\x00', r'\textbackslash{}')
 
 
+_LRM = '‎'  # LEFT-TO-RIGHT MARK — a zero-width strong-LTR anchor
+_CODE_NUM_COMMA_RE = re.compile(r',(?=\s*[0-9])')
+
+
 def force_ltr_inline_code(text: str) -> str:
     # RTL paragraph + plain \texttt{} = bidi reverses multi-word code spans.
     # No wrap: `void execute`         -> rendered as "execute void"
     # Wrap:    \LR{\texttt{void execute}} -> rendered as "void execute"
-    return INLINE_CODE_RE.sub(
-        lambda m: r'\LR{\texttt{' + _latex_escape(m.group(1)) + '}}',
-        text,
-    )
+    #
+    # A comma-separated NUMBER list still misorders inside \LR{\texttt{}}: digits
+    # are bidi "European Numbers" (weak) and a comma between them is a neutral
+    # separator that \LR alone doesn't anchor, so each comma jumps ahead of its
+    # number. An LRM after a comma that precedes a digit pins it LTR. (Letters are
+    # strong L and never need this — only number lists break.)
+    # Before: \LR{\texttt{98, 183, 37}}  -> ",98 ,183 37"
+    # After:  \LR{\texttt{98,‎ 183,‎ 37}} -> "98, 183, 37"
+    def repl(m: re.Match) -> str:
+        body = _CODE_NUM_COMMA_RE.sub(',' + _LRM, _latex_escape(m.group(1)))
+        return r'\LR{\texttt{' + body + '}}'
+    return INLINE_CODE_RE.sub(repl, text)
 
 
 def apply_outside_fences(text: str, transform):
@@ -374,6 +414,7 @@ def convert_to_pdf(md_path: str) -> str:
     def preprocess(t: str) -> str:
         t = normalize_dashes(t)
         t = unwrap_math_code(t)
+        t = demote_math_identifier(t)
         t = unwrap_math_text_macros(t)
         t = normalize_math_text_spaces(t)
         t = wrap_math_text_ltr(t)

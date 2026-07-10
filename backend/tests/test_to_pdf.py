@@ -20,7 +20,10 @@ from to_pdf import (
     normalize_math_text_spaces,
     wrap_math_text_ltr,
     merge_ltr_math,
+    demote_math_identifier,
 )
+
+LRM = "‎"
 
 
 # ---------------------------------------------------------------------------
@@ -363,6 +366,48 @@ class TestWrapEnglishPhrases:
         assert r"\LR{Pull Request}" in result
         assert r"\LR{Pull Request)}" not in result
 
+    # --- Spaced hyphen / comma glue Latin tokens into one run ---
+
+    def test_spaced_hyphen_and_comma_glue_parenthetical(self):
+        # Regression: "(FIFO - First-In, First-Out)" split into three \LR runs;
+        # the neutral parens/dash/comma reordered to "(First-Out, First-In - FIFO)".
+        result = wrap_english_phrases('עקרון (FIFO - First-In, First-Out) כאן')
+        assert r"\LR{(FIFO - First-In, First-Out)}" in result
+
+    def test_comma_space_glues_bare_latin_tokens(self):
+        result = wrap_english_phrases("המונח First-In, First-Out שם")
+        assert r"\LR{First-In, First-Out}" in result
+
+    def test_spaced_hyphen_before_hebrew_not_glued(self):
+        # A spaced hyphen leading into Hebrew must NOT pull the dash into the run.
+        result = wrap_english_phrases("ראה Foo - עברית")
+        assert r"\LR{Foo}" in result
+        assert r"\LR{Foo -" not in result
+
+    def test_comma_before_hebrew_stays_rl(self):
+        # A comma followed by Hebrew (not another Latin token) stays RTL.
+        result = wrap_english_phrases("ראה Foo, עברית")
+        assert r"\LR{Foo}" in result
+        assert r"\RL{,}" in result
+
+    # --- Number glued directly to a Latin unit (4KB) ---
+
+    def test_number_glued_to_unit_wrapped(self):
+        # Regression: "4KB" -> 4\LR{KB} left the neutral 4 to reorder -> "KB4".
+        result = wrap_english_phrases("בין 4KB ל-64KB כאן")
+        assert r"\LR{4KB}" in result
+        assert r"\LR{64KB}" in result
+
+    def test_spaced_number_before_hebrew_not_glued(self):
+        # A number with a SPACE before the word stays RTL (not glued to a unit).
+        result = wrap_english_phrases("עולה 4 שקלים")
+        assert r"\LR" not in result
+
+    def test_digit_hyphen_prefix_still_glued_after_change(self):
+        # The optional-hyphen numeric prefix must still handle "3-way".
+        result = wrap_english_phrases("מיזוג 3-way merge")
+        assert r"\LR{3-way merge}" in result
+
 
 # ---------------------------------------------------------------------------
 # unwrap_math_code
@@ -419,6 +464,53 @@ class TestUnwrapMathCode:
         # between them, producing \(\LR{\texttt{...}}\) -> "Missing $ inserted".
         text = "הסימן `$` לפני שמו. ללא הסימן `$`,"
         assert unwrap_math_code(text) == text
+
+
+# ---------------------------------------------------------------------------
+# demote_math_identifier
+# ---------------------------------------------------------------------------
+
+class TestDemoteMathIdentifier:
+    def test_underscore_identifier_demoted_to_code(self):
+        # Regression: $_exit$ makes the leading _ a subscript operator, so it
+        # renders as a subscript "e" + "xit". It is a syscall name — route it
+        # through inline code so it renders literally.
+        assert demote_math_identifier("ש-$_exit$ היא") == "ש-`_exit` היא"
+
+    def test_capitalized_identifier_demoted(self):
+        assert demote_math_identifier("$_Exit$") == "`_Exit`"
+
+    def test_multiple_identifiers_each_demoted(self):
+        assert demote_math_identifier("$_exit$ ו-$_Exit$") == "`_exit` ו-`_Exit`"
+
+    def test_real_subscript_untouched(self):
+        # $x_i$ is real math (no leading _) — must not be demoted.
+        assert demote_math_identifier("$x_i$") == "$x_i$"
+
+    def test_leading_subscript_number_untouched(self):
+        # $_2F_1$ — a digit right after the _, a real leading subscript.
+        assert demote_math_identifier("$_2F_1$") == "$_2F_1$"
+
+    def test_braced_subscript_untouched(self):
+        assert demote_math_identifier("$a_{ij}$") == "$a_{ij}$"
+
+    def test_single_char_after_underscore_untouched(self):
+        # Narrow trigger: needs 2+ ident chars after _, so a lone $_x$ (an
+        # empty-base subscript) is left as math.
+        assert demote_math_identifier("$_x$") == "$_x$"
+
+    def test_identifier_with_trailing_math_untouched(self):
+        # Only fires when the WHOLE body is the identifier.
+        assert demote_math_identifier("$_exit + 1$") == "$_exit + 1$"
+
+    def test_display_math_delimiters_untouched(self):
+        # The single-$ pattern must not split $$-display delimiters.
+        text = "$$_exit + y$$"
+        assert demote_math_identifier(text) == text
+
+    def test_no_math_unchanged(self):
+        text = "טקסט רגיל ללא מתמטיקה"
+        assert demote_math_identifier(text) == text
 
 
 # ---------------------------------------------------------------------------
@@ -722,6 +814,27 @@ class TestForceLtrInlineCode:
         # inside that replacement gets escaped again. Guard against that.
         result = force_ltr_inline_code("`\\`")
         assert result == r"\LR{\texttt{\textbackslash{}}}"
+
+    def test_number_list_comma_gets_lrm(self):
+        # Regression: digits are bidi European Numbers; a comma between them is a
+        # neutral that \LR doesn't anchor, so "98, 183" reordered to ",98 ,183".
+        result = force_ltr_inline_code("בטראק `98, 183, 37`")
+        assert "98," + LRM + " 183," + LRM + " 37" in result
+
+    def test_comma_directly_before_digit_gets_lrm(self):
+        # No space between comma and digit still triggers the anchor.
+        result = force_ltr_inline_code("`1,2,3`")
+        assert "1," + LRM + "2," + LRM + "3" in result
+
+    def test_letter_list_comma_no_lrm(self):
+        # Letters are strong L and render fine — comma not before a digit, no LRM.
+        result = force_ltr_inline_code("`foo, bar`")
+        assert LRM not in result
+        assert r"\LR{\texttt{foo, bar}}" in result
+
+    def test_trailing_comma_before_nondigit_no_lrm(self):
+        result = force_ltr_inline_code("`a,`")
+        assert LRM not in result
 
 
 # ---------------------------------------------------------------------------
@@ -1111,4 +1224,67 @@ class TestHebrewInCodeBlockRenders:
         # visual, so check membership of whole words, not the full line).
         for word in ("שמירת", "בסיס", "המחסנית", "הגדרת"):
             assert word in text, f"Hebrew word {word!r} missing from rendered code block"
+
+
+@pytest.mark.skipif(
+    not (_xelatex_available() and _pandoc_available() and _pymupdf_available()),
+    reason="needs xelatex + pandoc + pymupdf to render and inspect a real PDF",
+)
+class TestBidiOrderingRenders:
+    # The canonical bidi verification for the five overview→PDF ordering bugs.
+    # We read glyphs in TRUE visual (x-coordinate) order (see docs/PDF.md): RTL
+    # Hebrew comes out reversed, but the ORDER/ADJACENCY of the LTR islands is
+    # faithful — which is exactly what these fixes are about. A get_text()
+    # substring check would lie here (docs/PDF.md, PyMuPDF caveat).
+    def _visual_text(self, md: str) -> str:
+        import fitz
+        from collections import defaultdict
+        with tempfile.TemporaryDirectory() as d:
+            md_path = os.path.join(d, "s.md")
+            with open(md_path, "w", encoding="utf-8") as f:
+                f.write(md)
+            pdf_path = convert_to_pdf(md_path)
+            try:
+                page = fitz.open(pdf_path).load_page(0).get_text("rawdict")
+            finally:
+                os.unlink(pdf_path)
+        lines = defaultdict(list)
+        for b in page["blocks"]:
+            for l in b.get("lines", []):
+                for s in l["spans"]:
+                    for c in s["chars"]:
+                        lines[round(c["origin"][1])].append((c["origin"][0], c["c"]))
+        return "\n".join(
+            "".join(ch for _, ch in sorted(lines[y])) for y in sorted(lines)
+        )
+
+    def test_issue1_math_text_islands_keep_source_order(self):
+        # English \text{} islands inside display math stay in source order; the
+        # middle multi-word island is not reversed.
+        md = (
+            "$$S = \\{M(x) = 1 \\text{ within } 2^{g} "
+            "\\text{ steps and using at most } g \\text{ space}\\}$$\n"
+        )
+        vis = self._visual_text(md)
+        assert "steps and using at most" in vis
+        assert "most at using and steps" not in vis
+
+    def test_issue2_number_list_in_code_ordered(self):
+        vis = self._visual_text("בטראק `98, 183, 37` הבא\n")
+        assert "98, 183, 37" in vis
+        assert ",98 ,183" not in vis
+
+    def test_issue3_parenthesized_acronym_ordered(self):
+        vis = self._visual_text("עקרון (FIFO - First-In, First-Out) כאן\n")
+        assert "FIFO - First-In, First-Out" in vis
+
+    def test_issue4_number_unit_ordered(self):
+        vis = self._visual_text("בין 4KB ל-64KB כאן\n")
+        assert "4KB" in vis and "64KB" in vis
+        assert "KB4" not in vis
+
+    def test_issue5_underscore_identifier_literal(self):
+        # _exit / _Exit render as literal identifiers, not "subscript e + xit".
+        vis = self._visual_text("ש-$_exit$ (או $_Exit$) היא\n")
+        assert "_exit" in vis and "_Exit" in vis
 
