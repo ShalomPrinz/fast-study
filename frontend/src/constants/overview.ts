@@ -28,7 +28,6 @@ export function lastGeneratedFile(slug: string, phases: CoursePhase[]): string {
 
 export interface StartedSlug {
   furthest: string // furthest pipeline output already on disk
-  willRegenerate: string[] // every file up to and including it — what a re-run overwrites
 }
 
 // How far along a slug is, given the set of existing overview filenames.
@@ -40,5 +39,5 @@ export function startedSlug(slug: string, phases: CoursePhase[], existing: Set<s
     if (existing.has(name)) furthestIdx = i
   })
   if (furthestIdx === -1) return null
-  return { furthest: produced[furthestIdx], willRegenerate: produced.slice(0, furthestIdx + 1) }
+  return { furthest: produced[furthestIdx] }
 }

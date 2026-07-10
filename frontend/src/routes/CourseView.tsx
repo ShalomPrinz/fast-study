@@ -9,7 +9,6 @@ import { useReportOnce } from '@/hooks/useReportOnce'
 import { useToggleSet } from '@/hooks/useToggleSet'
 import { toast, toastInitResult } from '@/services/toaster'
 import { lastGeneratedFile, generatedFiles, startedSlug, stepsFor } from '@/constants/overview'
-import type { StartedSlug } from '@/constants/overview'
 import Icon from '@/components/Icon'
 import ConfirmModal from '@/components/ConfirmModal'
 
@@ -33,7 +32,6 @@ export default function CourseView() {
   const [status, setStatus] = useState<CourseStatus | null>(null)
   const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string; phases: CoursePhase[] } | null>(null)
   const [regenerateStep, setRegenerateStep] = useState<{ slug: string; title: string; phase: CoursePhase; label: string; rebuilds: string[] } | null>(null)
-  const [generateAllWarning, setGenerateAllWarning] = useState<(StartedSlug & { title: string })[] | null>(null)
   const expanded = useToggleSet(extractors?.map((e) => e.slug) ?? [])
   const latestFiles = useLatestRequest()
   const latestStatus = useLatestRequest()
@@ -96,8 +94,9 @@ export default function CourseView() {
   }
 
   // A single trigger runs the phases sequentially server-side; omitting names = all.
-  async function handleGenerate(names?: string[], fromPhase?: CoursePhase) {
-    const result = await runOverview(course, names, fromPhase)
+  // skipExisting continues a run (missing phases only); default overwrites (re-generate).
+  async function handleGenerate(names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean) {
+    const result = await runOverview(course, names, fromPhase, skipExisting)
     toastInitResult(result, {
       busy: 'Overview is already running for this course',
       error: 'Overview failed to start',
@@ -119,18 +118,10 @@ export default function CourseView() {
     handleGenerate([slug], phase)
   }
 
-  function handleGenerateAll() {
-    const existing = new Set(files.map((f) => f.name))
-    const started = (extractors ?? []).flatMap(({ slug, title, phases }) => {
-      const st = startedSlug(slug, phases, existing)
-      return st ? [{ title, ...st }] : []
-    })
-    if (started.length === 0) {
-      handleGenerate()
-    } else {
-      setGenerateAllWarning(started)
-    }
-  }
+  // Any produced file means we're continuing rather than starting fresh; the header
+  // button never overwrites (skip_existing), so a "continue" run only fills gaps.
+  const existingFiles = new Set(files.map((f) => f.name))
+  const hasStarted = (extractors ?? []).some(({ slug, phases }) => startedSlug(slug, phases, existingFiles) !== null)
 
   return (
     <main className="main-view main-view--panel">
@@ -139,11 +130,11 @@ export default function CourseView() {
 
         <button
           className="run-all-btn course-global-btn"
-          onClick={handleGenerateAll}
+          onClick={() => handleGenerate(undefined, undefined, true)}
           disabled={running || extractors === null}
         >
           {running && <span className="spinner spinner--sm" />}
-          {running ? 'Generating…' : 'Generate All'}
+          {running ? 'Generating…' : hasStarted ? 'Continue Generating' : 'Generate All'}
         </button>
 
         {extractors === null ? (
@@ -285,32 +276,6 @@ export default function CourseView() {
           }
           onConfirm={confirmRegenerateStep}
           onCancel={() => setRegenerateStep(null)}
-        />
-      )}
-
-      {generateAllWarning && (
-        <ConfirmModal
-          message="Generating all will re-generate:"
-          postMessage="Are you sure you want to re-generate everything?"
-          detail={
-            <ul className="modal-slug-list">
-              {generateAllWarning.map(({ title, willRegenerate }) => (
-                <li key={title} className="modal-slug-item">
-                  <span className="modal-slug-title">{title}</span>
-                  <ul className="modal-file-list">
-                    {willRegenerate.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          }
-          onConfirm={() => {
-            setGenerateAllWarning(null)
-            handleGenerate()
-          }}
-          onCancel={() => setGenerateAllWarning(null)}
         />
       )}
     </main>

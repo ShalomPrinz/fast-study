@@ -15,6 +15,7 @@ _EMPTY_STATUS = {"running": False, "phase": None, "started_at": None, "extractor
 
 PHASE_ORDER = ("extract", "analyze", "topics", "to_pdf")
 DEFAULT_FROM_PHASE = PHASE_ORDER[0]
+_PHASE_SUFFIX = {"extract": ".txt", "analyze": ".md", "topics": ".md", "to_pdf": ".pdf"}
 
 
 def get_status(course: str) -> dict:
@@ -40,14 +41,16 @@ def _participants(phase: str, slugs: list[str]) -> list[str]:
     return [s for s in slugs if phase in overview.EXTRACTORS_BY_SLUG[s].phases]
 
 
-def try_run_generate(course: str, course_node: dict, slugs: list[str], from_phase: str = DEFAULT_FROM_PHASE) -> str:
-    """Run all 'slugs' course overview sequentially in the background, starting from `from_phase`."""
+def try_run_generate(course: str, course_node: dict, slugs: list[str],
+                     from_phase: str = DEFAULT_FROM_PHASE, skip_existing: bool = False) -> str:
+    """Run all 'slugs' course overview sequentially in the background, starting from `from_phase`.
+    With `skip_existing`, any phase output already on disk at run start is kept."""
     lock = _locks.setdefault(course, asyncio.Lock())
     if lock.locked():
         return "busy"
     # Status must be installed before the task is scheduled so the first poll sees the run.
     _status[course] = _new_run(from_phase, slugs)
-    asyncio.create_task(_run_generate(lock, course, course_node, slugs, from_phase))
+    asyncio.create_task(_run_generate(lock, course, course_node, slugs, from_phase, skip_existing))
     return "started"
 
 
@@ -67,9 +70,10 @@ def _new_run(from_phase: str, slugs: list[str]) -> dict:
     }
 
 
-async def _run_generate(lock: asyncio.Lock, course: str, course_node: dict, slugs: list[str], from_phase: str) -> None:
-    """Hold the course lock across all phases so nothing else runs in between. Skips phases before
-    `from_phase`, and any phase with no participating extractor (no phase-advance, no notify, no work)."""
+async def _run_generate(lock: asyncio.Lock, course: str, course_node: dict, slugs: list[str],
+                        from_phase: str, skip_existing: bool = False) -> None:
+    """Hold the course lock across all phases so nothing else runs in between. Skips phases before `from_phase`.
+    With `skip_existing`, a participant whose phase output already existed at run start is kept."""
     start = _start_index(from_phase)
     workers = {
         "extract": lambda ps: _extract_phase(course, course_node, ps),
@@ -77,23 +81,43 @@ async def _run_generate(lock: asyncio.Lock, course: str, course_node: dict, slug
         "topics":  lambda ps: _topics_phase(course, course_node, ps),
         "to_pdf":  lambda ps: _to_pdf_phase(course, ps),
     }
+
+    # Snapshot the overview dir once at run start
+    existing = _existing_outputs(course) if skip_existing else set()
     async with lock:
         try:
             first = True
             for phase in PHASE_ORDER[start:]:
                 if not _participants(phase, slugs):
                     continue  # no extractor declares this phase → skip entirely (no advance/notify/work)
+
                 # Drop extractors that errored earlier; keep their "error" visible (never a downstream skip).
                 survivors = [s for s in _participants(phase, slugs)
                              if _status[course]["extractors"][s].get("status") != "error"]
                 if not first:
                     _advance_phase(course, phase, survivors)
                 first = False
-                if survivors:
-                    await asyncio.to_thread(workers[phase], survivors)
+
+                # continue mode: keep survivors whose output already existed at run start; run the rest.
+                kept = [s for s in survivors if f"{s}{_PHASE_SUFFIX[phase]}" in existing] if skip_existing else []
+                _mark_kept(course, kept)
+                to_run = [s for s in survivors if s not in kept]
+                if to_run:
+                    await asyncio.to_thread(workers[phase], to_run)
         finally:
             _status[course]["running"] = False
             db_client.notify()
+
+
+def _existing_outputs(course: str) -> set[str]:
+    """Snapshot the course's overview output filenames."""
+    return {f["name"] for f in db_client.list_overview_files(course)}
+
+
+def _mark_kept(course: str, slugs: list[str]) -> None:
+    """A kept (already-on-disk) participant: non-error status."""
+    for s in slugs:
+        _status[course]["extractors"][s] = {"status": "skipped", "message": "already generated"}
 
 
 def _advance_phase(course: str, phase: str, participants: list[str]) -> None:

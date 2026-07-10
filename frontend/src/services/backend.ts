@@ -74,8 +74,8 @@ export async function fetchOverviewExtractors(): Promise<OverviewExtractor[]> {
   return raw.extractors.map((e) => ({ slug: e.slug, title: e.title, phases: e.phases ?? [] }))
 }
 
-export async function runOverview(course: string, extractors?: string[], fromPhase?: CoursePhase): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(courseOverviewBase(course) + '/generate' + overviewGenerateQuery(extractors, fromPhase))
+export async function runOverview(course: string, extractors?: string[], fromPhase?: CoursePhase, skipExisting?: boolean): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(courseOverviewBase(course) + '/generate' + overviewGenerateQuery(extractors, fromPhase, skipExisting))
 }
 
 interface RawCourseStatus {

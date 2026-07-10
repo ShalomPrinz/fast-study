@@ -84,6 +84,11 @@ def db(monkeypatch):
             raise DbClientError(f"{filename} not found in {course}/overview")
         return calls.overview_store[filename]
 
+    def list_overview_files(course):
+        # skip_existing snapshots this once at run start; reflects whatever was seeded.
+        return [{"name": name, "size": len(data), "mtime": 0}
+                for name, data in calls.overview_store.items()]
+
     def notify():
         calls.notifies += 1
 
@@ -96,6 +101,7 @@ def db(monkeypatch):
     monkeypatch.setattr(db_client, "get_file_bytes", get_file_bytes)
     monkeypatch.setattr(db_client, "put_overview_file", put_overview_file)
     monkeypatch.setattr(db_client, "get_overview_file", get_overview_file)
+    monkeypatch.setattr(db_client, "list_overview_files", list_overview_files)
     monkeypatch.setattr(db_client, "notify", notify)
     # Analyze is glue over Gemini — stub it so no network; per-slug prefix keeps asserts readable.
     monkeypatch.setattr(course_analyze, "analyze", lambda ext, report, course: f"ניתוח:{ext.slug}")
@@ -452,6 +458,103 @@ class TestFromPhase:
     def test_start_index_helper_unknown_is_zero(self):
         assert course_runner._start_index("bogus") == 0
         assert course_runner._start_index("analyze") == course_runner.PHASE_ORDER.index("analyze")
+
+
+class TestSkipExisting:
+    """`skip_existing=true` is a "continue": each phase output already on disk at run start is KEPT
+    (its extractor not re-run, marked skipped/"already generated"); missing outputs generate normally.
+    The snapshot is taken ONCE at run start via db_client.list_overview_files."""
+
+    def _seed(self, db, filename, data):
+        db.overview_store[filename] = data
+
+    def test_fully_done_slug_untouched_workers_not_called(self, db, monkeypatch):
+        # A slug with .txt+.md+.pdf already present → every phase keeps it; no worker fires for it.
+        self._seed(db, "exam-hints.txt", b"report")
+        self._seed(db, "exam-hints.md", b"# analyzed")
+        self._seed(db, "exam-hints.pdf", b"%PDF old")
+        monkeypatch.setattr(course_extract, "fetch_sources",
+                            lambda *a: pytest.fail("extract worker must not run for a fully-done slug"))
+        monkeypatch.setattr(course_analyze, "analyze",
+                            lambda *a: pytest.fail("analyze worker must not run for a fully-done slug"))
+        monkeypatch.setattr(course_to_pdf, "convert_to_pdf",
+                            lambda *a: pytest.fail("to_pdf worker must not run for a fully-done slug"))
+
+        async def go():
+            assert course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], skip_existing=True) == "started"
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["exam-hints"] == {"status": "skipped", "message": "already generated"}
+        assert db.puts == []  # nothing overwritten
+        # Seeded files are byte-for-byte untouched.
+        assert db.overview_store["exam-hints.txt"] == b"report"
+        assert db.overview_store["exam-hints.md"] == b"# analyzed"
+        assert db.overview_store["exam-hints.pdf"] == b"%PDF old"
+
+    def test_partial_slug_continues_extract_kept_analyze_and_to_pdf_run(self, db):
+        # Only .txt present → extract kept, analyze + to_pdf run (the "continue" case).
+        self._seed(db, "exam-hints.txt", b"report")
+
+        async def go():
+            course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], skip_existing=True)
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        # Final status reflects the LAST phase (to_pdf ran) → done, not the earlier "kept" skip.
+        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert [f for _, f, _ in db.puts] == ["exam-hints.md", "exam-hints.pdf"]
+        assert db.overview_store["exam-hints.txt"] == b"report"  # kept, not rewritten
+
+    def test_not_started_slug_runs_fully(self, db):
+        # No outputs present → skip_existing keeps nothing; every phase generates.
+        async def go():
+            course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], skip_existing=True)
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md", "exam-hints.pdf"]
+
+    def test_skip_existing_false_still_overwrites_everything(self, db):
+        # Regression: default behavior must overwrite present outputs (the ↺ re-generate flows rely on it).
+        self._seed(db, "exam-hints.txt", b"OLD txt")
+        self._seed(db, "exam-hints.md", b"OLD md")
+        self._seed(db, "exam-hints.pdf", b"OLD pdf")
+
+        async def go():
+            course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], skip_existing=False)
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["exam-hints"] == {"status": "done"}
+        assert [f for _, f, _ in db.puts] == ["exam-hints.txt", "exam-hints.md", "exam-hints.pdf"]
+        # Every output was regenerated, not left as the seeded sentinel.
+        assert db.overview_store["exam-hints.txt"] != b"OLD txt"
+        assert db.overview_store["exam-hints.md"] != b"OLD md"
+        assert db.overview_store["exam-hints.pdf"] != b"OLD pdf"
+
+    def test_kept_extractor_does_not_block_or_spuriously_skip_later_phase(self, db):
+        # .txt+.md present, .pdf missing → extract AND analyze kept, but to_pdf they still need MUST run.
+        # A kept extractor stays a participant (not dropped, not treated as error), so to_pdf isn't skipped.
+        self._seed(db, "exam-hints.txt", b"report")
+        self._seed(db, "exam-hints.md", b"# analyzed")
+
+        async def go():
+            course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], skip_existing=True)
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["exam-hints"] == {"status": "done"}  # to_pdf ran, not skipped
+        assert [f for _, f, _ in db.puts] == ["exam-hints.pdf"]
+        assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
+        assert db.overview_store["exam-hints.txt"] == b"report"     # kept
+        assert db.overview_store["exam-hints.md"] == b"# analyzed"  # kept
 
 
 class TestSharedLock:

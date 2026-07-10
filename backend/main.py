@@ -97,8 +97,10 @@ async def _find_course(course: str) -> tuple[dict | None, dict | None]:
 
 @app.post("/courses/{course}/overview/generate")
 async def overview_generate(course: str, extractors: str | None = Query(None),
-                            from_phase: str = Query(course_runner.DEFAULT_FROM_PHASE)):
-    """Generate course overview for given extractors (comma-separated slugs), starting from `from_phase` through to_pdf."""
+                            from_phase: str = Query(course_runner.DEFAULT_FROM_PHASE),
+                            skip_existing: bool = Query(False)):
+    """Generate course overview for given extractors (comma-separated slugs), starting from `from_phase` through to_pdf.
+    `skip_existing=true` is a "continue": phase outputs already on disk at run start are kept, only missing ones generated."""
     if from_phase not in course_runner.PHASE_ORDER:
         return {"status": "error", "message": f"unknown phase: {from_phase}"}
     slugs, err = course_runner.resolve_slugs(extractors)
@@ -107,7 +109,7 @@ async def overview_generate(course: str, extractors: str | None = Query(None),
     course_node, err = await _find_course(course)
     if course_node is None or err is not None:
         return err
-    return {"status": course_runner.try_run_generate(course, course_node, slugs, from_phase)}
+    return {"status": course_runner.try_run_generate(course, course_node, slugs, from_phase, skip_existing)}
 
 
 @app.get("/courses/{course}/overview/status")

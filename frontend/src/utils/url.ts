@@ -48,9 +48,11 @@ export function extractorsQuery(names?: string[]): string {
   return names?.length ? `?extractors=${names.map(encodeURIComponent).join(',')}` : ''
 }
 
-// Query for an overview /generate trigger: optional extractor CSV + optional start phase.
-export function overviewGenerateQuery(names?: string[], fromPhase?: CoursePhase): string {
-  const base = extractorsQuery(names)
-  if (!fromPhase) return base
-  return `${base}${base ? '&' : '?'}from_phase=${fromPhase}`
+// Query for an overview /generate trigger: optional extractor CSV + optional start
+// phase + optional skip_existing (continue: generate only missing phase outputs).
+export function overviewGenerateQuery(names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean): string {
+  let q = extractorsQuery(names)
+  if (fromPhase) q += `${q ? '&' : '?'}from_phase=${fromPhase}`
+  if (skipExisting) q += `${q ? '&' : '?'}skip_existing=true`
+  return q
 }
