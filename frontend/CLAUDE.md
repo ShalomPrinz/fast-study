@@ -39,7 +39,7 @@ frontend/
       toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
     constants/
       pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
-      overview.ts              OVERVIEW_STEPS (phase→suffix→label table: extract.txt/analyze.md/topics.md/to_pdf.pdf) + stepsFor(phases) to pick one extractor's subset; generatedFiles/lastGeneratedFile/startedSlug all take an extractor's phases and operate on stepsFor(phases) (topics → topics.md+topics.pdf, no .txt)
+      overview.ts              OVERVIEW_STEPS (phase→suffix→label table: extract.txt/analyze.md/topics.md/to_pdf.pdf) + stepsFor(phases) to pick one extractor's subset; generatedFiles/lastGeneratedFile/startedSlug all take an extractor's phases and operate on stepsFor(phases) (topics → topics.md+topics.pdf, no .txt); branchStatus(status, files, slug, phases) → { running, done, error } (pure, + BranchStatus type)
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
       CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
@@ -73,7 +73,9 @@ frontend/
       Layout.tsx                routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
       MainView.tsx
       EditSummaryView.tsx
-      CourseView.tsx          per-course overview view: per-extractor row with a caret (useToggleSet) that expands a per-phase breakdown filtered to that extractor's phases (stepsFor(extractor.phases) — pattern extractors show {slug}.txt/.md/.pdf, the immediate topics extractor shows {slug}.md(Collect)/.pdf with no .txt row), ✓/spinner, PDF-only open button, per-step ↺ re-generate-from-here; header has "Generate" (→ ↺ re-generate-all once the last file exists, + open-PDF) + a "Continue Generating"/"Generate All" button (skip_existing, fills only missing work, no warning); SSE-refreshed status
+      course/
+        CourseOverviewContext.tsx  data-only provider (1 prop `course`): owns the extractors/files/meta/status fetches (two effects + three useLatestRequest + useNotify(refresh)) and exposes { course, extractors, files, meta, status, generate } via useCourseOverview(). `generate(names?, fromPhase?, skipExisting?)` calls runOverview + refresh and returns the RunInitResult without toasting (consumers toast)
+      CourseView.tsx          per-course overview shell: reads `course` from useParams, renders <CourseOverviewProvider> wrapping an inline CourseOverviewBody that reads the context. Body owns interaction state (expanded via useToggleSet, the two regenerate* modal states) + the once-per-error toast effect + a local handleGenerate (context.generate → toastInitResult). Per-extractor row with a caret (useToggleSet) that expands a per-phase breakdown filtered to that extractor's phases (stepsFor(extractor.phases) — pattern extractors show {slug}.txt/.md/.pdf, the immediate topics extractor shows {slug}.md(Collect)/.pdf with no .txt row), ✓/spinner, PDF-only open button, per-step ↺ re-generate-from-here; header has "Generate" (→ ↺ re-generate-all once the last file exists, + open-PDF) + a "Continue Generating"/"Generate All" button (skip_existing, fills only missing work, no warning); SSE-refreshed status
     components/
       sidebar/
         index.ts                re-exports Sidebar as the default

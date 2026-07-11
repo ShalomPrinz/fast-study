@@ -1,24 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import type { OverviewExtractor, CourseFile, CourseStatus, CoursePhase, OverviewMeta } from '@/types'
-import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
-import { fetchCourseFiles, fetchCourseMeta, overviewFileUrl } from '@/services/database'
+import type { CoursePhase } from '@/types'
+import { overviewFileUrl } from '@/services/database'
 import { formatMonthDate, formatFullTimestamp } from '@/utils/format'
 import { formatRange } from '@/utils/overview'
-import { useNotify } from '@/hooks/useNotify'
-import { useLatestRequest } from '@/hooks/useLatestRequest'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { useToggleSet } from '@/hooks/useToggleSet'
 import { toast, toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile, generatedFiles, startedSlug, stepsFor } from '@/constants/overview'
+import { lastGeneratedFile, generatedFiles, startedSlug, stepsFor, branchStatus } from '@/constants/overview'
+import type { BranchStatus } from '@/constants/overview'
 import Icon from '@/components/Icon'
 import ConfirmModal from '@/components/ConfirmModal'
-
-interface BranchStatus {
-  running: boolean
-  done: boolean
-  error: string | null
-}
+import { CourseOverviewProvider, useCourseOverview } from '@/routes/course/CourseOverviewContext'
 
 function BranchIndicator({ status }: { status: BranchStatus }) {
   if (status.running) return <span className="spinner spinner--sm" />
@@ -27,50 +20,12 @@ function BranchIndicator({ status }: { status: BranchStatus }) {
   return <span className="course-stage-dot" />
 }
 
-export default function CourseView() {
-  const { course = '' } = useParams()
-  const [extractors, setExtractors] = useState<OverviewExtractor[] | null>(null)
-  const [files, setFiles] = useState<CourseFile[]>([])
-  const [meta, setMeta] = useState<OverviewMeta>({})
-  const [status, setStatus] = useState<CourseStatus | null>(null)
+function CourseOverviewBody() {
+  const { course, extractors, files, meta, status, generate } = useCourseOverview()
   const [regenerateTarget, setRegenerateTarget] = useState<{ slug: string; title: string; phases: CoursePhase[] } | null>(null)
   const [regenerateStep, setRegenerateStep] = useState<{ slug: string; title: string; phase: CoursePhase; label: string; rebuilds: string[] } | null>(null)
   const expanded = useToggleSet(extractors?.map((e) => e.slug) ?? [])
-  const latestFiles = useLatestRequest()
-  const latestMeta = useLatestRequest()
-  const latestStatus = useLatestRequest()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
-
-  useEffect(() => {
-    fetchOverviewExtractors()
-      .then(setExtractors)
-      .catch(() => {}) // connection errors are toasted centrally by the http client
-  }, [])
-
-  async function refresh() {
-    try {
-      const [f, m, s] = await Promise.all([
-        latestFiles(fetchCourseFiles(course)),
-        latestMeta(fetchCourseMeta(course)),
-        latestStatus(fetchCourseStatus(course)),
-      ])
-      if (f) setFiles(f)
-      if (m) setMeta(m)
-      if (s) setStatus(s)
-    } catch {
-      // connection errors are toasted centrally; SSE fires again on the next transition
-    }
-  }
-
-  useEffect(() => {
-    setFiles([])
-    setMeta({})
-    setStatus(null)
-    refresh()
-  }, [course])
-
-  // Refresh status and files on each backend notify event
-  useNotify(refresh)
 
   // Toast each extractor error once per (course, slug, message). Status is keyed by
   // slug; show the friendlier title when we have the extractor list loaded.
@@ -89,28 +44,15 @@ export default function CourseView() {
     pruneErrors(valid, (k) => k.startsWith(`${course}/`))
   }, [status, course, extractors])
 
-  if (!course) return null
-
   const running = status?.running ?? false
 
-  function branchStatus(slug: string, phases: CoursePhase[]): BranchStatus {
-    const st = status?.extractors[slug]
-    return {
-      running: st?.status === 'running',
-      done: files.some((f) => f.name === lastGeneratedFile(slug, phases)),
-      error: st?.status === 'error' ? (st.message ?? 'failed') : null,
-    }
-  }
-
-  // A single trigger runs the phases sequentially server-side; omitting names = all.
-  // skipExisting continues a run (missing phases only); default overwrites (re-generate).
+  // Fire the mutation via the context, then toast its result here — a component may toast.
   async function handleGenerate(names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean) {
-    const result = await runOverview(course, names, fromPhase, skipExisting)
+    const result = await generate(names, fromPhase, skipExisting)
     toastInitResult(result, {
       busy: 'Overview is already running for this course',
       error: 'Overview failed to start',
     })
-    refresh()
   }
 
   function confirmRegenerate() {
@@ -151,7 +93,7 @@ export default function CourseView() {
         ) : (
           <div className="file-list">
             {extractors.map(({ slug, title, phases }) => {
-              const bs = branchStatus(slug, phases)
+              const bs = branchStatus(status, files, slug, phases)
               const steps = stepsFor(phases)
               const entry = meta[slug]
               return (
@@ -298,5 +240,15 @@ export default function CourseView() {
         />
       )}
     </main>
+  )
+}
+
+export default function CourseView() {
+  const { course = '' } = useParams()
+  if (!course) return null
+  return (
+    <CourseOverviewProvider course={course}>
+      <CourseOverviewBody />
+    </CourseOverviewProvider>
   )
 }

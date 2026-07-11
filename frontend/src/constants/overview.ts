@@ -1,4 +1,4 @@
-import type { CoursePhase } from '@/types'
+import type { CoursePhase, CourseStatus, CourseFile } from '@/types'
 
 export interface OverviewStep {
   phase: CoursePhase
@@ -40,4 +40,25 @@ export function startedSlug(slug: string, phases: CoursePhase[], existing: Set<s
   })
   if (furthestIdx === -1) return null
   return { furthest: produced[furthestIdx] }
+}
+
+export interface BranchStatus {
+  running: boolean
+  done: boolean
+  error: string | null
+}
+
+// extractor's derived state from the fetched status + files
+export function branchStatus(
+  status: CourseStatus | null,
+  files: CourseFile[],
+  slug: string,
+  phases: CoursePhase[],
+): BranchStatus {
+  const st = status?.extractors[slug]
+  return {
+    running: st?.status === 'running',
+    done: files.some((f) => f.name === lastGeneratedFile(slug, phases)),
+    error: st?.status === 'error' ? (st.message ?? 'failed') : null,
+  }
 }
