@@ -4,11 +4,11 @@ import { useSelection } from '@/hooks/useSelection'
 import { useShiftHeld } from '@/hooks/useShiftHeld'
 import { useAddLecture } from '@/hooks/useAddLecture'
 import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
-import InlineEditInput from '@/components/InlineEditInput'
-import PaginatedList from '@/components/sidebar/PaginatedList'
 import { CourseGroupContext } from './CourseGroupContext'
+import { LectureListProvider } from './LectureListContext'
 import CourseHeader from './CourseHeader'
-import LectureItem from './LectureItem'
+import LectureList from './LectureList'
+import AddLectureInput from './AddLectureInput'
 
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()
@@ -41,9 +41,6 @@ export default function CourseGroup({ course }: { course: Course }) {
     add.start('recitation')
   }
 
-  const isAddingLecture = add.target?.kind === 'lecture'
-  const isAddingRecitation = add.target?.kind === 'recitation'
-
   return (
     <CourseGroupContext.Provider value={{ course, add }}>
       <div className="course-group">
@@ -53,23 +50,10 @@ export default function CourseGroup({ course }: { course: Course }) {
 
         {expanded && (
           <ul className="lecture-list">
-            <PaginatedList
-              items={course.lectures}
-              renderItem={(lecture) => (
-                <LectureItem key={`lecture::${lecture.name}`} lecture={lecture} kind="lecture" />
-              )}
-            />
-
-            {isAddingLecture && (
-              <li>
-                <InlineEditInput
-                  edit={add.edit}
-                  onCommit={add.commit}
-                  onCancel={add.cancel}
-                  placeholder="Lecture name…"
-                />
-              </li>
-            )}
+            <LectureListProvider kind="lecture">
+              <LectureList />
+              <AddLectureInput />
+            </LectureListProvider>
 
             <li className="recitations-group">
               <div className="recitations-header">
@@ -93,22 +77,10 @@ export default function CourseGroup({ course }: { course: Course }) {
               </div>
               {recExpanded && (
                 <ul className="lecture-list recitation-list">
-                  <PaginatedList
-                    items={course.recitations ?? []}
-                    renderItem={(rec) => (
-                      <LectureItem key={`recitation::${rec.name}`} lecture={rec} kind="recitation" />
-                    )}
-                  />
-                  {isAddingRecitation && (
-                    <li>
-                      <InlineEditInput
-                        edit={add.edit}
-                        onCommit={add.commit}
-                        onCancel={add.cancel}
-                        placeholder="Recitation name…"
-                      />
-                    </li>
-                  )}
+                  <LectureListProvider kind="recitation">
+                    <LectureList />
+                    <AddLectureInput />
+                  </LectureListProvider>
                 </ul>
               )}
             </li>

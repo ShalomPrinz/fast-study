@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Lecture, Kind } from '@/types'
+import type { Lecture } from '@/types'
 import { renameLecture } from '@/services/database'
 import { toast } from '@/services/toaster'
 import { useSelection } from '@/hooks/useSelection'
@@ -9,9 +9,11 @@ import { findLecture } from '@/utils/courseTree'
 import InlineEditInput from '@/components/InlineEditInput'
 import { usePendingUpload } from '@/components/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
+import { useLectureListKind } from './LectureListContext'
 
-export default function LectureItem({ lecture, kind }: { lecture: Lecture; kind: Kind }) {
+export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const { course } = useCourseGroup()
+  const kind = useLectureListKind()
   const { selected, onSelect } = useSelection()
   const { courses, refreshCourses } = useCourseTreeContext()
   const upload = usePendingUpload()

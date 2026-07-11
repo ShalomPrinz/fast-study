@@ -80,10 +80,13 @@ frontend/
         Sidebar.tsx             header + ModeToggle; declares the mode→{label, Component} map, no state/branching
         LecturesSidebar.tsx     lecture/course tree shell, no props — mounts PendingUploadProvider; body maps active/archived courses to <CourseGroup> + owns the archived-panel toggle
         tree/
-          CourseGroup.tsx       one course group (1 prop `course`): owns expanded/recExpanded + per-group auto-expand + useAddLecture(course); provides CourseGroupContext; renders <CourseHeader> + the lecture PaginatedList + the recitations block (still inline here until A6's RecitationsGroup). Passes CourseHeader a 1-prop `expand` handle since expand state lives here
+          CourseGroup.tsx       one course group (1 prop `course`): owns expanded/recExpanded + per-group auto-expand + useAddLecture(course); provides CourseGroupContext; renders <CourseHeader> + a <LectureListProvider kind="lecture"> wrapping <LectureList/><AddLectureInput/> + the recitations block (still inline here until A6's RecitationsGroup). Passes CourseHeader a 1-prop `expand` handle since expand state lives here
           CourseGroupContext.tsx  { course, add } + useCourseGroup() — one course group's shared course + add-lecture flow
           CourseHeader.tsx      course-header row (1 prop `expand: CourseExpand = { isOpen, toggle, open }`): local course-rename; owns toggleArchived + lecture-add; reads useCourseGroup()/useSelection()/useShiftHeld()/useCourseTreeContext()
-          LectureItem.tsx       one lecture/recitation row (props `lecture`, `kind`): local rename + drag-over; reads course via useCourseGroup(), plus useSelection()/usePendingUpload(). (A5 will drop `kind` to a LectureListContext → 1 prop)
+          LectureListContext.tsx  1-member `kind` context (LectureListProvider + useLectureListKind()) — which list (lecture vs recitation) a subtree renders
+          LectureList.tsx       0 props: the PaginatedList of <LectureItem> for the provider's kind (course.lectures vs course.recitations)
+          AddLectureInput.tsx   0 props: the inline new-lecture/recitation input row; renders only in the list whose kind is currently being added (add.target.kind === useLectureListKind())
+          LectureItem.tsx       one lecture/recitation row (1 prop `lecture`): local rename + drag-over; reads kind via useLectureListKind(), course via useCourseGroup(), plus useSelection()/usePendingUpload()
         ModeToggle.tsx          owns the localStorage-persisted AppMode; renders the "Lectures"/"Courses" segments and the selected mode's body from the map
         CoursesList.tsx         overview sidebar body: flat list of non-archived courses → /course/:course
         NewCourseRow.tsx        inline "new course" input row
