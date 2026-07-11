@@ -43,7 +43,7 @@ frontend/
     contexts/
       RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
       CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
-    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, OverviewMeta ({slug → {lectures/recitations: {start,end}|null, generatedAt}}), …
+    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, OverviewMeta ({slug → {lectures/recitations: {start,end}|null, generatedAt}}), InlineEdit, ExpandHandle (collapse/expand handle for a child whose open-state its parent owns), …
     App.tsx                  React Router routes; renders Layout + the three views
     main.tsx                 React entry point
     index.css                Single flat stylesheet, CSS variables for theming
@@ -80,9 +80,10 @@ frontend/
         Sidebar.tsx             header + ModeToggle; declares the mode→{label, Component} map, no state/branching
         LecturesSidebar.tsx     lecture/course tree shell, no props — mounts PendingUploadProvider; body maps active/archived courses to <CourseGroup> + owns the archived-panel toggle
         tree/
-          CourseGroup.tsx       one course group (1 prop `course`): owns expanded/recExpanded + per-group auto-expand + useAddLecture(course); provides CourseGroupContext; renders <CourseHeader> + a <LectureListProvider kind="lecture"> wrapping <LectureList/><AddLectureInput/> + the recitations block (still inline here until A6's RecitationsGroup). Passes CourseHeader a 1-prop `expand` handle since expand state lives here
+          CourseGroup.tsx       one course group (1 prop `course`): owns expanded/recExpanded + per-group auto-expand + useAddLecture(course); provides CourseGroupContext; renders <CourseHeader> + a <LectureListProvider kind="lecture"> wrapping <LectureList/><AddLectureInput/> + <RecitationsGroup>. Hands CourseHeader/RecitationsGroup 1-prop ExpandHandles since both expand states live here (so recExpanded persists across course collapse)
           CourseGroupContext.tsx  { course, add } + useCourseGroup() — one course group's shared course + add-lecture flow
-          CourseHeader.tsx      course-header row (1 prop `expand: CourseExpand = { isOpen, toggle, open }`): local course-rename; owns toggleArchived + lecture-add; reads useCourseGroup()/useSelection()/useShiftHeld()/useCourseTreeContext()
+          CourseHeader.tsx      course-header row (1 prop `expand: ExpandHandle`): local course-rename; owns toggleArchived + lecture-add; reads useCourseGroup()/useSelection()/useShiftHeld()/useCourseTreeContext()
+          RecitationsGroup.tsx  recitations sub-group (1 prop `expand: ExpandHandle`): owns the recitations "+" + useShiftHeld() gate; renders <LectureListProvider kind="recitation"> with <LectureList/><AddLectureInput/>
           LectureListContext.tsx  1-member `kind` context (LectureListProvider + useLectureListKind()) — which list (lecture vs recitation) a subtree renders
           LectureList.tsx       0 props: the PaginatedList of <LectureItem> for the provider's kind (course.lectures vs course.recitations)
           AddLectureInput.tsx   0 props: the inline new-lecture/recitation input row; renders only in the list whose kind is currently being added (add.target.kind === useLectureListKind())

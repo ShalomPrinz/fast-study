@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Course } from '@/types'
 import { useSelection } from '@/hooks/useSelection'
-import { useShiftHeld } from '@/hooks/useShiftHeld'
 import { useAddLecture } from '@/hooks/useAddLecture'
 import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
 import { CourseGroupContext } from './CourseGroupContext'
@@ -9,11 +8,11 @@ import { LectureListProvider } from './LectureListContext'
 import CourseHeader from './CourseHeader'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
+import RecitationsGroup from './RecitationsGroup'
 
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()
   const { refreshCourses } = useCourseTreeContext()
-  const shiftHeld = useShiftHeld()
   const add = useAddLecture(course)
 
   const [expanded, setExpanded] = useState(false)
@@ -34,13 +33,6 @@ export default function CourseGroup({ course }: { course: Course }) {
     refreshCourses()
   }
 
-  function startAddingRecitation(e: React.MouseEvent) {
-    e.stopPropagation()
-    setExpanded(true)
-    setRecExpanded(true)
-    add.start('recitation')
-  }
-
   return (
     <CourseGroupContext.Provider value={{ course, add }}>
       <div className="course-group">
@@ -55,35 +47,13 @@ export default function CourseGroup({ course }: { course: Course }) {
               <AddLectureInput />
             </LectureListProvider>
 
-            <li className="recitations-group">
-              <div className="recitations-header">
-                <button
-                  className="course-toggle recitations-toggle"
-                  onClick={() => setRecExpanded((v) => !v)}
-                  dir="auto"
-                >
-                  <span className="chevron">{recExpanded ? '▾' : '▸'}</span>
-                  <span>Recitations</span>
-                </button>
-                {!shiftHeld && (
-                  <button
-                    className="course-add-btn"
-                    onClick={startAddingRecitation}
-                    title="Add recitation"
-                  >
-                    +
-                  </button>
-                )}
-              </div>
-              {recExpanded && (
-                <ul className="lecture-list recitation-list">
-                  <LectureListProvider kind="recitation">
-                    <LectureList />
-                    <AddLectureInput />
-                  </LectureListProvider>
-                </ul>
-              )}
-            </li>
+            <RecitationsGroup
+              expand={{
+                isOpen: recExpanded,
+                toggle: () => setRecExpanded((v) => !v),
+                open: () => setRecExpanded(true),
+              }}
+            />
           </ul>
         )}
       </div>

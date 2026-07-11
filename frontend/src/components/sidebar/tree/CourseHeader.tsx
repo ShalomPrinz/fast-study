@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ExpandHandle } from '@/types'
 import { renameCourse, setCourseArchived } from '@/services/database'
 import { useSelection } from '@/hooks/useSelection'
 import { useShiftHeld } from '@/hooks/useShiftHeld'
@@ -9,13 +10,7 @@ import InlineEditInput from '@/components/InlineEditInput'
 import { useCourseGroup } from './CourseGroupContext'
 
 // Course header both reflects expand state and mutates it - toggle on click, open when adding a lecture
-export interface CourseExpand {
-  isOpen: boolean
-  toggle: () => void
-  open: () => void
-}
-
-export default function CourseHeader({ expand }: { expand: CourseExpand }) {
+export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { course, add } = useCourseGroup()
   const { selected, onSelect } = useSelection()
   const { refreshCourses } = useCourseTreeContext()
