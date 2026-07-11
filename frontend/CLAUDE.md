@@ -80,8 +80,9 @@ frontend/
         Sidebar.tsx             header + ModeToggle; declares the mode→{label, Component} map, no state/branching
         LecturesSidebar.tsx     lecture/course tree shell, no props — mounts PendingUploadProvider; body maps active/archived courses to <CourseGroup> + owns the archived-panel toggle
         tree/
-          CourseGroup.tsx       one course group (1 prop `course`): local expanded/recExpanded + per-group auto-expand; owns useAddLecture(course); provides CourseGroupContext. Course-header/lecture-list/recitations JSX + rename/drag/archive handlers currently inline here (being pushed into LectureItem/CourseHeader/… by the .refactor-plan.md A-steps)
+          CourseGroup.tsx       one course group (1 prop `course`): local expanded/recExpanded + per-group auto-expand; owns useAddLecture(course) + course-rename/archive; provides CourseGroupContext. Course-header/recitations JSX still inline here (being pushed into CourseHeader/RecitationsGroup/… by the .refactor-plan.md A-steps)
           CourseGroupContext.tsx  { course, add } + useCourseGroup() — one course group's shared course + add-lecture flow
+          LectureItem.tsx       one lecture/recitation row (props `lecture`, `kind`): local rename + drag-over; reads course via useCourseGroup(), plus useSelection()/usePendingUpload(). (A5 will drop `kind` to a LectureListContext → 1 prop)
         ModeToggle.tsx          owns the localStorage-persisted AppMode; renders the "Lectures"/"Courses" segments and the selected mode's body from the map
         CoursesList.tsx         overview sidebar body: flat list of non-archived courses → /course/:course
         NewCourseRow.tsx        inline "new course" input row
