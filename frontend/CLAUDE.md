@@ -68,6 +68,7 @@ frontend/
       useLatestRequest.ts      returns a wrapper that resolves only the most recent in-flight promise, dropping superseded responses
       useShiftHeld.ts          tracks whether the Shift key is currently held
       useSelection.ts          route-derived { selected, onSelect } — reads useMatch + useKindParam, navigates via lectureRoute()
+      useAddLecture.ts         per-course add-lecture/recitation flow → { target, edit, start, cancel, commit } (backs CourseGroup's add)
     routes/
       Layout.tsx                routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
       MainView.tsx
@@ -77,7 +78,10 @@ frontend/
       sidebar/
         index.ts                re-exports Sidebar as the default
         Sidebar.tsx             header + ModeToggle; declares the mode→{label, Component} map, no state/branching
-        LecturesSidebar.tsx     lecture/course tree body, no props — shell mounts PendingUploadProvider around the body, which derives selection via useSelection()
+        LecturesSidebar.tsx     lecture/course tree shell, no props — mounts PendingUploadProvider; body maps active/archived courses to <CourseGroup> + owns the archived-panel toggle
+        tree/
+          CourseGroup.tsx       one course group (1 prop `course`): local expanded/recExpanded + per-group auto-expand; owns useAddLecture(course); provides CourseGroupContext. Course-header/lecture-list/recitations JSX + rename/drag/archive handlers currently inline here (being pushed into LectureItem/CourseHeader/… by the .refactor-plan.md A-steps)
+          CourseGroupContext.tsx  { course, add } + useCourseGroup() — one course group's shared course + add-lecture flow
         ModeToggle.tsx          owns the localStorage-persisted AppMode; renders the "Lectures"/"Courses" segments and the selected mode's body from the map
         CoursesList.tsx         overview sidebar body: flat list of non-archived courses → /course/:course
         NewCourseRow.tsx        inline "new course" input row
