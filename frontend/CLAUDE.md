@@ -67,6 +67,7 @@ frontend/
       useReportOnce.ts         dedupes `(key, msg)` pairs sent to a callback; backs RunnerStatusContext's per-lecture + runner-crash error fan-out
       useLatestRequest.ts      returns a wrapper that resolves only the most recent in-flight promise, dropping superseded responses
       useShiftHeld.ts          tracks whether the Shift key is currently held
+      useSelection.ts          route-derived { selected, onSelect } — reads useMatch + useKindParam, navigates via lectureRoute()
     routes/
       Layout.tsx                routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
       MainView.tsx
@@ -76,14 +77,14 @@ frontend/
       sidebar/
         index.ts                re-exports Sidebar as the default
         Sidebar.tsx             header + ModeToggle; declares the mode→{label, Component} map, no state/branching
-        LecturesSidebar.tsx     lecture/course tree body, no props — derives selection via useMatch + useKindParam, navigates via lectureRoute()
+        LecturesSidebar.tsx     lecture/course tree body, no props — shell mounts PendingUploadProvider around the body, which derives selection via useSelection()
         ModeToggle.tsx          owns the localStorage-persisted AppMode; renders the "Lectures"/"Courses" segments and the selected mode's body from the map
         CoursesList.tsx         overview sidebar body: flat list of non-archived courses → /course/:course
         NewCourseRow.tsx        inline "new course" input row
         RunnerPipelineRow.tsx   runner status/CTA row; click while running to jump to current lecture
         RefreshCoursesButton.tsx  manual tree-refresh button (reads CourseTreeContext)
         PaginatedList.tsx       generic "show more" chunked list
-        PendingUploadModal.tsx  pending-video upload modal + usePendingUpload hook
+        PendingUploadModal.tsx  PendingUploadProvider (owns pending state, renders its own replace-confirm modal) + usePendingUpload() context → { trigger, confirm }
       InlineEditInput.tsx       shared inline-edit input (Enter=commit, Escape/Blur=cancel)
       PdfViewer.tsx
       ConfirmModal.tsx

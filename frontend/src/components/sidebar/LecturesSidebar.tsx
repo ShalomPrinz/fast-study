@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
-import { useMatch, useNavigate } from 'react-router-dom'
-import type { Course, Lecture, Selected, Kind } from '@/types'
+import type { Course, Lecture, Kind } from '@/types'
 import { createLecture, renameCourse, renameLecture, setCourseArchived } from '@/services/database'
 import { toast } from '@/services/toaster'
 import { useShiftHeld } from '@/hooks/useShiftHeld'
-import { useKindParam } from '@/hooks/useKindParam'
-import { lectureRoute } from '@/utils/url'
+import { useSelection } from '@/hooks/useSelection'
 import Icon from '@/components/Icon'
 import InlineEditInput from '@/components/InlineEditInput'
 import NewCourseRow from './NewCourseRow'
-import { usePendingUpload } from './PendingUploadModal'
+import { usePendingUpload, PendingUploadProvider } from './PendingUploadModal'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import PaginatedList from './PaginatedList'
 import { useInlineEdit } from '@/hooks/useInlineEdit'
@@ -27,17 +25,15 @@ function recitationGroupKey(courseName: string): string {
 }
 
 export default function LecturesSidebar() {
-  const navigate = useNavigate()
-  const kind = useKindParam()
-  const match = useMatch('/:course/:lecture/*')
-  const selected: Selected | null = match?.params.course && match?.params.lecture
-    ? { course: match.params.course, lecture: match.params.lecture, kind }
-    : null
+  return (
+    <PendingUploadProvider>
+      <LecturesSidebarBody />
+    </PendingUploadProvider>
+  )
+}
 
-  function onSelect(course: string, lecture: string, k: Kind) {
-    navigate(lectureRoute(course, lecture, k))
-  }
-
+function LecturesSidebarBody() {
+  const { selected, onSelect } = useSelection()
   const { courses, refreshCourses } = useCourseTreeContext()
   const expanded = useToggleSet(courses.map((c) => c.name))
   const recitationsExpanded = useToggleSet(courses.map((c) => recitationGroupKey(c.name)))
@@ -329,8 +325,6 @@ export default function LecturesSidebar() {
           )}
         </nav>
       )}
-
-      {upload.modal}
     </>
   )
 }
