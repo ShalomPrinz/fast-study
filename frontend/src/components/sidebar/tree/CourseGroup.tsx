@@ -1,29 +1,24 @@
 import { useState, useEffect, useRef } from 'react'
-import type { Course, Kind } from '@/types'
-import { renameCourse, setCourseArchived } from '@/services/database'
+import type { Course } from '@/types'
 import { useSelection } from '@/hooks/useSelection'
 import { useShiftHeld } from '@/hooks/useShiftHeld'
-import { useInlineEdit } from '@/hooks/useInlineEdit'
 import { useAddLecture } from '@/hooks/useAddLecture'
 import { useCourseTreeContext } from '@/contexts/CourseTreeContext'
-import Icon from '@/components/Icon'
 import InlineEditInput from '@/components/InlineEditInput'
 import PaginatedList from '@/components/sidebar/PaginatedList'
 import { CourseGroupContext } from './CourseGroupContext'
+import CourseHeader from './CourseHeader'
 import LectureItem from './LectureItem'
 
 export default function CourseGroup({ course }: { course: Course }) {
-  const { selected, onSelect } = useSelection()
+  const { selected } = useSelection()
   const { refreshCourses } = useCourseTreeContext()
   const shiftHeld = useShiftHeld()
   const add = useAddLecture(course)
 
   const [expanded, setExpanded] = useState(false)
   const [recExpanded, setRecExpanded] = useState(false)
-  const [renamingCourse, setRenamingCourse] = useState(false)
   const didAutoExpandRef = useRef(false)
-
-  const renameCourseEdit = useInlineEdit(renamingCourse ? course.name : null)
 
   // Auto-expand this group the first time it becomes the selected course (e.g. deep link).
   useEffect(() => {
@@ -39,35 +34,11 @@ export default function CourseGroup({ course }: { course: Course }) {
     refreshCourses()
   }
 
-  function startAdding(e: React.MouseEvent, kind: Kind) {
+  function startAddingRecitation(e: React.MouseEvent) {
     e.stopPropagation()
     setExpanded(true)
-    if (kind === 'recitation') setRecExpanded(true)
-    add.start(kind)
-  }
-
-  function startRenamingCourse(e: React.MouseEvent) {
-    e.preventDefault()
-    setRenamingCourse(true)
-    renameCourseEdit.setValue(course.name)
-  }
-
-  async function commitRenameCourse() {
-    const name = renameCourseEdit.value.trim()
-    setRenamingCourse(false)
-    renameCourseEdit.setValue('')
-    if (!name || name === course.name) return
-    await renameCourse(course.name, name)
-    if (selected?.course === course.name) {
-      onSelect(name, selected.lecture, selected.kind)
-    }
-    refreshCourses()
-  }
-
-  async function toggleArchived(e: React.MouseEvent) {
-    e.stopPropagation()
-    await setCourseArchived(course.name, !course.archived)
-    refreshCourses()
+    setRecExpanded(true)
+    add.start('recitation')
   }
 
   const isAddingLecture = add.target?.kind === 'lecture'
@@ -76,46 +47,9 @@ export default function CourseGroup({ course }: { course: Course }) {
   return (
     <CourseGroupContext.Provider value={{ course, add }}>
       <div className="course-group">
-        <div className="course-header">
-          {renamingCourse ? (
-            <InlineEditInput
-              edit={renameCourseEdit}
-              onCommit={commitRenameCourse}
-              onCancel={() => { setRenamingCourse(false); renameCourseEdit.setValue('') }}
-            />
-          ) : (
-          <button
-            className="course-toggle"
-            onClick={(e) => {
-              if (e.shiftKey) startRenamingCourse(e)
-              else toggleCourse()
-            }}
-            dir="auto"
-          >
-            <span className="chevron">{expanded ? '▾' : '▸'}</span>
-            <span>{course.name}</span>
-          </button>
-          )}
-          {!renamingCourse && (
-            shiftHeld ? (
-              <button
-                className="course-add-btn course-archive-btn"
-                onClick={toggleArchived}
-                title={course.archived ? 'Unarchive course' : 'Archive course'}
-              >
-                <Icon icon={course.archived ? 'unarchive' : 'archive'} />
-              </button>
-            ) : (
-              <button
-                className="course-add-btn"
-                onClick={(e) => startAdding(e, 'lecture')}
-                title="Add lecture"
-              >
-                +
-              </button>
-            )
-          )}
-        </div>
+        <CourseHeader
+          expand={{ isOpen: expanded, toggle: toggleCourse, open: () => setExpanded(true) }}
+        />
 
         {expanded && (
           <ul className="lecture-list">
@@ -150,7 +84,7 @@ export default function CourseGroup({ course }: { course: Course }) {
                 {!shiftHeld && (
                   <button
                     className="course-add-btn"
-                    onClick={(e) => startAdding(e, 'recitation')}
+                    onClick={startAddingRecitation}
                     title="Add recitation"
                   >
                     +
