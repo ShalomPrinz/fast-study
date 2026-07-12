@@ -4,6 +4,16 @@
 
 A Chrome extension (Manifest V3) plus a tiny local Node server that together capture video streams from web pages and hand them off to the database service, which writes `{DATA_ROOT}/{course}/{lecture}/video.mp4` so the backend's `/run/audio` step can pick them up with no manual file moves. Two source paths:
 
+## Layout
+
+```
+extension/regular/   Chrome MV3 extension: background.js, manifest.json, popup.html, popup.js
+extension/simple/    Simplified extension-only variant (no server; saves to Downloads/)
+server/              server.js (the npm-start server) + package.json
+auto/                Standalone auto-downloader (talks to the server over HTTP)
+```
+
+
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
 - **YouTube** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing.
 - **PDF** — when the active tab is a `.pdf`, the popup fetches it directly (with the user's cookies) and uploads it as `material.pdf`; no header replay needed since PDFs aren't token-gated.
@@ -11,12 +21,12 @@ A Chrome extension (Manifest V3) plus a tiny local Node server that together cap
 ## Running
 
 ```bash
-npm start         # starts server.js on port 3052 (no deps; uses Node stdlib only)
+npm --prefix downloader/server start   # starts server/server.js on port 3052 (no deps; Node stdlib only)
 ```
 
-The Chrome extension is loaded unpacked from this folder. `server.js` only accepts requests from one hardcoded extension ID (`EXTENSION_ID`); if you reload the extension and Chrome assigns a new ID, update that constant or CORS will block the popup.
+The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). `server/server.js` only accepts requests from one hardcoded extension ID (`EXTENSION_ID`); if you reload the extension and Chrome assigns a new ID, update that constant in `server/server.js` or CORS will block the popup.
 
-`server.js` reads `../.env` at startup (no `dotenv` dep — tiny inline parser) to pick up `DATABASE_URL` (default `http://localhost:8001`). It no longer touches `DATA_ROOT` itself — all filesystem I/O goes through the database service.
+`server/server.js` reads the repo-root `.env` (`path.resolve(__dirname, '..', '..', '.env')`, no `dotenv` dep — tiny inline parser) to pick up `DATABASE_URL` (default `http://localhost:8001`). It no longer touches `DATA_ROOT` itself — all filesystem I/O goes through the database service.
 
 ## Architecture
 

@@ -2,8 +2,8 @@
 
 A Chrome extension that grabs lecture videos (and PDFs) off the page you're watching. Two completely separate variants live in this folder:
 
-- **Full setup** (this folder — `downloader/`) — Chrome extension + Node server. Files land directly inside the `fast_study` app and the pipeline picks them up automatically. Supports YouTube via `yt-dlp`.
-- **Simple setup** (`downloader/simple_version/`) — Chrome extension only, **no Node.js, no server, no other services**. Files save to `Downloads\fast_study\<your file name>.<ext>`.
+- **Full setup** (`downloader/extension/regular` + `downloader/server`) — Chrome extension + Node server. Files land directly inside the `fast_study` app and the pipeline picks them up automatically. Supports YouTube via `yt-dlp`.
+- **Simple setup** (`downloader/extension/simple/`) — Chrome extension only, **no Node.js, no server, no other services**. Files save to `Downloads\fast_study\<your file name>.<ext>`.
 
 Pick the one that matches you below.
 
@@ -11,7 +11,7 @@ Pick the one that matches you below.
 
 ## For Non-Technical Users (Simple — no Node.js)
 
-You only need **Google Chrome**. Nothing else. You'll be loading the **`simple_version`** subfolder as a Chrome extension.
+You only need **Google Chrome**. Nothing else. You'll be loading the **`extension\simple`** subfolder as a Chrome extension.
 
 ### What you'll get
 
@@ -30,7 +30,7 @@ You type the file name you want — that's the only input.
 2. Open Google Chrome and go to: `chrome://extensions`
 3. In the top-right, turn on **Developer mode**.
 4. Click **Load unpacked** (top-left).
-5. Pick the **`downloader\simple_version`** folder (not the parent `downloader` folder). The extension *Fast Study Downloader (Simple)* should now appear in the list.
+5. Pick the **`downloader\extension\simple`** folder (not the parent `downloader` folder). The extension *Fast Study Downloader (Simple)* should now appear in the list.
 6. (Optional) Click the puzzle-piece icon in Chrome's toolbar and pin the extension so its icon stays visible.
 
 That's it. No installs, no terminal, no servers.
@@ -56,13 +56,13 @@ That's it. No installs, no terminal, no servers.
 
 ## For Technical Users (full setup, with Node.js)
 
-This is the full pipeline integration: the extension talks to a tiny local Node server (`server.js`), which calls `curl` (or `yt-dlp` for YouTube), and writes the file directly into the `fast_study` data tree via the database service. Auto-triggers the rest of the pipeline.
+This is the full pipeline integration: the extension talks to a tiny local Node server (`server/server.js`), which calls `curl` (or `yt-dlp` for YouTube), and writes the file directly into the `fast_study` data tree via the database service. Auto-triggers the rest of the pipeline.
 
 ### Requirements (Windows)
 
 | Tool | Why | Install on Windows |
 |---|---|---|
-| **Node.js 18+** | Runs `server.js` | <https://nodejs.org/> — pick the LTS Windows Installer |
+| **Node.js 18+** | Runs `server/server.js` | <https://nodejs.org/> — pick the LTS Windows Installer |
 | **curl** | Replays captured headers to download `.mp4` | Already bundled with Windows 10/11 (`curl.exe` in `System32`) |
 | **yt-dlp** | YouTube downloads | `winget install yt-dlp` (or download `yt-dlp.exe` from <https://github.com/yt-dlp/yt-dlp/releases> and add it to PATH) |
 | **Google Chrome** | The extension | <https://www.google.com/chrome/> |
@@ -76,9 +76,9 @@ The Node server itself has **zero npm dependencies** — no `npm install` step n
 3. Load the extension in Chrome:
    - Open `chrome://extensions`
    - Enable **Developer mode** (top-right)
-   - **Load unpacked** → select the **`downloader`** folder (not `simple_version`)
+   - **Load unpacked** → select the **`downloader\extension\regular`** folder (not `extension\simple`)
    - Pin the extension to the toolbar (optional but recommended)
-4. Note the **extension ID** Chrome assigned (looks like `abcdefghijklmnop...` on the extensions page). Open `downloader\server.js` and set the `EXTENSION_ID` constant to that value, or CORS will block the popup.
+4. Note the **extension ID** Chrome assigned (looks like `abcdefghijklmnop...` on the extensions page). Open `downloader\server\server.js` and set the `EXTENSION_ID` constant to that value, or CORS will block the popup.
 
 ### Run
 
@@ -93,7 +93,7 @@ That boots backend + frontend + downloader + database together. Logs prefixed `D
 Or, downloader-only:
 
 ```powershell
-cd downloader
+cd downloader\server
 npm start
 ```
 
@@ -116,8 +116,8 @@ npm start
 
 ### Troubleshooting
 
-- **Popup says "Server offline - start `npm start` in downloader/"** — start the server with `npm start` in `downloader\` (or `npm run dev` at the repo root).
-- **CORS error in DevTools** — the extension ID changed. Update `EXTENSION_ID` in `server.js` and restart.
+- **Popup says "Server offline - start `npm start` in downloader/"** — start the server with `npm start` in `downloader\server\` (or `npm run dev` at the repo root).
+- **CORS error in DevTools** — the extension ID changed. Update `EXTENSION_ID` in `server\server.js` and restart.
 - **YouTube downloads fail** — confirm `yt-dlp --version` works in your terminal. Recent versions also need Node.js on PATH for YouTube's player script (which you already have).
 - **Headers replay fails with 403** — the captured request expired. Reload the lecture page, let the video play a few seconds, then try again.
 
@@ -125,7 +125,7 @@ npm start
 
 ## Which one should I use?
 
-| | Simple (`simple_version/`) | Full (`downloader/`) |
+| | Simple (`extension/simple/`) | Full (`extension/regular` + `server/`) |
 |---|---|---|
 | Installs needed | Chrome only | Chrome + Node.js (+ `yt-dlp` for YouTube) |
 | YouTube support | ❌ | ✅ |
