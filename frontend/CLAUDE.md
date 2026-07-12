@@ -31,88 +31,105 @@ npm run build    # tsc -b && vite build → dist/
 ```
 frontend/
   src/
-    services/
-      http.ts                  typed fetch client + shared `httpError`
-      backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus, overview: fetchOverviewExtractors, runOverview, fetchCourseStatus)
-      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file, fetchCourseMeta for the per-slug overview meta/ranges)
-      events.ts         singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
-      toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
-    constants/
-      pipeline.ts              PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
-      overview.ts              OVERVIEW_STEPS (phase→suffix→label table: extract.txt/analyze.md/topics.md/to_pdf.pdf) + stepsFor(phases) to pick one extractor's subset; generatedFiles/lastGeneratedFile/startedSlug all take an extractor's phases and operate on stepsFor(phases) (topics → topics.md+topics.pdf, no .txt); branchStatus(status, files, slug, phases) → { running, done, error } (pure, + BranchStatus type)
-    contexts/
-      RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
-      CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
-    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, OverviewMeta ({slug → {lectures/recitations: {start,end}|null, generatedAt}}), InlineEdit, ExpandHandle (collapse/expand handle for a child whose open-state its parent owns), …
     App.tsx                  React Router routes; renders Layout + the three views
     main.tsx                 React entry point
     index.css                Single flat stylesheet, CSS variables for theming
+    types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, OverviewMeta ({slug → {lectures/recitations: {start,end}|null, generatedAt}}), InlineEdit, ExpandHandle (collapse/expand handle for a child whose open-state its parent owns), …
     vite-env.d.ts            /// <reference types="vite/client" />
-    utils/
-      inFlightKey.ts
-      namingSuggestion.ts
-      url.ts                   all URL/path string building: path`` encode-by-default tagged template, kindQuery() query suffix, lectureRoute() browser route, lectureBase() API path, courseRoute() browser route + courseOverviewBase() API path + extractorsQuery() CSV suffix + overviewGenerateQuery() (extractors CSV + optional from_phase + optional skip_existing) for the course overview feature
-      courseTree.ts            findLecture(courses, course, lecture, kind)
-      overview.ts              formatRange(entry) — "Lectures 2-9, Recitations 1-4" / "No Lectures"/"No Recitations" from an OverviewMeta entry
-      format.ts                formatDuration(seconds) + formatMonthDate(iso) ("10th July") / formatFullTimestamp(iso) ("Friday, 10 July 2026, 14:32") for overview meta subtitle
-      lectureSort.ts           sortLectures(items) — natural-order sort of lectures/recitations by name
-    hooks/
-      useInlineEdit.ts         generic inline-input editing
-      useKindParam.ts          reads ?kind=recitation from useSearchParams, returns a Kind
-      useLectureRoute.ts       reads { course, lecture, kind } from useParams + useKindParam and derives { files, transcribePartial } from CourseTreeContext
-      useNotify.ts             subscribes to SSE notify events via services/events.ts singleton; callback stays fresh via ref
-      useToggleSet.ts          string-keyed expand/collapse set with toggle/add + auto-prune to valid keys
-      useTimingStats.ts        (step, fileSize) -> TimingStats, with staleness guard for late responses
-      useRemoteInflightState.ts  synthesizes an inflight descriptor when the runner is processing the open lecture
-      useReportOnce.ts         dedupes `(key, msg)` pairs sent to a callback; backs RunnerStatusContext's per-lecture + runner-crash error fan-out
-      useLatestRequest.ts      returns a wrapper that resolves only the most recent in-flight promise, dropping superseded responses
-      useShiftHeld.ts          tracks whether the Shift key is currently held
-      useSelection.ts          route-derived { selected, onSelect } — reads useMatch + useKindParam, navigates via lectureRoute()
-      useAddLecture.ts         per-course add-lecture/recitation flow → { target, edit, start, cancel, commit } (backs CourseGroup's add)
-    routes/
-      Layout.tsx                routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
-      MainView.tsx
-      EditSummaryView.tsx
-      course/
-        CourseOverviewContext.tsx  data-only provider (1 prop `course`): owns the extractors/files/meta/status fetches (two effects + three useLatestRequest + useNotify(refresh)) and exposes { course, extractors, files, meta, status, generate } via useCourseOverview(). `generate(names?, fromPhase?, skipExisting?)` calls runOverview + refresh and returns the RunInitResult without toasting (consumers toast)
-        GenerateAllButton.tsx      0 props: the header "Generate All"/"Continue Generating" run control; reads useCourseOverview(), derives running/hasStarted, owns its own generate(…, skipExisting=true) → toastInitResult
-        ExtractorContext.tsx       { extractor, expanded, toggleExpanded, confirmRegenerate } + useExtractor() — one extractor row's shared extractor + expand/regenerate controls
-        BranchIndicator.tsx        1 prop `status: BranchStatus`, pure: the ✓/spinner/⚠/dot glyph for one extractor's final PDF
-        ExtractorHeader.tsx        0 props: one extractor's header row (caret/title/subtitle toggle + BranchIndicator + open-PDF + regenerate ↺ / "Generate"); reads useExtractor() + useCourseOverview(), owns handleGenerate → toastInitResult, ↺ calls context confirmRegenerate
-        ExtractorRow.tsx           1 prop `extractor`: one extractor row. Reads useCourseOverview(); owns local `expanded` (default false — rows start collapsed, provided via ExtractorContext) + the whole-extractor regenerate modal; provides ExtractorContext; renders <ExtractorHeader/> + <ExtractorSteps/>
-        ExtractorSteps.tsx         0 props: reads extractor+expanded from useExtractor(), returns null when collapsed else the course-steps div mapping stepsFor(extractor.phases) → <StepRow>
-        StepRow.tsx                1 prop `step: OverviewStep`: one phase's file-row (status glyph, PDF-only open, per-step ↺). Reads useCourseOverview()+useExtractor(), computes its own rebuilds, owns a local regenerate modal → generate([slug], step.phase) + toastInitResult
-      CourseView.tsx          per-course overview shell: reads `course` from useParams, renders <CourseOverviewProvider> wrapping an inline CourseOverviewBody that reads { course, extractors, status } + the once-per-error toast effect, and maps extractors → <ExtractorRow extractor={e} />. Per-extractor row with a caret (useToggleSet) that expands a per-phase breakdown filtered to that extractor's phases (stepsFor(extractor.phases) — pattern extractors show {slug}.txt/.md/.pdf, the immediate topics extractor shows {slug}.md(Collect)/.pdf with no .txt row), ✓/spinner, PDF-only open button, per-step ↺ re-generate-from-here; header has "Generate" (→ ↺ re-generate-all once the last file exists, + open-PDF) + a "Continue Generating"/"Generate All" button (skip_existing, fills only missing work, no warning); SSE-refreshed status
-    components/
-      sidebar/
+
+    app/
+      Layout.tsx             routes outlet + CourseTreeProvider + RunnerStatusProvider + Sidebar + ToastContainer
+
+    services/                per-concern boundary layer, shared by both features (never split by feature)
+      http.ts                  typed fetch client + shared `httpError`
+      backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus, overview: fetchOverviewExtractors, runOverview, fetchCourseStatus)
+      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file, fetchCourseMeta for the per-slug overview meta/ranges)
+      events.ts                singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
+      toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
+
+    shared/                  cross-feature building blocks (imported by both features)
+      components/
+        ConfirmModal.tsx
+        Icon.tsx
+      contexts/              the two app-wide providers Layout mounts
+        RunnerStatusContext.tsx  Shared RunnerStatus state + a single EventSource and dedupe ref (provider wraps Layout)
+        CourseTreeContext.tsx    Owns courses state + refreshCourses; SSE-driven refresh via useNotify
+      hooks/                 the hooks with cross-feature consumers
+        useNotify.ts             subscribes to SSE notify events via services/events.ts singleton; callback stays fresh via ref
+        useKindParam.ts          reads ?kind=recitation from useSearchParams, returns a Kind
+        useLatestRequest.ts      returns a wrapper that resolves only the most recent in-flight promise, dropping superseded responses
+        useReportOnce.ts         dedupes `(key, msg)` pairs sent to a callback; backs RunnerStatusContext's per-lecture + runner-crash error fan-out
+      utils/
+        url.ts                   all URL/path string building: path`` encode-by-default tagged template, kindQuery() query suffix, lectureRoute() browser route, lectureBase() API path, courseRoute() browser route + courseOverviewBase() API path + extractorsQuery() CSV suffix + overviewGenerateQuery() (extractors CSV + optional from_phase + optional skip_existing) for the course overview feature
+        format.ts                formatDuration(seconds) + formatMonthDate(iso) ("10th July") / formatFullTimestamp(iso) ("Friday, 10 July 2026, 14:32") for overview meta subtitle
+        inFlightKey.ts           (course, lecture, kind) → skey; consumed only by shared/contexts/RunnerStatusContext.tsx
+      sidebar/               the mode-agnostic sidebar shell (each mode body lives in its own feature)
         index.ts                re-exports Sidebar as the default
         Sidebar.tsx             header + ModeToggle; declares the mode→{label, Component} map, no state/branching
-        LecturesSidebar.tsx     lecture/course tree shell, no props — mounts PendingUploadProvider; body renders NewCourseRow + RunnerPipelineRow + the active-course <CourseGroup> nav + <ArchivedSection>
-        tree/
-          CourseGroup.tsx       one course group (1 prop `course`): owns expanded/recExpanded + per-group auto-expand + useAddLecture(course); provides CourseGroupContext; renders <CourseHeader> + a <LectureListProvider kind="lecture"> wrapping <LectureList/><AddLectureInput/> + <RecitationsGroup>. Hands CourseHeader/RecitationsGroup 1-prop ExpandHandles since both expand states live here (so recExpanded persists across course collapse)
-          CourseGroupContext.tsx  { course, add } + useCourseGroup() — one course group's shared course + add-lecture flow
-          CourseHeader.tsx      course-header row (1 prop `expand: ExpandHandle`): local course-rename; owns toggleArchived + lecture-add; reads useCourseGroup()/useSelection()/useShiftHeld()/useCourseTreeContext()
-          RecitationsGroup.tsx  recitations sub-group (1 prop `expand: ExpandHandle`): owns the recitations "+" + useShiftHeld() gate; renders <LectureListProvider kind="recitation"> with <LectureList/><AddLectureInput/>
-          LectureListContext.tsx  1-member `kind` context (LectureListProvider + useLectureListKind()) — which list (lecture vs recitation) a subtree renders
-          LectureList.tsx       0 props: the PaginatedList of <LectureItem> for the provider's kind (course.lectures vs course.recitations)
-          AddLectureInput.tsx   0 props: the inline new-lecture/recitation input row; renders only in the list whose kind is currently being added (add.target.kind === useLectureListKind())
-          ArchivedSection.tsx   0 props: the archived-courses footer toggle + collapsible panel (local showArchived; reads archived from useCourseTreeContext())
-          LectureItem.tsx       one lecture/recitation row (1 prop `lecture`): local rename + drag-over; reads kind via useLectureListKind(), course via useCourseGroup(), plus useSelection()/usePendingUpload()
         ModeToggle.tsx          owns the localStorage-persisted AppMode; renders the "Lectures"/"Courses" segments and the selected mode's body from the map
-        CoursesList.tsx         overview sidebar body: flat list of non-archived courses → /course/:course
-        NewCourseRow.tsx        inline "new course" input row
-        RunnerPipelineRow.tsx   runner status/CTA row; click while running to jump to current lecture
         RefreshCoursesButton.tsx  manual tree-refresh button (reads CourseTreeContext)
-        PaginatedList.tsx       generic "show more" chunked list
-        PendingUploadModal.tsx  PendingUploadProvider (owns pending state, renders its own replace-confirm modal) + usePendingUpload() context → { trigger, confirm }
-      InlineEditInput.tsx       shared inline-edit input (Enter=commit, Escape/Blur=cancel)
-      PdfViewer.tsx
-      ConfirmModal.tsx
-      Icon.tsx
+
+    features/
+      lectures/              the Lectures mode: pipeline views + the lecture/course tree sidebar
+        MainView.tsx
+        EditSummaryView.tsx
+        sidebar/
+          LecturesSidebar.tsx   lecture/course tree shell, no props — mounts PendingUploadProvider; body renders NewCourseRow + RunnerPipelineRow + the active-course <CourseGroup> nav + <ArchivedSection>
+          NewCourseRow.tsx      inline "new course" input row
+          RunnerPipelineRow.tsx runner status/CTA row; click while running to jump to current lecture
+          PendingUploadModal.tsx  PendingUploadProvider (owns pending state, renders its own replace-confirm modal) + usePendingUpload() context → { trigger, confirm }
+          tree/
+            CourseGroup.tsx       one course group (1 prop `course`): owns expanded/recExpanded + per-group auto-expand + useAddLecture(course); provides CourseGroupContext; renders <CourseHeader> + a <LectureListProvider kind="lecture"> wrapping <LectureList/><AddLectureInput/> + <RecitationsGroup>. Hands CourseHeader/RecitationsGroup 1-prop ExpandHandles since both expand states live here (so recExpanded persists across course collapse)
+            CourseGroupContext.tsx  { course, add } + useCourseGroup() — one course group's shared course + add-lecture flow
+            CourseHeader.tsx      course-header row (1 prop `expand: ExpandHandle`): local course-rename; owns toggleArchived + lecture-add; reads useCourseGroup()/useSelection()/useShiftHeld()/useCourseTreeContext()
+            RecitationsGroup.tsx  recitations sub-group (1 prop `expand: ExpandHandle`): owns the recitations "+" + useShiftHeld() gate; renders <LectureListProvider kind="recitation"> with <LectureList/><AddLectureInput/>
+            LectureListContext.tsx  1-member `kind` context (LectureListProvider + useLectureListKind()) — which list (lecture vs recitation) a subtree renders
+            LectureList.tsx       0 props: the PaginatedList of <LectureItem> for the provider's kind (course.lectures vs course.recitations)
+            AddLectureInput.tsx   0 props: the inline new-lecture/recitation input row; renders only in the list whose kind is currently being added (add.target.kind === useLectureListKind())
+            ArchivedSection.tsx   0 props: the archived-courses footer toggle + collapsible panel (local showArchived; reads archived from useCourseTreeContext())
+            LectureItem.tsx       one lecture/recitation row (1 prop `lecture`): local rename + drag-over; reads kind via useLectureListKind(), course via useCourseGroup(), plus useSelection()/usePendingUpload()
+        components/          single-consumer primitives (only used inside this feature today)
+          InlineEditInput.tsx     shared inline-edit input (Enter=commit, Escape/Blur=cancel)
+          PaginatedList.tsx       generic "show more" chunked list
+          PdfViewer.tsx
+        hooks/
+          useLectureRoute.ts     reads { course, lecture, kind } from useParams + useKindParam and derives { files, transcribePartial } from CourseTreeContext
+          useAddLecture.ts       per-course add-lecture/recitation flow → { target, edit, start, cancel, commit } (backs CourseGroup's add)
+          useSelection.ts        route-derived { selected, onSelect } — reads useMatch + useKindParam, navigates via lectureRoute()
+          useRemoteInflightState.ts  synthesizes an inflight descriptor when the runner is processing the open lecture
+          useTimingStats.ts      (step, fileSize) -> TimingStats, with staleness guard for late responses
+          useInlineEdit.ts       generic inline-input editing
+          useShiftHeld.ts        tracks whether the Shift key is currently held
+        constants/
+          pipeline.ts            PIPELINE step list + derived STEP_FILE / STEP_INPUT_FILE / STEP_LABEL / STEP_ERROR_LABEL / STEP_SET maps
+        utils/
+          courseTree.ts          findLecture(courses, course, lecture, kind)
+          lectureSort.ts         sortLectures(items) — natural-order sort of lectures/recitations by name
+          namingSuggestion.ts
+
+      course-overview/      the Courses mode: per-course overview + the flat course-list sidebar body
+        CourseView.tsx          per-course overview shell: reads `course` from useParams, renders <CourseOverviewProvider> wrapping an inline CourseOverviewBody that reads { course, extractors, status } + the once-per-error toast effect, and maps extractors → <ExtractorRow extractor={e} />
+        CoursesList.tsx         overview sidebar body: flat list of non-archived courses → /course/:course
+        components/
+          BranchIndicator.tsx     1 prop `status: BranchStatus`, pure: the ✓/spinner/⚠/dot glyph for one extractor's final PDF
+          ExtractorHeader.tsx     0 props: one extractor's header row (caret/title/subtitle toggle + BranchIndicator + open-PDF + regenerate ↺ / "Generate"); reads useExtractor() + useCourseOverview(), owns handleGenerate → toastInitResult, ↺ calls context confirmRegenerate
+          ExtractorRow.tsx        1 prop `extractor`: one extractor row. Reads useCourseOverview(); owns local `expanded` (default false — rows start collapsed, provided via ExtractorContext) + the whole-extractor regenerate modal; provides ExtractorContext; renders <ExtractorHeader/> + <ExtractorSteps/>
+          ExtractorSteps.tsx      0 props: reads extractor+expanded from useExtractor(), returns null when collapsed else the course-steps div mapping stepsFor(extractor.phases) → <StepRow>
+          GenerateAllButton.tsx   0 props: the header "Generate All"/"Continue Generating" run control; reads useCourseOverview(), derives running/hasStarted, owns its own generate(…, skipExisting=true) → toastInitResult
+          StepRow.tsx             1 prop `step: OverviewStep`: one phase's file-row (status glyph, PDF-only open, per-step ↺). Reads useCourseOverview()+useExtractor(), computes its own rebuilds, owns a local regenerate modal → generate([slug], step.phase) + toastInitResult
+        contexts/
+          CourseOverviewContext.tsx  data-only provider (1 prop `course`): owns the extractors/files/meta/status fetches (two effects + three useLatestRequest + useNotify(refresh)) and exposes { course, extractors, files, meta, status, generate } via useCourseOverview(). `generate(names?, fromPhase?, skipExisting?)` calls runOverview + refresh and returns the RunInitResult without toasting (consumers toast)
+          ExtractorContext.tsx    { extractor, expanded, toggleExpanded, confirmRegenerate } + useExtractor() — one extractor row's shared extractor + expand/regenerate controls
+        constants/
+          overview.ts             OVERVIEW_STEPS (phase→suffix→label table: extract.txt/analyze.md/topics.md/to_pdf.pdf) + stepsFor(phases) to pick one extractor's subset; generatedFiles/lastGeneratedFile/startedSlug all take an extractor's phases and operate on stepsFor(phases) (topics → topics.md+topics.pdf, no .txt); branchStatus(status, files, slug, phases) → { running, done, error } (pure, + BranchStatus type)
+        utils/
+          overview.ts             formatRange(entry) — "Lectures 2-9, Recitations 1-4" / "No Lectures"/"No Recitations" from an OverviewMeta entry
   vite.config.ts             plain React plugin — no fs plugin
   tsconfig.json
   index.html
 ```
+
+Layout: root files stay flat; `app/` holds the shell `Layout`; `services/` is the per-concern boundary layer (not split by feature); `shared/` holds cross-feature building blocks; each mode is a slice under `features/` owning its own views, sidebar body, components, hooks, contexts, constants, and utils. Imports across any of these dirs use the `@/` alias; only same-dir siblings go relative.
 
 ## Routing
 
@@ -134,8 +151,8 @@ frontend/
 - **Runner status is SSE-driven, not polled.** `RunnerStatusContext` calls `useNotify(refresh)` to refetch `GET /status` on each `notify` ping. The backend's `runner.py` fires a notify on every meaningful state change (step start/done, rate-limit, error, run complete). The provider also de-dupes `lastError` toasts via a ref so the same error doesn't fire twice. Sidebar and MainView share runner state by reading from the context.
 - **No FastAPI calls for filesystem state.** Don't add a backend endpoint to query "does file X exist." That belongs in the database service.
 - **Connection-refused errors are handled centrally in the http client.** When a `fetch` rejects with a `TypeError` (the Fetch spec's signal for a network failure — server unreachable; aborts are `DOMException` and propagate untouched), `createClient(baseUrl, serviceName)` wraps it in a typed `ConnectionError` (in `services/http.ts`) carrying the friendly service name ("backend service" / "database service"), toasts it via `toastConnectionError`, and rethrows. So every request surfaces "which service is down" in one place, and existing per-call error handling is unaffected. `toastConnectionError` (in `toaster.ts`) uses a `toastId` keyed per service so polling a downed service reuses one toast instead of stacking. Don't add connection-error handling at call sites — it belongs in this one catch.
-- **Courses is a sidebar mode, not a separate app.** `Sidebar` declares a `Record<AppMode, { label, Component }>` map (order = segment order: Lectures then Courses) and hands it to `ModeToggle`, which owns the `AppMode` (`'lectures' | 'courses'`) as component state persisted to `localStorage` (`fastStudyMode`, falling back to the default for a stale key), renders the segment buttons from the map, and renders the selected mode's body (`LecturesSidebar` / `CoursesList`) itself — both take no props, each deriving its own selection/navigation via `useMatch` + `useKindParam` + `lectureRoute()`/`courseRoute()`. `CourseView` (the per-course overview feature) refreshes files (database) + status (backend) on mount/course change and on each SSE notify; the backend notifies after every extractor and at run end, so there is no polling. Each extractor shows a single "Generate" button (once its `{slug}.pdf` exists the button becomes a `↺` re-generate control matching MainView's rotate button — it opens a `ConfirmModal` listing the `{slug}.txt/.md/.pdf` that will be rebuilt, then re-runs everything for that slug). The header button reads "Generate All" when nothing exists and "Continue Generating" once any phase of any slug is on disk (`startedSlug(slug, phases, existing)` in `constants/overview.ts` returning non-null over the current files). Either way it fires one `runOverview(course, undefined, undefined, true)` call with `skip_existing=true`, so it never overwrites — it only fills the missing phase outputs (a true continue). There is no warning modal; explicit re-generation (which overwrites) is per-slug (↺) / per-step (↺) only, and those pass no `skipExisting` (defaults false → overwrite). The backend runs the extract→analyze→to_pdf phases sequentially (mirroring the pipeline's Run-All: one trigger, backend schedules, SSE status drives the UI). Each extractor row also has a caret (`useToggleSet`) that expands a per-phase breakdown driven by that extractor's own phases (`stepsFor(extractor.phases)` over `OVERVIEW_STEPS` in `constants/overview.ts`, since `GET /overview/extractors` returns a `phases` array per extractor) — one `file-row` per phase mirroring MainView. Pattern extractors show `{slug}.txt/.md/.pdf`; the immediate `topics` extractor shows only `{slug}.md`(Collect)`/.pdf` with no `.txt`/extract row. ✓/spinner, an open-PDF button on the `.pdf` row only (intermediate `.txt`/`.md` stay link-less), and a per-step `↺` that re-generates from that phase through to_pdf keeping earlier files (`runOverview(course, [slug], phase)` after a ConfirmModal listing the chosen phase + following files). A per-extractor header ✓ still reflects whether the final `.pdf` exists. Run controls gate per-slug, not globally: each slug's Generate/↺ (and per-step ↺) disable on that slug's own `extractors[slug].status === 'running'` (`bs.running`), and the per-step spinner lights on `extractors[slug].phase === step.phase` — so a user can (re)generate one slug while `Generate All` churns on another (multiple overview runs run in parallel per course). Only the header `Generate All`/`Continue Generating` button gates on the aggregate `status.running`. Extractor errors toast once per `(course, extractor, message)` via `useReportOnce`.
-- **Pipeline steps are declared once.** `constants/pipeline.ts` is the single source of truth for the step list, prereq chain, action labels, and error labels. Don't hard-code a step name or input file anywhere else — derive from `PIPELINE` / `STEP_*` maps.
+- **Courses is a sidebar mode, not a separate app.** `Sidebar` declares a `Record<AppMode, { label, Component }>` map (order = segment order: Lectures then Courses) and hands it to `ModeToggle`, which owns the `AppMode` (`'lectures' | 'courses'`) as component state persisted to `localStorage` (`fastStudyMode`, falling back to the default for a stale key), renders the segment buttons from the map, and renders the selected mode's body (`LecturesSidebar` / `CoursesList`) itself — both take no props, each deriving its own selection/navigation via `useMatch` + `useKindParam` + `lectureRoute()`/`courseRoute()`. `CourseView` (the per-course overview feature) refreshes files (database) + status (backend) on mount/course change and on each SSE notify; the backend notifies after every extractor and at run end, so there is no polling. Each extractor shows a single "Generate" button (once its `{slug}.pdf` exists the button becomes a `↺` re-generate control matching MainView's rotate button — it opens a `ConfirmModal` listing the `{slug}.txt/.md/.pdf` that will be rebuilt, then re-runs everything for that slug). The header button reads "Generate All" when nothing exists and "Continue Generating" once any phase of any slug is on disk (`startedSlug(slug, phases, existing)` in `features/course-overview/constants/overview.ts` returning non-null over the current files). Either way it fires one `runOverview(course, undefined, undefined, true)` call with `skip_existing=true`, so it never overwrites — it only fills the missing phase outputs (a true continue). There is no warning modal; explicit re-generation (which overwrites) is per-slug (↺) / per-step (↺) only, and those pass no `skipExisting` (defaults false → overwrite). The backend runs the extract→analyze→to_pdf phases sequentially (mirroring the pipeline's Run-All: one trigger, backend schedules, SSE status drives the UI). Each extractor row also has a caret (local `expanded` state, provided via `ExtractorContext`) that expands a per-phase breakdown driven by that extractor's own phases (`stepsFor(extractor.phases)` over `OVERVIEW_STEPS` in `features/course-overview/constants/overview.ts`, since `GET /overview/extractors` returns a `phases` array per extractor) — one `file-row` per phase mirroring MainView. Pattern extractors show `{slug}.txt/.md/.pdf`; the immediate `topics` extractor shows only `{slug}.md`(Collect)`/.pdf` with no `.txt`/extract row. ✓/spinner, an open-PDF button on the `.pdf` row only (intermediate `.txt`/`.md` stay link-less), and a per-step `↺` that re-generates from that phase through to_pdf keeping earlier files (`runOverview(course, [slug], phase)` after a ConfirmModal listing the chosen phase + following files). A per-extractor header ✓ still reflects whether the final `.pdf` exists. Run controls gate per-slug, not globally: each slug's Generate/↺ (and per-step ↺) disable on that slug's own `extractors[slug].status === 'running'` (`bs.running`), and the per-step spinner lights on `extractors[slug].phase === step.phase` — so a user can (re)generate one slug while `Generate All` churns on another (multiple overview runs run in parallel per course). Only the header `Generate All`/`Continue Generating` button gates on the aggregate `status.running`. Extractor errors toast once per `(course, extractor, message)` via `useReportOnce`.
+- **Pipeline steps are declared once.** `features/lectures/constants/pipeline.ts` is the single source of truth for the step list, prereq chain, action labels, and error labels. Don't hard-code a step name or input file anywhere else — derive from `PIPELINE` / `STEP_*` maps.
 - **Single CSS file.** All styles in `index.css` with CSS custom properties. No CSS modules / styled-components.
 - **Hebrew rendering.** Folder name labels use `dir="auto"` so the browser auto-detects RTL. Font stack includes Noto Sans Hebrew (Google Fonts) with system fallbacks (Segoe UI, Arial).
 - **Toast notifications.** `react-toastify`'s `ToastContainer` is mounted once in `Layout`. Surface non-blocking errors via `toast.error(...)` rather than alerts or inline banners. **UI belongs in components, not contexts / hooks etc.** Contexts and hooks communicate events upward via callbacks (e.g. `sendUpdate(kind, message)`) — callers decide how to render them. Never import `toast` inside a context or hook.
@@ -176,7 +193,7 @@ Each file under `src/services/` is the **single boundary** for one external conc
 
 ### `http.ts` — typed fetch client factory
 
-`createClient(baseUrl, serviceName)` builds the per-service HTTP clients used by `backend.ts` and `database.ts`. Centralizes `if (!res.ok) throw httpError(res)` / JSON encoding / `Content-Type` headers, and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status"). URL/path string building lives in `utils/url.ts`, not here.
+`createClient(baseUrl, serviceName)` builds the per-service HTTP clients used by `backend.ts` and `database.ts`. Centralizes `if (!res.ok) throw httpError(res)` / JSON encoding / `Content-Type` headers, and exposes a `request(...)` escape hatch for endpoints whose behavior intentionally diverges (e.g. `deleteFile`'s fire-and-forget, `uploadVideo`'s bespoke error message, the summary endpoints' "parse JSON regardless of status"). URL/path string building lives in `shared/utils/url.ts`, not here.
 
 ### `backend.ts` — FastAPI backend client → `${VITE_API_URL}`
 
@@ -200,4 +217,4 @@ When you need a new toast shape, add a helper here and import it from this servi
 
 ### URL encoding convention
 
-Course / lecture / file names must be `encodeURIComponent`-encoded in URLs to handle Hebrew folder names. Don't call `encodeURIComponent` directly — use the `` path`` `` tagged template in `utils/url.ts`, which encodes every interpolated value by default (`` path`/courses/${course}` ``). Its output is already encoded, so never feed `path` (or `lectureBase`, built from it) back into another `path` — that double-encodes. `kind === 'recitation'` is appended as `?kind=recitation` via the shared `kindQuery` helper, also in `utils/url.ts`.
+Course / lecture / file names must be `encodeURIComponent`-encoded in URLs to handle Hebrew folder names. Don't call `encodeURIComponent` directly — use the `` path`` `` tagged template in `shared/utils/url.ts`, which encodes every interpolated value by default (`` path`/courses/${course}` ``). Its output is already encoded, so never feed `path` (or `lectureBase`, built from it) back into another `path` — that double-encodes. `kind === 'recitation'` is appended as `?kind=recitation` via the shared `kindQuery` helper, also in `shared/utils/url.ts`.

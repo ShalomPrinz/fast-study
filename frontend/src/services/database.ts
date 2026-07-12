@@ -1,5 +1,5 @@
 import type { FileName, Course, Kind, CourseFile, OverviewMetaRaw, OverviewMeta } from '@/types'
-import { path, kindQuery, lectureBase, courseOverviewBase } from '@/utils/url'
+import { path, kindQuery, lectureBase, courseOverviewBase } from '@/shared/utils/url'
 import { createClient } from './http'
 
 const database = createClient(import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001', 'database service')
