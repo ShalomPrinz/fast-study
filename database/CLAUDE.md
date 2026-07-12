@@ -12,7 +12,7 @@ Behavior is a verbatim port of the old `frontend/fs-api/handlers/*` middleware �
 database/
   main.py              FastAPI app + uvicorn entry
   fs/
-    paths.py             data_root, course_dir, overview_dir, lecture_dir(course, lecture, kind), RECITATIONS_DIR, OVERVIEW_DIR, ARCHIVED_MARKER, PREDEFINED_FILES
+    paths.py             data_root, course_dir, overview_dir, lecture_dir(course, lecture, kind), RECITATIONS_DIR, OVERVIEW_DIR, ARCHIVED_MARKER, SOURCE_URL_MARKER, PREDEFINED_FILES
     tree.py              read_tree, read_course (port of frontend fs-reader.ts)
     summary.py           read/write/revert summary.md
     files.py             resolve a lecture file path for streaming
@@ -49,8 +49,9 @@ python3 main.py                          # also works, same port
 | Method+Path                                                              | Purpose                                  |
 |--------------------------------------------------------------------------|------------------------------------------|
 | `GET    /tree`                                                           | full course tree                         |
-| `POST   /courses`                                                        | create course (body: `{name}`)           |
+| `POST   /courses`                                                        | create course (body: `{name}`, optional `{source_url}`) |
 | `PATCH  /courses/{course}`                                               | rename course (body: `{name}`)           |
+| `PATCH  /courses/{course}/source_url`                                    | set/clear course source_url (body: `{source_url}`; empty/null clears) |
 | `PATCH  /courses/{course}/archived`                                      | archive/unarchive course (body: `{archived}`) |
 | `POST   /courses/{course}/lectures?kind=lecture\|recitation`             | create lecture (body: `{name}`)          |
 | `PATCH  /courses/{course}/lectures/{lecture}?kind=...`                   | rename lecture (body: `{name}`)          |
@@ -75,6 +76,7 @@ python3 main.py                          # also works, same port
 ## Key design decisions
 
 - **All path conventions live here.** `lecture_dir(course, lecture, kind)` in `fs/paths.py` is the single source of truth for resolving paths under `DATA_ROOT`. The on-disk layout (`{DATA_ROOT}/{course}/{lecture}/...` and `{DATA_ROOT}/{course}/Recitations/{name}/...`) is not re-encoded anywhere else — other services pass `(course, lecture, kind)` tuples and let this service resolve them.
+- **Per-course `source_url` lives in a `.source_url` dotfile.** The auto-downloader's per-course lecture-site URL is stored in `{DATA_ROOT}/{course}/.source_url` (holds the URL text, mirroring `drive_url.txt`; a dotfile so tree iteration — dirs only — ignores it, and it survives renames like `.archived`). `read_course` surfaces it as the `source_url` field on every course node (`null` when unset, so pre-existing courses stay backwards-compatible). Set via `POST /courses` (`source_url` in the create body) or `PATCH /courses/{course}/source_url`; empty/null clears the file.
 - **`overview/` is a course-level file area, not a lecture.** Backend's overview step writes cross-lecture study files (e.g. `exam-hints.txt`) to `{DATA_ROOT}/{course}/overview/{name}` via `overview_dir(course)`. `fs/tree.py` skips this directory (like `Recitations`) so it never appears as a lecture in the tree. Writes are neutral (no artifact wipe, no side effects) and 404 if the course doesn't exist.
 - **`PUT /…/video` auto-triggers backend's `/run/audio`.** After a successful video write, the endpoint fire-and-forgets a POST to `${BACKEND_URL}/courses/{c}/lectures/{l}/run/audio?kind=...` (default `BACKEND_URL=http://localhost:8000`) so a downloader upload starts the audio-extraction step without a frontend click. Failures are logged and swallowed; the PUT response returns as soon as bytes hit disk.
 - **`PUT /…/video` wipes derived artifacts; `PUT /…/files/{name}` does not.** The video endpoint is the downloader's fresh-upload path and intentionally erases stale audio/transcript/summary. The generic files endpoint is the backend pipeline's write path for `audio.mp3`, `transcript.txt`, `transcript.partial.*`, `summary.pdf`, `drive_url.txt` — wiping would erase prior pipeline outputs mid-run. Summary writes go through the dedicated `/summary` endpoint, which snapshots the pre-edit original on first write.

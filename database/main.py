@@ -43,11 +43,11 @@ def get_tree():
 
 @app.post("/courses")
 async def post_course(request: Request):
-    """Create a new course directory."""
+    """Create a new course directory, optionally with a source_url."""
 
     try:
         body = await request.json()
-        crud.create_course(body["name"])
+        crud.create_course(body["name"], body.get("source_url"))
         return _ok()
     except Exception as e:
         return _ok(str(e), 400)
@@ -60,6 +60,18 @@ async def patch_course(course: str, request: Request):
     try:
         body = await request.json()
         crud.rename_course(course, body["name"])
+        return _ok()
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
+@app.patch("/courses/{course}/source_url")
+async def patch_course_source_url(course: str, request: Request):
+    """Set or clear a course's source URL (body: {source_url}); empty/null clears it."""
+
+    try:
+        body = await request.json()
+        crud.set_course_source_url(course, body.get("source_url"))
         return _ok()
     except Exception as e:
         return _ok(str(e), 400)

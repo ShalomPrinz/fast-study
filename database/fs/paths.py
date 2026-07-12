@@ -9,6 +9,10 @@ OVERVIEW_DIR = "overview"
 # Empty marker file inside a course dir flagging it as archived. Survives renames.
 ARCHIVED_MARKER = ".archived"
 
+# Dotfile inside a course dir holding the lecture-site URL.
+# Unlike .archived it carries content (the URL); a dotfile so tree iteration (dirs only) ignores it, and it survives renames.
+SOURCE_URL_MARKER = ".source_url"
+
 # Every file the frontend cares about in a lecture dir. Single source of truth —
 # tree responses surface all of these, and re-uploading video.mp4 wipes the rest.
 PREDEFINED_FILES = (

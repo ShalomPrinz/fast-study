@@ -1,10 +1,23 @@
-from .paths import data_root, course_dir, lecture_dir, RECITATIONS_DIR, PREDEFINED_FILES, ARCHIVED_MARKER
+from .paths import data_root, course_dir, lecture_dir, RECITATIONS_DIR, PREDEFINED_FILES, ARCHIVED_MARKER, SOURCE_URL_MARKER
 
 
-def create_course(name: str) -> None:
-    """Create a new course directory under DATA_ROOT (idempotent)."""
+def create_course(name: str, source_url: str | None = None) -> None:
+    """Create a new course directory under DATA_ROOT (idempotent), optionally seeding its source_url."""
 
     (data_root() / name).mkdir(parents=True, exist_ok=True)
+    if source_url:
+        set_course_source_url(name, source_url)
+
+
+def set_course_source_url(name: str, source_url: str | None) -> None:
+    """Write (or clear when empty/None) the course's source URL in its .source_url dotfile."""
+
+    marker = course_dir(name) / SOURCE_URL_MARKER
+    url = (source_url or "").strip()
+    if url:
+        marker.write_text(url, encoding="utf-8")
+    elif marker.exists():
+        marker.unlink()
 
 
 def set_course_archived(name: str, archived: bool) -> None:

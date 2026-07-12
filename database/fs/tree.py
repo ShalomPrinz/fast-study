@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from .paths import data_root, RECITATIONS_DIR, OVERVIEW_DIR, PREDEFINED_FILES, ARCHIVED_MARKER
+from .paths import data_root, RECITATIONS_DIR, OVERVIEW_DIR, PREDEFINED_FILES, ARCHIVED_MARKER, SOURCE_URL_MARKER
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
@@ -74,6 +74,15 @@ def _read_recitations(course_path: Path) -> list[dict]:
     ]
 
 
+def _read_source_url(course_path: Path) -> Optional[str]:
+    """Return the course's source URL, or None when unset (backwards-compatible for pre-existing courses)."""
+
+    p = course_path / SOURCE_URL_MARKER
+    if not p.exists():
+        return None
+    return p.read_text(encoding="utf-8").strip() or None
+
+
 def read_course(name: str) -> Optional[dict]:
     """Return the full tree for a single course (lectures + recitations), or None if it doesn't exist."""
 
@@ -83,6 +92,7 @@ def read_course(name: str) -> Optional[dict]:
     return {
         "name": name,
         "archived": (course_path / ARCHIVED_MARKER).exists(),
+        "source_url": _read_source_url(course_path),
         "lectures": _read_lectures(course_path),
         "recitations": _read_recitations(course_path),
     }
