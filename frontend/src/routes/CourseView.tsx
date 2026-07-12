@@ -7,11 +7,12 @@ import { formatRange } from '@/utils/overview'
 import { useReportOnce } from '@/hooks/useReportOnce'
 import { useToggleSet } from '@/hooks/useToggleSet'
 import { toast, toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile, generatedFiles, startedSlug, stepsFor, branchStatus } from '@/constants/overview'
+import { lastGeneratedFile, generatedFiles, stepsFor, branchStatus } from '@/constants/overview'
 import type { BranchStatus } from '@/constants/overview'
 import Icon from '@/components/Icon'
 import ConfirmModal from '@/components/ConfirmModal'
 import { CourseOverviewProvider, useCourseOverview } from '@/routes/course/CourseOverviewContext'
+import GenerateAllButton from '@/routes/course/GenerateAllButton'
 
 function BranchIndicator({ status }: { status: BranchStatus }) {
   if (status.running) return <span className="spinner spinner--sm" />
@@ -44,8 +45,6 @@ function CourseOverviewBody() {
     pruneErrors(valid, (k) => k.startsWith(`${course}/`))
   }, [status, course, extractors])
 
-  const running = status?.running ?? false
-
   // Fire the mutation via the context, then toast its result here — a component may toast.
   async function handleGenerate(names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean) {
     const result = await generate(names, fromPhase, skipExisting)
@@ -69,24 +68,12 @@ function CourseOverviewBody() {
     handleGenerate([slug], phase)
   }
 
-  // Any produced file means we're continuing rather than starting fresh; the header
-  // button never overwrites (skip_existing), so a "continue" run only fills gaps.
-  const existingFiles = new Set(files.map((f) => f.name))
-  const hasStarted = (extractors ?? []).some(({ slug, phases }) => startedSlug(slug, phases, existingFiles) !== null)
-
   return (
     <main className="main-view main-view--panel">
       <div className="lecture-panel">
         <h2 className="lecture-panel-title" dir="auto">{course}</h2>
 
-        <button
-          className="run-all-btn course-global-btn"
-          onClick={() => handleGenerate(undefined, undefined, true)}
-          disabled={running || extractors === null}
-        >
-          {running && <span className="spinner spinner--sm" />}
-          {running ? 'Generating…' : hasStarted ? 'Continue Generating' : 'Generate All'}
-        </button>
+        <GenerateAllButton />
 
         {extractors === null ? (
           <div className="spinner" />
