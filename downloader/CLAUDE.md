@@ -10,7 +10,7 @@ A Chrome extension (Manifest V3) plus a tiny local Node server that together cap
 extension/regular/   Chrome MV3 extension: background.js, manifest.json, popup.html, popup.js
 extension/simple/    Simplified extension-only variant (no server; saves to Downloads/)
 server/              server.js (the npm-start server) + package.json
-auto/                Standalone auto-downloader (talks to the server over HTTP)
+auto/                Auto-downloader: Playwright CLI + HTTP service (talks to server/ over HTTP)
 ```
 
 
@@ -22,6 +22,7 @@ auto/                Standalone auto-downloader (talks to the server over HTTP)
 
 ```bash
 npm --prefix downloader/server start   # starts server/server.js on port 3052 (no deps; Node stdlib only)
+npm --prefix downloader/auto start     # starts auto/src/server.js on port 3053 (the HTTP service; needs Playwright)
 ```
 
 The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). `server/server.js` only accepts requests from one hardcoded extension ID (`EXTENSION_ID`); if you reload the extension and Chrome assigns a new ID, update that constant in `server/server.js` or CORS will block the popup.
@@ -52,6 +53,31 @@ Four pieces, one flow:
 4. **Size probes + progress rendering** — `probeContentLength` (curl path, HEAD → ranged-GET fallback) and `probeYoutubeSize` (yt-dlp `--skip-download --print %(filesize,filesize_approx)s` summed across the `bv*+ba/b` format selection) print an expected size before each download. The children then run **silent** (curl `--silent`, yt-dlp `--no-progress`); the server is the *sole* terminal writer. It registers each in-flight download in a module-level `Map` and a single shared `setInterval` (~1.5s, started on the first register, cleared when the registry empties) polls the temp size against the probed total — curl: `stat video.mp4`; yt-dlp: **sum all temp files** (separate audio/video before merge), clamped ≤99% until exit. **WHY not just inherit the children's progress bars:** two parallel `--progress-bar`/`--progress` children share one terminal line, and their `\r` repaints stomp each other (and our `console.log`s). **WHY two render paths:** under `concurrently` (`npm run dev`) the server's stdout is a *pipe, not a TTY* (lines prefixed `Downloader |`), so ANSI cursor repaint is meaningless — the non-TTY path emits throttled newline-terminated lines (only when percent advanced ≥5% or several seconds elapsed), which can't interleave mid-line. The TTY path (`npm start`) repaints a compact block in place via ANSI. Lines look like `📥 [{course}/{lecture}] 52% (210/402 MB)`; unknown probe shows a byte count + "downloading…". Child stderr is captured to a tail buffer (we no longer inherit it) so a non-zero exit still logs the real error.
 
 Recitations are routed via the database PUT endpoint's `?kind=recitation` query — the database service owns the on-disk layout (`{course}/Recitations/{name}/`).
+
+## Auto-downloader HTTP service (`auto/`, port 3053)
+
+`auto/` is a **separate package** (its own `node_modules`) so Playwright never leaks into the dependency-free `server/`. It has two entry points sharing one core (`src/core.js`: `listRecordings` + `downloadRecording`):
+
+- **CLI** — `node src/index.js <courseUrl> [--course "<name>"]` (or `npm --prefix downloader/auto cli`). Lists a course's recordings and interactively downloads. Unchanged UX.
+- **HTTP service** — `src/server.js` (`npm start`), Node-stdlib HTTP on **port 3053** (`AUTODL_PORT`). Browser-facing: CORS allows the Vite origin `http://localhost:5173` (unlike `server/server.js`, locked to the extension ID). Reads the repo-root `.env` (via `src/config.js`) for `SERVER_URL` (default `http://localhost:3052`) — the `server/` base it POSTs downloads to.
+
+**Persistent browser + mutex.** `src/browserSession.js` owns **ONE** long-lived headless browser+context+page (singleton `session`), built lazily from the stored `storageState`. It is **not** closed between requests or when switching course — switching course is just `goto()`. All page ops run through `withLock(fn)`, a small async mutex that serializes only the quick navigate+sniff; the heavy download runs afterward in `server/server.js`, so parallel downloads still overlap end-to-end. Re-auth calls `rebuildContext(newState)` (fresh cookies, same browser process). An idle-timeout (`IDLE_TIMEOUT_MS`, ~45 min) is only a leak-safety valve; the browser re-opens lazily on the next call. The browser closes on `/close`, `SIGINT`/`SIGTERM`, or idle.
+
+**Auth** (`src/auth/MicrosoftAuth.js`) is split for a UI trigger: `connect(entryUrl)` opens the headed login and returns immediately; `complete()` persists `storageState` and closes the headed browser; `status()` is a cheap probe (state file exists + cookie-expiry heuristic, no browser launch). The CLI's terminal-Enter path (`getAuthState`) reuses the same `connect`/`complete`. One auth instance is cached **per university** so `connect`→`complete` share the in-memory headed browser.
+
+Endpoints (all JSON; `401 {status:'reconnect'}` when `storageState` is missing/expired, so the UI steers to Reconnect instead of a generic 500):
+
+| Endpoint | Body | Returns |
+|---|---|---|
+| `GET /auth/status` | — | `{ connected, expired }` |
+| `POST /auth/connect` | `{ entryUrl? }` | `{ status: 'pending' }` (headed login opens) |
+| `POST /auth/complete` | — | `{ connected: true }` (persists state; rebuilds context if open) |
+| `POST /list` | `{ courseUrl }` | `{ recordings }` — ensure browser, `goto`, parse |
+| `POST /playlist/entries` | `{ recording }` | `{ entries }` — follow redirect + `yt-dlp --flat-playlist` |
+| `POST /download-item` | `{ recording, course, name, kind }` | `{ ok }` — fresh `.mp4` sniff → `server/` `/download`, or youtube entry → `/download-youtube` |
+| `POST /close` | — | `{ ok: true }` — close the persistent browser |
+
+**Dev-stack wiring:** the root `npm run dev` runs it as the `AutoDL` (cyan) `concurrently` process alongside Backend/Frontend/Downloader/Database.
 
 ## Why these specific hacks
 

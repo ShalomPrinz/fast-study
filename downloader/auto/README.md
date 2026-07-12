@@ -18,12 +18,18 @@ npx playwright install chromium
 
 ## Run
 
+Two entry points share one core:
+
 ```bash
-node src/index.js <courseUrl>
+node src/index.js <courseUrl>   # CLI: list + interactively download (npm run cli)
+npm start                        # HTTP service on port 3053 (src/server.js)
 ```
 
-Prints a numbered list of discovered videos and writes `captures/<slug>.json`
-for the next phase to consume.
+The CLI prints a numbered list of discovered videos and writes `captures/<slug>.json`.
+The HTTP service holds one persistent headless browser and exposes auth/list/
+playlist/download endpoints for the frontend (CORS: `http://localhost:5173`); it
+reads the repo-root `.env` for `SERVER_URL`. Override the port with `AUTODL_PORT`
+and the headed-login entry URL with `AUTODL_AUTH_URL`.
 
 ## First-login is headed; reuse is headless
 

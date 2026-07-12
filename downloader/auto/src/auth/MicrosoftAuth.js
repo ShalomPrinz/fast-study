@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
 import { AuthProvider } from './AuthProvider.js';
+import { launchBrowser } from '../browserLaunch.js';
 import { ask } from '../prompt.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -21,7 +21,7 @@ const LOGIN_PATH_RE = /\/login(\/|$|\?)/i;
  * @param {string} finalUrl  the URL after navigation + redirects settled
  * @returns {boolean}  true if we landed on a Microsoft login page (= unauthenticated)
  */
-function isLoginUrl(finalUrl) {
+export function isLoginUrl(finalUrl) {
   try {
     const u = new URL(finalUrl);
     if (LOGIN_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith(`.${h}`))) return true;
@@ -29,26 +29,6 @@ function isLoginUrl(finalUrl) {
     return false;
   } catch {
     return false;
-  }
-}
-
-/**
- * Launch a browser, trying bare Chromium first. Microsoft login sometimes flags
- * automation on bundled Chromium; if the launch throws, retry with the system
- * Chrome channel (real Chrome is less likely to be blocked).
- * @param {{ headless: boolean }} opts
- * @returns {Promise<import('playwright').Browser>}
- */
-async function launchBrowser(opts) {
-  try {
-    return await chromium.launch(opts);
-  } catch (err) {
-    // Fallback: bundled Chromium failed to launch (or MS blocked it). Retry with
-    // the installed Google Chrome. TODO: if MS blocks *bare Chromium* at the login
-    // step (launch succeeds but login is rejected) rather than at launch, force
-    // `channel: 'chrome'` for the headed path unconditionally instead.
-    console.warn(`Chromium launch failed (${err.message}); retrying with channel: 'chrome'…`);
-    return chromium.launch({ ...opts, channel: 'chrome' });
   }
 }
 
@@ -62,6 +42,80 @@ export class MicrosoftAuth extends AuthProvider {
   constructor({ statePath }) {
     super();
     this.statePath = path.isAbsolute(statePath) ? statePath : path.join(PKG_ROOT, statePath);
+    // A headed login in progress (connect() → complete()), for the UI-triggered
+    // flow. Null when no login is pending. Held on the instance so connect and
+    // complete — two separate HTTP calls — share the same live headed browser.
+    this._pending = null;
+  }
+
+  /** @returns {import('./AuthProvider.js').StorageState|null}  parsed persisted state, or null. */
+  loadState() {
+    try {
+      if (!fs.existsSync(this.statePath)) return null;
+      return JSON.parse(fs.readFileSync(this.statePath, 'utf8'));
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Cheap status for the UI pill — no browser launch. `connected` = a state file
+   * exists; `expired` uses cookie `expires` timestamps as a fast heuristic (the
+   * real redirect-to-login check happens on /list).
+   * @returns {{ connected: boolean, expired: boolean }}
+   */
+  status() {
+    const state = this.loadState();
+    if (!state) return { connected: false, expired: false };
+    return { connected: true, expired: this._isExpired(state) };
+  }
+
+  // A storageState is "expired" when it carries no still-valid dated cookie.
+  // Session cookies (expires -1) are ignored — they can't prove freshness.
+  // Before: probing validity meant launching a headless browser on every poll.
+  // After:  read cookie `expires`; expired = every dated cookie is already past.
+  _isExpired(state) {
+    const now = Date.now() / 1000;
+    const dated = (state.cookies ?? []).filter((c) => typeof c.expires === 'number' && c.expires > 0);
+    if (!dated.length) return false; // only session cookies → can't tell cheaply; let /list decide
+    return !dated.some((c) => c.expires > now);
+  }
+
+  /**
+   * UI-triggered login, step 1: open the headed browser at the login entry and
+   * return immediately (the user finishes MFA by hand). Idempotent — a second
+   * call while a login is already pending is a no-op.
+   * @param {string} entryUrl
+   */
+  async connect(entryUrl) {
+    if (this._pending) return;
+    const browser = await launchBrowser({ headless: false });
+    try {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(entryUrl, { waitUntil: 'load' });
+      this._pending = { browser, context };
+    } catch (err) {
+      await browser.close().catch(() => {});
+      throw err;
+    }
+  }
+
+  /**
+   * UI-triggered login, step 2: persist storageState from the pending headed
+   * browser and close it. Throws if no login is pending.
+   * @returns {Promise<import('./AuthProvider.js').StorageState>}
+   */
+  async complete() {
+    if (!this._pending) throw new Error('no pending login (call connect first)');
+    const { browser, context } = this._pending;
+    this._pending = null;
+    try {
+      fs.mkdirSync(path.dirname(this.statePath), { recursive: true });
+      return await context.storageState({ path: this.statePath });
+    } finally {
+      await browser.close().catch(() => {});
+    }
   }
 
   /**
@@ -115,25 +169,17 @@ export class MicrosoftAuth extends AuthProvider {
    * @returns {Promise<import('./AuthProvider.js').StorageState>}
    */
   async _headedLogin(entryUrl) {
-    const browser = await launchBrowser({ headless: false });
-    try {
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await page.goto(entryUrl, { waitUntil: 'load' });
-
-      // DOM-agnostic completion signal: we don't know BIU's post-login DOM yet, so
-      // we ask the human to confirm on the terminal instead of racing a selector.
-      // TODO: once the real course DOM is known, replace this with a selector wait
-      //   (e.g. page.waitForSelector('<logged-in element>')) for a hands-off flow.
-      console.log('\nA browser window has opened. Complete the Microsoft login + MFA there.');
-      await ask('When you are fully logged in, press Enter here to save the session… ');
-
-      fs.mkdirSync(path.dirname(this.statePath), { recursive: true });
-      const state = await context.storageState({ path: this.statePath });
-      console.log(`Saved auth state to ${this.statePath}.`);
-      return state;
-    } finally {
-      await browser.close();
-    }
+    // Same connect/complete pair the HTTP flow uses; the CLI just drives the
+    // completion signal from the terminal instead of a UI "Done" button.
+    // DOM-agnostic: we don't know BIU's post-login DOM yet, so we ask the human
+    // to confirm on the terminal rather than racing a selector.
+    // TODO: once the real course DOM is known, replace this Enter with a selector
+    //   wait (e.g. page.waitForSelector('<logged-in element>')) for a hands-off flow.
+    await this.connect(entryUrl);
+    console.log('\nA browser window has opened. Complete the Microsoft login + MFA there.');
+    await ask('When you are fully logged in, press Enter here to save the session… ');
+    const state = await this.complete();
+    console.log(`Saved auth state to ${this.statePath}.`);
+    return state;
   }
 }

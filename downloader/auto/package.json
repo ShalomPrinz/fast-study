@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Headless-browser auto-downloader",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/server.js",
+    "cli": "node src/index.js"
   },
   "dependencies": {
     "playwright": "^1.48.0"

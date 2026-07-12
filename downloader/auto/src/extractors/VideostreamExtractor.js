@@ -18,6 +18,11 @@ const MP4_WAIT_MS = 20000;
  * fresh at download time (tokens are short-lived).
  */
 export class VideostreamExtractor extends VideoExtractor {
+  /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
+  get strategy() {
+    return 'videostream';
+  }
+
   /**
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}

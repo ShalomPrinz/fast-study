@@ -2,7 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { resolveUniversity, resolveExtractor } from './registry.js';
+import { resolveUniversity } from './registry.js';
+import { listRecordings } from './core.js';
 import { deriveName, promptNumber } from './naming.js';
 import { postDownload, postDownloadYoutube } from './serverClient.js';
 import { ask } from './prompt.js';
@@ -78,18 +79,10 @@ async function main() {
     const page = await context.newPage();
     await page.goto(courseUrl, { waitUntil: 'load' });
 
-    // 3. Enumerate activities (per-LMS), then route each to its extractor
-    //    (per-activity, by modType). Unhandled types (e.g. resource/PDF) → skip.
-    //    Keep each recording paired with the extractor that resolves it.
-    const activities = await uni.parse(page);
-    const items = []; // { recording, extractor }
-    for (const activity of activities) {
-      const extractor = resolveExtractor(activity);
-      if (!extractor) {
-        continue;
-      }
-      for (const recording of extractor.toRecordings(activity)) items.push({ recording, extractor });
-    }
+    // 3. Enumerate activities and route each to its extractor (shared with the
+    //    HTTP service via core.js). Each recording stays paired with the extractor
+    //    that resolves it, for the interactive download loop below.
+    const items = await listRecordings(page, courseUrl); // { recording, extractor }[]
     const recordings = items.map((it) => it.recording);
 
     console.log(`\nDiscovered ${recordings.length} recording(s) for ${courseUrl}:`);

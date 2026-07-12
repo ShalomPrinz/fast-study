@@ -1,0 +1,185 @@
+import http from 'node:http';
+import { AUTODL_PORT, SERVER_URL, AUTH_ENTRY_URL } from './config.js';
+import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from './registry.js';
+import { isLoginUrl } from './auth/MicrosoftAuth.js';
+import { session } from './browserSession.js';
+import { listRecordings, downloadRecording } from './core.js';
+
+// Browser-facing (the Vite dev origin), unlike downloader/server/server.js which
+// is locked to the extension ID. Only the frontend drives this service.
+const ALLOWED_ORIGIN = 'http://localhost:5173';
+
+// One auth instance PER university, reused across requests: connect()/complete()
+// share the same in-memory headed browser, so a fresh instance per call would
+// lose the pending login. Keyed by university id (single-university for now).
+const authInstances = new Map();
+function authFor(uni) {
+  if (!authInstances.has(uni.id)) authInstances.set(uni.id, uni.auth());
+  return authInstances.get(uni.id);
+}
+
+function setCors(res) {
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', (c) => { body += c; });
+    req.on('end', () => resolve(body));
+    req.on('error', reject);
+  });
+}
+
+function send(res, status, body) {
+  res.writeHead(status, { 'Content-Type': 'application/json' });
+  res.end(JSON.stringify(body));
+}
+
+// Distinct "session expired → steer the user to Reconnect" signal, so the page
+// can open the auth pill rather than toast a generic 500. 401 = unauthenticated.
+function sendReconnect(res) {
+  send(res, 401, { status: 'reconnect' });
+}
+
+// Same guard as server/server.js: reject path-traversal / empty names before
+// they reach the database service.
+function isSafeName(name) {
+  return typeof name === 'string'
+    && name.length > 0
+    && !name.includes('/')
+    && !name.includes('\\')
+    && name !== '.'
+    && name !== '..';
+}
+
+// ── Auth endpoints ──────────────────────────────────────────────────────────
+
+function handleAuthStatus(res) {
+  send(res, 200, authFor(defaultUniversity()).status());
+}
+
+async function handleAuthConnect(req, res) {
+  const { entryUrl } = JSON.parse((await readBody(req)) || '{}');
+  await authFor(defaultUniversity()).connect(entryUrl || AUTH_ENTRY_URL);
+  send(res, 200, { status: 'pending' });
+}
+
+async function handleAuthComplete(res) {
+  const auth = authFor(defaultUniversity());
+  const state = await auth.complete();
+  // If the persistent browser is already open, its context holds the now-stale
+  // cookies — rebuild it from the fresh state so the next /list is authenticated.
+  if (session.isOpen()) await session.rebuildContext(state);
+  send(res, 200, { connected: true });
+}
+
+// ── Browsing endpoints ──────────────────────────────────────────────────────
+
+async function handleList(req, res) {
+  const { courseUrl } = JSON.parse(await readBody(req));
+  if (typeof courseUrl !== 'string' || !/^https?:\/\//.test(courseUrl)) {
+    return send(res, 400, { error: 'valid courseUrl required' });
+  }
+  let uni;
+  try { uni = resolveUniversity(courseUrl); } catch (e) { return send(res, 400, { error: e.message }); }
+
+  const auth = authFor(uni);
+  const state = auth.loadState();
+  if (!state || auth.status().expired) return sendReconnect(res);
+
+  await session.open(state);
+  // withLock returns null as a sentinel for "the session bounced to login" so the
+  // reconnect signal is sent OUTSIDE the lock (can't send from inside cleanly).
+  const recordings = await session.withLock(async () => {
+    const finalUrl = await session.goto(courseUrl);
+    if (isLoginUrl(finalUrl)) return null;
+    const items = await listRecordings(session.page, courseUrl);
+    return items.map((it) => it.recording);
+  });
+  if (recordings === null) return sendReconnect(res);
+  send(res, 200, { recordings });
+}
+
+async function handlePlaylistEntries(req, res) {
+  const { recording } = JSON.parse(await readBody(req));
+  const extractor = resolveExtractorForRecording(recording);
+  if (!recording?.pageUrl || typeof extractor?.listEntries !== 'function') {
+    return send(res, 400, { error: 'recording is not an expandable playlist' });
+  }
+  const auth = authFor(resolveUniversity(recording.pageUrl));
+  const state = auth.loadState();
+  if (!state || auth.status().expired) return sendReconnect(res);
+
+  await session.open(state);
+  const entries = await session.withLock(() => extractor.listEntries(session.page, recording));
+  send(res, 200, { entries });
+}
+
+async function handleDownloadItem(req, res) {
+  const { recording, course, name, kind = 'lecture' } = JSON.parse(await readBody(req));
+  if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'recording required' });
+  if (!isSafeName(course) || !isSafeName(name)) return send(res, 400, { error: 'course and name are required' });
+  if (kind !== 'lecture' && kind !== 'recitation') return send(res, 400, { error: `invalid kind: ${kind}` });
+
+  // A youtube entry carries its direct url (playlist already expanded) and needs
+  // no browser; videostream must sniff the .mp4 fresh on the shared page.
+  if (recording.strategy === 'youtube-playlist' && recording.url) {
+    await downloadRecording(null, { recording, course, name, kind });
+    return send(res, 200, { ok: true });
+  }
+  if (!recording.pageUrl) return send(res, 400, { error: 'recording.pageUrl required' });
+
+  const auth = authFor(resolveUniversity(recording.pageUrl));
+  const state = auth.loadState();
+  if (!state || auth.status().expired) return sendReconnect(res);
+
+  await session.open(state);
+  // Lock covers the whole navigate+sniff (captureVideo navigates internally); the
+  // POST to server.js is quick — server.js returns immediately and downloads in bg.
+  await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind }));
+  send(res, 200, { ok: true });
+}
+
+async function handleClose(res) {
+  await session.close();
+  send(res, 200, { ok: true });
+}
+
+// ── Router ──────────────────────────────────────────────────────────────────
+
+const server = http.createServer(async (req, res) => {
+  setCors(res);
+  if (req.method === 'OPTIONS') return res.writeHead(204).end();
+
+  try {
+    if (req.method === 'GET' && req.url === '/auth/status') return handleAuthStatus(res);
+    if (req.method === 'POST' && req.url === '/auth/connect') return await handleAuthConnect(req, res);
+    if (req.method === 'POST' && req.url === '/auth/complete') return await handleAuthComplete(res);
+    if (req.method === 'POST' && req.url === '/list') return await handleList(req, res);
+    if (req.method === 'POST' && req.url === '/playlist/entries') return await handlePlaylistEntries(req, res);
+    if (req.method === 'POST' && req.url === '/download-item') return await handleDownloadItem(req, res);
+    if (req.method === 'POST' && req.url === '/close') return await handleClose(res);
+    res.writeHead(404).end();
+  } catch (e) {
+    console.error(e?.stack ?? String(e));
+    send(res, 500, { error: e.message ?? 'Server error' });
+  }
+});
+
+// Close the persistent browser on shutdown so no headless Chromium is orphaned.
+for (const sig of ['SIGINT', 'SIGTERM']) {
+  process.on(sig, () => {
+    session.close().finally(() => process.exit(0));
+  });
+}
+
+server.listen(AUTODL_PORT, () => {
+  console.log(`\n==========================================`);
+  console.log(`🤖 Auto-downloader listening on port ${AUTODL_PORT}`);
+  console.log(`📥 SERVER_URL: ${SERVER_URL}`);
+  console.log(`🌐 CORS origin: ${ALLOWED_ORIGIN}`);
+  console.log(`==========================================\n`);
+});

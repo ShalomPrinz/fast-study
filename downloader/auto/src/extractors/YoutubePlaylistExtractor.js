@@ -23,6 +23,11 @@ function pickEntry(entries) {
  * YouTube playlists are supported; anything else is rejected at download time.
  */
 export class YoutubePlaylistExtractor extends VideoExtractor {
+  /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
+  get strategy() {
+    return 'youtube-playlist';
+  }
+
   /**
    * Optimistic: assume `url` modules are the redirect-to-YouTube kind.
    * @param {import('./VideoExtractor.js').Activity} activity
@@ -43,14 +48,14 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * DOWNLOAD PHASE: follow the Moodle url-module redirect to YouTube, list the
-   * playlist entries with yt-dlp, let the user pick one. No headers — server.js's
-   * /download-youtube runs yt-dlp, which manages its own session.
+   * Follow the Moodle url-module redirect to YouTube and flat-list its playlist
+   * entries with yt-dlp. Pure listing — no prompting — so both the CLI download
+   * flow and the HTTP /playlist/entries endpoint reuse it.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
-   * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
+   * @returns {Promise<{ title: string, url: string }[]>}
    */
-  async captureVideo(page, rec) {
+  async listEntries(page, rec) {
     // `&redirect=1` is what the Moodle onclick uses to jump straight to the target.
     const sep = rec.pageUrl.includes('?') ? '&' : '?';
     await page.goto(`${rec.pageUrl}${sep}redirect=1`, { waitUntil: 'load' });
@@ -79,11 +84,22 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
       })
       .filter((e) => e.url);
     if (!entries.length) throw new Error(`no playlist entries found at ${finalUrl}`);
+    return entries;
+  }
 
+  /**
+   * DOWNLOAD PHASE: list the playlist entries, let the user pick one on the
+   * terminal. No headers — server.js's /download-youtube runs yt-dlp, which
+   * manages its own session.
+   * @param {import('playwright').Page} page
+   * @param {import('./VideoExtractor.js').Recording} rec
+   * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
+   */
+  async captureVideo(page, rec) {
+    const entries = await this.listEntries(page, rec);
     console.log(`\nPlaylist entries (${entries.length}):`);
     entries.forEach((e, i) => console.log(`  [${i + 1}] ${e.title}`));
     const chosen = await pickEntry(entries);
-
     return { title: chosen.title, url: chosen.url, kind: rec.kind, strategy: 'youtube-playlist' };
   }
 }
