@@ -26,10 +26,16 @@ npm start                        # HTTP service on port 3053 (src/server.js)
 ```
 
 The CLI prints a numbered list of discovered videos and writes `captures/<slug>.json`.
-The HTTP service holds one persistent headless browser and exposes auth/list/
-playlist/download endpoints for the frontend (CORS: `http://localhost:5173`); it
-reads the repo-root `.env` for `SERVER_URL`. Override the port with `AUTODL_PORT`
-and the headed-login entry URL with `AUTODL_AUTH_URL`.
+The HTTP service holds one persistent headless browser and exposes auth / `/list`
+/ `/list/expand` / `/download-item` endpoints for the frontend (CORS:
+`http://localhost:5173`); it reads the repo-root `.env` for `SERVER_URL`. Override
+the port with `AUTODL_PORT` and the headed-login entry URL with `AUTODL_AUTH_URL`.
+
+The HTTP surface is **mechanism-agnostic**: `/list` and `/list/expand` return
+uniform `Item = { ref, title, kind, expandable }` and `/download-item` takes
+`{ ref, ... }`. The download mechanism (videostream / youtube / playlist) is
+hidden inside the opaque `ref` (base64url of the internal `Recording`, see
+`src/ref.js`) — the frontend round-trips `ref` and never parses it.
 
 ## First-login is headed; reuse is headless
 

@@ -4,6 +4,21 @@ import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } fr
 import { isLoginUrl } from './auth/MicrosoftAuth.js';
 import { session } from './browserSession.js';
 import { listRecordings, downloadRecording } from './core.js';
+import { encodeRef, decodeRef } from './ref.js';
+
+// Uniform, mechanism-agnostic item the frontend sees. The download mechanism
+// (videostream / youtube / playlist) is hidden inside the opaque `ref`; the
+// frontend only reads `expandable` to decide /list/expand vs /download-item.
+// A recording that's an unexpanded playlist (has pageUrl, no direct url) is
+// expandable; concrete videostream/youtube-entry recordings are downloadable.
+function toItem(recording) {
+  return {
+    ref: encodeRef(recording),
+    title: recording.title,
+    kind: recording.kind,
+    expandable: recording.strategy === 'youtube-playlist' && !recording.url,
+  };
+}
 
 // Browser-facing (the Vite dev origin), unlike downloader/server/server.js which
 // is locked to the extension ID. Only the frontend drives this service.
@@ -100,14 +115,18 @@ async function handleList(req, res) {
     return items.map((it) => it.recording);
   });
   if (recordings === null) return sendReconnect(res);
-  send(res, 200, { recordings });
+  send(res, 200, { items: recordings.map(toItem) });
 }
 
-async function handlePlaylistEntries(req, res) {
-  const { recording } = JSON.parse(await readBody(req));
+// Resolve ONE expandable item (a playlist) into its downloadable children. The
+// route name and body are mechanism-neutral; the redirect-follow + yt-dlp
+// --flat-playlist lives behind the extractor and the opaque ref.
+async function handleListExpand(req, res) {
+  const { ref } = JSON.parse(await readBody(req));
+  const recording = decodeRef(ref);
   const extractor = resolveExtractorForRecording(recording);
   if (!recording?.pageUrl || typeof extractor?.listEntries !== 'function') {
-    return send(res, 400, { error: 'recording is not an expandable playlist' });
+    return send(res, 400, { error: 'item is not expandable' });
   }
   const auth = authFor(resolveUniversity(recording.pageUrl));
   const state = auth.loadState();
@@ -115,12 +134,18 @@ async function handlePlaylistEntries(req, res) {
 
   await session.open(state);
   const entries = await session.withLock(() => extractor.listEntries(session.page, recording));
-  send(res, 200, { entries });
+  // Each entry becomes a concrete, downloadable child (has a direct url → not
+  // expandable). The child's ref carries the youtube recording for /download-item.
+  const items = entries.map((e) =>
+    toItem({ title: e.title, url: e.url, kind: recording.kind, strategy: recording.strategy }),
+  );
+  send(res, 200, { items });
 }
 
 async function handleDownloadItem(req, res) {
-  const { recording, course, name, kind = 'lecture' } = JSON.parse(await readBody(req));
-  if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'recording required' });
+  const { ref, course, name, kind = 'lecture' } = JSON.parse(await readBody(req));
+  const recording = decodeRef(ref);
+  if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'valid ref required' });
   if (!isSafeName(course) || !isSafeName(name)) return send(res, 400, { error: 'course and name are required' });
   if (kind !== 'lecture' && kind !== 'recitation') return send(res, 400, { error: `invalid kind: ${kind}` });
 
@@ -130,7 +155,7 @@ async function handleDownloadItem(req, res) {
     await downloadRecording(null, { recording, course, name, kind });
     return send(res, 200, { ok: true });
   }
-  if (!recording.pageUrl) return send(res, 400, { error: 'recording.pageUrl required' });
+  if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
   const auth = authFor(resolveUniversity(recording.pageUrl));
   const state = auth.loadState();
@@ -159,7 +184,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/auth/connect') return await handleAuthConnect(req, res);
     if (req.method === 'POST' && req.url === '/auth/complete') return await handleAuthComplete(res);
     if (req.method === 'POST' && req.url === '/list') return await handleList(req, res);
-    if (req.method === 'POST' && req.url === '/playlist/entries') return await handlePlaylistEntries(req, res);
+    if (req.method === 'POST' && req.url === '/list/expand') return await handleListExpand(req, res);
     if (req.method === 'POST' && req.url === '/download-item') return await handleDownloadItem(req, res);
     if (req.method === 'POST' && req.url === '/close') return await handleClose(res);
     res.writeHead(404).end();

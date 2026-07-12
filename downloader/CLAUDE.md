@@ -65,6 +65,17 @@ Recitations are routed via the database PUT endpoint's `?kind=recitation` query 
 
 **Auth** (`src/auth/MicrosoftAuth.js`) is split for a UI trigger: `connect(entryUrl)` opens the headed login and returns immediately; `complete()` persists `storageState` and closes the headed browser; `status()` is a cheap probe (state file exists + cookie-expiry heuristic, no browser launch). The CLI's terminal-Enter path (`getAuthState`) reuses the same `connect`/`complete`. One auth instance is cached **per university** so `connect`→`complete` share the in-memory headed browser.
 
+**Mechanism-agnostic HTTP surface.** The frontend contract never exposes the download mechanism — `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist` must NOT appear in any response. `/list` and `/list/expand` both return uniform `Item`s:
+
+```
+Item = { ref: string,        // opaque token; frontend round-trips it, never parses it
+         title: string,
+         kind: 'lecture' | 'recitation',
+         expandable: boolean } // true → call /list/expand(ref); false → download via /download-item(ref)
+```
+
+`ref` opaquely encodes the internal `Recording` (base64url JSON — stateless, no server-side map; see `src/ref.js`). The service decodes it on the way back in and routes videostream vs youtube internally. The internal CLI/core `Recording` shape is unchanged; only the HTTP boundary is opaque.
+
 Endpoints (all JSON; `401 {status:'reconnect'}` when `storageState` is missing/expired, so the UI steers to Reconnect instead of a generic 500):
 
 | Endpoint | Body | Returns |
@@ -72,9 +83,9 @@ Endpoints (all JSON; `401 {status:'reconnect'}` when `storageState` is missing/e
 | `GET /auth/status` | — | `{ connected, expired }` |
 | `POST /auth/connect` | `{ entryUrl? }` | `{ status: 'pending' }` (headed login opens) |
 | `POST /auth/complete` | — | `{ connected: true }` (persists state; rebuilds context if open) |
-| `POST /list` | `{ courseUrl }` | `{ recordings }` — ensure browser, `goto`, parse |
-| `POST /playlist/entries` | `{ recording }` | `{ entries }` — follow redirect + `yt-dlp --flat-playlist` |
-| `POST /download-item` | `{ recording, course, name, kind }` | `{ ok }` — fresh `.mp4` sniff → `server/` `/download`, or youtube entry → `/download-youtube` |
+| `POST /list` | `{ courseUrl }` | `{ items }` — ensure browser, `goto`, parse → `Item[]` |
+| `POST /list/expand` | `{ ref }` | `{ items }` — resolve one expandable item → child `Item[]` (internally: redirect-follow + `yt-dlp --flat-playlist`) |
+| `POST /download-item` | `{ ref, course, name, kind }` | `{ ok }` — decode `ref`; fresh `.mp4` sniff → `server/` `/download`, or youtube entry → `/download-youtube` |
 | `POST /close` | — | `{ ok: true }` — close the persistent browser |
 
 **Dev-stack wiring:** the root `npm run dev` runs it as the `AutoDL` (cyan) `concurrently` process alongside Backend/Frontend/Downloader/Database.
