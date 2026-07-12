@@ -68,10 +68,12 @@ export class VideostreamExtractor extends VideoExtractor {
       throw new Error(`No .mp4 request captured on ${rec.pageUrl} (playback may need a manual trigger)`);
     }
 
+    // server.js's headersToObject expects the extension's webRequest shape (an
+    // array of {name, value}) instead of Playwright's {name: value} object.
     return {
       title: rec.title,
       url: request.url(),
-      headers: request.headers(),
+      headers: Object.entries(request.headers()).map(([name, value]) => ({ name, value })),
       kind: rec.kind,
       strategy: 'videostream',
     };
