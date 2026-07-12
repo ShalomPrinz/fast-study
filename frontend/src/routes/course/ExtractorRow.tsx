@@ -1,35 +1,24 @@
 import { useState } from 'react'
 import type { OverviewExtractor, CoursePhase } from '@/types'
 import { overviewFileUrl } from '@/services/database'
-import { formatMonthDate, formatFullTimestamp } from '@/utils/format'
-import { formatRange } from '@/utils/overview'
 import { toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile, generatedFiles, stepsFor, branchStatus } from '@/constants/overview'
-import type { BranchStatus } from '@/constants/overview'
+import { generatedFiles, stepsFor, branchStatus } from '@/constants/overview'
 import Icon from '@/components/Icon'
 import ConfirmModal from '@/components/ConfirmModal'
 import { useCourseOverview } from '@/routes/course/CourseOverviewContext'
 import { ExtractorContext } from '@/routes/course/ExtractorContext'
 import type { ExtractorValue } from '@/routes/course/ExtractorContext'
-
-// Pure status glyph for one extractor's final PDF. (B4 relocates to its own file.)
-function BranchIndicator({ status }: { status: BranchStatus }) {
-  if (status.running) return <span className="spinner spinner--sm" />
-  if (status.error) return <span className="course-stage-error" title={status.error}>⚠</span>
-  if (status.done) return <span className="file-check">✓</span>
-  return <span className="course-stage-dot" />
-}
+import ExtractorHeader from '@/routes/course/ExtractorHeader'
 
 export default function ExtractorRow({ extractor }: { extractor: OverviewExtractor }) {
-  const { course, files, meta, status, generate } = useCourseOverview()
-  const { slug, title, phases } = extractor
+  const { course, files, status, generate } = useCourseOverview()
+  const { slug, phases } = extractor
   const [expanded, setExpanded] = useState(false)
   const [regenerateOpen, setRegenerateOpen] = useState(false)
   const [regenerateStep, setRegenerateStep] = useState<{ phase: CoursePhase; label: string; rebuilds: string[] } | null>(null)
 
   const bs = branchStatus(status, files, slug, phases)
   const steps = stepsFor(phases)
-  const entry = meta[slug]
 
   // Fire the mutation via the context, then toast its result here — a component may toast.
   async function handleGenerate(names?: string[], fromPhase?: CoursePhase) {
@@ -62,52 +51,7 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
   return (
     <ExtractorContext.Provider value={value}>
       <div className={`file-row course-branch${bs.done ? ' file-row--present' : ''}`}>
-        <div className="course-branch-header">
-          <button
-            className="course-branch-toggle"
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-          >
-            <span className="course-branch-caret">{expanded ? '▾' : '▸'}</span>
-            <span className="course-branch-heading">
-              <span className="course-branch-name">{title}</span>
-              {entry && (
-                <span className="course-branch-subtitle">
-                  {formatRange(entry)} ·{' '}
-                  <span title={formatFullTimestamp(entry.generatedAt)}>{formatMonthDate(entry.generatedAt)}</span>
-                </span>
-              )}
-            </span>
-          </button>
-          <span className="course-branch-actions">
-            <BranchIndicator status={bs} />
-            {bs.done && (
-              <button
-                className="file-open-btn"
-                title="Open PDF in new tab"
-                onClick={() => window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')}
-              >
-                <Icon icon="external-link" />
-              </button>
-            )}
-            {bs.done ? (
-              <button
-                className="file-rotate-btn"
-                title={`Re-generate ${title}`}
-                onClick={() => setRegenerateOpen(true)}
-                disabled={bs.running}
-              >↺</button>
-            ) : (
-              <button
-                className="file-action-btn"
-                onClick={() => handleGenerate([slug])}
-                disabled={bs.running}
-              >
-                Generate
-              </button>
-            )}
-          </span>
-        </div>
+        <ExtractorHeader />
 
         {expanded && (
           <div className="course-steps">
