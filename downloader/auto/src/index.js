@@ -23,7 +23,7 @@ async function main() {
   }
 
   const { auth, source } = resolveSite(courseUrl); // throws with a clear message if no handler
-  const authState = await auth.getAuthState();
+  const authState = await auth.getAuthState(courseUrl);
   const videos = await source.listVideos(authState, courseUrl);
 
   console.log(`\nDiscovered ${videos.length} video(s) for ${courseUrl}:`);
