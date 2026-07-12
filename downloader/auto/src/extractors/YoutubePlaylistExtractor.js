@@ -1,4 +1,26 @@
+import { execFile } from 'node:child_process';
+import readline from 'node:readline';
+import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
+
+const execFileAsync = promisify(execFile);
+
+// Hosts we accept as a YouTube redirect target. Anything else is unsupported for now.
+const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
+
+/** Prompt on the terminal for a 1-based index into `entries`; re-asks until valid. */
+function pickEntry(entries) {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  const ask = () =>
+    new Promise((resolve) => {
+      rl.question('Pick a playlist entry number: ', (answer) => {
+        const i = parseInt(String(answer).trim(), 10);
+        if (Number.isInteger(i) && i >= 1 && i <= entries.length) resolve(entries[i - 1]);
+        else resolve(ask());
+      });
+    });
+  return ask().finally(() => rl.close());
+}
 
 /**
  * Moodle `url` module that redirects off-site. We can't know the target host
@@ -27,18 +49,47 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * DOWNLOAD PHASE (later).
+   * DOWNLOAD PHASE: follow the Moodle url-module redirect to YouTube, list the
+   * playlist entries with yt-dlp, let the user pick one. No headers — server.js's
+   * /download-youtube runs yt-dlp, which manages its own session.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
    */
   async captureVideo(page, rec) {
-    // TODO(download phase): navigate `${rec.pageUrl}&redirect=1` (as the Moodle
-    // onclick does) and wait for the final URL. Confirm its host is one of
-    // {youtube.com, www.youtube.com, m.youtube.com, youtu.be}; otherwise throw
-    // "unsupported redirect target" (only YouTube handled for now). Treat it as a
-    // playlist → list entries via `yt-dlp --flat-playlist` → user picks one →
-    // POST server.js /download-youtube with the chosen entry's URL.
-    throw new Error('YoutubePlaylistExtractor.captureVideo not implemented (download phase)');
+    // `&redirect=1` is what the Moodle onclick uses to jump straight to the target.
+    const sep = rec.pageUrl.includes('?') ? '&' : '?';
+    await page.goto(`${rec.pageUrl}${sep}redirect=1`, { waitUntil: 'load' });
+    const finalUrl = page.url();
+
+    const host = new URL(finalUrl).hostname;
+    if (!YOUTUBE_HOSTS.has(host)) throw new Error(`unsupported redirect target: ${host}`);
+
+    // Flat-list the playlist (title<TAB>url per entry). argv array — never a shell
+    // string — so titles with metacharacters can't inject.
+    let stdout;
+    try {
+      ({ stdout } = await execFileAsync('yt-dlp', ['--flat-playlist', '--print', '%(title)s\t%(url)s', finalUrl]));
+    } catch (err) {
+      const detail = err.code === 'ENOENT' ? 'yt-dlp not found on PATH' : err.stderr || err.message;
+      throw new Error(`yt-dlp failed to list playlist: ${detail}`);
+    }
+
+    const entries = stdout
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [title, url] = line.split('\t');
+        return { title, url };
+      })
+      .filter((e) => e.url);
+    if (!entries.length) throw new Error(`no playlist entries found at ${finalUrl}`);
+
+    console.log(`\nPlaylist entries (${entries.length}):`);
+    entries.forEach((e, i) => console.log(`  [${i + 1}] ${e.title}`));
+    const chosen = await pickEntry(entries);
+
+    return { title: chosen.title, url: chosen.url, kind: rec.kind, strategy: 'youtube-playlist' };
   }
 }
