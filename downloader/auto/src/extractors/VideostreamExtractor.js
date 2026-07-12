@@ -1,7 +1,7 @@
 import { VideoExtractor } from './VideoExtractor.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
-export function endsWithMp4(url) {
+function endsWithMp4(url) {
   try {
     return new URL(url).pathname.toLowerCase().endsWith('.mp4');
   } catch {

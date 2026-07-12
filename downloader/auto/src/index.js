@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { resolveUniversity, resolveExtractor } from './registry.js';
 import { deriveName, promptNumber } from './naming.js';
 import { postDownload, postDownloadYoutube } from './serverClient.js';
+import { ask } from './prompt.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CAPTURES_DIR = path.resolve(__dirname, '..', 'captures');
@@ -30,16 +30,10 @@ function parseArgs(argv) {
   return { courseUrl: positional[0], course };
 }
 
-/** Ask one line on the terminal and resolve the trimmed answer. */
-function promptLine(question) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((resolve) => rl.question(question, (a) => resolve(String(a).trim()))).finally(() => rl.close());
-}
-
 /** Interactive download loop: pick a recording, capture it, POST to server.js. */
 async function downloadLoop(page, items, course) {
   for (;;) {
-    const answer = await promptLine('\nPick a recording number to download (q to quit): ');
+    const answer = await ask('\nPick a recording number to download (q to quit): ');
     if (answer === 'q' || answer === '') break;
     const idx = parseInt(answer, 10);
     if (!Number.isInteger(idx) || idx < 1 || idx > items.length) {

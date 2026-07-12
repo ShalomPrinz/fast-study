@@ -19,5 +19,5 @@ function loadEnv(file) {
 
 loadEnv(path.join(REPO_ROOT, '.env'));
 
-// SERVER_URL is for the later download phase (POST /download); unused in MVP.
+// server.js base URL for the download phase (POST /download, /download-youtube).
 export const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3052';

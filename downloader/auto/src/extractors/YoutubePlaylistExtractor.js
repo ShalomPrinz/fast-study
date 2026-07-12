@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
-import readline from 'node:readline';
 import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
+import { askUntil } from '../prompt.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -10,16 +10,10 @@ const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com'
 
 /** Prompt on the terminal for a 1-based index into `entries`; re-asks until valid. */
 function pickEntry(entries) {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ask = () =>
-    new Promise((resolve) => {
-      rl.question('Pick a playlist entry number: ', (answer) => {
-        const i = parseInt(String(answer).trim(), 10);
-        if (Number.isInteger(i) && i >= 1 && i <= entries.length) resolve(entries[i - 1]);
-        else resolve(ask());
-      });
-    });
-  return ask().finally(() => rl.close());
+  return askUntil('Pick a playlist entry number: ', (answer) => {
+    const i = parseInt(answer, 10);
+    return Number.isInteger(i) && i >= 1 && i <= entries.length ? entries[i - 1] : null;
+  });
 }
 
 /**

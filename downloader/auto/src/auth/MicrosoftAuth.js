@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { AuthProvider } from './AuthProvider.js';
+import { ask } from '../prompt.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/auth/ -> src/ -> auto/  (statePath is relative to the package root)
@@ -30,17 +30,6 @@ function isLoginUrl(finalUrl) {
   } catch {
     return false;
   }
-}
-
-/** Prompt on the terminal and resolve when the user presses Enter. */
-function waitForEnter(promptText) {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    rl.question(promptText, () => {
-      rl.close();
-      resolve();
-    });
-  });
 }
 
 /**
@@ -137,7 +126,7 @@ export class MicrosoftAuth extends AuthProvider {
       // TODO: once the real course DOM is known, replace this with a selector wait
       //   (e.g. page.waitForSelector('<logged-in element>')) for a hands-off flow.
       console.log('\nA browser window has opened. Complete the Microsoft login + MFA there.');
-      await waitForEnter('When you are fully logged in, press Enter here to save the session… ');
+      await ask('When you are fully logged in, press Enter here to save the session… ');
 
       fs.mkdirSync(path.dirname(this.statePath), { recursive: true });
       const state = await context.storageState({ path: this.statePath });

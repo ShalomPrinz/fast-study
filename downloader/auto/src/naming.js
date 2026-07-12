@@ -1,4 +1,4 @@
-import readline from 'node:readline';
+import { askUntil } from './prompt.js';
 
 /** kind → app-convention name prefix (matches suggestLectureName in popup.js). */
 function prefixFor(kind) {
@@ -29,14 +29,8 @@ export function deriveName(title, kind) {
  */
 export function promptNumber(kind) {
   const word = kind === 'recitation' ? 'recitation' : 'lecture';
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ask = () =>
-    new Promise((resolve) => {
-      rl.question(`Enter ${word} number: `, (answer) => {
-        const m = String(answer).match(/\d+/);
-        if (m) resolve(`${prefixFor(kind)} ${parseInt(m[0], 10)}`);
-        else resolve(ask());
-      });
-    });
-  return ask().finally(() => rl.close());
+  return askUntil(`Enter ${word} number: `, (answer) => {
+    const m = answer.match(/\d+/);
+    return m ? `${prefixFor(kind)} ${parseInt(m[0], 10)}` : null;
+  });
 }
