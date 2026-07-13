@@ -45,7 +45,6 @@ frontend/
       http.ts                  typed fetch client + shared `httpError`
       backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus, overview: fetchOverviewExtractors, runOverview, fetchCourseStatus)
       database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file, fetchCourseMeta for the per-slug overview meta/ranges); createCourse takes an optional source_url + setCourseSourceUrl(course, url) PATCHes it
-      autoDownloader.ts        HTTP client for the auto-downloader service (`VITE_AUTODL_URL`) — BIU auth: fetchAuthStatus/connectAuth/completeAuth (discovery/download land in Steps 4–5)
       events.ts                singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
       toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
 
@@ -128,10 +127,15 @@ frontend/
           overview.ts             formatRange(entry) — "Lectures 2-9, Recitations 1-4" / "No Lectures"/"No Recitations" from an OverviewMeta entry
 
       downloads/            the Downloads page (auto-downloader integration), a main-layout view peer to CourseView — no sidebar mode
-        DownloadsView.tsx       /downloads shell: AuthPill + the course source-URL list (non-archived courses from CourseTreeContext) + AddCourseRow
+        DownloadsView.tsx       /downloads shell: AuthPill + the course source-URL list (non-archived courses from CourseTreeContext) + AddCourseRow; owns discovery state (selectedCourse/items/loading/error) — one selected course at a time, discover() calls listRecordings and renders the in-page recordings panel of <RecordingRow>; ReconnectError → toast steering to the pill (never selects)
         AuthPill.tsx            BIU account status pill: fetchAuthStatus on mount; Connect → connectAuth (pops headed browser) → Done → completeAuth → re-probe
-        CourseSourceRow.tsx     one course row: name + source URL as a real new-tab link once set (pencil ✎ Icon opens inline edit → setCourseSourceUrl PATCH); "+ add source URL" opens edit directly when none. Grid-aligned (.source-row 180px|1fr|auto), name+URL ellipsis-truncated with full-value title
+        CourseSourceRow.tsx     one course row: name + source URL as a real new-tab link once set (pencil ✎ Icon opens inline edit → setCourseSourceUrl PATCH); "+ add source URL" opens edit directly when none. When a source URL is set, a "Load recordings" button (onDiscover/selected/discovering props) triggers in-page discovery. The `selected` course highlights the whole row (.source-row--selected), not the button (button reverts to ghost + transient "Loading…"). Grid-aligned (.source-row 180px|1fr|auto), name+URL ellipsis-truncated with full-value title
+        RecordingRow.tsx        one discovered Item. Downloadable (expandable=false): title + Lecture/Recitation kind toggle (default item.kind) + name input (real editable value seeded from suggestItemName, recomputed on kind toggle unless the user has typed — `touched` flag) + Download button (spinner → ✓/✗). When the live (name,kind) matches an existing lecture/recitation (CourseTreeContext) the whole row goes green (.recording-row--downloaded) and Download opens a ConfirmModal (overwrite?) before proceeding; otherwise it downloads directly. Expandable (expandable=true): collapsed, no-op caret only (Step 5). ReconnectError → onReconnect()
         AddCourseRow.tsx        create a course (name + optional source URL) via createCourse
+        services/
+          autoDownloader.ts     feature-local HTTP client for the auto-downloader service (`VITE_AUTODL_URL`, default localhost:3053). BIU auth: fetchAuthStatus/connectAuth/completeAuth. Discovery/download: Item (mechanism-agnostic {ref,title,kind,expandable} — round-trip ref, never parse), listRecordings(courseUrl)→POST /list, downloadItem({ref,course,name,kind})→POST /download-item. Both use a direct fetch (not the shared client, which hides the body) to read the 401 { status:'reconnect' } signal → typed ReconnectError (+ isReconnectError guard); that raw fetch forgoes central ConnectionError wrapping for these two
+        utils/
+          nameSuggestion.ts     suggestItemName(title,kind,courses,course): mirror of the CLI's deriveName — first integer in the title → "Lecture N"/"Recitation N"; no number → suggestName(courses,course,kind) fallback
   vite.config.ts             plain React plugin — no fs plugin
   tsconfig.json
   index.html

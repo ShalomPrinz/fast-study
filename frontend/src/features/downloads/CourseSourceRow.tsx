@@ -6,11 +6,19 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import Icon from '@/shared/components/Icon'
 
+interface Props {
+  course: Course
+  onDiscover?: () => void
+  selected?: boolean
+  discovering?: boolean
+}
+
 // One course row: name + its source URL. Once a URL is set the text is a real
 // link (default click opens a new tab); a pencil button switches to inline edit
 // (setCourseSourceUrl PATCH). With no URL yet there's nothing to link to, so the
-// "+ add source URL" affordance opens edit mode directly.
-export default function CourseSourceRow({ course }: { course: Course }) {
+// "+ add source URL" affordance opens edit mode directly. When a source URL is set,
+// a "Load recordings" button discovers the course's recordings in-page.
+export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { refreshCourses } = useCourseTreeContext()
   const [editing, setEditing] = useState(false)
   const edit = useInlineEdit(editing ? (course.source_url ?? '') : null)
@@ -29,7 +37,7 @@ export default function CourseSourceRow({ course }: { course: Course }) {
   }
 
   return (
-    <div className="source-row">
+    <div className={selected ? 'source-row source-row--selected' : 'source-row'}>
       <span className="source-row-name" title={course.name} dir="auto">{course.name}</span>
       {editing ? (
         <InlineEditInput
@@ -56,9 +64,20 @@ export default function CourseSourceRow({ course }: { course: Course }) {
         </button>
       )}
       {!editing && course.source_url && (
-        <button className="source-row-edit-btn" onClick={start} title="Edit source URL">
-          <Icon icon="edit" />
-        </button>
+        <div className="source-row-actions">
+          {onDiscover && (
+            <button
+              className="source-row-btn source-row-btn--ghost"
+              onClick={onDiscover}
+              disabled={discovering}
+            >
+              {discovering ? 'Loading…' : 'Load recordings'}
+            </button>
+          )}
+          <button className="source-row-edit-btn" onClick={start} title="Edit source URL">
+            <Icon icon="edit" />
+          </button>
+        </div>
       )}
     </div>
   )

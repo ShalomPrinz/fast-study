@@ -1,4 +1,5 @@
-import { createClient } from '@/services/http'
+import { createClient, httpError } from '@/services/http'
+import type { Kind } from '@/types'
 
 // Boundary for the auto-downloader service (persistent-browser BIU capture).
 const autoDownloader = createClient(
@@ -9,6 +10,65 @@ const autoDownloader = createClient(
 export interface AuthStatus {
   connected: boolean
   expired: boolean
+}
+
+// Mechanism-agnostic discovery item. `ref` is an opaque token — round-trip it
+// back to /download-item, never parse it. `expandable` true → resolve via
+// /list/expand (Step 5); false → downloadable directly.
+export interface Item {
+  ref: string
+  title: string
+  kind: Kind
+  expandable: boolean
+}
+
+// Thrown when the stored BIU session is missing/expired. /list and /download-item
+// answer HTTP 401 { status: 'reconnect' } in that case; we surface it distinctly so
+// the UI steers the user to the Reconnect pill instead of a generic error toast.
+export class ReconnectError extends Error {
+  constructor() {
+    super('BIU session expired — reconnect the account.')
+    this.name = 'ReconnectError'
+  }
+}
+
+export function isReconnectError(err: unknown): err is ReconnectError {
+  return err instanceof ReconnectError
+}
+
+// The shared http client hides the response body, so the { status: 'reconnect' }
+// 401 signal can't be read through it — hence a small direct fetch here that reads
+// the body on 401. NOTE: this bypasses the client's central ConnectionError
+// wrapping, so a connection-refused here throws a raw TypeError rather than the
+// friendly "service down" toast — acceptable for these two endpoints.
+async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(autoDownloader.url(path), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (res.status === 401) {
+    const data = await res.json().catch(() => null)
+    if (data?.status === 'reconnect') throw new ReconnectError()
+  }
+  if (!res.ok) throw httpError(res)
+  return res.json() as Promise<T>
+}
+
+// Discover a course's recordings. Empty/expired session → ReconnectError.
+export async function listRecordings(courseUrl: string): Promise<Item[]> {
+  const { items } = await postReconnectAware<{ items: Item[] }>('/list', { courseUrl })
+  return items
+}
+
+// Download one downloadable item (echo its opaque ref). Expired session → ReconnectError.
+export async function downloadItem(args: {
+  ref: string
+  course: string
+  name: string
+  kind: Kind
+}): Promise<{ ok: boolean }> {
+  return postReconnectAware<{ ok: boolean }>('/download-item', args)
 }
 
 export async function fetchAuthStatus(): Promise<AuthStatus> {
