@@ -139,6 +139,17 @@ export class MicrosoftAuth extends AuthProvider {
   }
 
   /**
+   * Persist a refreshed storageState after a silent SSO recovery — the AAD cookie
+   * completed the login redirect without MFA, so re-saving the now-rolling cookies
+   * keeps the session window extending across runs. Mirrors how complete() writes.
+   * @param {import('./AuthProvider.js').StorageState} state
+   */
+  saveState(state) {
+    fs.mkdirSync(path.dirname(this.statePath), { recursive: true });
+    fs.writeFileSync(this.statePath, JSON.stringify(state));
+  }
+
+  /**
    * @param {string} entryUrl  course/entry URL — headed-login entry + probe target
    * @returns {Promise<import('./AuthProvider.js').StorageState>}
    */

@@ -1,9 +1,17 @@
 import { launchBrowser } from './browserLaunch.js';
+import { isLoginUrl } from './auth/MicrosoftAuth.js';
 
 // Safety valve only — the browser is meant to stay open (the ~1–2s launch + auth
 // context build is paid once). Auto-close after this long idle so a forgotten
 // server doesn't hold a headless Chromium forever; it re-opens lazily next call.
 const IDLE_TIMEOUT_MS = 45 * 60 * 1000;
+
+// How long to wait for a login bounce to auto-redirect back to a real page. The
+// Moodle session can idle out while the persistent AAD cookie is still alive, so
+// SSO often completes silently (no MFA) within a couple seconds. A genuinely dead
+// AAD session parks on the login/MFA form instead, so this timeout is what tells
+// the two apart — long enough to cover the redirect chain, short enough to fail fast.
+const SILENT_REAUTH_TIMEOUT_MS = 12_000;
 
 /**
  * The ONE persistent headless browser+context+page the HTTP service drives. All
@@ -38,6 +46,31 @@ export class BrowserSession {
     await this.page.goto(url, { waitUntil: 'load' });
     this._touch();
     return this.page.url();
+  }
+
+  // Navigate, but treat a login/enrol bounce as maybe-recoverable instead of fatal.
+  // wait (bounded) for the persistent AAD cookie to auto-redirect back to a real
+  //         page. Resolves → silent recovery (re-save the refreshed rolling cookies via
+  //         auth.saveState); times out → AAD session truly gone → return null so the
+  //         caller runs its markExpired()/reconnect path. MUST be called inside withLock.
+  // Returns { url, recovered } on success, or null when recovery failed (unrecoverable).
+  async gotoAuthenticated(url, auth) {
+    let finalUrl = await this.goto(url);
+    if (!isLoginUrl(finalUrl)) return { url: finalUrl, recovered: false };
+    try {
+      await this.page.waitForURL((u) => !isLoginUrl(String(u)), { timeout: SILENT_REAUTH_TIMEOUT_MS });
+    } catch {
+      return null; // login/MFA form just sat there → credentials really required
+    }
+    finalUrl = this.page.url();
+    // Persisting the refreshed state is best-effort — a failed write shouldn't sink an
+    // otherwise-successful recovery; the in-memory context is already re-authenticated.
+    try {
+      auth.saveState(await this.context.storageState());
+    } catch (e) {
+      console.warn(`Failed to persist recovered auth state: ${e.message}`);
+    }
+    return { url: finalUrl, recovered: true };
   }
 
   // Async mutex: chain fn onto the tail so only one page op runs at a time.

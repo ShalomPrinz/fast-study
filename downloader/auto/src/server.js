@@ -1,7 +1,6 @@
 import http from 'node:http';
 import { AUTODL_PORT, SERVER_URL, AUTH_ENTRY_URL } from './config.js';
 import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from './registry.js';
-import { isLoginUrl } from './auth/MicrosoftAuth.js';
 import { session } from './browserSession.js';
 import { listRecordings, downloadRecording } from './core.js';
 import { encodeRef, decodeRef } from './ref.js';
@@ -119,17 +118,18 @@ async function handleList(req, res) {
   if (!state || auth.status().expired) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
 
   await session.open(state);
-  // withLock returns null as a sentinel for "the session bounced to login" so the
-  // reconnect signal is sent OUTSIDE the lock (can't send from inside cleanly).
+  // withLock returns null as a sentinel for "the session bounced to login AND silent
+  // SSO recovery failed" so the reconnect signal is sent OUTSIDE the lock (can't send
+  // from inside cleanly). gotoAuthenticated absorbs a recoverable bounce silently.
   const recordings = await session.withLock(async () => {
-    const finalUrl = await session.goto(courseUrl);
-    if (isLoginUrl(finalUrl)) return null;
+    const nav = await session.gotoAuthenticated(courseUrl, auth);
+    if (!nav) return null;
     const items = await listRecordings(session.page, courseUrl);
     return items.map((it) => it.recording);
   });
-  // Runtime bounce: the nav actually landed on login/enrol, so the server (not the
-  // cheap cookie heuristic) is now the source of truth — mark the cached instance
-  // expired so the next /auth/status reports expired:true.
+  // Runtime bounce that couldn't self-recover: the AAD session is genuinely gone, so
+  // the server (not the cheap cookie heuristic) is now the source of truth — mark the
+  // cached instance expired so the next /auth/status reports expired:true.
   if (recordings === null) { auth.markExpired(); logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
@@ -185,10 +185,10 @@ async function handleDownloadItem(req, res) {
   await session.open(state);
   // Lock covers the whole navigate+sniff (captureVideo navigates internally); the
   // POST to server.js is quick — server.js returns immediately and downloads in bg.
-  // Mirror /list: pre-nav to pageUrl detects a runtime login/enrol bounce (null
-  // sentinel) so an expired session steers to Reconnect instead of throwing a 500.
+  // Mirror /list: gotoAuthenticated first tries a silent SSO recovery on a login/enrol
+  // bounce; only an unrecoverable bounce (null) steers to Reconnect instead of a 500.
   const bounced = await session.withLock(async () => {
-    if (isLoginUrl(await session.goto(recording.pageUrl))) return true;
+    if (!(await session.gotoAuthenticated(recording.pageUrl, auth))) return true;
     await downloadRecording(session.page, { recording, course, name, kind });
     return false;
   });
