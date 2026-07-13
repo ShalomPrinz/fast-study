@@ -4,6 +4,7 @@ import { MicrosoftAuth } from './auth/MicrosoftAuth.js';
 import { parseMoodleCourse } from './extractors/moodleCourse.js';
 import { VideostreamExtractor } from './extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from './extractors/YoutubePlaylistExtractor.js';
+import { ZoomExtractor } from './extractors/ZoomExtractor.js';
 
 // Universities own AUTH (per host) + which LMS parser enumerates their courses.
 const UNIVERSITIES = [
@@ -21,6 +22,7 @@ const UNIVERSITIES = [
 const EXTRACTORS = [
   new VideostreamExtractor(), // modType 'videostream' → in-site .mp4
   new YoutubePlaylistExtractor(), // modType 'url'      → YouTube playlist (redirect)
+  new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
 ];
 
 /**

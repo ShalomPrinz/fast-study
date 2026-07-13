@@ -1,5 +1,7 @@
 import { resolveUniversity, resolveExtractor, resolveExtractorForRecording } from './registry.js';
 import { postDownload, postDownloadYoutube } from './serverClient.js';
+import { parseZoomSections } from './extractors/zoomSection.js';
+import { splitName } from './naming.js';
 
 /**
  * LISTING PATH: enumerate a navigated course page's recordings, each paired with
@@ -13,7 +15,10 @@ import { postDownload, postDownloadYoutube } from './serverClient.js';
  */
 export async function listRecordings(page, courseUrl) {
   const uni = resolveUniversity(courseUrl);
-  const activities = await uni.parse(page);
+  // Two DOM sources merge here (the single merge point): the LMS's `li.activity`
+  // module cards, plus zoom-share links living in `li.section` summaries (which
+  // aren't activity cards, so the module parser never sees them).
+  const activities = [...(await uni.parse(page)), ...(await parseZoomSections(page))];
   const items = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
@@ -41,6 +46,19 @@ export async function downloadRecording(page, { recording, course, name, kind })
   }
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
+
+  // Zoom yields 1-or-2 captures (a share link can hold a before/after-break pair).
+  // Split into `<name>.1`/`<name>.2` ONLY when a distinct second .mp4 was captured;
+  // a lone recording keeps the plain `<name>`.
+  if (recording.strategy === 'zoom') {
+    const caps = await extractor.captureVideo(page, recording);
+    const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
+    for (let i = 0; i < caps.length; i++) {
+      await postDownload({ url: caps[i].url, headers: caps[i].headers, course, lecture: names[i], kind });
+    }
+    return;
+  }
+
   const cap = await extractor.captureVideo(page, recording);
   await postDownload({ url: cap.url, headers: cap.headers, course, lecture: name, kind });
 }

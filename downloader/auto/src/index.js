@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { resolveUniversity } from './registry.js';
 import { listRecordings } from './core.js';
-import { deriveName, promptNumber } from './naming.js';
+import { deriveName, promptNumber, splitName } from './naming.js';
 import { postDownload, postDownloadYoutube } from './serverClient.js';
 import { ask } from './prompt.js';
 
@@ -43,6 +43,19 @@ async function downloadLoop(page, items, course) {
     }
     const { recording, extractor } = items[idx - 1];
     try {
+      // Zoom returns 1-or-2 captures (a share link can hold a before/after-break
+      // pair); split the name into `<base>.1`/`<base>.2` only when a distinct
+      // second .mp4 was captured, else keep the plain `<base>`.
+      if (recording.strategy === 'zoom') {
+        const caps = await extractor.captureVideo(page, recording);
+        const base = deriveName(caps[0].title, caps[0].kind) ?? (await promptNumber(caps[0].kind));
+        const names = caps.length === 2 ? [splitName(base, 1), splitName(base, 2)] : [base];
+        for (let i = 0; i < caps.length; i++) {
+          await postDownload({ url: caps[i].url, headers: caps[i].headers, course, lecture: names[i], kind: caps[i].kind });
+          console.log(`✓ Sent "${caps[i].title}" → ${course}/${names[i]} (zoom)`);
+        }
+        continue;
+      }
       // captureVideo resolves the actual downloadable video (videostream: sniff the
       // .mp4 fresh; youtube: follow the redirect + let the user pick a playlist entry).
       const cap = await extractor.captureVideo(page, recording);
