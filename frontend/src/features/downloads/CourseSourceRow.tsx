@@ -4,8 +4,12 @@ import { setCourseSourceUrl } from '@/services/database'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
+import Icon from '@/shared/components/Icon'
 
-// One course row: name + its source URL with inline edit (database PATCH).
+// One course row: name + its source URL. Once a URL is set the text is a real
+// link (default click opens a new tab); a pencil button switches to inline edit
+// (setCourseSourceUrl PATCH). With no URL yet there's nothing to link to, so the
+// "+ add source URL" affordance opens edit mode directly.
 export default function CourseSourceRow({ course }: { course: Course }) {
   const { refreshCourses } = useCourseTreeContext()
   const [editing, setEditing] = useState(false)
@@ -26,7 +30,7 @@ export default function CourseSourceRow({ course }: { course: Course }) {
 
   return (
     <div className="source-row">
-      <span className="source-row-name" dir="auto">{course.name}</span>
+      <span className="source-row-name" title={course.name} dir="auto">{course.name}</span>
       {editing ? (
         <InlineEditInput
           edit={edit}
@@ -35,11 +39,25 @@ export default function CourseSourceRow({ course }: { course: Course }) {
           placeholder="https://…"
           className="source-row-input"
         />
+      ) : course.source_url ? (
+        <a
+          className="source-row-url-text"
+          href={course.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          title={course.source_url}
+          dir="auto"
+        >
+          {course.source_url}
+        </a>
       ) : (
-        <button className="source-row-url" onClick={start} title="Edit source URL" dir="auto">
-          {course.source_url
-            ? <span className="source-row-url-text">{course.source_url}</span>
-            : <span className="source-row-url-empty">+ add source URL</span>}
+        <button className="source-row-url" onClick={start} dir="auto">
+          + add source URL
+        </button>
+      )}
+      {!editing && course.source_url && (
+        <button className="source-row-edit-btn" onClick={start} title="Edit source URL">
+          <Icon icon="edit" />
         </button>
       )}
     </div>

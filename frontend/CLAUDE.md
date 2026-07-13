@@ -130,7 +130,7 @@ frontend/
       downloads/            the Downloads page (auto-downloader integration), a main-layout view peer to CourseView — no sidebar mode
         DownloadsView.tsx       /downloads shell: AuthPill + the course source-URL list (non-archived courses from CourseTreeContext) + AddCourseRow
         AuthPill.tsx            BIU account status pill: fetchAuthStatus on mount; Connect → connectAuth (pops headed browser) → Done → completeAuth → re-probe
-        CourseSourceRow.tsx     one course row: name + inline-edit source URL (setCourseSourceUrl PATCH)
+        CourseSourceRow.tsx     one course row: name + source URL as a real new-tab link once set (pencil ✎ Icon opens inline edit → setCourseSourceUrl PATCH); "+ add source URL" opens edit directly when none. Grid-aligned (.source-row 180px|1fr|auto), name+URL ellipsis-truncated with full-value title
         AddCourseRow.tsx        create a course (name + optional source URL) via createCourse
   vite.config.ts             plain React plugin — no fs plugin
   tsconfig.json
