@@ -53,6 +53,16 @@ function send(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+// Lightweight request logging — one line in, one line out per request. Enough to
+// see each request and diagnose an empty list (the parsed item count), without
+// dumping DOM / storageState / secrets.
+function logReq(method, path, detail) {
+  console.log(`→ ${method} ${path}${detail ? `  ${detail}` : ''}`);
+}
+function logResult(path, msg) {
+  console.log(`↳ ${path} → ${msg}`);
+}
+
 // Distinct "session expired → steer the user to Reconnect" signal, so the page
 // can open the auth pill rather than toast a generic 500. 401 = unauthenticated.
 function sendReconnect(res) {
@@ -77,12 +87,14 @@ function handleAuthStatus(res) {
 }
 
 async function handleAuthConnect(req, res) {
+  logReq('POST', '/auth/connect');
   const { entryUrl } = JSON.parse((await readBody(req)) || '{}');
   await authFor(defaultUniversity()).connect(entryUrl || AUTH_ENTRY_URL);
   send(res, 200, { status: 'pending' });
 }
 
 async function handleAuthComplete(res) {
+  logReq('POST', '/auth/complete');
   const auth = authFor(defaultUniversity());
   const state = await auth.complete();
   // If the persistent browser is already open, its context holds the now-stale
@@ -95,6 +107,7 @@ async function handleAuthComplete(res) {
 
 async function handleList(req, res) {
   const { courseUrl } = JSON.parse(await readBody(req));
+  logReq('POST', '/list', courseUrl);
   if (typeof courseUrl !== 'string' || !/^https?:\/\//.test(courseUrl)) {
     return send(res, 400, { error: 'valid courseUrl required' });
   }
@@ -103,7 +116,7 @@ async function handleList(req, res) {
 
   const auth = authFor(uni);
   const state = auth.loadState();
-  if (!state || auth.status().expired) return sendReconnect(res);
+  if (!state || auth.status().expired) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
 
   await session.open(state);
   // withLock returns null as a sentinel for "the session bounced to login" so the
@@ -114,7 +127,8 @@ async function handleList(req, res) {
     const items = await listRecordings(session.page, courseUrl);
     return items.map((it) => it.recording);
   });
-  if (recordings === null) return sendReconnect(res);
+  if (recordings === null) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
+  logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
 }
 
@@ -122,6 +136,7 @@ async function handleList(req, res) {
 // route name and body are mechanism-neutral; the redirect-follow + yt-dlp
 // --flat-playlist lives behind the extractor and the opaque ref.
 async function handleListExpand(req, res) {
+  logReq('POST', '/list/expand', '(expanding)');
   const { ref } = JSON.parse(await readBody(req));
   const recording = decodeRef(ref);
   const extractor = resolveExtractorForRecording(recording);
@@ -130,7 +145,7 @@ async function handleListExpand(req, res) {
   }
   const auth = authFor(resolveUniversity(recording.pageUrl));
   const state = auth.loadState();
-  if (!state || auth.status().expired) return sendReconnect(res);
+  if (!state || auth.status().expired) { logResult('/list/expand', 'reconnect (401)'); return sendReconnect(res); }
 
   await session.open(state);
   const entries = await session.withLock(() => extractor.listEntries(session.page, recording));
@@ -139,11 +154,13 @@ async function handleListExpand(req, res) {
   const items = entries.map((e) =>
     toItem({ title: e.title, url: e.url, kind: recording.kind, strategy: recording.strategy }),
   );
+  logResult('/list/expand', `${items.length} items`);
   send(res, 200, { items });
 }
 
 async function handleDownloadItem(req, res) {
   const { ref, course, name, kind = 'lecture' } = JSON.parse(await readBody(req));
+  logReq('POST', '/download-item', `${course}/${name} (${kind})`);
   const recording = decodeRef(ref);
   if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'valid ref required' });
   if (!isSafeName(course) || !isSafeName(name)) return send(res, 400, { error: 'course and name are required' });
@@ -153,22 +170,25 @@ async function handleDownloadItem(req, res) {
   // no browser; videostream must sniff the .mp4 fresh on the shared page.
   if (recording.strategy === 'youtube-playlist' && recording.url) {
     await downloadRecording(null, { recording, course, name, kind });
+    logResult('/download-item', 'ok');
     return send(res, 200, { ok: true });
   }
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
   const auth = authFor(resolveUniversity(recording.pageUrl));
   const state = auth.loadState();
-  if (!state || auth.status().expired) return sendReconnect(res);
+  if (!state || auth.status().expired) { logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
 
   await session.open(state);
   // Lock covers the whole navigate+sniff (captureVideo navigates internally); the
   // POST to server.js is quick — server.js returns immediately and downloads in bg.
   await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind }));
+  logResult('/download-item', 'ok');
   send(res, 200, { ok: true });
 }
 
 async function handleClose(res) {
+  logReq('POST', '/close');
   await session.close();
   send(res, 200, { ok: true });
 }
