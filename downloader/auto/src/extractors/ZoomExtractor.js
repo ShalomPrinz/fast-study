@@ -1,4 +1,5 @@
 import { VideoExtractor } from './VideoExtractor.js';
+import { ZOOM_PASSWORD } from '../config.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
 function endsWithMp4(url) {
@@ -47,8 +48,9 @@ export class ZoomExtractor extends VideoExtractor {
   }
 
   /**
-   * One Recording per share link. `passcode` rides on the Recording (encoded into
-   * the opaque ref at the HTTP boundary) and drives the passcode gate at download.
+   * One Recording per share link. The passcode is NOT carried here — every BIU
+   * share uses the single hardcoded `ZOOM_PASSWORD` (see config.js), applied at
+   * the passcode gate during download.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
@@ -57,7 +59,6 @@ export class ZoomExtractor extends VideoExtractor {
       {
         title: activity.title,
         pageUrl: activity.pageUrl,
-        passcode: activity.passcode,
         kind: activity.kind,
         strategy: 'zoom',
       },
@@ -82,13 +83,12 @@ export class ZoomExtractor extends VideoExtractor {
       .catch(() => null);
 
     await page.goto(rec.pageUrl, { waitUntil: 'load' });
-    await this.#submitPasscode(page, rec.passcode);
+    await this.#submitPasscode(page);
 
     let request = await firstWait;
     if (!request) {
-      // TODO(unverified): the zoom player's autoplay-vs-click behaviour and its
-      // play-button selector are not confirmed against the live share page (no
-      // access in this environment). Best-effort trigger, then wait once more.
+      // The player may not autoplay after the gate clears — nudge playback, then
+      // wait once more for the .mp4 request.
       await this.#triggerPlay(page);
       request = await page
         .waitForRequest((req) => endsWithMp4(req.url()), { timeout: MP4_WAIT_MS })
@@ -100,37 +100,56 @@ export class ZoomExtractor extends VideoExtractor {
     seen.add(mp4Key(request.url()));
     const captures = [this.#toCapture(request, rec)];
 
-    // Attempt the second recording (before/after the break). Only kept if it's a
-    // DISTINCT .mp4 — otherwise we ship a single file named `Lecture N`.
-    const second = await this.#captureSecond(page, seen);
-    if (second) captures.push(this.#toCapture(second, rec));
+    // A share link can hold two recordings (before/after the break). The player's
+    // clip control reads "Total N Recordings" only when N > 1 — use that as the
+    // authoritative signal instead of guessing, then advance to sniff the second.
+    if (await this.#hasMultipleClips(page)) {
+      const second = await this.#captureSecond(page, seen);
+      if (second) captures.push(this.#toCapture(second, rec));
+    }
     return captures;
   }
 
   /**
-   * Fill + submit the passcode gate if present. No-op when the page shows the
-   * player directly (already authorized or link without a passcode).
+   * Fill the passcode gate with the hardcoded ZOOM_PASSWORD and click "Watch
+   * Recording". No-op when the page shows the player directly (already authorized
+   * or a link without a gate). Selectors match the live zoom share form:
+   *   <input id="passcode" type="password"> + <button id="passcode_btn">Watch Recording</button>
    * @param {import('playwright').Page} page
-   * @param {string|undefined} passcode
    */
-  async #submitPasscode(page, passcode) {
-    if (!passcode) return;
-    // TODO(unverified): the real zoom passcode field/submit selectors can't be
-    // confirmed here. These cover the common cases (password input + submit
-    // button); refine against the live gate if capture fails.
+  async #submitPasscode(page) {
     const field = await page
-      .waitForSelector('input#passcode, input[name="passcode"], input[type="password"]', { timeout: 5000 })
+      .waitForSelector('input#passcode, input[type="password"]', { timeout: 5000 })
       .catch(() => null);
     if (!field) return;
-    await field.fill(passcode).catch(() => {});
+    await field.fill(ZOOM_PASSWORD).catch(() => {});
+    // The share form's action is `javascript:;` (Vue SPA) — clicking #passcode_btn
+    // swaps in the player in place, so there's no navigation to wait on; the .mp4
+    // request wait in captureVideo is what confirms the gate cleared.
     await page
-      .click('button[type="submit"], #passcode_btn, .passcode-btn, button:has-text("Submit")')
+      .click('#passcode_btn, button:has-text("Watch Recording")')
       .catch(() => {});
-    await page.waitForLoadState('load').catch(() => {});
   }
 
   /**
-   * Try to advance to the second recording and sniff a DISTINCT .mp4.
+   * Does the player expose more than one clip? The `.vjs-multiple-clip-control`
+   * strip renders "Total N Recordings" only for multi-clip shares.
+   * @param {import('playwright').Page} page
+   * @returns {Promise<boolean>}
+   */
+  async #hasMultipleClips(page) {
+    const el = await page
+      .waitForSelector('.vjs-multiple-clip-control', { timeout: 5000 })
+      .catch(() => null);
+    if (!el) return false;
+    const text = (await el.textContent().catch(() => '')) || '';
+    const m = text.match(/Total\s+(\d+)\s+Recordings/i);
+    return m ? Number(m[1]) > 1 : false;
+  }
+
+  /**
+   * Advance to the next clip (the "Go Forward to next clip" control) and sniff a
+   * DISTINCT .mp4. Only kept when it's genuinely a different stream.
    * @param {import('playwright').Page} page
    * @param {Set<string>} seen  keys of already-captured .mp4s
    * @returns {Promise<import('playwright').Request|null>}
@@ -139,16 +158,8 @@ export class ZoomExtractor extends VideoExtractor {
     const wait = page
       .waitForRequest((req) => endsWithMp4(req.url()) && !seen.has(mp4Key(req.url())), { timeout: SECOND_MP4_WAIT_MS })
       .catch(() => null);
-    // TODO(unverified): zoom auto-advances at the end of part 1, or exposes a
-    // "next recording" control in the player — neither is confirmable here. Click
-    // a likely next-control; if the page auto-advances instead, the wait catches it.
     await page
-      .evaluate(() => {
-        const next = document.querySelector(
-          '[aria-label*="next" i], [title*="next" i], .next-recording, .vjs-next-button',
-        );
-        next?.click();
-      })
+      .click('.vjs-multiple-clip-control-button.button-next button')
       .catch(() => {});
     const request = await wait;
     if (request) seen.add(mp4Key(request.url()));
@@ -161,7 +172,7 @@ export class ZoomExtractor extends VideoExtractor {
       .evaluate(() => {
         const v = document.querySelector('video');
         if (v) return v.play?.();
-        document.querySelector('button[aria-label*="play" i], .play, .vjs-big-play-button, .playback-btn')?.click();
+        document.querySelector('.vjs-big-play-button, button[aria-label*="play" i]')?.click();
       })
       .catch(() => {});
   }

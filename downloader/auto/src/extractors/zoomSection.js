@@ -18,11 +18,11 @@ const SECTION_WAIT_MS = 5_000;
  *
  * A section summary (`li.section .summary .no-overflow`) holds repeated
  * `הרצאה מספר N:` labels, each followed by a `<p>` with a
- * `zoom.us/rec/share/…` link (as an `<a href>` OR bare text) plus a trailing
- * `Passcode: …`. We walk each summary's `<p>`s in order, tracking the most
- * recent label, and emit one synthetic `modType:'zoom'` activity per link.
- * `passcode` rides on the activity (ZoomExtractor.toRecordings reads it) and
- * must never leave the service except inside the opaque `ref`.
+ * `zoom.us/rec/share/…` link (as an `<a href>` OR bare text). We walk each
+ * summary's `<p>`s in order, tracking the most recent label, and emit one
+ * synthetic `modType:'zoom'` activity per link. The per-link `Passcode:` text is
+ * deliberately ignored — every BIU share uses one hardcoded passcode applied at
+ * the gate (see ZOOM_PASSWORD in config.js), so no passcode is scraped here.
  *
  * @param {import('playwright').Page} page
  * @returns {Promise<Activity[]>}  in document order
@@ -69,14 +69,12 @@ export async function parseZoomSections(page) {
           continue;
         }
 
-        const pcMatch = text.match(/Passcode:\s*(\S+)/i);
-        const passcode = pcMatch ? pcMatch[1] : '';
         const seen = new Set();
         for (const url of urls) {
           const key = shareKey(url);
           if (!key || seen.has(key)) continue;
           seen.add(key);
-          out.push({ shareUrl: url, title: label, passcode, sectionName });
+          out.push({ shareUrl: url, title: label, sectionName });
         }
       }
     }
@@ -89,7 +87,6 @@ export async function parseZoomSections(page) {
     modType: 'zoom',
     title: r.title,
     pageUrl: r.shareUrl,
-    passcode: r.passcode,
     sectionName: r.sectionName,
     kind: classifyKind(r.sectionName, r.title),
   }));
