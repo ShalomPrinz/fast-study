@@ -24,6 +24,48 @@ export function classifyKind(sectionName, title) {
 // render, short enough that a legitimately-empty course doesn't hang the request.
 const ACTIVITY_WAIT_MS = 10_000;
 
+// Per-section wait for content to appear after its tile is clicked.
+const TILE_CONTENT_WAIT_MS = 4_000;
+
+/**
+ * On format_tiles courses each section's body (activities AND summary — where the
+ * zoom-share links live) is injected into the DOM only when its tile is clicked;
+ * an unexpanded course parses as empty ("No recordings found"). Click every tile
+ * once so all section content is present before parsing.
+ *
+ * No-op on other course formats (guarded by the format_tiles marker). Every click
+ * and wait is best-effort — a single stubborn tile must not abort discovery — and
+ * a section whose body is already present is skipped (clicking would just re-toggle
+ * visibility; the content stays in the DOM either way, so the parser still sees it).
+ * @param {import('playwright').Page} page
+ */
+export async function expandTiles(page) {
+  const isTiles = await page
+    .$('body.format-tiles, .format-tiles, .format-tiles-cm-list')
+    .then((el) => !!el)
+    .catch(() => false);
+  if (!isTiles) return;
+
+  // Section numbers carried on tiles / section stubs (section 0 is the always-open
+  // "general" section — no tile to click).
+  const nums = await page
+    .$$eval('[data-section]', (els) =>
+      [...new Set(els.map((e) => e.getAttribute('data-section')))].filter((s) => /^[1-9]\d*$/.test(s)),
+    )
+    .catch(() => []);
+
+  for (const n of nums) {
+    const contentSel = `#section-${n} .no-overflow, #section-${n} li.activity`;
+    if (await page.$(contentSel).catch(() => null)) continue; // already loaded
+    const tile = await page
+      .$(`#tile-${n}, li.tile[data-section="${n}"], .tile[data-section="${n}"]`)
+      .catch(() => null);
+    if (!tile) continue;
+    await tile.click({ timeout: 2000 }).catch(() => {});
+    await page.waitForSelector(contentSel, { timeout: TILE_CONTENT_WAIT_MS }).catch(() => {});
+  }
+}
+
 /**
  * Per-LMS enumerator for a Moodle course page: walk every `li.activity` and
  * produce the activities present, regardless of module type. Pure DOM parse of

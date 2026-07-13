@@ -1,6 +1,7 @@
 import { resolveUniversity, resolveExtractor, resolveExtractorForRecording } from './registry.js';
 import { postDownload, postDownloadYoutube } from './serverClient.js';
 import { parseZoomSections } from './extractors/zoomSection.js';
+import { expandTiles } from './extractors/moodleCourse.js';
 import { splitName } from './naming.js';
 
 /**
@@ -15,6 +16,9 @@ import { splitName } from './naming.js';
  */
 export async function listRecordings(page, courseUrl) {
   const uni = resolveUniversity(courseUrl);
+  // format_tiles defers each section's body until its tile is clicked, so both
+  // parsers below would see an empty page — expand every tile first.
+  await expandTiles(page);
   // Two DOM sources merge here (the single merge point): the LMS's `li.activity`
   // module cards, plus zoom-share links living in `li.section` summaries (which
   // aren't activity cards, so the module parser never sees them).
