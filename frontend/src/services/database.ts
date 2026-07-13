@@ -14,8 +14,12 @@ export async function fetchTree(): Promise<Course[]> {
   return database.get<Course[]>('/tree')
 }
 
-export async function createCourse(name: string): Promise<void> {
-  await database.post('/courses', { json: { name } })
+export async function createCourse(name: string, source_url?: string | null): Promise<void> {
+  await database.post('/courses', { json: { name, source_url: source_url || null } })
+}
+
+export async function setCourseSourceUrl(course: string, source_url: string | null): Promise<void> {
+  await database.patch(path`/courses/${course}/source_url`, { json: { source_url: source_url || null } })
 }
 
 export async function renameCourse(oldName: string, newName: string): Promise<void> {

@@ -1229,3 +1229,202 @@ html, body, #root {
   font-size: 13px;
   cursor: help;
 }
+
+/* ── Downloads page ── */
+
+/* Sidebar-header entry control: the Downloads nav link sits beside refresh */
+.sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sidebar-downloads-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  color: var(--sidebar-muted);
+  text-decoration: none;
+  font-size: 15px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.sidebar-downloads-link:hover {
+  background: var(--sidebar-hover);
+  color: var(--accent);
+}
+
+/* Auth pill: BIU account connection status */
+.auth-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 24px;
+}
+
+.auth-pill--muted {
+  background: #f3f4f6;
+  color: var(--text-muted);
+}
+
+.auth-pill--connected {
+  background: #e7f7e6;
+  color: #2f7a29;
+}
+
+.auth-pill--disconnected {
+  background: #fdeaea;
+  color: #b3261e;
+}
+
+.auth-pill--pending {
+  background: #fff5e0;
+  color: #9a6a00;
+}
+
+.auth-pill-btn {
+  padding: 3px 12px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-pill-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.auth-pill-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Course source-URL list */
+.source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.source-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.source-row-name {
+  flex-shrink: 0;
+  min-width: 120px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.source-row-url {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.source-row-url-text {
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.source-row-url-empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.source-row-url:hover .source-row-url-text {
+  text-decoration: underline;
+}
+
+.source-row-input {
+  flex: 1;
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.source-add-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+}
+
+.source-add-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.source-add-btn {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  background: none;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.source-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.source-row-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.source-row-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.source-row-btn--ghost {
+  background: transparent;
+  border-color: #d1d5db;
+  color: var(--text-muted);
+}

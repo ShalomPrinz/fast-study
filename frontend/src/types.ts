@@ -44,6 +44,7 @@ export interface Lecture {
 export interface Course {
   name: string
   archived: boolean
+  source_url: string | null
   lectures: Lecture[]
   recitations: Lecture[]
 }

@@ -25,13 +25,14 @@ npm run build    # tsc -b && vite build → dist/
 |-----------------------|--------------------------------------------------------------------------|
 | `VITE_API_URL`        | FastAPI backend base URL, defaults to `http://localhost:8000`            |
 | `VITE_DATABASE_URL`   | Database service base URL, defaults to `http://localhost:8001`           |
+| `VITE_AUTODL_URL`     | Auto-downloader service base URL, defaults to `http://localhost:3053`    |
 
 ## Directory layout
 
 ```
 frontend/
   src/
-    App.tsx                  React Router routes; renders Layout + the three views
+    App.tsx                  React Router routes; renders Layout + the views (lectures, course overview, downloads)
     main.tsx                 React entry point
     index.css                Single flat stylesheet, CSS variables for theming
     types.ts                 Domain types: FileName, FileStatus, Course, Lecture, Kind, Step, RunInitResult, InFlightEntry, RunnerStatus, AppMode, OverviewExtractor, CourseStatus, CourseFile, OverviewMeta ({slug → {lectures/recitations: {start,end}|null, generatedAt}}), InlineEdit, ExpandHandle (collapse/expand handle for a child whose open-state its parent owns), …
@@ -43,7 +44,8 @@ frontend/
     services/                per-concern boundary layer, shared by both features (never split by feature)
       http.ts                  typed fetch client + shared `httpError`
       backend.ts               HTTP client for the FastAPI backend (runStep, runPipeline, fetchTimingStats, runAll, fetchRunnerStatus, overview: fetchOverviewExtractors, runOverview, fetchCourseStatus)
-      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file, fetchCourseMeta for the per-slug overview meta/ranges)
+      database.ts              HTTP client for the database service (tree, summary, files, video upload, SSE URL, overview files list + overviewFileUrl for opening one overview file, fetchCourseMeta for the per-slug overview meta/ranges); createCourse takes an optional source_url + setCourseSourceUrl(course, url) PATCHes it
+      autoDownloader.ts        HTTP client for the auto-downloader service (`VITE_AUTODL_URL`) — BIU auth: fetchAuthStatus/connectAuth/completeAuth (discovery/download land in Steps 4–5)
       events.ts                singleton EventSource subscription boundary — subscribeNotify(cb) ref-counts one shared stream
       toaster.ts               single boundary around react-toastify — exports toast/toastConnectionError/toastPromise/toastInitResult + ToastContainer
 
@@ -124,6 +126,12 @@ frontend/
           overview.ts             OVERVIEW_STEPS (phase→suffix→label table: extract.txt/analyze.md/topics.md/to_pdf.pdf) + stepsFor(phases) to pick one extractor's subset; generatedFiles/lastGeneratedFile/startedSlug all take an extractor's phases and operate on stepsFor(phases) (topics → topics.md+topics.pdf, no .txt); branchStatus(status, files, slug, phases) → { running, done, error } (pure, + BranchStatus type)
         utils/
           overview.ts             formatRange(entry) — "Lectures 2-9, Recitations 1-4" / "No Lectures"/"No Recitations" from an OverviewMeta entry
+
+      downloads/            the Downloads page (auto-downloader integration), a main-layout view peer to CourseView — no sidebar mode
+        DownloadsView.tsx       /downloads shell: AuthPill + the course source-URL list (non-archived courses from CourseTreeContext) + AddCourseRow
+        AuthPill.tsx            BIU account status pill: fetchAuthStatus on mount; Connect → connectAuth (pops headed browser) → Done → completeAuth → re-probe
+        CourseSourceRow.tsx     one course row: name + inline-edit source URL (setCourseSourceUrl PATCH)
+        AddCourseRow.tsx        create a course (name + optional source URL) via createCourse
   vite.config.ts             plain React plugin — no fs plugin
   tsconfig.json
   index.html
@@ -139,8 +147,11 @@ Layout: root files stay flat; `app/` holds the shell `Layout`; `services/` is th
 |-------------------------------|---------------------|
 | `/`                           | empty state         |
 | `/course/:course`            | `CourseView`        |
+| `/downloads`                  | `DownloadsView`     |
 | `/:course/:lecture`           | `MainView`          |
 | `/:course/:lecture/edit`      | `EditSummaryView`   |
+
+`/downloads` renders inside `Layout` so the sidebar persists; it has no sidebar connection, so clicking any sidebar mode navigates away (intended "exit on sidebar click"). Reached via the ⭳ link in the sidebar header — a plain nav link, not a third `AppMode`.
 
 `kind` (lecture vs recitation) is a query param (`?kind=recitation`) propagated everywhere it's needed. The static `course` segment outranks the dynamic `/:course/:lecture` pattern in v7 route ranking, so the two never collide.
 

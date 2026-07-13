@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import type { AppMode } from '@/types'
 import RefreshCoursesButton from './RefreshCoursesButton'
 import ModeToggle from './ModeToggle'
@@ -16,7 +17,10 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <span>Fast Study</span>
-        <RefreshCoursesButton />
+        <div className="sidebar-header-actions">
+          <Link className="sidebar-downloads-link" to="/downloads" title="Downloads">⭳</Link>
+          <RefreshCoursesButton />
+        </div>
       </div>
       <ModeToggle modes={MODES} />
     </aside>
