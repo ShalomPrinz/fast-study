@@ -98,14 +98,14 @@ export class ZoomExtractor extends VideoExtractor {
       throw new Error(`No .mp4 request captured on zoom share ${rec.pageUrl} (passcode/player may need a manual trigger)`);
     }
     seen.add(mp4Key(request.url()));
-    const captures = [this.#toCapture(request, rec)];
+    const captures = [await this.#toCapture(request, rec)];
 
     // A share link can hold two recordings (before/after the break). The player's
     // clip control reads "Total N Recordings" only when N > 1 — use that as the
     // authoritative signal instead of guessing, then advance to sniff the second.
     if (await this.#hasMultipleClips(page)) {
       const second = await this.#captureSecond(page, seen);
-      if (second) captures.push(this.#toCapture(second, rec));
+      if (second) captures.push(await this.#toCapture(second, rec));
     }
     return captures;
   }
@@ -177,12 +177,20 @@ export class ZoomExtractor extends VideoExtractor {
       .catch(() => {});
   }
 
-  /** Map a captured request to server.js's expected [{name,value}] header shape. */
-  #toCapture(request, rec) {
+  /**
+   * Map a captured request to server.js's expected [{name,value}] header shape.
+   * MUST use allHeaders() (async), not headers(): Playwright's sync headers()
+   * omits security-related headers — crucially `Cookie` — so a curl replay of the
+   * token-gated zoom .mp4 lands unauthenticated.
+   * Before: headers()     -> no Cookie  -> curl (22) HTTP 403
+   * After:  allHeaders()  -> Cookie set -> curl streams the mp4
+   */
+  async #toCapture(request, rec) {
+    const headers = await request.allHeaders();
     return {
       title: rec.title,
       url: request.url(),
-      headers: Object.entries(request.headers()).map(([name, value]) => ({ name, value })),
+      headers: Object.entries(headers).map(([name, value]) => ({ name, value })),
       kind: rec.kind,
       strategy: 'zoom',
     };
