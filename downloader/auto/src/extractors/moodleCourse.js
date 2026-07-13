@@ -20,16 +20,23 @@ export function classifyKind(sectionName, title) {
   return RECITATION_KEYWORDS.some((k) => hay.includes(k.toLowerCase())) ? 'recitation' : 'lecture';
 }
 
+// Bounded wait for the first activity card. Long enough to cover a slow AJAX
+// render, short enough that a legitimately-empty course doesn't hang the request.
+const ACTIVITY_WAIT_MS = 10_000;
+
 /**
  * Per-LMS enumerator for a Moodle course page: walk every `li.activity` and
- * produce the activities present, regardless of module type. Pure DOM parse —
- * Moodle renders all sections even when visually collapsed, so one page load
- * sees everything; no navigation, no network sniff. Routing each Activity to an
- * extractor (and skipping unhandled types) is the caller's job.
+ * produce the activities present, regardless of module type. Pure DOM parse of
+ * all sections (Moodle renders even visually-collapsed ones), no network sniff.
+ * A bounded waitForSelector first, because some Moodle 4.x hosts inject the
+ * activity cards after the `load` event — a bare $$eval would race and see zero.
+ * On timeout (a genuinely empty course) we parse anyway and return []. Routing
+ * each Activity to an extractor (and skipping unhandled types) is the caller's job.
  * @param {import('playwright').Page} page
  * @returns {Promise<Activity[]>}  in document order
  */
 export async function parseMoodleCourse(page) {
+  await page.waitForSelector('li.activity', { timeout: ACTIVITY_WAIT_MS }).catch(() => {});
   const raw = await page.$$eval('li.activity', (items) =>
     items.map((li) => {
       // modType from the `modtype_<x>` class token (e.g. modtype_videostream → 'videostream').

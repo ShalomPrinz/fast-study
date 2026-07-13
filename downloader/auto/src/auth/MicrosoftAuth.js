@@ -16,16 +16,25 @@ const PKG_ROOT = path.resolve(__dirname, '../..');
 // bare `/login` path catches a same-host login page if BIU proxies the flow.
 const LOGIN_HOSTS = ['login.microsoftonline.com', 'login.live.com'];
 const LOGIN_PATH_RE = /\/login(\/|$|\?)/i;
+// An expired/guest BIU session does NOT bounce to a Microsoft login page — Moodle
+// silently redirects the course view to its enrol gate (/enrol/index.php), a page
+// with zero li.activity. Without catching it, /list scrapes an empty page and
+// returns [] ("No recordings found") instead of steering the UI to Reconnect.
+// Before: expired session → goto lands on /enrol/index.php → isLoginUrl=false → []
+// After:  expired session → /enrol/index.php matched → reconnect (401)
+const ENROL_GATE_RE = /\/enrol\/index\.php/i;
 
 /**
  * @param {string} finalUrl  the URL after navigation + redirects settled
- * @returns {boolean}  true if we landed on a Microsoft login page (= unauthenticated)
+ * @returns {boolean}  true if the landed page means the session is unusable — a
+ *   Microsoft login page or Moodle's enrol gate — so the caller should Reconnect.
  */
 export function isLoginUrl(finalUrl) {
   try {
     const u = new URL(finalUrl);
     if (LOGIN_HOSTS.some((h) => u.hostname === h || u.hostname.endsWith(`.${h}`))) return true;
     if (LOGIN_PATH_RE.test(u.pathname)) return true;
+    if (ENROL_GATE_RE.test(u.pathname)) return true;
     return false;
   } catch {
     return false;
