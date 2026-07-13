@@ -127,7 +127,10 @@ async function handleList(req, res) {
     const items = await listRecordings(session.page, courseUrl);
     return items.map((it) => it.recording);
   });
-  if (recordings === null) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
+  // Runtime bounce: the nav actually landed on login/enrol, so the server (not the
+  // cheap cookie heuristic) is now the source of truth — mark the cached instance
+  // expired so the next /auth/status reports expired:true.
+  if (recordings === null) { auth.markExpired(); logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
 }
@@ -182,7 +185,14 @@ async function handleDownloadItem(req, res) {
   await session.open(state);
   // Lock covers the whole navigate+sniff (captureVideo navigates internally); the
   // POST to server.js is quick — server.js returns immediately and downloads in bg.
-  await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind }));
+  // Mirror /list: pre-nav to pageUrl detects a runtime login/enrol bounce (null
+  // sentinel) so an expired session steers to Reconnect instead of throwing a 500.
+  const bounced = await session.withLock(async () => {
+    if (isLoginUrl(await session.goto(recording.pageUrl))) return true;
+    await downloadRecording(session.page, { recording, course, name, kind });
+    return false;
+  });
+  if (bounced) { auth.markExpired(); logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
   logResult('/download-item', 'ok');
   send(res, 200, { ok: true });
 }

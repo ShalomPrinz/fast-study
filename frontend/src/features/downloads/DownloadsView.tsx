@@ -18,9 +18,11 @@ export default function DownloadsView() {
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [reconnectKey, setReconnectKey] = useState(0)
 
   function reconnectHint() {
     toast('error', 'BIU session expired. Reconnect your account.')
+    setReconnectKey((k) => k + 1)
   }
 
   // Discover one course's recordings in-page. Switching courses just re-calls /list
@@ -49,7 +51,7 @@ export default function DownloadsView() {
       <div className="lecture-panel">
         <h2 className="lecture-panel-title">Downloads</h2>
 
-        <AuthPill />
+        <AuthPill key={reconnectKey} />
 
         <div className="source-list">
           {active.map((course) => (

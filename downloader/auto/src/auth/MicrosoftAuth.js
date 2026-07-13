@@ -55,6 +55,15 @@ export class MicrosoftAuth extends AuthProvider {
     // flow. Null when no login is pending. Held on the instance so connect and
     // complete — two separate HTTP calls — share the same live headed browser.
     this._pending = null;
+    // Runtime "known invalid" flag. The cheap cookie heuristic in status() can't
+    // see a server-side session kill, so a live login/enrol bounce during /list or
+    // /download-item flips this until the next successful complete() clears it.
+    this._invalidated = false;
+  }
+
+  /** Mark this cached instance's session dead after a runtime login/enrol bounce. */
+  markExpired() {
+    this._invalidated = true;
   }
 
   /** @returns {import('./AuthProvider.js').StorageState|null}  parsed persisted state, or null. */
@@ -76,7 +85,7 @@ export class MicrosoftAuth extends AuthProvider {
   status() {
     const state = this.loadState();
     if (!state) return { connected: false, expired: false };
-    return { connected: true, expired: this._isExpired(state) };
+    return { connected: true, expired: this._invalidated || this._isExpired(state) };
   }
 
   // A storageState is "expired" when it carries no still-valid dated cookie.
@@ -121,7 +130,9 @@ export class MicrosoftAuth extends AuthProvider {
     this._pending = null;
     try {
       fs.mkdirSync(path.dirname(this.statePath), { recursive: true });
-      return await context.storageState({ path: this.statePath });
+      const state = await context.storageState({ path: this.statePath });
+      this._invalidated = false; // fresh state persisted — a prior runtime bounce is no longer sticky
+      return state;
     } finally {
       await browser.close().catch(() => {});
     }

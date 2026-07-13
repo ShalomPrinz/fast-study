@@ -62,12 +62,13 @@ export default function AuthPill() {
     )
   }
 
-  if (status?.connected && !status.expired) {
+  const expired = status?.expired
+  if (status?.connected && !expired) {
     return <div className="auth-pill auth-pill--connected">BIU account connected ✓</div>
   }
 
-  const label = status?.expired ? 'session expired' : 'not connected'
-  const action = status?.expired ? 'Reconnect' : 'Connect'
+  const label = expired ? 'session expired' : 'not connected'
+  const action = expired ? 'Reconnect' : 'Connect'
   return (
     <div className="auth-pill auth-pill--disconnected">
       <span>{label}</span>
