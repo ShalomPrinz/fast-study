@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browserLaunch.js';
 import { resolveUniversity } from './registry.js';
 import { listRecordings } from './core.js';
 import { deriveName, promptNumber, splitName } from './naming.js';
@@ -86,7 +86,7 @@ async function main() {
   // 2. Orchestrator owns the browser: headless context from the auth state. Listing
   //    is DOM-only, so no .mp4 sniffer here — that runs inside captureVideo, which
   //    reuses this same page to open a recording's view.php / redirect page.
-  const browser = await chromium.launch({ headless: true });
+  const browser = await launchBrowser({ headless: true });
   try {
     const context = await browser.newContext({ storageState: state });
     const page = await context.newPage();

@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 
 // Surgical stealth: apply puppeteer-extra's stealth evasions (window.chrome mocking,
 // iframe.contentWindow proxying, stripping CDP-injected props, etc.) to close the
@@ -149,7 +150,7 @@ export async function launchZoomBrowser() {
     headless: false,
     channel: 'chrome',
     ignoreDefaultArgs: ['--enable-automation'],
-    args: ['--disable-blink-features=AutomationControlled'],
+    args: [...COMMON_LAUNCH_ARGS, '--disable-blink-features=AutomationControlled'],
     // Point Chrome at the virtual display AND its auth cookie so it can connect.
     env: { ...process.env, DISPLAY: display, XAUTHORITY: authFile },
   });

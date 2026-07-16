@@ -1,5 +1,11 @@
 import { chromium } from 'playwright';
 
+// Launch args shared by EVERY browser the auto-downloader spawns (plain + zoom).
+// --mute-audio: these browsers run headless / on a virtual Xvfb display with no audio
+// sink, yet lecture and zoom recordings autoplay on load. Muting keeps them from
+// pushing audio into a nonexistent output (and keeps the dev/CI machine silent).
+export const COMMON_LAUNCH_ARGS = ['--mute-audio'];
+
 /**
  * Launch a browser, trying bundled Chromium first. Microsoft login sometimes flags
  * automation on bundled Chromium; if the launch throws, retry with the system
@@ -11,5 +17,5 @@ import { chromium } from 'playwright';
  * @returns {Promise<import('playwright').Browser>}
  */
 export async function launchBrowser(opts) {
-  return await chromium.launch(opts);
+  return await chromium.launch({ ...opts, args: [...COMMON_LAUNCH_ARGS, ...(opts.args ?? [])] });
 }
