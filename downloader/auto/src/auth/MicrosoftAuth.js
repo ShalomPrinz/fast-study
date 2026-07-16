@@ -104,8 +104,11 @@ export class MicrosoftAuth extends AuthProvider {
    * return immediately (the user finishes MFA by hand). Idempotent — a second
    * call while a login is already pending is a no-op.
    * @param {string} entryUrl
+   * @param {{ onCancel?: () => void }} [opts]  onCancel fires when the headed browser
+   *   closes/dies BEFORE complete() consumes it (user abandoned the login). Optional —
+   *   the CLI path (_headedLogin) passes no options and must still work.
    */
-  async connect(entryUrl) {
+  async connect(entryUrl, { onCancel } = {}) {
     if (this._pending) return;
     const browser = await launchBrowser({ headless: false });
     try {
@@ -113,6 +116,19 @@ export class MicrosoftAuth extends AuthProvider {
       const page = await context.newPage();
       await page.goto(entryUrl, { waitUntil: 'load' });
       this._pending = { browser, context };
+      // The login spans two HTTP calls (connect / complete) with no shared async
+      // scope a finally could release on, so the "login ended" signal is the headed
+      // browser closing. The reference check makes this fire ONLY for a genuine cancel:
+      // Before: complete() succeeds → complete() sets _pending=null THEN browser.close()
+      //         → disconnected fires but _pending.browser !== browser → no-op (correct).
+      // After:  user closes the window pre-complete → _pending.browser === browser still
+      //         → clear _pending and signal onCancel (release the parked browsing gate).
+      browser.on('disconnected', () => {
+        if (this._pending && this._pending.browser === browser) {
+          this._pending = null;
+          onCancel?.();
+        }
+      });
     } catch (err) {
       await browser.close().catch(() => {});
       throw err;
