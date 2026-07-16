@@ -50,16 +50,48 @@ export class VideoExtractor {
   }
 
   /**
-   * DOWNLOAD PHASE (later): resolve one Recording to a downloadable video.
+   * DOWNLOAD PHASE (template method — do NOT override; subclasses implement
+   * `_captureVideo`): resolve one Recording to a downloadable video, then ALWAYS
+   * stop any playback the sniff left running. Keeping the stop step here (not in
+   * each subclass) makes it apply to every extractor / browser profile.
+   * @param {import('playwright').Page} page
+   * @param {Recording} rec
+   * @returns {Promise<VideoCapture|VideoCapture[]>}
+   */
+  async captureVideo(page, rec) {
+    try {
+      return await this._captureVideo(page, rec);
+    } finally {
+      await this.stopPlayback(page);
+    }
+  }
+
+  /**
+   * Resolve one Recording to a downloadable video (implemented per strategy).
    *  - videostream: navigate pageUrl, sniff the .mp4 (url + live headers) fresh
    *    (tokens are short-lived) → POST server.js /download.
    *  - youtube-playlist: navigate `…&redirect=1`, confirm YouTube, list entries
    *    (yt-dlp --flat-playlist), user picks one → POST server.js /download-youtube.
    * @param {import('playwright').Page} page
    * @param {Recording} rec
-   * @returns {Promise<VideoCapture>}
+   * @returns {Promise<VideoCapture|VideoCapture[]>}
    */
-  async captureVideo(page, rec) {
+  async _captureVideo(page, rec) {
     throw new Error('not implemented');
+  }
+
+  // Recordings autoplay so the .mp4 request fires; on the long-lived session page a
+  // captured recording would otherwise keep streaming in the background afterward.
+  // Pause every <video> once capture is done (best-effort; a detached page is fine).
+  async stopPlayback(page) {
+    await page
+      .evaluate(() => {
+        for (const v of document.querySelectorAll('video')) {
+          try {
+            v.pause();
+          } catch {}
+        }
+      })
+      .catch(() => {});
   }
 }

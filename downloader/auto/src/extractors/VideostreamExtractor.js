@@ -47,7 +47,7 @@ export class VideostreamExtractor extends VideoExtractor {
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
    */
-  async captureVideo(page, rec) {
+  async _captureVideo(page, rec) {
     // Register the listener BEFORE navigating so an autoplay .mp4 firing during
     // load isn't missed (mirrors background.js's onSendHeaders capture).
     const mp4Request = page.waitForRequest((req) => endsWithMp4(req.url()), { timeout: MP4_WAIT_MS }).catch(() => null);

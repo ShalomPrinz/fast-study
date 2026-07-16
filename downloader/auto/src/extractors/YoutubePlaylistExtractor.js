@@ -95,7 +95,7 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
    */
-  async captureVideo(page, rec) {
+  async _captureVideo(page, rec) {
     const entries = await this.listEntries(page, rec);
     console.log(`\nPlaylist entries (${entries.length}):`);
     entries.forEach((e, i) => console.log(`  [${i + 1}] ${e.title}`));

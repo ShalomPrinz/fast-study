@@ -79,7 +79,7 @@ export class ZoomExtractor extends VideoExtractor {
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture[]>}
    */
-  async captureVideo(page, rec) {
+  async _captureVideo(page, rec) {
     // Register the listener BEFORE navigating so an autoplay .mp4 firing during
     // load isn't missed (mirrors VideostreamExtractor / background.js).
     const seen = new Set();
