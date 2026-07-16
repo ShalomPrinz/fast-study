@@ -1,9 +1,10 @@
 import { launchBrowser } from './browserLaunch.js';
+import { launchZoomBrowser, stopXvfb } from './zoomBrowser.js';
 import { isLoginUrl } from './auth/MicrosoftAuth.js';
 
-// Safety valve only — the browser is meant to stay open (the ~1–2s launch + auth
+// Safety valve only — a browser is meant to stay open (the ~1–2s launch + auth
 // context build is paid once). Auto-close after this long idle so a forgotten
-// server doesn't hold a headless Chromium forever; it re-opens lazily next call.
+// server doesn't hold a browser forever; it re-opens lazily next call.
 const IDLE_TIMEOUT_MS = 45 * 60 * 1000;
 
 // How long to wait for a login bounce to auto-redirect back to a real page. The
@@ -14,13 +15,18 @@ const IDLE_TIMEOUT_MS = 45 * 60 * 1000;
 const SILENT_REAUTH_TIMEOUT_MS = 12_000;
 
 /**
- * The ONE persistent headless browser+context+page the HTTP service drives. All
- * browsing endpoints share this single page; switching course is just goto(). Page
- * ops are serialized by withLock so one call's navigate can't interrupt another's
- * sniff. Built lazily from a storageState and kept open across requests.
+ * A persistent browser+context+page the HTTP service drives, with its browser
+ * choice INJECTED (a launcher fn) rather than hardcoded — so the plain path gets a
+ * headless bundled Chromium and the zoom path gets chrome+stealth+Xvfb, without
+ * this class knowing which. Browsing endpoints share one page per profile; switching
+ * course is just goto(). Page ops are serialized by withLock so one call's navigate
+ * can't interrupt another's sniff. Built lazily from a storageState, kept open across
+ * requests. See getSession() for the per-profile registry.
  */
 export class BrowserSession {
-  constructor() {
+  /** @param {() => Promise<import('playwright').Browser>} launch  profile-specific launcher */
+  constructor(launch) {
+    this._launch = launch;
     this.browser = null;
     this.context = null;
     this.page = null;
@@ -32,10 +38,10 @@ export class BrowserSession {
     return !!this.page;
   }
 
-  /** Lazily launch the headless browser + build a context from storageState. No-op if already open. */
+  /** Lazily launch the browser (via the injected launcher) + build a context from storageState. No-op if already open. */
   async open(storageState) {
     if (this.page) return;
-    this.browser = await launchBrowser({ headless: true });
+    this.browser = await this._launch();
     this.context = await this.browser.newContext({ storageState });
     this.page = await this.context.newPage();
     this._touch();
@@ -114,5 +120,33 @@ export class BrowserSession {
   }
 }
 
-// One process-wide session — every browsing endpoint operates on it.
-export const session = new BrowserSession();
+// Per-extractor browser choice. 'plain' = headless bundled Chromium (course listing,
+// videostream, login-probe reuse); 'zoom' = chrome+stealth on a managed Xvfb display
+// so the recording player sees a real GPU + clean UA with no visible window.
+const LAUNCHERS = {
+  plain: () => launchBrowser({ headless: true }),
+  zoom: () => launchZoomBrowser(),
+};
+
+// One lazily-built session per profile, kept open across requests (each with its own
+// idle timer). An extractor's `browserProfile` selects which one it runs on.
+const sessions = new Map();
+
+export function getSession(profile = 'plain') {
+  const key = LAUNCHERS[profile] ? profile : 'plain';
+  if (!sessions.has(key)) sessions.set(key, new BrowserSession(LAUNCHERS[key]));
+  return sessions.get(key);
+}
+
+/** Re-point every OPEN session's context at fresh cookies (after /auth/complete). */
+export async function rebuildOpenSessions(storageState) {
+  await Promise.all(
+    [...sessions.values()].filter((s) => s.isOpen()).map((s) => s.rebuildContext(storageState)),
+  );
+}
+
+/** Close every session and stop the managed Xvfb (on /close, idle-shutdown, or signals). */
+export async function closeAllSessions() {
+  await Promise.all([...sessions.values()].map((s) => s.close()));
+  stopXvfb();
+}

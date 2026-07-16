@@ -1,7 +1,7 @@
 import http from 'node:http';
 import { AUTODL_PORT, SERVER_URL, AUTH_ENTRY_URL } from './config.js';
 import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from './registry.js';
-import { session } from './browserSession.js';
+import { getSession, rebuildOpenSessions, closeAllSessions } from './browserSession.js';
 import { listRecordings, downloadRecording } from './core.js';
 import { encodeRef, decodeRef } from './ref.js';
 
@@ -96,9 +96,9 @@ async function handleAuthComplete(res) {
   logReq('POST', '/auth/complete');
   const auth = authFor(defaultUniversity());
   const state = await auth.complete();
-  // If the persistent browser is already open, its context holds the now-stale
-  // cookies — rebuild it from the fresh state so the next /list is authenticated.
-  if (session.isOpen()) await session.rebuildContext(state);
+  // Any already-open session's context holds the now-stale cookies — rebuild every
+  // open one from the fresh state so the next /list (or zoom capture) is authenticated.
+  await rebuildOpenSessions(state);
   send(res, 200, { connected: true });
 }
 
@@ -117,6 +117,7 @@ async function handleList(req, res) {
   const state = auth.loadState();
   if (!state || auth.status().expired) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
 
+  const session = getSession('plain');
   await session.open(state);
   // withLock returns null as a sentinel for "the session bounced to login AND silent
   // SSO recovery failed" so the reconnect signal is sent OUTSIDE the lock (can't send
@@ -150,6 +151,7 @@ async function handleListExpand(req, res) {
   const state = auth.loadState();
   if (!state || auth.status().expired) { logResult('/list/expand', 'reconnect (401)'); return sendReconnect(res); }
 
+  const session = getSession('plain');
   await session.open(state);
   const entries = await session.withLock(() => extractor.listEntries(session.page, recording));
   // Each entry becomes a concrete, downloadable child (has a direct url → not
@@ -178,6 +180,23 @@ async function handleDownloadItem(req, res) {
   }
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
+  // The extractor picks its own browser profile (DI): videostream runs on the plain
+  // headless session; zoom runs on the chrome+stealth+Xvfb session.
+  const profile = resolveExtractorForRecording(recording)?.browserProfile ?? 'plain';
+  const session = getSession(profile);
+
+  // Zoom shares live on `*.zoom.us` (not the course host) and are gated by a
+  // passcode, NOT BIU SSO — so resolving a university from the zoom pageUrl would
+  // throw ("No university/auth handler"), and there's no login bounce to recover
+  // from. Open the browser (reusing BIU state if present, else a fresh context)
+  // and let captureVideo navigate + clear the passcode gate itself.
+  if (recording.strategy === 'zoom') {
+    await session.open(authFor(defaultUniversity()).loadState() ?? undefined);
+    await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind }));
+    logResult('/download-item', 'ok');
+    return send(res, 200, { ok: true });
+  }
+
   const auth = authFor(resolveUniversity(recording.pageUrl));
   const state = auth.loadState();
   if (!state || auth.status().expired) { logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
@@ -199,7 +218,7 @@ async function handleDownloadItem(req, res) {
 
 async function handleClose(res) {
   logReq('POST', '/close');
-  await session.close();
+  await closeAllSessions();
   send(res, 200, { ok: true });
 }
 
@@ -224,10 +243,11 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-// Close the persistent browser on shutdown so no headless Chromium is orphaned.
+// Close every session (and the managed Xvfb) on shutdown so no browser or virtual
+// display is orphaned.
 for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, () => {
-    session.close().finally(() => process.exit(0));
+    closeAllSessions().finally(() => process.exit(0));
   });
 }
 

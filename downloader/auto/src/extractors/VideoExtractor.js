@@ -21,6 +21,15 @@
  */
 export class VideoExtractor {
   /**
+   * Which browser profile this extractor's captureVideo needs (dependency injection
+   * for the session registry). Default 'plain' = headless bundled Chromium; the zoom
+   * player needs 'zoom' (chrome+stealth+Xvfb). @returns {'plain'|'zoom'}
+   */
+  get browserProfile() {
+    return 'plain';
+  }
+
+  /**
    * Does this strategy handle this activity? Keys off the Moodle module type
    * (and, for redirects, the resolved target host at download time). Sync + cheap.
    * @param {Activity} activity

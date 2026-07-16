@@ -19,7 +19,7 @@ function mp4Key(url) {
   }
 }
 
-const MP4_WAIT_MS = 20000;
+const MP4_WAIT_MS = 30000;
 // The second recording auto-advances only at the END of part 1, which could be a
 // long lecture. We don't wait a full video length here — best-effort: if a second
 // .mp4 doesn't surface promptly (auto-advance or a "next" control), we ship one file.
@@ -36,6 +36,11 @@ const SECOND_MP4_WAIT_MS = 15000;
 export class ZoomExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
   get strategy() {
+    return 'zoom';
+  }
+
+  /** The zoom recording player rejects headless/SwiftShader Chrome — needs the heavyweight profile. */
+  get browserProfile() {
     return 'zoom';
   }
 
@@ -122,13 +127,32 @@ export class ZoomExtractor extends VideoExtractor {
       .waitForSelector('input#passcode, input[type="password"]', { timeout: 5000 })
       .catch(() => null);
     if (!field) return;
-    await field.fill(ZOOM_PASSWORD).catch(() => {});
-    // The share form's action is `javascript:;` (Vue SPA) — clicking #passcode_btn
-    // swaps in the player in place, so there's no navigation to wait on; the .mp4
-    // request wait in captureVideo is what confirms the gate cleared.
-    await page
-      .click('#passcode_btn, button:has-text("Watch Recording")')
-      .catch(() => {});
+    // TODO: figure out actual issue and remove this workaround
+    // The share form is a Vue SPA whose passcode v-model + submit handler bind a beat
+    // AFTER the input appears (action is `javascript:;`, so there's no navigation to
+    // await). A fill+click fired the instant the field exists is lost — the value never
+    // enters Vue's reactive state, so the submit sends an empty passcode, the gate never
+    // clears, no player loads, and captureVideo throws "No .mp4 captured".
+    // Before: fill + click once, immediately  -> value dropped -> gate stays
+    // After:  RE-fill + click each retry until #passcode detaches — a post-hydration fill
+    //         lands in Vue state and the submit swaps in the player (whose .mp4 then fires).
+    for (let i = 0; i < 5; i++) {
+      await page.fill('input#passcode, input[type="password"]', ZOOM_PASSWORD).catch(() => {});
+      await page
+        .click('#passcode_btn, button:has-text("Watch Recording")')
+        .catch(() => {});
+      const cleared = await page
+        .waitForSelector('input#passcode', { state: 'detached', timeout: 3000 })
+        .then(() => true)
+        .catch(() => false);
+      if (cleared) {
+        console.log(`[zoom] passcode gate cleared on attempt ${i + 1}`);
+        return;
+      }
+    }
+    // Distinguishes a passcode-gate failure from a player/.mp4 failure in the log when
+    // captureVideo later throws "No .mp4 captured" — the two look identical otherwise.
+    console.warn('[zoom] passcode gate did NOT clear after 5 attempts');
   }
 
   /**
