@@ -1536,6 +1536,28 @@ html, body, #root {
   color: var(--text-muted);
   padding: 0 2px;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+}
+
+.recording-caret:disabled {
+  cursor: default;
+}
+
+/* An expandable row and, once opened, its downloadable children indented beneath. */
+.recording-expandable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recording-children {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: 20px;
+  padding-left: 10px;
+  border-left: 2px solid #e5e7eb;
 }
 
 .recording-title {
@@ -1598,6 +1620,12 @@ html, body, #root {
   border-top-color: #fff;
   border-radius: 50%;
   animation: recording-spin 0.7s linear infinite;
+}
+
+/* Caret spinner sits on the light row background, not the accent button. */
+.recording-spinner--dark {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: var(--text-muted);
 }
 
 @keyframes recording-spin {

@@ -3,7 +3,7 @@ import type { Kind } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item } from './services/autoDownloader'
-import { downloadItem, isReconnectError } from './services/autoDownloader'
+import { downloadItem, expandItem, isReconnectError, isUnsupportedError } from './services/autoDownloader'
 import { suggestItemName } from './utils/nameSuggestion'
 
 type Result = 'ok' | 'fail' | null
@@ -15,7 +15,8 @@ interface Props {
 }
 
 // One discovered recording. Downloadable rows carry the full name/kind/download
-// controls; expandable rows render collapsed with a no-op caret (TODO)
+// controls; expandable rows lazy-fetch their downloadable children on caret click
+// and render each as its own (recursive) RecordingRow.
 export default function RecordingRow({ item, course, onReconnect }: Props) {
   const { courses } = useCourseTreeContext()
   const [kind, setKind] = useState<Kind>(item.kind)
@@ -24,6 +25,15 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<Result>(null)
   const [confirming, setConfirming] = useState(false)
+
+  // Expandable-row state: children are fetched lazily on first expand and cached,
+  // so collapsing/re-expanding just toggles visibility (a second click never refetches).
+  const [expanded, setExpanded] = useState(false)
+  const [children, setChildren] = useState<Item[] | null>(null)
+  const [expanding, setExpanding] = useState(false)
+  // Holds either the server's unsupported-source message (permanent) or the generic
+  // retry text; null hides the inline error row.
+  const [expandError, setExpandError] = useState<string | null>(null)
 
   // Read the live course node so a completed download's SSE tree refresh updates state
   const courseNode = courses.find((c) => c.name === course)
@@ -41,12 +51,51 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
     if (!touched) setName(suggestItemName(item.title, next, courses, course))
   }
 
+  async function toggleExpand() {
+    if (children) {
+      setExpanded((e) => !e)
+      return
+    }
+    setExpanding(true)
+    setExpandError(null)
+    try {
+      const items = await expandItem(item.ref)
+      setChildren(items)
+      setExpanded(true)
+    } catch (err) {
+      if (isReconnectError(err)) onReconnect()
+      else if (isUnsupportedError(err)) setExpandError(err.message)
+      else setExpandError('Couldn’t load entries. Try again.')
+    } finally {
+      setExpanding(false)
+    }
+  }
+
   if (item.expandable) {
-    // Collapsed, controls hidden. TODO wire this caret to POST /list/expand.
     return (
-      <div className="recording-row recording-row--expandable">
-        <button className="recording-caret" aria-label="Expand" title="Coming soon">▸</button>
-        <span className="recording-title" dir="auto" title={item.title}>{item.title}</span>
+      <div className="recording-expandable">
+        <div className="recording-row recording-row--expandable">
+          <button
+            className="recording-caret"
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+            aria-expanded={expanded}
+            onClick={toggleExpand}
+            disabled={expanding}
+          >
+            {expanding ? <span className="recording-spinner recording-spinner--dark" /> : expanded ? '▾' : '▸'}
+          </button>
+          <span className="recording-title" dir="auto" title={item.title}>{item.title}</span>
+        </div>
+        {expandError && (
+          <div className="recordings-status recordings-status--error">{expandError}</div>
+        )}
+        {expanded && children && (
+          <div className="recording-children">
+            {children.map((child) => (
+              <RecordingRow key={child.ref} item={child} course={course} onReconnect={onReconnect} />
+            ))}
+          </div>
+        )}
       </div>
     )
   }

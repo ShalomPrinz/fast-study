@@ -14,7 +14,7 @@ export interface AuthStatus {
 
 // Mechanism-agnostic discovery item. `ref` is an opaque token — round-trip it
 // back to /download-item, never parse it. `expandable` true → resolve via
-// /list/expand (Step 5); false → downloadable directly.
+// /list/expand into downloadable children; false → downloadable directly.
 export interface Item {
   ref: string
   title: string
@@ -36,6 +36,21 @@ export function isReconnectError(err: unknown): err is ReconnectError {
   return err instanceof ReconnectError
 }
 
+// Thrown when an expandable item's redirect target is an unsupported (non-YouTube)
+// host. /list/expand answers HTTP 422 { status: 'unsupported', message } in that case;
+// the message is a ready-to-display user-friendly string we surface verbatim (permanent
+// failure — the UI shows it instead of a "try again" retry prompt).
+export class UnsupportedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'UnsupportedError'
+  }
+}
+
+export function isUnsupportedError(err: unknown): err is UnsupportedError {
+  return err instanceof UnsupportedError
+}
+
 // The shared http client hides the response body, so the { status: 'reconnect' }
 // 401 signal can't be read through it — hence a small direct fetch here that reads
 // the body on 401. NOTE: this bypasses the client's central ConnectionError
@@ -51,6 +66,12 @@ async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
     const data = await res.json().catch(() => null)
     if (data?.status === 'reconnect') throw new ReconnectError()
   }
+  if (res.status === 422) {
+    const data = await res.json().catch(() => null)
+    if (data?.status === 'unsupported') {
+      throw new UnsupportedError(data.message ?? 'Unsupported recording source.')
+    }
+  }
   if (!res.ok) throw httpError(res)
   return res.json() as Promise<T>
 }
@@ -58,6 +79,13 @@ async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
 // Discover a course's recordings. Empty/expired session → ReconnectError.
 export async function listRecordings(courseUrl: string): Promise<Item[]> {
   const { items } = await postReconnectAware<{ items: Item[] }>('/list', { courseUrl })
+  return items
+}
+
+// Resolve one expandable item into its downloadable children (echo the opaque ref).
+// Expired session → ReconnectError; unsupported (non-YouTube) redirect target → UnsupportedError.
+export async function expandItem(ref: string): Promise<Item[]> {
+  const { items } = await postReconnectAware<{ items: Item[] }>('/list/expand', { ref })
   return items
 }
 
