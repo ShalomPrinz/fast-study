@@ -56,18 +56,18 @@ That's it. No installs, no terminal, no servers.
 
 ## For Technical Users (full setup, with Node.js)
 
-This is the full pipeline integration: the extension talks to a tiny local Node server (`server/server.js`), which calls `curl` (or `yt-dlp` for YouTube), and writes the file directly into the `fast_study` data tree via the database service. Auto-triggers the rest of the pipeline.
+This is the full pipeline integration: the extension talks to a small local Node server (`server/`), which calls `curl` (or `yt-dlp` for YouTube), and writes the file directly into the `fast_study` data tree via the database service. Auto-triggers the rest of the pipeline.
 
 ### Requirements (Windows)
 
 | Tool | Why | Install on Windows |
 |---|---|---|
-| **Node.js 18+** | Runs `server/server.js` | <https://nodejs.org/> — pick the LTS Windows Installer |
+| **Node.js 18+** | Runs the `server/` service | <https://nodejs.org/> — pick the LTS Windows Installer |
 | **curl** | Replays captured headers to download `.mp4` | Already bundled with Windows 10/11 (`curl.exe` in `System32`) |
 | **yt-dlp** | YouTube downloads | `winget install yt-dlp` (or download `yt-dlp.exe` from <https://github.com/yt-dlp/yt-dlp/releases> and add it to PATH) |
 | **Google Chrome** | The extension | <https://www.google.com/chrome/> |
 
-The Node server itself has **zero npm dependencies** — no `npm install` step needed.
+The Node server uses a few npm packages (express, cors, dotenv) — run `npm install` in `downloader\server` once.
 
 ### Install — one time
 
@@ -78,7 +78,7 @@ The Node server itself has **zero npm dependencies** — no `npm install` step n
    - Enable **Developer mode** (top-right)
    - **Load unpacked** → select the **`downloader\extension\regular`** folder (not `extension\simple`)
    - Pin the extension to the toolbar (optional but recommended)
-4. Note the **extension ID** Chrome assigned (looks like `abcdefghijklmnop...` on the extensions page). Open `downloader\server\server.js` and set the `EXTENSION_ID` constant to that value, or CORS will block the popup.
+4. Note the **extension ID** Chrome assigned (looks like `abcdefghijklmnop...` on the extensions page). Set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to that value (or edit the default in `server\src\config.js`), or CORS will block the popup.
 
 ### Run
 
@@ -117,7 +117,7 @@ npm start
 ### Troubleshooting
 
 - **Popup says "Server offline - start `npm start` in downloader/"** — start the server with `npm start` in `downloader\server\` (or `npm run dev` at the repo root).
-- **CORS error in DevTools** — the extension ID changed. Update `EXTENSION_ID` in `server\server.js` and restart.
+- **CORS error in DevTools** — the extension ID changed. Set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` (or `server\src\config.js`) and restart.
 - **YouTube downloads fail** — confirm `yt-dlp --version` works in your terminal. Recent versions also need Node.js on PATH for YouTube's player script (which you already have).
 - **Headers replay fails with 403** — the captured request expired. Reload the lecture page, let the video play a few seconds, then try again.
 
