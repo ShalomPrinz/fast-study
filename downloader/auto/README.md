@@ -22,7 +22,7 @@ installed.
 ## Run
 
 ```bash
-npm start   # HTTP service on port 3053 (src/server.js)
+npm start   # HTTP service on port 3053 (src/http/server.js)
 ```
 
 The service holds one persistent headless browser per profile and exposes
@@ -34,7 +34,7 @@ Override the port with `AUTODL_PORT` and the headed-login entry URL with
 The HTTP surface is **mechanism-agnostic**: `/list` and `/list/expand` return
 uniform `Item = { ref, title, kind, expandable }` and `/download-item` takes
 `{ ref, … }`. The download mechanism (videostream / youtube / zoom) is hidden
-inside the opaque `ref` (base64url of the internal `Recording`, see `src/ref.js`)
+inside the opaque `ref` (base64url of the internal `Recording`, see `src/lib/ref.js`)
 — the frontend round-trips `ref` and never parses it.
 
 ## First-login is headed; reuse is headless

@@ -22,7 +22,7 @@ auto/                Auto-downloader: Playwright HTTP service (talks to server/ 
 
 ```bash
 npm --prefix downloader/server start   # starts server/server.js on port 3052 (no deps; Node stdlib only)
-npm --prefix downloader/auto start     # starts auto/src/server.js on port 3053 (the HTTP service; needs Playwright)
+npm --prefix downloader/auto start     # starts auto/src/http/server.js on port 3053 (the HTTP service; needs Playwright)
 ```
 
 The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). `server/server.js` only accepts requests from one hardcoded extension ID (`EXTENSION_ID`); if you reload the extension and Chrome assigns a new ID, update that constant in `server/server.js` or CORS will block the popup.

@@ -1,5 +1,5 @@
 /**
- * @typedef {import('./VideoExtractor.js').Activity} Activity
+ * @typedef {import('../extractors/VideoExtractor.js').Activity} Activity
  */
 
 // Hints (case-insensitive) marking an activity as a recitation, not a lecture.

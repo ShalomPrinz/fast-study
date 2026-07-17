@@ -1,7 +1,7 @@
 import { classifyKind } from './moodleCourse.js';
 
 /**
- * @typedef {import('./VideoExtractor.js').Activity} Activity
+ * @typedef {import('../extractors/VideoExtractor.js').Activity} Activity
  */
 
 // Bounded wait for one section. format_tiles renders every `.summary` up front and

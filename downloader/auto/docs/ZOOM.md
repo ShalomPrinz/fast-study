@@ -2,7 +2,7 @@
 
 Zoom cloud recordings (`zoom.us/rec/share/…` links found in course-section summaries) are passcode-gated and serve a direct `.mp4`, captured like `videostream`. The player is picky, so this is the only path on the heavyweight browser profile.
 
-## Why the heavyweight browser (`zoomBrowser.js`)
+## Why the heavyweight browser (`browser/zoomBrowser.js`)
 
 Headless Chrome falls back to SwiftShader software rendering AND leaks a `HeadlessChrome` UA token — the recording player rejects both. The fix is headed **system Chrome (`channel:'chrome'`) under a managed Xvfb virtual display**: it keeps the hardware D3D12 GPU renderer (WSL's `/dev/dxg` is reached independent of the X display) AND a clean `Chrome` UA, with no visible window. puppeteer-extra **stealth** closes the deeper automation leaks Playwright's args miss.
 
@@ -22,8 +22,8 @@ Managed in-process via `node:child_process`, spawned lazily on the first zoom la
 
 ## Passcode gate
 
-Every BIU share uses the single hardcoded `ZOOM_PASSWORD` (`config.js`) — not scraped per-link, not carried in the `ref`. Filled at the `#passcode` gate. The form is a Vue SPA whose reactive binding lands a beat after the input appears, so the fill+click is **retried up to 5×** until `#passcode` detaches (a fill fired too early is dropped and the gate never clears).
+Every BIU share uses the single hardcoded `ZOOM_PASSWORD` (`lib/config.js`) — not scraped per-link, not carried in the `ref`. Filled at the `#passcode` gate. The form is a Vue SPA whose reactive binding lands a beat after the input appears, so the fill+click is **retried up to 5×** until `#passcode` detaches (a fill fired too early is dropped and the gate never clears).
 
 ## Before/after-break split
 
-One share link can hold two recordings (before/after the break). `captureVideo` returns **1-or-2** captures: it sniffs the second `.mp4` only when `.vjs-multiple-clip-control` reports "Total N Recordings" (N>1) and advancing via the "next clip" control yields a distinct stream. The caller (`core.js`) then splits the name into `<name>.1`/`<name>.2` (`splitName` in `naming.js`); a lone recording keeps the plain `<name>`.
+One share link can hold two recordings (before/after the break). `captureVideo` returns **1-or-2** captures: it sniffs the second `.mp4` only when `.vjs-multiple-clip-control` reports "Total N Recordings" (N>1) and advancing via the "next clip" control yields a distinct stream. The caller (`core/core.js`) then splits the name into `<name>.1`/`<name>.2` (`splitName` in `lib/naming.js`); a lone recording keeps the plain `<name>`.

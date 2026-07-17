@@ -20,7 +20,7 @@ The cookie heuristic can't see a server-side session kill, so runtime navs go th
 
 An expired BIU session doesn't bounce to a Microsoft login — Moodle silently redirects `course/view.php` to its enrol gate (`/enrol/index.php`, guest access, zero activities). `isLoginUrl` catches it (alongside the Microsoft login hosts) so `/list` steers the UI to Reconnect (`401 {status:'reconnect'}`) instead of returning an empty list.
 
-## Auth gate (`server.js`)
+## Auth gate (`http/server.js`)
 
 Per-university barrier (in-memory, mirrors `authInstances`) that browsing endpoints (`/list`, `/list/expand`, and the videostream branch of `/download-item` — NOT the zoom branch) `await` before touching cookies or the browser.
 

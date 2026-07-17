@@ -3,9 +3,9 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// src/ -> auto/ -> downloader/ -> repo root. No override: dotenv must not clobber
+// src/lib/ -> src/ -> auto/ -> downloader/ -> repo root. No override: dotenv must not clobber
 // already-set process.env vars (matches the old `if (process.env[...] === undefined)` guard).
-dotenv.config({ path: path.resolve(__dirname, '../../..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../../..', '.env') });
 
 // server.js base URL for the download phase (POST /download, /download-youtube).
 export const SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:3052';

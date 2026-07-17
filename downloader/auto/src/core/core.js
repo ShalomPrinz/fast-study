@@ -1,15 +1,15 @@
 import { resolveUniversity, resolveExtractor, resolveExtractorForRecording } from './registry.js';
-import { postDownload, postDownloadYoutube } from './serverClient.js';
-import { parseZoomSections } from './extractors/zoomSection.js';
-import { expandTiles } from './extractors/moodleCourse.js';
-import { splitName } from './naming.js';
+import { postDownload, postDownloadYoutube } from '../http/serverClient.js';
+import { parseZoomSections } from '../discovery/zoomSection.js';
+import { expandTiles } from '../discovery/moodleCourse.js';
+import { splitName } from '../lib/naming.js';
 
 /**
  * LISTING PATH: enumerate a navigated course page's recordings (caller owns nav + auth).
  * See docs/BROWSING.md.
  * @param {import('playwright').Page} page
  * @param {string} courseUrl
- * @returns {Promise<import('./extractors/VideoExtractor.js').Recording[]>}
+ * @returns {Promise<import('../extractors/VideoExtractor.js').Recording[]>}
  */
 export async function listRecordings(page, courseUrl) {
   const uni = resolveUniversity(courseUrl);
@@ -32,7 +32,7 @@ export async function listRecordings(page, courseUrl) {
  * videostream/zoom sniff the .mp4 fresh on the shared page; a youtube entry carries its
  * direct url (no navigation). See docs/BROWSING.md.
  * @param {import('playwright').Page|null} page  live shared page (null for youtube entries)
- * @param {{ recording: import('./extractors/VideoExtractor.js').Recording,
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string }} args
  */
 export async function downloadRecording(page, { recording, course, name, kind }) {

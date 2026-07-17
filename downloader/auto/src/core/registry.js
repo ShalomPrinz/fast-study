@@ -1,10 +1,10 @@
 // Three concerns, matched at different granularities.
 // Auth: per university (host). Parser: per LMS. Extractor: per activity (modType).
-import { MicrosoftAuth } from './auth/MicrosoftAuth.js';
-import { parseMoodleCourse } from './extractors/moodleCourse.js';
-import { VideostreamExtractor } from './extractors/VideostreamExtractor.js';
-import { YoutubePlaylistExtractor } from './extractors/YoutubePlaylistExtractor.js';
-import { ZoomExtractor } from './extractors/ZoomExtractor.js';
+import { MicrosoftAuth } from '../auth/MicrosoftAuth.js';
+import { parseMoodleCourse } from '../discovery/moodleCourse.js';
+import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
+import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
+import { ZoomExtractor } from '../extractors/ZoomExtractor.js';
 
 // Universities own AUTH (per host) + which LMS parser enumerates their courses.
 const UNIVERSITIES = [
@@ -26,8 +26,8 @@ const EXTRACTORS = [
 
 /**
  * @param {string} courseUrl
- * @returns {{ id: string, auth: () => import('./auth/AuthProvider.js').AuthProvider,
- *             parse: (page: import('playwright').Page) => Promise<import('./extractors/VideoExtractor.js').Activity[]> }}
+ * @returns {{ id: string, auth: () => import('../auth/AuthProvider.js').AuthProvider,
+ *             parse: (page: import('playwright').Page) => Promise<import('../extractors/VideoExtractor.js').Activity[]> }}
  */
 export function resolveUniversity(courseUrl) {
   const uni = UNIVERSITIES.find((u) => u.matches(courseUrl));
@@ -47,8 +47,8 @@ export function defaultUniversity() {
 /**
  * Route a recording echoed back from the frontend to its extractor by strategy
  * (the download phase can't re-parse the course to recover the extractor).
- * @param {import('./extractors/VideoExtractor.js').Recording} recording
- * @returns {import('./extractors/VideoExtractor.js').VideoExtractor | null}
+ * @param {import('../extractors/VideoExtractor.js').Recording} recording
+ * @returns {import('../extractors/VideoExtractor.js').VideoExtractor | null}
  */
 export function resolveExtractorForRecording(recording) {
   return EXTRACTORS.find((ex) => ex.strategy === recording?.strategy) ?? null;
@@ -57,8 +57,8 @@ export function resolveExtractorForRecording(recording) {
 /**
  * Route one activity to its extractor. Returns null (no throw) when no strategy
  * handles it — null means skip (e.g. a `resource`/PDF activity).
- * @param {import('./extractors/VideoExtractor.js').Activity} activity
- * @returns {import('./extractors/VideoExtractor.js').VideoExtractor | null}
+ * @param {import('../extractors/VideoExtractor.js').Activity} activity
+ * @returns {import('../extractors/VideoExtractor.js').VideoExtractor | null}
  */
 export function resolveExtractor(activity) {
   return EXTRACTORS.find((ex) => ex.canHandle(activity)) ?? null;

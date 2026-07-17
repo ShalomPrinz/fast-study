@@ -1,10 +1,10 @@
 # Discovery, listing & expansion
 
-`listRecordings` (`core.js`) enumerates a navigated course page; `expandTiles` runs first, then two DOM parsers merge, then each activity routes to an extractor.
+`listRecordings` (`core/core.js`) enumerates a navigated course page; `expandTiles` runs first, then two DOM parsers merge, then each activity routes to an extractor.
 
 ## Tile expansion
 
-BIU runs Moodle **format_tiles**, which injects each section's body (activities AND summary) into the DOM only when its tile is clicked — so an unexpanded course parses as empty ("No recordings found"). `expandTiles` (`moodleCourse.js`) clicks every `#tile-N` / `.tile[data-section]` and waits for that section's content. No-op on non-tiles formats; per-tile failures swallowed; already-loaded sections skipped.
+BIU runs Moodle **format_tiles**, which injects each section's body (activities AND summary) into the DOM only when its tile is clicked — so an unexpanded course parses as empty ("No recordings found"). `expandTiles` (`discovery/moodleCourse.js`) clicks every `#tile-N` / `.tile[data-section]` and waits for that section's content. No-op on non-tiles formats; per-tile failures swallowed; already-loaded sections skipped.
 
 ## Two merged parsers
 
@@ -19,7 +19,7 @@ These are the single merge point; zoom-share links live in summaries, not activi
 
 ## Mechanism-agnostic Item / ref contract
 
-The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, expandable }`. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
+The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, expandable }`. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
 
 ## Lazy expansion
 

@@ -9,11 +9,11 @@ A Playwright HTTP service that, given a **course URL**, drives a browser to auth
 ## Run
 
 ```bash
-npm --prefix downloader/auto start   # HTTP service, src/server.js
+npm --prefix downloader/auto start   # HTTP service, src/http/server.js
 npx playwright install chromium      # once, for the plain profile
 ```
 
-Port **3053** (`AUTODL_PORT`). Reads the repo-root `.env` (`src/config.js`) for `SERVER_URL` (default `http://localhost:3052`) — the `server/` base it POSTs downloads to. CORS allows only the Vite origin `http://localhost:5173` (unlike `server/`, locked to the extension ID). Zoom capture also needs `Xvfb` + system Google Chrome installed.
+Port **3053** (`AUTODL_PORT`). Reads the repo-root `.env` (`src/lib/config.js`) for `SERVER_URL` (default `http://localhost:3052`) — the `server/` base it POSTs downloads to. CORS allows only the Vite origin `http://localhost:5173` (unlike `server/`, locked to the extension ID). Zoom capture also needs `Xvfb` + system Google Chrome installed.
 
 ## HTTP surface
 

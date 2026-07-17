@@ -1,6 +1,6 @@
 import { launchBrowser } from './browserLaunch.js';
 import { launchZoomBrowser, stopXvfb } from './zoomBrowser.js';
-import { isLoginUrl } from './auth/MicrosoftAuth.js';
+import { isLoginUrl } from '../auth/MicrosoftAuth.js';
 
 // Leak-safety valve only — a browser is meant to stay open; it re-opens lazily next call.
 const IDLE_TIMEOUT_MS = 45 * 60 * 1000;

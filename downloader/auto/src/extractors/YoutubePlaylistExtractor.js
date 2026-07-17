@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
-import { isRecording } from './moodleCourse.js';
-import { UnsupportedError } from '../errors.js';
+import { isRecording } from '../discovery/moodleCourse.js';
+import { UnsupportedError } from '../lib/errors.js';
 
 const execFileAsync = promisify(execFile);
 

@@ -1,11 +1,11 @@
 import express from 'express';
 import cors from 'cors';
-import { AUTODL_PORT, SERVER_URL, AUTH_ENTRY_URL } from './config.js';
-import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from './registry.js';
-import { getSession, rebuildOpenSessions, closeAllSessions } from './browserSession.js';
-import { listRecordings, downloadRecording } from './core.js';
-import { encodeRef, decodeRef } from './ref.js';
-import { UnsupportedError } from './errors.js';
+import { AUTODL_PORT, SERVER_URL, AUTH_ENTRY_URL } from '../lib/config.js';
+import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from '../core/registry.js';
+import { getSession, rebuildOpenSessions, closeAllSessions } from '../browser/browserSession.js';
+import { listRecordings, downloadRecording } from '../core/core.js';
+import { encodeRef, decodeRef } from '../lib/ref.js';
+import { UnsupportedError } from '../lib/errors.js';
 
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
 // unexpanded playlist (pageUrl, no url) is expandable, else downloadable. See docs/BROWSING.md.

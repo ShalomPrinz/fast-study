@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AuthProvider } from './AuthProvider.js';
-import { launchBrowser } from '../browserLaunch.js';
+import { launchBrowser } from '../browser/browserLaunch.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/auth/ -> src/ -> auto/  (statePath is relative to the package root)

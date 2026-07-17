@@ -1,5 +1,5 @@
 import { VideoExtractor } from './VideoExtractor.js';
-import { ZOOM_PASSWORD } from '../config.js';
+import { ZOOM_PASSWORD } from '../lib/config.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
 function endsWithMp4(url) {

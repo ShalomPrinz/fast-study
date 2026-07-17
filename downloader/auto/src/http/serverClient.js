@@ -1,4 +1,4 @@
-import { SERVER_URL } from './config.js';
+import { SERVER_URL } from '../lib/config.js';
 
 /**
  * POST a JSON body and return parsed JSON (or {}). Throws on non-2xx with the
