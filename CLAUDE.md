@@ -60,3 +60,4 @@ Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-c
   # After:  <concrete input>  -> <good output>
   ```
 - Never write multi-paragraph docstrings or multi-line comment blocks to fill space — one short line is the default; the before/after pattern is the upgrade when the WHY is non-obvious.
+- Docs and comments describe the *current* state and the durable WHY — not implementation plans, phased build steps, or "how we got here" history. Plans belong in plan files; once a plan ships, fold its durable knowledge into docs and drop the narrative.

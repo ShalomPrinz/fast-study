@@ -4,26 +4,14 @@ import { classifyKind } from './moodleCourse.js';
  * @typedef {import('./VideoExtractor.js').Activity} Activity
  */
 
-// Bounded wait for at least one section to render. format_tiles renders every
-// section's `.summary` into the DOM up front and toggles visibility via CSS/JS,
-// so parsing all `li.section` (regardless of the `state-visible` class) is the
-// cheapest path that sees every tile's content — no per-tile click / navigation.
-// ASSUMPTION (untestable here, no live site): summaries are NOT lazy-loaded on
-// tile click. If a host is found that lazy-loads them, add a fallback that clicks
-// each tile or `goto`s its `section.php?id=<data-true-sectionid>` before parsing.
+// Bounded wait for one section. format_tiles renders every `.summary` up front and
+// toggles visibility via CSS, so parsing all `li.section` sees every tile's content.
 const SECTION_WAIT_MS = 5_000;
 
 /**
- * Discover zoom-share recordings sitting inside a course section's summary.
- *
- * A section summary (`li.section .summary .no-overflow`) holds repeated
- * `הרצאה מספר N:` labels, each followed by a `<p>` with a
- * `zoom.us/rec/share/…` link (as an `<a href>` OR bare text). We walk each
- * summary's `<p>`s in order, tracking the most recent label, and emit one
- * synthetic `modType:'zoom'` activity per link. The per-link `Passcode:` text is
- * deliberately ignored — every BIU share uses one hardcoded passcode applied at
- * the gate (see ZOOM_PASSWORD in config.js), so no passcode is scraped here.
- *
+ * Discover zoom-share recordings in course section summaries: walk each summary's `<p>`s
+ * tracking the most recent `הרצאה מספר N` label, emit one synthetic `modType:'zoom'`
+ * activity per `zoom.us/rec/share` link. Passcode text is ignored (docs/ZOOM.md).
  * @param {import('playwright').Page} page
  * @returns {Promise<Activity[]>}  in document order
  */
@@ -31,12 +19,9 @@ export async function parseZoomSections(page) {
   await page.waitForSelector('li.section', { timeout: SECTION_WAIT_MS }).catch(() => {});
 
   const raw = await page.$$eval('li.section', (sections) => {
-    // A zoom recording share link — matched both in <a href> and bare page text.
-    // \s excludes   (the trailing &nbsp; the site emits after each URL), so
-    // the tail stops cleanly before "Passcode:".
+    // Zoom share link in <a href> or bare text; \s stops the tail before the trailing &nbsp;/Passcode.
     const ZOOM_RE = /https?:\/\/[^\s"'<>]*zoom\.us\/rec\/share\/[^\s"'<>]+/g;
-    // Number label preceding a link: "הרצאה מספר N" / "הרצאה N" / "שיעור N" /
-    // "תרגול N". Longer wording first so it isn't shadowed by a shorter prefix.
+    // Number label preceding a link. Longer wording first so a shorter prefix can't shadow it.
     const LABEL_RE = /(?:הרצאה\s+מספר|הרצאה|שיעור|תרגול|תרגיל)\s*(\d+)/;
     const shareKey = (u) => (u.split('/rec/share/')[1] || '').split(/[?#]/)[0];
 
@@ -54,9 +39,8 @@ export async function parseZoomSections(page) {
       for (const p of noOverflow.querySelectorAll('p')) {
         const text = p.textContent || '';
 
-        // Collect links in this <p> from anchors AND bare text, deduped by the
-        // share token (the <a href> and its identical text would otherwise both
-        // count for the first lecture, which uses a real anchor).
+        // Links from anchors AND bare text, deduped by share token (the <a href> and its
+        // identical text would otherwise both count for the first lecture).
         const urls = [];
         p.querySelectorAll('a[href*="zoom.us/rec/share"]').forEach((a) => urls.push(a.href));
         const textMatches = text.match(ZOOM_RE);

@@ -8,19 +8,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/auth/ -> src/ -> auto/  (statePath is relative to the package root)
 const PKG_ROOT = path.resolve(__dirname, '../..');
 
-// Hosts / path fragments that mean "not authenticated": if the probe URL bounces
-// to any of these, the persisted session has expired and we must re-login.
-// Assumption: BIU's Microsoft OAuth redirects to one of these on an expired
-// session (login.microsoftonline.com for AAD, login.live.com for MSA); the
-// bare `/login` path catches a same-host login page if BIU proxies the flow.
+// A bounce to any of these means "not authenticated" (AAD / MSA login, or a same-host
+// /login page if BIU proxies the flow).
 const LOGIN_HOSTS = ['login.microsoftonline.com', 'login.live.com'];
 const LOGIN_PATH_RE = /\/login(\/|$|\?)/i;
-// An expired/guest BIU session does NOT bounce to a Microsoft login page — Moodle
-// silently redirects the course view to its enrol gate (/enrol/index.php), a page
-// with zero li.activity. Without catching it, /list scrapes an empty page and
-// returns [] ("No recordings found") instead of steering the UI to Reconnect.
-// Before: expired session → goto lands on /enrol/index.php → isLoginUrl=false → []
-// After:  expired session → /enrol/index.php matched → reconnect (401)
+// An expired/guest BIU session doesn't bounce to a Microsoft login — Moodle silently
+// redirects to its enrol gate (zero li.activity), so catch it too or /list returns []
+// instead of steering to Reconnect. See docs/AUTH.md.
 const ENROL_GATE_RE = /\/enrol\/index\.php/i;
 
 /**
@@ -50,13 +44,11 @@ export class MicrosoftAuth extends AuthProvider {
   constructor({ statePath }) {
     super();
     this.statePath = path.isAbsolute(statePath) ? statePath : path.join(PKG_ROOT, statePath);
-    // A headed login in progress (connect() → complete()), for the UI-triggered
-    // flow. Null when no login is pending. Held on the instance so connect and
-    // complete — two separate HTTP calls — share the same live headed browser.
+    // Headed login in progress; held on the instance so connect() and complete() (two
+    // HTTP calls) share the same live headed browser. Null when none pending.
     this._pending = null;
-    // Runtime "known invalid" flag. The cheap cookie heuristic in status() can't
-    // see a server-side session kill, so a live login/enrol bounce during /list or
-    // /download-item flips this until the next successful complete() clears it.
+    // Runtime "known invalid" flag: a live login/enrol bounce sets it (the cookie
+    // heuristic can't see a server-side kill), cleared by the next complete().
     this._invalidated = false;
   }
 
@@ -87,10 +79,8 @@ export class MicrosoftAuth extends AuthProvider {
     return { connected: true, expired: this._invalidated || this._isExpired(state) };
   }
 
-  // A storageState is "expired" when it carries no still-valid dated cookie.
-  // Session cookies (expires -1) are ignored — they can't prove freshness.
-  // Before: probing validity meant launching a headless browser on every poll.
-  // After:  read cookie `expires`; expired = every dated cookie is already past.
+  // Expired = no still-valid dated cookie (session cookies can't prove freshness).
+  // A cheap read of cookie `expires`, avoiding a browser launch on every poll.
   _isExpired(state) {
     const now = Date.now() / 1000;
     const dated = (state.cookies ?? []).filter((c) => typeof c.expires === 'number' && c.expires > 0);
@@ -114,13 +104,9 @@ export class MicrosoftAuth extends AuthProvider {
       const page = await context.newPage();
       await page.goto(entryUrl, { waitUntil: 'load' });
       this._pending = { browser, context };
-      // The login spans two HTTP calls (connect / complete) with no shared async
-      // scope a finally could release on, so the "login ended" signal is the headed
-      // browser closing. The reference check makes this fire ONLY for a genuine cancel:
-      // Before: complete() succeeds → complete() sets _pending=null THEN browser.close()
-      //         → disconnected fires but _pending.browser !== browser → no-op (correct).
-      // After:  user closes the window pre-complete → _pending.browser === browser still
-      //         → clear _pending and signal onCancel (release the parked browsing gate).
+      // "Login ended" signal = the headed browser closing. The reference check fires
+      // onCancel ONLY for a genuine abandon (still the pending browser), not for the
+      // close complete() itself does after clearing _pending.
       browser.on('disconnected', () => {
         if (this._pending && this._pending.browser === browser) {
           this._pending = null;

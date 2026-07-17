@@ -10,7 +10,6 @@ import { ZoomExtractor } from './extractors/ZoomExtractor.js';
 const UNIVERSITIES = [
   {
     id: 'biu',
-    // PLACEHOLDER: adjust to the real BIU course host (see plan §9).
     matches: (u) => /(^|\.)biu\.ac\.il$/.test(new URL(u).hostname),
     auth: () => new MicrosoftAuth({ statePath: '.auth/biu.json' }),
     parse: parseMoodleCourse, // BIU runs Moodle

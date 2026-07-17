@@ -34,10 +34,8 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * A `url` module MIGHT redirect to YouTube (host unknown until we navigate), but
-   * only claim it when a recording keyword appears in its title or section heading —
-   * otherwise unrelated `url` links (syllabi, readings, drive folders) get surfaced
-   * as recordings and blow up on expand.
+   * Claim a `url` module (target host unknown until navigated) only when a recording
+   * keyword is present, else unrelated links get surfaced and blow up on expand.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
@@ -64,21 +62,15 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
    * @returns {Promise<{ title: string, url: string }[]>}
    */
   async listEntries(page, rec) {
-    // `&redirect=1` is what the Moodle onclick uses to jump straight to the target.
+    // `&redirect=1` is the Moodle onclick's jump-straight-to-target flag.
     const sep = rec.pageUrl.includes('?') ? '&' : '?';
-    // Read the redirect target as soon as navigation COMMITS, not after the target
-    // page finishes loading. The Moodle `?redirect=1` hop is a server-side HTTP
-    // redirect Playwright follows before commit, so page.url() is already the final
-    // host — and yt-dlp fetches the playlist itself, so we never need the page loaded.
-    // Before: waitUntil:'load' → a heavy non-YouTube target (zoom) hangs the full 30s
-    //         → Playwright timeout → generic 500, host check below never runs.
-    // After:  waitUntil:'commit' → final host known instantly for YouTube AND zoom.
+    // waitUntil:'commit' (not 'load'): the final host is known at commit, and a heavy
+    // non-YouTube target would otherwise hang the full timeout before the host check runs.
     try {
       await page.goto(`${rec.pageUrl}${sep}redirect=1`, { waitUntil: 'commit' });
     } catch (err) {
-      // A goto that still throws (e.g. timeout) but already committed onto a
-      // non-YouTube host is an unsupported source, not a server fault — classify it
-      // as such. Only a genuinely-YouTube or unknown host rethrows as a real error.
+      // A throw that already committed onto a non-YouTube host is unsupported, not a
+      // server fault; a YouTube/unknown host rethrows as a real error.
       const host = safeHost(page.url());
       if (host && !YOUTUBE_HOSTS.has(host)) throw unsupported(host);
       throw err;

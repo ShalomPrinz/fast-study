@@ -7,11 +7,8 @@ import { listRecordings, downloadRecording } from './core.js';
 import { encodeRef, decodeRef } from './ref.js';
 import { UnsupportedError } from './errors.js';
 
-// Uniform, mechanism-agnostic item the frontend sees. The download mechanism
-// (videostream / youtube / playlist) is hidden inside the opaque `ref`; the
-// frontend only reads `expandable` to decide /list/expand vs /download-item.
-// A recording that's an unexpanded playlist (has pageUrl, no direct url) is
-// expandable; concrete videostream/youtube-entry recordings are downloadable.
+// Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
+// unexpanded playlist (pageUrl, no url) is expandable, else downloadable. See docs/BROWSING.md.
 function toItem(recording) {
   return {
     ref: encodeRef(recording),
@@ -25,9 +22,8 @@ function toItem(recording) {
 // is locked to the extension ID. Only the frontend drives this service.
 const ALLOWED_ORIGIN = 'http://localhost:5173';
 
-// One auth instance PER university, reused across requests: connect()/complete()
-// share the same in-memory headed browser, so a fresh instance per call would
-// lose the pending login. Keyed by university id (single-university for now).
+// One auth instance PER university, reused across requests so connect()/complete()
+// share the same in-memory headed browser. Never evict. Keyed by university id.
 const authInstances = new Map();
 function authFor(uni) {
   if (!authInstances.has(uni.id)) authInstances.set(uni.id, uni.auth());
@@ -35,36 +31,10 @@ function authFor(uni) {
 }
 
 // ── Auth gate ─────────────────────────────────────────────────────────────────
-// Per-university barrier the browsing endpoints await BEFORE they touch cookies or
-// the browser. Closed on /auth/connect, opened on /auth/complete AFTER the context
-// rebuild. In-memory run state only — never persisted (mirrors authInstances above).
-//
-// WHY: /auth/complete persists fresh cookies then rebuildOpenSessions() swaps the
-// shared session's context to them. open() is a no-op when already open and doesn't
-// route through withLock, so a /list fired during "finishing…" used to navigate on
-// the STALE pre-login context → bounce to the Microsoft login → silent SSO recovery
-// fails → markExpired() flips a PERMANENT false "expired". The gate makes such a
-// /list park (async, zero-CPU) until the rebuild finishes, then run on fresh cookies.
-// Before: /list during finishing… → stale context → bounce → stuck _invalidated
-// After:  /list during finishing… → parks on gate → runs on fresh cookies → items
-//
-// Release-on-cancel (WHY it isn't just the timer): a gate that opens ONLY on
-// /auth/complete blocks forever if the user closes the login window / MFA fails —
-// complete() never fires. The PRIMARY release is the headed login browser's
-// `disconnected` event, routed through connect()'s onCancel → openAuthGate, so a
-// parked /list wakes IMMEDIATELY (re-checks auth.status() → still expired → reconnect)
-// and the user can retry at once. The AUTH_GATE_BACKSTOP_MS timer is only a last-resort
-// safety valve for the pathological case where the browser neither completes nor emits
-// `disconnected` (e.g. a hung process). It can't just be shortened instead: a legitimately
-// slow MFA login must not have its gate cut early — that would reconnect-error a parked
-// request mid-login. The event is what keeps the timer rare rather than routine.
-//
-// Step-7 decision (rebuildContext/open under withLock): NOT done. The gate already
-// establishes happens-before for the login case (browsing can't run until the rebuild
-// completed). Wrapping rebuildContext/open in withLock risks deadlock — rebuildOpenSessions
-// runs from /auth/complete OUTSIDE any lock, while browsing calls open() INSIDE withLock,
-// so a shared lock could interleave into a hold-and-wait — for no gain the gate doesn't
-// already give. Left as-is; the gate is what guarantees ordering.
+// Per-university barrier browsing endpoints await before touching cookies/browser:
+// closed on /auth/connect, opened on /auth/complete AFTER the context rebuild, so a
+// /list fired mid-login parks and runs on fresh cookies (not the stale pre-login
+// context, which bounces → a permanent false "expired"). See docs/AUTH.md.
 const AUTH_GATE_BACKSTOP_MS = 3 * 60 * 1000; // > a real MFA login; release-on-timeout safety valve only
 
 const authGates = new Map();
@@ -80,9 +50,7 @@ function authGate(uni) {
 }
 
 // Close the gate: park future browsing on a fresh pending promise + arm the backstop.
-// Guarded to be idempotent-safe: re-closing an already-closed gate keeps the SAME
-// pending promise (so awaiters already parked on it aren't orphaned) and only re-arms
-// the timer — replacing the promise would strand them with no backstop of their own.
+// Re-closing keeps the SAME pending promise (don't orphan already-parked awaiters).
 function closeAuthGate(uni) {
   const gate = gateFor(uni);
   if (!gate.resolve) gate.promise = new Promise((res) => { gate.resolve = res; });
@@ -104,9 +72,7 @@ function send(res, status, body) {
   res.status(status).json(body);
 }
 
-// Lightweight request logging — one line in, one line out per request. Enough to
-// see each request and diagnose an empty list (the parsed item count), without
-// dumping DOM / storageState / secrets.
+// Lightweight request logging — one line in, one out; no DOM / state / secrets.
 function logReq(method, path, detail) {
   console.log(`→ ${method} ${path}${detail ? `  ${detail}` : ''}`);
 }
@@ -120,9 +86,8 @@ function sendReconnect(res) {
   send(res, 401, { status: 'reconnect' });
 }
 
-// Distinct "this item can't be expanded/downloaded" signal (e.g. a `url` module that
-// redirects to a non-YouTube host), so the page can show the specific reason rather
-// than a generic 500. 422 = well-formed request, unprocessable target.
+// Distinct "this item can't be expanded/downloaded" signal (e.g. a `url` module
+// redirecting off-YouTube) so the page shows the specific reason, not a generic 500.
 function sendUnsupported(res, message) {
   send(res, 422, { status: 'unsupported', message });
 }
@@ -148,11 +113,8 @@ async function handleAuthConnect(req, res) {
   logReq('POST', '/auth/connect');
   const { entryUrl } = req.body; // express.json() yields {} for an empty body → entryUrl undefined
   const uni = defaultUniversity();
-  // Close the gate as the login starts so browsing parks until /auth/complete rebuilds
-  // on fresh cookies. Closing BEFORE connect (not after) removes any window where the
-  // browser's disconnected event could race the close. Released immediately by that
-  // disconnected event if the user abandons the login (onCancel → openAuthGate), on a
-  // connect() throw, or — last-resort backstop only — the timer inside closeAuthGate.
+  // Close the gate BEFORE connect (no race with the browser's disconnected event) so
+  // browsing parks until /auth/complete rebuilds on fresh cookies. See docs/AUTH.md.
   closeAuthGate(uni);
   try {
     await authFor(uni).connect(entryUrl || AUTH_ENTRY_URL, { onCancel: () => openAuthGate(uni) });
@@ -198,25 +160,21 @@ async function handleList(req, res) {
 
   const session = getSession('plain');
   await session.open(state);
-  // withLock returns null as a sentinel for "the session bounced to login AND silent
-  // SSO recovery failed" so the reconnect signal is sent OUTSIDE the lock (can't send
-  // from inside cleanly). gotoAuthenticated absorbs a recoverable bounce silently.
+  // null = bounced to login AND silent SSO recovery failed; sent as reconnect OUTSIDE
+  // the lock. gotoAuthenticated absorbs a recoverable bounce silently (docs/AUTH.md).
   const recordings = await session.withLock(async () => {
     const nav = await session.gotoAuthenticated(courseUrl, auth);
     if (!nav) return null;
     return listRecordings(session.page, courseUrl);
   });
-  // Runtime bounce that couldn't self-recover: the AAD session is genuinely gone, so
-  // the server (not the cheap cookie heuristic) is now the source of truth — mark the
-  // cached instance expired so the next /auth/status reports expired:true.
+  // Unrecoverable bounce: AAD session genuinely gone → server is source of truth.
   if (recordings === null) { auth.markExpired(); logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
 }
 
-// Resolve ONE expandable item (a playlist) into its downloadable children. The
-// route name and body are mechanism-neutral; the redirect-follow + yt-dlp
-// --flat-playlist lives behind the extractor and the opaque ref.
+// Resolve ONE expandable item (a playlist) into its downloadable children; the
+// redirect-follow + yt-dlp --flat-playlist lives behind the extractor + opaque ref.
 async function handleListExpand(req, res) {
   logReq('POST', '/list/expand', '(expanding)');
   const { ref } = req.body;
@@ -249,9 +207,8 @@ async function handleListExpand(req, res) {
   send(res, 200, { items });
 }
 
-// Symmetric with /list/expand: if a not-yet-expanded (or otherwise unsupported) ref
-// reaches the download path, surface it as 422 unsupported rather than a 500. Any
-// other error rethrows to the centralized 500.
+// Symmetric with /list/expand: an unsupported ref on the download path surfaces as
+// 422, not a 500. Other errors rethrow to the centralized handler.
 async function handleDownloadItem(req, res) {
   try {
     await downloadItem(req, res);
@@ -283,11 +240,9 @@ async function downloadItem(req, res) {
   const profile = resolveExtractorForRecording(recording)?.browserProfile ?? 'plain';
   const session = getSession(profile);
 
-  // Zoom shares live on `*.zoom.us` (not the course host) and are gated by a
-  // passcode, NOT BIU SSO — so resolving a university from the zoom pageUrl would
-  // throw ("No university/auth handler"), and there's no login bounce to recover
-  // from. Open the browser (reusing BIU state if present, else a fresh context)
-  // and let captureVideo navigate + clear the passcode gate itself.
+  // Zoom shares live on `*.zoom.us`, gated by a passcode not BIU SSO — no university to
+  // resolve and no login bounce. Open (reuse BIU state if present) and let captureVideo
+  // clear the passcode gate. See docs/ZOOM.md.
   if (recording.strategy === 'zoom') {
     await session.open(authFor(defaultUniversity()).loadState() ?? undefined);
     await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind }));
@@ -302,10 +257,8 @@ async function downloadItem(req, res) {
   if (!state || auth.status().expired) { logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
 
   await session.open(state);
-  // Lock covers the whole navigate+sniff (captureVideo navigates internally); the
-  // POST to server.js is quick — server.js returns immediately and downloads in bg.
-  // Mirror /list: gotoAuthenticated first tries a silent SSO recovery on a login/enrol
-  // bounce; only an unrecoverable bounce (null) steers to Reconnect instead of a 500.
+  // Lock covers the whole navigate+sniff (captureVideo navigates internally). Mirror
+  // /list: an unrecoverable login/enrol bounce steers to Reconnect instead of a 500.
   const bounced = await session.withLock(async () => {
     if (!(await session.gotoAuthenticated(recording.pageUrl, auth))) return true;
     await downloadRecording(session.page, { recording, course, name, kind });
@@ -338,8 +291,7 @@ app.post('/download-item', handleDownloadItem);
 app.post('/close', handleClose);
 
 // Centralized error backstop: Express 5 forwards async-handler rejections here.
-// An UnsupportedError that rethrew still maps to 422; anything else to 500 — same
-// mapping and console.error(stack) as the old router's try/catch.
+// A rethrown UnsupportedError maps to 422; anything else to 500.
 app.use((err, req, res, next) => {
   console.error(err?.stack ?? String(err));
   if (err instanceof UnsupportedError) return sendUnsupported(res, err.message);

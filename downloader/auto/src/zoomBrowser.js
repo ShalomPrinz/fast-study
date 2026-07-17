@@ -8,16 +8,9 @@ import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 
-// Surgical stealth: apply puppeteer-extra's stealth evasions (window.chrome mocking,
-// iframe.contentWindow proxying, stripping CDP-injected props, etc.) to close the
-// deeper automation leaks Playwright's plain launch args don't — BUT keep the real
-// Chrome UA.
-// Before: stealth's 'user-agent-override' evasion rewrites navigator.userAgent, which
-//         desyncs from Chrome's Sec-CH-UA Client-Hints -> zoom flags the mismatch.
-// After:  that one evasion is deleted, so the genuine UA and Client-Hints stay in sync
-//         while every other leak-evasion still runs. (Registered once at module load,
-//         and ONLY on playwright-extra's chromium — the plain launcher imports the
-//         untouched `chromium` from `playwright`, so non-zoom launches stay stealth-free.)
+// Stealth to close automation leaks, but DELETE its 'user-agent-override' evasion — a
+// rewritten UA desyncs from Chrome's Client-Hints and zoom flags it. Registered ONLY on
+// playwright-extra's chromium (plain launches stay stealth-free). See docs/ZOOM.md.
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
 chromium.use(stealth);
@@ -28,15 +21,9 @@ let xvfb = null; // { proc: ChildProcess, display: ':N', authFile: string }
 
 const XVFB_READY_TIMEOUT_MS = 10_000;
 
-// Pick a free X display number the way xvfb-run's find_free_servernum does: step up
-// from :99 while a server for that number looks taken.
-// Before: `-displayfd` lets Xvfb auto-pick, but that path fatally needs to create the
-//         filesystem socket /tmp/.X11-unix/X{N} — and here /tmp/.X11-unix is a READ-ONLY
-//         tmpfs (WSLg), so the bind fails and no display ever comes up.
-// After:  an EXPLICIT `:N` makes Xvfb fall back to a Linux abstract Unix socket (no
-//         filesystem entry needed), which works on the ro mount. On this box the FS
-//         socket file never appears, so the writable /tmp/.X{N}-lock file is what
-//         disambiguates a taken display number.
+// Pick a free X display EXPLICITLY (step up from :99), not via `-displayfd`: on WSLg
+// /tmp/.X11-unix is a read-only tmpfs, so an auto-picked display can't create its FS
+// socket. An explicit `:N` falls back to an abstract Unix socket. See docs/ZOOM.md.
 function findFreeDisplay() {
   for (let n = 99; n < 1000; n++) {
     if (fs.existsSync(`/tmp/.X${n}-lock`)) continue;
@@ -46,10 +33,8 @@ function findFreeDisplay() {
   throw new Error('no free X display number found (:99-:999 all taken)');
 }
 
-// Write a per-run XAUTHORITY holding a MIT-MAGIC-COOKIE for :N (mirrors xvfb-run).
-// The same file is handed to both Xvfb (-auth) and Chrome (env XAUTHORITY) so the
-// browser can authenticate to the virtual display. Cookie via crypto (no mcookie dep);
-// xauth encodes the binary Xauthority format.
+// Per-run XAUTHORITY (MIT-MAGIC-COOKIE for :N), handed to both Xvfb (-auth) and Chrome
+// (env XAUTHORITY) so the browser can authenticate to the virtual display.
 function writeXauthority(display) {
   const authFile = path.join(os.tmpdir(), `autodl-xvfb-${process.pid}-${display}.Xauthority`);
   fs.writeFileSync(authFile, ''); // xauth appends to an existing file
@@ -59,11 +44,9 @@ function writeXauthority(display) {
 }
 
 /**
- * Spawn Xvfb on an explicit free display and resolve once it accepts connections.
- * `-nolisten tcp` keeps it local-only; the 1280x1024x24 screen is enough for a player.
- * Readiness is polled by connecting to the abstract Unix socket (`\0/tmp/.X11-unix/X{N}`,
- * the one Xvfb actually binds on this ro-tmpfs box) — the `_XSERVTrans…failed to bind
- * listener` lines Xvfb still prints for the (impossible) FILESYSTEM socket are harmless.
+ * Spawn Xvfb on an explicit free display; resolve once it accepts connections, polled on
+ * the abstract Unix socket it binds on this ro-tmpfs box (the `failed to bind listener`
+ * lines it prints for the impossible FS socket are harmless). See docs/ZOOM.md.
  * @returns {Promise<{ proc: import('node:child_process').ChildProcess, display: string, authFile: string }>}
  */
 function startXvfb() {
@@ -131,17 +114,10 @@ export function stopXvfb() {
 }
 
 /**
- * Launch the browser the ZOOM recording player needs: system Google Chrome
- * (channel:'chrome'), stealth-cloaked, HEADED on a managed Xvfb virtual display.
- * Before: plain HEADLESS Chrome falls back to SwiftShader software rendering AND leaks
- *         the `HeadlessChrome` UA token -> zoom's player refuses to load the recording.
- * After:  headed system Chrome under Xvfb keeps the real hardware GPU renderer (WSL's
- *         /dev/dxg is reached independent of the X display) AND a clean `Chrome` UA, with
- *         NO visible window (the display is virtual). `--enable-automation` /
- *         AutomationControlled are stripped so navigator.webdriver reports false.
- * Do NOT override the UA (here or via stealth) — it desyncs from Chrome's Client-Hints
- * and zoom flags the mismatch. Do NOT add `--use-angle=vulkan` — no HW Vulkan on this
- * box, so it falls back to SwiftShader.
+ * Launch the browser the ZOOM recording player needs: system Chrome (channel:'chrome'),
+ * stealth-cloaked, HEADED on a managed Xvfb display — keeps the real GPU renderer + clean
+ * UA that headless lacks, with no visible window. Do NOT override the UA or add
+ * `--use-angle=vulkan` (both drop it to SwiftShader / flag it). See docs/ZOOM.md.
  * @returns {Promise<import('playwright').Browser>}
  */
 export async function launchZoomBrowser() {

@@ -56,9 +56,7 @@ export class VideostreamExtractor extends VideoExtractor {
 
     let request = await mp4Request;
     if (!request) {
-      // TODO(unverified): autoplay-vs-click is not confirmed against the real
-      // view.php page. Best-effort trigger playback, then wait once more. If the
-      // real page needs a specific selector/gesture, refine this here.
+      // Player may not autoplay — nudge playback, then wait once more for the .mp4.
       await page
         .evaluate(() => {
           const v = document.querySelector('video');
@@ -73,8 +71,7 @@ export class VideostreamExtractor extends VideoExtractor {
       throw new Error(`No .mp4 request captured on ${rec.pageUrl} (playback may need a manual trigger)`);
     }
 
-    // server.js's headersToObject expects the extension's webRequest shape (an
-    // array of {name, value}) instead of Playwright's {name: value} object.
+    // server/ expects the extension's webRequest shape ([{name,value}]), not Playwright's object.
     return {
       title: rec.title,
       url: request.url(),

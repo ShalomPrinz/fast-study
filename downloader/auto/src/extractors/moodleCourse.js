@@ -2,16 +2,12 @@
  * @typedef {import('./VideoExtractor.js').Activity} Activity
  */
 
-// Section-name / title hints that mark an activity as a recitation rather than a
-// lecture. Extend as new wordings show up; matched case-insensitively.
-// (Hebrew: תרגול / תרגיל = recitation; "tirgul" is the transliteration. Note
-// תרגולים — "recitations" — contains תרגול, so it matches.)
+// Hints (case-insensitive) marking an activity as a recitation, not a lecture.
+// (Hebrew: תרגול/תרגיל = recitation; תרגולים contains תרגול so it matches too.)
 const RECITATION_KEYWORDS = ['תרגולים', 'תרגול', 'תרגיל', 'recitation', 'tirgul'];
 
-// Section-name / title hints that a `url` module is a recording playlist rather
-// than an unrelated link (syllabus, reading, drive folder). Matched
-// case-insensitively. (Hebrew: הקלטות/הקלטה = recordings; הרצאות/הרצאה = lectures;
-// תרגולים/תרגול = recitations.)
+// Hints that a `url` module is a recording playlist, not an unrelated link (syllabus,
+// reading, drive folder). (Hebrew: הקלטות/הקלטה = recordings; הרצאות/הרצאה = lectures.)
 const RECORDING_KEYWORDS = ['הקלטות', 'הרצאות', 'הקלטה', 'הרצאה', 'recording', 'lecture', ...RECITATION_KEYWORDS];
 
 /**
@@ -39,23 +35,17 @@ export function isRecording(sectionName, title) {
   return RECORDING_KEYWORDS.some((k) => hay.includes(k.toLowerCase()));
 }
 
-// Bounded wait for the first activity card. Long enough to cover a slow AJAX
-// render, short enough that a legitimately-empty course doesn't hang the request.
+// Bounded wait for the first activity card (covers slow AJAX; empty course won't hang).
 const ACTIVITY_WAIT_MS = 10_000;
 
 // Per-section wait for content to appear after its tile is clicked.
 const TILE_CONTENT_WAIT_MS = 4_000;
 
 /**
- * On format_tiles courses each section's body (activities AND summary — where the
- * zoom-share links live) is injected into the DOM only when its tile is clicked;
- * an unexpanded course parses as empty ("No recordings found"). Click every tile
- * once so all section content is present before parsing.
- *
- * No-op on other course formats (guarded by the format_tiles marker). Every click
- * and wait is best-effort — a single stubborn tile must not abort discovery — and
- * a section whose body is already present is skipped (clicking would just re-toggle
- * visibility; the content stays in the DOM either way, so the parser still sees it).
+ * format_tiles injects each section's body (activities AND summary) into the DOM only
+ * when its tile is clicked, so an unexpanded course parses as empty — click every tile
+ * first. No-op on other formats; best-effort per tile; already-loaded sections skipped.
+ * See docs/BROWSING.md.
  * @param {import('playwright').Page} page
  */
 export async function expandTiles(page) {
@@ -86,13 +76,9 @@ export async function expandTiles(page) {
 }
 
 /**
- * Per-LMS enumerator for a Moodle course page: walk every `li.activity` and
- * produce the activities present, regardless of module type. Pure DOM parse of
- * all sections (Moodle renders even visually-collapsed ones), no network sniff.
- * A bounded waitForSelector first, because some Moodle 4.x hosts inject the
- * activity cards after the `load` event — a bare $$eval would race and see zero.
- * On timeout (a genuinely empty course) we parse anyway and return []. Routing
- * each Activity to an extractor (and skipping unhandled types) is the caller's job.
+ * Per-LMS enumerator: pure DOM walk of every `li.activity` (any module type), no sniff.
+ * A bounded waitForSelector first (some Moodle 4.x hosts inject cards after `load`);
+ * on timeout parse anyway and return []. Routing to extractors is the caller's job.
  * @param {import('playwright').Page} page
  * @returns {Promise<Activity[]>}  in document order
  */

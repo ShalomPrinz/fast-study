@@ -1,8 +1,6 @@
-// Opaque token the frontend round-trips without ever parsing it. It encodes the
-// internal Recording (strategy / pageUrl / redirect target) so the HTTP surface
-// stays mechanism-agnostic: 'strategy', 'pageUrl', 'playlist', 'youtube', and
-// 'videostream' must never appear in any response the frontend sees. Stateless —
-// the whole Recording lives in the token, so there's no server-side map to keep.
+// Opaque token the frontend round-trips without parsing. Encodes the whole internal
+// Recording so the HTTP surface stays mechanism-agnostic and stateless (no server-side
+// map). 'strategy'/'pageUrl'/'videostream'/etc. must never appear in a response. See docs/BROWSING.md.
 
 /** @param {object} recording  internal Recording → base64url token. */
 export function encodeRef(recording) {

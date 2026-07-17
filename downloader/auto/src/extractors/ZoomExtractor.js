@@ -20,18 +20,13 @@ function mp4Key(url) {
 }
 
 const MP4_WAIT_MS = 30000;
-// The second recording auto-advances only at the END of part 1, which could be a
-// long lecture. We don't wait a full video length here — best-effort: if a second
-// .mp4 doesn't surface promptly (auto-advance or a "next" control), we ship one file.
+// Best-effort wait for the second clip's .mp4 (not a full video length); ship one file if none.
 const SECOND_MP4_WAIT_MS = 15000;
 
 /**
- * Zoom cloud recording shared via a `zoom.us/rec/share/…` link (discovered in a
- * course section summary by `parseZoomSection`s, not as an `li.activity` card).
- * The share page is passcode-gated and serves a direct `.mp4`, captured the same
- * way `videostream` is. A single share link can hold TWO recordings (before/after
- * the break); when a distinct second `.mp4` is captured the caller splits the name
- * into `Lecture N.1` / `Lecture N.2`.
+ * Zoom cloud recording from a passcode-gated `zoom.us/rec/share/…` link (found in a
+ * section summary, not an `li.activity` card). Serves a direct `.mp4`, captured like
+ * `videostream`; one share can hold two recordings. See docs/ZOOM.md.
  */
 export class ZoomExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -53,9 +48,8 @@ export class ZoomExtractor extends VideoExtractor {
   }
 
   /**
-   * One Recording per share link. The passcode is NOT carried here — every BIU
-   * share uses the single hardcoded `ZOOM_PASSWORD` (see config.js), applied at
-   * the passcode gate during download.
+   * One Recording per share link; the passcode is NOT carried (single hardcoded
+   * ZOOM_PASSWORD, applied at the gate — see config.js / docs/ZOOM.md).
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
@@ -71,10 +65,8 @@ export class ZoomExtractor extends VideoExtractor {
   }
 
   /**
-   * DOWNLOAD PHASE: open the share page, clear the passcode gate, and sniff the
-   * recording `.mp4`(s). Returns 1-or-2 captures — unlike other extractors which
-   * return a single VideoCapture — because one share link can hold two recordings
-   * (the caller (core.js) splits the name only when 2 are captured).
+   * DOWNLOAD PHASE: open the share, clear the passcode gate, sniff the `.mp4`(s).
+   * Returns 1-or-2 captures (a share can hold two recordings); core.js splits the name.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture[]>}
@@ -105,9 +97,8 @@ export class ZoomExtractor extends VideoExtractor {
     seen.add(mp4Key(request.url()));
     const captures = [await this.#toCapture(request, rec)];
 
-    // A share link can hold two recordings (before/after the break). The player's
-    // clip control reads "Total N Recordings" only when N > 1 — use that as the
-    // authoritative signal instead of guessing, then advance to sniff the second.
+    // A share can hold two recordings; "Total N Recordings" (N>1) is the authoritative
+    // signal to advance and sniff the second (docs/ZOOM.md).
     if (await this.#hasMultipleClips(page)) {
       const second = await this.#captureSecond(page, seen);
       if (second) captures.push(await this.#toCapture(second, rec));
@@ -116,10 +107,8 @@ export class ZoomExtractor extends VideoExtractor {
   }
 
   /**
-   * Fill the passcode gate with the hardcoded ZOOM_PASSWORD and click "Watch
-   * Recording". No-op when the page shows the player directly (already authorized
-   * or a link without a gate). Selectors match the live zoom share form:
-   *   <input id="passcode" type="password"> + <button id="passcode_btn">Watch Recording</button>
+   * Fill the passcode gate (`input#passcode` + `#passcode_btn` "Watch Recording") with
+   * ZOOM_PASSWORD. No-op when the player shows directly (already authorized / no gate).
    * @param {import('playwright').Page} page
    */
   async #submitPasscode(page) {
@@ -127,15 +116,9 @@ export class ZoomExtractor extends VideoExtractor {
       .waitForSelector('input#passcode, input[type="password"]', { timeout: 5000 })
       .catch(() => null);
     if (!field) return;
-    // TODO: figure out actual issue and remove this workaround
-    // The share form is a Vue SPA whose passcode v-model + submit handler bind a beat
-    // AFTER the input appears (action is `javascript:;`, so there's no navigation to
-    // await). A fill+click fired the instant the field exists is lost — the value never
-    // enters Vue's reactive state, so the submit sends an empty passcode, the gate never
-    // clears, no player loads, and captureVideo throws "No .mp4 captured".
-    // Before: fill + click once, immediately  -> value dropped -> gate stays
-    // After:  RE-fill + click each retry until #passcode detaches — a post-hydration fill
-    //         lands in Vue state and the submit swaps in the player (whose .mp4 then fires).
+    // The share form is a Vue SPA whose passcode binding lands a beat after the input
+    // appears, so a fill fired too early is dropped and the gate never clears. Re-fill +
+    // click each retry until #passcode detaches. See docs/ZOOM.md.
     for (let i = 0; i < 5; i++) {
       await page.fill('input#passcode, input[type="password"]', ZOOM_PASSWORD).catch(() => {});
       await page
@@ -150,8 +133,7 @@ export class ZoomExtractor extends VideoExtractor {
         return;
       }
     }
-    // Distinguishes a passcode-gate failure from a player/.mp4 failure in the log when
-    // captureVideo later throws "No .mp4 captured" — the two look identical otherwise.
+    // Distinguishes a passcode-gate failure from a later player/.mp4 failure in the log.
     console.warn('[zoom] passcode gate did NOT clear after 5 attempts');
   }
 
@@ -202,12 +184,9 @@ export class ZoomExtractor extends VideoExtractor {
   }
 
   /**
-   * Map a captured request to server.js's expected [{name,value}] header shape.
-   * MUST use allHeaders() (async), not headers(): Playwright's sync headers()
-   * omits security-related headers — crucially `Cookie` — so a curl replay of the
-   * token-gated zoom .mp4 lands unauthenticated.
-   * Before: headers()     -> no Cookie  -> curl (22) HTTP 403
-   * After:  allHeaders()  -> Cookie set -> curl streams the mp4
+   * Map a captured request to server/'s [{name,value}] header shape. MUST use
+   * allHeaders() (async), not headers(): the sync one omits `Cookie`, so the curl
+   * replay of the token-gated .mp4 would land unauthenticated (403).
    */
   async #toCapture(request, rec) {
     const headers = await request.allHeaders();

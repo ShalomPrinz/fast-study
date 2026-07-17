@@ -2,26 +2,16 @@ import { launchBrowser } from './browserLaunch.js';
 import { launchZoomBrowser, stopXvfb } from './zoomBrowser.js';
 import { isLoginUrl } from './auth/MicrosoftAuth.js';
 
-// Safety valve only — a browser is meant to stay open (the ~1–2s launch + auth
-// context build is paid once). Auto-close after this long idle so a forgotten
-// server doesn't hold a browser forever; it re-opens lazily next call.
+// Leak-safety valve only — a browser is meant to stay open; it re-opens lazily next call.
 const IDLE_TIMEOUT_MS = 45 * 60 * 1000;
 
-// How long to wait for a login bounce to auto-redirect back to a real page. The
-// Moodle session can idle out while the persistent AAD cookie is still alive, so
-// SSO often completes silently (no MFA) within a couple seconds. A genuinely dead
-// AAD session parks on the login/MFA form instead, so this timeout is what tells
-// the two apart — long enough to cover the redirect chain, short enough to fail fast.
+// Bound on a silent-SSO redirect: long enough for the AAD cookie to auto-redirect back,
+// short enough that a dead session parked on the login form fails fast. See docs/AUTH.md.
 const SILENT_REAUTH_TIMEOUT_MS = 12_000;
 
 /**
- * A persistent browser+context+page the HTTP service drives, with its browser
- * choice INJECTED (a launcher fn) rather than hardcoded — so the plain path gets a
- * headless bundled Chromium and the zoom path gets chrome+stealth+Xvfb, without
- * this class knowing which. Browsing endpoints share one page per profile; switching
- * course is just goto(). Page ops are serialized by withLock so one call's navigate
- * can't interrupt another's sniff. Built lazily from a storageState, kept open across
- * requests. See getSession() for the per-profile registry.
+ * A persistent browser+context+page with its launcher INJECTED (plain vs zoom profile),
+ * kept open across requests. Page ops are serialized by withLock. See docs/SESSIONS.md.
  */
 export class BrowserSession {
   /** @param {() => Promise<import('playwright').Browser>} launch  profile-specific launcher */
@@ -54,12 +44,9 @@ export class BrowserSession {
     return this.page.url();
   }
 
-  // Navigate, but treat a login/enrol bounce as maybe-recoverable instead of fatal.
-  // wait (bounded) for the persistent AAD cookie to auto-redirect back to a real
-  //         page. Resolves → silent recovery (re-save the refreshed rolling cookies via
-  //         auth.saveState); times out → AAD session truly gone → return null so the
-  //         caller runs its markExpired()/reconnect path. MUST be called inside withLock.
-  // Returns { url, recovered } on success, or null when recovery failed (unrecoverable).
+  // Navigate, treating a login/enrol bounce as maybe-recoverable: wait (bounded) for the
+  // AAD cookie to silently redirect back and re-save the refreshed cookies. Returns
+  // { url, recovered } on success, or null when recovery failed. MUST run inside withLock.
   async gotoAuthenticated(url, auth) {
     let finalUrl = await this.goto(url);
     if (!isLoginUrl(finalUrl)) return { url: finalUrl, recovered: false };
@@ -79,10 +66,9 @@ export class BrowserSession {
     return { url: finalUrl, recovered: true };
   }
 
-  // Async mutex: chain fn onto the tail so only one page op runs at a time.
-  // Before: two /list calls goto the same shared page concurrently → one nav aborts the other.
-  // After:  each awaits its turn; only the quick navigate+sniff is serialized — the heavy
-  //         download runs afterward in server.js, so parallel downloads still overlap there.
+  // Async mutex: chain fn onto the tail so only one page op runs at a time (two concurrent
+  // /list calls on the shared page would otherwise abort each other's nav). Serializes only
+  // the quick navigate+sniff; the heavy download runs afterward in server/, so it overlaps.
   withLock(fn) {
     const run = this._lock.then(fn, fn); // run regardless of the prior op's outcome
     this._lock = run.then(() => {}, () => {}); // a rejection must not poison the chain
@@ -120,9 +106,8 @@ export class BrowserSession {
   }
 }
 
-// Per-extractor browser choice. 'plain' = headless bundled Chromium (course listing,
-// videostream, login-probe reuse); 'zoom' = chrome+stealth on a managed Xvfb display
-// so the recording player sees a real GPU + clean UA with no visible window.
+// Per-extractor browser choice. 'plain' = headless bundled Chromium; 'zoom' =
+// chrome+stealth on a managed Xvfb display (docs/ZOOM.md).
 const LAUNCHERS = {
   plain: () => launchBrowser({ headless: true }),
   zoom: () => launchZoomBrowser(),

@@ -50,10 +50,8 @@ export class VideoExtractor {
   }
 
   /**
-   * DOWNLOAD PHASE (template method — do NOT override; subclasses implement
-   * `_captureVideo`): resolve one Recording to a downloadable video, then ALWAYS
-   * stop any playback the sniff left running. Keeping the stop step here (not in
-   * each subclass) makes it apply to every extractor / browser profile.
+   * DOWNLOAD PHASE template method (do NOT override; subclasses implement `_captureVideo`):
+   * resolve one Recording to a downloadable video, then ALWAYS stop leftover playback.
    * @param {import('playwright').Page} page
    * @param {Recording} rec
    * @returns {Promise<VideoCapture|VideoCapture[]>}
@@ -67,12 +65,8 @@ export class VideoExtractor {
   }
 
   /**
-   * Resolve one Recording to a downloadable video (implemented per strategy).
-   *  - videostream: navigate pageUrl, sniff the .mp4 (url + live headers) fresh
-   *    (tokens are short-lived) → POST server.js /download.
-   *  - youtube-playlist: expansion (navigate `…&redirect=1`, confirm YouTube,
-   *    list entries via yt-dlp --flat-playlist) is handled by listEntries and the
-   *    /list/expand endpoint, so this template isn't used for youtube recordings.
+   * Resolve one Recording to a downloadable video (per strategy). Not used by
+   * youtube-playlist, which expands via listEntries + /list/expand instead.
    * @param {import('playwright').Page} page
    * @param {Recording} rec
    * @returns {Promise<VideoCapture|VideoCapture[]>}
@@ -81,9 +75,8 @@ export class VideoExtractor {
     throw new Error('not implemented');
   }
 
-  // Recordings autoplay so the .mp4 request fires; on the long-lived session page a
-  // captured recording would otherwise keep streaming in the background afterward.
-  // Pause every <video> once capture is done (best-effort; a detached page is fine).
+  // Pause every <video> after capture, else a recording keeps streaming in the
+  // background on the long-lived session page (best-effort; a detached page is fine).
   async stopPlayback(page) {
     await page
       .evaluate(() => {
