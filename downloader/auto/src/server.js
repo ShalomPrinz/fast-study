@@ -1,4 +1,5 @@
-import http from 'node:http';
+import express from 'express';
+import cors from 'cors';
 import { AUTODL_PORT, SERVER_URL, AUTH_ENTRY_URL } from './config.js';
 import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from './registry.js';
 import { getSession, rebuildOpenSessions, closeAllSessions } from './browserSession.js';
@@ -97,24 +98,10 @@ function openAuthGate(uni) {
   if (gate.resolve) { gate.resolve(); gate.resolve = null; }
 }
 
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-}
-
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let body = '';
-    req.on('data', (c) => { body += c; });
-    req.on('end', () => resolve(body));
-    req.on('error', reject);
-  });
-}
-
+// Thin wrapper over Express's res.status().json() so the handler call sites stay
+// send(res, status, body) — no manual writeHead / JSON.stringify.
 function send(res, status, body) {
-  res.writeHead(status, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify(body));
+  res.status(status).json(body);
 }
 
 // Lightweight request logging — one line in, one line out per request. Enough to
@@ -135,7 +122,7 @@ function sendReconnect(res) {
 
 // Distinct "this item can't be expanded/downloaded" signal (e.g. a `url` module that
 // redirects to a non-YouTube host), so the page can show the specific reason rather
-// than a generic 500 "try again". 422 = well-formed request, unprocessable target.
+// than a generic 500. 422 = well-formed request, unprocessable target.
 function sendUnsupported(res, message) {
   send(res, 422, { status: 'unsupported', message });
 }
@@ -153,13 +140,13 @@ function isSafeName(name) {
 
 // ── Auth endpoints ──────────────────────────────────────────────────────────
 
-function handleAuthStatus(res) {
+function handleAuthStatus(req, res) {
   send(res, 200, authFor(defaultUniversity()).status());
 }
 
 async function handleAuthConnect(req, res) {
   logReq('POST', '/auth/connect');
-  const { entryUrl } = JSON.parse((await readBody(req)) || '{}');
+  const { entryUrl } = req.body; // express.json() yields {} for an empty body → entryUrl undefined
   const uni = defaultUniversity();
   // Close the gate as the login starts so browsing parks until /auth/complete rebuilds
   // on fresh cookies. Closing BEFORE connect (not after) removes any window where the
@@ -176,7 +163,7 @@ async function handleAuthConnect(req, res) {
   send(res, 200, { status: 'pending' });
 }
 
-async function handleAuthComplete(res) {
+async function handleAuthComplete(req, res) {
   logReq('POST', '/auth/complete');
   const uni = defaultUniversity();
   const auth = authFor(uni);
@@ -196,7 +183,7 @@ async function handleAuthComplete(res) {
 // ── Browsing endpoints ──────────────────────────────────────────────────────
 
 async function handleList(req, res) {
-  const { courseUrl } = JSON.parse(await readBody(req));
+  const { courseUrl } = req.body;
   logReq('POST', '/list', courseUrl);
   if (typeof courseUrl !== 'string' || !/^https?:\/\//.test(courseUrl)) {
     return send(res, 400, { error: 'valid courseUrl required' });
@@ -232,7 +219,7 @@ async function handleList(req, res) {
 // --flat-playlist lives behind the extractor and the opaque ref.
 async function handleListExpand(req, res) {
   logReq('POST', '/list/expand', '(expanding)');
-  const { ref } = JSON.parse(await readBody(req));
+  const { ref } = req.body;
   const recording = decodeRef(ref);
   const extractor = resolveExtractorForRecording(recording);
   if (!recording?.pageUrl || typeof extractor?.listEntries !== 'function') {
@@ -251,7 +238,7 @@ async function handleListExpand(req, res) {
     entries = await session.withLock(() => extractor.listEntries(session.page, recording));
   } catch (e) {
     if (e instanceof UnsupportedError) { logResult('/list/expand', `unsupported (422): ${e.message}`); return sendUnsupported(res, e.message); }
-    throw e; // other failures fall through to the router's 500 ("try again")
+    throw e; // other failures fall through to the centralized 500 ("try again")
   }
   // Each entry becomes a concrete, downloadable child (has a direct url → not
   // expandable). The child's ref carries the youtube recording for /download-item.
@@ -264,7 +251,7 @@ async function handleListExpand(req, res) {
 
 // Symmetric with /list/expand: if a not-yet-expanded (or otherwise unsupported) ref
 // reaches the download path, surface it as 422 unsupported rather than a 500. Any
-// other error rethrows to the router's 500.
+// other error rethrows to the centralized 500.
 async function handleDownloadItem(req, res) {
   try {
     await downloadItem(req, res);
@@ -275,7 +262,7 @@ async function handleDownloadItem(req, res) {
 }
 
 async function downloadItem(req, res) {
-  const { ref, course, name, kind = 'lecture' } = JSON.parse(await readBody(req));
+  const { ref, course, name, kind = 'lecture' } = req.body;
   logReq('POST', '/download-item', `${course}/${name} (${kind})`);
   const recording = decodeRef(ref);
   if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'valid ref required' });
@@ -329,31 +316,34 @@ async function downloadItem(req, res) {
   send(res, 200, { ok: true });
 }
 
-async function handleClose(res) {
+async function handleClose(req, res) {
   logReq('POST', '/close');
   await closeAllSessions();
   send(res, 200, { ok: true });
 }
 
-// ── Router ──────────────────────────────────────────────────────────────────
+// ── App ───────────────────────────────────────────────────────────────────────
 
-const server = http.createServer(async (req, res) => {
-  setCors(res);
-  if (req.method === 'OPTIONS') return res.writeHead(204).end();
+const app = express();
+// cors handles the OPTIONS preflight for the single Vite origin; no manual short-circuit.
+app.use(cors({ origin: ALLOWED_ORIGIN, methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type'] }));
+app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
 
-  try {
-    if (req.method === 'GET' && req.url === '/auth/status') return handleAuthStatus(res);
-    if (req.method === 'POST' && req.url === '/auth/connect') return await handleAuthConnect(req, res);
-    if (req.method === 'POST' && req.url === '/auth/complete') return await handleAuthComplete(res);
-    if (req.method === 'POST' && req.url === '/list') return await handleList(req, res);
-    if (req.method === 'POST' && req.url === '/list/expand') return await handleListExpand(req, res);
-    if (req.method === 'POST' && req.url === '/download-item') return await handleDownloadItem(req, res);
-    if (req.method === 'POST' && req.url === '/close') return await handleClose(res);
-    res.writeHead(404).end();
-  } catch (e) {
-    console.error(e?.stack ?? String(e));
-    send(res, 500, { error: e.message ?? 'Server error' });
-  }
+app.get('/auth/status', handleAuthStatus);
+app.post('/auth/connect', handleAuthConnect);
+app.post('/auth/complete', handleAuthComplete);
+app.post('/list', handleList);
+app.post('/list/expand', handleListExpand);
+app.post('/download-item', handleDownloadItem);
+app.post('/close', handleClose);
+
+// Centralized error backstop: Express 5 forwards async-handler rejections here.
+// An UnsupportedError that rethrew still maps to 422; anything else to 500 — same
+// mapping and console.error(stack) as the old router's try/catch.
+app.use((err, req, res, next) => {
+  console.error(err?.stack ?? String(err));
+  if (err instanceof UnsupportedError) return sendUnsupported(res, err.message);
+  send(res, 500, { error: err.message ?? 'Server error' });
 });
 
 // Close every session (and the managed Xvfb) on shutdown so no browser or virtual
@@ -364,7 +354,7 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-server.listen(AUTODL_PORT, () => {
+app.listen(AUTODL_PORT, () => {
   console.log(`\n==========================================`);
   console.log(`🤖 Auto-downloader listening on port ${AUTODL_PORT}`);
   console.log(`📥 SERVER_URL: ${SERVER_URL}`);
