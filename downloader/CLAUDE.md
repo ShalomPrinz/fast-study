@@ -89,7 +89,7 @@ Item = { ref: string,        // opaque token; frontend round-trips it, never par
 
 `ref` opaquely encodes the internal `Recording` (base64url JSON — stateless, no server-side map; see `src/ref.js`). The service decodes it on the way back in and routes videostream vs youtube internally. The internal core `Recording` shape is unchanged; only the HTTP boundary is opaque.
 
-Endpoints (all JSON; `401 {status:'reconnect'}` when `storageState` is missing/expired **or** the course view bounces to a login/enrol gate — an expired BIU session silently redirects `course/view.php` to `/enrol/index.php` (guest access, zero activities), which `isLoginUrl` now catches so the UI steers to Reconnect instead of returning an empty list):
+Endpoints (all JSON; `401 {status:'reconnect'}` when `storageState` is missing/expired **or** the course view bounces to a login/enrol gate — an expired BIU session silently redirects `course/view.php` to `/enrol/index.php` (guest access, zero activities), which `isLoginUrl` now catches so the UI steers to Reconnect instead of returning an empty list; and `422 {status:'unsupported', message}` on `/list/expand` (and `/download-item`) when a `url` module redirects to a non-YouTube host, so the UI shows the specific reason instead of a generic 500):
 
 | Endpoint | Body | Returns |
 |---|---|---|
@@ -97,7 +97,7 @@ Endpoints (all JSON; `401 {status:'reconnect'}` when `storageState` is missing/e
 | `POST /auth/connect` | `{ entryUrl? }` | `{ status: 'pending' }` (headed login opens) |
 | `POST /auth/complete` | — | `{ connected: true }` (persists state; rebuilds context if open) |
 | `POST /list` | `{ courseUrl }` | `{ items }` — ensure browser, `goto`, parse → `Item[]`. Parse does a bounded `waitForSelector('li.activity')` (some Moodle 4.x hosts inject cards after `load`), parsing anyway on timeout so a genuinely empty course returns `[]` without hanging |
-| `POST /list/expand` | `{ ref }` | `{ items }` — resolve one expandable item → child `Item[]` (internally: redirect-follow + `yt-dlp --flat-playlist`) |
+| `POST /list/expand` | `{ ref }` | `{ items }` — resolve one expandable item → child `Item[]` (internally: redirect-follow + `yt-dlp --flat-playlist`). `422 {status:'unsupported', message}` when the `url` module redirects to a non-YouTube host (e.g. a zoom site) — a genuinely-unsupported source, distinct from a 500 "try again" (same mapping applies on `/download-item`) |
 | `POST /download-item` | `{ ref, course, name, kind }` | `{ ok }` — decode `ref`; fresh `.mp4` sniff → `server/` `/download`, or youtube entry → `/download-youtube` |
 | `POST /close` | — | `{ ok: true }` — close the persistent browser |
 

@@ -2,11 +2,24 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from './moodleCourse.js';
+import { UnsupportedError } from '../errors.js';
 
 const execFileAsync = promisify(execFile);
 
 // Hosts we accept as a YouTube redirect target. Anything else is unsupported for now.
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
+
+// hostname of a URL, or null if it isn't a parseable absolute URL (e.g. about:blank
+// before any commit) — lets the goto-catch guard probe page.url() without throwing.
+function safeHost(url) {
+  try { return new URL(url).hostname; } catch { return null; }
+}
+
+// User-facing "this source can't be expanded" — names the host so the frontend can
+// tell the user exactly what redirected off-YouTube.
+function unsupported(host) {
+  return new UnsupportedError(`Unsupported recording source (${host}). Only YouTube playlists can be expanded.`);
+}
 
 /**
  * Moodle `url` module that redirects off-site. We can't know the target host
@@ -53,11 +66,27 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   async listEntries(page, rec) {
     // `&redirect=1` is what the Moodle onclick uses to jump straight to the target.
     const sep = rec.pageUrl.includes('?') ? '&' : '?';
-    await page.goto(`${rec.pageUrl}${sep}redirect=1`, { waitUntil: 'load' });
+    // Read the redirect target as soon as navigation COMMITS, not after the target
+    // page finishes loading. The Moodle `?redirect=1` hop is a server-side HTTP
+    // redirect Playwright follows before commit, so page.url() is already the final
+    // host — and yt-dlp fetches the playlist itself, so we never need the page loaded.
+    // Before: waitUntil:'load' → a heavy non-YouTube target (zoom) hangs the full 30s
+    //         → Playwright timeout → generic 500, host check below never runs.
+    // After:  waitUntil:'commit' → final host known instantly for YouTube AND zoom.
+    try {
+      await page.goto(`${rec.pageUrl}${sep}redirect=1`, { waitUntil: 'commit' });
+    } catch (err) {
+      // A goto that still throws (e.g. timeout) but already committed onto a
+      // non-YouTube host is an unsupported source, not a server fault — classify it
+      // as such. Only a genuinely-YouTube or unknown host rethrows as a real error.
+      const host = safeHost(page.url());
+      if (host && !YOUTUBE_HOSTS.has(host)) throw unsupported(host);
+      throw err;
+    }
     const finalUrl = page.url();
 
     const host = new URL(finalUrl).hostname;
-    if (!YOUTUBE_HOSTS.has(host)) throw new Error(`unsupported redirect target: ${host}`);
+    if (!YOUTUBE_HOSTS.has(host)) throw unsupported(host);
 
     // Flat-list the playlist (title<TAB>url per entry). argv array — never a shell
     // string — so titles with metacharacters can't inject.

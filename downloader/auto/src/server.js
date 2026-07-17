@@ -4,6 +4,7 @@ import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } fr
 import { getSession, rebuildOpenSessions, closeAllSessions } from './browserSession.js';
 import { listRecordings, downloadRecording } from './core.js';
 import { encodeRef, decodeRef } from './ref.js';
+import { UnsupportedError } from './errors.js';
 
 // Uniform, mechanism-agnostic item the frontend sees. The download mechanism
 // (videostream / youtube / playlist) is hidden inside the opaque `ref`; the
@@ -132,6 +133,13 @@ function sendReconnect(res) {
   send(res, 401, { status: 'reconnect' });
 }
 
+// Distinct "this item can't be expanded/downloaded" signal (e.g. a `url` module that
+// redirects to a non-YouTube host), so the page can show the specific reason rather
+// than a generic 500 "try again". 422 = well-formed request, unprocessable target.
+function sendUnsupported(res, message) {
+  send(res, 422, { status: 'unsupported', message });
+}
+
 // Same guard as server/server.js: reject path-traversal / empty names before
 // they reach the database service.
 function isSafeName(name) {
@@ -238,7 +246,13 @@ async function handleListExpand(req, res) {
 
   const session = getSession('plain');
   await session.open(state);
-  const entries = await session.withLock(() => extractor.listEntries(session.page, recording));
+  let entries;
+  try {
+    entries = await session.withLock(() => extractor.listEntries(session.page, recording));
+  } catch (e) {
+    if (e instanceof UnsupportedError) { logResult('/list/expand', `unsupported (422): ${e.message}`); return sendUnsupported(res, e.message); }
+    throw e; // other failures fall through to the router's 500 ("try again")
+  }
   // Each entry becomes a concrete, downloadable child (has a direct url → not
   // expandable). The child's ref carries the youtube recording for /download-item.
   const items = entries.map((e) =>
@@ -248,7 +262,19 @@ async function handleListExpand(req, res) {
   send(res, 200, { items });
 }
 
+// Symmetric with /list/expand: if a not-yet-expanded (or otherwise unsupported) ref
+// reaches the download path, surface it as 422 unsupported rather than a 500. Any
+// other error rethrows to the router's 500.
 async function handleDownloadItem(req, res) {
+  try {
+    await downloadItem(req, res);
+  } catch (e) {
+    if (e instanceof UnsupportedError) { logResult('/download-item', `unsupported (422): ${e.message}`); return sendUnsupported(res, e.message); }
+    throw e;
+  }
+}
+
+async function downloadItem(req, res) {
   const { ref, course, name, kind = 'lecture' } = JSON.parse(await readBody(req));
   logReq('POST', '/download-item', `${course}/${name} (${kind})`);
   const recording = decodeRef(ref);
