@@ -17,5 +17,15 @@ export const COMMON_LAUNCH_ARGS = ['--mute-audio'];
  * @returns {Promise<import('playwright').Browser>}
  */
 export async function launchBrowser(opts) {
-  return await chromium.launch({ ...opts, args: [...COMMON_LAUNCH_ARGS, ...(opts.args ?? [])] });
+  const args = [...COMMON_LAUNCH_ARGS, ...(opts.args ?? [])];
+  try {
+    return await chromium.launch({ ...opts, args });
+  } catch (err) {
+    try {
+      return await chromium.launch({ ...opts, channel: 'chrome', args });
+    } catch {
+      // Surface the original bundled-Chromium error, not the fallback's.
+      throw err;
+    }
+  }
 }
