@@ -135,7 +135,7 @@ frontend/
         services/
           autoDownloader.ts     feature-local HTTP client for the auto-downloader service (`VITE_AUTODL_URL`, default localhost:3053). BIU auth: fetchAuthStatus/connectAuth/completeAuth. Discovery/download: Item (mechanism-agnostic {ref,title,kind,expandable} — round-trip ref, never parse), listRecordings(courseUrl)→POST /list, downloadItem({ref,course,name,kind})→POST /download-item. Both use a direct fetch (not the shared client, which hides the body) to read the 401 { status:'reconnect' } signal → typed ReconnectError (+ isReconnectError guard); that raw fetch forgoes central ConnectionError wrapping for these two
         utils/
-          nameSuggestion.ts     suggestItemName(title,kind,courses,course): mirror of the CLI's deriveName — first integer in the title → "Lecture N"/"Recitation N"; no number → suggestName(courses,course,kind) fallback
+          nameSuggestion.ts     suggestItemName(title,kind,courses,course): first integer in the title → "Lecture N"/"Recitation N"; no number → suggestName(courses,course,kind) fallback
   vite.config.ts             plain React plugin — no fs plugin
   tsconfig.json
   index.html

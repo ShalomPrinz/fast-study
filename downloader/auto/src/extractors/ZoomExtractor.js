@@ -74,7 +74,7 @@ export class ZoomExtractor extends VideoExtractor {
    * DOWNLOAD PHASE: open the share page, clear the passcode gate, and sniff the
    * recording `.mp4`(s). Returns 1-or-2 captures — unlike other extractors which
    * return a single VideoCapture — because one share link can hold two recordings
-   * (the caller (core.js / index.js) splits the name only when 2 are captured).
+   * (the caller (core.js) splits the name only when 2 are captured).
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture[]>}

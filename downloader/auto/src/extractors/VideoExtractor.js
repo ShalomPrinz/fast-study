@@ -70,8 +70,9 @@ export class VideoExtractor {
    * Resolve one Recording to a downloadable video (implemented per strategy).
    *  - videostream: navigate pageUrl, sniff the .mp4 (url + live headers) fresh
    *    (tokens are short-lived) → POST server.js /download.
-   *  - youtube-playlist: navigate `…&redirect=1`, confirm YouTube, list entries
-   *    (yt-dlp --flat-playlist), user picks one → POST server.js /download-youtube.
+   *  - youtube-playlist: expansion (navigate `…&redirect=1`, confirm YouTube,
+   *    list entries via yt-dlp --flat-playlist) is handled by listEntries and the
+   *    /list/expand endpoint, so this template isn't used for youtube recordings.
    * @param {import('playwright').Page} page
    * @param {Recording} rec
    * @returns {Promise<VideoCapture|VideoCapture[]>}

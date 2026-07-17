@@ -1,7 +1,7 @@
 import type { Course, Kind } from '@/types'
 import { suggestName } from '@/features/lectures/utils/namingSuggestion'
 
-// Frontend mirror of the CLI's deriveName (downloader/auto/src/naming.js): pull the
+// Derive a lecture/recitation name from a recording title: pull the
 // first integer out of the recording title → "Lecture N" / "Recitation N" by kind.
 // When the title has no number, fall back to the tree's next-number suggestion.
 //   ('הרצאה 3', 'lecture')    -> 'Lecture 3'

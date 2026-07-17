@@ -7,13 +7,30 @@
 
 export class AuthProvider {
   /**
-   * Return a valid, serializable auth context, loading the persisted one or
-   * running the (headed) login flow if missing/expired. Persists on success.
-   * @param {string} entryUrl  the course/entry URL — used as the headed-login
-   *   entry point and as the headless validity-probe target.
+   * Start the (headed) login: open the browser at `entryUrl` and return once it's
+   * up, so the user can finish MFA by hand. Paired with complete().
+   * @param {string} entryUrl
+   * @param {{ onCancel?: () => void }} [opts]
+   * @returns {Promise<void>}
+   */
+  async connect(entryUrl, opts) {
+    throw new Error('not implemented');
+  }
+
+  /**
+   * Finish the pending login: persist the serializable auth context and close the
+   * headed browser. Throws if no login is pending.
    * @returns {Promise<StorageState>}
    */
-  async getAuthState(entryUrl) {
+  async complete() {
+    throw new Error('not implemented');
+  }
+
+  /**
+   * Cheap status for the UI pill — no browser launch.
+   * @returns {{ connected: boolean, expired: boolean }}
+   */
+  status() {
     throw new Error('not implemented');
   }
 }

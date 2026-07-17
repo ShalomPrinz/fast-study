@@ -3,7 +3,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AuthProvider } from './AuthProvider.js';
 import { launchBrowser } from '../browserLaunch.js';
-import { ask } from '../prompt.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/auth/ -> src/ -> auto/  (statePath is relative to the package root)
@@ -105,8 +104,7 @@ export class MicrosoftAuth extends AuthProvider {
    * call while a login is already pending is a no-op.
    * @param {string} entryUrl
    * @param {{ onCancel?: () => void }} [opts]  onCancel fires when the headed browser
-   *   closes/dies BEFORE complete() consumes it (user abandoned the login). Optional —
-   *   the CLI path (_headedLogin) passes no options and must still work.
+   *   closes/dies BEFORE complete() consumes it (user abandoned the login). Optional.
    */
   async connect(entryUrl, { onCancel } = {}) {
     if (this._pending) return;
@@ -163,70 +161,5 @@ export class MicrosoftAuth extends AuthProvider {
   saveState(state) {
     fs.mkdirSync(path.dirname(this.statePath), { recursive: true });
     fs.writeFileSync(this.statePath, JSON.stringify(state));
-  }
-
-  /**
-   * @param {string} entryUrl  course/entry URL — headed-login entry + probe target
-   * @returns {Promise<import('./AuthProvider.js').StorageState>}
-   */
-  async getAuthState(entryUrl) {
-    if (fs.existsSync(this.statePath)) {
-      const state = JSON.parse(fs.readFileSync(this.statePath, 'utf8'));
-      if (await this._isValid(state, entryUrl)) {
-        console.log(`Reusing persisted auth state (${this.statePath}).`);
-        return state;
-      }
-      console.log('Persisted auth state expired — re-running headed login.');
-      // fall through to the headed login and re-persist.
-    }
-    return this._headedLogin(entryUrl);
-  }
-
-  /**
-   * Cheap validity probe: open a headless context with the saved state, navigate
-   * the entry URL, and treat a redirect to a Microsoft login host as expired.
-   * @param {import('./AuthProvider.js').StorageState} state
-   * @param {string} entryUrl
-   * @returns {Promise<boolean>}
-   */
-  async _isValid(state, entryUrl) {
-    const browser = await launchBrowser({ headless: true });
-    try {
-      const context = await browser.newContext({ storageState: state });
-      const page = await context.newPage();
-      // `waitUntil: 'load'` lets client-side auth redirects settle before we read
-      // the final URL; a login-gated SPA bounces here if the cookies are stale.
-      await page.goto(entryUrl, { waitUntil: 'load' });
-      const finalUrl = page.url();
-      return !isLoginUrl(finalUrl);
-    } catch (err) {
-      // A probe failure (nav error, timeout) is inconclusive; treat as invalid so
-      // we fall back to the interactive login rather than trusting a stale state.
-      console.warn(`Auth validity probe failed (${err.message}); treating as invalid.`);
-      return false;
-    } finally {
-      await browser.close();
-    }
-  }
-
-  /**
-   * Headed login: open a real browser, let the user finish Microsoft login + MFA
-   * once, then persist storageState to disk.
-   * @param {string} entryUrl
-   * @returns {Promise<import('./AuthProvider.js').StorageState>}
-   */
-  async _headedLogin(entryUrl) {
-    // Same connect/complete pair the HTTP flow uses; the CLI just drives the
-    // completion signal from the terminal instead of a UI "Done" button.
-    // DOM-agnostic: we don't know BIU's post-login DOM yet, so we ask the human
-    // to confirm on the terminal rather than racing a selector.
-    // TODO: once the real course DOM is known, replace this Enter with a selector
-    //   wait (e.g. page.waitForSelector('<logged-in element>')) for a hands-off flow.
-    await this.connect(entryUrl);
-    console.log('\nA browser window has opened. Complete the Microsoft login + MFA there.');
-    await ask('When you are fully logged in, press Enter here to save the session… ');
-    const state = await this.complete();
-    console.log(`Saved auth state to ${this.statePath}.`);
-    return state;
   }
 }

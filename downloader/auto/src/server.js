@@ -209,8 +209,7 @@ async function handleList(req, res) {
   const recordings = await session.withLock(async () => {
     const nav = await session.gotoAuthenticated(courseUrl, auth);
     if (!nav) return null;
-    const items = await listRecordings(session.page, courseUrl);
-    return items.map((it) => it.recording);
+    return listRecordings(session.page, courseUrl);
   });
   // Runtime bounce that couldn't self-recover: the AAD session is genuinely gone, so
   // the server (not the cheap cookie heuristic) is now the source of truth — mark the

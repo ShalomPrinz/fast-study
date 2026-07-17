@@ -5,14 +5,12 @@ import { expandTiles } from './extractors/moodleCourse.js';
 import { splitName } from './naming.js';
 
 /**
- * LISTING PATH: enumerate a navigated course page's recordings, each paired with
- * the extractor that resolves it (the pairing is what the CLI download loop needs;
- * the HTTP layer keeps only the recordings and re-resolves the extractor later).
+ * LISTING PATH: enumerate a navigated course page's recordings. The HTTP layer
+ * re-resolves the extractor per recording later (from the echoed-back ref).
  * The page must already be at `courseUrl` — the caller owns navigation + auth.
  * @param {import('playwright').Page} page
  * @param {string} courseUrl
- * @returns {Promise<{ recording: import('./extractors/VideoExtractor.js').Recording,
- *                     extractor: import('./extractors/VideoExtractor.js').VideoExtractor }[]>}
+ * @returns {Promise<import('./extractors/VideoExtractor.js').Recording[]>}
  */
 export async function listRecordings(page, courseUrl) {
   const uni = resolveUniversity(courseUrl);
@@ -23,13 +21,13 @@ export async function listRecordings(page, courseUrl) {
   // module cards, plus zoom-share links living in `li.section` summaries (which
   // aren't activity cards, so the module parser never sees them).
   const activities = [...(await uni.parse(page)), ...(await parseZoomSections(page))];
-  const items = [];
+  const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
     if (!extractor) continue;
-    for (const recording of extractor.toRecordings(activity)) items.push({ recording, extractor });
+    for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
   }
-  return items;
+  return recordings;
 }
 
 /**

@@ -1,20 +1,11 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
-import { askUntil } from '../prompt.js';
 
 const execFileAsync = promisify(execFile);
 
 // Hosts we accept as a YouTube redirect target. Anything else is unsupported for now.
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
-
-/** Prompt on the terminal for a 1-based index into `entries`; re-asks until valid. */
-function pickEntry(entries) {
-  return askUntil('Pick a playlist entry number: ', (answer) => {
-    const i = parseInt(answer, 10);
-    return Number.isInteger(i) && i >= 1 && i <= entries.length ? entries[i - 1] : null;
-  });
-}
 
 /**
  * Moodle `url` module that redirects off-site. We can't know the target host
@@ -49,8 +40,8 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
 
   /**
    * Follow the Moodle url-module redirect to YouTube and flat-list its playlist
-   * entries with yt-dlp. Pure listing — no prompting — so both the CLI download
-   * flow and the HTTP /playlist/entries endpoint reuse it.
+   * entries with yt-dlp. Pure listing — no prompting — backing the HTTP
+   * /list/expand endpoint.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<{ title: string, url: string }[]>}
@@ -85,21 +76,5 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
       .filter((e) => e.url);
     if (!entries.length) throw new Error(`no playlist entries found at ${finalUrl}`);
     return entries;
-  }
-
-  /**
-   * DOWNLOAD PHASE: list the playlist entries, let the user pick one on the
-   * terminal. No headers — server.js's /download-youtube runs yt-dlp, which
-   * manages its own session.
-   * @param {import('playwright').Page} page
-   * @param {import('./VideoExtractor.js').Recording} rec
-   * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
-   */
-  async _captureVideo(page, rec) {
-    const entries = await this.listEntries(page, rec);
-    console.log(`\nPlaylist entries (${entries.length}):`);
-    entries.forEach((e, i) => console.log(`  [${i + 1}] ${e.title}`));
-    const chosen = await pickEntry(entries);
-    return { title: chosen.title, url: chosen.url, kind: rec.kind, strategy: 'youtube-playlist' };
   }
 }
