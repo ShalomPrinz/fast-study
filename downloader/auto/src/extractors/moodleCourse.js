@@ -6,7 +6,13 @@
 // lecture. Extend as new wordings show up; matched case-insensitively.
 // (Hebrew: תרגול / תרגיל = recitation; "tirgul" is the transliteration. Note
 // תרגולים — "recitations" — contains תרגול, so it matches.)
-const RECITATION_KEYWORDS = ['תרגול', 'תרגיל', 'recitation', 'tirgul'];
+const RECITATION_KEYWORDS = ['תרגולים', 'תרגול', 'תרגיל', 'recitation', 'tirgul'];
+
+// Section-name / title hints that a `url` module is a recording playlist rather
+// than an unrelated link (syllabus, reading, drive folder). Matched
+// case-insensitively. (Hebrew: הקלטות/הקלטה = recordings; הרצאות/הרצאה = lectures;
+// תרגולים/תרגול = recitations.)
+const RECORDING_KEYWORDS = ['הקלטות', 'הרצאות', 'הקלטה', 'הרצאה', 'recording', 'lecture', ...RECITATION_KEYWORDS];
 
 /**
  * Section name / title text ⇒ activity kind. Defaults to 'lecture' when no
@@ -18,6 +24,19 @@ const RECITATION_KEYWORDS = ['תרגול', 'תרגיל', 'recitation', 'tirgul']
 export function classifyKind(sectionName, title) {
   const hay = `${sectionName} ${title}`.toLowerCase();
   return RECITATION_KEYWORDS.some((k) => hay.includes(k.toLowerCase())) ? 'recitation' : 'lecture';
+}
+
+/**
+ * Does this activity's section heading OR title mark it as a recording?
+ * @param {string} sectionName
+ * @param {string} title
+ * @returns {boolean}
+ */
+// Allow-list gating which `url` modules are treated as recordings — considers the
+// owning section heading AND the activity's own title.
+export function isRecording(sectionName, title) {
+  const hay = `${sectionName} ${title}`.toLowerCase();
+  return RECORDING_KEYWORDS.some((k) => hay.includes(k.toLowerCase()));
 }
 
 // Bounded wait for the first activity card. Long enough to cover a slow AJAX

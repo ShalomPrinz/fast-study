@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
+import { isRecording } from './moodleCourse.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -20,12 +21,15 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * Optimistic: assume `url` modules are the redirect-to-YouTube kind.
+   * A `url` module MIGHT redirect to YouTube (host unknown until we navigate), but
+   * only claim it when a recording keyword appears in its title or section heading —
+   * otherwise unrelated `url` links (syllabi, readings, drive folders) get surfaced
+   * as recordings and blow up on expand.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
   canHandle(activity) {
-    return activity.modType === 'url';
+    return activity.modType === 'url' && isRecording(activity.sectionName, activity.title);
   }
 
   /**
