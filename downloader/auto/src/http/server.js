@@ -1,6 +1,4 @@
-import express from 'express';
-import cors from 'cors';
-import { AUTODL_PORT, SERVER_URL, AUTH_ENTRY_URL } from '../lib/config.js';
+import { AUTH_ENTRY_URL } from '../lib/config.js';
 import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from '../core/registry.js';
 import { getSession, rebuildOpenSessions, closeAllSessions } from '../browser/browserSession.js';
 import { listRecordings, downloadRecording } from '../core/core.js';
@@ -18,10 +16,6 @@ function toItem(recording) {
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
   };
 }
-
-// Browser-facing (the Vite dev origin), unlike downloader/server/server.js which
-// is locked to the extension ID. Only the frontend drives this service.
-const ALLOWED_ORIGIN = 'http://localhost:5173';
 
 // One auth instance PER university, reused across requests so connect()/complete()
 // share the same in-memory headed browser. Never evict. Keyed by university id.
@@ -88,7 +82,7 @@ function sendReconnect(res) {
 
 // Distinct "this item can't be expanded/downloaded" signal (e.g. a `url` module
 // redirecting off-YouTube) so the page shows the specific reason.
-function sendUnsupported(res, message) {
+export function sendUnsupported(res, message) {
   send(res, 422, { status: 'unsupported', message });
 }
 
@@ -111,11 +105,11 @@ function isSafeName(name) {
 
 // ── Auth endpoints ──────────────────────────────────────────────────────────
 
-function handleAuthStatus(req, res) {
+export function handleAuthStatus(req, res) {
   send(res, 200, authFor(defaultUniversity()).status());
 }
 
-async function handleAuthConnect(req, res) {
+export async function handleAuthConnect(req, res) {
   logReq('POST', '/auth/connect');
   const { entryUrl } = req.body; // express.json() yields {} for an empty body → entryUrl undefined
   const uni = defaultUniversity();
@@ -131,7 +125,7 @@ async function handleAuthConnect(req, res) {
   send(res, 200, { status: 'pending' });
 }
 
-async function handleAuthComplete(req, res) {
+export async function handleAuthComplete(req, res) {
   logReq('POST', '/auth/complete');
   const uni = defaultUniversity();
   const auth = authFor(uni);
@@ -150,7 +144,7 @@ async function handleAuthComplete(req, res) {
 
 // ── Browsing endpoints ──────────────────────────────────────────────────────
 
-async function handleList(req, res) {
+export async function handleList(req, res) {
   const { courseUrl } = req.body;
   logReq('POST', '/list', courseUrl);
   if (typeof courseUrl !== 'string' || !/^https?:\/\//.test(courseUrl)) {
@@ -181,7 +175,7 @@ async function handleList(req, res) {
 
 // Resolve ONE expandable item (a playlist) into its downloadable children; the
 // redirect-follow + yt-dlp --flat-playlist lives behind the extractor + opaque ref.
-async function handleListExpand(req, res) {
+export async function handleListExpand(req, res) {
   logReq('POST', '/list/expand', '(expanding)');
   const { ref } = req.body;
   const recording = decodeRef(ref);
@@ -215,7 +209,7 @@ async function handleListExpand(req, res) {
 
 // Symmetric with /list/expand: an unsupported ref on the download path surfaces as
 // 422, not a 500. Other errors rethrow to the centralized handler.
-async function handleDownloadItem(req, res) {
+export async function handleDownloadItem(req, res) {
   try {
     await downloadItem(req, res);
   } catch (e) {
@@ -285,7 +279,7 @@ async function downloadItem(req, res) {
 
 // Persist a zoom passcode for a course (default) or a single lecture (override). The
 // sibling frontend prompt calls this after a 409 `passcode`, then retries /download-item.
-function handleZoomPasscode(req, res) {
+export function handleZoomPasscode(req, res) {
   const { course, name, passcode, scope } = req.body;
   logReq('POST', '/zoom/passcode', `${course}${scope === 'lecture' ? `/${name}` : ''} (${scope})`);
   if (!isSafeName(course)) return send(res, 400, { error: 'course is required' });
@@ -297,48 +291,8 @@ function handleZoomPasscode(req, res) {
   send(res, 200, { ok: true });
 }
 
-async function handleClose(req, res) {
+export async function handleClose(req, res) {
   logReq('POST', '/close');
   await closeAllSessions();
   send(res, 200, { ok: true });
 }
-
-// ── App ───────────────────────────────────────────────────────────────────────
-
-const app = express();
-// cors handles the OPTIONS preflight for the single Vite origin; no manual short-circuit.
-app.use(cors({ origin: ALLOWED_ORIGIN, methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type'] }));
-app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
-
-app.get('/auth/status', handleAuthStatus);
-app.post('/auth/connect', handleAuthConnect);
-app.post('/auth/complete', handleAuthComplete);
-app.post('/list', handleList);
-app.post('/list/expand', handleListExpand);
-app.post('/download-item', handleDownloadItem);
-app.post('/zoom/passcode', handleZoomPasscode);
-app.post('/close', handleClose);
-
-// Centralized error backstop: Express 5 forwards async-handler rejections here.
-// A rethrown UnsupportedError maps to 422; anything else to 500.
-app.use((err, req, res, next) => {
-  console.error(err?.stack ?? String(err));
-  if (err instanceof UnsupportedError) return sendUnsupported(res, err.message);
-  send(res, 500, { error: err.message ?? 'Server error' });
-});
-
-// Close every session (and the managed Xvfb) on shutdown so no browser or virtual
-// display is orphaned.
-for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, () => {
-    closeAllSessions().finally(() => process.exit(0));
-  });
-}
-
-app.listen(AUTODL_PORT, () => {
-  console.log(`\n==========================================`);
-  console.log(`🤖 Auto-downloader listening on port ${AUTODL_PORT}`);
-  console.log(`📥 SERVER_URL: ${SERVER_URL}`);
-  console.log(`🌐 CORS origin: ${ALLOWED_ORIGIN}`);
-  console.log(`==========================================\n`);
-});

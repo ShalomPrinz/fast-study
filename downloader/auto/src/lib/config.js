@@ -16,3 +16,6 @@ export const AUTODL_PORT = Number(process.env.AUTODL_PORT ?? 3053);
 // Entry URL for the headed BIU login (the UI Connect flow carries no course URL).
 // Overridable; the real BIU login/course host should be set here or via env.
 export const AUTH_ENTRY_URL = process.env.AUTODL_AUTH_URL ?? 'https://lemida.biu.ac.il/';
+
+// CORS origin: the Vite dev server; this service only serves that SPA.
+export const ALLOWED_ORIGIN = 'http://localhost:5173';

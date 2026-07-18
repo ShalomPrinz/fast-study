@@ -9,7 +9,7 @@ A Playwright HTTP service that, given a **course URL**, drives a browser to auth
 ## Run
 
 ```bash
-npm --prefix downloader/auto start   # HTTP service, src/http/server.js
+npm --prefix downloader/auto start   # HTTP service, app.js
 npx playwright install chromium      # once, for the plain profile
 ```
 
