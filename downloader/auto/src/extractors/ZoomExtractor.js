@@ -1,5 +1,5 @@
 import { VideoExtractor } from './VideoExtractor.js';
-import { ZOOM_PASSWORD } from '../lib/config.js';
+import { PasscodeError } from '../lib/errors.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
 function endsWithMp4(url) {
@@ -48,8 +48,8 @@ export class ZoomExtractor extends VideoExtractor {
   }
 
   /**
-   * One Recording per share link; the passcode is NOT carried (single hardcoded
-   * ZOOM_PASSWORD, applied at the gate — see config.js / docs/ZOOM.md).
+   * One Recording per share link; the passcode is NOT carried in the ref — it's
+   * looked up per course/lecture at the gate (server.js → passcodes.js, docs/ZOOM.md).
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
@@ -69,9 +69,10 @@ export class ZoomExtractor extends VideoExtractor {
    * Returns 1-or-2 captures (a share can hold two recordings); core.js splits the name.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
+   * @param {{ passcode?: string|null }} [opts]  passcode resolved per course/lecture upstream
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture[]>}
    */
-  async _captureVideo(page, rec) {
+  async _captureVideo(page, rec, { passcode } = {}) {
     // Register the listener BEFORE navigating so an autoplay .mp4 firing during
     // load isn't missed (mirrors VideostreamExtractor / background.js).
     const seen = new Set();
@@ -80,7 +81,7 @@ export class ZoomExtractor extends VideoExtractor {
       .catch(() => null);
 
     await page.goto(rec.pageUrl, { waitUntil: 'load' });
-    await this.#submitPasscode(page);
+    await this.#submitPasscode(page, passcode);
 
     let request = await firstWait;
     if (!request) {
@@ -108,19 +109,25 @@ export class ZoomExtractor extends VideoExtractor {
 
   /**
    * Fill the passcode gate (`input#passcode` + `#passcode_btn` "Watch Recording") with
-   * ZOOM_PASSWORD. No-op when the player shows directly (already authorized / no gate).
+   * the resolved `passcode`. No-op when the player shows directly (already authorized /
+   * no gate). Throws PasscodeError so the caller can steer the user to enter/fix it:
+   * `missing` (gate present, no passcode) up front; `incorrect` (gate never clears).
    * @param {import('playwright').Page} page
+   * @param {string|null|undefined} passcode
    */
-  async #submitPasscode(page) {
+  async #submitPasscode(page, passcode) {
     const field = await page
       .waitForSelector('input#passcode, input[type="password"]', { timeout: 5000 })
       .catch(() => null);
     if (!field) return;
+    // Gate is up but we have nothing to type — don't burn 5 empty submits; ask upstream
+    // for a passcode straight away.
+    if (!passcode) throw new PasscodeError('missing');
     // The share form is a Vue SPA whose passcode binding lands a beat after the input
     // appears, so a fill fired too early is dropped and the gate never clears. Re-fill +
     // click each retry until #passcode detaches. See docs/ZOOM.md.
     for (let i = 0; i < 5; i++) {
-      await page.fill('input#passcode, input[type="password"]', ZOOM_PASSWORD).catch(() => {});
+      await page.fill('input#passcode, input[type="password"]', passcode).catch(() => {});
       await page
         .click('#passcode_btn, button:has-text("Watch Recording")')
         .catch(() => {});
@@ -133,8 +140,9 @@ export class ZoomExtractor extends VideoExtractor {
         return;
       }
     }
-    // Distinguishes a passcode-gate failure from a later player/.mp4 failure in the log.
-    console.warn('[zoom] passcode gate did NOT clear after 5 attempts');
+    // Gate outlasted all retries → the stored passcode is wrong (Vue-timing failures
+    // clear within a few attempts; a persistent gate means a bad code).
+    throw new PasscodeError('incorrect');
   }
 
   /**

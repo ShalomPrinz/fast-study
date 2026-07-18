@@ -16,7 +16,3 @@ export const AUTODL_PORT = Number(process.env.AUTODL_PORT ?? 3053);
 // Entry URL for the headed BIU login (the UI Connect flow carries no course URL).
 // Overridable; the real BIU login/course host should be set here or via env.
 export const AUTH_ENTRY_URL = process.env.AUTODL_AUTH_URL ?? 'https://lemida.biu.ac.il/';
-
-// Every BIU zoom share uses this one fixed passcode, filled at the gate rather than
-// scraped per-link (docs/ZOOM.md). If BIU rotates it, change here.
-export const ZOOM_PASSWORD = 'dfgdf@#$dfgd%$^2';

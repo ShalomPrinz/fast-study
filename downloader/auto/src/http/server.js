@@ -5,7 +5,8 @@ import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } fr
 import { getSession, rebuildOpenSessions, closeAllSessions } from '../browser/browserSession.js';
 import { listRecordings, downloadRecording } from '../core/core.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
-import { UnsupportedError } from '../lib/errors.js';
+import { UnsupportedError, PasscodeError } from '../lib/errors.js';
+import * as passcodes from '../lib/passcodes.js';
 
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
 // unexpanded playlist (pageUrl, no url) is expandable, else downloadable. See docs/BROWSING.md.
@@ -80,16 +81,21 @@ function logResult(path, msg) {
   console.log(`↳ ${path} → ${msg}`);
 }
 
-// Distinct "session expired → steer the user to Reconnect" signal, so the page
-// can open the auth pill rather than toast a generic 500. 401 = unauthenticated.
+// Distinct "session expired → steer the user to Reconnect" signal.
 function sendReconnect(res) {
   send(res, 401, { status: 'reconnect' });
 }
 
 // Distinct "this item can't be expanded/downloaded" signal (e.g. a `url` module
-// redirecting off-YouTube) so the page shows the specific reason, not a generic 500.
+// redirecting off-YouTube) so the page shows the specific reason.
 function sendUnsupported(res, message) {
   send(res, 422, { status: 'unsupported', message });
+}
+
+// Distinct "the zoom passcode gate couldn't be cleared" signal so the page can prompt
+// for a passcode (reason 'missing') or flag a wrong one (reason 'incorrect') and retry.
+function sendPasscode(res, { reason, course, name }) {
+  send(res, 409, { status: 'passcode', reason, course, name });
 }
 
 // Same guard as server/server.js: reject path-traversal / empty names before
@@ -214,6 +220,11 @@ async function handleDownloadItem(req, res) {
     await downloadItem(req, res);
   } catch (e) {
     if (e instanceof UnsupportedError) { logResult('/download-item', `unsupported (422): ${e.message}`); return sendUnsupported(res, e.message); }
+    if (e instanceof PasscodeError) {
+      const { course, name } = req.body;
+      logResult('/download-item', `passcode ${e.reason} (409)`);
+      return sendPasscode(res, { reason: e.reason, course, name });
+    }
     throw e;
   }
 }
@@ -244,8 +255,11 @@ async function downloadItem(req, res) {
   // resolve and no login bounce. Open (reuse BIU state if present) and let captureVideo
   // clear the passcode gate. See docs/ZOOM.md.
   if (recording.strategy === 'zoom') {
+    // Per-course default with an optional per-lecture override; null → the gate throws
+    // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
+    const passcode = passcodes.lookup(course, name);
     await session.open(authFor(defaultUniversity()).loadState() ?? undefined);
-    await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind }));
+    await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode }));
     logResult('/download-item', 'ok');
     return send(res, 200, { ok: true });
   }
@@ -269,6 +283,20 @@ async function downloadItem(req, res) {
   send(res, 200, { ok: true });
 }
 
+// Persist a zoom passcode for a course (default) or a single lecture (override). The
+// sibling frontend prompt calls this after a 409 `passcode`, then retries /download-item.
+function handleZoomPasscode(req, res) {
+  const { course, name, passcode, scope } = req.body;
+  logReq('POST', '/zoom/passcode', `${course}${scope === 'lecture' ? `/${name}` : ''} (${scope})`);
+  if (!isSafeName(course)) return send(res, 400, { error: 'course is required' });
+  if (scope !== 'course' && scope !== 'lecture') return send(res, 400, { error: `invalid scope: ${scope}` });
+  if (scope === 'lecture' && !isSafeName(name)) return send(res, 400, { error: 'name is required for lecture scope' });
+  if (typeof passcode !== 'string' || passcode.length === 0) return send(res, 400, { error: 'passcode is required' });
+  passcodes.save({ course, name, passcode, scope });
+  logResult('/zoom/passcode', 'ok');
+  send(res, 200, { ok: true });
+}
+
 async function handleClose(req, res) {
   logReq('POST', '/close');
   await closeAllSessions();
@@ -288,6 +316,7 @@ app.post('/auth/complete', handleAuthComplete);
 app.post('/list', handleList);
 app.post('/list/expand', handleListExpand);
 app.post('/download-item', handleDownloadItem);
+app.post('/zoom/passcode', handleZoomPasscode);
 app.post('/close', handleClose);
 
 // Centralized error backstop: Express 5 forwards async-handler rejections here.

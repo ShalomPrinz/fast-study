@@ -33,9 +33,10 @@ export async function listRecordings(page, courseUrl) {
  * direct url (no navigation). See docs/BROWSING.md.
  * @param {import('playwright').Page|null} page  live shared page (null for youtube entries)
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
- *           course: string, name: string, kind: string }} args
+ *           course: string, name: string, kind: string, passcode?: string|null }} args
+ *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
  */
-export async function downloadRecording(page, { recording, course, name, kind }) {
+export async function downloadRecording(page, { recording, course, name, kind, passcode }) {
   if (recording.strategy === 'youtube-playlist') {
     if (!recording.url) throw new Error('expand the playlist and download a specific entry');
     await postDownloadYoutube({ url: recording.url, course, lecture: name, kind });
@@ -47,7 +48,7 @@ export async function downloadRecording(page, { recording, course, name, kind })
   // Zoom yields 1-or-2 captures (before/after-break pair). Split into `<name>.1`/`<name>.2`
   // only when a distinct second .mp4 was captured; a lone recording keeps `<name>`.
   if (recording.strategy === 'zoom') {
-    const caps = await extractor.captureVideo(page, recording);
+    const caps = await extractor.captureVideo(page, recording, { passcode });
     const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
     for (let i = 0; i < caps.length; i++) {
       await postDownload({ url: caps[i].url, headers: caps[i].headers, course, lecture: names[i], kind });

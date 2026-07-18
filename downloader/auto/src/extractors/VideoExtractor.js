@@ -54,11 +54,12 @@ export class VideoExtractor {
    * resolve one Recording to a downloadable video, then ALWAYS stop leftover playback.
    * @param {import('playwright').Page} page
    * @param {Recording} rec
+   * @param {object} [opts]  strategy-specific options (e.g. zoom's `{ passcode }`); others ignore it
    * @returns {Promise<VideoCapture|VideoCapture[]>}
    */
-  async captureVideo(page, rec) {
+  async captureVideo(page, rec, opts) {
     try {
-      return await this._captureVideo(page, rec);
+      return await this._captureVideo(page, rec, opts);
     } finally {
       await this.stopPlayback(page);
     }

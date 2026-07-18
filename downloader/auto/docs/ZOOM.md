@@ -22,7 +22,9 @@ Managed in-process via `node:child_process`, spawned lazily on the first zoom la
 
 ## Passcode gate
 
-Every BIU share uses the single hardcoded `ZOOM_PASSWORD` (`lib/config.js`) — not scraped per-link, not carried in the `ref`. Filled at the `#passcode` gate. The form is a Vue SPA whose reactive binding lands a beat after the input appears, so the fill+click is **retried up to 5×** until `#passcode` detaches (a fill fired too early is dropped and the gate never clears).
+Passcodes are stored per course, with an optional per-lecture override, in `.auth/zoom-passcodes.json` (`lib/passcodes.js`; plaintext, gitignored, like the session cookies) — not scraped per-link, not carried in the `ref`. `/download-item`'s zoom branch resolves it via `passcodes.lookup(course, name)` (lecture override wins, else course default) and threads it through `downloadRecording → captureVideo → #submitPasscode`. The frontend saves one via `POST /zoom/passcode`.
+
+Filled at the `#passcode` gate. The form is a Vue SPA whose reactive binding lands a beat after the input appears, so the fill+click is **retried up to 5×** until `#passcode` detaches (a fill fired too early is dropped and the gate never clears). The gate throws `PasscodeError` → the HTTP layer replies **409 `{status:'passcode', reason, course, name}`**: `reason:'missing'` (gate present, none stored — thrown up front, no empty submits) or `reason:'incorrect'` (a stored passcode that never clears after the 5 retries). No gate = already authorized, a no-op.
 
 ## Before/after-break split
 

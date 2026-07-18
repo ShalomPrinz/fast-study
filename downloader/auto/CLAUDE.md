@@ -27,9 +27,10 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | `POST /list` | `{ courseUrl }` | `{ items }` |
 | `POST /list/expand` | `{ ref }` | `{ items }` (resolve one expandable item → children) |
 | `POST /download-item` | `{ ref, course, name, kind }` | `{ ok }` |
+| `POST /zoom/passcode` | `{ course, name?, passcode, scope }` | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
 | `POST /close` | — | `{ ok:true }` (close the persistent browser) |
 
-`401 {status:'reconnect'}` = session missing/expired or a login/enrol bounce. `422 {status:'unsupported'}` = a `url` module redirects to a non-YouTube host.
+`401 {status:'reconnect'}` = session missing/expired or a login/enrol bounce. `422 {status:'unsupported'}` = a `url` module redirects to a non-YouTube host. `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
 
 ## Deep logic → `docs/`
 
