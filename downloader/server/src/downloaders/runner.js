@@ -21,7 +21,10 @@ function removeTempDir(dir) {
 export async function runDownloadJob(downloader, input, { course, lecture, kind }) {
   const label = `${course}/${lecture}`;
   const tempDir = makeTempDir();
-  emitLog(`\n📥 ${downloader.tool} downloading to temp: ${tempDir}`);
+  // Leading blank line is a TTY-only spacer for the in-place render. Under concurrently
+  // stdout is a pipe where each newline gets its own `Downloader |` prefix.
+  const spacer = process.stdout.isTTY ? '\n' : '';
+  emitLog(`${spacer}📥 ${downloader.tool} downloading to temp: ${tempDir}`);
   const bytes = await downloader.probeSize(input);
   emitLog(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
 
