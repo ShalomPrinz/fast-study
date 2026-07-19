@@ -28,5 +28,8 @@ clamped ≤99% until exit because yt-dlp's merge can transiently overshoot the p
 
 Unknown probe → show a byte count + "downloading…" instead of a percentage.
 
+The same registry entries back the HTTP job registry (`JOBS.md`), which measures bytes
+off them on read — one measurement path, two renderers.
+
 **Error surface.** We no longer inherit child stderr, so `makeStderrTail` keeps the
 last ~64 KB; a non-zero exit logs the tail (last 15 non-blank lines).

@@ -42,7 +42,7 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 ## Local helper server (`server/`, port 3052)
 
-`server/` is the Node (express) server the extension talks to over HTTP. Given a captured `.mp4` (+ headers), a YouTube URL, or PDF bytes, it downloads/forwards the file to the database service (which owns the on-disk layout, including `?kind=recitation`). It is documented in its own **`server/CLAUDE.md`** (run command, config, endpoint table, module layout) with the deep logic in **`server/docs/`** (`DOWNLOAD.md`, `PROGRESS.md`, `DATABASE.md`). Don't restate that here.
+`server/` is the Node (express) server the extension talks to over HTTP. Given a captured `.mp4` (+ headers), a YouTube URL, or PDF bytes, it downloads/forwards the file to the database service (which owns the on-disk layout, including `?kind=recitation`). It is documented in its own **`server/CLAUDE.md`** (run command, config, endpoint table, module layout) with the deep logic in **`server/docs/`** (`DOWNLOAD.md`, `PROGRESS.md`, `JOBS.md`, `DATABASE.md`). Don't restate that here.
 
 ## Auto-downloader HTTP service (`auto/`, port 3053)
 

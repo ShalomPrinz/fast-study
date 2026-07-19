@@ -2,10 +2,21 @@ import { Router } from 'express';
 import { downloaders, runDownloadJob } from '../downloaders/index.js';
 import { YTDLP_HOST_RE } from '../downloaders/ytdlp.js';
 import { isSafeName, validateKind } from '../validate.js';
+import { createJob } from '../jobs.js';
 
 const router = Router();
 
 // Both routes fire-and-forget so a slow size probe doesn't delay the HTTP response.
+// The job entry is created HERE, before that probe, so the returned jobId is already
+// pollable on /jobs the instant the caller holds it.
+
+// Start a background download and answer with its job id (docs/JOBS.md). The legacy
+// status/target fields stay for the extension popup, which shows them verbatim.
+function startJob(res, downloader, input, { course, lecture, kind }) {
+  const jobId = createJob({ course, lecture, kind, tool: downloader.tool });
+  runDownloadJob(downloader, input, { course, lecture, kind, jobId });
+  res.json({ status: 'Downloading in background...', target: `${course}/${lecture}`, jobId });
+}
 
 router.post('/download', (req, res) => {
   const { url, headers, course, lecture, kind = 'lecture' } = req.body ?? {};
@@ -18,8 +29,7 @@ router.post('/download', (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  runDownloadJob(downloaders.curl, { url, headers }, { course, lecture, kind });
-  res.json({ status: 'Downloading in background...', target: `${course}/${lecture}` });
+  startJob(res, downloaders.curl, { url, headers }, { course, lecture, kind });
 });
 
 router.post('/download-youtube', (req, res) => {
@@ -35,8 +45,7 @@ router.post('/download-youtube', (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  runDownloadJob(downloaders.ytdlp, { url }, { course, lecture, kind });
-  res.json({ status: 'Downloading in background...', target: `${course}/${lecture}` });
+  startJob(res, downloaders.ytdlp, { url }, { course, lecture, kind });
 });
 
 export default router;

@@ -25,6 +25,7 @@ export async function listCourses() {
 // Stream the just-downloaded video.mp4 to the database, then remove the temp dir
 // whether or not the upload succeeded. This PUT also wipes derived audio/transcript/
 // summary (correct for a fresh video). `tool` labels errors (curl / yt-dlp).
+// Returns {ok} rather than throwing — the caller turns it into the job's terminal state.
 export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   const file = path.join(tempDir, VIDEO_FILENAME);
   try {
@@ -39,13 +40,16 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     let body = null;
     try { body = await res.json(); } catch {}
     if (!res.ok || body?.ok === false) {
-      emitError(`❌ ${tool} upload to database failed: ${body?.error ?? `HTTP ${res.status}`}`);
-      return;
+      const error = body?.error ?? `HTTP ${res.status}`;
+      emitError(`❌ ${tool} upload to database failed: ${error}`);
+      return { ok: false, error };
     }
     emitLog(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
+    return { ok: true };
   } catch (err) {
     emitError(`❌ ${tool} upload to database failed: ${err.message}`);
+    return { ok: false, error: err.message };
   } finally {
     try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
   }

@@ -33,8 +33,10 @@ the popup.
 |----------------------------------------|----------------------------------------------------------------|
 | `GET  /courses`                        | database `/tree` reshaped to name arrays, archived dropped     |
 | `POST /probe-size`                     | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)     |
-| `POST /download`                       | curl header-replay capture; 200 immediately, runs in background|
-| `POST /download-youtube`               | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately, runs in background |
+| `POST /download`                       | curl header-replay capture; 200 immediately with a `jobId`, runs in background |
+| `POST /download-youtube`               | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` |
+| `GET  /jobs`                           | download jobs, `?ids=<csv>` filter (`docs/JOBS.md`)            |
+| `GET  /jobs/:id`                       | one download job, 404 if unknown/evicted                       |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the neutral `/files/material.pdf`   |
 
 `kind` is `lecture` (default) or `recitation`.
@@ -47,7 +49,8 @@ src/
   config.js            env + PORT / EXTENSION_ID / DATABASE_URL / filenames
   validate.js          isSafeName, validateKind
   progress.js          active-download registry + TTY/pipe progress rendering
-  routes/              courses, probe, download, pdf
+  jobs.js              HTTP-pollable job registry over the same download entries
+  routes/              courses, probe, download, pdf, jobs
   services/
     database.js        all DATABASE_URL I/O (listCourses, uploadVideo, uploadPdf, notify)
     probe.js           probeContentLength — the ONLY raw node:http/https
@@ -59,7 +62,8 @@ src/
 
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
 DASH + JS-runtime, size probe), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
-vs yt-dlp-dir measure), `DATABASE.md` (video PUT wipes derived artifacts vs neutral
+vs yt-dlp-dir measure), `JOBS.md` (job lifecycle, why the id is minted in the route,
+`done` = uploaded), `DATABASE.md` (video PUT wipes derived artifacts vs neutral
 `/files/`, `/tree` reshape, notify ping).
 
 ## Conventions

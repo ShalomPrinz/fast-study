@@ -1,6 +1,7 @@
 import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from '../core/registry.js';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import { listRecordings, downloadRecording } from '../core/core.js';
+import { getJobs } from './serverClient.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
@@ -183,9 +184,9 @@ async function downloadItem(req, res) {
   // yt-dlp strategies need no browser: a youtube entry carries its direct url (playlist
   // already expanded), a Drive file its pageUrl. videostream must sniff the .mp4 fresh.
   if ((recording.strategy === 'youtube-playlist' && recording.url) || recording.strategy === 'google-drive') {
-    await downloadRecording(null, { recording, course, name, kind });
-    logResult('/download-item', 'ok');
-    return send(res, 200, { ok: true });
+    const jobs = await downloadRecording(null, { recording, course, name, kind });
+    logResult('/download-item', `ok (${jobs.length} job)`);
+    return send(res, 200, { ok: true, jobs });
   }
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
@@ -202,9 +203,10 @@ async function downloadItem(req, res) {
     // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
     const passcode = passcodes.lookup(course, name);
     await session.open();
-    await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode }));
-    logResult('/download-item', 'ok');
-    return send(res, 200, { ok: true });
+    // A zoom share can hold a before/after-break pair → one job id per captured .mp4.
+    const jobs = await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode }));
+    logResult('/download-item', `ok (${jobs.length} jobs)`);
+    return send(res, 200, { ok: true, jobs });
   }
 
   // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
@@ -215,10 +217,11 @@ async function downloadItem(req, res) {
   const token = auth.loadToken();
 
   await session.open();
+  let jobs;
   try {
-    await session.withLock(async () => {
+    jobs = await session.withLock(async () => {
       await ensureAutologin(session, token);
-      await downloadRecording(session.page, { recording, course, name, kind });
+      return downloadRecording(session.page, { recording, course, name, kind });
     });
   } catch (e) {
     // A dead token surfaces from getSiteInfo/getAutologinKey as an invalidToken WS
@@ -226,8 +229,19 @@ async function downloadItem(req, res) {
     if (invalidToken(e)) { auth.markExpired(); logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
     throw e;
   }
-  logResult('/download-item', 'ok');
-  send(res, 200, { ok: true });
+  logResult('/download-item', `ok (${jobs.length} job)`);
+  send(res, 200, { ok: true, jobs });
+}
+
+// Proxy server/'s job registry: the frontend can't reach 3052 (its CORS is locked to the
+// extension origin), so this is the only path to download progress. Deliberately unlogged
+// — it's polled while a download runs and would drown the request log.
+export async function handleProgress(req, res) {
+  const ids = typeof req.query.ids === 'string'
+    ? req.query.ids.split(',').map((s) => s.trim()).filter(Boolean)
+    : [];
+  send(res, 200, { jobs: await getJobs(ids) }); // no ids → every live job, extension's included
+
 }
 
 // Log the shared plain session into Moodle via a one-shot autologin key so the token-gated

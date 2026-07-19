@@ -5,6 +5,7 @@ import { emitError } from './progress.js';
 import coursesRouter from './routes/courses.js';
 import probeRouter from './routes/probe.js';
 import downloadRouter from './routes/download.js';
+import jobsRouter from './routes/jobs.js';
 import pdfRouter from './routes/pdf.js';
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(express.json({ limit: '5mb' }));
 app.use(coursesRouter);
 app.use(probeRouter);
 app.use(downloadRouter);
+app.use(jobsRouter);
 app.use(pdfRouter);
 
 // eslint-disable-next-line no-unused-vars -- express identifies error handlers by arity

@@ -56,6 +56,8 @@ export function listRecordings(sections) {
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
+ * @returns {Promise<string[]>} server/ job ids — one per started download (zoom's
+ *   before/after-break pair yields two), pollable via /progress.
  */
 export async function downloadRecording(page, { recording, course, name, kind, passcode }) {
   // yt-dlp strategies: no browser, no capture. A youtube entry must be a specific
@@ -69,8 +71,8 @@ export async function downloadRecording(page, { recording, course, name, kind, p
     } else {
       await assertPubliclyShared(url);
     }
-    await postDownloadYoutube({ url, course, lecture: name, kind });
-    return;
+    const jobId = await postDownloadYoutube({ url, course, lecture: name, kind });
+    return [jobId].filter(Boolean);
   }
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
@@ -80,12 +82,14 @@ export async function downloadRecording(page, { recording, course, name, kind, p
   if (recording.strategy === 'zoom') {
     const caps = await extractor.captureVideo(page, recording, { passcode });
     const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
+    const jobIds = [];
     for (let i = 0; i < caps.length; i++) {
-      await postDownload({ url: caps[i].url, headers: caps[i].headers, course, lecture: names[i], kind });
+      jobIds.push(await postDownload({ url: caps[i].url, headers: caps[i].headers, course, lecture: names[i], kind }));
     }
-    return;
+    return jobIds.filter(Boolean);
   }
 
   const cap = await extractor.captureVideo(page, recording);
-  await postDownload({ url: cap.url, headers: cap.headers, course, lecture: name, kind });
+  const jobId = await postDownload({ url: cap.url, headers: cap.headers, course, lecture: name, kind });
+  return [jobId].filter(Boolean);
 }

@@ -11,6 +11,7 @@ import {
   handleList,
   handleListExpand,
   handleDownloadItem,
+  handleProgress,
   handleZoomPasscode,
   handleClose,
 } from './src/http/server.js';
@@ -26,6 +27,7 @@ app.post('/auth/complete', handleAuthComplete);
 app.post('/list', handleList);
 app.post('/list/expand', handleListExpand);
 app.post('/download-item', handleDownloadItem);
+app.get('/progress', handleProgress);
 app.post('/zoom/passcode', handleZoomPasscode);
 app.post('/close', handleClose);
 
