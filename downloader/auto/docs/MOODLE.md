@@ -54,11 +54,16 @@ We persist `{ wstoken, privatetoken, savedAt }` to `.auth/biu-token.json` (gitig
 
 ## The REST API
 
-Every call is one GET to `webservice/rest/server.php`, authenticated by the token in the query:
+Every call goes to `webservice/rest/server.php`, authenticated by the token in the query:
 
 ```
 {site}/webservice/rest/server.php?wstoken=<wstoken>&moodlewsrestformat=json&wsfunction=<fn>[&<params>]
 ```
+
+Calls are GET with params in the query, except `tool_mobile_get_autologin_key` (see below). Every
+call sends `User-Agent: MoodleMobile 4.4.0 (44000)`: the token is minted through the app's own
+`launch.php` (`service=moodle_mobile_app`), and Moodle gates app-only functions on
+`core_useragent::is_moodle_app()`, which just substring-matches `MoodleMobile` in the UA.
 
 **Error shape (important):** Moodle answers a *failed* call — including a dead/expired token —
 with **HTTP 200** and a JSON body `{ exception, errorcode, message }`, not an HTTP error status.
@@ -129,7 +134,8 @@ so it still has to be sniffed in a logged-in browser. But we no longer keep a co
 instead the `privatetoken` mints a one-shot login with **no MFA**.
 
 ```
-tool_mobile_get_autologin_key   (params: privatetoken)
+tool_mobile_get_autologin_key   (privatetoken in a form-encoded POST body — Moodle
+                                 rejects it as a GET param: invalidprivatetoken)
   → { key, autologinurl, warnings }
 navigate a headless browser to  {autologinurl}?userid=<userid>&key=<key>
   → sets the Moodle session cookie
