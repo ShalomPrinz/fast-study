@@ -47,6 +47,10 @@ a decimal — a Latin letter (a=1…z=26), one of `אבגדהוזחטי` (א=1�
 present. Ambiguity voids the marker rather than guessing (whitespace, a second letter, a date tail), and a
 title with no number at all falls back to the tree's next-number suggestion.
 
+A single row's failure both flips the button to "Retry ✗" and toasts via `toastDownloadError` (generic copy,
+except an `UnsupportedError` whose message is display-ready). Reconnect, passcode and a cancelled passcode
+prompt don't toast — they steer the UI elsewhere. The bulk run never toasts per item; its summary covers it.
+
 ## Bulk download
 
 "Download all" flattens the section into downloadable leaves — a playlist contributes its children, never

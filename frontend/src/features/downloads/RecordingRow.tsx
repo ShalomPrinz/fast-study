@@ -11,6 +11,7 @@ import {
 import PasscodePrompt from './PasscodePrompt'
 import { useRowEdit } from './contexts/RowEditsContext'
 import { isDownloaded } from './utils/nameSuggestion'
+import { toastDownloadError } from './utils/downloadErrors'
 
 type Result = 'ok' | 'fail' | null
 
@@ -85,13 +86,18 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     try {
       const { ok } = await downloadItem({ ref: item.ref, course, name: effectiveName, kind })
       setResult(ok ? 'ok' : 'fail')
+      if (!ok) toastDownloadError(effectiveName)
     } catch (err) {
+      // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.
       if (isReconnectError(err)) onReconnect()
       else if (isPasscodeError(err)) {
         // Prompt instead of failing; the finally clears the spinner while the user types.
         setPasscodeReason(err.reason)
         setPasscodePrompt(true)
-      } else setResult('fail')
+      } else {
+        setResult('fail')
+        toastDownloadError(effectiveName, err)
+      }
     } finally {
       setPending(false)
     }
@@ -103,8 +109,9 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     setPending(true)
     try {
       await saveZoomPasscode({ course, name: effectiveName, passcode, scope })
-    } catch {
+    } catch (err) {
       setResult('fail')
+      toastDownloadError(effectiveName, err)
       setPasscodePrompt(false)
       setPending(false)
       return
