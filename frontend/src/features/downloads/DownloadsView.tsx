@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { Course } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { toast } from '@/services/toaster'
@@ -7,7 +7,10 @@ import { listRecordings, isReconnectError } from './services/autoDownloader'
 import AuthPill from './AuthPill'
 import CourseSourceRow from './CourseSourceRow'
 import AddCourseRow from './AddCourseRow'
-import RecordingRow from './RecordingRow'
+import SectionGroup from './SectionGroup'
+
+// Items whose Moodle heading is blank still need a home.
+const OTHER_SECTION = 'Other'
 
 // Downloads page: connect the BIU account, manage course source URLs, discover and download recordings
 export default function DownloadsView() {
@@ -19,6 +22,18 @@ export default function DownloadsView() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reconnectKey, setReconnectKey] = useState(0)
+
+  // Group by Moodle section, first-seen order (the server's order is the page's order).
+  const sections = useMemo(() => {
+    const map = new Map<string, Item[]>()
+    for (const item of items) {
+      const key = item.section || OTHER_SECTION
+      const bucket = map.get(key)
+      if (bucket) bucket.push(item)
+      else map.set(key, [item])
+    }
+    return [...map]
+  }, [items])
 
   function reconnectHint() {
     toast('error', 'BIU session expired. Reconnect your account.')
@@ -82,8 +97,14 @@ export default function DownloadsView() {
             {!loading && !error && items.length === 0 && (
               <div className="recordings-status">No recordings found.</div>
             )}
-            {items.map((item) => (
-              <RecordingRow key={item.ref} item={item} course={selected} onReconnect={reconnectHint} />
+            {sections.map(([title, sectionItems]) => (
+              <SectionGroup
+                key={title}
+                title={title}
+                items={sectionItems}
+                course={selected}
+                onReconnect={reconnectHint}
+              />
             ))}
           </div>
         )}

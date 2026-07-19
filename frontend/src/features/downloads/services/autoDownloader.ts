@@ -15,11 +15,13 @@ export interface AuthStatus {
 // Mechanism-agnostic discovery item. `ref` is an opaque token — round-trip it
 // back to /download-item, never parse it. `expandable` true → resolve via
 // /list/expand into downloadable children; false → downloadable directly.
+// `section` is the Moodle heading the item sits under, '' when the heading is blank.
 export interface Item {
   ref: string
   title: string
   kind: Kind
   expandable: boolean
+  section: string
 }
 
 // Thrown when the stored BIU session is missing/expired. /list and /download-item

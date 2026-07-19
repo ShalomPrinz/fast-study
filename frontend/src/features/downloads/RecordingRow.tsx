@@ -5,27 +5,36 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item, PasscodeError } from './services/autoDownloader'
 import {
   downloadItem,
-  expandItem,
   isPasscodeError,
   isReconnectError,
-  isUnsupportedError,
   saveZoomPasscode,
 } from './services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
-import { suggestItemName } from './utils/nameSuggestion'
+import { isDownloaded, suggestItemName } from './utils/nameSuggestion'
 
 type Result = 'ok' | 'fail' | null
+
+// Expandable rows are driven by SectionGroup, which owns the fetch + children cache so it
+// can tell whether the whole section is expanded (and build the bulk queue from the children).
+export interface ExpandControl {
+  expanded: boolean
+  children: Item[] | null
+  expanding: boolean
+  error: string | null
+  onToggle: () => void
+}
 
 interface Props {
   item: Item
   course: string
   onReconnect: () => void
+  expand?: ExpandControl
 }
 
 // One discovered recording. Downloadable rows carry the full name/kind/download
-// controls; expandable rows lazy-fetch their downloadable children on caret click
-// and render each as its own (recursive) RecordingRow.
-export default function RecordingRow({ item, course, onReconnect }: Props) {
+// controls; expandable rows render the caret against the parent-owned ExpandControl
+// and render each fetched child as its own (recursive) RecordingRow.
+export default function RecordingRow({ item, course, onReconnect, expand }: Props) {
   const { courses } = useCourseTreeContext()
   const [kind, setKind] = useState<Kind>(item.kind)
   const [name, setName] = useState(() => suggestItemName(item.title, item.kind, courses, course))
@@ -40,24 +49,13 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
   const [passcodePrompt, setPasscodePrompt] = useState(false)
   const [passcodeReason, setPasscodeReason] = useState<PasscodeError['reason']>('missing')
 
-  // Expandable-row state: children are fetched lazily on first expand and cached,
-  // so collapsing/re-expanding just toggles visibility (a second click never refetches).
-  const [expanded, setExpanded] = useState(false)
-  const [children, setChildren] = useState<Item[] | null>(null)
-  const [expanding, setExpanding] = useState(false)
-  // Holds either the server's unsupported-source message (permanent) or the generic
-  // retry text; null hides the inline error row.
-  const [expandError, setExpandError] = useState<string | null>(null)
-
-  // Read the live course node so a completed download's SSE tree refresh updates state
-  const courseNode = courses.find((c) => c.name === course)
+  // Read the live tree so a completed download's SSE refresh updates the row
   const suggestion = useMemo(
     () => suggestItemName(item.title, kind, courses, course),
     [item.title, kind, courses, course],
   )
   const effectiveName = name.trim() || suggestion
-  const existing = kind === 'recitation' ? courseNode?.recitations : courseNode?.lectures
-  const alreadyDownloaded = existing?.some((l) => l.name === effectiveName) ?? false
+  const alreadyDownloaded = isDownloaded(effectiveName, kind, courses, course)
 
   // Kind toggle recomputes the suggested name — but only until the user edits it.
   function changeKind(next: Kind) {
@@ -65,47 +63,29 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
     if (!touched) setName(suggestItemName(item.title, next, courses, course))
   }
 
-  async function toggleExpand() {
-    if (children) {
-      setExpanded((e) => !e)
-      return
-    }
-    setExpanding(true)
-    setExpandError(null)
-    try {
-      const items = await expandItem(item.ref)
-      setChildren(items)
-      setExpanded(true)
-    } catch (err) {
-      if (isReconnectError(err)) onReconnect()
-      else if (isUnsupportedError(err)) setExpandError(err.message)
-      else setExpandError("Couldn't load entries. Try again.")
-    } finally {
-      setExpanding(false)
-    }
-  }
-
-  if (item.expandable) {
+  if (item.expandable && expand) {
     return (
       <div className="recording-expandable">
         <div className="recording-row recording-row--expandable">
           <button
             className="recording-caret"
-            aria-label={expanded ? 'Collapse' : 'Expand'}
-            aria-expanded={expanded}
-            onClick={toggleExpand}
-            disabled={expanding}
+            aria-label={expand.expanded ? 'Collapse' : 'Expand'}
+            aria-expanded={expand.expanded}
+            onClick={expand.onToggle}
+            disabled={expand.expanding}
           >
-            {expanding ? <span className="recording-spinner recording-spinner--dark" /> : expanded ? '▾' : '▸'}
+            {expand.expanding ? (
+              <span className="recording-spinner recording-spinner--dark" />
+            ) : expand.expanded ? '▾' : '▸'}
           </button>
           <span className="recording-title" dir="auto" title={item.title}>{item.title}</span>
         </div>
-        {expandError && (
-          <div className="recordings-status recordings-status--error">{expandError}</div>
+        {expand.error && (
+          <div className="recordings-status recordings-status--error">{expand.error}</div>
         )}
-        {expanded && children && (
+        {expand.expanded && expand.children && (
           <div className="recording-children">
-            {children.map((child) => (
+            {expand.children.map((child) => (
               <RecordingRow key={child.ref} item={child} course={course} onReconnect={onReconnect} />
             ))}
           </div>

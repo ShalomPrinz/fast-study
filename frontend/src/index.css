@@ -1533,6 +1533,54 @@ html, body, #root {
   color: var(--text-warning);
 }
 
+/* One Moodle section: heading + bulk control above its recording rows. */
+.recordings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.recordings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 2px 4px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.recordings-section-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.recordings-section-progress {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Reads as the section-wide action, not a row's Download: outlined rather than filled. */
+.recordings-download-all {
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.recordings-download-all:disabled {
+  color: var(--text-muted);
+  border-color: #d1d5db;
+  cursor: not-allowed;
+}
+
 .recording-row {
   display: flex;
   align-items: center;
