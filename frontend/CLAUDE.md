@@ -52,7 +52,8 @@ src/
 
 - Docs and comments describe the **current state** and the durable WHY — never plans, phased steps, or
   "how we got here" history. When a plan ships, fold what's durable into the docs and drop the narrative.
-- Keep it short. One line is the default; explain a non-obvious WHY in 2–3 lines with the failure mode
-  contrasted against the fix. Never restate what the code already says.
+- Comments describe what a function does and the idea behind it, plus the non-obvious WHY when there is
+  one. Never restate what the code already says, and don't comment everywhere — that's noise.
+- Keep it short. One line is the default, two the maximum.
 - Architecture belongs in `docs/`; inline comments stay to small technical details (two lines max).
 - When a change makes these docs stale, update them in the same pass.

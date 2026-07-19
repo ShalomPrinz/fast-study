@@ -1,53 +1,70 @@
-# PDF rendering - pandoc, LaTeX
+# PDF rendering — pandoc + XeLaTeX
 
-## bidi/LaTeX gotchas
+The summary is a Hebrew-primary RTL document with English fragments (code, terminology). `pipeline/to_pdf.py` preprocesses the markdown, then runs pandoc → XeLaTeX with polyglossia and `\setmainlanguage{hebrew}`, the bundled fonts in `assets/fonts/`, the template in `assets/templates/`, and the Lua filter in `assets/filters/`.
 
-This is a Hebrew-primary RTL document with English fragments (code, terminology). The pipeline uses pandoc + XeLaTeX + polyglossia with `\setmainlanguage{hebrew}`. Several things that *seem* like they should work, don't — these were learned the hard way, don't re-discover them.
+## Engine constraints
 
-### Direction primitives: TeXXeT only, NOT XeTeX-native
+This TeX Live build (`xelatex 3.141592653-2.6-0.999993`) uses the **e-TeX TeXXeT** bidi model.
 
-The XeLaTeX in this TeX Live build (`xelatex 3.141592653-2.6-0.999993`, TeX Live 2022) uses the **e-TeX TeXXeT** bidi model:
+- Defined: `\beginL`, `\endL`, `\beginR`, `\endR`, `\LR{}`, `\RL{}`, `\LRE{}`, `\TeXXeTstate`, `\XeTeXcharclass`.
+- **Undefined**: `\pardir`, `\textdir`, `\bodydir` (LuaTeX-XeTeX primitives). In `\AtBeginEnvironment` hooks they fail with "Undefined control sequence"; inside `formatcom={...}` they may partially parse and leak their argument as literal text (`TLT` in the PDF).
+- **Undefined**: `\LTRverbatim` — bidi.sty is installed but `bidiverbatim.sty` is not.
 
-- **Defined**: `\beginL`, `\endL`, `\beginR`, `\endR`, `\LR{...}`, `\RL{...}`, `\LRE{...}`, `\TeXXeTstate`, `\XeTeXcharclass`
-- **UNDEFINED**: `\pardir`, `\textdir`, `\bodydir` — these are LuaTeX-XeTeX primitives that exist in some other TeX engines but not this one. Using them in `\AtBeginEnvironment` hooks fails with "Undefined control sequence", and inside `formatcom={...}` they may be partially-parsed and leak the argument as literal text (`TLT` appearing in PDF output).
-- **Also undefined**: `\LTRverbatim` — bidi.sty is installed but the `bidiverbatim.sty` add-on is not. Don't try to use `\begin{LTRverbatim}...\end{LTRverbatim}` here.
+Probe with a `\ifx\foo\@undefined NO\else YES\fi` test file before assuming a primitive exists.
 
-`xelatex --version` to confirm the engine. To probe which primitives exist, compile a small file with `\ifx\foo\@undefined NO\else YES\fi` lines.
+## Code blocks
 
-### Code Blocks
+`assets/filters/ltr_code.lua` wraps every `CodeBlock` in `\begin{english}`.
 
-#### `\begin{LTR}` is not enough for code blocks
+`\begin{LTR}` is not enough: it is just `\beginL...\endL`, a run-direction switch. It fixes token order but NOT **character mirroring** — `(`↔`)`, `{`↔`}`, `<`↔`>` still flip inside fancyvrb's `Verbatim` (what pandoc's `Highlighting` is built on). Mirroring is triggered by the active language's base direction at tokenization time, below the bidi-run level; per-token `\LR{}` doesn't reach it either.
 
-`\begin{LTR}...\end{LTR}` (polyglossia/bidi) is just `\beginL...\endL` — a **run direction switch**. It fixes word/token order at the paragraph level but does NOT fix **character mirroring**: `(` ↔ `)`, `{` ↔ `}`, `<` ↔ `>` still flip inside `fancyvrb`'s `Verbatim` (the environment pandoc's `Highlighting` is built on via `\DefineVerbatimEnvironment{Highlighting}{Verbatim}{...}`). Mirroring is triggered by the **active language's base direction** at character-tokenization time — below the bidi run level. Wrapping individual tokens in `\LR{}` doesn't help either; the mirroring is deeper still.
+`\begin{english}` is a polyglossia **language switch**: inside its scope the active language is English, so the local base direction is LTR, mirroring is off, Hebrew elsewhere is unaffected, and pandoc's Shaded/Highlighting/Verbatim machinery (including colours) works unchanged.
 
-#### Using `\begin{english}` (polyglossia language switch)
+Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\pardir TLT...}`, `\renewenvironment{Shaded}{}{}`, per-token `\LR{}`, `--listings`. Note `Shaded` is already `\newenvironment{Shaded}{}{}` in pandoc 2.9 — there is no background to remove, overriding it accomplishes nothing.
 
-`backend/assets/filters/ltr_code.lua` wraps every `CodeBlock` in `\begin{english}...\end{english}`. This is a polyglossia **language switch**, not just a direction switch — inside the scope, the *active language* becomes English, so:
+### The mono font must cover Hebrew
 
-- Local base direction is LTR → no character mirroring
-- Hebrew elsewhere in the document is unaffected
-- Pandoc's `Shaded`/`Highlighting`/`Verbatim` machinery works unchanged → syntax-highlighting colours preserved
+`Verbatim` uses the **global `\ttfamily`**, not polyglossia's `\englishfonttt` — even inside `\begin{english}`. A Latin-only mono leaves Hebrew comments as notdef boxes, and XeLaTeX has no per-glyph font fallback (that's LuaTeX/luaotfload). So one dual-script monospace is set globally via `\setmonofont`: **Miriam Mono CLM** (Culmus, dual-script, true monospace). Setting only `\englishfonttt` does nothing.
 
-This is the only approach I've found that works on this engine. Don't replace it with `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\pardir TLT...}`, `\renewenvironment{Shaded}{}{}`, per-token `\LR{}` wraps, or `--listings` — all of these were tried and each failed in a different way. See the comment block in `ltr_code.lua` for the rationale.
+## Markdown preprocessing
 
-#### The code-block mono font must cover Hebrew
+`convert_to_pdf` runs a fixed chain of pure string helpers via `apply_outside_fences`, which never touches content inside ``` / ~~~ fences (those are the Lua filter's job). Each helper has a dedicated test class in `tests/pipeline/test_to_pdf.py`.
 
-`fancyvrb`'s `Verbatim` uses the **global `\ttfamily`**, NOT polyglossia's `\englishfonttt` gloss — even inside `\begin{english}`. So a Latin-only mono leaves Hebrew comments (`# שמירת...`) as notdef boxes (`￿`). XeLaTeX has **no per-glyph font fallback** (that's LuaTeX/luaotfload), so a single dual-script monospace must be set globally. We bundle **Miriam Mono CLM** (Culmus, dual-script + true monospace, all advances 600) in `assets/fonts/` and point `\setmonofont` at it in `LATEX_HEADER`. Setting only `\englishfonttt` does nothing — Verbatim never consults it. Don't revert to `Noto Sans Mono` / Latin Modern Mono (no Hebrew glyphs).
+Protected-region handling is the recurring theme: `$$…$$` is matched before `$…$`, the inline-math body excludes backticks (a `$` inside a code span is a literal, and pandoc won't let math cross a code span), and splitting happens over the WHOLE text — line-by-line first would break multi-line display math and leak its Latin contents into the phrase wrapper.
 
-### Dead ends to remember
+| Helper | What it fixes |
+|---|---|
+| `normalize_dashes` | em/en dashes → ASCII, which behave predictably under bidi. |
+| `unwrap_math_code` | The LLM backticks whole math expressions; unwrapped they'd render as literal `$…$` source. Only fires when the span's entire body is one math expression, so `` `RSI` `` stays code. |
+| `demote_math_identifier` | `$_exit$` makes the leading `_` a subscript operator. Syscall/identifier names are code, not math → rewritten to a backtick span. Narrow trigger (`_` + letter + 2+ ident chars) leaves `$x_i$`, `$_2F_1$`, `$a_{ij}$` alone. |
+| `unwrap_math_text_macros` | `\text{\Pi}` switches to text mode where `\Pi` is undefined → "Missing $ inserted". Only fires when the body is a single macro. |
+| `normalize_math_text_spaces` | XeLaTeX trims edge spaces inside `\text{}` at the bidi boundary, fusing words together. Moves them out as math control spaces (`\ `). |
+| `wrap_math_text_ltr` | `\text{}` inherits the document's RTL base direction, so English inside math renders word-reversed. |
+| `normalize_math_spans` | Pandoc requires no space adjacent to the `$` delimiters. |
+| `ensure_blank_before_lists` | Pandoc needs a blank line before a list that follows a paragraph. |
+| `wrap_english_phrases` | The big one — see below. |
+| `force_ltr_inline_code` | Backtick spans → `\LR{\texttt{…}}`. Enough for word order (a plain `\texttt` in an RTL paragraph reverses), since no `Verbatim` is involved. NOT enough for a comma-separated **number** list: digits are weak European Numbers and the comma is a neutral, so each comma jumps ahead of its number — an LRM (U+200E) after any comma preceding a digit pins it. Letters are strong L and never need this. |
+| `merge_ltr_math` | An inline-code `\LR{}` and an adjacent `$…$` are two separate LTR islands, which RTL bidi orders right-to-left. Merges them into one run. |
 
-- **`Shaded` env is already empty in pandoc 2.9**: `\newenvironment{Shaded}{}{}`. There is no gray background to "remove" and overriding `Shaded` accomplishes nothing.
-- **Inline code (` `` `) is separate**: `force_ltr_inline_code` in `to_pdf.py` wraps backtick code in `\LR{\texttt{...}}`. This is enough for inline WORD order because no `fancyvrb`/`Verbatim` is involved — it's a regular LaTeX `\texttt` token in an RTL paragraph, and `\LR{}` IS enough to fix that. It is NOT enough for a comma-separated **number** list (`` `98, 183, 37` ``): digits are bidi European Numbers (weak) and the comma is a neutral, so each comma jumps ahead of its number (`,98 ,183`). `force_ltr_inline_code` inserts an LRM (U+200E) after any comma that precedes a digit to pin it LTR (letters are strong L and never need this).
-- **Underscore-led identifiers in math**: `$_exit$` makes the leading `_` a subscript operator ("subscript e" + "xit"). Syscall/identifier names are code, not math — the `summarize.md` prompt tells the LLM to backtick them, and `demote_math_identifier` in `to_pdf.py` is a defensive backstop that rewrites an inline `$...$` whose whole body is `_<letter><2+ ident chars>` into a backtick span (narrow trigger: leaves real math like `$x_i$`, `$_2F_1$`, `$a_{ij}$` untouched).
-- **Verifying a PDF fix is non-negotiable**: tests on the LaTeX string output only verify structure. Bracket mirroring happens at XeLaTeX render time. Compile the actual PDF and extract text before claiming any bidi fix works — but read the PyMuPDF caveat below first, because the naive `get_text()` extraction lies about RTL.
+### `wrap_english_phrases`
 
-### PyMuPDF `get_text()` returns RTL in VISUAL order — don't substring-match it
+Wraps Latin runs in `\LR{}` (with LaTeX escaping, since tokens like `x86_64` carry special chars) so they don't reorder inside the RTL paragraph. Its regex is deliberately fussy; the durable reasons:
 
-When verifying a bidi/dash/order fix, the obvious check is `fitz.open(p).load_page(0).get_text()` followed by `"NP-ש" in text`. **This gives false positives and false negatives on Hebrew lines.** PyMuPDF emits glyphs in *visual* (left-to-right on the page) order, not *logical* (reading) order. For an RTL line each Hebrew word comes out reversed, and Latin/neutral fragments land wherever they sit visually — so a correctly-rendered `כ-NP-שלמה` extracts as `המלש-NP-כ`, and a search for the bug signature `NPש` matches purely as an artifact of that reversal (the `ה` of a reversed `למחלקה` lands next to `NP`). I wasted a verification cycle trusting this.
+- **Latin range includes accented forms** (Latin-1 Supplement + Latin Extended-A/B, minus `×`/`÷`). ASCII-only would cut "Scheffé" and orphan the `é` in the RTL run.
+- **A numeric prefix glued to a letter joins the run** (`4KB`, `64GB`, `3-way`) — otherwise the neutral number reorders after it. A number with a space before the letter ("4 שקלים") is not glued.
+- **A number alone is a continuation, never an anchor** — so "Software 1.0" is one run, while a Hebrew-adjacent "5 שקלים" stays untouched.
+- **Separators (space, `, `, ` - `, abbreviation `. `) are glue only when another Latin token follows**, so a sentence-final period or a dash before Hebrew stays with the RTL side.
+- **Trailing separators are excluded** from the run so they don't jump to its far edge; a possessive apostrophe is kept inside ("Tukey's" as one run, not `\LR{Tukey}’\LR{s}`).
+- **A leading slash is glued only when not directly after a Hebrew letter**: `/index.html` is a path, but "גרעינים/kernels" is a word separator and pulling the slash into the run moves it to the run's left edge.
+- **A balanced parenthesized group is wrapped whole**, parens included, so the neutral `(` `)` don't reorder. Requiring the matching `)` means a lone `)` on the Hebrew side is never swallowed.
+- **Exception**: a group ending in a digit (`(Software 1.0)`) has its parens kept OUTSIDE the run — a `)` right after a digit inside `\LR{}` mirrors. Letter-terminated groups don't.
+- **Punctuation directly after a protected span** is wrapped in `\RL{}` explicitly, else bidi attaches it to the LTR island. This happens after the Latin substitution, otherwise the phrase regex matches the literal "RL".
 
-**When it bites:** any time the line mixes RTL (Hebrew) with an LTR island (English term, code, math) AND you care about the *order/adjacency* of characters across that boundary — exactly the dash/bidi bugs this file is about. It does NOT bite when you only care about presence/absence of a glyph, or for pure-LTR code blocks.
+## Verifying a bidi fix
 
-**Reliable check — inspect true visual order via glyph x-coordinates:**
+Tests on the LaTeX string only verify structure — mirroring happens at render time. Compile the real PDF and inspect it, but **do not substring-match `fitz` `get_text()`**: PyMuPDF emits glyphs in *visual* order, so each Hebrew word comes out reversed and Latin islands land wherever they sit on the page. Searching for a bug signature there yields both false positives and false negatives. It only bites when the line mixes RTL with an LTR island AND you care about order/adjacency across that boundary; presence/absence checks and pure-LTR code blocks are fine.
+
+Reliable check — reconstruct true left-to-right order from glyph x-coordinates:
 
 ```python
 import fitz
@@ -63,4 +80,4 @@ for y in sorted(lines):
     print(repr("".join(ch for _, ch in sorted(lines[y]))))  # sorted by x = true L→R
 ```
 
-Then read the boundary by eye: Hebrew runs are reversed (e.g. `שלמה`→`המלש`), but the *relative placement* of the LTR island and the dashes is faithful. `.תומלש-NP` is visually `NP-שלמות.` (hyphen between NP and Hebrew = correct); a fused `NPשלמות` with no dash would be the real bug. Verify dash/order fixes this way, not with `in` on `get_text()`.
+Read the boundary by eye: Hebrew runs are reversed, but the relative placement of the LTR island and its dashes is faithful.

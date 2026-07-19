@@ -52,12 +52,7 @@ Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-c
 
 ## Documentation and code style
 
-- Document the non-obvious WHY: a hidden constraint, a subtle invariant, a workaround for a specific bug, behavior that would surprise a reader. Skip comments that just restate what the code says.
-- For non-trivial helpers, prefer a 2–3 line comment that contrasts the failure mode with the fix. Show, don't explain. See `normalize_math_spans` and `force_ltr_inline_code` in `backend/pipeline/to_pdf.py` for the canonical pattern:
-  ```python
-  # One sentence stating the failure condition.
-  # Before: <concrete input>  -> <bad output / error>
-  # After:  <concrete input>  -> <good output>
-  ```
-- Never write multi-paragraph docstrings or multi-line comment blocks to fill space — one short line is the default; the before/after pattern is the upgrade when the WHY is non-obvious.
+- A comment describes what a function does and the idea behind it — plus the non-obvious WHY when there is one: a hidden constraint, a subtle invariant, a workaround for a specific bug. Skip comments that just restate the code.
+- Commenting everything is noise. Comment what a reader would otherwise get wrong, and leave the rest bare.
+- Keep it short: one line is the default, two is the maximum. Never write multi-paragraph docstrings or multi-line comment blocks to fill space. Architecture belongs in the service's `docs/`.
 - Docs and comments describe the *current* state and the durable WHY — not implementation plans, phased build steps, or "how we got here" history. Plans belong in plan files; once a plan ships, fold its durable knowledge into docs and drop the narrative.
