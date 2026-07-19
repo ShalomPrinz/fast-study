@@ -287,3 +287,127 @@ def test_rate_limit_sleeps_then_retries_same_step():
 
     assert call_log == ["transcribe", "transcribe"]
     assert sleep_log == [runner.RATE_LIMIT_SLEEP_SECONDS]
+
+
+def test_rate_limit_honors_per_result_retry_after():
+    """A rate_limited result may carry its own retry_after; the 3600s constant is
+    only the fallback, which is what transcribe uses."""
+    sleep_log: list[float] = []
+    calls = {"n": 0}
+
+    async def fake_call(course, lecture, kind, step):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return {"status": "rate_limited", "retry_after": 42.0}
+        return {"status": "done"}
+
+    async def fake_sleep(seconds):
+        sleep_log.append(seconds)
+
+    async def go():
+        with patch.object(runner, "_call_step", fake_call), \
+             patch.object(runner.db_client, "notify"), \
+             patch.object(runner.asyncio, "sleep", fake_sleep):
+            await runner._run_step_unlocked("C1", "L1", "lecture", "summarize")
+
+    asyncio.run(go())
+    assert sleep_log == [42.0]
+
+
+# ---- Gemini 429 → step result ----
+
+def _run_exec_summarize(info: dict) -> dict:
+    """Run _exec_summarize with the transcript present and Gemini raising a 429."""
+    err = runner.GeminiRateLimitError({**info, "message": "quota message"})
+
+    def _exists(course, lecture, kind, name):
+        return name == "transcript.txt"  # transcript present, material absent
+
+    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
+         patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"), \
+         patch.object(runner.db_client, "put_summary") as put_summary, \
+         patch.object(runner, "summarize", side_effect=err):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    put_summary.assert_not_called()
+    return result
+
+
+def test_exec_summarize_per_minute_quota_is_rate_limited():
+    """A per-minute quota waits out its window, not Groq's hour."""
+    result = _run_exec_summarize({"is_daily": False})
+    assert result["status"] == "rate_limited"
+    assert result["retry_after"] == runner.GEMINI_MINUTE_QUOTA_SLEEP_SECONDS
+
+
+def test_exec_summarize_daily_quota_is_error_not_retried():
+    """A daily quota is a plain flagged error — its retryDelay lies, so no retry."""
+    result = _run_exec_summarize({"is_daily": True})
+    assert result["status"] == "error"
+    assert result["daily_quota"] is True
+    assert result["message"] == "quota message"
+
+
+# ---- Gemini daily-quota block ----
+
+def _quota_error_result(message="Gemini free-tier daily quota reached (20 requests/day) — resets at midnight Pacific"):
+    return {"status": "error", "message": message, "daily_quota": True}
+
+
+def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
+    """First lecture records the real error and halts; every later lecture stops
+    silently at transcript.txt — one error in the UI, not N identical ones."""
+    steps_run: list[tuple[str, str]] = []
+    queue = [("C1", "L1", "lecture"), ("C1", "L2", "lecture"), ("C1", "L3", "lecture")]
+
+    async def fake_fetch(course, lecture, kind):
+        # Everything is transcribed already, so next_step is always summarize
+        # until summary.md exists (it never does here).
+        return _files(video=True, audio=True, transcript=True)
+
+    async def fake_call(course, lecture, kind, step):
+        steps_run.append((lecture, step))
+        return _quota_error_result()
+
+    async def go():
+        with patch.object(runner, "_fetch_files", fake_fetch), \
+             patch.object(runner, "_call_step", fake_call), \
+             patch.object(runner.db_client, "notify"):
+            return await runner.run_all(queue)
+
+    try:
+        asyncio.run(go())
+        assert steps_run == [("L1", "summarize")], "only the first lecture may call Gemini"
+        assert list(runner._errors) == [runner._skey("C1", "L1", "lecture")]
+        assert "daily quota reached" in runner._errors[runner._skey("C1", "L1", "lecture")]
+    finally:
+        runner._errors.clear()
+        runner._summarize_blocked = False
+
+
+def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
+    """run_all clears the flag in its finally; a manual /pipeline trigger never
+    consults it (the user may have swapped keys since)."""
+    calls: list[str] = []
+
+    async def fake_fetch(course, lecture, kind):
+        return _files(video=True, audio=True, transcript=True)
+
+    async def fake_call(course, lecture, kind, step):
+        calls.append(step)
+        return _quota_error_result()
+
+    async def go():
+        with patch.object(runner, "_fetch_files", fake_fetch), \
+             patch.object(runner, "_call_step", fake_call), \
+             patch.object(runner.db_client, "notify"):
+            await runner.run_all([("C1", "L1", "lecture")])
+            assert runner._summarize_blocked is False  # cleared by run_all's finally
+            runner._summarize_blocked = True           # as if a run were still blocked
+            await runner.run_pipeline_for("C1", "L2", "lecture")
+
+    try:
+        asyncio.run(go())
+        assert calls == ["summarize", "summarize"]
+    finally:
+        runner._errors.clear()
+        runner._summarize_blocked = False

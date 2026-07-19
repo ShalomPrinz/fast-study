@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 from services import db_client
+from services.llm_client import GeminiRateLimitError
 from pipeline.strip_audio import strip_audio
 from pipeline.transcribe import transcribe_audio, TranscribeRateLimitError, PARTIAL_TXT, PARTIAL_META
 from pipeline.summarize import summarize
@@ -33,6 +34,10 @@ STEP_OUTPUT = {
     "drive":      "drive_url.txt",
 }
 RATE_LIMIT_SLEEP_SECONDS = 3600
+# Only Gemini's PER-MINUTE quota is worth waiting out (its daily one is a hard
+# error, never a sleep) — so a rate_limited result may carry its own retry_after,
+# and the hourly constant above stays the fallback transcribe uses.
+GEMINI_MINUTE_QUOTA_SLEEP_SECONDS = 60
 
 # lkey = (course, lecture, kind) tuple — hashable key into _locks.
 # skey = "course||lecture||kind" string — key into _in_flight / _errors (also appears in API output).
@@ -40,6 +45,8 @@ _locks: dict[tuple[str, str, str], asyncio.Lock] = {}  # per-lecture; created la
 _in_flight: dict[str, dict] = {}    # skey → entry; cleared on step completion or error
 _errors: dict[str, str] = {}        # skey → last error message; survives after _in_flight clears
 _runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": None}
+# Run-scoped: set when a lecture hits Gemini's DAILY quota, reset by run_all.
+_summarize_blocked = False
 
 
 def _lkey(course: str, lecture: str, kind: str) -> tuple[str, str, str]:
@@ -73,11 +80,13 @@ def get_status() -> dict:
 # it. This maps a file to its likely cause so _require_nonempty can report the
 # *why* even though there's no raised error to derive it from. The fallback is
 # the generic "is empty" with no hint.
+# For summary.md the usual culprits are finish_reason MALFORMED_RESPONSE, a
+# safety block, or a rate limit.
 EMPTY_FILE_ISSUES: dict[str, str] = {
     "video.mp4":      "the source video is empty or was not fully uploaded",
     "audio.mp3":      "ffmpeg produced no audio — the video may have no audio track or be corrupt",
     "transcript.txt": "Whisper returned no text — the audio may be silent or corrupt",
-    "summary.md":     "Gemini returned no text — often finish_reason MALFORMED_RESPONSE, a safety block, or a token-limit cutoff",
+    "summary.md":     "Gemini returned no text",
     "summary.pdf":    "pandoc produced an empty PDF — summary.md may be empty or malformed",
     "drive_url.txt":  "the Drive upload returned no share URL",
     "material.pdf":   "the attached material PDF is empty",
@@ -205,7 +214,9 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
 
 
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
-    """Summarize transcript.txt → summary.md via Gemini. Passes material.pdf alongside if present."""
+    """Summarize transcript.txt → summary.md via Gemini. Passes material.pdf alongside if present.
+    Returns {status: done|error|rate_limited}; a daily-quota 429 is a plain error flagged
+    daily_quota (no retry), a per-minute one is rate_limited and waits out its window."""
     try:
         if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
             return {"status": "error", "message": "transcript.txt is required — run Transcribe first"}
@@ -222,6 +233,12 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
         _require_nonempty("summary.md", summary.encode("utf-8"))
         db_client.put_summary(course, lecture, kind, summary)
         return {"status": "done", "usedMaterial": has_material}
+    except GeminiRateLimitError as e:
+        # A daily quota's retryDelay lies — the body says "retry in 59s" while the
+        # quotaId says PerDay, so sleeping and retrying fails all day.
+        if e.info["is_daily"]:
+            return {"status": "error", "message": str(e), "daily_quota": True}
+        return {"status": "rate_limited", "retry_after": GEMINI_MINUTE_QUOTA_SLEEP_SECONDS}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -344,6 +361,7 @@ async def _call_step(course: str, lecture: str, kind: str, step: str) -> dict:
 async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) -> None:
     """Drive a single pipeline step to a terminal outcome (done or error), retrying after rate-limit sleeps.
     Unsafe: caller must hold _locks[_lkey(course, lecture, kind)] before calling."""
+    global _summarize_blocked
     skey = _skey(course, lecture, kind)
     # Each loop iteration = one attempt; rate_limited cycles back, done/error exits.
     while True:
@@ -362,17 +380,20 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
             db_client.notify()
             return
         elif result["status"] == "rate_limited":
-            wake = datetime.now(timezone.utc) + timedelta(seconds=RATE_LIMIT_SLEEP_SECONDS)
+            sleep_seconds = result.get("retry_after") or RATE_LIMIT_SLEEP_SECONDS
+            wake = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
             _in_flight[skey]["sleeping_until"] = wake.isoformat()
             _in_flight[skey]["progress"] = result.get("progress")
             db_client.notify()
-            await asyncio.sleep(RATE_LIMIT_SLEEP_SECONDS)
+            await asyncio.sleep(sleep_seconds)
             _in_flight[skey]["sleeping_until"] = None
             _in_flight[skey]["progress"] = None
             db_client.notify()
             # loop → retry same step
         else:  # error
             _in_flight.pop(skey, None)
+            if result.get("daily_quota"):
+                _summarize_blocked = True
             msg = result.get("message") or result.get("status") or "unknown error"
             _errors[skey] = msg
             log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
@@ -380,17 +401,24 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
             return
 
 
-async def _run_pipeline_unlocked(course: str, lecture: str, kind: str) -> None:
+async def _run_pipeline_unlocked(course: str, lecture: str, kind: str, *, honor_block: bool = False) -> bool:
     """Advance a lecture through every remaining pipeline step until done or an error stops it.
+    Returns True iff it stopped early because summarize is blocked for this run.
+    `honor_block` is only set by run_all — a manual trigger always tries Gemini again
+    (the user may have swapped keys or upgraded billing) and gets the clear message if not.
     Unsafe: caller must hold _locks[_lkey(course, lecture, kind)] before calling."""
     while True:
         files = await _fetch_files(course, lecture, kind)
         step = next_step(files)
         if step is None:
-            return
+            return False
+        if step == "summarize" and honor_block and _summarize_blocked:
+            # Stop silently at transcript.txt if summarize was blocked once
+            log.info("%s/%s (%s): summarize blocked (Gemini daily quota), stopping here", course, lecture, kind)
+            return True
         await _run_step_unlocked(course, lecture, kind, step)
         if _skey(course, lecture, kind) in _errors:
-            return  # a step error halts the whole pipeline for this lecture
+            return False  # a step error halts the whole pipeline for this lecture
 
 
 async def run_step(course: str, lecture: str, kind: str, step: str) -> None:
@@ -399,10 +427,11 @@ async def run_step(course: str, lecture: str, kind: str, step: str) -> None:
         await _run_step_unlocked(course, lecture, kind, step)
 
 
-async def run_pipeline_for(course: str, lecture: str, kind: str) -> None:
-    """Acquire the per-lecture lock, then advance the lecture through all remaining steps."""
+async def run_pipeline_for(course: str, lecture: str, kind: str, *, honor_block: bool = False) -> bool:
+    """Acquire the per-lecture lock, then advance the lecture through all remaining steps.
+    Returns True iff it stopped early on the run-scoped summarize block (run_all only)."""
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
-        await _run_pipeline_unlocked(course, lecture, kind)
+        return await _run_pipeline_unlocked(course, lecture, kind, honor_block=honor_block)
 
 
 def try_run_step(course: str, lecture: str, kind: str, step: str) -> str:
@@ -428,7 +457,10 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
 async def run_all(queue: list[tuple[str, str, str]]) -> dict:
     """Run every lecture in queue to completion sequentially. Caller is responsible
     for scanning and passing a non-empty queue; this function never re-scans."""
+    global _summarize_blocked
     log.info("run_all starting with %d pending lecture(s): %s", len(queue), [f"\n{c}/{l} ({k})" for c, l, k in queue])
+    _summarize_blocked = False
+    blocked_count = 0
     _runner_status["running"] = True
     _runner_status["done"] = 0
     _runner_status["total"] = len(queue)
@@ -447,17 +479,20 @@ async def run_all(queue: list[tuple[str, str, str]]) -> dict:
                 db_client.notify()
                 continue
             try:
-                await run_pipeline_for(course, lecture, kind)
+                if await run_pipeline_for(course, lecture, kind, honor_block=True):
+                    blocked_count += 1
             except Exception as e:
                 log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
                 _runner_status["last_error"] = f"{course}/{lecture}: {e}"
             _runner_status["done"] += 1
             # No notify here to prevent race condition.
             # Next step will notify, or if on last lecture, final status update after the loop.
-        log.info("run_all completed: %d/%d done, last_error=%s", _runner_status["done"], _runner_status["total"], _runner_status["last_error"])
+        blocked = f", summarize skipped for {blocked_count} (Gemini daily quota)" if blocked_count else ""
+        log.info("run_all completed: %d/%d done%s, last_error=%s", _runner_status["done"], _runner_status["total"], blocked, _runner_status["last_error"])
         return {"status": "completed", **get_status()}
     finally:
         _runner_status["running"] = False
+        _summarize_blocked = False
         db_client.notify()
 
 

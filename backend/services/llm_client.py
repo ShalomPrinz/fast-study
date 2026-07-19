@@ -5,10 +5,91 @@ as RuntimeError so endpoints can turn them into {"status": "error"}. Keep that
 logic here, not duplicated per call site."""
 
 import os
+import re
 
 from google import genai
 
 DEFAULT_MODEL = "gemini-3.5-flash"
+
+
+class GeminiRateLimitError(RuntimeError):
+    """A 429 from Gemini, with the quota facts pulled out of the SDK error body.
+    info = {quota_id, quota_value, model, is_daily}."""
+
+    def __init__(self, info: dict):
+        self.info = info
+        super().__init__(info["message"])
+
+
+def _extract_gemini_body(err: Exception) -> dict:
+    """Dig the JSON error body out of a google-genai SDK exception."""
+    for attr in ("details", "body"):
+        value = getattr(err, attr, None)
+        if isinstance(value, dict):
+            return value
+    try:
+        return err.response.json()
+    except Exception:
+        return {}
+
+
+def _is_rate_limit(err: Exception, body: dict) -> bool:
+    if getattr(err, "code", None) == 429:
+        return True
+    inner = body.get("error", body)
+    if isinstance(inner, dict) and (inner.get("code") == 429 or inner.get("status") == "RESOURCE_EXHAUSTED"):
+        return True
+    return "RESOURCE_EXHAUSTED" in str(err)
+
+
+def _detail(inner: dict, type_suffix: str) -> dict:
+    """Find one entry of the error body's `details` list by its @type suffix."""
+    for entry in inner.get("details") or []:
+        if isinstance(entry, dict) and str(entry.get("@type", "")).endswith(type_suffix):
+            return entry
+    return {}
+
+
+def parse_gemini_rate_limit(body: dict, fallback_text: str = "") -> dict:
+    """Pull {quota_id, quota_value, model, is_daily} out of a
+    429 body, falling back to regex over the raw error text when the structured
+    details are missing. Only an explicit per-minute quotaId is treated as
+    waitable — an unknown/absent one is assumed daily, because sleeping an hour on
+    a quota that won't return until midnight is the worse failure."""
+    inner = body.get("error", body) if isinstance(body, dict) else {}
+    if not isinstance(inner, dict):
+        inner = {}
+
+    violation = ((_detail(inner, "QuotaFailure").get("violations") or [{}]) or [{}])[0]
+    quota_id = violation.get("quotaId")
+    quota_value = violation.get("quotaValue")
+    model = (violation.get("quotaDimensions") or {}).get("model")
+
+    text = fallback_text or str(inner.get("message") or "")
+    if quota_id is None:
+        m = re.search(r"['\"]quotaId['\"]:\s*['\"]([^'\"]+)['\"]", text)
+        quota_id = m.group(1) if m else None
+    if quota_value is None:
+        m = re.search(r"['\"]quotaValue['\"]:\s*['\"]?(\d+)", text)
+        quota_value = m.group(1) if m else None
+
+    return {
+        "quota_id": quota_id,
+        "quota_value": int(quota_value) if str(quota_value or "").isdigit() else None,
+        "model": model,
+        "is_daily": "PerMinute" not in (quota_id or ""),
+    }
+
+
+def _quota_message(info: dict, model: str) -> str:
+    """One readable line replacing the SDK's multi-hundred-character JSON blob."""
+    name = info.get("model") or model
+    tier = "free-tier " if "FreeTier" in (info.get("quota_id") or "") else ""
+    if info["is_daily"]:
+        limit = f"{info['quota_value']} requests/day for {name}" if info.get("quota_value") else name
+        return f"Gemini {tier}daily quota reached ({limit}) — resets at midnight Pacific"
+    limit = f"{info['quota_value']} requests/min for {name}" if info.get("quota_value") else name
+    return f"Gemini {tier}per-minute quota reached ({limit})"
 
 
 class LLMClient:
@@ -25,6 +106,11 @@ class LLMClient:
         try:
             response = self.client.models.generate_content(model=self.model, contents=contents)
         except Exception as e:
+            body = _extract_gemini_body(e)
+            if _is_rate_limit(e, body):
+                info = parse_gemini_rate_limit(body, str(e))
+                info["message"] = _quota_message(info, self.model)
+                raise GeminiRateLimitError(info) from e
             raise RuntimeError(str(e)) from e
         return (response.text or "").strip()
 
