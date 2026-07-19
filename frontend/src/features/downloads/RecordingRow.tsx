@@ -2,8 +2,16 @@ import { useMemo, useState } from 'react'
 import type { Kind } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import type { Item } from './services/autoDownloader'
-import { downloadItem, expandItem, isReconnectError, isUnsupportedError } from './services/autoDownloader'
+import type { Item, PasscodeError } from './services/autoDownloader'
+import {
+  downloadItem,
+  expandItem,
+  isPasscodeError,
+  isReconnectError,
+  isUnsupportedError,
+  saveZoomPasscode,
+} from './services/autoDownloader'
+import PasscodePrompt from './PasscodePrompt'
 import { suggestItemName } from './utils/nameSuggestion'
 
 type Result = 'ok' | 'fail' | null
@@ -25,6 +33,12 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<Result>(null)
   const [confirming, setConfirming] = useState(false)
+
+  // Zoom passcode prompt: opened when /download-item answers 409 { status:'passcode' }.
+  // Distinct from the pre-download overwrite ConfirmModal — they fire at different moments
+  // (confirming is already false once download() runs), so the two never co-render.
+  const [passcodePrompt, setPasscodePrompt] = useState(false)
+  const [passcodeReason, setPasscodeReason] = useState<PasscodeError['reason']>('missing')
 
   // Expandable-row state: children are fetched lazily on first expand and cached,
   // so collapsing/re-expanding just toggles visibility (a second click never refetches).
@@ -65,7 +79,7 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
     } catch (err) {
       if (isReconnectError(err)) onReconnect()
       else if (isUnsupportedError(err)) setExpandError(err.message)
-      else setExpandError('Couldn’t load entries. Try again.')
+      else setExpandError("Couldn't load entries. Try again.")
     } finally {
       setExpanding(false)
     }
@@ -109,10 +123,38 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
       setResult(ok ? 'ok' : 'fail')
     } catch (err) {
       if (isReconnectError(err)) onReconnect()
-      else setResult('fail')
+      else if (isPasscodeError(err)) {
+        // Row is mid-flow — prompt for the passcode instead of failing. The finally clears
+        // the spinner while the user types; submitting re-enters pending and re-runs download().
+        setPasscodeReason(err.reason)
+        setPasscodePrompt(true)
+      } else setResult('fail')
     } finally {
       setPending(false)
     }
+  }
+
+  // Save the entered passcode, then re-run download() so it re-hits /download-item with the
+  // stored passcode. pending stays true across save→retry so the spinner never flashes off; a
+  // still-wrong passcode re-opens this prompt with the 'incorrect' copy.
+  async function submitPasscode(passcode: string, scope: 'course' | 'lecture') {
+    if (!passcode) return
+    setPending(true)
+    try {
+      await saveZoomPasscode({ course, name: effectiveName, passcode, scope })
+    } catch {
+      setResult('fail')
+      setPasscodePrompt(false)
+      setPending(false)
+      return
+    }
+    setPasscodePrompt(false)
+    await download()
+  }
+
+  function cancelPasscode() {
+    setPasscodePrompt(false)
+    setResult('fail')
   }
 
   // Re-downloading an existing recording overwrites it, so confirm first.
@@ -165,6 +207,15 @@ export default function RecordingRow({ item, course, onReconnect }: Props) {
           message={`${effectiveName} already exists in ${course}. Download again and overwrite?`}
           onConfirm={download}
           onCancel={() => setConfirming(false)}
+        />
+      )}
+
+      {passcodePrompt && (
+        <PasscodePrompt
+          reason={passcodeReason}
+          busy={pending}
+          onSubmit={submitPasscode}
+          onCancel={cancelPasscode}
         />
       )}
     </div>

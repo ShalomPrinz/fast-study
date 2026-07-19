@@ -51,6 +51,22 @@ export function isUnsupportedError(err: unknown): err is UnsupportedError {
   return err instanceof UnsupportedError
 }
 
+// Thrown when a recording is gated behind a passcode the server doesn't have.
+// Note: `name` is mapped to `lecture` because it collides with Error.name
+export class PasscodeError extends Error {
+  constructor(
+    public reason: 'missing' | 'incorrect',
+    public info?: { course?: string; lecture?: string },
+  ) {
+    super(`Zoom passcode ${reason}.`)
+    this.name = 'PasscodeError'
+  }
+}
+
+export function isPasscodeError(err: unknown): err is PasscodeError {
+  return err instanceof PasscodeError
+}
+
 // The shared http client hides the response body, so the { status: 'reconnect' }
 // 401 signal can't be read through it — hence a small direct fetch here that reads
 // the body on 401. NOTE: this bypasses the client's central ConnectionError
@@ -70,6 +86,12 @@ async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
     const data = await res.json().catch(() => null)
     if (data?.status === 'unsupported') {
       throw new UnsupportedError(data.message ?? 'Unsupported recording source.')
+    }
+  }
+  if (res.status === 409) {
+    const data = await res.json().catch(() => null)
+    if (data?.status === 'passcode') {
+      throw new PasscodeError(data.reason, { course: data.course, lecture: data.name })
     }
   }
   if (!res.ok) throw httpError(res)
@@ -97,6 +119,22 @@ export async function downloadItem(args: {
   kind: Kind
 }): Promise<{ ok: boolean }> {
   return postReconnectAware<{ ok: boolean }>('/download-item', args)
+}
+
+export async function saveZoomPasscode({
+  course,
+  name,
+  passcode,
+  scope,
+}: {
+  course: string
+  name: string
+  passcode: string
+  scope: 'course' | 'lecture'
+}): Promise<{ ok: boolean }> {
+  return autoDownloader.post<{ ok: boolean }>('/zoom/passcode', {
+    json: { course, name, passcode, scope },
+  })
 }
 
 export async function fetchAuthStatus(): Promise<AuthStatus> {

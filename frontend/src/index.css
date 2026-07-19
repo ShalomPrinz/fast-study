@@ -482,6 +482,24 @@ html, body, #root {
   margin-bottom: 0;
 }
 
+/* Zoom passcode prompt: masked input + scope toggle inside the shared .modal shell */
+.passcode-input {
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.passcode-scope {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 18px;
+  cursor: pointer;
+}
+
 /* ── Lecture panel ── */
 
 .lecture-panel {
