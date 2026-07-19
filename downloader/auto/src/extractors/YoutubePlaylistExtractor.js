@@ -22,10 +22,10 @@ function unsupported(host) {
 }
 
 /**
- * Moodle `url` module that redirects off-site. We can't know the target host
- * without navigating, so canHandle claims `url` activities optimistically and the
- * download phase confirms the redirect actually lands on YouTube. For now only
- * YouTube playlists are supported; anything else is rejected at download time.
+ * Moodle `url` module that links off-site. canHandle claims recording-keyword `url`
+ * activities; expand confirms the direct external target (contents[].fileurl) is a
+ * YouTube host. For now only YouTube playlists are supported; anything else (Drive,
+ * GitHub, …) is rejected as unsupported at expand time.
  */
 export class YoutubePlaylistExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -34,8 +34,8 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a `url` module (target host unknown until navigated) only when a recording
-   * keyword is present, else unrelated links get surfaced and blow up on expand.
+   * Claim a `url` module only when a recording keyword is present, else unrelated
+   * links (syllabus, reading) get surfaced and rejected on expand.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
@@ -44,41 +44,26 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * List as ONE unexpanded entry — the playlist expands at download time (we
-   * don't navigate during listing).
+   * List as ONE unexpanded entry — the playlist expands at download time. `pageUrl` is
+   * the direct external target (contents[].fileurl), so expand runs yt-dlp straight on it.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
   toRecordings(activity) {
-    return [{ title: activity.title, pageUrl: activity.viewUrl, kind: activity.kind, strategy: 'youtube-playlist' }];
+    return [{ title: activity.title, pageUrl: activity.externalUrl, kind: activity.kind, strategy: 'youtube-playlist' }];
   }
 
   /**
-   * Follow the Moodle url-module redirect to YouTube and flat-list its playlist
-   * entries with yt-dlp. Pure listing — no prompting — backing the HTTP
-   * /list/expand endpoint.
-   * @param {import('playwright').Page} page
-   * @param {import('./VideoExtractor.js').Recording} rec
+   * Flat-list a YouTube playlist with yt-dlp, straight on the direct external URL from
+   * the ref — no browser, no page navigation. Backs the HTTP /list/expand endpoint.
+   * @param {import('./VideoExtractor.js').Recording} rec  rec.pageUrl = the external target
    * @returns {Promise<{ title: string, url: string }[]>}
    */
-  async listEntries(page, rec) {
-    // `&redirect=1` is the Moodle onclick's jump-straight-to-target flag.
-    const sep = rec.pageUrl.includes('?') ? '&' : '?';
-    // waitUntil:'commit' (not 'load'): the final host is known at commit, and a heavy
-    // non-YouTube target would otherwise hang the full timeout before the host check runs.
-    try {
-      await page.goto(`${rec.pageUrl}${sep}redirect=1`, { waitUntil: 'commit' });
-    } catch (err) {
-      // A throw that already committed onto a non-YouTube host is unsupported, not a
-      // server fault; a YouTube/unknown host rethrows as a real error.
-      const host = safeHost(page.url());
-      if (host && !YOUTUBE_HOSTS.has(host)) throw unsupported(host);
-      throw err;
-    }
-    const finalUrl = page.url();
-
-    const host = new URL(finalUrl).hostname;
-    if (!YOUTUBE_HOSTS.has(host)) throw unsupported(host);
+  async listEntries(rec) {
+    const finalUrl = rec.pageUrl;
+    // The direct target host is known without navigating; only YouTube playlists expand.
+    const host = safeHost(finalUrl);
+    if (!host || !YOUTUBE_HOSTS.has(host)) throw unsupported(host || finalUrl);
 
     // Flat-list the playlist (title<TAB>url per entry). argv array — never a shell
     // string — so titles with metacharacters can't inject.

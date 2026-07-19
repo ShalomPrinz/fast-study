@@ -1,8 +1,8 @@
 # auto-downloader
 
-Given a **course URL**, this service drives a browser to authenticate (persisted
-long-term, like the backend's Google Drive OAuth), discover the course's
-recordings, and download them — reusing `server/`'s `/download` +
+Given a **course URL**, this service authenticates to Moodle's Web-Services API
+(a long-lived token, persisted like the backend's Google Drive OAuth), discovers
+the course's recordings, and downloads them — reusing `server/`'s `/download` +
 `/download-youtube` for the actual fetch. Auth, list, expand, and download are
 all working.
 
@@ -28,8 +28,7 @@ npm start   # HTTP service on port 3053 (src/http/server.js)
 The service holds one persistent headless browser per profile and exposes
 auth / `/list` / `/list/expand` / `/download-item` / `/close` for the frontend
 (CORS: `http://localhost:5173`); it reads the repo-root `.env` for `SERVER_URL`.
-Override the port with `AUTODL_PORT` and the headed-login entry URL with
-`AUTODL_AUTH_URL`.
+Override the port with `AUTODL_PORT`.
 
 The HTTP surface is **mechanism-agnostic**: `/list` and `/list/expand` return
 uniform `Item = { ref, title, kind, expandable }` and `/download-item` takes
@@ -37,17 +36,19 @@ uniform `Item = { ref, title, kind, expandable }` and `/download-item` takes
 inside the opaque `ref` (base64url of the internal `Recording`, see `src/lib/ref.js`)
 — the frontend round-trips `ref` and never parses it.
 
-## First-login is headed; reuse is headless
+## One MFA, then a long-lived token
 
-Microsoft login involves MFA, which can't be fully automated:
+Login involves MFA, which can't be automated — but you only do it once:
 
-- **First run / expired session:** a **headed** browser opens so you complete the
-  Microsoft login + MFA by hand **once**; the session (`storageState`) is saved
-  to `.auth/biu.json`.
-- **Every run after:** that saved state loads into a **headless** browser
-  silently. If it has expired, the headed login runs again and re-persists.
+- **First run / expired token:** a **headed** browser opens so you complete the
+  Microsoft login + MFA by hand **once**; the Moodle Web-Services token is saved
+  to `.auth/biu-token.json`.
+- **Every run after:** that token drives Moodle's stateless REST API with no
+  browser and no re-MFA (Moodle default lifetime: 12 weeks). When it expires the
+  UI shows Reconnect and one more MFA re-grabs it.
 
-`.auth/` holds your live session and is gitignored — treat it as a secret.
+`.auth/` holds your live token (and any zoom passcodes) and is gitignored — treat
+it as a secret.
 
 ## More
 

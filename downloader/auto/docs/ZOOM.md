@@ -18,7 +18,7 @@ Managed in-process via `node:child_process`, spawned lazily on the first zoom la
 - Display number is chosen **explicitly** (`findFreeDisplay`, stepping up from `:99`), NOT via `-displayfd`. On WSLg `/tmp/.X11-unix` is a read-only tmpfs, so Xvfb can't create the filesystem socket an auto-picked display needs; an explicit `:N` makes it fall back to a Linux abstract Unix socket. `/tmp/.X{N}-lock` disambiguates a taken number.
 - Readiness is polled by connecting to the abstract socket (`\0/tmp/.X11-unix/X{N}`); the `failed to bind listener` lines Xvfb prints for the impossible filesystem socket are harmless.
 - A per-run XAUTHORITY (MIT-MAGIC-COOKIE) is handed to both Xvfb (`-auth`) and Chrome (env `XAUTHORITY`).
-- The **node process is NOT wrapped in `xvfb-run`** — the headed Microsoft login browser must stay on the real WSLg display.
+- The **node process is NOT wrapped in `xvfb-run`** — the headed token-grab browser must stay on the real WSLg display.
 
 ## Passcode gate
 

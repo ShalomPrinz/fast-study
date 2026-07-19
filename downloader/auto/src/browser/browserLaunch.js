@@ -7,11 +7,11 @@ import { chromium } from 'playwright';
 export const COMMON_LAUNCH_ARGS = ['--mute-audio'];
 
 /**
- * Launch a browser, trying bundled Chromium first. Microsoft login sometimes flags
- * automation on bundled Chromium; if the launch throws, retry with the system
- * Chrome channel (real Chrome is less likely to be blocked).
+ * Launch a browser, trying bundled Chromium first. The headed token grab's Entra
+ * SSO sometimes flags automation on bundled Chromium; if the launch throws, retry
+ * with the system Chrome channel (real Chrome is less likely to be blocked).
  * This is the PLAIN launcher: no stealth, no forced channel — used by course
- * listing, videostream capture, and the headed Microsoft login. The zoom path has
+ * listing, videostream capture, and the headed token grab. The zoom path has
  * its own launcher (chrome + stealth + Xvfb) in zoomBrowser.js.
  * @param {{ headless: boolean }} opts
  * @returns {Promise<import('playwright').Browser>}

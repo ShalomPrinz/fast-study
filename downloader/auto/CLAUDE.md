@@ -4,7 +4,7 @@
 
 ## What this is
 
-A Playwright HTTP service that, given a **course URL**, drives a browser to authenticate, discover the course's recordings, and download them — reusing `server/`'s `/download` + `/download-youtube` for the actual fetch. A **separate package** with its own `node_modules` so Playwright never leaks into the dependency-free `server/`. Auth + list + expand + download are all implemented.
+A Playwright HTTP service that, given a **course URL**, authenticates to Moodle's Web-Services API (a one-time headed token grab, then a long-lived stateless token — the Google-Drive-refresh-token model), discovers the course's recordings via that WS API, and downloads them — reusing `server/`'s `/download` + `/download-youtube` for the actual fetch. A **separate package** with its own `node_modules` so Playwright never leaks into the dependency-free `server/`. Auth + list + expand + download are all implemented.
 
 ## Run
 
@@ -22,21 +22,21 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | Endpoint | Body | Returns |
 |---|---|---|
 | `GET /auth/status` | — | `{ connected, expired }` |
-| `POST /auth/connect` | `{ entryUrl? }` | `{ status:'pending' }` (headed login opens) |
-| `POST /auth/complete` | — | `{ connected:true }` (persists state; rebuilds open contexts) |
+| `POST /auth/connect` | `{}` | `{ status:'pending' }` (headed token grab opens) |
+| `POST /auth/complete` | — | `{ connected:true }` (persists the Moodle WS token) |
 | `POST /list` | `{ courseUrl }` | `{ items }` |
 | `POST /list/expand` | `{ ref }` | `{ items }` (resolve one expandable item → children) |
 | `POST /download-item` | `{ ref, course, name, kind }` | `{ ok }` |
 | `POST /zoom/passcode` | `{ course, name?, passcode, scope }` | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
 | `POST /close` | — | `{ ok:true }` (close the persistent browser) |
 
-`401 {status:'reconnect'}` = session missing/expired or a login/enrol bounce. `422 {status:'unsupported'}` = a `url` module redirects to a non-YouTube host. `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
+`401 {status:'reconnect'}` = the Moodle WS token is missing or a call returned `invalidtoken`. `422 {status:'unsupported'}` = a `url` module redirects to a non-YouTube host. `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
 
 ## Deep logic → `docs/`
 
 - **`docs/SESSIONS.md`** — persistent per-profile browsers, `withLock` mutex, idle timeout, the launch matrix.
 - **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + managed Xvfb; the UA/GPU constraints; passcode gate; before/after-break split.
-- **`docs/BROWSING.md`** — tile expansion, the merged Moodle+zoom parsers, keyword gating, the `Item`/`ref` contract, lazy playlist expansion.
-- **`docs/AUTH.md`** — headed-first/headless-reuse, silent SSO recovery, `markExpired`, the per-university auth gate, enrol-gate → reconnect.
+- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword gating, the `Item`/`ref` contract, lazy playlist expansion.
+- **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
 
 Dev-stack wiring: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

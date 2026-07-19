@@ -71,7 +71,7 @@ export class MoodleToken extends AuthProvider {
   /**
    * Cheap status for the UI pill — no browser, no API call. `connected` = a token file with a
    * wstoken exists. Token validity is only knowable by hitting the API, so `expired` is purely
-   * the runtime markExpired flag (there's no cookie-expiry heuristic like MicrosoftAuth's).
+   * the runtime markExpired flag (a WS invalidToken response), not a cookie-expiry heuristic.
    * @returns {{ connected: boolean, expired: boolean }}
    */
   status() {

@@ -1,18 +1,18 @@
-// Three concerns, matched at different granularities.
-// Auth: per university (host). Parser: per LMS. Extractor: per activity (modType).
-import { MicrosoftAuth } from '../auth/MicrosoftAuth.js';
-import { parseMoodleCourse } from '../discovery/moodleCourse.js';
+// Two concerns, matched at different granularities.
+// Auth: per university (host). Extractor: per activity (modType). Discovery is the
+// stateless Moodle WS API (core_course_get_contents), not a per-LMS DOM parser.
+import { MoodleToken } from '../auth/moodleToken.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
 import { ZoomExtractor } from '../extractors/ZoomExtractor.js';
 
-// Universities own AUTH (per host) + which LMS parser enumerates their courses.
+// Universities own AUTH (per host). The one-time headed token grab yields a long-lived
+// Moodle WS token; the token authenticates the stateless REST API thereafter.
 const UNIVERSITIES = [
   {
     id: 'biu',
     matches: (u) => /(^|\.)biu\.ac\.il$/.test(new URL(u).hostname),
-    auth: () => new MicrosoftAuth({ statePath: '.auth/biu.json' }),
-    parse: parseMoodleCourse, // BIU runs Moodle
+    auth: () => new MoodleToken({ tokenPath: '.auth/biu-token.json' }),
   },
 ];
 
@@ -26,8 +26,7 @@ const EXTRACTORS = [
 
 /**
  * @param {string} courseUrl
- * @returns {{ id: string, auth: () => import('../auth/AuthProvider.js').AuthProvider,
- *             parse: (page: import('playwright').Page) => Promise<import('../extractors/VideoExtractor.js').Activity[]> }}
+ * @returns {{ id: string, auth: () => import('../auth/AuthProvider.js').AuthProvider }}
  */
 export function resolveUniversity(courseUrl) {
   const uni = UNIVERSITIES.find((u) => u.matches(courseUrl));

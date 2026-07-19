@@ -1,13 +1,8 @@
 import { launchBrowser } from './browserLaunch.js';
 import { launchZoomBrowser, stopXvfb } from './zoomBrowser.js';
-import { isLoginUrl } from '../auth/MicrosoftAuth.js';
 
 // Leak-safety valve only — a browser is meant to stay open; it re-opens lazily next call.
 const IDLE_TIMEOUT_MS = 45 * 60 * 1000;
-
-// Bound on a silent-SSO redirect: long enough for the AAD cookie to auto-redirect back,
-// short enough that a dead session parked on the login form fails fast. See docs/AUTH.md.
-const SILENT_REAUTH_TIMEOUT_MS = 12_000;
 
 /**
  * A persistent browser+context+page with its launcher INJECTED (plain vs zoom profile),
@@ -22,48 +17,41 @@ export class BrowserSession {
     this.page = null;
     this._lock = Promise.resolve(); // tail of the mutex chain
     this._idleTimer = null;
+    this._authedUntil = 0; // when the Moodle autologin cookie is treated as still fresh
   }
 
   isOpen() {
     return !!this.page;
   }
 
-  /** Lazily launch the browser (via the injected launcher) + build a context from storageState. No-op if already open. */
-  async open(storageState) {
+  /**
+   * Lazily launch the browser (via the injected launcher) + a blank context. No-op if
+   * already open. No cookies are injected — the plain profile authenticates on demand via
+   * Moodle autologin (docs/MOODLE.md); the zoom profile is passcode-gated, never BIU-auth.
+   */
+  async open() {
     if (this.page) return;
     this.browser = await this._launch();
-    this.context = await this.browser.newContext({ storageState });
+    this.context = await this.browser.newContext();
     this.page = await this.context.newPage();
     this._touch();
   }
 
-  /** Navigate the shared page; returns the settled URL (for login-redirect detection). */
+  /** Navigate the shared page; returns the settled URL. */
   async goto(url) {
     await this.page.goto(url, { waitUntil: 'load' });
     this._touch();
     return this.page.url();
   }
 
-  // Navigate, treating a login/enrol bounce as maybe-recoverable: wait (bounded) for the
-  // AAD cookie to silently redirect back and re-save the refreshed cookies. Returns
-  // { url, recovered } on success, or null when recovery failed. MUST run inside withLock.
-  async gotoAuthenticated(url, auth) {
-    let finalUrl = await this.goto(url);
-    if (!isLoginUrl(finalUrl)) return { url: finalUrl, recovered: false };
-    try {
-      await this.page.waitForURL((u) => !isLoginUrl(String(u)), { timeout: SILENT_REAUTH_TIMEOUT_MS });
-    } catch {
-      return null; // login/MFA form just sat there → credentials really required
-    }
-    finalUrl = this.page.url();
-    // Persisting the refreshed state is best-effort — a failed write shouldn't sink an
-    // otherwise-successful recovery; the in-memory context is already re-authenticated.
-    try {
-      auth.saveState(await this.context.storageState());
-    } catch (e) {
-      console.warn(`Failed to persist recovered auth state: ${e.message}`);
-    }
-    return { url: finalUrl, recovered: true };
+  // Autologin is rate-limited (~1/user/6 min), so cache its cookie's freshness: skip a
+  // re-login while an earlier one is still within ttl. Reset on close (context/cookie gone).
+  isAuthed() {
+    return Date.now() < this._authedUntil;
+  }
+
+  markAuthed(ttlMs) {
+    this._authedUntil = Date.now() + ttlMs;
   }
 
   // Async mutex: chain fn onto the tail so only one page op runs at a time (two concurrent
@@ -75,18 +63,9 @@ export class BrowserSession {
     return run;
   }
 
-  // Re-auth invalidates the old cookies, so build a fresh context from the new
-  // storageState. The browser process can stay — only the context is stale.
-  async rebuildContext(storageState) {
-    if (!this.browser) return this.open(storageState);
-    if (this.context) await this.context.close().catch(() => {});
-    this.context = await this.browser.newContext({ storageState });
-    this.page = await this.context.newPage();
-    this._touch();
-  }
-
   async close() {
     this._clearIdle();
+    this._authedUntil = 0; // context (and its autologin cookie) is gone → re-auth next open
     const b = this.browser;
     this.browser = this.context = this.page = null;
     if (b) await b.close().catch(() => {});
@@ -121,13 +100,6 @@ export function getSession(profile = 'plain') {
   const key = LAUNCHERS[profile] ? profile : 'plain';
   if (!sessions.has(key)) sessions.set(key, new BrowserSession(LAUNCHERS[key]));
   return sessions.get(key);
-}
-
-/** Re-point every OPEN session's context at fresh cookies (after /auth/complete). */
-export async function rebuildOpenSessions(storageState) {
-  await Promise.all(
-    [...sessions.values()].filter((s) => s.isOpen()).map((s) => s.rebuildContext(storageState)),
-  );
 }
 
 /** Close every session and stop the managed Xvfb (on /close, idle-shutdown, or signals). */

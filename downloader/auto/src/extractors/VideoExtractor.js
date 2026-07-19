@@ -1,6 +1,7 @@
 /**
- * One `li.activity` from the Moodle course page (produced by the course parser).
- * @typedef {{ title: string, modType: string, viewUrl: string,
+ * One module from the Moodle WS course contents. `externalUrl` is the off-site target of
+ * a `url` module (from contents[].fileurl) — the direct link a youtube playlist expands.
+ * @typedef {{ title: string, modType: string, viewUrl: string, externalUrl?: string,
  *             sectionName: string, kind: 'lecture'|'recitation' }} Activity
  *
  * A listed recording — cheap metadata + which download strategy resolves it.

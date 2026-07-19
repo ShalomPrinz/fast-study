@@ -1,26 +1,20 @@
-/**
- * Serializable auth context = Playwright storageState (cookies + localStorage).
- * NOT a live browser context — auth hands over serializable state, and the site
- * facade builds its own headless context from it (keeps the two concerns split).
- * @typedef {import('playwright').BrowserContextOptions['storageState']} StorageState
- */
-
+// Auth provider contract: a two-step headed login (MFA by hand) that persists a
+// long-lived credential, then serves it statelessly. See MoodleToken / docs/AUTH.md.
 export class AuthProvider {
   /**
-   * Start the (headed) login: open the browser at `entryUrl` and return once it's
-   * up, so the user can finish MFA by hand. Paired with complete().
-   * @param {string} entryUrl
-   * @param {{ onCancel?: () => void }} [opts]
+   * Start the (headed) login and return once it's up, so the user can finish MFA by
+   * hand. Paired with complete().
+   * @param {{ onCancel?: () => void }} [opts]  onCancel fires if the login is abandoned.
    * @returns {Promise<void>}
    */
-  async connect(entryUrl, opts) {
+  async connect(opts) {
     throw new Error('not implemented');
   }
 
   /**
-   * Finish the pending login: persist the serializable auth context and close the
-   * headed browser. Throws if no login is pending.
-   * @returns {Promise<StorageState>}
+   * Finish the pending login: persist the credential and close the headed browser.
+   * Throws if no login is pending.
+   * @returns {Promise<object>}
    */
   async complete() {
     throw new Error('not implemented');

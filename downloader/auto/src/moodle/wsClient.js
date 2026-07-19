@@ -1,6 +1,6 @@
 // Thin fetch wrapper over Moodle's Web-Services REST API (webservice/rest/server.php).
-// Stateless: a wstoken authenticates every call — no browser, no cookies. Mirrors the
-// URL shapes proven in probe-ws-token.mjs against lemida.biu.ac.il.
+// Stateless: a wstoken authenticates every call — no browser, no cookies. Protocol
+// reference: docs/MOODLE.md.
 
 // Default Moodle site; kept a parameter (not hardcoded in URL building) so callers can inject.
 export const DEFAULT_SITE = 'https://lemida.biu.ac.il';
@@ -23,8 +23,8 @@ export function invalidToken(err) {
   return err instanceof WsError && INVALID_TOKEN_CODES.has(err.errorcode);
 }
 
-// One WS call: build the URL exactly like the probe (?wstoken=…&moodlewsrestformat=json
-// &wsfunction=… + extra params), fetch, parse JSON. A JSON body with `.exception` is
+// One WS call: build the URL (?wstoken=…&moodlewsrestformat=json&wsfunction=… + extra
+// params), fetch, parse JSON. A JSON body with `.exception` is
 // Moodle's error shape (HTTP is still 200) → throw a WsError so callers can inspect it.
 async function callWs(token, fn, params = {}, { site = DEFAULT_SITE } = {}) {
   const url = new URL(`${site}/webservice/rest/server.php`);
@@ -47,6 +47,14 @@ export function getSiteInfo(token, { site = DEFAULT_SITE } = {}) {
 /** core_course_get_contents(courseId) → the sections array. Throws WsError on a WS exception. */
 export function getCourseContents(token, courseId, { site = DEFAULT_SITE } = {}) {
   return callWs(token, 'core_course_get_contents', { courseid: courseId }, { site });
+}
+
+// tool_mobile_get_autologin_key mints a one-shot no-MFA browser login. It's authenticated
+// by the wstoken (like every WS call) and takes the privatetoken as a parameter — they're
+// two distinct secrets from the launch payload. Rate-limited (~1/user/6 min) and IP-bound.
+/** @returns {Promise<{ key: string, autologinurl: string, warnings: unknown[] }>} */
+export function getAutologinKey(wstoken, privatetoken, { site = DEFAULT_SITE } = {}) {
+  return callWs(wstoken, 'tool_mobile_get_autologin_key', { privatetoken }, { site });
 }
 
 // WS pluginfile auth = token in the query string. fileurl may already carry a query

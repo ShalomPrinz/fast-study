@@ -1,10 +1,16 @@
-import { AUTH_ENTRY_URL } from '../lib/config.js';
 import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from '../core/registry.js';
-import { getSession, rebuildOpenSessions, closeAllSessions } from '../browser/browserSession.js';
+import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import { listRecordings, downloadRecording } from '../core/core.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
+import {
+  courseIdFrom,
+  getCourseContents,
+  getSiteInfo,
+  getAutologinKey,
+  invalidToken,
+} from '../moodle/wsClient.js';
 
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
 // unexpanded playlist (pageUrl, no url) is expandable, else downloadable. See docs/BROWSING.md.
@@ -25,41 +31,10 @@ function authFor(uni) {
   return authInstances.get(uni.id);
 }
 
-// ── Auth gate ─────────────────────────────────────────────────────────────────
-// Per-university barrier browsing endpoints await before touching cookies/browser:
-// closed on /auth/connect, opened on /auth/complete AFTER the context rebuild, so a
-// /list fired mid-login parks and runs on fresh cookies (not the stale pre-login
-// context, which bounces → a permanent false "expired"). See docs/AUTH.md.
-const AUTH_GATE_BACKSTOP_MS = 3 * 60 * 1000; // > a real MFA login; release-on-timeout safety valve only
-
-const authGates = new Map();
-function gateFor(uni) {
-  if (!authGates.has(uni.id)) authGates.set(uni.id, { promise: Promise.resolve(), resolve: null, timer: null });
-  return authGates.get(uni.id);
-}
-
-// Browsing endpoints await this: already-resolved when no login is in progress
-// (proceed immediately), pending while one is (park until complete/backstop opens it).
-function authGate(uni) {
-  return gateFor(uni).promise;
-}
-
-// Close the gate: park future browsing on a fresh pending promise + arm the backstop.
-// Re-closing keeps the SAME pending promise (don't orphan already-parked awaiters).
-function closeAuthGate(uni) {
-  const gate = gateFor(uni);
-  if (!gate.resolve) gate.promise = new Promise((res) => { gate.resolve = res; });
-  if (gate.timer) clearTimeout(gate.timer);
-  gate.timer = setTimeout(() => openAuthGate(uni), AUTH_GATE_BACKSTOP_MS);
-  gate.timer.unref?.(); // don't keep the process alive just for the backstop (match _touch's idle timer)
-}
-
-// Open the gate: release every parked browsing request. No-op if already open.
-function openAuthGate(uni) {
-  const gate = gateFor(uni);
-  if (gate.timer) { clearTimeout(gate.timer); gate.timer = null; }
-  if (gate.resolve) { gate.resolve(); gate.resolve = null; }
-}
+// Reuse the autologin cookie across back-to-back videostream downloads: autologin is
+// rate-limited (~1/user/6 min), so re-minting a key every download would 429. Well under
+// the Moodle session lifetime, so a cached cookie stays valid within the window.
+const AUTOLOGIN_TTL_MS = 20 * 60 * 1000;
 
 // Thin wrapper over Express's res.status().json() so the handler call sites stay
 // send(res, status, body) — no manual writeHead / JSON.stringify.
@@ -111,34 +86,14 @@ export function handleAuthStatus(req, res) {
 
 export async function handleAuthConnect(req, res) {
   logReq('POST', '/auth/connect');
-  const { entryUrl } = req.body; // express.json() yields {} for an empty body → entryUrl undefined
-  const uni = defaultUniversity();
-  // Close the gate BEFORE connect (no race with the browser's disconnected event) so
-  // browsing parks until /auth/complete rebuilds on fresh cookies. See docs/AUTH.md.
-  closeAuthGate(uni);
-  try {
-    await authFor(uni).connect(entryUrl || AUTH_ENTRY_URL, { onCancel: () => openAuthGate(uni) });
-  } catch (e) {
-    openAuthGate(uni);
-    throw e;
-  }
+  // The token module builds its own launch.php URL, so connect takes no entry URL.
+  await authFor(defaultUniversity()).connect();
   send(res, 200, { status: 'pending' });
 }
 
 export async function handleAuthComplete(req, res) {
   logReq('POST', '/auth/complete');
-  const uni = defaultUniversity();
-  const auth = authFor(uni);
-  try {
-    const state = await auth.complete();
-    // Any already-open session's context holds the now-stale cookies — rebuild every
-    // open one from the fresh state so the next /list (or zoom capture) is authenticated.
-    await rebuildOpenSessions(state);
-  } finally {
-    // Open even if complete()/rebuild threw — a failed rebuild must not hang future
-    // browsing forever; the next browsing call just re-opens the context via open().
-    openAuthGate(uni);
-  }
+  await authFor(defaultUniversity()).complete();
   send(res, 200, { connected: true });
 }
 
@@ -153,28 +108,29 @@ export async function handleList(req, res) {
   let uni;
   try { uni = resolveUniversity(courseUrl); } catch (e) { return send(res, 400, { error: e.message }); }
 
-  await authGate(uni); // park if a login+rebuild is in progress → proceed on fresh cookies
   const auth = authFor(uni);
-  const state = auth.loadState();
-  if (!state || auth.status().expired) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
+  if (!auth.status().connected) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
 
-  const session = getSession('plain');
-  await session.open(state);
-  // null = bounced to login AND silent SSO recovery failed; sent as reconnect OUTSIDE
-  // the lock. gotoAuthenticated absorbs a recoverable bounce silently (docs/AUTH.md).
-  const recordings = await session.withLock(async () => {
-    const nav = await session.gotoAuthenticated(courseUrl, auth);
-    if (!nav) return null;
-    return listRecordings(session.page, courseUrl);
-  });
-  // Unrecoverable bounce: AAD session genuinely gone → server is source of truth.
-  if (recordings === null) { auth.markExpired(); logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
+  let courseId;
+  try { courseId = courseIdFrom(courseUrl); } catch (e) { return send(res, 400, { error: e.message }); }
+
+  // Stateless WS: no browser needed. A dead token comes back as an invalidToken
+  // WS exception → mark expired + steer to Reconnect; any other WS fault falls to 500.
+  const token = auth.loadToken().wstoken;
+  let sections;
+  try {
+    sections = await getCourseContents(token, courseId);
+  } catch (e) {
+    if (invalidToken(e)) { auth.markExpired(); logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
+    throw e;
+  }
+  const recordings = listRecordings(sections);
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
 }
 
-// Resolve ONE expandable item (a playlist) into its downloadable children; the
-// redirect-follow + yt-dlp --flat-playlist lives behind the extractor + opaque ref.
+// Resolve ONE expandable item (a YouTube playlist) into its downloadable children by
+// running yt-dlp on the direct external URL in the ref — no browser, no auth, no gate.
 export async function handleListExpand(req, res) {
   logReq('POST', '/list/expand', '(expanding)');
   const { ref } = req.body;
@@ -183,17 +139,9 @@ export async function handleListExpand(req, res) {
   if (!recording?.pageUrl || typeof extractor?.listEntries !== 'function') {
     return send(res, 400, { error: 'item is not expandable' });
   }
-  const uni = resolveUniversity(recording.pageUrl);
-  await authGate(uni); // park if a login+rebuild is in progress → proceed on fresh cookies
-  const auth = authFor(uni);
-  const state = auth.loadState();
-  if (!state || auth.status().expired) { logResult('/list/expand', 'reconnect (401)'); return sendReconnect(res); }
-
-  const session = getSession('plain');
-  await session.open(state);
   let entries;
   try {
-    entries = await session.withLock(() => extractor.listEntries(session.page, recording));
+    entries = await extractor.listEntries(recording);
   } catch (e) {
     if (e instanceof UnsupportedError) { logResult('/list/expand', `unsupported (422): ${e.message}`); return sendUnsupported(res, e.message); }
     throw e; // other failures fall through to the centralized 500 ("try again")
@@ -246,35 +194,57 @@ async function downloadItem(req, res) {
   const session = getSession(profile);
 
   // Zoom shares live on `*.zoom.us`, gated by a passcode not BIU SSO — no university to
-  // resolve and no login bounce. Open (reuse BIU state if present) and let captureVideo
-  // clear the passcode gate. See docs/ZOOM.md.
+  // resolve and no login. Open a blank session and let captureVideo clear the passcode
+  // gate. See docs/ZOOM.md.
   if (recording.strategy === 'zoom') {
     // Per-course default with an optional per-lecture override; null → the gate throws
     // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
     const passcode = passcodes.lookup(course, name);
-    await session.open(authFor(defaultUniversity()).loadState() ?? undefined);
+    await session.open();
     await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode }));
     logResult('/download-item', 'ok');
     return send(res, 200, { ok: true });
   }
 
+  // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
+  // autologin (privatetoken → one-shot cookie, no MFA). See docs/MOODLE.md.
   const uni = resolveUniversity(recording.pageUrl);
-  await authGate(uni); // park if a login+rebuild is in progress → proceed on fresh cookies
   const auth = authFor(uni);
-  const state = auth.loadState();
-  if (!state || auth.status().expired) { logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
+  if (!auth.status().connected) { logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
+  const token = auth.loadToken();
 
-  await session.open(state);
-  // Lock covers the whole navigate+sniff (captureVideo navigates internally). Mirror
-  // /list: an unrecoverable login/enrol bounce steers to Reconnect instead of a 500.
-  const bounced = await session.withLock(async () => {
-    if (!(await session.gotoAuthenticated(recording.pageUrl, auth))) return true;
-    await downloadRecording(session.page, { recording, course, name, kind });
-    return false;
-  });
-  if (bounced) { auth.markExpired(); logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
+  await session.open();
+  try {
+    await session.withLock(async () => {
+      await ensureAutologin(session, token);
+      await downloadRecording(session.page, { recording, course, name, kind });
+    });
+  } catch (e) {
+    // A dead token surfaces from getSiteInfo/getAutologinKey as an invalidToken WS
+    // exception → Reconnect. Other faults (rate-limit lockout, no .mp4) fall to 500.
+    if (invalidToken(e)) { auth.markExpired(); logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
+    throw e;
+  }
   logResult('/download-item', 'ok');
   send(res, 200, { ok: true });
+}
+
+// Log the shared plain session into Moodle via a one-shot autologin key so the token-gated
+// .mp4 sniffs authenticated. Skips the rate-limited key mint while a prior cookie is fresh.
+// MUST run inside the session lock (navigates the shared page).
+async function ensureAutologin(session, token) {
+  if (session.isAuthed()) return;
+  if (!token?.privatetoken) {
+    throw new Error('token has no privatetoken; Reconnect to enable videostream capture');
+  }
+  const { userid } = await getSiteInfo(token.wstoken);
+  const { key, autologinurl } = await getAutologinKey(token.wstoken, token.privatetoken);
+  // autologinurl is a bare endpoint; add userid+key via the URL API (it may already carry a query).
+  const u = new URL(autologinurl);
+  u.searchParams.set('userid', userid);
+  u.searchParams.set('key', key);
+  await session.goto(u.toString());
+  session.markAuthed(AUTOLOGIN_TTL_MS);
 }
 
 // Persist a zoom passcode for a course (default) or a single lecture (override). The

@@ -1,27 +1,43 @@
-import { resolveUniversity, resolveExtractor, resolveExtractorForRecording } from './registry.js';
+import { resolveExtractor, resolveExtractorForRecording } from './registry.js';
 import { postDownload, postDownloadYoutube } from '../http/serverClient.js';
-import { parseZoomSections } from '../discovery/zoomSection.js';
-import { expandTiles } from '../discovery/moodleCourse.js';
+import { parseZoomSummaries } from '../discovery/zoomSection.js';
+import { classifyKind } from '../discovery/moodleCourse.js';
 import { splitName } from '../lib/naming.js';
 
+// Flatten the WS section tree into activities. `url` modules carry their external target
+// in contents[].fileurl (YouTube/zoom/Drive/…) — the direct link the extractor expands,
+// not the redirect view page. `resource`/unknown modTypes match no extractor → skipped.
+function mapModules(sections) {
+  const activities = [];
+  for (const section of sections ?? []) {
+    for (const module of section.modules ?? []) {
+      activities.push({
+        title: module.name,
+        modType: module.modname,
+        viewUrl: module.url,
+        externalUrl: module.contents?.[0]?.fileurl,
+        sectionName: section.name,
+        kind: classifyKind(section.name, module.name),
+      });
+    }
+  }
+  return activities;
+}
+
 /**
- * LISTING PATH: enumerate a navigated course page's recordings (caller owns nav + auth).
- * See docs/BROWSING.md.
- * @param {import('playwright').Page} page
- * @param {string} courseUrl
- * @returns {Promise<import('../extractors/VideoExtractor.js').Recording[]>}
+ * LISTING PATH: enumerate a course's recordings from the stateless WS contents — no
+ * browser needed. Merges module cards with zoom-share links parsed out of each
+ * section summary, then routes each activity to its extractor. See docs/BROWSING.md.
+ * @param {Array<{ name?: string, summary?: string, modules?: object[] }>} sections
+ *   core_course_get_contents result
+ * @returns {import('../extractors/VideoExtractor.js').Recording[]}
  */
-export async function listRecordings(page, courseUrl) {
-  const uni = resolveUniversity(courseUrl);
-  // format_tiles defers each section's body until its tile is clicked — expand first.
-  await expandTiles(page);
-  // Single merge point: `li.activity` module cards + zoom-share links in `li.section`
-  // summaries (not activity cards, so the module parser never sees them).
-  const activities = [...(await uni.parse(page)), ...(await parseZoomSections(page))];
+export function listRecordings(sections) {
+  const activities = [...mapModules(sections), ...parseZoomSummaries(sections)];
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
-    if (!extractor) continue;
+    if (!extractor) continue; // resource/non-recording url/unknown → skip
     for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
   }
   return recordings;

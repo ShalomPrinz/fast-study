@@ -9,7 +9,7 @@ model, native to Moodle: MFA collapses from "every few hours" to ~once per token
 Two modules implement the client side:
 
 - **`src/moodle/wsClient.js`** — the stateless REST client (`getSiteInfo`, `getCourseContents`,
-  `pluginfileUrl`, `courseIdFrom`, `invalidToken`, `WsError`, `DEFAULT_SITE`).
+  `getAutologinKey`, `pluginfileUrl`, `courseIdFrom`, `invalidToken`, `WsError`, `DEFAULT_SITE`).
 - **`src/auth/moodleToken.js`** — the one-time headed token grab + persistence (`MoodleToken`).
 
 ## Token acquisition (the one headed step)
@@ -72,7 +72,7 @@ Identity + capability probe. Fields we rely on: `userid` (needed for autologin),
 `release` (Moodle version, `4.5.10` on BIU).
 
 ### `core_course_get_contents(courseid)`
-The whole course as JSON — replaces the old DOM scrape (tile-expansion, `li.activity` walk).
+The whole course as JSON — sections, their `modules[]`, and each section's `summary` HTML.
 `courseIdFrom(courseUrl)` parses the numeric `id=` from `…/course/view.php?id=N` to feed it.
 Returns an array of **sections**:
 
