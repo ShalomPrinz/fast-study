@@ -1,6 +1,4 @@
-"""Shared OAuth helper for Google APIs. The Drive uploader obtains `Credentials`
-through here so the on-disk credential/token files live in one place.
-"""
+"""Shared OAuth helper for Google APIs, so the on-disk credential/token files live in one place."""
 
 from pathlib import Path
 from typing import Literal
@@ -17,6 +15,8 @@ SCOPES_MAP = {
 ScopeKey = Literal["drive"]
 
 def get_credentials(scope_key: ScopeKey) -> Credentials:
+    """Load (or interactively obtain) credentials for one scope set, caching per scope key."""
+
     scopes = SCOPES_MAP.get(scope_key)
     if not scopes:
         raise ValueError(f"Unknown scope key: {scope_key}")
@@ -27,16 +27,15 @@ def get_credentials(scope_key: ScopeKey) -> Credentials:
             "Download credentials.json from Google Cloud Console and place it there."
         )
 
-    # Per-scope token file to prevent token collision due to different scopes
+    # Per-scope token file, so different scope sets can't collide.
     token_path = str(Path(__file__).parent.parent / f"token_{scope_key}.json")
 
     creds: Credentials | None = None
     if Path(token_path).exists():
         creds = Credentials.from_authorized_user_file(token_path, scopes)
 
-    # A cached token issued for a different scope set is silently unusable —
-    # the API call later fails with an opaque 403. Detect the mismatch up front
-    # and force a fresh consent flow.
+    # A token cached for a different scope set is silently unusable (opaque 403 later),
+    # so detect the mismatch up front and force a fresh consent flow.
     if creds and set(creds.scopes or []) != set(scopes):
         creds = None
 

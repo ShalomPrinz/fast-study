@@ -8,6 +8,8 @@ DB_PATH = Path(__file__).parent / "timing.db"
 
 
 def init_db():
+    """Create the timing table if it doesn't exist."""
+
     with sqlite3.connect(DB_PATH) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS timing (
@@ -29,6 +31,9 @@ def _record(operation: str, file_size_bytes: int, duration_seconds: float):
 
 
 def get_stats(operation: str, file_size_bytes: int) -> dict:
+    """Duration stats for one operation, with a linear-regression estimate for this file size.
+    All durations are in seconds; falls back to the average below two data points."""
+
     with sqlite3.connect(DB_PATH) as conn:
         rows = conn.execute(
             "SELECT file_size_bytes, duration_seconds FROM timing WHERE operation = ?",
@@ -63,7 +68,6 @@ def get_stats(operation: str, file_size_bytes: int) -> dict:
     else:
         estimated = average
 
-    # all durations are in seconds
     return {
         "shortest": shortest,
         "longest": longest,
@@ -73,6 +77,8 @@ def get_stats(operation: str, file_size_bytes: int) -> dict:
 
 
 def timed_pipeline(operation: str):
+    """Decorator recording a pipeline call's duration against its first argument's file size."""
+
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

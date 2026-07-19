@@ -23,6 +23,8 @@ class TranscribeRateLimitError(Exception):
 
 
 def get_duration(audio_path: str) -> float:
+    """Audio duration in seconds, via ffprobe."""
+
     result = subprocess.run([
         "ffprobe", "-v", "error", "-show_entries", "format=duration",
         "-of", "default=noprint_wrappers=1:nokey=1", audio_path
@@ -31,6 +33,8 @@ def get_duration(audio_path: str) -> float:
 
 
 def split_one_chunk(audio_path: str, tmpdir: str, index: int, chunk_seconds: int) -> str:
+    """Cut one fixed-length mp3 chunk out of the audio; Groq caps a request at 25 MB."""
+
     chunk_path = os.path.join(tmpdir, f"chunk_{index:04d}.mp3")
     subprocess.run([
         "ffmpeg", "-y", "-i", audio_path,
@@ -42,6 +46,8 @@ def split_one_chunk(audio_path: str, tmpdir: str, index: int, chunk_seconds: int
 
 
 def parse_rate_limit_message(msg: str) -> dict:
+    """Pull {limit, used, requested, retry_after_seconds} out of Groq's prose 429 message."""
+
     def _int(pattern: str):
         m = re.search(pattern, msg)
         return int(m.group(1)) if m else None
@@ -66,6 +72,8 @@ def parse_rate_limit_message(msg: str) -> dict:
 
 
 def _extract_groq_message(err: groq.RateLimitError) -> str:
+    """The human-readable message from a Groq error, whichever shape the SDK gave it."""
+
     body = getattr(err, "body", None) or getattr(err, "response", None)
     if isinstance(body, dict):
         inner = body.get("error", body)
@@ -79,10 +87,9 @@ def _extract_groq_message(err: groq.RateLimitError) -> str:
 
 
 def _load_resume_state(audio_path: str) -> dict:
-    """Return dict with completed_chunks, total_chunks, chunk_seconds, fresh (bool).
-    If meta exists and matches current audio, returns the resumable state.
-    Otherwise returns a fresh-start state and removes any stale partial files.
-    """
+    """The resumable state when the meta matches the current audio, else a fresh-start
+    state with any stale partial files removed."""
+
     lecture_dir = Path(audio_path).parent
     meta_path = lecture_dir / PARTIAL_META
     partial_path = lecture_dir / PARTIAL_TXT
@@ -123,6 +130,8 @@ def _load_resume_state(audio_path: str) -> dict:
 
 
 def _write_meta_atomic(lecture_dir: Path, meta: dict) -> None:
+    """Write the resume meta via a temp file + rename, so a crash can't leave it half-written."""
+
     tmp = lecture_dir / (PARTIAL_META + ".tmp")
     tmp.write_text(json.dumps(meta), encoding="utf-8")
     os.replace(tmp, lecture_dir / PARTIAL_META)
@@ -130,6 +139,9 @@ def _write_meta_atomic(lecture_dir: Path, meta: dict) -> None:
 
 @timed_pipeline("transcribe")
 def transcribe_audio(audio_path: str) -> str:
+    """Transcribe audio to Hebrew text chunk by chunk, resuming from partial state on disk.
+    Raises TranscribeRateLimitError, leaving the partial files for the next call."""
+
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         raise RuntimeError("GROQ_API_KEY is not set in the environment")

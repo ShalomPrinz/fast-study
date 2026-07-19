@@ -75,7 +75,9 @@ def upload_to_drive(
     file_name: str | None = None,
     subfolder: str | None = None,
 ) -> str:
-    """Upload pdf_path to Drive at GDRIVE_ROOT_FOLDER/course/[subfolder/]. Returns the Drive file URL."""
+    """Upload pdf_path to Drive at GDRIVE_ROOT_FOLDER/course/[subfolder/], creating folders
+    as needed. Returns the Drive file URL."""
+
     root_folder_name = os.environ.get("GDRIVE_ROOT_FOLDER")
     if not root_folder_name:
         raise RuntimeError("GDRIVE_ROOT_FOLDER is not set in the environment")
@@ -100,7 +102,7 @@ def upload_to_drive(
         file_name = file_name or Path(pdf_path).name
         media = MediaFileUpload(pdf_path, mimetype="application/pdf")
 
-        # Re-running a lecture should replace its PDF in place
+        # Re-running a lecture replaces its PDF in place.
         existing_id = _find_file(service, file_name, parent_id)
         if existing_id:
             return _update_file(service, existing_id, media)

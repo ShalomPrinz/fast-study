@@ -1,6 +1,5 @@
-"""Overview analyze phase: send one extractor's snippet report to Gemini with its prompt, and
-the phase worker the runner drives — read {slug}.txt, analyze, write {slug}.md. A
-missing .txt just skips. Pure work — the runner owns loop/status/notify/failure isolation."""
+"""Overview analyze phase: send one extractor's snippet report to Gemini with its prompt and
+write the result. Pure work — the runner owns the loop, status and failure isolation."""
 
 from pathlib import Path
 
@@ -15,14 +14,16 @@ MODEL = "gemini-3.5-flash"
 
 def analyze(extractor: Extractor, report: str, course: str) -> str:
     """Send one extractor's report to an LLM with its prompt. Raises RuntimeError on API failure."""
+
     prompt = (PROMPT_DIR / extractor.prompt_file).read_text(encoding="utf-8")
     client = LLMClient(model=MODEL)
     return client.generate([prompt, f"Course: {course}", report])
 
 
 def run_analyze(course: str, extractor: Extractor) -> dict:
-    """Analyze one extractor's snippet report; write {slug}.md. Returns a status dict
-    ("skipped"/"done"); raises on Gemini/I/O failure so the runner records it as "error"."""
+    """Analyze one extractor's snippet report and write {slug}.md; a missing .txt skips.
+    Raises on Gemini/I/O failure so the runner records it as "error"."""
+
     slug = extractor.slug
     try:
         report = db_client.get_overview_file(course, f"{slug}.txt").decode("utf-8")

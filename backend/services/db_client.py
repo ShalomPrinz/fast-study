@@ -26,9 +26,9 @@ def _summary_url(course: str, lecture: str) -> str:
 
 
 def _raise_for_envelope(resp: requests.Response) -> None:
-    # Mutating endpoints return {ok: false, error} on failure. Lift the error
-    # message into an exception so callers see failures the same way Path
-    # operations raise today — silent ok:false would otherwise swallow errors.
+    """Raise DbClientError for an HTTP failure or an {ok: false} envelope, so callers see
+    failures as exceptions rather than silently succeeding."""
+
     if not resp.ok:
         try:
             body = resp.json()

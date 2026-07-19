@@ -1,8 +1,6 @@
-"""Shared Gemini (google-genai) client. Both the summarize step and the course
-overview analysis talk to Gemini the same way — construct a client from
-GEMINI_API_KEY, call generate_content, strip the reply, and surface SDK failures
-as RuntimeError so endpoints can turn them into {"status": "error"}. Keep that
-logic here, not duplicated per call site."""
+"""Shared Gemini (google-genai) client for the summarize step and the course overview
+analysis: GEMINI_API_KEY auth, stripped replies, and SDK failures surfaced as RuntimeError
+(429s as GeminiRateLimitError) so endpoints can return {"status": "error"}."""
 
 import os
 import re
@@ -13,8 +11,7 @@ DEFAULT_MODEL = "gemini-3.5-flash"
 
 
 class GeminiRateLimitError(RuntimeError):
-    """A 429 from Gemini, with the quota facts pulled out of the SDK error body.
-    info = {quota_id, quota_value, model, is_daily}."""
+    """A 429 from Gemini; info = {quota_id, quota_value, model, is_daily}."""
 
     def __init__(self, info: dict):
         self.info = info
@@ -23,6 +20,7 @@ class GeminiRateLimitError(RuntimeError):
 
 def _extract_gemini_body(err: Exception) -> dict:
     """Dig the JSON error body out of a google-genai SDK exception."""
+
     for attr in ("details", "body"):
         value = getattr(err, attr, None)
         if isinstance(value, dict):
@@ -34,6 +32,8 @@ def _extract_gemini_body(err: Exception) -> dict:
 
 
 def _is_rate_limit(err: Exception, body: dict) -> bool:
+    """True when the SDK error is a 429 / RESOURCE_EXHAUSTED, however it is shaped."""
+
     if getattr(err, "code", None) == 429:
         return True
     inner = body.get("error", body)
@@ -44,6 +44,7 @@ def _is_rate_limit(err: Exception, body: dict) -> bool:
 
 def _detail(inner: dict, type_suffix: str) -> dict:
     """Find one entry of the error body's `details` list by its @type suffix."""
+
     for entry in inner.get("details") or []:
         if isinstance(entry, dict) and str(entry.get("@type", "")).endswith(type_suffix):
             return entry
@@ -51,11 +52,10 @@ def _detail(inner: dict, type_suffix: str) -> dict:
 
 
 def parse_gemini_rate_limit(body: dict, fallback_text: str = "") -> dict:
-    """Pull {quota_id, quota_value, model, is_daily} out of a
-    429 body, falling back to regex over the raw error text when the structured
-    details are missing. Only an explicit per-minute quotaId is treated as
-    waitable — an unknown/absent one is assumed daily, because sleeping an hour on
-    a quota that won't return until midnight is the worse failure."""
+    """Pull the quota facts out of a 429 body, falling back to regex over the raw error text.
+    Only an explicit per-minute quotaId is waitable — an unknown one is assumed daily, since
+    sleeping an hour on a quota that returns at midnight is the worse failure."""
+
     inner = body.get("error", body) if isinstance(body, dict) else {}
     if not isinstance(inner, dict):
         inner = {}
@@ -83,6 +83,7 @@ def parse_gemini_rate_limit(body: dict, fallback_text: str = "") -> dict:
 
 def _quota_message(info: dict, model: str) -> str:
     """One readable line replacing the SDK's multi-hundred-character JSON blob."""
+
     name = info.get("model") or model
     tier = "free-tier " if "FreeTier" in (info.get("quota_id") or "") else ""
     if info["is_daily"]:
@@ -94,7 +95,7 @@ def _quota_message(info: dict, model: str) -> str:
 
 class LLMClient:
     def __init__(self, *, model: str = DEFAULT_MODEL, api_key: str | None = None):
-        # Developer API path used here requires an API key.
+        # The Developer API path used here requires an API key; OAuth is Vertex-only.
         api_key = api_key or os.environ.get("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY is not set in the environment")
@@ -103,6 +104,7 @@ class LLMClient:
 
     def generate(self, contents: list) -> str:
         """Send contents to the model and return its stripped text."""
+
         try:
             response = self.client.models.generate_content(model=self.model, contents=contents)
         except Exception as e:
@@ -116,13 +118,15 @@ class LLMClient:
 
     def upload_file(self, path, mime_type: str):
         """Upload a local file as a reusable content part. Raises RuntimeError on failure."""
+
         try:
             return self.client.files.upload(file=str(path), config={"mime_type": mime_type})
         except Exception as e:
             raise RuntimeError(str(e)) from e
 
     def delete_file(self, name: str) -> None:
-        """Best-effort cleanup of server-side upload quota. Swallows errors"""
+        """Best-effort cleanup of server-side upload quota; swallows errors."""
+
         try:
             self.client.files.delete(name=name)
         except Exception:

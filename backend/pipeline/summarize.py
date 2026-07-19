@@ -23,12 +23,14 @@ PDF_INSTRUCTION_SUFFIX = (
 
 @timed_pipeline("summarize")
 def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
+    """Summarize a transcript (plus an optional material PDF) with Gemini."""
+
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
 
     client = LLMClient(model=MODEL)
     uploaded = []
     try:
-        # Context first, instructions last
+        # Context first, instructions last.
         transcript_file = client.upload_file(transcript_path, "text/plain")
         uploaded.append(transcript_file)
 
@@ -48,6 +50,5 @@ def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
 
         return client.generate(contents)
     finally:
-        # Clean up uploaded files
         for handle in uploaded:
             client.delete_file(handle.name)

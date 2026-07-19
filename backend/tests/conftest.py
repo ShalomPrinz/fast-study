@@ -10,8 +10,7 @@ import pytest
 import timing
 
 
-# The @timed_pipeline decorator writes to timing.db which exists in DB_PATH
-# To achieve test isolation, we use a temporary file for the database during tests
+# @timed_pipeline writes to the real timing.db — point it at a temp file for isolation.
 @pytest.fixture(autouse=True)
 def isolate_timing_db(tmp_path, monkeypatch):
     monkeypatch.setattr(timing, "DB_PATH", tmp_path / "timing.db")

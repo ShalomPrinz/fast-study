@@ -1,24 +1,9 @@
-"""Course-level overview orchestrator. Phase boundaries live here, while actual work in separate modules.
-Mirrors the per-lecture `pipeline/runner.py`, but keyed by (course, slug).
+"""Course-level overview orchestrator: phase boundaries live here, the work lives in the
+phase modules. Mirrors pipeline/runner.py but is keyed by (course, slug).
 
-Each 'generate' trigger is one `OverviewRun` instance: the run owns its selection (slugs, from_phase,
-skip_existing) and the transcript `sources` (fetched ONCE, lazily, memoized on the instance), but it
-does NOT own status — it WRITES its slug entries into the shared per-(course, slug) `_status` store.
-The run is SLUG-BY-SLUG: the outer loop walks the selected extractors in declaration order and, for
-each, acquires that slug's OWN lock, runs its phase chain (from `from_phase` through to_pdf) to
-completion, then releases the lock before the next slug. Because a run only ever holds the CURRENT
-slug's lock, a SEPARATE trigger can run a DIFFERENT slug of the same course fully in parallel — "let
-the user lead". Same slug + same course serialize on the (course, slug) lock; same slug in different
-courses run in parallel for free (different keys).
-
-Collision rule = "first-come keeps it, other skips": when a run reaches a slug whose (course, slug)
-lock is already held by ANOTHER run, it SKIPS that slug and does NOT touch its status entry (the
-lock-holder owns that entry). No waiting, no double work, no clobber.
-
-Module-level state: `_locks` (per-(course, slug), persists across runs to serialize same-slug triggers)
-and `_status` (course → {slug → entry}; the shared store the runs write into, survives after a run
-finishes so `get_status` reads it)."""
-
+Each 'generate' trigger is one OverviewRun owning its selection and transcript sources; status
+is NOT run-scoped — runs write into the shared module-level store. See docs/OVERVIEW.md for the
+lock/collision/failure-isolation model."""
 import asyncio
 
 from course import analyze, collect, extract, overview, to_pdf
@@ -33,8 +18,8 @@ _status: dict[str, dict[str, dict]] = {}
 
 
 def get_status(course: str) -> dict:
-    """Aggregate the shared per-slug store for a course. `running` is DERIVED (any entry running);
-    unknown/never-run course → the empty shape."""
+    """Aggregate the shared per-slug store for a course; `running` is derived from the entries."""
+
     entries = _status.get(course, {})
     return {
         "running": any(e.get("status") == "running" for e in entries.values()),
@@ -43,11 +28,9 @@ def get_status(course: str) -> dict:
 
 def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
     """Parse the optional `extractors` CSV into extractor slugs (default: all)."""
-    # default - all extractors
+
     if not csv:
         return overview.ALL_SLUGS, None
-
-    # parse slugs from csv
     slugs = [s.strip() for s in csv.split(",") if s.strip()]
     unknown = [s for s in slugs if s not in overview.EXTRACTORS_BY_SLUG]
     if unknown:
@@ -57,6 +40,7 @@ def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
 
 def resolve_from_phase(from_phase: str | None) -> tuple[Phase | None, str | None]:
     """Parse the optional from_phase id into a Phase (None = full chain / not provided)."""
+
     if from_phase is None:
         return None, None
     phase = Phase.from_id(from_phase)
@@ -67,10 +51,9 @@ def resolve_from_phase(from_phase: str | None) -> tuple[Phase | None, str | None
 
 def try_run_generate(course: str, course_node: dict, slugs: list[str],
                      from_phase: "Phase | None" = None, skip_existing: bool = False) -> str:
-    """Schedule an overview run over `slugs` (slug-by-slug, each under its own (course, slug) lock).
-    Seeds pending status synchronously so the first poll sees the run — but only for slugs NOT already
-    in flight under another run (never clobber a live entry). Returns "busy" iff EVERY requested slug's
-    lock is currently held (nothing new to start), else "started"."""
+    """Schedule an overview run over `slugs`, seeding pending status synchronously so the first
+    poll sees it. Returns "busy" iff every requested slug's lock is already held."""
+
     entries = _status.setdefault(course, {})
     seeded_any = False
     for slug in slugs:
@@ -87,12 +70,8 @@ def try_run_generate(course: str, course_node: dict, slugs: list[str],
 
 
 class OverviewRun:
-    """One overview 'generate' trigger. Owns run-scoped selection (slugs, from_phase, skip_existing)
-    and the transcript `sources` (fetched ONCE, lazily, the first time any slug enters extract, then
-    reused for the whole run). Does NOT own status — it writes its slug entries into the shared
-    `_status[course]` store, and only for slugs whose (course, slug) lock IT holds. Sequences the
-    slugs SLUG-BY-SLUG (declaration order): each extractor runs its own phase chain from `from_phase`
-    through to_pdf under its own lock before the next starts."""
+    """One overview 'generate' trigger: owns the run-scoped selection and the transcript sources,
+    and walks the slugs one at a time, each running its full phase chain under its own lock."""
 
     def __init__(self, course: str, course_node: dict, slugs: list[str],
                  from_phase: "Phase | None", skip_existing: bool):
@@ -105,67 +84,68 @@ class OverviewRun:
 
     @property
     def sources(self):
-        # Fetch every transcript once, then reuse for every pattern extractor.
+        """Every transcript, fetched once on first access and reused for the whole run."""
+
         if self._sources is None:
             self._sources = extract.fetch_sources(self.course, self.course_node)
         return self._sources
 
     async def execute(self) -> None:
-        """Walk the selected slugs in declaration order. For each, grab its OWN (course, slug) lock and
-        run its phase chain from `from_phase` through to_pdf; earlier phases are skipped (files kept).
-        One slug's failure stops only its own remaining phases — the next slug still runs. With
-        `skip_existing`, a phase whose output already existed at run start is kept (not re-run)."""
+        """Walk the selected slugs in declaration order, running each one's phase chain under its
+        own lock. One slug's failure stops only its own remaining phases."""
+
         # Snapshot the overview dir once at run start (continue mode reads only this snapshot).
         existing = self._existing_outputs() if self.skip_existing else set()
         for slug in self.slugs:
             extractor = overview.EXTRACTORS_BY_SLUG[slug]
             lock = _locks.setdefault((self.course, slug), asyncio.Lock())
-            # Acquiring an un-held asyncio.Lock completes WITHOUT yielding to the event loop (CPython
-            # sets _locked=True and returns immediately when there are no waiters), so between this
-            # `locked()` check being False and entering `async with` below no other task can grab it —
-            # as long as there is NO await in between. That makes skip-on-collision atomic vs. the check.
+            # An un-held asyncio.Lock acquires without yielding, so with no await between this
+            # check and the `async with` below, skip-on-collision is atomic.
             if lock.locked():
                 continue  # another run owns this slug right now — skip, don't touch its entry
             async with lock:
                 for phase in extractor.phases_from(self.from_phase):
                     self._set_phase(slug, phase)
 
-                    # continue mode: keep an output already on disk at run start; run the rest normally.
+                    # Continue mode: keep an output already on disk at run start.
                     if self.skip_existing and extractor.output_file(phase) in existing:
                         self._mark_kept(slug)
                         db_client.notify()
                         continue
 
                     if await asyncio.to_thread(self._run_slug_phase, slug, phase):
-                        break  # slug errored: stop its chain (don't run to_pdf on a failed analyze); others go on
-        # No global running flag to clear — get_status derives it. Notify so the UI refreshes at run end.
+                        break  # slug errored: stop its chain, the other slugs go on
         db_client.notify()
 
     def _existing_outputs(self) -> set[str]:
         """Snapshot the course's overview output filenames."""
+
         return {f["name"] for f in db_client.list_overview_files(self.course)}
 
     def _entry(self, slug: str) -> dict:
-        """The shared status entry for this run's slug (created on demand under the store's course dict)."""
+        """The shared status entry for this run's slug, created on demand."""
+
         return _status.setdefault(self.course, {}).setdefault(slug, {})
 
     def _set_phase(self, slug: str, phase: Phase) -> None:
-        """Mark the slug's current phase in the shared store (creates the entry if needed).
-        Stores the STRING `phase.id` — a Phase object must never reach the JSON-serialized store."""
+        """Mark the slug's current phase in the shared store as the STRING `phase.id` —
+        a Phase object must never reach the JSON-serialized store."""
+
         self._entry(slug)["phase"] = phase.id
 
     def _mark_kept(self, slug: str) -> None:
-        """A kept (already-on-disk) participant: non-error status; keeps the phase _set_phase stamped."""
+        """A kept (already-on-disk) participant: non-error status, keeping the stamped phase."""
+
         self._entry(slug).update({"status": "skipped", "message": "already generated"})
 
     def _run_slug_phase(self, slug: str, phase: Phase) -> bool:
-        """Run one extractor's single phase in a worker thread: mark running, run its worker, fold the
-        result dict into the shared entry, notify. Returns True if it raised (caller stops the chain).
-        Keeps `phase` on the entry across the running→result transition so the UI's per-step spinner
-        stays correct; a fresh dict on running so a prior phase's message can't linger. The stored
-        `phase` is always the STRING `phase.id` — the store is serialized straight to JSON."""
+        """Run one (slug, phase) worker and fold its result into the shared entry; returns True
+        if it raised, so the caller stops that slug's chain."""
+
         entries = _status.setdefault(self.course, {})
-        entries[slug] = {"status": "running", "phase": phase.id}  # fresh dict, phase preserved
+        # Fresh dict so a prior phase's message can't linger, but `phase` is carried across the
+        # running→result transition so the UI's per-step spinner stays correct.
+        entries[slug] = {"status": "running", "phase": phase.id}
         try:
             entries[slug] = {**self._phase_worker(slug, phase), "phase": phase.id}
             errored = False
@@ -177,16 +157,16 @@ class OverviewRun:
         return errored
 
     def _phase_worker(self, slug: str, phase: Phase) -> dict:
-        """Dispatch one (slug, phase) to its worker; each returns a "done"/"skipped" status dict.
-        The phase list comes from each `Extractor.phases`; dispatch stays here (importing the worker
-        modules that import `overview` back would be a cycle)."""
+        """Dispatch one (slug, phase) to its worker. Dispatch lives here, not in the registry —
+        the workers import `overview` back, so a worker import there would cycle."""
+
         extractor = overview.EXTRACTORS_BY_SLUG[slug]
         if phase is Phase.EXTRACT:
             return extract.run_extractor(self.course, extractor, self.sources)
         if phase is Phase.ANALYZE:
             return analyze.run_analyze(self.course, extractor)
         if phase is Phase.TOPICS:
-            # topics ignores the slug: it distills every lecture/recitation summary into topics.md.
+            # topics ignores the slug: it distills every summary into one topics.md.
             return collect.run_collect(self.course, self.course_node)
         if phase is Phase.TO_PDF:
             return to_pdf.run_to_pdf(self.course, slug)

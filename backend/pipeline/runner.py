@@ -1,5 +1,5 @@
-"""Unified execution engine: step executors, in-flight tracking, and runner orchestration.
-All state, logic and scheduling lives here."""
+"""Per-lecture execution engine: step executors, in-flight tracking, orchestration.
+All pipeline state, logic and scheduling lives here. See docs/PIPELINE.md."""
 
 import asyncio
 import json
@@ -33,29 +33,25 @@ STEP_OUTPUT = {
     "pdf":        "summary.pdf",
     "drive":      "drive_url.txt",
 }
-RATE_LIMIT_SLEEP_SECONDS = 3600
-# Only Gemini's PER-MINUTE quota is worth waiting out (its daily one is a hard
-# error, never a sleep) — so a rate_limited result may carry its own retry_after,
-# and the hourly constant above stays the fallback transcribe uses.
+RATE_LIMIT_SLEEP_SECONDS = 3600   # Groq's hourly ASR window; transcribe's fallback
 GEMINI_MINUTE_QUOTA_SLEEP_SECONDS = 60
 
-# lkey = (course, lecture, kind) tuple — hashable key into _locks.
-# skey = "course||lecture||kind" string — key into _in_flight / _errors (also appears in API output).
 _locks: dict[tuple[str, str, str], asyncio.Lock] = {}  # per-lecture; created lazily via setdefault
 _in_flight: dict[str, dict] = {}    # skey → entry; cleared on step completion or error
 _errors: dict[str, str] = {}        # skey → last error message; survives after _in_flight clears
 _runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": None}
-# Run-scoped: set when a lecture hits Gemini's DAILY quota, reset by run_all.
-_summarize_blocked = False
+_summarize_blocked = False          # run-scoped; set on Gemini's DAILY quota, reset by run_all
 
 
 def _lkey(course: str, lecture: str, kind: str) -> tuple[str, str, str]:
-    """Tuple key into _locks. Tuple (not string) so the dict holds Lock objects, not serialisable data."""
+    """Tuple key into _locks — the dict holds Lock objects, not serialisable data."""
+
     return (course, lecture, kind)
 
 
 def _skey(course: str, lecture: str, kind: str) -> str:
-    """String key into _in_flight and _errors. String form appears verbatim in /status output."""
+    """String key into _in_flight and _errors; appears verbatim in /status output."""
+
     return f"{course}||{lecture}||{kind}"
 
 
@@ -65,6 +61,7 @@ def _now_iso() -> str:
 
 def get_status() -> dict:
     """Snapshot of all live state; returned verbatim by GET /status."""
+
     return {
         "runner":    dict(_runner_status),
         "in_flight": list(_in_flight.values()),
@@ -74,14 +71,8 @@ def get_status() -> dict:
 
 # ---- empty-file guard ----
 
-# A pipeline file is never legitimately 0 bytes. When one is, the producing step
-# (or an out-of-band write) failed silently — but the failure mode is usually a
-# tool returning success with no content, so no exception was raised to explain
-# it. This maps a file to its likely cause so _require_nonempty can report the
-# *why* even though there's no raised error to derive it from. The fallback is
-# the generic "is empty" with no hint.
-# For summary.md the usual culprits are finish_reason MALFORMED_RESPONSE, a
-# safety block, or a rate limit.
+# A 0-byte pipeline file means the producing tool returned success with no content
+# and raised nothing, so map each file to its likely cause for the error message.
 EMPTY_FILE_ISSUES: dict[str, str] = {
     "video.mp4":      "the source video is empty or was not fully uploaded",
     "audio.mp3":      "ffmpeg produced no audio — the video may have no audio track or be corrupt",
@@ -94,14 +85,9 @@ EMPTY_FILE_ISSUES: dict[str, str] = {
 
 
 def _require_nonempty(filename: str, data: bytes) -> None:
-    """The generic guard: a 0-byte pipeline file is always a silent failure, so
-    refuse it at every input read and output write. Halting here keeps a 0-byte
-    file from being written or consumed, instead of advancing on it (which
-    `next_step` counts as "exists") and surfacing a misleading downstream error.
-    Before: 0-byte summary.md consumed -> pdf step crashes with "pandoc failed"
-    After:  0-byte summary.md rejected -> "summary.md is empty — Gemini returned no text ..."
-    The message borrows EMPTY_FILE_ISSUES for the cause, since the failing tool
-    raised nothing to derive it from."""
+    """Reject a 0-byte pipeline file at every read and write — advancing on one
+    (`next_step` counts it as "exists") surfaces a misleading downstream error."""
+
     if not data:
         hint = EMPTY_FILE_ISSUES.get(filename)
         raise RuntimeError(f"{filename} is empty" + (f" — {hint}" if hint else ""))
@@ -111,12 +97,9 @@ def _require_nonempty(filename: str, data: bytes) -> None:
 
 @contextmanager
 def _db_workspace(course: str, lecture: str, kind: str, *, download=(), upload=()):
-    """Tempdir scoped to one pipeline step: pre-downloads named inputs from the
-    database service and uploads named outputs on clean exit. Pipeline binaries
-    (ffmpeg/pandoc/Gemini) need real filesystem paths, so bytes have to land
-    somewhere — this just centralizes the round-trip. Inputs are guarded on the
-    way in and outputs on the way out, so no step ever consumes or emits a
-    0-byte file."""
+    """Tempdir scoped to one pipeline step: downloads named inputs and uploads named
+    outputs on clean exit, guarding both ends against 0-byte files."""
+
     with tempfile.TemporaryDirectory() as tmp:
         tmp_path = Path(tmp)
         paths = {name: tmp_path / name for name in set(download) | set(upload)}
@@ -135,6 +118,7 @@ def _db_workspace(course: str, lecture: str, kind: str, *, download=(), upload=(
 
 def _exec_audio(course: str, lecture: str, kind: str) -> dict:
     """Strip audio from video.mp4 → audio.mp3 via ffmpeg. Returns {status: done|error}."""
+
     try:
         if not db_client.file_exists(course, lecture, kind, "video.mp4"):
             return {"status": "error", "message": "video.mp4 is required"}
@@ -146,7 +130,8 @@ def _exec_audio(course: str, lecture: str, kind: str) -> dict:
 
 
 def _persist_transcribe_partial(course: str, lecture: str, kind: str, tmp: Path) -> None:
-    """Persists transcription partial state. Runs on any transcribe mid-run failure."""
+    """Persist transcription partial state. Runs on any transcribe mid-run failure."""
+
     for name in (PARTIAL_TXT, PARTIAL_META):
         p = tmp / name
         if p.exists():
@@ -155,7 +140,8 @@ def _persist_transcribe_partial(course: str, lecture: str, kind: str, tmp: Path)
 
 def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
     """Transcribe audio.mp3 → transcript.txt via Groq Whisper, resuming from partial state if present.
-    Returns {status: done|error|rate_limited}; on rate_limited, progress chunk counts are included."""
+    Returns {status: done|error|rate_limited}; rate_limited carries progress chunk counts."""
+
     try:
         if not db_client.file_exists(course, lecture, kind, "audio.mp3"):
             return {"status": "error", "message": "audio.mp3 is required — run Extract Audio first"}
@@ -166,11 +152,8 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
             _require_nonempty("audio.mp3", audio_bytes)
             audio_path.write_bytes(audio_bytes)
 
-            # Resume support: pipeline writes partial.txt/meta next to audio_path and
-            # validates audio mtime+size against the meta. Re-downloading audio.mp3 each
-            # request gives it a fresh mtime, so we mirror the stored partial state into
-            # the temp dir AND fix audio's mtime to match meta — otherwise resume always
-            # falls back to fresh, losing previously-transcribed chunks.
+            # Resume validates audio mtime+size against the meta, and re-downloading gives
+            # audio a fresh mtime — so restore the recorded mtime or resume restarts from 0.
             partial_meta_bytes = None
             if db_client.file_exists(course, lecture, kind, PARTIAL_META):
                 partial_meta_bytes = db_client.get_file_bytes(course, lecture, kind, PARTIAL_META)
@@ -214,9 +197,9 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
 
 
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
-    """Summarize transcript.txt → summary.md via Gemini. Passes material.pdf alongside if present.
-    Returns {status: done|error|rate_limited}; a daily-quota 429 is a plain error flagged
-    daily_quota (no retry), a per-minute one is rate_limited and waits out its window."""
+    """Summarize transcript.txt → summary.md via Gemini, passing material.pdf if present.
+    A daily-quota 429 is a plain error (no retry); a per-minute one is rate_limited."""
+
     try:
         if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
             return {"status": "error", "message": "transcript.txt is required — run Transcribe first"}
@@ -227,15 +210,12 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
         print(f"Summarize: material.pdf {'found — passing to Gemini' if has_material else 'not found — transcript only'}")
         with _db_workspace(course, lecture, kind, download=download) as ws:
             summary = summarize(ws["transcript.txt"], ws.get("material.pdf") if has_material else None)
-        # Gemini can return HTTP 200 with no text (e.g. finish_reason
-        # MALFORMED_RESPONSE) — the generic guard turns that into a clear error
-        # instead of a 0-byte summary.md.
+        # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
         db_client.put_summary(course, lecture, kind, summary)
         return {"status": "done", "usedMaterial": has_material}
     except GeminiRateLimitError as e:
-        # A daily quota's retryDelay lies — the body says "retry in 59s" while the
-        # quotaId says PerDay, so sleeping and retrying fails all day.
+        # A daily quota's retryDelay lies: it says 59s while the quotaId says PerDay.
         if e.info["is_daily"]:
             return {"status": "error", "message": str(e), "daily_quota": True}
         return {"status": "rate_limited", "retry_after": GEMINI_MINUTE_QUOTA_SLEEP_SECONDS}
@@ -245,12 +225,12 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
 
 def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
     """Render summary.md → summary.pdf via pandoc/XeLaTeX."""
+
     try:
         if not db_client.file_exists(course, lecture, kind, "summary.md"):
             return {"status": "error", "message": "summary.md is required — run Summarize first"}
         with _db_workspace(course, lecture, kind, upload=["summary.pdf"]) as ws:
-            # summary.md comes from get_summary (envelope-wrapped), not get_file_bytes,
-            # so write it into the workspace dir manually next to the pandoc output.
+            # summary.md comes from get_summary (envelope-wrapped), not get_file_bytes.
             md_path = ws["summary.pdf"].parent / "summary.md"
             md = db_client.get_summary(course, lecture, kind)
             _require_nonempty("summary.md", md.encode("utf-8"))
@@ -263,10 +243,11 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
 
 def _exec_drive(course: str, lecture: str, kind: str) -> dict:
     """Upload summary.pdf to Google Drive and write the share URL to drive_url.txt."""
+
     try:
         if not db_client.file_exists(course, lecture, kind, "summary.pdf"):
             return {"status": "error", "message": "summary.pdf is required — run PDF first"}
-        # Recitations live under a Recitations/ subfolder inside the course folder in Drive.
+        # Recitations live under a Recitations/ subfolder of the course folder in Drive.
         subfolder = RECITATIONS_DIR if kind == "recitation" else None
         with _db_workspace(course, lecture, kind, download=["summary.pdf"], upload=["drive_url.txt"]) as ws:
             url = upload_to_drive(
@@ -292,27 +273,22 @@ _EXECUTORS = {
 
 def execute_step(course: str, lecture: str, kind: str, step: str) -> dict:
     """Public dispatch: called by main.py route handlers."""
+
     return _EXECUTORS[step](course, lecture, kind)
 
 
 # ---- Pipeline utilities ----
 
 def next_step(files: dict) -> Optional[str]:
-    """Given a {filename: {exists: bool, ...}} mapping for one lecture, return
-    the next pipeline step name to run, or None if drive_url.txt already exists.
-
-    A step is skipped iff its output file already exists. Steps run in
-    STEP_ORDER; the first step whose output is missing is returned."""
+    """The first step in STEP_ORDER whose output file is missing, or None once
+    drive_url.txt exists. Pure file-existence, so every trigger is resumable."""
 
     def has(name: str) -> bool:
         entry = files.get(name)
         return bool(entry and entry.get("exists"))
 
-    # Assumes last step's output is drive_url.txt; if it exists, the lecture is done
     if has("drive_url.txt"):
         return None
-    
-    # Otherwise return the first step whose output file is missing
     for step in STEP_ORDER:
         if not has(STEP_OUTPUT[step]):
             return step
@@ -321,14 +297,15 @@ def next_step(files: dict) -> Optional[str]:
 
 def _lecture_pending(files: dict) -> bool:
     """A lecture is pending iff it has video.mp4 but no drive_url.txt."""
+
     video = files.get("video.mp4") or {}
     drive = files.get("drive_url.txt") or {}
     return bool(video.get("exists")) and not bool(drive.get("exists"))
 
 
 async def scan_pending() -> list[tuple[str, str, str]]:
-    """Walk the full tree; return (course, lecture, kind) triples for every
-    lecture/recitation that has video.mp4 but no drive_url.txt."""
+    """Walk the full tree for every pending lecture/recitation as (course, lecture, kind)."""
+
     tree = await asyncio.to_thread(db_client.get_tree)
     pending: list[tuple[str, str, str]] = []
     for course in tree:
@@ -344,6 +321,7 @@ async def scan_pending() -> list[tuple[str, str, str]]:
 
 async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
     """Build a {filename: {exists}} mapping for one lecture via parallel HEAD calls."""
+
     names = ["video.mp4", "audio.mp3", "transcript.txt", "summary.md", "summary.pdf", "drive_url.txt"]
     results = await asyncio.gather(
         *[asyncio.to_thread(db_client.file_exists, course, lecture, kind, name) for name in names]
@@ -355,15 +333,17 @@ async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
 
 async def _call_step(course: str, lecture: str, kind: str, step: str) -> dict:
     """Run one executor in a worker thread so the event loop stays free during blocking I/O."""
+
     return await asyncio.to_thread(_EXECUTORS[step], course, lecture, kind)
 
 
 async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) -> None:
-    """Drive a single pipeline step to a terminal outcome (done or error), retrying after rate-limit sleeps.
-    Unsafe: caller must hold _locks[_lkey(course, lecture, kind)] before calling."""
+    """Drive one step to a terminal outcome, retrying after rate-limit sleeps.
+    Unsafe: the caller must hold this lecture's lock."""
+
     global _summarize_blocked
     skey = _skey(course, lecture, kind)
-    # Each loop iteration = one attempt; rate_limited cycles back, done/error exits.
+    # Each iteration = one attempt; rate_limited cycles back, done/error exits.
     while True:
         _in_flight[skey] = {
             "course": course, "lecture": lecture, "kind": kind,
@@ -402,18 +382,15 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
 
 
 async def _run_pipeline_unlocked(course: str, lecture: str, kind: str, *, honor_block: bool = False) -> bool:
-    """Advance a lecture through every remaining pipeline step until done or an error stops it.
-    Returns True iff it stopped early because summarize is blocked for this run.
-    `honor_block` is only set by run_all — a manual trigger always tries Gemini again
-    (the user may have swapped keys or upgraded billing) and gets the clear message if not.
-    Unsafe: caller must hold _locks[_lkey(course, lecture, kind)] before calling."""
+    """Advance a lecture through its remaining steps; True iff it stopped early on the
+    run-scoped summarize block. Unsafe: the caller must hold this lecture's lock."""
+
     while True:
         files = await _fetch_files(course, lecture, kind)
         step = next_step(files)
         if step is None:
             return False
         if step == "summarize" and honor_block and _summarize_blocked:
-            # Stop silently at transcript.txt if summarize was blocked once
             log.info("%s/%s (%s): summarize blocked (Gemini daily quota), stopping here", course, lecture, kind)
             return True
         await _run_step_unlocked(course, lecture, kind, step)
@@ -423,6 +400,7 @@ async def _run_pipeline_unlocked(course: str, lecture: str, kind: str, *, honor_
 
 async def run_step(course: str, lecture: str, kind: str, step: str) -> None:
     """Acquire the per-lecture lock, then run one step to completion (blocking the caller)."""
+
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
         await _run_step_unlocked(course, lecture, kind, step)
 
@@ -430,12 +408,14 @@ async def run_step(course: str, lecture: str, kind: str, step: str) -> None:
 async def run_pipeline_for(course: str, lecture: str, kind: str, *, honor_block: bool = False) -> bool:
     """Acquire the per-lecture lock, then advance the lecture through all remaining steps.
     Returns True iff it stopped early on the run-scoped summarize block (run_all only)."""
+
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
         return await _run_pipeline_unlocked(course, lecture, kind, honor_block=honor_block)
 
 
 def try_run_step(course: str, lecture: str, kind: str, step: str) -> str:
     """Fire-and-forget run_step if the lecture isn't already locked. Returns 'busy' or 'started'."""
+
     lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
     if lock.locked():
         return "busy"
@@ -445,6 +425,7 @@ def try_run_step(course: str, lecture: str, kind: str, step: str) -> str:
 
 def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
     """Fire-and-forget run_pipeline_for if the lecture isn't already locked. Returns 'busy' or 'started'."""
+
     lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
     if lock.locked():
         return "busy"
@@ -455,8 +436,9 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
 # ---- Runner orchestration ----
 
 async def run_all(queue: list[tuple[str, str, str]]) -> dict:
-    """Run every lecture in queue to completion sequentially. Caller is responsible
-    for scanning and passing a non-empty queue; this function never re-scans."""
+    """Run every lecture in queue to completion sequentially. The caller passes a
+    non-empty queue; this never re-scans."""
+
     global _summarize_blocked
     log.info("run_all starting with %d pending lecture(s): %s", len(queue), [f"\n{c}/{l} ({k})" for c, l, k in queue])
     _summarize_blocked = False
@@ -465,9 +447,8 @@ async def run_all(queue: list[tuple[str, str, str]]) -> dict:
     _runner_status["done"] = 0
     _runner_status["total"] = len(queue)
     _runner_status["last_error"] = None
-    # No notify here: first useful frontend state is when first step is in-flight.
-    # Earlier notifies (in_flight still empty) create a rapid-fire burst whose
-    # parallel refreshes can reorder and overwrite the fresh snapshot.
+    # No notify: with _in_flight still empty these burst, and their parallel refreshes
+    # can reorder and overwrite the fresher snapshot. Same for the per-lecture done below.
     try:
         for (course, lecture, kind) in queue:
             log.info("=== starting pipeline %d/%d: %s/%s (%s) ===", _runner_status["done"] + 1, _runner_status["total"], course, lecture, kind)
@@ -485,8 +466,6 @@ async def run_all(queue: list[tuple[str, str, str]]) -> dict:
                 log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
                 _runner_status["last_error"] = f"{course}/{lecture}: {e}"
             _runner_status["done"] += 1
-            # No notify here to prevent race condition.
-            # Next step will notify, or if on last lecture, final status update after the loop.
         blocked = f", summarize skipped for {blocked_count} (Gemini daily quota)" if blocked_count else ""
         log.info("run_all completed: %d/%d done%s, last_error=%s", _runner_status["done"], _runner_status["total"], blocked, _runner_status["last_error"])
         return {"status": "completed", **get_status()}
@@ -497,7 +476,8 @@ async def run_all(queue: list[tuple[str, str, str]]) -> dict:
 
 
 async def _scheduled_run() -> None:
-    """Cron entry point: already running — skip. Otherwise scan, then run if anything pending."""
+    """Cron entry point: skip if already running, else scan and run anything pending."""
+
     if _runner_status["running"]:
         log.info("cron: runner already running, skipping")
         return
