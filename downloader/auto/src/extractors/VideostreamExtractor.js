@@ -36,7 +36,7 @@ export class VideostreamExtractor extends VideoExtractor {
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
   toRecordings(activity) {
-    return [{ title: activity.title, pageUrl: activity.viewUrl, kind: activity.kind, strategy: 'videostream' }];
+    return [{ title: activity.title, pageUrl: activity.viewUrl, kind: activity.kind, strategy: 'videostream', section: activity.sectionName }];
   }
 
   /**

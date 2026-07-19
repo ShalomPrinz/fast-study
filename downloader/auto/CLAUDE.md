@@ -17,7 +17,7 @@ Port **3053** (`AUTODL_PORT`). Reads the repo-root `.env` (`src/lib/config.js`) 
 
 ## HTTP surface
 
-Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, expandable }`; `/download-item` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.
+Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, expandable, section }` (`section` = the Moodle section heading, display metadata for grouping, `''` when unnamed); `/download-item` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.
 
 | Endpoint | Body | Returns |
 |---|---|---|

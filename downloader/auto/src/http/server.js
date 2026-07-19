@@ -20,6 +20,7 @@ function toItem(recording) {
     title: recording.title,
     kind: recording.kind,
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
+    section: recording.section ?? '',
   };
 }
 
@@ -149,7 +150,7 @@ export async function handleListExpand(req, res) {
   // Each entry becomes a concrete, downloadable child (has a direct url → not
   // expandable). The child's ref carries the youtube recording for /download-item.
   const items = entries.map((e) =>
-    toItem({ title: e.title, url: e.url, kind: recording.kind, strategy: recording.strategy }),
+    toItem({ title: e.title, url: e.url, kind: recording.kind, strategy: recording.strategy, section: recording.section }),
   );
   logResult('/list/expand', `${items.length} items`);
   send(res, 200, { items });

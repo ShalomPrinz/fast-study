@@ -60,6 +60,7 @@ export class ZoomExtractor extends VideoExtractor {
         pageUrl: activity.pageUrl,
         kind: activity.kind,
         strategy: 'zoom',
+        section: activity.sectionName,
       },
     ];
   }

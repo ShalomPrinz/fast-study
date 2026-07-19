@@ -59,7 +59,7 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
   toRecordings(activity) {
-    return [{ title: activity.title, pageUrl: activity.externalUrl, kind: activity.kind, strategy: 'youtube-playlist' }];
+    return [{ title: activity.title, pageUrl: activity.externalUrl, kind: activity.kind, strategy: 'youtube-playlist', section: activity.sectionName }];
   }
 
   /**

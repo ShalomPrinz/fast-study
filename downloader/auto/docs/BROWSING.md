@@ -21,7 +21,7 @@ cards, so the module parser never sees them.
 
 ## Mechanism-agnostic Item / ref contract
 
-The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, expandable }`. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
+The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, expandable, section }`. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `section` is display metadata — the Moodle course section heading (`section.name`) the item lives under, a sibling field the frontend groups by (never parsed out of `ref`); `''` when the section is unnamed. Expanded playlist children inherit their parent's `section`. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
 
 ## Lazy expansion
 
