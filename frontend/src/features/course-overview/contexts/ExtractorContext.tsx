@@ -1,8 +1,7 @@
 import { createContext, useContext } from 'react'
 import type { OverviewExtractor } from '@/types'
 
-// One extractor row's shared concern: the extractor it renders + its expand/regenerate
-// controls. Lets the header / steps reach the extractor without prop-drilling it.
+// One extractor row's extractor + expand/regenerate controls, reachable without prop-drilling.
 export interface ExtractorValue {
   extractor: OverviewExtractor
   expanded: boolean

@@ -4,8 +4,7 @@ export function formatDuration(seconds: number): string {
   return `${Math.floor(s / 60)}m ${s % 60}s`
 }
 
-// English ordinal suffix. 11th–13th are special-cased (they don't follow the 1st/2nd/3rd rule).
-//    examples: ordinal(1) -> "1st"  ordinal(12) -> "12th"  ordinal(22) -> "22nd"
+// English ordinal; 11th–13th break the 1st/2nd/3rd rule and are special-cased.
 function ordinal(n: number): string {
   const mod100 = n % 100
   if (mod100 >= 11 && mod100 <= 13) return `${n}th`

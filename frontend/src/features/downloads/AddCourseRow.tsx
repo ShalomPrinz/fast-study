@@ -2,9 +2,7 @@ import { useState } from 'react'
 import { createCourse } from '@/services/database'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 
-// Add-course row: creates the same DATA_ROOT course the pipeline uses, seeded
-// with an optional source URL. Uses plain inputs (not InlineEditInput) so moving
-// between the name and URL fields doesn't blur-cancel the entry.
+// Plain inputs, not InlineEditInput: moving between the name and URL fields must not blur-cancel.
 export default function AddCourseRow() {
   const { refreshCourses } = useCourseTreeContext()
   const [adding, setAdding] = useState(false)

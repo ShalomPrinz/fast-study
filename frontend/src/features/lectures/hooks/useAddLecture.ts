@@ -6,7 +6,7 @@ import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { suggestName } from '@/features/lectures/utils/namingSuggestion'
 
 export interface AddLecture {
-  // Which kind of item is currently being added (null = not adding).
+  // null = not adding.
   target: { kind: Kind } | null
   edit: InlineEdit
   start: (kind: Kind) => void
@@ -14,7 +14,7 @@ export interface AddLecture {
   commit: () => Promise<void>
 }
 
-// add-lecture/recitation flow scoped to one course: which kind is being added, inline-edit buffer, and commit/cancel.
+// The add-lecture/recitation flow for one course.
 export function useAddLecture(course: Course): AddLecture {
   const { courses, refreshCourses } = useCourseTreeContext()
   const [target, setTarget] = useState<{ kind: Kind } | null>(null)

@@ -14,8 +14,7 @@ import { isDownloaded } from './utils/nameSuggestion'
 
 type Result = 'ok' | 'fail' | null
 
-// Expandable rows are driven by SectionGroup, which owns the fetch + children cache so it
-// can tell whether the whole section is expanded (and build the bulk queue from the children).
+// Owned by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {
   expanded: boolean
   children: Item[] | null
@@ -31,24 +30,21 @@ interface Props {
   expand?: ExpandControl
 }
 
-// One discovered recording. Downloadable rows carry the full name/kind/download
-// controls; expandable rows render the caret against the parent-owned ExpandControl
-// and render each fetched child as its own (recursive) RecordingRow.
+// One discovered recording; an expandable one renders each child as a recursive RecordingRow.
 export default function RecordingRow({ item, course, onReconnect, expand }: Props) {
   const { courses } = useCourseTreeContext()
-  // Name/kind live in SectionGroup (keyed by ref) so this row and the bulk queue agree.
+  // Name/kind live in SectionGroup so this row and the bulk queue agree.
   const { kind, suggestion, value, name: effectiveName, setName, setKind } = useRowEdit(item, course)
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<Result>(null)
   const [confirming, setConfirming] = useState(false)
 
-  // Zoom passcode prompt: opened when /download-item answers 409 { status:'passcode' }.
-  // Distinct from the pre-download overwrite ConfirmModal — they fire at different moments
-  // (confirming is already false once download() runs), so the two never co-render.
+  // Opened on a 409 passcode gate. Never co-renders with the overwrite confirm, which is
+  // already dismissed by the time download() can hit the 409.
   const [passcodePrompt, setPasscodePrompt] = useState(false)
   const [passcodeReason, setPasscodeReason] = useState<PasscodeError['reason']>('missing')
 
-  // Read the live tree so a completed download's SSE refresh updates the row
+  // Live tree, so a completed download's SSE refresh flips the row green.
   const alreadyDownloaded = isDownloaded(effectiveName, kind, courses, course)
 
   if (item.expandable && expand) {
@@ -92,8 +88,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     } catch (err) {
       if (isReconnectError(err)) onReconnect()
       else if (isPasscodeError(err)) {
-        // Row is mid-flow — prompt for the passcode instead of failing. The finally clears
-        // the spinner while the user types; submitting re-enters pending and re-runs download().
+        // Prompt instead of failing; the finally clears the spinner while the user types.
         setPasscodeReason(err.reason)
         setPasscodePrompt(true)
       } else setResult('fail')
@@ -102,9 +97,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     }
   }
 
-  // Save the entered passcode, then re-run download() so it re-hits /download-item with the
-  // stored passcode. pending stays true across save→retry so the spinner never flashes off; a
-  // still-wrong passcode re-opens this prompt with the 'incorrect' copy.
+  // pending stays true across save→retry so the spinner never flashes off.
   async function submitPasscode(passcode: string, scope: 'course' | 'lecture') {
     if (!passcode) return
     setPending(true)
@@ -125,7 +118,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     setResult('fail')
   }
 
-  // Re-downloading an existing recording overwrites it, so confirm first.
+  // Re-downloading overwrites, so confirm first.
   function onDownloadClick() {
     if (alreadyDownloaded) setConfirming(true)
     else download()

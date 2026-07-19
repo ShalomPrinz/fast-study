@@ -38,7 +38,6 @@ export default function RunnerPipelineRow() {
     <InFlightRow key={`${entry.course}||${entry.lecture}||${entry.kind}`} entry={entry} />
   ))
 
-  // Show the "Run incomplete pipelines" button if automated runner is not running
   if (!running) {
     return (
       <>
@@ -48,7 +47,7 @@ export default function RunnerPipelineRow() {
     )
   }
 
-  // done is 0-indexed but we want to show 1-indexed progress, so add 1 - but cap at total.
+  // `done` counts finished lectures; display the 1-indexed current one, capped at total.
   const runnerCurrent = Math.min(status!.runner.done + 1, status!.runner.total)
   const runnerCurrentDisplay = `(${runnerCurrent}/${status!.runner.total})`
 

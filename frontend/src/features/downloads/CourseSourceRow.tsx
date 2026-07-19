@@ -13,11 +13,8 @@ interface Props {
   discovering?: boolean
 }
 
-// One course row: name + its source URL. Once a URL is set the text is a real
-// link (default click opens a new tab); a pencil button switches to inline edit
-// (setCourseSourceUrl PATCH). With no URL yet there's nothing to link to, so the
-// "+ add source URL" affordance opens edit mode directly. When a source URL is set,
-// a "Load recordings" button discovers the course's recordings in-page.
+// One course row: name + source URL (a real link once set, pencil to edit) + Load recordings.
+// With no URL there's nothing to link to, so "+ add source URL" opens edit mode directly.
 export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { refreshCourses } = useCourseTreeContext()
   const [editing, setEditing] = useState(false)

@@ -1,7 +1,7 @@
 import { createClient, httpError } from '@/services/http'
 import type { Kind } from '@/types'
 
-// Boundary for the auto-downloader service (persistent-browser BIU capture).
+// Feature-local boundary for the auto-downloader service (persistent-browser BIU capture).
 const autoDownloader = createClient(
   import.meta.env.VITE_AUTODL_URL ?? 'http://localhost:3053',
   'auto-downloader service',
@@ -12,10 +12,8 @@ export interface AuthStatus {
   expired: boolean
 }
 
-// Mechanism-agnostic discovery item. `ref` is an opaque token — round-trip it
-// back to /download-item, never parse it. `expandable` true → resolve via
-// /list/expand into downloadable children; false → downloadable directly.
-// `section` is the Moodle heading the item sits under, '' when the heading is blank.
+// Mechanism-agnostic discovery item. `ref` is opaque — round-trip it, never parse it.
+// `expandable` → resolve via /list/expand into children; `section` is the Moodle heading ('' if blank).
 export interface Item {
   ref: string
   title: string
@@ -24,9 +22,8 @@ export interface Item {
   section: string
 }
 
-// Thrown when the stored BIU session is missing/expired. /list and /download-item
-// answer HTTP 401 { status: 'reconnect' } in that case; we surface it distinctly so
-// the UI steers the user to the Reconnect pill instead of a generic error toast.
+// HTTP 401 { status: 'reconnect' }: the stored BIU session is gone. Distinct type so the UI
+// steers to the Reconnect pill instead of a generic error toast.
 export class ReconnectError extends Error {
   constructor() {
     super('BIU session expired — reconnect the account.')
@@ -38,10 +35,8 @@ export function isReconnectError(err: unknown): err is ReconnectError {
   return err instanceof ReconnectError
 }
 
-// Thrown when an expandable item's redirect target is an unsupported (non-YouTube)
-// host. /list/expand answers HTTP 422 { status: 'unsupported', message } in that case;
-// the message is a ready-to-display user-friendly string we surface verbatim (permanent
-// failure — the UI shows it instead of a "try again" retry prompt).
+// HTTP 422 { status: 'unsupported' } from /list/expand: non-YouTube redirect target.
+// Permanent failure, and `message` is display-ready — show it verbatim, no retry prompt.
 export class UnsupportedError extends Error {
   constructor(message: string) {
     super(message)
@@ -53,8 +48,8 @@ export function isUnsupportedError(err: unknown): err is UnsupportedError {
   return err instanceof UnsupportedError
 }
 
-// Thrown when a recording is gated behind a passcode the server doesn't have.
-// Note: `name` is mapped to `lecture` because it collides with Error.name
+// HTTP 409 { status: 'passcode' }: recording gated behind a passcode the server lacks.
+// The body's `name` is carried as `lecture` because it collides with Error.name.
 export class PasscodeError extends Error {
   constructor(
     public reason: 'missing' | 'incorrect',
@@ -69,11 +64,9 @@ export function isPasscodeError(err: unknown): err is PasscodeError {
   return err instanceof PasscodeError
 }
 
-// The shared http client hides the response body, so the { status: 'reconnect' }
-// 401 signal can't be read through it — hence a small direct fetch here that reads
-// the body on 401. NOTE: this bypasses the client's central ConnectionError
-// wrapping, so a connection-refused here throws a raw TypeError rather than the
-// friendly "service down" toast — acceptable for these two endpoints.
+// These endpoints encode meaning in the response body, which the shared client discards — hence
+// a direct fetch. Trade-off: no central ConnectionError wrapping, so a refused connection throws
+// a raw TypeError instead of the friendly "service down" toast.
 async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
   const res = await fetch(autoDownloader.url(path), {
     method: 'POST',
@@ -100,20 +93,17 @@ async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>
 }
 
-// Discover a course's recordings. Empty/expired session → ReconnectError.
 export async function listRecordings(courseUrl: string): Promise<Item[]> {
   const { items } = await postReconnectAware<{ items: Item[] }>('/list', { courseUrl })
   return items
 }
 
-// Resolve one expandable item into its downloadable children (echo the opaque ref).
-// Expired session → ReconnectError; unsupported (non-YouTube) redirect target → UnsupportedError.
+// Resolve one expandable item into its downloadable children.
 export async function expandItem(ref: string): Promise<Item[]> {
   const { items } = await postReconnectAware<{ items: Item[] }>('/list/expand', { ref })
   return items
 }
 
-// Download one downloadable item (echo its opaque ref). Expired session → ReconnectError.
 export async function downloadItem(args: {
   ref: string
   course: string
@@ -143,7 +133,7 @@ export async function fetchAuthStatus(): Promise<AuthStatus> {
   return autoDownloader.get<AuthStatus>('/auth/status')
 }
 
-// Launches a headed browser on the machine for MFA; returns immediately.
+// Launches a headed browser on the host for MFA; returns immediately.
 export async function connectAuth(): Promise<{ status: string }> {
   return autoDownloader.post<{ status: string }>('/auth/connect')
 }

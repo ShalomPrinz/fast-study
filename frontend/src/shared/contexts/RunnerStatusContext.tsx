@@ -60,12 +60,10 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     }
   }
 
-  // Refresh status on mount
   useEffect(() => {
     refresh()
   }, [])
 
-  // Refresh status when SSE 'notify' events are received
   useNotify(refresh)
 
   async function trigger() {

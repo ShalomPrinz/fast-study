@@ -1,9 +1,7 @@
 import { useCallback, useRef } from 'react'
 
-// Guards against stale async responses overwriting fresher ones when the same
-// fetcher is triggered repeatedly (e.g. SSE notify bursts around step boundaries,
-// or rapid user clicks). Only the most recently issued call's resolved value is
-// returned; superseded calls resolve to undefined and should be ignored.
+// Drops stale responses when one fetcher is re-triggered (SSE notify bursts, rapid clicks):
+// only the newest call resolves to a value, superseded ones resolve to undefined.
 export function useLatestRequest() {
   const idRef = useRef(0)
   return useCallback(async <T,>(p: Promise<T>): Promise<T | undefined> => {

@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react'
 import type { Kind } from '@/types'
 
-// Single-member context: which list (lecture vs recitation) the subtree belongs to.
+// Which list (lecture vs recitation) the subtree belongs to.
 const LectureListContext = createContext<Kind | null>(null)
 
 export function LectureListProvider({ kind, children }: { kind: Kind; children: ReactNode }) {

@@ -2,12 +2,11 @@ import { useCourseOverview } from '@/features/course-overview/contexts/CourseOve
 import { startedSlug } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
 
-// Course overview header run control
 export default function GenerateAllButton() {
   const { extractors, files, status, generate } = useCourseOverview()
   const running = status?.running ?? false
 
-  // Any produced file means we're continuing rather than starting fresh
+  // Any existing output means this is a continue, not a fresh start.
   const existingFiles = new Set(files.map((f) => f.name))
   const hasStarted = (extractors ?? []).some(({ slug, phases }) => startedSlug(slug, phases, existingFiles) !== null)
 

@@ -139,16 +139,13 @@ export default function MainView() {
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
 
-  // Derive inflight state from backend context
   const { isInFlight, getError } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
   const lectureError = getError(course, lecture, kind)
   const remote = useRemoteInflightState({ course, lecture, kind, files, transcribePartial })
 
-  // MainView shows course and lecture details. No course or lecture in URL -> show nothing
   if (!course || !lecture) return null
 
-  // Still loading course details (files, etc.) -> show spinner
   if (!files) {
     return (
       <main className="main-view">

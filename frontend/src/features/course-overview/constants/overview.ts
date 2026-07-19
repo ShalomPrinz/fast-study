@@ -30,8 +30,7 @@ export interface StartedSlug {
   furthest: string // furthest pipeline output already on disk
 }
 
-// How far along a slug is, given the set of existing overview filenames.
-// Returns null when nothing was produced yet — that's fresh generation, not a re-generation.
+// How far a slug got; null when nothing exists yet — a fresh generation, not a continue.
 export function startedSlug(slug: string, phases: CoursePhase[], existing: Set<string>): StartedSlug | null {
   const produced = generatedFiles(slug, phases)
   let furthestIdx = -1
@@ -48,7 +47,7 @@ export interface BranchStatus {
   error: string | null
 }
 
-// extractor's derived state from the fetched status + files
+// One extractor's derived state; `done` means its last phase output exists.
 export function branchStatus(
   status: CourseStatus | null,
   files: CourseFile[],

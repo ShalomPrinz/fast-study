@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { Step, TimingStats } from '@/types'
 import { fetchTimingStats } from '@/services/backend'
 
-// Async (step, size) -> TimingStats with a staleness guard: late responses
-// for a (step, size) the caller has moved on from are dropped.
+// (step, size) -> TimingStats, dropping responses for a key the caller has moved on from.
 export function useTimingStats(step: Step | null, fileSizeBytes: number): TimingStats | null {
   const [state, setState] = useState<{ key: string; stats: TimingStats | null } | null>(null)
   const reqKeyRef = useRef<string | null>(null)

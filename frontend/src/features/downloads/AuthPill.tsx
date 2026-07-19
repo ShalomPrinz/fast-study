@@ -5,7 +5,7 @@ import { toast } from '@/services/toaster'
 
 type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing'
 
-// BIU account connection pill. Connect pops a headed browser on the machine to get user auth details.
+// Connect pops a headed browser on the host for MFA; Done persists the session.
 export default function AuthPill() {
   const [status, setStatus] = useState<AuthStatus | null>(null)
   const [phase, setPhase] = useState<Phase>('loading')
@@ -14,7 +14,7 @@ export default function AuthPill() {
     try {
       setStatus(await fetchAuthStatus())
     } catch {
-      // Connection errors are toasted centrally by the http client.
+      // Connection errors are toasted centrally.
       setStatus(null)
     }
   }
@@ -49,7 +49,6 @@ export default function AuthPill() {
     return <div className="auth-pill auth-pill--muted">checking account…</div>
   }
 
-  // Waiting for the user to finish MFA in the headed browser, then click Done.
   if (phase === 'pending' || phase === 'connecting' || phase === 'completing') {
     const busy = phase !== 'pending'
     return (

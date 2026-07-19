@@ -2,7 +2,6 @@ import { useMatch, useNavigate } from 'react-router-dom'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { courseRoute } from '@/shared/utils/url'
 
-// Courses sidebar body: a flat list of all non-archived courses
 export default function CoursesList() {
   const { courses } = useCourseTreeContext()
   const navigate = useNavigate()

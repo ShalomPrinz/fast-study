@@ -19,7 +19,7 @@ export default function CourseGroup({ course }: { course: Course }) {
   const [recExpanded, setRecExpanded] = useState(false)
   const didAutoExpandRef = useRef(false)
 
-  // Auto-expand this group the first time it becomes the selected course (e.g. deep link).
+  // Expand once when this first becomes the selected course (deep link).
   useEffect(() => {
     if (didAutoExpandRef.current) return
     if (selected?.course !== course.name) return

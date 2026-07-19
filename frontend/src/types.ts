@@ -87,14 +87,13 @@ export interface InFlightEntry {
 }
 
 export interface RunnerStatus {
-  // runner.lastError: unexpected exception that aborted a lecture's pipeline mid-sweep
+  // lastError: an unexpected exception that aborted a sweep, not a step-level failure.
   runner: { running: boolean; total: number; done: number; lastError: string | null }
   inFlight: InFlightEntry[]
-  // expected step-level failures, per lecture, from any trigger
+  // Expected step-level failures per lecture, from any trigger; persists after the run ends.
   errors: Record<string, string>
 }
 
-// Sidebar mode: normal lecture tree vs the flat courses list.
 export type AppMode = 'lectures' | 'courses'
 
 export type CoursePhase = 'extract' | 'analyze' | 'topics' | 'to_pdf'

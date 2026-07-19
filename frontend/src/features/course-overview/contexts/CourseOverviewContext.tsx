@@ -6,7 +6,7 @@ import { fetchCourseFiles, fetchCourseMeta } from '@/services/database'
 import { useNotify } from '@/shared/hooks/useNotify'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
 
-// Data-only store for one course's overview
+// Data-only store for one course's overview — consumers toast, this never does.
 export interface CourseOverviewValue {
   course: string
   extractors: OverviewExtractor[] | null
@@ -61,11 +61,10 @@ export function CourseOverviewProvider({ course, children }: { course: string; c
     refresh()
   }, [course])
 
-  // Refresh status and files on each backend notify event
   useNotify(refresh)
 
-  // A single trigger runs the phases sequentially server-side; omitting names = all.
-  // skipExisting continues a run (missing phases only); default overwrites (re-generate).
+  // One trigger; omitting names = all slugs. skipExisting = continue (missing phases only),
+  // default = overwrite. See docs/course-overview.md.
   async function generate(names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean): Promise<RunInitResult> {
     const result = await runOverview(course, names, fromPhase, skipExisting)
     refresh()

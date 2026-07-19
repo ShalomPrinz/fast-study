@@ -17,7 +17,7 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
 
   const bs = branchStatus(status, files, slug, phases)
 
-  // Fire the whole-extractor regenerate, then toast its result here — a component may toast.
+  // No skipExisting: an explicit re-generate overwrites.
   async function regenerate() {
     setRegenerateOpen(false)
     const result = await generate([slug])

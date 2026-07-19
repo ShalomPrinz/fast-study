@@ -10,9 +10,8 @@ export interface RowEdit {
   kind?: Kind
 }
 
-// One section's per-row (name, kind) edits, keyed by item ref so a leaf row can reach its own
-// without being prop-drilled through the recursive expandable rows. Lifted to SectionGroup so
-// the green "already downloaded" row and the "Download all" skip rule read the same values.
+// One section's per-row (name, kind) edits, keyed by item ref — reaches recursive rows without
+// prop-drilling, and keeps the green row and the bulk skip rule reading the same values.
 export interface RowEditsValue {
   edits: Record<string, RowEdit>
   setName: (ref: string, name: string) => void
@@ -28,8 +27,8 @@ interface Resolved {
   name: string    // what a download uses — blank input falls back to the suggestion
 }
 
-// Storing only overrides makes the "user hasn't typed yet" flag fall out: with no `name`
-// override the derived name keeps tracking the kind toggle, and typing pins it.
+// Storing overrides only: with no `name` set the derived name keeps tracking the kind toggle,
+// and the first keystroke pins it.
 export function resolveRow(
   item: Item,
   edit: RowEdit | undefined,

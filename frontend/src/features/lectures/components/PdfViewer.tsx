@@ -20,8 +20,8 @@ export default function PdfViewer({ url, show }: Props) {
   const capturedScrollRef = useRef({ top: 0, left: 0 })
   const prevUrlRef = useRef(url)
 
-  // Capture scroll in the render phase, before React commits DOM changes for the new url.
-  // At this point the old pages are still mounted and scrollTop is the real user position.
+  // Capture in the render phase, before React commits the new url: the old pages are still
+  // mounted here, so scrollTop is the real user position.
   if (prevUrlRef.current !== url) {
     const container = scrollContainerRef.current
     if (container) {
@@ -30,8 +30,8 @@ export default function PdfViewer({ url, show }: Props) {
     prevUrlRef.current = url
   }
 
-  // Each page's onRenderSuccess fires when the canvas is laid out at real size.
-  // Restore captured scroll, or snap to RTL right edge on first load. Idempotent across pages.
+  // Fires per page once its canvas is laid out at real size; idempotent across pages.
+  // Restore the captured scroll, or snap to the right edge (RTL) on first load.
   const handlePageRendered = () => {
     const container = scrollContainerRef.current
     if (!container) return

@@ -3,14 +3,10 @@ import { suggestName } from '@/features/lectures/utils/namingSuggestion'
 
 const HEBREW_SUB = 'אבגדהוזחטי' // ordered, א -> 1 … י -> 10; later letters and final forms don't count
 
-// A split session marks its part with exactly one character glued to the number (no
-// whitespace), optionally after a `.`/`-`/`_` separator: a Latin letter (a=1 … z=26), one
-// of 'אבגדהוזחטי' (א=1 … י=10), or — separator required — a single digit. Anything longer
-// or ambiguous is ignored rather than guessed, so the plain number wins.
-//   '11a' / '11.A' / '11-א' -> 11.1      (also '11א'' — a trailing geresh is fine)
-//   '11_3' / '11-2'         -> 11.3 / 11.2
-//   '11 A' / '11 א'         -> 11        (whitespace breaks the pairing)
-//   '11ab' / '11.3.2024'    -> 11        (second letter / date tail voids the marker)
+// A split session's part marker: one char glued to the number (optionally after `.`/`-`/`_`).
+// Ambiguity is ignored rather than guessed, so the plain number wins.
+//   '11a' / '11.A' / '11-א' / '11_3'  -> 1 / 1 / 1 / 3
+//   '11 A' / '11ab' / '11.3.2024'     -> null  (whitespace, second letter, date tail)
 function subNumber(rest: string): number | null {
   const m = rest.match(/^[.\-_]?([A-Za-zא-ת\d])'?(.{0,2})/)
   if (!m) return null
@@ -23,13 +19,9 @@ function subNumber(rest: string): number | null {
   return index < 0 ? null : index + 1
 }
 
-// Derive a lecture/recitation name from a recording title: pull the first integer out
-// of the recording title → "Lecture N" / "Recitation N" by kind, plus the sub-session
-// marker glued to those digits (see subNumber) as a decimal sub-number.
-// When the title has no number, fall back to the tree's next-number suggestion.
-//   ('הרצאה 3', 'lecture')     -> 'Lecture 3'
-//   ('הרצאה 11a', 'lecture')   -> 'Lecture 11.1'
-//   ('רועי', 'recitation')     -> suggestName(...) e.g. 'Recitation 4'
+// First integer in the title → "Lecture N" / "Recitation N", plus any sub-marker as a decimal.
+// No number at all falls back to the tree's next-number suggestion.
+//   'הרצאה 3' -> 'Lecture 3'   'הרצאה 11a' -> 'Lecture 11.1'   'רועי' -> 'Recitation 4'
 export function suggestItemName(
   title: string,
   kind: Kind,
@@ -47,8 +39,7 @@ export function suggestItemName(
   return suggestName(courses, course, kind)
 }
 
-// Single source of truth for "this recording is already on disk": an exact name match
-// against the course's lectures (or recitations, per kind) in the live tree.
+// The single "already on disk" rule — exact name match in the live tree, used by row and queue.
 export function isDownloaded(
   name: string,
   kind: Kind,

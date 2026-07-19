@@ -12,7 +12,7 @@ import SectionGroup from './SectionGroup'
 // Items whose Moodle heading is blank still need a home.
 const OTHER_SECTION = 'Other'
 
-// Downloads page: connect the BIU account, manage course source URLs, discover and download recordings
+// Downloads page: BIU account, course source URLs, discovery. See docs/downloads.md.
 export default function DownloadsView() {
   const { courses } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
@@ -23,7 +23,7 @@ export default function DownloadsView() {
   const [error, setError] = useState<string | null>(null)
   const [reconnectKey, setReconnectKey] = useState(0)
 
-  // Group by Moodle section, first-seen order (the server's order is the page's order).
+  // First-seen order: the server's order is the page's order.
   const sections = useMemo(() => {
     const map = new Map<string, Item[]>()
     for (const item of items) {
@@ -40,7 +40,6 @@ export default function DownloadsView() {
     setReconnectKey((k) => k + 1)
   }
 
-  // Discover one course's recordings in-page. Switching courses just re-calls /list
   async function discover(course: Course) {
     if (!course.source_url) return
     setSelected(course.name)

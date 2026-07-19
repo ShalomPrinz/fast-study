@@ -21,8 +21,7 @@ interface PendingUploadValue {
 
 const PendingUploadContext = createContext<PendingUploadValue | null>(null)
 
-// Provider owns the pending-replace state and renders its own confirmation modal, so
-// consumers never juggle a returned modal node — they just call trigger/confirm.
+// Renders its own confirm modal, so consumers just call trigger/confirm.
 export function PendingUploadProvider({ children }: { children: ReactNode }) {
   const { refreshCourses } = useCourseTreeContext()
   const [pending, setPending] = useState<PendingUpload | null>(null)

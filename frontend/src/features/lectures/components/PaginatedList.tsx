@@ -7,17 +7,15 @@ interface Props<T> {
   firstChunk?: number
 }
 
-// Self-contained windowing for a sidebar list: shows the latest `initialCount` items
-// (the array tail) with a "Load more" row pinned above that reveals older items in
-// doubling chunks (4, then 8, then 16…). Owns its own paging state — the parent only
-// hands it the data + a renderItem closure, so selection/rename/drag stay in Sidebar.
+// Shows the latest `initialCount` items with a "Load more" row above that reveals older ones
+// in doubling chunks. Owns its paging state; the parent only hands it data + renderItem.
 export default function PaginatedList<T>({ items, renderItem, initialCount = 2, firstChunk = 4 }: Props<T>) {
   const [visible, setVisible] = useState(initialCount)
   const [chunk, setChunk] = useState(firstChunk)
 
   const hidden = items.length - visible
   const nextLoad = Math.min(chunk, hidden)
-  // Slice from the end so newly added items (appended at the tail) stay visible.
+  // Slice from the tail so newly added items stay visible.
   const shown = hidden > 0 ? items.slice(hidden) : items
 
   function loadMore() {

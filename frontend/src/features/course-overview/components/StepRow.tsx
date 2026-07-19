@@ -8,7 +8,6 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
 
-// phase of an extractor: status glyph and a ↺ that re-generates from this phase forward
 export default function StepRow({ step }: { step: OverviewStep }) {
   const { course, files, status, generate } = useCourseOverview()
   const { extractor } = useExtractor()
@@ -22,7 +21,7 @@ export default function StepRow({ step }: { step: OverviewStep }) {
   const isPdf = step.phase === 'to_pdf'
   const bs = branchStatus(status, files, slug, phases)
 
-  // Re-generating from this phase rebuilds it and every later phase.
+  // Re-generating from this phase rebuilds it and every later one.
   const steps = stepsFor(phases)
   const idx = steps.findIndex((s) => s.phase === step.phase)
   const rebuilds = steps.slice(idx).map((s) => `${slug}${s.suffix}`)

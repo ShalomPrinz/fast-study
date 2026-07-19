@@ -3,7 +3,7 @@ import type { Selected, Kind } from '@/types'
 import { useKindParam } from '@/shared/hooks/useKindParam'
 import { lectureRoute } from '@/shared/utils/url'
 
-// The currently-open lecture, derived from the route + ?kind param, plus a navigate helper.
+// The open lecture, derived from the route + ?kind, plus a navigate helper.
 export function useSelection() {
   const navigate = useNavigate()
   const kind = useKindParam()

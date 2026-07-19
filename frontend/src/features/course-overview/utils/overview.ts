@@ -1,6 +1,6 @@
 import type { OverviewMeta, OverviewRange } from '@/types'
 
-// Returns "Lectures 2-9" / "Lecture 2" / "No Lectures", decided by given range
+// "Lectures 2-9" / "Lecture 2" / "No Lectures", by range.
 function rangePart(range: OverviewRange, singular: string): string {
   const plural = singular + 's' // assumes all relevant pluralization is just adding "s"
   if (!range) return `No ${plural}`
@@ -8,7 +8,7 @@ function rangePart(range: OverviewRange, singular: string): string {
   return `${plural} ${range.start}-${range.end}`
 }
 
-// Lectures part always first: "Lectures 2-9, Recitations 1-4" / "Lectures 2-9, No Recitations".
+// Lectures always first: "Lectures 2-9, Recitations 1-4".
 export function formatRange(entry: OverviewMeta[string]): string {
   return `${rangePart(entry.lectures, 'Lecture')}, ${rangePart(entry.recitations, 'Recitation')}`
 }

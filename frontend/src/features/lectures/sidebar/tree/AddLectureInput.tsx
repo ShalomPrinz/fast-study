@@ -2,8 +2,7 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { useCourseGroup } from './CourseGroupContext'
 import { useLectureListKind } from './LectureListContext'
 
-// The inline "new lecture/recitation" input row — renders only in the list whose kind
-// is currently being added, so the two lists never show the input at once.
+// Renders only in the list whose kind is being added, so the two lists never both show it.
 export default function AddLectureInput() {
   const { add } = useCourseGroup()
   const kind = useLectureListKind()

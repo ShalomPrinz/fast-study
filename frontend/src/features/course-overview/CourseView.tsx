@@ -10,8 +10,7 @@ function CourseOverviewBody() {
   const { course, extractors, status } = useCourseOverview()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
 
-  // Toast each extractor error once per (course, slug, message). Status is keyed by
-  // slug; show the friendlier title when we have the extractor list loaded.
+  // Toast each extractor error once per (course, slug, message).
   useEffect(() => {
     if (!status) return
     const titleBySlug = new Map(extractors?.map((e) => [e.slug, e.title]))
@@ -22,8 +21,7 @@ function CourseOverviewBody() {
       valid.add(key)
       reportError(key, `${titleBySlug.get(slug) ?? slug}: ${st.message ?? 'failed'}`)
     }
-    // Prune only this course's keys; other courses' remembered errors must survive a
-    // switch away, or returning to them would re-toast an error already shown.
+    // Prune only this course's keys, or returning to another course would re-toast its errors.
     pruneErrors(valid, (k) => k.startsWith(`${course}/`))
   }, [status, course, extractors])
 

@@ -14,13 +14,12 @@ interface Props {
   modes: Record<AppMode, ModeConfig>
 }
 
-// Compact segment switch below the sidebar title: owns the localStorage-persisted
-// AppMode and renders the selected mode's body. Segment order follows `modes`
-// insertion order (Lectures then Courses).
+// Owns the localStorage-persisted AppMode and renders the selected mode's body.
+// Segment order follows `modes` insertion order.
 export default function ModeToggle({ modes }: Props) {
   const [mode, setMode] = useState<AppMode>(() => {
     const stored = localStorage.getItem(MODE_STORAGE_KEY)
-    // Fall back to the default if the stored value is stale / not a known mode.
+    // A stale stored key falls back to the default.
     return stored && stored in modes ? (stored as AppMode) : DEFAULT_MODE
   })
 

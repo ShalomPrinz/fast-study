@@ -1,5 +1,4 @@
-// Module-level singleton: one EventSource for all subscribers.
-// Opens lazily on the first subscriber and closes when the last one unsubscribes.
+// One EventSource for all subscribers: opened on the first, closed on the last.
 import { databaseUrl } from './database'
 
 type Callback = () => void
@@ -14,17 +13,13 @@ function dispatch() {
 export function subscribeNotify(cb: Callback): () => void {
   subscribers.add(cb)
 
-  // Open the EventSource lazily on the first subscriber
   if (!es) {
     es = new EventSource(`${databaseUrl}/events`)
     es.addEventListener('notify', dispatch)
   }
 
-  // Unsubscribe function
   return () => {
     subscribers.delete(cb)
-
-    // Close the EventSource if there are no more subscribers
     if (subscribers.size === 0 && es) {
       es.removeEventListener('notify', dispatch)
       es.close()

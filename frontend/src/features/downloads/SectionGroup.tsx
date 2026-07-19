@@ -37,7 +37,7 @@ interface Tally {
   skipped: number
 }
 
-// A paused run: the passcode prompt is open and the queue resumes from `index` on submit.
+// A paused run: the passcode prompt is open; the queue resumes from `index` on submit.
 interface Paused {
   queue: Item[]
   index: number
@@ -48,14 +48,12 @@ interface Paused {
 
 const IDLE: ExpandState = { expanded: false, children: null, expanding: false, error: null }
 
-// One Moodle section: its heading, its rows, and a sequential "Download all" over them.
-// Owns the expandable rows' fetch/children cache (RecordingRow only renders it) because the
-// bulk queue needs the resolved children — an unexpanded playlist ref is not downloadable.
+// One Moodle section + a sequential "Download all" over it. Owns the expand/children cache
+// (rows only render it) because the bulk queue needs resolved children. See docs/downloads.md.
 export default function SectionGroup({ title, items, course, onReconnect }: Props) {
   const { courses } = useCourseTreeContext()
   const [expansions, setExpansions] = useState<Record<string, ExpandState>>({})
-  // Keyed by item ref and never cleared, so an edit outlives an SSE tree refresh, a
-  // collapse/re-expand of its playlist, and a bulk run.
+  // Keyed by ref and never cleared: an edit outlives an SSE refresh, a re-expand, and a bulk run.
   const [edits, setEdits] = useState<Record<string, RowEdit>>({})
   const [running, setRunning] = useState(false)
   const [progress, setProgress] = useState<{ at: number; total: number } | null>(null)
@@ -63,11 +61,10 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
   const [paused, setPaused] = useState<Paused | null>(null)
   const [saving, setSaving] = useState(false)
 
-  // The tree refreshes over SSE mid-run, so the loop reads courses through a ref to
-  // skip items that finished moments ago rather than the snapshot it started with.
+  // Read through refs so the queue sees a mid-run SSE refresh and a name typed mid-run,
+  // rather than the snapshot it started with.
   const coursesRef = useRef(courses)
   coursesRef.current = courses
-  // Same reason for the edits: a row typed into while the queue runs must be honoured.
   const editsRef = useRef(edits)
   editsRef.current = edits
 
@@ -87,7 +84,7 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
     setExpansions((prev) => ({ ...prev, [ref]: { ...(prev[ref] ?? IDLE), ...next } }))
   }
 
-  // Children are cached on first expand, so collapse/re-expand never refetches.
+  // Cached on first expand, so collapse/re-expand never refetches.
   async function toggleExpand(item: Item) {
     const current = stateOf(item.ref)
     if (current.children) {
@@ -108,8 +105,7 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
   const expandables = items.filter((i) => i.expandable)
   const allExpanded = expandables.every((i) => stateOf(i.ref).children !== null)
 
-  // Flatten the section into downloadable leaves: a playlist contributes its children,
-  // never its own ref (the backend rejects an unexpanded playlist ref).
+  // A playlist contributes its children, never its own ref — the backend rejects that.
   function buildQueue(): Item[] {
     return items.flatMap((item) =>
       item.expandable ? (stateOf(item.ref).children ?? []) : [item],
@@ -125,15 +121,14 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
     setSummary(parts.join(', '))
   }
 
-  // Sequential by design: the auto-downloader drives one shared browser session, so a
-  // parallel burst would contend. Continue mode — items already on disk are skipped.
+  // Sequential by design: the downloader drives one shared browser session.
   async function runQueue(queue: Item[], from: number, tally: Tally) {
     setRunning(true)
     setSummary(null)
     for (let i = from; i < queue.length; i++) {
       const item = queue[i]
       setProgress({ at: i + 1, total: queue.length })
-      // Exactly what the row shows: same overrides, same live tree, same already-there rule.
+      // Exactly what the row shows, so the skip rule and the green row can't disagree.
       const { name, kind } = resolveRow(item, editsRef.current[item.ref], coursesRef.current, course)
       if (isDownloaded(name, kind, coursesRef.current, course)) {
         tally.skipped++
@@ -152,7 +147,7 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
           return
         }
         if (isPasscodeError(err)) {
-          // Hold the queue here; submitting the passcode resumes by retrying this same item.
+          // Hold here; submitting the passcode retries this same item.
           setPaused({ queue, index: i, tally, reason: err.reason, name })
           setRunning(false)
           return
@@ -182,7 +177,7 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
     void runQueue(resume.queue, resume.index, resume.tally)
   }
 
-  // Cancelling the prompt abandons the rest of the queue, not just the gated item.
+  // Cancelling abandons the rest of the queue, not just the gated item.
   function cancelPasscode() {
     if (paused) {
       paused.tally.failed++

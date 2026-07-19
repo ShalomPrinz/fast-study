@@ -15,7 +15,6 @@ export default function EditSummaryView() {
   const { getError } = useRunnerStatus()
   const lectureError = getError(course, lecture, kind)
 
-  // Internal state management
   const [content, setContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -24,12 +23,12 @@ export default function EditSummaryView() {
   const [pdfKey, setPdfKey] = useState(0)
   const [showPdf, setShowPdf] = useState(false)
 
-  // Gates the completion-detection logic: true only while we're waiting for our own pdf step.
+  // True only while waiting for the pdf step this view started.
   const pdfFiredRef = useRef(false)
   const latest = useLatestRequest()
 
-  // Runs on every SSE-driven files/lectureError change; pdfFiredRef gates the completion branch
-  // so unrelated refreshes (sibling files, other lectures' errors) don't toggle generating state.
+  // Runs on every SSE refresh; the ref gates the completion branch so a sibling file change or
+  // another lecture's error can't clear the generating state.
   useEffect(() => {
     if (!files) return
     const pdfExists = files['summary.pdf'].exists

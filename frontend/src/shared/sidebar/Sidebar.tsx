@@ -6,7 +6,7 @@ import type { ModeConfig } from './ModeToggle'
 import CoursesList from '@/features/course-overview/CoursesList'
 import LecturesSidebar from '@/features/lectures/sidebar/LecturesSidebar'
 
-// Order matters: it drives the ModeToggle segment order (Lectures then Courses).
+// Order matters: it drives the ModeToggle segment order.
 const MODES: Record<AppMode, ModeConfig> = {
   lectures: { label: 'Lectures', Component: LecturesSidebar },
   courses: { label: 'Courses', Component: CoursesList },

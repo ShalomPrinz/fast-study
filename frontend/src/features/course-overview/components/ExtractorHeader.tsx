@@ -8,7 +8,6 @@ import BranchIndicator from './BranchIndicator'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
 
-// Extractor row header: caret/title/subtitle toggle + status glyph + open-PDF and regenerate/Generate actions
 export default function ExtractorHeader() {
   const { course, files, meta, status, generate } = useCourseOverview()
   const { extractor, expanded, toggleExpanded, confirmRegenerate } = useExtractor()
@@ -16,7 +15,7 @@ export default function ExtractorHeader() {
   const bs = branchStatus(status, files, slug, phases)
   const entry = meta[slug]
 
-  // Fire the mutation via the context, then toast its result here — a component may toast.
+  // The context never toasts; components do.
   async function handleGenerate() {
     const result = await generate([slug])
     toastInitResult(result, {

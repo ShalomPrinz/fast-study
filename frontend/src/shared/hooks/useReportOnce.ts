@@ -1,10 +1,8 @@
 import { useCallback, useRef } from 'react'
 
-// Dedupes `(key, msg)` pairs so the same error doesn't fire twice.
-// Before: every refresh re-sends the same lastError or errors[key] toast
-// After:  each (key, msg) is sent once; prune(validKeys) lets it fire again if the key reappears later
-// prune's optional inScope predicate limits deletion to keys it owns (e.g. one course), so a
-// caller pruning its own slice can't forget another scope's keys and re-toast them on return.
+// Dedupes `(key, msg)` so a repeated status refresh doesn't re-toast the same error.
+// Before: every refresh re-sends errors[key]. After: sent once; prune(validKeys) rearms the key.
+// prune's `inScope` limits deletion to the caller's own keys, so other scopes aren't rearmed.
 export function useReportOnce(send: ((msg: string) => void) | undefined) {
   const sendRef = useRef(send)
   sendRef.current = send

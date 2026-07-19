@@ -2,8 +2,7 @@ import { createContext, useContext } from 'react'
 import type { Course } from '@/types'
 import type { AddLecture } from '@/features/lectures/hooks/useAddLecture'
 
-// One course group's shared concern: the course it renders + its add-lecture flow.
-// Lets the header / lists / items reach the course without prop-drilling it.
+// One course group's course + add-lecture flow, reachable without prop-drilling.
 export interface CourseGroupValue {
   course: Course
   add: AddLecture

@@ -9,7 +9,7 @@ import Icon from '@/shared/components/Icon'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { useCourseGroup } from './CourseGroupContext'
 
-// Course header both reflects expand state and mutates it - toggle on click, open when adding a lecture
+// Reflects and mutates the expand state: toggle on click, open when adding a lecture.
 export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { course, add } = useCourseGroup()
   const { selected, onSelect } = useSelection()

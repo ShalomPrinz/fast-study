@@ -9,11 +9,8 @@ interface PasscodePromptProps {
   onCancel: () => void
 }
 
-// Masked-input modal for a zoom passcode. Mirrors ConfirmModal's portal + Escape/overlay-cancel
-// shape (ConfirmModal can't host an input). Owns the input + scope state so the parent only sees
-// the final (passcode, scope) on submit; the parent unmounts it between openings, so a wrong-
-// passcode re-prompt mounts fresh with an empty field. Default scope is course-wide; "just this
-// lecture" narrows it to this recording.
+// Masked passcode modal — ConfirmModal's portal/Escape shape, which can't host an input.
+// The parent unmounts it between openings, so a re-prompt mounts fresh with an empty field.
 export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: PasscodePromptProps) {
   const [value, setValue] = useState('')
   const [justThisLecture, setJustThisLecture] = useState(false)

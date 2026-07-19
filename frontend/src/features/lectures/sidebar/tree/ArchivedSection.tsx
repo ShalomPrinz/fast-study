@@ -3,7 +3,6 @@ import Icon from '@/shared/components/Icon'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import CourseGroup from './CourseGroup'
 
-// The archived-courses footer toggle + its collapsible panel of archived CourseGroups.
 export default function ArchivedSection() {
   const { courses } = useCourseTreeContext()
   const [showArchived, setShowArchived] = useState(false)

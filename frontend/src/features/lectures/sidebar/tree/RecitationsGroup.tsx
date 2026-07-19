@@ -5,8 +5,7 @@ import { LectureListProvider } from './LectureListContext'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 
-// The recitations sub-group. Its open-state (`expand`) is owned by CourseGroup so it
-// survives collapsing/re-expanding the course.
+// `expand` is owned by CourseGroup, so this stays open across a course collapse/re-expand.
 export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
   const { add } = useCourseGroup()
   const shiftHeld = useShiftHeld()

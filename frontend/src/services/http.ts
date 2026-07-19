@@ -4,7 +4,7 @@ export function httpError(res: Response): Error {
   return new Error(`${res.status} ${res.statusText}`)
 }
 
-// Thrown when a request never reaches the server (connection refused / service down)
+// A request that never reached the server (service down); toasted centrally on construction.
 export class ConnectionError extends Error {
   constructor(public serviceName: string, public baseUrl: string, public cause?: unknown) {
     super(`Can't reach ${serviceName} at ${baseUrl}. Make sure it's running.`)
@@ -52,7 +52,7 @@ export function createClient(baseUrl: string, serviceName: string): Client {
     try {
       res = await fetch(url(path), reqInit)
     } catch (err) {
-      // Per the Fetch spec, only network failures (server unreachable) reject as a TypeError
+      // Per the Fetch spec only network failures reject as TypeError; aborts are DOMException.
       if (err instanceof TypeError) {
         const ce = new ConnectionError(serviceName, baseUrl, err)
         toastConnectionError(ce)
