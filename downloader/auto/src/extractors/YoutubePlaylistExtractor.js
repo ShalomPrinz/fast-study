@@ -23,9 +23,11 @@ function unsupported(host) {
 
 /**
  * Moodle `url` module that links off-site. canHandle claims recording-keyword `url`
- * activities; expand confirms the direct external target (contents[].fileurl) is a
- * YouTube host. For now only YouTube playlists are supported; anything else (Drive,
- * GitHub, …) is rejected as unsupported at expand time.
+ * activities whose direct external target (contents[].fileurl) is a YouTube host —
+ * the target host is known at list time with no fetch/redirect hop, so non-YouTube
+ * links (Drive, GitHub, …) are simply not claimed rather than surfaced and rejected.
+ * The expand-time 422 in listEntries is now only a fallback (an echoed ref can still
+ * reach the download path).
  */
 export class YoutubePlaylistExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -34,13 +36,20 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a `url` module only when a recording keyword is present, else unrelated
-   * links (syllabus, reading) get surfaced and rejected on expand.
+   * Claim a `url` module only when a recording keyword is present AND its direct
+   * external target is a YouTube host. Gating on the host here (known from
+   * contents[].fileurl, no fetch) keeps unrelated links (syllabus, reading) and
+   * non-YouTube recording sources (Drive, …) off the list instead of surfacing them
+   * and rejecting on expand. Unparseable target (safeHost → null) → not claimed.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
   canHandle(activity) {
-    return activity.modType === 'url' && isRecording(activity.sectionName, activity.title);
+    return (
+      activity.modType === 'url' &&
+      isRecording(activity.sectionName, activity.title) &&
+      YOUTUBE_HOSTS.has(safeHost(activity.externalUrl))
+    );
   }
 
   /**
@@ -61,7 +70,8 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
    */
   async listEntries(rec) {
     const finalUrl = rec.pageUrl;
-    // The direct target host is known without navigating; only YouTube playlists expand.
+    // Fallback host guard: canHandle already keeps non-YouTube targets off the list, but
+    // an echoed ref can still arrive here — reject non-YouTube (or unparseable) targets.
     const host = safeHost(finalUrl);
     if (!host || !YOUTUBE_HOSTS.has(host)) throw unsupported(host || finalUrl);
 

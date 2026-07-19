@@ -17,7 +17,7 @@ cards, so the module parser never sees them.
 
 ## Keyword gating
 
-`isRecording(sectionName, title)` matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading. **Only the `url` extractor is gated.** A Moodle `url` module is an opaque off-site link — a YouTube playlist, but equally a syllabus, reading, or Drive folder — so unfiltered every `url` got optimistically surfaced and blew up on expand. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
+`isRecording(sectionName, title)` matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading. **Only the `url` extractor is gated**, and it is gated twice: a recording keyword AND a YouTube target host. A Moodle `url` module is an opaque off-site link — a YouTube playlist, but equally a syllabus, reading, or Drive folder — but its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so `canHandle` also requires `YOUTUBE_HOSTS.has(safeHost(externalUrl))`. A non-YouTube target (Drive, GitHub, unparseable) is therefore not claimed at all — skipped like a syllabus link — rather than surfaced and rejected on expand. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
 
 ## Mechanism-agnostic Item / ref contract
 
@@ -27,6 +27,8 @@ The frontend never sees the download mechanism. `/list` and `/list/expand` retur
 
 An unexpanded playlist (`url` module) lists as ONE `expandable` item. Its `pageUrl` is the
 module's **direct external target** (`contents[0].fileurl`) — no redirect hop. `/list/expand`
-runs `yt-dlp --flat-playlist` straight on that URL, after a YouTube-host check. A non-YouTube
-host is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500
+runs `yt-dlp --flat-playlist` straight on that URL. Non-YouTube targets are already filtered at
+list time by `canHandle` (see Keyword gating), so the YouTube-host check in `listEntries` is now
+a fallback: an echoed ref can still reach expand/download, and a non-YouTube (or unparseable)
+host there is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500
 "try again"); the same mapping applies on `/download-item`.
