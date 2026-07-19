@@ -42,15 +42,3 @@ export function isDownloaded(
   const existing = kind === 'recitation' ? node?.recitations : node?.lectures
   return existing?.some((l) => l.name === name) ?? false
 }
-
-// The bulk path can't use per-row name edits, so it asks for the suggested name and
-// whether that name already exists in one call — keeping its skip rule identical to a row's.
-export function suggestedDownload(
-  title: string,
-  kind: Kind,
-  courses: Course[],
-  course: string,
-): { name: string; alreadyDownloaded: boolean } {
-  const name = suggestItemName(title, kind, courses, course)
-  return { name, alreadyDownloaded: isDownloaded(name, kind, courses, course) }
-}

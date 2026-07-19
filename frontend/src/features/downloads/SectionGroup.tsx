@@ -1,4 +1,5 @@
-import { useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
+import type { Kind } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import type { Item, PasscodeError } from './services/autoDownloader'
 import {
@@ -12,7 +13,9 @@ import {
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'
-import { suggestedDownload } from './utils/nameSuggestion'
+import type { RowEdit } from './contexts/RowEditsContext'
+import { RowEditsContext, resolveRow } from './contexts/RowEditsContext'
+import { isDownloaded } from './utils/nameSuggestion'
 
 interface Props {
   title: string
@@ -51,6 +54,9 @@ const IDLE: ExpandState = { expanded: false, children: null, expanding: false, e
 export default function SectionGroup({ title, items, course, onReconnect }: Props) {
   const { courses } = useCourseTreeContext()
   const [expansions, setExpansions] = useState<Record<string, ExpandState>>({})
+  // Keyed by item ref and never cleared, so an edit outlives an SSE tree refresh, a
+  // collapse/re-expand of its playlist, and a bulk run.
+  const [edits, setEdits] = useState<Record<string, RowEdit>>({})
   const [running, setRunning] = useState(false)
   const [progress, setProgress] = useState<{ at: number; total: number } | null>(null)
   const [summary, setSummary] = useState<string | null>(null)
@@ -61,6 +67,17 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
   // skip items that finished moments ago rather than the snapshot it started with.
   const coursesRef = useRef(courses)
   coursesRef.current = courses
+  // Same reason for the edits: a row typed into while the queue runs must be honoured.
+  const editsRef = useRef(edits)
+  editsRef.current = edits
+
+  const setName = useCallback((ref: string, name: string) => {
+    setEdits((prev) => ({ ...prev, [ref]: { ...prev[ref], name } }))
+  }, [])
+  const setKind = useCallback((ref: string, kind: Kind) => {
+    setEdits((prev) => ({ ...prev, [ref]: { ...prev[ref], kind } }))
+  }, [])
+  const rowEdits = useMemo(() => ({ edits, setName, setKind }), [edits, setName, setKind])
 
   function stateOf(ref: string): ExpandState {
     return expansions[ref] ?? IDLE
@@ -116,18 +133,14 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
     for (let i = from; i < queue.length; i++) {
       const item = queue[i]
       setProgress({ at: i + 1, total: queue.length })
-      const { name, alreadyDownloaded } = suggestedDownload(
-        item.title,
-        item.kind,
-        coursesRef.current,
-        course,
-      )
-      if (alreadyDownloaded) {
+      // Exactly what the row shows: same overrides, same live tree, same already-there rule.
+      const { name, kind } = resolveRow(item, editsRef.current[item.ref], coursesRef.current, course)
+      if (isDownloaded(name, kind, coursesRef.current, course)) {
         tally.skipped++
         continue
       }
       try {
-        const { ok } = await downloadItem({ ref: item.ref, course, name, kind: item.kind })
+        const { ok } = await downloadItem({ ref: item.ref, course, name, kind })
         if (ok) tally.done++
         else tally.failed++
       } catch (err) {
@@ -200,20 +213,22 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         </button>
       </div>
 
-      {items.map((item) => {
-        const expand: ExpandControl | undefined = item.expandable
-          ? { ...stateOf(item.ref), onToggle: () => toggleExpand(item) }
-          : undefined
-        return (
-          <RecordingRow
-            key={item.ref}
-            item={item}
-            course={course}
-            onReconnect={onReconnect}
-            expand={expand}
-          />
-        )
-      })}
+      <RowEditsContext.Provider value={rowEdits}>
+        {items.map((item) => {
+          const expand: ExpandControl | undefined = item.expandable
+            ? { ...stateOf(item.ref), onToggle: () => toggleExpand(item) }
+            : undefined
+          return (
+            <RecordingRow
+              key={item.ref}
+              item={item}
+              course={course}
+              onReconnect={onReconnect}
+              expand={expand}
+            />
+          )
+        })}
+      </RowEditsContext.Provider>
 
       {paused && (
         <PasscodePrompt

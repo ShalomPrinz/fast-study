@@ -1,5 +1,4 @@
-import { useMemo, useState } from 'react'
-import type { Kind } from '@/types'
+import { useState } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item, PasscodeError } from './services/autoDownloader'
@@ -10,7 +9,8 @@ import {
   saveZoomPasscode,
 } from './services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
-import { isDownloaded, suggestItemName } from './utils/nameSuggestion'
+import { useRowEdit } from './contexts/RowEditsContext'
+import { isDownloaded } from './utils/nameSuggestion'
 
 type Result = 'ok' | 'fail' | null
 
@@ -36,9 +36,8 @@ interface Props {
 // and render each fetched child as its own (recursive) RecordingRow.
 export default function RecordingRow({ item, course, onReconnect, expand }: Props) {
   const { courses } = useCourseTreeContext()
-  const [kind, setKind] = useState<Kind>(item.kind)
-  const [name, setName] = useState(() => suggestItemName(item.title, item.kind, courses, course))
-  const [touched, setTouched] = useState(false)
+  // Name/kind live in SectionGroup (keyed by ref) so this row and the bulk queue agree.
+  const { kind, suggestion, value, name: effectiveName, setName, setKind } = useRowEdit(item, course)
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<Result>(null)
   const [confirming, setConfirming] = useState(false)
@@ -50,18 +49,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
   const [passcodeReason, setPasscodeReason] = useState<PasscodeError['reason']>('missing')
 
   // Read the live tree so a completed download's SSE refresh updates the row
-  const suggestion = useMemo(
-    () => suggestItemName(item.title, kind, courses, course),
-    [item.title, kind, courses, course],
-  )
-  const effectiveName = name.trim() || suggestion
   const alreadyDownloaded = isDownloaded(effectiveName, kind, courses, course)
-
-  // Kind toggle recomputes the suggested name — but only until the user edits it.
-  function changeKind(next: Kind) {
-    setKind(next)
-    if (!touched) setName(suggestItemName(item.title, next, courses, course))
-  }
 
   if (item.expandable && expand) {
     return (
@@ -150,13 +138,13 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
       <div className="kind-toggle">
         <button
           className={kind === 'lecture' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'}
-          onClick={() => changeKind('lecture')}
+          onClick={() => setKind('lecture')}
         >
           Lecture
         </button>
         <button
           className={kind === 'recitation' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'}
-          onClick={() => changeKind('recitation')}
+          onClick={() => setKind('recitation')}
         >
           Recitation
         </button>
@@ -164,8 +152,8 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
 
       <input
         className="source-row-input recording-name-input"
-        value={name}
-        onChange={(e) => { setName(e.target.value); setTouched(true) }}
+        value={value}
+        onChange={(e) => setName(e.target.value)}
         placeholder={suggestion}
         dir="auto"
       />
