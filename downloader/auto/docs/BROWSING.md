@@ -15,6 +15,11 @@ JSON, then each activity routes to an extractor.
 These are the single merge point; zoom-share links live in section **summaries**, not module
 cards, so the module parser never sees them.
 
+WS `section.name` / `module.name` are HTML strings (Moodle wraps subsection headings in
+`<span class="course-mod_subsection">…</span>`), so both parsers flatten them through
+`stripTags` (`lib/html.js`) before they become `sectionName`/`title` — the frontend renders
+those as text, and the keyword gate matches over them.
+
 ## Keyword gating
 
 `isRecording(sectionName, title)` matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading. **Only the `url` extractor is gated**, and it is gated twice: a recording keyword AND a YouTube target host. A Moodle `url` module is an opaque off-site link — a YouTube playlist, but equally a syllabus, reading, or Drive folder — but its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so `canHandle` also requires `YOUTUBE_HOSTS.has(safeHost(externalUrl))`. A non-YouTube target (Drive, GitHub, unparseable) is therefore not claimed at all — skipped like a syllabus link — rather than surfaced and rejected on expand. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.

@@ -3,21 +3,25 @@ import { postDownload, postDownloadYoutube } from '../http/serverClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
 import { splitName } from '../lib/naming.js';
+import { stripTags } from '../lib/html.js';
 
 // Flatten the WS section tree into activities. `url` modules carry their external target
 // in contents[].fileurl (YouTube/zoom/Drive/…) — the direct link the extractor expands,
 // not the redirect view page. `resource`/unknown modTypes match no extractor → skipped.
+// Names arrive as HTML, so they're flattened before being displayed or keyword-matched.
 function mapModules(sections) {
   const activities = [];
   for (const section of sections ?? []) {
+    const sectionName = stripTags(section.name || '');
     for (const module of section.modules ?? []) {
+      const title = stripTags(module.name || '');
       activities.push({
-        title: module.name,
+        title,
         modType: module.modname,
         viewUrl: module.url,
         externalUrl: module.contents?.[0]?.fileurl,
-        sectionName: section.name,
-        kind: classifyKind(section.name, module.name),
+        sectionName,
+        kind: classifyKind(sectionName, title),
       });
     }
   }

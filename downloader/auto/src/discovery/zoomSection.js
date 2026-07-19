@@ -1,4 +1,5 @@
 import { classifyKind } from './moodleCourse.js';
+import { decodeEntities, stripTags } from '../lib/html.js';
 
 /**
  * @typedef {import('../extractors/VideoExtractor.js').Activity} Activity
@@ -11,24 +12,6 @@ const LABEL_RE = /(?:הרצאה\s+מספר|הרצאה|שיעור|תרגול|תר
 // href value of any anchor (both quote styles), captured for a zoom.us/rec/share filter.
 const ANCHOR_HREF_RE = /<a\b[^>]*\bhref\s*=\s*(["'])(.*?)\1/gi;
 const shareKey = (u) => (u.split('/rec/share/')[1] || '').split(/[?#]/)[0];
-
-// WS returns summaries as HTML strings, so &amp; in a share URL's query would break the
-// link the DOM parser saw decoded. Decode the handful of entities Moodle emits in hrefs/text.
-function decodeEntities(s) {
-  return s
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#0*39;|&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ');
-}
-
-// The DOM parser read p.textContent; here that's the tag-stripped, entity-decoded,
-// whitespace-collapsed paragraph text.
-function stripTags(html) {
-  return decodeEntities(html.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
-}
 
 function anchorShareUrls(paragraph) {
   const out = [];
@@ -53,7 +36,7 @@ export function parseZoomSummaries(sections) {
   for (const section of sections ?? []) {
     const summary = section?.summary;
     if (typeof summary !== 'string' || !summary) continue;
-    const sectionName = section.name || '';
+    const sectionName = stripTags(section.name || '');
 
     let label = '';
     // Split on the whole opening <p …> tag so each chunk is one paragraph's inner HTML —
