@@ -96,6 +96,10 @@ export class MoodleToken extends AuthProvider {
       // Chromium can't follow the custom moodlemobile:// scheme, so the token surfaces on
       // whichever signal fires first — the redirect's Location header, the failed navigation
       // to the custom scheme, or the frame's URL. Watch all three (redundant by design).
+      // On capture we close the headed window immediately: complete() persists from the
+      // already-resolved token string and doesn't need a live browser, so leaving the window
+      // open would just strand the user on a dead tab + Chromium's xdg-open prompt for the
+      // unknown moodlemobile:// scheme (looks like a hang).
       let apptoken = null;
       let resolveToken;
       const tokenPromise = new Promise((resolve) => {
@@ -105,6 +109,7 @@ export class MoodleToken extends AuthProvider {
         if (url && url.startsWith(TOKEN_PREFIX) && !apptoken) {
           apptoken = url.slice(TOKEN_PREFIX.length);
           resolveToken(apptoken);
+          browser.close().catch(() => {});
         }
       };
       context.on('response', (resp) => grab(resp.headers()['location'] || ''));
@@ -118,8 +123,12 @@ export class MoodleToken extends AuthProvider {
       await page.goto(launchUrl, { waitUntil: 'load' }).catch(() => {});
 
       this._pending = { browser, context, tokenPromise };
-      // "Login abandoned" signal = the headed browser closing before complete() consumes it.
+      // "Login abandoned" signal = the headed browser closing before a token is captured.
+      // apptoken is truthy only after grab() fired our own post-capture close, so guard on it:
+      // a self-close is a SUCCESS, not a cancellation — misfiring here would null _pending and
+      // break complete() ("no pending login").
       browser.on('disconnected', () => {
+        if (apptoken) return;
         if (this._pending && this._pending.browser === browser) {
           this._pending = null;
           onCancel?.();

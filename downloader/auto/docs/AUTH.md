@@ -10,10 +10,12 @@ university** in `authInstances` (`http/server.js`) and never evicted, so `connec
 ## connect / complete / status
 
 - `connect()` — takes no args; builds its own `launch.php` URL and opens the **headed**
-  browser (MFA by hand, once). Returns immediately, login still pending.
-- `complete()` — waits for the captured `moodlemobile://token` redirect, decodes it, and
-  persists `{ wstoken, privatetoken }` to `.auth/biu-token.json`. `/auth/complete` returns
-  `{ connected: true }`.
+  browser (MFA by hand, once). Returns immediately, login still pending. The headed window
+  closes itself the instant the `moodlemobile://token` redirect is captured, so the user
+  never sees the dead tab or Chromium's xdg-open prompt for the custom scheme.
+- `complete()` — waits for the (already-captured) token string, decodes it, and persists
+  `{ wstoken, privatetoken }` to `.auth/biu-token.json`; it needs no live browser (its own
+  close is a no-op after the self-close). `/auth/complete` returns `{ connected: true }`.
 - `status()` — no browser, no API call: `{ connected: token file exists, expired: markExpired flag }`.
 
 ## Expiry is only knowable at call time
