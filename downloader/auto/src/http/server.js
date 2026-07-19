@@ -180,9 +180,9 @@ async function downloadItem(req, res) {
   if (!isSafeName(course) || !isSafeName(name)) return send(res, 400, { error: 'course and name are required' });
   if (kind !== 'lecture' && kind !== 'recitation') return send(res, 400, { error: `invalid kind: ${kind}` });
 
-  // A youtube entry carries its direct url (playlist already expanded) and needs
-  // no browser; videostream must sniff the .mp4 fresh on the shared page.
-  if (recording.strategy === 'youtube-playlist' && recording.url) {
+  // yt-dlp strategies need no browser: a youtube entry carries its direct url (playlist
+  // already expanded), a Drive file its pageUrl. videostream must sniff the .mp4 fresh.
+  if ((recording.strategy === 'youtube-playlist' && recording.url) || recording.strategy === 'google-drive') {
     await downloadRecording(null, { recording, course, name, kind });
     logResult('/download-item', 'ok');
     return send(res, 200, { ok: true });

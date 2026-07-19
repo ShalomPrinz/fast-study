@@ -7,7 +7,8 @@
  * A listed recording — cheap metadata + which download strategy resolves it.
  * `section` is the Moodle course section heading (display metadata for grouping; '' when unnamed).
  * @typedef {{ title: string, pageUrl: string, kind: 'lecture'|'recitation',
- *             strategy: 'videostream'|'youtube-playlist', section: string }} Recording
+ *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive',
+ *             section: string }} Recording
  *
  * A recording resolved for download — url = the .mp4 (videostream) or a YouTube
  * URL (playlist entry). Shape maps straight onto server.js's download endpoints.

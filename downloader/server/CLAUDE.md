@@ -34,7 +34,7 @@ the popup.
 | `GET  /courses`                        | database `/tree` reshaped to name arrays, archived dropped     |
 | `POST /probe-size`                     | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)     |
 | `POST /download`                       | curl header-replay capture; 200 immediately, runs in background|
-| `POST /download-youtube`               | yt-dlp capture; 200 immediately, runs in background            |
+| `POST /download-youtube`               | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately, runs in background |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the neutral `/files/material.pdf`   |
 
 `kind` is `lecture` (default) or `recitation`.

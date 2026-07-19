@@ -30,13 +30,13 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | `POST /zoom/passcode` | `{ course, name?, passcode, scope }` | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
 | `POST /close` | — | `{ ok:true }` (close the persistent browser) |
 
-`401 {status:'reconnect'}` = the Moodle WS token is missing or a call returned `invalidtoken`. `422 {status:'unsupported'}` = a `url` module redirects to a non-YouTube host. `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
+`401 {status:'reconnect'}` = the Moodle WS token is missing or a call returned `invalidtoken`. `422 {status:'unsupported'}` = the source genuinely can't be handled: a `url` module target that is neither a YouTube playlist nor a public Google Drive file (a Drive file that isn't shared "anyone with the link" reports the sharing cause and the URL). `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
 
 ## Deep logic → `docs/`
 
 - **`docs/SESSIONS.md`** — persistent per-profile browsers, `withLock` mutex, idle timeout, the launch matrix.
 - **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + managed Xvfb; the UA/GPU constraints; passcode gate; before/after-break split.
-- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword gating, the `Item`/`ref` contract, lazy playlist expansion.
+- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, yt-dlp), `zoom`.
 - **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
 
 Dev-stack wiring: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

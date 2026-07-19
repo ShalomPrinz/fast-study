@@ -15,7 +15,7 @@ auto/                Auto-downloader: Playwright HTTP service (talks to server/ 
 
 
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
-- **YouTube** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing.
+- **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links (`auto/`'s `google-drive` strategy).
 - **PDF** — when the active tab is a `.pdf`, the popup fetches it directly (with the user's cookies) and uploads it as `material.pdf`; no header replay needed since PDFs aren't token-gated.
 
 ## Running

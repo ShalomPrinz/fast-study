@@ -22,7 +22,12 @@ those as text, and the keyword gate matches over them.
 
 ## Keyword gating
 
-`isRecording(sectionName, title)` matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading. **Only the `url` extractor is gated**, and it is gated twice: a recording keyword AND a YouTube target host. A Moodle `url` module is an opaque off-site link — a YouTube playlist, but equally a syllabus, reading, or Drive folder — but its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so `canHandle` also requires `YOUTUBE_HOSTS.has(safeHost(externalUrl))`. A non-YouTube target (Drive, GitHub, unparseable) is therefore not claimed at all — skipped like a syllabus link — rather than surfaced and rejected on expand. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
+`isRecording(sectionName, title)` matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading. **Only the `url` extractors are gated**, and each is gated twice: a recording keyword AND a target check. A Moodle `url` module is an opaque off-site link — a YouTube playlist or a Drive video, but equally a syllabus, reading, Google Doc, or Drive folder — but its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so the target check is a pure function of the URL:
+
+- `YoutubePlaylistExtractor` — `YOUTUBE_HOSTS.has(safeHost(externalUrl))`.
+- `GoogleDriveExtractor` — a Drive host (`drive.google.com`/`docs.google.com`) **and** a single-file path (`/file/d/<id>/…`, `/open?id=`, `/uc?id=`). The path half carries real weight: a Google Doc titled `…לתרגילים` passes the keyword gate, and only the path check keeps it unclaimed. Folder links (`/drive/folders/<id>`) are likewise unclaimed.
+
+Any other target (GitHub, unparseable) is not claimed at all — skipped like a syllabus link — rather than surfaced and rejected on expand. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
 
 ## Mechanism-agnostic Item / ref contract
 
@@ -37,3 +42,10 @@ list time by `canHandle` (see Keyword gating), so the YouTube-host check in `lis
 a fallback: an echoed ref can still reach expand/download, and a non-YouTube (or unparseable)
 host there is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500
 "try again"); the same mapping applies on `/download-item`.
+
+A `google-drive` item is **not** expandable — it is one concrete file, downloadable straight from
+its `pageUrl`. `/download-item` skips the browser entirely and hands that URL to `server/`'s
+`/download-youtube` (yt-dlp), after a `yt-dlp --skip-download --print id` preflight
+(`assertPubliclyShared`): `server/`'s download job is fire-and-forget, so a file that isn't shared
+"anyone with the link" is caught here and surfaces as `422 {status:'unsupported'}` naming Drive
+sharing and the URL; any other yt-dlp failure stays a 500.

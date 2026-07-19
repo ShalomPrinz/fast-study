@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { downloaders, runDownloadJob } from '../downloaders/index.js';
-import { YOUTUBE_HOST_RE } from '../downloaders/ytdlp.js';
+import { YTDLP_HOST_RE } from '../downloaders/ytdlp.js';
 import { isSafeName, validateKind } from '../validate.js';
 
 const router = Router();
@@ -26,8 +26,8 @@ router.post('/download-youtube', (req, res) => {
   const { url, course, lecture, kind = 'lecture' } = req.body ?? {};
   let host = '';
   try { host = new URL(url).hostname; } catch {}
-  if (!host || !YOUTUBE_HOST_RE.test(host)) {
-    return res.status(400).json({ error: 'valid youtube url required' });
+  if (!host || !YTDLP_HOST_RE.test(host)) {
+    return res.status(400).json({ error: 'valid youtube or google drive url required' });
   }
   if (!isSafeName(course) || !isSafeName(lecture)) {
     return res.status(400).json({ error: 'course and lecture are required' });

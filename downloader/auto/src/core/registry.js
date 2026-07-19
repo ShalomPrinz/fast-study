@@ -4,6 +4,7 @@
 import { MoodleToken } from '../auth/moodleToken.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
+import { GoogleDriveExtractor } from '../extractors/GoogleDriveExtractor.js';
 import { ZoomExtractor } from '../extractors/ZoomExtractor.js';
 
 // Universities own AUTH (per host). The one-time headed token grab yields a long-lived
@@ -21,6 +22,7 @@ const UNIVERSITIES = [
 const EXTRACTORS = [
   new VideostreamExtractor(), // modType 'videostream' → in-site .mp4
   new YoutubePlaylistExtractor(), // modType 'url'      → YouTube playlist (redirect)
+  new GoogleDriveExtractor(), // modType 'url'          → Google Drive single video file
   new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
 ];
 

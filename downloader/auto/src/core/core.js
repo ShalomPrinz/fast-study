@@ -2,6 +2,7 @@ import { resolveExtractor, resolveExtractorForRecording } from './registry.js';
 import { postDownload, postDownloadYoutube } from '../http/serverClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
+import { assertPubliclyShared } from '../extractors/GoogleDriveExtractor.js';
 import { splitName } from '../lib/naming.js';
 import { stripTags } from '../lib/html.js';
 
@@ -49,17 +50,26 @@ export function listRecordings(sections) {
 
 /**
  * DOWNLOAD PATH (HTTP): resolve one echoed-back recording and hand it to server/.
- * videostream/zoom sniff the .mp4 fresh on the shared page; a youtube entry carries its
- * direct url (no navigation). See docs/BROWSING.md.
- * @param {import('playwright').Page|null} page  live shared page (null for youtube entries)
+ * videostream/zoom sniff the .mp4 fresh on the shared page; youtube/google-drive carry a
+ * direct url yt-dlp resolves (no navigation). See docs/BROWSING.md.
+ * @param {import('playwright').Page|null} page  live shared page (null for yt-dlp strategies)
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
  */
 export async function downloadRecording(page, { recording, course, name, kind, passcode }) {
-  if (recording.strategy === 'youtube-playlist') {
-    if (!recording.url) throw new Error('expand the playlist and download a specific entry');
-    await postDownloadYoutube({ url: recording.url, course, lecture: name, kind });
+  // yt-dlp strategies: no browser, no capture. A youtube entry must be a specific
+  // expanded playlist entry (`url`); a Drive file downloads straight from its `pageUrl`,
+  // preflighted so a non-public file fails as 422 rather than silently in server/'s job.
+  if (recording.strategy === 'youtube-playlist' || recording.strategy === 'google-drive') {
+    let url = recording.pageUrl;
+    if (recording.strategy === 'youtube-playlist') {
+      if (!recording.url) throw new Error('expand the playlist and download a specific entry');
+      url = recording.url;
+    } else {
+      await assertPubliclyShared(url);
+    }
+    await postDownloadYoutube({ url, course, lecture: name, kind });
     return;
   }
   const extractor = resolveExtractorForRecording(recording);

@@ -1,6 +1,8 @@
 import { execFile } from 'node:child_process';
 
-export const YOUTUBE_HOST_RE = /(^|\.)youtube\.com$|^youtu\.be$/i;
+// Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
+// which yt-dlp resolves without a login.
+export const YTDLP_HOST_RE = /(^|\.)youtube\.com$|^youtu\.be$|^drive\.google\.com$|^docs\.google\.com$/i;
 
 // Recent yt-dlp needs a JS runtime to run YouTube's player script and extract
 // formats; both the probe and the download must carry these or format extraction errors.
