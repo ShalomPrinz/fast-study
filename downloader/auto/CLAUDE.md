@@ -13,7 +13,7 @@ npm --prefix downloader/auto start   # HTTP service, app.js
 npx playwright install chromium      # once, for the plain profile
 ```
 
-Port **3053** (`AUTODL_PORT`). Reads the repo-root `.env` (`src/lib/config.js`) for `SERVER_URL` (default `http://localhost:3052`) — the `server/` base it POSTs downloads to. CORS allows only the Vite origin `http://localhost:5173` (unlike `server/`, locked to the extension ID). Zoom capture also needs `Xvfb` + system Google Chrome installed.
+Port **3053** (`AUTODL_PORT`). Reads the repo-root `.env` (`src/lib/config.js`) for `SERVER_URL` (default `http://localhost:3052`) — the `server/` base it POSTs downloads to. CORS allows only the Vite origin `http://localhost:5173`. Zoom capture also needs `Xvfb` + system Google Chrome installed.
 
 ## HTTP surface
 
@@ -27,15 +27,14 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | `POST /list` | `{ courseUrl }` | `{ items }` |
 | `POST /list/expand` | `{ ref }` | `{ items }` (resolve one expandable item → children) |
 | `POST /download-item` | `{ ref, course, name, kind }` | `{ ok, jobs }` (`jobs` = server/ job ids) |
-| `GET /progress?ids=<csv>` | — | `{ jobs }` — download progress, proxied from server/ |
 | `POST /zoom/passcode` | `{ course, name?, passcode, scope }` | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
 | `POST /close` | — | `{ ok:true }` (close the persistent browser) |
 
 `/download-item` returns 200 once the download is **queued**, not finished: `jobs` holds
-one server/ job id per started download (the zoom before/after-break pair yields two) and
-the page polls `/progress` for `receivedBytes`/`expectedBytes`/terminal status. `/progress`
-proxies server/'s `GET /jobs` because the browser can't reach 3052 — its CORS is locked to
-the extension origin. Job semantics live in `server/docs/JOBS.md`.
+one server/ job id per started download (the zoom before/after-break pair yields two). auto
+keeps no job state — the page follows those ids on `server/`'s own `GET /events` and
+resyncs them from its `GET /jobs`. Job semantics, event payloads and the timing samples
+live in `server/docs/JOBS.md`.
 
 `401 {status:'reconnect'}` = the Moodle WS token is missing or a call returned `invalidtoken`. `422 {status:'unsupported'}` = the source genuinely can't be handled: a `url` module target that is neither a YouTube playlist nor a public Google Drive file (a Drive file that isn't shared "anyone with the link" reports the sharing cause and the URL). `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
 

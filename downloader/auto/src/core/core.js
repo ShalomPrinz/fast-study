@@ -57,7 +57,8 @@ export function listRecordings(sections) {
  *           course: string, name: string, kind: string, passcode?: string|null }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
  * @returns {Promise<string[]>} server/ job ids — one per started download (zoom's
- *   before/after-break pair yields two), pollable via /progress.
+ *   before/after-break pair yields two), followed on server/'s /events and resyncable
+ *   via server/'s /jobs.
  */
 export async function downloadRecording(page, { recording, course, name, kind, passcode }) {
   // yt-dlp strategies: no browser, no capture. A youtube entry must be a specific

@@ -24,7 +24,7 @@ async function postJson(path, body) {
 /**
  * In-site .mp4 (videostream): server.js replays the captured headers via curl.
  * @param {{ url: string, headers: Record<string,string>, course: string, lecture: string, kind?: string }} payload
- * @returns {Promise<string|undefined>} the server's job id, pollable via getJobs
+ * @returns {Promise<string|undefined>} server/'s job id
  */
 export async function postDownload({ url, headers, course, lecture, kind }) {
   const body = await postJson('/download', { url, headers, course, lecture, kind });
@@ -34,23 +34,9 @@ export async function postDownload({ url, headers, course, lecture, kind }) {
 /**
  * YouTube entry: server.js runs yt-dlp (no captured headers — it manages its own session).
  * @param {{ url: string, course: string, lecture: string, kind?: string }} payload
- * @returns {Promise<string|undefined>} the server's job id, pollable via getJobs
+ * @returns {Promise<string|undefined>} server/'s job id
  */
 export async function postDownloadYoutube({ url, course, lecture, kind }) {
   const body = await postJson('/download-youtube', { url, course, lecture, kind });
   return body?.jobId;
-}
-
-/**
- * Read back download jobs by id. The frontend can't hit server/ directly (its CORS is
- * locked to the extension origin), so /progress proxies through here.
- * @param {string[]} ids
- * @returns {Promise<object[]>}
- */
-export async function getJobs(ids) {
-  const qs = ids.length ? `?ids=${encodeURIComponent(ids.join(','))}` : '';
-  const res = await fetch(`${SERVER_URL}/jobs${qs}`);
-  if (!res.ok) throw new Error(`GET /jobs failed: ${res.status}`);
-  const body = await res.json().catch(() => ({}));
-  return body?.jobs ?? [];
 }

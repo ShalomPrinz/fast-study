@@ -1,7 +1,6 @@
 import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from '../core/registry.js';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import { listRecordings, downloadRecording } from '../core/core.js';
-import { getJobs } from './serverClient.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
@@ -231,17 +230,6 @@ async function downloadItem(req, res) {
   }
   logResult('/download-item', `ok (${jobs.length} job)`);
   send(res, 200, { ok: true, jobs });
-}
-
-// Proxy server/'s job registry: the frontend can't reach 3052 (its CORS is locked to the
-// extension origin), so this is the only path to download progress. Deliberately unlogged
-// — it's polled while a download runs and would drown the request log.
-export async function handleProgress(req, res) {
-  const ids = typeof req.query.ids === 'string'
-    ? req.query.ids.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
-  send(res, 200, { jobs: await getJobs(ids) }); // no ids → every live job, extension's included
-
 }
 
 // Log the shared plain session into Moodle via a one-shot autologin key so the token-gated
