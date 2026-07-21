@@ -48,12 +48,16 @@ _LATEX_SPECIAL = {
 # minus the × (U+00D7) and ÷ (U+00F7) signs sitting in that block.
 _LATIN = r'A-Za-zÀ-ÖØ-öø-ɏ'
 _HEBREW = '֐-׿'
+# A possessive apostrophe after a sibilant ("Bayes' Rule") glues across the space
+# too, so the run isn't split into two islands. Restricting the lookbehind to s/x/z
+# is what keeps a closing quote between Latin words ("’word’ here") outside the run.
+_POSSESSIVE = r"(?<=[sxzSXZ])['’](?=[ \t]+[" + _LATIN + r'])'
 # One Latin token: an optional numeric prefix and/or leading slash glued to a letter,
 # then letters/digits/underscore with separators that are FOLLOWED by more of the same.
 # See docs/PDF.md for why each piece is shaped this way.
 _WORD = (
     r'(?:[0-9]+-?)?(?:(?<![' + _HEBREW + r'])/)?[' + _LATIN + r']'
-    r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r'0-9]))*'
+    r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r'0-9])|' + _POSSESSIVE + r')*'
 )
 # A number joins a phrase as a CONTINUATION only, never an anchor — so a lone
 # Hebrew-adjacent number ("5 שקלים") stays untouched in the RTL run.
@@ -114,6 +118,17 @@ def normalize_dashes(text: str) -> str:
     return text.replace('—', ' - ').replace('–', '-')
 
 
+# Whole line: opens `$$`, no other `$` or backtick in the body, closes with a lone `$`.
+_UNBALANCED_DISPLAY_MATH_RE = re.compile(r'^([ \t]*\$\$[^$`\n]+)\$[ \t]*$', re.MULTILINE)
+
+
+def close_unbalanced_display_math(text: str) -> str:
+    """Close a display block the LLM opened with `$$` but ended with a lone `$` —
+    the stray delimiter pairs with a LATER `$$`, desyncing every math span after it."""
+
+    return _UNBALANCED_DISPLAY_MATH_RE.sub(r'\1$$', text)
+
+
 def unwrap_math_code(text: str) -> str:
     """Strip the backticks the LLM puts around whole math expressions,
     which would otherwise render as literal `$...$` source."""
@@ -162,18 +177,54 @@ def normalize_math_text_spaces(text: str) -> str:
 
 
 _MATH_TEXT_BODY_RE = re.compile(r'\\text\s*\{([^{}]*)\}')
+# First strong character of a \text{} body decides its base direction (UAX#9 P2/P3).
+_FIRST_STRONG_RE = re.compile(r'([' + _LATIN + r'])|([' + _HEBREW + r'])')
 
 
-def wrap_math_text_ltr(text: str) -> str:
-    """Force \\text{} bodies LTR — text mode inherits the document's RTL base
-    direction, so English inside math renders word-reversed."""
+def wrap_math_text_dir(text: str) -> str:
+    """Give each \\text{} body an explicit base direction — math text mode inherits
+    the document's RTL base, so English reverses and Hebrew keeps the wrong side."""
 
     def repl(m: re.Match) -> str:
         body = m.group(1)
-        if not body.strip():
+        strong = _FIRST_STRONG_RE.search(body)
+        # No strong character (spaces, digits, punctuation) — nothing to reorder,
+        # and an island would only give the neutrals a new boundary to attach to.
+        if not strong:
             return m.group(0)
-        return r'\text{\LR{' + body + '}}'
+        macro = r'\LR{' if strong.group(1) else r'\RL{'
+        return r'\text{' + macro + body + '}}'
     return _MATH_TEXT_BODY_RE.sub(repl, text)
+
+
+_MATH_NUMBER = r'[0-9]+(?:[.,][0-9]+)*'
+_RTL_MATH_TEXT = r'\\text\s*\{\\RL\{([^{}]*)\}\}'
+# Only whitespace and the math control space may sit between the number and the text.
+_MATH_GAP = r'(?:[ \t]|\\ )*'
+# The number must be a standalone math token: a preceding ^/_/./letter/digit means it
+# belongs to another token (an exponent, a subscript, a decimal tail), not to the text.
+_MERGE_RTL_NUMBER_RE = re.compile(
+    r'(?<![0-9A-Za-z^_.\\])(' + _MATH_NUMBER + r')(' + _MATH_GAP + r')' + _RTL_MATH_TEXT
+    + r'|' + _RTL_MATH_TEXT + r'(' + _MATH_GAP + r')(' + _MATH_NUMBER + r')'
+    + r'(?![0-9A-Za-z^_.{])'
+)
+
+
+def merge_rtl_math_number(text: str) -> str:
+    """Pull a number adjacent to a Hebrew \\text{} into its \\RL{} run — left outside,
+    the number stays in LTR math flow and the two islands order wrongly against each
+    other. \\RL{} is text-mode only, so the merged run has to live inside the \\text{}."""
+
+    def repl(m: re.Match) -> str:
+        num, gap, body = (m.group(1), m.group(2), m.group(3)) if m.group(1) else \
+            (m.group(6), m.group(5), m.group(4))
+        # The number was in math flow, so it keeps math typesetting after the move;
+        # \ensuremath re-enters math inside the text-mode \text{} body.
+        num = r'\ensuremath{' + num + '}'
+        gap = ' ' if gap else ''
+        parts = (num, gap, body) if m.group(1) else (body, gap, num)
+        return r'\text{\RL{' + ''.join(parts) + '}}'
+    return _MERGE_RTL_NUMBER_RE.sub(repl, text)
 
 
 _INLINE_MATH_ONLY_RE = re.compile(_INLINE_MATH)
@@ -338,16 +389,18 @@ def convert_to_pdf(md_path: str) -> str:
     raw_md = input_path.read_text(encoding="utf-8")
 
     def preprocess(t: str) -> str:
+        t = close_unbalanced_display_math(t)
         t = normalize_dashes(t)
         t = unwrap_math_code(t)
         t = demote_math_identifier(t)
         t = unwrap_math_text_macros(t)
         t = normalize_math_text_spaces(t)
-        t = wrap_math_text_ltr(t)
+        t = wrap_math_text_dir(t)
         t = normalize_math_spans(t)
         t = ensure_blank_before_lists(t)
         t = wrap_english_phrases(t)
         t = force_ltr_inline_code(t)
+        t = merge_rtl_math_number(t)
         t = merge_ltr_math(t)
         return t
 

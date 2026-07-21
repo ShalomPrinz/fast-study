@@ -30,21 +30,23 @@ Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBe
 
 `convert_to_pdf` runs a fixed chain of pure string helpers via `apply_outside_fences`, which never touches content inside ``` / ~~~ fences (those are the Lua filter's job). Each helper has a dedicated test class in `tests/pipeline/test_to_pdf.py`.
 
-Protected-region handling is the recurring theme: `$$…$$` is matched before `$…$`, the inline-math body excludes backticks (a `$` inside a code span is a literal, and pandoc won't let math cross a code span), and splitting happens over the WHOLE text — line-by-line first would break multi-line display math and leak its Latin contents into the phrase wrapper.
+Protected-region handling is the recurring theme, and balanced delimiters are its precondition — one unclosed `$$` desyncs every math span after it, so `close_unbalanced_display_math` runs first. Beyond that: `$$…$$` is matched before `$…$`, the inline-math body excludes backticks (a `$` inside a code span is a literal, and pandoc won't let math cross a code span), and splitting happens over the WHOLE text — line-by-line first would break multi-line display math and leak its Latin contents into the phrase wrapper.
 
 | Helper | What it fixes |
 |---|---|
+| `close_unbalanced_display_math` | The LLM opens a display block with `$$` but closes it with a lone `$`; the stray delimiter pairs with the next `$$`, so later math bodies fall outside the protected region and `\frac` gets rewritten as `\LR{frac}`. Triggers only on a whole line of the form `$$…$` with no other `$` or backtick. |
 | `normalize_dashes` | em/en dashes → ASCII, which behave predictably under bidi. |
 | `unwrap_math_code` | The LLM backticks whole math expressions; unwrapped they'd render as literal `$…$` source. Only fires when the span's entire body is one math expression, so `` `RSI` `` stays code. |
 | `demote_math_identifier` | `$_exit$` makes the leading `_` a subscript operator. Syscall/identifier names are code, not math → rewritten to a backtick span. Narrow trigger (`_` + letter + 2+ ident chars) leaves `$x_i$`, `$_2F_1$`, `$a_{ij}$` alone. |
 | `unwrap_math_text_macros` | `\text{\Pi}` switches to text mode where `\Pi` is undefined → "Missing $ inserted". Only fires when the body is a single macro. |
 | `normalize_math_text_spaces` | XeLaTeX trims edge spaces inside `\text{}` at the bidi boundary, fusing words together. Moves them out as math control spaces (`\ `). |
-| `wrap_math_text_ltr` | `\text{}` inherits the document's RTL base direction, so English inside math renders word-reversed. |
+| `wrap_math_text_dir` | `\text{}` inherits the surrounding base direction, so English inside math renders word-reversed and Hebrew lands on the wrong side. Gives the body an explicit direction by its FIRST strong character (UAX#9): Latin → `\LR{}`, Hebrew → `\RL{}`. A body with no strong character (`\text{ }`, `\text{123}`) is left bare — nothing to reorder, and an island would only give its neutrals a new boundary to attach to. `\RL{}` is explicit rather than relying on the inherited RTL, which is wrong once `merge_ltr_math` nests the math inside an `\LR{}`. |
 | `normalize_math_spans` | Pandoc requires no space adjacent to the `$` delimiters. |
 | `ensure_blank_before_lists` | Pandoc needs a blank line before a list that follows a paragraph. |
 | `wrap_english_phrases` | The big one — see below. |
 | `force_ltr_inline_code` | Backtick spans → `\LR{\texttt{…}}`. Enough for word order (a plain `\texttt` in an RTL paragraph reverses), since no `Verbatim` is involved. NOT enough for a comma-separated **number** list: digits are weak European Numbers and the comma is a neutral, so each comma jumps ahead of its number — an LRM (U+200E) after any comma preceding a digit pins it. Letters are strong L and never need this. |
 | `merge_ltr_math` | An inline-code `\LR{}` and an adjacent `$…$` are two separate LTR islands, which RTL bidi orders right-to-left. Merges them into one run. |
+| `merge_rtl_math_number` | The RTL mirror: a number beside a Hebrew `\text{}` sits outside it in LTR math flow, so `240 \text{ תאים}` renders "תאים 240". Pulls that one number INTO the `\RL{}` body (`\RL{}` is text-mode only, so the merged run must live inside the `\text{}`) wrapped in `\ensuremath{}` — it was math before the move, so it must still typeset as math after it; a number already inside the body (`\text{שלב 2 ואילך}`) never was math and is left as text. Only whitespace / `\ ` may separate them, one number, one side; a Latin body or a preceding `^`/`_`/digit disqualifies it, and an adjacent `=` stays outside. |
 
 ### `wrap_english_phrases`
 
@@ -54,7 +56,7 @@ Wraps Latin runs in `\LR{}` (with LaTeX escaping, since tokens like `x86_64` car
 - **A numeric prefix glued to a letter joins the run** (`4KB`, `64GB`, `3-way`) — otherwise the neutral number reorders after it. A number with a space before the letter ("4 שקלים") is not glued.
 - **A number alone is a continuation, never an anchor** — so "Software 1.0" is one run, while a Hebrew-adjacent "5 שקלים" stays untouched.
 - **Separators (space, `, `, ` - `, abbreviation `. `) are glue only when another Latin token follows**, so a sentence-final period or a dash before Hebrew stays with the RTL side.
-- **Trailing separators are excluded** from the run so they don't jump to its far edge; a possessive apostrophe is kept inside ("Tukey's" as one run, not `\LR{Tukey}’\LR{s}`).
+- **Trailing separators are excluded** from the run so they don't jump to its far edge; a possessive apostrophe is kept inside ("Tukey's" as one run, not `\LR{Tukey}’\LR{s}`). It also glues **across a following space** ("Bayes' Rule" as one run, else the two islands reverse to "Rule' Bayes") — but only after a sibilant (`s`/`x`/`z`), which is what keeps a closing quote between Latin words ("’word’ here") outside the run.
 - **A leading slash is glued only when not directly after a Hebrew letter**: `/index.html` is a path, but "גרעינים/kernels" is a word separator and pulling the slash into the run moves it to the run's left edge.
 - **A balanced parenthesized group is wrapped whole**, parens included, so the neutral `(` `)` don't reorder. Requiring the matching `)` means a lone `)` on the Hebrew side is never swallowed.
 - **Exception**: a group ending in a digit (`(Software 1.0)`) has its parens kept OUTSIDE the run — a `)` right after a digit inside `\LR{}` mirrors. Letter-terminated groups don't.

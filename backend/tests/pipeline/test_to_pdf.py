@@ -18,9 +18,11 @@ from to_pdf import (
     unwrap_math_code,
     unwrap_math_text_macros,
     normalize_math_text_spaces,
-    wrap_math_text_ltr,
+    wrap_math_text_dir,
     merge_ltr_math,
+    merge_rtl_math_number,
     demote_math_identifier,
+    close_unbalanced_display_math,
 )
 
 LRM = "‎"
@@ -258,6 +260,31 @@ class TestWrapEnglishPhrases:
         result = wrap_english_phrases("the user can't do it")
         assert r"\LR{the user can't do it}" in result
 
+    def test_possessive_before_space_keeps_one_run(self):
+        # Regression: "Bayes' Rule" split into \LR{Bayes}' \LR{Rule} — two LTR
+        # islands, which RTL orders right-to-left ("Rule' Bayes" in the PDF).
+        result = wrap_english_phrases("חוק בייס (Bayes' Rule)")
+        assert r"\LR{(Bayes' Rule)}" in result
+        assert r"\LR{Bayes}" not in result
+
+    def test_possessive_before_space_outside_parens(self):
+        result = wrap_english_phrases("על students' work כאן")
+        assert r"\LR{students' work}" in result
+
+    def test_possessive_before_hebrew_still_excluded(self):
+        # No Latin token follows, so the apostrophe stays out of the run —
+        # the trailing-separator rule must not regress.
+        result = wrap_english_phrases("על Bayes' משהו")
+        assert r"\LR{Bayes}" in result
+        assert r"\LR{Bayes'}" not in result
+
+    def test_closing_quote_between_latin_words_not_swallowed(self):
+        # A quote closing a quoted word is not a possessive; only a sibilant
+        # before it makes the across-a-space glue fire.
+        result = wrap_english_phrases("the ’word’ here")
+        assert r"\LR{word}" in result
+        assert r"\LR{word’ here}" not in result
+
     def test_trailing_apostrophe_before_hebrew_excluded(self):
         # An apostrophe NOT followed by a letter/digit (here a closing quote
         # before Hebrew) must stay outside the LTR run.
@@ -407,6 +434,63 @@ class TestWrapEnglishPhrases:
         # The optional-hyphen numeric prefix must still handle "3-way".
         result = wrap_english_phrases("מיזוג 3-way merge")
         assert r"\LR{3-way merge}" in result
+
+
+# ---------------------------------------------------------------------------
+# close_unbalanced_display_math
+# ---------------------------------------------------------------------------
+
+class TestCloseUnbalancedDisplayMath:
+    def test_lone_closing_dollar_is_doubled(self):
+        # Regression: a block opened with $$ and closed with a single $ leaves a
+        # stray delimiter that pairs with the NEXT $$, so every later math span
+        # is mis-paired and its body escapes the protected region.
+        text = r"$$W \sim \mathcal{N}\left(0, \frac{2}{n}\right)$"
+        assert close_unbalanced_display_math(text) == text + "$"
+
+    def test_later_math_stays_paired_after_fix(self):
+        text = "$$a + b$\n\nטקסט\n\n$$\\frac{1}{2}$$\n"
+        fixed = close_unbalanced_display_math(text)
+        assert fixed.count("$") % 2 == 0
+        assert "$$a + b$$" in fixed
+        assert "$$\\frac{1}{2}$$" in fixed
+
+    def test_trailing_whitespace_tolerated(self):
+        assert close_unbalanced_display_math("$$x^2$   ") == "$$x^2$$"
+
+    def test_indented_block_closed(self):
+        assert close_unbalanced_display_math("  $$x^2$") == "  $$x^2$$"
+
+    def test_balanced_display_math_untouched(self):
+        text = r"$$\frac{1}{2}$$"
+        assert close_unbalanced_display_math(text) == text
+
+    def test_inline_math_untouched(self):
+        text = "הערך $x$ גדול"
+        assert close_unbalanced_display_math(text) == text
+
+    def test_inline_math_alone_on_line_untouched(self):
+        text = "$x + y$"
+        assert close_unbalanced_display_math(text) == text
+
+    def test_dollar_inside_code_span_untouched(self):
+        text = "`$$x$`"
+        assert close_unbalanced_display_math(text) == text
+
+    def test_line_with_prose_after_closing_dollar_untouched(self):
+        text = "$$x^2$ וטקסט"
+        assert close_unbalanced_display_math(text) == text
+
+    def test_empty_body_untouched(self):
+        assert close_unbalanced_display_math("$$$") == "$$$"
+
+    def test_multiline_display_block_untouched(self):
+        text = "$$\na + b\n$$"
+        assert close_unbalanced_display_math(text) == text
+
+    def test_only_the_broken_line_changes(self):
+        text = "שורה\n$$x^2$\n$$y^2$$\nסוף"
+        assert close_unbalanced_display_math(text) == "שורה\n$$x^2$$\n$$y^2$$\nסוף"
 
 
 # ---------------------------------------------------------------------------
@@ -664,42 +748,69 @@ class TestNormalizeMathSpans:
 
 
 # ---------------------------------------------------------------------------
-# wrap_math_text_ltr
+# wrap_math_text_dir
 # ---------------------------------------------------------------------------
 
-class TestWrapMathTextLtr:
+class TestWrapMathTextDir:
     def test_text_body_wrapped_in_lr(self):
         # Regression: English inside \text{} in math renders RTL (words reversed)
         # because text mode inherits the document's RTL base direction.
         text = r"$$cyclic = \{G \mid G \text{is an undirected graph}\}$$"
-        result = wrap_math_text_ltr(text)
+        result = wrap_math_text_dir(text)
         assert r"\text{\LR{is an undirected graph}}" in result
 
     def test_short_text_wrapped(self):
-        assert wrap_math_text_ltr(r"\text{steps}") == r"\text{\LR{steps}}"
+        assert wrap_math_text_dir(r"\text{steps}") == r"\text{\LR{steps}}"
 
     def test_text_with_spaces_around_macro(self):
         # The space between \text and { is cosmetic in LaTeX; collapsing it is fine.
-        assert wrap_math_text_ltr(r"\text {within}") == r"\text{\LR{within}}"
+        assert wrap_math_text_dir(r"\text {within}") == r"\text{\LR{within}}"
 
     def test_multiple_text_macros_each_wrapped(self):
-        result = wrap_math_text_ltr(r"\text{from} a \text{to} b")
+        result = wrap_math_text_dir(r"\text{from} a \text{to} b")
         assert result == r"\text{\LR{from}} a \text{\LR{to}} b"
 
     def test_whitespace_only_body_untouched(self):
         # normalize_math_text_spaces turns edge-only \text{} into \ ; a body that
         # is only whitespace must not be wrapped (an empty \LR is pointless).
-        assert wrap_math_text_ltr(r"\text{ }") == r"\text{ }"
+        assert wrap_math_text_dir(r"\text{ }") == r"\text{ }"
 
     def test_no_text_macro_unchanged(self):
         text = "טקסט עברי $x^2 + 1$ רגיל"
-        assert wrap_math_text_ltr(text) == text
+        assert wrap_math_text_dir(text) == text
 
     def test_nested_braces_body_left_alone(self):
         # The regex deliberately excludes inner braces; a \text{} containing a
         # macro group is not a plain-text run and is left as-is.
         text = r"\text{\alpha{}}"
-        assert wrap_math_text_ltr(text) == text
+        assert wrap_math_text_dir(text) == text
+
+    # --- Script-aware direction ---
+
+    def test_hebrew_body_wrapped_in_rl(self):
+        # Regression: a Hebrew body used to get \LR{}, forcing it into an LTR
+        # island so it landed on the wrong side of the surrounding math.
+        text = r"$$\alpha_i \ge 0 \quad \text{וכן} \quad \sum \alpha_i = 0$$"
+        result = wrap_math_text_dir(text)
+        assert r"\text{\RL{וכן}}" in result
+        assert r"\LR{וכן}" not in result
+
+    def test_hebrew_body_with_digit_wrapped_in_rl(self):
+        assert wrap_math_text_dir(r"\text{שלב 2}") == r"\text{\RL{שלב 2}}"
+
+    def test_mixed_body_takes_first_strong_char(self):
+        # UAX#9 first-strong: the leading script sets the body's base direction.
+        assert wrap_math_text_dir(r"\text{מטריצה A}") == r"\text{\RL{מטריצה A}}"
+        assert wrap_math_text_dir(r"\text{matrix א}") == r"\text{\LR{matrix א}}"
+
+    def test_no_strong_char_body_untouched(self):
+        # Digits/punctuation only: nothing to reorder, and an island would just
+        # give the neutrals a new bidi boundary to attach to.
+        assert wrap_math_text_dir(r"\text{, }") == r"\text{, }"
+        assert wrap_math_text_dir(r"\text{123}") == r"\text{123}"
+
+    def test_abbreviation_body_still_ltr(self):
+        assert wrap_math_text_dir(r"\text{s.t.}") == r"\text{\LR{s.t.}}"
 
 
 # ---------------------------------------------------------------------------
@@ -740,7 +851,7 @@ class TestMergeLtrMath:
         assert merge_ltr_math(text) == text
 
     def test_display_math_not_descended_into(self):
-        # $$...$$ holds its own \LR (from wrap_math_text_ltr); merge must skip it
+        # $$...$$ holds its own \LR (from wrap_math_text_dir); merge must skip it
         # wholesale and never pull an adjacent inline $ into it.
         text = r"$$a \text{\LR{x}} b$$ $y$"
         assert merge_ltr_math(text) == text
@@ -748,6 +859,59 @@ class TestMergeLtrMath:
     def test_lr_separated_by_hebrew_not_merged(self):
         text = r"\LR{Word} עברית $A$"
         assert merge_ltr_math(text) == text
+
+
+# ---------------------------------------------------------------------------
+# merge_rtl_math_number
+# ---------------------------------------------------------------------------
+
+class TestMergeRtlMathNumber:
+    def test_number_after_hebrew_text_merged(self):
+        # Regression: the 1 stays in LTR math flow and renders right of תיוג.
+        text = r"$0.98 \to \text{\RL{תיוג}}\  1$"
+        assert merge_rtl_math_number(text) == r"$0.98 \to \text{\RL{תיוג \ensuremath{1}}}$"
+
+    def test_number_before_hebrew_text_merged(self):
+        # Mirror regression: 240 renders left of תאים.
+        text = r"$$x = 240 \ \text{\RL{תאים}}$$"
+        assert merge_rtl_math_number(text) == r"$$x = \text{\RL{\ensuremath{240} תאים}}$$"
+
+    def test_absorbed_number_keeps_math_typesetting(self):
+        # It was math before the move, so it must still be math after it.
+        assert r"\ensuremath{240}" in merge_rtl_math_number(r"240 \ \text{\RL{תאים}}")
+
+    def test_number_already_inside_body_stays_text(self):
+        # This 2 was never math — wrapping it would change its font.
+        text = r"$$A = \text{\RL{שלב 2 ואילך}}$$"
+        assert merge_rtl_math_number(text) == text
+
+    def test_operator_stays_outside_the_run(self):
+        assert r"= \text" in merge_rtl_math_number(r"= 240 \ \text{\RL{תאים}}")
+
+    def test_latin_body_with_adjacent_number_untouched(self):
+        for text in (r"= 240 \ \text{\LR{(cells)}}", r"2 \ \text{\LR{mod}}\  n"):
+            assert merge_rtl_math_number(text) == text
+
+    def test_intervening_operator_disqualifies(self):
+        text = r"240 + \text{\RL{תאים}}"
+        assert merge_rtl_math_number(text) == text
+
+    def test_decimal_number_merged(self):
+        text = r"3.5 \ \text{\RL{שעות}}"
+        assert merge_rtl_math_number(text) == r"\text{\RL{\ensuremath{3.5} שעות}}"
+
+    def test_hebrew_text_without_adjacent_number_untouched(self):
+        text = r"$$A = \text{\RL{שלב ואילך}}$$"
+        assert merge_rtl_math_number(text) == text
+
+    def test_exponent_digit_not_absorbed(self):
+        # The 2 belongs to x^2, not to the Hebrew word.
+        text = r"x^2 \ \text{\RL{תאים}}"
+        assert merge_rtl_math_number(text) == text
+
+    def test_only_one_number_absorbed(self):
+        text = r"3 \ \text{\RL{תאים}}\  5"
+        assert merge_rtl_math_number(text) == r"\text{\RL{\ensuremath{3} תאים}}\  5"
 
 
 # ---------------------------------------------------------------------------
@@ -1288,3 +1452,16 @@ class TestBidiOrderingRenders:
         vis = self._visual_text("ש-$_exit$ (או $_Exit$) היא\n")
         assert "_exit" in vis and "_Exit" in vis
 
+
+    def test_issue6_hebrew_math_text_keeps_rtl_order(self):
+        # A Hebrew \text{} body forced into \LR renders "ואילך 2 שלב"; \RL keeps
+        # the RTL word order (x-order below is each word reversed, as expected).
+        vis = self._visual_text("$$A = \\text{שלב 2 ואילך}$$\n")
+        assert "ךליאו2בלש" in vis
+        assert "בלש2ךליאו" not in vis
+
+    def test_issue7_possessive_phrase_is_one_island(self):
+        # "Bayes' Rule" as two islands reverses to "(Rule 'Bayes)".
+        vis = self._visual_text("חוק בייס (Bayes' Rule)\n")
+        assert "(Bayes' Rule)" in vis
+        assert "(Rule 'Bayes)" not in vis
