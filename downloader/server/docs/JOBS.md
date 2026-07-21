@@ -1,15 +1,21 @@
-# Download jobs (`src/jobs.js`)
+# Download jobs (`src/jobs.js`, `src/events.js`)
 
 `progress.js` renders download progress to the terminal; the job registry exposes the
-same data over HTTP so a browser can render it too. Both read one `entry` object per
-download — there is no second measurement path.
+same lifecycle to consumers outside this process, and `events.js` pushes its transitions
+to them over SSE.
 
 **Why a registry at all.** `POST /download` answers before the download starts, so its
 200 means "accepted", never "downloaded". Without a job id the caller can't tell a
 finished download from a failed one, and a background failure reaches nobody.
 
+**Why the registry survives alongside the stream.** A push stream has no memory: a client
+that subscribes after it got its `queued` response, or reloads the page mid-download, has
+missed `job:start` and can never learn about that download from the stream alone. `GET
+/jobs` is the resync that closes the race — the registry is the state, the stream is only
+notification.
+
 **The id is minted in the route, not the runner.** `runDownloadJob` awaits `probeSize`
-(a network round-trip) before it could register anything, so a client polling with the
+(a network round-trip) before it could register anything, so a client resyncing with the
 id it just received would find nothing. `createJob` runs synchronously in the route
 handler, before any await, which makes that race impossible by construction.
 
@@ -25,33 +31,58 @@ failure (which fires both `error` and `close`) keeps the informative reason.
 `error` carries `message`: the child's stderr tail (`makeStderrTail`, last 15 lines),
 the upload's error, or the thrown message — the same text the terminal logs.
 
-## Bytes
+## Events
 
-`receivedBytes` is measured on read via `measureBytes` (curl → stat `video.mp4`,
-yt-dlp → sum the temp dir). At child exit it's frozen onto the job, because the upload
-deletes the temp dir a moment later and a `done` job must not report 0 bytes.
+Exactly two per download, because a consumer animates its bar against an ETA rather than
+following a byte count — streaming bytes over HTTP would carry the one thing nobody reads.
 
-`expectedBytes` is the probed total, **null when the probe couldn't determine one** —
-consumers show a byte count instead of a percent, as the terminal renderer does.
+```
+event: job:start
+data: {"id","course","lecture","kind","tool","expectedBytes","startedAt"}
 
-The API returns raw bytes; percent is the consumer's business. Whoever derives it must
-keep the ≤99%-until-terminal clamp — yt-dlp's merge transiently overshoots the probed
-sum, so an unclamped bar hits 100% and then keeps going.
+event: job:end
+data: {"id","status":"done"|"error","message"}
+```
+
+`job:start` fires when the child spawns — after the size probe, so `expectedBytes` is
+already resolved. A job that fails before that (a throwing probe) emits only `job:end`.
+`startedAt` is epoch ms: with an ETA it is everything the client's animation needs.
+
+Bytes are still measured on the interval — `progress.js` needs them for the console and
+`jobs.js` reads the same `entry` — but they never reach the wire.
 
 ## Retention
 
-Finished jobs stay in memory `RETENTION_MS` (5 min) before eviction, so a poller on a
-slow interval reliably observes the terminal state instead of a 404 it must guess at.
+Finished jobs stay in memory `RETENTION_MS` (5 min) before eviction, so a client that
+reconnects shortly after a download ended still resyncs a terminal state instead of a
+gap it must guess at.
+
+## Timing samples
+
+On a clean child exit the runner posts `{operation, file_size_bytes, duration_seconds}`
+to the backend's `POST /timing` (`services/timing.js`) — the sample the frontend's ETA
+regression is built from. This is the downloader's only edge to the backend (8000).
+
+- `operation` is per tool: `download:curl` or `download:ytdlp`. A curl-replayed in-site
+  `.mp4` and a yt-dlp YouTube fetch have very different throughput curves; merging them
+  into one regression makes both estimates worse.
+- `duration_seconds` is wall-clock spawn → exit; the upload is a separate concern.
+- `file_size_bytes` is the measured bytes on disk (what actually crossed the wire in that
+  duration), falling back to the probed `expectedBytes`. The backend rejects a non-positive
+  size — it would skew every later estimate — so a job with neither sends nothing.
+- A non-zero exit sends nothing: a truncated download is not a valid duration sample.
+- Fire-and-forget and fully swallowed; it must never be able to fail a download.
 
 ## Endpoints
 
-`GET /jobs` — all non-evicted jobs; `?ids=<csv>` filters.
+`GET /events` — SSE stream of the two events above.
+`GET /jobs` — every non-evicted job (the resync).
 `GET /jobs/:id` — one job, 404 if unknown or evicted.
 
 ```json
 { "id": "…", "status": "running", "course": "…", "lecture": "…", "kind": "lecture",
-  "tool": "curl", "receivedBytes": 65536, "expectedBytes": 6291456, "message": null }
+  "tool": "curl", "expectedBytes": 6291456, "startedAt": 1784540024714, "message": null }
 ```
 
-The frontend can't call these directly — CORS here is locked to the extension origin.
-It goes through `auto`'s `GET /progress`, which proxies `/jobs`.
+The frontend subscribes to `/events` and resyncs `/jobs` here directly; CORS allows the
+extension origin and the frontend origin (`EXTENSION_ID` / `FRONTEND_URL`).

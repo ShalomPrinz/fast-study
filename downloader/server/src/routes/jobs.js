@@ -1,16 +1,15 @@
 import { Router } from 'express';
 import { getJob, listJobs } from '../jobs.js';
+import { subscribe } from '../events.js';
 
 const router = Router();
 
-// Raw bytes only — percent is the consumer's business (and must stay clamped ≤99%
-// until the job is terminal; see docs/JOBS.md).
+// `/events` is how a consumer follows downloads
+router.get('/events', (req, res) => subscribe(res));
 
+// `/jobs` is how a consumer resyncs after subscribing late or reconnecting (docs/JOBS.md).
 router.get('/jobs', (req, res) => {
-  const ids = typeof req.query.ids === 'string'
-    ? req.query.ids.split(',').map((s) => s.trim()).filter(Boolean)
-    : null;
-  res.json({ jobs: listJobs(ids) });
+  res.json({ jobs: listJobs() });
 });
 
 router.get('/jobs/:id', (req, res) => {

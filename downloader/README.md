@@ -72,7 +72,7 @@ The Node server uses a few npm packages (express, cors, dotenv) — run `npm ins
 ### Install — one time
 
 1. **Clone or download** the `fast_study` repo to disk (e.g. `C:\Users\<you>\fast_study`).
-2. Make sure the rest of the stack is set up per the top-level `README` / `CLAUDE.md`. The downloader needs the **database service** running (default `http://localhost:8001`); set `DATABASE_URL` in the repo-root `.env` if it differs.
+2. Make sure the rest of the stack is set up per the top-level `README` / `CLAUDE.md`. The downloader needs the **database service** running (default `http://localhost:8001`); set `DATABASE_URL` in the repo-root `.env` if it differs. It also posts download timing samples to the backend (`BACKEND_URL`, default `http://localhost:8000`) — harmless if it's down.
 3. Load the extension in Chrome:
    - Open `chrome://extensions`
    - Enable **Developer mode** (top-right)

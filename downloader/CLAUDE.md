@@ -48,6 +48,14 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 `auto/` is a **separate package** (its own `node_modules`) so Playwright never leaks into the dependency-free `server/`. Given a course URL it authenticates via a long-lived Moodle Web-Services token (one-time headed grab), discovers the recordings, and downloads them by reusing `server/`'s `/download` + `/download-youtube`. It is documented in its own **`auto/CLAUDE.md`** (what it is, how to run it, the mechanism-agnostic HTTP surface + endpoint table) with the deep logic in **`auto/docs/`** (`SESSIONS.md`, `ZOOM.md`, `BROWSING.md`, `AUTH.md`, `MOODLE.md`). Don't restate that here.
 
+## Service edges
+
+`server/` → **database** (8001) for every file it saves, and → **backend** (8000) for
+download duration samples (`POST /timing`, per-tool ETA buckets — `server/docs/JOBS.md`).
+`auto/` → `server/` only. From outside, the extension popup calls `server/`, and the
+frontend calls both `server/` (job events + resync) and `auto/` (listing, auto-download,
+auth, passcodes).
+
 ## Why these specific hacks (extension)
 
 - **Per-tab badge / per-page filter.** Multiple lectures open in different tabs would otherwise pollute each other's capture list. (The download/curl/yt-dlp hacks live in `server/docs/DOWNLOAD.md`.)

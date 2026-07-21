@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { PORT, DATABASE_URL, EXTENSION_ID } from './config.js';
+import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
 import { emitError } from './progress.js';
 import coursesRouter from './routes/courses.js';
 import probeRouter from './routes/probe.js';
@@ -10,9 +10,8 @@ import pdfRouter from './routes/pdf.js';
 
 const app = express();
 
-// Locked to the one extension origin; cors also answers OPTIONS preflight.
 app.use(cors({
-  origin: `chrome-extension://${EXTENSION_ID}`,
+  origin: [`chrome-extension://${EXTENSION_ID}`, FRONTEND_URL],
   methods: ['GET', 'POST', 'OPTIONS'],
   allowedHeaders: ['Content-Type'],
 }));
