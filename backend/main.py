@@ -8,7 +8,9 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
-from timing import init_db, get_stats
+from pydantic import BaseModel
+
+from timing import init_db, get_stats, record
 from course import overview
 from course import runner as course_runner
 from services import db_client
@@ -153,3 +155,16 @@ def timing_stats(operation: str, file_size_bytes: int = Query(...)):
     """Return a calibrated ETA estimate for the given operation and file size."""
 
     return get_stats(operation, file_size_bytes)
+
+
+class TimingSample(BaseModel):
+    operation: str
+    file_size_bytes: int
+    duration_seconds: float
+
+
+@app.post("/timing")
+def timing_record(sample: TimingSample):
+    """Record one duration sample."""
+
+    return record(sample.operation, sample.file_size_bytes, sample.duration_seconds)

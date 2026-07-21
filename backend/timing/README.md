@@ -1,13 +1,15 @@
 # timing.db
 
-SQLite database that records how long each pipeline step takes, used to estimate future durations.
+SQLite database that records how long an operation takes, used to estimate future durations.
+
+`operation` is free text. Any service can record its own buckets over `POST /timing`. Rows are per-bucket, so a new operation simply starts its own regression.
 
 ## Schema
 
 ```sql
 CREATE TABLE timing (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    operation        TEXT     NOT NULL,   -- "audio" | "transcribe" | "summarize" | "pdf"
+    operation        TEXT     NOT NULL,   -- free-text bucket
     file_size_bytes  INTEGER  NOT NULL,   -- size of the input file
     duration_seconds REAL     NOT NULL,   -- wall-clock time for the step
     recorded_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP

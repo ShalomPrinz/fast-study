@@ -21,8 +21,16 @@ Scans for pending lectures and runs the queue. → `{"status": "started"|"alread
 `GET /status`
 `{runner: {running, total, done, last_error}, in_flight: [...], errors: {skey: message}}`. Cheap; polled by the UI.
 
+## Timing
+
+`operation` is free text.
+
 `GET /timing/{operation}?file_size_bytes=N`
 Regression ETA from past runs, or `{"message": "not-enough-data"}`.
+
+`POST /timing`
+body `{"operation": str, "file_size_bytes": int, "duration_seconds": float}`
+Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank operation or a non-positive size/duration (such a sample would skew every later estimate of that operation). Server-to-server; not reachable from the browser, since CORS only allows the frontend origin.
 
 ## Course overview
 

@@ -30,6 +30,21 @@ def _record(operation: str, file_size_bytes: int, duration_seconds: float):
         )
 
 
+def record(operation: str, file_size_bytes: int, duration_seconds: float) -> dict:
+    """Public entry point for recording a sample (used by external services over HTTP)."""
+
+    operation = (operation or "").strip()
+    if not operation:
+        return {"status": "error", "message": "operation is required"}
+    if file_size_bytes <= 0:
+        return {"status": "error", "message": f"file_size_bytes must be positive, got {file_size_bytes}"}
+    if duration_seconds <= 0:
+        return {"status": "error", "message": f"duration_seconds must be positive, got {duration_seconds}"}
+
+    _record(operation, file_size_bytes, duration_seconds)
+    return {"status": "ok"}
+
+
 def get_stats(operation: str, file_size_bytes: int) -> dict:
     """Duration stats for one operation, with a linear-regression estimate for this file size.
     All durations are in seconds; falls back to the average below two data points."""
