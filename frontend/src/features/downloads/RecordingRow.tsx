@@ -163,9 +163,9 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     setResult('fail')
   }
 
-  // Re-downloading overwrites, so confirm first.
+  // Re-downloading overwrites existing videos, so confirm first.
   function onDownloadClick() {
-    if (alreadyDownloaded) setConfirming(true)
+    if (alreadyDownloaded || status === 'done') setConfirming(true)
     else download()
   }
 
