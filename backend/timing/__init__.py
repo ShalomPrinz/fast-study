@@ -11,6 +11,7 @@ def init_db():
     """Create the timing table if it doesn't exist."""
 
     with sqlite3.connect(DB_PATH) as conn:
+        # Initial table creation
         conn.execute("""
             CREATE TABLE IF NOT EXISTS timing (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -20,6 +21,9 @@ def init_db():
                 recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Migration #1: Index on operation for faster queries
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_timing_operation ON timing(operation)")
 
 
 def _record(operation: str, file_size_bytes: int, duration_seconds: float):

@@ -14,6 +14,9 @@ CREATE TABLE timing (
     duration_seconds REAL     NOT NULL,   -- wall-clock time for the step
     recorded_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Hot-path read (get_stats) always filters on operation.
+CREATE INDEX idx_timing_operation ON timing(operation);
 ```
 
 ## Connecting
