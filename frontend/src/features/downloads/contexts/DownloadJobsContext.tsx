@@ -5,9 +5,10 @@ import type { DownloadJob } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
 
-// What a row's jobs collapse into. The wire carries no bytes, so `expectedBytes` + `startedAt` +
-// `operation` are exactly the inputs the shared ETA bar needs; a null size means nothing to regress on.
-export interface RowProgress {
+// One download job as the display atom for a titled ETA bar
+export interface JobProgress {
+  id: string
+  title: string
   status: 'running' | 'done' | 'error'
   startedAt: number | null
   expectedBytes: number | null
@@ -15,7 +16,7 @@ export interface RowProgress {
 }
 
 interface DownloadJobsValue {
-  progressOf: (ref: string) => RowProgress | null
+  progressOf: (ref: string) => JobProgress[]
 }
 
 const DownloadJobsContext = createContext<DownloadJobsValue | null>(null)
@@ -24,10 +25,18 @@ function isTerminal(job: DownloadJob): boolean {
   return job.status === 'done' || job.status === 'error'
 }
 
+// The whole-row aggregate the Download/Retry button and the section summary share: running if any
+// job is non-terminal, else error if any failed, else done, else null (no jobs). Retry-if-any-failed.
+export function rowStatus(jobs: JobProgress[]): 'running' | 'done' | 'error' | null {
+  if (!jobs.length) return null
+  if (jobs.some((j) => j.status === 'running')) return 'running'
+  if (jobs.some((j) => j.status === 'error')) return 'error'
+  return 'done'
+}
+
 // One EventSource for the page, against the downloader server (:3052) which owns the jobs.
 // The stream is a contentless `job:change` ping; every ping refetches `GET /jobs`.
-// Rows group the snapshot by `job.ref` — several could be in flight at once during a bulk run,
-// hence a shared store rather than a subscription per row. See docs/DOWNLOADS.md.
+// A `ref` groups the row, while its jobs are the display atoms. See docs/DOWNLOADS.md.
 export function DownloadJobsProvider({ children }: { children: ReactNode }) {
   const [jobs, setJobs] = useState<DownloadJob[]>([])
 
@@ -56,25 +65,20 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
     return subscribeJobs(refresh)
   }, [handleSnapshot])
 
-  const progressOf = useCallback((ref: string): RowProgress | null => {
-    // allow many jobs to share a ref, for the zoom double recordings per link.
-    // in the future we might add another ref for the second recording and simplify this function.
-    const mine = jobs.filter((j) => j.ref === ref)
-    if (!mine.length) return null
-
-    const status = mine.some((j) => !isTerminal(j))
-      ? 'running'
-      : mine.some((j) => j.status === 'error') ? 'error' : 'done'
-    // `startedAt` is the server's epoch ms, and the bar measures elapsed against the browser's
+  const progressOf = useCallback((ref: string): JobProgress[] => {
+    // Note: `startedAt` is the server's epoch ms and the bar measures elapsed against the browser's
     // `Date.now()` — this assumes both clocks agree; skew renders as an overflowed bar.
-    const times = mine.map((j) => j.startedAt).filter((t): t is number => t !== null)
-    const unknown = mine.some((j) => j.expectedBytes === null)
-    return {
-      status,
-      startedAt: times.length ? Math.min(...times) : null,
-      expectedBytes: unknown ? null : mine.reduce((sum, j) => sum + (j.expectedBytes ?? 0), 0),
-      operation: mine[0].operation,
-    }
+    return jobs
+      .filter((j) => j.ref === ref)
+      .sort((a, b) => a.lecture.localeCompare(b.lecture) || a.id.localeCompare(b.id))
+      .map((j) => ({
+        id: j.id,
+        title: j.lecture,
+        status: isTerminal(j) ? (j.status as 'done' | 'error') : 'running',
+        startedAt: j.startedAt,
+        expectedBytes: j.expectedBytes,
+        operation: j.operation,
+      }))
   }, [jobs])
 
   const value = useMemo(() => ({ progressOf }), [progressOf])

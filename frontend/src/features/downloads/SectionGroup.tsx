@@ -13,8 +13,8 @@ import {
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'
-import type { RowProgress } from './contexts/DownloadJobsContext'
-import { useDownloadJobs } from './contexts/DownloadJobsContext'
+import type { JobProgress } from './contexts/DownloadJobsContext'
+import { rowStatus, useDownloadJobs } from './contexts/DownloadJobsContext'
 import type { RowEdit } from './contexts/RowEditsContext'
 import { RowEditsContext, resolveRow } from './contexts/RowEditsContext'
 import { isDownloaded } from './utils/nameSuggestion'
@@ -52,10 +52,11 @@ interface Paused {
 
 const IDLE: ExpandState = { expanded: false, children: null, expanding: false, error: null }
 
-// A started row counts as failed if its jobs failed — the trigger succeeding says nothing.
-function summarize(tally: Tally, started: (RowProgress | null)[]): string {
-  const failed = tally.failed + started.filter((p) => p?.status === 'error').length
-  const parts = [`${started.filter((p) => p?.status === 'done').length} downloaded`]
+// A started row counts as failed if any of its jobs failed. `started` is one job list per queued ref.
+function summarize(tally: Tally, started: JobProgress[][]): string {
+  const status = started.map(rowStatus)
+  const failed = tally.failed + status.filter((s) => s === 'error').length
+  const parts = [`${status.filter((s) => s === 'done').length} downloaded`]
   if (failed) parts.push(`${failed} failed`)
   if (tally.skipped) parts.push(`${tally.skipped} already there`)
   return parts.join(', ')
@@ -198,10 +199,11 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
     setPaused(null)
   }
 
-  // The run's real result: queueing ends long before the downloads do, so the tally is folded
-  // with the live job status of every row it started, looked up by `ref` in the jobs snapshot.
+  // The run's real result: queueing ends long before the downloads do, so the tally is folded with
+  // the live jobs of every row it started, looked up by `ref`. `active` counts running jobs (per
+  // atom), so the header keeps ticking until the last clip of a zoom pair lands.
   const started = outcome ? outcome.started.map((ref) => progressOf(ref)) : []
-  const active = started.filter((p) => p?.status === 'running').length
+  const active = started.flat().filter((j) => j.status === 'running').length
   const summary = outcome && !active ? summarize(outcome, started) : null
   const busy = running || paused !== null || active > 0
 

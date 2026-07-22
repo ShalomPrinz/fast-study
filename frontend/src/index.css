@@ -1671,12 +1671,43 @@ html, body, #root {
   border-color: #b6e0b0;
 }
 
-/* The pipeline bar, re-laid out for a row: inline beside the button rather than stacked under a
-   card, and narrow enough to leave the title its space. The class lands on the <p> directly in the
-   bar's label-only states, hence both selectors. */
+/* The main row line plus its progress block stacked beneath it. */
+.recording-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Full-width block below the row (not an inline flex child): one bar per download job, indented to
+   sit under the row's content. A lone job renders a single bar; a zoom pair stacks two titled ones. */
+.recording-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 10px 0 12px;
+}
+
+.recording-progress-job {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* The `.1`/`.2` clip name above its bar, shown only when a row has more than one. */
+.recording-progress-title {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* The pipeline bar, re-laid out for the row's progress block: full width of the block below the
+   main line rather than stacked under a card. The class lands on the <p> directly in the bar's
+   label-only states, hence both selectors. */
 .recording-progress {
-  width: 180px;
-  flex-shrink: 0;
+  width: 100%;
   margin-top: 0;
   gap: 3px;
 }

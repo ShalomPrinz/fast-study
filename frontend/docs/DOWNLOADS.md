@@ -79,18 +79,24 @@ reconnect gap are covered. A failed refetch is a no-op — the stream reconnects
 a download still running after a reload (or one the extension started) shows on its row with no extra
 lookup. A queued job pings too, so the row flips into flight from the snapshot alone once the POST returns.
 
-`progressOf` collapses a row's jobs into one `RowProgress`: earliest `startedAt`, summed `expectedBytes`
-(null if any job's probe came back unknown), the tool's timing operation, `running` until **every** job is
-terminal, `error` if any errored. The row feeds that to the shared `ProgressBar` with a `TimingStats` from
-`useTimingStats(operation, expectedBytes)` — `tool: curl` → `download:curl`, `yt-dlp` → `download:ytdlp`,
-two buckets because their throughput profiles differ. A null `expectedBytes` has nothing to regress on, so
-the bar shows "Not enough data to estimate" rather than an invented number; so does a tool with too few
-recorded runs.
+**A `ref` groups the row; its jobs are the display atoms.** `progressOf(ref)` returns a `JobProgress[]` —
+one entry per matching job (id, `job.lecture` title, `status`, `startedAt`, `expectedBytes`, `operation`),
+sorted by lecture so a zoom pair's two bars never reorder. The row maps each to a `JobProgressBar`, which
+owns its own `useTimingStats(operation, expectedBytes)` call — so each clip regresses independently and one
+unknown probe blanks only its own bar (no summing, no null-poisoning across siblings). `tool: curl` →
+`download:curl`, `yt-dlp` → `download:ytdlp`, two buckets because their throughput profiles differ. A null
+`expectedBytes` shows "Not enough data to estimate"; so does a tool with too few recorded runs. The per-bar
+`.1`/`.2` title shows only when a row has more than one bar — a lone bar leaves it off (the row already
+names it). The 99% non-zoom case is one job → one untitled bar, unchanged.
 
-The bar is literally `MainView`'s — same component, same `Estimating…` / `Not enough data to estimate` /
-`Nm Ns remaining` / `Taking longer than expected` states; `.recording-progress` only re-lays it out inline
-in the row. While it shows, the row's button reads "Downloading…" and is disabled; on `done` it reads
-"Downloaded ✓" (the SSE tree refresh lands at the same moment and tints the row green), on `error` "Retry ✗".
+Whole-row state comes from `rowStatus(jobs)` (running if any job is non-terminal, else error if any failed,
+else done, else null) — the button, confirm-overwrite and passcode flows stay whole-row and keyed on `ref`.
+
+Each bar is literally `MainView`'s — same component, same `Estimating…` / `Not enough data to estimate` /
+`Nm Ns remaining` / `Taking longer than expected` states; the bars render as a full-width block stacked
+below the row line (`.recording-entry` wraps the two). While any job runs, the button reads "Downloading…"
+and is disabled; on all-done it reads
+"Downloaded ✓" (the SSE tree refresh lands at the same moment and tints the row green), on error "Retry ✗".
 
 The provider — not the row — toasts a job failure via `toastJobError`, so one place covers single and bulk
 rows alike. It toasts each error id once (a failed job lingers the full 5-minute retention), guarded by a
