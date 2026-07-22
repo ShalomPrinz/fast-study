@@ -75,9 +75,12 @@ regression is built from. This is the downloader's only edge to the backend (800
 
 ```json
 { "id": "…", "status": "running", "course": "…", "lecture": "…", "kind": "lecture",
-  "tool": "curl", "ref": "…", "expectedBytes": 6291456, "startedAt": 1784540024714,
-  "message": null }
+  "tool": "curl", "ref": "…", "operation": "download:curl", "expectedBytes": 6291456,
+  "startedAt": 1784540024714, "message": null }
 ```
+
+`operation` (`'download:curl'|'download:ytdlp'|null`) is derived from `tool` via
+`services/timing.js`'s `OPERATIONS` map — null while queued before the tool is known.
 
 `ref` (`string|null`) is the discovery-row id that spawned the job; jobs sharing a `ref`
 group under one row, so a zoom before/after-break pair (`<name>.1`/`<name>.2`) stays together.

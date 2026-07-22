@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { measureBytes } from './progress.js';
 import { broadcast } from './events.js';
+import { operationForTool } from './services/timing.js';
 
 // The download registry a consumer outside this process can read (docs/JOBS.md).
 const jobs = new Map();
@@ -65,7 +66,7 @@ function liveBytes(job) {
 
 function snapshot(job) {
   const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt, message } = job;
-  return { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt, message };
+  return { id, status, course, lecture, kind, tool, ref, operation: operationForTool(tool), expectedBytes, startedAt, message };
 }
 
 export function listJobs() {

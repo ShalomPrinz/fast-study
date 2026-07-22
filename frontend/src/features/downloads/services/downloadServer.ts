@@ -1,5 +1,5 @@
 import { createClient, httpError } from '@/services/http'
-import type { Kind } from '@/types'
+import type { DownloadOperation, Kind } from '@/types'
 
 // Feature-local boundary for the downloader server, which owns every background download job —
 // both the ones the auto-downloader queues and the ones the Chrome extension starts.
@@ -24,6 +24,7 @@ export interface DownloadJob {
   lecture: string
   kind: Kind
   tool: DownloadTool
+  operation: DownloadOperation | null
   ref: string | null
   expectedBytes: number | null
   startedAt: number | null

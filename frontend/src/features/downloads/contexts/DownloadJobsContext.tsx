@@ -20,11 +20,6 @@ interface DownloadJobsValue {
 
 const DownloadJobsContext = createContext<DownloadJobsValue | null>(null)
 
-const TOOL_OPERATION: Record<string, DownloadOperation> = {
-  curl: 'download:curl',
-  'yt-dlp': 'download:ytdlp',
-}
-
 function isTerminal(job: DownloadJob): boolean {
   return job.status === 'done' || job.status === 'error'
 }
@@ -78,7 +73,7 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
       status,
       startedAt: times.length ? Math.min(...times) : null,
       expectedBytes: unknown ? null : mine.reduce((sum, j) => sum + (j.expectedBytes ?? 0), 0),
-      operation: TOOL_OPERATION[mine[0].tool ?? ''] ?? null,
+      operation: mine[0].operation,
     }
   }, [jobs])
 
