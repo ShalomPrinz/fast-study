@@ -8,11 +8,10 @@ to them over SSE.
 200 means "accepted", never "downloaded". Without a job id the caller can't tell a
 finished download from a failed one, and a background failure reaches nobody.
 
-**Why the registry survives alongside the stream.** A push stream has no memory: a client
-that subscribes after it got its `queued` response, or reloads the page mid-download, has
-missed `job:start` and can never learn about that download from the stream alone. `GET
-/jobs` is the resync that closes the race — the registry is the state, the stream is only
-notification.
+**Why the registry survives alongside the stream.** The stream is contentless: a
+`job:change` ping carries no state, so a client can only learn what changed by refetching
+`/jobs`. The registry is the state; the stream is only notification. `GET /jobs` is also
+the resync for a client that subscribes late or reloads mid-download and so missed a ping.
 
 **The id is minted in the route, not the runner.** `runDownloadJob` awaits `probeSize`
 (a network round-trip) before it could register anything, so a client resyncing with the
@@ -33,20 +32,16 @@ the upload's error, or the thrown message — the same text the terminal logs.
 
 ## Events
 
-Exactly two per download, because a consumer animates its bar against an ETA rather than
-following a byte count — streaming bytes over HTTP would carry the one thing nobody reads.
+One contentless event, `job:change`, fires on every transition — queued, start, and end:
 
 ```
-event: job:start
-data: {"id","course","lecture","kind","tool","expectedBytes","startedAt"}
-
-event: job:end
-data: {"id","status":"done"|"error","message"}
+event: job:change
+data: {}
 ```
 
-`job:start` fires when the child spawns — after the size probe, so `expectedBytes` is
-already resolved. A job that fails before that (a throwing probe) emits only `job:end`.
-`startedAt` is epoch ms: with an ETA it is everything the client's animation needs.
+The frame carries no state; it only says "something changed, refetch". On it the client
+re-`GET`s `/jobs`, which is the single source of truth. The queued ping matters: it lets
+the frontend flip a row to in-flight the instant the job registers, before the child spawns.
 
 Bytes are still measured on the interval — `progress.js` needs them for the console and
 `jobs.js` reads the same `entry` — but they never reach the wire.
@@ -75,14 +70,17 @@ regression is built from. This is the downloader's only edge to the backend (800
 
 ## Endpoints
 
-`GET /events` — SSE stream of the two events above.
-`GET /jobs` — every non-evicted job (the resync).
-`GET /jobs/:id` — one job, 404 if unknown or evicted.
+`GET /events` — SSE stream of the contentless `job:change` ping above.
+`GET /jobs` — every non-evicted job (the single source of truth).
 
 ```json
 { "id": "…", "status": "running", "course": "…", "lecture": "…", "kind": "lecture",
-  "tool": "curl", "expectedBytes": 6291456, "startedAt": 1784540024714, "message": null }
+  "tool": "curl", "ref": "…", "expectedBytes": 6291456, "startedAt": 1784540024714,
+  "message": null }
 ```
 
-The frontend subscribes to `/events` and resyncs `/jobs` here directly; CORS allows the
-extension origin and the frontend origin (`EXTENSION_ID` / `FRONTEND_URL`).
+`ref` (`string|null`) is the discovery-row id that spawned the job; jobs sharing a `ref`
+group under one row, so a zoom before/after-break pair (`<name>.1`/`<name>.2`) stays together.
+
+The frontend subscribes to `/events` and refetches `/jobs` here on every ping; CORS allows
+the extension origin and the frontend origin (`EXTENSION_ID` / `FRONTEND_URL`).

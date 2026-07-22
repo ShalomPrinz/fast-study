@@ -175,6 +175,8 @@ export async function handleDownloadItem(req, res) {
 async function downloadItem(req, res) {
   const { ref, course, name, kind = 'lecture' } = req.body;
   logReq('POST', '/download-item', `${course}/${name} (${kind})`);
+  // The discovery row's ref groups every server/ job it spawns (incl. a zoom split pair).
+  const rowRef = typeof ref === 'string' ? ref : null;
   const recording = decodeRef(ref);
   if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'valid ref required' });
   if (!isSafeName(course) || !isSafeName(name)) return send(res, 400, { error: 'course and name are required' });
@@ -183,7 +185,7 @@ async function downloadItem(req, res) {
   // yt-dlp strategies need no browser: a youtube entry carries its direct url (playlist
   // already expanded), a Drive file its pageUrl. videostream must sniff the .mp4 fresh.
   if ((recording.strategy === 'youtube-playlist' && recording.url) || recording.strategy === 'google-drive') {
-    const jobs = await downloadRecording(null, { recording, course, name, kind });
+    const jobs = await downloadRecording(null, { recording, course, name, kind, ref: rowRef });
     logResult('/download-item', `ok (${jobs.length} job)`);
     return send(res, 200, { ok: true, jobs });
   }
@@ -203,7 +205,7 @@ async function downloadItem(req, res) {
     const passcode = passcodes.lookup(course, name);
     await session.open();
     // A zoom share can hold a before/after-break pair → one job id per captured .mp4.
-    const jobs = await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode }));
+    const jobs = await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode, ref: rowRef }));
     logResult('/download-item', `ok (${jobs.length} jobs)`);
     return send(res, 200, { ok: true, jobs });
   }
@@ -220,7 +222,7 @@ async function downloadItem(req, res) {
   try {
     jobs = await session.withLock(async () => {
       await ensureAutologin(session, token);
-      return downloadRecording(session.page, { recording, course, name, kind });
+      return downloadRecording(session.page, { recording, course, name, kind, ref: rowRef });
     });
   } catch (e) {
     // A dead token surfaces from getSiteInfo/getAutologinKey as an invalidToken WS

@@ -38,9 +38,8 @@ the popup.
 | `POST /probe-size`                     | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)     |
 | `POST /download`                       | curl header-replay capture; 200 immediately with a `jobId`, runs in background |
 | `POST /download-youtube`               | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` |
-| `GET  /events`                         | SSE: `job:start` / `job:end` per download (`docs/JOBS.md`)      |
-| `GET  /jobs`                           | all live download jobs — the resync for a late subscriber       |
-| `GET  /jobs/:id`                       | one download job, 404 if unknown/evicted                       |
+| `GET  /events`                         | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`) |
+| `GET  /jobs`                           | all live download jobs (snapshot includes `ref`) — the single source of truth |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the neutral `/files/material.pdf`   |
 
 `kind` is `lecture` (default) or `recitation`.
@@ -54,7 +53,7 @@ src/
   validate.js          isSafeName, validateKind
   progress.js          active-download registry + TTY/pipe progress rendering
   jobs.js              job registry over the same download entries (the state)
-  events.js            SSE fan-out of job:start / job:end (the notification)
+  events.js            SSE fan-out of the contentless job:change ping (the notification)
   routes/              courses, probe, download, pdf, jobs (+ /events)
   services/
     database.js        all DATABASE_URL I/O (listCourses, uploadVideo, uploadPdf, notify)

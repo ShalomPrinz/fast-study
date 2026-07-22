@@ -54,13 +54,16 @@ export function listRecordings(sections) {
  * direct url yt-dlp resolves (no navigation). See docs/BROWSING.md.
  * @param {import('playwright').Page|null} page  live shared page (null for yt-dlp strategies)
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
- *           course: string, name: string, kind: string, passcode?: string|null }} args
+ *           course: string, name: string, kind: string, passcode?: string|null,
+ *           ref?: string|null }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
+ *   ref is the discovery-row id that spawned this download — stamped onto every server/
+ *   job so a zoom before/after-break split pair groups under the one parent row.
  * @returns {Promise<string[]>} server/ job ids — one per started download (zoom's
  *   before/after-break pair yields two), followed on server/'s /events and resyncable
  *   via server/'s /jobs.
  */
-export async function downloadRecording(page, { recording, course, name, kind, passcode }) {
+export async function downloadRecording(page, { recording, course, name, kind, passcode, ref }) {
   // yt-dlp strategies: no browser, no capture. A youtube entry must be a specific
   // expanded playlist entry (`url`); a Drive file downloads straight from its `pageUrl`,
   // preflighted so a non-public file fails as 422 rather than silently in server/'s job.
@@ -72,7 +75,7 @@ export async function downloadRecording(page, { recording, course, name, kind, p
     } else {
       await assertPubliclyShared(url);
     }
-    const jobId = await postDownloadYoutube({ url, course, lecture: name, kind });
+    const jobId = await postDownloadYoutube({ url, course, lecture: name, kind, ref });
     return [jobId].filter(Boolean);
   }
   const extractor = resolveExtractorForRecording(recording);
@@ -85,12 +88,12 @@ export async function downloadRecording(page, { recording, course, name, kind, p
     const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
     const jobIds = [];
     for (let i = 0; i < caps.length; i++) {
-      jobIds.push(await postDownload({ url: caps[i].url, headers: caps[i].headers, course, lecture: names[i], kind }));
+      jobIds.push(await postDownload({ url: caps[i].url, headers: caps[i].headers, course, lecture: names[i], kind, ref }));
     }
     return jobIds.filter(Boolean);
   }
 
   const cap = await extractor.captureVideo(page, recording);
-  const jobId = await postDownload({ url: cap.url, headers: cap.headers, course, lecture: name, kind });
+  const jobId = await postDownload({ url: cap.url, headers: cap.headers, course, lecture: name, kind, ref });
   return [jobId].filter(Boolean);
 }

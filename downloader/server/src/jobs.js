@@ -10,13 +10,14 @@ const RETENTION_MS = 5 * 60 * 1000;
 
 // Created SYNCHRONOUSLY by the route, before the async size probe, so a client that
 // resyncs with the id it just received can never miss the job.
-export function createJob({ course, lecture, kind, tool }) {
+export function createJob({ course, lecture, kind, tool, ref = null }) {
   const id = randomUUID();
   jobs.set(id, {
-    id, course, lecture, kind, tool,
+    id, course, lecture, kind, tool, ref,
     status: 'queued', expectedBytes: null, startedAt: null,
     receivedBytes: 0, message: null, entry: null,
   });
+  broadcast(); // a queued job must ping so the frontend row flips to in-flight
   return id;
 }
 
@@ -34,8 +35,7 @@ export function startJob(id, entry) {
   job.status = 'running';
   job.entry = entry;
   job.startedAt = Date.now();
-  const { course, lecture, kind, tool, expectedBytes, startedAt } = job;
-  broadcast('job:start', { id, course, lecture, kind, tool, expectedBytes, startedAt });
+  broadcast();
 }
 
 // Take the final measurement while the temp dir still exists — the upload deletes it.
@@ -55,7 +55,7 @@ export function finishJob(id, status, message = null) {
   freezeJobBytes(id);
   job.status = status;
   job.message = message;
-  broadcast('job:end', { id, status, message });
+  broadcast();
   setTimeout(() => jobs.delete(id), RETENTION_MS).unref();
 }
 
@@ -64,13 +64,8 @@ function liveBytes(job) {
 }
 
 function snapshot(job) {
-  const { id, status, course, lecture, kind, tool, expectedBytes, startedAt, message } = job;
-  return { id, status, course, lecture, kind, tool, expectedBytes, startedAt, message };
-}
-
-export function getJob(id) {
-  const job = jobs.get(id);
-  return job ? snapshot(job) : null;
+  const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt, message } = job;
+  return { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt, message };
 }
 
 export function listJobs() {

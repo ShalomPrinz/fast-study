@@ -1,6 +1,6 @@
-// Push side of the job registry (docs/JOBS.md): subscribers get one event when a
-// download starts and one when it ends. Nothing in between — a consumer animates its
-// bar against an ETA. A live byte count is not implemented (yet).
+// Push side of the job registry (docs/JOBS.md): pure notification. Every transition
+// fires one contentless `job:change` frame; the frame carries no state, it only tells
+// the client to refetch `/jobs`, which is the single source of truth.
 const subscribers = new Set();
 
 // A silent stream is killed by idle timeouts; a comment line keeps it warm.
@@ -23,8 +23,8 @@ export function subscribe(res) {
 }
 
 // Fire-and-forget: a broken subscriber is dropped, never allowed to fail a download.
-export function broadcast(event, data) {
-  const frame = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+export function broadcast() {
+  const frame = 'event: job:change\ndata: {}\n\n';
   for (const res of subscribers) {
     try { res.write(frame); } catch { subscribers.delete(res); }
   }
