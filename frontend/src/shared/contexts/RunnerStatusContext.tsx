@@ -35,11 +35,13 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
   const [status, setStatus] = useState<RunnerStatus | null>(null)
   const sendUpdateRef = useRef(sendUpdate)
   useEffect(() => { sendUpdateRef.current = sendUpdate }, [sendUpdate])
-  const { report: reportError, prune: pruneErrors } = useReportOnce(
+  const { report: reportError, seed: seedError, prune: pruneErrors } = useReportOnce(
     (msg) => sendUpdateRef.current?.('error', msg),
   )
 
   const latest = useLatestRequest()
+  // First applied status carries errors from before load: seed-and-suppress them, toast later ones.
+  const primed = useRef(false)
 
   async function refresh() {
     try {
@@ -49,12 +51,14 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       const validKeys = new Set(Object.keys(s.errors))
       validKeys.add('runner-crash')
       pruneErrors(validKeys)
+      const announce = primed.current ? reportError : seedError
       if (!s.runner.running && s.runner.lastError) {
-        reportError('runner-crash', s.runner.lastError)
+        announce('runner-crash', s.runner.lastError)
       }
       for (const [key, message] of Object.entries(s.errors)) {
-        reportError(key, message)
+        announce(key, message)
       }
+      primed.current = true
     } catch {
       // SSE will fire again on the next backend transition; nothing to do.
     }
