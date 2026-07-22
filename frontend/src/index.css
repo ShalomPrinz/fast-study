@@ -1671,6 +1671,22 @@ html, body, #root {
   border-color: #b6e0b0;
 }
 
+/* The pipeline bar, re-laid out for a row: inline beside the button rather than stacked under a
+   card, and narrow enough to leave the title its space. The class lands on the <p> directly in the
+   bar's label-only states, hence both selectors. */
+.recording-progress {
+  width: 180px;
+  flex-shrink: 0;
+  margin-top: 0;
+  gap: 3px;
+}
+
+.recording-progress .progress-label,
+p.recording-progress {
+  margin-top: 0;
+  line-height: 1.3;
+}
+
 .recording-download-btn {
   flex-shrink: 0;
   min-width: 110px;

@@ -11,7 +11,8 @@ npm run build    # tsc -b && vite build → dist/   (run this to surface type er
 ```
 
 `.env` (not committed): `VITE_API_URL` (default `http://localhost:8000`), `VITE_DATABASE_URL`
-(`http://localhost:8001`), `VITE_AUTODL_URL` (`http://localhost:3053`).
+(`http://localhost:8001`), `VITE_AUTODL_URL` (`http://localhost:3053`), `VITE_DOWNLOADER_URL`
+(`http://localhost:3052`).
 
 ## Docs
 
@@ -36,7 +37,8 @@ src/
                                               hooks, utils (url, format, inFlightKey), sidebar shell
   features/lectures/                          MainView, EditSummaryView, sidebar tree, pipeline constants
   features/course-overview/                   CourseView, extractor rows, overview constants
-  features/downloads/                         DownloadsView, recording rows, autoDownloader service
+  features/downloads/                         DownloadsView, recording rows, autoDownloader +
+                                              downloadServer services
 ```
 
 ## Rules

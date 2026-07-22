@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Step, FileName, TimingStats } from '@/types'
+import type { Step, FileName } from '@/types'
 import { deleteFile, fileUrl } from '@/services/database'
 import { runStep, runPipeline } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
@@ -12,60 +12,13 @@ import { kindQuery } from '@/shared/utils/url'
 import { formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
 import ConfirmModal from '@/shared/components/ConfirmModal'
+import ProgressBar from '@/shared/components/ProgressBar'
 import Icon from '@/shared/components/Icon'
 
 interface RotateTarget {
   file: FileName
   step: Step
   toDelete: FileName[]
-}
-
-
-function ProgressBar({
-  stats,
-  startedAt,
-  completedFraction = 0,
-}: {
-  stats: TimingStats | null | undefined
-  startedAt: number
-  completedFraction?: number
-}) {
-  const [elapsed, setElapsed] = useState(() => (Date.now() - startedAt) / 1000)
-
-  useEffect(() => {
-    const id = setInterval(() => setElapsed((Date.now() - startedAt) / 1000), 500)
-    return () => clearInterval(id)
-  }, [startedAt])
-
-  if (stats === null || stats === undefined) {
-    return <p className="progress-label progress-label--muted">Estimating…</p>
-  }
-
-  if ('message' in stats) {
-    return <p className="progress-label progress-label--muted">Not enough data to estimate</p>
-  }
-
-  const { estimated, longest } = stats
-  const effectiveElapsed = completedFraction * estimated + elapsed
-  const fillPct = Math.min((effectiveElapsed / estimated) * 100, 100)
-  const remaining = Math.max(estimated - effectiveElapsed, 0)
-  const overflowing = effectiveElapsed >= estimated
-
-  return (
-    <div className="progress-wrap">
-      <div className="progress-track">
-        <div
-          className={`progress-fill${overflowing ? ' progress-fill--overflow' : ''}`}
-          style={{ width: `${fillPct}%` }}
-        />
-      </div>
-      <p className={`progress-label${overflowing ? ' progress-label--overflow' : ''}`}>
-        {overflowing
-          ? `Taking longer than expected · ${formatDuration(elapsed)} · longest recorded: ${formatDuration(longest)}`
-          : `${formatDuration(remaining)} remaining`}
-      </p>
-    </div>
-  )
 }
 
 type MaterialIndicatorProps = {

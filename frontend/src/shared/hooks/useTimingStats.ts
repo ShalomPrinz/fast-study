@@ -1,27 +1,27 @@
 import { useEffect, useRef, useState } from 'react'
-import type { Step, TimingStats } from '@/types'
+import type { TimingOperation, TimingStats } from '@/types'
 import { fetchTimingStats } from '@/services/backend'
 
-// (step, size) -> TimingStats, dropping responses for a key the caller has moved on from.
-export function useTimingStats(step: Step | null, fileSizeBytes: number): TimingStats | null {
+// (operation, size) -> TimingStats, dropping responses for a key the caller has moved on from.
+export function useTimingStats(operation: TimingOperation | null, fileSizeBytes: number): TimingStats | null {
   const [state, setState] = useState<{ key: string; stats: TimingStats | null } | null>(null)
   const reqKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (!step) {
+    if (!operation) {
       reqKeyRef.current = null
       setState(null)
       return
     }
-    const key = `${step}:${fileSizeBytes}`
+    const key = `${operation}:${fileSizeBytes}`
     if (reqKeyRef.current === key) return
     reqKeyRef.current = key
     setState({ key, stats: null })
-    fetchTimingStats(step, fileSizeBytes)
+    fetchTimingStats(operation, fileSizeBytes)
       .then((stats) => { if (reqKeyRef.current === key) setState({ key, stats }) })
       .catch(() => { if (reqKeyRef.current === key) setState({ key, stats: { message: 'not-enough-data' } }) })
-  }, [step, fileSizeBytes])
+  }, [operation, fileSizeBytes])
 
-  const expectedKey = step ? `${step}:${fileSizeBytes}` : null
+  const expectedKey = operation ? `${operation}:${fileSizeBytes}` : null
   return state && state.key === expectedKey ? state.stats : null
 }

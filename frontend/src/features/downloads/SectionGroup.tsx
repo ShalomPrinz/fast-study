@@ -13,6 +13,8 @@ import {
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'
+import type { RowProgress } from './contexts/DownloadJobsContext'
+import { useDownloadJobs } from './contexts/DownloadJobsContext'
 import type { RowEdit } from './contexts/RowEditsContext'
 import { RowEditsContext, resolveRow } from './contexts/RowEditsContext'
 import { isDownloaded } from './utils/nameSuggestion'
@@ -31,8 +33,10 @@ interface ExpandState {
   error: string | null
 }
 
+// `started` holds refs, not a count: a queued download's real outcome lives in its jobs, so the
+// summary is derived from them rather than tallied at queue time.
 interface Tally {
-  done: number
+  started: string[]
   failed: number
   skipped: number
 }
@@ -48,16 +52,26 @@ interface Paused {
 
 const IDLE: ExpandState = { expanded: false, children: null, expanding: false, error: null }
 
+// A started row counts as failed if its jobs failed — the trigger succeeding says nothing.
+function summarize(tally: Tally, started: (RowProgress | null)[]): string {
+  const failed = tally.failed + started.filter((p) => p?.status === 'error').length
+  const parts = [`${started.filter((p) => p?.status === 'done').length} downloaded`]
+  if (failed) parts.push(`${failed} failed`)
+  if (tally.skipped) parts.push(`${tally.skipped} already there`)
+  return parts.join(', ')
+}
+
 // One Moodle section + a sequential "Download all" over it. Owns the expand/children cache
 // (rows only render it) because the bulk queue needs resolved children. See docs/downloads.md.
 export default function SectionGroup({ title, items, course, onReconnect }: Props) {
   const { courses } = useCourseTreeContext()
+  const { progressOf } = useDownloadJobs()
   const [expansions, setExpansions] = useState<Record<string, ExpandState>>({})
   // Keyed by ref and never cleared: an edit outlives an SSE refresh, a re-expand, and a bulk run.
   const [edits, setEdits] = useState<Record<string, RowEdit>>({})
   const [running, setRunning] = useState(false)
   const [progress, setProgress] = useState<{ at: number; total: number } | null>(null)
-  const [summary, setSummary] = useState<string | null>(null)
+  const [outcome, setOutcome] = useState<Tally | null>(null)
   const [paused, setPaused] = useState<Paused | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -115,16 +129,14 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
   function finish(tally: Tally) {
     setRunning(false)
     setProgress(null)
-    const parts = [`${tally.done} downloaded`]
-    if (tally.failed) parts.push(`${tally.failed} failed`)
-    if (tally.skipped) parts.push(`${tally.skipped} already there`)
-    setSummary(parts.join(', '))
+    setOutcome({ ...tally, started: [...tally.started] })
   }
 
-  // Sequential by design: the downloader drives one shared browser session.
+  // Triggering is sequential by design (the downloader drives one shared browser session), but the
+  // downloads themselves run on — so several rows are in flight by the end of the queue.
   async function runQueue(queue: Item[], from: number, tally: Tally) {
     setRunning(true)
-    setSummary(null)
+    setOutcome(null)
     for (let i = from; i < queue.length; i++) {
       const item = queue[i]
       setProgress({ at: i + 1, total: queue.length })
@@ -135,15 +147,15 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         continue
       }
       try {
-        const { ok } = await downloadItem({ ref: item.ref, course, name, kind })
-        if (ok) tally.done++
+        const { ok, jobs } = await downloadItem({ ref: item.ref, course, name, kind })
+        if (ok && jobs.length) tally.started.push(item.ref)
         else tally.failed++
       } catch (err) {
         if (isReconnectError(err)) {
           onReconnect()
           setRunning(false)
           setProgress(null)
-          setSummary(null)
+          setOutcome(null)
           return
         }
         if (isPasscodeError(err)) {
@@ -186,7 +198,12 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
     setPaused(null)
   }
 
-  const busy = running || paused !== null
+  // The run's real result: queueing ends long before the downloads do, so the tally is folded
+  // with the live job status of every row it started, looked up by `ref` in the jobs snapshot.
+  const started = outcome ? outcome.started.map((ref) => progressOf(ref)) : []
+  const active = started.filter((p) => p?.status === 'running').length
+  const summary = outcome && !active ? summarize(outcome, started) : null
+  const busy = running || paused !== null || active > 0
 
   return (
     <div className="recordings-section">
@@ -197,10 +214,13 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
             Downloading {progress.at}/{progress.total}…
           </span>
         )}
+        {!progress && active > 0 && (
+          <span className="recordings-section-progress">Downloading {active} more…</span>
+        )}
         {!progress && summary && <span className="recordings-section-progress">{summary}</span>}
         <button
           className="source-row-btn recordings-download-all"
-          onClick={() => runQueue(buildQueue(), 0, { done: 0, failed: 0, skipped: 0 })}
+          onClick={() => runQueue(buildQueue(), 0, { started: [], failed: 0, skipped: 0 })}
           disabled={busy || !allExpanded}
           title={allExpanded ? undefined : 'Expand every playlist in this section first'}
         >

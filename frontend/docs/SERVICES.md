@@ -27,10 +27,11 @@ Everything filesystem-backed: tree, course/lecture CRUD, summary read/save/rever
 course `overview/` file listing + meta. Also exports `databaseUrl`, the base the SSE `EventSource` is built
 from. `fetchCourseMeta` unwraps `{ meta }` and renames `generated_at` → `generatedAt`.
 
-## `events.ts` — the one EventSource
+## `events.ts` — the database notify stream
 
 Module-level singleton over `${databaseUrl}/events`, opened on the first `subscribeNotify` and closed when
-the last subscriber unsubscribes. Consumed only through `useNotify`.
+the last subscriber unsubscribes. Consumed only through `useNotify`. The downloads page opens a second,
+unrelated stream against the downloader server; that one lives in its own service, below.
 
 ## `toaster.ts` — the one `react-toastify` import
 
@@ -69,3 +70,25 @@ because the client discards the response body and these endpoints encode meaning
 Trade-off: those three endpoints forgo the client's central `ConnectionError` wrapping, so a refused
 connection surfaces as a raw `TypeError` instead of the friendly toast. `PasscodeError` maps the body's
 `name` to `lecture` because `name` collides with `Error.name`.
+
+`downloadItem` returns `{ ok, jobs: [id] }` — one id per started background download (a zoom
+before/after-break pair yields two). The jobs themselves belong to the downloader server, below.
+
+## `features/downloads/services/downloadServer.ts` → downloader server (`VITE_DOWNLOADER_URL`, :3052)
+
+The server that actually runs the downloads owns their job state, so the downloads page talks to two
+services: it queues through the auto-downloader and follows the outcome here.
+
+`subscribeJobs(onChange)` wraps `GET /events`, which fires one contentless `job:change` ping per job
+transition (no byte count — see `DOWNLOADS.md`); the `open` event calls `onChange` too, for the initial
+sync and every reconnect resync. This is the one `EventSource` outside `services/events.ts`, and it belongs
+here because the stream is this feature's service, not the database's notify channel.
+
+`fetchJobs()` reads `GET /jobs`, the single source of truth the ping tells you to refetch: every non-evicted
+job (each carrying the discovery-row `ref` it belongs to, including ones the Chrome extension started). It
+bypasses the shared client for the opposite reason to the three endpoints above — the client toasts every
+`ConnectionError`, and a reconnect loop against a downed service would stack one toast per attempt.
+
+`DownloadTool` (`curl` / `yt-dlp`) is null before the child spawns and the real one is known. `startedAt` is
+the **server's** epoch ms; the ETA bar compares it to the browser's `Date.now()`, which assumes the two
+clocks agree.

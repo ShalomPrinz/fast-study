@@ -1,7 +1,7 @@
 import type { Step, TimingStats, Kind, FileStatus } from '@/types'
 import { STEP_INPUT_FILE, STEP_SET } from '@/features/lectures/constants/pipeline'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
-import { useTimingStats } from './useTimingStats'
+import { useTimingStats } from '@/shared/hooks/useTimingStats'
 
 export interface RemoteInflight {
   step: Step

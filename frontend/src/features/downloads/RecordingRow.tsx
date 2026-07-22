@@ -1,6 +1,9 @@
 import { useState } from 'react'
+import type { TimingStats } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ConfirmModal from '@/shared/components/ConfirmModal'
+import ProgressBar from '@/shared/components/ProgressBar'
 import type { Item, PasscodeError } from './services/autoDownloader'
 import {
   downloadItem,
@@ -9,11 +12,14 @@ import {
   saveZoomPasscode,
 } from './services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
+import { useDownloadJobs } from './contexts/DownloadJobsContext'
 import { useRowEdit } from './contexts/RowEditsContext'
 import { isDownloaded } from './utils/nameSuggestion'
 import { toastDownloadError } from './utils/downloadErrors'
 
-type Result = 'ok' | 'fail' | null
+type Result = 'fail' | null
+
+const NO_ESTIMATE: TimingStats = { message: 'not-enough-data' }
 
 // Owned by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {
@@ -36,6 +42,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
   const { courses } = useCourseTreeContext()
   // Name/kind live in SectionGroup so this row and the bulk queue agree.
   const { kind, suggestion, value, name: effectiveName, setName, setKind } = useRowEdit(item, course)
+  const { progressOf } = useDownloadJobs()
   const [pending, setPending] = useState(false)
   const [result, setResult] = useState<Result>(null)
   const [confirming, setConfirming] = useState(false)
@@ -47,6 +54,15 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
 
   // Live tree, so a completed download's SSE refresh flips the row green.
   const alreadyDownloaded = isDownloaded(effectiveName, kind, courses, course)
+
+  // The 200 from /download-item only queued the work; these are the actual downloads, grouped by
+  // this row's `ref` — so a download still running after a page reload re-attaches for free.
+  const progress = progressOf(item.ref)
+  const downloading = progress?.status === 'running'
+  const failed = result === 'fail' || progress?.status === 'error'
+
+  const sized = progress?.expectedBytes != null
+  const stats = useTimingStats(sized ? progress!.operation : null, progress?.expectedBytes ?? 0)
 
   if (item.expandable && expand) {
     return (
@@ -84,9 +100,13 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     setPending(true)
     setResult(null)
     try {
-      const { ok } = await downloadItem({ ref: item.ref, course, name: effectiveName, kind })
-      setResult(ok ? 'ok' : 'fail')
-      if (!ok) toastDownloadError(effectiveName)
+      const { ok, jobs } = await downloadItem({ ref: item.ref, course, name: effectiveName, kind })
+      // Success is the jobs' to report — the snapshot ping drives the row into flight. Only a
+      // failure to queue is the trigger's to surface.
+      if (!(ok && jobs.length)) {
+        setResult('fail')
+        toastDownloadError(effectiveName)
+      }
     } catch (err) {
       // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.
       if (isReconnectError(err)) onReconnect()
@@ -158,13 +178,29 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
         dir="auto"
       />
 
-      <button className="source-row-btn recording-download-btn" onClick={onDownloadClick} disabled={pending}>
+      {/* Queued but not yet spawned means no start time — and no stats either, so the bar
+          reads "Estimating…" and the 0 is never used. */}
+      {downloading && progress && (
+        <ProgressBar
+          className="recording-progress"
+          stats={sized ? stats : NO_ESTIMATE}
+          startedAt={progress.startedAt ?? 0}
+        />
+      )}
+
+      <button
+        className="source-row-btn recording-download-btn"
+        onClick={onDownloadClick}
+        disabled={pending || downloading}
+      >
         {pending ? (
           <span className="recording-spinner" />
-        ) : result === 'ok' ? (
-          'Downloaded ✓'
-        ) : result === 'fail' ? (
+        ) : downloading ? (
+          'Downloading…'
+        ) : failed ? (
           'Retry ✗'
+        ) : progress?.status === 'done' ? (
+          'Downloaded ✓'
         ) : (
           'Download'
         )}

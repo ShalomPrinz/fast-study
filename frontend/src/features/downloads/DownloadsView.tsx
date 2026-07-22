@@ -8,6 +8,7 @@ import AuthPill from './AuthPill'
 import CourseSourceRow from './CourseSourceRow'
 import AddCourseRow from './AddCourseRow'
 import SectionGroup from './SectionGroup'
+import { DownloadJobsProvider } from './contexts/DownloadJobsContext'
 
 // Items whose Moodle heading is blank still need a home.
 const OTHER_SECTION = 'Other'
@@ -61,53 +62,55 @@ export default function DownloadsView() {
   }
 
   return (
-    <main className="main-view main-view--panel">
-      <div className="lecture-panel">
-        <h2 className="lecture-panel-title">Downloads</h2>
+    <DownloadJobsProvider>
+      <main className="main-view main-view--panel">
+        <div className="lecture-panel">
+          <h2 className="lecture-panel-title">Downloads</h2>
 
-        <AuthPill key={reconnectKey} />
+          <AuthPill key={reconnectKey} />
 
-        <div className="source-list">
-          {active.map((course) => (
-            <CourseSourceRow
-              key={course.name}
-              course={course}
-              onDiscover={course.source_url ? () => discover(course) : undefined}
-              selected={selected === course.name}
-              discovering={selected === course.name && loading}
-            />
-          ))}
-          <AddCourseRow />
-        </div>
-
-        {selected && (
-          <div className="recordings-panel">
-            <div className="recordings-header">
-              <span className="recordings-title" dir="auto">Recordings · {selected}</span>
-              <button
-                className="recordings-close"
-                onClick={() => { setSelected(null); setItems([]); setError(null) }}
-              >
-                close 
-              </button>
-            </div>
-            {loading && <div className="recordings-status">Loading recordings…</div>}
-            {error && <div className="recordings-status recordings-status--error">{error}</div>}
-            {!loading && !error && items.length === 0 && (
-              <div className="recordings-status">No recordings found.</div>
-            )}
-            {sections.map(([title, sectionItems]) => (
-              <SectionGroup
-                key={title}
-                title={title}
-                items={sectionItems}
-                course={selected}
-                onReconnect={reconnectHint}
+          <div className="source-list">
+            {active.map((course) => (
+              <CourseSourceRow
+                key={course.name}
+                course={course}
+                onDiscover={course.source_url ? () => discover(course) : undefined}
+                selected={selected === course.name}
+                discovering={selected === course.name && loading}
               />
             ))}
+            <AddCourseRow />
           </div>
-        )}
-      </div>
-    </main>
+
+          {selected && (
+            <div className="recordings-panel">
+              <div className="recordings-header">
+                <span className="recordings-title" dir="auto">Recordings · {selected}</span>
+                <button
+                  className="recordings-close"
+                  onClick={() => { setSelected(null); setItems([]); setError(null) }}
+                >
+                  close 
+                </button>
+              </div>
+              {loading && <div className="recordings-status">Loading recordings…</div>}
+              {error && <div className="recordings-status recordings-status--error">{error}</div>}
+              {!loading && !error && items.length === 0 && (
+                <div className="recordings-status">No recordings found.</div>
+              )}
+              {sections.map(([title, sectionItems]) => (
+                <SectionGroup
+                  key={title}
+                  title={title}
+                  items={sectionItems}
+                  course={selected}
+                  onReconnect={reconnectHint}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
+    </DownloadJobsProvider>
   )
 }

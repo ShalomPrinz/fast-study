@@ -20,7 +20,7 @@ Corollary: never add a backend endpoint to answer "does file X exist" — that i
 | `features/<x>/` | one slice per mode/page: views, sidebar body, components, hooks, contexts, constants, utils |
 
 A primitive lives in `features/<x>/components` until a second feature needs it; then it moves to `shared/`.
-A feature may own a service (`features/downloads/services/autoDownloader.ts`) when the concern is its alone.
+A feature may own a service (`features/downloads/services/autoDownloader.ts`, `downloadServer.ts`) when the concern is its alone.
 
 Imports across directories use the `@/` alias (`@/*` → `src/*`, set in both `tsconfig.json` and
 `vite.config.ts`). Only same-directory siblings may be relative.
@@ -39,6 +39,10 @@ the first subscriber and ref-counts it closed on the last; `useNotify(cb)` is th
 `CourseTreeContext`, `RunnerStatusContext` and `CourseOverviewContext` all refresh on notify — nothing
 polls. The backend fires a notify on every meaningful state change, and the downloader POSTs
 `${database}/notify` after a download, so a completed download updates the UI live.
+
+The downloader server has its own, separate stream (`GET /events`, opened by `DownloadJobsProvider` through
+`downloadServer.ts`) carrying a download's start and end. It is push-only too; the one HTTP fetch beside it,
+`GET /jobs`, runs once per connect to give the memoryless stream a starting state (see `DOWNLOADS.md`).
 
 Any fetcher that can be re-triggered by a notify burst wraps its promise in `useLatestRequest()`, which
 resolves only the newest call (superseded ones resolve `undefined`) so a late response can't overwrite a

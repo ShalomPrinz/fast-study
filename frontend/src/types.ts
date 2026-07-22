@@ -53,6 +53,9 @@ export type Kind = 'lecture' | 'recitation'
 
 export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'drive'
 
+export type DownloadOperation = 'download:curl' | 'download:ytdlp'
+export type TimingOperation = Step | DownloadOperation
+
 export interface RateLimitInfo {
   limit: number | null
   used: number | null
