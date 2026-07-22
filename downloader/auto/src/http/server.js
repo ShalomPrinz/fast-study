@@ -173,7 +173,7 @@ export async function handleDownloadItem(req, res) {
 }
 
 async function downloadItem(req, res) {
-  const { ref, course, name, kind = 'lecture' } = req.body;
+  const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body;
   logReq('POST', '/download-item', `${course}/${name} (${kind})`);
   // The discovery row's ref groups every server/ job it spawns (incl. a zoom split pair).
   const rowRef = typeof ref === 'string' ? ref : null;
@@ -181,11 +181,15 @@ async function downloadItem(req, res) {
   if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'valid ref required' });
   if (!isSafeName(course) || !isSafeName(name)) return send(res, 400, { error: 'course and name are required' });
   if (kind !== 'lecture' && kind !== 'recitation') return send(res, 400, { error: `invalid kind: ${kind}` });
+  
+  // only = act on just this one (course,name,kind) target
+  // forceCapture = bypass the replay cache and capture fresh
+  const opts = { only: only === true, forceCapture: forceCapture === true };
 
   // yt-dlp strategies need no browser: a youtube entry carries its direct url (playlist
   // already expanded), a Drive file its pageUrl. videostream must sniff the .mp4 fresh.
   if ((recording.strategy === 'youtube-playlist' && recording.url) || recording.strategy === 'google-drive') {
-    const jobs = await downloadRecording(null, { recording, course, name, kind, ref: rowRef });
+    const jobs = await downloadRecording(null, { recording, course, name, kind, ref: rowRef, ...opts });
     logResult('/download-item', `ok (${jobs.length} job)`);
     return send(res, 200, { ok: jobs.length > 0 });
   }
@@ -205,7 +209,7 @@ async function downloadItem(req, res) {
     const passcode = passcodes.lookup(course, name);
     await session.open();
     // A zoom share can hold a before/after-break pair → one job id per captured .mp4.
-    const jobs = await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode, ref: rowRef }));
+    const jobs = await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode, ref: rowRef, ...opts }));
     logResult('/download-item', `ok (${jobs.length} jobs)`);
     return send(res, 200, { ok: jobs.length > 0 });
   }
@@ -222,7 +226,7 @@ async function downloadItem(req, res) {
   try {
     jobs = await session.withLock(async () => {
       await ensureAutologin(session, token);
-      return downloadRecording(session.page, { recording, course, name, kind, ref: rowRef });
+      return downloadRecording(session.page, { recording, course, name, kind, ref: rowRef, ...opts });
     });
   } catch (e) {
     // A dead token surfaces from getSiteInfo/getAutologinKey as an invalidToken WS

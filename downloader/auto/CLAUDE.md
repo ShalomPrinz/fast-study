@@ -26,7 +26,7 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | `POST /auth/complete` | — | `{ connected:true }` (persists the Moodle WS token) |
 | `POST /list` | `{ courseUrl }` | `{ items }` |
 | `POST /list/expand` | `{ ref }` | `{ items }` (resolve one expandable item → children) |
-| `POST /download-item` | `{ ref, course, name, kind }` | `{ ok }` (`ok` = at least one download started) |
+| `POST /download-item` | `{ ref, course, name, kind, only?, forceCapture? }` | `{ ok }` (`ok` = at least one download started) |
 | `POST /zoom/passcode` | `{ course, name?, passcode, scope }` | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
 | `POST /close` | — | `{ ok:true }` (close the persistent browser) |
 
@@ -34,6 +34,17 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 at least one download started (the zoom before/after-break pair spawns two, but the count isn't reported — the page follows the actual outcome on the job stream).
 auto keeps no job state and hands back no job ids — every spawned job is stamped with the row's `ref`, so the page re-finds them on `server/`'s own `GET /events` / `GET /jobs` by `ref`. 
 Job semantics, the change ping and the timing samples live in `server/docs/JOBS.md`.
+
+**Session replay cache** (`src/core/replayCache.js`). Every resolved cap — `{url, headers}` (curl)
+or `{url}` (yt-dlp) — is kept in memory keyed by its final `(course, lecture, kind)` target
+(zoom split names included), so a retry replays it without re-capturing. In-memory only (dies
+with the process), never logged (caps hold Cookies/tokens), unbounded (session-small). Two
+optional `/download-item` flags drive it: `only:true` acts on just the one `(course, name, kind)`
+target (`name` may be a zoom split `<base>.<n>`); `forceCapture:true` bypasses the cache and
+captures fresh. Absent → today's behavior (whole recording, now cache-assisted). Each POST to
+`server/` carries `fromCache:<bool>` so `server/` can silently re-capture a stale cached token
+(`server/docs/JOBS.md`). `only`+`forceCapture` re-sniffs the whole share (one zoom share yields
+both clips), then posts only the cap whose split name matches the request.
 
 `401 {status:'reconnect'}` = the Moodle WS token is missing or a call returned `invalidtoken`. `422 {status:'unsupported'}` = the source genuinely can't be handled: a `url` module target that is neither a YouTube playlist nor a public Google Drive file (a Drive file that isn't shared "anyone with the link" reports the sharing cause and the URL). `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
 
