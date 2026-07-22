@@ -2,14 +2,14 @@
 
 SQLite database that records how long an operation takes, used to estimate future durations.
 
-`operation` is free text. Any service can record its own buckets over `POST /timing`. Rows are per-bucket, so a new operation simply starts its own regression.
+`operation` is validated against an allowlist on record: the pipeline steps sourced from `pipeline/runner.STEP_ORDER`, plus the downloader's `OPERATIONS` (downloader/server/src/services/timing.js). An unknown value (typo/rename) is logged and rejected rather than silently starting a dead bucket that nothing queries. Rows are per-bucket, so each valid operation has its own regression.
 
 ## Schema
 
 ```sql
 CREATE TABLE timing (
     id               INTEGER PRIMARY KEY AUTOINCREMENT,
-    operation        TEXT     NOT NULL,   -- free-text bucket
+    operation        TEXT     NOT NULL,   -- validated against an allowlist on record
     file_size_bytes  INTEGER  NOT NULL,   -- size of the input file
     duration_seconds REAL     NOT NULL,   -- wall-clock time for the step
     recorded_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP

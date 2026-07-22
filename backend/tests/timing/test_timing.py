@@ -26,6 +26,17 @@ class TestRecord:
         assert result["status"] == "error"
         assert _rows() == []
 
+    @pytest.mark.parametrize("operation", ["audio", "transcribe", "summarize", "pdf", "drive"])
+    def test_accepts_pipeline_operations(self, operation):
+        assert timing.record(operation, 1000, 2.5) == {"status": "ok"}
+        assert _rows() == [(operation, 1000, 2.5)]
+
+    def test_rejects_unknown_operation(self):
+        result = timing.record("trasncribe", 1000, 2.5)  # typo
+        assert result["status"] == "error"
+        assert "unknown operation" in result["message"]
+        assert _rows() == []  # no dead bucket written
+
     @pytest.mark.parametrize("size", [0, -1])
     def test_rejects_non_positive_size(self, size):
         result = timing.record("download:curl", size, 2.5)

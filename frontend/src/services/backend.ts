@@ -1,4 +1,4 @@
-import type { Step, RunInitResult, TimingStats, Kind, RunnerStatus, OverviewExtractor, CoursePhase, CourseExtractorState, CourseStatus } from '@/types'
+import type { Step, RunInitResult, TimingStats, TimingOperation, Kind, RunnerStatus, OverviewExtractor, CoursePhase, CourseExtractorState, CourseStatus } from '@/types'
 import { kindQuery, lectureBase, courseOverviewBase, overviewGenerateQuery } from '@/shared/utils/url'
 import { createClient } from './http'
 
@@ -12,7 +12,7 @@ export async function runPipeline(course: string, lecture: string, kind?: Kind):
   return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/pipeline${kindQuery(kind)}`)
 }
 
-export async function fetchTimingStats(operation: string, fileSizeBytes: number): Promise<TimingStats> {
+export async function fetchTimingStats(operation: TimingOperation, fileSizeBytes: number): Promise<TimingStats> {
   return backend.get<TimingStats>(`/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
 }
 

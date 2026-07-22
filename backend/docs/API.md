@@ -23,14 +23,14 @@ Scans for pending lectures and runs the queue. → `{"status": "started"|"alread
 
 ## Timing
 
-`operation` is free text.
+`operation` on record is restricted to an allowlist: the pipeline steps (`STEP_ORDER`) plus downloader's `OPERATIONS`.
 
 `GET /timing/{operation}?file_size_bytes=N`
 Regression ETA from past runs, or `{"message": "not-enough-data"}`.
 
 `POST /timing`
 body `{"operation": str, "file_size_bytes": int, "duration_seconds": float}`
-Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank operation or a non-positive size/duration (such a sample would skew every later estimate of that operation). Server-to-server; not reachable from the browser, since CORS only allows the frontend origin.
+Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from the browser, since CORS only allows the frontend origin.
 
 ## Course overview
 

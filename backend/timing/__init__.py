@@ -1,10 +1,24 @@
 import os
 import time
+import logging
 import sqlite3
 import functools
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "timing.db"
+
+log = logging.getLogger("timing")
+
+# Mirrors the downloader server's tool→operation map
+DOWNLOAD_OPERATIONS = frozenset({"download:curl", "download:ytdlp"})
+
+
+def _allowed_operations() -> frozenset:
+    """Valid buckets: the pipeline's own steps plus the downloader's operations."""
+
+    # Importing here to avoid import cycle
+    from pipeline.runner import STEP_ORDER
+    return frozenset(STEP_ORDER) | DOWNLOAD_OPERATIONS
 
 
 def init_db():
@@ -40,6 +54,9 @@ def record(operation: str, file_size_bytes: int, duration_seconds: float) -> dic
     operation = (operation or "").strip()
     if not operation:
         return {"status": "error", "message": "operation is required"}
+    if operation not in _allowed_operations():
+        log.warning("rejected unknown timing operation: %r", operation)
+        return {"status": "error", "message": f"unknown operation: {operation}"}
     if file_size_bytes <= 0:
         return {"status": "error", "message": f"file_size_bytes must be positive, got {file_size_bytes}"}
     if duration_seconds <= 0:
