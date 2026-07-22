@@ -100,10 +100,10 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     setPending(true)
     setResult(null)
     try {
-      const { ok, jobs } = await downloadItem({ ref: item.ref, course, name: effectiveName, kind })
+      const started = await downloadItem({ ref: item.ref, course, name: effectiveName, kind })
       // Success is the jobs' to report — the snapshot ping drives the row into flight. Only a
       // failure to queue is the trigger's to surface.
-      if (!(ok && jobs.length)) {
+      if (!started) {
         setResult('fail')
         toastDownloadError(effectiveName)
       }

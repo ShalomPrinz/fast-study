@@ -104,16 +104,15 @@ export async function expandItem(ref: string): Promise<Item[]> {
   return items
 }
 
-// A 200 only means the download STARTED — one job id per download (a zoom before/after-break pair
-// yields two). The real outcome arrives on the job stream (`services/downloadServer.ts`).
+// True once at least one download has started by this request.
 export async function downloadItem(args: {
   ref: string
   course: string
   name: string
   kind: Kind
-}): Promise<{ ok: boolean; jobs: string[] }> {
-  const data = await postReconnectAware<{ ok: boolean; jobs?: string[] }>('/download-item', args)
-  return { ok: data.ok, jobs: data.jobs ?? [] }
+}): Promise<boolean> {
+  const data = await postReconnectAware<{ ok: boolean }>('/download-item', args)
+  return data.ok
 }
 
 export async function saveZoomPasscode({

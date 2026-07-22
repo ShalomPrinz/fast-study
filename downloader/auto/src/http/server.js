@@ -187,7 +187,7 @@ async function downloadItem(req, res) {
   if ((recording.strategy === 'youtube-playlist' && recording.url) || recording.strategy === 'google-drive') {
     const jobs = await downloadRecording(null, { recording, course, name, kind, ref: rowRef });
     logResult('/download-item', `ok (${jobs.length} job)`);
-    return send(res, 200, { ok: true, jobs });
+    return send(res, 200, { ok: jobs.length > 0 });
   }
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
@@ -207,7 +207,7 @@ async function downloadItem(req, res) {
     // A zoom share can hold a before/after-break pair → one job id per captured .mp4.
     const jobs = await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode, ref: rowRef }));
     logResult('/download-item', `ok (${jobs.length} jobs)`);
-    return send(res, 200, { ok: true, jobs });
+    return send(res, 200, { ok: jobs.length > 0 });
   }
 
   // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
@@ -231,7 +231,7 @@ async function downloadItem(req, res) {
     throw e;
   }
   logResult('/download-item', `ok (${jobs.length} job)`);
-  send(res, 200, { ok: true, jobs });
+  send(res, 200, { ok: jobs.length > 0 });
 }
 
 // Log the shared plain session into Moodle via a one-shot autologin key so the token-gated

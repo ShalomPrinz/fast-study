@@ -26,15 +26,14 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | `POST /auth/complete` | — | `{ connected:true }` (persists the Moodle WS token) |
 | `POST /list` | `{ courseUrl }` | `{ items }` |
 | `POST /list/expand` | `{ ref }` | `{ items }` (resolve one expandable item → children) |
-| `POST /download-item` | `{ ref, course, name, kind }` | `{ ok, jobs }` (`jobs` = server/ job ids) |
+| `POST /download-item` | `{ ref, course, name, kind }` | `{ ok }` (`ok` = at least one download started) |
 | `POST /zoom/passcode` | `{ course, name?, passcode, scope }` | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
 | `POST /close` | — | `{ ok:true }` (close the persistent browser) |
 
-`/download-item` returns 200 once the download is **queued**, not finished: `jobs` holds
-one server/ job id per started download (the zoom before/after-break pair yields two). auto
-keeps no job state — the page follows those ids on `server/`'s own `GET /events` and
-resyncs them from its `GET /jobs`. Job semantics, event payloads and the timing samples
-live in `server/docs/JOBS.md`.
+`/download-item` returns 200 once the download is **queued**, not finished: `ok` is true when
+at least one download started (the zoom before/after-break pair spawns two, but the count isn't reported — the page follows the actual outcome on the job stream).
+auto keeps no job state and hands back no job ids — every spawned job is stamped with the row's `ref`, so the page re-finds them on `server/`'s own `GET /events` / `GET /jobs` by `ref`. 
+Job semantics, the change ping and the timing samples live in `server/docs/JOBS.md`.
 
 `401 {status:'reconnect'}` = the Moodle WS token is missing or a call returned `invalidtoken`. `422 {status:'unsupported'}` = the source genuinely can't be handled: a `url` module target that is neither a YouTube playlist nor a public Google Drive file (a Drive file that isn't shared "anyone with the link" reports the sharing cause and the URL). `409 {status:'passcode', reason, course, name}` = zoom passcode `missing` (none stored) or `incorrect` (stored one won't clear the gate); save one via `POST /zoom/passcode` and retry.
 
