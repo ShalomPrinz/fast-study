@@ -178,12 +178,12 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
         dir="auto"
       />
 
-      {/* Queued but not yet spawned means no start time — and no stats either, so the bar
-          reads "Estimating…" and the 0 is never used. */}
+      {/* Queued (not yet spawned) has no start time and no size, so pass null → "Estimating…".
+          Once running, an unknown size means yt-dlp gave none → the definitive "Not enough data". */}
       {downloading && progress && (
         <ProgressBar
           className="recording-progress"
-          stats={sized ? stats : NO_ESTIMATE}
+          stats={progress.startedAt == null ? null : sized ? stats : NO_ESTIMATE}
           startedAt={progress.startedAt ?? 0}
         />
       )}
