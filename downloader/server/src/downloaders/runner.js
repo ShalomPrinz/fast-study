@@ -7,7 +7,8 @@ import {
 } from '../progress.js';
 import { uploadVideo } from '../services/database.js';
 import { recordDownloadTiming } from '../services/timing.js';
-import { setExpectedBytes, startJob, freezeJobBytes, finishJob } from '../jobs.js';
+import { recaptureItem } from '../services/autodl.js';
+import { setExpectedBytes, startJob, freezeJobBytes, finishJob, isJobTerminal, removeJob } from '../jobs.js';
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'fast-study-dl-'));
@@ -17,11 +18,30 @@ function removeTempDir(dir) {
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
 }
 
+// Auth signature in a curl (--fail) / yt-dlp stderr tail: an HTTP 401/403 or a
+// denied/expired-token phrasing means a replayed token went stale.
+function isAuthError(message) {
+  if (!message) return false;
+  return /\b40[13]\b/.test(message)
+    || /forbidden|unauthorized|access denied/i.test(message)
+    || /(expired|invalid|bad)[ -]?token|token (has )?expired/i.test(message);
+}
+
+// Map auto's NON-200 re-capture response to this (superseded) job's terminal message —
+// recovery couldn't proceed, so the reason is user-actionable. (A 200 spawns a fresh job
+// that replaces this row, so the caller drops this job instead of messaging it.)
+function recaptureMessage(status, body) {
+  if (status === 401) return 'reconnect Moodle';
+  if (status === 409) return 'passcode needed';
+  if (status === 422) return `source unsupported${body?.message ? `: ${body.message}` : ''}`;
+  return `re-capture failed: ${body?.error ?? `HTTP ${status || 'network'}`}`;
+}
+
 // Source-agnostic runner: probe size, spawn the silent child in a temp dir, and on
 // clean exit hand the video to the database (which uploads + cleans + notifies).
 // Adding a source = a new downloaders/*.js registered in index.js; no edits here.
 // `jobId` was created synchronously by the route; every exit path must terminate it.
-export async function runDownloadJob(downloader, input, { course, lecture, kind, jobId }) {
+export async function runDownloadJob(downloader, input, { course, lecture, kind, jobId, ref = null, fromCache = false }) {
   const label = `${course}/${lecture}`;
   const tempDir = makeTempDir();
   try {
@@ -57,9 +77,21 @@ export async function runDownloadJob(downloader, input, { course, lecture, kind,
       if (code !== 0) {
         const detail = tail();
         const message = `exited with code ${code}${detail ? `\n${detail}` : ''}`;
-        emitError(`❌ ${downloader.tool} failed: ${message}`);
-        finishJob(jobId, 'error', message);
         removeTempDir(tempDir);
+
+        // recapture from cache. invariant due to usage of forceCapture:true in request.
+        if (isAuthError(detail) && ref && fromCache && !isJobTerminal(jobId)) {
+          emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
+          const { status, body } = await recaptureItem({ ref, course, name: lecture, kind });
+          // 200 = a fresh job (with same ref) was spawned to replace this one, so drop this job.
+          if (status === 200) { removeJob(jobId); return; }
+          finishJob(jobId, 'error', recaptureMessage(status, body));
+          return;
+        }
+
+        // Non-auth error, a fresh-capture auth failure, or no ref → finalize as-is.
+        emitError(`❌ ${downloader.tool} failed: ${message}`);
+        finishJob(jobId, 'error', isAuthError(detail) ? `authentication failed\n${message}` : message);
         return;
       }
       // Timing sample only after a clean exit — a truncated download is not a valid duration

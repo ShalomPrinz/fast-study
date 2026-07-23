@@ -50,9 +50,10 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 ## Service edges
 
-`server/` → **database** (8001) for every file it saves, and → **backend** (8000) for
-download duration samples (`POST /timing`, per-tool ETA buckets — `server/docs/JOBS.md`).
-`auto/` → `server/` only. From outside, the extension popup calls `server/`, and the
+`server/` → **database** (8001) for every file it saves, → **backend** (8000) for
+download duration samples (`POST /timing`, per-tool ETA buckets — `server/docs/JOBS.md`),
+and → **auto/** (3053) to silently re-capture a stale cached token on an auth failure.
+`auto/` → `server/` for downloads. From outside, the extension popup calls `server/`, and the
 frontend calls both `server/` (job events + resync) and `auto/` (listing, auto-download,
 auth, passcodes).
 

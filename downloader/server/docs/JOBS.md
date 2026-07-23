@@ -30,6 +30,47 @@ failure (which fires both `error` and `close`) keeps the informative reason.
 `error` carries `message`: the child's stderr tail (`makeStderrTail`, last 15 lines),
 the upload's error, or the thrown message — the same text the terminal logs.
 
+## Provenance & silent auth-recovery
+
+`/download` and `/download-youtube` accept `fromCache` (bool, default false): auto/ sets it
+true when the cap was replayed from its session cache — a `.mp4` URL + headers whose token is
+short-lived — rather than freshly sniffed. It rides on the job object for the recovery
+decision below and is deliberately kept **out of `snapshot()`** (provenance, not client state;
+url/headers/cookies never reach `/jobs` either).
+
+On a terminal non-zero exit the runner classifies the stderr tail with `isAuthError` (HTTP
+401/403 or denied/expired-token phrasing — the curl `--fail` / yt-dlp signatures):
+
+- **auth error AND `ref` present AND `fromCache` true** → the replayed token went stale. The
+  runner calls auto/ (`AUTODL_URL` `POST /download-item {ref, course, name:lecture, kind,
+  only:true, forceCapture:true}`, `services/autodl.js`) to re-capture just this one target
+  fresh. On **200** a **new** job (same `ref`) was spawned to replace this row, so the old job
+  is **removed** (`removeJob`) — not errored: it uploaded nothing, and `done` would be a false
+  success. On a non-200 recovery can't proceed, so the old job is finalized `error` with the
+  actionable reason — 401 "reconnect Moodle", 409 "passcode needed", 422 "source unsupported",
+  else "re-capture failed".
+- **otherwise** (non-auth error, a `fromCache:false` auth failure, or no `ref`) → finalized
+  as-is; a fresh-capture auth failure reads "authentication failed".
+
+The recapture branch is also gated on `!isJobTerminal(jobId)` so a double-fired `close` (after
+`error` already finalized) can't spawn a second re-capture.
+
+**No-loop invariant:** the re-capture re-POSTs as `fromCache:false`, so if THAT attempt also
+auth-fails it lands in the "otherwise" branch — exactly one silent recovery, never a loop.
+auto/ is only ever called when `fromCache === true`.
+
+### How it works
+
+Label the failed job A and its replacement B:
+
+1. Child A exits non-zero with 403 stderr → A's close handler runs (line 75).
+2. isAuthError && ref && fromCache is true → await recaptureItem(...) — an outbound HTTP POST to auto's /download-item (only:true, forceCapture:true). This suspends A's handler and yields the event loop.
+3. auto captures fresh (browser work), then POSTs server's own /download route. That route — a separate Express request — runs createJob (job B exists now, broadcast queued) then fires runDownloadJob for B (spawns child B, its own close handler) and responds 200 {jobId: B}.
+4. auto's /download-item returns 200; recaptureItem resolves.
+5. A's handler resumes → on auto's 200, removeJob(A) (dropped, superseded by B) → return. (A non-200 finalizes A as `error` with the actionable reason instead.)
+
+So B is reached via A.close → HTTP → auto → HTTP → server /download route → runDownloadJob. A new call chain, not recursion.
+
 ## Events
 
 One contentless event, `job:change`, fires on every transition — queued, start, and end:

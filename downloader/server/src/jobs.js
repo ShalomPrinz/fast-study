@@ -11,10 +11,10 @@ const RETENTION_MS = 5 * 60 * 1000;
 
 // Created SYNCHRONOUSLY by the route, before the async size probe, so a client that
 // resyncs with the id it just received can never miss the job.
-export function createJob({ course, lecture, kind, tool, ref = null }) {
+export function createJob({ course, lecture, kind, tool, ref = null, fromCache = false }) {
   const id = randomUUID();
   jobs.set(id, {
-    id, course, lecture, kind, tool, ref,
+    id, course, lecture, kind, tool, ref, fromCache,
     status: 'queued', expectedBytes: null, startedAt: null,
     receivedBytes: 0, message: null, entry: null,
   });
@@ -48,16 +48,29 @@ export function freezeJobBytes(id) {
   return job.receivedBytes;
 }
 
+// done/error are terminal; a missing (already-reaped) job counts as terminal too.
+function terminal(job) {
+  return !job || job.status === 'done' || job.status === 'error';
+}
+
 // First terminal call wins: a spawn failure fires both 'error' and 'close', and the
 // 'error' handler carries the real reason.
 export function finishJob(id, status, message = null) {
   const job = jobs.get(id);
-  if (!job || job.status === 'done' || job.status === 'error') return;
+  if (terminal(job)) return;
   freezeJobBytes(id);
   job.status = status;
   job.message = message;
   broadcast();
   setTimeout(() => jobs.delete(id), RETENTION_MS).unref();
+}
+
+export function isJobTerminal(id) {
+  return terminal(jobs.get(id));
+}
+
+export function removeJob(id) {
+  if (jobs.delete(id)) broadcast();
 }
 
 function liveBytes(job) {

@@ -2,8 +2,8 @@
 
 The local server for downloading videos and documents. It has no disk conventions of its
 own: it captures a video (curl header-replay or yt-dlp) or receives a PDF, then hands the bytes to the **database service** (8001), which writes them under
-`DATA_ROOT`. It also posts download duration samples to the **backend** (8000) — its only
-other outbound edge (`docs/JOBS.md`).
+`DATA_ROOT`. It also posts download duration samples to the **backend** (8000), and calls
+**auto/** (3053) to silently re-capture a stale cached token (`docs/JOBS.md`).
 
 ## Tech Stack
 
@@ -26,6 +26,7 @@ npm --prefix downloader/server start   # node src/index.js, port 3052
 | `FRONTEND_URL`           | `http://localhost:5173`              | frontend CORS origin (`/events` + `/jobs`) |
 | `DATABASE_URL`           | `http://localhost:8001`              | database service base URL        |
 | `BACKEND_URL`            | `http://localhost:8000`              | backend base URL — timing samples only |
+| `AUTODL_URL`             | `http://localhost:3053`              | auto/ base URL — silent re-capture of a stale cached token (`docs/JOBS.md`) |
 
 If a reloaded extension gets a new ID, set `DOWNLOADER_EXTENSION_ID` or CORS blocks
 the popup.
@@ -36,8 +37,8 @@ the popup.
 |----------------------------------------|----------------------------------------------------------------|
 | `GET  /courses`                        | database `/tree` reshaped to name arrays, archived dropped     |
 | `POST /probe-size`                     | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)     |
-| `POST /download`                       | curl header-replay capture; 200 immediately with a `jobId`, runs in background |
-| `POST /download-youtube`               | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` |
+| `POST /download`                       | curl header-replay capture; 200 immediately with a `jobId`, runs in background (`fromCache` bool marks a replayed cap) |
+| `POST /download-youtube`               | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` (`fromCache` bool) |
 | `GET  /events`                         | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`) |
 | `GET  /jobs`                           | all live download jobs (snapshot includes `ref`) — the single source of truth |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the neutral `/files/material.pdf`   |
@@ -59,6 +60,7 @@ src/
     database.js        all DATABASE_URL I/O (listCourses, uploadVideo, uploadPdf, notify)
     probe.js           probeContentLength — the ONLY raw node:http/https
     timing.js          fire-and-forget duration samples to the backend's POST /timing
+    autodl.js          AUTODL_URL edge — silent re-capture of a stale cached token
   downloaders/
     index.js           registry { curl, ytdlp } + runDownloadJob
     runner.js          source-agnostic spawn/probe/upload loop
