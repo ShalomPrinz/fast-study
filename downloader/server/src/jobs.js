@@ -6,12 +6,16 @@ import { operationForTool } from './services/timing.js';
 // The download registry a consumer outside this process can read (docs/JOBS.md).
 const jobs = new Map();
 
-// Finished jobs linger so a client that reconnects late still sees the terminal state.
-const RETENTION_MS = 5 * 60 * 1000;
+// A `done` job lingers only to bridge the sub-second gap until the database tree SSE flips
+// the frontend row green — the tree, not the job, owns the durable "downloaded" state.
+const DONE_BRIDGE_MS = 60 * 1000;
 
 // Created SYNCHRONOUSLY by the route, before the async size probe, so a client that
 // resyncs with the id it just received can never miss the job.
 export function createJob({ course, lecture, kind, tool, ref = null, fromCache = false }) {
+  // A same-ref retry supersedes the failed row: drop the prior terminal error so the map
+  // never carries two jobs for one target (mirrors runner.js's removeJob on 200 recapture).
+  supersedeError({ course, lecture, kind, ref });
   const id = randomUUID();
   jobs.set(id, {
     id, course, lecture, kind, tool, ref, fromCache,
@@ -53,8 +57,6 @@ function terminal(job) {
   return !job || job.status === 'done' || job.status === 'error';
 }
 
-// First terminal call wins: a spawn failure fires both 'error' and 'close', and the
-// 'error' handler carries the real reason.
 export function finishJob(id, status, message = null) {
   const job = jobs.get(id);
   if (terminal(job)) return;
@@ -62,7 +64,18 @@ export function finishJob(id, status, message = null) {
   job.status = status;
   job.message = message;
   broadcast();
-  setTimeout(() => jobs.delete(id), RETENTION_MS).unref();
+  // Delete after short timeout. See @docs/JOBS.md.
+  if (status === 'done') setTimeout(() => jobs.delete(id), DONE_BRIDGE_MS).unref();
+}
+
+// Evict a prior terminal error for the same target so a same-ref retry replaces it in place.
+function supersedeError({ course, lecture, kind, ref }) {
+  for (const [id, job] of jobs) {
+    if (job.status === 'error' && job.ref === ref
+        && job.course === course && job.lecture === lecture && job.kind === kind) {
+      removeJob(id);
+    }
+  }
 }
 
 export function isJobTerminal(id) {

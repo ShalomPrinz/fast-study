@@ -89,9 +89,17 @@ Bytes are still measured on the interval — `progress.js` needs them for the co
 
 ## Retention
 
-Finished jobs stay in memory `RETENTION_MS` (5 min) before eviction, so a client that
-reconnects shortly after a download ended still resyncs a terminal state instead of a
-gap it must guess at.
+Terminal jobs are kept asymmetrically, because they carry different weight:
+
+- **`done`** is redundant with durable state — the database course tree (its own `:8001`
+  SSE) is what flips the frontend row green. So a `done` job lingers only `DONE_BRIDGE_MS`
+  (3 s), a short bridge over the gap between this server finishing and that tree ping.
+  Eviction is deferred, never synchronous: a client resyncing on the `done` ping must still
+  find the terminal state.
+- **`error`** is the ONLY carrier of "this failed" — a failed download leaves no file, so
+  the tree can't tell it from never-attempted. It stays in the map with no timeout, evicted
+  only when a same-`ref` retry supersedes it (`createJob` → `supersedeError`, matching
+  course+lecture+kind+ref — the frontend's dedupe key).
 
 ## Timing samples
 
