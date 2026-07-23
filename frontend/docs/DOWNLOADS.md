@@ -40,7 +40,9 @@ Edits are never cleared, so they survive an SSE tree refresh, a collapse/re-expa
 
 `isDownloaded(name, kind, courses, course)` is the single already-downloaded rule (exact name match in the
 live tree). It drives both the green row and the queue's skip. A single row's Download on an existing name
-opens an overwrite confirm first; the bulk run skips instead.
+opens an overwrite confirm first; the bulk run skips instead. When the base name isn't itself on disk,
+`splitSiblings` (same lookup) checks for `${name}.1`/`.2` — a zoom row splits lazily into those during
+download — and Download opens a "might overwrite" confirm naming the siblings; exact match takes precedence.
 
 `suggestItemName` derives the name from the recording title: the first integer becomes `Lecture N` /
 `Recitation N`, plus at most one sub-session marker glued to those digits (optionally after `.`/`-`/`_`) as

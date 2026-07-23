@@ -7,7 +7,7 @@ import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from './contexts/DownloadJobsContext'
 import { rowStatus, useDownloadJobs } from './contexts/DownloadJobsContext'
 import { useRowEdit } from './contexts/RowEditsContext'
-import { isDownloaded } from './utils/nameSuggestion'
+import { isDownloaded, splitSiblings } from './utils/nameSuggestion'
 import { useRecordingDownload } from './useRecordingDownload'
 
 // Owned by SectionGroup — the bulk queue needs the same children cache.
@@ -44,20 +44,38 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
   const split = jobs.length > 1
   const downloading = status === 'running'
 
-  // Pending overwrite confirm: `name` is what the modal names, `run` is what a Yes replays
+  // Pending overwrite confirm: `message` is what the modal shows, `run` is what a Yes replays
   // (the whole-row download or one clip's retry). Null means no modal.
-  const [confirm, setConfirm] = useState<{ name: string; run: () => void } | null>(null)
+  const [confirm, setConfirm] = useState<{ message: string; run: () => void } | null>(null)
 
-  // Re-downloading overwrites existing videos, so confirm first.
-  const onDownloadClick = () =>
-    alreadyDownloaded || status === 'done'
-      ? setConfirm({ name: effectiveName, run: download })
-      : download()
+  // Re-downloading overwrites existing videos, so confirm first. Exact match takes precedence; only
+  // otherwise warn if a zoom split ('${name}.1'/'.2') already exists — this row might split onto it.
+  const onDownloadClick = () => {
+    if (alreadyDownloaded || status === 'done') {
+      setConfirm({
+        message: `${effectiveName} already exists in ${course}. Download again and overwrite?`,
+        run: download,
+      })
+      return
+    }
+    const siblings = splitSiblings(effectiveName, kind, courses, course)
+    if (siblings.length)
+      setConfirm({
+        message: `${effectiveName} may split into parts that overwrite existing ${siblings.join(', ')} in ${course}. Download anyway?`,
+        run: download,
+      })
+    else download()
+  }
 
   // A per-clip button in a split row: a done clip overwrites, so confirm naming that clip; an
   // errored clip downloaded nothing to overwrite, so retry straight away (mirrors the main button).
   const onClipAction = (job: JobProgress) =>
-    job.status === 'done' ? setConfirm({ name: job.title, run: () => retryClip(job) }) : retryClip(job)
+    job.status === 'done'
+      ? setConfirm({
+          message: `${job.title} already exists in ${course}. Download again and overwrite?`,
+          run: () => retryClip(job),
+        })
+      : retryClip(job)
 
   if (item.expandable && expand) {
     return (
@@ -148,7 +166,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
 
       {confirm && (
         <ConfirmModal
-          message={`${confirm.name} already exists in ${course}. Download again and overwrite?`}
+          message={confirm.message}
           onConfirm={() => {
             const run = confirm.run
             setConfirm(null)

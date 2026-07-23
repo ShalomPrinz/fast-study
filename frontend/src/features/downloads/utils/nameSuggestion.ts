@@ -39,14 +39,31 @@ export function suggestItemName(
   return suggestName(courses, course, kind)
 }
 
-// The single "already on disk" rule — exact name match in the live tree, used by row and queue.
+// The live tree's node names for one course+kind
+function existingNames(kind: Kind, courses: Course[], course: string): string[] {
+  const node = courses.find((c) => c.name === course)
+  const existing = kind === 'recitation' ? node?.recitations : node?.lectures
+  return existing?.map((l) => l.name) ?? []
+}
+
+// The single "already on disk" rule — exact name match in the live tree
 export function isDownloaded(
   name: string,
   kind: Kind,
   courses: Course[],
   course: string,
 ): boolean {
-  const node = courses.find((c) => c.name === course)
-  const existing = kind === 'recitation' ? node?.recitations : node?.lectures
-  return existing?.some((l) => l.name === name) ?? false
+  return existingNames(kind, courses, course).includes(name)
+}
+
+// A recording might split lazily into `${name}.1`/`.2` during download; returns whichever split
+// siblings already exist on disk, so a whole-row download can warn before overwriting them.
+export function splitSiblings(
+  name: string,
+  kind: Kind,
+  courses: Course[],
+  course: string,
+): string[] {
+  const names = existingNames(kind, courses, course)
+  return [`${name}.1`, `${name}.2`].filter((n) => names.includes(n))
 }
