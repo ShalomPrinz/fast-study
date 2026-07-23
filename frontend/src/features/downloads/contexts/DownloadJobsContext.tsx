@@ -1,14 +1,18 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { DownloadOperation } from '@/types'
+import type { DownloadOperation, Kind } from '@/types'
 import type { DownloadJob } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
 
-// One download job as the display atom for a titled ETA bar
+// One download job as the display atom for a titled ETA bar. Carries the fields a per-job retry
+// needs to re-issue `/download-item` (ref/course/title=lecture/kind).
 export interface JobProgress {
   id: string
   title: string
+  ref: string
+  course: string
+  kind: Kind
   status: 'running' | 'done' | 'error'
   startedAt: number | null
   expectedBytes: number | null
@@ -36,6 +40,7 @@ export function rowStatus(jobs: JobProgress[]): 'running' | 'done' | 'error' | n
 
 // One EventSource for the page, against the downloader server (:3052) which owns the jobs.
 // The stream is a contentless `job:change` ping; every ping refetches `GET /jobs`.
+// The server guarantees at most one job per target in a snapshot, so we trust `/jobs` as-is.
 // A `ref` groups the row, while its jobs are the display atoms. See docs/DOWNLOADS.md.
 export function DownloadJobsProvider({ children }: { children: ReactNode }) {
   const [jobs, setJobs] = useState<DownloadJob[]>([])
@@ -74,6 +79,9 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
       .map((j) => ({
         id: j.id,
         title: j.lecture,
+        ref,
+        course: j.course,
+        kind: j.kind,
         status: isTerminal(j) ? (j.status as 'done' | 'error') : 'running',
         startedAt: j.startedAt,
         expectedBytes: j.expectedBytes,

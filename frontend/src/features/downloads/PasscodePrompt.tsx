@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom'
 import type { PasscodeError } from './services/autoDownloader'
 
-interface PasscodePromptProps {
+export interface PasscodePromptProps {
   reason: PasscodeError['reason']
   busy: boolean
   onSubmit: (passcode: string, scope: 'course' | 'lecture') => void

@@ -70,6 +70,13 @@ Chrome extension started. Each job carries the discovery-row **`ref`** it belong
 before/after-break pair lands under lecture names `<name>.1`/`<name>.2`, but both jobs carry the parent
 row's `ref`. So the row-to-job link is server-side — no client id↔row map, no seeding, no delta merge.
 
+**One job per target — the server guarantees it.** When the server silently recovers a stale token — or a
+manual retry runs — `createJob` calls `supersedeTerminal`, evicting any prior *terminal* job (`done`/`error`)
+for the same `(course, lecture, kind, ref)` before minting the fresh one. So a `/jobs` snapshot never holds
+two jobs for one target, and no superseded `error` survives to flash a stale row or toast a recovery that
+actually succeeded. The client trusts the snapshot as-is — no client-side dedupe. (A zoom pair's `.1`/`.2`
+halves are distinct targets under one `ref`, so both legitimately coexist.)
+
 `DownloadJobsProvider` (mounted in `DownloadsView` above the panel, so the snapshot survives a close and
 re-discover) owns **one EventSource for the page** and holds the latest `/jobs` snapshot. `open` fires on
 connect and every auto-reconnect and also refetches, so the initial sync and any events missed during a
@@ -80,17 +87,33 @@ a download still running after a reload (or one the extension started) shows on 
 lookup. A queued job pings too, so the row flips into flight from the snapshot alone once the POST returns.
 
 **A `ref` groups the row; its jobs are the display atoms.** `progressOf(ref)` returns a `JobProgress[]` —
-one entry per matching job (id, `job.lecture` title, `status`, `startedAt`, `expectedBytes`, `operation`),
-sorted by lecture so a zoom pair's two bars never reorder. The row maps each to a `JobProgressBar`, which
-owns its own `useTimingStats(operation, expectedBytes)` call — so each clip regresses independently and one
-unknown probe blanks only its own bar (no summing, no null-poisoning across siblings). `tool: curl` →
-`download:curl`, `yt-dlp` → `download:ytdlp`, two buckets because their throughput profiles differ. A null
-`expectedBytes` shows "Not enough data to estimate"; so does a tool with too few recorded runs. The per-bar
-`.1`/`.2` title shows only when a row has more than one bar — a lone bar leaves it off (the row already
-names it). The 99% non-zoom case is one job → one untitled bar, unchanged.
+one entry per matching job (id, `job.lecture` title, plus `ref`/`course`/`kind` for retry, `status`,
+`startedAt`, `expectedBytes`, `operation`), sorted by lecture so a zoom pair's two bars never reorder.
+`RecordingJobList` maps each to a `JobProgressBar`, which owns its own `useTimingStats(operation, expectedBytes)` call —
+so each clip regresses independently and one unknown probe blanks only its own bar (no summing, no
+null-poisoning across siblings). `tool: curl` → `download:curl`, `yt-dlp` → `download:ytdlp`, two buckets
+because their throughput profiles differ. A null `expectedBytes` shows "Not enough data to estimate"; so
+does a tool with too few recorded runs. The per-bar `.1`/`.2` title shows only when a row has more than one
+bar — a lone bar leaves it off (the row already names it). The 99% non-zoom case is one job → one untitled
+bar, unchanged.
+
+**Per-clip retry.** On a multi-job (zoom-pair) row, a terminal job renders a per-clip **Retry ✗** (error)
+or **Re-download ↻** (done) button instead of a bar, so one failed half replays without touching the other.
+It re-issues `POST /download-item` with `{ ref, course, name: job.lecture, kind, only: true }` (`only`
+re-triggers just that named clip) and reuses the row's reconnect/passcode gates via the shared `runIntent`.
+A done clip's **Re-download ↻** overwrites, so it opens the overwrite confirm named for that clip (`job.title`)
+and only replays on Yes; an errored clip's **Retry ✗** downloaded nothing to overwrite, so it retries directly.
+A lone job needs no per-clip button — its retry lives on the main row button, which replays the whole row.
 
 Whole-row state comes from `rowStatus(jobs)` (running if any job is non-terminal, else error if any failed,
-else done, else null) — the button, confirm-overwrite and passcode flows stay whole-row and keyed on `ref`.
+else done, else null). On a split row (`jobs.length > 1`) the per-clip buttons own re-download/retry, so the
+main control becomes a non-clickable status label (`.recording-download-btn--label`) — "Downloading…" /
+"Downloaded ✓" / "Failed ✗" — never triggering a whole-row overwrite. Non-split rows keep the clickable
+button; confirm-overwrite and passcode flows stay whole-row and keyed on `ref`.
+
+`RecordingRow` is the integrator: it derives the display (`jobs`/`status`/`split`/`alreadyDownloaded`) and
+owns the overwrite confirm. `useRecordingDownload` is the download effect only — the action plus its own
+pending/retry/queue-failure/passcode state. `RecordingJobList` is the presentational per-job block.
 
 Each bar is literally `MainView`'s — same component, same `Estimating…` / `Not enough data to estimate` /
 `Nm Ns remaining` / `Taking longer than expected` states; the bars render as a full-width block stacked
@@ -133,5 +156,7 @@ openings so a wrong-passcode re-prompt mounts fresh and empty. Scope defaults to
 lecture" narrows it to the one recording.
 
 In a single row, the passcode prompt and the overwrite confirm can never co-render — the confirm is already
-dismissed by the time `download()` can hit the 409. The row keeps its spinner on across save → retry so it
-doesn't flash off while the passcode is stored.
+dismissed by the time `download()` can hit the 409. The modal's own `savingPasscode` busy state drives its
+spinner; on submit it saves the passcode and resumes whichever intent hit the gate (row download or a
+per-clip retry) via `passcodeResume`, closing the modal and starting the resume in one render so no spinner
+flashes off.

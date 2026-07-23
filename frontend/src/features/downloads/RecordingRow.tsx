@@ -1,45 +1,14 @@
 import { useState } from 'react'
-import type { TimingStats } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import ProgressBar from '@/shared/components/ProgressBar'
-import type { Item, PasscodeError } from './services/autoDownloader'
-import {
-  downloadItem,
-  isPasscodeError,
-  isReconnectError,
-  saveZoomPasscode,
-} from './services/autoDownloader'
+import type { Item } from './services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
+import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from './contexts/DownloadJobsContext'
 import { rowStatus, useDownloadJobs } from './contexts/DownloadJobsContext'
 import { useRowEdit } from './contexts/RowEditsContext'
 import { isDownloaded } from './utils/nameSuggestion'
-import { toastDownloadError } from './utils/downloadErrors'
-
-type Result = 'fail' | null
-
-const NO_ESTIMATE: TimingStats = { message: 'not-enough-data' }
-
-// One job's ETA bar with its own `useTimingStats` call
-function JobProgressBar({ job, showTitle }: { job: JobProgress; showTitle: boolean }) {
-  const sized = job.expectedBytes != null
-  const stats = useTimingStats(sized ? job.operation : null, job.expectedBytes ?? 0)
-  // Per-job visibility so bar vanishes the instant its own clip is done/errored, independent of siblings
-  if (job.status !== 'running') return null
-  // Queued (no start time, no size) → null → "Estimating…"; running without a size → "Not enough data".
-  return (
-    <div className="recording-progress-job">
-      {showTitle && <span className="recording-progress-title" dir="auto" title={job.title}>{job.title}</span>}
-      <ProgressBar
-        className="recording-progress"
-        stats={job.startedAt == null ? null : sized ? stats : NO_ESTIMATE}
-        startedAt={job.startedAt ?? 0}
-      />
-    </div>
-  )
-}
+import { useRecordingDownload } from './useRecordingDownload'
 
 // Owned by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {
@@ -63,24 +32,32 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
   // Name/kind live in SectionGroup so this row and the bulk queue agree.
   const { kind, suggestion, value, name: effectiveName, setName, setKind } = useRowEdit(item, course)
   const { progressOf } = useDownloadJobs()
-  const [pending, setPending] = useState(false)
-  const [result, setResult] = useState<Result>(null)
-  const [confirming, setConfirming] = useState(false)
-
-  // Opened on a 409 passcode gate. Never co-renders with the overwrite confirm, which is
-  // already dismissed by the time download() can hit the 409.
-  const [passcodePrompt, setPasscodePrompt] = useState(false)
-  const [passcodeReason, setPasscodeReason] = useState<PasscodeError['reason']>('missing')
+  const { download, retryClip, pending, retryingId, failed: queueFailed, passcode } =
+    useRecordingDownload({ item, course, name: effectiveName, kind, onReconnect })
 
   // Live tree, so a completed download's SSE refresh flips the row green.
   const alreadyDownloaded = isDownloaded(effectiveName, kind, courses, course)
-
-  // The 200 from /download-item only queued the work; these are the actual downloads (one bar each),
-  // grouped by this row's `ref` — so a download still running after a page reload re-attaches for free.
+  // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
+  // for free after a reload. A multi-clip recording (jobs.length > 1) turns the main button into a label.
   const jobs = progressOf(item.ref)
   const status = rowStatus(jobs)
+  const split = jobs.length > 1
   const downloading = status === 'running'
-  const failed = result === 'fail' || status === 'error'
+
+  // Pending overwrite confirm: `name` is what the modal names, `run` is what a Yes replays
+  // (the whole-row download or one clip's retry). Null means no modal.
+  const [confirm, setConfirm] = useState<{ name: string; run: () => void } | null>(null)
+
+  // Re-downloading overwrites existing videos, so confirm first.
+  const onDownloadClick = () =>
+    alreadyDownloaded || status === 'done'
+      ? setConfirm({ name: effectiveName, run: download })
+      : download()
+
+  // A per-clip button in a split row: a done clip overwrites, so confirm naming that clip; an
+  // errored clip downloaded nothing to overwrite, so retry straight away (mirrors the main button).
+  const onClipAction = (job: JobProgress) =>
+    job.status === 'done' ? setConfirm({ name: job.title, run: () => retryClip(job) }) : retryClip(job)
 
   if (item.expandable && expand) {
     return (
@@ -113,62 +90,6 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     )
   }
 
-  async function download() {
-    setConfirming(false)
-    setPending(true)
-    setResult(null)
-    try {
-      const started = await downloadItem({ ref: item.ref, course, name: effectiveName, kind })
-      // Success is the jobs' to report — the snapshot ping drives the row into flight. Only a
-      // failure to queue is the trigger's to surface.
-      if (!started) {
-        setResult('fail')
-        toastDownloadError(effectiveName)
-      }
-    } catch (err) {
-      // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.
-      if (isReconnectError(err)) onReconnect()
-      else if (isPasscodeError(err)) {
-        // Prompt instead of failing; the finally clears the spinner while the user types.
-        setPasscodeReason(err.reason)
-        setPasscodePrompt(true)
-      } else {
-        setResult('fail')
-        toastDownloadError(effectiveName, err)
-      }
-    } finally {
-      setPending(false)
-    }
-  }
-
-  // pending stays true across save→retry so the spinner never flashes off.
-  async function submitPasscode(passcode: string, scope: 'course' | 'lecture') {
-    if (!passcode) return
-    setPending(true)
-    try {
-      await saveZoomPasscode({ course, name: effectiveName, passcode, scope })
-    } catch (err) {
-      setResult('fail')
-      toastDownloadError(effectiveName, err)
-      setPasscodePrompt(false)
-      setPending(false)
-      return
-    }
-    setPasscodePrompt(false)
-    await download()
-  }
-
-  function cancelPasscode() {
-    setPasscodePrompt(false)
-    setResult('fail')
-  }
-
-  // Re-downloading overwrites existing videos, so confirm first.
-  function onDownloadClick() {
-    if (alreadyDownloaded || status === 'done') setConfirming(true)
-    else download()
-  }
-
   return (
     <div className="recording-entry">
       <div className={alreadyDownloaded ? 'recording-row recording-row--downloaded' : 'recording-row'}>
@@ -197,49 +118,47 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
         dir="auto"
       />
 
-      <button
-        className="source-row-btn recording-download-btn"
-        onClick={onDownloadClick}
-        disabled={pending || downloading}
-      >
-        {pending ? (
-          <span className="recording-spinner" />
-        ) : downloading ? (
-          'Downloading…'
-        ) : failed ? (
-          'Retry ✗'
-        ) : status === 'done' ? (
-          'Downloaded ✓'
-        ) : (
-          'Download'
-        )}
-      </button>
+      {split ? (
+        // Per-clip buttons own re-download/retry, so the main button is just a status label here.
+        <span className="source-row-btn recording-download-btn recording-download-btn--label">
+          {downloading ? 'Downloading…' : status === 'error' ? 'Failed ✗' : 'Downloaded ✓'}
+        </span>
+      ) : (
+        <button
+          className="source-row-btn recording-download-btn"
+          onClick={onDownloadClick}
+          disabled={pending || downloading}
+        >
+          {pending ? (
+            <span className="recording-spinner" />
+          ) : downloading ? (
+            'Downloading…'
+          ) : queueFailed || status === 'error' ? (
+            'Retry ✗'
+          ) : status === 'done' ? (
+            'Downloaded ✓'
+          ) : (
+            'Download'
+          )}
+        </button>
+      )}
       </div>
 
-      {jobs.some((j) => j.status === 'running') && (
-        <div className="recording-progress-list">
-          {jobs.map((job) => (
-            <JobProgressBar key={job.id} job={job} showTitle={jobs.length > 1} />
-          ))}
-        </div>
-      )}
+      <RecordingJobList jobs={jobs} split={split} retryingId={retryingId} onClipAction={onClipAction} />
 
-      {confirming && (
+      {confirm && (
         <ConfirmModal
-          message={`${effectiveName} already exists in ${course}. Download again and overwrite?`}
-          onConfirm={download}
-          onCancel={() => setConfirming(false)}
+          message={`${confirm.name} already exists in ${course}. Download again and overwrite?`}
+          onConfirm={() => {
+            const run = confirm.run
+            setConfirm(null)
+            run()
+          }}
+          onCancel={() => setConfirm(null)}
         />
       )}
 
-      {passcodePrompt && (
-        <PasscodePrompt
-          reason={passcodeReason}
-          busy={pending}
-          onSubmit={submitPasscode}
-          onCancel={cancelPasscode}
-        />
-      )}
+      {passcode && <PasscodePrompt {...passcode} />}
     </div>
   )
 }

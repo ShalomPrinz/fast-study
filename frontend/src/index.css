@@ -1726,6 +1726,40 @@ p.recording-progress {
   justify-content: center;
 }
 
+/* Split rows (a zoom pair) delegate re-download/retry to the per-clip buttons, so the main control
+   is a plain status label — no button chrome, no hover, no pointer. */
+.recording-download-btn--label {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+  cursor: default;
+}
+
+/* A terminal job's per-clip control (Retry / Re-download) sits inline beside its clip title,
+   right-aligned so a row of clips reads as title … button. */
+.recording-progress-job--action {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Let the clip title take the row and ellipsis-truncate next to the button. */
+.recording-progress-job--action .recording-progress-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.recording-job-btn {
+  flex-shrink: 0;
+  min-width: 96px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
 .recording-spinner {
   width: 13px;
   height: 13px;

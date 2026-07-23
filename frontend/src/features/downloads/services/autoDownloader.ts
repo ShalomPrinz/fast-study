@@ -104,12 +104,14 @@ export async function expandItem(ref: string): Promise<Item[]> {
   return items
 }
 
-// True once at least one download has started by this request.
+// True once at least one download has started by this request. `only` re-triggers a single named
+// item (a zoom split clip) without re-downloading its siblings — used by per-job retry.
 export async function downloadItem(args: {
   ref: string
   course: string
   name: string
   kind: Kind
+  only?: boolean
 }): Promise<boolean> {
   const data = await postReconnectAware<{ ok: boolean }>('/download-item', args)
   return data.ok
