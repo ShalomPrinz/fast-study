@@ -98,8 +98,13 @@ Terminal jobs are kept asymmetrically, because they carry different weight:
   find the terminal state.
 - **`error`** is the ONLY carrier of "this failed" — a failed download leaves no file, so
   the tree can't tell it from never-attempted. It stays in the map with no timeout, evicted
-  only when a same-`ref` retry supersedes it (`createJob` → `supersedeError`, matching
-  course+lecture+kind+ref — the frontend's dedupe key).
+  only when a retry supersedes it.
+
+Supersession (`createJob` → `supersedeTerminal`) evicts **any terminal predecessor** — `done`
+or `error` — for the same target (course+lecture+kind+ref). This makes `/jobs` hold at most
+one job per target, so the frontend trusts the server and does no client-side dedupe. It also
+covers a re-download issued inside a `done` job's bridge window: the pending `DONE_BRIDGE_MS`
+delete then fires harmlessly on an already-removed id (`jobs.delete` no-ops on a missing key).
 
 ## Timing samples
 

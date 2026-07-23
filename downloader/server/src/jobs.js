@@ -13,9 +13,9 @@ const DONE_BRIDGE_MS = 60 * 1000;
 // Created SYNCHRONOUSLY by the route, before the async size probe, so a client that
 // resyncs with the id it just received can never miss the job.
 export function createJob({ course, lecture, kind, tool, ref = null, fromCache = false }) {
-  // A same-ref retry supersedes the failed row: drop the prior terminal error so the map
-  // never carries two jobs for one target (mirrors runner.js's removeJob on 200 recapture).
-  supersedeError({ course, lecture, kind, ref });
+  // A retry supersedes any terminal predecessor for this target so `/jobs` holds at most
+  // one job per target (mirrors runner.js's removeJob on 200 recapture).
+  supersedeTerminal({ course, lecture, kind, ref });
   const id = randomUUID();
   jobs.set(id, {
     id, course, lecture, kind, tool, ref, fromCache,
@@ -68,10 +68,10 @@ export function finishJob(id, status, message = null) {
   if (status === 'done') setTimeout(() => jobs.delete(id), DONE_BRIDGE_MS).unref();
 }
 
-// Evict a prior terminal error for the same target so a same-ref retry replaces it in place.
-function supersedeError({ course, lecture, kind, ref }) {
+// Evict any terminal predecessor (`done` or `error`) to guarantee one job per target
+function supersedeTerminal({ course, lecture, kind, ref }) {
   for (const [id, job] of jobs) {
-    if (job.status === 'error' && job.ref === ref
+    if (terminal(job) && job.ref === ref
         && job.course === course && job.lecture === lecture && job.kind === kind) {
       removeJob(id);
     }
