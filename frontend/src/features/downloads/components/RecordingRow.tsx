@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import type { Item } from './services/autoDownloader'
+import type { Item } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
-import type { JobProgress } from './contexts/DownloadJobsContext'
-import { rowStatus, useDownloadJobs } from './contexts/DownloadJobsContext'
-import { useRowEdit } from './contexts/RowEditsContext'
-import { isDownloaded, splitSiblings } from './utils/nameSuggestion'
-import { useRecordingDownload } from './useRecordingDownload'
+import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
+import { rowStatus, useDownloadJobs } from '@/features/downloads/contexts/DownloadJobsContext'
+import { useRowEdit } from '@/features/downloads/contexts/RowEditsContext'
+import { isDownloaded, splitSiblings } from '@/features/downloads/utils/nameSuggestion'
+import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 
 // Owned by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {

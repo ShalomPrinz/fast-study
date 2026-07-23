@@ -1,15 +1,15 @@
 import { useRef, useState } from 'react'
 import type { Kind } from '@/types'
-import type { Item, PasscodeError } from './services/autoDownloader'
+import type { Item, PasscodeError } from '@/features/downloads/services/autoDownloader'
 import {
   downloadItem,
   isPasscodeError,
   isReconnectError,
   saveZoomPasscode,
-} from './services/autoDownloader'
-import type { JobProgress } from './contexts/DownloadJobsContext'
-import type { PasscodePromptProps } from './PasscodePrompt'
-import { toastDownloadError } from './utils/downloadErrors'
+} from '@/features/downloads/services/autoDownloader'
+import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
+import type { PasscodePromptProps } from '@/features/downloads/components/PasscodePrompt'
+import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 
 type Result = 'fail' | null
 

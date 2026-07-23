@@ -1,7 +1,7 @@
 import type { TimingStats } from '@/types'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ProgressBar from '@/shared/components/ProgressBar'
-import type { JobProgress } from './contexts/DownloadJobsContext'
+import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 
 const NO_ESTIMATE: TimingStats = { message: 'not-enough-data' }
 

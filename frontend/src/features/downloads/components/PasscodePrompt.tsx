@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom'
-import type { PasscodeError } from './services/autoDownloader'
+import type { PasscodeError } from '@/features/downloads/services/autoDownloader'
 
 export interface PasscodePromptProps {
   reason: PasscodeError['reason']

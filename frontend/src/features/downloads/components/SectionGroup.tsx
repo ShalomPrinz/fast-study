@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import type { Kind } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import type { Item, PasscodeError } from './services/autoDownloader'
+import type { Item, PasscodeError } from '@/features/downloads/services/autoDownloader'
 import {
   downloadItem,
   expandItem,
@@ -9,15 +9,15 @@ import {
   isReconnectError,
   isUnsupportedError,
   saveZoomPasscode,
-} from './services/autoDownloader'
+} from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'
-import type { JobProgress } from './contexts/DownloadJobsContext'
-import { rowStatus, useDownloadJobs } from './contexts/DownloadJobsContext'
-import type { RowEdit } from './contexts/RowEditsContext'
-import { RowEditsContext, resolveRow } from './contexts/RowEditsContext'
-import { isDownloaded } from './utils/nameSuggestion'
+import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
+import { rowStatus, useDownloadJobs } from '@/features/downloads/contexts/DownloadJobsContext'
+import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
+import { RowEditsContext, resolveRow } from '@/features/downloads/contexts/RowEditsContext'
+import { isDownloaded } from '@/features/downloads/utils/nameSuggestion'
 
 interface Props {
   title: string
