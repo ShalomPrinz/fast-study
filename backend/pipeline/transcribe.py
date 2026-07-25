@@ -167,7 +167,7 @@ def transcribe_audio(audio_path: str) -> str:
 
     duration = get_duration(audio_path)
     print(f"Duration: {duration/60:.1f} min → {total} chunks (resuming from {completed})")
-    print(f"Transcribing with Groq (whisper-large-v3, Hebrew)...")
+    print("Transcribing with Groq (whisper-large-v3, Hebrew)...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         for i in range(completed, total):

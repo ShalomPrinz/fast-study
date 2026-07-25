@@ -18,7 +18,11 @@ mapfile -d '' -t changed < <(
   git diff --name-only -z HEAD 2>/dev/null
   git ls-files --others --exclude-standard -z 2>/dev/null
 )
-[ ${#changed[@]} -eq 0 ] && exit 0
+# A passing Stop hook's stdout goes to the debug log only, so the one channel
+# that reaches the user is systemMessage — always report, even when idle.
+report() { jq -n --arg m "$1" '{systemMessage: $m, suppressOutput: true}'; }
+
+[ ${#changed[@]} -eq 0 ] && { report "typecheck · clean tree, nothing to check"; exit 0; }
 
 ts=0
 for f in "${changed[@]}"; do
@@ -27,12 +31,13 @@ for f in "${changed[@]}"; do
     frontend/*.ts|frontend/*.tsx) ts=1 ;;
   esac
 done
-[ "$ts" -eq 0 ] && exit 0
+[ "$ts" -eq 0 ] && { report "typecheck · no frontend TS changed"; exit 0; }
 
 # `npm run build` is tsc -b + the vite bundle; this is the same typecheck without
 # the bundle. Whole-project by nature — tsc has no meaningful per-file mode.
 if out="$(cd frontend && npx tsc --noEmit 2>&1)"; then
   rm -f "$state"
+  report "typecheck ✓ frontend (tsc --noEmit)"
   exit 0
 fi
 failures="[frontend] tsc --noEmit failed:"$'\n'"$(printf '%s\n' "$out" | head -30)"

@@ -1,10 +1,16 @@
 {
   "name": "fast-study",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "concurrently -k -t 'HH:mm:ss' -p '[{time}] {name}' -n Backend,Frontend,Downloader,AutoDL,Database -c blue,green,magenta,cyan,yellow \"cd backend && UVICORN_RELOAD_EXCLUDE='*.db timing/*' PYTHONUNBUFFERED=1 uv run uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader/server start\" \"npm --prefix downloader/auto start\" \"cd database && uvicorn main:app --reload --port 8001\""
+    "dev": "concurrently -k -t 'HH:mm:ss' -p '[{time}] {name}' -n Backend,Frontend,Downloader,AutoDL,Database -c blue,green,magenta,cyan,yellow \"cd backend && UVICORN_RELOAD_EXCLUDE='*.db timing/*' PYTHONUNBUFFERED=1 uv run uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader/server start\" \"npm --prefix downloader/auto start\" \"cd database && uvicorn main:app --reload --port 8001\"",
+    "lint": "eslint . && uvx ruff check backend database"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^9.1.0",
+    "eslint": "^10.8.0",
+    "globals": "^17.7.0",
+    "typescript-eslint": "^8.65.0"
   }
 }

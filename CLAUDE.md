@@ -67,3 +67,14 @@ Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-c
 
 - For non-trivial changes: ground yourself in the actual code first, present 2-3 options with tradeoffs, and wait for a decision before implementing. Don't start editing on an ambiguous request.
 - When a workaround fails twice, stop implementing and research the root cause — official docs, the API surface, community threads — instead of trying a third variant.
+
+## Linting
+
+Every service is linted, and new code must land lint-clean — `npm run lint` from the repo root runs both linters over everything.
+
+- **Python** (`backend/`, `database/`) — `uvx ruff check`, configured in the root `ruff.toml`.
+- **JS/TS** (`frontend/`, `downloader/`) — `npx eslint`, one root install whose `eslint.config.js` covers the SPA, both Node packages, and the Chrome extension.
+
+Both stay at pyflakes/recommended level — undefined names and unused symbols, no style enforcement — so they run in about a second. Reach for an inline `eslint-disable` / `noqa` only with a reason on the same line; if a rule is wrong repo-wide, change the config instead.
+
+`.claude/lint.sh` runs them on changed files at the end of every turn and every subagent, and `.claude/typecheck.sh` typechecks `frontend/` the same way. A green hook means the code parses and typechecks — never that it works.

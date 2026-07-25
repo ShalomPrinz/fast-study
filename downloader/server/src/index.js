@@ -24,7 +24,7 @@ app.use(downloadRouter);
 app.use(jobsRouter);
 app.use(pdfRouter);
 
-// eslint-disable-next-line no-unused-vars -- express identifies error handlers by arity
+// The unused `next` is load-bearing: express identifies error handlers by arity.
 app.use((err, req, res, next) => {
   emitError(err?.stack ?? String(err));
   res.status(500).json({ error: err.message ?? 'Server error' });
