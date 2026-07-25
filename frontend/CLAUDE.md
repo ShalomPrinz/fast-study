@@ -59,3 +59,6 @@ src/
 - Keep it short. One line is the default, two the maximum.
 - Architecture belongs in `docs/`; inline comments stay to small technical details (two lines max).
 - When a change makes these docs stale, update them in the same pass.
+
+## React Best Practices
+- Hooks and functions must return a narrow surface. A hook returning more than ~5 fields is a design smell — split it or reconsider the boundary. Similarly, a component with more than ~5 props is a design smell.

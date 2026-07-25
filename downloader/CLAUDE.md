@@ -67,3 +67,7 @@ auth, passcodes).
 - `suggestLectureName` / `suggestRecitationName` in `popup.js` duplicate logic from `frontend/src/components/Sidebar.tsx`. If the sidebar's naming convention changes, update both.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
 - Server-specific conventions (argv-array spawn, always `video.mp4`/`material.pdf`, probe-on-raw-http) live in `server/CLAUDE.md`.
+
+## Verification
+
+- Neither Node package has a test suite (`npm start` is the only script). Verify a change by running the service and hitting the real *endpoint* — the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior that no diff review can predict. Do not verify against real *data*.
