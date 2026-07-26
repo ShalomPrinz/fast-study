@@ -24,9 +24,10 @@ export interface Hit {
   ranges: { start: number; end: number }[]
 }
 
-// Hebrew (U+0590–U+05FF) is invisible to JS `\b`, so word boundaries are checked against this
-// class explicitly rather than by anchoring the RegExp.
-const WORD_CHAR = /[0-9A-Za-z_֐-׿]/
+// Hebrew is invisible to JS `\b`, so word boundaries are checked against this class explicitly
+// rather than by anchoring the RegExp. Letters and niqqud only: the block's punctuation — geresh,
+// gershayim, maqaf, sof pasuq — separates words (״ספר״, תנ״ך) exactly as Latin punctuation does.
+const WORD_CHAR = /[0-9A-Za-z_\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C7\u05D0-\u05EA\u05EF-\u05F2]/
 
 // A sentence ends at '.', per the summaries' own writing style.
 const TERMINATOR = '.'

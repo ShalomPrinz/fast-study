@@ -8,6 +8,7 @@ runs and to the database service (:8001) for all filesystem state; the Vite dev 
 ```bash
 npm run dev      # localhost:5173
 npm run build    # tsc -b && vite build → dist/   (run this to surface type errors)
+npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for watch mode)
 ```
 
 `.env` (not committed): `VITE_API_URL` (default `http://localhost:8000`), `VITE_DATABASE_URL`
@@ -41,6 +42,7 @@ src/
   features/downloads/                         DownloadsView, recording rows, autoDownloader +
                                               downloadServer services
   features/search/                            SearchView, in-memory course corpus, pure matcher
+                                              (+ search.test.ts, the only test suite)
 ```
 
 ## Rules

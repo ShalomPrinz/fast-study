@@ -38,8 +38,10 @@ cost ~1s and froze the tab on the first letter of any Hebrew word. Window comput
 stay eager (grouping can't be decided without it); string assembly is built only for the groups on screen.
 
 Whole-word is implemented by inspecting the characters adjacent to the match against an explicit
-letter/digit class that includes the Hebrew block (`֐-׿`) — JS `\b` doesn't recognise Hebrew letters as
-word characters, so anchoring the RegExp would match every Hebrew word.
+letter/digit class that includes Hebrew letters and niqqud — JS `\b` doesn't recognise Hebrew letters as
+word characters, so anchoring the RegExp would match every Hebrew word. Hebrew punctuation (geresh,
+gershayim, maqaf, sof pasuq) is deliberately outside the class: it separates words, so `״ספר״` is a
+whole-word hit for `ספר`.
 
 ## Snippet window and overlap merging
 
