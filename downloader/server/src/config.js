@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/ -> server/ -> downloader/ -> repo root. No override: dotenv must not clobber
 // vars already set in the process environment.
-dotenv.config({ path: path.resolve(__dirname, '../../..', '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../..', '.env'), quiet: true });
 
 export const PORT = Number(process.env.DOWNLOADER_PORT) || 3052;
 
