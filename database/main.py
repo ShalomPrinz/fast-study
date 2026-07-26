@@ -1,10 +1,12 @@
 import asyncio
 import os
+import signal
 import urllib.parse
 import urllib.request
+from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-from events.sse import broadcast_notify, subscribe
+from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
@@ -17,7 +19,33 @@ load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Close SSE streams on SIGINT/SIGTERM so Ctrl-C exits cleanly instead of stalling on them."""
+
+    # Must happen at signal time, not on lifespan shutdown: uvicorn waits for connections
+    # to close *before* running lifespan shutdown, so an idle /events stream would deadlock
+    # that wait and then get cancelled mid-response (the ASGI traceback on Ctrl-C).
+    previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+
+    def handle(sig, frame):
+        """Drain subscribers, then hand the signal back to whoever owned it (normally uvicorn's handle_exit)."""
+
+        close_all()
+        handler = previous[sig]
+        if callable(handler):
+            handler(sig, frame)
+        else:
+            signal.signal(sig, handler)
+            signal.raise_signal(sig)
+
+    for sig in previous:
+        signal.signal(sig, handle)
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
