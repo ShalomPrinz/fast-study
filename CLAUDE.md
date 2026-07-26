@@ -52,6 +52,12 @@ Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-c
 
 `python` is not aliased on this WSL setup — always invoke `python3` explicitly.
 
+## Always ask user for clarifications
+
+For every architecture decision, small or big, ask the user to clarify his intention.
+When you catch yourself reading a phrase like "if possible I'd like X" or "what do you recommend" as approval to implement X — it isn't. Answer the question, then wait.
+I prefer being sure of what's going to happen before you actually do it, so no redundant work is ever done by you.
+
 ## Documentation and code style
 
 - A comment describes what a function does and the idea behind it — plus the non-obvious WHY when there is one: a hidden constraint, a subtle invariant, a workaround for a specific bug. Skip comments that just restate the code.
