@@ -10,6 +10,7 @@ export const OVERVIEW_STEPS: readonly OverviewStep[] = [
   { phase: 'extract', suffix: '.txt', label: 'Extract' },
   { phase: 'analyze', suffix: '.md', label: 'Analyze' },
   { phase: 'topics', suffix: '.md', label: 'Collect' },
+  { phase: 'compile', suffix: '.md', label: 'Compile' },
   { phase: 'to_pdf', suffix: '.pdf', label: 'Export PDF' },
 ]
 

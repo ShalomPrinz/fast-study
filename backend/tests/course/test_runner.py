@@ -214,11 +214,12 @@ class TestGenerateAll:
 
     def test_notify_fires_per_slug_phase_plus_run_end(self, db):
         # One ping per (slug, phase) work unit + one at run end (no separate phase-boundary pings).
-        # All 4 extractors (3 pattern + topics); tree has transcripts but no summaries, so:
+        # All 5 extractors (3 pattern + topics + all-lectures); tree has transcripts but no summaries, so:
         #   exam-hints : extract done + analyze done + to_pdf done      → 3
         #   student-qa : extract skip + analyze skip + to_pdf skip      → 3
         #   pitfalls   : extract skip + analyze skip + to_pdf skip      → 3
         #   topics     : topics skip + to_pdf skip                      → 2
+        #   all-lectures: compile skip + to_pdf skip                     → 2
         #   run end                                                     → 1
         async def go():
             slugs, _ = course_runner.resolve_slugs(None)
@@ -226,7 +227,7 @@ class TestGenerateAll:
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 12
+        assert db.notifies == 14
 
 
 class TestGenerateSubset:
@@ -1146,12 +1147,14 @@ class TestStatusAndListing:
             "student-qa",
             "pitfalls",
             "topics",
+            "all-lectures",
         ]
         assert [x["title"] for x in listing] == [
             "Exam Hints",
             "Student QA",
             "Pitfalls",
             "Topics",
+            "All Lectures",
         ]
 
     def test_extractors_listing_includes_phases(self):

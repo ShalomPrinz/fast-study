@@ -1,18 +1,11 @@
 """Tests for course/collect.py — the topics-phase parser/formatter and run_collect worker.
 
-Pure helpers (parse_summary, _natural_key, _display_name, build_topics_md) are exercised
+Pure helpers (parse_summary, natural_key, display_name, build_topics_md) are exercised
 directly; run_collect is driven with db_client mocked (no network). Topics are HEADERS ONLY
 (H2 topics + H3 subtopics) — no list-item collection."""
 
-from course.collect import (
-    RLM,
-    _display_name,
-    _natural_key,
-    build_topics_md,
-    parse_summary,
-    render_entry,
-    run_collect,
-)
+from course.collect import build_topics_md, parse_summary, render_entry, run_collect
+from course.summary_md import RLM, display_name, natural_key
 from services import db_client
 
 
@@ -78,7 +71,7 @@ class TestCodeFenceSkipped:
 class TestNaturalKey:
     def test_lecture_2_2_before_10_1(self):
         names = ["Lecture 10.1", "Lecture 2.2", "Lecture 2.10", "Lecture 2.2"]
-        assert sorted(names, key=_natural_key) == [
+        assert sorted(names, key=natural_key) == [
             "Lecture 2.2",
             "Lecture 2.2",
             "Lecture 2.10",
@@ -88,13 +81,13 @@ class TestNaturalKey:
 
 class TestDisplayName:
     def test_lecture_translated_to_hebrew(self):
-        assert _display_name("Lecture 5.2", "lecture") == "הרצאה 5.2"
+        assert display_name("Lecture 5.2", "lecture") == "הרצאה 5.2"
 
     def test_recitation_translated_to_hebrew(self):
-        assert _display_name("Recitation 3.1", "recitation") == "תרגול 3.1"
+        assert display_name("Recitation 3.1", "recitation") == "תרגול 3.1"
 
     def test_unknown_kind_left_as_is(self):
-        assert _display_name("Lecture 5.2", "other") == "Lecture 5.2"
+        assert display_name("Lecture 5.2", "other") == "Lecture 5.2"
 
 
 class TestBuildTopicsMd:

@@ -22,7 +22,7 @@ FastAPI app exposing two things over HTTP: the per-lecture video → audio → t
 backend/
   main.py             FastAPI app + uvicorn entry point; thin route glue only
   pipeline/           per-LECTURE logic — one pure module per step + runner.py (execution engine)
-  course/             per-COURSE logic — overview.py (registry), runner.py, and one module per phase
+  course/             per-COURSE logic — overview.py (registry), runner.py, summary_md.py, and one module per phase
   services/           db_client.py (all filesystem I/O), llm_client.py (Gemini), google_auth.py (OAuth)
   timing/             SQLite per-operation duration log + @timed_pipeline decorator
   assets/

@@ -9,7 +9,7 @@ import asyncio
 
 from services import db_client
 
-from course import analyze, collect, extract, overview, to_pdf
+from course import analyze, collect, extract, merge, overview, to_pdf
 from course.overview import Phase
 
 # Per-(course, slug); created lazily via setdefault, persists across runs so same-slug triggers serialize.
@@ -180,8 +180,9 @@ class OverviewRun:
         if phase is Phase.ANALYZE:
             return analyze.run_analyze(self.course, extractor)
         if phase is Phase.TOPICS:
-            # topics ignores the slug: it distills every summary into one topics.md.
             return collect.run_collect(self.course, self.course_node)
+        if phase is Phase.COMPILE:
+            return merge.run_merge(self.course, self.course_node)
         if phase is Phase.TO_PDF:
             return to_pdf.run_to_pdf(self.course, slug)
         raise ValueError(f"unknown phase: {phase}")

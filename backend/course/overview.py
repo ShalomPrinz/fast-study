@@ -14,6 +14,7 @@ class Phase(Enum):
     EXTRACT = ("extract", ".txt")
     ANALYZE = ("analyze", ".md")
     TOPICS = ("topics", ".md")
+    COMPILE = ("compile", ".md")
     TO_PDF = ("to_pdf", ".pdf")
 
     def __init__(self, id: str, suffix: str):
@@ -81,6 +82,14 @@ class ImmediateExtractor(Extractor):
     phases: ClassVar[tuple[Phase, ...]] = (Phase.TOPICS, Phase.TO_PDF)
 
 
+@dataclass(frozen=True)
+class CompileExtractor(Extractor):
+    """Merges the lecture summaries into one full-content document — no LLM — then reuses
+    the shared to_pdf phase."""
+
+    phases: ClassVar[tuple[Phase, ...]] = (Phase.COMPILE, Phase.TO_PDF)
+
+
 EXTRACTORS: tuple[Extractor, ...] = (
     PatternExtractor(
         slug="exam-hints",
@@ -132,6 +141,7 @@ EXTRACTORS: tuple[Extractor, ...] = (
         ),
     ),
     ImmediateExtractor(slug="topics", title="Topics"),
+    CompileExtractor(slug="all-lectures", title="All Lectures"),
 )
 
 EXTRACTORS_BY_SLUG: dict[str, Extractor] = {e.slug: e for e in EXTRACTORS}

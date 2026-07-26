@@ -1,11 +1,13 @@
 """Registry-shape tests for course/overview.py: the Extractor base + PatternExtractor /
-ImmediateExtractor subclasses, per-type `phases` ClassVar (tuples of `Phase`), the `Phase`
-value type, the phase-chain / output-filename helpers, and that Topics is registered."""
+ImmediateExtractor / CompileExtractor subclasses, per-type `phases` ClassVar (tuples of
+`Phase`), the `Phase` value type, the phase-chain / output-filename helpers, and that Topics
+and All Lectures are registered."""
 
 from course.overview import (
     ALL_SLUGS,
     EXTRACTORS,
     EXTRACTORS_BY_SLUG,
+    CompileExtractor,
     Extractor,
     ImmediateExtractor,
     PatternExtractor,
@@ -18,6 +20,7 @@ class TestPhase:
         assert (Phase.EXTRACT.id, Phase.EXTRACT.suffix) == ("extract", ".txt")
         assert (Phase.ANALYZE.id, Phase.ANALYZE.suffix) == ("analyze", ".md")
         assert (Phase.TOPICS.id, Phase.TOPICS.suffix) == ("topics", ".md")
+        assert (Phase.COMPILE.id, Phase.COMPILE.suffix) == ("compile", ".md")
         assert (Phase.TO_PDF.id, Phase.TO_PDF.suffix) == ("to_pdf", ".pdf")
 
     def test_from_id_round_trips(self):
@@ -65,8 +68,20 @@ class TestRegistry:
         assert topics.title == "Topics"
         assert topics.phases == (Phase.TOPICS, Phase.TO_PDF)
 
+    def test_all_lectures_registered_as_compile(self):
+        all_lectures = EXTRACTORS_BY_SLUG["all-lectures"]
+        assert isinstance(all_lectures, CompileExtractor)
+        assert all_lectures.title == "All Lectures"
+        assert all_lectures.phases == (Phase.COMPILE, Phase.TO_PDF)
+
     def test_all_slugs_and_declaration_order(self):
-        assert ALL_SLUGS == ["exam-hints", "student-qa", "pitfalls", "topics"]
+        assert ALL_SLUGS == [
+            "exam-hints",
+            "student-qa",
+            "pitfalls",
+            "topics",
+            "all-lectures",
+        ]
         assert [e.slug for e in EXTRACTORS] == ALL_SLUGS
 
 

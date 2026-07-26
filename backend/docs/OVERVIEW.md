@@ -8,10 +8,11 @@ Outputs land in `{DATA_ROOT}/{course}/overview/` via the database service's over
 
 `course/overview.py` is a **pure registry** — it declares extractors and their phase chains and imports NO worker module, because every worker imports it back.
 
-- `Phase` is a value-type enum: each member carries `.id` (wire/CSV/status string) and `.suffix` (on-disk output suffix). `EXTRACT`→`.txt`, `ANALYZE`/`TOPICS`→`.md`, `TO_PDF`→`.pdf`.
+- `Phase` is a value-type enum: each member carries `.id` (wire/CSV/status string) and `.suffix` (on-disk output suffix). `EXTRACT`→`.txt`, `ANALYZE`/`TOPICS`/`COMPILE`→`.md`, `TO_PDF`→`.pdf`.
 - `Extractor` declares `phases` as a ClassVar tuple — phase order is intrinsic to each extractor, there is **no global phase-order table**. `phases_from(from_phase)` yields the sub-chain to run; `output_file(phase)` is `f"{slug}{phase.suffix}"`.
 - `PatternExtractor` (exam-hints, student-qa, pitfalls): EXTRACT → ANALYZE → TO_PDF. Its Gemini prompt is `assets/instructions/overview/{slug}.md`.
 - `ImmediateExtractor` (topics): TOPICS → TO_PDF. It **collects, it doesn't analyze** — `collect.py` reads each `summary.md` directly and writes `topics.md`, then reuses the shared `to_pdf` phase. No LLM call.
+- `CompileExtractor` (all-lectures): COMPILE → TO_PDF. Same idea as topics but keeps the section **bodies**: `merge.py` merges every lecture `summary.md` into one full-course `all-lectures.md`. No LLM call.
 
 An extractor only runs phases it declares, so a topics-only run never fetches transcripts and a pattern-only run never enters topics.
 
@@ -25,14 +26,17 @@ Each worker is pure work returning a `"done"`/`"skipped"` status dict, raising o
 
 - `extract.py` — `fetch_sources` reads every transcript once; `run_extractor` writes `{slug}.txt`. Whisper transcripts are near-unbroken blobs, so windowing is by **sentence, never by line**. One window per matched sentence (`before`/`after` context), overlapping windows merged so clustered matches yield one snippet. Hebrew patterns are unanchored substrings so prefixed forms (ו/ה/ש/ב) match for free.
 - `analyze.py` — reads `{slug}.txt`, sends it to Gemini with the extractor's prompt, writes `{slug}.md`. Missing `.txt` → skipped.
+- `merge.py` — merges every LECTURE `summary.md` (recitations deliberately excluded — this is the lecture content) into `all-lectures.md`: one `# ‏הרצאה N` heading per lecture, its summary demoted a level (H1→H2, saturating at H6) so it nests under that heading, built-in sections dropped whole, and lectures separated by a `---` rule. summarize.md mandates exactly two `---` per summary, both bordering a built-in section, so every in-summary rule is dropped and the only rules left are the inter-lecture ones. Fenced code is opaque — a `## x` or `---` inside a block survives verbatim.
 - `collect.py` — distills every `summary.md` into `topics.md` as **headers only** (H2 topics + nested H3 subtopics; built-in sections from `summarize.md` dropped). Entry headings are translated to Hebrew הרצאה/תרגול for display while sorting stays on the original English name so numeric order is unaffected. RLM marks keep Hebrew bullets RTL; pure-ASCII lines get none so they stay LTR.
 - `to_pdf.py` — renders `{slug}.md` → `{slug}.pdf` through `pipeline/to_pdf.py`'s `convert_to_pdf`. Missing `.md` → skipped. Distinct from `pipeline/to_pdf.py`: this is the per-course phase worker, that is the per-lecture md→PDF primitive it reuses.
+
+`summary_md.py` — the shared summary.md vocabulary both consumers need: `BUILTINS` (the summarize.md boilerplate section names), `RLM`, the heading/rule regexes, natural sort, the English→Hebrew display label, and the code-fence-aware line iterator. It exists so the built-in section names have exactly one definition — collect and merge must never disagree on what is boilerplate.
 
 `ranges.py` snapshots a source set's lecture/recitation number range (first dotted-number token per name, natural-sorted min–max, no contiguity check).
 
 ## meta.json
 
-`overview/meta.json` holds a per-slug snapshot of the source lecture/recitation ranges + `generated_at`. It is patched only when a slug's **extract** or **topics** phase produces output — never on skip, never on a later-phase re-run — so re-rendering a PDF leaves the snapshot describing the sources it was actually built from. The merge is server-side and atomic, so parallel per-slug PATCHes of the same course can't clobber each other.
+`overview/meta.json` holds a per-slug snapshot of the source lecture/recitation ranges + `generated_at`. It is patched only when a slug's **extract**, **topics** or **compile** phase produces output — never on skip, never on a later-phase re-run — so re-rendering a PDF leaves the snapshot describing the sources it was actually built from. The merge is server-side and atomic, so parallel per-slug PATCHes of the same course can't clobber each other.
 
 ## Run model
 
