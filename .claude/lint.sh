@@ -20,7 +20,7 @@ mapfile -d '' -t changed < <(
 # that reaches the user is systemMessage — always report, even when idle.
 report() { jq -n --arg m "$1" '{systemMessage: $m, suppressOutput: true}'; }
 
-[ ${#changed[@]} -eq 0 ] && { report "lint · clean tree, nothing to check"; exit 0; }
+[ ${#changed[@]} -eq 0 ] && { report "lint -"; exit 0; }
 
 py=() jsts=()
 for f in "${changed[@]}"; do
@@ -50,9 +50,9 @@ fi
 if [ -z "$failures" ]; then
   rm -f "$state"
   if [ $((${#py[@]} + ${#jsts[@]})) -eq 0 ]; then
-    report "lint · no Python/JS/TS files changed"
+    report "lint -"
   else
-    report "lint ✓ ruff ${#py[@]} file(s), eslint ${#jsts[@]} file(s)"
+    report "lint ✓"
   fi
   exit 0
 fi

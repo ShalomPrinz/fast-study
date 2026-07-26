@@ -18,37 +18,34 @@ report() {
   exit 0
 }
 
-# Counts the files a formatter actually rewrote: ruff reports a tally, prettier
-# lists every file it touched and suffixes the untouched ones with "(unchanged)".
-ruff_reformatted() { printf '%s' "$1" | grep -oE '[0-9]+ files? reformatted' | grep -oE '^[0-9]+' || echo 0; }
-prettier_reformatted() { printf '%s' "$1" | grep -c -v -e '(unchanged)' -e '^$' || true; }
+# Skips report without a duration — there is no formatting time worth showing.
+skip() {
+  jq -n --arg m "$1" '{systemMessage: $m, suppressOutput: true}'
+  exit 0
+}
 
 run_ruff() {   # "$@" = paths
-  local out
-  out="$(uvx ruff format "$@" 2>&1)"
+  uvx ruff format "$@" >/dev/null 2>&1
   uvx ruff check --select I --fix --quiet "$@" >/dev/null 2>&1
-  ruff_reformatted "$out"
 }
 run_prettier() {
-  local out
-  out="$(npx prettier --write --no-error-on-unmatched-pattern "$@" 2>/dev/null)"
-  prettier_reformatted "$out"
+  npx prettier --write --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1
 }
 
 # One-time baseline: neither formatter has ever run here, so align the whole repo
 # once. Without this every later edit would arrive as a whole-file reformat diff.
 if [ ! -f "$marker" ]; then
-  py_n="$(run_ruff backend database)"
-  web_n="$(run_prettier .)"
+  run_ruff backend database
+  run_prettier .
   date -Iseconds > "$marker"
-  report "format ✓ baseline pass — ruff $py_n, prettier $web_n file(s) reformatted"
+  report "format ✓"
 fi
 
 mapfile -d '' -t changed < <(
   git diff --name-only -z HEAD 2>/dev/null
   git ls-files --others --exclude-standard -z 2>/dev/null
 )
-[ ${#changed[@]} -eq 0 ] && report "format · clean tree, nothing to format"
+[ ${#changed[@]} -eq 0 ] && skip "format -"
 
 py=() web=()
 for f in "${changed[@]}"; do
@@ -59,10 +56,9 @@ for f in "${changed[@]}"; do
     downloader/*.js|downloader/*.css)              web+=("$f") ;;
   esac
 done
-[ $((${#py[@]} + ${#web[@]})) -eq 0 ] && report "format · no formattable files changed"
+[ $((${#py[@]} + ${#web[@]})) -eq 0 ] && skip "format -"
 
-py_n=0; web_n=0
-[ ${#py[@]}  -gt 0 ] && py_n="$(run_ruff "${py[@]}")"
-[ ${#web[@]} -gt 0 ] && web_n="$(run_prettier "${web[@]}")"
+[ ${#py[@]}  -gt 0 ] && run_ruff "${py[@]}"
+[ ${#web[@]} -gt 0 ] && run_prettier "${web[@]}"
 
-report "format ✓ ruff $py_n/${#py[@]}, prettier $web_n/${#web[@]} file(s) reformatted"
+report "format ✓"
