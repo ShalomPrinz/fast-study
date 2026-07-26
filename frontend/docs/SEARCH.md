@@ -30,7 +30,8 @@ Case-insensitive substring; the query is regex-escaped before it becomes a `RegE
 `{from, to}` content window their shared snippet will cover. Still position-only.
 
 `buildHit(group)` is the only phase that builds strings: it slices the window, collapses whitespace and
-returns `{summary, snippet, ranges}`.
+returns `{summary, snippet, ranges}`. A snippet carries no leading or trailing ellipsis — it is a
+complete sentence, so there is nothing to signal as cut off.
 
 The split exists because the phases differ by two orders of magnitude: over the largest course, the
 one-letter query `ר` finds 15k matches in ~11ms and groups them in ~15ms, while building every snippet
@@ -45,19 +46,20 @@ whole-word hit for `ספר`.
 
 ## Snippet window and overlap merging
 
-`.` is the sentence terminator. A match's window is the sentence containing it plus the one before and
-the one after, then **clamped** to ~140 chars before and ~200 after the match, since a summary with few
-periods would otherwise dump a whole document into one card.
+A match's window is **the sentence containing it** — from the delimiter before the match to the delimiter
+after it, inclusive. Delimiters are `.` `?` `!` `;` `:` `…` and any line break; a newline is what ends a
+heading, a bullet or a paragraph in markdown, and the markdown marker opening the line (`#`, `-`, `*`,
+`>`) is stripped off the snippet's front.
 
-**If two matches' windows touch or overlap they become one snippet with both occurrences highlighted**,
-chained so a run of nearby matches collapses into a single block with N `<mark>`s. Without this, nearby
-matches produced separate snippets repeating most of the same text. Merging never crosses a summary, and
-relies on `findMatches` order (by summary, ascending index) rather than re-sorting.
+There is **no length clamp**. Snippets are always whole words and whole sentences, so a delimiter-less
+paragraph renders in full rather than being cut at a character count — the previous ~140/200-char clamp
+severed words mid-token, which is what this replaces.
 
-A merged block is **deliberately uncapped**: the per-match clamp still bounds each individual window, but
-the merged span runs from the first window's start to the last window's end however long that gets. The
-alternative — cutting a run in half at some size limit — reintroduces the duplicated context the merge
-exists to remove.
+**If two matches' windows overlap they become one snippet with both occurrences highlighted**, chained so
+a whole run collapses into a single block with N `<mark>`s. With sentence-aligned windows this means
+exactly the matches that share a sentence: two distinct sentences never overlap, so they stay separate
+cards. Merging never crosses a summary, and relies on `findMatches` order (by summary, ascending index)
+rather than re-sorting.
 
 Whitespace collapses to single spaces, one regex pass per segment (before the first match, between
 consecutive matches, after the last), accumulating offsets as it goes. That is only correct because the

@@ -1953,7 +1953,7 @@ p.recording-progress {
 .search-result-snippet + .search-result-snippet {
   margin-top: 8px;
   padding-top: 8px;
-  border-top: 1px solid #ececec;
+  border-top: 2px solid #bbbbbb;
 }
 
 .search-more {

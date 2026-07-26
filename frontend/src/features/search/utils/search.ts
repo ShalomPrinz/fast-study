@@ -29,14 +29,12 @@ export interface Hit {
 // gershayim, maqaf, sof pasuq — separates words (״ספר״, תנ״ך) exactly as Latin punctuation does.
 const WORD_CHAR = /[0-9A-Za-z_\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C7\u05D0-\u05EA\u05EF-\u05F2]/
 
-// A sentence ends at '.', per the summaries' own writing style.
-const TERMINATOR = '.'
+// Sentence separators: terminal and clause punctuation, plus any line break — in markdown a newline
+// is what ends a heading, a bullet or a paragraph.
+const DELIMITER = /[.?!;:…\n\r]/
 
-// Context kept around a single match once its sentence window is longer than a card should show.
-const MAX_BEFORE = 140
-const MAX_AFTER = 200
-
-const ELLIPSIS = '…'
+// Markdown markers a snippet should not open with, once the line break before them is its delimiter.
+const LEADING_MARKER = /^[\s#>*+-]+/
 
 function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -79,20 +77,30 @@ export function findMatches(
   return matches
 }
 
-// The content window one match would show on its own: its sentence plus the one before and after,
-// clamped so a summary with few periods can't dump a whole document into one card.
+// The content window one match would show on its own: the sentence containing it, from the delimiter
+// before the match to the one after it, inclusive. Never length-clamped — cutting at a character
+// count landed mid-word, and a whole sentence is the smallest unit that reads correctly.
 function windowFor(match: Match): { from: number; to: number } {
   const { content } = match.summary
   const { index: start, end } = match
 
-  const prev1 = start > 0 ? content.lastIndexOf(TERMINATOR, start - 1) : -1
-  const prev2 = prev1 > 0 ? content.lastIndexOf(TERMINATOR, prev1 - 1) : -1
-  const next1 = content.indexOf(TERMINATOR, end)
-  const next2 = next1 >= 0 ? content.indexOf(TERMINATOR, next1 + 1) : -1
+  let from = 0
+  for (let i = start - 1; i >= 0; i--) {
+    if (DELIMITER.test(content[i])) {
+      from = i + 1
+      break
+    }
+  }
 
-  let from = Math.max(prev2 + 1, start - MAX_BEFORE)
-  let to = Math.min(next2 >= 0 ? next2 + 1 : content.length, end + MAX_AFTER)
-  while (from < start && /\s/.test(content[from])) from++
+  let to = content.length
+  for (let i = end; i < content.length; i++) {
+    if (DELIMITER.test(content[i])) {
+      to = i + 1
+      break
+    }
+  }
+
+  from += LEADING_MARKER.exec(content.slice(from, start))?.[0].length ?? 0
   while (to > end && /\s/.test(content[to - 1])) to--
 
   return { from, to }
@@ -100,8 +108,8 @@ function windowFor(match: Match): { from: number; to: number } {
 
 /**
  * Collapses matches whose windows touch or overlap into one group, so nearby matches yield a single
- * snippet with several highlights instead of near-duplicate cards. A merged window is deliberately
- * uncapped — the per-match clamp still bounds each window, but a long run merges completely.
+ * snippet with several highlights instead of near-duplicate cards. Since windows are whole sentences
+ * this now merges exactly the matches sharing a sentence — distinct sentences never overlap.
  * Relies on `findMatches` order (by summary, then ascending index); groups never span summaries.
  */
 export function groupMatches(matches: Match[]): MatchGroup[] {
@@ -131,8 +139,7 @@ export function buildHit(group: MatchGroup): Hit {
 
   // Collapsing each segment separately is safe only because the needle is trimmed: a match never
   // starts or ends on whitespace, so no whitespace run can straddle a match boundary.
-  let snippet =
-    (from > 0 ? ELLIPSIS : '') + content.slice(from, matches[0].index).replace(/\s+/g, ' ')
+  let snippet = content.slice(from, matches[0].index).replace(/\s+/g, ' ')
   const ranges: { start: number; end: number }[] = []
 
   for (let i = 0; i < matches.length; i++) {
@@ -144,5 +151,5 @@ export function buildHit(group: MatchGroup): Hit {
     snippet += content.slice(match.end, nextStart).replace(/\s+/g, ' ')
   }
 
-  return { summary, snippet: snippet + (to < content.length ? ELLIPSIS : ''), ranges }
+  return { summary, snippet, ranges }
 }

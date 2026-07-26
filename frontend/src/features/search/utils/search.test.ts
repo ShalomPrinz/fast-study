@@ -136,22 +136,11 @@ describe('findMatches', () => {
 })
 
 describe('buildHit', () => {
-  it('omits the leading ellipsis when the match is in the first sentence', () => {
-    const doc = lecture('Target opens here. Second sentence. Third sentence. Fourth sentence.')
-    const [hit] = hitsFor([doc], 'Target')
-
-    expect(hit.snippet.startsWith('…')).toBe(false)
-    expect(hit.snippet.startsWith('Target opens here.')).toBe(true)
-    expect(hit.snippet.endsWith('…')).toBe(true)
-  })
-
-  it('omits the trailing ellipsis when the match is in the last sentence', () => {
-    const doc = lecture('First sentence. Second sentence. Third one ends with target.')
+  it('is the containing sentence alone, with no ellipsis on either side', () => {
+    const doc = lecture('First sentence. Second has target inside. Third sentence.')
     const [hit] = hitsFor([doc], 'target')
 
-    expect(hit.snippet.startsWith('…')).toBe(true)
-    expect(hit.snippet.endsWith('…')).toBe(false)
-    expect(hit.snippet.endsWith('ends with target.')).toBe(true)
+    expect(hit.snippet).toBe('Second has target inside.')
   })
 
   it('reports ranges as offsets into the snippet, not the document', () => {
@@ -165,7 +154,7 @@ describe('buildHit', () => {
   })
 
   it('collapses whitespace runs inside the window', () => {
-    const doc = lecture('One. Two   with\n\n  target   inside. Three. Four.')
+    const doc = lecture('One. Two   with    target   inside. Three. Four.')
     const [hit] = hitsFor([doc], 'target')
 
     expect(hit.snippet).toContain('Two with target inside.')
@@ -173,23 +162,46 @@ describe('buildHit', () => {
     for (const range of hit.ranges) expect(hit.snippet.slice(range.start, range.end)).toBe('target')
   })
 
-  it('clamps the snippet when the document has no sentence terminator', () => {
+  it('never cuts a word, even when the document has no sentence delimiter', () => {
     const filler = 'word '.repeat(200)
     const doc = lecture(`${filler}target ${filler}`)
     const [hit] = hitsFor([doc], 'target')
 
     expect(doc.content.length).toBeGreaterThan(1000)
-    // MAX_BEFORE (140) + needle + MAX_AFTER (200), plus an ellipsis at each end.
-    expect(hit.snippet.length).toBeLessThanOrEqual(140 + 'target'.length + 200 + 2)
-    expect(hit.snippet.startsWith('…')).toBe(true)
-    expect(hit.snippet.endsWith('…')).toBe(true)
+    // A delimiter-less document is one sentence, so it renders whole rather than cut mid-word.
+    const words = hit.snippet.trim().split(' ')
+    expect(words.every((word) => word === 'word' || word === 'target')).toBe(true)
     for (const range of hit.ranges) expect(hit.snippet.slice(range.start, range.end)).toBe('target')
+  })
+
+  it('keeps the sentence whole on both sides of a long match', () => {
+    const doc = lecture(`One. ${'long '.repeat(60)}target${' long'.repeat(60)}. Three.`)
+    const [hit] = hitsFor([doc], 'target')
+
+    expect(hit.snippet.startsWith('long')).toBe(true)
+    expect(hit.snippet.endsWith('long.')).toBe(true)
+  })
+
+  it('cuts at every kind of delimiter, not only a period', () => {
+    for (const delim of ['?', '!', ';', ':', '…']) {
+      const doc = lecture(`Before${delim} holds target${delim} after`)
+      const [hit] = hitsFor([doc], 'target')
+
+      expect(hit.snippet).toBe(`holds target${delim}`)
+    }
+  })
+
+  it('cuts at a line break and drops the markdown marker opening the line', () => {
+    const doc = lecture('# Heading\n- a bullet with target inside\n## Next')
+    const [hit] = hitsFor([doc], 'target')
+
+    expect(hit.snippet).toBe('a bullet with target inside')
   })
 })
 
 describe('groupMatches', () => {
-  it('merges two nearby matches into one snippet with two ranges', () => {
-    const doc = lecture('One. Two has target here. Three. Four has target again. Five.')
+  it('merges two matches in one sentence into a single snippet with two ranges', () => {
+    const doc = lecture('One. Two has target here and target again. Three.')
     const groups = groupMatches(findMatches([doc], 'target'))
 
     expect(groups).toHaveLength(1)
@@ -201,9 +213,8 @@ describe('groupMatches', () => {
     for (const range of hit.ranges) expect(hit.snippet.slice(range.start, range.end)).toBe('target')
   })
 
-  it('keeps far-apart matches in separate groups', () => {
-    const filler = 'A filler sentence with nothing of interest at all. '.repeat(12)
-    const doc = lecture(`Opening with target here. ${filler}Closing with target again.`)
+  it('keeps matches in different sentences in separate groups', () => {
+    const doc = lecture('Opening with target here. Closing with target again.')
     const groups = groupMatches(findMatches([doc], 'target'))
 
     expect(groups).toHaveLength(2)
