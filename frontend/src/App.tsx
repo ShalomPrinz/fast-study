@@ -4,6 +4,7 @@ import MainView from '@/features/lectures/MainView'
 import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
 import DownloadsView from '@/features/downloads/DownloadsView'
+import SearchView from '@/features/search/SearchView'
 
 function EmptyState() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
         <Route index element={<EmptyState />} />
         <Route path="course/:course" element={<CourseView />} />
         <Route path="downloads" element={<DownloadsView />} />
+        <Route path="search" element={<SearchView />} />
         <Route path=":course/:lecture" element={<MainView />} />
         <Route path=":course/:lecture/edit" element={<EditSummaryView />} />
       </Route>

@@ -53,6 +53,12 @@ export type Kind = 'lecture' | 'recitation'
 
 export type Step = 'audio' | 'transcribe' | 'summarize' | 'pdf' | 'drive'
 
+export interface CourseSummary {
+  name: string
+  kind: Kind
+  content: string
+}
+
 export type DownloadOperation = 'download:curl' | 'download:ytdlp'
 export type TimingOperation = Step | DownloadOperation
 

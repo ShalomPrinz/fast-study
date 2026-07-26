@@ -23,6 +23,7 @@ npm run build    # tsc -b && vite build → dist/   (run this to surface type er
 | `docs/lectures.md`        | pipeline constants, runner/in-flight state, edit view, sidebar tree          |
 | `docs/course-overview.md` | extractors, phases, generate/continue/re-generate, per-slug gating           |
 | `docs/downloads.md`       | auth, discovery, row edits, bulk queue, passcode gate                        |
+| `docs/search.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 
@@ -39,6 +40,7 @@ src/
   features/course-overview/                   CourseView, extractor rows, overview constants
   features/downloads/                         DownloadsView, recording rows, autoDownloader +
                                               downloadServer services
+  features/search/                            SearchView, in-memory course corpus, pure matcher
 ```
 
 ## Rules

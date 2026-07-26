@@ -1,4 +1,12 @@
-import type { FileName, Course, Kind, CourseFile, OverviewMetaRaw, OverviewMeta } from '@/types'
+import type {
+  FileName,
+  Course,
+  Kind,
+  CourseFile,
+  CourseSummary,
+  OverviewMetaRaw,
+  OverviewMeta,
+} from '@/types'
 import { path, kindQuery, lectureBase, courseOverviewBase } from '@/shared/utils/url'
 import { createClient } from './http'
 
@@ -95,6 +103,11 @@ export async function saveSummaryContent(
 
 export async function revertSummary(course: string, lecture: string, kind?: Kind): Promise<void> {
   await database.delete(`${lectureBase(course, lecture)}/summary${kindQuery(kind)}`)
+}
+
+export async function fetchCourseSummaries(course: string): Promise<CourseSummary[]> {
+  const raw = await database.get<{ summaries: CourseSummary[] }>(path`/courses/${course}/summaries`)
+  return raw.summaries
 }
 
 export async function fetchCourseFiles(course: string): Promise<CourseFile[]> {

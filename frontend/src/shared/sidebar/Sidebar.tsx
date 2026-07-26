@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { AppMode } from '@/types'
+import Icon from '@/shared/components/Icon'
 import RefreshCoursesButton from './RefreshCoursesButton'
 import ModeToggle from './ModeToggle'
 import type { ModeConfig } from './ModeToggle'
@@ -18,6 +19,9 @@ export default function Sidebar() {
       <div className="sidebar-header">
         <span>Fast Study</span>
         <div className="sidebar-header-actions">
+          <Link className="sidebar-downloads-link" to="/search" title="Search">
+            <Icon icon="search" />
+          </Link>
           <Link className="sidebar-downloads-link" to="/downloads" title="Downloads">
             ⭳
           </Link>
