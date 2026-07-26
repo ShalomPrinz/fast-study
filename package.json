@@ -11,6 +11,7 @@
     "concurrently": "^9.1.0",
     "eslint": "^10.8.0",
     "globals": "^17.7.0",
+    "prettier": "^3.9.6",
     "typescript-eslint": "^8.65.0"
   }
 }

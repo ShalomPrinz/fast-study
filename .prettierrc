@@ -1,0 +1,11 @@
+{
+  "singleQuote": true,
+  "printWidth": 100,
+  "semi": true,
+  "overrides": [
+    {
+      "files": "frontend/**",
+      "options": { "semi": false }
+    }
+  ]
+}

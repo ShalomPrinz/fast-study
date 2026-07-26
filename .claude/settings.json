@@ -3,16 +3,42 @@
     "Stop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/lint.sh\"", "timeout": 120 },
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/typecheck.sh\"", "timeout": 120 }
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/format.sh\"",
+            "timeout": 300
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/lint.sh\"",
+            "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/typecheck.sh\"",
+            "timeout": 120
+          }
         ]
       }
     ],
     "SubagentStop": [
       {
         "hooks": [
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/lint.sh\"", "timeout": 120 },
-          { "type": "command", "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/typecheck.sh\"", "timeout": 120 }
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/format.sh\"",
+            "timeout": 300
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/lint.sh\"",
+            "timeout": 120
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/typecheck.sh\"",
+            "timeout": 120
+          }
         ]
       }
     ]

@@ -8,3 +8,4 @@ prompt-*.md
 backlog.md
 
 node_modules/
+.claude/.format-baseline
