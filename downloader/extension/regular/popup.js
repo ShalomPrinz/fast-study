@@ -8,10 +8,16 @@ let pdfPageUrl = null;
 let youtubeUrl = null;
 
 function isYouTubeUrl(url) {
-  try { return YOUTUBE_HOSTS.has(new URL(url).hostname); } catch { return false; }
+  try {
+    return YOUTUBE_HOSTS.has(new URL(url).hostname);
+  } catch {
+    return false;
+  }
 }
 
-function $(id) { return document.getElementById(id); }
+function $(id) {
+  return document.getElementById(id);
+}
 
 function getKind() {
   return document.querySelector('input[name="kind"]:checked').value;
@@ -30,7 +36,10 @@ function setStatus(text, color) {
 function suggestLectureName(course, mode) {
   const names = course?.lectures ?? [];
   const matches = names
-    .map((n) => { const m = n.match(/^Lecture\s+(\d+)(?:\.(\d+))?$/i); return m ? { n: +m[1], sub: m[2] ? +m[2] : 0, raw: n } : null; })
+    .map((n) => {
+      const m = n.match(/^Lecture\s+(\d+)(?:\.(\d+))?$/i);
+      return m ? { n: +m[1], sub: m[2] ? +m[2] : 0, raw: n } : null;
+    })
     .filter(Boolean);
   if (!matches.length) return mode === 'latest' ? '' : 'Lecture 1';
   const latest = matches.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b));
@@ -42,7 +51,10 @@ function suggestLectureName(course, mode) {
 
 function suggestRecitationName(course, mode) {
   const entries = (course?.recitations ?? [])
-    .map((n) => { const m = n.match(/^Recitation\s+(\d+)$/i); return m ? { n: +m[1], raw: n } : null; })
+    .map((n) => {
+      const m = n.match(/^Recitation\s+(\d+)$/i);
+      return m ? { n: +m[1], raw: n } : null;
+    })
     .filter(Boolean);
   if (!entries.length) return mode === 'latest' ? '' : 'Recitation 1';
   const latest = entries.reduce((a, b) => (a.n > b.n ? a : b));
@@ -52,7 +64,9 @@ function suggestRecitationName(course, mode) {
 
 function suggestName(courseName, kind, mode) {
   const course = courses.find((c) => c.name === courseName);
-  return kind === 'recitation' ? suggestRecitationName(course, mode) : suggestLectureName(course, mode);
+  return kind === 'recitation'
+    ? suggestRecitationName(course, mode)
+    : suggestLectureName(course, mode);
 }
 
 function refreshLectureSuggestions() {
@@ -70,7 +84,9 @@ async function loadCourses() {
     const res = await fetch(`${SERVER}/courses`);
     if (!res.ok) throw new Error();
     courses = await res.json();
-    $('courses-list').innerHTML = courses.map((c) => `<option value="${c.name}"></option>`).join('');
+    $('courses-list').innerHTML = courses
+      .map((c) => `<option value="${c.name}"></option>`)
+      .join('');
   } catch {
     setStatus('Server offline - start `npm start` in downloader/', '#ff6666');
   }
@@ -162,7 +178,11 @@ async function loadIntercepted() {
 // URL, so we can grab the URL straight off the active tab instead of sniffing
 // network requests + replaying headers.
 function isPdfUrl(url) {
-  try { return new URL(url).pathname.toLowerCase().endsWith('.pdf'); } catch { return false; }
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith('.pdf');
+  } catch {
+    return false;
+  }
 }
 
 async function loadActivePagePdf() {
@@ -270,9 +290,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadCourses(), loadIntercepted(), loadActivePagePdf()]);
   applyVisibility();
   $('course').addEventListener('input', refreshLectureSuggestions);
-  document.querySelectorAll('input[name="kind"]').forEach((el) =>
-    el.addEventListener('change', refreshLectureSuggestions)
-  );
+  document
+    .querySelectorAll('input[name="kind"]')
+    .forEach((el) => el.addEventListener('change', refreshLectureSuggestions));
   $('nodeBtn').addEventListener('click', sendToServer);
   $('pdfBtn').addEventListener('click', sendPdfToServer);
 });

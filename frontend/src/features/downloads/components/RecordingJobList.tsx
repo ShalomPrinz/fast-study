@@ -19,7 +19,9 @@ function JobProgressBar({
   const sized = job.expectedBytes != null
   const stats = useTimingStats(sized ? job.operation : null, job.expectedBytes ?? 0)
   const title = showTitle && (
-    <span className="recording-progress-title" dir="auto" title={job.title}>{job.title}</span>
+    <span className="recording-progress-title" dir="auto" title={job.title}>
+      {job.title}
+    </span>
   )
   // Terminal: offer a per-clip retry when the row wants one (a multi-clip recording); a lone job's
   // retry lives on the main row button instead, so it renders nothing here.
@@ -28,7 +30,11 @@ function JobProgressBar({
     return (
       <div className="recording-progress-job recording-progress-job--action">
         {title}
-        <button className="source-row-btn recording-job-btn" onClick={retry.onRetry} disabled={retry.busy}>
+        <button
+          className="source-row-btn recording-job-btn"
+          onClick={retry.onRetry}
+          disabled={retry.busy}
+        >
           {retry.busy ? (
             <span className="recording-spinner" />
           ) : job.status === 'error' ? (
@@ -75,7 +81,9 @@ export default function RecordingJobList({
           key={job.id}
           job={job}
           showTitle={jobs.length > 1}
-          retry={split ? { onRetry: () => onClipAction(job), busy: retryingId === job.id } : undefined}
+          retry={
+            split ? { onRetry: () => onClipAction(job), busy: retryingId === job.id } : undefined
+          }
         />
       ))}
     </div>

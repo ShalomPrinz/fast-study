@@ -12,7 +12,11 @@ const DRIVE_HOSTS = new Set(['drive.google.com', 'docs.google.com']);
 // hostname of a URL, or null if it isn't a parseable absolute URL — lets canHandle
 // probe an arbitrary externalUrl (or undefined) without throwing.
 function safeUrl(url) {
-  try { return new URL(url); } catch { return null; }
+  try {
+    return new URL(url);
+  } catch {
+    return null;
+  }
 }
 
 // A Drive URL pointing at one video file.
@@ -96,6 +100,14 @@ export class GoogleDriveExtractor extends VideoExtractor {
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
   toRecordings(activity) {
-    return [{ title: activity.title, pageUrl: activity.externalUrl, kind: activity.kind, strategy: 'google-drive', section: activity.sectionName }];
+    return [
+      {
+        title: activity.title,
+        pageUrl: activity.externalUrl,
+        kind: activity.kind,
+        strategy: 'google-drive',
+        section: activity.sectionName,
+      },
+    ];
   }
 }

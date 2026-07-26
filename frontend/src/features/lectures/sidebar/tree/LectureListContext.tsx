@@ -10,6 +10,7 @@ export function LectureListProvider({ kind, children }: { kind: Kind; children: 
 
 export function useLectureListKind(): Kind {
   const kind = useContext(LectureListContext)
-  if (kind === null) throw new Error('useLectureListKind must be used within a <LectureListProvider>')
+  if (kind === null)
+    throw new Error('useLectureListKind must be used within a <LectureListProvider>')
   return kind
 }

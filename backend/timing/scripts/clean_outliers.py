@@ -9,6 +9,7 @@ Usage:
     python3 backend/timing/scripts/clean_outliers.py --apply --k 2.5
     python3 backend/timing/scripts/clean_outliers.py --apply --op transcribe
 """
+
 import argparse
 import sqlite3
 from pathlib import Path
@@ -50,12 +51,20 @@ def find_outliers(rows, k):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--apply", action="store_true",
-                    help="actually delete (default: dry-run)")
-    ap.add_argument("--k", type=float, default=2.0,
-                    help="residual threshold in std devs (default 2.0)")
-    ap.add_argument("--op", action="append",
-                    help="limit to this operation (repeatable); default: all")
+    ap.add_argument(
+        "--apply", action="store_true", help="actually delete (default: dry-run)"
+    )
+    ap.add_argument(
+        "--k",
+        type=float,
+        default=2.0,
+        help="residual threshold in std devs (default 2.0)",
+    )
+    ap.add_argument(
+        "--op",
+        action="append",
+        help="limit to this operation (repeatable); default: all",
+    )
     args = ap.parse_args()
 
     with sqlite3.connect(DB) as conn:
@@ -69,7 +78,8 @@ def main():
         for op in ops:
             rows = conn.execute(
                 "SELECT id, file_size_bytes, duration_seconds FROM timing "
-                "WHERE operation = ?", (op,)
+                "WHERE operation = ?",
+                (op,),
             ).fetchall()
 
             outlier_ids, std_r = find_outliers(rows, args.k)
@@ -78,8 +88,10 @@ def main():
                 _, size, dur = by_id[rid]
                 to_delete.append((op, rid, size, dur))
 
-            print(f"{op:11s} n={len(rows):3d}  σ={std_r:6.2f}s  "
-                  f"outliers={len(outlier_ids)}")
+            print(
+                f"{op:11s} n={len(rows):3d}  σ={std_r:6.2f}s  "
+                f"outliers={len(outlier_ids)}"
+            )
 
         if not to_delete:
             print("nothing to delete.")
@@ -87,12 +99,16 @@ def main():
 
         print("\nrows targeted:")
         for op, rid, size, dur in to_delete:
-            print(f"  {op:11s} id={rid:<5d} size={size/1e6:7.2f}MB  "
-                  f"duration={dur:8.2f}s")
+            print(
+                f"  {op:11s} id={rid:<5d} size={size / 1e6:7.2f}MB  "
+                f"duration={dur:8.2f}s"
+            )
 
         if args.apply:
-            conn.executemany("DELETE FROM timing WHERE id = ?",
-                             [(rid,) for _, rid, _, _ in to_delete])
+            conn.executemany(
+                "DELETE FROM timing WHERE id = ?",
+                [(rid,) for _, rid, _, _ in to_delete],
+            )
             conn.commit()
             print(f"\ndeleted {len(to_delete)} rows.")
         else:

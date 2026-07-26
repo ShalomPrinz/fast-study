@@ -55,15 +55,23 @@ export default function PdfViewer({ url, show }: Props) {
   return (
     <div className="pdf-viewer">
       <div className="pdf-zoom-bar">
-        <button className="pdf-zoom-btn" onClick={() => setScale(s => Math.max(s - 0.2, 0.4))}>−</button>
+        <button className="pdf-zoom-btn" onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}>
+          −
+        </button>
         <span className="pdf-zoom-label">{Math.round(scale * 100)}%</span>
-        <button className="pdf-zoom-btn" onClick={() => setScale(s => Math.min(s + 0.2, 4))}>+</button>
+        <button className="pdf-zoom-btn" onClick={() => setScale((s) => Math.min(s + 0.2, 4))}>
+          +
+        </button>
       </div>
       <div className="pdf-scroll-container" ref={scrollContainerRef}>
         <Document
           file={url}
           onLoadSuccess={({ numPages: n }) => setNumPages(n)}
-          loading={<div className="pdf-doc-loading"><div className="spinner" /></div>}
+          loading={
+            <div className="pdf-doc-loading">
+              <div className="spinner" />
+            </div>
+          }
         >
           {Array.from({ length: numPages }, (_, i) => (
             <Page

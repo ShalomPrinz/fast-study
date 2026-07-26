@@ -17,7 +17,7 @@ const activeDownloads = new Map();
 let renderTimer = null;
 let paintedLines = 0; // TTY only: lines in the last repainted block
 const RENDER_INTERVAL_MS = 1500;
-const NEWLINE_PCT_STEP = 5;           // non-TTY: re-print once percent advances this much…
+const NEWLINE_PCT_STEP = 5; // non-TTY: re-print once percent advances this much…
 const NEWLINE_MIN_INTERVAL_MS = 8000; // …or this long elapses, whichever first
 
 export function registerDownload(key, entry) {
@@ -41,12 +41,16 @@ export function measureBytes(entry) {
     if (entry.measure === 'dir') {
       let sum = 0;
       for (const name of fs.readdirSync(entry.tempDir)) {
-        try { sum += fs.statSync(path.join(entry.tempDir, name)).size; } catch {}
+        try {
+          sum += fs.statSync(path.join(entry.tempDir, name)).size;
+        } catch {}
       }
       return sum;
     }
     return fs.statSync(path.join(entry.tempDir, VIDEO_FILENAME)).size;
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 function progressSnapshot(entry) {
@@ -56,7 +60,10 @@ function progressSnapshot(entry) {
   }
   // Clamp <99% until exit: yt-dlp's merge can transiently overshoot the probed sum.
   const pct = Math.max(0, Math.min(99, Math.floor((got / entry.expected) * 100)));
-  return { pct, line: `📥 [${entry.label}] ${pct}% (${formatBytes(got)}/${formatBytes(entry.expected)})` };
+  return {
+    pct,
+    line: `📥 [${entry.label}] ${pct}% (${formatBytes(got)}/${formatBytes(entry.expected)})`,
+  };
 }
 
 function clearPainted() {
@@ -68,8 +75,14 @@ function clearPainted() {
 
 // Route every lifecycle log through these so the TTY block is wiped before a
 // permanent line prints (else the next repaint overwrites it).
-export function emitLog(line) { clearPainted(); console.log(line); }
-export function emitError(line) { clearPainted(); console.error(line); }
+export function emitLog(line) {
+  clearPainted();
+  console.log(line);
+}
+export function emitError(line) {
+  clearPainted();
+  console.error(line);
+}
 
 function renderProgress() {
   const entries = [...activeDownloads.values()];
@@ -87,7 +100,8 @@ function renderProgress() {
   const now = Date.now();
   for (const e of entries) {
     const { pct, line } = progressSnapshot(e);
-    const advanced = pct != null && e.lastPercent != null && pct - e.lastPercent >= NEWLINE_PCT_STEP;
+    const advanced =
+      pct != null && e.lastPercent != null && pct - e.lastPercent >= NEWLINE_PCT_STEP;
     if (!e.emitted || advanced || now - e.lastEmit >= NEWLINE_MIN_INTERVAL_MS) {
       console.log(line);
       e.emitted = true;
@@ -105,5 +119,11 @@ export function makeStderrTail(child, maxLines = 15) {
     buf += c;
     if (buf.length > 65536) buf = buf.slice(-65536);
   });
-  return () => buf.split('\n').map((l) => l.trimEnd()).filter(Boolean).slice(-maxLines).join('\n');
+  return () =>
+    buf
+      .split('\n')
+      .map((l) => l.trimEnd())
+      .filter(Boolean)
+      .slice(-maxLines)
+      .join('\n');
 }

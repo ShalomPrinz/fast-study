@@ -10,11 +10,13 @@ import pdfRouter from './routes/pdf.js';
 
 const app = express();
 
-app.use(cors({
-  origin: [`chrome-extension://${EXTENSION_ID}`, FRONTEND_URL],
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type'],
-}));
+app.use(
+  cors({
+    origin: [`chrome-extension://${EXTENSION_ID}`, FRONTEND_URL],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  }),
+);
 // JSON for probe/download; /upload-pdf parses its own raw body per-route.
 app.use(express.json({ limit: '5mb' }));
 

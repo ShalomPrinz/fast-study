@@ -29,7 +29,7 @@ GET {site}/admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=<rand
   site id, so we generate a throwaway value and don't check it.
 - `urlscheme=moodlemobile` makes launch.php hand the token back via a custom-scheme redirect.
 
-**Capturing the token.** Chromium can't *follow* the `moodlemobile://` scheme, so the token
+**Capturing the token.** Chromium can't _follow_ the `moodlemobile://` scheme, so the token
 never lands as a page URL — it surfaces on whichever low-level signal fires first. `connect()`
 watches all three (redundant by design):
 
@@ -38,6 +38,7 @@ context.on('response')      → the 302's `location` response header
 context.on('requestfailed') → the failed navigation to the custom scheme
 page.on('framenavigated')   → the frame URL
 ```
+
 each tested against the `moodlemobile://token=` prefix.
 
 **Decoding.** The captured value is base64. Decode it, and if the result lacks `:::` retry
@@ -65,18 +66,20 @@ call sends `User-Agent: MoodleMobile 4.4.0 (44000)`: the token is minted through
 `launch.php` (`service=moodle_mobile_app`), and Moodle gates app-only functions on
 `core_useragent::is_moodle_app()`, which just substring-matches `MoodleMobile` in the UA.
 
-**Error shape (important):** Moodle answers a *failed* call — including a dead/expired token —
+**Error shape (important):** Moodle answers a _failed_ call — including a dead/expired token —
 with **HTTP 200** and a JSON body `{ exception, errorcode, message }`, not an HTTP error status.
 `callWs` detects `.exception` and throws a `WsError` carrying `errorcode`. `invalidToken(err)`
 keys on `errorcode ∈ { invalidtoken, accessexception }` — that's the "session died → Reconnect"
 signal (one MFA to re-grab a token). Any other errorcode is a real fault.
 
 ### `core_webservice_get_site_info`
+
 Identity + capability probe. Fields we rely on: `userid` (needed for autologin), `functions[]`
 (must include `core_course_get_contents`), `downloadfiles` (`1` = pluginfile downloads permitted),
 `release` (Moodle version, `4.5.10` on BIU).
 
 ### `core_course_get_contents(courseid)`
+
 The whole course as JSON — sections, their `modules[]`, and each section's `summary` HTML.
 `courseIdFrom(courseUrl)` parses the numeric `id=` from `…/course/view.php?id=N` to feed it.
 Returns an array of **sections**:
@@ -86,26 +89,26 @@ Returns an array of **sections**:
   {
     "section": 1,
     "name": "הרצאות",
-    "summary": "<p>הרצאה מספר 1 …<a href=\"https://…zoom.us/rec/share/…\">…</a></p>",  // HTML
+    "summary": "<p>הרצאה מספר 1 …<a href=\"https://…zoom.us/rec/share/…\">…</a></p>", // HTML
     "modules": [
       {
-        "modname": "videostream",          // module type
+        "modname": "videostream", // module type
         "name": "שילוב סרטון",
-        "url": "https://lemida.biu.ac.il/mod/videostream/view.php?id=…",  // the view page
-        "contents": [ /* present for resource/url modules — see below */ ]
-      }
-    ]
-  }
+        "url": "https://lemida.biu.ac.il/mod/videostream/view.php?id=…", // the view page
+        "contents": [/* present for resource/url modules — see below */],
+      },
+    ],
+  },
 ]
 ```
 
 ## Module → item mapping
 
-| `modname` | Meaning | Strategy | Where the target comes from |
-|---|---|---|---|
-| `videostream` | in-site recorded lecture | `videostream` | `module.url` (the view.php page); the `.mp4` is sniffed there — **not** in the WS response |
-| `url` (recording keyword) | off-site link module | `youtube-playlist` if the target host is YouTube, else `422 unsupported` | `module.contents[].fileurl` = the **external** target (YouTube/zoom/Drive/GitHub) — no redirect-navigation needed |
-| `resource` | Moodle-hosted file (PDF, …) | skipped (video-only) | `module.contents[].fileurl` — download proven; see `PDF_RES_FUTURE.md` |
+| `modname`                 | Meaning                     | Strategy                                                                 | Where the target comes from                                                                                       |
+| ------------------------- | --------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `videostream`             | in-site recorded lecture    | `videostream`                                                            | `module.url` (the view.php page); the `.mp4` is sniffed there — **not** in the WS response                        |
+| `url` (recording keyword) | off-site link module        | `youtube-playlist` if the target host is YouTube, else `422 unsupported` | `module.contents[].fileurl` = the **external** target (YouTube/zoom/Drive/GitHub) — no redirect-navigation needed |
+| `resource`                | Moodle-hosted file (PDF, …) | skipped (video-only)                                                     | `module.contents[].fileurl` — download proven; see `PDF_RES_FUTURE.md`                                            |
 
 Zoom recordings are **not** modules. Their `rec/share` links live in each **`section.summary`**
 HTML string. The section parser runs the same regex over `summary` that the DOM parser used to
@@ -119,7 +122,7 @@ appending the wstoken to the query — no cookies, no headers:
 
 ```js
 const u = pluginfileUrl(content.fileurl, wstoken); // sets ?token=… via the URL API
-await fetch(u);  // 200, application/pdf, bytes
+await fetch(u); // 200, application/pdf, bytes
 ```
 
 `pluginfileUrl` uses `searchParams.set` (not string concat) because `fileurl` may already carry
@@ -129,7 +132,7 @@ the pipeline is deferred — see `PDF_RES_FUTURE.md`.)
 
 ## Autologin (the only remaining browser use besides zoom)
 
-A `videostream` `.mp4` is short-lived and token-gated *in the page*, not exposed via the WS API —
+A `videostream` `.mp4` is short-lived and token-gated _in the page_, not exposed via the WS API —
 so it still has to be sniffed in a logged-in browser. But we no longer keep a cookie session:
 instead the `privatetoken` mints a one-shot login with **no MFA**.
 
@@ -156,4 +159,4 @@ requesting IP**; fine for on-demand sniffing, needs graceful backoff. `userid` c
   `contents[]` with `type === 'file'`, not just the first.
 - **Recordings in summaries, not modules** — confirm against a course that actually has posted
   `rec/share` links; the sample course's recordings section was empty and its recitation zoom
-  was a *meeting* (not recording) link.
+  was a _meeting_ (not recording) link.

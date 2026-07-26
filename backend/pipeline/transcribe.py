@@ -8,7 +8,6 @@ from pathlib import Path
 
 import groq
 from groq import Groq
-
 from timing import timed_pipeline
 
 CHUNK_MINUTES = 10
@@ -25,23 +24,52 @@ class TranscribeRateLimitError(Exception):
 def get_duration(audio_path: str) -> float:
     """Audio duration in seconds, via ffprobe."""
 
-    result = subprocess.run([
-        "ffprobe", "-v", "error", "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1", audio_path
-    ], capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            audio_path,
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     return float(result.stdout.strip())
 
 
-def split_one_chunk(audio_path: str, tmpdir: str, index: int, chunk_seconds: int) -> str:
+def split_one_chunk(
+    audio_path: str, tmpdir: str, index: int, chunk_seconds: int
+) -> str:
     """Cut one fixed-length mp3 chunk out of the audio; Groq caps a request at 25 MB."""
 
     chunk_path = os.path.join(tmpdir, f"chunk_{index:04d}.mp3")
-    subprocess.run([
-        "ffmpeg", "-y", "-i", audio_path,
-        "-ss", str(index * chunk_seconds), "-t", str(chunk_seconds),
-        "-ar", "16000", "-ac", "1", "-b:a", "32k",
-        chunk_path
-    ], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-y",
+            "-i",
+            audio_path,
+            "-ss",
+            str(index * chunk_seconds),
+            "-t",
+            str(chunk_seconds),
+            "-ar",
+            "16000",
+            "-ac",
+            "1",
+            "-b:a",
+            "32k",
+            chunk_path,
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
     return chunk_path
 
 
@@ -157,16 +185,21 @@ def transcribe_audio(audio_path: str) -> str:
 
     if state["fresh"]:
         partial_path.write_text("", encoding="utf-8")
-        _write_meta_atomic(lecture_dir, {
-            "audio_size": stat.st_size,
-            "audio_mtime": stat.st_mtime,
-            "chunk_seconds": chunk_seconds,
-            "completed_chunks": 0,
-            "total_chunks": total,
-        })
+        _write_meta_atomic(
+            lecture_dir,
+            {
+                "audio_size": stat.st_size,
+                "audio_mtime": stat.st_mtime,
+                "chunk_seconds": chunk_seconds,
+                "completed_chunks": 0,
+                "total_chunks": total,
+            },
+        )
 
     duration = get_duration(audio_path)
-    print(f"Duration: {duration/60:.1f} min → {total} chunks (resuming from {completed})")
+    print(
+        f"Duration: {duration / 60:.1f} min → {total} chunks (resuming from {completed})"
+    )
     print("Transcribing with Groq (whisper-large-v3, Hebrew)...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -188,18 +221,23 @@ def transcribe_audio(audio_path: str) -> str:
                 info["total_chunks"] = total
                 raise TranscribeRateLimitError(info) from e
 
-            text = response.strip() if isinstance(response, str) else str(response).strip()
+            text = (
+                response.strip() if isinstance(response, str) else str(response).strip()
+            )
             with open(partial_path, "a", encoding="utf-8") as f:
                 f.write(text + "\n\n")
                 f.flush()
                 os.fsync(f.fileno())
 
-            _write_meta_atomic(lecture_dir, {
-                "audio_size": stat.st_size,
-                "audio_mtime": stat.st_mtime,
-                "chunk_seconds": chunk_seconds,
-                "completed_chunks": i + 1,
-                "total_chunks": total,
-            })
+            _write_meta_atomic(
+                lecture_dir,
+                {
+                    "audio_size": stat.st_size,
+                    "audio_mtime": stat.st_mtime,
+                    "chunk_seconds": chunk_seconds,
+                    "completed_chunks": i + 1,
+                    "total_chunks": total,
+                },
+            )
 
     return partial_path.read_text(encoding="utf-8").strip()

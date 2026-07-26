@@ -121,7 +121,12 @@ export function useRecordingDownload({
 
   // Shaped for <PasscodePrompt>; null when the gate is closed.
   const passcode: PasscodePromptProps | null = passcodePrompt
-    ? { reason: passcodeReason, busy: savingPasscode, onSubmit: submitPasscode, onCancel: cancelPasscode }
+    ? {
+        reason: passcodeReason,
+        busy: savingPasscode,
+        onSubmit: submitPasscode,
+        onCancel: cancelPasscode,
+      }
     : null
 
   return {

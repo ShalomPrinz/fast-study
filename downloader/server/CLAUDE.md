@@ -19,29 +19,29 @@ npm --prefix downloader/server start   # node src/index.js, port 3052
 
 ## Config (repo-root `.env`, all optional)
 
-| Key                      | Default                              | Meaning                          |
-|--------------------------|--------------------------------------|----------------------------------|
-| `DOWNLOADER_PORT`        | `3052`                               | listen port                      |
-| `DOWNLOADER_EXTENSION_ID`| `lnhmnpikihooldojjihejacblbgjkdlg`   | extension CORS origin            |
-| `FRONTEND_URL`           | `http://localhost:5173`              | frontend CORS origin (`/events` + `/jobs`) |
-| `DATABASE_URL`           | `http://localhost:8001`              | database service base URL        |
-| `BACKEND_URL`            | `http://localhost:8000`              | backend base URL — timing samples only |
-| `AUTODL_URL`             | `http://localhost:3053`              | auto/ base URL — silent re-capture of a stale cached token (`docs/JOBS.md`) |
+| Key                       | Default                            | Meaning                                                                     |
+| ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
+| `DOWNLOADER_PORT`         | `3052`                             | listen port                                                                 |
+| `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                       |
+| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (`/events` + `/jobs`)                                  |
+| `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                   |
+| `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples only                                      |
+| `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — silent re-capture of a stale cached token (`docs/JOBS.md`) |
 
 If a reloaded extension gets a new ID, set `DOWNLOADER_EXTENSION_ID` or CORS blocks
 the popup.
 
 ## Endpoints
 
-| Method + path                          | Purpose                                                        |
-|----------------------------------------|----------------------------------------------------------------|
-| `GET  /courses`                        | database `/tree` reshaped to name arrays, archived dropped     |
-| `POST /probe-size`                     | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)     |
-| `POST /download`                       | curl header-replay capture; 200 immediately with a `jobId`, runs in background (`fromCache` bool marks a replayed cap) |
-| `POST /download-youtube`               | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` (`fromCache` bool) |
-| `GET  /events`                         | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`) |
-| `GET  /jobs`                           | all live download jobs (snapshot includes `ref`) — the single source of truth |
-| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the neutral `/files/material.pdf`   |
+| Method + path                             | Purpose                                                                                                                |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                             |
+| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)                                                             |
+| `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background (`fromCache` bool marks a replayed cap) |
+| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` (`fromCache` bool)           |
+| `GET  /events`                            | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`)                                                     |
+| `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                          |
+| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the neutral `/files/material.pdf`                                                             |
 
 `kind` is `lecture` (default) or `recitation`.
 

@@ -11,13 +11,13 @@ Corollary: never add a backend endpoint to answer "does file X exist" — that i
 
 ## Layering
 
-| Dir             | Rule |
-|-----------------|------|
-| root (`App`, `types.ts`, `index.css`) | flat, no subdirs |
-| `app/`          | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container |
-| `services/`     | one file per external concern, shared by all features, never split per feature |
-| `shared/`       | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
-| `features/<x>/` | one slice per mode/page: views, sidebar body, components, hooks, contexts, constants, utils |
+| Dir                                   | Rule                                                                                             |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| root (`App`, `types.ts`, `index.css`) | flat, no subdirs                                                                                 |
+| `app/`                                | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container                        |
+| `services/`                           | one file per external concern, shared by all features, never split per feature                   |
+| `shared/`                             | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
+| `features/<x>/`                       | one slice per mode/page: views, sidebar body, components, hooks, contexts, constants, utils      |
 
 A primitive lives in `features/<x>/components` until a second feature needs it; then it moves to `shared/`.
 A feature may own a service (`features/downloads/services/autoDownloader.ts`, `downloadServer.ts`) when the concern is its alone.
@@ -53,7 +53,7 @@ fresher one.
 `react-router-dom` v7, declared in `App.tsx`; every route renders inside `Layout`.
 
 | Path                     | View              |
-|--------------------------|-------------------|
+| ------------------------ | ----------------- |
 | `/`                      | empty state       |
 | `/course/:course`        | `CourseView`      |
 | `/downloads`             | `DownloadsView`   |

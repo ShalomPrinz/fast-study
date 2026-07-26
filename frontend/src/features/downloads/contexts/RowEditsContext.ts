@@ -23,8 +23,8 @@ export const RowEditsContext = createContext<RowEditsValue | null>(null)
 interface Resolved {
   kind: Kind
   suggestion: string
-  value: string   // what the input shows
-  name: string    // what a download uses — blank input falls back to the suggestion
+  value: string // what the input shows
+  name: string // what a download uses — blank input falls back to the suggestion
 }
 
 // Storing overrides only: with no `name` set the derived name keeps tracking the kind toggle,

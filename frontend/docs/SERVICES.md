@@ -43,7 +43,7 @@ does nothing on `'started'` — completion arrives over SSE. New toast shapes ge
 ## URL building — `shared/utils/url.ts`
 
 Hebrew course/lecture/file names must be percent-encoded. Never call `encodeURIComponent` at a call site;
-use the `` path`` `` tagged template, which encodes every interpolated value and leaves literals alone.
+use the ` path` `` tagged template, which encodes every interpolated value and leaves literals alone.
 
 Its output is already encoded, so **never feed `path` output (or `lectureBase`, built from it) back into
 another `path`** — that double-encodes.
@@ -61,11 +61,11 @@ mechanism-agnostic: `ref` is an opaque token to round-trip, never parse.
 `/list`, `/list/expand` and `/download-item` go through a bespoke `fetch` rather than the shared client,
 because the client discards the response body and these endpoints encode meaning in it:
 
-| HTTP | body                  | thrown |
-|------|-----------------------|--------|
-| 401  | `status: reconnect`   | `ReconnectError` — steer the user to the Reconnect pill |
+| HTTP | body                  | thrown                                                                    |
+| ---- | --------------------- | ------------------------------------------------------------------------- |
+| 401  | `status: reconnect`   | `ReconnectError` — steer the user to the Reconnect pill                   |
 | 422  | `status: unsupported` | `UnsupportedError` — permanent; `message` is display-ready, show verbatim |
-| 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect` |
+| 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`               |
 
 Trade-off: those three endpoints forgo the client's central `ConnectionError` wrapping, so a refused
 connection surfaces as a raw `TypeError` instead of the friendly toast. `PasscodeError` maps the body's

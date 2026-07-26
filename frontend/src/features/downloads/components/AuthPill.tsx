@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { AuthStatus } from '@/features/downloads/services/autoDownloader'
-import { fetchAuthStatus, connectAuth, completeAuth } from '@/features/downloads/services/autoDownloader'
+import {
+  fetchAuthStatus,
+  connectAuth,
+  completeAuth,
+} from '@/features/downloads/services/autoDownloader'
 import { toast } from '@/services/toaster'
 
 type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing'
@@ -71,7 +75,9 @@ export default function AuthPill() {
   return (
     <div className="auth-pill auth-pill--disconnected">
       <span>{label}</span>
-      <button className="auth-pill-btn" onClick={handleConnect}>{action}</button>
+      <button className="auth-pill-btn" onClick={handleConnect}>
+        {action}
+      </button>
     </div>
   )
 }

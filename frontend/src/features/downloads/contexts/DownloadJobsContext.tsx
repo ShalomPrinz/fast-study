@@ -66,28 +66,35 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // A failed fetch is a no-op; the stream reconnects and pings again.
-    const refresh = () => { void fetchJobs().then(handleSnapshot).catch(() => {}) }
+    const refresh = () => {
+      void fetchJobs()
+        .then(handleSnapshot)
+        .catch(() => {})
+    }
     return subscribeJobs(refresh)
   }, [handleSnapshot])
 
-  const progressOf = useCallback((ref: string): JobProgress[] => {
-    // Note: `startedAt` is the server's epoch ms and the bar measures elapsed against the browser's
-    // `Date.now()` — this assumes both clocks agree; skew renders as an overflowed bar.
-    return jobs
-      .filter((j) => j.ref === ref)
-      .sort((a, b) => a.lecture.localeCompare(b.lecture) || a.id.localeCompare(b.id))
-      .map((j) => ({
-        id: j.id,
-        title: j.lecture,
-        ref,
-        course: j.course,
-        kind: j.kind,
-        status: isTerminal(j) ? (j.status as 'done' | 'error') : 'running',
-        startedAt: j.startedAt,
-        expectedBytes: j.expectedBytes,
-        operation: j.operation,
-      }))
-  }, [jobs])
+  const progressOf = useCallback(
+    (ref: string): JobProgress[] => {
+      // Note: `startedAt` is the server's epoch ms and the bar measures elapsed against the browser's
+      // `Date.now()` — this assumes both clocks agree; skew renders as an overflowed bar.
+      return jobs
+        .filter((j) => j.ref === ref)
+        .sort((a, b) => a.lecture.localeCompare(b.lecture) || a.id.localeCompare(b.id))
+        .map((j) => ({
+          id: j.id,
+          title: j.lecture,
+          ref,
+          course: j.course,
+          kind: j.kind,
+          status: isTerminal(j) ? (j.status as 'done' | 'error') : 'running',
+          startedAt: j.startedAt,
+          expectedBytes: j.expectedBytes,
+          operation: j.operation,
+        }))
+    },
+    [jobs],
+  )
 
   const value = useMemo(() => ({ progressOf }), [progressOf])
   return <DownloadJobsContext.Provider value={value}>{children}</DownloadJobsContext.Provider>

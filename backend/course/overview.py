@@ -13,11 +13,11 @@ class Phase(Enum):
 
     EXTRACT = ("extract", ".txt")
     ANALYZE = ("analyze", ".md")
-    TOPICS  = ("topics",  ".md")
-    TO_PDF  = ("to_pdf",  ".pdf")
+    TOPICS = ("topics", ".md")
+    TO_PDF = ("to_pdf", ".pdf")
 
     def __init__(self, id: str, suffix: str):
-        self.id = id          # wire/status/CSV string identifier
+        self.id = id  # wire/status/CSV string identifier
         self.suffix = suffix  # on-disk output suffix for this phase
 
     @classmethod
@@ -33,8 +33,8 @@ class Extractor:
     """Base extractor identity. `phases` is a ClassVar because it's behavior, not
     per-instance data: each subclass declares the phases it participates in, in order."""
 
-    slug: str                        # kebab-case stable id: output file stem, status key, API/CSV identifier
-    title: str                       # human-readable display name (UI + report header only)
+    slug: str  # kebab-case stable id: output file stem, status key, API/CSV identifier
+    title: str  # human-readable display name (UI + report header only)
 
     phases: ClassVar[tuple[Phase, ...]] = ()
 
@@ -50,7 +50,7 @@ class Extractor:
 
         if from_phase is None or from_phase not in self.phases:
             return self.phases
-        return self.phases[self.phases.index(from_phase):]
+        return self.phases[self.phases.index(from_phase) :]
 
     def output_file(self, phase: Phase) -> str:
         """On-disk output filename for one of this extractor's phases (e.g. 'exam-hints.txt')."""
@@ -62,9 +62,9 @@ class Extractor:
 class PatternExtractor(Extractor):
     """Transcript-pattern extractor: extract snippets → analyze with LLM → render PDF."""
 
-    patterns: tuple[str, ...] = ()   # regexes matched per sentence
-    before: int = 1                  # sentences kept before a match
-    after: int = 3                   # sentences kept after a match
+    patterns: tuple[str, ...] = ()  # regexes matched per sentence
+    before: int = 1  # sentences kept before a match
+    after: int = 3  # sentences kept after a match
 
     phases: ClassVar[tuple[Phase, ...]] = (Phase.EXTRACT, Phase.ANALYZE, Phase.TO_PDF)
 
@@ -86,24 +86,49 @@ EXTRACTORS: tuple[Extractor, ...] = (
         slug="exam-hints",
         title="Exam Hints",
         patterns=(
-            "במבחן", "בבחינה", "למבחן", "לבחינה", "שאלת מבחן", "חומר למבחן",
-            "תזכרו", "חשוב מאוד", "אני מבטיח לכם", "שווה לזכור",
+            "במבחן",
+            "בבחינה",
+            "למבחן",
+            "לבחינה",
+            "שאלת מבחן",
+            "חומר למבחן",
+            "תזכרו",
+            "חשוב מאוד",
+            "אני מבטיח לכם",
+            "שווה לזכור",
         ),
     ),
     PatternExtractor(
         slug="student-qa",
         title="Student QA",
         patterns=(
-            "שקט", r"ששש+", r"רגע,? רגע", "יש שאלה", "שאלה טובה", "שאלה מצוינת",
-            "מה השאלה", "חוזר על השאלה", "בואו נשמע", "נשאלה שאלה", "תשאל", "שאל אותי",
+            "שקט",
+            r"ששש+",
+            r"רגע,? רגע",
+            "יש שאלה",
+            "שאלה טובה",
+            "שאלה מצוינת",
+            "מה השאלה",
+            "חוזר על השאלה",
+            "בואו נשמע",
+            "נשאלה שאלה",
+            "תשאל",
+            "שאל אותי",
         ),
     ),
     PatternExtractor(
         slug="pitfalls",
         title="Pitfalls",
         patterns=(
-            "טעות נפוצה", "טעות קלאסית", "אל תתבלבלו", "לא להתבלבל", "מתבלבלים",
-            "שימו לב", "זהירות", "הרבה סטודנטים", "בטעות",
+            "טעות נפוצה",
+            "טעות קלאסית",
+            "אל תתבלבלו",
+            "לא להתבלבל",
+            "מתבלבלים",
+            "שימו לב",
+            "זהירות",
+            "הרבה סטודנטים",
+            "בטעות",
         ),
     ),
     ImmediateExtractor(slug="topics", title="Topics"),

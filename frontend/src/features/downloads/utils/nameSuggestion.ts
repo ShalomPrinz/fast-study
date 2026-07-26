@@ -47,12 +47,7 @@ function existingNames(kind: Kind, courses: Course[], course: string): string[] 
 }
 
 // The single "already on disk" rule — exact name match in the live tree
-export function isDownloaded(
-  name: string,
-  kind: Kind,
-  courses: Course[],
-  course: string,
-): boolean {
+export function isDownloaded(name: string, kind: Kind, courses: Course[], course: string): boolean {
   return existingNames(kind, courses, course).includes(name)
 }
 

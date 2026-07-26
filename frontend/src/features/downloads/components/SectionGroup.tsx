@@ -122,9 +122,7 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
 
   // A playlist contributes its children, never its own ref — the backend rejects that.
   function buildQueue(): Item[] {
-    return items.flatMap((item) =>
-      item.expandable ? (stateOf(item.ref).children ?? []) : [item],
-    )
+    return items.flatMap((item) => (item.expandable ? (stateOf(item.ref).children ?? []) : [item]))
   }
 
   function finish(tally: Tally) {
@@ -142,7 +140,12 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
       const item = queue[i]
       setProgress({ at: i + 1, total: queue.length })
       // Exactly what the row shows, so the skip rule and the green row can't disagree.
-      const { name, kind } = resolveRow(item, editsRef.current[item.ref], coursesRef.current, course)
+      const { name, kind } = resolveRow(
+        item,
+        editsRef.current[item.ref],
+        coursesRef.current,
+        course,
+      )
       if (isDownloaded(name, kind, coursesRef.current, course)) {
         tally.skipped++
         continue
@@ -210,7 +213,9 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
   return (
     <div className="recordings-section">
       <div className="recordings-section-header">
-        <span className="recordings-section-title" dir="auto">{title}</span>
+        <span className="recordings-section-title" dir="auto">
+          {title}
+        </span>
         {progress && (
           <span className="recordings-section-progress">
             Downloading {progress.at}/{progress.total}…

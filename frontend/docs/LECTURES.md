@@ -14,7 +14,7 @@ A step's button is enabled only when its prereq file exists and nothing is in fl
 
 ## Rotate
 
-Rotating a file deletes it *and every later file in `PIPELINE`* that exists, then re-runs its step — the
+Rotating a file deletes it _and every later file in `PIPELINE`_ that exists, then re-runs its step — the
 confirm modal lists exactly those. This is why rotate must derive from the `PIPELINE` order rather than a
 per-step list.
 
@@ -27,7 +27,7 @@ mount and on every SSE notify — never polled:
 { runner: { running, total, done, lastError }, inFlight: InFlightEntry[], errors: Record<skey, string> }
 ```
 
-`inFlight` covers active steps from *any* trigger (runner sweep, `/pipeline`, single `/run/{step}`);
+`inFlight` covers active steps from _any_ trigger (runner sweep, `/pipeline`, single `/run/{step}`);
 `errors` persists a lecture's last failure after the entry leaves `inFlight`. Keys are
 `course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror backend `runner.py::_skey`**.
 `runner.lastError` is an unexpected exception that aborted a sweep, distinct from the expected per-step
@@ -41,7 +41,7 @@ start time, timing estimate, `completedFraction`, `sleepingUntil`, `progress`. P
 entry when present, else from `transcript.partial.txt`'s completed/total for a transcribe step.
 
 `useTimingStats(step, fileSizeBytes)` fetches the backend's linear-regression estimate for the step's
-*input* file size and drops responses for a `(step, size)` key the caller has moved on from.
+_input_ file size and drops responses for a `(step, size)` key the caller has moved on from.
 
 Rate limiting is not an error: when the runner sets `sleepingUntil`, `MainView` renders a countdown panel
 with the chunk progress instead of a failure.
@@ -75,7 +75,7 @@ Interaction conventions: shift-click a course or lecture row renames it inline; 
 course "+" button for archive/unarchive. `useShiftHeld` resets on window blur because an alt-tab mid-hold
 never delivers `keyup`.
 
-`PaginatedList` slices from the *tail* so newly added items stay visible, with a "Load more" row above that
+`PaginatedList` slices from the _tail_ so newly added items stay visible, with a "Load more" row above that
 reveals older items in doubling chunks.
 
 ## Name suggestion and sorting

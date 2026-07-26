@@ -19,20 +19,12 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
   return (
     <li className="recitations-group">
       <div className="recitations-header">
-        <button
-          className="course-toggle recitations-toggle"
-          onClick={expand.toggle}
-          dir="auto"
-        >
+        <button className="course-toggle recitations-toggle" onClick={expand.toggle} dir="auto">
           <span className="chevron">{expand.isOpen ? '▾' : '▸'}</span>
           <span>Recitations</span>
         </button>
         {!shiftHeld && (
-          <button
-            className="course-add-btn"
-            onClick={startAdding}
-            title="Add recitation"
-          >
+          <button className="course-add-btn" onClick={startAdding} title="Add recitation">
             +
           </button>
         )}

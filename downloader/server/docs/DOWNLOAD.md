@@ -32,11 +32,12 @@ downloads both tracks, and muxes them.
 
 Args: `--no-playlist --merge-output-format mp4 --js-runtimes node --remote-components
 ejs:github --quiet --no-warnings --no-progress -o video.%(ext)s`. `-o video.%(ext)s`
-+ merge → final `video.mp4`. **Prerequisite:** recent yt-dlp needs a JS runtime to
-evaluate YouTube's player script; only `deno` is auto-enabled, so we point it at the
-`node` already present. yt-dlp must be installed system-wide (`pipx install yt-dlp`);
-the server does not install it — same external-CLI dependency as ffmpeg is for the
-backend.
+
+- merge → final `video.mp4`. **Prerequisite:** recent yt-dlp needs a JS runtime to
+  evaluate YouTube's player script; only `deno` is auto-enabled, so we point it at the
+  `node` already present. yt-dlp must be installed system-wide (`pipx install yt-dlp`);
+  the server does not install it — same external-CLI dependency as ffmpeg is for the
+  backend.
 
 ## Size probe (`services/probe.js`)
 

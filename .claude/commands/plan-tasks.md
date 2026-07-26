@@ -9,6 +9,7 @@ If `TODOS.md` does not exist or is empty, tell the user there are no tasks there
 Read `CLAUDE.md` to ground yourself in the current state of the codebase before interpreting the todos.
 
 Parse `TODOS.md` and identify each distinct change the user wants. A "distinct change" is anything that:
+
 - Touches a different part of the codebase than another item
 - Has a different type (bug fix vs feature vs refactor)
 - Would produce a cleaner, more focused prompt on its own
@@ -26,6 +27,7 @@ Wait for the user's answers before continuing.
 ## Step 3 — Plan
 
 Decide how to split the todos into prompts. Each prompt should be:
+
 - Focused on one coherent change
 - Executable independently without depending on another prompt in the same batch (unless you explicitly mark a dependency, then ask the user what he prefers to do)
 - Small enough that Claude Code can hold the full context in one session
@@ -54,21 +56,26 @@ Each file must follow this structure exactly:
 (Optional) **Depends on:** [prompt file name]
 
 **User Raw Description:**
+
 > Copy verbatim the exact text from TODOS.md that this prompt addresses. Do not paraphrase. If multiple todo items are grouped into this prompt, include all of them.
 
 **Context:**
+
 > What currently exists in the codebase that this prompt touches. Be specific: name the files, components, functions, and data structures involved. Claude Code must be able to understand the starting state from this paragraph alone without reading the whole codebase.
 
 **Goal:**
 One sentence. The end state after this prompt is executed.
 
 **Implementation Notes:**
+
 > Step-by-step instructions. Reference file paths explicitly. Call out which existing logic to reuse vs replace. Flag any constraint from CONVENTIONS.md or ERRORS.md that is directly relevant to this change. Do not repeat the full convention — just name it and say why it applies here.
 
 (Optional) **Out of Scope:**
+
 > Anything the user mentioned or implied that should NOT be done in this prompt. Explicit boundaries prevent Claude Code from over-reaching.
 
 **Deliverables:**
+
 - Bullet list of concrete outcomes that must be true when this prompt is complete
 - If new logic implemented - test it
 - Always ends with running tests (depends on programming language and context of current task)
@@ -78,6 +85,6 @@ One sentence. The end state after this prompt is executed.
 After writing all files, print a summary table:
 
 | File | Type | Depends on | One-line summary |
-|------|------|------------|-----------------|
+| ---- | ---- | ---------- | ---------------- |
 
 Then stop. Do not execute any of the prompts.

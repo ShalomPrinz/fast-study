@@ -40,7 +40,11 @@ export function extractorsQuery(names?: string[]): string {
 }
 
 // /generate query: extractor CSV + start phase + skip_existing (continue, never overwrite).
-export function overviewGenerateQuery(names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean): string {
+export function overviewGenerateQuery(
+  names?: string[],
+  fromPhase?: CoursePhase,
+  skipExisting?: boolean,
+): string {
   let q = extractorsQuery(names)
   if (fromPhase) q += `${q ? '&' : '?'}from_phase=${fromPhase}`
   if (skipExisting) q += `${q ? '&' : '?'}skip_existing=true`

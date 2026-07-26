@@ -3,14 +3,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from transcribe import (
     PARTIAL_META,
     PARTIAL_TXT,
     _load_resume_state,
     parse_rate_limit_message,
 )
-
 
 GROQ_429_MESSAGE = (
     "Rate limit reached for model `whisper-large-v3` in organization "

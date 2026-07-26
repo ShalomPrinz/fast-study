@@ -29,6 +29,6 @@ You have received transcripts or excerpts from a lecture where the lecturer hint
 ## ‏דגשים ועקרונות
 
 **[Emphasis Title]:** (הרצאה Z)  
-[Rephrasing of an emphasis. Short, Readable, Fluent.] 
+[Rephrasing of an emphasis. Short, Readable, Fluent.]
 
 ...

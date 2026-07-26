@@ -21,14 +21,20 @@ interface Args {
 }
 
 // Render descriptor for this lecture's in_flight entry; null when it isn't in flight.
-export function useRemoteInflightState({ course, lecture, kind, files, transcribePartial }: Args): RemoteInflight | null {
+export function useRemoteInflightState({
+  course,
+  lecture,
+  kind,
+  files,
+  transcribePartial,
+}: Args): RemoteInflight | null {
   const { getInFlight } = useRunnerStatus()
   const entry = getInFlight(course, lecture, kind)
   const step = entry && STEP_SET.has(entry.step) ? (entry.step as Step) : null
 
   // The estimate keys on the step's *input* file size.
   const inputFile = step ? STEP_INPUT_FILE[step] : null
-  const fileSizeBytes = step && inputFile && files ? files[inputFile]?.size ?? 0 : 0
+  const fileSizeBytes = step && inputFile && files ? (files[inputFile]?.size ?? 0) : 0
   const timingStats = useTimingStats(files ? step : null, fileSizeBytes)
 
   if (!step || !entry) return null

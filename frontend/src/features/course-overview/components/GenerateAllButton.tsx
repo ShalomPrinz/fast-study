@@ -8,7 +8,9 @@ export default function GenerateAllButton() {
 
   // Any existing output means this is a continue, not a fresh start.
   const existingFiles = new Set(files.map((f) => f.name))
-  const hasStarted = (extractors ?? []).some(({ slug, phases }) => startedSlug(slug, phases, existingFiles) !== null)
+  const hasStarted = (extractors ?? []).some(
+    ({ slug, phases }) => startedSlug(slug, phases, existingFiles) !== null,
+  )
 
   async function handleGenerate() {
     const result = await generate(undefined, undefined, true)

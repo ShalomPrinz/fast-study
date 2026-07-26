@@ -35,14 +35,20 @@ function MaterialIndicator({
   materialMtime,
 }: MaterialIndicatorProps) {
   const materialWasUsed =
-    summaryExists && materialExists &&
-    materialMtime !== null && summaryMtime !== null &&
+    summaryExists &&
+    materialExists &&
+    materialMtime !== null &&
+    summaryMtime !== null &&
     materialMtime <= summaryMtime
 
   const { symbol, text, cls } = summaryExists
     ? materialWasUsed
       ? { symbol: '📎', text: 'material.pdf was used', cls: 'material-indicator--used' }
-      : { symbol: '⊘', text: 'summary did not use material.pdf', cls: 'material-indicator--was-missing' }
+      : {
+          symbol: '⊘',
+          text: 'summary did not use material.pdf',
+          cls: 'material-indicator--was-missing',
+        }
     : materialExists
       ? { symbol: '📎', text: 'material.pdf will be used', cls: 'material-indicator--will-use' }
       : { symbol: '⚠', text: 'material.pdf not found', cls: 'material-indicator--missing' }
@@ -154,7 +160,9 @@ export default function MainView() {
   return (
     <main className="main-view main-view--panel">
       <div className="lecture-panel">
-        <h2 className="lecture-panel-title" dir="auto">{lecture}</h2>
+        <h2 className="lecture-panel-title" dir="auto">
+          {lecture}
+        </h2>
 
         <div className="file-list">
           {PIPELINE.map(({ file, step, actionLabel, prereq }) => {
@@ -162,13 +170,14 @@ export default function MainView() {
             const isRunning = runningFile === file
             const prereqMet = !prereq || files[prereq].exists
             const isResumeTranscribe =
-              file === 'transcript.txt' &&
-              !exists &&
-              files['transcript.partial.txt'].exists
+              file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
             const buttonLabel = isResumeTranscribe ? 'Continue transcription' : actionLabel
 
             return (
-              <div key={file} className={`file-row${exists ? ' file-row--present' : ''}${isRunning ? ' file-row--running' : ''}`}>
+              <div
+                key={file}
+                className={`file-row${exists ? ' file-row--present' : ''}${isRunning ? ' file-row--running' : ''}`}
+              >
                 <div className="file-row-header">
                   <span className="file-name-wrap">
                     <span className="file-name">{file}</span>
@@ -206,7 +215,9 @@ export default function MainView() {
                           title={`Rotate ${file}`}
                           onClick={() => openRotateModal(file, step)}
                           disabled={inflight}
-                        >↺</button>
+                        >
+                          ↺
+                        </button>
                       </span>
                     )}
                     {((file === 'summary.pdf' && pdfExists) ||
@@ -217,7 +228,9 @@ export default function MainView() {
                           <button
                             className="file-open-btn"
                             title="Open PDF in new tab"
-                            onClick={() => window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank')}
+                            onClick={() =>
+                              window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank')
+                            }
                           >
                             <Icon icon="external-link" />
                           </button>
@@ -254,7 +267,6 @@ export default function MainView() {
               </div>
             )
           })}
-
         </div>
 
         {hasActions && (
@@ -270,10 +282,7 @@ export default function MainView() {
         )}
 
         {remote?.sleepingUntil != null && (
-          <RateLimitPanel
-            sleepingUntil={remote.sleepingUntil}
-            progress={remote.progress}
-          />
+          <RateLimitPanel sleepingUntil={remote.sleepingUntil} progress={remote.progress} />
         )}
       </div>
 

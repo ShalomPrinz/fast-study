@@ -37,7 +37,9 @@ export default function StepRow({ step }: { step: OverviewStep }) {
 
   return (
     <>
-      <div className={`file-row${exists ? ' file-row--present' : ''}${stepRunning ? ' file-row--running' : ''}`}>
+      <div
+        className={`file-row${exists ? ' file-row--present' : ''}${stepRunning ? ' file-row--running' : ''}`}
+      >
         <div className="file-row-header">
           <span className="file-name">{fileName}</span>
           <span className="file-row-right">
@@ -68,7 +70,9 @@ export default function StepRow({ step }: { step: OverviewStep }) {
                   title={`Re-generate from ${step.label}`}
                   onClick={() => setRegenerateOpen(true)}
                   disabled={bs.running}
-                >↺</button>
+                >
+                  ↺
+                </button>
               )}
             </span>
           </span>

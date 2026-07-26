@@ -1,4 +1,12 @@
-from .paths import data_root, course_dir, lecture_dir, RECITATIONS_DIR, PREDEFINED_FILES, ARCHIVED_MARKER, SOURCE_URL_MARKER
+from .paths import (
+    ARCHIVED_MARKER,
+    PREDEFINED_FILES,
+    RECITATIONS_DIR,
+    SOURCE_URL_MARKER,
+    course_dir,
+    data_root,
+    lecture_dir,
+)
 
 
 def create_course(name: str, source_url: str | None = None) -> None:

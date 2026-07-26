@@ -4,8 +4,9 @@
 import re
 from datetime import datetime
 
-from course import ranges
 from services import db_client
+
+from course import ranges
 
 RLM = "‏"  # right-to-left mark
 
@@ -99,7 +100,10 @@ def render_entry(name: str, kind: str, summary: str) -> str:
     """Render one entry's `#name / ##title` block plus its topic/subtopic heading bullets."""
 
     parsed = parse_summary(summary)
-    lines = [_bullet("#", _display_name(name, kind), 0), _bullet("##", parsed["title"], 0)]
+    lines = [
+        _bullet("#", _display_name(name, kind), 0),
+        _bullet("##", parsed["title"], 0),
+    ]
     body: list[str] = []
     for topic in parsed["topics"]:
         body.append(_bullet("-", topic["title"], 0))
@@ -111,11 +115,19 @@ def render_entry(name: str, kind: str, summary: str) -> str:
     return "\n".join(lines)
 
 
-def build_topics_md(lectures: list[tuple[str, str]], recitations: list[tuple[str, str]]) -> str:
+def build_topics_md(
+    lectures: list[tuple[str, str]], recitations: list[tuple[str, str]]
+) -> str:
     """Assemble topics.md: natural-sorted lectures, a `---` rule, then natural-sorted recitations."""
 
-    lec = [render_entry(n, "lecture", s) for n, s in sorted(lectures, key=lambda t: _natural_key(t[0]))]
-    rec = [render_entry(n, "recitation", s) for n, s in sorted(recitations, key=lambda t: _natural_key(t[0]))]
+    lec = [
+        render_entry(n, "lecture", s)
+        for n, s in sorted(lectures, key=lambda t: _natural_key(t[0]))
+    ]
+    rec = [
+        render_entry(n, "recitation", s)
+        for n, s in sorted(recitations, key=lambda t: _natural_key(t[0]))
+    ]
     blocks = list(lec)
     if rec:
         if blocks:
@@ -128,8 +140,10 @@ def run_collect(course: str, course_node: dict) -> dict:
     """Collect every lecture/recitation summary into topics.md; raises on I/O failure so
     the runner records it as "error"."""
 
-    groups = [("lecture", course_node.get("lectures") or []),
-              ("recitation", course_node.get("recitations") or [])]
+    groups = [
+        ("lecture", course_node.get("lectures") or []),
+        ("recitation", course_node.get("recitations") or []),
+    ]
     collected: dict[str, list[tuple[str, str]]] = {"lecture": [], "recitation": []}
 
     for kind, entries in groups:
@@ -145,9 +159,13 @@ def run_collect(course: str, course_node: dict) -> dict:
     db_client.put_overview_file(course, "topics.md", md.encode("utf-8"))
 
     # Snapshot the source range at generation time; later-phase re-runs leave it intact.
-    db_client.patch_overview_meta(course, "topics", {
-        "lectures": ranges.name_range([n for n, _ in collected["lecture"]]),
-        "recitations": ranges.name_range([n for n, _ in collected["recitation"]]),
-        "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-    })
+    db_client.patch_overview_meta(
+        course,
+        "topics",
+        {
+            "lectures": ranges.name_range([n for n, _ in collected["lecture"]]),
+            "recitations": ranges.name_range([n for n, _ in collected["recitation"]]),
+            "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        },
+    )
     return {"status": "done"}

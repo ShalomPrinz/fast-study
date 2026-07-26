@@ -55,13 +55,7 @@ class TestBuiltinExclusion:
 
 class TestNesting:
     def test_h2_topic_with_h3_subtopics(self):
-        md = (
-            "# T\n\n"
-            "## נושא\n\n"
-            "פסקה כלשהי\n\n"
-            "### תת נושא\n\n"
-            "עוד פסקה\n"
-        )
+        md = "# T\n\n## נושא\n\nפסקה כלשהי\n\n### תת נושא\n\nעוד פסקה\n"
         topic = parse_summary(md)["topics"][0]
         assert topic["title"] == "נושא"
         assert [s["title"] for s in topic["subtopics"]] == ["תת נושא"]
@@ -85,7 +79,10 @@ class TestNaturalKey:
     def test_lecture_2_2_before_10_1(self):
         names = ["Lecture 10.1", "Lecture 2.2", "Lecture 2.10", "Lecture 2.2"]
         assert sorted(names, key=_natural_key) == [
-            "Lecture 2.2", "Lecture 2.2", "Lecture 2.10", "Lecture 10.1",
+            "Lecture 2.2",
+            "Lecture 2.2",
+            "Lecture 2.10",
+            "Lecture 10.1",
         ]
 
 
@@ -122,7 +119,10 @@ class TestBuildTopicsMd:
 
     def test_no_list_bullets_only_headers(self):
         # A summary with lists must yield header topics only — no list-derived bullets.
-        lec = ("Lecture 1", "# T\n\n## נושא\n\n1. **פריט ממוספר**: הסבר\n\n* פריט שני\n")
+        lec = (
+            "Lecture 1",
+            "# T\n\n## נושא\n\n1. **פריט ממוספר**: הסבר\n\n* פריט שני\n",
+        )
         md = build_topics_md([lec], [])
         assert "פריט ממוספר" not in md
         assert "פריט שני" not in md
@@ -133,23 +133,25 @@ class TestRenderEntry:
     def test_hebrew_entry_heading_and_rlm(self):
         md = render_entry("Lecture 5.2", "lecture", "# ‏כותרת עברית\n\n## ‏נושא\n")
         lines = md.split("\n")
-        assert lines[0] == f"# {RLM}הרצאה 5.2"        # Hebrew label → RLM after marker
-        assert lines[1] == f"## {RLM}כותרת עברית"      # H1 title, Hebrew → RLM
-        assert f"- {RLM}נושא" in lines                 # topic bullet at indent 0
+        assert lines[0] == f"# {RLM}הרצאה 5.2"  # Hebrew label → RLM after marker
+        assert lines[1] == f"## {RLM}כותרת עברית"  # H1 title, Hebrew → RLM
+        assert f"- {RLM}נושא" in lines  # topic bullet at indent 0
 
     def test_recitation_entry_heading(self):
         md = render_entry("Recitation 3.1", "recitation", "# ‏חזרה\n\n## ‏נושא\n")
         assert md.split("\n")[0] == f"# {RLM}תרגול 3.1"
 
     def test_summary_with_only_builtins_gives_block_with_no_bullets(self):
-        md = render_entry("Lecture 1", "lecture", "# ‏כותרת\n\n## ‏תקציר\n\nטקסט\n\n## ‏סיכום\n\nעוד\n")
+        md = render_entry(
+            "Lecture 1", "lecture", "# ‏כותרת\n\n## ‏תקציר\n\nטקסט\n\n## ‏סיכום\n\nעוד\n"
+        )
         assert md == f"# {RLM}הרצאה 1\n## {RLM}כותרת"
 
     def test_nested_h3_subtopic_indent(self):
         md = render_entry("Lecture 1", "lecture", "# T\n\n## נושא\n\n### תת\n")
         lines = md.split("\n")
-        assert f"- {RLM}נושא" in lines          # H2 topic at indent 0
-        assert f"  - {RLM}תת" in lines          # H3 subtopic at indent 2
+        assert f"- {RLM}נושא" in lines  # H2 topic at indent 0
+        assert f"  - {RLM}תת" in lines  # H3 subtopic at indent 2
 
 
 class TestRunCollect:
@@ -158,6 +160,7 @@ class TestRunCollect:
     def _node(self, lectures=(), recitations=()):
         def entry(name, has_summary):
             return {"name": name, "files": {"summary.md": {"exists": has_summary}}}
+
         return {
             "name": self.COURSE,
             "lectures": [entry(n, h) for n, h in lectures],
@@ -165,23 +168,39 @@ class TestRunCollect:
         }
 
     def test_skipped_when_no_summaries(self, monkeypatch):
-        monkeypatch.setattr(db_client, "put_overview_file",
-                            lambda *a: (_ for _ in ()).throw(AssertionError("must not write")))
-        monkeypatch.setattr(db_client, "patch_overview_meta",
-                            lambda *a: (_ for _ in ()).throw(AssertionError("must not patch meta")))
+        monkeypatch.setattr(
+            db_client,
+            "put_overview_file",
+            lambda *a: (_ for _ in ()).throw(AssertionError("must not write")),
+        )
+        monkeypatch.setattr(
+            db_client,
+            "patch_overview_meta",
+            lambda *a: (_ for _ in ()).throw(AssertionError("must not patch meta")),
+        )
         node = self._node(lectures=[("Lecture 1", False)])
-        assert run_collect(self.COURSE, node) == {"status": "skipped", "message": "no summaries found"}
+        assert run_collect(self.COURSE, node) == {
+            "status": "skipped",
+            "message": "no summaries found",
+        }
 
     def test_done_writes_topics_md(self, monkeypatch):
         puts = {}
         patches = []
-        monkeypatch.setattr(db_client, "get_summary",
-                            lambda c, l, k: "# ‏כותרת\n\n## ‏נושא\n")
-        monkeypatch.setattr(db_client, "put_overview_file",
-                            lambda c, f, d: puts.__setitem__(f, d.decode("utf-8")))
-        monkeypatch.setattr(db_client, "patch_overview_meta",
-                            lambda c, s, e: patches.append((c, s, e)))
-        node = self._node(lectures=[("Lecture 1", True)], recitations=[("Recitation 2", True)])
+        monkeypatch.setattr(
+            db_client, "get_summary", lambda c, l, k: "# ‏כותרת\n\n## ‏נושא\n"
+        )
+        monkeypatch.setattr(
+            db_client,
+            "put_overview_file",
+            lambda c, f, d: puts.__setitem__(f, d.decode("utf-8")),
+        )
+        monkeypatch.setattr(
+            db_client, "patch_overview_meta", lambda c, s, e: patches.append((c, s, e))
+        )
+        node = self._node(
+            lectures=[("Lecture 1", True)], recitations=[("Recitation 2", True)]
+        )
         assert run_collect(self.COURSE, node) == {"status": "done"}
         assert "topics.md" in puts
         # Meta patched for the topics slug from the collected lecture/recitation names.
@@ -198,12 +217,16 @@ class TestRunCollect:
 
     def test_only_summarized_entries_fetched(self, monkeypatch):
         gets = []
-        monkeypatch.setattr(db_client, "get_summary",
-                            lambda c, l, k: gets.append((l, k)) or "# T\n\n## X\n")
+        monkeypatch.setattr(
+            db_client,
+            "get_summary",
+            lambda c, l, k: gets.append((l, k)) or "# T\n\n## X\n",
+        )
         monkeypatch.setattr(db_client, "put_overview_file", lambda *a: None)
         monkeypatch.setattr(db_client, "patch_overview_meta", lambda *a: None)
         node = self._node(
             lectures=[("Lecture 1", True), ("Lecture 2", False)],
-            recitations=[("Recitation 1", True)])
+            recitations=[("Recitation 1", True)],
+        )
         run_collect(self.COURSE, node)
         assert gets == [("Lecture 1", "lecture"), ("Recitation 1", "recitation")]

@@ -3,28 +3,44 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
-  registerDownload, deregisterDownload, makeStderrTail, emitLog, emitError, formatBytes,
+  registerDownload,
+  deregisterDownload,
+  makeStderrTail,
+  emitLog,
+  emitError,
+  formatBytes,
 } from '../progress.js';
 import { uploadVideo } from '../services/database.js';
 import { recordDownloadTiming } from '../services/timing.js';
 import { recaptureItem } from '../services/autodl.js';
-import { setExpectedBytes, startJob, freezeJobBytes, finishJob, isJobTerminal, removeJob } from '../jobs.js';
+import {
+  setExpectedBytes,
+  startJob,
+  freezeJobBytes,
+  finishJob,
+  isJobTerminal,
+  removeJob,
+} from '../jobs.js';
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'fast-study-dl-'));
 }
 
 function removeTempDir(dir) {
-  try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } catch {}
 }
 
 // Auth signature in a curl (--fail) / yt-dlp stderr tail: an HTTP 401/403 or a
 // denied/expired-token phrasing means a replayed token went stale.
 function isAuthError(message) {
   if (!message) return false;
-  return /\b40[13]\b/.test(message)
-    || /forbidden|unauthorized|access denied/i.test(message)
-    || /(expired|invalid|bad)[ -]?token|token (has )?expired/i.test(message);
+  return (
+    /\b40[13]\b/.test(message) ||
+    /forbidden|unauthorized|access denied/i.test(message) ||
+    /(expired|invalid|bad)[ -]?token|token (has )?expired/i.test(message)
+  );
 }
 
 // Map auto's NON-200 re-capture response to this (superseded) job's terminal message —
@@ -41,7 +57,11 @@ function recaptureMessage(status, body) {
 // clean exit hand the video to the database (which uploads + cleans + notifies).
 // Adding a source = a new downloaders/*.js registered in index.js; no edits here.
 // `jobId` was created synchronously by the route; every exit path must terminate it.
-export async function runDownloadJob(downloader, input, { course, lecture, kind, jobId, ref = null, fromCache = false }) {
+export async function runDownloadJob(
+  downloader,
+  input,
+  { course, lecture, kind, jobId, ref = null, fromCache = false },
+) {
   const label = `${course}/${lecture}`;
   const tempDir = makeTempDir();
   try {
@@ -59,8 +79,14 @@ export async function runDownloadJob(downloader, input, { course, lecture, kind,
     const child = spawn(command, args, { cwd: tempDir, stdio: ['ignore', 'ignore', 'pipe'] });
     const tail = makeStderrTail(child);
     const entry = {
-      label, tempDir, measure: downloader.measure, expected: bytes,
-      tool: downloader.tool, lastPercent: null, lastEmit: 0, emitted: false,
+      label,
+      tempDir,
+      measure: downloader.measure,
+      expected: bytes,
+      tool: downloader.tool,
+      lastPercent: null,
+      lastEmit: 0,
+      emitted: false,
     };
     registerDownload(tempDir, entry);
     startJob(jobId, entry); // the job reads bytes off the same entry the renderer polls
@@ -84,14 +110,21 @@ export async function runDownloadJob(downloader, input, { course, lecture, kind,
           emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
           const { status, body } = await recaptureItem({ ref, course, name: lecture, kind });
           // 200 = a fresh job (with same ref) was spawned to replace this one, so drop this job.
-          if (status === 200) { removeJob(jobId); return; }
+          if (status === 200) {
+            removeJob(jobId);
+            return;
+          }
           finishJob(jobId, 'error', recaptureMessage(status, body));
           return;
         }
 
         // Non-auth error, a fresh-capture auth failure, or no ref → finalize as-is.
         emitError(`❌ ${downloader.tool} failed: ${message}`);
-        finishJob(jobId, 'error', isAuthError(detail) ? `authentication failed\n${message}` : message);
+        finishJob(
+          jobId,
+          'error',
+          isAuthError(detail) ? `authentication failed\n${message}` : message,
+        );
         return;
       }
       // Timing sample only after a clean exit — a truncated download is not a valid duration

@@ -14,6 +14,7 @@ SCOPES_MAP = {
 }
 ScopeKey = Literal["drive"]
 
+
 def get_credentials(scope_key: ScopeKey) -> Credentials:
     """Load (or interactively obtain) credentials for one scope set, caching per scope key."""
 

@@ -35,7 +35,9 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
 
   return (
     <div className={selected ? 'source-row source-row--selected' : 'source-row'}>
-      <span className="source-row-name" title={course.name} dir="auto">{course.name}</span>
+      <span className="source-row-name" title={course.name} dir="auto">
+        {course.name}
+      </span>
       {editing ? (
         <InlineEditInput
           edit={edit}

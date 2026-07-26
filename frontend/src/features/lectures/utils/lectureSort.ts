@@ -1,7 +1,10 @@
 // "Lecture 3" / "Lecture 1.2" / "Recitation 5" — group 1 = number, group 2 = sub-number.
 const PATTERN = /^(?:Lecture|Recitation)\s+(\d+)(?:\.(\d+))?$/i
 
-interface Parsed { n: number; sub: number }
+interface Parsed {
+  n: number
+  sub: number
+}
 
 function parse(name: string): Parsed | null {
   const m = name.match(PATTERN)

@@ -3,14 +3,8 @@
   "name": "Video MP4 Interceptor",
   "version": "1.0",
   "description": "Automatically intercepts video streams and generates a cURL command with secure headers.",
-  "permissions": [
-    "webRequest",
-    "storage",
-    "activeTab"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["webRequest", "storage", "activeTab"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },

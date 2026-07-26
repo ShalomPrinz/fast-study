@@ -1,57 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <style>
-    body { font-family: system-ui, sans-serif; width: 350px; padding: 15px; background: #1a1a1a; color: #fff; margin: 0; }
-    h3 { margin: 0 0 8px; color: #2d8cff; }
-    .status { font-size: 13px; color: #aaa; margin-bottom: 10px; }
-    label { display: block; font-size: 11px; color: #aaa; margin: 8px 0 3px; }
-    input, select { width: 100%; box-sizing: border-box; background: #2d2d2d; color: #fff; border: 1px solid #555; padding: 7px; border-radius: 4px; font-family: inherit; font-size: 12px; }
-    .row { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 12px; color: #ccc; }
-    .row label { margin: 0; color: #ccc; font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
-    button { width: 100%; padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; color: #fff; background: #9d2bba; margin-top: 12px; transition: background 0.2s; }
-    button:hover { background: #7a2291; }
-    button:disabled { background: #555; cursor: not-allowed; }
-  </style>
-</head>
-<body>
-  <h3>Video Interceptor</h3>
-  <div class="status" id="status">Waiting for video stream...</div>
+  <head>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        width: 350px;
+        padding: 15px;
+        background: #1a1a1a;
+        color: #fff;
+        margin: 0;
+      }
+      h3 {
+        margin: 0 0 8px;
+        color: #2d8cff;
+      }
+      .status {
+        font-size: 13px;
+        color: #aaa;
+        margin-bottom: 10px;
+      }
+      label {
+        display: block;
+        font-size: 11px;
+        color: #aaa;
+        margin: 8px 0 3px;
+      }
+      input,
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        background: #2d2d2d;
+        color: #fff;
+        border: 1px solid #555;
+        padding: 7px;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 12px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #ccc;
+      }
+      .row label {
+        margin: 0;
+        color: #ccc;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      button {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 13px;
+        color: #fff;
+        background: #9d2bba;
+        margin-top: 12px;
+        transition: background 0.2s;
+      }
+      button:hover {
+        background: #7a2291;
+      }
+      button:disabled {
+        background: #555;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Video Interceptor</h3>
+    <div class="status" id="status">Waiting for video stream...</div>
 
-  <div id="targetSection" style="display:none">
-    <label for="course">Course</label>
-    <input id="course" list="courses-list" placeholder="e.g. Calculus" autocomplete="off" />
-    <datalist id="courses-list"></datalist>
+    <div id="targetSection" style="display: none">
+      <label for="course">Course</label>
+      <input id="course" list="courses-list" placeholder="e.g. Calculus" autocomplete="off" />
+      <datalist id="courses-list"></datalist>
 
-    <label for="lecture">Lecture</label>
-    <input id="lecture" list="lectures-list" placeholder="e.g. Lecture 3" autocomplete="off" />
-    <datalist id="lectures-list"></datalist>
+      <label for="lecture">Lecture</label>
+      <input id="lecture" list="lectures-list" placeholder="e.g. Lecture 3" autocomplete="off" />
+      <datalist id="lectures-list"></datalist>
 
-    <div class="row">
-      <label><input type="radio" name="kind" value="lecture" checked /> Lecture</label>
-      <label><input type="radio" name="kind" value="recitation" /> Recitation</label>
+      <div class="row">
+        <label><input type="radio" name="kind" value="lecture" checked /> Lecture</label>
+        <label><input type="radio" name="kind" value="recitation" /> Recitation</label>
+      </div>
     </div>
-  </div>
 
-  <div id="videoSection" style="display:none">
-    <label for="videoSelect" id="videoSelectLabel">Intercepted video</label>
-    <select id="videoSelect"></select>
+    <div id="videoSection" style="display: none">
+      <label for="videoSelect" id="videoSelectLabel">Intercepted video</label>
+      <select id="videoSelect"></select>
 
-    <label for="youtubeUrl" id="youtubeUrlLabel" style="display:none">YouTube page</label>
-    <input id="youtubeUrl" readonly style="display:none" />
+      <label for="youtubeUrl" id="youtubeUrlLabel" style="display: none">YouTube page</label>
+      <input id="youtubeUrl" readonly style="display: none" />
 
-    <button id="nodeBtn">Download</button>
-  </div>
+      <button id="nodeBtn">Download</button>
+    </div>
 
-  <div id="pdfSection" style="display:none">
-    <label for="pdfUrl">PDF on this page</label>
-    <input id="pdfUrl" readonly />
-    <button id="pdfBtn">Download PDF</button>
-  </div>
+    <div id="pdfSection" style="display: none">
+      <label for="pdfUrl">PDF on this page</label>
+      <input id="pdfUrl" readonly />
+      <button id="pdfBtn">Download PDF</button>
+    </div>
 
-  <div id="emptyMsg" style="display:none; margin-top: 12px; color: #aaa; font-size: 13px;">
-    No .mp4 nor .pdf found on this page.
-  </div>
-  <script src="popup.js"></script>
-</body>
+    <div id="emptyMsg" style="display: none; margin-top: 12px; color: #aaa; font-size: 13px">
+      No .mp4 nor .pdf found on this page.
+    </div>
+    <script src="popup.js"></script>
+  </body>
 </html>

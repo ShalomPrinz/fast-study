@@ -39,6 +39,7 @@ Do not write any code. Do not modify any file. Just read and analyze.
 Write your findings and execution plan to `.refactor-plan.md` at the project root.
 
 **Format rules:**
+
 - Use whatever section titles and structure best match what you actually found
 - Be specific — name the files, the strings, the patterns
 - Each step in the execution plan must have a clear `Status: [ ]` marker so `/refactor-implement` can track progress

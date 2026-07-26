@@ -4,13 +4,13 @@
 
 ## Stages
 
-| Step | Output | Notes |
-|---|---|---|
-| `audio` | `audio.mp3` | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR. |
-| `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB). |
-| `summarize` | `summary.md` | Gemini via `google-genai`; transcript (+ optional `material.pdf`) uploaded as file parts. |
-| `pdf` | `summary.pdf` | pandoc + XeLaTeX. See `PDF.md`. |
-| `drive` | `drive_url.txt` | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link. |
+| Step         | Output           | Notes                                                                                     |
+| ------------ | ---------------- | ----------------------------------------------------------------------------------------- |
+| `audio`      | `audio.mp3`      | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR.                               |
+| `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB).            |
+| `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ optional `material.pdf`) uploaded as file parts. |
+| `pdf`        | `summary.pdf`    | pandoc + XeLaTeX. See `PDF.md`.                                                           |
+| `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link.         |
 
 Other files in a lecture dir: `video.mp4` (user/downloader), `material.pdf` (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit).
 
@@ -33,6 +33,7 @@ A pipeline file is never legitimately 0 bytes; when one is, the producing tool r
 Endpoints are fire-and-forget: they schedule a background asyncio task and return `{"status": "started"|"busy"}`. Outcomes live in runner state, which the frontend reads via `GET /status`.
 
 State in `pipeline/runner.py`:
+
 - `_locks[(course, lecture, kind)]` — one `asyncio.Lock` per lecture, serializing concurrent triggers.
 - `_in_flight[skey]` — all in-flight entries regardless of trigger (runner / `/pipeline` / single `/run/{step}` all populate the same map, so the frontend doesn't care which path queued them). `skey` is the string `"course||lecture||kind"` and appears verbatim in `/status`.
 - `_errors[skey]` — last error, survives after `_in_flight` clears.

@@ -9,7 +9,9 @@ export async function recaptureItem({ ref, course, name, kind }) {
       body: JSON.stringify({ ref, course, name, kind, only: true, forceCapture: true }),
     });
     let body = null;
-    try { body = await res.json(); } catch {}
+    try {
+      body = await res.json();
+    } catch {}
     return { status: res.status, body };
   } catch (err) {
     return { status: 0, body: { error: err.message } };

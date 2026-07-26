@@ -55,23 +55,26 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
         <InlineEditInput
           edit={renameEdit}
           onCommit={commitRename}
-          onCancel={() => { setRenaming(false); renameEdit.setValue('') }}
+          onCancel={() => {
+            setRenaming(false)
+            renameEdit.setValue('')
+          }}
         />
       ) : (
-      <button
-        className="course-toggle"
-        onClick={(e) => {
-          if (e.shiftKey) startRenaming(e)
-          else expand.toggle()
-        }}
-        dir="auto"
-      >
-        <span className="chevron">{expand.isOpen ? '▾' : '▸'}</span>
-        <span>{course.name}</span>
-      </button>
+        <button
+          className="course-toggle"
+          onClick={(e) => {
+            if (e.shiftKey) startRenaming(e)
+            else expand.toggle()
+          }}
+          dir="auto"
+        >
+          <span className="chevron">{expand.isOpen ? '▾' : '▸'}</span>
+          <span>{course.name}</span>
+        </button>
       )}
-      {!renaming && (
-        shiftHeld ? (
+      {!renaming &&
+        (shiftHeld ? (
           <button
             className="course-add-btn course-archive-btn"
             onClick={toggleArchived}
@@ -80,15 +83,10 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             <Icon icon={course.archived ? 'unarchive' : 'archive'} />
           </button>
         ) : (
-          <button
-            className="course-add-btn"
-            onClick={startAdding}
-            title="Add lecture"
-          >
+          <button className="course-add-btn" onClick={startAdding} title="Add lecture">
             +
           </button>
-        )
-      )}
+        ))}
     </div>
   )
 }

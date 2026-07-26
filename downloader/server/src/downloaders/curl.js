@@ -7,9 +7,18 @@ import { SKIP_HEADERS, probeContentLength } from '../services/probe.js';
 // without close_notify mid-stream. See docs/DOWNLOAD.md.
 function buildCurlArgs(url, headers) {
   const args = [
-    '-L', '--fail', '--compressed', '--silent', '--show-error',
-    '--retry', '3', '--retry-delay', '2', '--retry-all-errors',
-    '--output', VIDEO_FILENAME,
+    '-L',
+    '--fail',
+    '--compressed',
+    '--silent',
+    '--show-error',
+    '--retry',
+    '3',
+    '--retry-delay',
+    '2',
+    '--retry-all-errors',
+    '--output',
+    VIDEO_FILENAME,
   ];
   for (const h of headers ?? []) {
     if (SKIP_HEADERS.has(h.name.toLowerCase())) continue;

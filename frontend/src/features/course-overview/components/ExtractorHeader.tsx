@@ -26,18 +26,16 @@ export default function ExtractorHeader() {
 
   return (
     <div className="course-branch-header">
-      <button
-        className="course-branch-toggle"
-        onClick={toggleExpanded}
-        aria-expanded={expanded}
-      >
+      <button className="course-branch-toggle" onClick={toggleExpanded} aria-expanded={expanded}>
         <span className="course-branch-caret">{expanded ? '▾' : '▸'}</span>
         <span className="course-branch-heading">
           <span className="course-branch-name">{title}</span>
           {entry && (
             <span className="course-branch-subtitle">
               {formatRange(entry)} ·{' '}
-              <span title={formatFullTimestamp(entry.generatedAt)}>{formatMonthDate(entry.generatedAt)}</span>
+              <span title={formatFullTimestamp(entry.generatedAt)}>
+                {formatMonthDate(entry.generatedAt)}
+              </span>
             </span>
           )}
         </span>
@@ -48,7 +46,9 @@ export default function ExtractorHeader() {
           <button
             className="file-open-btn"
             title="Open PDF in new tab"
-            onClick={() => window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')}
+            onClick={() =>
+              window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')
+            }
           >
             <Icon icon="external-link" />
           </button>
@@ -59,13 +59,11 @@ export default function ExtractorHeader() {
             title={`Re-generate ${title}`}
             onClick={confirmRegenerate}
             disabled={bs.running}
-          >↺</button>
-        ) : (
-          <button
-            className="file-action-btn"
-            onClick={handleGenerate}
-            disabled={bs.running}
           >
+            ↺
+          </button>
+        ) : (
+          <button className="file-action-btn" onClick={handleGenerate} disabled={bs.running}>
             Generate
           </button>
         )}

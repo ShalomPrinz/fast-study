@@ -18,7 +18,9 @@ export default function Sidebar() {
       <div className="sidebar-header">
         <span>Fast Study</span>
         <div className="sidebar-header-actions">
-          <Link className="sidebar-downloads-link" to="/downloads" title="Downloads">⭳</Link>
+          <Link className="sidebar-downloads-link" to="/downloads" title="Downloads">
+            ⭳
+          </Link>
           <RefreshCoursesButton />
         </div>
       </div>

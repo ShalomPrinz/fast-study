@@ -67,28 +67,33 @@ If `CLAUDE.md` doesn't exist yet, create it with the sections relevant to what h
 Apply these standards as you implement each step:
 
 ### `src/types.ts`
+
 - Extract every inline type and interface from component files
 - Use `export type` for all of them
 - Update every import site
 - If a type is used in only one file, still extract it — consistency matters
 
 ### `src/constants.ts`
+
 - Every string literal appearing more than twice belongs here
 - Pay special attention to file names and asset paths
 - Name constants in `SCREAMING_SNAKE_CASE`
 - Group related constants with a comment block
 
 ### `src/components/shared/`
+
 - Props must be fully typed using types from `src/types.ts`
 - Each shared component gets its own file
 - Add `src/components/shared/index.ts` with named exports
 
 ### `src/hooks/`
+
 - Named `use[DescriptiveName].ts`
 - Any `useState` + `useEffect` combo appearing in 2+ places belongs here
 - Any data-fetching logic living inside a component belongs in a hook
 
 ### Barrel exports
+
 - Every folder under `src/` should have an `index.ts`
 - Component files should use folder-level imports, not deep paths
 

@@ -1,7 +1,7 @@
 # Progress rendering (`src/progress.js`)
 
 The children run **silent** (curl `--silent`, yt-dlp `--no-progress`); the server is
-the *sole* terminal writer. Each in-flight download is registered in a module-level
+the _sole_ terminal writer. Each in-flight download is registered in a module-level
 `Map`, and a single shared `setInterval` (~1.5s, started on the first register,
 cleared when the registry empties) polls the temp size against the probed total and
 emits a line per download.
@@ -11,6 +11,7 @@ emits a line per download.
 and our `console.log`s → overwrite + flicker.
 
 **Why two render paths.**
+
 - **TTY** (`npm start`): repaint a compact block in place via ANSI (cursor-up +
   clear-line), tracking `paintedLines`.
 - **Pipe** (`npm run dev` under `concurrently`): stdout is a pipe, not a TTY, and

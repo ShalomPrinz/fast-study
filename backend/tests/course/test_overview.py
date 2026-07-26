@@ -36,6 +36,7 @@ class TestClassHierarchy:
     def test_phases_is_a_classvar_not_a_field(self):
         # phases lives on the class (behavior), so it is NOT a constructor argument (instance data).
         import inspect
+
         assert PatternExtractor.phases == (Phase.EXTRACT, Phase.ANALYZE, Phase.TO_PDF)
         assert ImmediateExtractor.phases == (Phase.TOPICS, Phase.TO_PDF)
         assert Extractor.phases == ()
@@ -99,5 +100,9 @@ class TestPhasesFrom:
 
     def test_phase_ids_are_the_wire_strings(self):
         # phase_ids serializes the phase chain without callers reaching into Phase.id themselves.
-        assert EXTRACTORS_BY_SLUG["exam-hints"].phase_ids == ("extract", "analyze", "to_pdf")
+        assert EXTRACTORS_BY_SLUG["exam-hints"].phase_ids == (
+            "extract",
+            "analyze",
+            "to_pdf",
+        )
         assert EXTRACTORS_BY_SLUG["topics"].phase_ids == ("topics", "to_pdf")

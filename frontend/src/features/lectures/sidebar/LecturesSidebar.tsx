@@ -22,7 +22,9 @@ function LecturesSidebarBody() {
       <NewCourseRow />
       <RunnerPipelineRow />
       <nav className="sidebar-nav">
-        {active.map((c) => <CourseGroup key={c.name} course={c} />)}
+        {active.map((c) => (
+          <CourseGroup key={c.name} course={c} />
+        ))}
       </nav>
       <ArchivedSection />
     </>

@@ -29,12 +29,13 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
   useNotify(refreshCourses)
 
   const sortedCourses = useMemo(
-    () => courses.map((c) => ({
-      ...c,
-      lectures: sortLectures(c.lectures),
-      recitations: sortLectures(c.recitations),
-    })),
-    [courses]
+    () =>
+      courses.map((c) => ({
+        ...c,
+        lectures: sortLectures(c.lectures),
+        recitations: sortLectures(c.recitations),
+      })),
+    [courses],
   )
 
   return (

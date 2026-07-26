@@ -85,12 +85,18 @@ export default function DownloadsView() {
           {selected && (
             <div className="recordings-panel">
               <div className="recordings-header">
-                <span className="recordings-title" dir="auto">Recordings · {selected}</span>
+                <span className="recordings-title" dir="auto">
+                  Recordings · {selected}
+                </span>
                 <button
                   className="recordings-close"
-                  onClick={() => { setSelected(null); setItems([]); setError(null) }}
+                  onClick={() => {
+                    setSelected(null)
+                    setItems([])
+                    setError(null)
+                  }}
                 >
-                  close 
+                  close
                 </button>
               </div>
               {loading && <div className="recordings-status">Loading recordings…</div>}

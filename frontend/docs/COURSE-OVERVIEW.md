@@ -38,7 +38,7 @@ row's Generate/↺ gates on its own slug's `running`, and a step spinner lights 
 `phase` matches the row. So one slug can be re-generated while "Generate All" churns on another.
 
 `branchStatus(status, files, slug, phases)` is the single derivation of a row's `{ running, done, error }`:
-`done` means the *last* file of that extractor's phase list exists.
+`done` means the _last_ file of that extractor's phase list exists.
 
 Only the `.pdf` row and the header carry an open-in-new-tab button; intermediate `.txt`/`.md` stay
 link-less. Extractor errors toast once per `(course, slug, message)` via `useReportOnce`, pruned with a

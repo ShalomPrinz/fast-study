@@ -6,7 +6,6 @@ sys.path.insert(0, str(_BACKEND / "pipeline"))
 sys.path.insert(0, str(_BACKEND))
 
 import pytest
-
 import timing
 
 

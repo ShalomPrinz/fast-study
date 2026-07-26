@@ -10,7 +10,14 @@ interface Props {
   onCancel: () => void
 }
 
-export default function ConfirmModal({ message, postMessage, warning, detail, onConfirm, onCancel }: Props) {
+export default function ConfirmModal({
+  message,
+  postMessage,
+  warning,
+  detail,
+  onConfirm,
+  onCancel,
+}: Props) {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') onCancel()
@@ -27,8 +34,12 @@ export default function ConfirmModal({ message, postMessage, warning, detail, on
         {detail}
         {postMessage && <p className="modal-message">{postMessage}</p>}
         <div className="modal-actions">
-          <button className="modal-btn modal-btn--yes" onClick={onConfirm}>Yes</button>
-          <button className="modal-btn modal-btn--no" autoFocus onClick={onCancel}>No</button>
+          <button className="modal-btn modal-btn--yes" onClick={onConfirm}>
+            Yes
+          </button>
+          <button className="modal-btn modal-btn--no" autoFocus onClick={onCancel}>
+            No
+          </button>
         </div>
       </div>
     </div>,

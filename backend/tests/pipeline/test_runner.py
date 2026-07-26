@@ -13,20 +13,36 @@ from pipeline import runner
 def _files(**existing) -> dict:
     """Build a {filename: {exists: bool}} mapping. Pass kwargs like video=True."""
     name_map = {
-        "video":      "video.mp4",
-        "audio":      "audio.mp3",
+        "video": "video.mp4",
+        "audio": "audio.mp3",
         "transcript": "transcript.txt",
-        "summary":    "summary.md",
-        "pdf":        "summary.pdf",
-        "drive":      "drive_url.txt",
+        "summary": "summary.md",
+        "pdf": "summary.pdf",
+        "drive": "drive_url.txt",
     }
-    return {fname: {"exists": existing.get(short, False)} for short, fname in name_map.items()}
+    return {
+        fname: {"exists": existing.get(short, False)}
+        for short, fname in name_map.items()
+    }
 
 
 # ---- next_step ----
 
+
 def test_next_step_drive_present_returns_none():
-    assert runner.next_step(_files(video=True, audio=True, transcript=True, summary=True, pdf=True, drive=True)) is None
+    assert (
+        runner.next_step(
+            _files(
+                video=True,
+                audio=True,
+                transcript=True,
+                summary=True,
+                pdf=True,
+                drive=True,
+            )
+        )
+        is None
+    )
 
 
 def test_next_step_audio_present_transcript_missing_returns_transcribe():
@@ -38,28 +54,39 @@ def test_next_step_only_video_returns_audio():
 
 
 def test_next_step_summary_present_pdf_missing_returns_pdf():
-    assert runner.next_step(_files(video=True, audio=True, transcript=True, summary=True)) == "pdf"
+    assert (
+        runner.next_step(_files(video=True, audio=True, transcript=True, summary=True))
+        == "pdf"
+    )
 
 
 def test_next_step_pdf_present_drive_missing_returns_drive():
-    assert runner.next_step(_files(video=True, audio=True, transcript=True, summary=True, pdf=True)) == "drive"
+    assert (
+        runner.next_step(
+            _files(video=True, audio=True, transcript=True, summary=True, pdf=True)
+        )
+        == "drive"
+    )
 
 
 # ---- scan_pending ----
 
+
 def test_scan_pending_filters_no_video_and_finished():
-    tree = [{
-        "name": "C1",
-        "lectures": [
-            {"name": "L_done",      "files": _files(video=True, drive=True)},
-            {"name": "L_pending",   "files": _files(video=True, audio=True)},
-            {"name": "L_no_video",  "files": _files()},
-        ],
-        "recitations": [
-            {"name": "R_pending",   "files": _files(video=True)},
-            {"name": "R_done",      "files": _files(video=True, drive=True)},
-        ],
-    }]
+    tree = [
+        {
+            "name": "C1",
+            "lectures": [
+                {"name": "L_done", "files": _files(video=True, drive=True)},
+                {"name": "L_pending", "files": _files(video=True, audio=True)},
+                {"name": "L_no_video", "files": _files()},
+            ],
+            "recitations": [
+                {"name": "R_pending", "files": _files(video=True)},
+                {"name": "R_done", "files": _files(video=True, drive=True)},
+            ],
+        }
+    ]
     with patch.object(runner.db_client, "get_tree", return_value=tree):
         result = asyncio.run(runner.scan_pending())
     assert ("C1", "L_pending", "lecture") in result
@@ -72,6 +99,7 @@ def test_scan_pending_filters_no_video_and_finished():
 
 # ---- _scheduled_run guard ----
 
+
 def test_scheduled_run_skips_when_locked():
     """_scheduled_run must not call scan_pending or run_all if already running."""
     scan_calls: list = []
@@ -79,7 +107,9 @@ def test_scheduled_run_skips_when_locked():
     async def go():
         runner._runner_status["running"] = True
         try:
-            with patch.object(runner, "scan_pending", side_effect=lambda: scan_calls.append(1)):
+            with patch.object(
+                runner, "scan_pending", side_effect=lambda: scan_calls.append(1)
+            ):
                 await runner._scheduled_run()
         finally:
             runner._runner_status["running"] = False
@@ -89,6 +119,7 @@ def test_scheduled_run_skips_when_locked():
 
 
 # ---- empty-file guard ----
+
 
 def test_require_nonempty_raises_on_empty():
     with pytest.raises(RuntimeError, match="is empty"):
@@ -102,7 +133,9 @@ def test_require_nonempty_allows_content():
 def test_require_nonempty_appends_known_cause():
     """For a known file, the message borrows EMPTY_FILE_ISSUES for the 'why'
     (no exception was raised by the failing tool to derive it from)."""
-    with pytest.raises(RuntimeError, match="summary.md is empty — Gemini returned no text"):
+    with pytest.raises(
+        RuntimeError, match="summary.md is empty — Gemini returned no text"
+    ):
         runner._require_nonempty("summary.md", b"")
 
 
@@ -118,7 +151,9 @@ def test_db_workspace_rejects_empty_upload():
     output and never write it to the database service."""
     with patch.object(runner.db_client, "put_file_bytes") as put:
         with pytest.raises(RuntimeError, match="is empty"):
-            with runner._db_workspace("C1", "L1", "lecture", upload=["audio.mp3"]) as ws:
+            with runner._db_workspace(
+                "C1", "L1", "lecture", upload=["audio.mp3"]
+            ) as ws:
                 ws["audio.mp3"].write_bytes(b"")
     put.assert_not_called()
 
@@ -136,17 +171,21 @@ def test_db_workspace_rejects_empty_download():
     entered = {"yes": False}
     with patch.object(runner.db_client, "get_file_bytes", return_value=b""):
         with pytest.raises(RuntimeError, match="transcript.txt is empty"):
-            with runner._db_workspace("C1", "L1", "lecture", download=["transcript.txt"]):
+            with runner._db_workspace(
+                "C1", "L1", "lecture", download=["transcript.txt"]
+            ):
                 entered["yes"] = True
     assert entered["yes"] is False
 
 
 def test_exec_transcribe_rejects_empty_transcript():
     """An empty Whisper result must halt the step, not write a 0-byte transcript."""
-    with patch.object(runner.db_client, "file_exists", return_value=True), \
-         patch.object(runner.db_client, "get_file_bytes", return_value=b"audio"), \
-         patch.object(runner, "transcribe_audio", return_value=""), \
-         patch.object(runner.db_client, "put_file_bytes") as put:
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=True),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"audio"),
+        patch.object(runner, "transcribe_audio", return_value=""),
+        patch.object(runner.db_client, "put_file_bytes") as put,
+    ):
         result = runner._exec_transcribe("C1", "L1", "lecture")
     assert result["status"] == "error"
     assert "transcript.txt is empty" in result["message"]
@@ -157,13 +196,16 @@ def test_exec_transcribe_rejects_empty_transcript():
 def test_exec_summarize_rejects_empty_summary():
     """Output guard: an empty Gemini response is rejected with its known cause,
     and no 0-byte summary.md is written."""
+
     def _exists(course, lecture, kind, name):
         return name == "transcript.txt"  # transcript present, material absent
 
-    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
-         patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"), \
-         patch.object(runner, "summarize", return_value=""), \
-         patch.object(runner.db_client, "put_summary") as put_summary:
+    with (
+        patch.object(runner.db_client, "file_exists", side_effect=_exists),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"),
+        patch.object(runner, "summarize", return_value=""),
+        patch.object(runner.db_client, "put_summary") as put_summary,
+    ):
         result = runner._exec_summarize("C1", "L1", "lecture")
     assert result["status"] == "error"
     assert "summary.md is empty — Gemini returned no text" in result["message"]
@@ -172,14 +214,19 @@ def test_exec_summarize_rejects_empty_summary():
 
 # ---- transcribe partial persistence ----
 
+
 def _fake_transcribe_writing_partial(exc):
     """Return a transcribe_audio stand-in that writes partial files into the workspace
     (mimicking chunks completed this run) and then raises `exc`."""
+
     def _fake(audio_path):
         d = Path(audio_path).parent
         (d / runner.PARTIAL_TXT).write_text("chunk 1 text\n\n")
-        (d / runner.PARTIAL_META).write_text('{"completed_chunks": 1, "total_chunks": 9}')
+        (d / runner.PARTIAL_META).write_text(
+            '{"completed_chunks": 1, "total_chunks": 9}'
+        )
         raise exc
+
     return _fake
 
 
@@ -191,17 +238,30 @@ def test_exec_transcribe_persists_partial_on_generic_error():
     def _exists(course, lecture, kind, name):
         return name == "audio.mp3"  # only audio present; no prior partial to restore
 
-    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
-         patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"), \
-         patch.object(runner.db_client, "put_file_bytes", side_effect=lambda c, l, k, n, d: puts.append(n)), \
-         patch.object(runner, "transcribe_audio",
-                      side_effect=_fake_transcribe_writing_partial(RuntimeError("Internal Server Error"))):
+    with (
+        patch.object(runner.db_client, "file_exists", side_effect=_exists),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"),
+        patch.object(
+            runner.db_client,
+            "put_file_bytes",
+            side_effect=lambda c, l, k, n, d: puts.append(n),
+        ),
+        patch.object(
+            runner,
+            "transcribe_audio",
+            side_effect=_fake_transcribe_writing_partial(
+                RuntimeError("Internal Server Error")
+            ),
+        ),
+    ):
         result = runner._exec_transcribe("C1", "L1", "lecture")
 
     assert result["status"] == "error"
     assert "Internal Server Error" in result["message"]
     assert runner.PARTIAL_TXT in puts and runner.PARTIAL_META in puts
-    assert "transcript.txt" not in puts  # a failed run must never write the final transcript
+    assert (
+        "transcript.txt" not in puts
+    )  # a failed run must never write the final transcript
 
 
 def test_exec_transcribe_persists_partial_on_rate_limit():
@@ -213,10 +273,20 @@ def test_exec_transcribe_persists_partial_on_rate_limit():
     def _exists(course, lecture, kind, name):
         return name == "audio.mp3"
 
-    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
-         patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"), \
-         patch.object(runner.db_client, "put_file_bytes", side_effect=lambda c, l, k, n, d: puts.append(n)), \
-         patch.object(runner, "transcribe_audio", side_effect=_fake_transcribe_writing_partial(err)):
+    with (
+        patch.object(runner.db_client, "file_exists", side_effect=_exists),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"),
+        patch.object(
+            runner.db_client,
+            "put_file_bytes",
+            side_effect=lambda c, l, k, n, d: puts.append(n),
+        ),
+        patch.object(
+            runner,
+            "transcribe_audio",
+            side_effect=_fake_transcribe_writing_partial(err),
+        ),
+    ):
         result = runner._exec_transcribe("C1", "L1", "lecture")
 
     assert result["status"] == "rate_limited"
@@ -226,15 +296,19 @@ def test_exec_transcribe_persists_partial_on_rate_limit():
 
 # ---- error is logged, not just stored ----
 
+
 def test_run_step_logs_error(caplog):
     """An error outcome is logged (not only stored in _errors), so the terminal shows
     the failure instead of a silent jump to the next lecture."""
+
     async def fake_call(course, lecture, kind, step):
         return {"status": "error", "message": "boom"}
 
     async def go():
-        with patch.object(runner, "_call_step", fake_call), \
-             patch.object(runner.db_client, "notify"):
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
             await runner._run_step_unlocked("C1", "L1", "lecture", "transcribe")
 
     with caplog.at_level("ERROR", logger="runner"):
@@ -247,6 +321,7 @@ def test_run_step_logs_error(caplog):
 
 
 # ---- rate-limit branch ----
+
 
 def test_rate_limit_sleeps_then_retries_same_step():
     """patch _call_step to return rate_limited then done; patch _fetch_files to
@@ -262,7 +337,9 @@ def test_rate_limit_sleeps_then_retries_same_step():
     # the first outer loop, fully-done after the step completes.
     file_states = [
         _files(video=True, audio=True),
-        _files(video=True, audio=True, transcript=True, summary=True, pdf=True, drive=True),
+        _files(
+            video=True, audio=True, transcript=True, summary=True, pdf=True, drive=True
+        ),
     ]
     state_idx = {"i": 0}
 
@@ -280,9 +357,11 @@ def test_rate_limit_sleeps_then_retries_same_step():
     async def fake_sleep(seconds):
         sleep_log.append(seconds)
 
-    with patch.object(runner, "_fetch_files", fake_fetch), \
-         patch.object(runner, "_call_step", fake_call), \
-         patch.object(runner.asyncio, "sleep", fake_sleep):
+    with (
+        patch.object(runner, "_fetch_files", fake_fetch),
+        patch.object(runner, "_call_step", fake_call),
+        patch.object(runner.asyncio, "sleep", fake_sleep),
+    ):
         asyncio.run(runner.run_pipeline_for("C1", "L1", "lecture"))
 
     assert call_log == ["transcribe", "transcribe"]
@@ -305,9 +384,11 @@ def test_rate_limit_honors_per_result_retry_after():
         sleep_log.append(seconds)
 
     async def go():
-        with patch.object(runner, "_call_step", fake_call), \
-             patch.object(runner.db_client, "notify"), \
-             patch.object(runner.asyncio, "sleep", fake_sleep):
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+            patch.object(runner.asyncio, "sleep", fake_sleep),
+        ):
             await runner._run_step_unlocked("C1", "L1", "lecture", "summarize")
 
     asyncio.run(go())
@@ -316,6 +397,7 @@ def test_rate_limit_honors_per_result_retry_after():
 
 # ---- Gemini 429 → step result ----
 
+
 def _run_exec_summarize(info: dict) -> dict:
     """Run _exec_summarize with the transcript present and Gemini raising a 429."""
     err = runner.GeminiRateLimitError({**info, "message": "quota message"})
@@ -323,10 +405,12 @@ def _run_exec_summarize(info: dict) -> dict:
     def _exists(course, lecture, kind, name):
         return name == "transcript.txt"  # transcript present, material absent
 
-    with patch.object(runner.db_client, "file_exists", side_effect=_exists), \
-         patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"), \
-         patch.object(runner.db_client, "put_summary") as put_summary, \
-         patch.object(runner, "summarize", side_effect=err):
+    with (
+        patch.object(runner.db_client, "file_exists", side_effect=_exists),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"),
+        patch.object(runner.db_client, "put_summary") as put_summary,
+        patch.object(runner, "summarize", side_effect=err),
+    ):
         result = runner._exec_summarize("C1", "L1", "lecture")
     put_summary.assert_not_called()
     return result
@@ -349,7 +433,10 @@ def test_exec_summarize_daily_quota_is_error_not_retried():
 
 # ---- Gemini daily-quota block ----
 
-def _quota_error_result(message="Gemini free-tier daily quota reached (20 requests/day) — resets at midnight Pacific"):
+
+def _quota_error_result(
+    message="Gemini free-tier daily quota reached (20 requests/day) — resets at midnight Pacific",
+):
     return {"status": "error", "message": message, "daily_quota": True}
 
 
@@ -369,16 +456,22 @@ def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
         return _quota_error_result()
 
     async def go():
-        with patch.object(runner, "_fetch_files", fake_fetch), \
-             patch.object(runner, "_call_step", fake_call), \
-             patch.object(runner.db_client, "notify"):
+        with (
+            patch.object(runner, "_fetch_files", fake_fetch),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
             return await runner.run_all(queue)
 
     try:
         asyncio.run(go())
-        assert steps_run == [("L1", "summarize")], "only the first lecture may call Gemini"
+        assert steps_run == [("L1", "summarize")], (
+            "only the first lecture may call Gemini"
+        )
         assert list(runner._errors) == [runner._skey("C1", "L1", "lecture")]
-        assert "daily quota reached" in runner._errors[runner._skey("C1", "L1", "lecture")]
+        assert (
+            "daily quota reached" in runner._errors[runner._skey("C1", "L1", "lecture")]
+        )
     finally:
         runner._errors.clear()
         runner._summarize_blocked = False
@@ -397,12 +490,14 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
         return _quota_error_result()
 
     async def go():
-        with patch.object(runner, "_fetch_files", fake_fetch), \
-             patch.object(runner, "_call_step", fake_call), \
-             patch.object(runner.db_client, "notify"):
+        with (
+            patch.object(runner, "_fetch_files", fake_fetch),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
             await runner.run_all([("C1", "L1", "lecture")])
             assert runner._summarize_blocked is False  # cleared by run_all's finally
-            runner._summarize_blocked = True           # as if a run were still blocked
+            runner._summarize_blocked = True  # as if a run were still blocked
             await runner.run_pipeline_for("C1", "L2", "lecture")
 
     try:

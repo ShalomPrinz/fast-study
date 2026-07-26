@@ -5,8 +5,12 @@ import https from 'node:https';
 // body whose offset-0 MP4 header is missing (unplayable). Stripped everywhere the
 // captured headers are reused (probe + curl). See docs/DOWNLOAD.md.
 export const SKIP_HEADERS = new Set([
-  'range', 'if-range', 'if-none-match', 'if-modified-since',
-  'host', 'content-length',
+  'range',
+  'if-range',
+  'if-none-match',
+  'if-modified-since',
+  'host',
+  'content-length',
 ]);
 
 export function headersToObject(headers) {
@@ -23,15 +27,25 @@ export function headersToObject(headers) {
 function requestHead(url, headers, method, extraHeaders) {
   return new Promise((resolve) => {
     let u;
-    try { u = new URL(url); } catch { return resolve(null); }
+    try {
+      u = new URL(url);
+    } catch {
+      return resolve(null);
+    }
     const lib = u.protocol === 'http:' ? http : https;
     const req = lib.request(
       url,
       { method, headers: { ...headersToObject(headers), ...(extraHeaders ?? {}) } },
-      (res) => { res.resume(); resolve(res); },
+      (res) => {
+        res.resume();
+        resolve(res);
+      },
     );
     req.on('error', () => resolve(null));
-    req.setTimeout(10000, () => { req.destroy(); resolve(null); });
+    req.setTimeout(10000, () => {
+      req.destroy();
+      resolve(null);
+    });
     req.end();
   });
 }

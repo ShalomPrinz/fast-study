@@ -10,16 +10,18 @@ export default function CoursesList() {
   return (
     <nav className="sidebar-nav">
       <ul className="lecture-list course-list">
-        {courses.filter((c) => !c.archived).map((course) => (
-          <li key={course.name}>
-            <button
-              className={`lecture-btn${selectedCourse === course.name ? ' selected' : ''}`}
-              onClick={() => navigate(courseRoute(course.name))}
-            >
-              {course.name}
-            </button>
-          </li>
-        ))}
+        {courses
+          .filter((c) => !c.archived)
+          .map((course) => (
+            <li key={course.name}>
+              <button
+                className={`lecture-btn${selectedCourse === course.name ? ' selected' : ''}`}
+                onClick={() => navigate(courseRoute(course.name))}
+              >
+                {course.name}
+              </button>
+            </li>
+          ))}
       </ul>
     </nav>
   )

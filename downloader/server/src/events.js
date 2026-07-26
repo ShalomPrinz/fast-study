@@ -17,15 +17,26 @@ export function subscribe(res) {
   res.write(': connected\n\n');
   subscribers.add(res);
 
-  const keepalive = setInterval(() => { try { res.write(': keepalive\n\n'); } catch {} }, KEEPALIVE_MS);
+  const keepalive = setInterval(() => {
+    try {
+      res.write(': keepalive\n\n');
+    } catch {}
+  }, KEEPALIVE_MS);
   keepalive.unref(); // an open stream must not hold the process alive
-  res.on('close', () => { clearInterval(keepalive); subscribers.delete(res); });
+  res.on('close', () => {
+    clearInterval(keepalive);
+    subscribers.delete(res);
+  });
 }
 
 // Fire-and-forget: a broken subscriber is dropped, never allowed to fail a download.
 export function broadcast() {
   const frame = 'event: job:change\ndata: {}\n\n';
   for (const res of subscribers) {
-    try { res.write(frame); } catch { subscribers.delete(res); }
+    try {
+      res.write(frame);
+    } catch {
+      subscribers.delete(res);
+    }
   }
 }

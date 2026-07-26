@@ -8,7 +8,15 @@ const RECITATION_KEYWORDS = ['תרגולים', 'תרגול', 'תרגיל', 'reci
 
 // Hints that a `url` module is a recording playlist, not an unrelated link (syllabus,
 // reading, drive folder). (Hebrew: הקלטות/הקלטה = recordings; הרצאות/הרצאה = lectures.)
-const RECORDING_KEYWORDS = ['הקלטות', 'הרצאות', 'הקלטה', 'הרצאה', 'recording', 'lecture', ...RECITATION_KEYWORDS];
+const RECORDING_KEYWORDS = [
+  'הקלטות',
+  'הרצאות',
+  'הקלטה',
+  'הרצאה',
+  'recording',
+  'lecture',
+  ...RECITATION_KEYWORDS,
+];
 
 /**
  * Section name / title text ⇒ activity kind. Defaults to 'lecture' when no

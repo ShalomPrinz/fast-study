@@ -17,7 +17,9 @@ router.post('/upload-pdf', express.raw({ type: '*/*', limit: '1gb' }), async (re
   if (kindErr) return res.status(400).json(kindErr);
 
   const buf = req.body;
-  emitLog(`\n📥 PDF upload received: ${formatBytes(buf?.length ?? 0)} for ${course}/${lecture} (kind=${kind})`);
+  emitLog(
+    `\n📥 PDF upload received: ${formatBytes(buf?.length ?? 0)} for ${course}/${lecture} (kind=${kind})`,
+  );
   if (!Buffer.isBuffer(buf) || buf.length === 0) {
     return res.status(400).json({ error: 'empty body' });
   }

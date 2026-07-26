@@ -2,7 +2,6 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 import summarize as summarize_mod
 from summarize import summarize
 
@@ -15,7 +14,9 @@ def _make_client(response_text: str = "# Title\nbody"):
 
     def _upload(path, mime_type):
         counter["n"] += 1
-        return SimpleNamespace(_path=path, _mime=mime_type, name=f"files/handle{counter['n']}")
+        return SimpleNamespace(
+            _path=path, _mime=mime_type, name=f"files/handle{counter['n']}"
+        )
 
     client.upload_file.side_effect = _upload
     client.generate.return_value = response_text if response_text is not None else ""
@@ -85,7 +86,9 @@ def test_summarize_with_material(tmp_path):
     # PDF suffix is appended before the length budget, so it lives in the middle.
     assert summarize_mod.PDF_INSTRUCTION_SUFFIX in contents[5]
     assert contents[5].endswith(summarize_mod.LENGTH_BUDGET_SUFFIX)
-    assert contents[5].index(summarize_mod.PDF_INSTRUCTION_SUFFIX) < contents[5].index(summarize_mod.LENGTH_BUDGET_SUFFIX)
+    assert contents[5].index(summarize_mod.PDF_INSTRUCTION_SUFFIX) < contents[5].index(
+        summarize_mod.LENGTH_BUDGET_SUFFIX
+    )
 
 
 def test_summarize_raises_on_api_failure(tmp_path):

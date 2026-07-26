@@ -1,4 +1,6 @@
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -23,7 +25,9 @@
   font-family: 'Inter', 'Noto Sans Hebrew', 'Segoe UI', Arial, sans-serif;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
 }
 
@@ -74,7 +78,9 @@ html, body, #root {
   border-radius: 4px;
   color: var(--sidebar-muted);
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .sidebar-refresh-btn:hover:not(:disabled) {
@@ -91,7 +97,9 @@ html, body, #root {
 }
 
 @keyframes sidebar-refresh-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .sidebar-nav {
@@ -127,7 +135,9 @@ html, body, #root {
   color: var(--sidebar-muted);
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .archived-footer-btn:hover,
@@ -341,7 +351,6 @@ html, body, #root {
   font-size: 13px;
   outline: none;
 }
-
 
 /* ── Main view ── */
 
@@ -560,10 +569,18 @@ html, body, #root {
   line-height: 1;
 }
 
-.material-indicator--will-use { color: #2563eb; }
-.material-indicator--used { color: #16a34a; }
-.material-indicator--missing { color: #d97706; }
-.material-indicator--was-missing { color: #6b7280; }
+.material-indicator--will-use {
+  color: #2563eb;
+}
+.material-indicator--used {
+  color: #16a34a;
+}
+.material-indicator--missing {
+  color: #d97706;
+}
+.material-indicator--was-missing {
+  color: #6b7280;
+}
 
 .file-row-right {
   display: flex;
@@ -713,7 +730,9 @@ html, body, #root {
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: background 0.12s, border-color 0.12s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 }
 
 .runner-inflight-row:hover {
@@ -828,11 +847,12 @@ html, body, #root {
   color: #b91c1c;
 }
 
-
 /* ── Spinner ── */
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinner {
@@ -1069,7 +1089,7 @@ html, body, #root {
 }
 
 .pdf-scroll-container .react-pdf__Page {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .pdf-doc-loading {
@@ -1136,7 +1156,9 @@ html, body, #root {
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .mode-toggle-btn:hover {
@@ -1267,7 +1289,9 @@ html, body, #root {
   color: var(--sidebar-muted);
   text-decoration: none;
   font-size: 15px;
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .sidebar-downloads-link:hover {
@@ -1776,5 +1800,7 @@ p.recording-progress {
 }
 
 @keyframes recording-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }

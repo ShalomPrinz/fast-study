@@ -94,7 +94,9 @@ export class ZoomExtractor extends VideoExtractor {
         .catch(() => null);
     }
     if (!request) {
-      throw new Error(`No .mp4 request captured on zoom share ${rec.pageUrl} (passcode/player may need a manual trigger)`);
+      throw new Error(
+        `No .mp4 request captured on zoom share ${rec.pageUrl} (passcode/player may need a manual trigger)`,
+      );
     }
     seen.add(mp4Key(request.url()));
     const captures = [await this.#toCapture(request, rec)];
@@ -129,9 +131,7 @@ export class ZoomExtractor extends VideoExtractor {
     // click each retry until #passcode detaches. See docs/ZOOM.md.
     for (let i = 0; i < 5; i++) {
       await page.fill('input#passcode, input[type="password"]', passcode).catch(() => {});
-      await page
-        .click('#passcode_btn, button:has-text("Watch Recording")')
-        .catch(() => {});
+      await page.click('#passcode_btn, button:has-text("Watch Recording")').catch(() => {});
       const cleared = await page
         .waitForSelector('input#passcode', { state: 'detached', timeout: 3000 })
         .then(() => true)
@@ -171,11 +171,11 @@ export class ZoomExtractor extends VideoExtractor {
    */
   async #captureSecond(page, seen) {
     const wait = page
-      .waitForRequest((req) => endsWithMp4(req.url()) && !seen.has(mp4Key(req.url())), { timeout: SECOND_MP4_WAIT_MS })
+      .waitForRequest((req) => endsWithMp4(req.url()) && !seen.has(mp4Key(req.url())), {
+        timeout: SECOND_MP4_WAIT_MS,
+      })
       .catch(() => null);
-    await page
-      .click('.vjs-multiple-clip-control-button.button-next button')
-      .catch(() => {});
+    await page.click('.vjs-multiple-clip-control-button.button-next button').catch(() => {});
     const request = await wait;
     if (request) seen.add(mp4Key(request.url()));
     return request;

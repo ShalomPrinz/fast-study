@@ -2,7 +2,14 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from .paths import data_root, RECITATIONS_DIR, OVERVIEW_DIR, PREDEFINED_FILES, ARCHIVED_MARKER, SOURCE_URL_MARKER
+from .paths import (
+    ARCHIVED_MARKER,
+    OVERVIEW_DIR,
+    PREDEFINED_FILES,
+    RECITATIONS_DIR,
+    SOURCE_URL_MARKER,
+    data_root,
+)
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
@@ -104,4 +111,8 @@ def read_tree() -> list[dict]:
     root = data_root()
     if not root.exists():
         return []
-    return [c for c in (read_course(e.name) for e in root.iterdir() if e.is_dir()) if c is not None]
+    return [
+        c
+        for c in (read_course(e.name) for e in root.iterdir() if e.is_dir())
+        if c is not None
+    ]

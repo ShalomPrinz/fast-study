@@ -1,4 +1,8 @@
-import { resolveUniversity, defaultUniversity, resolveExtractorForRecording } from '../core/registry.js';
+import {
+  resolveUniversity,
+  defaultUniversity,
+  resolveExtractorForRecording,
+} from '../core/registry.js';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import { listRecordings, downloadRecording } from '../core/core.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
@@ -71,12 +75,14 @@ function sendPasscode(res, { reason, course, name }) {
 // Same guard as server/server.js: reject path-traversal / empty names before
 // they reach the database service.
 function isSafeName(name) {
-  return typeof name === 'string'
-    && name.length > 0
-    && !name.includes('/')
-    && !name.includes('\\')
-    && name !== '.'
-    && name !== '..';
+  return (
+    typeof name === 'string' &&
+    name.length > 0 &&
+    !name.includes('/') &&
+    !name.includes('\\') &&
+    name !== '.' &&
+    name !== '..'
+  );
 }
 
 // ── Auth endpoints ──────────────────────────────────────────────────────────
@@ -107,13 +113,24 @@ export async function handleList(req, res) {
     return send(res, 400, { error: 'valid courseUrl required' });
   }
   let uni;
-  try { uni = resolveUniversity(courseUrl); } catch (e) { return send(res, 400, { error: e.message }); }
+  try {
+    uni = resolveUniversity(courseUrl);
+  } catch (e) {
+    return send(res, 400, { error: e.message });
+  }
 
   const auth = authFor(uni);
-  if (!auth.status().connected) { logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
+  if (!auth.status().connected) {
+    logResult('/list', 'reconnect (401)');
+    return sendReconnect(res);
+  }
 
   let courseId;
-  try { courseId = courseIdFrom(courseUrl); } catch (e) { return send(res, 400, { error: e.message }); }
+  try {
+    courseId = courseIdFrom(courseUrl);
+  } catch (e) {
+    return send(res, 400, { error: e.message });
+  }
 
   // Stateless WS: no browser needed. A dead token comes back as an invalidToken
   // WS exception → mark expired + steer to Reconnect; any other WS fault falls to 500.
@@ -122,7 +139,11 @@ export async function handleList(req, res) {
   try {
     sections = await getCourseContents(token, courseId);
   } catch (e) {
-    if (invalidToken(e)) { auth.markExpired(); logResult('/list', 'reconnect (401)'); return sendReconnect(res); }
+    if (invalidToken(e)) {
+      auth.markExpired();
+      logResult('/list', 'reconnect (401)');
+      return sendReconnect(res);
+    }
     throw e;
   }
   const recordings = listRecordings(sections);
@@ -144,13 +165,22 @@ export async function handleListExpand(req, res) {
   try {
     entries = await extractor.listEntries(recording);
   } catch (e) {
-    if (e instanceof UnsupportedError) { logResult('/list/expand', `unsupported (422): ${e.message}`); return sendUnsupported(res, e.message); }
+    if (e instanceof UnsupportedError) {
+      logResult('/list/expand', `unsupported (422): ${e.message}`);
+      return sendUnsupported(res, e.message);
+    }
     throw e; // other failures fall through to the centralized 500 ("try again")
   }
   // Each entry becomes a concrete, downloadable child (has a direct url → not
   // expandable). The child's ref carries the youtube recording for /download-item.
   const items = entries.map((e) =>
-    toItem({ title: e.title, url: e.url, kind: recording.kind, strategy: recording.strategy, section: recording.section }),
+    toItem({
+      title: e.title,
+      url: e.url,
+      kind: recording.kind,
+      strategy: recording.strategy,
+      section: recording.section,
+    }),
   );
   logResult('/list/expand', `${items.length} items`);
   send(res, 200, { items });
@@ -162,7 +192,10 @@ export async function handleDownloadItem(req, res) {
   try {
     await downloadItem(req, res);
   } catch (e) {
-    if (e instanceof UnsupportedError) { logResult('/download-item', `unsupported (422): ${e.message}`); return sendUnsupported(res, e.message); }
+    if (e instanceof UnsupportedError) {
+      logResult('/download-item', `unsupported (422): ${e.message}`);
+      return sendUnsupported(res, e.message);
+    }
     if (e instanceof PasscodeError) {
       const { course, name } = req.body;
       logResult('/download-item', `passcode ${e.reason} (409)`);
@@ -178,18 +211,31 @@ async function downloadItem(req, res) {
   // The discovery row's ref groups every server/ job it spawns (incl. a zoom split pair).
   const rowRef = typeof ref === 'string' ? ref : null;
   const recording = decodeRef(ref);
-  if (!recording || typeof recording !== 'object') return send(res, 400, { error: 'valid ref required' });
-  if (!isSafeName(course) || !isSafeName(name)) return send(res, 400, { error: 'course and name are required' });
-  if (kind !== 'lecture' && kind !== 'recitation') return send(res, 400, { error: `invalid kind: ${kind}` });
-  
+  if (!recording || typeof recording !== 'object')
+    return send(res, 400, { error: 'valid ref required' });
+  if (!isSafeName(course) || !isSafeName(name))
+    return send(res, 400, { error: 'course and name are required' });
+  if (kind !== 'lecture' && kind !== 'recitation')
+    return send(res, 400, { error: `invalid kind: ${kind}` });
+
   // only = act on just this one (course,name,kind) target
   // forceCapture = bypass the replay cache and capture fresh
   const opts = { only: only === true, forceCapture: forceCapture === true };
 
   // yt-dlp strategies need no browser: a youtube entry carries its direct url (playlist
   // already expanded), a Drive file its pageUrl. videostream must sniff the .mp4 fresh.
-  if ((recording.strategy === 'youtube-playlist' && recording.url) || recording.strategy === 'google-drive') {
-    const jobs = await downloadRecording(null, { recording, course, name, kind, ref: rowRef, ...opts });
+  if (
+    (recording.strategy === 'youtube-playlist' && recording.url) ||
+    recording.strategy === 'google-drive'
+  ) {
+    const jobs = await downloadRecording(null, {
+      recording,
+      course,
+      name,
+      kind,
+      ref: rowRef,
+      ...opts,
+    });
     logResult('/download-item', `ok (${jobs.length} job)`);
     return send(res, 200, { ok: jobs.length > 0 });
   }
@@ -209,7 +255,17 @@ async function downloadItem(req, res) {
     const passcode = passcodes.lookup(course, name);
     await session.open();
     // A zoom share can hold a before/after-break pair → one job id per captured .mp4.
-    const jobs = await session.withLock(() => downloadRecording(session.page, { recording, course, name, kind, passcode, ref: rowRef, ...opts }));
+    const jobs = await session.withLock(() =>
+      downloadRecording(session.page, {
+        recording,
+        course,
+        name,
+        kind,
+        passcode,
+        ref: rowRef,
+        ...opts,
+      }),
+    );
     logResult('/download-item', `ok (${jobs.length} jobs)`);
     return send(res, 200, { ok: jobs.length > 0 });
   }
@@ -218,7 +274,10 @@ async function downloadItem(req, res) {
   // autologin (privatetoken → one-shot cookie, no MFA). See docs/MOODLE.md.
   const uni = resolveUniversity(recording.pageUrl);
   const auth = authFor(uni);
-  if (!auth.status().connected) { logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
+  if (!auth.status().connected) {
+    logResult('/download-item', 'reconnect (401)');
+    return sendReconnect(res);
+  }
   const token = auth.loadToken();
 
   await session.open();
@@ -226,12 +285,23 @@ async function downloadItem(req, res) {
   try {
     jobs = await session.withLock(async () => {
       await ensureAutologin(session, token);
-      return downloadRecording(session.page, { recording, course, name, kind, ref: rowRef, ...opts });
+      return downloadRecording(session.page, {
+        recording,
+        course,
+        name,
+        kind,
+        ref: rowRef,
+        ...opts,
+      });
     });
   } catch (e) {
     // A dead token surfaces from getSiteInfo/getAutologinKey as an invalidToken WS
     // exception → Reconnect. Other faults (rate-limit lockout, no .mp4) fall to 500.
-    if (invalidToken(e)) { auth.markExpired(); logResult('/download-item', 'reconnect (401)'); return sendReconnect(res); }
+    if (invalidToken(e)) {
+      auth.markExpired();
+      logResult('/download-item', 'reconnect (401)');
+      return sendReconnect(res);
+    }
     throw e;
   }
   logResult('/download-item', `ok (${jobs.length} job)`);
@@ -262,9 +332,12 @@ export function handleZoomPasscode(req, res) {
   const { course, name, passcode, scope } = req.body;
   logReq('POST', '/zoom/passcode', `${course}${scope === 'lecture' ? `/${name}` : ''} (${scope})`);
   if (!isSafeName(course)) return send(res, 400, { error: 'course is required' });
-  if (scope !== 'course' && scope !== 'lecture') return send(res, 400, { error: `invalid scope: ${scope}` });
-  if (scope === 'lecture' && !isSafeName(name)) return send(res, 400, { error: 'name is required for lecture scope' });
-  if (typeof passcode !== 'string' || passcode.length === 0) return send(res, 400, { error: 'passcode is required' });
+  if (scope !== 'course' && scope !== 'lecture')
+    return send(res, 400, { error: `invalid scope: ${scope}` });
+  if (scope === 'lecture' && !isSafeName(name))
+    return send(res, 400, { error: 'name is required for lecture scope' });
+  if (typeof passcode !== 'string' || passcode.length === 0)
+    return send(res, 400, { error: 'passcode is required' });
   passcodes.save({ course, name, passcode, scope });
   logResult('/zoom/passcode', 'ok');
   send(res, 200, { ok: true });

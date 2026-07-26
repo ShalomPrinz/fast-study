@@ -19,7 +19,7 @@ Streams the temp `video.mp4` to
 `PUT /courses/{course}/lectures/{lecture}/video?kind=`. This endpoint **also wipes any
 derived `audio.mp3` / `transcript.txt` / `summary.*`** — correct for a fresh video.
 `duplex: 'half'` is required by undici when the fetch body is a stream. The temp dir
-is removed on success *or* failure.
+is removed on success _or_ failure.
 
 ## `uploadPdf` — neutral `/files/` PUT does NOT wipe
 

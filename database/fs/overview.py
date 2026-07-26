@@ -10,7 +10,13 @@ OVERVIEW_META = "meta.json"
 def _check_safe(segment: str) -> None:
     """Reject a course/file name that could escape its directory (path separators or '..')."""
 
-    if not segment or segment in (".", "..") or "/" in segment or "\\" in segment or "\x00" in segment:
+    if (
+        not segment
+        or segment in (".", "..")
+        or "/" in segment
+        or "\\" in segment
+        or "\x00" in segment
+    ):
         raise ValueError(f"unsafe path segment: {segment!r}")
 
 
@@ -55,7 +61,7 @@ def read_overview_meta(course: str) -> dict:
     meta_path = overview_dir(course) / OVERVIEW_META
     if not meta_path.exists():
         return {}
-    
+
     # defined as not critical - so we swallow any errors
     try:
         return json.loads(meta_path.read_text(encoding="utf-8"))
@@ -85,5 +91,7 @@ def merge_overview_meta(course: str, slug: str, entry) -> None:
     meta[slug] = entry
     # Atomic write using os.replace, instead of truncate then write (not atomic)
     tmp_path = meta_path.with_name(f"{meta_path.name}.{os.getpid()}.tmp")
-    tmp_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp_path.write_text(
+        json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     os.replace(tmp_path, meta_path)

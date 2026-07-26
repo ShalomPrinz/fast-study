@@ -3,7 +3,6 @@ from pathlib import Path
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-
 from services.google_auth import get_credentials
 from timing import timed_pipeline
 
@@ -14,7 +13,9 @@ def _get_service():
 
 
 def _find_folder(service, name: str, parent_id: str | None = None) -> str | None:
-    parent_clause = f"and '{parent_id}' in parents" if parent_id else "and 'root' in parents"
+    parent_clause = (
+        f"and '{parent_id}' in parents" if parent_id else "and 'root' in parents"
+    )
     q = (
         f"name='{name}' and mimeType='application/vnd.google-apps.folder' "
         f"{parent_clause} and trashed=false"

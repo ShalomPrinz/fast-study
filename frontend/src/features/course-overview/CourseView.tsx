@@ -2,7 +2,10 @@ import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { toast } from '@/services/toaster'
-import { CourseOverviewProvider, useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
+import {
+  CourseOverviewProvider,
+  useCourseOverview,
+} from '@/features/course-overview/contexts/CourseOverviewContext'
 import GenerateAllButton from '@/features/course-overview/components/GenerateAllButton'
 import ExtractorRow from '@/features/course-overview/components/ExtractorRow'
 
@@ -28,7 +31,9 @@ function CourseOverviewBody() {
   return (
     <main className="main-view main-view--panel">
       <div className="lecture-panel">
-        <h2 className="lecture-panel-title" dir="auto">{course}</h2>
+        <h2 className="lecture-panel-title" dir="auto">
+          {course}
+        </h2>
 
         <GenerateAllButton />
 

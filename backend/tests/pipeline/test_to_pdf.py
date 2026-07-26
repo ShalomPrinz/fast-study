@@ -8,21 +8,21 @@ from to_pdf import (
     FONTS_DIR,
     LATEX_HEADER,
     LTR_CODE_FILTER,
-    convert_to_pdf,
-    normalize_dashes,
-    ensure_blank_before_lists,
-    wrap_english_phrases,
-    normalize_math_spans,
-    force_ltr_inline_code,
     apply_outside_fences,
-    unwrap_math_code,
-    unwrap_math_text_macros,
-    normalize_math_text_spaces,
-    wrap_math_text_dir,
+    close_unbalanced_display_math,
+    convert_to_pdf,
+    demote_math_identifier,
+    ensure_blank_before_lists,
+    force_ltr_inline_code,
     merge_ltr_math,
     merge_rtl_math_number,
-    demote_math_identifier,
-    close_unbalanced_display_math,
+    normalize_dashes,
+    normalize_math_spans,
+    normalize_math_text_spaces,
+    unwrap_math_code,
+    unwrap_math_text_macros,
+    wrap_english_phrases,
+    wrap_math_text_dir,
 )
 
 LRM = "‎"
@@ -31,6 +31,7 @@ LRM = "‎"
 # ---------------------------------------------------------------------------
 # normalize_dashes
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizeDashes:
     def test_em_dash_replaced_with_spaced_hyphen(self):
@@ -54,6 +55,7 @@ class TestNormalizeDashes:
 # ---------------------------------------------------------------------------
 # ensure_blank_before_lists
 # ---------------------------------------------------------------------------
+
 
 class TestEnsureBlankBeforeLists:
     def test_inserts_blank_before_dash_list_after_paragraph(self):
@@ -110,8 +112,8 @@ class TestEnsureBlankBeforeLists:
 # wrap_english_phrases
 # ---------------------------------------------------------------------------
 
-class TestWrapEnglishPhrases:
 
+class TestWrapEnglishPhrases:
     # --- Multi-word wrapping ---
 
     def test_two_word_english_phrase_wrapped(self):
@@ -398,7 +400,7 @@ class TestWrapEnglishPhrases:
     def test_spaced_hyphen_and_comma_glue_parenthetical(self):
         # Regression: "(FIFO - First-In, First-Out)" split into three \LR runs;
         # the neutral parens/dash/comma reordered to "(First-Out, First-In - FIFO)".
-        result = wrap_english_phrases('עקרון (FIFO - First-In, First-Out) כאן')
+        result = wrap_english_phrases("עקרון (FIFO - First-In, First-Out) כאן")
         assert r"\LR{(FIFO - First-In, First-Out)}" in result
 
     def test_comma_space_glues_bare_latin_tokens(self):
@@ -439,6 +441,7 @@ class TestWrapEnglishPhrases:
 # ---------------------------------------------------------------------------
 # close_unbalanced_display_math
 # ---------------------------------------------------------------------------
+
 
 class TestCloseUnbalancedDisplayMath:
     def test_lone_closing_dollar_is_doubled(self):
@@ -497,6 +500,7 @@ class TestCloseUnbalancedDisplayMath:
 # unwrap_math_code
 # ---------------------------------------------------------------------------
 
+
 class TestUnwrapMathCode:
     def test_backtick_math_unwrapped(self):
         # Regression: the LLM wraps math in backticks, so force_ltr_inline_code
@@ -554,6 +558,7 @@ class TestUnwrapMathCode:
 # demote_math_identifier
 # ---------------------------------------------------------------------------
 
+
 class TestDemoteMathIdentifier:
     def test_underscore_identifier_demoted_to_code(self):
         # Regression: $_exit$ makes the leading _ a subscript operator, so it
@@ -601,17 +606,19 @@ class TestDemoteMathIdentifier:
 # unwrap_math_text_macros
 # ---------------------------------------------------------------------------
 
+
 class TestUnwrapMathTextMacros:
     def test_lone_macro_unwrapped(self):
         # Regression: \text{\Pi}_k errors with "Missing $ inserted" because
         # \Pi is undefined in \text's text mode.
-        assert unwrap_math_text_macros(r"$\text{\Pi}_k = co\Sigma_k$") == \
-            r"$\Pi_k = co\Sigma_k$"
+        assert (
+            unwrap_math_text_macros(r"$\text{\Pi}_k = co\Sigma_k$")
+            == r"$\Pi_k = co\Sigma_k$"
+        )
 
     def test_multiple_occurrences_unwrapped(self):
         text = r"המחלקה $\text{\Pi}_k$ והמחלקה $\text{\Pi}_2$"
-        assert unwrap_math_text_macros(text) == \
-            r"המחלקה $\Pi_k$ והמחלקה $\Pi_2$"
+        assert unwrap_math_text_macros(text) == r"המחלקה $\Pi_k$ והמחלקה $\Pi_2$"
 
     def test_real_text_left_untouched(self):
         # \text wrapping actual prose must survive — only lone macros are unwrapped.
@@ -630,30 +637,30 @@ class TestUnwrapMathTextMacros:
 # normalize_math_text_spaces
 # ---------------------------------------------------------------------------
 
+
 class TestNormalizeMathTextSpaces:
     def test_leading_space_moved_out(self):
         # Regression: \text{ steps}'s leading space is trimmed at the bidi
         # boundary, fusing onto the preceding token -> "tsteps".
-        assert normalize_math_text_spaces(r"t \text{ steps}") == \
-            r"t \ \text{steps}"
+        assert normalize_math_text_spaces(r"t \text{ steps}") == r"t \ \text{steps}"
 
     def test_trailing_space_only_moved_out(self):
         # Only the trailing edge has a space — only a trailing \  is emitted,
         # the leading side stays fused as the source intended.
-        assert normalize_math_text_spaces(r"\text{steps } b") == \
-            r"\text{steps}\  b"
+        assert normalize_math_text_spaces(r"\text{steps } b") == r"\text{steps}\  b"
 
     def test_leading_and_trailing_space_moved_out(self):
-        assert normalize_math_text_spaces(r"1 \text{ within } t") == \
-            r"1 \ \text{within}\  t"
+        assert (
+            normalize_math_text_spaces(r"1 \text{ within } t")
+            == r"1 \ \text{within}\  t"
+        )
 
     def test_no_edge_space_left_untouched(self):
         text = r"V(x) = 1 \text{within} t"
         assert normalize_math_text_spaces(text) == text
 
     def test_inner_space_preserved(self):
-        assert normalize_math_text_spaces(r"\text{ s.t. }") == \
-            r"\ \text{s.t.}\ "
+        assert normalize_math_text_spaces(r"\text{ s.t. }") == r"\ \text{s.t.}\ "
 
     def test_whitespace_only_body_collapses_to_space(self):
         assert normalize_math_text_spaces(r"a \text{ } b") == r"a \  b"
@@ -661,8 +668,10 @@ class TestNormalizeMathTextSpaces:
     def test_full_issue_expression_renders_space(self):
         # The original bug report: both \text{} edge spaces must survive.
         text = r"$$V(x, y_1, y_2) = 1 \text{ within } t \text{ steps}$$"
-        assert normalize_math_text_spaces(text) == \
-            r"$$V(x, y_1, y_2) = 1 \ \text{within}\  t \ \text{steps}$$"
+        assert (
+            normalize_math_text_spaces(text)
+            == r"$$V(x, y_1, y_2) = 1 \ \text{within}\  t \ \text{steps}$$"
+        )
 
     # --- false positives: don't inject spaces where none are needed ---
 
@@ -692,6 +701,7 @@ class TestNormalizeMathTextSpaces:
 # ---------------------------------------------------------------------------
 # normalize_math_spans
 # ---------------------------------------------------------------------------
+
 
 class TestNormalizeMathSpans:
     def test_leading_space_inside_inline_math_stripped(self):
@@ -750,6 +760,7 @@ class TestNormalizeMathSpans:
 # ---------------------------------------------------------------------------
 # wrap_math_text_dir
 # ---------------------------------------------------------------------------
+
 
 class TestWrapMathTextDir:
     def test_text_body_wrapped_in_lr(self):
@@ -817,6 +828,7 @@ class TestWrapMathTextDir:
 # merge_ltr_math
 # ---------------------------------------------------------------------------
 
+
 class TestMergeLtrMath:
     def test_code_then_math_merged(self):
         # Regression: \LR{\texttt{current}} and $\leftarrow v$ are separate LTR
@@ -865,16 +877,21 @@ class TestMergeLtrMath:
 # merge_rtl_math_number
 # ---------------------------------------------------------------------------
 
+
 class TestMergeRtlMathNumber:
     def test_number_after_hebrew_text_merged(self):
         # Regression: the 1 stays in LTR math flow and renders right of תיוג.
         text = r"$0.98 \to \text{\RL{תיוג}}\  1$"
-        assert merge_rtl_math_number(text) == r"$0.98 \to \text{\RL{תיוג \ensuremath{1}}}$"
+        assert (
+            merge_rtl_math_number(text) == r"$0.98 \to \text{\RL{תיוג \ensuremath{1}}}$"
+        )
 
     def test_number_before_hebrew_text_merged(self):
         # Mirror regression: 240 renders left of תאים.
         text = r"$$x = 240 \ \text{\RL{תאים}}$$"
-        assert merge_rtl_math_number(text) == r"$$x = \text{\RL{\ensuremath{240} תאים}}$$"
+        assert (
+            merge_rtl_math_number(text) == r"$$x = \text{\RL{\ensuremath{240} תאים}}$$"
+        )
 
     def test_absorbed_number_keeps_math_typesetting(self):
         # It was math before the move, so it must still be math after it.
@@ -917,6 +934,7 @@ class TestMergeRtlMathNumber:
 # ---------------------------------------------------------------------------
 # force_ltr_inline_code
 # ---------------------------------------------------------------------------
+
 
 class TestForceLtrInlineCode:
     def test_two_word_code_wrapped_in_lr_texttt(self):
@@ -1005,6 +1023,7 @@ class TestForceLtrInlineCode:
 # apply_outside_fences
 # ---------------------------------------------------------------------------
 
+
 class TestApplyOutsideFences:
     def test_transform_runs_outside_fence(self):
         text = "hello\n```\nworld\n```\n"
@@ -1066,9 +1085,7 @@ class TestApplyOutsideFences:
         def pipeline(t):
             return force_ltr_inline_code(
                 wrap_english_phrases(
-                    ensure_blank_before_lists(
-                        normalize_math_spans(normalize_dashes(t))
-                    )
+                    ensure_blank_before_lists(normalize_math_spans(normalize_dashes(t)))
                 )
             )
 
@@ -1091,8 +1108,8 @@ class TestApplyOutsideFences:
 # wrap_english_phrases — extended token coverage (paths, versions, filenames)
 # ---------------------------------------------------------------------------
 
-class TestWrapEnglishPhrasesExtended:
 
+class TestWrapEnglishPhrasesExtended:
     # --- URL-style paths ---
 
     def test_url_path_single_segment_wrapped(self):
@@ -1216,26 +1233,30 @@ class TestWrapEnglishPhrasesExtended:
 # Lua filter — integration test via `pandoc --to=latex`
 # ---------------------------------------------------------------------------
 
+
 def _pandoc_available():
     return shutil.which("pandoc") is not None
 
 
 @pytest.mark.skipif(not _pandoc_available(), reason="pandoc not installed")
 class TestLuaFilterLtrCodeBlock:
-
     def _run_pandoc_latex(self, md: str) -> str:
         """Run pandoc with ltr_code.lua and return the LaTeX body."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".md", delete=False, encoding="utf-8"
+        ) as f:
             f.write(md)
             md_path = f.name
         try:
             result = subprocess.run(
                 [
-                    "pandoc", md_path,
+                    "pandoc",
+                    md_path,
                     "--to=latex",
                     f"--lua-filter={LTR_CODE_FILTER}",
                 ],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             assert result.returncode == 0, f"pandoc failed:\n{result.stderr}"
             return result.stdout
@@ -1320,6 +1341,7 @@ class TestLuaFilterLtrCodeBlock:
 # a Hebrew-less mono.
 # ---------------------------------------------------------------------------
 
+
 class TestMonoFontWiring:
     def test_miriam_mono_files_bundled(self):
         for name in ("MiriamMonoCLM-Book.ttf", "MiriamMonoCLM-Bold.ttf"):
@@ -1340,6 +1362,7 @@ class TestMonoFontWiring:
 # a missing-Hebrew mono. Gated on the real toolchain (xelatex + pandoc + fitz).
 # ---------------------------------------------------------------------------
 
+
 def _xelatex_available():
     return shutil.which("xelatex") is not None
 
@@ -1347,6 +1370,7 @@ def _xelatex_available():
 def _pymupdf_available():
     try:
         import fitz  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -1368,6 +1392,7 @@ class TestHebrewInCodeBlockRenders:
 
     def _render_text(self) -> str:
         import fitz
+
         with tempfile.TemporaryDirectory() as d:
             md_path = os.path.join(d, "snippet.md")
             with open(md_path, "w", encoding="utf-8") as f:
@@ -1387,7 +1412,9 @@ class TestHebrewInCodeBlockRenders:
         # Words from the Hebrew comments must be present (PDF text order is
         # visual, so check membership of whole words, not the full line).
         for word in ("שמירת", "בסיס", "המחסנית", "הגדרת"):
-            assert word in text, f"Hebrew word {word!r} missing from rendered code block"
+            assert word in text, (
+                f"Hebrew word {word!r} missing from rendered code block"
+            )
 
 
 @pytest.mark.skipif(
@@ -1401,8 +1428,10 @@ class TestBidiOrderingRenders:
     # faithful — which is exactly what these fixes are about. A get_text()
     # substring check would lie here (docs/PDF.md, PyMuPDF caveat).
     def _visual_text(self, md: str) -> str:
-        import fitz
         from collections import defaultdict
+
+        import fitz
+
         with tempfile.TemporaryDirectory() as d:
             md_path = os.path.join(d, "s.md")
             with open(md_path, "w", encoding="utf-8") as f:
@@ -1451,7 +1480,6 @@ class TestBidiOrderingRenders:
         # _exit / _Exit render as literal identifiers, not "subscript e + xit".
         vis = self._visual_text("ש-$_exit$ (או $_Exit$) היא\n")
         assert "_exit" in vis and "_Exit" in vis
-
 
     def test_issue6_hebrew_math_text_keeps_rtl_order(self):
         # A Hebrew \text{} body forced into \LR renders "ואילך 2 שלב"; \RL keeps

@@ -12,13 +12,19 @@ const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com'
 // hostname of a URL, or null if it isn't a parseable absolute URL (e.g. about:blank
 // before any commit) — lets the goto-catch guard probe page.url() without throwing.
 function safeHost(url) {
-  try { return new URL(url).hostname; } catch { return null; }
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
 }
 
 // User-facing "this source can't be expanded" — names the host so the frontend can
 // tell the user exactly what redirected off-YouTube.
 function unsupported(host) {
-  return new UnsupportedError(`Unsupported recording source (${host}). Only YouTube playlists can be expanded.`);
+  return new UnsupportedError(
+    `Unsupported recording source (${host}). Only YouTube playlists can be expanded.`,
+  );
 }
 
 /**
@@ -59,7 +65,15 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
   toRecordings(activity) {
-    return [{ title: activity.title, pageUrl: activity.externalUrl, kind: activity.kind, strategy: 'youtube-playlist', section: activity.sectionName }];
+    return [
+      {
+        title: activity.title,
+        pageUrl: activity.externalUrl,
+        kind: activity.kind,
+        strategy: 'youtube-playlist',
+        section: activity.sectionName,
+      },
+    ];
   }
 
   /**
@@ -79,7 +93,12 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
     // string — so titles with metacharacters can't inject.
     let stdout;
     try {
-      ({ stdout } = await execFileAsync('yt-dlp', ['--flat-playlist', '--print', '%(title)s\t%(url)s', finalUrl]));
+      ({ stdout } = await execFileAsync('yt-dlp', [
+        '--flat-playlist',
+        '--print',
+        '%(title)s\t%(url)s',
+        finalUrl,
+      ]));
     } catch (err) {
       const detail = err.code === 'ENOENT' ? 'yt-dlp not found on PATH' : err.stderr || err.message;
       throw new Error(`yt-dlp failed to list playlist: ${detail}`);

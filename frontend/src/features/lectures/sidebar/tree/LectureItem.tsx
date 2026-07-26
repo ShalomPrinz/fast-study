@@ -23,7 +23,9 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const renameEdit = useInlineEdit(renaming ? lecture.name : null)
 
   const isSelected =
-    selected?.course === course.name && selected?.lecture === lecture.name && selected?.kind === kind
+    selected?.course === course.name &&
+    selected?.lecture === lecture.name &&
+    selected?.kind === kind
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()
@@ -64,7 +66,10 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
         <InlineEditInput
           edit={renameEdit}
           onCommit={commitRename}
-          onCancel={() => { setRenaming(false); renameEdit.setValue('') }}
+          onCancel={() => {
+            setRenaming(false)
+            renameEdit.setValue('')
+          }}
         />
       </li>
     )
@@ -78,7 +83,10 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
           if (e.shiftKey) startRenaming(e)
           else onSelect(course.name, lecture.name, kind)
         }}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onDragOver={(e) => {
+          e.preventDefault()
+          setDragOver(true)
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         dir="auto"

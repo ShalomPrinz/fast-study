@@ -4,7 +4,6 @@ course/analyze.py (moved out of overview.py, which is registry-only)."""
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from course import analyze as ca
 from course import overview as ep
 from course.overview import PatternExtractor
@@ -35,7 +34,9 @@ class TestAnalyze:
 
         ctor.assert_called_once_with(model=ca.MODEL)
         contents = fake.generate.call_args.args[0]
-        assert contents[0] == (ca.PROMPT_DIR / ext.prompt_file).read_text(encoding="utf-8")
+        assert contents[0] == (ca.PROMPT_DIR / ext.prompt_file).read_text(
+            encoding="utf-8"
+        )
         assert "מבני נתונים" in contents[1]
         assert contents[2] == "REPORT TEXT"
         assert result == "ניתוח"

@@ -3,14 +3,14 @@ import type { CoursePhase, CourseStatus, CourseFile } from '@/types'
 export interface OverviewStep {
   phase: CoursePhase
   suffix: string // the file {slug}{suffix} this phase produces
-  label: string  // human-readable action name (UI only)
+  label: string // human-readable action name (UI only)
 }
 
 export const OVERVIEW_STEPS: readonly OverviewStep[] = [
   { phase: 'extract', suffix: '.txt', label: 'Extract' },
-  { phase: 'analyze', suffix: '.md',  label: 'Analyze' },
-  { phase: 'topics',  suffix: '.md',  label: 'Collect' },
-  { phase: 'to_pdf',  suffix: '.pdf', label: 'Export PDF' },
+  { phase: 'analyze', suffix: '.md', label: 'Analyze' },
+  { phase: 'topics', suffix: '.md', label: 'Collect' },
+  { phase: 'to_pdf', suffix: '.pdf', label: 'Export PDF' },
 ]
 
 export function stepsFor(phases: CoursePhase[]): OverviewStep[] {
@@ -31,7 +31,11 @@ export interface StartedSlug {
 }
 
 // How far a slug got; null when nothing exists yet — a fresh generation, not a continue.
-export function startedSlug(slug: string, phases: CoursePhase[], existing: Set<string>): StartedSlug | null {
+export function startedSlug(
+  slug: string,
+  phases: CoursePhase[],
+  existing: Set<string>,
+): StartedSlug | null {
   const produced = generatedFiles(slug, phases)
   let furthestIdx = -1
   produced.forEach((name, i) => {

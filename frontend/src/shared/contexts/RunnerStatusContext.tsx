@@ -7,7 +7,6 @@ import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useNotify } from '@/shared/hooks/useNotify'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
 
-
 interface RunnerStatusValue {
   status: RunnerStatus | null
   trigger: () => Promise<void>
@@ -34,10 +33,14 @@ interface ProviderProps {
 export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
   const [status, setStatus] = useState<RunnerStatus | null>(null)
   const sendUpdateRef = useRef(sendUpdate)
-  useEffect(() => { sendUpdateRef.current = sendUpdate }, [sendUpdate])
-  const { report: reportError, seed: seedError, prune: pruneErrors } = useReportOnce(
-    (msg) => sendUpdateRef.current?.('error', msg),
-  )
+  useEffect(() => {
+    sendUpdateRef.current = sendUpdate
+  }, [sendUpdate])
+  const {
+    report: reportError,
+    seed: seedError,
+    prune: pruneErrors,
+  } = useReportOnce((msg) => sendUpdateRef.current?.('error', msg))
 
   const latest = useLatestRequest()
   // First applied status carries errors from before load: seed-and-suppress them, toast later ones.
@@ -86,12 +89,12 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
 
   function isInFlight(course: string, lecture: string, kind: Kind): boolean {
     const key = inFlightKey(course, lecture, kind)
-    return status?.inFlight.some(e => inFlightKey(e.course, e.lecture, e.kind) === key) ?? false
+    return status?.inFlight.some((e) => inFlightKey(e.course, e.lecture, e.kind) === key) ?? false
   }
 
   function getInFlight(course: string, lecture: string, kind: Kind): InFlightEntry | null {
     const key = inFlightKey(course, lecture, kind)
-    return status?.inFlight.find(e => inFlightKey(e.course, e.lecture, e.kind) === key) ?? null
+    return status?.inFlight.find((e) => inFlightKey(e.course, e.lecture, e.kind) === key) ?? null
   }
 
   function getError(course: string, lecture: string, kind: Kind): string | null {

@@ -29,13 +29,26 @@ router.post('/download', (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  startJob(res, downloaders.curl, { url, headers }, { course, lecture, kind, ref: typeof ref === 'string' ? ref : null, fromCache: fromCache === true });
+  startJob(
+    res,
+    downloaders.curl,
+    { url, headers },
+    {
+      course,
+      lecture,
+      kind,
+      ref: typeof ref === 'string' ? ref : null,
+      fromCache: fromCache === true,
+    },
+  );
 });
 
 router.post('/download-youtube', (req, res) => {
   const { url, course, lecture, kind = 'lecture', ref, fromCache } = req.body ?? {};
   let host = '';
-  try { host = new URL(url).hostname; } catch {}
+  try {
+    host = new URL(url).hostname;
+  } catch {}
   if (!host || !YTDLP_HOST_RE.test(host)) {
     return res.status(400).json({ error: 'valid youtube or google drive url required' });
   }
@@ -45,7 +58,18 @@ router.post('/download-youtube', (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  startJob(res, downloaders.ytdlp, { url }, { course, lecture, kind, ref: typeof ref === 'string' ? ref : null, fromCache: fromCache === true });
+  startJob(
+    res,
+    downloaders.ytdlp,
+    { url },
+    {
+      course,
+      lecture,
+      kind,
+      ref: typeof ref === 'string' ? ref : null,
+      fromCache: fromCache === true,
+    },
+  );
 });
 
 export default router;

@@ -37,7 +37,9 @@ def _is_rate_limit(err: Exception, body: dict) -> bool:
     if getattr(err, "code", None) == 429:
         return True
     inner = body.get("error", body)
-    if isinstance(inner, dict) and (inner.get("code") == 429 or inner.get("status") == "RESOURCE_EXHAUSTED"):
+    if isinstance(inner, dict) and (
+        inner.get("code") == 429 or inner.get("status") == "RESOURCE_EXHAUSTED"
+    ):
         return True
     return "RESOURCE_EXHAUSTED" in str(err)
 
@@ -46,7 +48,9 @@ def _detail(inner: dict, type_suffix: str) -> dict:
     """Find one entry of the error body's `details` list by its @type suffix."""
 
     for entry in inner.get("details") or []:
-        if isinstance(entry, dict) and str(entry.get("@type", "")).endswith(type_suffix):
+        if isinstance(entry, dict) and str(entry.get("@type", "")).endswith(
+            type_suffix
+        ):
             return entry
     return {}
 
@@ -87,9 +91,19 @@ def _quota_message(info: dict, model: str) -> str:
     name = info.get("model") or model
     tier = "free-tier " if "FreeTier" in (info.get("quota_id") or "") else ""
     if info["is_daily"]:
-        limit = f"{info['quota_value']} requests/day for {name}" if info.get("quota_value") else name
-        return f"Gemini {tier}daily quota reached ({limit}) — resets at midnight Pacific"
-    limit = f"{info['quota_value']} requests/min for {name}" if info.get("quota_value") else name
+        limit = (
+            f"{info['quota_value']} requests/day for {name}"
+            if info.get("quota_value")
+            else name
+        )
+        return (
+            f"Gemini {tier}daily quota reached ({limit}) — resets at midnight Pacific"
+        )
+    limit = (
+        f"{info['quota_value']} requests/min for {name}"
+        if info.get("quota_value")
+        else name
+    )
     return f"Gemini {tier}per-minute quota reached ({limit})"
 
 
@@ -106,7 +120,9 @@ class LLMClient:
         """Send contents to the model and return its stripped text."""
 
         try:
-            response = self.client.models.generate_content(model=self.model, contents=contents)
+            response = self.client.models.generate_content(
+                model=self.model, contents=contents
+            )
         except Exception as e:
             body = _extract_gemini_body(e)
             if _is_rate_limit(e, body):
@@ -120,7 +136,9 @@ class LLMClient:
         """Upload a local file as a reusable content part. Raises RuntimeError on failure."""
 
         try:
-            return self.client.files.upload(file=str(path), config={"mime_type": mime_type})
+            return self.client.files.upload(
+                file=str(path), config={"mime_type": mime_type}
+            )
         except Exception as e:
             raise RuntimeError(str(e)) from e
 

@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { fetchSummaryContent, saveSummaryContent, revertSummary, deleteFile, fileUrl } from '@/services/database'
+import {
+  fetchSummaryContent,
+  saveSummaryContent,
+  revertSummary,
+  deleteFile,
+  fileUrl,
+} from '@/services/database'
 import { runStep } from '@/services/backend'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
@@ -97,8 +103,12 @@ export default function EditSummaryView() {
   return (
     <div className="edit-view">
       <div className="edit-toolbar">
-        <button className="edit-back-btn" onClick={() => navigate(-1)}>← Back</button>
-        <h2 className="edit-title" dir="auto">{lecture}</h2>
+        <button className="edit-back-btn" onClick={() => navigate(-1)}>
+          ← Back
+        </button>
+        <h2 className="edit-title" dir="auto">
+          {lecture}
+        </h2>
         <div className="edit-toolbar-actions">
           <button
             className="edit-action-btn"
@@ -127,7 +137,9 @@ export default function EditSummaryView() {
 
         <div className="edit-panel edit-panel--text">
           {loading ? (
-            <div className="edit-loading"><div className="spinner" /></div>
+            <div className="edit-loading">
+              <div className="spinner" />
+            </div>
           ) : (
             <textarea
               className="summary-editor"

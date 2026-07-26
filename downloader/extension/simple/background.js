@@ -46,5 +46,5 @@ chrome.webRequest.onSendHeaders.addListener(
     chrome.action.setBadgeBackgroundColor({ color: '#FF0000' });
   },
   { urls: ['<all_urls>'] },
-  ['requestHeaders', 'extraHeaders']
+  ['requestHeaders', 'extraHeaders'],
 );

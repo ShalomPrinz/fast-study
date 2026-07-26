@@ -81,7 +81,11 @@ function cachedTargets(recording, course, name, kind) {
     if (single) return [{ name, cap: single.cap }];
     const c1 = getCap(course, splitName(name, 1), kind);
     const c2 = getCap(course, splitName(name, 2), kind);
-    if (c1 && c2) return [{ name: splitName(name, 1), cap: c1.cap }, { name: splitName(name, 2), cap: c2.cap }];
+    if (c1 && c2)
+      return [
+        { name: splitName(name, 1), cap: c1.cap },
+        { name: splitName(name, 2), cap: c2.cap },
+      ];
     return null;
   }
   const hit = getCap(course, name, kind);
@@ -106,7 +110,10 @@ function cachedTargets(recording, course, name, kind) {
  *   before/after-break pair yields two), followed on server/'s /events and resyncable
  *   via server/'s /jobs.
  */
-export async function downloadRecording(page, { recording, course, name, kind, passcode, ref, only = false, forceCapture = false }) {
+export async function downloadRecording(
+  page,
+  { recording, course, name, kind, passcode, ref, only = false, forceCapture = false },
+) {
   // yt-dlp strategies: no browser, no capture. A youtube entry must be a specific expanded
   // playlist entry (`url`); a Drive file downloads straight from its `pageUrl`, preflighted
   // so a non-public file fails as 422 rather than silently in server/'s job. Single target,
@@ -125,7 +132,14 @@ export async function downloadRecording(page, { recording, course, name, kind, p
       cap = { url };
       cacheCap(course, name, kind, cap, ref);
     }
-    const jobId = await postDownloadYoutube({ url: cap.url, course, lecture: name, kind, ref, fromCache });
+    const jobId = await postDownloadYoutube({
+      url: cap.url,
+      course,
+      lecture: name,
+      kind,
+      ref,
+      fromCache,
+    });
     return [jobId].filter(Boolean);
   }
   const extractor = resolveExtractorForRecording(recording);
@@ -143,15 +157,24 @@ export async function downloadRecording(page, { recording, course, name, kind, p
     }
     // Miss/force: one zoom share sniffs BOTH clips, so re-capture the whole recording (using
     // the inverted base name so the split matches) and keep only the cap for the request.
-    const targets = await captureTargets(page, recording, extractor, { name: baseName(name), course, kind, passcode, ref });
-    const chosen = targets.find((t) => t.name === name) ?? (targets.length === 1 ? targets[0] : null);
+    const targets = await captureTargets(page, recording, extractor, {
+      name: baseName(name),
+      course,
+      kind,
+      passcode,
+      ref,
+    });
+    const chosen =
+      targets.find((t) => t.name === name) ?? (targets.length === 1 ? targets[0] : null);
     if (!chosen) throw new Error(`captured clips don't include ${name}`);
     return [await postCap(chosen.cap, chosen.name, false)].filter(Boolean);
   }
 
   // Whole recording. Replay from the cache when every resulting target is cached, else capture.
   const cached = forceCapture ? null : cachedTargets(recording, course, name, kind);
-  const targets = cached ?? await captureTargets(page, recording, extractor, { name, course, kind, passcode, ref });
+  const targets =
+    cached ??
+    (await captureTargets(page, recording, extractor, { name, course, kind, passcode, ref }));
   const fromCache = Boolean(cached);
   const jobIds = [];
   for (const t of targets) jobIds.push(await postCap(t.cap, t.name, fromCache));

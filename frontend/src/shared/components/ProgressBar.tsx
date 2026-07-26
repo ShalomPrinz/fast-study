@@ -26,7 +26,9 @@ export default function ProgressBar({ stats, startedAt, completedFraction = 0, c
   }
 
   if ('message' in stats) {
-    return <p className={`progress-label progress-label--muted${extra}`}>Not enough data to estimate</p>
+    return (
+      <p className={`progress-label progress-label--muted${extra}`}>Not enough data to estimate</p>
+    )
   }
 
   const { estimated, longest } = stats

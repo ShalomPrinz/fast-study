@@ -17,7 +17,13 @@ import {
 
 const app = express();
 // cors handles the OPTIONS preflight for the single Vite origin; no manual short-circuit.
-app.use(cors({ origin: ALLOWED_ORIGIN, methods: ['GET', 'POST', 'OPTIONS'], allowedHeaders: ['Content-Type'] }));
+app.use(
+  cors({
+    origin: ALLOWED_ORIGIN,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type'],
+  }),
+);
 app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
 
 app.get('/auth/status', handleAuthStatus);

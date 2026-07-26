@@ -4,11 +4,13 @@ phase modules. Mirrors pipeline/runner.py but is keyed by (course, slug).
 Each 'generate' trigger is one OverviewRun owning its selection and transcript sources; status
 is NOT run-scoped — runs write into the shared module-level store. See docs/OVERVIEW.md for the
 lock/collision/failure-isolation model."""
+
 import asyncio
+
+from services import db_client
 
 from course import analyze, collect, extract, overview, to_pdf
 from course.overview import Phase
-from services import db_client
 
 # Per-(course, slug); created lazily via setdefault, persists across runs so same-slug triggers serialize.
 _locks: dict[tuple[str, str], asyncio.Lock] = {}
@@ -25,6 +27,7 @@ def get_status(course: str) -> dict:
         "running": any(e.get("status") == "running" for e in entries.values()),
         "extractors": entries,
     }
+
 
 def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
     """Parse the optional `extractors` CSV into extractor slugs (default: all)."""
@@ -49,8 +52,13 @@ def resolve_from_phase(from_phase: str | None) -> tuple[Phase | None, str | None
     return phase, None
 
 
-def try_run_generate(course: str, course_node: dict, slugs: list[str],
-                     from_phase: "Phase | None" = None, skip_existing: bool = False) -> str:
+def try_run_generate(
+    course: str,
+    course_node: dict,
+    slugs: list[str],
+    from_phase: "Phase | None" = None,
+    skip_existing: bool = False,
+) -> str:
     """Schedule an overview run over `slugs`, seeding pending status synchronously so the first
     poll sees it. Returns "busy" iff every requested slug's lock is already held."""
 
@@ -73,8 +81,14 @@ class OverviewRun:
     """One overview 'generate' trigger: owns the run-scoped selection and the transcript sources,
     and walks the slugs one at a time, each running its full phase chain under its own lock."""
 
-    def __init__(self, course: str, course_node: dict, slugs: list[str],
-                 from_phase: "Phase | None", skip_existing: bool):
+    def __init__(
+        self,
+        course: str,
+        course_node: dict,
+        slugs: list[str],
+        from_phase: "Phase | None",
+        skip_existing: bool,
+    ):
         self.course = course
         self.course_node = course_node
         self.slugs = slugs

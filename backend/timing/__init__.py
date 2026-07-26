@@ -1,7 +1,7 @@
-import time
+import functools
 import logging
 import sqlite3
-import functools
+import time
 from pathlib import Path
 
 DB_PATH = Path(__file__).parent / "timing.db"
@@ -17,6 +17,7 @@ def _allowed_operations() -> frozenset:
 
     # Importing here to avoid import cycle
     from pipeline.runner import STEP_ORDER
+
     return frozenset(STEP_ORDER) | DOWNLOAD_OPERATIONS
 
 
@@ -36,7 +37,9 @@ def init_db():
         """)
 
         # Migration #1: Index on operation for faster queries
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_timing_operation ON timing(operation)")
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_timing_operation ON timing(operation)"
+        )
 
 
 def _record(operation: str, file_size_bytes: int, duration_seconds: float):
@@ -57,9 +60,15 @@ def record(operation: str, file_size_bytes: int, duration_seconds: float) -> dic
         log.warning("rejected unknown timing operation: %r", operation)
         return {"status": "error", "message": f"unknown operation: {operation}"}
     if file_size_bytes <= 0:
-        return {"status": "error", "message": f"file_size_bytes must be positive, got {file_size_bytes}"}
+        return {
+            "status": "error",
+            "message": f"file_size_bytes must be positive, got {file_size_bytes}",
+        }
     if duration_seconds <= 0:
-        return {"status": "error", "message": f"duration_seconds must be positive, got {duration_seconds}"}
+        return {
+            "status": "error",
+            "message": f"duration_seconds must be positive, got {duration_seconds}",
+        }
 
     _record(operation, file_size_bytes, duration_seconds)
     return {"status": "ok"}
@@ -93,7 +102,7 @@ def get_stats(operation: str, file_size_bytes: int) -> dict:
         sum_y = sum(ys)
         sum_xy = sum(x * y for x, y in zip(xs, ys))
         sum_xx = sum(x * x for x in xs)
-        denom = n * sum_xx - sum_x ** 2
+        denom = n * sum_xx - sum_x**2
         if denom != 0:
             slope = (n * sum_xy - sum_x * sum_y) / denom
             intercept = (sum_y - slope * sum_x) / n
@@ -120,7 +129,9 @@ def timed_pipeline(operation: str):
             input_val = args[0] if args else None
             if input_val and isinstance(input_val, (str, Path)):
                 p = Path(input_val)
-                file_size = p.stat().st_size if p.exists() else len(str(input_val).encode())
+                file_size = (
+                    p.stat().st_size if p.exists() else len(str(input_val).encode())
+                )
             else:
                 file_size = 0
 
@@ -130,5 +141,7 @@ def timed_pipeline(operation: str):
 
             _record(operation, file_size, duration)
             return result
+
         return wrapper
+
     return decorator

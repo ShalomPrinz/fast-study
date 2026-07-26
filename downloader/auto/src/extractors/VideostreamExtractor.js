@@ -36,7 +36,15 @@ export class VideostreamExtractor extends VideoExtractor {
    * @returns {import('./VideoExtractor.js').Recording[]}
    */
   toRecordings(activity) {
-    return [{ title: activity.title, pageUrl: activity.viewUrl, kind: activity.kind, strategy: 'videostream', section: activity.sectionName }];
+    return [
+      {
+        title: activity.title,
+        pageUrl: activity.viewUrl,
+        kind: activity.kind,
+        strategy: 'videostream',
+        section: activity.sectionName,
+      },
+    ];
   }
 
   /**
@@ -50,7 +58,9 @@ export class VideostreamExtractor extends VideoExtractor {
   async _captureVideo(page, rec) {
     // Register the listener BEFORE navigating so an autoplay .mp4 firing during
     // load isn't missed (mirrors background.js's onSendHeaders capture).
-    const mp4Request = page.waitForRequest((req) => endsWithMp4(req.url()), { timeout: MP4_WAIT_MS }).catch(() => null);
+    const mp4Request = page
+      .waitForRequest((req) => endsWithMp4(req.url()), { timeout: MP4_WAIT_MS })
+      .catch(() => null);
 
     await page.goto(rec.pageUrl, { waitUntil: 'load' });
 
@@ -61,14 +71,20 @@ export class VideostreamExtractor extends VideoExtractor {
         .evaluate(() => {
           const v = document.querySelector('video');
           if (v) return v.play?.();
-          document.querySelector('button[aria-label*="play" i], .play, .vjs-big-play-button')?.click();
+          document
+            .querySelector('button[aria-label*="play" i], .play, .vjs-big-play-button')
+            ?.click();
         })
         .catch(() => {});
-      request = await page.waitForRequest((req) => endsWithMp4(req.url()), { timeout: MP4_WAIT_MS }).catch(() => null);
+      request = await page
+        .waitForRequest((req) => endsWithMp4(req.url()), { timeout: MP4_WAIT_MS })
+        .catch(() => null);
     }
 
     if (!request) {
-      throw new Error(`No .mp4 request captured on ${rec.pageUrl} (playback may need a manual trigger)`);
+      throw new Error(
+        `No .mp4 request captured on ${rec.pageUrl} (playback may need a manual trigger)`,
+      );
     }
 
     // server/ expects the extension's webRequest shape ([{name,value}]), not Playwright's object.

@@ -4,13 +4,13 @@ import urllib.parse
 import urllib.request
 
 from dotenv import load_dotenv
+from events.sse import broadcast_notify, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-
-from fs import crud, overview, summary as summary_fs, tree
+from fs import crud, overview, tree
+from fs import summary as summary_fs
 from fs.files import file_path
-from events.sse import subscribe, broadcast_notify
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -102,7 +102,9 @@ async def post_lecture(course: str, request: Request, kind: str = Query("lecture
 
 
 @app.patch("/courses/{course}/lectures/{lecture}")
-async def patch_lecture(course: str, lecture: str, request: Request, kind: str = Query("lecture")):
+async def patch_lecture(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
     """Rename a lecture or recitation."""
 
     try:
@@ -123,7 +125,9 @@ def _post_run_audio(course: str, lecture: str, kind: str) -> None:
     )
     try:
         # strip_audio can take a while; no upper bound on the wait.
-        with urllib.request.urlopen(urllib.request.Request(url, method="POST"), timeout=None) as resp:
+        with urllib.request.urlopen(
+            urllib.request.Request(url, method="POST"), timeout=None
+        ) as resp:
             resp.read()
     except Exception as e:
         print(f"auto run/audio failed for {course}/{lecture} ({kind}): {e}", flush=True)
@@ -136,7 +140,9 @@ async def _trigger_audio(course: str, lecture: str, kind: str) -> None:
 
 
 @app.put("/courses/{course}/lectures/{lecture}/video")
-async def put_video(course: str, lecture: str, request: Request, kind: str = Query("lecture")):
+async def put_video(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
     """Upload video.mp4 from a raw request body, wiping any derived artifacts.
 
     On success, fire-and-forget triggers backend's /run/audio so a downloader
@@ -153,7 +159,9 @@ async def put_video(course: str, lecture: str, request: Request, kind: str = Que
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/files/{name}")
-def delete_file_endpoint(course: str, lecture: str, name: str, kind: str = Query("lecture")):
+def delete_file_endpoint(
+    course: str, lecture: str, name: str, kind: str = Query("lecture")
+):
     """Delete one file inside a lecture or recitation directory."""
 
     try:
@@ -164,7 +172,9 @@ def delete_file_endpoint(course: str, lecture: str, name: str, kind: str = Query
 
 
 @app.put("/courses/{course}/lectures/{lecture}/files/{name}")
-async def put_file(course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")):
+async def put_file(
+    course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")
+):
     """Write raw body bytes to a single file in a lecture dir. Neutral write — does NOT wipe derived artifacts (unlike PUT /video)."""
 
     try:
@@ -196,7 +206,9 @@ def get_summary(course: str, lecture: str, kind: str = Query("lecture")):
 
 
 @app.put("/courses/{course}/lectures/{lecture}/summary")
-async def put_summary(course: str, lecture: str, request: Request, kind: str = Query("lecture")):
+async def put_summary(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
     """Overwrite summary.md from a raw utf-8 body; first edit snapshots the original for later revert."""
 
     try:
@@ -309,4 +321,5 @@ async def notify(request: Request):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)

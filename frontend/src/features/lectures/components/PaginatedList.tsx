@@ -9,7 +9,12 @@ interface Props<T> {
 
 // Shows the latest `initialCount` items with a "Load more" row above that reveals older ones
 // in doubling chunks. Owns its paging state; the parent only hands it data + renderItem.
-export default function PaginatedList<T>({ items, renderItem, initialCount = 2, firstChunk = 4 }: Props<T>) {
+export default function PaginatedList<T>({
+  items,
+  renderItem,
+  initialCount = 2,
+  firstChunk = 4,
+}: Props<T>) {
   const [visible, setVisible] = useState(initialCount)
   const [chunk, setChunk] = useState(firstChunk)
 

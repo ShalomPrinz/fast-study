@@ -43,7 +43,7 @@ On a terminal non-zero exit the runner classifies the stderr tail with `isAuthEr
 
 - **auth error AND `ref` present AND `fromCache` true** → the replayed token went stale. The
   runner calls auto/ (`AUTODL_URL` `POST /download-item {ref, course, name:lecture, kind,
-  only:true, forceCapture:true}`, `services/autodl.js`) to re-capture just this one target
+only:true, forceCapture:true}`, `services/autodl.js`) to re-capture just this one target
   fresh. On **200** a **new** job (same `ref`) was spawned to replace this row, so the old job
   is **removed** (`removeJob`) — not errored: it uploaded nothing, and `done` would be a false
   success. On a non-200 recovery can't proceed, so the old job is finalized `error` with the
@@ -128,9 +128,19 @@ regression is built from. This is the downloader's only edge to the backend (800
 `GET /jobs` — every non-evicted job (the single source of truth).
 
 ```json
-{ "id": "…", "status": "running", "course": "…", "lecture": "…", "kind": "lecture",
-  "tool": "curl", "ref": "…", "operation": "download:curl", "expectedBytes": 6291456,
-  "startedAt": 1784540024714, "message": null }
+{
+  "id": "…",
+  "status": "running",
+  "course": "…",
+  "lecture": "…",
+  "kind": "lecture",
+  "tool": "curl",
+  "ref": "…",
+  "operation": "download:curl",
+  "expectedBytes": 6291456,
+  "startedAt": 1784540024714,
+  "message": null
+}
 ```
 
 `operation` (`'download:curl'|'download:ytdlp'|null`) is derived from `tool` via

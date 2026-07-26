@@ -46,30 +46,30 @@ python3 main.py                          # also works, same port
 
 ## API surface
 
-| Method+Path                                                              | Purpose                                  |
-|--------------------------------------------------------------------------|------------------------------------------|
-| `GET    /tree`                                                           | full course tree                         |
-| `POST   /courses`                                                        | create course (body: `{name}`, optional `{source_url}`) |
-| `PATCH  /courses/{course}`                                               | rename course (body: `{name}`)           |
-| `PATCH  /courses/{course}/source_url`                                    | set/clear course source_url (body: `{source_url}`; empty/null clears) |
-| `PATCH  /courses/{course}/archived`                                      | archive/unarchive course (body: `{archived}`) |
-| `POST   /courses/{course}/lectures?kind=lecture\|recitation`             | create lecture (body: `{name}`)          |
-| `PATCH  /courses/{course}/lectures/{lecture}?kind=...`                   | rename lecture (body: `{name}`)          |
-| `PUT    /courses/{course}/lectures/{lecture}/video?kind=...`             | upload `video.mp4` (raw body), wipes derived artifacts |
-| `PUT    /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | write a single file (raw body); neutral — no artifact wipe |
-| `HEAD   /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | 200 if file exists, 404 otherwise        |
-| `DELETE /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | delete a single file in the lecture dir  |
-| `GET    /courses/{course}/lectures/{lecture}/summary?kind=...`           | read `summary.md` + `hasOriginal` flag   |
-| `PUT    /courses/{course}/lectures/{lecture}/summary?kind=...`           | write `summary.md` (raw utf-8 body)      |
-| `DELETE /courses/{course}/lectures/{lecture}/summary?kind=...`           | revert to `original_summary.md`          |
-| `GET    /courses/{course}/lectures/{lecture}/files/{name}?kind=...`      | stream a lecture file                    |
-| `PUT    /courses/{course}/overview/files/{name}`                        | write a course-level overview file (raw body); neutral, 404 if course missing |
-| `GET    /courses/{course}/overview/files`                               | list overview files: `{files: [{name, size, mtime}]}` (empty if dir absent) |
-| `GET    /courses/{course}/overview/files/{name}`                        | stream a course-level overview file     |
-| `GET    /courses/{course}/overview/meta`                                | read per-slug overview meta map: `{meta: {...}}` (`{}` if none) |
-| `PATCH  /courses/{course}/overview/meta`                                | merge one slug's entry into `overview/meta.json` (body: `{slug, entry}`); atomic server-side merge, 404 if course missing |
-| `GET    /events`                                                         | SSE stream of `notify` events            |
-| `POST   /notify`                                                         | broadcast a `notify` event to subscribers|
+| Method+Path                                                         | Purpose                                                                                                                   |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `GET    /tree`                                                      | full course tree                                                                                                          |
+| `POST   /courses`                                                   | create course (body: `{name}`, optional `{source_url}`)                                                                   |
+| `PATCH  /courses/{course}`                                          | rename course (body: `{name}`)                                                                                            |
+| `PATCH  /courses/{course}/source_url`                               | set/clear course source_url (body: `{source_url}`; empty/null clears)                                                     |
+| `PATCH  /courses/{course}/archived`                                 | archive/unarchive course (body: `{archived}`)                                                                             |
+| `POST   /courses/{course}/lectures?kind=lecture\|recitation`        | create lecture (body: `{name}`)                                                                                           |
+| `PATCH  /courses/{course}/lectures/{lecture}?kind=...`              | rename lecture (body: `{name}`)                                                                                           |
+| `PUT    /courses/{course}/lectures/{lecture}/video?kind=...`        | upload `video.mp4` (raw body), wipes derived artifacts                                                                    |
+| `PUT    /courses/{course}/lectures/{lecture}/files/{name}?kind=...` | write a single file (raw body); neutral — no artifact wipe                                                                |
+| `HEAD   /courses/{course}/lectures/{lecture}/files/{name}?kind=...` | 200 if file exists, 404 otherwise                                                                                         |
+| `DELETE /courses/{course}/lectures/{lecture}/files/{name}?kind=...` | delete a single file in the lecture dir                                                                                   |
+| `GET    /courses/{course}/lectures/{lecture}/summary?kind=...`      | read `summary.md` + `hasOriginal` flag                                                                                    |
+| `PUT    /courses/{course}/lectures/{lecture}/summary?kind=...`      | write `summary.md` (raw utf-8 body)                                                                                       |
+| `DELETE /courses/{course}/lectures/{lecture}/summary?kind=...`      | revert to `original_summary.md`                                                                                           |
+| `GET    /courses/{course}/lectures/{lecture}/files/{name}?kind=...` | stream a lecture file                                                                                                     |
+| `PUT    /courses/{course}/overview/files/{name}`                    | write a course-level overview file (raw body); neutral, 404 if course missing                                             |
+| `GET    /courses/{course}/overview/files`                           | list overview files: `{files: [{name, size, mtime}]}` (empty if dir absent)                                               |
+| `GET    /courses/{course}/overview/files/{name}`                    | stream a course-level overview file                                                                                       |
+| `GET    /courses/{course}/overview/meta`                            | read per-slug overview meta map: `{meta: {...}}` (`{}` if none)                                                           |
+| `PATCH  /courses/{course}/overview/meta`                            | merge one slug's entry into `overview/meta.json` (body: `{slug, entry}`); atomic server-side merge, 404 if course missing |
+| `GET    /events`                                                    | SSE stream of `notify` events                                                                                             |
+| `POST   /notify`                                                    | broadcast a `notify` event to subscribers                                                                                 |
 
 `kind` defaults to `lecture`; pass `?kind=recitation` to address recitations.
 
@@ -80,7 +80,7 @@ python3 main.py                          # also works, same port
 - **`overview/` is a course-level file area, not a lecture.** Backend's overview step writes cross-lecture study files (e.g. `exam-hints.txt`) to `{DATA_ROOT}/{course}/overview/{name}` via `overview_dir(course)`. `fs/tree.py` skips this directory (like `Recitations`) so it never appears as a lecture in the tree. Writes are neutral (no artifact wipe, no side effects) and 404 if the course doesn't exist.
 - **`PUT /…/video` auto-triggers backend's `/run/audio`.** After a successful video write, the endpoint fire-and-forgets a POST to `${BACKEND_URL}/courses/{c}/lectures/{l}/run/audio?kind=...` (default `BACKEND_URL=http://localhost:8000`) so a downloader upload starts the audio-extraction step without a frontend click. Failures are logged and swallowed; the PUT response returns as soon as bytes hit disk.
 - **`PUT /…/video` wipes derived artifacts; `PUT /…/files/{name}` does not.** The video endpoint is the downloader's fresh-upload path and intentionally erases stale audio/transcript/summary. The generic files endpoint is the backend pipeline's write path for `audio.mp3`, `transcript.txt`, `transcript.partial.*`, `summary.pdf`, `drive_url.txt` — wiping would erase prior pipeline outputs mid-run. Summary writes go through the dedicated `/summary` endpoint, which snapshots the pre-edit original on first write.
-- **Overview-meta concurrency: no lock, cooperative-scheduling atomicity + atomic write.** The read-modify-write of `overview/meta.json` in `merge_overview_meta` is atomic across concurrent per-slug PATCHes because the route is `async def` (runs on the single event loop, not a threadpool) and the merge body contains **no `await`** — cooperative scheduling means the RMW runs to completion before another coroutine can interleave. This deliberately uses **no `asyncio.Lock`** (redundant while the body stays await-free); the load-bearing rule is "never add an `await` inside `merge_overview_meta`". The write itself is a temp-file + atomic `os.replace`, so an external reader or a crash mid-write can never see a torn/truncated file. Two things this does **not** protect against: (1) running uvicorn with multiple worker processes — separate event loops would race, needing `flock` or atomic-rename-based cross-process coordination; (2) a torn read from an *external* process still writing the file — that's why `read_overview_meta` swallows parse errors and degrades to `{}`, self-healing on the next refresh.
+- **Overview-meta concurrency: no lock, cooperative-scheduling atomicity + atomic write.** The read-modify-write of `overview/meta.json` in `merge_overview_meta` is atomic across concurrent per-slug PATCHes because the route is `async def` (runs on the single event loop, not a threadpool) and the merge body contains **no `await`** — cooperative scheduling means the RMW runs to completion before another coroutine can interleave. This deliberately uses **no `asyncio.Lock`** (redundant while the body stays await-free); the load-bearing rule is "never add an `await` inside `merge_overview_meta`". The write itself is a temp-file + atomic `os.replace`, so an external reader or a crash mid-write can never see a torn/truncated file. Two things this does **not** protect against: (1) running uvicorn with multiple worker processes — separate event loops would race, needing `flock` or atomic-rename-based cross-process coordination; (2) a torn read from an _external_ process still writing the file — that's why `read_overview_meta` swallows parse errors and degrades to `{}`, self-healing on the next refresh.
 - **SSE lives here.** `/events` is a long-lived `text/event-stream` response; each subscriber gets its own `asyncio.Queue`. `/notify` fans an `event: notify` message out to every queue. Producers (today: the downloader, after a successful download) fire-and-forget — failure to deliver is silent and non-blocking, same contract as the previous Vite-plugin handler.
 - **CORS open to `http://localhost:5173`.** Backend and downloader call this service server-to-server, so no CORS entry is needed for them.
 - **No auth.** Localhost-only trust model.

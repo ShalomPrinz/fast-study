@@ -3,15 +3,8 @@
   "name": "Fast Study Downloader (Simple)",
   "version": "1.0",
   "description": "Intercepts video streams and saves them to your Downloads folder. No server required.",
-  "permissions": [
-    "webRequest",
-    "storage",
-    "activeTab",
-    "downloads"
-  ],
-  "host_permissions": [
-    "<all_urls>"
-  ],
+  "permissions": ["webRequest", "storage", "activeTab", "downloads"],
+  "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },

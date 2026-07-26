@@ -1,14 +1,20 @@
 """Extraction logic tests — split_sentences / extract_snippets / build_report now live in
 course/extract.py (moved out of overview.py, which is registry-only)."""
 
+from course.extract import (
+    build_report,
+    extract_snippets,
+    run_extractor,
+    split_sentences,
+)
 from course.overview import PatternExtractor
-from course.extract import split_sentences, extract_snippets, build_report, run_extractor
 from services import db_client
 
 
 def _pattern_extractor(patterns, before=1, after=1, slug="test", title="Test"):
-    return PatternExtractor(slug=slug, title=title,
-                            patterns=tuple(patterns), before=before, after=after)
+    return PatternExtractor(
+        slug=slug, title=title, patterns=tuple(patterns), before=before, after=after
+    )
 
 
 class TestSplitSentences:
@@ -29,7 +35,9 @@ class TestSplitSentences:
 
     def test_newlines_are_boundaries(self):
         assert split_sentences("שורה ראשונה\nשורה שנייה. סוף") == [
-            "שורה ראשונה", "שורה שנייה.", "סוף",
+            "שורה ראשונה",
+            "שורה שנייה.",
+            "סוף",
         ]
 
     def test_empty_and_whitespace_only(self):
@@ -39,8 +47,13 @@ class TestSplitSentences:
 
 class TestPatternWindowing:
     SENTS = [
-        "משפט אפס.", "משפט אחד.", "כאן מופיע במבחן משהו.", "משפט שלוש.",
-        "משפט ארבע.", "משפט חמש.", "משפט שש.",
+        "משפט אפס.",
+        "משפט אחד.",
+        "כאן מופיע במבחן משהו.",
+        "משפט שלוש.",
+        "משפט ארבע.",
+        "משפט חמש.",
+        "משפט שש.",
     ]
 
     def test_window_around_match(self):
@@ -64,13 +77,17 @@ class TestPatternWindowing:
         assert snippets[0].endswith("\nכאן מופיע במבחן משהו. משפט שתיים.")
 
     def test_overlapping_windows_merge_with_both_patterns(self):
-        text = "משפט אפס. יש שאלה בקהל. משפט שתיים. שאלה טובה מאוד. משפט ארבע. משפט חמש."
+        text = (
+            "משפט אפס. יש שאלה בקהל. משפט שתיים. שאלה טובה מאוד. משפט ארבע. משפט חמש."
+        )
         ext = _pattern_extractor(["יש שאלה", "שאלה טובה"], before=1, after=1)
         snippets = extract_snippets(ext, text)
         assert len(snippets) == 1
         header, text_out = snippets[0].split("\n", 1)
         assert header == "--- [patterns: יש שאלה, שאלה טובה] ---"
-        assert text_out == "משפט אפס. יש שאלה בקהל. משפט שתיים. שאלה טובה מאוד. משפט ארבע."
+        assert (
+            text_out == "משפט אפס. יש שאלה בקהל. משפט שתיים. שאלה טובה מאוד. משפט ארבע."
+        )
 
     def test_adjacent_windows_merge(self):
         # Windows [0,1] and [2,3] touch with no gap sentence — one snippet, not two.
@@ -121,17 +138,23 @@ class TestBuildReport:
 
     def test_zero_snippet_source_omitted(self):
         snippet = "--- [patterns: במבחן] ---\nקטע."
-        report = build_report(self.EXT, "קורס", [
-            ("Lecture 1", []),
-            ("Lecture 2", [snippet]),
-            ("Recitations/תרגול 3", []),
-        ])
+        report = build_report(
+            self.EXT,
+            "קורס",
+            [
+                ("Lecture 1", []),
+                ("Lecture 2", [snippet]),
+                ("Recitations/תרגול 3", []),
+            ],
+        )
         assert "Lecture 1" not in report
         assert "=== Lecture 2 ===" in report
         assert "תרגול 3" not in report
 
     def test_all_sources_empty_returns_empty_string(self):
-        assert build_report(self.EXT, "קורס", [("Lecture 1", []), ("Lecture 2", [])]) == ""
+        assert (
+            build_report(self.EXT, "קורס", [("Lecture 1", []), ("Lecture 2", [])]) == ""
+        )
 
     def test_recitation_label_appears_verbatim(self):
         snippet = "--- [patterns: במבחן] ---\nקטע."
@@ -143,20 +166,28 @@ class TestRunExtractorMeta:
     """run_extractor patches overview meta only on a successful write ("done")."""
 
     # A pattern that matches every source so build_report always yields a non-empty report.
-    EXT = _pattern_extractor(["x"], before=0, after=0, slug="exam-hints", title="Exam Hints")
+    EXT = _pattern_extractor(
+        ["x"], before=0, after=0, slug="exam-hints", title="Exam Hints"
+    )
 
     def _mock(self, monkeypatch):
         puts, patches = [], []
-        monkeypatch.setattr(db_client, "put_overview_file",
-                            lambda c, f, d: puts.append((f, d)))
-        monkeypatch.setattr(db_client, "patch_overview_meta",
-                            lambda c, s, e: patches.append((c, s, e)))
+        monkeypatch.setattr(
+            db_client, "put_overview_file", lambda c, f, d: puts.append((f, d))
+        )
+        monkeypatch.setattr(
+            db_client, "patch_overview_meta", lambda c, s, e: patches.append((c, s, e))
+        )
         return puts, patches
 
     def test_meta_written_on_done_with_split_ranges(self, monkeypatch):
         _, patches = self._mock(monkeypatch)
-        sources = [("Lecture 2", "x."), ("Lecture 9", "x."),
-                   ("Recitations/Recitation 1", "x."), ("Recitations/Recitation 4", "x.")]
+        sources = [
+            ("Lecture 2", "x."),
+            ("Lecture 9", "x."),
+            ("Recitations/Recitation 1", "x."),
+            ("Recitations/Recitation 4", "x."),
+        ]
         assert run_extractor("קורס", self.EXT, sources) == {"status": "done"}
         assert len(patches) == 1
         course, slug, entry = patches[0]
@@ -168,7 +199,9 @@ class TestRunExtractorMeta:
 
     def test_recitations_null_when_absent(self, monkeypatch):
         _, patches = self._mock(monkeypatch)
-        assert run_extractor("קורס", self.EXT, [("Lecture 5", "x.")]) == {"status": "done"}
+        assert run_extractor("קורס", self.EXT, [("Lecture 5", "x.")]) == {
+            "status": "done"
+        }
         entry = patches[0][2]
         assert entry["lectures"] == {"start": "5", "end": "5"}
         assert entry["recitations"] is None

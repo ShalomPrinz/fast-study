@@ -69,9 +69,7 @@ export interface RateLimitProgress {
 }
 
 export type RunInitResult =
-  | { status: 'started' }
-  | { status: 'busy' }
-  | { status: 'error'; message: string }
+  { status: 'started' } | { status: 'busy' } | { status: 'error'; message: string }
 
 export interface Selected {
   course: string
@@ -127,7 +125,7 @@ export interface CourseFile {
 export type OverviewRange = { start: string; end: string } | null
 
 export type OverviewMetaRaw = Record<
-  string, /* slug */
+  string /* slug */,
   { lectures: OverviewRange; recitations: OverviewRange; generated_at: string }
 >
 
@@ -135,4 +133,3 @@ export type OverviewMeta = Record<
   string /* slug */,
   { lectures: OverviewRange; recitations: OverviewRange; generatedAt: string }
 >
-

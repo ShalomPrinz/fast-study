@@ -5,8 +5,12 @@ export function useShiftHeld(): boolean {
   const [shiftHeld, setShiftHeld] = useState(false)
 
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => { if (e.key === 'Shift') setShiftHeld(true) }
-    const onKeyUp = (e: KeyboardEvent) => { if (e.key === 'Shift') setShiftHeld(false) }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') setShiftHeld(true)
+    }
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') setShiftHeld(false)
+    }
     // An alt-tab mid-hold never delivers keyup, so reset on blur.
     const onBlur = () => setShiftHeld(false)
     window.addEventListener('keydown', onKeyDown)

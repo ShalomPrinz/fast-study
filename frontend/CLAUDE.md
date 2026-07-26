@@ -16,13 +16,13 @@ npm run build    # tsc -b && vite build → dist/   (run this to surface type er
 
 ## Docs
 
-| Doc                          | Covers |
-|------------------------------|--------|
-| `docs/architecture.md`       | layering, `@/` alias, routing, SSE refresh model, sidebar modes, styling |
-| `docs/services.md`           | the boundary rule, http client + ConnectionError, each service, URL encoding |
-| `docs/lectures.md`           | pipeline constants, runner/in-flight state, edit view, sidebar tree |
-| `docs/course-overview.md`    | extractors, phases, generate/continue/re-generate, per-slug gating |
-| `docs/downloads.md`          | auth, discovery, row edits, bulk queue, passcode gate |
+| Doc                       | Covers                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| `docs/architecture.md`    | layering, `@/` alias, routing, SSE refresh model, sidebar modes, styling     |
+| `docs/services.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding |
+| `docs/lectures.md`        | pipeline constants, runner/in-flight state, edit view, sidebar tree          |
+| `docs/course-overview.md` | extractors, phases, generate/continue/re-generate, per-slug gating           |
+| `docs/downloads.md`       | auth, discovery, row edits, bulk queue, passcode gate                        |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 
@@ -61,4 +61,5 @@ src/
 - When a change makes these docs stale, update them in the same pass.
 
 ## React Best Practices
+
 - Hooks and functions must return a narrow surface. A hook returning more than ~5 fields is a design smell — split it or reconsider the boundary. Similarly, a component with more than ~5 props is a design smell.

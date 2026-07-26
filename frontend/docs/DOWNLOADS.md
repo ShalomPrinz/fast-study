@@ -50,9 +50,9 @@ a decimal — a Latin letter (a=1…z=26), one of `אבגדהוזחטי` (א=1�
 present. Ambiguity voids the marker rather than guessing (whitespace, a second letter, a date tail), and a
 title with no number at all falls back to the tree's next-number suggestion.
 
-A row's failure to *start* flips the button to "Retry ✗" and toasts via `toastDownloadError` (generic copy,
+A row's failure to _start_ flips the button to "Retry ✗" and toasts via `toastDownloadError` (generic copy,
 except an `UnsupportedError` whose message is display-ready). Reconnect, passcode and a cancelled passcode
-prompt don't toast — they steer the UI elsewhere. A failure *after* the start is a job failure, below.
+prompt don't toast — they steer the UI elsewhere. A failure _after_ the start is a job failure, below.
 
 ## Download progress
 
@@ -73,7 +73,7 @@ before/after-break pair lands under lecture names `<name>.1`/`<name>.2`, but bot
 row's `ref`. So the row-to-job link is server-side — no client id↔row map, no seeding, no delta merge.
 
 **One job per target — the server guarantees it.** When the server silently recovers a stale token — or a
-manual retry runs — `createJob` calls `supersedeTerminal`, evicting any prior *terminal* job (`done`/`error`)
+manual retry runs — `createJob` calls `supersedeTerminal`, evicting any prior _terminal_ job (`done`/`error`)
 for the same `(course, lecture, kind, ref)` before minting the fresh one. So a `/jobs` snapshot never holds
 two jobs for one target, and no superseded `error` survives to flash a stale row or toast a recovery that
 actually succeeded. The client trusts the snapshot as-is — no client-side dedupe. (A zoom pair's `.1`/`.2`

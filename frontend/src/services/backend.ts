@@ -1,18 +1,51 @@
-import type { Step, RunInitResult, TimingStats, TimingOperation, Kind, RunnerStatus, OverviewExtractor, CoursePhase, CourseExtractorState, CourseStatus } from '@/types'
-import { kindQuery, lectureBase, courseOverviewBase, overviewGenerateQuery } from '@/shared/utils/url'
+import type {
+  Step,
+  RunInitResult,
+  TimingStats,
+  TimingOperation,
+  Kind,
+  RunnerStatus,
+  OverviewExtractor,
+  CoursePhase,
+  CourseExtractorState,
+  CourseStatus,
+} from '@/types'
+import {
+  kindQuery,
+  lectureBase,
+  courseOverviewBase,
+  overviewGenerateQuery,
+} from '@/shared/utils/url'
 import { createClient } from './http'
 
-const backend = createClient(import.meta.env.VITE_API_URL ?? 'http://localhost:8000', 'backend service')
+const backend = createClient(
+  import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
+  'backend service',
+)
 
-export async function runStep(course: string, lecture: string, step: Step, kind?: Kind): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/run/${step}${kindQuery(kind)}`)
+export async function runStep(
+  course: string,
+  lecture: string,
+  step: Step,
+  kind?: Kind,
+): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(
+    `${lectureBase(course, lecture)}/run/${step}${kindQuery(kind)}`,
+  )
 }
 
-export async function runPipeline(course: string, lecture: string, kind?: Kind): Promise<RunInitResult> {
+export async function runPipeline(
+  course: string,
+  lecture: string,
+  kind?: Kind,
+): Promise<RunInitResult> {
   return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/pipeline${kindQuery(kind)}`)
 }
 
-export async function fetchTimingStats(operation: TimingOperation, fileSizeBytes: number): Promise<TimingStats> {
+export async function fetchTimingStats(
+  operation: TimingOperation,
+  fileSizeBytes: number,
+): Promise<TimingStats> {
   return backend.get<TimingStats>(`/timing/${operation}?file_size_bytes=${fileSizeBytes}`)
 }
 
@@ -74,8 +107,17 @@ export async function fetchOverviewExtractors(): Promise<OverviewExtractor[]> {
   return raw.extractors.map((e) => ({ slug: e.slug, title: e.title, phases: e.phases ?? [] }))
 }
 
-export async function runOverview(course: string, extractors?: string[], fromPhase?: CoursePhase, skipExisting?: boolean): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(courseOverviewBase(course) + '/generate' + overviewGenerateQuery(extractors, fromPhase, skipExisting))
+export async function runOverview(
+  course: string,
+  extractors?: string[],
+  fromPhase?: CoursePhase,
+  skipExisting?: boolean,
+): Promise<RunInitResult> {
+  return backend.post<RunInitResult>(
+    courseOverviewBase(course) +
+      '/generate' +
+      overviewGenerateQuery(extractors, fromPhase, skipExisting),
+  )
 }
 
 interface RawCourseStatus {

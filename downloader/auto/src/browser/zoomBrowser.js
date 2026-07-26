@@ -58,7 +58,9 @@ function startXvfb() {
     { stdio: ['ignore', 'ignore', 'pipe'] }, // stderr captured (not inherited) — surfaced only on failure
   );
   let err = '';
-  proc.stderr.on('data', (c) => { err += c.toString(); });
+  proc.stderr.on('data', (c) => {
+    err += c.toString();
+  });
 
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -68,10 +70,15 @@ function startXvfb() {
       settled = true;
       fn(arg);
     };
-    proc.once('error', (e) => finish(reject, new Error(`Failed to spawn Xvfb (${e.message}); is it installed?`)));
+    proc.once('error', (e) =>
+      finish(reject, new Error(`Failed to spawn Xvfb (${e.message}); is it installed?`)),
+    );
     proc.once('exit', (code) => {
       fs.rmSync(authFile, { force: true });
-      finish(reject, new Error(`Xvfb exited early (code ${code}).${err ? ` Xvfb said: ${err.trim()}` : ''}`));
+      finish(
+        reject,
+        new Error(`Xvfb exited early (code ${code}).${err ? ` Xvfb said: ${err.trim()}` : ''}`),
+      );
     });
 
     // Poll the abstract socket until the server accepts a connection or we time out.
@@ -88,7 +95,12 @@ function startXvfb() {
         if (Date.now() >= deadline) {
           proc.kill('SIGKILL');
           fs.rmSync(authFile, { force: true });
-          finish(reject, new Error(`Xvfb :${num} did not accept connections within timeout.${err ? ` Xvfb said: ${err.trim()}` : ''}`));
+          finish(
+            reject,
+            new Error(
+              `Xvfb :${num} did not accept connections within timeout.${err ? ` Xvfb said: ${err.trim()}` : ''}`,
+            ),
+          );
         } else {
           setTimeout(attempt, 100).unref?.();
         }

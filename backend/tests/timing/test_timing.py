@@ -1,14 +1,15 @@
 import sqlite3
 
 import pytest
-
 import timing
 
 
 # conftest's autouse fixture already points timing.DB_PATH at a temp db.
 def _rows():
     with sqlite3.connect(timing.DB_PATH) as conn:
-        return conn.execute("SELECT operation, file_size_bytes, duration_seconds FROM timing").fetchall()
+        return conn.execute(
+            "SELECT operation, file_size_bytes, duration_seconds FROM timing"
+        ).fetchall()
 
 
 class TestRecord:
@@ -26,7 +27,9 @@ class TestRecord:
         assert result["status"] == "error"
         assert _rows() == []
 
-    @pytest.mark.parametrize("operation", ["audio", "transcribe", "summarize", "pdf", "drive"])
+    @pytest.mark.parametrize(
+        "operation", ["audio", "transcribe", "summarize", "pdf", "drive"]
+    )
     def test_accepts_pipeline_operations(self, operation):
         assert timing.record(operation, 1000, 2.5) == {"status": "ok"}
         assert _rows() == [(operation, 1000, 2.5)]
@@ -64,4 +67,6 @@ class TestRecord:
 
     def test_operations_are_separate_buckets(self):
         timing.record("download:curl", 1000, 1.0)
-        assert timing.get_stats("download:ytdlp", 1000) == {"message": "not-enough-data"}
+        assert timing.get_stats("download:ytdlp", 1000) == {
+            "message": "not-enough-data"
+        }

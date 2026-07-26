@@ -15,5 +15,7 @@ export function decodeEntities(s) {
 
 // What textContent would have given: tag-stripped, entity-decoded, whitespace-collapsed.
 export function stripTags(html) {
-  return decodeEntities(String(html ?? '').replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+  return decodeEntities(String(html ?? '').replace(/<[^>]*>/g, ' '))
+    .replace(/\s+/g, ' ')
+    .trim();
 }

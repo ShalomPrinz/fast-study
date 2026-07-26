@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import type { ReactNode } from 'react'
-import type { OverviewExtractor, CourseFile, CourseStatus, CoursePhase, OverviewMeta, RunInitResult } from '@/types'
+import type {
+  OverviewExtractor,
+  CourseFile,
+  CourseStatus,
+  CoursePhase,
+  OverviewMeta,
+  RunInitResult,
+} from '@/types'
 import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
 import { fetchCourseFiles, fetchCourseMeta } from '@/services/database'
 import { useNotify } from '@/shared/hooks/useNotify'
@@ -13,7 +20,11 @@ export interface CourseOverviewValue {
   files: CourseFile[]
   meta: OverviewMeta
   status: CourseStatus | null
-  generate: (names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean) => Promise<RunInitResult>
+  generate: (
+    names?: string[],
+    fromPhase?: CoursePhase,
+    skipExisting?: boolean,
+  ) => Promise<RunInitResult>
 }
 
 const CourseOverviewContext = createContext<CourseOverviewValue | null>(null)
@@ -24,7 +35,13 @@ export function useCourseOverview(): CourseOverviewValue {
   return ctx
 }
 
-export function CourseOverviewProvider({ course, children }: { course: string; children: ReactNode }) {
+export function CourseOverviewProvider({
+  course,
+  children,
+}: {
+  course: string
+  children: ReactNode
+}) {
   const [extractors, setExtractors] = useState<OverviewExtractor[] | null>(null)
   const [files, setFiles] = useState<CourseFile[]>([])
   const [meta, setMeta] = useState<OverviewMeta>({})
@@ -65,7 +82,11 @@ export function CourseOverviewProvider({ course, children }: { course: string; c
 
   // One trigger; omitting names = all slugs. skipExisting = continue (missing phases only),
   // default = overwrite. See docs/course-overview.md.
-  async function generate(names?: string[], fromPhase?: CoursePhase, skipExisting?: boolean): Promise<RunInitResult> {
+  async function generate(
+    names?: string[],
+    fromPhase?: CoursePhase,
+    skipExisting?: boolean,
+  ): Promise<RunInitResult> {
     const result = await runOverview(course, names, fromPhase, skipExisting)
     refresh()
     return result

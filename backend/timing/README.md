@@ -102,6 +102,7 @@ python3 backend/timing/scripts/plot_timing.py
 ```
 
 Outputs:
+
 - `backend/timing/plots/_all.png` — combined grid, one subplot per operation
 - `backend/timing/plots/<operation>.png` — one PNG per operation
 

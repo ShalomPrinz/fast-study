@@ -4,17 +4,15 @@ from typing import Literal, get_args
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+from course import overview
+from course import runner as course_runner
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-
-from pydantic import BaseModel
-
-from timing import init_db, get_stats, record
-from course import overview
-from course import runner as course_runner
-from services import db_client
 from pipeline import runner
+from pydantic import BaseModel
+from services import db_client
+from timing import get_stats, init_db, record
 
 load_dotenv()
 
@@ -24,7 +22,9 @@ async def lifespan(app: FastAPI):
     """Start the APScheduler cron that auto-runs pending lectures at 03:00 daily."""
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(runner._scheduled_run, CronTrigger(hour=3, minute=0), id="run_all_daily")
+    scheduler.add_job(
+        runner._scheduled_run, CronTrigger(hour=3, minute=0), id="run_all_daily"
+    )
     scheduler.start()
     try:
         yield
@@ -44,11 +44,11 @@ app.add_middleware(
 
 
 _STEP_CONFIG: dict[str, tuple[str, str]] = {
-    "audio":      ("video.mp4",      "Download"),
-    "transcribe": ("audio.mp3",      "Extract Audio"),
-    "summarize":  ("transcript.txt", "Transcribe"),
-    "pdf":        ("summary.md",     "Summarize"),
-    "drive":      ("summary.pdf",    "PDF"),
+    "audio": ("video.mp4", "Download"),
+    "transcribe": ("audio.mp3", "Extract Audio"),
+    "summarize": ("transcript.txt", "Transcribe"),
+    "pdf": ("summary.md", "Summarize"),
+    "drive": ("summary.pdf", "PDF"),
 }
 
 
@@ -68,22 +68,30 @@ def _validate_kind(kind: str):
 async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
     if step not in _STEP_CONFIG:
         return {"status": "error", "message": f"Unknown step: {step}"}
-    if err := _validate_kind(kind): return err
+    if err := _validate_kind(kind):
+        return err
 
     # Each step depends on the previous step's output file.
     required_file, prev_step = _STEP_CONFIG[step]
-    if not await asyncio.to_thread(runner.db_client.file_exists, course, lecture, kind, required_file):
-        return {"status": "error", "message": f"{required_file} is required — run {prev_step} first"}
+    if not await asyncio.to_thread(
+        runner.db_client.file_exists, course, lecture, kind, required_file
+    ):
+        return {
+            "status": "error",
+            "message": f"{required_file} is required — run {prev_step} first",
+        }
     return {"status": runner.try_run_step(course, lecture, kind, step)}
 
 
 @app.post("/courses/{course}/lectures/{lecture}/pipeline")
 async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture")):
-    if err := _validate_kind(kind): return err
+    if err := _validate_kind(kind):
+        return err
     return {"status": runner.try_run_pipeline(course, lecture, kind)}
 
 
 # ---- Overview (course-level, not per-lecture — state lives in course/runner.py) ----
+
 
 async def _find_course(course: str) -> tuple[dict | None, dict | None]:
     """Locate a course node in the tree; returns (node, error envelope)."""
@@ -96,9 +104,12 @@ async def _find_course(course: str) -> tuple[dict | None, dict | None]:
 
 
 @app.post("/courses/{course}/overview/generate")
-async def overview_generate(course: str, extractors: str | None = Query(None),
-                            from_phase: str | None = Query(None),
-                            skip_existing: bool = Query(False)):
+async def overview_generate(
+    course: str,
+    extractors: str | None = Query(None),
+    from_phase: str | None = Query(None),
+    skip_existing: bool = Query(False),
+):
     """Generate a course overview for the given extractor slugs, from `from_phase`
     through to_pdf. Semantics of the run and both flags: docs/OVERVIEW.md."""
 
@@ -113,7 +124,11 @@ async def overview_generate(course: str, extractors: str | None = Query(None),
     course_node, err = await _find_course(course)
     if course_node is None or err is not None:
         return err
-    return {"status": course_runner.try_run_generate(course, course_node, slugs, phase, skip_existing)}
+    return {
+        "status": course_runner.try_run_generate(
+            course, course_node, slugs, phase, skip_existing
+        )
+    }
 
 
 @app.get("/courses/{course}/overview/status")
@@ -127,7 +142,12 @@ def overview_status(course: str):
 def overview_extractors():
     """Static extractor listing. `slug` is the stable id, `title` is the label."""
 
-    return {"extractors": [{"slug": e.slug, "title": e.title, "phases": e.phase_ids} for e in overview.EXTRACTORS]}
+    return {
+        "extractors": [
+            {"slug": e.slug, "title": e.title, "phases": e.phase_ids}
+            for e in overview.EXTRACTORS
+        ]
+    }
 
 
 @app.post("/run-all")

@@ -9,6 +9,7 @@ You own all development work inside `backend/`: the FastAPI app (Python 3.12, ma
 Scope: work only within `backend/`. Don't modify other services.
 
 Working rules:
+
 - Follow existing conventions in the backend code and `backend/CLAUDE.md`. Pipeline functions stay pure (paths/strings in, no global state); all filesystem access goes through `services/db_client.py`.
 - Run tests with `uv run pytest tests/ -q`. Per `backend/CLAUDE.md`, any change to `pipeline/` (or its helpers) is not done until the suite is green and the new logic has a test — especially `to_pdf.py` bidi/LaTeX helpers.
 - When your changes make `backend/CLAUDE.md` (or `backend/docs/*`) outdated, update them in the same pass — endpoints, signatures, the directory/file-naming listings, design decisions. Keep docs concise; one short line is the default.

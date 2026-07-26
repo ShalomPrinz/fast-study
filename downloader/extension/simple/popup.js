@@ -8,7 +8,9 @@ const SAVE_ROOT = 'fast_study';
 let interceptedRequest = null;
 let pdfPageUrl = null;
 
-function $(id) { return document.getElementById(id); }
+function $(id) {
+  return document.getElementById(id);
+}
 
 function setStatus(text, color) {
   const el = $('status');
@@ -91,7 +93,9 @@ async function loadIntercepted() {
     select.appendChild(opt);
     opts.push(opt);
   }
-  select.addEventListener('change', () => { interceptedRequest = videoRequests[+select.value]; });
+  select.addEventListener('change', () => {
+    interceptedRequest = videoRequests[+select.value];
+  });
   interceptedRequest = videoRequests[0];
 
   videoRequests.forEach(async (req, i) => {
@@ -102,7 +106,11 @@ async function loadIntercepted() {
 
 // PDFs aren't gated like .mp4 streams — Chrome just renders them at the tab URL.
 function isPdfUrl(url) {
-  try { return new URL(url).pathname.toLowerCase().endsWith('.pdf'); } catch { return false; }
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith('.pdf');
+  } catch {
+    return false;
+  }
 }
 
 async function loadActivePagePdf() {
@@ -145,7 +153,11 @@ async function downloadVideo() {
     alert(`Download failed: ${e.message ?? e}`);
     btn.innerText = 'Download';
   }
-  setTimeout(() => { btn.innerText = 'Download'; btn.style.background = ''; btn.disabled = false; }, 2000);
+  setTimeout(() => {
+    btn.innerText = 'Download';
+    btn.style.background = '';
+    btn.disabled = false;
+  }, 2000);
 }
 
 async function downloadPdf() {
@@ -177,7 +189,11 @@ async function downloadPdf() {
     alert(`Download failed: ${e.message ?? e}`);
     btn.innerText = 'Download PDF';
   }
-  setTimeout(() => { btn.innerText = 'Download PDF'; btn.style.background = ''; btn.disabled = false; }, 2000);
+  setTimeout(() => {
+    btn.innerText = 'Download PDF';
+    btn.style.background = '';
+    btn.disabled = false;
+  }, 2000);
 }
 
 document.addEventListener('DOMContentLoaded', async () => {

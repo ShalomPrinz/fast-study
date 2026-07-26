@@ -18,7 +18,10 @@ def run_to_pdf(course: str, slug: str) -> dict:
     try:
         md_bytes = db_client.get_overview_file(course, md_name)
     except db_client.DbClientError:
-        return {"status": "skipped", "message": "no analyzed markdown — run analyze first"}
+        return {
+            "status": "skipped",
+            "message": "no analyzed markdown — run analyze first",
+        }
     # convert_to_pdf needs the .md on disk and drops the .pdf beside it, so round-trip
     # through a temp dir.
     with tempfile.TemporaryDirectory() as tmp:

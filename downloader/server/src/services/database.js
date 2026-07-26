@@ -38,7 +38,9 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
       duplex: 'half',
     });
     let body = null;
-    try { body = await res.json(); } catch {}
+    try {
+      body = await res.json();
+    } catch {}
     if (!res.ok || body?.ok === false) {
       const error = body?.error ?? `HTTP ${res.status}`;
       emitError(`❌ ${tool} upload to database failed: ${error}`);
@@ -51,7 +53,9 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     emitError(`❌ ${tool} upload to database failed: ${err.message}`);
     return { ok: false, error: err.message };
   } finally {
-    try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch {}
+    try {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    } catch {}
   }
 }
 
@@ -66,7 +70,9 @@ export async function uploadPdf(buf, course, lecture, kind) {
     body: buf,
   });
   let body = null;
-  try { body = await res.json(); } catch {}
+  try {
+    body = await res.json();
+  } catch {}
   if (!res.ok || body?.ok === false) {
     const error = body?.error ?? `HTTP ${res.status}`;
     emitError(`❌ PDF upload to database failed: ${error}`);

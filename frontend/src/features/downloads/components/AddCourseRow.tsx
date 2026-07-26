@@ -43,7 +43,9 @@ export default function AddCourseRow() {
         className="source-row-input"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Escape') reset() }}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') reset()
+        }}
         placeholder="Course name…"
         dir="auto"
         autoFocus
@@ -52,13 +54,20 @@ export default function AddCourseRow() {
         className="source-row-input"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
-        onKeyDown={(e) => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') reset() }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') commit()
+          if (e.key === 'Escape') reset()
+        }}
         placeholder="Source URL (optional)…"
         dir="auto"
       />
       <div className="source-add-actions">
-        <button className="source-row-btn" onClick={commit} disabled={saving || !name.trim()}>Create</button>
-        <button className="source-row-btn source-row-btn--ghost" onClick={reset}>Cancel</button>
+        <button className="source-row-btn" onClick={commit} disabled={saving || !name.trim()}>
+          Create
+        </button>
+        <button className="source-row-btn source-row-btn--ghost" onClick={reset}>
+          Cancel
+        </button>
       </div>
     </div>
   )

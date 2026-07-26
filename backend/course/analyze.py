@@ -3,9 +3,10 @@ write the result. Pure work — the runner owns the loop, status and failure iso
 
 from pathlib import Path
 
-from course.overview import Extractor
 from services import db_client
 from services.llm_client import LLMClient
+
+from course.overview import Extractor
 
 PROMPT_DIR = Path(__file__).parent.parent / "assets" / "instructions" / "overview"
 

@@ -39,6 +39,7 @@ Each worker is pure work returning a `"done"`/`"skipped"` status dict, raising o
 One `generate` trigger is one `OverviewRun`. The run owns its selection (slugs, `from_phase`, `skip_existing`) and the transcript `sources` — fetched ONCE, lazily on the first slug entering extract, memoized on the instance. It does **not** own status.
 
 Module-level state in `course/runner.py`:
+
 - `_locks[(course, slug)]` — persists across runs so same-slug triggers serialize.
 - `_status[course][slug]` — the shared store runs write into; entry is `{"status", "phase"?, "message"?}`. It survives after a run finishes so `get_status` can read it. `running` is DERIVED (any entry running); `phase` is per-entry and is always the **string** `phase.id` — a `Phase` object must never reach the JSON-serialized store.
 
@@ -59,5 +60,6 @@ Because a slug holds its lock across its whole phase chain, the UI shows one spi
 `from_phase` makes the run START at that phase and continue through `to_pdf`. Earlier phases are skipped, so their `.txt`/`.md` files are kept (never deleted); a missing input just yields the phase's usual `skipped`. A `from_phase` an extractor doesn't declare falls back to that extractor's full chain. It is parsed at the HTTP boundary by `resolve_from_phase` so `main.py` stays thin route glue.
 
 `skip_existing` (default `false`) is a **continue** mode:
+
 - `false` — every participating phase overwrites its output. The per-slug ↺ re-generate flows rely on this.
 - `true` — snapshots the overview dir once at run start and keeps any participant whose output file already exists, marking it `skipped` "already generated" without running its worker. A kept extractor stays a participant for later phases (a kept `.txt` still lets analyze run if `.md` is missing) and is never an error. A fully-done slug ends `skipped`; one whose missing tail regenerated ends `done`.

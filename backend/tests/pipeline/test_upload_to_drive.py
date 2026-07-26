@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pytest
-
 import upload_to_drive as drive_mod
 from upload_to_drive import upload_to_drive
 
@@ -113,8 +112,12 @@ def test_subfolder_file_lookup_is_scoped_to_subfolder(tmp_path, store):
     # the Recitations subfolder — re-upload there should update the subfolder copy.
     with patch.object(drive_mod, "_get_service", return_value=FakeService(store)):
         upload_to_drive(_pdf(tmp_path), "Course", file_name="t.pdf")
-        upload_to_drive(_pdf(tmp_path), "Course", file_name="t.pdf", subfolder="Recitations")
-        upload_to_drive(_pdf(tmp_path), "Course", file_name="t.pdf", subfolder="Recitations")
+        upload_to_drive(
+            _pdf(tmp_path), "Course", file_name="t.pdf", subfolder="Recitations"
+        )
+        upload_to_drive(
+            _pdf(tmp_path), "Course", file_name="t.pdf", subfolder="Recitations"
+        )
 
     pdfs = [f for f in store["files"] if f["name"] == "t.pdf"]
     assert len(pdfs) == 2  # one in course root, one in Recitations

@@ -6,7 +6,11 @@ export function httpError(res: Response): Error {
 
 // A request that never reached the server (service down); toasted centrally on construction.
 export class ConnectionError extends Error {
-  constructor(public serviceName: string, public baseUrl: string, public cause?: unknown) {
+  constructor(
+    public serviceName: string,
+    public baseUrl: string,
+    public cause?: unknown,
+  ) {
     super(`Can't reach ${serviceName} at ${baseUrl}. Make sure it's running.`)
     this.name = 'ConnectionError'
   }

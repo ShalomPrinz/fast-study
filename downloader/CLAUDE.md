@@ -13,7 +13,6 @@ server/              Node server (express): src/, docs/ — see server/CLAUDE.md
 auto/                Auto-downloader: Playwright HTTP service (talks to server/ over HTTP)
 ```
 
-
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
 - **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links (`auto/`'s `google-drive` strategy).
 - **PDF** — when the active tab is a `.pdf`, the popup fetches it directly (with the user's cookies) and uploads it as `material.pdf`; no header replay needed since PDFs aren't token-gated.
@@ -38,7 +37,7 @@ The extension has two pieces; the server they hand off to is covered separately 
    - Hostname-checks `activeTab.url` against `{youtube.com, www.youtube.com, m.youtube.com, youtu.be}`.
      - **YouTube path:** hides the captured-requests `<select>`, shows the page URL as a readonly field, POSTs `{url, course, lecture, kind}` to `/download-youtube`.
      - **Generic path:** reads `videoRequests` from storage and **filters by exact-match `pageUrl === activeTab.url`** so captures from other pages/tabs never leak in. Renders each capture in a `<select>` prefixed with its size (`[412.3 MB] host … file.mp4`). Sizes are probed lazily via `POST /probe-size` (the server uses Node `http`, which can send the captured `Cookie` header that `fetch` forbids); the probe does HEAD then falls back to a `Range: bytes=0-0` GET reading `Content-Range`. Failures render `[?]`; pending probes show `[…]`. On submit, POSTs `{url, headers, course, lecture, kind}` (raw URL + captured headers — not a prebuilt curl string) to `/download`.
-   - **PDF path:** if `activeTab.url` ends in `.pdf`, shows the URL readonly; on submit the popup `fetch`es the PDF itself (`credentials: 'include'`, so the user's session cookies authenticate) and POSTs the bytes to `/upload-pdf?course=&lecture=&kind=`. Only one of {video, PDF, empty} is shown — video wins; PDF mode pre-fills the *latest* existing lecture name (attach material), not the next one.
+   - **PDF path:** if `activeTab.url` ends in `.pdf`, shows the URL readonly; on submit the popup `fetch`es the PDF itself (`credentials: 'include'`, so the user's session cookies authenticate) and POSTs the bytes to `/upload-pdf?course=&lecture=&kind=`. Only one of {video, PDF, empty} is shown — video wins; PDF mode pre-fills the _latest_ existing lecture name (attach material), not the next one.
 
 ## Local helper server (`server/`, port 3052)
 
@@ -70,4 +69,4 @@ auth, passcodes).
 
 ## Verification
 
-- Neither Node package has a test suite (`npm start` is the only script). Verify a change by running the service and hitting the real *endpoint* — the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior that no diff review can predict. Do not verify against real *data*.
+- Neither Node package has a test suite (`npm start` is the only script). Verify a change by running the service and hitting the real _endpoint_ — the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior that no diff review can predict. Do not verify against real _data_.

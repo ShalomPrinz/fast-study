@@ -18,9 +18,19 @@ export function createJob({ course, lecture, kind, tool, ref = null, fromCache =
   supersedeTerminal({ course, lecture, kind, ref });
   const id = randomUUID();
   jobs.set(id, {
-    id, course, lecture, kind, tool, ref, fromCache,
-    status: 'queued', expectedBytes: null, startedAt: null,
-    receivedBytes: 0, message: null, entry: null,
+    id,
+    course,
+    lecture,
+    kind,
+    tool,
+    ref,
+    fromCache,
+    status: 'queued',
+    expectedBytes: null,
+    startedAt: null,
+    receivedBytes: 0,
+    message: null,
+    entry: null,
   });
   broadcast(); // a queued job must ping so the frontend row flips to in-flight
   return id;
@@ -71,8 +81,13 @@ export function finishJob(id, status, message = null) {
 // Evict any terminal predecessor (`done` or `error`) to guarantee one job per target
 function supersedeTerminal({ course, lecture, kind, ref }) {
   for (const [id, job] of jobs) {
-    if (terminal(job) && job.ref === ref
-        && job.course === course && job.lecture === lecture && job.kind === kind) {
+    if (
+      terminal(job) &&
+      job.ref === ref &&
+      job.course === course &&
+      job.lecture === lecture &&
+      job.kind === kind
+    ) {
       removeJob(id);
     }
   }
@@ -92,7 +107,19 @@ function liveBytes(job) {
 
 function snapshot(job) {
   const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt, message } = job;
-  return { id, status, course, lecture, kind, tool, ref, operation: operationForTool(tool), expectedBytes, startedAt, message };
+  return {
+    id,
+    status,
+    course,
+    lecture,
+    kind,
+    tool,
+    ref,
+    operation: operationForTool(tool),
+    expectedBytes,
+    startedAt,
+    message,
+  };
 }
 
 export function listJobs() {

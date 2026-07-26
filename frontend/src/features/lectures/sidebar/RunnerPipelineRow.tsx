@@ -19,11 +19,11 @@ function InFlightRow({ entry }: { entry: InFlightEntry }) {
   const onClick = () => navigate(lectureRoute(entry.course, entry.lecture, entry.kind))
   return (
     <button className="runner-inflight-row" onClick={onClick} dir="auto">
-      <span className="runner-inflight-lecture">{entry.course} / {entry.lecture}</span>
+      <span className="runner-inflight-lecture">
+        {entry.course} / {entry.lecture}
+      </span>
       <span className="runner-inflight-step">
-        {sleeping
-          ? `rate-limited until ${new Date(sleeping).toLocaleTimeString()}`
-          : entry.step}
+        {sleeping ? `rate-limited until ${new Date(sleeping).toLocaleTimeString()}` : entry.step}
       </span>
     </button>
   )
@@ -53,9 +53,7 @@ export default function RunnerPipelineRow() {
 
   return (
     <div className="runner-panel">
-      <div className="runner-panel-header">
-        Running pipelines… {runnerCurrentDisplay}
-      </div>
+      <div className="runner-panel-header">Running pipelines… {runnerCurrentDisplay}</div>
       {inFlightRows}
     </div>
   )

@@ -18,7 +18,9 @@ def _q(s: str) -> str:
 
 
 def _file_url(course: str, lecture: str, name: str) -> str:
-    return f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/files/{_q(name)}"
+    return (
+        f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/files/{_q(name)}"
+    )
 
 
 def _summary_url(course: str, lecture: str) -> str:
@@ -55,10 +57,14 @@ def get_file_bytes(course: str, lecture: str, kind: str, filename: str) -> bytes
     return r.content
 
 
-def put_file_bytes(course: str, lecture: str, kind: str, filename: str, data: bytes) -> None:
+def put_file_bytes(
+    course: str, lecture: str, kind: str, filename: str, data: bytes
+) -> None:
     """Upload raw bytes for one file in the lecture dir. Neutral write — no artifact wipe."""
 
-    r = requests.put(_file_url(course, lecture, filename), params={"kind": kind}, data=data)
+    r = requests.put(
+        _file_url(course, lecture, filename), params={"kind": kind}, data=data
+    )
     _raise_for_envelope(r)
 
 
@@ -153,7 +159,11 @@ def get_summary(course: str, lecture: str, kind: str) -> str:
 def put_summary(course: str, lecture: str, kind: str, content: str) -> None:
     """Write summary.md. The database service snapshots the original on first write (enables revert)."""
 
-    r = requests.put(_summary_url(course, lecture), params={"kind": kind}, data=content.encode("utf-8"))
+    r = requests.put(
+        _summary_url(course, lecture),
+        params={"kind": kind},
+        data=content.encode("utf-8"),
+    )
     _raise_for_envelope(r)
 
 

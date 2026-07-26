@@ -2,7 +2,8 @@ import { execFile } from 'node:child_process';
 
 // Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
 // which yt-dlp resolves without a login.
-export const YTDLP_HOST_RE = /(^|\.)youtube\.com$|^youtu\.be$|^drive\.google\.com$|^docs\.google\.com$/i;
+export const YTDLP_HOST_RE =
+  /(^|\.)youtube\.com$|^youtu\.be$|^drive\.google\.com$|^docs\.google\.com$/i;
 
 // Recent yt-dlp needs a JS runtime to run YouTube's player script and extract
 // formats; both the probe and the download must carry these or format extraction errors.
@@ -16,9 +17,18 @@ function probeYoutubeSize(url) {
   return new Promise((resolve) => {
     execFile(
       'yt-dlp',
-      ['--no-playlist', '--no-warnings', '--quiet', '--skip-download',
+      [
+        '--no-playlist',
+        '--no-warnings',
+        '--quiet',
+        '--skip-download',
         ...YT_PLAYER_JS_FLAGS,
-        '-f', 'bv*+ba/b', '--print', '%(filesize,filesize_approx)s', url],
+        '-f',
+        'bv*+ba/b',
+        '--print',
+        '%(filesize,filesize_approx)s',
+        url,
+      ],
       { timeout: 30000 },
       (err, stdout) => {
         if (err) return resolve(null);
@@ -38,10 +48,14 @@ function probeYoutubeSize(url) {
 function buildYtdlpArgs(url) {
   return [
     '--no-playlist',
-    '--merge-output-format', 'mp4',
+    '--merge-output-format',
+    'mp4',
     ...YT_PLAYER_JS_FLAGS,
-    '--quiet', '--no-warnings', '--no-progress',
-    '-o', 'video.%(ext)s',
+    '--quiet',
+    '--no-warnings',
+    '--no-progress',
+    '-o',
+    'video.%(ext)s',
     url,
   ];
 }

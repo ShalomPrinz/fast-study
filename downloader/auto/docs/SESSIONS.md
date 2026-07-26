@@ -13,10 +13,10 @@ The service holds long-lived browsers (the ~1–2s launch + context build is pai
 
 Zoom's recording player is the only path needing the heavyweight browser.
 
-| Profile / path | Browser | Display | Visible |
-|---|---|---|---|
-| `'plain'` — videostream `.mp4` sniff only (`/list` and `/list/expand` need no browser; `browser/browserLaunch.js`, plain bundled Chromium, no stealth) | headless | none | no |
-| `'zoom'` — `ZoomExtractor` capture (`browser/zoomBrowser.js`) | system Chrome `channel:'chrome'` + puppeteer-extra stealth + `--disable-blink-features=AutomationControlled` + `ignoreDefaultArgs:['--enable-automation']`, `headless:false` | managed **Xvfb** | no (virtual) |
-| One-time token grab (`MoodleToken.connect()`, `launchBrowser` headed) | bundled Chromium → `channel:'chrome'` on launch failure | real WSLg display | **yes — MFA once** |
+| Profile / path                                                                                                                                         | Browser                                                                                                                                                                      | Display           | Visible            |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- | ------------------ |
+| `'plain'` — videostream `.mp4` sniff only (`/list` and `/list/expand` need no browser; `browser/browserLaunch.js`, plain bundled Chromium, no stealth) | headless                                                                                                                                                                     | none              | no                 |
+| `'zoom'` — `ZoomExtractor` capture (`browser/zoomBrowser.js`)                                                                                          | system Chrome `channel:'chrome'` + puppeteer-extra stealth + `--disable-blink-features=AutomationControlled` + `ignoreDefaultArgs:['--enable-automation']`, `headless:false` | managed **Xvfb**  | no (virtual)       |
+| One-time token grab (`MoodleToken.connect()`, `launchBrowser` headed)                                                                                  | bundled Chromium → `channel:'chrome'` on launch failure                                                                                                                      | real WSLg display | **yes — MFA once** |
 
 See `ZOOM.md` for why the zoom profile is shaped this way.

@@ -7,6 +7,7 @@ Zoom cloud recordings (`zoom.us/rec/share/…` links found in course-section sum
 Headless Chrome falls back to SwiftShader software rendering AND leaks a `HeadlessChrome` UA token — the recording player rejects both. The fix is headed **system Chrome (`channel:'chrome'`) under a managed Xvfb virtual display**: it keeps the hardware D3D12 GPU renderer (WSL's `/dev/dxg` is reached independent of the X display) AND a clean `Chrome` UA, with no visible window. puppeteer-extra **stealth** closes the deeper automation leaks Playwright's args miss.
 
 Hard constraints (each is load-bearing):
+
 - **Do NOT override the UA** — including stealth's `user-agent-override` evasion, which we delete at module load. A rewritten UA desyncs from Chrome's Sec-CH-UA Client-Hints and zoom flags the mismatch. Stealth is registered ONLY on playwright-extra's `chromium`, so plain launches stay stealth-free.
 - **Do NOT add `--use-angle=vulkan`** — no HW Vulkan on this box, so it falls back to SwiftShader.
 - **Headless is rejected** for the two reasons above.

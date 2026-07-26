@@ -32,4 +32,3 @@ You have received transcripts or excerpts around student questions, including mo
 [proffesor answer + main takeaways]
 
 ...
-

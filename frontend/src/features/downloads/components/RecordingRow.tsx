@@ -30,10 +30,23 @@ interface Props {
 export default function RecordingRow({ item, course, onReconnect, expand }: Props) {
   const { courses } = useCourseTreeContext()
   // Name/kind live in SectionGroup so this row and the bulk queue agree.
-  const { kind, suggestion, value, name: effectiveName, setName, setKind } = useRowEdit(item, course)
+  const {
+    kind,
+    suggestion,
+    value,
+    name: effectiveName,
+    setName,
+    setKind,
+  } = useRowEdit(item, course)
   const { progressOf } = useDownloadJobs()
-  const { download, retryClip, pending, retryingId, failed: queueFailed, passcode } =
-    useRecordingDownload({ item, course, name: effectiveName, kind, onReconnect })
+  const {
+    download,
+    retryClip,
+    pending,
+    retryingId,
+    failed: queueFailed,
+    passcode,
+  } = useRecordingDownload({ item, course, name: effectiveName, kind, onReconnect })
 
   // Live tree, so a completed download's SSE refresh flips the row green.
   const alreadyDownloaded = isDownloaded(effectiveName, kind, courses, course)
@@ -90,9 +103,15 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
           >
             {expand.expanding ? (
               <span className="recording-spinner recording-spinner--dark" />
-            ) : expand.expanded ? '▾' : '▸'}
+            ) : expand.expanded ? (
+              '▾'
+            ) : (
+              '▸'
+            )}
           </button>
-          <span className="recording-title" dir="auto" title={item.title}>{item.title}</span>
+          <span className="recording-title" dir="auto" title={item.title}>
+            {item.title}
+          </span>
         </div>
         {expand.error && (
           <div className="recordings-status recordings-status--error">{expand.error}</div>
@@ -100,7 +119,12 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
         {expand.expanded && expand.children && (
           <div className="recording-children">
             {expand.children.map((child) => (
-              <RecordingRow key={child.ref} item={child} course={course} onReconnect={onReconnect} />
+              <RecordingRow
+                key={child.ref}
+                item={child}
+                course={course}
+                onReconnect={onReconnect}
+              />
             ))}
           </div>
         )}
@@ -110,59 +134,72 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
 
   return (
     <div className="recording-entry">
-      <div className={alreadyDownloaded ? 'recording-row recording-row--downloaded' : 'recording-row'}>
-      <span className="recording-title" dir="auto" title={item.title}>{item.title}</span>
-
-      <div className="kind-toggle">
-        <button
-          className={kind === 'lecture' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'}
-          onClick={() => setKind('lecture')}
-        >
-          Lecture
-        </button>
-        <button
-          className={kind === 'recitation' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'}
-          onClick={() => setKind('recitation')}
-        >
-          Recitation
-        </button>
-      </div>
-
-      <input
-        className="source-row-input recording-name-input"
-        value={value}
-        onChange={(e) => setName(e.target.value)}
-        placeholder={suggestion}
-        dir="auto"
-      />
-
-      {split ? (
-        // Per-clip buttons own re-download/retry, so the main button is just a status label here.
-        <span className="source-row-btn recording-download-btn recording-download-btn--label">
-          {downloading ? 'Downloading…' : status === 'error' ? 'Failed ✗' : 'Downloaded ✓'}
+      <div
+        className={alreadyDownloaded ? 'recording-row recording-row--downloaded' : 'recording-row'}
+      >
+        <span className="recording-title" dir="auto" title={item.title}>
+          {item.title}
         </span>
-      ) : (
-        <button
-          className="source-row-btn recording-download-btn"
-          onClick={onDownloadClick}
-          disabled={pending || downloading}
-        >
-          {pending ? (
-            <span className="recording-spinner" />
-          ) : downloading ? (
-            'Downloading…'
-          ) : queueFailed || status === 'error' ? (
-            'Retry ✗'
-          ) : status === 'done' ? (
-            'Downloaded ✓'
-          ) : (
-            'Download'
-          )}
-        </button>
-      )}
+
+        <div className="kind-toggle">
+          <button
+            className={
+              kind === 'lecture' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'
+            }
+            onClick={() => setKind('lecture')}
+          >
+            Lecture
+          </button>
+          <button
+            className={
+              kind === 'recitation' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'
+            }
+            onClick={() => setKind('recitation')}
+          >
+            Recitation
+          </button>
+        </div>
+
+        <input
+          className="source-row-input recording-name-input"
+          value={value}
+          onChange={(e) => setName(e.target.value)}
+          placeholder={suggestion}
+          dir="auto"
+        />
+
+        {split ? (
+          // Per-clip buttons own re-download/retry, so the main button is just a status label here.
+          <span className="source-row-btn recording-download-btn recording-download-btn--label">
+            {downloading ? 'Downloading…' : status === 'error' ? 'Failed ✗' : 'Downloaded ✓'}
+          </span>
+        ) : (
+          <button
+            className="source-row-btn recording-download-btn"
+            onClick={onDownloadClick}
+            disabled={pending || downloading}
+          >
+            {pending ? (
+              <span className="recording-spinner" />
+            ) : downloading ? (
+              'Downloading…'
+            ) : queueFailed || status === 'error' ? (
+              'Retry ✗'
+            ) : status === 'done' ? (
+              'Downloaded ✓'
+            ) : (
+              'Download'
+            )}
+          </button>
+        )}
       </div>
 
-      <RecordingJobList jobs={jobs} split={split} retryingId={retryingId} onClipAction={onClipAction} />
+      <RecordingJobList
+        jobs={jobs}
+        split={split}
+        retryingId={retryingId}
+        onClipAction={onClipAction}
+      />
 
       {confirm && (
         <ConfirmModal

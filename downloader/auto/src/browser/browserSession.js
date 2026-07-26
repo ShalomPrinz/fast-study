@@ -59,7 +59,10 @@ export class BrowserSession {
   // the quick navigate+sniff; the heavy download runs afterward in server/, so it overlaps.
   withLock(fn) {
     const run = this._lock.then(fn, fn); // run regardless of the prior op's outcome
-    this._lock = run.then(() => {}, () => {}); // a rejection must not poison the chain
+    this._lock = run.then(
+      () => {},
+      () => {},
+    ); // a rejection must not poison the chain
     return run;
   }
 

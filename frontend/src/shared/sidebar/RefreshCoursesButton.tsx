@@ -9,7 +9,11 @@ export default function RefreshCoursesButton() {
   async function handleClick() {
     if (refreshing) return
     setRefreshing(true)
-    try { await refreshCourses() } finally { setRefreshing(false) }
+    try {
+      await refreshCourses()
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   return (
