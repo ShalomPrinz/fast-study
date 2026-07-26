@@ -9,6 +9,7 @@ from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
 from fs import crud, overview, tree
+from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
 
@@ -239,6 +240,18 @@ def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture"))
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None
     return FileResponse(str(p), media_type=media_type)
+
+
+@app.get("/courses/{course}/summaries")
+def get_course_summaries(course: str):
+    """Return every non-empty summary.md in a course so the client can full-text search the whole corpus."""
+
+    try:
+        return {"summaries": summaries_fs.read_course_summaries(course)}
+    except FileNotFoundError as e:
+        return _ok(str(e), 404)
+    except Exception as e:
+        return _ok(str(e), 400)
 
 
 @app.put("/courses/{course}/overview/files/{name}")

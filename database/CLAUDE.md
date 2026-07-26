@@ -15,6 +15,7 @@ database/
     paths.py             data_root, course_dir, overview_dir, lecture_dir(course, lecture, kind), RECITATIONS_DIR, OVERVIEW_DIR, ARCHIVED_MARKER, SOURCE_URL_MARKER, PREDEFINED_FILES
     tree.py              read_tree, read_course (port of frontend fs-reader.ts)
     summary.py           read/write/revert summary.md
+    summaries.py         read every non-empty summary.md in a course (client-side search corpus)
     files.py             resolve a lecture file path for streaming
     crud.py              create/rename/archive course, create/rename lecture, upload video, write/delete file
     overview.py          course-level overview files: resolve path, write, list
@@ -63,6 +64,7 @@ python3 main.py                          # also works, same port
 | `PUT    /courses/{course}/lectures/{lecture}/summary?kind=...`      | write `summary.md` (raw utf-8 body)                                                                                       |
 | `DELETE /courses/{course}/lectures/{lecture}/summary?kind=...`      | revert to `original_summary.md`                                                                                           |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}?kind=...` | stream a lecture file                                                                                                     |
+| `GET    /courses/{course}/summaries`                                | all non-empty `summary.md` in a course: `{summaries: [{name, kind, content}]}`; 404 if course missing                     |
 | `PUT    /courses/{course}/overview/files/{name}`                    | write a course-level overview file (raw body); neutral, 404 if course missing                                             |
 | `GET    /courses/{course}/overview/files`                           | list overview files: `{files: [{name, size, mtime}]}` (empty if dir absent)                                               |
 | `GET    /courses/{course}/overview/files/{name}`                    | stream a course-level overview file                                                                                       |
