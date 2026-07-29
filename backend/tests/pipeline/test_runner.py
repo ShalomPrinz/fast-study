@@ -506,3 +506,46 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
     finally:
         runner._errors.clear()
         runner._summarize_blocked = False
+
+
+class TestDropInFlight:
+    """drop_in_flight filters the scanned queue by the per-lecture locks."""
+
+    def test_keeps_unlocked_and_drops_locked(self):
+        async def go():
+            queue = [("C1", "L1", "lecture"), ("C1", "L2", "lecture")]
+            held = runner._locks.setdefault(
+                runner._lkey("C1", "L1", "lecture"), asyncio.Lock()
+            )
+            async with held:
+                assert runner.drop_in_flight(queue) == [("C1", "L2", "lecture")]
+            # lock released → both come back
+            assert runner.drop_in_flight(queue) == queue
+
+        try:
+            asyncio.run(go())
+        finally:
+            runner._locks.clear()
+
+    def test_all_locked_yields_empty_queue(self):
+        async def go():
+            queue = [("C1", "L1", "lecture"), ("C1", "R1", "recitation")]
+            locks = [
+                runner._locks.setdefault(runner._lkey(*entry), asyncio.Lock())
+                for entry in queue
+            ]
+            for lock in locks:
+                await lock.acquire()
+            try:
+                assert runner.drop_in_flight(queue) == []
+            finally:
+                for lock in locks:
+                    lock.release()
+
+        try:
+            asyncio.run(go())
+        finally:
+            runner._locks.clear()
+
+    def test_empty_queue_stays_empty(self):
+        assert runner.drop_in_flight([]) == []

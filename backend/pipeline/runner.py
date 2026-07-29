@@ -361,6 +361,18 @@ async def scan_pending() -> list[tuple[str, str, str]]:
     return pending
 
 
+def drop_in_flight(
+    queue: list[tuple[str, str, str]],
+) -> list[tuple[str, str, str]]:
+    """Drop lectures a concurrent trigger already owns; run_all would skip them anyway."""
+
+    return [
+        entry
+        for entry in queue
+        if not (lock := _locks.get(_lkey(*entry))) or not lock.locked()
+    ]
+
+
 async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
     """Build a {filename: {exists}} mapping for one lecture via parallel HEAD calls."""
 

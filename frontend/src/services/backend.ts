@@ -86,9 +86,10 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
   }
 }
 
-export async function runAll(): Promise<RunnerStatus | 'empty_queue'> {
+export async function runAll(): Promise<RunnerStatus | 'empty_queue' | 'all_in_flight'> {
   const raw = await backend.post<RawRunnerStatus & { status?: string }>('/run-all')
   if (raw.status === 'empty_queue') return 'empty_queue'
+  if (raw.status === 'all_in_flight') return 'all_in_flight'
   return normalizeRunner(raw)
 }
 

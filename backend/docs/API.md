@@ -16,7 +16,8 @@ Validates that the step's prerequisite file exists (`_STEP_CONFIG`), returning `
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`.
 
 `POST /run-all`
-Scans for pending lectures and runs the queue. → `{"status": "started"|"already_running"|"empty_queue"}`.
+Scans for pending lectures and runs the queue. → `{"status": "started"|"already_running"|"empty_queue"|"all_in_flight"}`.
+`all_in_flight` means every pending lecture is already owned by a concurrent trigger — run_all would have skipped them all, so the UI can say so instead of appearing to do nothing.
 
 `GET /status`
 `{runner: {running, total, done, last_error}, in_flight: [...], errors: {skey: message}}`. Cheap; polled by the UI.

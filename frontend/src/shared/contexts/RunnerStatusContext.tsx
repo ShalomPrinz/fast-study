@@ -80,6 +80,10 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
         sendUpdateRef.current?.('info', 'Nothing to run - All pipelines complete')
         return
       }
+      if (s === 'all_in_flight') {
+        sendUpdateRef.current?.('info', 'Nothing to run - All remaining pipelines already running')
+        return
+      }
       setStatus(s)
     } catch (err) {
       if (isConnectionError(err)) return // already toasted centrally by the http client

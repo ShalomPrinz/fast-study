@@ -159,6 +159,9 @@ async def run_all_endpoint():
     queue = await runner.scan_pending()
     if not queue:
         return {"status": "empty_queue"}
+    queue = runner.drop_in_flight(queue)
+    if not queue:
+        return {"status": "all_in_flight"}
     asyncio.create_task(runner.run_all(queue))
     return {"status": "started", **runner.get_status()}
 
