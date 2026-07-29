@@ -147,16 +147,14 @@ def db(monkeypatch):
 
 
 async def _wait_done(course=COURSE, timeout=5.0):
-    """Poll the shared store until every entry for `course` is in a terminal state (done/skipped/error).
-    `running` alone can't gate this (it starts false before the task runs); a fully-terminal store is
-    the reliable "run finished" signal."""
-    terminal = {"done", "skipped", "error"}
-    for _ in range(int(timeout / 0.01)):
-        entries = course_runner.get_status(course)["extractors"]
-        if entries and all(e["status"] in terminal for e in entries.values()):
-            return course_runner.get_status(course)
-        await asyncio.sleep(0.01)
-    raise AssertionError("overview run did not finish in time")
+    """Await the scheduled run task(s) themselves, then return the course's status.
+    The store is NOT a completion signal: between phases every entry can already look terminal
+    (a slug 'skipped' at extract is still waiting for to_pdf), so polling for terminal entries
+    returns mid-run. The task finishing is the only exact one."""
+    pending = asyncio.all_tasks() - {asyncio.current_task()}
+    if pending:
+        await asyncio.wait_for(asyncio.gather(*pending), timeout)
+    return course_runner.get_status(course)
 
 
 def _entry(course, slug):
