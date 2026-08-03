@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from .paths import course_dir, overview_dir
+from .paths import course_dir, overview_dir, overview_pdf_warning_marker
 
 OVERVIEW_META = "meta.json"
 
@@ -38,8 +38,27 @@ def write_overview_file(course: str, name: str, data: bytes) -> None:
     p.write_bytes(data)
 
 
+def _read_pdf_warning(overview_path: Path, slug: str) -> str | None:
+    """
+    Return the non-fatal XeLaTeX warning text for an overview {slug}.pdf, or None if absent or empty.
+    Swallows read errors so an unreadable dotfile doesn't break the listing.
+    """
+
+    p = overview_path / overview_pdf_warning_marker(slug)
+    if not p.exists():
+        return None
+    try:
+        return p.read_text(encoding="utf-8").strip() or None
+    except Exception:
+        return None
+
+
 def list_overview_files(course: str) -> list[dict]:
-    """List {name, size, mtime} entries in a course's overview dir; empty if it doesn't exist yet."""
+    """
+    List {name, size, mtime} entries in a course's overview dir; empty if it doesn't exist yet.
+    Dotfiles are skipped (they are metadata, never listing rows); a {slug}.pdf carries its
+    .{slug}.pdf_warning text inline as a `warning` field, mirroring summary.pdf in the tree.
+    """
 
     _check_safe(course)
     d = overview_dir(course)
@@ -47,10 +66,15 @@ def list_overview_files(course: str) -> list[dict]:
         return []
     entries = []
     for p in sorted(d.iterdir()):
-        if not p.is_file():
+        if not p.is_file() or p.name.startswith("."):
             continue
         stat = p.stat()
-        entries.append({"name": p.name, "size": stat.st_size, "mtime": stat.st_mtime})
+        entry = {"name": p.name, "size": stat.st_size, "mtime": stat.st_mtime}
+        if p.suffix == ".pdf":
+            warning = _read_pdf_warning(d, p.stem)
+            if warning is not None:
+                entry["warning"] = warning
+        entries.append(entry)
     return entries
 
 

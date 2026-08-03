@@ -53,6 +53,12 @@ def overview_dir(course: str) -> Path:
     return data_root() / course / OVERVIEW_DIR
 
 
+def overview_pdf_warning_marker(slug: str) -> str:
+    """Name of the overview dotfile holding one line of XeLaTeX warning text for {slug}.pdf (one per extractor)."""
+
+    return f".{slug}{PDF_WARNING_MARKER}"
+
+
 def lecture_dir(course: str, lecture: str, kind: str = "lecture") -> Path:
     """Resolve the directory for a lecture or recitation under its course."""
 

@@ -88,7 +88,12 @@ def db(monkeypatch):
     Extract's writes feed analyze's reads via `overview_store`, so `get_overview_file`
     raises DbClientError exactly when extract wrote no {slug}.txt (skipped extractor)."""
     calls = SimpleNamespace(
-        puts=[], transcript_gets=[], notifies=0, overview_store={}, meta_patches=[]
+        puts=[],
+        warning_puts=[],
+        transcript_gets=[],
+        notifies=0,
+        overview_store={},
+        meta_patches=[],
     )
     monkeypatch.setattr(db_client, "get_tree", lambda: _tree())
 
@@ -97,7 +102,10 @@ def db(monkeypatch):
         return TRANSCRIPT.encode("utf-8")
 
     def put_overview_file(course, filename, data):
-        calls.puts.append((course, filename, data.decode("utf-8")))
+        # to_pdf writes a .pdf_warning marker on every render; it is metadata, not a phase
+        # output, so it gets its own list and `puts` stays the phase-output sequence.
+        target = calls.warning_puts if filename.startswith(".") else calls.puts
+        target.append((course, filename, data.decode("utf-8")))
         calls.overview_store[filename] = data
 
     def get_overview_file(course, filename):
@@ -107,9 +115,11 @@ def db(monkeypatch):
 
     def list_overview_files(course):
         # skip_existing snapshots this once at run start; reflects whatever was seeded.
+        # Dotfiles are excluded, as the database service excludes them from the listing.
         return [
             {"name": name, "size": len(data), "mtime": 0}
             for name, data in calls.overview_store.items()
+            if not name.startswith(".")
         ]
 
     def notify():

@@ -26,6 +26,10 @@ The warning rides two dotfiles in the lecture dir, written by `_exec_pdf` (the p
 - `.pdf_warning` — the one-line warning, written after the PDF upload succeeds and deleted on a clean render, so it never outlives or precedes its PDF. The database inlines it onto the `summary.pdf` tree entry as `warning`, and drops it whenever `summary.pdf` is deleted — that rule lives only there.
 - `.pdf_build.tex` — the generated LaTeX, kept only on a hard failure. `PdfRenderError.tex_source` carries it out of the tempdir before it vanishes; `_exec_pdf` persists it.
 
+### Course overview PDFs
+
+`course/to_pdf.py` mirrors this per slug: the warning for `{slug}.pdf` goes to `.{slug}.pdf_warning` in the overview dir, again written only after the PDF upload, and the database inlines it onto the `{slug}.pdf` entry of the overview file listing. It differs in how a clean render clears the marker — it writes it **empty** rather than deleting it, because the database exposes no overview delete route; an empty marker reads as no warning. There is no `.pdf_build.tex` equivalent: a hard failure raises and the runner records it as the slug's error.
+
 ## Engine constraints
 
 This TeX Live build (`xelatex 3.141592653-2.6-0.999993`) uses the **e-TeX TeXXeT** bidi model.

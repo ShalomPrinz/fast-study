@@ -10,6 +10,12 @@ from pipeline.to_pdf import convert_to_pdf
 from services import db_client
 
 
+def warning_file(slug: str) -> str:
+    """Marker holding a recovered render's warning for {slug}.pdf; the database inlines it."""
+
+    return f".{slug}.pdf_warning"
+
+
 def run_to_pdf(course: str, slug: str) -> dict:
     """Render one extractor's analyzed markdown to {slug}.pdf; a missing .md skips.
     Raises on render/I/O failure so the runner records it as "error"."""
@@ -27,9 +33,12 @@ def run_to_pdf(course: str, slug: str) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         md_path = Path(tmp) / md_name
         md_path.write_bytes(md_bytes)
-        # An overview PDF has no per-file warning surface, so a recovered render's
-        # warning is dropped here — only a hard failure (which raises) is reported.
-        pdf_path, _ = convert_to_pdf(str(md_path))
+        pdf_path, warning = convert_to_pdf(str(md_path))
         pdf_bytes = Path(pdf_path).read_bytes()
     db_client.put_overview_file(course, f"{slug}.pdf", pdf_bytes)
+    # Written only after the PDF upload, so a warning never exists without its PDF. A clean
+    # render clears the marker by writing it EMPTY — the database has no overview delete
+    # route, and it reads an empty marker as no warning at all.
+    marker = b"" if warning is None else warning.encode("utf-8")
+    db_client.put_overview_file(course, warning_file(slug), marker)
     return {"status": "done"}
