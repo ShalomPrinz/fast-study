@@ -118,6 +118,90 @@ def test_scheduled_run_skips_when_locked():
     assert scan_calls == [], "scan_pending should not be called while runner is running"
 
 
+# ---- summary-history reset on the pdf step ----
+
+
+def _run_step_recording(step: str, **kwargs) -> tuple[list, list]:
+    """Run run_step with db_client.delete_file and _call_step mocked; returns
+    (deleted file names, events) where events interleave deletes and the step call."""
+
+    deleted: list[str] = []
+    events: list[str] = []
+
+    def fake_delete(course, lecture, kind, name):
+        deleted.append(name)
+        events.append(f"delete:{name}")
+
+    async def fake_call(course, lecture, kind, step):
+        events.append(f"call:{step}")
+        return {"status": "done"}
+
+    async def go():
+        with (
+            patch.object(runner.db_client, "delete_file", fake_delete),
+            patch.object(runner.db_client, "notify"),
+            patch.object(runner, "_call_step", fake_call),
+        ):
+            await runner.run_step("C1", "L1", "lecture", step, **kwargs)
+
+    asyncio.run(go())
+    return deleted, events
+
+
+def test_run_step_pdf_wipes_summary_history_before_rendering():
+    """A lecture-view PDF export leaves no revertable history: both the snapshot and the
+    stale PDF go before the executor runs."""
+
+    deleted, events = _run_step_recording("pdf")
+    assert deleted == ["original_summary.md", "summary.pdf"]
+    assert events[-1] == "call:pdf"
+
+
+def test_run_step_pdf_reset_history_false_keeps_snapshot():
+    """The edit view opts out — it just created original_summary.md."""
+
+    deleted, _ = _run_step_recording("pdf", reset_history=False)
+    assert deleted == []
+
+
+def test_run_step_non_pdf_step_never_wipes():
+    deleted, _ = _run_step_recording("summarize")
+    assert deleted == []
+
+
+def test_run_step_pdf_wipes_once_across_rate_limit_retries():
+    """The reset sits outside the retry loop, so a retried render can't delete the
+    output of its own earlier attempt."""
+
+    deleted: list[str] = []
+    calls = {"n": 0}
+
+    def fake_delete(course, lecture, kind, name):
+        deleted.append(name)
+
+    async def fake_call(course, lecture, kind, step):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            return {"status": "rate_limited", "retry_after": 1}
+        return {"status": "done"}
+
+    async def fake_sleep(seconds):
+        pass
+
+    async def go():
+        with (
+            patch.object(runner.db_client, "delete_file", fake_delete),
+            patch.object(runner.db_client, "notify"),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.asyncio, "sleep", fake_sleep),
+        ):
+            await runner.run_step("C1", "L1", "lecture", "pdf")
+
+    asyncio.run(go())
+    assert calls["n"] == 2
+    assert deleted == ["original_summary.md", "summary.pdf"]
+
+
 # ---- empty-file guard ----
 
 

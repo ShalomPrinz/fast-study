@@ -8,9 +8,11 @@ CORS is open to `http://localhost:5173` only.
 
 ## Per-lecture
 
-`POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}`
+`POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}&reset_history=<bool>`
 `step ∈ {audio, transcribe, summarize, pdf, drive}`, `kind` defaults to `lecture`.
 Validates that the step's prerequisite file exists (`_STEP_CONFIG`), returning `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise. On success → `{"status": "started"|"busy"}`.
+
+`reset_history` defaults to `true` and is meaningful only for `step=pdf`: before rendering, the run deletes `original_summary.md` and the stale `summary.pdf`, so a PDF export from the lecture view leaves nothing to revert to. Only the frontend's edit view passes `false` — it just created that snapshot. Accepted consequence: if the render then fails, the lecture is left with no `summary.pdf` and no revertable original; there is no restore-on-failure path.
 
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`.

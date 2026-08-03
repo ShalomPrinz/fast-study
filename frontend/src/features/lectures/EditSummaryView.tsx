@@ -85,7 +85,7 @@ export default function EditSummaryView() {
     }
     setHasOriginal(true)
     await deleteFile(course, lecture, 'summary.pdf', kind)
-    const initResult = await runStep(course, lecture, 'pdf', kind)
+    const initResult = await runStep(course, lecture, 'pdf', kind, false)
     if (initResult.status !== 'started') {
       toastInitResult(initResult, { busy: 'Step already running', error: 'Failed to generate PDF' })
       if (initResult.status === 'error') setError(initResult.message ?? 'Failed to generate PDF')

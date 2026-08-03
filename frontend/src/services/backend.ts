@@ -28,10 +28,11 @@ export async function runStep(
   lecture: string,
   step: Step,
   kind?: Kind,
+  resetHistory?: boolean,
 ): Promise<RunInitResult> {
-  return backend.post<RunInitResult>(
-    `${lectureBase(course, lecture)}/run/${step}${kindQuery(kind)}`,
-  )
+  const query = kindQuery(kind)
+  const keep = resetHistory === false ? `${query ? '&' : '?'}reset_history=false` : ''
+  return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/run/${step}${query}${keep}`)
 }
 
 export async function runPipeline(

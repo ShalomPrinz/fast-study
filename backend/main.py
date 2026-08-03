@@ -65,7 +65,13 @@ def _validate_kind(kind: str):
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
-async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
+async def run_step(
+    course: str,
+    lecture: str,
+    step: str,
+    kind: Kind = Query("lecture"),
+    reset_history: bool = Query(True),
+):
     if step not in _STEP_CONFIG:
         return {"status": "error", "message": f"Unknown step: {step}"}
     if err := _validate_kind(kind):
@@ -80,7 +86,11 @@ async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lec
             "status": "error",
             "message": f"{required_file} is required — run {prev_step} first",
         }
-    return {"status": runner.try_run_step(course, lecture, kind, step)}
+    return {
+        "status": runner.try_run_step(
+            course, lecture, kind, step, reset_history=reset_history
+        )
+    }
 
 
 @app.post("/courses/{course}/lectures/{lecture}/pipeline")
