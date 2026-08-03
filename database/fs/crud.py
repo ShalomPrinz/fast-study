@@ -69,7 +69,6 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     d = lecture_dir(course, lecture, kind)
     # The downloader uploads here for brand-new lectures, so create the dir if missing.
     d.mkdir(parents=True, exist_ok=True)
-    # Wipe everything from the previous video before writing the new one
     for f in (
         *PREDEFINED_FILES,
         "transcript.partial.meta.json",
@@ -83,10 +82,8 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
 
 
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
-    """
-    Delete a single file in a lecture dir if present; no-op otherwise.
-    Deleting summary.pdf also drops .pdf_warning — the warning describes THIS pdf and can never outlive it.
-    """
+    """Delete a single file in a lecture dir if present; deleting summary.pdf also drops .pdf_warning,
+    which describes THIS pdf and can never outlive it."""
 
     d = lecture_dir(course, lecture, kind)
     p = d / file
@@ -97,10 +94,7 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
 
 
 def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> None:
-    """
-    Write raw bytes to a single file in a lecture dir.
-    Neutral write — does NOT wipe derived artifacts (use write_video for that).
-    """
+    """Write raw bytes to one file in a lecture dir; neutral — does NOT wipe derived artifacts."""
 
     d = lecture_dir(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)

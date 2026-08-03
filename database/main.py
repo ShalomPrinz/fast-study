@@ -24,9 +24,7 @@ BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 async def lifespan(app: FastAPI):
     """Close SSE streams on SIGINT/SIGTERM so Ctrl-C exits cleanly instead of stalling on them."""
 
-    # Must happen at signal time, not on lifespan shutdown: uvicorn waits for connections
-    # to close *before* running lifespan shutdown, so an idle /events stream would deadlock
-    # that wait and then get cancelled mid-response (the ASGI traceback on Ctrl-C).
+    # At signal time, not lifespan shutdown, which uvicorn runs only after connections close.
     previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
 
     def handle(sig, frame):
@@ -153,7 +151,7 @@ def _post_run_audio(course: str, lecture: str, kind: str) -> None:
         f"/run/audio?kind={urllib.parse.quote(kind, safe='')}"
     )
     try:
-        # strip_audio can take a while; no upper bound on the wait.
+        # No timeout: stripping audio can take minutes, and a timeout would orphan the run.
         with urllib.request.urlopen(
             urllib.request.Request(url, method="POST"), timeout=None
         ) as resp:
@@ -172,11 +170,8 @@ async def _trigger_audio(course: str, lecture: str, kind: str) -> None:
 async def put_video(
     course: str, lecture: str, request: Request, kind: str = Query("lecture")
 ):
-    """Upload video.mp4 from a raw request body, wiping any derived artifacts.
-
-    On success, fire-and-forget triggers backend's /run/audio so a downloader
-    upload automatically kicks off the audio-extraction step — the response
-    returns as soon as the file is on disk, not when audio is done."""
+    """Upload video.mp4 from a raw body, wiping derived artifacts, then fire-and-forget the
+    backend's audio step; responds as soon as the bytes are on disk."""
 
     try:
         data = await request.body()
@@ -204,7 +199,7 @@ def delete_file_endpoint(
 async def put_file(
     course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")
 ):
-    """Write raw body bytes to a single file in a lecture dir. Neutral write — does NOT wipe derived artifacts (unlike PUT /video)."""
+    """Write raw body bytes to one file in a lecture dir; neutral — does NOT wipe derived artifacts."""
 
     try:
         data = await request.body()
@@ -216,7 +211,7 @@ async def put_file(
 
 @app.head("/courses/{course}/lectures/{lecture}/files/{name}")
 def head_file(course: str, lecture: str, name: str, kind: str = Query("lecture")):
-    """Return 200 if the file exists, 404 otherwise. Cheap existence check for backend pipeline preconditions."""
+    """Return 200 if the file exists, 404 otherwise — cheap precondition check for the backend."""
 
     p = file_path(course, lecture, name, kind)
     if not p.exists():

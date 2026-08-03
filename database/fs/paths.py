@@ -6,23 +6,17 @@ RECITATIONS_DIR = "Recitations"
 # Course-level dir for overview pipeline outputs (files belong to the course, not a lecture).
 OVERVIEW_DIR = "overview"
 
-# Empty marker file inside a course dir flagging it as archived. Survives renames.
+# Course-dir dotfiles: empty archived flag, and the auto-downloader's lecture-site URL.
 ARCHIVED_MARKER = ".archived"
-
-# Dotfile inside a course dir holding the lecture-site URL.
-# Unlike .archived it carries content (the URL); a dotfile so tree iteration (dirs only) ignores it, and it survives renames.
 SOURCE_URL_MARKER = ".source_url"
 
-# Dotfile inside a lecture dir holding one line of classified XeLaTeX warning text for summary.pdf.
-# A dotfile, not a predefined file: it is not a pipeline artifact and must never become a tree row.
+# Lecture-dir dotfiles: one line of XeLaTeX warning text for summary.pdf, and the generated
+# LaTeX the backend keeps only on a hard render failure. Dotfiles never become tree rows.
 PDF_WARNING_MARKER = ".pdf_warning"
-
-# Dotfile inside a lecture dir holding the generated LaTeX, kept only when a render fails hard so the reported l.<N> is lookupable.
-# A dotfile for the same reason: build debris, not a pipeline artifact, so it must never become a tree row.
 PDF_BUILD_TEX_MARKER = ".pdf_build.tex"
 
-# Every file the frontend cares about in a lecture dir. Single source of truth —
-# tree responses surface all of these, and re-uploading video.mp4 wipes the rest.
+# Every file the frontend cares about in a lecture dir: the tree surfaces exactly these,
+# and re-uploading video.mp4 wipes exactly these. See docs/LAYOUT.md.
 PREDEFINED_FILES = (
     "video.mp4",
     "audio.mp3",

@@ -14,10 +14,7 @@ from .paths import (
 
 
 def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
-    """
-    Return partial-transcription progress {completed, total}, or None if absent or malformed.
-    Swallows read/parse errors so a corrupt meta file doesn't break the tree listing.
-    """
+    """Return partial-transcription progress {completed, total}, or None if absent or malformed."""
 
     meta_path = lecture_path / "transcript.partial.meta.json"
     if not meta_path.exists():
@@ -34,10 +31,7 @@ def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
 
 
 def _read_pdf_warning(lecture_path: Path) -> Optional[str]:
-    """
-    Return the non-fatal XeLaTeX warning text for summary.pdf, or None if absent or empty.
-    Swallows read errors so an unreadable dotfile doesn't break the tree listing.
-    """
+    """Return the non-fatal XeLaTeX warning for summary.pdf, or None if absent, empty, or unreadable."""
 
     p = lecture_path / PDF_WARNING_MARKER
     if not p.exists():

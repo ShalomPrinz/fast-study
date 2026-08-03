@@ -39,10 +39,7 @@ def write_overview_file(course: str, name: str, data: bytes) -> None:
 
 
 def _read_pdf_warning(overview_path: Path, slug: str) -> str | None:
-    """
-    Return the non-fatal XeLaTeX warning text for an overview {slug}.pdf, or None if absent or empty.
-    Swallows read errors so an unreadable dotfile doesn't break the listing.
-    """
+    """Return the XeLaTeX warning for an overview {slug}.pdf, or None if absent, empty, or unreadable."""
 
     p = overview_path / overview_pdf_warning_marker(slug)
     if not p.exists():
@@ -54,11 +51,8 @@ def _read_pdf_warning(overview_path: Path, slug: str) -> str | None:
 
 
 def list_overview_files(course: str) -> list[dict]:
-    """
-    List {name, size, mtime} entries in a course's overview dir; empty if it doesn't exist yet.
-    Dotfiles are skipped (they are metadata, never listing rows); a {slug}.pdf carries its
-    .{slug}.pdf_warning text inline as a `warning` field, mirroring summary.pdf in the tree.
-    """
+    """List {name, size, mtime(, warning)} entries in a course's overview dir, skipping dotfiles;
+    empty if the dir doesn't exist yet."""
 
     _check_safe(course)
     d = overview_dir(course)
@@ -86,7 +80,7 @@ def read_overview_meta(course: str) -> dict:
     if not meta_path.exists():
         return {}
 
-    # defined as not critical - so we swallow any errors
+    # Non-critical metadata: degrade to {} rather than break the caller. See docs/LAYOUT.md.
     try:
         return json.loads(meta_path.read_text(encoding="utf-8"))
     except Exception:
@@ -96,7 +90,8 @@ def read_overview_meta(course: str) -> dict:
 def merge_overview_meta(course: str, slug: str, entry) -> None:
     """Set meta[slug]=entry in the course's overview meta.json, creating overview/ on demand."""
 
-    # we avoid using await here to achieve atomicity
+    # Never add an `await` below: the await-free body is what makes this read-modify-write
+    # atomic against concurrent PATCHes without a lock. See docs/OVERVIEW.md.
     _check_safe(course)
     _check_safe(slug)
     if not course_dir(course).is_dir():
@@ -113,7 +108,7 @@ def merge_overview_meta(course: str, slug: str, entry) -> None:
         meta = {}
 
     meta[slug] = entry
-    # Atomic write using os.replace, instead of truncate then write (not atomic)
+    # Temp file + os.replace: truncate-then-write would expose a torn file to readers.
     tmp_path = meta_path.with_name(f"{meta_path.name}.{os.getpid()}.tmp")
     tmp_path.write_text(
         json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8"
