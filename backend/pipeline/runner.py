@@ -503,26 +503,10 @@ async def _run_pipeline_unlocked(
             return False  # a step error halts the whole pipeline for this lecture
 
 
-def _reset_summary_history(course: str, lecture: str, kind: str) -> None:
-    """Drop the pre-edit snapshot and the stale PDF: a fresh render is the new canonical
-    version, so nothing revertable may survive it. delete_file is a no-op when missing."""
-
-    # database is responsible for .pdf_warning so it's not listed here
-    db_client.delete_file(course, lecture, kind, "original_summary.md")
-    db_client.delete_file(course, lecture, kind, "summary.pdf")
-
-
-async def run_step(
-    course: str, lecture: str, kind: str, step: str, *, reset_history: bool = True
-) -> None:
-    """Acquire the per-lecture lock, then run one step to completion (blocking the caller).
-    A `pdf` step wipes the summary history first unless the caller opts out."""
+async def run_step(course: str, lecture: str, kind: str, step: str) -> None:
+    """Acquire the per-lecture lock, then run one step to completion (blocking the caller)."""
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
-        # Under the lock (a concurrent run would have returned busy) and before the retry
-        # loop, so it runs exactly once and never deletes the PDF this run just uploaded.
-        if step == "pdf" and reset_history:
-            await asyncio.to_thread(_reset_summary_history, course, lecture, kind)
         await _run_step_unlocked(course, lecture, kind, step)
 
 
@@ -538,17 +522,13 @@ async def run_pipeline_for(
         )
 
 
-def try_run_step(
-    course: str, lecture: str, kind: str, step: str, *, reset_history: bool = True
-) -> str:
+def try_run_step(course: str, lecture: str, kind: str, step: str) -> str:
     """Fire-and-forget run_step if the lecture isn't already locked. Returns 'busy' or 'started'."""
 
     lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
     if lock.locked():
         return "busy"
-    asyncio.create_task(
-        run_step(course, lecture, kind, step, reset_history=reset_history)
-    )
+    asyncio.create_task(run_step(course, lecture, kind, step))
     return "started"
 
 

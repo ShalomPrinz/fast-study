@@ -64,11 +64,6 @@ Save → delete `summary.pdf` → run the `pdf` step, then wait for SSE. The eff
 run this view started — otherwise a sibling file change or another lecture's error would clear the
 generating state. The PDF is re-rendered by bumping a cache-busting `t=` on the file URL.
 
-This is the one caller passing `resetHistory: false` to `runStep` (`reset_history=false` on the wire). The
-backend's `pdf` step otherwise deletes `original_summary.md` + `summary.pdf` first, and this save just
-created that snapshot — the flag is what keeps "Revert to Original" working. A PDF export from `MainView`
-(Export PDF, or the ↺ re-run) takes the default and wipes the history on purpose.
-
 `PdfViewer` captures scroll during the render phase before React commits the new URL (the old pages are
 still mounted, so `scrollTop` is the real position) and restores it from each page's `onRenderSuccess`;
 with no captured position it snaps to the right edge for RTL.

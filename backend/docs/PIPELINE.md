@@ -9,7 +9,7 @@
 | `audio`      | `audio.mp3`      | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR.                               |
 | `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB).            |
 | `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ optional `material.pdf`) uploaded as file parts. |
-| `pdf`        | `summary.pdf`    | pandoc → `.tex` → XeLaTeX (two passes). See `PDF.md`. History-destroying by default — see below. |
+| `pdf`        | `summary.pdf`    | pandoc → `.tex` → XeLaTeX (two passes). See `PDF.md`.                                     |
 | `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link.         |
 
 Other files in a lecture dir: `video.mp4` (user/downloader), `material.pdf` (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see `PDF.md`).
@@ -17,12 +17,6 @@ Other files in a lecture dir: `video.mp4` (user/downloader), `material.pdf` (use
 A XeLaTeX error that still yielded a usable PDF is **not** a step failure: `_exec_pdf` returns `done` and persists the warning to `.pdf_warning`, so the run continues to `drive`. The runner stays error-only — there is no warning channel in `/status`.
 
 The Hebrew summarize prompt lives at `assets/instructions/summarize.md` — edit the file to change output structure, no code change. Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode.
-
-## The pdf step wipes summary history
-
-`run_step` with `step="pdf"` deletes `original_summary.md` and the stale `summary.pdf` before rendering (`_reset_summary_history`), unless the caller passes `reset_history=False`: the fresh render is the new canonical version, so no revertable snapshot may survive it. The reset happens under the per-lecture lock and outside the retry loop — in the route it would race a concurrent run that returned `busy`, after `try_run_step` it could delete the new PDF, and inside `_run_step_unlocked` it would repeat on every rate-limit retry.
-
-`/pipeline` and `run_all` deliberately don't trigger it: they go through `_run_pipeline_unlocked`, reaching `pdf` right after a freshly generated `summary.md` that has no snapshot behind it. This is the intended "main-view buttons only" scope, not an inconsistency to fix.
 
 ## Purity and the database round-trip
 
