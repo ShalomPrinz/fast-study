@@ -5,6 +5,7 @@ from typing import Optional
 from .paths import (
     ARCHIVED_MARKER,
     OVERVIEW_DIR,
+    PDF_WARNING_MARKER,
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
@@ -32,6 +33,21 @@ def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
         return None
 
 
+def _read_pdf_warning(lecture_path: Path) -> Optional[str]:
+    """
+    Return the non-fatal XeLaTeX warning text for summary.pdf, or None if absent or empty.
+    Swallows read errors so an unreadable dotfile doesn't break the tree listing.
+    """
+
+    p = lecture_path / PDF_WARNING_MARKER
+    if not p.exists():
+        return None
+    try:
+        return p.read_text(encoding="utf-8").strip() or None
+    except Exception:
+        return None
+
+
 def _read_lecture(lecture_path: Path, name: str) -> dict:
     """Build the tree entry for one lecture: existence/size for each predefined file, plus partial-transcript progress."""
 
@@ -48,6 +64,10 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         entry = {"exists": exists, "size": size, "mtime": mtime}
         if url is not None:
             entry["url"] = url
+        if f == "summary.pdf":
+            warning = _read_pdf_warning(lecture_path)
+            if warning is not None:
+                entry["warning"] = warning
         files[f] = entry
     return {
         "name": name,
