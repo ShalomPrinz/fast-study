@@ -11,14 +11,17 @@ import { runStep } from '@/services/backend'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
+import PdfWarningBadge from '@/features/lectures/components/PdfWarningBadge'
 
 export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
   const { getError } = useRunnerStatus()
+  const { refreshCourses } = useCourseTreeContext()
   const lectureError = getError(course, lecture, kind)
 
   const [content, setContent] = useState('')
@@ -69,6 +72,9 @@ export default function EditSummaryView() {
     setError('')
     await revertSummary(course, lecture, kind)
     await loadContent()
+    // Revert rewrites summary.md with no SSE notify behind it, so the tree's mtimes — and the
+    // stale-PDF badge that reads them — only update if we ask for them.
+    refreshCourses()
   }
 
   async function handleGeneratePdf() {
@@ -109,6 +115,7 @@ export default function EditSummaryView() {
         <h2 className="edit-title" dir="auto">
           {lecture}
         </h2>
+        <PdfWarningBadge files={files} />
         <div className="edit-toolbar-actions">
           <button
             className="edit-action-btn"

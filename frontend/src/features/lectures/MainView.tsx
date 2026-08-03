@@ -221,9 +221,7 @@ export default function MainView() {
                         </button>
                       </span>
                     )}
-                    {file === 'summary.pdf' && (
-                      <PdfWarningBadge warning={files['summary.pdf'].warning} />
-                    )}
+                    {file === 'summary.pdf' && <PdfWarningBadge files={files} />}
                     {((file === 'summary.pdf' && pdfExists) ||
                       (file === 'summary.md' && summaryExists) ||
                       (file === 'drive_url.txt' && pdfUploaded)) && (

@@ -1,11 +1,19 @@
-// Non-fatal marker on the summary.pdf row: the PDF opened fine, but part of it may render wrong.
-// Styled like MaterialIndicator; the full message is the tooltip, since it is a long one-liner.
-export default function PdfWarningBadge({ warning }: { warning?: string }) {
-  if (!warning) return null
+import type { FileStatus } from '@/types'
+import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+
+// Non-fatal marker for summary.pdf: it rendered with XeLaTeX errors, or it no longer matches
+// summary.md. The full message is the tooltip, since a render warning is a long one-liner.
+export default function PdfWarningBadge({ files }: { files: FileStatus | null }) {
+  const badge = files && pdfBadge(files)
+  if (!badge) return null
 
   return (
-    <span className="file-slot pdf-warning-indicator" title={warning} role="status">
-      <span className="pdf-warning-symbol">⚠</span>
+    <span
+      className="pdf-badge"
+      title={badge.title}
+      role="status"
+    >
+      <span className="pdf-badge-symbol">{badge.kind === 'warning' ? '⚠' : '≠'}</span>
     </span>
   )
 }

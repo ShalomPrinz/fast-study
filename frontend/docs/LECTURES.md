@@ -36,14 +36,27 @@ failures in `errors`.
 Error toasts fan out through `useReportOnce`, which dedupes `(key, message)` so a repeated refresh doesn't
 re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs later.
 
-## PDF render warnings
+## summary.pdf badges
+
+`PdfWarningBadge` renders **one** badge for `summary.pdf`, chosen by `pdfBadge(files)`: a render warning
+(⚠) if there is one, else a stale marker (≠) when `summary.md` has a newer `mtime` than `summary.pdf`.
+The warning wins because it describes *this* PDF; staleness resurfaces on its own once it clears. It
+appears on the `summary.pdf` row in `MainView` and in the `EditSummaryView` toolbar, whose preview pane
+would otherwise show the outdated render with no hint.
+
+Staleness means the PDF no longer reflects the summary — after a revert, an edit that never regenerated,
+or a re-run `summarize`. A **missing** PDF is never stale, which is what keeps a pending re-render quiet:
+every path that re-renders (rotate, edit-view save) deletes `summary.pdf` first, and a fresh pipeline has
+not written one yet. Equal mtimes don't warn, so a same-second render can't flicker.
+
+### Render warnings
 
 A `summary.pdf` that rendered despite XeLaTeX errors carries a one-line `warning` on its `FileInfo` (the
 database service inlines the `.pdf_warning` dotfile onto the tree entry; the key is absent when clean).
-`MainView` shows it as a `PdfWarningBadge` on the `summary.pdf` row — non-fatal, message on hover — and
-`CourseTreeContext` announces it once through `useReportOnce` + `announcePdfWarnings`: the first applied
-tree only seeds, so warnings predating page load don't toast, and a vanished warning is pruned so it can
-fire again. It lives on the tree, not `/status`, which is why it is announced there and not in
+It is non-fatal, message on hover, and `CourseTreeContext` announces it once through `useReportOnce` +
+`announcePdfWarnings`: the first applied tree only seeds, so warnings predating page load don't toast,
+and a vanished warning is pruned so it can fire again. It lives on the tree, not `/status`, which is why
+it is announced there and not in
 `RunnerStatusContext`. Deleting `summary.pdf` (rotate, edit-view save) drops `.pdf_warning` inside the
 database service, so no frontend path clears it.
 

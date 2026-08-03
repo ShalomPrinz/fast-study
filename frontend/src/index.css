@@ -582,12 +582,15 @@ body,
   color: #6b7280;
 }
 
-.pdf-warning-indicator {
+.pdf-badge {
   color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: help;
 }
 
-.pdf-warning-symbol {
+.pdf-badge-symbol {
   font-size: 12px;
   line-height: 1;
 }
