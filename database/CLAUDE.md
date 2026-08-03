@@ -21,8 +21,11 @@ database/
     overview.py          course-level overview files: resolve path, write, list
   events/
     sse.py               in-memory pub/sub: subscribe() async generator + broadcast_notify()
+  tests/                 pytest suite; conftest points DATA_ROOT at a per-test tmp dir
   pyproject.toml
 ```
+
+There is deliberately **no delete path for overview files** — no `DELETE /courses/{course}/overview/files/{name}` route and no crud helper. When one is added, it must drop the pdf's `.{slug}.pdf_warning` alongside it, the way `crud.delete_file` does for `summary.pdf`.
 
 ## Environment
 
@@ -40,6 +43,12 @@ python3 main.py                          # also works, same port
 ```
 
 `npm run dev` from the repo root brings this up alongside Backend / Frontend / Downloader.
+
+## Testing
+
+```bash
+cd database && python3 -m pytest tests/ -q
+```
 
 ## Ports
 
@@ -66,7 +75,7 @@ python3 main.py                          # also works, same port
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}?kind=...` | stream a lecture file                                                                                                     |
 | `GET    /courses/{course}/summaries`                                | all non-empty `summary.md` in a course: `{summaries: [{name, kind, content}]}`; 404 if course missing                     |
 | `PUT    /courses/{course}/overview/files/{name}`                    | write a course-level overview file (raw body); neutral, 404 if course missing                                             |
-| `GET    /courses/{course}/overview/files`                           | list overview files: `{files: [{name, size, mtime}]}` (empty if dir absent)                                               |
+| `GET    /courses/{course}/overview/files`                           | list overview files: `{files: [{name, size, mtime, warning?}]}` (dotfiles excluded; empty if dir absent)                  |
 | `GET    /courses/{course}/overview/files/{name}`                    | stream a course-level overview file                                                                                       |
 | `GET    /courses/{course}/overview/meta`                            | read per-slug overview meta map: `{meta: {...}}` (`{}` if none)                                                           |
 | `PATCH  /courses/{course}/overview/meta`                            | merge one slug's entry into `overview/meta.json` (body: `{slug, entry}`); atomic server-side merge, 404 if course missing |
@@ -80,6 +89,7 @@ python3 main.py                          # also works, same port
 - **All path conventions live here.** `lecture_dir(course, lecture, kind)` in `fs/paths.py` is the single source of truth for resolving paths under `DATA_ROOT`. The on-disk layout (`{DATA_ROOT}/{course}/{lecture}/...` and `{DATA_ROOT}/{course}/Recitations/{name}/...`) is not re-encoded anywhere else — other services pass `(course, lecture, kind)` tuples and let this service resolve them.
 - **Per-course `source_url` lives in a `.source_url` dotfile.** The auto-downloader's per-course lecture-site URL is stored in `{DATA_ROOT}/{course}/.source_url` (holds the URL text, mirroring `drive_url.txt`; a dotfile so tree iteration — dirs only — ignores it, and it survives renames like `.archived`). `read_course` surfaces it as the `source_url` field on every course node (`null` when unset, so pre-existing courses stay backwards-compatible). Set via `POST /courses` (`source_url` in the create body) or `PATCH /courses/{course}/source_url`; empty/null clears the file.
 - **PDF render dotfiles live in the lecture dir.** `.pdf_warning` (`PDF_WARNING_MARKER`) holds one line of classified XeLaTeX warning text for a `summary.pdf` that rendered despite errors; `.pdf_build.tex` (`PDF_BUILD_TEX_MARKER`) holds the generated LaTeX the backend keeps only when a render fails hard. Both are dotfiles and deliberately **not** in `PREDEFINED_FILES` — they are debug/metadata, not pipeline artifacts, and must never become tree rows. `_read_lecture` inlines `.pdf_warning`'s stripped content onto the existing `summary.pdf` entry as a `warning` field (mirroring `drive_url.txt` → `url`); absent, empty, or unreadable ⇒ no `warning` key at all, never `null`.
+- **Overview PDFs mirror the same warning convention, one marker per slug.** `.{slug}.pdf_warning` in the course's `overview/` dir (`overview_pdf_warning_marker(slug)` in `fs/paths.py`) holds one line of XeLaTeX warning text for `{slug}.pdf`; `list_overview_files` inlines its stripped content onto that pdf's entry as `warning` (absent/empty/unreadable ⇒ no key). The listing skips **all** dotfiles, so markers and any future metadata never become rows. The backend writes and clears the marker through the plain `PUT /…/overview/files/{name}` path — dot-prefixed names pass `_check_safe`, and an empty write clears the warning.
 - **Deleting `summary.pdf` drops `.pdf_warning`.** `crud.delete_file` is the single chokepoint: a warning describes THIS pdf and can never outlive it, so backend teardown, frontend delete paths, and re-render resets all get the clear for free without clearing it themselves. `write_video`'s group wipe drops both dotfiles too.
 - **`overview/` is a course-level file area, not a lecture.** Backend's overview step writes cross-lecture study files (e.g. `exam-hints.txt`) to `{DATA_ROOT}/{course}/overview/{name}` via `overview_dir(course)`. `fs/tree.py` skips this directory (like `Recitations`) so it never appears as a lecture in the tree. Writes are neutral (no artifact wipe, no side effects) and 404 if the course doesn't exist.
 - **`PUT /…/video` auto-triggers backend's `/run/audio`.** After a successful video write, the endpoint fire-and-forgets a POST to `${BACKEND_URL}/courses/{c}/lectures/{l}/run/audio?kind=...` (default `BACKEND_URL=http://localhost:8000`) so a downloader upload starts the audio-extraction step without a frontend click. Failures are logged and swallowed; the PUT response returns as soon as bytes hit disk.
