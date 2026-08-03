@@ -26,6 +26,10 @@ Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBe
 
 `Verbatim` uses the **global `\ttfamily`**, not polyglossia's `\englishfonttt` — even inside `\begin{english}`. A Latin-only mono leaves Hebrew comments as notdef boxes, and XeLaTeX has no per-glyph font fallback (that's LuaTeX/luaotfload). So one dual-script monospace is set globally via `\setmonofont`: **Miriam Mono CLM** (Culmus, dual-script, true monospace). Setting only `\englishfonttt` does nothing.
 
+## Failure messages
+
+A non-zero pandoc exit is classified by `parse_tex_errors` / `format_tex_errors` (pure, over both stdout and stderr) into one short line — first `! …` error, its line, the offending source, plus a count of the rest — because it reaches the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, which pandoc discards with its temp dir, so it maps to nothing in `summary.md`. A failure with no `! …` lines (pandoc's own: unparseable markdown, missing template, engine absent) still raises the full log.
+
 ## Markdown preprocessing
 
 `convert_to_pdf` runs a fixed chain of pure string helpers via `apply_outside_fences`, which never touches content inside ``` / ~~~ fences (those are the Lua filter's job). Each helper has a dedicated test class in `tests/pipeline/test_to_pdf.py`.
