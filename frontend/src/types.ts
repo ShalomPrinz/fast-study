@@ -21,7 +21,14 @@ export type FileName =
   | 'summary.pdf'
   | 'drive_url.txt'
   | 'material.pdf'
-export type FileInfo = { exists: boolean; size: number | null; mtime: number | null; url?: string }
+
+export type FileInfo = {
+  exists: boolean
+  size: number | null
+  mtime: number | null
+  url?: string
+  warning?: string
+}
 export type FileStatus = Record<FileName, FileInfo>
 
 export type TranscribePartial = { completed: number; total: number }

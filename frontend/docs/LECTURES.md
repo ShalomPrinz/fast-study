@@ -36,6 +36,17 @@ failures in `errors`.
 Error toasts fan out through `useReportOnce`, which dedupes `(key, message)` so a repeated refresh doesn't
 re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs later.
 
+## PDF render warnings
+
+A `summary.pdf` that rendered despite XeLaTeX errors carries a one-line `warning` on its `FileInfo` (the
+database service inlines the `.pdf_warning` dotfile onto the tree entry; the key is absent when clean).
+`MainView` shows it as a `PdfWarningBadge` on the `summary.pdf` row — non-fatal, message on hover — and
+`CourseTreeContext` announces it once through `useReportOnce` + `announcePdfWarnings`: the first applied
+tree only seeds, so warnings predating page load don't toast, and a vanished warning is pruned so it can
+fire again. It lives on the tree, not `/status`, which is why it is announced there and not in
+`RunnerStatusContext`. Deleting `summary.pdf` (rotate, edit-view save) drops `.pdf_warning` inside the
+database service, so no frontend path clears it.
+
 `useRemoteInflightState` turns the entry for the currently open lecture into a render descriptor: step,
 start time, timing estimate, `completedFraction`, `sleepingUntil`, `progress`. Progress comes from the
 entry when present, else from `transcript.partial.txt`'s completed/total for a transcribe step.

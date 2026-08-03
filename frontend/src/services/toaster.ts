@@ -6,7 +6,7 @@ import type { ConnectionError } from '@/services/http'
 
 export { ToastContainer }
 
-type ToastKind = 'info' | 'error'
+type ToastKind = 'info' | 'warning' | 'error'
 
 function appToast(kind: ToastKind, message: string): void {
   toast[kind](message)

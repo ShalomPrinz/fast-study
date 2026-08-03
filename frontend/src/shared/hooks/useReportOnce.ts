@@ -32,3 +32,5 @@ export function useReportOnce(send: ((msg: string) => void) | undefined) {
 
   return { report, seed, prune }
 }
+
+export type ReportOnce = ReturnType<typeof useReportOnce>

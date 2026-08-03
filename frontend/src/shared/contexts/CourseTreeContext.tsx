@@ -1,10 +1,13 @@
-import { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { Course } from '@/types'
 import { fetchTree } from '@/services/database'
+import { toast } from '@/services/toaster'
 import { useNotify } from '@/shared/hooks/useNotify'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
+import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { sortLectures } from '@/features/lectures/utils/lectureSort'
+import { announcePdfWarnings } from '@/features/lectures/utils/pdfWarnings'
 
 interface CourseTreeValue {
   courses: Course[]
@@ -17,9 +20,16 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([])
   const latest = useLatestRequest()
 
+  // PDF render warnings ride the tree, so they are announced here rather than from /status.
+  const warningReports = useReportOnce((msg) => toast('warning', msg))
+  const primed = useRef(false)
+
   async function refreshCourses() {
     const c = await latest(fetchTree())
-    if (c) setCourses(c)
+    if (!c) return
+    setCourses(c)
+    announcePdfWarnings(c, warningReports, primed.current)
+    primed.current = true
   }
 
   useEffect(() => {

@@ -582,6 +582,16 @@ body,
   color: #6b7280;
 }
 
+.pdf-warning-indicator {
+  color: #d97706;
+  cursor: help;
+}
+
+.pdf-warning-symbol {
+  font-size: 12px;
+  line-height: 1;
+}
+
 .file-row-right {
   display: flex;
   align-items: center;
