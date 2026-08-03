@@ -27,7 +27,9 @@ def run_to_pdf(course: str, slug: str) -> dict:
     with tempfile.TemporaryDirectory() as tmp:
         md_path = Path(tmp) / md_name
         md_path.write_bytes(md_bytes)
-        pdf_path = convert_to_pdf(str(md_path))
+        # An overview PDF has no per-file warning surface, so a recovered render's
+        # warning is dropped here — only a hard failure (which raises) is reported.
+        pdf_path, _ = convert_to_pdf(str(md_path))
         pdf_bytes = Path(pdf_path).read_bytes()
     db_client.put_overview_file(course, f"{slug}.pdf", pdf_bytes)
     return {"status": "done"}

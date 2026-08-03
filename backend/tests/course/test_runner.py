@@ -136,11 +136,11 @@ def db(monkeypatch):
     )
 
     # to_pdf reuses pipeline.convert_to_pdf; stub it (no pandoc/XeLaTeX) — it drops a .pdf
-    # beside the input md and returns that path, which the phase reads back and uploads.
+    # beside the input md and returns (path, warning), the path being read back and uploaded.
     def fake_convert(md_path):
         out = Path(md_path).with_suffix(".pdf")
         out.write_bytes(b"%PDF-1.4 stub")
-        return str(out)
+        return str(out), None
 
     monkeypatch.setattr(course_to_pdf, "convert_to_pdf", fake_convert)
     return calls
@@ -440,7 +440,7 @@ class TestToPdfPhase:
                 raise RuntimeError("pandoc boom")
             out = Path(md_path).with_suffix(".pdf")
             out.write_bytes(b"%PDF-1.4 stub")
-            return str(out)
+            return str(out), None
 
         monkeypatch.setattr(course_to_pdf, "convert_to_pdf", selective)
 
@@ -1247,7 +1247,7 @@ class TestPhaseWorkerSeam:
         def fake_convert(md_path):
             out = Path(md_path).with_suffix(".pdf")
             out.write_bytes(b"%PDF-1.4 stub")
-            return str(out)
+            return str(out), None
 
         monkeypatch.setattr(course_to_pdf, "convert_to_pdf", fake_convert)
         assert course_to_pdf.run_to_pdf(COURSE, "exam-hints") == {"status": "done"}

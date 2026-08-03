@@ -2,6 +2,30 @@
 
 The summary is a Hebrew-primary RTL document with English fragments (code, terminology). `pipeline/to_pdf.py` preprocesses the markdown, then runs pandoc → XeLaTeX with polyglossia and `\setmainlanguage{hebrew}`, the bundled fonts in `assets/fonts/`, the template in `assets/templates/`, and the Lua filter in `assets/filters/`.
 
+## Two-pass render
+
+`convert_to_pdf(md_path) -> (pdf_path, warning|None)` runs the two tools itself instead of letting pandoc drive the engine:
+
+1. **pandoc → `build.tex`** (no `--pdf-engine`), so the generated LaTeX is a file we own.
+2. **`xelatex -interaction=nonstopmode build.tex`, twice** — the second pass is what hyperref/bookmark need for stable references, exactly what pandoc's engine loop was doing.
+
+Both run with the cwd set to one tempdir, so every aux file (`.aux`, `.log`, `.out`) lands there and nothing leaks beside the markdown. XeLaTeX names its output after the `.tex` stem, so `build.pdf` is moved onto `output_path` at the end.
+
+`nonstopmode` is the recovery lever: TeX skips past an error and **still emits a PDF**, exiting non-zero. Hence the outcome rules:
+
+| XeLaTeX outcome                   | Result                                                             |
+| --------------------------------- | ------------------------------------------------------------------ |
+| exit 0                            | success, `warning is None`                                          |
+| non-zero, PDF exists and non-empty | accepted — the PDF is returned with the classified warning text     |
+| no PDF, or a 0-byte PDF           | `PdfRenderError`. Empty stays fatal; `_require_nonempty` agrees      |
+
+A damaged region renders wrong or blank while the rest of the document is fine, which is far more robust than guessing which source line to excise.
+
+The warning rides two dotfiles in the lecture dir, written by `_exec_pdf` (the pipeline function stays pure and carries nothing but paths):
+
+- `.pdf_warning` — the one-line warning, written after the PDF upload succeeds and deleted on a clean render, so it never outlives or precedes its PDF. The database inlines it onto the `summary.pdf` tree entry as `warning`, and drops it whenever `summary.pdf` is deleted — that rule lives only there.
+- `.pdf_build.tex` — the generated LaTeX, kept only on a hard failure. `PdfRenderError.tex_source` carries it out of the tempdir before it vanishes; `_exec_pdf` persists it.
+
 ## Engine constraints
 
 This TeX Live build (`xelatex 3.141592653-2.6-0.999993`) uses the **e-TeX TeXXeT** bidi model.
@@ -28,7 +52,9 @@ Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBe
 
 ## Failure messages
 
-A non-zero pandoc exit is classified by `parse_tex_errors` / `format_tex_errors` (pure, over both stdout and stderr) into one short line — first `! …` error, its line, the offending source, plus a count of the rest — because it reaches the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, which pandoc discards with its temp dir, so it maps to nothing in `summary.md`. A failure with no `! …` lines (pandoc's own: unparseable markdown, missing template, engine absent) still raises the full log.
+Both the raised error and the non-fatal warning are classified by `parse_tex_errors` / `format_tex_errors` (pure) into one short line — first `! …` error, its line, the offending source, plus a count of the rest — because they reach the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, never of `summary.md`; on a hard failure that file is kept as `.pdf_build.tex`, so the number is actually lookup-able.
+
+Sources: pandoc's own failure is classified over both its streams; the XeLaTeX passes are classified over `build.log`, falling back to stdout only when no log was written — stdout mirrors the log, so reading both would count every error twice. A failure with no `! …` lines (unparseable markdown, missing template, engine absent) keeps the full log.
 
 ## Markdown preprocessing
 

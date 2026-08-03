@@ -1,5 +1,6 @@
 import asyncio
 import sys
+from contextlib import ExitStack
 from pathlib import Path
 from unittest.mock import patch
 
@@ -633,3 +634,107 @@ class TestDropInFlight:
 
     def test_empty_queue_stays_empty(self):
         assert runner.drop_in_flight([]) == []
+
+
+# ---- _exec_pdf: the .pdf_warning / .pdf_build.tex dotfiles ----
+
+
+class _PdfDb:
+    """Records the db_client calls _exec_pdf makes around a render."""
+
+    def __init__(self):
+        self.puts: list[str] = []
+        self.deletes: list[str] = []
+        self.notifies = 0
+        self.stored: dict[str, bytes] = {}
+
+    def install(self, stack, convert):
+        stack.enter_context(
+            patch.object(runner.db_client, "file_exists", lambda *a: True)
+        )
+        stack.enter_context(
+            patch.object(runner.db_client, "get_summary", lambda *a: "# summary\n")
+        )
+        stack.enter_context(patch.object(runner.db_client, "put_file_bytes", self._put))
+        stack.enter_context(patch.object(runner.db_client, "delete_file", self._delete))
+        stack.enter_context(patch.object(runner.db_client, "notify", self._notify))
+        stack.enter_context(patch.object(runner, "convert_to_pdf", convert))
+
+    def _put(self, course, lecture, kind, name, data):
+        self.puts.append(name)
+        self.stored[name] = data
+
+    def _delete(self, course, lecture, kind, name):
+        self.deletes.append(name)
+
+    def _notify(self):
+        self.notifies += 1
+
+
+def _run_exec_pdf(convert) -> tuple[dict, _PdfDb]:
+    db = _PdfDb()
+    with ExitStack() as stack:
+        db.install(stack, convert)
+        result = runner._exec_pdf("C1", "L1", "lecture")
+    return result, db
+
+
+def _fake_render(warning=None):
+    def convert(md_path):
+        out = Path(md_path).with_suffix(".pdf")
+        out.write_bytes(b"%PDF-1.4 stub")
+        return str(out), warning
+
+    return convert
+
+
+def test_exec_pdf_writes_warning_and_still_reports_done():
+    """A recovered render must not stop the pipeline — drive still has to run."""
+
+    result, db = _run_exec_pdf(_fake_render("LaTeX error: Missing $ inserted (line 7)"))
+    assert result == {"status": "done"}
+    assert (
+        db.stored[runner.PDF_WARNING_FILE]
+        == b"LaTeX error: Missing $ inserted (line 7)"
+    )
+    assert db.notifies == 1
+
+
+def test_exec_pdf_warning_is_written_after_the_pdf_upload():
+    """A warning may never exist without the PDF it describes."""
+
+    _, db = _run_exec_pdf(_fake_render("LaTeX error: boom"))
+    assert db.puts == ["summary.pdf", runner.PDF_WARNING_FILE]
+
+
+def test_exec_pdf_clean_render_clears_a_stale_warning():
+    result, db = _run_exec_pdf(_fake_render(None))
+    assert result == {"status": "done"}
+    assert db.deletes == [runner.PDF_WARNING_FILE]
+    assert runner.PDF_WARNING_FILE not in db.stored
+    assert db.notifies == 1
+
+
+def test_exec_pdf_hard_failure_stores_the_generated_tex():
+    """The `l.<N>` in the message indexes .pdf_build.tex, so it has to be persisted."""
+
+    def convert(md_path):
+        raise runner.PdfRenderError(
+            "LaTeX error: Undefined control sequence (line 417)",
+            tex_source="\\documentclass{article}",
+        )
+
+    result, db = _run_exec_pdf(convert)
+    assert result["status"] == "error"
+    assert db.stored[runner.PDF_BUILD_TEX_FILE] == b"\\documentclass{article}"
+    # No PDF was produced, so no warning may be written either.
+    assert runner.PDF_WARNING_FILE not in db.stored
+
+
+def test_exec_pdf_plain_failure_writes_no_dotfiles():
+    def convert(md_path):
+        raise RuntimeError("pandoc missing")
+
+    result, db = _run_exec_pdf(convert)
+    assert result == {"status": "error", "message": "pandoc missing"}
+    assert db.stored == {}

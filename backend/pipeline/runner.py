@@ -16,7 +16,7 @@ from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
 from pipeline.summarize import summarize
-from pipeline.to_pdf import convert_to_pdf
+from pipeline.to_pdf import PdfRenderError, convert_to_pdf
 from pipeline.transcribe import (
     PARTIAL_META,
     PARTIAL_TXT,
@@ -39,6 +39,10 @@ STEP_OUTPUT = {
     "pdf": "summary.pdf",
     "drive": "drive_url.txt",
 }
+# Dotfiles beside summary.pdf: the classified non-fatal warning (rides the tree as the
+# summary.pdf entry's `warning`), and the generated LaTeX kept only on a hard failure.
+PDF_WARNING_FILE = ".pdf_warning"
+PDF_BUILD_TEX_FILE = ".pdf_build.tex"
 RATE_LIMIT_SLEEP_SECONDS = 3600  # Groq's hourly ASR window; transcribe's fallback
 GEMINI_MINUTE_QUOTA_SLEEP_SECONDS = 60
 
@@ -257,7 +261,8 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
 
 
 def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
-    """Render summary.md → summary.pdf via pandoc/XeLaTeX."""
+    """Render summary.md → summary.pdf via pandoc/XeLaTeX. A render that errored but still
+    produced a usable PDF is `done` with the warning persisted to .pdf_warning."""
 
     try:
         if not db_client.file_exists(course, lecture, kind, "summary.md"):
@@ -271,8 +276,32 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
             md = db_client.get_summary(course, lecture, kind)
             _require_nonempty("summary.md", md.encode("utf-8"))
             md_path.write_text(md, encoding="utf-8")
-            convert_to_pdf(str(md_path))
+            _, warning = convert_to_pdf(str(md_path))
+        # After the workspace uploaded the PDF, so a warning never exists without it.
+        # A clean render clears any stale warning (delete_file is a no-op when missing).
+        if warning:
+            db_client.put_file_bytes(
+                course, lecture, kind, PDF_WARNING_FILE, warning.encode("utf-8")
+            )
+        else:
+            db_client.delete_file(course, lecture, kind, PDF_WARNING_FILE)
+        db_client.notify()
         return {"status": "done"}
+    except PdfRenderError as e:
+        # Keep the generated .tex so the `l.<N>` in the message is lookup-able; it lives
+        # in the render's tempdir, so the exception is what carries it out.
+        if e.tex_source:
+            try:
+                db_client.put_file_bytes(
+                    course,
+                    lecture,
+                    kind,
+                    PDF_BUILD_TEX_FILE,
+                    e.tex_source.encode("utf-8"),
+                )
+            except Exception:
+                log.exception("failed to store %s", PDF_BUILD_TEX_FILE)
+        return {"status": "error", "message": str(e)}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -478,6 +507,7 @@ def _reset_summary_history(course: str, lecture: str, kind: str) -> None:
     """Drop the pre-edit snapshot and the stale PDF: a fresh render is the new canonical
     version, so nothing revertable may survive it. delete_file is a no-op when missing."""
 
+    # database is responsible for .pdf_warning so it's not listed here
     db_client.delete_file(course, lecture, kind, "original_summary.md")
     db_client.delete_file(course, lecture, kind, "summary.pdf")
 

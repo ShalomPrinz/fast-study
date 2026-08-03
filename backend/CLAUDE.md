@@ -13,7 +13,7 @@ FastAPI app exposing two things over HTTP: the per-lecture video → audio → t
 - @docs/PIPELINE.md — per-lecture stages, execution/lock model, rate-limit handling, timing
 - @docs/OVERVIEW.md — course overview: extractors, phases, run/lock model, `from_phase` + `skip_existing`
 - @docs/API.md — endpoint reference
-- @docs/PDF.md — pandoc/XeLaTeX bidi gotchas and the markdown preprocessing chain
+- @docs/PDF.md — the two-pass render + warning recovery, pandoc/XeLaTeX bidi gotchas, the markdown preprocessing chain
 - `timing/README.md` — timing.db schema, queries, maintenance scripts
 
 ## Layout

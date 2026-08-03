@@ -9,10 +9,12 @@
 | `audio`      | `audio.mp3`      | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR.                               |
 | `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB).            |
 | `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ optional `material.pdf`) uploaded as file parts. |
-| `pdf`        | `summary.pdf`    | pandoc + XeLaTeX. See `PDF.md`. History-destroying by default — see below.                |
+| `pdf`        | `summary.pdf`    | pandoc → `.tex` → XeLaTeX (two passes). See `PDF.md`. History-destroying by default — see below. |
 | `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link.         |
 
-Other files in a lecture dir: `video.mp4` (user/downloader), `material.pdf` (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit).
+Other files in a lecture dir: `video.mp4` (user/downloader), `material.pdf` (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see `PDF.md`).
+
+A XeLaTeX error that still yielded a usable PDF is **not** a step failure: `_exec_pdf` returns `done` and persists the warning to `.pdf_warning`, so the run continues to `drive`. The runner stays error-only — there is no warning channel in `/status`.
 
 The Hebrew summarize prompt lives at `assets/instructions/summarize.md` — edit the file to change output structure, no code change. Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode.
 

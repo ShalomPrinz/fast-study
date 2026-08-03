@@ -2,12 +2,17 @@ import os
 import shutil
 import subprocess
 import tempfile
+from contextlib import contextmanager
+from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from to_pdf import (
     FONTS_DIR,
     LATEX_HEADER,
     LTR_CODE_FILTER,
+    PdfRenderError,
     apply_outside_fences,
     close_unbalanced_display_math,
     convert_to_pdf,
@@ -1399,7 +1404,7 @@ class TestHebrewInCodeBlockRenders:
             md_path = os.path.join(d, "snippet.md")
             with open(md_path, "w", encoding="utf-8") as f:
                 f.write(self.MD)
-            pdf_path = convert_to_pdf(md_path)
+            pdf_path, _ = convert_to_pdf(md_path)
             try:
                 return fitz.open(pdf_path).load_page(0).get_text()
             finally:
@@ -1438,7 +1443,7 @@ class TestBidiOrderingRenders:
             md_path = os.path.join(d, "s.md")
             with open(md_path, "w", encoding="utf-8") as f:
                 f.write(md)
-            pdf_path = convert_to_pdf(md_path)
+            pdf_path, _ = convert_to_pdf(md_path)
             try:
                 page = fitz.open(pdf_path).load_page(0).get_text("rawdict")
             finally:
@@ -1590,3 +1595,168 @@ class TestFormatTexErrors:
 
     def test_empty_list(self):
         assert format_tex_errors([]) == ""
+
+
+# ---------------------------------------------------------------------------
+# Two-pass render: pandoc → build.tex, then xelatex twice with nonstopmode.
+# Every subprocess is mocked — no real pandoc/XeLaTeX here (the real-toolchain
+# renders above cover that).
+# ---------------------------------------------------------------------------
+
+ERROR_LOG = "! Undefined control sequence.\nl.417 \\Pi\n"
+
+
+class FakeRun:
+    """Stand-in for subprocess.run that materialises what each tool would leave in cwd."""
+
+    def __init__(
+        self,
+        *,
+        pandoc_rc=0,
+        xelatex_rcs=(0, 0),
+        pdf_bytes=b"%PDF-1.4 stub",
+        log_text="",
+        pandoc_stderr="",
+        tex_text="\\documentclass{article}\\begin{document}x\\end{document}",
+    ):
+        self.pandoc_rc = pandoc_rc
+        self.xelatex_rcs = list(xelatex_rcs)
+        self.pdf_bytes = pdf_bytes
+        self.log_text = log_text
+        self.pandoc_stderr = pandoc_stderr
+        self.tex_text = tex_text
+        self.calls = []
+
+    def __call__(self, cmd, capture_output=False, text=False, cwd=None):
+        self.calls.append((list(cmd), cwd))
+        d = Path(cwd)
+        if cmd[0] == "pandoc":
+            if self.pandoc_rc == 0:
+                (d / "build.tex").write_text(self.tex_text, encoding="utf-8")
+            return SimpleNamespace(
+                returncode=self.pandoc_rc, stdout="", stderr=self.pandoc_stderr
+            )
+        (d / "build.log").write_text(self.log_text, encoding="utf-8")
+        if self.pdf_bytes is not None:
+            (d / "build.pdf").write_bytes(self.pdf_bytes)
+        rc = self.xelatex_rcs[min(len(self.calls) - 2, len(self.xelatex_rcs) - 1)]
+        return SimpleNamespace(returncode=rc, stdout=self.log_text, stderr="")
+
+    @property
+    def pandoc_cmd(self):
+        return self.calls[0][0]
+
+    @property
+    def xelatex_cmds(self):
+        return [cmd for cmd, _ in self.calls if cmd[0] == "xelatex"]
+
+
+@contextmanager
+def _render(fake: FakeRun, md: str = "שלום world\n"):
+    """Run convert_to_pdf over a temp markdown file with `fake` standing in for subprocess."""
+
+    with tempfile.TemporaryDirectory() as d:
+        md_path = Path(d) / "summary.md"
+        md_path.write_text(md, encoding="utf-8")
+        with patch("subprocess.run", fake):
+            yield str(md_path)
+
+
+class TestTwoPassInvocation:
+    def test_pandoc_writes_tex_not_pdf_and_drops_pdf_engine(self):
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        cmd = fake.pandoc_cmd
+        assert cmd[cmd.index("-o") + 1] == "build.tex"
+        # pandoc no longer runs the engine — that is pass 2's job.
+        assert not any(a.startswith("--pdf-engine") for a in cmd)
+
+    def test_pandoc_keeps_every_existing_flag(self):
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        cmd = fake.pandoc_cmd
+        assert "--from=markdown-smart" in cmd
+        assert "--standalone" in cmd
+        assert any(a.startswith("--template=") for a in cmd)
+        assert any(a.startswith("--include-in-header=") for a in cmd)
+        assert any(a.startswith("--lua-filter=") for a in cmd)
+        assert cmd.count("-V") == 2
+        assert "geometry:margin=2.5cm" in cmd
+        assert "linestretch=1.3" in cmd
+
+    def test_xelatex_runs_twice_in_nonstopmode(self):
+        # Twice for hyperref/bookmark reference stability; nonstopmode is the recovery lever.
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        cmds = fake.xelatex_cmds
+        assert len(cmds) == 2
+        for cmd in cmds:
+            assert cmd == ["xelatex", "-interaction=nonstopmode", "build.tex"]
+
+    def test_aux_files_stay_in_a_tempdir_and_pdf_lands_on_output_path(self):
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            pdf_path, warning = convert_to_pdf(md_path)
+            assert pdf_path == str(Path(md_path).with_suffix(".pdf"))
+            assert Path(pdf_path).read_bytes() == b"%PDF-1.4 stub"
+            assert warning is None
+            # Nothing but the markdown and the PDF beside it — the build dir is gone.
+            assert sorted(p.name for p in Path(md_path).parent.iterdir()) == [
+                "summary.md",
+                "summary.pdf",
+            ]
+        build_dir = fake.calls[0][1]
+        assert not Path(build_dir).exists()
+
+
+class TestRenderRecovery:
+    def test_nonzero_exit_with_usable_pdf_returns_warning(self):
+        fake = FakeRun(xelatex_rcs=(1, 1), log_text=ERROR_LOG)
+        with _render(fake) as md_path:
+            pdf_path, warning = convert_to_pdf(md_path)
+            assert Path(pdf_path).exists()
+        assert warning == r"LaTeX error: Undefined control sequence (line 417: \Pi)"
+
+    def test_nonzero_exit_without_reported_error_still_warns(self):
+        fake = FakeRun(xelatex_rcs=(1, 1), log_text="no bang lines here\n")
+        with _render(fake) as md_path:
+            _, warning = convert_to_pdf(md_path)
+        assert warning and "\n" not in warning.splitlines()[0]
+        assert "exited 1" in warning
+
+    def test_no_pdf_raises_with_classified_message(self):
+        fake = FakeRun(xelatex_rcs=(1, 1), pdf_bytes=None, log_text=ERROR_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError, match="Undefined control sequence"):
+                convert_to_pdf(md_path)
+
+    def test_empty_pdf_is_fatal(self):
+        # A 0-byte PDF is never usable, and _require_nonempty would reject it anyway.
+        fake = FakeRun(xelatex_rcs=(1, 1), pdf_bytes=b"", log_text=ERROR_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError):
+                convert_to_pdf(md_path)
+
+    def test_hard_failure_carries_the_generated_tex(self):
+        fake = FakeRun(xelatex_rcs=(1, 1), pdf_bytes=None, log_text=ERROR_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError) as exc:
+                convert_to_pdf(md_path)
+        # The .tex dies with the build dir, so the exception is what carries it out.
+        assert exc.value.tex_source == fake.tex_text
+
+    def test_pandoc_failure_raises_before_any_xelatex_run(self):
+        fake = FakeRun(pandoc_rc=1, pandoc_stderr="template not found")
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError, match="template not found"):
+                convert_to_pdf(md_path)
+        assert fake.xelatex_cmds == []
+
+    def test_pandoc_failure_with_tex_error_is_classified(self):
+        fake = FakeRun(pandoc_rc=1, pandoc_stderr=ERROR_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError, match="Undefined control sequence"):
+                convert_to_pdf(md_path)
