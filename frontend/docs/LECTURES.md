@@ -38,7 +38,8 @@ re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs 
 
 ## summary.pdf badges
 
-`PdfWarningBadge` renders **one** badge for `summary.pdf`, chosen by `pdfBadge(files)`: a render warning
+`PdfWarningBadge` (shared — the course overview reuses it) renders the badge it is handed. For
+`summary.pdf` that badge is **one** of, chosen by `pdfBadge(files)`: a render warning
 (⚠) if there is one, else a stale marker (≠) when `summary.md` has a newer `mtime` than `summary.pdf`.
 The warning wins because it describes *this* PDF; staleness resurfaces on its own once it clears. It
 appears on the `summary.pdf` row in `MainView` and in the `EditSummaryView` toolbar, whose preview pane

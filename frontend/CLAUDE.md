@@ -42,7 +42,6 @@ src/
   features/downloads/                         DownloadsView, recording rows, autoDownloader +
                                               downloadServer services
   features/search/                            SearchView, in-memory course corpus, pure matcher
-                                              (+ search.test.ts, the only test suite)
 ```
 
 ## Rules
@@ -52,6 +51,7 @@ src/
 - Derive steps from `features/lectures/constants/pipeline.ts`; build URLs with `shared/utils/url.ts`.
 - UI lives in components, not contexts or hooks — those expose state and callbacks only.
 - Import via `@/` for anything outside the current directory; siblings may be relative.
+- Tests are vitest `*.test.ts` colocated with the pure logic they cover; there is no DOM test setup.
 - Verify with `npm run build`.
 
 ## Documentation style

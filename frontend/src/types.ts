@@ -133,7 +133,12 @@ export interface CourseFile {
   name: string
   size: number
   mtime: number
+  // Set on {slug}.pdf when it rendered despite XeLaTeX errors but is still usable.
+  warning?: string
 }
+
+// Non-fatal marker shown on a rendered PDF: bad render, or out of sync with its source.
+export type PdfBadge = { kind: 'warning' | 'stale'; title: string }
 
 export type OverviewRange = { start: string; end: string } | null
 

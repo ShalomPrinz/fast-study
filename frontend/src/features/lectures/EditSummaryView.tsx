@@ -15,7 +15,8 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
-import PdfWarningBadge from '@/features/lectures/components/PdfWarningBadge'
+import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
+import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 
 export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()
@@ -115,7 +116,7 @@ export default function EditSummaryView() {
         <h2 className="edit-title" dir="auto">
           {lecture}
         </h2>
-        <PdfWarningBadge files={files} />
+        <PdfWarningBadge badge={files && pdfBadge(files)} />
         <div className="edit-toolbar-actions">
           <button
             className="edit-action-btn"

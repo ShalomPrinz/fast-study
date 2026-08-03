@@ -50,9 +50,11 @@ export interface BranchStatus {
   running: boolean
   done: boolean
   error: string | null
+  warning: string | null
 }
 
 // One extractor's derived state; `done` means its last phase output exists.
+// `warning` rides on the produced PDF and is not a failure — the branch still reads as done.
 export function branchStatus(
   status: CourseStatus | null,
   files: CourseFile[],
@@ -60,9 +62,11 @@ export function branchStatus(
   phases: CoursePhase[],
 ): BranchStatus {
   const st = status?.extractors[slug]
+  const last = files.find((f) => f.name === lastGeneratedFile(slug, phases))
   return {
     running: st?.status === 'running',
-    done: files.some((f) => f.name === lastGeneratedFile(slug, phases)),
+    done: last !== undefined,
     error: st?.status === 'error' ? (st.message ?? 'failed') : null,
+    warning: last?.warning ?? null,
   }
 }

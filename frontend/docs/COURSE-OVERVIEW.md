@@ -37,8 +37,11 @@ overview runs can execute in parallel on one course. Only the header button gate
 row's Generate/↺ gates on its own slug's `running`, and a step spinner lights only when that slug's current
 `phase` matches the row. So one slug can be re-generated while "Generate All" churns on another.
 
-`branchStatus(status, files, slug, phases)` is the single derivation of a row's `{ running, done, error }`:
-`done` means the _last_ file of that extractor's phase list exists.
+`branchStatus(status, files, slug, phases)` is the single derivation of a row's
+`{ running, done, error, warning }`: `done` means the _last_ file of that extractor's phase list exists,
+and `warning` is that file's `warning` — a `{slug}.pdf` that rendered despite XeLaTeX errors but is usable.
+A warning is not an error: the row still reads as done, and `ExtractorHeader` shows it as a ⚠
+`PdfWarningBadge` (message on hover) next to `BranchIndicator`, with no toast.
 
 Only the `.pdf` row and the header carry an open-in-new-tab button; intermediate `.txt`/`.md` stay
 link-less. Extractor errors toast once per `(course, slug, message)` via `useReportOnce`, pruned with a

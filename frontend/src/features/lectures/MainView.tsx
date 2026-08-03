@@ -11,7 +11,8 @@ import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '@/features/lectures/const
 import { kindQuery } from '@/shared/utils/url'
 import { formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
-import PdfWarningBadge from '@/features/lectures/components/PdfWarningBadge'
+import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
+import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ProgressBar from '@/shared/components/ProgressBar'
 import Icon from '@/shared/components/Icon'
@@ -221,7 +222,7 @@ export default function MainView() {
                         </button>
                       </span>
                     )}
-                    {file === 'summary.pdf' && <PdfWarningBadge files={files} />}
+                    {file === 'summary.pdf' && <PdfWarningBadge badge={files && pdfBadge(files)} />}
                     {((file === 'summary.pdf' && pdfExists) ||
                       (file === 'summary.md' && summaryExists) ||
                       (file === 'drive_url.txt' && pdfUploaded)) && (

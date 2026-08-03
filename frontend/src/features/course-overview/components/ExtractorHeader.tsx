@@ -4,6 +4,7 @@ import { formatRange } from '@/features/course-overview/utils/overview'
 import { toastInitResult } from '@/services/toaster'
 import { lastGeneratedFile, branchStatus } from '@/features/course-overview/constants/overview'
 import Icon from '@/shared/components/Icon'
+import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import BranchIndicator from './BranchIndicator'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
@@ -42,6 +43,7 @@ export default function ExtractorHeader() {
       </button>
       <span className="course-branch-actions">
         <BranchIndicator status={bs} />
+        <PdfWarningBadge badge={bs.warning ? { kind: 'warning', title: bs.warning } : null} />
         {bs.done && (
           <button
             className="file-open-btn"

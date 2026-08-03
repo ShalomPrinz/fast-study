@@ -1,6 +1,4 @@
-import type { FileStatus } from '@/types'
-
-export type PdfBadge = { kind: 'warning' | 'stale'; title: string }
+import type { FileStatus, PdfBadge } from '@/types'
 
 export const STALE_PDF_TITLE = 'summary.pdf is older than summary.md. Re-generate it.'
 
