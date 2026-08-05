@@ -34,6 +34,7 @@ the popup.
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                             |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)                                                             |
 | `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background (`fromCache` bool marks a replayed cap) |
+| `POST /download-file`                     | plain-URL (no header replay) capture saved as the lecture's `material.pdf`; 200 immediately with a `jobId`  |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` (`fromCache` bool)           |
 | `GET  /events`                            | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`)                                                     |
 | `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                          |
@@ -43,6 +44,8 @@ the popup.
 
 ## Module layout
 
+`downloaders/` holds one descriptor per source — `curl` (header replay), `ytdlp`, and `fetch` (plain
+URL). Each names its own `upload` (required): `uploadVideo` for the two video sources, `uploadMaterial` for `fetch`.
 `jobs.js` is the state (job registry over the download entries), `events.js` the notification (SSE fan-out of the contentless `job:change` ping). `services/probe.js` is the ONLY raw `node:http`/`https` in the package. All `DATABASE_URL` I/O goes through `services/database.js`.
 
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp

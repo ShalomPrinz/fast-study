@@ -21,12 +21,17 @@ derived `audio.mp3` / `transcript.txt` / `summary.*`** — correct for a fresh v
 `duplex: 'half'` is required by undici when the fetch body is a stream. The temp dir
 is removed on success _or_ failure.
 
-## `uploadPdf` — neutral `/files/` PUT does NOT wipe
+## `uploadPdf` / `uploadMaterial` — neutral `/files/` PUT does NOT wipe
 
-`PUT /courses/{course}/lectures/{lecture}/files/material.pdf?kind=`. The neutral
+Both PUT `/courses/{course}/lectures/{lecture}/files/material.pdf?kind=`. The neutral
 `/files/` endpoint does **not** wipe derived artifacts (unlike the video PUT), since
-attaching material shouldn't invalidate an existing summary. Throws on a network error
-(route → 500); returns `{ok:false}` on a database-level failure (route → 502).
+attaching material shouldn't invalidate an existing summary.
+
+`uploadPdf(buf, …)` forwards bytes the extension already fetched: throws on a network error
+(route → 500), returns `{ok:false}` on a database-level failure (route → 502).
+`uploadMaterial(tempDir, …)` is the job path (`downloaders/fetch.js`): it streams the temp
+`material.pdf`, removes the temp dir either way, and returns `{ok}` without throwing so the
+runner can turn it into the job's terminal state — same shape as `uploadVideo`.
 
 ## `notifyFrontend` — SSE ping
 

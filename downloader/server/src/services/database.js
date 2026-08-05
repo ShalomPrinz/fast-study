@@ -59,6 +59,42 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   }
 }
 
+// Stream the just-downloaded material.pdf to the neutral /files/ endpoint, then remove the temp
+// dir either way. Unlike the video PUT this does NOT wipe derived transcript/summary artifacts.
+// Returns {ok} rather than throwing — the caller turns it into the job's terminal state.
+export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
+  const file = path.join(tempDir, MATERIAL_FILENAME);
+  try {
+    const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/files/${MATERIAL_FILENAME}?kind=${encodeURIComponent(kind)}`;
+    // duplex: 'half' is required when a fetch body is a stream (undici).
+    const res = await fetch(url, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/pdf' },
+      body: Readable.toWeb(fs.createReadStream(file)),
+      duplex: 'half',
+    });
+    let body = null;
+    try {
+      body = await res.json();
+    } catch {}
+    if (!res.ok || body?.ok === false) {
+      const error = body?.error ?? `HTTP ${res.status}`;
+      emitError(`❌ ${tool} upload to database failed: ${error}`);
+      return { ok: false, error };
+    }
+    emitLog(`✅ Uploaded ${MATERIAL_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
+    notifyFrontend();
+    return { ok: true };
+  } catch (err) {
+    emitError(`❌ ${tool} upload to database failed: ${err.message}`);
+    return { ok: false, error: err.message };
+  } finally {
+    try {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    } catch {}
+  }
+}
+
 // Forward already-fetched PDF bytes to the neutral /files/ endpoint (does NOT wipe
 // derived artifacts, unlike the video PUT). Throws on network error (route -> 500);
 // returns {ok:false} on a database-level failure (route -> 502).

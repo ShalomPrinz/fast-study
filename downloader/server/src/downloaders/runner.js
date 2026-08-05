@@ -10,7 +10,6 @@ import {
   emitError,
   formatBytes,
 } from '../progress.js';
-import { uploadVideo } from '../services/database.js';
 import { recordDownloadTiming } from '../services/timing.js';
 import { recaptureItem } from '../services/autodl.js';
 import {
@@ -53,8 +52,8 @@ function recaptureMessage(status, body) {
   return `re-capture failed: ${body?.error ?? `HTTP ${status || 'network'}`}`;
 }
 
-// Source-agnostic runner: probe size, spawn the silent child in a temp dir, and on
-// clean exit hand the video to the database (which uploads + cleans + notifies).
+// Source-agnostic runner: probe size, spawn the silent child in a temp dir, and on clean exit
+// hand the result to the source's required `upload` (which uploads + cleans + notifies).
 // Adding a source = a new downloaders/*.js registered in index.js; no edits here.
 // `jobId` was created synchronously by the route; every exit path must terminate it.
 export async function runDownloadJob(
@@ -131,7 +130,7 @@ export async function runDownloadJob(
       recordDownloadTiming(downloader.tool, finalBytes || bytes, (Date.now() - spawnedAt) / 1000);
       // Not done at exit 0 — the bytes are still in a temp dir nobody else can see.
       // The job turns `done` only once the database has them.
-      const result = await uploadVideo(tempDir, course, lecture, kind, downloader.tool);
+      const result = await downloader.upload(tempDir, course, lecture, kind, downloader.tool);
       if (result.ok) finishJob(jobId, 'done');
       else finishJob(jobId, 'error', result.error);
     });

@@ -43,6 +43,32 @@ router.post('/download', (req, res) => {
   );
 });
 
+// Plain URL (no header replay) saved as the lecture's material.pdf.
+router.post('/download-file', (req, res) => {
+  const { url, course, lecture, kind = 'lecture', ref, fromCache } = req.body ?? {};
+  if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
+    return res.status(400).json({ error: 'valid url required' });
+  }
+  if (!isSafeName(course) || !isSafeName(lecture)) {
+    return res.status(400).json({ error: 'course and lecture are required' });
+  }
+  const kindErr = validateKind(kind);
+  if (kindErr) return res.status(400).json(kindErr);
+
+  startJob(
+    res,
+    downloaders.fetch,
+    { url },
+    {
+      course,
+      lecture,
+      kind,
+      ref: typeof ref === 'string' ? ref : null,
+      fromCache: fromCache === true,
+    },
+  );
+});
+
 router.post('/download-youtube', (req, res) => {
   const { url, course, lecture, kind = 'lecture', ref, fromCache } = req.body ?? {};
   let host = '';

@@ -22,9 +22,9 @@ handler, before any await, which makes that race impossible by construction.
 
 `queued` → `running` (child spawned) → `done` | `error`.
 
-`done` means the video reached the **database service**, not that the child exited 0 —
+`done` means the file reached the **database service**, not that the child exited 0 —
 between those two the bytes sit in a private temp dir nobody else can see. A failed
-`uploadVideo` is an `error` like any other. First terminal call wins, so a spawn
+upload is an `error` like any other. First terminal call wins, so a spawn
 failure (which fires both `error` and `close`) keeps the informative reason.
 
 `error` carries `message`: the child's stderr tail (`makeStderrTail`, last 15 lines),

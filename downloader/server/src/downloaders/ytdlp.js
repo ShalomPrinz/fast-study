@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import { uploadVideo } from '../services/database.js';
 
 // Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
 // which yt-dlp resolves without a login.
@@ -64,6 +65,7 @@ function buildYtdlpArgs(url) {
 export const ytdlp = {
   tool: 'yt-dlp',
   measure: 'dir', // sum separate audio/video temp files pre-merge
+  upload: uploadVideo,
   probeSize: ({ url }) => probeYoutubeSize(url),
   buildCommand: ({ url }) => ({ command: 'yt-dlp', args: buildYtdlpArgs(url) }),
 };

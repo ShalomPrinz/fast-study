@@ -1,11 +1,12 @@
 # Download mechanics
 
 The server never downloads inline; each source is a `src/downloaders/*.js` module
-implementing `{ tool, measure, probeSize(input), buildCommand(input, tempDir) }`,
+implementing `{ tool, measure, upload, probeSize(input), buildCommand(input, tempDir) }`,
 registered in `downloaders/index.js`. `runner.js#runDownloadJob` is source-agnostic:
 make a private temp dir, probe + log the expected size, `spawn` the silent child in
-that dir, and on a clean exit hand `video.mp4` to the database (upload + cleanup +
-notify). Adding a source is a new module + one registry line — no runner/route edits.
+that dir, and on a clean exit call the source's `upload` (upload + cleanup + notify) —
+`uploadVideo` for curl/yt-dlp, `uploadMaterial` for `fetch`. Adding a source is a new
+module + one registry line — no runner/route edits.
 
 ## curl (generic `.mp4`)
 
