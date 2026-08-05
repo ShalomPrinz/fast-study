@@ -6,8 +6,9 @@
 
 `GET /overview/extractors` returns `{ slug, title, phases[] }`. `OVERVIEW_STEPS` maps each phase to the
 file it produces and its UI label: `extract → {slug}.txt`, `analyze → {slug}.md`, `topics → {slug}.md`,
-`to_pdf → {slug}.pdf`. `stepsFor(phases)` picks one extractor's subset — pattern extractors run
-extract/analyze/to_pdf, while the `topics` extractor produces only `.md` + `.pdf` with no extract row.
+`compile → {slug}.md`, `to_pdf → {slug}.pdf`. `stepsFor(phases)` picks one extractor's subset — pattern
+extractors run extract/analyze/to_pdf, while the `topics` and `all-lectures` extractors produce only
+`.md` + `.pdf` with no extract row.
 Everything derived (`generatedFiles`, `lastGeneratedFile`, `startedSlug`, `branchStatus`) goes through
 `stepsFor`, so adding a phase is a one-table change.
 

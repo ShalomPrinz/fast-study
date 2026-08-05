@@ -57,12 +57,13 @@ fresher one.
 | `/`                      | empty state       |
 | `/course/:course`        | `CourseView`      |
 | `/downloads`             | `DownloadsView`   |
+| `/search`                | `SearchView`      |
 | `/:course/:lecture`      | `MainView`        |
 | `/:course/:lecture/edit` | `EditSummaryView` |
 
 `kind` (lecture vs recitation) is a query param `?kind=recitation`, propagated everywhere rather than
-being a route segment. The static `course`/`downloads` segments outrank the dynamic `/:course/:lecture`
-pattern in v7 ranking, so they never collide.
+being a route segment. The static `course`/`downloads`/`search` segments outrank the dynamic
+`/:course/:lecture` pattern in v7 ranking, so they never collide.
 
 `/downloads` is reached from a plain nav link in the sidebar header, not a sidebar mode — clicking any
 sidebar mode navigates away from it, which is the intended "exit on sidebar click".

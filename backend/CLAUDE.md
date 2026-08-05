@@ -4,7 +4,7 @@ Guidance for Claude Code when working inside `backend/`.
 
 ## What this is
 
-FastAPI app exposing two things over HTTP: the per-lecture video → audio → transcript → summary → PDF → Drive pipeline, and the per-course overview generator. Every mutating endpoint is fire-and-forget — it schedules a background asyncio task and returns `started`/`busy`; the frontend polls the status endpoints.
+FastAPI app exposing two things over HTTP: the per-lecture video → audio → transcript → summary → PDF → Drive pipeline, and the per-course overview generator. Every mutating endpoint is fire-and-forget — it schedules a background asyncio task and returns `started`/`busy`; the frontend reads outcomes from the status endpoints, refetching on the database service's SSE notify.
 
 ## Docs
 

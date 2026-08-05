@@ -7,8 +7,9 @@ proxies and clients see the stream open before any real traffic.
 
 The event carries **no payload** — the body of `/notify` is drained and discarded. It is a
 "something changed, refetch" ping, which keeps producers from having to model what changed and
-keeps the channel a single event type. Today's only producer is the downloader, after a
-successful download.
+keeps the channel a single event type. Producers are the backend (each meaningful pipeline and
+course-overview state change, via `services/db_client.notify`) and the downloader server (after a
+successful upload).
 
 Delivery is fire-and-forget: per-queue failures are swallowed, and producers neither wait nor
 retry. A missed notify costs a stale view until the next one, never a blocked producer.

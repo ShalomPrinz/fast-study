@@ -92,8 +92,7 @@ Bytes are still measured on the interval — `progress.js` needs them for the co
 Terminal jobs are kept asymmetrically, because they carry different weight:
 
 - **`done`** is redundant with durable state — the database course tree (its own `:8001`
-  SSE) is what flips the frontend row green. So a `done` job lingers only `DONE_BRIDGE_MS`
-  (3 s), a short bridge over the gap between this server finishing and that tree ping.
+  SSE) is what flips the frontend row green. So a `done` job lingers only `DONE_BRIDGE_MS`, a short bridge over the gap between this server finishing and that tree ping.
   Eviction is deferred, never synchronous: a client resyncing on the `done` ping must still
   find the terminal state.
 - **`error`** is the ONLY carrier of "this failed" — a failed download leaves no file, so

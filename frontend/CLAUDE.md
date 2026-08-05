@@ -19,12 +19,12 @@ npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for 
 
 | Doc                       | Covers                                                                       |
 | ------------------------- | ---------------------------------------------------------------------------- |
-| `docs/architecture.md`    | layering, `@/` alias, routing, SSE refresh model, sidebar modes, styling     |
-| `docs/services.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding |
-| `docs/lectures.md`        | pipeline constants, runner/in-flight state, edit view, sidebar tree          |
-| `docs/course-overview.md` | extractors, phases, generate/continue/re-generate, per-slug gating           |
-| `docs/downloads.md`       | auth, discovery, row edits, bulk queue, passcode gate                        |
-| `docs/search.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries |
+| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, sidebar modes, styling     |
+| `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding |
+| `docs/LECTURES.md`        | pipeline constants, runner/in-flight state, edit view, sidebar tree          |
+| `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating           |
+| `docs/DOWNLOADS.md`       | auth, discovery, row edits, bulk queue, passcode gate                        |
+| `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 

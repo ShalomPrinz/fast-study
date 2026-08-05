@@ -26,7 +26,7 @@ Per-service docs live next to each service in `CLAUDE.md`.
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.12+
 - Node.js 18+
 - `ffmpeg` — `sudo apt install ffmpeg`
 - `pandoc` — `sudo apt install pandoc`
@@ -36,7 +36,7 @@ Per-service docs live next to each service in `CLAUDE.md`.
 - [Gemini API key](https://aistudio.google.com/apikey) — summary generation
 - Google OAuth client (`backend/credentials.json`) — Drive upload
 
-The Hebrew font (Noto Serif Hebrew) is bundled in `backend/assets/fonts/` — no system font install needed.
+The Hebrew fonts (Noto Sans Hebrew for body text, Miriam Mono CLM for code) are bundled in `backend/assets/fonts/` — no system font install needed.
 
 ## Environment
 
@@ -65,7 +65,7 @@ npm run dev
 
 Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-coded; Ctrl-C kills all four. Per-service commands live in each service's `CLAUDE.md`.
 
-The Chrome extension is loaded unpacked from `downloader/`. After loading, copy the assigned extension ID into the `EXTENSION_ID` constant in `downloader/server.js` or CORS will block the popup.
+The Chrome extension is loaded unpacked from `downloader/extension/regular`. After loading, set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to the ID Chrome assigned, or CORS will block the popup. See `downloader/README.md` for the full install guide.
 
 ## Tests
 

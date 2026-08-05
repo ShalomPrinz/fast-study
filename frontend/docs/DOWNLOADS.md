@@ -3,7 +3,7 @@
 `/downloads` — connect the BIU account, keep each course's source URL, then discover and download
 recordings into the same `DATA_ROOT` courses the pipeline uses. Talks to two services: the auto-downloader
 (:3053) for auth, discovery and queueing, and the downloader server (:3052) for job progress — see
-`services.md` for their clients and error signals.
+`SERVICES.md` for their clients and error signals.
 
 ## Auth
 
@@ -56,10 +56,11 @@ prompt don't toast — they steer the UI elsewhere. A failure _after_ the start 
 
 ## Download progress
 
-`POST /download-item` returns `{ ok, jobs: [id] }` — a 200 only means the download was queued, and the
-curl/yt-dlp job runs on in the background (a zoom before/after-break pair yields two ids, everything else
-one). The 200 is never the row's outcome — treating it as one reports "Downloaded ✓" mid-download and
-swallows every background failure.
+`POST /download-item` returns `{ ok }` — a 200 only means at least one download was queued, and the
+curl/yt-dlp job runs on in the background. No job ids come back: the auto-downloader keeps no job state,
+and every job it spawns is stamped with the row's `ref`, so the row re-finds its jobs on the downloader
+server's own `/jobs`. The 200 is never the row's outcome — treating it as one reports "Downloaded ✓"
+mid-download and swallows every background failure.
 
 The jobs context mirrors the pipeline's `RunnerStatusContext`: `GET /jobs` is the **single source of
 truth**, and the stream is a contentless "refetch now" ping. `GET /events` (SSE) fires one event,
@@ -67,7 +68,7 @@ truth**, and the stream is a contentless "refetch now" ping. `GET /events` (SSE)
 byte count is transported** — the bar is a client-side ETA animation, so following a download costs one open
 connection and a refetch per transition rather than a request per second.
 
-`GET /jobs` returns every non-evicted `DownloadJob` (5 min retention after terminal), including ones the
+`GET /jobs` returns every non-evicted `DownloadJob` (a `done` job is dropped after short bridge period; an `error` has no timeout and is evicted only when a retry supersedes it), including ones the
 Chrome extension started. Each job carries the discovery-row **`ref`** it belongs to: a zoom
 before/after-break pair lands under lecture names `<name>.1`/`<name>.2`, but both jobs carry the parent
 row's `ref`. So the row-to-job link is server-side — no client id↔row map, no seeding, no delta merge.
@@ -124,7 +125,7 @@ and is disabled; on all-done it reads
 "Downloaded ✓" (the SSE tree refresh lands at the same moment and tints the row green), on error "Retry ✗".
 
 The provider — not the row — toasts a job failure via `toastJobError`, so one place covers single and bulk
-rows alike. It toasts each error id once (a failed job lingers the full 5-minute retention), guarded by a
+rows alike. It toasts each error id once (a failed job lingers until a retry supersedes it), guarded by a
 `primed` flag: the first snapshot's errors are seeded into the toasted set and suppressed, since a failure
 already terminal before this session saw it is history, not a live outcome.
 

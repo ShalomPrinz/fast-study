@@ -20,7 +20,7 @@ Scans for pending lectures and runs the queue. → `{"status": "started"|"alread
 `all_in_flight` means every pending lecture is already owned by a concurrent trigger — run_all would have skipped them all, so the UI can say so instead of appearing to do nothing.
 
 `GET /status`
-`{runner: {running, total, done, last_error}, in_flight: [...], errors: {skey: message}}`. Cheap; polled by the UI.
+`{runner: {running, total, done, last_error}, in_flight: [...], errors: {skey: message}}`. Cheap; the UI refetches it on each SSE notify.
 
 ## Timing
 

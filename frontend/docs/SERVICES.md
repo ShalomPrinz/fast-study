@@ -71,8 +71,8 @@ Trade-off: those three endpoints forgo the client's central `ConnectionError` wr
 connection surfaces as a raw `TypeError` instead of the friendly toast. `PasscodeError` maps the body's
 `name` to `lecture` because `name` collides with `Error.name`.
 
-`downloadItem` returns `{ ok, jobs: [id] }` — one id per started background download (a zoom
-before/after-break pair yields two). The jobs themselves belong to the downloader server, below.
+`downloadItem` returns the body's `ok` alone — true once at least one background download started. No job
+ids: the jobs belong to the downloader server (below) and are found by the row's `ref`.
 
 ## `features/downloads/services/downloadServer.ts` → downloader server (`VITE_DOWNLOADER_URL`, :3052)
 
