@@ -1,7 +1,5 @@
 # CLAUDE.md — auto (auto-downloader)
 
-> **Docs describe the CURRENT state, not how we got here.** Never reference a `*PLAN.md`, a phase/step number, or "was TODO / now done". When behavior changes, edit the affected line to read as if it always worked that way. History lives in git, not in these docs or in `src/` comments.
-
 ## What this is
 
 A Playwright HTTP service that, given a **course URL**, authenticates to Moodle's Web-Services API (a one-time headed token grab, then a long-lived stateless token — the Google-Drive-refresh-token model), discovers the course's recordings via that WS API, and downloads them — reusing `server/`'s `/download` + `/download-youtube` for the actual fetch. A **separate package** with its own `node_modules` so Playwright never leaks into the dependency-free `server/`. Auth + list + expand + download are all implemented.

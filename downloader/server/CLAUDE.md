@@ -60,5 +60,3 @@ vs yt-dlp-dir measure), `JOBS.md` (job lifecycle, event stream vs resync,
 - Add a download source = new `downloaders/*.js` + one registry line; don't edit the runner.
 - The size probe stays on raw `node:http` because it replays the `Cookie` header that
   `fetch` forbids — do not "modernize" it to fetch.
-- Docs/comments describe the **current state and durable WHY** — never plans, phased
-  steps, or "how we got here" history.

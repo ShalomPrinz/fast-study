@@ -38,7 +38,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 - A comment describes what a function does and the idea behind it — plus the non-obvious WHY when there is one: a hidden constraint, a subtle invariant, a workaround for a specific bug. Skip comments that just restate the code.
 - Commenting everything is noise. Comment what a reader would otherwise get wrong, and leave the rest bare.
 - Keep it short: one line is the default, two is the maximum. Never write multi-paragraph docstrings or multi-line comment blocks to fill space. Architecture belongs in the service's `docs/`.
-- Docs and comments describe the _current_ state and the durable WHY — not implementation plans, phased build steps, or "how we got here" history. Plans belong in plan files; once a plan ships, fold its durable knowledge into docs and drop the narrative.
+- Docs, comments, and every `CLAUDE.md` describe the _current_ state and the durable WHY — never implementation plans, phase/step numbers, plan references, or "was TODO / now done". When behavior changes, edit the affected line to read as if it always worked that way. History lives in git; once a plan ships, fold its durable knowledge into docs and drop the narrative.
 
 ## Architecture Preferences
 
