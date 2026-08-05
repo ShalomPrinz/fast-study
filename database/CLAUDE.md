@@ -56,11 +56,7 @@ all four up together.
 
 ## Documentation rules
 
-- Every `def` / `async def` gets a one-line docstring stating intent, not mechanics. Add a second
-  line only when the WHY is genuinely non-obvious; full reasoning belongs in `docs/`.
-- Inline comments are one-liners for small technical details. Architecture and rationale go in
-  `docs/`.
-- **Docs and comments describe the current state and the durable WHY — never plans, phased steps,
-  or "how we got here" history.** Plans live in plan files; once shipped, fold the durable part
-  into `docs/` and drop the narrative.
+Root `CLAUDE.md` covers the general rules. Database-specific:
+
+- Every `def` / `async def` gets a one-line docstring stating intent, not mechanics. Full reasoning belongs in `docs/`.
 - Update the affected doc and docstring in the same pass as the code change.

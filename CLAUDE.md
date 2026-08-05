@@ -29,24 +29,7 @@ Beyond that, `downloader/` also calls `backend/` to record download durations in
 
 ## Service subagents
 
-Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent:
-
-| Subagent         | Owns          | Stack                              |
-| ---------------- | ------------- | ---------------------------------- |
-| `backend-dev`    | `backend/`    | FastAPI pipeline (Python, uv)      |
-| `frontend-dev`   | `frontend/`   | React + Vite + TS SPA              |
-| `downloader-dev` | `downloader/` | Chrome MV3 extension + Node server |
-| `database-dev`   | `database/`   | FastAPI DATA_ROOT I/O + SSE        |
-
-## Running the dev stack
-
-All four services boot in one terminal via `concurrently`:
-
-```bash
-npm run dev
-```
-
-Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-coded; Ctrl-C kills all four. The script is defined in the root `package.json`. Per-service commands and ports are documented in each service's CLAUDE.md.
+Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
 
 ## Always use `python3`
 
@@ -78,9 +61,6 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 ## Linting
 
 Every service is linted, and new code must land lint-clean — `npm run lint` from the repo root runs both linters over everything.
-
-- **Python** (`backend/`, `database/`) — `uvx ruff check`, configured in the root `ruff.toml`.
-- **JS/TS** (`frontend/`, `downloader/`) — `npx eslint`, one root install whose `eslint.config.js` covers the SPA, both Node packages, and the Chrome extension.
 
 Both stay at pyflakes/recommended level — undefined names and unused symbols, no style enforcement — so they run in about a second. Reach for an inline `eslint-disable` / `noqa` only with a reason on the same line; if a rule is wrong repo-wide, change the config instead.
 

@@ -76,7 +76,4 @@ This applies to "small" changes too — the `to_pdf.py` preprocessing helpers lo
 
 ## Documentation and comment style
 
-- Docs and comments describe the **current state** and the durable WHY — never plans, phased build steps, or "how we got here" history. Plans live in plan files; when a plan ships, fold what's durable into `docs/` and drop the narrative.
-- Comments explain what a function does and the idea behind it. Adding them everywhere is noise — skip anything that restates the code.
-- Docstrings are one line, two at most, followed by one blank line before the body.
-- Architecture belongs in `docs/`; inline comments stay to short, specific technical details (two lines max).
+Root `CLAUDE.md` covers the general rules. Backend-specific: docstrings are one line, two at most, followed by one blank line before the body. Architecture belongs in `docs/`.
