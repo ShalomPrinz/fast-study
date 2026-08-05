@@ -47,5 +47,11 @@ string), then falls back to a 1-byte `Range: bytes=0-0` GET and reads the total 
 `Content-Range`. **This module deliberately keeps raw `node:http`/`https`** — it
 replays the captured `Cookie` header, which `fetch`/undici forbid setting.
 
+Raw http doesn't auto-follow redirects, so both attempts follow `Location` themselves (5
+hops max, then null): a 3xx's `Content-Length` is the redirect stub's, which would report a
+few hundred bytes as the video's size and wreck the ETA and progress percentage.
+`Cookie`/`Authorization` are dropped when a hop changes origin — captured credentials belong
+to the lecture site, not to whatever it redirects to.
+
 yt-dlp path: `--skip-download --print %(filesize,filesize_approx)s` over the same
 `bv*+ba/b` format selection the real download uses; the printed sizes are summed.
