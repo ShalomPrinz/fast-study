@@ -1,3 +1,7 @@
+---
+description: Turn TODOS.md into per-task prompt files ready for /implement.
+---
+
 Read `TODOS.md` from the project root.
 
 If `TODOS.md` does not exist or is empty, tell the user there are no tasks there and stop.

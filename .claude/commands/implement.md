@@ -1,3 +1,8 @@
+---
+argument-hint: <prompt-file>
+description: Implement a prompt file, then verify every requirement against the UI happy path and edge cases.
+---
+
 1. **Implement**
    Read the prompt file passed as argument. If it contains a "Depends on" section, verify those dependencies are already implemented — if not, inform the user and ask whether to implement them now or stop and handle them manually. Then implement everything described in the prompt file.
 
