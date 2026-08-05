@@ -18,22 +18,7 @@ FastAPI app exposing two things over HTTP: the per-lecture video → audio → t
 
 ## Layout
 
-```
-backend/
-  main.py             FastAPI app + uvicorn entry point; thin route glue only
-  pipeline/           per-LECTURE logic — one pure module per step + runner.py (execution engine)
-  course/             per-COURSE logic — overview.py (registry), runner.py, summary_md.py, and one module per phase
-  services/           db_client.py (all filesystem I/O), llm_client.py (Gemini), google_auth.py (OAuth)
-  timing/             SQLite per-operation duration log + @timed_pipeline decorator
-  assets/
-    fonts/            NotoSansHebrew-* (body) + MiriamMonoCLM-* (dual-script mono); bundled, no system install
-    instructions/     summarize.md, overview/{slug}.md — Hebrew prompts; edit the file, no code change
-    templates/        pandoc_template.tex
-    filters/          ltr_code.lua
-  tests/              subdirs mirror the source packages (course/, pipeline/, services/); no __init__.py
-  credentials.json    Google OAuth client (gitignored)
-  token_drive.json    Google OAuth token cache (gitignored)
-```
+Fonts in `assets/fonts/` are bundled — never assume a system install. Hebrew prompts live in `assets/instructions/` (`summarize.md`, `overview/{slug}.md`); edit the file, no code change. `tests/` subdirs mirror the source packages.
 
 ## Lecture files
 
@@ -52,25 +37,16 @@ Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, `GDRIVE_
 
 ## Running
 
-Dependencies and Python 3.12 are managed by [uv](https://docs.astral.sh/uv/); `uv run` auto-syncs `backend/.venv`.
-
 ```bash
 cd backend
 uv sync --extra test             # one-time / after dep changes
 uv run uvicorn main:app --reload # dev (port 8000)
-```
-
-## Testing after every logic update
-
-```bash
 uv run pytest tests/ -q          # CI runs exactly this on every push
 ```
 
-Whenever logic under `pipeline/`, `course/`, or `services/` changes, this is non-negotiable:
+## Testing
 
-1. **Run the suite first** for a green baseline. If a test fails, fix the code or update the test deliberately — never silently delete or skip it.
-2. **Add tests for the new logic** in the matching `tests/{pipeline,course,services}/test_<module>.py`. Cover the regression case (fails without the fix), the happy path, and one edge case (empty input, escaping, a protected/unprotected boundary).
-3. **Re-run the full suite.** The change isn't done until it's green.
+New tests go in the matching `tests/{pipeline,course,services}/test_<module>.py`. Never silently delete or skip a failing test — fix the code or update the test deliberately.
 
 This applies to "small" changes too — the `to_pdf.py` preprocessing helpers look trivial and interact with bidi/LaTeX in surprising ways, which is why every one of them has a test class.
 

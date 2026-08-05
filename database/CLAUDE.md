@@ -19,22 +19,9 @@ changes: keep them backward-compatible or flag the impact.
 | [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity |
 | [docs/EVENTS.md](docs/EVENTS.md)     | SSE channel and clean shutdown                              |
 
-## Directory layout
+## Layout
 
-```
-database/
-  main.py        FastAPI app, routes, uvicorn entry
-  fs/
-    paths.py       path resolution + layout constants — the single source of truth
-    tree.py        read_tree / read_course
-    summary.py     read/write/revert summary.md
-    summaries.py   every non-empty summary.md in a course (client-side search corpus)
-    files.py       resolve a lecture file path
-    crud.py        create/rename/archive course, create/rename lecture, video + file writes
-    overview.py    course-level overview files and meta.json
-  events/sse.py  in-memory pub/sub: subscribe() + broadcast_notify()
-  tests/         pytest; conftest points DATA_ROOT at a per-test tmp dir
-```
+`fs/paths.py` is the single source of truth for path resolution and layout constants. `tests/` uses a conftest that points `DATA_ROOT` at a per-test tmp dir.
 
 ## Environment
 

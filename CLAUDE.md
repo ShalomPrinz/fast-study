@@ -6,15 +6,7 @@ Top-level guidance for Claude Code in this repo. Service-specific docs live next
 
 A four-service app that turns a Hebrew video lecture into a structured written summary (and uploads it to Google Drive). The video → audio → transcript → summary → PDF → Drive pipeline lives in `backend/`; a web UI for driving it lives in `frontend/`; a Chrome extension + helper server for grabbing source videos (and PDFs) off lecture sites lives in `downloader/`; and all filesystem reads/writes under `DATA_ROOT` (plus the cross-service SSE notify channel) are owned by `database/`.
 
-## Repository layout
-
-```
-backend/      FastAPI app + pipeline modules (Python).        See backend/CLAUDE.md
-frontend/     React + Vite + TS UI (talks to database/).      See frontend/CLAUDE.md
-downloader/   Chrome MV3 extension + small Node server.       See downloader/CLAUDE.md
-database/     FastAPI service owning all DATA_ROOT I/O + SSE. See database/CLAUDE.md
-.env          Shared env file — DATA_ROOT, GROQ_API_KEY, GEMINI_API_KEY, GDRIVE_ROOT_FOLDER
-```
+## Shared data layout
 
 All services read the same `.env` at the repo root and share one on-disk layout under `DATA_ROOT`:
 

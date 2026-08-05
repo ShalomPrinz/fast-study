@@ -7,7 +7,7 @@ runs and to the database service (:8001) for all filesystem state; the Vite dev 
 
 ```bash
 npm run dev      # localhost:5173
-npm run build    # tsc -b && vite build → dist/   (run this to surface type errors)
+npm run build    # tsc -b && vite build → dist/
 npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for watch mode)
 ```
 
@@ -28,22 +28,6 @@ npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for 
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 
-## Directory layout
-
-```
-src/
-  App.tsx  main.tsx  index.css  types.ts      routes, entry, single stylesheet, domain types
-  app/Layout.tsx                              providers + sidebar + outlet + ToastContainer
-  services/                                   http, backend, database, events (SSE), toaster
-  shared/                                     components, contexts (CourseTree, RunnerStatus),
-                                              hooks, utils (url, format, inFlightKey), sidebar shell
-  features/lectures/                          MainView, EditSummaryView, sidebar tree, pipeline constants
-  features/course-overview/                   CourseView, extractor rows, overview constants
-  features/downloads/                         DownloadsView, recording rows, autoDownloader +
-                                              downloadServer services
-  features/search/                            SearchView, in-memory course corpus, pure matcher
-```
-
 ## Rules
 
 - Each file under `services/` is the single boundary for one external concern — no raw `fetch`,
@@ -52,7 +36,6 @@ src/
 - UI lives in components, not contexts or hooks — those expose state and callbacks only.
 - Import via `@/` for anything outside the current directory; siblings may be relative.
 - Tests are vitest `*.test.ts` colocated with the pure logic they cover; there is no DOM test setup.
-- Verify with `npm run build`.
 
 ## Documentation style
 

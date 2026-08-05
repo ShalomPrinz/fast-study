@@ -5,10 +5,6 @@ own: it captures a video (curl header-replay or yt-dlp) or receives a PDF, then 
 `DATA_ROOT`. It also posts download duration samples to the **backend** (8000), and calls
 **auto/** (3053) to silently re-capture a stale cached token (`docs/JOBS.md`).
 
-## Tech Stack
-
-Node.js: Express + cors + dotenv; subprocesses via `node:child_process`.
-
 ## Run
 
 ```bash
@@ -47,25 +43,7 @@ the popup.
 
 ## Module layout
 
-```
-src/
-  index.js             entry: express app (cors, json, routers, error handler) + listen
-  config.js            env + PORT / EXTENSION_ID / FRONTEND_URL / DATABASE_URL / filenames
-  validate.js          isSafeName, validateKind
-  progress.js          active-download registry + TTY/pipe progress rendering
-  jobs.js              job registry over the same download entries (the state)
-  events.js            SSE fan-out of the contentless job:change ping (the notification)
-  routes/              courses, probe, download, pdf, jobs (+ /events)
-  services/
-    database.js        all DATABASE_URL I/O (listCourses, uploadVideo, uploadPdf, notify)
-    probe.js           probeContentLength — the ONLY raw node:http/https
-    timing.js          fire-and-forget duration samples to the backend's POST /timing
-    autodl.js          AUTODL_URL edge — silent re-capture of a stale cached token
-  downloaders/
-    index.js           registry { curl, ytdlp } + runDownloadJob
-    runner.js          source-agnostic spawn/probe/upload loop
-    curl.js  ytdlp.js  one module per source
-```
+`jobs.js` is the state (job registry over the download entries), `events.js` the notification (SSE fan-out of the contentless `job:change` ping). `services/probe.js` is the ONLY raw `node:http`/`https` in the package. All `DATABASE_URL` I/O goes through `services/database.js`.
 
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
 DASH + JS-runtime, size probe), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
@@ -75,7 +53,7 @@ vs yt-dlp-dir measure), `JOBS.md` (job lifecycle, event stream vs resync,
 
 ## Conventions
 
-- ESM only (`import`, never `require`); deps are express + cors + dotenv.
+- ESM only (`import`, never `require`).
 - Subprocesses via `execFile`/`spawn` with **argv arrays, never shell strings** — a
   captured header value must not be able to inject.
 - Saved video is always `video.mp4`, uploaded PDF always `material.pdf` (`config.js`).

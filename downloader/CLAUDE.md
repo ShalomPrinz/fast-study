@@ -4,14 +4,9 @@
 
 A Chrome extension (Manifest V3) plus a tiny local Node server that together capture video streams from web pages and hand them off to the database service, which writes `{DATA_ROOT}/{course}/{lecture}/video.mp4` so the backend's `/run/audio` step can pick them up with no manual file moves. Two source paths:
 
-## Layout
+## Source paths
 
-```
-extension/regular/   Chrome MV3 extension: background.js, manifest.json, popup.html, popup.js
-extension/simple/    Simplified extension-only variant (no server; saves to Downloads/)
-server/              Node server (express): src/, docs/ — see server/CLAUDE.md
-auto/                Auto-downloader: Playwright HTTP service (talks to server/ over HTTP)
-```
+`extension/simple/` is an extension-only variant that needs no server and saves to `Downloads/`.
 
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
 - **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links (`auto/`'s `google-drive` strategy).
@@ -62,11 +57,8 @@ auth, passcodes).
 
 ## Conventions
 
-- The Node packages (`server/`, `auto/`) use npm freely (express + cors + dotenv); **only the Chrome extension** (`extension/`) must avoid them (MV3 constraint).
+- The Node packages (`server/`, `auto/`) use npm freely; **only the Chrome extension** (`extension/`) must avoid dependencies (MV3 constraint).
 - `suggestLectureName` / `suggestRecitationName` in `popup.js` duplicate logic from `frontend/src/components/Sidebar.tsx`. If the sidebar's naming convention changes, update both.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
 - Server-specific conventions (argv-array spawn, always `video.mp4`/`material.pdf`, probe-on-raw-http) live in `server/CLAUDE.md`.
-
-## Verification
-
-- Neither Node package has a test suite (`npm start` is the only script). Verify a change by running the service and hitting the real _endpoint_ — the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior that no diff review can predict. Do not verify against real _data_.
+- Neither Node package has a test suite, and the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior no diff review can predict — exercise the real _endpoint_, but never against real _data_.
