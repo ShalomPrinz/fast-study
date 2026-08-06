@@ -34,8 +34,9 @@ auto keeps no job state and hands back no job ids — every spawned job is stamp
 Job semantics, the change ping and the timing samples live in `server/docs/JOBS.md`.
 
 **Session replay cache** (`src/core/replayCache.js`). Every resolved cap — `{url, headers}` (curl)
-or `{url}` (yt-dlp) — is kept in memory keyed by its final `(course, lecture, kind)` target
-(zoom split names included), so a retry replays it without re-capturing. In-memory only (dies
+or `{url}` (yt-dlp) — is kept in memory keyed by its final `(course, lecture, kind, media)`
+target (zoom split names included; `media` keeps a lecture's `video.mp4` and `material.pdf` caps
+apart), so a retry replays it without re-capturing. In-memory only (dies
 with the process), never logged (caps hold Cookies/tokens), unbounded (session-small). Two
 optional `/download-item` flags drive it: `only:true` acts on just the one `(course, name, kind)`
 target (`name` may be a zoom split `<base>.<n>`); `forceCapture:true` bypasses the cache and

@@ -88,7 +88,7 @@ async function captureTargets(page, recording, extractor, { name, course, kind, 
     const cap = await extractor.captureVideo(page, recording);
     targets = [{ name, cap }];
   }
-  for (const t of targets) cacheCap(course, t.name, kind, t.cap, ref);
+  for (const t of targets) cacheCap(course, t.name, kind, 'video', t.cap, ref);
   return targets;
 }
 
@@ -96,10 +96,10 @@ async function captureTargets(page, recording, extractor, { name, course, kind, 
 // missing — a partial hit still needs a fresh capture (one zoom share sniffs both clips).
 function cachedTargets(recording, course, name, kind) {
   if (recording.strategy === 'zoom') {
-    const single = getCap(course, name, kind);
+    const single = getCap(course, name, kind, 'video');
     if (single) return [{ name, cap: single.cap }];
-    const c1 = getCap(course, splitName(name, 1), kind);
-    const c2 = getCap(course, splitName(name, 2), kind);
+    const c1 = getCap(course, splitName(name, 1), kind, 'video');
+    const c2 = getCap(course, splitName(name, 2), kind, 'video');
     if (c1 && c2)
       return [
         { name: splitName(name, 1), cap: c1.cap },
@@ -107,7 +107,7 @@ function cachedTargets(recording, course, name, kind) {
       ];
     return null;
   }
-  const hit = getCap(course, name, kind);
+  const hit = getCap(course, name, kind, 'video');
   return hit ? [{ name, cap: hit.cap }] : null;
 }
 
@@ -138,13 +138,13 @@ export async function downloadRecording(
   // plain HTTP URL that server/ fetches as the lecture's material.pdf. Single target, so
   // `only` collapses to the same path; the cap is just a `{url}`.
   if (recording.strategy === 'moodle-file') {
-    let cap = forceCapture ? null : getCap(course, name, kind)?.cap;
+    let cap = forceCapture ? null : getCap(course, name, kind, 'material')?.cap;
     const fromCache = Boolean(cap);
     if (!cap) {
       const url = pluginfileUrl(recording.fileurl, wstoken);
       await assertPluginfileReadable(url);
       cap = { url };
-      cacheCap(course, name, kind, cap, ref);
+      cacheCap(course, name, kind, 'material', cap, ref);
     }
     const jobId = await postDownloadFile({
       url: cap.url,
@@ -162,7 +162,7 @@ export async function downloadRecording(
   // so a non-public file fails as 422 rather than silently in server/'s job. Single target,
   // so `only` collapses to the same path; the cap is just a `{url}`.
   if (recording.strategy === 'youtube-playlist' || recording.strategy === 'google-drive') {
-    let cap = forceCapture ? null : getCap(course, name, kind)?.cap;
+    let cap = forceCapture ? null : getCap(course, name, kind, 'video')?.cap;
     const fromCache = Boolean(cap);
     if (!cap) {
       let url = recording.pageUrl;
@@ -173,7 +173,7 @@ export async function downloadRecording(
         await assertPubliclyShared(url);
       }
       cap = { url };
-      cacheCap(course, name, kind, cap, ref);
+      cacheCap(course, name, kind, 'video', cap, ref);
     }
     const jobId = await postDownloadYoutube({
       url: cap.url,
@@ -195,7 +195,7 @@ export async function downloadRecording(
   // split name). A cache hit is keyed directly by that name — no splitting needed.
   if (only) {
     if (!forceCapture) {
-      const hit = getCap(course, name, kind);
+      const hit = getCap(course, name, kind, 'video');
       if (hit) return [await postCap(hit.cap, name, true)].filter(Boolean);
     }
     // Miss/force: one zoom share sniffs BOTH clips, so re-capture the whole recording (using
