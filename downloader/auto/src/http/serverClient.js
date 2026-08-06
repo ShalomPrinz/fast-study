@@ -33,6 +33,17 @@ export async function postDownload({ url, headers, course, lecture, kind, ref, f
 }
 
 /**
+ * Plain URL with no header replay (a tokened Moodle pluginfile URL): server.js fetches it
+ * and saves it as the lecture's material.pdf.
+ * @param {{ url: string, course: string, lecture: string, kind?: string, ref?: string|null, fromCache?: boolean }} payload
+ * @returns {Promise<string|undefined>} server/'s job id
+ */
+export async function postDownloadFile({ url, course, lecture, kind, ref, fromCache }) {
+  const body = await postJson('/download-file', { url, course, lecture, kind, ref, fromCache });
+  return body?.jobId;
+}
+
+/**
  * YouTube entry: server.js runs yt-dlp (no captured headers — it manages its own session).
  * @param {{ url: string, course: string, lecture: string, kind?: string, ref?: string|null, fromCache?: boolean }} payload
  * @returns {Promise<string|undefined>} server/'s job id

@@ -6,6 +6,7 @@ import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
 import { GoogleDriveExtractor } from '../extractors/GoogleDriveExtractor.js';
 import { ZoomExtractor } from '../extractors/ZoomExtractor.js';
+import { MoodleFileExtractor } from '../extractors/MoodleFileExtractor.js';
 
 // Universities own AUTH (per host). The one-time headed token grab yields a long-lived
 // Moodle WS token; the token authenticates the stateless REST API thereafter.
@@ -18,12 +19,13 @@ const UNIVERSITIES = [
 ];
 
 // Extractors own the per-activity EXTRACTION mechanism. Ordered; first
-// canHandle(activity) wins. `resource`/unknown modTypes match none → skipped.
+// canHandle(activity) wins. Unknown modTypes match none → skipped.
 const EXTRACTORS = [
   new VideostreamExtractor(), // modType 'videostream' → in-site .mp4
   new YoutubePlaylistExtractor(), // modType 'url'      → YouTube playlist (redirect)
   new GoogleDriveExtractor(), // modType 'url'          → Google Drive single video file
   new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
+  new MoodleFileExtractor(), // modType 'resource'     → course-hosted PDF → material.pdf
 ];
 
 /**
@@ -57,7 +59,7 @@ export function resolveExtractorForRecording(recording) {
 
 /**
  * Route one activity to its extractor. Returns null (no throw) when no strategy
- * handles it — null means skip (e.g. a `resource`/PDF activity).
+ * handles it — null means skip (e.g. a non-PDF `resource` file).
  * @param {import('../extractors/VideoExtractor.js').Activity} activity
  * @returns {import('../extractors/VideoExtractor.js').VideoExtractor | null}
  */

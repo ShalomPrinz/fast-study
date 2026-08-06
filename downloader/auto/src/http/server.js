@@ -17,12 +17,14 @@ import {
 } from '../moodle/wsClient.js';
 
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
-// unexpanded playlist (pageUrl, no url) is expandable, else downloadable. See docs/BROWSING.md.
+// unexpanded playlist (pageUrl, no url) is expandable, else downloadable. `media` says which
+// file lands on disk (video.mp4 vs material.pdf), never how it is fetched. See docs/BROWSING.md.
 function toItem(recording) {
   return {
     ref: encodeRef(recording),
     title: recording.title,
     kind: recording.kind,
+    media: recording.strategy === 'moodle-file' ? 'material' : 'video',
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
   };
@@ -221,6 +223,37 @@ async function downloadItem(req, res) {
   // only = act on just this one (course,name,kind) target
   // forceCapture = bypass the replay cache and capture fresh
   const opts = { only: only === true, forceCapture: forceCapture === true };
+
+  // moodle-file needs no browser either: the ref carries the Moodle fileurl, and the WS
+  // token (query-string auth for pluginfile) makes it a plain fetch for server/.
+  if (recording.strategy === 'moodle-file') {
+    const auth = authFor(resolveUniversity(recording.fileurl));
+    if (!auth.status().connected) {
+      logResult('/download-item', 'reconnect (401)');
+      return sendReconnect(res);
+    }
+    let jobs;
+    try {
+      jobs = await downloadRecording(null, {
+        recording,
+        course,
+        name,
+        kind,
+        wstoken: auth.loadToken().wstoken,
+        ref: rowRef,
+        ...opts,
+      });
+    } catch (e) {
+      if (invalidToken(e)) {
+        auth.markExpired();
+        logResult('/download-item', 'reconnect (401)');
+        return sendReconnect(res);
+      }
+      throw e;
+    }
+    logResult('/download-item', `ok (${jobs.length} job)`);
+    return send(res, 200, { ok: jobs.length > 0 });
+  }
 
   // yt-dlp strategies need no browser: a youtube entry carries its direct url (playlist
   // already expanded), a Drive file its pageUrl. videostream must sniff the .mp4 fresh.

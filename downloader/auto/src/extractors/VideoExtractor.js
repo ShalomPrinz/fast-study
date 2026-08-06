@@ -1,13 +1,19 @@
 /**
  * One module from the Moodle WS course contents. `externalUrl` is the off-site target of
  * a `url` module (from contents[].fileurl) — the direct link a youtube playlist expands.
+ * `fileurl`/`filename`/`mimetype` describe ONE file of a `resource` module (which can hold
+ * several, hence one activity per file).
  * @typedef {{ title: string, modType: string, viewUrl: string, externalUrl?: string,
+ *             fileurl?: string, filename?: string, mimetype?: string,
  *             sectionName: string, kind: 'lecture'|'recitation' }} Activity
  *
  * A listed recording — cheap metadata + which download strategy resolves it.
  * `section` is the Moodle course section heading (display metadata for grouping; '' when unnamed).
- * @typedef {{ title: string, pageUrl: string, kind: 'lecture'|'recitation',
- *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive',
+ * Every strategy but `moodle-file` carries a `pageUrl`; `moodle-file` carries the Moodle
+ * `fileurl` the tokened download URL is built from instead.
+ * @typedef {{ title: string, pageUrl?: string, fileurl?: string, filename?: string,
+ *             kind: 'lecture'|'recitation',
+ *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file',
  *             section: string }} Recording
  *
  * A recording resolved for download — url = the .mp4 (videostream) or a YouTube

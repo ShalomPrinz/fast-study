@@ -1,5 +1,6 @@
 import { resolveExtractor, resolveExtractorForRecording } from './registry.js';
-import { postDownload, postDownloadYoutube } from '../http/serverClient.js';
+import { postDownload, postDownloadFile, postDownloadYoutube } from '../http/serverClient.js';
+import { assertPluginfileReadable, pluginfileUrl } from '../moodle/wsClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
 import { assertPubliclyShared } from '../extractors/GoogleDriveExtractor.js';
@@ -9,7 +10,9 @@ import { stripTags } from '../lib/html.js';
 
 // Flatten the WS section tree into activities. `url` modules carry their external target
 // in contents[].fileurl (YouTube/zoom/Drive/…) — the direct link the extractor expands,
-// not the redirect view page. `resource`/unknown modTypes match no extractor → skipped.
+// not the redirect view page. A `resource` module is the one type that can hold SEVERAL
+// files, so it yields one activity per file (each its own downloadable row); every other
+// modType yields exactly one. Unknown modTypes match no extractor → skipped.
 // Names arrive as HTML, so they're flattened before being displayed or keyword-matched.
 function mapModules(sections) {
   const activities = [];
@@ -17,12 +20,28 @@ function mapModules(sections) {
     const sectionName = stripTags(section.name || '');
     for (const module of section.modules ?? []) {
       const title = stripTags(module.name || '');
+      const base = { modType: module.modname, viewUrl: module.url, sectionName };
+      if (module.modname === 'resource') {
+        const files = (module.contents ?? []).filter((c) => c.type === 'file');
+        for (const file of files) {
+          // Only a multi-file resource needs the filename to tell its rows apart; a
+          // single-file one would just read "1-Git — 1-Git.pdf".
+          const fileTitle = files.length > 1 ? `${title} — ${file.filename}` : title;
+          activities.push({
+            ...base,
+            title: fileTitle,
+            fileurl: file.fileurl,
+            filename: file.filename,
+            mimetype: file.mimetype,
+            kind: classifyKind(sectionName, fileTitle),
+          });
+        }
+        continue;
+      }
       activities.push({
+        ...base,
         title,
-        modType: module.modname,
-        viewUrl: module.url,
         externalUrl: module.contents?.[0]?.fileurl,
-        sectionName,
         kind: classifyKind(sectionName, title),
       });
     }
@@ -43,7 +62,7 @@ export function listRecordings(sections) {
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
-    if (!extractor) continue; // resource/non-recording url/unknown → skip
+    if (!extractor) continue; // non-PDF resource/non-recording url/unknown → skip
     for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
   }
   return recordings;
@@ -95,13 +114,14 @@ function cachedTargets(recording, course, name, kind) {
 /**
  * DOWNLOAD PATH (HTTP): resolve one echoed-back recording and hand its target(s) to server/.
  * videostream/zoom sniff the .mp4 fresh on the shared page; youtube/google-drive carry a
- * direct url yt-dlp resolves (no navigation). Each resolved cap is kept in the session
+ * direct url yt-dlp resolves and moodle-file a tokened pluginfile url (no navigation). Each resolved cap is kept in the session
  * replay cache (see replayCache.js) so a retry replays it without re-capturing. See docs/BROWSING.md.
- * @param {import('playwright').Page|null} page  live shared page (null for yt-dlp strategies)
+ * @param {import('playwright').Page|null} page  live shared page (null for the no-browser strategies)
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null,
- *           ref?: string|null, only?: boolean, forceCapture?: boolean }} args
+ *           wstoken?: string, ref?: string|null, only?: boolean, forceCapture?: boolean }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
+ *   wstoken is the caller's Moodle WS token; only the moodle-file path consumes it.
  *   ref is the discovery-row id that spawned this download — stamped onto every server/
  *   job so a zoom before/after-break split pair groups under the one parent row.
  *   only = operate on just the single (course,name,kind) target (name may be a zoom split
@@ -112,8 +132,31 @@ function cachedTargets(recording, course, name, kind) {
  */
 export async function downloadRecording(
   page,
-  { recording, course, name, kind, passcode, ref, only = false, forceCapture = false },
+  { recording, course, name, kind, passcode, wstoken, ref, only = false, forceCapture = false },
 ) {
+  // moodle-file: no browser, no capture — the WS token turns the Moodle fileurl into a
+  // plain HTTP URL that server/ fetches as the lecture's material.pdf. Single target, so
+  // `only` collapses to the same path; the cap is just a `{url}`.
+  if (recording.strategy === 'moodle-file') {
+    let cap = forceCapture ? null : getCap(course, name, kind)?.cap;
+    const fromCache = Boolean(cap);
+    if (!cap) {
+      const url = pluginfileUrl(recording.fileurl, wstoken);
+      await assertPluginfileReadable(url);
+      cap = { url };
+      cacheCap(course, name, kind, cap, ref);
+    }
+    const jobId = await postDownloadFile({
+      url: cap.url,
+      course,
+      lecture: name,
+      kind,
+      ref,
+      fromCache,
+    });
+    return [jobId].filter(Boolean);
+  }
+
   // yt-dlp strategies: no browser, no capture. A youtube entry must be a specific expanded
   // playlist entry (`url`); a Drive file downloads straight from its `pageUrl`, preflighted
   // so a non-public file fails as 422 rather than silently in server/'s job. Single target,

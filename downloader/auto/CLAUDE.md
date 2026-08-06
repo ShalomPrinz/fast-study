@@ -2,7 +2,7 @@
 
 ## What this is
 
-A Playwright HTTP service that, given a **course URL**, authenticates to Moodle's Web-Services API (a one-time headed token grab, then a long-lived stateless token — the Google-Drive-refresh-token model), discovers the course's recordings via that WS API, and downloads them — reusing `server/`'s `/download` + `/download-youtube` for the actual fetch. A **separate package** with its own `node_modules` so Playwright never leaks into the dependency-free `server/`.
+A Playwright HTTP service that, given a **course URL**, authenticates to Moodle's Web-Services API (a one-time headed token grab, then a long-lived stateless token — the Google-Drive-refresh-token model), discovers the course's recordings (and its PDF handouts) via that WS API, and downloads them — reusing `server/`'s `/download`, `/download-youtube` and `/download-file` for the actual fetch. A **separate package** with its own `node_modules` so Playwright never leaks into the dependency-free `server/`.
 
 ## Run
 
@@ -15,7 +15,7 @@ Port **3053** (`AUTODL_PORT`). Reads the repo-root `.env` (`src/lib/config.js`) 
 
 ## HTTP surface
 
-Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, expandable, section }` (`section` = the Moodle section heading, display metadata for grouping, `''` when unnamed); `/download-item` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.
+Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, expandable, section }` (`section` = the Moodle section heading, display metadata for grouping, `''` when unnamed; `media` = `'video'`|`'material'`, which file lands on disk — `video.mp4` vs `material.pdf` — not how it is fetched); `/download-item` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.
 
 | Endpoint              | Body                                                | Returns                                                            |
 | --------------------- | --------------------------------------------------- | ------------------------------------------------------------------ |
@@ -50,7 +50,7 @@ both clips), then posts only the cap whose split name matches the request.
 
 - **`docs/SESSIONS.md`** — persistent per-profile browsers, `withLock` mutex, idle timeout, the launch matrix.
 - **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + managed Xvfb; the UA/GPU constraints; passcode gate; before/after-break split.
-- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, yt-dlp), `zoom`.
+- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword/mimetype gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, yt-dlp), `zoom`, `moodle-file` (course-hosted PDF → `material.pdf`).
 - **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
 
 Dev-stack wiring: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

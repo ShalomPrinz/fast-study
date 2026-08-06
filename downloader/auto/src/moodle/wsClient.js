@@ -84,6 +84,20 @@ export function pluginfileUrl(fileurl, token) {
   return u.toString();
 }
 
+// Preflight a tokened pluginfile URL. A dead token gets Moodle's JSON exception body under
+// HTTP 200 (never a 403), so an unchecked download would silently save that blob as the PDF —
+// probe one byte and surface it as a WsError, which invalidToken() recognizes. `server/`'s
+// download job is fire-and-forget, so this is the only place the caller can still answer 401.
+export async function assertPluginfileReadable(url) {
+  const res = await fetch(url, {
+    headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT },
+  });
+  if (!res.headers.get('content-type')?.includes('application/json')) return;
+  const body = await res.json().catch(() => null);
+  if (body?.errorcode) throw new WsError(body.errorcode, body.message);
+  throw new Error(`pluginfile served JSON, not a file: ${url}`);
+}
+
 // Parse the numeric course id from a Moodle course URL (…/course/view.php?id=109063).
 // Returned as a string to match the WS &courseid= usage.
 export function courseIdFrom(courseUrl) {
