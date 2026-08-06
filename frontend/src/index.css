@@ -1158,6 +1158,13 @@ body,
   flex-shrink: 0;
 }
 
+/* Same switch in the downloads panel, which spaces its own children — no sidebar margins. */
+.mode-toggle--downloads {
+  margin: 0;
+  align-self: flex-start;
+  min-width: 220px;
+}
+
 .mode-toggle-btn {
   flex: 1;
   padding: 5px 8px;

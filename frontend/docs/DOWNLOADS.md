@@ -17,8 +17,19 @@ otherwise still read "connected".
 
 ## Discovery
 
-One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order. Items
-are grouped into sections by `item.section` (the Moodle heading) in first-seen order, blank → "Other".
+One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order.
+
+Each item carries `media`: `'material'` for a Moodle PDF resource (lands as `material.pdf`), `'video'`
+for everything else (lands as `video.mp4`). The destination file is derived server-side from the opaque
+`ref` — the frontend only branches its own affordances on `media`, it never sends it.
+
+A `ModeToggle` under the panel header splits the two — **Videos** (default) on the left, **Materials** on
+the right — and `groupSections(items, media)` filters by `media` *before* grouping by `item.section` (the
+Moodle heading) in first-seen order, blank → "Other". So each side shows only its own sections, a section
+with nothing on the active side doesn't render, and an empty side shows "No recordings found." / "No
+materials found." while both segments stay clickable. `groupSections` is a pure helper (`utils/sections.ts`)
+precisely so the filter+group rule is testable without a DOM. Everything below a section — including
+"Download all" — therefore operates on one media only: a bulk run covers just the active side.
 
 An item is either downloadable or `expandable` (a playlist). `SectionGroup` — not the row — owns the
 expand state, the fetched children and the cache, because the bulk queue needs resolved children and the
@@ -38,11 +49,27 @@ tree. Two consequences fall out of storing overrides rather than values:
 
 Edits are never cleared, so they survive an SSE tree refresh, a collapse/re-expand, and a bulk run.
 
-`isDownloaded(name, kind, courses, course)` is the single already-downloaded rule (exact name match in the
-live tree). It drives both the green row and the queue's skip. A single row's Download on an existing name
-opens an overwrite confirm first; the bulk run skips instead. When the base name isn't itself on disk,
-`splitSiblings` (same lookup) checks for `${name}.1`/`.2` — a zoom row splits lazily into those during
+`hasResource(media, name, kind, courses, course)` is the single already-downloaded rule, so the green row,
+the overwrite confirm and the bulk queue's skip can never disagree. It finds the node named `name` in the
+live tree and checks the file the media implies — `video` → `video.mp4`, `material` → `material.pdf`. A
+lecture that exists but holds neither file is not "already there" for either row. A
+single row's Download on an existing target opens an overwrite confirm first (worded as replacing the
+_material_ on a material row); the bulk run skips instead. For a video row whose base name isn't itself on
+disk, `splitSiblings` (same lookup) checks for `${name}.1`/`.2` — a zoom row splits lazily into those during
 download — and Download opens a "might overwrite" confirm naming the siblings; exact match takes precedence.
+A material row skips that check: a PDF always lands on the one lecture picked.
+
+## Material rows
+
+A material row picks which lecture the PDF attaches to, and takes its suggestion from `suggestItemName`
+like a video row — the Moodle activity title ("שקפי הרצאה 5", "תרגול 3 - פתרונות") names the lecture the
+PDF belongs to, so the number in it wins. A numberless title falls through to the next-new name.
+
+The destination field is a native `<input list>` + `<datalist>` of `existingNames(kind, …)`: dropdown of
+what exists plus free text for a lecture that doesn't exist yet, in one element with no focus/keyboard
+handling to reinvent. The options follow the kind toggle, and the input's `aria-label` reads "Attach material to" rather than
+"Lecture name" — the only in-row material affordance, since the media toggle already carries the signal.
+The row shell is otherwise shared with video rows; it just drops the split-siblings warning.
 
 `suggestItemName` derives the name from the recording title: the first integer becomes `Lecture N` /
 `Recitation N`, plus at most one sub-session marker glued to those digits (optionally after `.`/`-`/`_`) as

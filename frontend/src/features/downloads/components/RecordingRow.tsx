@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item } from '@/features/downloads/services/autoDownloader'
@@ -7,7 +7,11 @@ import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import { rowStatus, useDownloadJobs } from '@/features/downloads/contexts/DownloadJobsContext'
 import { useRowEdit } from '@/features/downloads/contexts/RowEditsContext'
-import { isDownloaded, splitSiblings } from '@/features/downloads/utils/nameSuggestion'
+import {
+  existingNames,
+  hasResource,
+  splitSiblings,
+} from '@/features/downloads/utils/nameSuggestion'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 
 // Owned by SectionGroup — the bulk queue needs the same children cache.
@@ -48,8 +52,11 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     passcode,
   } = useRecordingDownload({ item, course, name: effectiveName, kind, onReconnect })
 
+  // A material row attaches a PDF to an existing lecture instead of creating one from a video.
+  const material = item.media === 'material'
+  const listId = useId()
   // Live tree, so a completed download's SSE refresh flips the row green.
-  const alreadyDownloaded = isDownloaded(effectiveName, kind, courses, course)
+  const alreadyDownloaded = hasResource(item.media, effectiveName, kind, courses, course)
   // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
   // for free after a reload. A multi-clip recording (jobs.length > 1) turns the main button into a label.
   const jobs = progressOf(item.ref)
@@ -66,9 +73,16 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
   const onDownloadClick = () => {
     if (alreadyDownloaded || status === 'done') {
       setConfirm({
-        message: `${effectiveName} already exists in ${course}. Download again and overwrite?`,
+        message: material
+          ? `${effectiveName} in ${course} already has material. Download again and replace it?`
+          : `${effectiveName} already exists in ${course}. Download again and overwrite?`,
         run: download,
       })
+      return
+    }
+    // Lazy zoom splits are a video-only hazard; a PDF always lands on the one lecture picked.
+    if (material) {
+      download()
       return
     }
     const siblings = splitSiblings(effectiveName, kind, courses, course)
@@ -160,13 +174,24 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
           </button>
         </div>
 
+        {/* Material picks an existing lecture to attach to, so the input offers them — while
+            staying free text, since the lecture may not exist yet. */}
         <input
           className="source-row-input recording-name-input"
           value={value}
           onChange={(e) => setName(e.target.value)}
           placeholder={suggestion}
+          list={material ? listId : undefined}
+          aria-label={material ? 'Attach material to' : 'Lecture name'}
           dir="auto"
         />
+        {material && (
+          <datalist id={listId}>
+            {existingNames(kind, courses, course).map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+        )}
 
         {split ? (
           // Per-clip buttons own re-download/retry, so the main button is just a status label here.

@@ -1,17 +1,23 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { Course } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { toast } from '@/services/toaster'
-import type { Item } from './services/autoDownloader'
+import type { Item, Media } from './services/autoDownloader'
 import { listRecordings, isReconnectError } from './services/autoDownloader'
+import ModeToggle from '@/shared/components/ModeToggle'
+import type { ModeConfig } from '@/shared/components/ModeToggle'
 import AuthPill from '@/features/downloads/components/AuthPill'
 import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
 import AddCourseRow from '@/features/downloads/components/AddCourseRow'
 import SectionGroup from '@/features/downloads/components/SectionGroup'
+import { groupSections } from '@/features/downloads/utils/sections'
 import { DownloadJobsProvider } from './contexts/DownloadJobsContext'
 
-// Items whose Moodle heading is blank still need a home.
-const OTHER_SECTION = 'Other'
+// Order matters: it drives the segment order and the default side (videos).
+const MEDIA_MODES: Record<Media, ModeConfig> = {
+  video: { label: 'Videos' },
+  material: { label: 'Materials' },
+}
 
 // Downloads page: BIU account, course source URLs, discovery. See docs/downloads.md.
 export default function DownloadsView() {
@@ -23,18 +29,6 @@ export default function DownloadsView() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reconnectKey, setReconnectKey] = useState(0)
-
-  // First-seen order: the server's order is the page's order.
-  const sections = useMemo(() => {
-    const map = new Map<string, Item[]>()
-    for (const item of items) {
-      const key = item.section || OTHER_SECTION
-      const bucket = map.get(key)
-      if (bucket) bucket.push(item)
-      else map.set(key, [item])
-    }
-    return [...map]
-  }, [items])
 
   function reconnectHint() {
     toast('error', 'BIU session expired. Reconnect your account.')
@@ -101,18 +95,33 @@ export default function DownloadsView() {
               </div>
               {loading && <div className="recordings-status">Loading recordings…</div>}
               {error && <div className="recordings-status recordings-status--error">{error}</div>}
-              {!loading && !error && items.length === 0 && (
-                <div className="recordings-status">No recordings found.</div>
-              )}
-              {sections.map(([title, sectionItems]) => (
-                <SectionGroup
-                  key={title}
-                  title={title}
-                  items={sectionItems}
-                  course={selected}
-                  onReconnect={reconnectHint}
-                />
-              ))}
+              <ModeToggle
+                modes={MEDIA_MODES}
+                storageKey="fastStudyDownloadsMedia"
+                className="mode-toggle--downloads"
+              >
+                {(media) => {
+                  const sections = groupSections(items, media)
+                  if (!sections.length)
+                    return (
+                      !loading &&
+                      !error && (
+                        <div className="recordings-status">
+                          {media === 'material' ? 'No materials found.' : 'No recordings found.'}
+                        </div>
+                      )
+                    )
+                  return sections.map(([title, sectionItems]) => (
+                    <SectionGroup
+                      key={title}
+                      title={title}
+                      items={sectionItems}
+                      course={selected}
+                      onReconnect={reconnectHint}
+                    />
+                  ))
+                }}
+              </ModeToggle>
             </div>
           )}
         </div>

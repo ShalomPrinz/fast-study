@@ -68,12 +68,18 @@ being a route segment. The static `course`/`downloads`/`search` segments outrank
 `/downloads` is reached from a plain nav link in the sidebar header, not a sidebar mode — clicking any
 sidebar mode navigates away from it, which is the intended "exit on sidebar click".
 
-## Sidebar modes
+## Mode toggles
 
-`Sidebar` declares `Record<AppMode, { label, Component }>` (insertion order = segment order) and hands it
-to `ModeToggle`, which owns the mode as component state persisted in `localStorage` (`fastStudyMode`,
-falling back to the default on an unknown key) and renders the selected body. Mode bodies take no props;
-each derives its own selection from the route.
+`shared/components/ModeToggle` is the generic segmented switch: `ModeToggle<M>({ modes, storageKey,
+className?, children? })`. It owns the mode as component state persisted in `localStorage` under
+`storageKey`; insertion order of `modes` is both the segment order and the default, and an unknown
+stored key falls back to that default. A mode either names a zero-prop `Component` or the caller passes
+`children(mode)` when it needs the selected value rather than a body.
+
+`Sidebar` uses the `Component` form with `Record<AppMode, …>` and key `fastStudyMode`; mode bodies take
+no props and each derives its own selection from the route. `DownloadsView` uses the `children` form
+with `Record<Media, …>` and key `fastStudyDownloadsMedia`, since it filters items by the selected media.
+`.mode-toggle--downloads` is a margins-only modifier over the shared `.mode-toggle` CSS.
 
 ## Styling
 

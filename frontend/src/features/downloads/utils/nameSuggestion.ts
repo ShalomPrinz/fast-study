@@ -1,5 +1,6 @@
-import type { Course, Kind } from '@/types'
+import type { Course, FileName, Kind, Lecture } from '@/types'
 import { suggestName } from '@/features/lectures/utils/namingSuggestion'
+import type { Media } from '../services/autoDownloader'
 
 const HEBREW_SUB = 'אבגדהוזחטי' // ordered, א -> 1 … י -> 10; later letters and final forms don't count
 
@@ -39,16 +40,30 @@ export function suggestItemName(
   return suggestName(courses, course, kind)
 }
 
-// The live tree's node names for one course+kind
-function existingNames(kind: Kind, courses: Course[], course: string): string[] {
+// The live tree's nodes for one course+kind
+function existingNodes(kind: Kind, courses: Course[], course: string): Lecture[] {
   const node = courses.find((c) => c.name === course)
-  const existing = kind === 'recitation' ? node?.recitations : node?.lectures
-  return existing?.map((l) => l.name) ?? []
+  return (kind === 'recitation' ? node?.recitations : node?.lectures) ?? []
 }
 
-// The single "already on disk" rule — exact name match in the live tree
-export function isDownloaded(name: string, kind: Kind, courses: Course[], course: string): boolean {
-  return existingNames(kind, courses, course).includes(name)
+// The live tree's node names for one course+kind — also the material row's dropdown options.
+export function existingNames(kind: Kind, courses: Course[], course: string): string[] {
+  return existingNodes(kind, courses, course).map((l) => l.name)
+}
+
+const FILE_FOR: Record<Media, FileName> = { material: 'material.pdf', video: 'video.mp4' }
+
+// The single "already on disk" rule: the node named `name` exists and the media's file exists on it,
+// so the green row, the overwrite confirm and the bulk skip can't disagree.
+export function hasResource(
+  media: Media,
+  name: string,
+  kind: Kind,
+  courses: Course[],
+  course: string,
+): boolean {
+  const node = existingNodes(kind, courses, course).find((l) => l.name === name)
+  return node?.files[FILE_FOR[media]]?.exists ?? false
 }
 
 // A recording might split lazily into `${name}.1`/`.2` during download; returns whichever split

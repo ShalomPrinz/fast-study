@@ -12,12 +12,16 @@ export interface AuthStatus {
   expired: boolean
 }
 
+// Which file the item lands on disk as; the destination is derived server-side from `ref`.
+export type Media = 'video' | 'material'
+
 // Mechanism-agnostic discovery item. `ref` is opaque — round-trip it, never parse it.
 // `expandable` → resolve via /list/expand into children; `section` is the Moodle heading ('' if blank).
 export interface Item {
   ref: string
   title: string
   kind: Kind
+  media: Media
   expandable: boolean
   section: string
 }

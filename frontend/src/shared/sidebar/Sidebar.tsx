@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom'
 import type { AppMode } from '@/types'
 import Icon from '@/shared/components/Icon'
 import RefreshCoursesButton from './RefreshCoursesButton'
-import ModeToggle from './ModeToggle'
-import type { ModeConfig } from './ModeToggle'
+import ModeToggle from '@/shared/components/ModeToggle'
+import type { ModeConfig } from '@/shared/components/ModeToggle'
 import CoursesList from '@/features/course-overview/CoursesList'
 import LecturesSidebar from '@/features/lectures/sidebar/LecturesSidebar'
 
-// Order matters: it drives the ModeToggle segment order.
+// Order matters: it drives the ModeToggle segment order and its default (lectures).
 const MODES: Record<AppMode, ModeConfig> = {
   lectures: { label: 'Lectures', Component: LecturesSidebar },
   courses: { label: 'Courses', Component: CoursesList },
@@ -28,7 +28,7 @@ export default function Sidebar() {
           <RefreshCoursesButton />
         </div>
       </div>
-      <ModeToggle modes={MODES} />
+      <ModeToggle modes={MODES} storageKey="fastStudyMode" />
     </aside>
   )
 }
