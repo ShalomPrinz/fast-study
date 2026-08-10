@@ -24,7 +24,7 @@ is removed on success _or_ failure.
 ## `uploadPdf` / `uploadMaterial` — appending `/materials` POST does NOT wipe
 
 Both POST raw PDF bytes to `/courses/{course}/lectures/{lecture}/materials?kind=` and get back
-`{ok, name}`. The **database allocates the filename** (`material.pdf`, then `material.2.pdf`, …)
+`{name}`. The **database allocates the filename** (`material.pdf`, then `material.2.pdf`, …)
 atomically at write time, so a lecture holds many materials and a second upload appends instead of
 overwriting; the server names nothing. Derived artifacts are left intact (unlike the video PUT),
 since attaching material shouldn't invalidate an existing summary. The allocated `name` is what we log.

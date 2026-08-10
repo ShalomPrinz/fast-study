@@ -65,6 +65,8 @@ export function createClient(baseUrl: string, serviceName: string): Client {
       throw err
     }
     if (!res.ok) throw httpError(res)
+    // Mutations answer 204 with no body; res.json() would throw a SyntaxError on it.
+    if (res.status === 204 || res.headers.get('Content-Length') === '0') return undefined as T
     return res.json() as Promise<T>
   }
 

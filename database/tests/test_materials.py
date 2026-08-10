@@ -49,9 +49,9 @@ def test_creates_missing_lecture_dir(data_root):
 
 def test_post_endpoint_returns_allocated_name(client, lecture):
     r = client.post("/courses/Algo/lectures/Lecture 1/materials", content=b"a")
-    assert r.status_code == 200 and r.json() == {"ok": True, "name": "material.pdf"}
+    assert r.status_code == 200 and r.json() == {"name": "material.pdf"}
     r = client.post("/courses/Algo/lectures/Lecture 1/materials", content=b"b")
-    assert r.json() == {"ok": True, "name": "material.2.pdf"}
+    assert r.json() == {"name": "material.2.pdf"}
 
 
 def test_get_endpoint_empty_for_missing_or_bare_lecture(client, lecture):
@@ -112,7 +112,7 @@ def test_delete_leaves_the_others_unrenamed(client, lecture):
     for data in (b"a", b"b", b"c"):
         write_material("Algo", "Lecture 1", "lecture", data)
     r = client.delete("/courses/Algo/lectures/Lecture 1/files/material.2.pdf")
-    assert r.status_code == 200
+    assert r.status_code == 204
     assert [e["name"] for e in list_materials(lecture)] == [
         "material.pdf",
         "material.3.pdf",

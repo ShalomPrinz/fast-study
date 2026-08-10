@@ -19,7 +19,7 @@ def test_put_and_list_marker_via_http(client, data_root):
     r = client.put(
         "/courses/Algo/overview/files/.exam-hints.pdf_warning", content=b"boom\n"
     )
-    assert r.status_code == 200 and r.json()["ok"] is True
+    assert r.status_code == 204
 
     files = client.get("/courses/Algo/overview/files").json()["files"]
     assert [f["name"] for f in files] == ["exam-hints.pdf"]

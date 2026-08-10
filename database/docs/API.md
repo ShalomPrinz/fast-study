@@ -5,7 +5,8 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 
 ## Conventions
 
-- Mutations return the envelope `{ok: true}`, or `{ok: false, error}` with a non-2xx status.
+- Mutations return a bare `204 No Content`, or `{error}` with a non-2xx status. The one exception
+  is `POST /…/materials`, which answers `200 {name}` with the filename it allocated.
   Reads return their payload directly (`{summaries: [...]}`, `{files: [...]}`, the tree array).
 - `?kind=lecture|recitation` addresses the two lecture families; it defaults to `lecture`.
 - Bodies are raw bytes for file/video/summary writes, JSON for metadata routes.
@@ -23,7 +24,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/lectures/{lecture}`                      | rename lecture/recitation (`{name}`)                                       |
 | `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts, auto-triggers audio           |
 | `GET    /courses/{course}/lectures/{lecture}/materials`            | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture   |
-| `POST   /courses/{course}/lectures/{lecture}/materials`            | add a material pdf; returns `{ok: true, name}` with the allocated filename |
+| `POST   /courses/{course}/lectures/{lecture}/materials`            | add a material pdf; returns `{name}` with the allocated filename           |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}`         | write one file; neutral                                                    |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}`         | 200 if present, else 404                                                   |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}`         | stream one file                                                            |

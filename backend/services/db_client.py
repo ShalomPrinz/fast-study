@@ -10,7 +10,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL", "http://localhost:8001")
 
 
 class DbClientError(RuntimeError):
-    """Raised when a database service call fails (HTTP error or {ok: false} envelope)."""
+    """Raised when a database service call fails, i.e. answers a non-2xx status."""
 
 
 def _q(s: str) -> str:
@@ -27,9 +27,9 @@ def _summary_url(course: str, lecture: str) -> str:
     return f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/summary"
 
 
-def _raise_for_envelope(resp: requests.Response) -> None:
-    """Raise DbClientError for an HTTP failure or an {ok: false} envelope, so callers see
-    failures as exceptions rather than silently succeeding."""
+def _raise_for_status(resp: requests.Response) -> None:
+    """Raise DbClientError carrying the database's {error} message on a non-2xx status, so
+    callers see failures as exceptions rather than silently succeeding."""
 
     if not resp.ok:
         try:
@@ -38,12 +38,6 @@ def _raise_for_envelope(resp: requests.Response) -> None:
         except Exception:
             err = None
         raise DbClientError(err or f"HTTP {resp.status_code}: {resp.text[:200]}")
-    try:
-        body = resp.json()
-    except Exception:
-        return
-    if isinstance(body, dict) and body.get("ok") is False:
-        raise DbClientError(body.get("error") or "Internal database service error")
 
 
 def get_file_bytes(course: str, lecture: str, kind: str, filename: str) -> bytes:
@@ -65,7 +59,7 @@ def put_file_bytes(
     r = requests.put(
         _file_url(course, lecture, filename), params={"kind": kind}, data=data
     )
-    _raise_for_envelope(r)
+    _raise_for_status(r)
 
 
 def file_exists(course: str, lecture: str, kind: str, filename: str) -> bool:
@@ -79,7 +73,7 @@ def delete_file(course: str, lecture: str, kind: str, filename: str) -> None:
     """Delete one file in a lecture dir (no-op server-side if missing)."""
 
     r = requests.delete(_file_url(course, lecture, filename), params={"kind": kind})
-    _raise_for_envelope(r)
+    _raise_for_status(r)
 
 
 def list_materials(course: str, lecture: str, kind: str) -> list[dict]:
@@ -103,7 +97,7 @@ def put_overview_file(course: str, filename: str, data: bytes) -> None:
     """Write one file into the course-level overview dir (created server-side on demand)."""
 
     r = requests.put(_overview_url(course, filename), data=data)
-    _raise_for_envelope(r)
+    _raise_for_status(r)
 
 
 def get_overview_file(course: str, filename: str) -> bytes:
@@ -145,7 +139,7 @@ def patch_overview_meta(course: str, slug: str, entry: dict) -> None:
     (atomic across concurrent per-slug PATCHes from parallel overview runs of the same course)."""
 
     r = requests.patch(_overview_meta_url(course), json={"slug": slug, "entry": entry})
-    _raise_for_envelope(r)
+    _raise_for_status(r)
 
 
 def get_tree() -> list[dict]:
@@ -163,10 +157,7 @@ def get_summary(course: str, lecture: str, kind: str) -> str:
     r = requests.get(_summary_url(course, lecture), params={"kind": kind})
     if not r.ok:
         raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
-    body = r.json()
-    if isinstance(body, dict) and body.get("ok") is False:
-        raise DbClientError(body.get("error") or "Internal database service error")
-    return body["content"]
+    return r.json()["content"]
 
 
 def put_summary(course: str, lecture: str, kind: str, content: str) -> None:
@@ -177,7 +168,7 @@ def put_summary(course: str, lecture: str, kind: str, content: str) -> None:
         params={"kind": kind},
         data=content.encode("utf-8"),
     )
-    _raise_for_envelope(r)
+    _raise_for_status(r)
 
 
 def notify() -> None:

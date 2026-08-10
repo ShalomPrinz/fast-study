@@ -54,12 +54,10 @@ app.add_middleware(
 )
 
 
-def _ok(error: str | None = None, status: int = 200):
-    """Build the service's uniform JSON response envelope ({ok: true} or {ok: false, error})."""
+def _error(message: str, status: int):
+    """Build the service's failure body ({error})."""
 
-    if error is not None:
-        return JSONResponse({"ok": False, "error": error}, status_code=status)
-    return JSONResponse({"ok": True})
+    return JSONResponse({"error": message}, status_code=status)
 
 
 @app.get("/tree")
@@ -76,9 +74,9 @@ async def post_course(request: Request):
     try:
         body = await request.json()
         crud.create_course(body["name"], body.get("source_url"))
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.patch("/courses/{course}")
@@ -88,9 +86,9 @@ async def patch_course(course: str, request: Request):
     try:
         body = await request.json()
         crud.rename_course(course, body["name"])
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.patch("/courses/{course}/source_url")
@@ -100,9 +98,9 @@ async def patch_course_source_url(course: str, request: Request):
     try:
         body = await request.json()
         crud.set_course_source_url(course, body.get("source_url"))
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.patch("/courses/{course}/archived")
@@ -112,9 +110,9 @@ async def patch_course_archived(course: str, request: Request):
     try:
         body = await request.json()
         crud.set_course_archived(course, body["archived"])
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.post("/courses/{course}/lectures")
@@ -124,9 +122,9 @@ async def post_lecture(course: str, request: Request, kind: str = Query("lecture
     try:
         body = await request.json()
         crud.create_lecture(course, body["name"], kind)
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.patch("/courses/{course}/lectures/{lecture}")
@@ -138,9 +136,9 @@ async def patch_lecture(
     try:
         body = await request.json()
         crud.rename_lecture(course, lecture, body["name"], kind)
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 def _post_run_audio(course: str, lecture: str, kind: str) -> None:
@@ -178,9 +176,9 @@ async def put_video(
         data = await request.body()
         crud.write_video(course, lecture, kind, data)
         asyncio.create_task(_trigger_audio(course, lecture, kind))
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.get("/courses/{course}/lectures/{lecture}/materials")
@@ -192,21 +190,21 @@ def get_materials(course: str, lecture: str, kind: str = Query("lecture")):
             "materials": materials.list_materials(lecture_dir(course, lecture, kind))
         }
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.post("/courses/{course}/lectures/{lecture}/materials")
 async def post_material(
     course: str, lecture: str, request: Request, kind: str = Query("lecture")
 ):
-    """Save a raw-body PDF as the lecture's next material and return its allocated {ok, name}."""
+    """Save a raw-body PDF as the lecture's next material and return its allocated {name}."""
 
     try:
         data = await request.body()
         name = materials.write_material(course, lecture, kind, data)
-        return JSONResponse({"ok": True, "name": name})
+        return JSONResponse({"name": name})
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -217,9 +215,9 @@ def delete_file_endpoint(
 
     try:
         crud.delete_file(course, lecture, name, kind)
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.put("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -231,9 +229,9 @@ async def put_file(
     try:
         data = await request.body()
         crud.write_file(course, lecture, name, kind, data)
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.head("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -253,7 +251,7 @@ def get_summary(course: str, lecture: str, kind: str = Query("lecture")):
     try:
         return summary_fs.read_summary(course, lecture, kind)
     except Exception as e:
-        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+        return _error(str(e), 500)
 
 
 @app.put("/courses/{course}/lectures/{lecture}/summary")
@@ -265,9 +263,9 @@ async def put_summary(
     try:
         content = (await request.body()).decode("utf-8")
         summary_fs.write_summary(course, lecture, kind, content)
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 500)
+        return _error(str(e), 500)
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/summary")
@@ -276,9 +274,9 @@ def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
 
     try:
         summary_fs.revert_summary(course, lecture, kind)
-        return _ok()
+        return Response(status_code=204)
     except Exception as e:
-        return _ok(str(e), 500)
+        return _error(str(e), 500)
 
 
 @app.get("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -299,9 +297,9 @@ def get_course_summaries(course: str):
     try:
         return {"summaries": summaries_fs.read_course_summaries(course)}
     except FileNotFoundError as e:
-        return _ok(str(e), 404)
+        return _error(str(e), 404)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.put("/courses/{course}/overview/files/{name}")
@@ -311,11 +309,11 @@ async def put_overview_file(course: str, name: str, request: Request):
     try:
         data = await request.body()
         overview.write_overview_file(course, name, data)
-        return _ok()
+        return Response(status_code=204)
     except FileNotFoundError as e:
-        return _ok(str(e), 404)
+        return _error(str(e), 404)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.get("/courses/{course}/overview/files")
@@ -325,7 +323,7 @@ def list_overview_files(course: str):
     try:
         return {"files": overview.list_overview_files(course)}
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.get("/courses/{course}/overview/meta")
@@ -335,7 +333,7 @@ def get_overview_meta(course: str):
     try:
         return {"meta": overview.read_overview_meta(course)}
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.patch("/courses/{course}/overview/meta")
@@ -345,11 +343,11 @@ async def patch_overview_meta(course: str, request: Request):
     try:
         body = await request.json()
         overview.merge_overview_meta(course, body["slug"], body["entry"])
-        return _ok()
+        return Response(status_code=204)
     except FileNotFoundError as e:
-        return _ok(str(e), 404)
+        return _error(str(e), 404)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
 
 
 @app.get("/courses/{course}/overview/files/{name}")
@@ -359,7 +357,7 @@ def get_overview_file(course: str, name: str):
     try:
         p = overview.overview_file_path(course, name)
     except Exception as e:
-        return _ok(str(e), 400)
+        return _error(str(e), 400)
     if not p.exists():
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None

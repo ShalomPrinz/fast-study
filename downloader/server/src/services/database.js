@@ -41,7 +41,7 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     try {
       body = await res.json();
     } catch {}
-    if (!res.ok || body?.ok === false) {
+    if (!res.ok) {
       const error = body?.error ?? `HTTP ${res.status}`;
       emitError(`❌ ${tool} upload to database failed: ${error}`);
       return { ok: false, error };
@@ -78,7 +78,7 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
     try {
       body = await res.json();
     } catch {}
-    if (!res.ok || body?.ok === false) {
+    if (!res.ok) {
       const error = body?.error ?? `HTTP ${res.status}`;
       emitError(`❌ ${tool} upload to database failed: ${error}`);
       return { ok: false, error };
@@ -110,7 +110,7 @@ export async function uploadPdf(buf, course, lecture, kind) {
   try {
     body = await res.json();
   } catch {}
-  if (!res.ok || body?.ok === false) {
+  if (!res.ok) {
     const error = body?.error ?? `HTTP ${res.status}`;
     emitError(`❌ PDF upload to database failed: ${error}`);
     return { ok: false, error };
