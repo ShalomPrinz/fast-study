@@ -46,8 +46,7 @@ def get_file_bytes(course: str, lecture: str, kind: str, filename: str) -> bytes
     r = requests.get(_file_url(course, lecture, filename), params={"kind": kind})
     if r.status_code == 404:
         raise DbClientError(f"{filename} not found for {course}/{lecture}")
-    if not r.ok:
-        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    _raise_for_status(r)
     return r.content
 
 
@@ -84,8 +83,7 @@ def list_materials(course: str, lecture: str, kind: str) -> list[dict]:
         f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/materials",
         params={"kind": kind},
     )
-    if not r.ok:
-        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    _raise_for_status(r)
     return r.json().get("materials", [])
 
 
@@ -106,8 +104,7 @@ def get_overview_file(course: str, filename: str) -> bytes:
     r = requests.get(_overview_url(course, filename))
     if r.status_code == 404:
         raise DbClientError(f"{filename} not found in {course}/overview")
-    if not r.ok:
-        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    _raise_for_status(r)
     return r.content
 
 
@@ -115,8 +112,7 @@ def list_overview_files(course: str) -> list[dict]:
     """List a course's overview files as [{name, size, mtime}]."""
 
     r = requests.get(f"{DATABASE_URL}/courses/{_q(course)}/overview/files")
-    if not r.ok:
-        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    _raise_for_status(r)
     return r.json().get("files", [])
 
 
@@ -129,8 +125,7 @@ def get_overview_meta(course: str) -> dict:
     Returns {} when the course has no meta.json yet."""
 
     r = requests.get(_overview_meta_url(course))
-    if not r.ok:
-        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    _raise_for_status(r)
     return r.json().get("meta", {})
 
 
@@ -146,8 +141,7 @@ def get_tree() -> list[dict]:
     """Fetch the full course tree (courses → lectures + recitations)."""
 
     r = requests.get(f"{DATABASE_URL}/tree")
-    if not r.ok:
-        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    _raise_for_status(r)
     return r.json()
 
 
@@ -155,8 +149,7 @@ def get_summary(course: str, lecture: str, kind: str) -> str:
     """Fetch summary.md content, unwrapping the {content, hasOriginal} envelope."""
 
     r = requests.get(_summary_url(course, lecture), params={"kind": kind})
-    if not r.ok:
-        raise DbClientError(f"HTTP {r.status_code}: {r.text[:200]}")
+    _raise_for_status(r)
     return r.json()["content"]
 
 
