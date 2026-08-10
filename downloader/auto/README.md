@@ -5,8 +5,8 @@ Given a **course URL**, this service authenticates to Moodle's Web-Services API
 the course's recordings, and downloads them — reusing `server/`'s `/download` +
 `/download-youtube` for the actual fetch.
 
-A **separate package** with its own `node_modules` so Playwright never leaks into
-the dependency-free `server/`.
+A **separate package** with its own `node_modules` so Playwright and its browser
+binaries never leak into `server/`'s much lighter dependency set.
 
 ## Setup
 

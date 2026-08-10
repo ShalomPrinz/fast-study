@@ -32,7 +32,7 @@ the popup.
 | Method + path                             | Purpose                                                                                                                |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                             |
-| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)                                                             |
+| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET)                                                                       |
 | `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background (`fromCache` bool marks a replayed cap) |
 | `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`  |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` (`fromCache` bool)           |
@@ -46,7 +46,7 @@ the popup.
 
 `downloaders/` holds one descriptor per source — `curl` (header replay), `ytdlp`, and `fetch` (plain
 URL). Each names its own `upload` (required): `uploadVideo` for the two video sources, `uploadMaterial` for `fetch`.
-`jobs.js` is the state (job registry over the download entries), `events.js` the notification (SSE fan-out of the contentless `job:change` ping). `services/probe.js` is the ONLY raw `node:http`/`https` in the package. All `DATABASE_URL` I/O goes through `services/database.js`.
+`jobs.js` is the state (job registry over the download entries), `events.js` the notification (SSE fan-out of the contentless `job:change` ping). All `DATABASE_URL` I/O goes through `services/database.js`.
 
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
 DASH + JS-runtime, size probe), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
@@ -63,5 +63,5 @@ appending `/materials` POST, `/tree` reshape, notify ping).
   `/materials`, which allocates the name (`material.pdf`, `material.2.pdf`, …) — the server
   never names a material, so a lecture can hold several.
 - Add a download source = new `downloaders/*.js` + one registry line; don't edit the runner.
-- The size probe stays on raw `node:http` because it replays the `Cookie` header that
-  `fetch` forbids — do not "modernize" it to fetch.
+- HTTP goes through `fetch`. Node's `fetch` has no forbidden-header list, so it replays a
+  captured `Cookie` and drops it on a cross-origin redirect on its own.

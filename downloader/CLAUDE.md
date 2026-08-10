@@ -40,7 +40,7 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 ## Auto-downloader HTTP service (`auto/`, port 3053)
 
-`auto/` is a **separate package** (its own `node_modules`) so Playwright never leaks into the dependency-free `server/`. Given a course URL it authenticates via a long-lived Moodle Web-Services token (one-time headed grab), discovers the recordings (and the course's PDF handouts), and downloads them by reusing `server/`'s `/download`, `/download-youtube` and `/download-file`. It is documented in its own **`auto/CLAUDE.md`** (what it is, how to run it, the mechanism-agnostic HTTP surface + endpoint table) with the deep logic in **`auto/docs/`** (`SESSIONS.md`, `ZOOM.md`, `BROWSING.md`, `AUTH.md`, `MOODLE.md`). Don't restate that here.
+`auto/` is a **separate package** (its own `node_modules`) so Playwright and its browser binaries never leak into `server/`'s much lighter dependency set. Given a course URL it authenticates via a long-lived Moodle Web-Services token (one-time headed grab), discovers the recordings (and the course's PDF handouts), and downloads them by reusing `server/`'s `/download`, `/download-youtube` and `/download-file`. It is documented in its own **`auto/CLAUDE.md`** (what it is, how to run it, the mechanism-agnostic HTTP surface + endpoint table) with the deep logic in **`auto/docs/`** (`SESSIONS.md`, `ZOOM.md`, `BROWSING.md`, `AUTH.md`, `MOODLE.md`). Don't restate that here.
 
 ## Service edges
 

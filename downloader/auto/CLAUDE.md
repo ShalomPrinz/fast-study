@@ -2,7 +2,7 @@
 
 ## What this is
 
-A Playwright HTTP service that, given a **course URL**, authenticates to Moodle's Web-Services API (a one-time headed token grab, then a long-lived stateless token — the Google-Drive-refresh-token model), discovers the course's recordings (and its PDF handouts) via that WS API, and downloads them — reusing `server/`'s `/download`, `/download-youtube` and `/download-file` for the actual fetch. A **separate package** with its own `node_modules` so Playwright never leaks into the dependency-free `server/`.
+A Playwright HTTP service that, given a **course URL**, authenticates to Moodle's Web-Services API (a one-time headed token grab, then a long-lived stateless token — the Google-Drive-refresh-token model), discovers the course's recordings (and its PDF handouts) via that WS API, and downloads them — reusing `server/`'s `/download`, `/download-youtube` and `/download-file` for the actual fetch. A **separate package** with its own `node_modules` so Playwright and its browser binaries never leak into `server/`'s much lighter dependency set.
 
 ## Run
 
