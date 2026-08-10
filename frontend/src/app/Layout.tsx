@@ -11,7 +11,7 @@ export default function Layout() {
         <div className="layout">
           <Sidebar />
           <Outlet />
-          <ToastContainer position="top-right" autoClose={3000} />
+          <ToastContainer position="top-right" autoClose={3000} closeOnClick />
         </div>
       </RunnerStatusProvider>
     </CourseTreeProvider>

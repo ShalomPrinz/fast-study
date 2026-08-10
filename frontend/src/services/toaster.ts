@@ -19,11 +19,12 @@ export function toastConnectionError(err: ConnectionError): void {
 }
 
 // Pass-through for the toastify promise lifecycle. Returns the original promise.
+// closeOnClick is re-stated because the pending toast is a `loading` toast, which opts out by default.
 export function toastPromise<T>(
   promise: Promise<T>,
   messages: { pending: string; success: string; error: string },
 ): Promise<T> {
-  return toast.promise(promise, messages)
+  return toast.promise(promise, messages, { closeOnClick: true })
 }
 
 export function toastInitResult(

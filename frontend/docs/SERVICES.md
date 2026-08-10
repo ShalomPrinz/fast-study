@@ -42,6 +42,9 @@ work like video upload), `toastInitResult`, and re-exports `ToastContainer` (mou
 toastify CSS is imported here too). `toastInitResult` folds a `RunInitResult` into a toast and deliberately
 does nothing on `'started'` — completion arrives over SSE. New toast shapes get a helper here.
 
+Every toast dismisses on a click anywhere in its body: `Layout` sets `closeOnClick` on the container, and
+`toastPromise` re-states it because a `loading` (pending) toast opts out by default.
+
 ## URL building — `shared/utils/url.ts`
 
 Hebrew course/lecture/file names must be percent-encoded. Never call `encodeURIComponent` at a call site;
