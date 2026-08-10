@@ -22,6 +22,8 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `POST   /courses/{course}/lectures`                                | create lecture/recitation (`{name}`)                                       |
 | `PATCH  /courses/{course}/lectures/{lecture}`                      | rename lecture/recitation (`{name}`)                                       |
 | `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts, auto-triggers audio           |
+| `GET    /courses/{course}/lectures/{lecture}/materials`            | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture   |
+| `POST   /courses/{course}/lectures/{lecture}/materials`            | add a material pdf; returns `{ok: true, name}` with the allocated filename |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}`         | write one file; neutral                                                    |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}`         | 200 if present, else 404                                                   |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}`         | stream one file                                                            |
@@ -43,8 +45,15 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 The two file-write paths differ on purpose, and confusing them destroys data:
 
 - **`PUT /…/video`** is the downloader's fresh-source path. It erases every predefined file plus
-  the partial-transcript meta and both pdf dotfiles, because they all describe the *old* video.
+  every material pdf, the partial-transcript meta, and both pdf dotfiles — they all belong to
+  the *old* video.
   It creates the lecture dir on demand — the downloader uploads to brand-new lectures.
+- **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
+  LAYOUT.md) and returning it. Also creates the lecture dir on demand. Callers that already know
+  the exact filename keep using `PUT /…/files/{name}`; delete/get/head go through the files
+  routes unchanged. `GET /…/materials` returns the same entries the tree inlines, so a caller
+  needing one lecture's materials doesn't pull the whole tree; a missing lecture yields `[]`
+  rather than 404, matching how the tree degrades.
 - **`PUT /…/files/{name}`** is the backend pipeline's path (`audio.mp3`, `transcript.txt`,
   `summary.pdf`, `drive_url.txt`, …). It is strictly neutral; wiping here would erase earlier
   outputs of the run in progress.

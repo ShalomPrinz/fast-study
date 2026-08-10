@@ -25,8 +25,31 @@ PREDEFINED_FILES = (
     "summary.md",
     "summary.pdf",
     "drive_url.txt",
-    "material.pdf",
 )
+
+# Material PDFs are a numbered family, not a predefined name: material.pdf, material.2.pdf, …
+MATERIAL_PREFIX = "material"
+MATERIAL_EXT = ".pdf"
+
+
+def material_name(index: int) -> str:
+    """Build the material filename for a 1-based index; index 1 is the unnumbered material.pdf."""
+
+    if index <= 1:
+        return f"{MATERIAL_PREFIX}{MATERIAL_EXT}"
+    return f"{MATERIAL_PREFIX}.{index}{MATERIAL_EXT}"
+
+
+def material_index(name: str) -> int | None:
+    """Return the 1-based index of a material filename, or None if the name isn't one."""
+
+    if not name.startswith(f"{MATERIAL_PREFIX}.") or not name.endswith(MATERIAL_EXT):
+        return None
+    middle = name[len(MATERIAL_PREFIX) + 1 : -len(MATERIAL_EXT)]
+    if not middle:
+        return 1
+    # Reject padded/signed forms so each index has exactly one spelling on disk.
+    return int(middle) if middle.isdigit() and not middle.startswith("0") else None
 
 
 def data_root() -> Path:

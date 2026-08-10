@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from .materials import list_materials
 from .paths import (
     ARCHIVED_MARKER,
     OVERVIEW_DIR,
@@ -43,7 +44,8 @@ def _read_pdf_warning(lecture_path: Path) -> Optional[str]:
 
 
 def _read_lecture(lecture_path: Path, name: str) -> dict:
-    """Build the tree entry for one lecture: existence/size for each predefined file, plus partial-transcript progress."""
+    """Build the tree entry for one lecture: existence/size per predefined file, the material list,
+    and partial-transcript progress."""
 
     files = {}
     for f in PREDEFINED_FILES:
@@ -66,6 +68,7 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
     return {
         "name": name,
         "files": files,
+        "materials": list_materials(lecture_path),
         "transcribePartial": _read_transcribe_partial(lecture_path),
     }
 

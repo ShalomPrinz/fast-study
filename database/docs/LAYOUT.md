@@ -21,7 +21,28 @@ frontend. Adding a pipeline artifact means adding it here.
 
 `original_summary.md` and `transcript.partial.meta.json` are deliberately outside the tuple —
 the first is edit state read through the summary endpoint, the second is progress metadata
-inlined as `transcribePartial`.
+inlined as `transcribePartial`. Material PDFs are outside it too: they are a numbered family
+(below), not a fixed name.
+
+## Materials
+
+A lecture can hold any number of attached PDFs, named `material.pdf`, `material.2.pdf`,
+`material.3.pdf`, … — `fs/paths.py` owns the pattern (`material_name` / `material_index`) and
+`fs/materials.py` owns listing and allocation. No other service knows the filename shape.
+
+A new material always takes **highest existing index + 1** (bare `material.pdf` counts as 1).
+Gaps left by deletes are never reused and never backfilled: `material.pdf` + `material.3.pdf`
+allocates `material.4.pdf`. Deleting removes only the named file and never renames the rest,
+because the frontend holds material URLs by name.
+
+Allocation happens here, at write time, because a client that picked its own name would race
+another uploader. It needs no lock: `write_material` scans the dir and writes with no `await`
+in between, and the single async writer makes that pair atomic. Adding an `await` inside it,
+serving `POST /…/materials` from a plain `def` (threadpool) route, or running a second uvicorn
+worker each invalidate that and would put two uploads on one name.
+
+A fresh `video.mp4` wipes every material along with the derived artifacts: a new video means the
+lecture folder is being re-sourced from scratch, so a re-upload is a reset, not an append.
 
 ## Dotfiles
 
@@ -42,8 +63,9 @@ since a rename moves the containing directory. None of them may ever become a tr
 `read_tree` returns one node per course: `name`, `archived`, `source_url`, `lectures`,
 `recitations`. `Recitations` and `overview` are skipped as lectures.
 
-Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`) plus
-`transcribePartial`. Two fields are inlined onto file entries rather than exposed as separate
+Each lecture entry carries `files` (every predefined name → `{exists, size, mtime}`),
+`materials` (index-ordered `{name, size, mtime}`, always present and `[]` when none — presence
+in the list *is* existence, so entries carry no `exists`), and `transcribePartial`. Two fields are inlined onto file entries rather than exposed as separate
 endpoints, because the frontend needs them on every render of the tree:
 
 - `drive_url.txt` → `url` on its own entry.

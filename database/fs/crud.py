@@ -1,3 +1,4 @@
+from .materials import material_names
 from .paths import (
     ARCHIVED_MARKER,
     PDF_BUILD_TEX_MARKER,
@@ -69,8 +70,11 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     d = lecture_dir(course, lecture, kind)
     # The downloader uploads here for brand-new lectures, so create the dir if missing.
     d.mkdir(parents=True, exist_ok=True)
+    # Materials go too: a fresh video means the folder is re-sourced from scratch, so a
+    # re-upload is a reset, not an append.
     for f in (
         *PREDEFINED_FILES,
+        *material_names(d),
         "transcript.partial.meta.json",
         PDF_WARNING_MARKER,
         PDF_BUILD_TEX_MARKER,

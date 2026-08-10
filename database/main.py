@@ -10,10 +10,11 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import crud, overview, tree
+from fs import crud, materials, overview, tree
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
+from fs.paths import lecture_dir
 
 load_dotenv()
 DATA_ROOT = os.environ["DATA_ROOT"]
@@ -178,6 +179,32 @@ async def put_video(
         crud.write_video(course, lecture, kind, data)
         asyncio.create_task(_trigger_audio(course, lecture, kind))
         return _ok()
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
+@app.get("/courses/{course}/lectures/{lecture}/materials")
+def get_materials(course: str, lecture: str, kind: str = Query("lecture")):
+    """List a lecture's material pdfs, index-ordered; [] for an empty or missing lecture, as the tree degrades."""
+
+    try:
+        return {
+            "materials": materials.list_materials(lecture_dir(course, lecture, kind))
+        }
+    except Exception as e:
+        return _ok(str(e), 400)
+
+
+@app.post("/courses/{course}/lectures/{lecture}/materials")
+async def post_material(
+    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+):
+    """Save a raw-body PDF as the lecture's next material and return its allocated {ok, name}."""
+
+    try:
+        data = await request.body()
+        name = materials.write_material(course, lecture, kind, data)
+        return JSONResponse({"ok": True, "name": name})
     except Exception as e:
         return _ok(str(e), 400)
 
