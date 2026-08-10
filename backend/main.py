@@ -12,9 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pipeline import runner
 from pydantic import BaseModel
 from services import db_client
+from services.logging_setup import setup_logging
 from timing import get_stats, init_db, record
 
 load_dotenv()
+setup_logging()
 
 
 @asynccontextmanager

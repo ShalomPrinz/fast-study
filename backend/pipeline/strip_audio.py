@@ -1,13 +1,16 @@
+import logging
 import subprocess
 
 from timing import timed_pipeline
+
+log = logging.getLogger("audio")
 
 
 @timed_pipeline("audio")
 def strip_audio(video_path: str, audio_path: str):
     """Extract mono 16 kHz 32 kbps audio from a video — minimal size, enough for ASR."""
 
-    print(f"Extracting audio from {video_path}...")
+    log.info(f"Extracting audio from {video_path}...")
     subprocess.run(
         [
             "ffmpeg",
@@ -27,4 +30,4 @@ def strip_audio(video_path: str, audio_path: str):
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    print(f"Audio saved to: {audio_path}")
+    log.info(f"Audio saved to: {audio_path}")

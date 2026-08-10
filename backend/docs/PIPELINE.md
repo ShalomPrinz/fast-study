@@ -69,3 +69,9 @@ Manual `/run/summarize` and `/pipeline` triggers ignore the flag — the user ma
 `timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. See `timing/README.md` for queries and the outlier-cleaning scripts.
 
 `--reload` watches `backend/`, and the runner touches `timing.db` constantly, so `npm run dev` sets `UVICORN_RELOAD_EXCLUDE='*.db timing/*'` to mute the noise (uvicorn reads `UVICORN_`-prefixed env vars; it has no config file). Set the same var if launching uvicorn by hand.
+
+## Logging
+
+`services/logging_setup.py` owns all logging config; `main.py` calls `setup_logging()` at import, which lands after uvicorn's own `dictConfig` and wins. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and rewrites `uvicorn.access` to `[api] POST /path → 200`.
+
+Access lines for `HEAD` and for 2xx `GET` are deliberately dropped — the frontend fires those constantly and they carry no information. Those requests still run; only their log line is suppressed. Everything else (any non-2xx, any mutating method) is logged.

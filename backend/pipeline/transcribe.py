@@ -1,4 +1,5 @@
 import json
+import logging
 import math
 import os
 import re
@@ -9,6 +10,8 @@ from pathlib import Path
 import groq
 from groq import Groq
 from timing import timed_pipeline
+
+log = logging.getLogger("transcribe")
 
 CHUNK_MINUTES = 10
 PARTIAL_TXT = "transcript.partial.txt"
@@ -197,14 +200,14 @@ def transcribe_audio(audio_path: str) -> str:
         )
 
     duration = get_duration(audio_path)
-    print(
+    log.info(
         f"Duration: {duration / 60:.1f} min → {total} chunks (resuming from {completed})"
     )
-    print("Transcribing with Groq (whisper-large-v3, Hebrew)...")
+    log.info("Transcribing with Groq (whisper-large-v3, Hebrew)...")
 
     with tempfile.TemporaryDirectory() as tmpdir:
         for i in range(completed, total):
-            print(f"  Chunk {i + 1}/{total}...")
+            log.info(f"chunk {i + 1}/{total}")
             chunk_path = split_one_chunk(audio_path, tmpdir, i, chunk_seconds)
             try:
                 with open(chunk_path, "rb") as f:
