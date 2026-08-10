@@ -94,9 +94,12 @@ with the chunk progress instead of a failure.
 ## Edit summary view
 
 Save → delete `summary.pdf` → run the `pdf` step, then wait for SSE. The effect that watches
-`files`/`lectureError` runs on every refresh, so a `pdfFiredRef` gate limits the completion branch to the
-run this view started — otherwise a sibling file change or another lecture's error would clear the
-generating state. The PDF is re-rendered by bumping a cache-busting `t=` on the file URL.
+`files`/`lectureError` runs on every refresh, so a `pdfFiredRef` gate limits it to the run this view
+started — otherwise a sibling file change or another lecture's error would clear the generating state,
+and the self-inflicted missing PDF mid-run would flash the "no PDF yet" placeholder. `PdfViewer`'s
+`generating` prop wins over both the placeholder and the document, so one spinner covers the whole cycle.
+The file URL carries `t=<summary.pdf mtime>` (`utils/pdfUrl.ts`), so the browser cache is reused only
+while the file on disk is unchanged.
 
 `PdfViewer` captures scroll during the render phase before React commits the new URL (the old pages are
 still mounted, so `scrollTop` is the real position) and restores it from each page's `onRenderSuccess`;

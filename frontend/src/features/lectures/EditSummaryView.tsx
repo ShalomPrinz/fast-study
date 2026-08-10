@@ -17,6 +17,7 @@ import { isConnectionError } from '@/services/http'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 
 export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()
@@ -30,29 +31,32 @@ export default function EditSummaryView() {
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
-  const [pdfKey, setPdfKey] = useState(0)
   const [showPdf, setShowPdf] = useState(false)
 
   // True only while waiting for the pdf step this view started.
   const pdfFiredRef = useRef(false)
   const latest = useLatestRequest()
 
-  // Runs on every SSE refresh; the ref gates the completion branch so a sibling file change or
-  // another lecture's error can't clear the generating state.
+  // Runs on every SSE refresh; the ref gates both branches so a sibling file change or another
+  // lecture's error can't disturb a generate in flight — the missing PDF mid-generate is our own
+  // delete, not a real "no PDF" state.
   useEffect(() => {
     if (!files) return
     const pdfExists = files['summary.pdf'].exists
-    setShowPdf(pdfExists)
-    if (!pdfFiredRef.current) return
+    if (!pdfFiredRef.current) {
+      setShowPdf(pdfExists)
+      return
+    }
     if (lectureError) {
       pdfFiredRef.current = false
       setGenerating(false)
+      setShowPdf(pdfExists)
       setError(lectureError)
       toast('error', lectureError)
     } else if (pdfExists) {
       pdfFiredRef.current = false
       setGenerating(false)
-      setPdfKey((k) => k + 1)
+      setShowPdf(true)
     }
   }, [files, lectureError])
 
@@ -104,8 +108,10 @@ export default function EditSummaryView() {
 
   if (!course || !lecture) return null
 
-  const baseUrl = fileUrl(course, lecture, 'summary.pdf', kind)
-  const pdfUrl = `${baseUrl}${baseUrl.includes('?') ? '&' : '?'}t=${pdfKey}`
+  const pdfUrl = cacheBustedUrl(
+    fileUrl(course, lecture, 'summary.pdf', kind),
+    files?.['summary.pdf'].mtime ?? null,
+  )
 
   return (
     <div className="edit-view">
@@ -140,7 +146,7 @@ export default function EditSummaryView() {
 
       <div className="edit-panels">
         <div className="edit-panel edit-panel--pdf">
-          <PdfViewer url={pdfUrl} show={showPdf} />
+          <PdfViewer url={pdfUrl} show={showPdf} generating={generating} />
         </div>
 
         <div className="edit-panel edit-panel--text">

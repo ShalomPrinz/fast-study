@@ -11,9 +11,10 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 interface Props {
   url: string
   show: boolean
+  generating: boolean
 }
 
-export default function PdfViewer({ url, show }: Props) {
+export default function PdfViewer({ url, show, generating }: Props) {
   const [numPages, setNumPages] = useState(0)
   const [scale, setScale] = useState(1.2)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -42,6 +43,15 @@ export default function PdfViewer({ url, show }: Props) {
     } else {
       container.scrollLeft = container.scrollWidth
     }
+  }
+
+  // Wins over the placeholder so a first-ever generate spins too, instead of flashing "no PDF yet".
+  if (generating) {
+    return (
+      <div className="pdf-doc-loading">
+        <div className="spinner" />
+      </div>
+    )
   }
 
   if (!show) {
