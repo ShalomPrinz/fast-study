@@ -14,9 +14,8 @@ function lecture(name: string, warning?: string): Lecture {
     'summary.md': EMPTY,
     'summary.pdf': { exists: true, size: 10, mtime: 1, ...(warning ? { warning } : {}) },
     'drive_url.txt': EMPTY,
-    'material.pdf': EMPTY,
   } satisfies FileStatus
-  return { name, files, transcribePartial: null }
+  return { name, files, materials: [], transcribePartial: null }
 }
 
 function tree(...lectures: Lecture[]): Course[] {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { Step, FileName } from '@/types'
-import { deleteFile, fileUrl } from '@/services/database'
+import type { Step, FileName, MaterialInfo } from '@/types'
+import { deleteFile, deleteMaterial, fileUrl, materialUrl } from '@/services/database'
 import { runStep, runPipeline } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
@@ -13,6 +13,7 @@ import { formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ProgressBar from '@/shared/components/ProgressBar'
 import Icon from '@/shared/components/Icon'
@@ -23,37 +24,16 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
-type MaterialIndicatorProps = {
-  summaryExists: boolean
-  materialExists: boolean
-  summaryMtime: number | null
-  materialMtime: number | null
-}
-
 function MaterialIndicator({
+  materials,
   summaryExists,
-  materialExists,
   summaryMtime,
-  materialMtime,
-}: MaterialIndicatorProps) {
-  const materialWasUsed =
-    summaryExists &&
-    materialExists &&
-    materialMtime !== null &&
-    summaryMtime !== null &&
-    materialMtime <= summaryMtime
-
-  const { symbol, text, cls } = summaryExists
-    ? materialWasUsed
-      ? { symbol: '📎', text: 'material.pdf was used', cls: 'material-indicator--used' }
-      : {
-          symbol: '⊘',
-          text: 'summary did not use material.pdf',
-          cls: 'material-indicator--was-missing',
-        }
-    : materialExists
-      ? { symbol: '📎', text: 'material.pdf will be used', cls: 'material-indicator--will-use' }
-      : { symbol: '⚠', text: 'material.pdf not found', cls: 'material-indicator--missing' }
+}: {
+  materials: MaterialInfo[]
+  summaryExists: boolean
+  summaryMtime: number | null
+}) {
+  const { symbol, text, cls } = materialIndicator(materials, summaryExists, summaryMtime)
 
   return (
     <span className={`material-indicator ${cls}`}>
@@ -95,10 +75,11 @@ function RateLimitPanel({
 }
 
 export default function MainView() {
-  const { course, lecture, kind, files, transcribePartial } = useLectureRoute()
+  const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
   const { refreshCourses } = useCourseTreeContext()
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
+  const [materialToDelete, setMaterialToDelete] = useState<string | null>(null)
 
   const { isInFlight, getError } = useRunnerStatus()
   const inflight = isInFlight(course, lecture, kind)
@@ -120,11 +101,9 @@ export default function MainView() {
   const pdfExists = files['summary.pdf'].exists
   const pdfUploaded = files['drive_url.txt'].exists
   const summaryExists = files['summary.md'].exists
-  const materialExists = files['material.pdf'].exists
   const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
 
   const summaryMtime = files['summary.md'].mtime
-  const materialMtime = files['material.pdf'].mtime
 
   async function handleStep(step: Step) {
     const initResult = await runStep(course, lecture, step, kind)
@@ -150,6 +129,12 @@ export default function MainView() {
       .map((p) => p.file)
       .filter((f) => files![f].exists)
     setRotateTarget({ file, step, toDelete })
+  }
+
+  async function confirmDeleteMaterial(name: string) {
+    setMaterialToDelete(null)
+    await deleteMaterial(course, lecture, name, kind)
+    refreshCourses()
   }
 
   function confirmRotate() {
@@ -185,10 +170,9 @@ export default function MainView() {
                     <span className="file-name">{file}</span>
                     {file === 'summary.md' && (
                       <MaterialIndicator
+                        materials={materials}
                         summaryExists={summaryExists}
-                        materialExists={materialExists}
                         summaryMtime={summaryMtime}
-                        materialMtime={materialMtime}
                       />
                     )}
                   </span>
@@ -272,6 +256,46 @@ export default function MainView() {
           })}
         </div>
 
+        {materials.length > 0 && (
+          <>
+            <h3 className="material-list-title">Materials</h3>
+            <div className="file-list material-list">
+              {materials.map((m) => (
+                <div key={m.name} className="file-row file-row--present">
+                  <div className="file-row-header">
+                    <span className="file-name-wrap">
+                      <span className="file-name">{m.name}</span>
+                    </span>
+                    <span className="file-row-right">
+                      <span className="file-slot file-slot--open">
+                        <button
+                          className="file-open-btn"
+                          title="Open material in new tab"
+                          onClick={() =>
+                            window.open(materialUrl(course, lecture, m.name, kind), '_blank')
+                          }
+                        >
+                          <Icon icon="external-link" />
+                        </button>
+                      </span>
+                      <span className="file-slot file-slot--rotate">
+                        <button
+                          className="file-rotate-btn"
+                          title={`Delete ${m.name}`}
+                          onClick={() => setMaterialToDelete(m.name)}
+                          disabled={inflight}
+                        >
+                          🗑
+                        </button>
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         {hasActions && (
           <button className="run-all-btn" onClick={handleRunRemaining} disabled={inflight}>
             Run Remaining
@@ -302,6 +326,15 @@ export default function MainView() {
           }
           onConfirm={confirmRotate}
           onCancel={() => setRotateTarget(null)}
+        />
+      )}
+
+      {materialToDelete && (
+        <ConfirmModal
+          message={`${materialToDelete} will be deleted.`}
+          postMessage="The other materials keep their names."
+          onConfirm={() => confirmDeleteMaterial(materialToDelete)}
+          onCancel={() => setMaterialToDelete(null)}
         />
       )}
     </main>

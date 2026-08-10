@@ -10,6 +10,7 @@ import { useRowEdit } from '@/features/downloads/contexts/RowEditsContext'
 import {
   existingNames,
   hasResource,
+  materialsOf,
   splitSiblings,
 } from '@/features/downloads/utils/nameSuggestion'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
@@ -55,6 +56,8 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
   // A material row attaches a PDF to an existing lecture instead of creating one from a video.
   const material = item.media === 'material'
   const listId = useId()
+  // Non-blocking state note: a material download appends, so the count is shown rather than confirmed.
+  const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
   // Live tree, so a completed download's SSE refresh flips the row green.
   const alreadyDownloaded = hasResource(item.media, effectiveName, kind, courses, course)
   // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
@@ -68,21 +71,20 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
   // (the whole-row download or one clip's retry). Null means no modal.
   const [confirm, setConfirm] = useState<{ message: string; run: () => void } | null>(null)
 
-  // Re-downloading overwrites existing videos, so confirm first. Exact match takes precedence; only
-  // otherwise warn if a zoom split ('${name}.1'/'.2') already exists — this row might split onto it.
+  // A material appends as the next material.N.pdf and lazy zoom splits are a video-only hazard, so a
+  // material row never confirms — the row's material count is the whole signal.
   const onDownloadClick = () => {
-    if (alreadyDownloaded || status === 'done') {
-      setConfirm({
-        message: material
-          ? `${effectiveName} in ${course} already has material. Download again and replace it?`
-          : `${effectiveName} already exists in ${course}. Download again and overwrite?`,
-        run: download,
-      })
-      return
-    }
-    // Lazy zoom splits are a video-only hazard; a PDF always lands on the one lecture picked.
     if (material) {
       download()
+      return
+    }
+    // Re-downloading overwrites an existing video, so confirm first. Exact match takes precedence;
+    // only otherwise warn if a zoom split ('${name}.1'/'.2') exists — this row might split onto it.
+    if (alreadyDownloaded || status === 'done') {
+      setConfirm({
+        message: `${effectiveName} already exists in ${course}. Download again and overwrite?`,
+        run: download,
+      })
       return
     }
     const siblings = splitSiblings(effectiveName, kind, courses, course)
@@ -191,6 +193,11 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
               <option key={n} value={n} />
             ))}
           </datalist>
+        )}
+        {materialCount > 0 && (
+          <span className="recording-material-count">
+            {materialCount} material{materialCount > 1 ? 's' : ''}
+          </span>
         )}
 
         {split ? (

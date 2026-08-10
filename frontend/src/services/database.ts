@@ -21,6 +21,21 @@ export function fileUrl(course: string, lecture: string, file: FileName, kind?: 
   return database.url(lectureBase(course, lecture) + path`/files/${file}` + kindQuery(kind))
 }
 
+// Materials are named at upload time (material.pdf, material.2.pdf, …), so they address the same
+// per-file routes by a runtime name rather than a FileName from the fixed predefined set.
+export function materialUrl(course: string, lecture: string, name: string, kind?: Kind): string {
+  return database.url(lectureBase(course, lecture) + path`/files/${name}` + kindQuery(kind))
+}
+
+export async function deleteMaterial(
+  course: string,
+  lecture: string,
+  name: string,
+  kind?: Kind,
+): Promise<void> {
+  await database.delete(lectureBase(course, lecture) + path`/files/${name}` + kindQuery(kind))
+}
+
 export async function fetchTree(): Promise<Course[]> {
   return database.get<Course[]>('/tree')
 }

@@ -1,4 +1,4 @@
-import type { Course, FileName, Kind, Lecture } from '@/types'
+import type { Course, Kind, Lecture, MaterialInfo } from '@/types'
 import { suggestName } from '@/features/lectures/utils/namingSuggestion'
 import type { Media } from '../services/autoDownloader'
 
@@ -51,10 +51,18 @@ export function existingNames(kind: Kind, courses: Course[], course: string): st
   return existingNodes(kind, courses, course).map((l) => l.name)
 }
 
-const FILE_FOR: Record<Media, FileName> = { material: 'material.pdf', video: 'video.mp4' }
+// The materials already attached to the node named `name`, [] if it has none or doesn't exist.
+export function materialsOf(
+  name: string,
+  kind: Kind,
+  courses: Course[],
+  course: string,
+): MaterialInfo[] {
+  return existingNodes(kind, courses, course).find((l) => l.name === name)?.materials ?? []
+}
 
-// The single "already on disk" rule: the node named `name` exists and the media's file exists on it,
-// so the green row, the overwrite confirm and the bulk skip can't disagree.
+// The single "already on disk" rule: the node named `name` exists and holds the media — a video.mp4
+// for a video row, any material for a material row — so the green row and the bulk skip can't disagree.
 export function hasResource(
   media: Media,
   name: string,
@@ -62,8 +70,9 @@ export function hasResource(
   courses: Course[],
   course: string,
 ): boolean {
+  if (media === 'material') return materialsOf(name, kind, courses, course).length > 0
   const node = existingNodes(kind, courses, course).find((l) => l.name === name)
-  return node?.files[FILE_FOR[media]]?.exists ?? false
+  return node?.files['video.mp4']?.exists ?? false
 }
 
 // A recording might split lazily into `${name}.1`/`.2` during download; returns whichever split

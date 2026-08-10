@@ -557,6 +557,14 @@ body,
   min-width: 0;
 }
 
+/* Materials are inputs to the summary, not pipeline outputs, so they get their own labelled list. */
+.material-list-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
 .material-indicator {
   display: inline-flex;
   align-items: center;
@@ -577,6 +585,10 @@ body,
 }
 .material-indicator--missing {
   color: #d97706;
+}
+/* Some but not all materials predate the summary — milder than a full miss, so amber, not grey. */
+.material-indicator--partial {
+  color: #b45309;
 }
 .material-indicator--was-missing {
   color: #6b7280;
@@ -1705,6 +1717,15 @@ body,
 
 .recording-name-input {
   width: 150px;
+  flex-shrink: 0;
+}
+
+/* Materials append rather than overwrite, so the row states how many the target already holds
+   instead of raising a confirm. */
+.recording-material-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
   flex-shrink: 0;
 }
 

@@ -19,7 +19,8 @@ otherwise still read "connected".
 
 One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order.
 
-Each item carries `media`: `'material'` for a Moodle PDF resource (lands as `material.pdf`), `'video'`
+Each item carries `media`: `'material'` for a Moodle PDF resource (appended as the lecture's next
+`material.N.pdf`), `'video'`
 for everything else (lands as `video.mp4`). The destination file is derived server-side from the opaque
 `ref` — the frontend only branches its own affordances on `media`, it never sends it.
 
@@ -49,15 +50,19 @@ tree. Two consequences fall out of storing overrides rather than values:
 
 Edits are never cleared, so they survive an SSE tree refresh, a collapse/re-expand, and a bulk run.
 
-`hasResource(media, name, kind, courses, course)` is the single already-downloaded rule, so the green row,
-the overwrite confirm and the bulk queue's skip can never disagree. It finds the node named `name` in the
-live tree and checks the file the media implies — `video` → `video.mp4`, `material` → `material.pdf`. A
-lecture that exists but holds neither file is not "already there" for either row. A
-single row's Download on an existing target opens an overwrite confirm first (worded as replacing the
-_material_ on a material row); the bulk run skips instead. For a video row whose base name isn't itself on
-disk, `splitSiblings` (same lookup) checks for `${name}.1`/`.2` — a zoom row splits lazily into those during
-download — and Download opens a "might overwrite" confirm naming the siblings; exact match takes precedence.
-A material row skips that check: a PDF always lands on the one lecture picked.
+`hasResource(media, name, kind, courses, course)` is the single already-downloaded rule, so the green row
+and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks
+what the media implies — `video` → `video.mp4` exists, `material` → `materialsOf(...)` is non-empty. A
+lecture that exists but holds neither is not "already there" for either row.
+
+A video row's Download on an existing target opens an overwrite confirm first; the bulk run skips instead.
+For a video row whose base name isn't itself on disk, `splitSiblings` (same lookup) checks for
+`${name}.1`/`.2` — a zoom row splits lazily into those during download — and Download opens a "might
+overwrite" confirm naming the siblings; exact match takes precedence.
+
+**A material row never confirms.** A material download appends as the next `material.N.pdf` and a PDF
+always lands on the one lecture picked, so neither hazard applies; instead the row shows a non-blocking
+"N materials" note for the selected lecture, live off the same tree lookup.
 
 ## Material rows
 
@@ -69,7 +74,8 @@ The destination field is a native `<input list>` + `<datalist>` of `existingName
 what exists plus free text for a lecture that doesn't exist yet, in one element with no focus/keyboard
 handling to reinvent. The options follow the kind toggle, and the input's `aria-label` reads "Attach material to" rather than
 "Lecture name" — the only in-row material affordance, since the media toggle already carries the signal.
-The row shell is otherwise shared with video rows; it just drops the split-siblings warning.
+The row shell is otherwise shared with video rows; it just drops both confirms and shows the target's
+material count instead.
 
 `suggestItemName` derives the name from the recording title: the first integer becomes `Lecture N` /
 `Recitation N`, plus at most one sub-session marker glued to those digits (optionally after `.`/`-`/`_`) as

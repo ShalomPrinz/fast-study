@@ -16,7 +16,6 @@ function files(pdf: Partial<FileInfo>, md: Partial<FileInfo>): FileStatus {
     'audio.mp3': info(),
     'transcript.txt': info(),
     'transcript.partial.txt': info(),
-    'material.pdf': info(),
     'summary.md': info(md),
     'summary.pdf': info(pdf),
     'drive_url.txt': info(),

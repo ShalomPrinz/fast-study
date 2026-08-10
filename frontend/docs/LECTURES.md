@@ -18,6 +18,26 @@ Rotating a file deletes it _and every later file in `PIPELINE`_ that exists, the
 confirm modal lists exactly those. This is why rotate must derive from the `PIPELINE` order rather than a
 per-step list.
 
+## Materials
+
+A lecture holds any number of materials — `material.pdf`, `material.2.pdf`, … — carried on the tree entry
+as `materials: {name, size, mtime}[]` beside `files` (always present, `[]` when none, index order). They
+are summarize inputs rather than pipeline outputs, so `MainView` lists them under their own "Materials"
+heading, each openable and deletable **by name** via the per-file routes. Deleting one never renames the
+others, so a held URL stays valid and the indices simply gain gaps.
+
+`materialIndicator(materials, summaryExists, summaryMtime)` (pure, in `utils/`) drives the note next to
+`summary.md`. With no summary yet: `⚠ no material found`, or `will be used`. With a summary, each
+material's mtime is compared against it and the counts pick the state — all older → `was used` (📎, green),
+none older → `did not use any material` (⊘, grey; a lone material is named instead of counted), and in
+between → `summary used only N of M materials` (📎, amber). A partial miss keeps the 📎: the ⊘ overstates it.
+The copy names a single material and counts several throughout.
+
+**mtime is a proxy for "was fed to the model", not a record of it.** Re-downloading an unchanged PDF bumps
+its mtime and so reads as unused, and the partial count inherits that fuzziness. Being exact would need the
+backend to persist which materials each summarize run consumed; until it does, the indicator is a hint, not
+an audit.
+
 ## Runner status and in-flight state
 
 `RunnerStatusContext` (mounted in `Layout`) holds the whole runner picture from `GET /status`, refreshed on

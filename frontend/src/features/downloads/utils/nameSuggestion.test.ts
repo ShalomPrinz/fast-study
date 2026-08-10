@@ -1,11 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
-import { existingNames, hasResource } from './nameSuggestion'
+import type { Course, FileInfo, FileStatus, Lecture, MaterialInfo } from '@/types'
+import { existingNames, hasResource, materialsOf } from './nameSuggestion'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }
 
-function node(name: string, has: { material?: boolean; video?: boolean } = {}): Lecture {
+const material = (name: string): MaterialInfo => ({ name, size: 10, mtime: 1 })
+
+function node(name: string, has: { materials?: string[]; video?: boolean } = {}): Lecture {
   const files = {
     'video.mp4': has.video ? PRESENT : EMPTY,
     'audio.mp3': EMPTY,
@@ -14,9 +16,8 @@ function node(name: string, has: { material?: boolean; video?: boolean } = {}): 
     'summary.md': EMPTY,
     'summary.pdf': EMPTY,
     'drive_url.txt': EMPTY,
-    'material.pdf': has.material ? PRESENT : EMPTY,
   } satisfies FileStatus
-  return { name, files, transcribePartial: null }
+  return { name, files, materials: (has.materials ?? []).map(material), transcribePartial: null }
 }
 
 function tree(lectures: Lecture[], recitations: Lecture[] = []): Course[] {
@@ -39,14 +40,38 @@ describe('existingNames', () => {
   })
 })
 
+describe('materialsOf', () => {
+  const courses = tree([
+    node('Lecture 1'),
+    node('Lecture 2', { materials: ['material.pdf', 'material.3.pdf'] }),
+  ])
+
+  it('lists the node materials in tree order', () => {
+    expect(materialsOf('Lecture 2', 'lecture', courses, 'Algebra').map((m) => m.name)).toEqual([
+      'material.pdf',
+      'material.3.pdf',
+    ])
+  })
+
+  it('is empty for a node with no materials and for one that does not exist', () => {
+    expect(materialsOf('Lecture 1', 'lecture', courses, 'Algebra')).toEqual([])
+    expect(materialsOf('Lecture 9', 'lecture', courses, 'Algebra')).toEqual([])
+  })
+})
+
 describe('hasResource', () => {
   const courses = tree([
     node('Lecture 1', { video: true }),
-    node('Lecture 2', { material: true }),
+    node('Lecture 2', { materials: ['material.pdf'] }),
     node('Lecture 3'),
+    node('Lecture 4', { materials: ['material.pdf', 'material.2.pdf'] }),
   ])
 
-  it('is true for a material row only when that node holds a material.pdf', () => {
+  it('is true for a material row when that node holds any material', () => {
+    expect(hasResource('material', 'Lecture 4', 'lecture', courses, 'Algebra')).toBe(true)
+  })
+
+  it('is true for a material row only when that node holds a material', () => {
     expect(hasResource('material', 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(true)
     expect(hasResource('material', 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(false)
   })

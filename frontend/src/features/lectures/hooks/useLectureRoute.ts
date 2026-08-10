@@ -13,14 +13,15 @@ export function useLectureRoute() {
 
   const { courses } = useCourseTreeContext()
 
-  const { files, transcribePartial } = useMemo(() => {
-    if (!course || !lecture) return { files: null, transcribePartial: null }
+  const { files, materials, transcribePartial } = useMemo(() => {
+    if (!course || !lecture) return { files: null, materials: [], transcribePartial: null }
     const found = findLecture(courses, course, lecture, kind)
     return {
       files: found?.files ?? null,
+      materials: found?.materials ?? [],
       transcribePartial: found?.transcribePartial ?? null,
     }
   }, [courses, course, lecture, kind])
 
-  return { course, lecture, kind, files, transcribePartial }
+  return { course, lecture, kind, files, materials, transcribePartial }
 }

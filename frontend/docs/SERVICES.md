@@ -24,7 +24,9 @@ is `snake_case`; normalization to camelCase happens here and nowhere else, so `t
 ## `database.ts` → database service (`VITE_DATABASE_URL`)
 
 Everything filesystem-backed: tree, course/lecture CRUD, summary read/save/revert, video upload, file URLs,
-course `overview/` file listing + meta. Also exports `databaseUrl`, the base the SSE `EventSource` is built
+course `overview/` file listing + meta. `materialUrl`/`deleteMaterial` hit the same per-file routes as
+`fileUrl`/`deleteFile` but take a runtime name, since a material's name comes from the tree rather than the
+fixed `FileName` set. Also exports `databaseUrl`, the base the SSE `EventSource` is built
 from. `fetchCourseMeta` unwraps `{ meta }` and renames `generated_at` → `generatedAt`.
 
 ## `events.ts` — the database notify stream

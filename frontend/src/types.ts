@@ -20,7 +20,6 @@ export type FileName =
   | 'summary.md'
   | 'summary.pdf'
   | 'drive_url.txt'
-  | 'material.pdf'
 
 export type FileInfo = {
   exists: boolean
@@ -31,10 +30,15 @@ export type FileInfo = {
 }
 export type FileStatus = Record<FileName, FileInfo>
 
+// One of a lecture's `material.pdf`, `material.2.pdf`, … — presence in the list is existence,
+// and names are never reused, so a URL held by name stays valid after a sibling is deleted.
+export type MaterialInfo = { name: string; size: number; mtime: number }
+
 export type TranscribePartial = { completed: number; total: number }
 
 export type LectureDerived = {
   files: FileStatus | null
+  materials: MaterialInfo[]
   transcribePartial: TranscribePartial | null
 }
 
@@ -45,6 +49,8 @@ export type TimingStats =
 export interface Lecture {
   name: string
   files: FileStatus
+  // Always present, [] when none, ordered by material index ascending.
+  materials: MaterialInfo[]
   transcribePartial: TranscribePartial | null
 }
 
