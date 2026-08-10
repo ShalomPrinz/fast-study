@@ -1,6 +1,6 @@
 # PDF rendering — pandoc + XeLaTeX
 
-The summary is a Hebrew-primary RTL document with English fragments (code, terminology). `pipeline/to_pdf.py` preprocesses the markdown, then runs pandoc → XeLaTeX with polyglossia and `\setmainlanguage{hebrew}`, the bundled fonts in `assets/fonts/`, the template in `assets/templates/`, and the Lua filter in `assets/filters/`.
+The summary is a Hebrew-primary RTL document with English fragments (code, terminology). `pipeline/to_pdf.py` preprocesses the markdown with the pure helpers in `pipeline/pdf/`, then runs pandoc → XeLaTeX with polyglossia and `\setmainlanguage{hebrew}`, the bundled fonts in `assets/fonts/`, the template in `assets/templates/`, and the Lua filter in `assets/filters/`.
 
 ## Two-pass render
 
@@ -56,13 +56,13 @@ Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBe
 
 ## Failure messages
 
-Both the raised error and the non-fatal warning are classified by `parse_tex_errors` / `format_tex_errors` (pure) into one short line — first `! …` error, its line, the offending source, plus a count of the rest — because they reach the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, never of `summary.md`; on a hard failure that file is kept as `.pdf_build.tex`, so the number is actually lookup-able.
+Both the raised error and the non-fatal warning are classified by `pipeline/pdf/tex_errors.py`'s `parse_tex_errors` / `format_tex_errors` (pure, wrapped by `classify`) into one short line — first `! …` error, its line, the offending source, plus a count of the rest — because they reach the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, never of `summary.md`; on a hard failure that file is kept as `.pdf_build.tex`, so the number is actually lookup-able.
 
 Sources: pandoc's own failure is classified over both its streams; the XeLaTeX passes are classified over `build.log`, falling back to stdout only when no log was written — stdout mirrors the log, so reading both would count every error twice. A failure with no `! …` lines (unparseable markdown, missing template, engine absent) keeps the full log.
 
 ## Markdown preprocessing
 
-`convert_to_pdf` runs a fixed chain of pure string helpers via `apply_outside_fences`, which never touches content inside ``` / ~~~ fences (those are the Lua filter's job). Each helper has a dedicated test class in `tests/pipeline/test_to_pdf.py`.
+`convert_to_pdf` runs a fixed chain of pure string helpers via `apply_outside_fences`, which never touches content inside ``` / ~~~ fences (those are the Lua filter's job). The helpers live in `pipeline/pdf/`, split by concern: `text.py` (the shared Latin/Hebrew/inline-math vocabulary, LaTeX escaping, and the fence/list structural helpers), `math_fixes.py` (everything math), `bidi.py` (`wrap_english_phrases` + `force_ltr_inline_code`) and `tex_errors.py` (log parsing). `text.py` imports from neither of the other two — they both import from it. Each helper has a dedicated test class in `tests/pipeline/pdf/test_<module>.py`.
 
 Protected-region handling is the recurring theme, and balanced delimiters are its precondition — one unclosed `$$` desyncs every math span after it, so `close_unbalanced_display_math` runs first. Beyond that: `$$…$$` is matched before `$…$`, the inline-math body excludes backticks (a `$` inside a code span is a literal, and pandoc won't let math cross a code span), and splitting happens over the WHOLE text — line-by-line first would break multi-line display math and leak its Latin contents into the phrase wrapper.
 

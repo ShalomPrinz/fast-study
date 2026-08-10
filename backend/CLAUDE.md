@@ -48,7 +48,7 @@ uv run pytest tests/ -q          # CI runs exactly this on every push
 
 New tests go in the matching `tests/{pipeline,course,services}/test_<module>.py`. Never silently delete or skip a failing test — fix the code or update the test deliberately.
 
-This applies to "small" changes too — the `to_pdf.py` preprocessing helpers look trivial and interact with bidi/LaTeX in surprising ways, which is why every one of them has a test class.
+This applies to "small" changes too — the `pipeline/pdf/` preprocessing helpers look trivial and interact with bidi/LaTeX in surprising ways, which is why every one of them has a test class under `tests/pipeline/pdf/`.
 
 ## Documentation and comment style
 
