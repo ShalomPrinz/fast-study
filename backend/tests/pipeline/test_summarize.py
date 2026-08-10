@@ -58,6 +58,22 @@ def test_summarize_without_material(tmp_path):
     assert result == "# Title\nbody"
 
 
+def test_summarize_with_empty_material_list(tmp_path):
+    """An empty list is the no-material case — no PDF suffix, transcript only."""
+    transcript = tmp_path / "transcript.txt"
+    transcript.write_text("hello")
+
+    fake = _make_client()
+    with patch.object(summarize_mod, "LLMClient", return_value=fake):
+        summarize(transcript, [])
+
+    assert len(_upload_calls(fake)) == 1
+    contents = _generate_contents(fake)
+    assert len(contents) == 4
+    assert "--- SUPPLEMENTARY PDF DOCUMENTS ---" not in contents
+    assert summarize_mod.PDF_INSTRUCTION_SUFFIX not in contents[3]
+
+
 def test_summarize_with_material(tmp_path):
     transcript = tmp_path / "transcript.txt"
     transcript.write_text("hello")
@@ -66,7 +82,7 @@ def test_summarize_with_material(tmp_path):
 
     fake = _make_client()
     with patch.object(summarize_mod, "LLMClient", return_value=fake):
-        summarize(transcript, material)
+        summarize(transcript, [material])
 
     uploads = _upload_calls(fake)
     assert len(uploads) == 2
@@ -78,7 +94,7 @@ def test_summarize_with_material(tmp_path):
     assert len(contents) == 6
     assert contents[0] == "--- MAIN TRANSCRIPT DOCUMENT ---"
     assert getattr(contents[1], "_mime", None) == "text/plain"
-    assert contents[2] == "--- SUPPLEMENTARY PDF DOCUMENT ---"
+    assert contents[2] == "--- SUPPLEMENTARY PDF DOCUMENTS ---"
     assert getattr(contents[3], "_mime", None) == "application/pdf"
     assert contents[4] == "--- INSTRUCTIONS ---"
     base_prompt = summarize_mod.PROMPT_FILE.read_text(encoding="utf-8")
@@ -89,6 +105,60 @@ def test_summarize_with_material(tmp_path):
     assert contents[5].index(summarize_mod.PDF_INSTRUCTION_SUFFIX) < contents[5].index(
         summarize_mod.LENGTH_BUDGET_SUFFIX
     )
+
+
+def test_summarize_with_several_materials(tmp_path):
+    """All materials share one group marker and follow it in order."""
+    transcript = tmp_path / "transcript.txt"
+    transcript.write_text("hello")
+    materials = []
+    for name in ("material.pdf", "material.2.pdf", "material.3.pdf"):
+        p = tmp_path / name
+        p.write_bytes(b"%PDF-1.4\n")
+        materials.append(p)
+
+    fake = _make_client()
+    with patch.object(summarize_mod, "LLMClient", return_value=fake):
+        summarize(transcript, materials)
+
+    uploads = _upload_calls(fake)
+    assert len(uploads) == 4
+    assert [c.args[0] for c in uploads[1:]] == materials
+    assert all(c.args[1] == "application/pdf" for c in uploads[1:])
+
+    contents = _generate_contents(fake)
+    # transcript pair + one marker + 3 PDFs + instructions pair.
+    assert len(contents) == 8
+    assert contents.count("--- SUPPLEMENTARY PDF DOCUMENTS ---") == 1
+    assert contents[2] == "--- SUPPLEMENTARY PDF DOCUMENTS ---"
+    assert [getattr(c, "_path", None) for c in contents[3:6]] == materials
+    assert contents[6] == "--- INSTRUCTIONS ---"
+    # The prompt suffix is appended once, not once per material.
+    assert contents[-1].count(summarize_mod.PDF_INSTRUCTION_SUFFIX) == 1
+    assert contents[-1].endswith(summarize_mod.LENGTH_BUDGET_SUFFIX)
+
+
+def test_summarize_deletes_every_uploaded_file(tmp_path):
+    """Cleanup covers the transcript and all materials, even when generate fails."""
+    transcript = tmp_path / "transcript.txt"
+    transcript.write_text("hello")
+    materials = []
+    for name in ("material.pdf", "material.2.pdf"):
+        p = tmp_path / name
+        p.write_bytes(b"%PDF-1.4\n")
+        materials.append(p)
+
+    fake = _make_client()
+    fake.generate.side_effect = RuntimeError("boom")
+    with patch.object(summarize_mod, "LLMClient", return_value=fake):
+        with pytest.raises(RuntimeError, match="boom"):
+            summarize(transcript, materials)
+
+    assert [c.args[0] for c in fake.delete_file.call_args_list] == [
+        "files/handle1",
+        "files/handle2",
+        "files/handle3",
+    ]
 
 
 def test_summarize_raises_on_api_failure(tmp_path):

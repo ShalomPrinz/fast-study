@@ -8,13 +8,15 @@
 | ------------ | ---------------- | ----------------------------------------------------------------------------------------- |
 | `audio`      | `audio.mp3`      | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR.                               |
 | `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB).            |
-| `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ optional `material.pdf`) uploaded as file parts. |
+| `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ every material PDF) uploaded as file parts.  |
 | `pdf`        | `summary.pdf`    | pandoc → `.tex` → XeLaTeX (two passes). See `PDF.md`.                                     |
 | `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link.         |
 
-Other files in a lecture dir: `video.mp4` (user/downloader), `material.pdf` (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see `PDF.md`).
+Other files in a lecture dir: `video.mp4` (user/downloader), any number of material PDFs (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see `PDF.md`).
 
 A XeLaTeX error that still yielded a usable PDF is **not** a step failure: `_exec_pdf` returns `done` and persists the warning to `.pdf_warning`, so the run continues to `drive`. The runner stays error-only — there is no warning channel in `/status`.
+
+A lecture may hold any number of material PDFs. `database/` owns their naming, so the backend never constructs one: `_exec_summarize` lists them via `db_client.list_materials`, downloads each into the workspace and passes them all to `summarize`. The step result's `usedMaterial` stays a bool — true iff at least one reached Gemini.
 
 The Hebrew summarize prompt lives at `assets/instructions/summarize.md` — edit the file to change output structure, no code change. Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode.
 
@@ -29,6 +31,8 @@ Asset paths (`assets/fonts`, `assets/instructions`, `assets/templates`) resolve 
 ## Empty-file guard
 
 A pipeline file is never legitimately 0 bytes; when one is, the producing tool returned success with no content and raised nothing to explain it. `_require_nonempty` rejects 0-byte data at every workspace read and write, and `EMPTY_FILE_ISSUES` supplies the likely cause per filename. Without it a 0-byte file counts as "exists" for `next_step` and the run advances, surfacing a misleading downstream error instead.
+
+Material PDFs are the exception: they are user-supplied optional inputs with no producing step, so an empty one is skipped with a warning and the run continues on the remaining materials (or transcript-only).
 
 ## Execution model
 

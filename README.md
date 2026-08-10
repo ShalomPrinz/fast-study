@@ -77,4 +77,4 @@ cd backend && uv run pytest tests/ -q
 
 ## Customizing the summary format
 
-Edit `backend/assets/instructions/summarize.md` — it's the Hebrew prompt sent to Gemini alongside the transcript (and the optional `material.pdf` if present in the lecture dir). No code change needed.
+Edit `backend/assets/instructions/summarize.md` — it's the Hebrew prompt sent to Gemini alongside the transcript (and every material PDF attached to the lecture, if any). No code change needed.

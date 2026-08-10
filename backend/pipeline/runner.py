@@ -94,7 +94,6 @@ EMPTY_FILE_ISSUES: dict[str, str] = {
     "summary.md": "Gemini returned no text",
     "summary.pdf": "pandoc produced an empty PDF — summary.md may be empty or malformed",
     "drive_url.txt": "the Drive upload returned no share URL",
-    "material.pdf": "the attached material PDF is empty",
 }
 
 
@@ -223,8 +222,27 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
         return {"status": "error", "message": str(e)}
 
 
+def _download_materials(course: str, lecture: str, kind: str, dest: Path) -> list[Path]:
+    """Fetch every material PDF of a lecture into `dest`. Unlike the fixed pipeline files,
+    an empty material is skipped with a warning — the transcript alone still summarizes."""
+
+    paths: list[Path] = []
+    for entry in db_client.list_materials(course, lecture, kind):
+        name = entry["name"]
+        data = db_client.get_file_bytes(course, lecture, kind, name)
+        if not data:
+            log.warning(
+                "%s/%s (%s): skipping empty material %s", course, lecture, kind, name
+            )
+            continue
+        path = dest / name
+        path.write_bytes(data)
+        paths.append(path)
+    return paths
+
+
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
-    """Summarize transcript.txt → summary.md via Gemini, passing material.pdf if present.
+    """Summarize transcript.txt → summary.md via Gemini, passing every material PDF present.
     A daily-quota 429 is a plain error (no retry); a per-minute one is rate_limited."""
 
     try:
@@ -233,21 +251,20 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
                 "status": "error",
                 "message": "transcript.txt is required — run Transcribe first",
             }
-        download = ["transcript.txt"]
-        has_material = db_client.file_exists(course, lecture, kind, "material.pdf")
-        if has_material:
-            download.append("material.pdf")
-        print(
-            f"Summarize: material.pdf {'found — passing to Gemini' if has_material else 'not found — transcript only'}"
-        )
-        with _db_workspace(course, lecture, kind, download=download) as ws:
-            summary = summarize(
-                ws["transcript.txt"], ws.get("material.pdf") if has_material else None
+        with _db_workspace(course, lecture, kind, download=["transcript.txt"]) as ws:
+            transcript = ws["transcript.txt"]
+            materials = _download_materials(course, lecture, kind, transcript.parent)
+            log.info(
+                "Summarize: %s",
+                f"{len(materials)} materials found — passing to Gemini"
+                if materials
+                else "no materials found — transcript only",
             )
+            summary = summarize(transcript, materials)
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
         db_client.put_summary(course, lecture, kind, summary)
-        return {"status": "done", "usedMaterial": has_material}
+        return {"status": "done", "usedMaterial": bool(materials)}
     except GeminiRateLimitError as e:
         # A daily quota's retryDelay lies: it says 59s while the quotaId says PerDay.
         if e.info["is_daily"]:

@@ -203,6 +203,7 @@ def test_exec_summarize_rejects_empty_summary():
 
     with (
         patch.object(runner.db_client, "file_exists", side_effect=_exists),
+        patch.object(runner.db_client, "list_materials", return_value=[]),
         patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"),
         patch.object(runner, "summarize", return_value=""),
         patch.object(runner.db_client, "put_summary") as put_summary,
@@ -211,6 +212,83 @@ def test_exec_summarize_rejects_empty_summary():
     assert result["status"] == "error"
     assert "summary.md is empty — Gemini returned no text" in result["message"]
     put_summary.assert_not_called()
+
+
+# ---- summarize: material PDFs ----
+
+
+def _run_exec_summarize_with_materials(contents: dict[str, bytes]) -> tuple[dict, dict]:
+    """Run _exec_summarize against a fake material listing ({name: bytes}, listing order),
+    capturing what reached summarize()."""
+    seen: dict = {}
+
+    def _fake_summarize(transcript_path, material_paths):
+        seen["names"] = [p.name for p in material_paths]
+        seen["bytes"] = [p.read_bytes() for p in material_paths]
+        seen["dir"] = transcript_path.parent
+        return "# summary"
+
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=True),
+        patch.object(
+            runner.db_client,
+            "list_materials",
+            return_value=[{"name": n, "size": len(b)} for n, b in contents.items()],
+        ),
+        patch.object(
+            runner.db_client,
+            "get_file_bytes",
+            side_effect=lambda c, l, k, name: contents.get(name, b"transcript"),
+        ),
+        patch.object(runner, "summarize", side_effect=_fake_summarize),
+        patch.object(runner.db_client, "put_summary"),
+    ):
+        result = runner._exec_summarize("C1", "L1", "lecture")
+    return result, seen
+
+
+def test_exec_summarize_no_materials():
+    result, seen = _run_exec_summarize_with_materials({})
+    assert result == {"status": "done", "usedMaterial": False}
+    assert seen["names"] == []
+
+
+def test_exec_summarize_single_material():
+    result, seen = _run_exec_summarize_with_materials({"material.pdf": b"%PDF-a"})
+    assert result == {"status": "done", "usedMaterial": True}
+    assert seen["names"] == ["material.pdf"]
+    assert seen["bytes"] == [b"%PDF-a"]
+
+
+def test_exec_summarize_several_materials():
+    """Every listed material is downloaded and handed to Gemini, in listing order."""
+    result, seen = _run_exec_summarize_with_materials(
+        {
+            "material.pdf": b"%PDF-a",
+            "material.2.pdf": b"%PDF-b",
+            "material.3.pdf": b"%PDF-c",
+        }
+    )
+    assert result == {"status": "done", "usedMaterial": True}
+    assert seen["names"] == ["material.pdf", "material.2.pdf", "material.3.pdf"]
+    assert seen["bytes"] == [b"%PDF-a", b"%PDF-b", b"%PDF-c"]
+
+
+def test_exec_summarize_skips_empty_material():
+    """An empty material is dropped, not fatal — the rest still reach Gemini."""
+    result, seen = _run_exec_summarize_with_materials(
+        {"material.pdf": b"", "material.2.pdf": b"%PDF-b"}
+    )
+    assert result == {"status": "done", "usedMaterial": True}
+    assert seen["names"] == ["material.2.pdf"]
+
+
+def test_exec_summarize_all_materials_empty_runs_transcript_only():
+    result, seen = _run_exec_summarize_with_materials(
+        {"material.pdf": b"", "material.2.pdf": b""}
+    )
+    assert result == {"status": "done", "usedMaterial": False}
+    assert seen["names"] == []
 
 
 # ---- transcribe partial persistence ----
@@ -408,6 +486,7 @@ def _run_exec_summarize(info: dict) -> dict:
 
     with (
         patch.object(runner.db_client, "file_exists", side_effect=_exists),
+        patch.object(runner.db_client, "list_materials", return_value=[]),
         patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"),
         patch.object(runner.db_client, "put_summary") as put_summary,
         patch.object(runner, "summarize", side_effect=err),

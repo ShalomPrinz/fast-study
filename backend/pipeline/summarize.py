@@ -14,16 +14,16 @@ LENGTH_BUDGET_SUFFIX = (
     "If a draft is running long, tighten phrasing and drop filler before adding more content."
 )
 
-# Appended to the base prompt when a supplementary PDF is attached.
+# Appended to the base prompt when one or more supplementary PDFs are attached.
 PDF_INSTRUCTION_SUFFIX = (
-    "\n\nA supplementary PDF has been attached alongside the transcript. "
-    "Cross-reference its contents with the transcript and incorporate relevant insights into the final summary."
+    "\n\nOne or more supplementary PDFs have been attached alongside the transcript. "
+    "Cross-reference their contents with the transcript and incorporate relevant insights into the final summary."
 )
 
 
 @timed_pipeline("summarize")
-def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
-    """Summarize a transcript (plus an optional material PDF) with Gemini."""
+def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -> str:
+    """Summarize a transcript (plus any number of material PDFs) with Gemini."""
 
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
 
@@ -39,10 +39,13 @@ def summarize(transcript_path: Path, material_path: Path | None = None) -> str:
             transcript_file,
         ]
 
-        if material_path is not None:
-            material_file = client.upload_file(material_path, "application/pdf")
-            uploaded.append(material_file)
-            contents += ["--- SUPPLEMENTARY PDF DOCUMENT ---", material_file]
+        if material_paths:
+            # One marker for the whole group, then every PDF under it.
+            contents.append("--- SUPPLEMENTARY PDF DOCUMENTS ---")
+            for material_path in material_paths:
+                material_file = client.upload_file(material_path, "application/pdf")
+                uploaded.append(material_file)
+                contents.append(material_file)
             prompt += PDF_INSTRUCTION_SUFFIX
 
         prompt += LENGTH_BUDGET_SUFFIX
