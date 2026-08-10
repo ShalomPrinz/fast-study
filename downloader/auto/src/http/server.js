@@ -18,7 +18,7 @@ import {
 
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
 // unexpanded playlist (pageUrl, no url) is expandable, else downloadable. `media` says which
-// file lands on disk (video.mp4 vs material.pdf), never how it is fetched. See docs/BROWSING.md.
+// file lands on disk (video.mp4 vs a material PDF), never how it is fetched. See docs/BROWSING.md.
 function toItem(recording) {
   return {
     ref: encodeRef(recording),

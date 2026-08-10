@@ -112,7 +112,7 @@ npm start
 | Captured `.mp4` (lecture)    | `{DATA_ROOT}\{Course}\{Lecture}\video.mp4`          |
 | Captured `.mp4` (recitation) | `{DATA_ROOT}\{Course}\Recitations\{Name}\video.mp4` |
 | YouTube                      | Same paths, via `yt-dlp`                            |
-| PDF                          | `...\{Lecture}\material.pdf`                        |
+| PDF                          | `...\{Lecture}\material.pdf` (`material.2.pdf`, … for each further PDF) |
 
 ### Troubleshooting
 

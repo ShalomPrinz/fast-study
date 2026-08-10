@@ -15,7 +15,7 @@ Port **3053** (`AUTODL_PORT`). Reads the repo-root `.env` (`src/lib/config.js`) 
 
 ## HTTP surface
 
-Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, expandable, section }` (`section` = the Moodle section heading, display metadata for grouping, `''` when unnamed; `media` = `'video'`|`'material'`, which file lands on disk — `video.mp4` vs `material.pdf` — not how it is fetched); `/download-item` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.
+Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, expandable, section }` (`section` = the Moodle section heading, display metadata for grouping, `''` when unnamed; `media` = `'video'`|`'material'`, which file lands on disk — `video.mp4` vs a lecture material PDF — not how it is fetched); `/download-item` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.
 
 | Endpoint              | Body                                                | Returns                                                            |
 | --------------------- | --------------------------------------------------- | ------------------------------------------------------------------ |
@@ -35,7 +35,7 @@ Job semantics, the change ping and the timing samples live in `server/docs/JOBS.
 
 **Session replay cache** (`src/core/replayCache.js`). Every resolved cap — `{url, headers}` (curl)
 or `{url}` (yt-dlp) — is kept in memory keyed by its final `(course, lecture, kind, media)`
-target (zoom split names included; `media` keeps a lecture's `video.mp4` and `material.pdf` caps
+target (zoom split names included; `media` keeps a lecture's video and material caps
 apart), so a retry replays it without re-capturing. In-memory only (dies
 with the process), never logged (caps hold Cookies/tokens), unbounded (session-small). Two
 optional `/download-item` flags drive it: `only:true` acts on just the one `(course, name, kind)`
@@ -51,7 +51,7 @@ both clips), then posts only the cap whose split name matches the request.
 
 - **`docs/SESSIONS.md`** — persistent per-profile browsers, `withLock` mutex, idle timeout, the launch matrix.
 - **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + managed Xvfb; the UA/GPU constraints; passcode gate; before/after-break split.
-- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword/mimetype gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, yt-dlp), `zoom`, `moodle-file` (course-hosted PDF → `material.pdf`).
+- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword/mimetype gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, yt-dlp), `zoom`, `moodle-file` (course-hosted PDF → lecture material).
 - **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
 
 Dev-stack wiring: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

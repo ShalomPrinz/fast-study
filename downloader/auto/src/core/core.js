@@ -135,7 +135,7 @@ export async function downloadRecording(
   { recording, course, name, kind, passcode, wstoken, ref, only = false, forceCapture = false },
 ) {
   // moodle-file: no browser, no capture — the WS token turns the Moodle fileurl into a
-  // plain HTTP URL that server/ fetches as the lecture's material.pdf. Single target, so
+  // plain HTTP URL that server/ fetches as one of the lecture's materials. Single target, so
   // `only` collapses to the same path; the cap is just a `{url}`.
   if (recording.strategy === 'moodle-file') {
     let cap = forceCapture ? null : getCap(course, name, kind, 'material')?.cap;

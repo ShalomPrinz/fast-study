@@ -34,7 +34,7 @@ export async function postDownload({ url, headers, course, lecture, kind, ref, f
 
 /**
  * Plain URL with no header replay (a tokened Moodle pluginfile URL): server.js fetches it
- * and saves it as the lecture's material.pdf.
+ * and adds it to the lecture's materials.
  * @param {{ url: string, course: string, lecture: string, kind?: string, ref?: string|null, fromCache?: boolean }} payload
  * @returns {Promise<string|undefined>} server/'s job id
  */

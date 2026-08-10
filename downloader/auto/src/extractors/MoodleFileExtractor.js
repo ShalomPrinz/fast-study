@@ -2,7 +2,7 @@ import { VideoExtractor } from './VideoExtractor.js';
 
 /**
  * Moodle `resource` module file — a course-hosted PDF (slide deck, handout) that lands as
- * the lecture's `material.pdf`. Unlike the video strategies this one has NO capture phase:
+ * one of the lecture's materials. Unlike the video strategies this one has NO capture phase:
  * the WS token turns `fileurl` into a plain HTTP URL (`pluginfileUrl`), which `server/`
  * fetches directly, so no browser is ever launched and `_captureVideo` is never called.
  */

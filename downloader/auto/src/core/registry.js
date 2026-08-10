@@ -25,7 +25,7 @@ const EXTRACTORS = [
   new YoutubePlaylistExtractor(), // modType 'url'      → YouTube playlist (redirect)
   new GoogleDriveExtractor(), // modType 'url'          → Google Drive single video file
   new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
-  new MoodleFileExtractor(), // modType 'resource'     → course-hosted PDF → material.pdf
+  new MoodleFileExtractor(), // modType 'resource'     → course-hosted PDF → lecture material
 ];
 
 /**

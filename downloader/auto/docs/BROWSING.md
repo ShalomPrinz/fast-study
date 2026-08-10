@@ -39,7 +39,7 @@ Any other target (GitHub, unparseable) is not claimed at all — skipped like a 
 
 ## Video vs material
 
-Every strategy but `moodle-file` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as its `material.pdf` — the same file the Chrome extension uploads manually. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the filename, and `server/` decides it from the endpoint (`/download-file` vs `/download`+`/download-youtube`). A second PDF into one lecture overwrites the first.
+Every strategy but `moodle-file` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as one of its materials — the same slot the Chrome extension uploads to manually. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the endpoint `server/` uses (`/download-file` vs `/download`+`/download-youtube`), and the database names the file. A second PDF into one lecture appends (`material.2.pdf`) rather than overwriting.
 
 ## Mechanism-agnostic Item / ref contract
 
@@ -69,6 +69,6 @@ by query-string token, and `fileurl` may already carry `?forcedownload=1`), and 
 same progress/retry/`ref`-grouping as a video. A missing token is `401 {status:'reconnect'}`, same as
 `/list`. A *dead* one needs a one-byte preflight (`assertPluginfileReadable`) because pluginfile answers
 it with **HTTP 200 + Moodle's JSON exception body**, never a 403: unchecked, `server/`'s fire-and-forget
-job saves that blob as `material.pdf` and reports success. The preflight turns it back into
+job saves that blob as a material and reports success. The preflight turns it back into
 `invalidtoken` → `markExpired` + reconnect. The resolved `{url}` cap is cached like any other, so a retry
 replays it and `fromCache` lets `server/` re-capture silently when the token has since expired.

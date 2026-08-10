@@ -10,7 +10,7 @@ A Chrome extension (Manifest V3) plus a tiny local Node server that together cap
 
 - **Generic `.mp4` capture** — sniff the browser's network requests, replay the captured headers via `curl`. This is the only thing that works for streaming sites that gate `.mp4` URLs behind short-lived tokens + Referer/Origin checks.
 - **YouTube / Google Drive** — captured `.mp4` URLs are useless because YouTube uses DASH-segmented streams; shell out to `yt-dlp` instead, which handles signed URLs and audio/video muxing. The same path serves public Google Drive file links (`auto/`'s `google-drive` strategy).
-- **PDF** — when the active tab is a `.pdf`, the popup fetches it directly (with the user's cookies) and uploads it as `material.pdf`; no header replay needed since PDFs aren't token-gated.
+- **PDF** — when the active tab is a `.pdf`, the popup fetches it directly (with the user's cookies) and uploads it as one of the lecture's materials; no header replay needed since PDFs aren't token-gated.
 
 ## Running
 
@@ -60,5 +60,5 @@ auth, passcodes).
 - The Node packages (`server/`, `auto/`) use npm freely; **only the Chrome extension** (`extension/`) must avoid dependencies (MV3 constraint).
 - `suggestLectureName` / `suggestRecitationName` in `popup.js` duplicate logic from `frontend/src/components/Sidebar.tsx`. If the sidebar's naming convention changes, update both.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
-- Server-specific conventions (argv-array spawn, always `video.mp4`/`material.pdf`, probe-on-raw-http) live in `server/CLAUDE.md`.
+- Server-specific conventions (argv-array spawn, always `video.mp4`, database-allocated material names, probe-on-raw-http) live in `server/CLAUDE.md`.
 - Neither Node package has a test suite, and the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior no diff review can predict — exercise the real _endpoint_, but never against real _data_.

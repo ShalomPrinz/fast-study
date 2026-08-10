@@ -3,7 +3,7 @@
 // replay on retry. In-memory only — dies with the process.
 
 // Collision-safe key over the download target:
-// course/lecture/kind pick the folder, `media` ('video'|'material') picks the file
+// course/lecture/kind pick the folder, `media` ('video'|'material') picks which file it becomes
 function keyOf(course, lecture, kind, media) {
   return JSON.stringify([course, lecture, kind, media]);
 }
