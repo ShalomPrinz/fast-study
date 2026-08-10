@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import signal
 import urllib.parse
@@ -15,8 +16,12 @@ from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
 from fs.paths import lecture_dir
+from logging_setup import setup_logging
 
 load_dotenv()
+setup_logging()
+log = logging.getLogger("db")
+
 DATA_ROOT = os.environ["DATA_ROOT"]
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
@@ -156,7 +161,7 @@ def _post_run_audio(course: str, lecture: str, kind: str) -> None:
         ) as resp:
             resp.read()
     except Exception as e:
-        print(f"auto run/audio failed for {course}/{lecture} ({kind}): {e}", flush=True)
+        log.error("auto run/audio failed for %s/%s (%s): %s", course, lecture, kind, e)
 
 
 async def _trigger_audio(course: str, lecture: str, kind: str) -> None:

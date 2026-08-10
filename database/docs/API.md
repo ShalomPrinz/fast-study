@@ -82,6 +82,14 @@ pipeline without a frontend click. It runs on a worker thread with no timeout (s
 is slow), and failures are logged and swallowed — the upload already succeeded, and the user can
 always start the step manually. The PUT responds as soon as the file is on disk.
 
+## Access logging
+
+`logging_setup.py` (called once at `main.py` import, after uvicorn's own `dictConfig`, so it wins)
+reformats uvicorn's access log to `[api] POST /courses/X/… → 200` and suppresses two routine
+classes of line: every `HEAD`, and every `GET` that returned 2xx. Those requests still run
+normally — they are the frontend's constant existence probes and tree/status reads, and only
+their log lines are dropped. Failing GETs and all writes are always logged.
+
 ## Trust model
 
 Localhost only, no auth. CORS allows `http://localhost:5173`; the backend and downloader call
