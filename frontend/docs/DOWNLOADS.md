@@ -126,17 +126,28 @@ actually succeeded. The client trusts the snapshot as-is — no client-side dedu
 halves are distinct targets under one `ref`, so both legitimately coexist.)
 
 `DownloadJobsProvider` (mounted in `DownloadsView` above the panel, so the snapshot survives a close and
-re-discover) owns **one EventSource for the page** and holds the latest `/jobs` snapshot. `open` fires on
-connect and every auto-reconnect and also refetches, so the initial sync and any events missed during a
-reconnect gap are covered. A failed refetch is a no-op — the stream reconnects and pings again.
+re-discover) owns **one EventSource for the page** and feeds each `/jobs` snapshot into the module-level
+store in `DownloadJobsContext.tsx`. `open` fires on connect and every auto-reconnect and also refetches, so
+the initial sync and any events missed during a reconnect gap are covered. A failed refetch is a no-op —
+the stream reconnects and pings again.
 
-**Re-attaching after a reload just works.** `progressOf(ref)` filters the snapshot by `job.ref === ref`, so
-a download still running after a reload (or one the extension started) shows on its row with no extra
-lookup. A queued job pings too, so the row flips into flight from the snapshot alone once the POST returns.
+The store keeps no context value: each snapshot is grouped **once** into a `Map<ref, JobProgress[]>`, and
+rows read it through `useSyncExternalStore`. `useRowJobs(ref)` subscribes a row to its own ref, so a ping
+re-renders only the rows that _have_ jobs — the memoized rows with none read one shared frozen `EMPTY_JOBS`
+and bail out. That's the whole win, and on a section where one row is downloading it's the difference
+between one re-render and all of them; grouping allocates a fresh bucket array per ref per snapshot, so a
+row with jobs re-renders on every ping regardless. `useJobsByRef()` hands `SectionGroup` the whole map,
+which is the right scope there: the bulk summary folds arbitrary refs it started. (A context is still mounted, purely to fail loudly when a hook is
+used outside the provider.)
 
-**A `ref` groups the row; its jobs are the display atoms.** `progressOf(ref)` returns a `JobProgress[]` —
-one entry per matching job (id, `job.lecture` title, plus `ref`/`course`/`kind` for retry, `status`,
-`startedAt`, `expectedBytes`, `operation`), sorted by lecture so a zoom pair's two bars never reorder.
+**Re-attaching after a reload just works.** The grouping keys on `job.ref`, so a download still running
+after a reload shows on its row with no extra lookup. A queued job pings too, so the row flips into flight
+from the snapshot alone once the POST returns. A job with a **null `ref`** is one the Chrome extension
+started; it belongs to no discovery row and is dropped while grouping.
+
+**A `ref` groups the row; its jobs are the display atoms.** Each bucket is a `JobProgress[]` — one entry per
+matching job (id, `job.lecture` title, plus `ref`/`course`/`kind` for retry, `status`, `startedAt`,
+`expectedBytes`, `operation`), sorted by lecture so a zoom pair's two bars never reorder.
 `RecordingJobList` maps each to a `JobProgressBar`, which owns its own `useTimingStats(operation, expectedBytes)` call —
 so each clip regresses independently and one unknown probe blanks only its own bar (no summing, no
 null-poisoning across siblings). `tool: curl` → `download:curl`, `yt-dlp` → `download:ytdlp`, two buckets

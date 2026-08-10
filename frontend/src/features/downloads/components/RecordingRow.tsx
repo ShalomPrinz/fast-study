@@ -5,7 +5,7 @@ import type { Item } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
-import { rowStatus, useDownloadJobs } from '@/features/downloads/contexts/DownloadJobsContext'
+import { rowStatus, useRowJobs } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
 import { useRowEdit, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
 import {
@@ -52,7 +52,9 @@ const RecordingRow = memo(function RecordingRow({
     setName,
     setKind,
   } = useRowEdit(item, edit, course)
-  const { progressOf } = useDownloadJobs()
+  // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
+  // for free after a reload. Subscribed per ref, so another row's job change doesn't re-render this one.
+  const jobs = useRowJobs(item.ref)
   const {
     download,
     retryClip,
@@ -69,9 +71,7 @@ const RecordingRow = memo(function RecordingRow({
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
   // Live tree, so a completed download's SSE refresh flips the row green.
   const alreadyDownloaded = hasResource(item.media, effectiveName, kind, courses, course)
-  // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
-  // for free after a reload. A multi-clip recording (jobs.length > 1) turns the main button into a label.
-  const jobs = progressOf(item.ref)
+  // A multi-clip recording (jobs.length > 1) turns the main button into a label.
   const status = rowStatus(jobs)
   const split = jobs.length > 1
   const downloading = status === 'running'

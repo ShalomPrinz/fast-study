@@ -68,7 +68,7 @@ export default function RecordingJobList({
   retryingId,
   onClipAction,
 }: {
-  jobs: JobProgress[]
+  jobs: readonly JobProgress[]
   split: boolean
   retryingId: string | null
   onClipAction: (job: JobProgress) => void
