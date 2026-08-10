@@ -19,6 +19,8 @@ export const DATABASE_URL = process.env.DATABASE_URL ?? 'http://localhost:8001';
 export const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:8000';
 export const AUTODL_URL = process.env.AUTODL_URL ?? 'http://localhost:3053';
 
-// Saved names the backend's /run/audio and the material contract expect.
+// Saved video name the backend's /run/audio expects.
 export const VIDEO_FILENAME = 'video.mp4';
-export const MATERIAL_FILENAME = 'material.pdf';
+// Temp-dir name for a downloaded PDF only — the database allocates the on-disk
+// material name (material.pdf, material.2.pdf, …) when the bytes are uploaded.
+export const MATERIAL_TEMP_FILENAME = 'material.pdf';

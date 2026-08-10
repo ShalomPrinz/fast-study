@@ -34,11 +34,11 @@ the popup.
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                             |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET, raw http)                                                             |
 | `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background (`fromCache` bool marks a replayed cap) |
-| `POST /download-file`                     | plain-URL (no header replay) capture saved as the lecture's `material.pdf`; 200 immediately with a `jobId`  |
+| `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`  |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` (`fromCache` bool)           |
 | `GET  /events`                            | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`)                                                     |
 | `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                          |
-| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the neutral `/files/material.pdf`                                                             |
+| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                         |
 
 `kind` is `lecture` (default) or `recitation`.
 
@@ -51,15 +51,17 @@ URL). Each names its own `upload` (required): `uploadVideo` for the two video so
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
 DASH + JS-runtime, size probe), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
 vs yt-dlp-dir measure), `JOBS.md` (job lifecycle, event stream vs resync,
-`done` = uploaded, per-tool timing samples), `DATABASE.md` (video PUT wipes derived artifacts vs neutral
-`/files/`, `/tree` reshape, notify ping).
+`done` = uploaded, per-tool timing samples), `DATABASE.md` (video PUT wipes derived artifacts vs the
+appending `/materials` POST, `/tree` reshape, notify ping).
 
 ## Conventions
 
 - ESM only (`import`, never `require`).
 - Subprocesses via `execFile`/`spawn` with **argv arrays, never shell strings** — a
   captured header value must not be able to inject.
-- Saved video is always `video.mp4`, uploaded PDF always `material.pdf` (`config.js`).
+- Saved video is always `video.mp4` (`config.js`); PDFs are POSTed to the database's
+  `/materials`, which allocates the name (`material.pdf`, `material.2.pdf`, …) — the server
+  never names a material, so a lecture can hold several.
 - Add a download source = new `downloaders/*.js` + one registry line; don't edit the runner.
 - The size probe stays on raw `node:http` because it replays the `Cookie` header that
   `fetch` forbids — do not "modernize" it to fetch.

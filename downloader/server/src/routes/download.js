@@ -43,7 +43,7 @@ router.post('/download', (req, res) => {
   );
 });
 
-// Plain URL (no header replay) saved as the lecture's material.pdf.
+// Plain URL (no header replay) added to the lecture's materials.
 router.post('/download-file', (req, res) => {
   const { url, course, lecture, kind = 'lecture', ref, fromCache } = req.body ?? {};
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {

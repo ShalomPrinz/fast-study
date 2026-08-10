@@ -1,11 +1,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Readable } from 'node:stream';
-import { DATABASE_URL, VIDEO_FILENAME, MATERIAL_FILENAME } from '../config.js';
+import { DATABASE_URL, VIDEO_FILENAME, MATERIAL_TEMP_FILENAME } from '../config.js';
 import { emitLog, emitError } from '../progress.js';
 
 // All DATABASE_URL I/O lives here. Contract details (video PUT wipes derived
-// artifacts vs neutral /files/, /tree reshape, notify) in docs/DATABASE.md.
+// artifacts vs appending /materials, /tree reshape, notify) in docs/DATABASE.md.
 
 // /tree returns rich lecture/recitation objects; the popup only wants the names,
 // and archived courses are dropped so finished ones don't clutter suggestions.
@@ -59,16 +59,17 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   }
 }
 
-// Stream the just-downloaded material.pdf to the neutral /files/ endpoint, then remove the temp
-// dir either way. Unlike the video PUT this does NOT wipe derived transcript/summary artifacts.
+// Stream the just-downloaded PDF to the /materials endpoint, then remove the temp dir either
+// way. The database allocates the name (material.pdf, material.2.pdf, …) so a second PDF appends
+// instead of overwriting, and derived transcript/summary artifacts are left alone (unlike the video PUT).
 // Returns {ok} rather than throwing — the caller turns it into the job's terminal state.
 export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
-  const file = path.join(tempDir, MATERIAL_FILENAME);
+  const file = path.join(tempDir, MATERIAL_TEMP_FILENAME);
   try {
-    const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/files/${MATERIAL_FILENAME}?kind=${encodeURIComponent(kind)}`;
+    const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
     // duplex: 'half' is required when a fetch body is a stream (undici).
     const res = await fetch(url, {
-      method: 'PUT',
+      method: 'POST',
       headers: { 'Content-Type': 'application/pdf' },
       body: Readable.toWeb(fs.createReadStream(file)),
       duplex: 'half',
@@ -82,7 +83,7 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
       emitError(`❌ ${tool} upload to database failed: ${error}`);
       return { ok: false, error };
     }
-    emitLog(`✅ Uploaded ${MATERIAL_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
+    emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
     return { ok: true };
   } catch (err) {
@@ -95,13 +96,13 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
   }
 }
 
-// Forward already-fetched PDF bytes to the neutral /files/ endpoint (does NOT wipe
-// derived artifacts, unlike the video PUT). Throws on network error (route -> 500);
-// returns {ok:false} on a database-level failure (route -> 502).
+// Forward already-fetched PDF bytes to the /materials endpoint: the database allocates the
+// name (a second PDF appends) and derived artifacts survive, unlike the video PUT. Throws on
+// network error (route -> 500); returns {ok:false} on a database-level failure (route -> 502).
 export async function uploadPdf(buf, course, lecture, kind) {
-  const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/files/${MATERIAL_FILENAME}?kind=${encodeURIComponent(kind)}`;
+  const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
   const res = await fetch(url, {
-    method: 'PUT',
+    method: 'POST',
     headers: { 'Content-Type': 'application/pdf' },
     body: buf,
   });
@@ -114,7 +115,7 @@ export async function uploadPdf(buf, course, lecture, kind) {
     emitError(`❌ PDF upload to database failed: ${error}`);
     return { ok: false, error };
   }
-  emitLog(`✅ Uploaded ${MATERIAL_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
+  emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
   notifyFrontend();
   return { ok: true };
 }

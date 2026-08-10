@@ -1,4 +1,4 @@
-import { MATERIAL_FILENAME } from '../config.js';
+import { MATERIAL_TEMP_FILENAME } from '../config.js';
 import { probeContentLength } from '../services/probe.js';
 import { uploadMaterial } from '../services/database.js';
 
@@ -17,7 +17,7 @@ function buildFetchArgs(url) {
     '2',
     '--retry-all-errors',
     '--output',
-    MATERIAL_FILENAME,
+    MATERIAL_TEMP_FILENAME,
     url,
   ];
 }
@@ -27,7 +27,7 @@ function buildFetchArgs(url) {
 export const fetchFile = {
   tool: 'fetch',
   measure: 'dir',
-  upload: uploadMaterial, // not uploadVideo: the material PUT must not wipe derived artifacts
+  upload: uploadMaterial, // not uploadVideo: the material upload must not wipe derived artifacts
   probeSize: ({ url }) => probeContentLength(url, []),
   buildCommand: ({ url }) => ({ command: 'curl', args: buildFetchArgs(url) }),
 };
