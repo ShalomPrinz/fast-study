@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture, MaterialInfo } from '@/types'
-import { existingNames, hasResource, materialsOf } from './nameSuggestion'
+import { existingNames, hasResource, materialsOf } from './existingItems'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }

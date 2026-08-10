@@ -3,7 +3,7 @@ import type { Course, Kind, InlineEdit } from '@/types'
 import { createLecture } from '@/services/database'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
-import { suggestName } from '@/features/lectures/utils/namingSuggestion'
+import { suggestName } from '@/features/lectures/utils/nextName'
 
 export interface AddLecture {
   // null = not adding.

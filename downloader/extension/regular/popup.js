@@ -29,7 +29,7 @@ function setStatus(text, color) {
   if (color) el.style.color = color;
 }
 
-// Mirrors Sidebar.tsx::suggestName so popup choices stay consistent with the app.
+// Mirrors nextName.ts::suggestName so popup choices stay consistent with the app.
 // mode='next' suggests the next-to-create name (video flow — fresh lecture).
 // mode='latest' returns the most recent existing name (PDF flow — attach material
 // to the lecture the user just watched).

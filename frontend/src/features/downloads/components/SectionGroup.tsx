@@ -17,7 +17,7 @@ import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsCont
 import { rowStatus, useDownloadJobs } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
 import { RowEditsContext, resolveRow } from '@/features/downloads/contexts/RowEditsContext'
-import { hasResource } from '@/features/downloads/utils/nameSuggestion'
+import { hasResource } from '@/features/downloads/utils/existingItems'
 
 interface Props {
   title: string

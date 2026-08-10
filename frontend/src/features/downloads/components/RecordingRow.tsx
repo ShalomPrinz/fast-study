@@ -12,7 +12,7 @@ import {
   hasResource,
   materialsOf,
   splitSiblings,
-} from '@/features/downloads/utils/nameSuggestion'
+} from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 
 // Owned by SectionGroup — the bulk queue needs the same children cache.

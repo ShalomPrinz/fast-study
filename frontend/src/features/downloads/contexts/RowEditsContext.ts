@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 import type { Course, Kind } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import type { Item } from '../services/autoDownloader'
-import { suggestItemName } from '../utils/nameSuggestion'
+import { suggestItemName } from '../utils/nameFromTitle'
 
 // Overrides only — an absent field means "still following the suggestion".
 export interface RowEdit {

@@ -25,7 +25,7 @@ export function latestName(names: string[], kind: Kind): LatestName | null {
   return parsed.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b))
 }
 
-export function suggestLectureName(courses: Course[], courseName: string): string {
+function suggestLectureName(courses: Course[], courseName: string): string {
   const course = courses.find((c) => c.name === courseName)
   if (!course) return ''
   const latest = latestName(
@@ -38,7 +38,7 @@ export function suggestLectureName(courses: Course[], courseName: string): strin
   return `Lecture ${latest.n + 1}`
 }
 
-export function suggestRecitationName(courses: Course[], courseName: string): string {
+function suggestRecitationName(courses: Course[], courseName: string): string {
   const course = courses.find((c) => c.name === courseName)
   if (!course) return 'Recitation 1'
   const latest = latestName(

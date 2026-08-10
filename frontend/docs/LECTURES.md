@@ -125,7 +125,7 @@ reveals older items in doubling chunks.
 
 ## Name suggestion and sorting
 
-`namingSuggestion.ts` suggests the next name from what the course already has: `Lecture N+1`, except that a
+`nextName.ts` suggests the next name from what the course already has: `Lecture N+1`, except that a
 trailing `Lecture N.1` suggests `Lecture N.2` (a split session's second half). Recitations are plain
 `Recitation N+1`.
 
