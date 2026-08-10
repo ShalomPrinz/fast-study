@@ -112,16 +112,92 @@ function cachedTargets(recording, course, name, kind) {
 }
 
 /**
- * DOWNLOAD PATH (HTTP): resolve one echoed-back recording and hand its target(s) to server/.
- * videostream/zoom sniff the .mp4 fresh on the shared page; youtube/google-drive carry a
- * direct url yt-dlp resolves and moodle-file a tokened pluginfile url (no navigation). Each resolved cap is kept in the session
- * replay cache (see replayCache.js) so a retry replays it without re-capturing. See docs/BROWSING.md.
- * @param {import('playwright').Page|null} page  live shared page (null for the no-browser strategies)
+ * DOWNLOAD PATH (HTTP), no browser: the WS token turns the Moodle fileurl into a plain HTTP
+ * URL that server/ fetches as one of the lecture's materials. Its own entry point because a
+ * strategy that needs no browser must be handed its credential explicitly — folding it into
+ * the capture dispatcher made every per-strategy secret look optional. Single target, so
+ * there is no `only` semantics; the cap is just a `{url}`. See docs/BROWSING.md.
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
+ *           course: string, name: string, kind: string, wstoken: string,
+ *           ref?: string|null, forceCapture?: boolean }} args
+ *   wstoken is the caller's Moodle WS token — required; pluginfile authenticates by it.
+ *   ref is the discovery-row id that spawned this download, stamped onto the server/ job.
+ *   forceCapture = bypass the replay cache and re-resolve the url fresh.
+ * @returns {Promise<string[]>} server/ job ids (one), followed on server/'s /events.
+ */
+export async function downloadMoodleFile({
+  recording,
+  course,
+  name,
+  kind,
+  wstoken,
+  ref,
+  forceCapture = false,
+}) {
+  let cap = forceCapture ? null : getCap(course, name, kind, 'material')?.cap;
+  const fromCache = Boolean(cap);
+  if (!cap) {
+    const url = pluginfileUrl(recording.fileurl, wstoken);
+    await assertPluginfileReadable(url);
+    cap = { url };
+    cacheCap(course, name, kind, 'material', cap, ref);
+  }
+  const jobId = await postDownloadFile({
+    url: cap.url,
+    course,
+    lecture: name,
+    kind,
+    ref,
+    fromCache,
+  });
+  return [jobId].filter(Boolean);
+}
+
+/**
+ * DOWNLOAD PATH (HTTP), no browser: hand a direct url to yt-dlp via server/. A youtube entry
+ * must be a specific expanded playlist entry (`url`); a Drive file downloads straight from its
+ * `pageUrl`, preflighted so a non-public file fails as 422 rather than silently inside server/'s
+ * job. Single target, so there is no `only` semantics; the cap is just a `{url}`.
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
+ *           course: string, name: string, kind: string, ref?: string|null,
+ *           forceCapture?: boolean }} args
+ * @returns {Promise<string[]>} server/ job ids (one), followed on server/'s /events.
+ */
+export async function downloadYtDlp({ recording, course, name, kind, ref, forceCapture = false }) {
+  let cap = forceCapture ? null : getCap(course, name, kind, 'video')?.cap;
+  const fromCache = Boolean(cap);
+  if (!cap) {
+    let url = recording.pageUrl;
+    if (recording.strategy === 'youtube-playlist') {
+      if (!recording.url) throw new Error('expand the playlist and download a specific entry');
+      url = recording.url;
+    } else {
+      await assertPubliclyShared(url);
+    }
+    cap = { url };
+    cacheCap(course, name, kind, 'video', cap, ref);
+  }
+  const jobId = await postDownloadYoutube({
+    url: cap.url,
+    course,
+    lecture: name,
+    kind,
+    ref,
+    fromCache,
+  });
+  return [jobId].filter(Boolean);
+}
+
+/**
+ * DOWNLOAD PATH (HTTP), browser capture: resolve one echoed-back recording on the live shared
+ * page and hand its target(s) to server/. videostream/zoom sniff the .mp4 fresh; the no-browser
+ * strategies have their own entry points above. Each resolved cap is kept in the session replay
+ * cache (see replayCache.js) so a retry replays it without re-capturing. See docs/BROWSING.md.
+ * @param {import('playwright').Page} page  live shared page
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null,
- *           wstoken?: string, ref?: string|null, only?: boolean, forceCapture?: boolean }} args
+ *           ref?: string|null, only?: boolean, forceCapture?: boolean }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
- *   wstoken is the caller's Moodle WS token; only the moodle-file path consumes it.
  *   ref is the discovery-row id that spawned this download — stamped onto every server/
  *   job so a zoom before/after-break split pair groups under the one parent row.
  *   only = operate on just the single (course,name,kind) target (name may be a zoom split
@@ -132,59 +208,8 @@ function cachedTargets(recording, course, name, kind) {
  */
 export async function downloadRecording(
   page,
-  { recording, course, name, kind, passcode, wstoken, ref, only = false, forceCapture = false },
+  { recording, course, name, kind, passcode, ref, only = false, forceCapture = false },
 ) {
-  // moodle-file: no browser, no capture — the WS token turns the Moodle fileurl into a
-  // plain HTTP URL that server/ fetches as one of the lecture's materials. Single target, so
-  // `only` collapses to the same path; the cap is just a `{url}`.
-  if (recording.strategy === 'moodle-file') {
-    let cap = forceCapture ? null : getCap(course, name, kind, 'material')?.cap;
-    const fromCache = Boolean(cap);
-    if (!cap) {
-      const url = pluginfileUrl(recording.fileurl, wstoken);
-      await assertPluginfileReadable(url);
-      cap = { url };
-      cacheCap(course, name, kind, 'material', cap, ref);
-    }
-    const jobId = await postDownloadFile({
-      url: cap.url,
-      course,
-      lecture: name,
-      kind,
-      ref,
-      fromCache,
-    });
-    return [jobId].filter(Boolean);
-  }
-
-  // yt-dlp strategies: no browser, no capture. A youtube entry must be a specific expanded
-  // playlist entry (`url`); a Drive file downloads straight from its `pageUrl`, preflighted
-  // so a non-public file fails as 422 rather than silently in server/'s job. Single target,
-  // so `only` collapses to the same path; the cap is just a `{url}`.
-  if (recording.strategy === 'youtube-playlist' || recording.strategy === 'google-drive') {
-    let cap = forceCapture ? null : getCap(course, name, kind, 'video')?.cap;
-    const fromCache = Boolean(cap);
-    if (!cap) {
-      let url = recording.pageUrl;
-      if (recording.strategy === 'youtube-playlist') {
-        if (!recording.url) throw new Error('expand the playlist and download a specific entry');
-        url = recording.url;
-      } else {
-        await assertPubliclyShared(url);
-      }
-      cap = { url };
-      cacheCap(course, name, kind, 'video', cap, ref);
-    }
-    const jobId = await postDownloadYoutube({
-      url: cap.url,
-      course,
-      lecture: name,
-      kind,
-      ref,
-      fromCache,
-    });
-    return [jobId].filter(Boolean);
-  }
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
 

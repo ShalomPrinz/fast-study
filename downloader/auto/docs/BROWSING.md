@@ -41,6 +41,15 @@ Any other target (GitHub, unparseable) is not claimed at all — skipped like a 
 
 Every strategy but `moodle-file` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as one of its materials — the same slot the Chrome extension uploads to manually. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the endpoint `server/` uses (`/download-file` vs `/download`+`/download-youtube`), and the database names the file. A second PDF into one lecture appends (`material.2.pdf`) rather than overwriting.
 
+## Three download entry points
+
+`core/core.js` exports one function per download shape, and `/download-item` picks between them
+in the strategy branching it already does: `downloadRecording(page, …)` (the browser-capture
+dispatcher — `videostream`, `zoom`), `downloadMoodleFile(…)` and `downloadYtDlp(…)`. The split
+is by *needs a browser*, not by strategy count: a browserless strategy has no page to carry its
+credential, so it must take one explicitly (`downloadMoodleFile`'s required `wstoken`).
+The browserless pair each resolve exactly one target, so `only` (azoom-split notion) doesn't apply to them; all three share the replay cache and `fromCache`.
+
 ## Mechanism-agnostic Item / ref contract
 
 The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, expandable, section }`. `media` is `'video'` or `'material'` — which file lands on disk, never how it is fetched, so it stays mechanism-agnostic; a `material` item is never `expandable`. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `section` is display metadata — the Moodle course section heading (`section.name`) the item lives under, a sibling field the frontend groups by (never parsed out of `ref`); `''` when the section is unnamed. Expanded playlist children inherit their parent's `section`. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.

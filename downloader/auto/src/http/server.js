@@ -4,7 +4,12 @@ import {
   resolveExtractorForRecording,
 } from '../core/registry.js';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
-import { listRecordings, downloadRecording } from '../core/core.js';
+import {
+  listRecordings,
+  downloadRecording,
+  downloadMoodleFile,
+  downloadYtDlp,
+} from '../core/core.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
@@ -220,7 +225,8 @@ async function downloadItem(req, res) {
   if (kind !== 'lecture' && kind !== 'recitation')
     return send(res, 400, { error: `invalid kind: ${kind}` });
 
-  // only = act on just this one (course,name,kind) target
+  // only = act on just this one (course,name,kind) target — meaningful only for the capture
+  // strategies (the no-browser ones have a single target, so a retry's `only` is a no-op there)
   // forceCapture = bypass the replay cache and capture fresh
   const opts = { only: only === true, forceCapture: forceCapture === true };
 
@@ -234,14 +240,14 @@ async function downloadItem(req, res) {
     }
     let jobs;
     try {
-      jobs = await downloadRecording(null, {
+      jobs = await downloadMoodleFile({
         recording,
         course,
         name,
         kind,
         wstoken: auth.loadToken().wstoken,
         ref: rowRef,
-        ...opts,
+        forceCapture: opts.forceCapture,
       });
     } catch (e) {
       if (invalidToken(e)) {
@@ -261,13 +267,13 @@ async function downloadItem(req, res) {
     (recording.strategy === 'youtube-playlist' && recording.url) ||
     recording.strategy === 'google-drive'
   ) {
-    const jobs = await downloadRecording(null, {
+    const jobs = await downloadYtDlp({
       recording,
       course,
       name,
       kind,
       ref: rowRef,
-      ...opts,
+      forceCapture: opts.forceCapture,
     });
     logResult('/download-item', `ok (${jobs.length} job)`);
     return send(res, 200, { ok: jobs.length > 0 });
