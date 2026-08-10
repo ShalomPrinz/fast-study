@@ -16,7 +16,11 @@ import type { ExpandControl } from './RecordingRow'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import { rowStatus, useDownloadJobs } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
-import { RowEditsContext, resolveRow } from '@/features/downloads/contexts/RowEditsContext'
+import {
+  RowEditsDispatchContext,
+  RowEditsStateContext,
+  resolveRow,
+} from '@/features/downloads/contexts/RowEditsContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
 
 interface Props {
@@ -83,13 +87,15 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
   const editsRef = useRef(edits)
   editsRef.current = edits
 
+  // Structural sharing is load-bearing: replacing only the edited ref's slice leaves every other
+  // slice identical, which is what lets the memoized sibling rows bail out of a keystroke render.
   const setName = useCallback((ref: string, name: string) => {
     setEdits((prev) => ({ ...prev, [ref]: { ...prev[ref], name } }))
   }, [])
   const setKind = useCallback((ref: string, kind: Kind) => {
     setEdits((prev) => ({ ...prev, [ref]: { ...prev[ref], kind } }))
   }, [])
-  const rowEdits = useMemo(() => ({ edits, setName, setKind }), [edits, setName, setKind])
+  const dispatch = useMemo(() => ({ setName, setKind }), [setName, setKind])
 
   function stateOf(ref: string): ExpandState {
     return expansions[ref] ?? IDLE
@@ -235,22 +241,25 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         </button>
       </div>
 
-      <RowEditsContext.Provider value={rowEdits}>
-        {items.map((item) => {
-          const expand: ExpandControl | undefined = item.expandable
-            ? { ...stateOf(item.ref), onToggle: () => toggleExpand(item) }
-            : undefined
-          return (
-            <RecordingRow
-              key={item.ref}
-              item={item}
-              course={course}
-              onReconnect={onReconnect}
-              expand={expand}
-            />
-          )
-        })}
-      </RowEditsContext.Provider>
+      <RowEditsDispatchContext.Provider value={dispatch}>
+        <RowEditsStateContext.Provider value={edits}>
+          {items.map((item) => {
+            const expand: ExpandControl | undefined = item.expandable
+              ? { ...stateOf(item.ref), onToggle: () => toggleExpand(item) }
+              : undefined
+            return (
+              <RecordingRow
+                key={item.ref}
+                item={item}
+                edit={edits[item.ref]}
+                course={course}
+                onReconnect={onReconnect}
+                expand={expand}
+              />
+            )
+          })}
+        </RowEditsStateContext.Provider>
+      </RowEditsDispatchContext.Provider>
 
       {paused && (
         <PasscodePrompt

@@ -1,4 +1,4 @@
-import { useId, useState } from 'react'
+import { memo, useId, useState } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item } from '@/features/downloads/services/autoDownloader'
@@ -6,7 +6,8 @@ import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import { rowStatus, useDownloadJobs } from '@/features/downloads/contexts/DownloadJobsContext'
-import { useRowEdit } from '@/features/downloads/contexts/RowEditsContext'
+import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
+import { useRowEdit, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
 import {
   existingNames,
   hasResource,
@@ -26,13 +27,21 @@ export interface ExpandControl {
 
 interface Props {
   item: Item
+  edit: RowEdit | undefined
   course: string
   onReconnect: () => void
   expand?: ExpandControl
 }
 
 // One discovered recording; an expandable one renders each child as a recursive RecordingRow.
-export default function RecordingRow({ item, course, onReconnect, expand }: Props) {
+// Memoized on its own `edit` slice, so typing in one row leaves its siblings untouched.
+const RecordingRow = memo(function RecordingRow({
+  item,
+  edit,
+  course,
+  onReconnect,
+  expand,
+}: Props) {
   const { courses } = useCourseTreeContext()
   // Name/kind live in SectionGroup so this row and the bulk queue agree.
   const {
@@ -42,7 +51,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
     name: effectiveName,
     setName,
     setKind,
-  } = useRowEdit(item, course)
+  } = useRowEdit(item, edit, course)
   const { progressOf } = useDownloadJobs()
   const {
     download,
@@ -134,14 +143,7 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
         )}
         {expand.expanded && expand.children && (
           <div className="recording-children">
-            {expand.children.map((child) => (
-              <RecordingRow
-                key={child.ref}
-                item={child}
-                course={course}
-                onReconnect={onReconnect}
-              />
-            ))}
+            <ChildRows items={expand.children} course={course} onReconnect={onReconnect} />
           </div>
         )}
       </div>
@@ -247,5 +249,35 @@ export default function RecordingRow({ item, course, onReconnect, expand }: Prop
 
       {passcode && <PasscodePrompt {...passcode} />}
     </div>
+  )
+})
+
+export default RecordingRow
+
+// Slices the edits map for an expanded playlist's children. Split out of RecordingRow so only
+// non-leaf rows subscribe to the map — a leaf that subscribed would re-render on every keystroke
+// in the section, memo or not.
+function ChildRows({
+  items,
+  course,
+  onReconnect,
+}: {
+  items: Item[]
+  course: string
+  onReconnect: () => void
+}) {
+  const edits = useRowEdits()
+  return (
+    <>
+      {items.map((child) => (
+        <RecordingRow
+          key={child.ref}
+          item={child}
+          edit={edits[child.ref]}
+          course={course}
+          onReconnect={onReconnect}
+        />
+      ))}
+    </>
   )
 }

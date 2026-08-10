@@ -40,7 +40,7 @@ expand, so collapse/re-expand never refetches. Expandable rows render their chil
 
 ## Row name and kind: one source of truth
 
-`RowEditsContext` (provided by `SectionGroup`, keyed by `item.ref`) stores **only overrides** —
+`contexts/RowEditsContext.ts` (provided by `SectionGroup`, keyed by `item.ref`) stores **only overrides** —
 `{ name?, kind? }`. `resolveRow` derives `{ kind, suggestion, value, name }` from an override plus the live
 tree. Two consequences fall out of storing overrides rather than values:
 
@@ -49,6 +49,18 @@ tree. Two consequences fall out of storing overrides rather than values:
   can never disagree.
 
 Edits are never cleared, so they survive an SSE tree refresh, a collapse/re-expand, and a bulk run.
+
+The edits live behind **two** contexts: `RowEditsStateContext` (the map) and `RowEditsDispatchContext`
+(`{ setName, setKind }`, identity-stable for the section's lifetime). Only the components that slice the
+map subscribe to the state context — `SectionGroup` for its top-level rows, and `ChildRows` for an expanded
+playlist's children. `RecordingRow` is `memo`ized and takes its own `edit` slice as a prop, reading only the
+dispatch context via `useRowEdit(item, edit, course)`, so a keystroke re-renders just the edited row. The
+setters update with `{ ...prev, [ref]: { ...prev[ref], name } }` — leaving every other slice's identity
+untouched is what lets the siblings bail out. (An SSE tree refresh still re-renders every row: leaf rows
+consume `CourseTreeContext` for the suggestion and the green highlight.)
+
+The bulk queue does not read either context — it resolves through `SectionGroup`'s `editsRef` mirror, so it
+picks up names typed while the run is in flight.
 
 `hasResource(media, name, kind, courses, course)` is the single already-downloaded rule, so the green row
 and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks

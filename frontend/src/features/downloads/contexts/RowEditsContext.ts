@@ -10,15 +10,23 @@ export interface RowEdit {
   kind?: Kind
 }
 
-// One section's per-row (name, kind) edits, keyed by item ref — reaches recursive rows without
-// prop-drilling, and keeps the green row and the bulk skip rule reading the same values.
-export interface RowEditsValue {
-  edits: Record<string, RowEdit>
+export interface RowEditsDispatch {
   setName: (ref: string, name: string) => void
   setKind: (ref: string, kind: Kind) => void
 }
 
-export const RowEditsContext = createContext<RowEditsValue | null>(null)
+// One section's per-row (name, kind) edits, keyed by item ref — reaches recursive rows without
+// prop-drilling, and keeps the green row and the bulk skip rule reading the same values. State and
+// dispatch are separate contexts so a keystroke only invalidates the rows that slice the map:
+// leaf rows read the stable dispatch and take their own slice as a prop.
+export const RowEditsStateContext = createContext<Record<string, RowEdit> | null>(null)
+export const RowEditsDispatchContext = createContext<RowEditsDispatch | null>(null)
+
+export function useRowEdits(): Record<string, RowEdit> {
+  const edits = useContext(RowEditsStateContext)
+  if (!edits) throw new Error('useRowEdits must be used within a <SectionGroup>')
+  return edits
+}
 
 interface Resolved {
   kind: Kind
@@ -41,13 +49,13 @@ export function resolveRow(
   return { kind, suggestion, value, name: value.trim() || suggestion }
 }
 
-export function useRowEdit(item: Item, course: string) {
-  const ctx = useContext(RowEditsContext)
-  if (!ctx) throw new Error('useRowEdit must be used within a <SectionGroup>')
+export function useRowEdit(item: Item, edit: RowEdit | undefined, course: string) {
+  const dispatch = useContext(RowEditsDispatchContext)
+  if (!dispatch) throw new Error('useRowEdit must be used within a <SectionGroup>')
   const { courses } = useCourseTreeContext()
   return {
-    ...resolveRow(item, ctx.edits[item.ref], courses, course),
-    setName: (name: string) => ctx.setName(item.ref, name),
-    setKind: (kind: Kind) => ctx.setKind(item.ref, kind),
+    ...resolveRow(item, edit, courses, course),
+    setName: (name: string) => dispatch.setName(item.ref, name),
+    setKind: (kind: Kind) => dispatch.setKind(item.ref, kind),
   }
 }
