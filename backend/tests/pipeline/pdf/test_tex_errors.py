@@ -33,7 +33,6 @@ class TestParseTexErrors:
         assert errors[0].message == "Undefined control sequence"
         assert errors[0].line == 417
         assert errors[0].at == r"\Pi"
-        assert errors[0].source == r"\Pi(x) is the profit function"
         assert errors[1].message == "Missing $ inserted"
         assert errors[1].line == 502
         # The `l.` marker sits past the <inserted text> context lines.
@@ -44,14 +43,15 @@ class TestParseTexErrors:
         errors = parse_tex_errors(log)
         assert len(errors) == 1
         assert (errors[0].message, errors[0].line) == ("Undefined control sequence", 12)
-        assert errors[0].source == r"\foobar"
+        # The indented remainder of the source line is echoed next; `at` stops at the break.
+        assert errors[0].at == r"\foo"
 
     def test_error_without_line_marker(self):
         log = "! LaTeX Error: File `bidi.sty' not found.\nType X to quit.\n"
         errors = parse_tex_errors(log)
         assert len(errors) == 1
         assert errors[0].line is None
-        assert errors[0].at == "" and errors[0].source == ""
+        assert errors[0].at == ""
         assert errors[0].message == "LaTeX Error: File `bidi.sty' not found"
 
     def test_no_bang_lines_yields_nothing(self):
@@ -64,10 +64,6 @@ class TestParseTexErrors:
     def test_later_marker_is_not_adopted_by_a_markerless_error(self):
         log = "! Emergency stop.\n" + "\n" * 25 + "l.900 \\bar\n"
         assert parse_tex_errors(log)[0].line is None
-
-    def test_source_line_without_continuation(self):
-        log = "! Missing $ inserted.\nl.7 $x\n"
-        assert parse_tex_errors(log)[0].source == "$x"
 
 
 class TestFormatTexErrors:

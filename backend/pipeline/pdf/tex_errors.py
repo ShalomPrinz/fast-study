@@ -9,7 +9,6 @@ class TexError:
 
     message: str
     line: int | None
-    source: str  # offending source line, rejoined across TeX's break
     at: str  # the part TeX had read when it failed — the error point
 
 
@@ -21,7 +20,7 @@ _AT_MAX_CHARS = 40
 
 
 def parse_tex_errors(log: str) -> list[TexError]:
-    """Extract the `! message` / `l.<N>` / offending-source triples from a XeLaTeX log.
+    """Extract the `! message` / `l.<N>` error-point pairs from a XeLaTeX log.
     Tolerant: an error with no `l.<N>` marker is still returned, with no line number."""
 
     lines = log.splitlines()
@@ -29,7 +28,7 @@ def parse_tex_errors(log: str) -> list[TexError]:
     for i, line in enumerate(lines):
         if not line.startswith("!") or not line[1:].strip():
             continue
-        num, at, source = None, "", ""
+        num, at = None, ""
         for j in range(i + 1, min(i + 1 + _TEX_LINE_LOOKAHEAD, len(lines))):
             if lines[j].startswith("!"):
                 break
@@ -38,12 +37,8 @@ def parse_tex_errors(log: str) -> list[TexError]:
                 continue
             num = int(m.group(1))
             at = m.group(2).strip()
-            # TeX echoes the rest of the source line indented on the next line,
-            # padded to align under the break point.
-            tail = lines[j + 1] if j + 1 < len(lines) else ""
-            source = (at + tail.strip()) if tail.startswith(" ") else at
             break
-        errors.append(TexError(line[1:].strip().rstrip("."), num, source, at))
+        errors.append(TexError(line[1:].strip().rstrip("."), num, at))
     return errors
 
 

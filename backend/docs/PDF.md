@@ -56,7 +56,7 @@ Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBe
 
 ## Failure messages
 
-Both the raised error and the non-fatal warning are classified by `pipeline/pdf/tex_errors.py`'s `parse_tex_errors` / `format_tex_errors` (pure, wrapped by `classify`) into one short line — first `! …` error, its line, the offending source, plus a count of the rest — because they reach the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, never of `summary.md`; on a hard failure that file is kept as `.pdf_build.tex`, so the number is actually lookup-able.
+Both the raised error and the non-fatal warning are classified by `pipeline/pdf/tex_errors.py`'s `parse_tex_errors` / `format_tex_errors` (pure, wrapped by `classify`) into one short line — first `! …` error, its line, the error point, plus a count of the rest — because they reach the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, never of `summary.md`; on a hard failure that file is kept as `.pdf_build.tex`, so the number is actually lookup-able.
 
 Sources: pandoc's own failure is classified over both its streams; the XeLaTeX passes are classified over `build.log`, falling back to stdout only when no log was written — stdout mirrors the log, so reading both would count every error twice. A failure with no `! …` lines (unparseable markdown, missing template, engine absent) keeps the full log.
 
