@@ -2,10 +2,10 @@ import re
 
 from pipeline.pdf.text import _HEBREW, _INLINE_MATH, _LATIN
 
-MATH_SPAN_RE = re.compile(r"\$\$[\s\S]*?\$\$|" + _INLINE_MATH)
+_MATH_SPAN_RE = re.compile(r"\$\$[\s\S]*?\$\$|" + _INLINE_MATH)
 # A code span whose ENTIRE body is one math expression, so spans mixing code and
 # prose (`RSI`) are left as real code.
-MATH_IN_CODE_RE = re.compile(r"`\s*(\$\$[\s\S]*?\$\$|" + _INLINE_MATH + r")\s*`")
+_MATH_IN_CODE_RE = re.compile(r"`\s*(\$\$[\s\S]*?\$\$|" + _INLINE_MATH + r")\s*`")
 
 # Whole line: opens `$$`, no other `$` or backtick in the body, closes with a lone `$`.
 _UNBALANCED_DISPLAY_MATH_RE = re.compile(
@@ -24,7 +24,7 @@ def unwrap_math_code(text: str) -> str:
     """Strip the backticks the LLM puts around whole math expressions,
     which would otherwise render as literal `$...$` source."""
 
-    return MATH_IN_CODE_RE.sub(lambda m: m.group(1), text)
+    return _MATH_IN_CODE_RE.sub(lambda m: m.group(1), text)
 
 
 # Body shape (_ + letter + 2+ ident chars) excludes real math: $x_i$, $_2F_1$, $a_{ij}$.
@@ -48,7 +48,8 @@ def unwrap_math_text_macros(text: str) -> str:
     return _TEXT_WRAPPED_MACRO_RE.sub(lambda m: m.group(1), text)
 
 
-_TEXT_EDGE_SPACE_RE = re.compile(r"\\text\s*\{([^{}]*)\}")
+# One \text{} body, shared by the two passes below.
+_TEXT_BODY_RE = re.compile(r"\\text\s*\{([^{}]*)\}")
 
 
 def normalize_math_text_spaces(text: str) -> str:
@@ -63,10 +64,9 @@ def normalize_math_text_spaces(text: str) -> str:
         trail = r"\ " if body[-1:].isspace() else ""
         return lead + r"\text{" + body.strip() + "}" + trail
 
-    return _TEXT_EDGE_SPACE_RE.sub(repl, text)
+    return _TEXT_BODY_RE.sub(repl, text)
 
 
-_MATH_TEXT_BODY_RE = re.compile(r"\\text\s*\{([^{}]*)\}")
 # First strong character of a \text{} body decides its base direction (UAX#9 P2/P3).
 _FIRST_STRONG_RE = re.compile(r"([" + _LATIN + r"])|([" + _HEBREW + r"])")
 
@@ -85,7 +85,7 @@ def wrap_math_text_dir(text: str) -> str:
         macro = r"\LR{" if strong.group(1) else r"\RL{"
         return r"\text{" + macro + body + "}}"
 
-    return _MATH_TEXT_BODY_RE.sub(repl, text)
+    return _TEXT_BODY_RE.sub(repl, text)
 
 
 _MATH_NUMBER = r"[0-9]+(?:[.,][0-9]+)*"
@@ -162,14 +162,13 @@ def merge_ltr_math(text: str) -> str:
 
     out = []
     i = 0
+    last = 0  # start of the untouched run still to be flushed
     n = len(text)
     while i < n:
         # Skip display math wholesale — never reorder or descend into it.
         if text.startswith("$$", i):
             j = text.find("$$", i + 2)
-            j = (j + 2) if j != -1 else n
-            out.append(text[i:j])
-            i = j
+            i = (j + 2) if j != -1 else n
             continue
         if text.startswith(r"\LR{", i):
             end = _lr_block_end(text, i)
@@ -183,10 +182,10 @@ def merge_ltr_math(text: str) -> str:
                 else None
             )
             if m:
+                out.append(text[last:i])
                 out.append(r"\LR{" + inner + " " + m.group(0) + "}")
-                i = m.end()
+                i = last = m.end()
                 continue
-            out.append(text[i:end])
             i = end
             continue
         if text[i] == "$":
@@ -198,11 +197,12 @@ def merge_ltr_math(text: str) -> str:
                 if text.startswith(r"\LR{", k):
                     end = _lr_block_end(text, k)
                     inner = text[k + 4 : end - 1]
+                    out.append(text[last:i])
                     out.append(r"\LR{" + m.group(0) + " " + inner + "}")
-                    i = end
+                    i = last = end
                     continue
-        out.append(text[i])
         i += 1
+    out.append(text[last:])
     return "".join(out)
 
 
@@ -215,4 +215,4 @@ def normalize_math_spans(text: str) -> str:
             return s
         return "$" + s[1:-1].strip() + "$"
 
-    return MATH_SPAN_RE.sub(replace, text)
+    return _MATH_SPAN_RE.sub(replace, text)
