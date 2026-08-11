@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+from pipeline.pdf.math_fixes import merge_ltr_math, merge_rtl_math_number
 from to_pdf import (
     FONTS_DIR,
     LATEX_HEADER,
@@ -15,6 +16,43 @@ from to_pdf import (
     PdfRenderError,
     convert_to_pdf,
 )
+
+# ---------------------------------------------------------------------------
+# Preprocessing chain order
+# ---------------------------------------------------------------------------
+
+# Inputs in post-wrap_math_text_dir shape (the \RL{} is already on the Hebrew body),
+# spanning both adjacencies: number before/after the \text{}, zero-gap and spaced,
+# \LR{} on either side, and an \LR{} body ending in a digit.
+MERGE_INPUTS = [
+    r"\LR{\texttt{cells}} $240 \text{\RL{תאים}}$",
+    r"\LR{\texttt{cells}} $240\text{\RL{תאים}}$",
+    r"\LR{\texttt{cells}}$240 \text{\RL{תאים}}$",
+    r"\LR{\texttt{cells}} $\text{\RL{תיוג}}\  1$",
+    r"$\text{\RL{תיוג}}\  1$ \LR{\texttt{cells}}",
+    r"$240 \text{\RL{תאים}}$ \LR{RDI}",
+    r"\LR{v2}$5 \text{\RL{תאים}}$",
+    r"\LR{240} $\text{\RL{תאים}}$",
+    r"$240 \text{\RL{תאים}}$",
+]
+
+
+class TestMergesCommute:
+    """`preprocess` runs merge_rtl_math_number then merge_ltr_math, but that order is
+    not load-bearing today — this fails loudly if a change ever makes it so."""
+
+    @pytest.mark.parametrize("text", MERGE_INPUTS)
+    def test_either_order_gives_the_same_result(self, text):
+        assert merge_ltr_math(merge_rtl_math_number(text)) == merge_rtl_math_number(
+            merge_ltr_math(text)
+        )
+
+    def test_chain_order_output_is_pinned(self):
+        # Both sides being equally broken would satisfy commutativity — pin the value.
+        assert merge_ltr_math(merge_rtl_math_number(MERGE_INPUTS[0])) == (
+            r"\LR{\texttt{cells} $\text{\RL{\ensuremath{240} תאים}}$}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Lua filter — integration test via `pandoc --to=latex`

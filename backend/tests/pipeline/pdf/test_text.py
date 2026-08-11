@@ -1,6 +1,8 @@
 from pipeline.pdf.bidi import force_ltr_inline_code, wrap_english_phrases
 from pipeline.pdf.math_fixes import normalize_math_spans
 from pipeline.pdf.text import (
+    _LATEX_SPECIAL,
+    _latex_escape,
     apply_outside_fences,
     ensure_blank_before_lists,
     normalize_dashes,
@@ -44,6 +46,35 @@ class TestNormalizeDashes:
 
     def test_em_dash_inside_display_math_untouched(self):
         assert normalize_dashes("$$\na—b\n$$") == "$$\na—b\n$$"
+
+
+# ---------------------------------------------------------------------------
+# _latex_escape
+# ---------------------------------------------------------------------------
+
+
+class TestLatexEscape:
+    def test_every_special_char_escaped(self):
+        for ch, esc in _LATEX_SPECIAL.items():
+            assert _latex_escape(f"a{ch}b") == f"a{esc}b"
+
+    def test_backslash_becomes_textbackslash(self):
+        assert _latex_escape("\\") == r"\textbackslash{}"
+
+    def test_backslash_replacement_braces_survive_the_brace_pass(self):
+        # The sentinel round-trip: \ is parked as \x00 so the braces of its own
+        # \textbackslash{} replacement aren't escaped by the {/} pass that follows.
+        assert _latex_escape(r"\x{y}") == r"\textbackslash{}x\{y\}"
+
+    def test_circumflex_replacement_braces_not_re_escaped(self):
+        # ^ and ~ also expand to a macro with braces, and they run after {/}.
+        assert _latex_escape("^~") == r"\textasciicircum{}\textasciitilde{}"
+
+    def test_empty_string(self):
+        assert _latex_escape("") == ""
+
+    def test_nothing_special_unchanged(self):
+        assert _latex_escape("x86 pipeline") == "x86 pipeline"
 
 
 # ---------------------------------------------------------------------------

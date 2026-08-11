@@ -1,4 +1,4 @@
-from pipeline.pdf.tex_errors import format_tex_errors, parse_tex_errors
+from pipeline.pdf.tex_errors import classify, format_tex_errors, parse_tex_errors
 
 # ---------------------------------------------------------------------------
 # XeLaTeX log classification
@@ -93,3 +93,22 @@ class TestFormatTexErrors:
 
     def test_empty_list(self):
         assert format_tex_errors([]) == ""
+
+
+class TestClassify:
+    def test_parsed_error_wins_over_the_fallback(self):
+        fallback = "xelatex produced no usable PDF:\n" + MULTI_ERROR_LOG
+        msg = classify(MULTI_ERROR_LOG, fallback)
+        assert msg == format_tex_errors(parse_tex_errors(MULTI_ERROR_LOG))
+        assert msg != fallback
+
+    def test_log_without_bang_line_returns_the_fallback_verbatim(self):
+        # pandoc's own failures (bad markdown, missing template) carry no `! …`,
+        # so the caller's full-log fallback is the only useful message.
+        fallback = "pandoc failed:\nTry pandoc --help."
+        assert classify("pandoc: unrecognized option `--nope'\n", fallback) == fallback
+
+    def test_empty_log_returns_the_fallback(self):
+        assert classify("", "xelatex exited 1 with no reported error") == (
+            "xelatex exited 1 with no reported error"
+        )

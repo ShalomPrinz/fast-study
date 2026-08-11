@@ -269,6 +269,15 @@ class TestNormalizeMathTextSpaces:
         text = r"המחלקה $\Sigma_k = co\Pi_k$ סגורה"
         assert normalize_math_text_spaces(text) == text
 
+    def test_reach_extends_to_a_bare_text_macro_in_prose(self):
+        # Documents reach, not intent: the regex is region-wide, so a \text{} written
+        # outside any $…$ is rewritten identically. Harmless — the chain only feeds it
+        # prose regions, where a literal \text{} is not a real input.
+        assert (
+            normalize_math_text_spaces(r"טקסט \text{ prose } כאן")
+            == r"טקסט \ \text{prose}\  כאן"
+        )
+
 
 # ---------------------------------------------------------------------------
 # normalize_math_spans
@@ -394,6 +403,14 @@ class TestWrapMathTextDir:
 
     def test_abbreviation_body_still_ltr(self):
         assert wrap_math_text_dir(r"\text{s.t.}") == r"\text{\LR{s.t.}}"
+
+    def test_reach_extends_to_a_bare_text_macro_in_prose(self):
+        # Documents reach, not intent: same region-wide regex as
+        # normalize_math_text_spaces — a prose \text{} gets the same direction wrapper.
+        assert (
+            wrap_math_text_dir(r"טקסט \text{prose} כאן")
+            == r"טקסט \text{\LR{prose}} כאן"
+        )
 
 
 # ---------------------------------------------------------------------------

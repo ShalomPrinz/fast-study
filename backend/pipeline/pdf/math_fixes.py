@@ -48,7 +48,8 @@ def unwrap_math_text_macros(text: str) -> str:
     return _TEXT_WRAPPED_MACRO_RE.sub(lambda m: m.group(1), text)
 
 
-# One \text{} body, shared by the two passes below.
+# One \text{} body, shared by the two passes below. Deliberately region-wide, not
+# math-only: the chain runs it over prose where a literal \text{} is not a real input.
 _TEXT_BODY_RE = re.compile(r"\\text\s*\{([^{}]*)\}")
 
 
