@@ -331,6 +331,20 @@ class TestWrapEnglishPhrases:
         result = wrap_english_phrases("מיזוג 3-way merge")
         assert r"\LR{3-way merge}" in result
 
+    # --- Backtick spans agree with force_ltr_inline_code about newlines ---
+
+    def test_backticks_across_lines_are_not_protected(self):
+        # A backtick pair spanning a newline is not a code span for force_ltr_inline_code
+        # either, so protecting it would leave its Latin wrapped by neither helper.
+        result = wrap_english_phrases("טקסט `foo\nבדיקה bar baz` טקסט")
+        assert r"\LR{foo}" in result
+        assert r"\LR{bar baz}" in result
+
+    def test_single_line_code_span_still_protected(self):
+        result = wrap_english_phrases("טקסט `bar baz` טקסט")
+        assert "`bar baz`" in result
+        assert r"\LR" not in result
+
 
 # ---------------------------------------------------------------------------
 # force_ltr_inline_code

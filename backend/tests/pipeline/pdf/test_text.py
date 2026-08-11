@@ -29,6 +29,22 @@ class TestNormalizeDashes:
     def test_hyphen_minus_untouched(self):
         assert normalize_dashes("3-way") == "3-way"
 
+    def test_em_dash_inside_inline_code_untouched(self):
+        assert normalize_dashes("use `a—b` here") == "use `a—b` here"
+
+    def test_en_dash_inside_inline_code_untouched(self):
+        assert normalize_dashes("use `a–b` here") == "use `a–b` here"
+
+    def test_em_dash_inside_inline_math_untouched(self):
+        assert normalize_dashes("נוסחה $a—b$ סוף") == "נוסחה $a—b$ סוף"
+
+    def test_dash_outside_protected_span_still_converted(self):
+        result = normalize_dashes("לפני — `a—b` — אחרי")
+        assert result == "לפני  -  `a—b`  -  אחרי"
+
+    def test_em_dash_inside_display_math_untouched(self):
+        assert normalize_dashes("$$\na—b\n$$") == "$$\na—b\n$$"
+
 
 # ---------------------------------------------------------------------------
 # ensure_blank_before_lists
@@ -84,6 +100,15 @@ class TestEnsureBlankBeforeLists:
 
     def test_empty_text(self):
         assert ensure_blank_before_lists("") == ""
+
+    def test_no_blank_inserted_inside_display_math(self):
+        # A blank line inside $$…$$ ends the paragraph for pandoc and splits the block.
+        text = "טקסט\n$$\nx = a\n- b\n$$\n"
+        assert ensure_blank_before_lists(text) == text
+
+    def test_list_after_display_math_still_separated(self):
+        text = "$$\nx = a\n$$\nפסקה\n- פריט\n"
+        assert "\n\n- פריט" in ensure_blank_before_lists(text)
 
 
 # ---------------------------------------------------------------------------

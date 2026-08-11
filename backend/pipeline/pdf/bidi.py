@@ -1,6 +1,6 @@
 import re
 
-from pipeline.pdf.text import _HEBREW, _INLINE_MATH, _LATIN, _latex_escape
+from pipeline.pdf.text import _HEBREW, _LATIN, _PROTECTED_RE, _latex_escape
 
 INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
 
@@ -47,9 +47,8 @@ def wrap_english_phrases(text: str) -> str:
             result += r"\RL{" + punct + "}"
         return result
 
-    # Split on math/code spans so MULTI_LATIN_RE never touches them: the capturing
-    # group keeps delimiters, so odd indices are protected and even ones substituted.
-    _PROTECTED_RE = re.compile(r"(\$\$[\s\S]*?\$\$|" + _INLINE_MATH + r"|`[^`]*`)")
+    # Split on math/code spans so MULTI_LATIN_RE never touches them: odd indices are
+    # protected passthrough, even ones get substituted.
     parts = _PROTECTED_RE.split(text)
     out = []
     for i, part in enumerate(parts):
