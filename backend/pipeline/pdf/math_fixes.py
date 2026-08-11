@@ -119,15 +119,13 @@ def merge_rtl_math_number(text: str) -> str:
     other. \\RL{} is text-mode only, so the merged run has to live inside the \\text{}."""
 
     def repl(m: re.Match) -> str:
-        num, gap, body = (
-            (m.group(1), m.group(2), m.group(3))
-            if m.group(1)
-            else (m.group(6), m.group(5), m.group(4))
-        )
+        num, body = (m.group(1), m.group(3)) if m.group(1) else (m.group(6), m.group(4))
         # The number was in math flow, so it keeps math typesetting after the move;
         # \ensuremath re-enters math inside the text-mode \text{} body.
         num = r"\ensuremath{" + num + "}"
-        gap = " " if gap else ""
+        # The space is unconditional — the source gap may be empty, and a merged number
+        # fused onto the Hebrew word renders as one token ("240תאים").
+        gap = " "
         parts = (num, gap, body) if m.group(1) else (body, gap, num)
         return r"\text{\RL{" + "".join(parts) + "}}"
 

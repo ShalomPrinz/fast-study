@@ -506,6 +506,15 @@ class TestMergeRtlMathNumber:
         text = r"3.5 \ \text{\RL{שעות}}"
         assert merge_rtl_math_number(text) == r"\text{\RL{\ensuremath{3.5} שעות}}"
 
+    def test_zero_gap_number_before_text_gets_a_space(self):
+        # Regression: with no source gap the merged run rendered "240תאים".
+        text = r"240\text{\RL{תאים}}"
+        assert merge_rtl_math_number(text) == r"\text{\RL{\ensuremath{240} תאים}}"
+
+    def test_zero_gap_number_after_text_gets_a_space(self):
+        text = r"\text{\RL{תאים}}240"
+        assert merge_rtl_math_number(text) == r"\text{\RL{תאים \ensuremath{240}}}"
+
     def test_hebrew_text_without_adjacent_number_untouched(self):
         text = r"$$A = \text{\RL{שלב ואילך}}$$"
         assert merge_rtl_math_number(text) == text
