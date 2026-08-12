@@ -23,6 +23,12 @@ def test_head_dropped():
     assert AccessFilter().filter(access_record("HEAD", "/tree", 200)) is False
 
 
+def test_options_dropped():
+    """CORS preflights never reach a handler."""
+
+    assert AccessFilter().filter(access_record("OPTIONS", "/tree", 200)) is False
+
+
 def test_get_2xx_dropped():
     """A successful GET is routine frontend traffic and is suppressed."""
 

@@ -91,10 +91,10 @@ unattended all the way to the finished summary.
 ## Access logging
 
 `logging_setup.py` (called once at `main.py` import, after uvicorn's own `dictConfig`, so it wins)
-reformats uvicorn's access log to `[api] POST /courses/X/… → 200` and suppresses two routine
-classes of line: every `HEAD`, and every `GET` that returned 2xx. Those requests still run
-normally — they are the frontend's constant existence probes and tree/status reads, and only
-their log lines are dropped. Failing GETs and all writes are always logged.
+reformats uvicorn's access log to `[api] POST /courses/X/… → 200` and suppresses the routine
+classes of line: every `HEAD`, every `OPTIONS`, and every `GET` that returned 2xx. Those requests
+still run normally — they are the frontend's constant existence probes, CORS preflights, and
+tree/status reads, and only their log lines are dropped. Failing GETs and all writes are always logged.
 
 ## Trust model
 

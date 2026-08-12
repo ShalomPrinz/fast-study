@@ -22,6 +22,10 @@ class TestAccessFilter:
         record = make_record(("127.0.0.1:1", "HEAD", "/courses", "1.1", 200))
         assert AccessFilter().filter(record) is False
 
+    def test_options_dropped(self):
+        record = make_record(("127.0.0.1:1", "OPTIONS", "/courses", "1.1", 200))
+        assert AccessFilter().filter(record) is False
+
     def test_successful_get_dropped(self):
         record = make_record(("127.0.0.1:1", "GET", "/status", "1.1", 200))
         assert AccessFilter().filter(record) is False

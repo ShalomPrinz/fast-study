@@ -2,14 +2,14 @@ import logging
 
 
 class AccessFilter(logging.Filter):
-    """Drop the routine access lines the frontend fires constantly: HEAD probes and successful GETs."""
+    """Drop the routine access lines the frontend fires constantly: HEAD/OPTIONS probes and successful GETs."""
 
     def filter(self, record):
         args = record.args
         if not isinstance(args, tuple) or len(args) != 5:
             return True
         _, method, _, _, status = args
-        if method == "HEAD":
+        if method in ("HEAD", "OPTIONS"):
             return False
         return not (method == "GET" and isinstance(status, int) and 200 <= status < 300)
 
