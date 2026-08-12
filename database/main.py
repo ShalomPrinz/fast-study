@@ -146,28 +146,28 @@ async def patch_lecture(
         return _error(str(e), 400)
 
 
-def _post_run_audio(course: str, lecture: str, kind: str) -> None:
-    """Blocking POST to backend's /run/audio; runs in a worker thread via asyncio.to_thread."""
+def _post_run_pipeline(course: str, lecture: str, kind: str) -> None:
+    """Blocking POST to backend's /pipeline; runs in a worker thread via asyncio.to_thread."""
 
     url = (
         f"{BACKEND_URL}/courses/{urllib.parse.quote(course, safe='')}"
         f"/lectures/{urllib.parse.quote(lecture, safe='')}"
-        f"/run/audio?kind={urllib.parse.quote(kind, safe='')}"
+        f"/pipeline?kind={urllib.parse.quote(kind, safe='')}"
     )
     try:
-        # No timeout: stripping audio can take minutes, and a timeout would orphan the run.
+        # No timeout: a full pipeline run takes many minutes, and a timeout would orphan it.
         with urllib.request.urlopen(
             urllib.request.Request(url, method="POST"), timeout=None
         ) as resp:
             resp.read()
     except Exception as e:
-        log.error("auto run/audio failed for %s/%s (%s): %s", course, lecture, kind, e)
+        log.error("auto pipeline failed for %s/%s (%s): %s", course, lecture, kind, e)
 
 
-async def _trigger_audio(course: str, lecture: str, kind: str) -> None:
+async def _trigger_pipeline(course: str, lecture: str, kind: str) -> None:
     """Fire-and-forget bridge that hands the blocking POST off to a worker thread."""
 
-    await asyncio.to_thread(_post_run_audio, course, lecture, kind)
+    await asyncio.to_thread(_post_run_pipeline, course, lecture, kind)
 
 
 @app.put("/courses/{course}/lectures/{lecture}/video")
@@ -175,12 +175,12 @@ async def put_video(
     course: str, lecture: str, request: Request, kind: str = Query("lecture")
 ):
     """Upload video.mp4 from a raw body, wiping derived artifacts, then fire-and-forget the
-    backend's audio step; responds as soon as the bytes are on disk."""
+    backend's full pipeline; responds as soon as the bytes are on disk."""
 
     try:
         data = await request.body()
         crud.write_video(course, lecture, kind, data)
-        asyncio.create_task(_trigger_audio(course, lecture, kind))
+        asyncio.create_task(_trigger_pipeline(course, lecture, kind))
         return Response(status_code=204)
     except Exception as e:
         return _error(str(e), 400)

@@ -28,7 +28,7 @@ changes: keep them backward-compatible or flag the impact.
 Reads the repo-root `.env` via `python-dotenv`:
 
 - `DATA_ROOT` (required) — absolute path to the data directory.
-- `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload audio trigger.
+- `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload pipeline trigger.
 
 ## Running and testing
 

@@ -22,7 +22,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/archived`                                | archive/unarchive (`{archived}`)                                           |
 | `POST   /courses/{course}/lectures`                                | create lecture/recitation (`{name}`)                                       |
 | `PATCH  /courses/{course}/lectures/{lecture}`                      | rename lecture/recitation (`{name}`)                                       |
-| `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts, auto-triggers audio           |
+| `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts, auto-triggers the pipeline    |
 | `GET    /courses/{course}/lectures/{lecture}/materials`            | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture   |
 | `POST   /courses/{course}/lectures/{lecture}/materials`            | add a material pdf; returns `{name}` with the allocated filename           |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}`         | write one file; neutral                                                    |
@@ -74,13 +74,19 @@ only, so the pipeline's untouched output stays recoverable however many times th
 
 Summary writes never go through the generic files route — that would skip the snapshot.
 
-## Video upload triggers audio extraction
+## Video upload triggers the pipeline
 
 After the bytes land, the video route fire-and-forgets a POST to
-`${BACKEND_URL}/courses/{c}/lectures/{l}/run/audio?kind=…` so a downloader upload starts the
-pipeline without a frontend click. It runs on a worker thread with no timeout (stripping audio
-is slow), and failures are logged and swallowed — the upload already succeeded, and the user can
-always start the step manually. The PUT responds as soon as the file is on disk.
+`${BACKEND_URL}/courses/{c}/lectures/{l}/pipeline?kind=…` so a downloader upload starts the
+pipeline without a frontend click. It targets `/pipeline` rather than a single step so the run
+continues past audio on its own; since the backend serializes per lecture, a later manual "Run
+remaining" click reporting `busy` accurately describes a run already in flight rather than a lost
+trigger. It runs on a worker thread with no timeout (a full run takes many minutes), and failures
+are logged and swallowed — the upload already succeeded, and the user can always start the run
+manually. The PUT responds as soon as the file is on disk.
+
+Consequence: every upload, including every downloader upload, spends Groq and Gemini quota
+unattended all the way to the finished summary.
 
 ## Access logging
 
