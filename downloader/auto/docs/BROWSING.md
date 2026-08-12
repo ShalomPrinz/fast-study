@@ -64,12 +64,20 @@ a fallback: an echoed ref can still reach expand/download, and a non-YouTube (or
 host there is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500
 "try again"); the same mapping applies on `/download-item`.
 
-A `google-drive` item is **not** expandable — it is one concrete file, downloadable straight from
-its `pageUrl`. `/download-item` skips the browser entirely and hands that URL to `server/`'s
-`/download-youtube` (yt-dlp), after a `yt-dlp --skip-download --print id` preflight
-(`assertPubliclyShared`): `server/`'s download job is fire-and-forget, so a file that isn't shared
-"anyone with the link" is caught here and surfaces as `422 {status:'unsupported'}` naming Drive
-sharing and the URL; any other yt-dlp failure stays a 500.
+A `google-drive` item is **not** expandable — it is one concrete file. Nothing in the WS payload
+says _what_ that file is (a Drive link in a recordings section is as easily `L1.zip` as a
+lecture video), so `/download-item` skips the browser and probes the file's real name first
+(`probeDriveFile`), then routes on its extension: `.mp4`/`.mkv`/`.mov`/`.webm`/`.m4v`/`.avi` →
+`server/`'s `/download-youtube` (yt-dlp on the `pageUrl`), `.pdf` → `/download-file` as one of the
+lecture's materials, anything else → `422 {status:'unsupported'}` naming the actual extension.
+The probe reads `Content-Disposition` off `uc?export=download&id=<ID>` (one request; a large
+file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallbacks) — the filename
+is a fact about the file, unlike yt-dlp's stderr wording. A file that isn't shared "anyone with
+the link" (or was removed) yields no name at all and is the same 422, naming Drive sharing and
+the URL. `server/`'s download job is fire-and-forget, which is why all of this is decided here.
+Results are memoized per Drive **file id** for the session (`src/core/driveProbeCache.js`), and
+`/download-item` echoes the resolved `media` back beside `ok`. `/list` never probes — it costs an
+HTTP round-trip per row.
 
 A `moodle-file` item is likewise not expandable and skips the browser: `/download-item` resolves the
 university from the ref's `fileurl`, appends the WS token via `pluginfileUrl` (pluginfile authenticates

@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Headless-browser auto-downloader",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "test": "node --test test/*.test.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

@@ -3,7 +3,8 @@ import { postDownload, postDownloadFile, postDownloadYoutube } from '../http/ser
 import { assertPluginfileReadable, pluginfileUrl } from '../moodle/wsClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
-import { assertPubliclyShared } from '../extractors/GoogleDriveExtractor.js';
+import { probeDriveFile } from '../extractors/GoogleDriveExtractor.js';
+import { UnsupportedError } from '../lib/errors.js';
 import { splitName } from '../lib/naming.js';
 import { cacheCap, getCap } from './replayCache.js';
 import { stripTags } from '../lib/html.js';
@@ -154,10 +155,8 @@ export async function downloadMoodleFile({
 }
 
 /**
- * DOWNLOAD PATH (HTTP), no browser: hand a direct url to yt-dlp via server/. A youtube entry
- * must be a specific expanded playlist entry (`url`); a Drive file downloads straight from its
- * `pageUrl`, preflighted so a non-public file fails as 422 rather than silently inside server/'s
- * job. Single target, so there is no `only` semantics; the cap is just a `{url}`.
+ * DOWNLOAD PATH (HTTP), no browser: hand a specific expanded playlist entry (`url`) to yt-dlp
+ * via server/. Single target, so there is no `only` semantics; the cap is just a `{url}`.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
@@ -167,14 +166,8 @@ export async function downloadYtDlp({ recording, course, name, kind, ref, forceC
   let cap = forceCapture ? null : getCap(course, name, kind, 'video')?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
-    let url = recording.pageUrl;
-    if (recording.strategy === 'youtube-playlist') {
-      if (!recording.url) throw new Error('expand the playlist and download a specific entry');
-      url = recording.url;
-    } else {
-      await assertPubliclyShared(url);
-    }
-    cap = { url };
+    if (!recording.url) throw new Error('expand the playlist and download a specific entry');
+    cap = { url: recording.url };
     cacheCap(course, name, kind, 'video', cap, ref);
   }
   const jobId = await postDownloadYoutube({
@@ -186,6 +179,45 @@ export async function downloadYtDlp({ recording, course, name, kind, ref, forceC
     fromCache,
   });
   return [jobId].filter(Boolean);
+}
+
+/**
+ * DOWNLOAD PATH (HTTP), no browser: a single Google Drive file. Its own entry point because it
+ * is the one strategy whose media isn't known until it runs — the probe resolves the real
+ * filename first and routes on its extension: a video goes to yt-dlp, a PDF becomes one of the
+ * lecture's materials, anything else can never succeed and says so (422). Single target; the
+ * cap is just a `{url}`, cached under the media that actually lands.
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
+ *           course: string, name: string, kind: string, ref?: string|null,
+ *           forceCapture?: boolean }} args
+ * @returns {Promise<{ jobIds: string[], media: 'video'|'material' }>} server/ job ids (one),
+ *   followed on server/'s /events, plus what the file turned out to be.
+ */
+export async function downloadDriveFile({
+  recording,
+  course,
+  name,
+  kind,
+  ref,
+  forceCapture = false,
+}) {
+  const { filename, media, downloadUrl } = await probeDriveFile(recording.pageUrl);
+  if (!media) {
+    const ext = filename.slice(filename.lastIndexOf('.'));
+    throw new UnsupportedError(
+      `Google Drive file is a ${ext}, not a video: ${recording.pageUrl}. Open it in a browser and download manually.`,
+    );
+  }
+  let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
+  const fromCache = Boolean(cap);
+  if (!cap) {
+    // yt-dlp resolves the /file/d/ page itself; /download-file needs the direct-download URL.
+    cap = { url: media === 'video' ? recording.pageUrl : downloadUrl };
+    cacheCap(course, name, kind, media, cap, ref);
+  }
+  const post = media === 'video' ? postDownloadYoutube : postDownloadFile;
+  const jobId = await post({ url: cap.url, course, lecture: name, kind, ref, fromCache });
+  return { jobIds: [jobId].filter(Boolean), media };
 }
 
 /**

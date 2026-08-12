@@ -9,6 +9,7 @@ import {
   downloadRecording,
   downloadMoodleFile,
   downloadYtDlp,
+  downloadDriveFile,
 } from '../core/core.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
@@ -258,15 +259,27 @@ async function downloadItem(req, res) {
       throw e;
     }
     logResult('/download-item', `ok (${jobs.length} job)`);
-    return send(res, 200, { ok: jobs.length > 0 });
+    return send(res, 200, { ok: jobs.length > 0, media: 'material' });
   }
 
-  // yt-dlp strategies need no browser: a youtube entry carries its direct url (playlist
-  // already expanded), a Drive file its pageUrl. videostream must sniff the .mp4 fresh.
-  if (
-    (recording.strategy === 'youtube-playlist' && recording.url) ||
-    recording.strategy === 'google-drive'
-  ) {
+  // A Drive file needs no browser either, but only the download-time filename probe knows
+  // whether it lands as a video or as a material — it reports back which.
+  if (recording.strategy === 'google-drive') {
+    const { jobIds, media } = await downloadDriveFile({
+      recording,
+      course,
+      name,
+      kind,
+      ref: rowRef,
+      forceCapture: opts.forceCapture,
+    });
+    logResult('/download-item', `ok (${jobIds.length} job, ${media})`);
+    return send(res, 200, { ok: jobIds.length > 0, media });
+  }
+
+  // An expanded youtube entry carries its direct url, so it needs no browser either;
+  // videostream must sniff the .mp4 fresh.
+  if (recording.strategy === 'youtube-playlist' && recording.url) {
     const jobs = await downloadYtDlp({
       recording,
       course,
@@ -276,7 +289,7 @@ async function downloadItem(req, res) {
       forceCapture: opts.forceCapture,
     });
     logResult('/download-item', `ok (${jobs.length} job)`);
-    return send(res, 200, { ok: jobs.length > 0 });
+    return send(res, 200, { ok: jobs.length > 0, media: 'video' });
   }
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
@@ -306,7 +319,7 @@ async function downloadItem(req, res) {
       }),
     );
     logResult('/download-item', `ok (${jobs.length} jobs)`);
-    return send(res, 200, { ok: jobs.length > 0 });
+    return send(res, 200, { ok: jobs.length > 0, media: 'video' });
   }
 
   // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
@@ -344,7 +357,7 @@ async function downloadItem(req, res) {
     throw e;
   }
   logResult('/download-item', `ok (${jobs.length} job)`);
-  send(res, 200, { ok: jobs.length > 0 });
+  send(res, 200, { ok: jobs.length > 0, media: 'video' });
 }
 
 // Log the shared plain session into Moodle via a one-shot autologin key so the token-gated

@@ -1,10 +1,7 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
-
-const execFileAsync = promisify(execFile);
+import { cacheDriveMedia, getDriveProbe } from '../core/driveProbeCache.js';
 
 // Hosts that serve Google Drive file links. Anything else isn't Drive.
 const DRIVE_HOSTS = new Set(['drive.google.com', 'docs.google.com']);
@@ -27,51 +24,135 @@ function isDriveFileUrl(url) {
   return (u.pathname === '/open' || u.pathname === '/uc') && !!u.searchParams.get('id');
 }
 
-// yt-dlp stderr fragments that mean "this file isn't readable without a Google session".
-// Drive answers 404 (never 403) for a file the anonymous caller may not see, so any 40x
-// on a Drive URL is a sharing problem, not a retryable one. 429 stays retryable.
-const NOT_SHARED_PATTERNS = [
-  /sign in/i,
-  /permission/i,
-  /not publicly shared/i,
-  /private/i,
-  /HTTP Error 40\d/i,
-];
-
-/** Does this yt-dlp stderr mean the Drive file isn't shared publicly? */
-function isNotSharedStderr(detail) {
-  return NOT_SHARED_PATTERNS.some((re) => re.test(detail));
-}
-
 /**
- * Cheap synchronous preflight before handing a Drive URL to `server/`. `server/`'s
- * /download-youtube is fire-and-forget (200 immediately, yt-dlp in a background job),
- * so a permission failure there could never reach the frontend — resolve it here.
- * Throws UnsupportedError (→ 422) when Drive won't serve the file anonymously; any
- * other yt-dlp failure stays a plain Error (→ 500 "try again").
+ * Drive file id out of the three single-file URL shapes, or null.
  * @param {string} url
+ * @returns {string|null}
  */
-export async function assertPubliclyShared(url) {
-  try {
-    await execFileAsync('yt-dlp', ['--skip-download', '--print', 'id', url]);
-  } catch (err) {
-    if (err.code === 'ENOENT') throw new Error('yt-dlp not found on PATH');
-    const detail = err.stderr || err.message || '';
-    if (isNotSharedStderr(detail)) {
-      throw new UnsupportedError(
-        `Google Drive file is not publicly shared (or was removed): ${url}. Open it in a browser and download manually.`,
-      );
-    }
-    throw new Error(`yt-dlp failed to resolve Google Drive file: ${detail}`);
+export function driveFileId(url) {
+  const u = safeUrl(url);
+  if (!u || !DRIVE_HOSTS.has(u.hostname)) return null;
+  const m = /^\/file\/d\/([^/]+)/.exec(u.pathname);
+  if (m) return decodeURIComponent(m[1]);
+  if (u.pathname === '/open' || u.pathname === '/uc') return u.searchParams.get('id') || null;
+  return null;
+}
+
+/** The anonymous direct-download URL for a file id — what both the probe and `server/` fetch. */
+export function driveDownloadUrl(fileId) {
+  return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
+}
+
+// A name only counts as resolved when it carries an extension: that is what the routing
+// reads, and it also rejects the page titles Drive serves instead ("Sign in", "Virus scan
+// warning") when the file isn't readable anonymously.
+const NAMED_FILE = /^(.+)\.([A-Za-z0-9]{1,5})$/;
+
+/**
+ * Filename out of a `Content-Disposition` header, or null. Handles both the plain
+ * `filename="L1.zip"` and the RFC 5987 `filename*=UTF-8''L1.zip` Drive sends for non-ASCII names.
+ * @param {string|null|undefined} header
+ * @returns {string|null}
+ */
+export function filenameFromDisposition(header) {
+  if (!header) return null;
+  const ext = /filename\*=\s*[^']*''([^;]+)/i.exec(header);
+  if (ext) {
+    const decoded = decodeURIComponent(ext[1].trim());
+    if (NAMED_FILE.test(decoded)) return decoded;
   }
+  const plain = /filename\s*=\s*"([^"]+)"|filename\s*=\s*([^;]+)/i.exec(header);
+  const name = (plain?.[1] ?? plain?.[2] ?? '').trim();
+  return NAMED_FILE.test(name) ? name : null;
 }
 
 /**
- * Moodle `url` module linking to a single Google Drive video file. The target
- * (contents[].fileurl) is known at list time, so the Drive host + single-file path are
- * decided with no fetch. Not expandable (folder links are out of scope) and needs no
- * browser: `server/` runs yt-dlp straight on the Drive URL, which serves
- * "anyone with the link" files without a Google session.
+ * Filename out of a Drive HTML page, or null: the confirm interstitial a large file answers
+ * with names it in `uc-name-size`/the virus-scan sentence, and `/view` puts it in the `<title>`.
+ * @param {string} html
+ * @returns {string|null}
+ */
+export function filenameFromHtml(html) {
+  const text = String(html ?? '');
+  const candidates = [
+    /class="uc-name-size"[^>]*>\s*<a[^>]*>([^<]+)<\/a>/i.exec(text)?.[1],
+    /([^\s<>"]+) \([\d.]+[KMG]?\) is too large/i.exec(text)?.[1],
+    /<title>([^<]*)<\/title>/i.exec(text)?.[1]?.replace(/\s*-\s*Google Drive\s*$/i, ''),
+  ];
+  for (const c of candidates) {
+    const name = c?.trim();
+    if (name && NAMED_FILE.test(name)) return name;
+  }
+  return null;
+}
+
+// Containers yt-dlp actually produces here; anything else it cannot turn into video.mp4.
+const VIDEO_EXTENSIONS = new Set(['mp4', 'mkv', 'mov', 'webm', 'm4v', 'avi']);
+
+/**
+ * Which file a Drive filename would land as: 'video' (yt-dlp), 'material' (a lecture PDF),
+ * or null for anything this service can't use (archives, slides decks, …).
+ * @param {string|null} filename
+ * @returns {'video'|'material'|null}
+ */
+export function classifyDriveFilename(filename) {
+  const ext = NAMED_FILE.exec(String(filename ?? ''))?.[2]?.toLowerCase();
+  if (!ext) return null;
+  if (VIDEO_EXTENSIONS.has(ext)) return 'video';
+  return ext === 'pdf' ? 'material' : null;
+}
+
+// Ask Drive for the file's real name without an API key. The direct-download URL answers a
+// readable file with `Content-Disposition` (one request, happy path); a large one answers the
+// confirm interstitial instead, which still carries the name; `/view`'s <title> is the fallback.
+async function fetchDriveFilename(fileId) {
+  const res = await fetch(driveDownloadUrl(fileId));
+  const fromHeader = filenameFromDisposition(res.headers.get('content-disposition'));
+  if (fromHeader) {
+    await res.body?.cancel().catch(() => {});
+    return fromHeader;
+  }
+  const fromHtml = filenameFromHtml(await res.text().catch(() => ''));
+  if (fromHtml) return fromHtml;
+  const view = await fetch(`https://drive.google.com/file/d/${encodeURIComponent(fileId)}/view`);
+  return filenameFromHtml(await view.text().catch(() => ''));
+}
+
+/**
+ * Resolve what a Drive link actually is before downloading it. `server/`'s download jobs are
+ * fire-and-forget (200 immediately), so the routing decision has to be made here: the filename
+ * is a fact about the file, unlike yt-dlp's stderr wording. Memoized per file id for the session.
+ * Throws UnsupportedError (→ 422) when Drive serves no name at all — the file isn't shared
+ * "anyone with the link" (or was removed), which no retry can fix.
+ * @param {string} url
+ * @returns {Promise<{ fileId: string, filename: string, media: 'video'|'material'|null,
+ *                     downloadUrl: string }>} media null = a real file this service can't use.
+ */
+export async function probeDriveFile(url) {
+  const fileId = driveFileId(url);
+  if (!fileId) throw new UnsupportedError(`not a Google Drive file link: ${url}`);
+  const downloadUrl = driveDownloadUrl(fileId);
+
+  const cached = getDriveProbe(fileId);
+  if (cached) return { fileId, filename: cached.filename, media: cached.media, downloadUrl };
+
+  const filename = await fetchDriveFilename(fileId);
+  if (!filename) {
+    throw new UnsupportedError(
+      `Google Drive file is not publicly shared (or was removed): ${url}. Open it in a browser and download manually.`,
+    );
+  }
+  const media = classifyDriveFilename(filename);
+  cacheDriveMedia(fileId, media, filename);
+  return { fileId, filename, media, downloadUrl };
+}
+
+/**
+ * Moodle `url` module linking to a single Google Drive file. The target (contents[].fileurl)
+ * is known at list time, so the Drive host + single-file path are decided with no fetch; what
+ * the file IS only comes out of the download-time filename probe (probeDriveFile). Not
+ * expandable (folder links are out of scope) and needs no browser: Drive serves "anyone with
+ * the link" files without a Google session.
  */
 export class GoogleDriveExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
