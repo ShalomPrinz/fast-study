@@ -31,7 +31,21 @@ DIRECTION_FILTER = (
     Path(__file__).parent.parent / "assets" / "filters" / "text_direction.lua"
 )
 
+# Preamble pandoc injects via --include-in-header. Package order and the callout box
+# design are load-bearing — see docs/PDF.md.
 LATEX_HEADER = r"""
+\usepackage{tcolorbox}
+\definecolor{calloutDefinitionTint}{HTML}{EDF3F9}
+\definecolor{calloutDefinitionFrame}{HTML}{1F4E79}
+\definecolor{calloutWarningTint}{HTML}{FBF2E3}
+\definecolor{calloutWarningFrame}{HTML}{B8860B}
+\definecolor{calloutInsightTint}{HTML}{EBF4F0}
+\definecolor{calloutInsightFrame}{HTML}{2E7D6B}
+\tcbset{calloutstyle/.style={boxrule=0.7pt, arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt, before skip=8pt, after skip=8pt}}
+\newtcolorbox{calloutdefinition}{calloutstyle, colback=calloutDefinitionTint, colframe=calloutDefinitionFrame}
+\newtcolorbox{calloutwarning}{calloutstyle, colback=calloutWarningTint, colframe=calloutWarningFrame}
+\newtcolorbox{calloutinsight}{calloutstyle, colback=calloutInsightTint, colframe=calloutInsightFrame}
+
 \usepackage{polyglossia}
 \setmainlanguage{hebrew}
 \setotherlanguage{english}
@@ -140,6 +154,26 @@ def _run_xelatex_passes(
     return returncodes, pass2_timeout, combined
 
 
+def preprocess_markdown(text: str) -> str:
+    """The prose fix chain, in order. Runs via `apply_outside_fences`, so it never sees a
+    fenced code block or a `::: callout` marker line. Order matters — see docs/PDF.md."""
+
+    text = close_unbalanced_display_math(text)
+    text = normalize_dashes(text)
+    text = unwrap_math_code(text)
+    text = demote_math_identifier(text)
+    text = unwrap_math_text_macros(text)
+    text = normalize_math_text_spaces(text)
+    text = wrap_math_text_dir(text)
+    text = normalize_math_spans(text)
+    text = ensure_blank_before_lists(text)
+    text = wrap_english_phrases(text)
+    text = force_ltr_inline_code(text)
+    text = merge_rtl_math_number(text)
+    text = merge_ltr_math(text)
+    return text
+
+
 @timed_pipeline("pdf")
 def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
     """Preprocess a markdown file and render it to a PDF beside it in two passes:
@@ -160,24 +194,7 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
     header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", fonts_dir)
 
     raw_md = input_path.read_text(encoding="utf-8")
-
-    def preprocess(t: str) -> str:
-        t = close_unbalanced_display_math(t)
-        t = normalize_dashes(t)
-        t = unwrap_math_code(t)
-        t = demote_math_identifier(t)
-        t = unwrap_math_text_macros(t)
-        t = normalize_math_text_spaces(t)
-        t = wrap_math_text_dir(t)
-        t = normalize_math_spans(t)
-        t = ensure_blank_before_lists(t)
-        t = wrap_english_phrases(t)
-        t = force_ltr_inline_code(t)
-        t = merge_rtl_math_number(t)
-        t = merge_ltr_math(t)
-        return t
-
-    fixed_md = apply_outside_fences(raw_md, preprocess)
+    fixed_md = apply_outside_fences(raw_md, preprocess_markdown)
 
     template_path = (
         Path(__file__).parent.parent / "assets" / "templates" / "pandoc_template.tex"

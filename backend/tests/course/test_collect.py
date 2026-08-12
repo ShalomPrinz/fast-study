@@ -217,3 +217,18 @@ class TestRunCollect:
         )
         run_collect(self.COURSE, node)
         assert gets == [("Lecture 1", "lecture"), ("Recitation 1", "recitation")]
+
+
+class TestCallouts:
+    """topics.md is headings only, so callout markers and their bodies simply drop out —
+    the point is that ::: is never read as a heading or a rule."""
+
+    def test_callout_markers_do_not_become_topics(self):
+        md = "# כותרת\n\n## נושא\n\n::: definition\nהגדרה\n:::\n"
+        parsed = parse_summary(md)
+        assert [t["title"] for t in parsed["topics"]] == ["נושא"]
+
+    def test_heading_inside_a_callout_still_collected(self):
+        md = "# כותרת\n\n## נושא\n\n::: warning\n### תת נושא\n:::\n"
+        parsed = parse_summary(md)
+        assert parsed["topics"][0]["subtopics"] == [{"title": "תת נושא"}]

@@ -4,6 +4,8 @@ so the built-in section names live in exactly one place."""
 
 import re
 
+from pipeline.pdf.text import DIV_MARKER_RE  # noqa: F401 — re-exported for merge.py
+
 # Built-in H2 sections from summarize.md that are boilerplate, not lecture content.
 BUILTINS = {"תקציר", "הערות אישיות והדגשות המרצה", "סיכום", "משימות נדרשות"}
 

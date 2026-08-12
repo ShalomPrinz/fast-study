@@ -53,7 +53,7 @@ Probe with a `\ifx\foo\@undefined NO\else YES\fi` test file before assuming a pr
 
 ## The direction filter
 
-`assets/filters/text_direction.lua` holds the direction fixes that have to happen in pandoc's AST rather than in the markdown or the LaTeX header: code blocks and table column alignment.
+`assets/filters/text_direction.lua` holds the AST rewrites that can't happen in the markdown or the LaTeX header: code-block direction, table column alignment, and callout boxes.
 
 ### Code blocks
 
@@ -75,6 +75,24 @@ Every `AlignDefault` column becomes `AlignRight`. bidi already reverses the colu
 
 This has to be an AST rewrite: `l` is a LaTeX built-in column type, so the alternative is redefining it globally, which would also silently flip the explicit ones.
 
+### Callout boxes
+
+`summarize.md` may mark a passage as a pandoc fenced div — `::: definition` … `:::` — in a **closed set of three** classes: `definition`, `warning`, `insight`. The filter's `Div` handler maps each to a `tcolorbox` environment (`calloutdefinition` / `calloutwarning` / `calloutinsight`) defined in `LATEX_HEADER`, wrapping the div's contents in `RawBlock`s exactly as `CodeBlock` does. The `Div` node itself is dropped rather than returned inside the box — pandoc's LaTeX writer renders a Div as bare contents anyway. An unmapped class falls through untouched and renders as plain prose, so a hallucinated class name degrades instead of failing.
+
+`fenced_divs` is **on by default** in this pandoc's (2.9.2.1) markdown reader, so `--from=markdown-smart` parses `::: definition` without an extension flag.
+
+The boxes are title-less: the frame colour alone identifies the kind, which keeps a 2–4 page summary from reading like a textbook. Tints are near-white so body text keeps its contrast in grayscale print, and the three frame colours sit at distinct luminances so they stay tellable apart there.
+
+`tcolorbox` is loaded at the **top** of `LATEX_HEADER`, before its `\usepackage{polyglossia}`: it pulls in tikz/graphicx, and bidi (which polyglossia loads for Hebrew) errors with "you have loaded package graphicx after bidi package" otherwise. `breakable` is not available — that is a separate tcolorbox library — so a callout must stay short enough to fit one page.
+
+RTL needs no special handling: the box spans margin to margin with symmetric insets, and its contents inherit the document's RTL base direction, so Hebrew starts flush at the inner right edge and `\LR{}` islands and math inside a callout behave exactly as in body prose.
+
+#### The `:::` marker is protected input
+
+The marker line must reach pandoc byte-for-byte. `wrap_english_phrases` would otherwise rewrite the Latin class name to `::: \LR{definition}`, which pandoc no longer reads as a div. `apply_outside_fences` therefore passes a div-marker line through verbatim the same way it passes a fence line, so the exemption covers the **whole** prose chain rather than one helper. The div's body is still preprocessed normally — it is Hebrew prose that needs its bidi fixes.
+
+`DIV_MARKER_RE` lives in `pipeline/pdf/text.py` beside the other markdown structural vocabulary and is re-exported by `course/summary_md.py`; `pipeline/` may not import `course/`, so the dependency runs that way.
+
 ## Failure messages
 
 Both the raised error and the non-fatal warning are classified by `pipeline/pdf/tex_errors.py`'s `parse_tex_errors` / `format_tex_errors` (pure, wrapped by `classify`) into one short line — first `! …` error, its line, the error point, plus a count of the rest — because they reach the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, never of `summary.md`; on a hard failure that file is kept as `.pdf_build.tex`, so the number is actually lookup-able.
@@ -83,7 +101,7 @@ Sources: pandoc's own failure is classified over both its streams; the XeLaTeX p
 
 ## Markdown preprocessing
 
-`convert_to_pdf` runs a fixed chain of pure string helpers via `apply_outside_fences`, which never touches content inside ``` / ~~~ fences (those are the Lua filter's job). The helpers live in `pipeline/pdf/`, split by concern: `text.py` (the shared Latin/Hebrew/inline-math vocabulary, LaTeX escaping, and the fence/list structural helpers), `math_fixes.py` (everything math), `bidi.py` (`wrap_english_phrases` + `force_ltr_inline_code`) and `tex_errors.py` (log parsing). `text.py` imports from neither of the other two — they both import from it. Each helper has a dedicated test class in `tests/pipeline/pdf/test_<module>.py`.
+`convert_to_pdf` runs `preprocess_markdown` — a fixed chain of pure string helpers — via `apply_outside_fences`, which never touches content inside ``` / ~~~ fences (those are the Lua filter's job) nor a `:::` callout marker line. The helpers live in `pipeline/pdf/`, split by concern: `text.py` (the shared Latin/Hebrew/inline-math vocabulary, LaTeX escaping, and the fence/list structural helpers), `math_fixes.py` (everything math), `bidi.py` (`wrap_english_phrases` + `force_ltr_inline_code`) and `tex_errors.py` (log parsing). `text.py` imports from neither of the other two — they both import from it. Each helper has a dedicated test class in `tests/pipeline/pdf/test_<module>.py`.
 
 Protected-region handling is the recurring theme, and balanced delimiters are its precondition — one unclosed `$$` desyncs every math span after it, so `close_unbalanced_display_math` runs first. Beyond that: `$$…$$` is matched before `$…$`, the inline-math body excludes backticks (a `$` inside a code span is a literal, and pandoc won't let math cross a code span), and splitting happens over the WHOLE text — line-by-line first would break multi-line display math and leak its Latin contents into the phrase wrapper.
 

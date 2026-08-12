@@ -209,3 +209,51 @@ class TestRunMerge:
         )
         run_merge(self.COURSE, node)
         assert kinds == ["lecture"]
+
+
+class TestCallouts:
+    """`::: definition` blocks pass through so the merged PDF renders the same boxes —
+    but a div one lecture left open must never swallow the next one."""
+
+    def test_callout_passes_through_verbatim(self):
+        md = "## נושא\n\n::: definition\nהגדרה\n:::\n"
+        out = strip_and_demote(md)
+        assert "::: definition" in out
+        assert out.rstrip().endswith(":::")
+
+    def test_marker_not_mistaken_for_a_rule(self):
+        # RULE_RE drops every in-summary ---; ::: must not be caught by it.
+        out = strip_and_demote("## נושא\n\n::: warning\nאזהרה\n:::\n")
+        assert "אזהרה" in out
+
+    def test_unclosed_div_is_closed_at_the_lecture_boundary(self):
+        out = strip_and_demote("## נושא\n\n::: insight\nתובנה בלי סוגר\n")
+        assert out.count(":::") == 2
+
+    def test_stray_closer_dropped(self):
+        # An orphan ::: would close a div opened by a LATER lecture in the merged file.
+        out = strip_and_demote("## נושא\n\nטקסט\n\n:::\n")
+        assert ":::" not in out
+
+    def test_closer_eaten_by_a_builtin_section_still_balances(self):
+        md = "## נושא\n\n::: definition\nהגדרה\n\n## סיכום\n\nסיכום\n"
+        out = strip_and_demote(md)
+        assert out.count(":::") == 2
+        assert "סיכום" not in out
+
+    def test_marker_inside_code_fence_is_not_counted(self):
+        md = "## נושא\n\n```\n::: definition\n```\n"
+        out = strip_and_demote(md)
+        assert out.count(":::") == 1  # the code line only, no injected closer
+
+    def test_open_div_does_not_leak_across_the_merge_boundary(self):
+        first = "# הרצאה\n\n::: warning\nלא נסגר\n"
+        second = "# הרצאה\n\nהתוכן של ההרצאה הבאה\n"
+        merged = build_all_lectures_md([("Lecture 1", first), ("Lecture 2", second)])
+        before_rule = merged.split("\n---\n")[0]
+        assert before_rule.count(":::") == 2
+
+    def test_nested_divs_each_get_closed(self):
+        md = "## נושא\n\n::: definition\nא\n\n::: insight\nב\n"
+        out = strip_and_demote(md)
+        assert out.count(":::") == 4

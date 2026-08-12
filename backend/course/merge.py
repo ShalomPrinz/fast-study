@@ -11,6 +11,7 @@ from services import db_client
 from course import ranges
 from course.summary_md import (
     BUILTINS,
+    DIV_MARKER_RE,
     HEADING_RE,
     RULE_RE,
     bullet,
@@ -45,6 +46,7 @@ def _collapse_blanks(lines: list[str]) -> str:
 def strip_and_demote(md: str) -> str:
     """One summary's body: built-in sections dropped whole, every heading pushed one level
     down (H1→H2, …) to make room for the per-lecture H1, and horizontal rules removed.
+    Callout divs pass through verbatim so the merged PDF renders the same boxes.
 
     summarize.md mandates exactly two `---` rules, both bordering a built-in section, so
     dropping all of them leaves only the rule this phase inserts between lectures."""
@@ -53,6 +55,7 @@ def strip_and_demote(md: str) -> str:
     skipping = (
         False  # inside a built-in H2 section — drop it and everything nested under it
     )
+    div_depth = 0  # open callout divs, so one lecture's can't swallow the next
     for line, in_code in lines_with_code_flag(md):
         if in_code:
             if not skipping:
@@ -67,9 +70,24 @@ def strip_and_demote(md: str) -> str:
             if not skipping:
                 kept.append(bullet("#" * min(level + 1, _MAX_LEVEL), text))
             continue
-        if skipping or RULE_RE.match(line.strip()):
+        if skipping:
+            continue
+        m_div = DIV_MARKER_RE.match(line)
+        if m_div:
+            if m_div.group("attr"):
+                div_depth += 1
+            elif div_depth:
+                div_depth -= 1
+            else:
+                continue  # a closer with nothing open would close a LATER lecture's div
+            kept.append(line)
+            continue
+        if RULE_RE.match(line.strip()):
             continue
         kept.append(line)
+    # A div left open (the LLM forgot its `:::`, or a built-in section ate the closer) would
+    # otherwise run on into every following lecture of the merged document.
+    kept.extend([":::"] * div_depth)
     return _collapse_blanks(kept)
 
 

@@ -43,6 +43,27 @@ These requirements are mandatory and must be followed without exception:
 - Math `$...$` is **only** for actual formulas/expressions. Function names, system calls, and identifiers (e.g. `_exit`, `_Exit`, `malloc`, `O_RDONLY`, `x86_64`) are **code**, not math — wrap them using the "Code blocks" section rules, never with `$...$`.
 - Note: inside math, a leading underscore is the subscript operator, so `$_exit$` would render as a subscript "e" followed by "xit".
 
+### Callout boxes
+
+- A short passage that deserves to stand apart from the prose may be wrapped in a callout, which renders as a coloured box in the PDF. The syntax is a line with `:::` and the class, the content, then a line with only `:::`:
+
+  ```
+  ::: [definition | warning | insight]
+  [Box content]
+  :::
+  ```
+
+- There are **exactly three** classes, and no others: 
+  1. `definition` - a formal definition of a term
+  2. `warning` - something the professor warned about, a common mistake, an exam caveat
+  3. `insight` - a non-obvious key idea worth remembering.
+  Any other class name renders as ordinary prose with no box.
+- The box carries no title, so do not add a heading or a label line inside it.
+- Box content should be new content. *Don't repeat existing text inside a box*.
+- **Use them sparingly.** Everything above still governs: the 2–4 page target, prose over lists, and no information that is not in the transcript. A callout is for content that is genuinely set apart — I expect 0-3 in a whole summary, and none at all is a perfectly good answer. A summary where most paragraphs are boxed is wrong.
+- The box content is normal Hebrew prose: usually one paragraph, at most two. Do not put a list, a heading, or a `---` inside it.
+- Callouts do not change the section structure: the `---` separator rules and the Required Output Structure below still hold exactly as written, and every callout lives inside one of those sections.
+
 ### Code blocks
 
 - Inside fenced code blocks (` ``` `), write **English only** — code _and_ comments. This applies even when the lecture used Hebrew: translate any in-code comment to English.

@@ -2,11 +2,13 @@ from pipeline.pdf.bidi import force_ltr_inline_code, wrap_english_phrases
 from pipeline.pdf.math_fixes import normalize_math_spans
 from pipeline.pdf.text import (
     _LATEX_SPECIAL,
+    DIV_MARKER_RE,
     _latex_escape,
     apply_outside_fences,
     ensure_blank_before_lists,
     normalize_dashes,
 )
+from pipeline.to_pdf import preprocess_markdown
 
 # ---------------------------------------------------------------------------
 # normalize_dashes
@@ -225,3 +227,69 @@ class TestApplyOutsideFences:
         assert r"\texttt{" not in code_section
         # But the surrounding Hebrew prose still got Python wrapped LTR.
         assert r"\LR{Python}" in result
+
+
+# ---------------------------------------------------------------------------
+# Callout div markers (::: definition) through the preprocessing chain
+# ---------------------------------------------------------------------------
+
+
+class TestCalloutDivMarkers:
+    """A `::: definition` line must reach pandoc byte-for-byte. Every prose helper runs
+    inside apply_outside_fences, so protecting it there covers the whole chain."""
+
+    def _preprocess(self, t: str) -> str:
+        """The real convert_to_pdf chain, so a helper added later is covered too."""
+
+        return apply_outside_fences(t, preprocess_markdown)
+
+    def test_marker_regex_open_and_close(self):
+        assert DIV_MARKER_RE.match("::: definition").group("attr") == "definition"
+        assert DIV_MARKER_RE.match(":::").group("attr") == ""
+        assert DIV_MARKER_RE.match("::: {.warning}").group("attr") == "{.warning}"
+        assert DIV_MARKER_RE.match("  :::").group("attr") == ""
+
+    def test_marker_regex_rejects_prose(self):
+        assert DIV_MARKER_RE.match(":: definition") is None
+        assert DIV_MARKER_RE.match("הגדרה ::: כאן") is None
+
+    def test_class_name_not_wrapped_in_lr(self):
+        # The trap: wrap_english_phrases would emit "::: \LR{definition}", which pandoc
+        # no longer reads as a fenced div.
+        out = self._preprocess("::: definition\nהגדרה כאן\n:::\n")
+        assert "::: definition\n" in out
+        assert r"\LR{definition}" not in out
+
+    def test_all_three_classes_survive(self):
+        for cls in ("definition", "warning", "insight"):
+            out = self._preprocess(f"::: {cls}\nטקסט\n:::\n")
+            assert f"::: {cls}\n" in out
+
+    def test_closing_marker_survives(self):
+        out = self._preprocess("::: insight\nתובנה\n:::\n\nהמשך\n")
+        assert out.count(":::") == 2
+
+    def test_body_is_still_preprocessed(self):
+        # Only the marker lines are exempt — the Hebrew body still needs its bidi fixes.
+        out = self._preprocess("::: definition\nמונח באנגלית deadlock כאן\n:::\n")
+        assert r"\LR{deadlock}" in out
+
+    def test_prose_around_the_div_is_preprocessed(self):
+        out = self._preprocess("לפני cache\n\n::: warning\nגוף\n:::\n\nאחרי buffer\n")
+        assert r"\LR{cache}" in out
+        assert r"\LR{buffer}" in out
+
+    def test_marker_inside_code_fence_untouched(self):
+        # Inside a fence it is code, not a div: the fence must keep owning the line.
+        text = "```\n::: definition\n```\n"
+        assert apply_outside_fences(text, str.upper) == text
+
+    def test_math_in_a_callout_survives(self):
+        out = self._preprocess("::: insight\nהסיבוכיות היא $O(n \\log n)$ כאן\n:::\n")
+        assert "$O(n \\log n)$" in out
+
+    def test_lone_colons_line_in_prose_is_left_alone(self):
+        # A bare ::: with no div around it is passed through, not transformed — harmless,
+        # and pandoc treats an unmatched fence as literal text.
+        out = apply_outside_fences("abc\n:::\ndef\n", str.upper)
+        assert out == "ABC\n:::\nDEF\n"
