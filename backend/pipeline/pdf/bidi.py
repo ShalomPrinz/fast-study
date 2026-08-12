@@ -76,21 +76,16 @@ def wrap_english_phrases(text: str) -> str:
     return "".join(out)
 
 
-_LRM = "‎"  # LEFT-TO-RIGHT MARK — a zero-width strong-LTR anchor
-_CODE_NUM_COMMA_RE = re.compile(r",(?=\s*[0-9])")
-
-
 def force_ltr_inline_code(text: str) -> str:
-    """Render inline code LTR as \\LR{\\texttt{...}}; an LRM after a comma that
-    precedes a digit additionally pins comma-separated number lists (weak bidi)."""
+    """Render inline code as \\LR{\\textenglish{\\texttt{...}}} — the language switch makes the
+    local base direction LTR (as ltr_code.lua does for blocks), anchoring weak digits/neutrals."""
 
     def repl(m: re.Match) -> str:
         raw = m.group(1) if m.group(1) is not None else m.group(2)
         # Markdown strips one padding space from each end of a span that has both.
         if raw.startswith(" ") and raw.endswith(" ") and raw.strip():
             raw = raw[1:-1]
-        body = _CODE_NUM_COMMA_RE.sub("," + _LRM, _latex_escape(raw))
-        return r"\LR{\texttt{" + body + "}}"
+        return r"\LR{\textenglish{\texttt{" + _latex_escape(raw) + "}}}"
 
     # The shared splitter, but rewriting the protected halves rather than skipping them —
     # code spans are the subject. Math must still split, else a `$…$` inside a code span

@@ -1,7 +1,5 @@
 from pipeline.pdf.bidi import force_ltr_inline_code, wrap_english_phrases
 
-LRM = "‎"
-
 # ---------------------------------------------------------------------------
 # wrap_english_phrases
 # ---------------------------------------------------------------------------
@@ -355,37 +353,37 @@ class TestForceLtrInlineCode:
     def test_two_word_code_wrapped_in_lr_texttt(self):
         # The bug: "void execute" rendered as "execute void" in RTL paragraphs.
         result = force_ltr_inline_code("הפקודה `void execute` מבצעת")
-        assert r"\LR{\texttt{void execute}}" in result
+        assert r"\LR{\textenglish{\texttt{void execute}}}" in result
         assert "`void execute`" not in result
 
     def test_single_word_code_wrapped(self):
         result = force_ltr_inline_code("פקודה `push` כאן")
-        assert r"\LR{\texttt{push}}" in result
+        assert r"\LR{\textenglish{\texttt{push}}}" in result
 
     def test_multiple_code_spans_each_wrapped(self):
         result = force_ltr_inline_code("`git push` ואז `git pull`")
-        assert r"\LR{\texttt{git push}}" in result
-        assert r"\LR{\texttt{git pull}}" in result
+        assert r"\LR{\textenglish{\texttt{git push}}}" in result
+        assert r"\LR{\textenglish{\texttt{git pull}}}" in result
 
     def test_latex_special_underscore_escaped(self):
         result = force_ltr_inline_code("`my_var`")
-        assert r"\LR{\texttt{my\_var}}" in result
+        assert r"\LR{\textenglish{\texttt{my\_var}}}" in result
 
     def test_latex_special_hash_escaped(self):
         result = force_ltr_inline_code("`#include`")
-        assert r"\LR{\texttt{\#include}}" in result
+        assert r"\LR{\textenglish{\texttt{\#include}}}" in result
 
     def test_latex_special_dollar_escaped(self):
         result = force_ltr_inline_code("`$var`")
-        assert r"\LR{\texttt{\$var}}" in result
+        assert r"\LR{\textenglish{\texttt{\$var}}}" in result
 
     def test_latex_special_backslash_escaped(self):
         result = force_ltr_inline_code("`a\\b`")
-        assert r"\LR{\texttt{a\textbackslash{}b}}" in result
+        assert r"\LR{\textenglish{\texttt{a\textbackslash{}b}}}" in result
 
     def test_latex_special_braces_escaped(self):
         result = force_ltr_inline_code("`{x}`")
-        assert r"\LR{\texttt{\{x\}}}" in result
+        assert r"\LR{\textenglish{\texttt{\{x\}}}}" in result
 
     def test_latex_special_caret_and_tilde_escaped(self):
         result = force_ltr_inline_code("`a^b~c`")
@@ -410,28 +408,25 @@ class TestForceLtrInlineCode:
         # If escape order is wrong, `\\` -> `\textbackslash{}` -> the `_`
         # inside that replacement gets escaped again. Guard against that.
         result = force_ltr_inline_code("`\\`")
-        assert result == r"\LR{\texttt{\textbackslash{}}}"
+        assert result == r"\LR{\textenglish{\texttt{\textbackslash{}}}}"
 
-    def test_number_list_comma_gets_lrm(self):
-        # Regression: digits are bidi European Numbers; a comma between them is a
-        # neutral that \LR doesn't anchor, so "98, 183" reordered to ",98 ,183".
+    def test_number_list_kept_in_source_order_by_language_switch(self):
+        # Digits are bidi European Numbers and the comma between them is a neutral, so
+        # only the \textenglish{} base direction keeps "98, 183, 37" in order.
         result = force_ltr_inline_code("בטראק `98, 183, 37`")
-        assert "98," + LRM + " 183," + LRM + " 37" in result
+        assert r"\LR{\textenglish{\texttt{98, 183, 37}}}" in result
 
-    def test_comma_directly_before_digit_gets_lrm(self):
-        # No space between comma and digit still triggers the anchor.
+    def test_comma_directly_before_digit_left_untouched(self):
         result = force_ltr_inline_code("`1,2,3`")
-        assert "1," + LRM + "2," + LRM + "3" in result
+        assert r"\LR{\textenglish{\texttt{1,2,3}}}" in result
 
-    def test_letter_list_comma_no_lrm(self):
-        # Letters are strong L and render fine — comma not before a digit, no LRM.
+    def test_letter_list_comma_left_untouched(self):
         result = force_ltr_inline_code("`foo, bar`")
-        assert LRM not in result
-        assert r"\LR{\texttt{foo, bar}}" in result
+        assert r"\LR{\textenglish{\texttt{foo, bar}}}" in result
 
-    def test_trailing_comma_before_nondigit_no_lrm(self):
+    def test_trailing_comma_left_untouched(self):
         result = force_ltr_inline_code("`a,`")
-        assert LRM not in result
+        assert r"\LR{\textenglish{\texttt{a,}}}" in result
 
     def test_stray_backtick_in_display_math_does_not_eat_the_closer(self):
         # An odd backtick inside $$…$$ used to pair with the next prose one, swallowing
@@ -440,20 +435,23 @@ class TestForceLtrInlineCode:
         result = force_ltr_inline_code(text)
         assert "$$ x = y` z $$" in result
         assert r"\$\$" not in result
-        assert r"\LR{\texttt{code}}" in result
+        assert r"\LR{\textenglish{\texttt{code}}}" in result
 
     def test_math_inside_a_code_span_does_not_split_it(self):
         # The mirror of the case above: a `$…$` pair living inside a code span. Splitting
         # on math alone cut the span in two and left the wrap off entirely.
         assert force_ltr_inline_code("awk: `awk '{print $1, $2}'` here").endswith(
-            r"\LR{\texttt{awk '\{print \$1, \$2\}'}} here"
+            r"\LR{\textenglish{\texttt{awk '\{print \$1, \$2\}'}}} here"
         )
 
     def test_two_code_spans_holding_math_keep_their_own_delimiters(self):
         # With the span split in two, the orphaned backticks paired ACROSS the spans and
         # turned the prose between them into code.
         result = force_ltr_inline_code("`a $x$` and `b $y$`")
-        assert result == r"\LR{\texttt{a \$x\$}} and \LR{\texttt{b \$y\$}}"
+        assert (
+            result
+            == r"\LR{\textenglish{\texttt{a \$x\$}}} and \LR{\textenglish{\texttt{b \$y\$}}}"
+        )
 
     def test_inline_math_is_left_alone(self):
         text = "מחיר $x + y$ כאן"
@@ -462,7 +460,7 @@ class TestForceLtrInlineCode:
     def test_code_span_beside_math_still_wrapped(self):
         # Protecting math must not cost the helper its actual subject.
         result = force_ltr_inline_code("$a$ ואז `push` ואז $b$")
-        assert r"\LR{\texttt{push}}" in result
+        assert r"\LR{\textenglish{\texttt{push}}}" in result
         assert "$a$" in result and "$b$" in result
 
     def test_double_backtick_span_is_code_to_both_helpers(self):
@@ -473,12 +471,15 @@ class TestForceLtrInlineCode:
         # Both delimiters are consumed and the padding spaces dropped, exactly as pandoc
         # would have read the span — leftover backticks would make it re-parse as code
         # and print the \LR{} literally.
-        assert result == r"מלל \LR{\texttt{code}} מלל"
+        assert result == r"מלל \LR{\textenglish{\texttt{code}}} מלל"
         assert r"\textbackslash{}LR" not in result
 
     def test_double_backtick_span_keeps_an_inner_backtick(self):
         # The whole point of the doubled delimiter: a literal backtick in the body.
-        assert force_ltr_inline_code("מלל ``a`b`` מלל") == r"מלל \LR{\texttt{a`b}} מלל"
+        assert (
+            force_ltr_inline_code("מלל ``a`b`` מלל")
+            == r"מלל \LR{\textenglish{\texttt{a`b}}} מלל"
+        )
 
 
 # ---------------------------------------------------------------------------

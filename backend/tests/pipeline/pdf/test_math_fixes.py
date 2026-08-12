@@ -121,7 +121,7 @@ class TestUnwrapMathCode:
     def test_literal_dollar_code_spans_not_fused_across_backticks(self):
         # Regression: two separate inline-code spans each holding a literal `$`
         # were fused into one fake `$...$` math span swallowing the Hebrew
-        # between them, producing \(\LR{\texttt{...}}\) -> "Missing $ inserted".
+        # between them, producing \(\LR{\textenglish{\texttt{...}}}\) -> "Missing $ inserted".
         text = "הסימן `$` לפני שמו. ללא הסימן `$`,"
         assert unwrap_math_code(text) == text
 
@@ -420,28 +420,34 @@ class TestWrapMathTextDir:
 
 class TestMergeLtrMath:
     def test_code_then_math_merged(self):
-        # Regression: \LR{\texttt{current}} and $\leftarrow v$ are separate LTR
+        # Regression: \LR{\textenglish{\texttt{current}}} and $\leftarrow v$ are separate LTR
         # islands; RTL bidi reverses them to "← v current".
-        text = r"\LR{\texttt{current}} $\leftarrow v$"
-        assert merge_ltr_math(text) == r"\LR{\texttt{current} $\leftarrow v$}"
+        text = r"\LR{\textenglish{\texttt{current}}} $\leftarrow v$"
+        assert (
+            merge_ltr_math(text)
+            == r"\LR{\textenglish{\texttt{current}} $\leftarrow v$}"
+        )
 
     def test_math_then_code_merged(self):
-        text = r"$\leftarrow v$ \LR{\texttt{current}}"
-        assert merge_ltr_math(text) == r"\LR{$\leftarrow v$ \texttt{current}}"
+        text = r"$\leftarrow v$ \LR{\textenglish{\texttt{current}}}"
+        assert (
+            merge_ltr_math(text)
+            == r"\LR{$\leftarrow v$ \textenglish{\texttt{current}}}"
+        )
 
     def test_word_lr_then_math_merged(self):
         text = r"\LR{RDI} $\oplus$"
         assert merge_ltr_math(text) == r"\LR{RDI $\oplus$}"
 
     def test_no_space_between_still_merged(self):
-        text = r"\LR{\texttt{x}}$+1$"
-        assert merge_ltr_math(text) == r"\LR{\texttt{x} $+1$}"
+        text = r"\LR{\textenglish{\texttt{x}}}$+1$"
+        assert merge_ltr_math(text) == r"\LR{\textenglish{\texttt{x}} $+1$}"
 
     def test_lr_with_escaped_braces_matched(self):
         # _lr_block_end must count nested/escaped braces — \texttt body can hold
         # escaped braces so the matching close is the second-to-last brace.
-        text = r"\LR{\texttt{a\{b\}}} $x$"
-        assert merge_ltr_math(text) == r"\LR{\texttt{a\{b\}} $x$}"
+        text = r"\LR{\textenglish{\texttt{a\{b\}}}} $x$"
+        assert merge_ltr_math(text) == r"\LR{\textenglish{\texttt{a\{b\}}} $x$}"
 
     def test_lone_math_untouched(self):
         text = r"עברית $A$ עברית"

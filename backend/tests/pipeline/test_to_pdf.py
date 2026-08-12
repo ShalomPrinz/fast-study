@@ -25,11 +25,11 @@ from to_pdf import (
 # spanning both adjacencies: number before/after the \text{}, zero-gap and spaced,
 # \LR{} on either side, and an \LR{} body ending in a digit.
 MERGE_INPUTS = [
-    r"\LR{\texttt{cells}} $240 \text{\RL{תאים}}$",
-    r"\LR{\texttt{cells}} $240\text{\RL{תאים}}$",
-    r"\LR{\texttt{cells}}$240 \text{\RL{תאים}}$",
-    r"\LR{\texttt{cells}} $\text{\RL{תיוג}}\  1$",
-    r"$\text{\RL{תיוג}}\  1$ \LR{\texttt{cells}}",
+    r"\LR{\textenglish{\texttt{cells}}} $240 \text{\RL{תאים}}$",
+    r"\LR{\textenglish{\texttt{cells}}} $240\text{\RL{תאים}}$",
+    r"\LR{\textenglish{\texttt{cells}}}$240 \text{\RL{תאים}}$",
+    r"\LR{\textenglish{\texttt{cells}}} $\text{\RL{תיוג}}\  1$",
+    r"$\text{\RL{תיוג}}\  1$ \LR{\textenglish{\texttt{cells}}}",
     r"$240 \text{\RL{תאים}}$ \LR{RDI}",
     r"\LR{v2}$5 \text{\RL{תאים}}$",
     r"\LR{240} $\text{\RL{תאים}}$",
@@ -50,7 +50,7 @@ class TestMergesCommute:
     def test_chain_order_output_is_pinned(self):
         # Both sides being equally broken would satisfy commutativity — pin the value.
         assert merge_ltr_math(merge_rtl_math_number(MERGE_INPUTS[0])) == (
-            r"\LR{\texttt{cells} $\text{\RL{\ensuremath{240} תאים}}$}"
+            r"\LR{\textenglish{\texttt{cells}} $\text{\RL{\ensuremath{240} תאים}}$}"
         )
 
 
@@ -318,6 +318,44 @@ class TestBidiOrderingRenders:
         vis = self._visual_text("חוק בייס (Bayes' Rule)\n")
         assert "(Bayes' Rule)" in vis
         assert "(Rule 'Bayes)" not in vis
+
+    # The inline-code paths below pin what force_ltr_inline_code's \LR{\textenglish{\texttt{}}}
+    # wrapper buys at render time, so a change to the wrapper is judged here.
+
+    def test_code_span_adjacent_to_math_keeps_source_order(self):
+        # merge_ltr_math fuses the code \LR{} with the touching $…$ into ONE island;
+        # left as two, RTL bidi would order them right-to-left and swap the pair.
+        vis = self._visual_text("המערך `cells` $240$ מכיל נתונים\n")
+        assert "cells 240" in vis
+        assert "240 cells" not in vis
+        vis = self._visual_text("הערך $240$ `cells` מופיע כאן\n")
+        assert "240 cells" in vis
+        assert "cells 240" not in vis
+
+    def test_latex_specials_in_code_span_render_literally(self):
+        # The span body is LaTeX-escaped, so `_` must not become a subscript and the
+        # escapes themselves must not leak as text.
+        vis = self._visual_text("המעבד `x86_64` והנתיב `C:\\dir\\{x}` מופיעים כאן\n")
+        assert "x86_64" in vis
+        assert "C:\\dir\\{x}" in vis
+        assert "textbackslash" not in vis
+
+    def test_doubled_backtick_span_renders_inner_backtick(self):
+        # ``a `b`` is markdown's literal-backtick span: the inner ` is content, and
+        # matching the inner pair instead would print the \LR{\textenglish{\texttt{}}} verbatim.
+        vis = self._visual_text("הכתיבה ``a `b`` נפוצה כאן\n")
+        assert "a `b" in vis
+        assert "texttt" not in vis and "\\LR" not in vis
+
+    def test_hebrew_inside_code_span_renders(self):
+        # \texttt resolves through the global \setmonofont, so a Latin-only mono would
+        # leave the Hebrew as notdef boxes (see docs/PDF.md).
+        vis = self._visual_text("הפקודה `print שלום עולם` מדפיסה\n")
+        assert "￿" not in vis
+        assert "print" in vis
+        # Inside the LTR run the word order is kept and each Hebrew word's glyphs come
+        # out reversed in x-order — "שלום עולם" read left to right.
+        assert "םולש" in vis and "םלוע" in vis
 
 
 # ---------------------------------------------------------------------------
