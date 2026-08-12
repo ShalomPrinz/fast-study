@@ -43,7 +43,7 @@ TRANSCRIPT = "משפט פתיחה של השיעור. זה יהיה במבחן ב
 # The three pattern extractors (topics is the immediate one, filtered out of extract/analyze).
 PATTERN_SLUGS = ["exam-hints", "student-qa", "pitfalls"]
 
-SUMMARY = "# ‏כותרת\n\n## ‏נושא ראשון\n\n- פריט אחד\n"
+SUMMARY = "# כותרת\n\n## נושא ראשון\n\n- פריט אחד\n"
 
 
 def _tree():

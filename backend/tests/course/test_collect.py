@@ -5,24 +5,22 @@ directly; run_collect is driven with db_client mocked (no network). Topics are H
 (H2 topics + H3 subtopics) — no list-item collection."""
 
 from course.collect import build_topics_md, parse_summary, render_entry, run_collect
-from course.summary_md import RLM, display_name, natural_key
+from course.summary_md import display_name, natural_key
 from services import db_client
 
 
 class TestHeadingParse:
-    def test_rlm_stripped_from_heading_text(self):
-        # summarize.md writes "## ‏text" (RLM after the #s); the captured topic must be clean.
-        md = f"# {RLM}הכותרת\n\n## {RLM}נושא\n"
+    def test_hebrew_heading_text_captured_clean(self):
+        md = "# הכותרת\n\n## נושא\n"
         parsed = parse_summary(md)
         assert parsed["title"] == "הכותרת"
         assert parsed["topics"][0]["title"] == "נושא"
-        assert RLM not in parsed["title"]
 
     def test_first_h1_is_title(self):
         md = "# First\n\n## נושא\n\n# Second\n"
         assert parse_summary(md)["title"] == "First"
 
-    def test_heading_without_rlm_still_parses(self):
+    def test_ascii_heading_parses(self):
         md = "# Title\n\n## Topic\n"
         parsed = parse_summary(md)
         assert parsed["title"] == "Title"
@@ -32,11 +30,7 @@ class TestHeadingParse:
 class TestBuiltinExclusion:
     def test_builtin_h2_and_its_whole_section_skipped(self):
         # תקציר is a built-in: its H3 must not leak into topics either.
-        md = (
-            f"# {RLM}כותרת\n\n"
-            f"## {RLM}תקציר\n\n### {RLM}תת של תקציר\n\nטקסט\n\n"
-            f"## {RLM}נושא אמיתי\n\nטקסט\n"
-        )
+        md = "# כותרת\n\n## תקציר\n\n### תת של תקציר\n\nטקסט\n\n## נושא אמיתי\n\nטקסט\n"
         parsed = parse_summary(md)
         assert [t["title"] for t in parsed["topics"]] == ["נושא אמיתי"]
         assert parsed["topics"][0]["subtopics"] == []
@@ -91,8 +85,8 @@ class TestDisplayName:
 
 
 class TestBuildTopicsMd:
-    LEC = ("Lecture 5.2", "# ‏מרוצי נתונים\n\n## ‏נושא\n")
-    REC = ("Recitation 3.1", "# ‏חזרה\n\n## ‏נושא תרגול\n")
+    LEC = ("Lecture 5.2", "# מרוצי נתונים\n\n## נושא\n")
+    REC = ("Recitation 3.1", "# חזרה\n\n## נושא תרגול\n")
 
     def test_recitations_after_divider(self):
         md = build_topics_md([self.LEC], [self.REC])
@@ -119,32 +113,32 @@ class TestBuildTopicsMd:
         md = build_topics_md([lec], [])
         assert "פריט ממוספר" not in md
         assert "פריט שני" not in md
-        assert f"- {RLM}נושא" in md.split("\n")
+        assert "- נושא" in md.split("\n")
 
 
 class TestRenderEntry:
-    def test_hebrew_entry_heading_and_rlm(self):
-        md = render_entry("Lecture 5.2", "lecture", "# ‏כותרת עברית\n\n## ‏נושא\n")
+    def test_hebrew_entry_heading(self):
+        md = render_entry("Lecture 5.2", "lecture", "# כותרת עברית\n\n## נושא\n")
         lines = md.split("\n")
-        assert lines[0] == f"# {RLM}הרצאה 5.2"  # Hebrew label → RLM after marker
-        assert lines[1] == f"## {RLM}כותרת עברית"  # H1 title, Hebrew → RLM
-        assert f"- {RLM}נושא" in lines  # topic bullet at indent 0
+        assert lines[0] == "# הרצאה 5.2"  # English name → Hebrew display label
+        assert lines[1] == "## כותרת עברית"  # H1 title of the summary
+        assert "- נושא" in lines  # topic bullet at indent 0
 
     def test_recitation_entry_heading(self):
-        md = render_entry("Recitation 3.1", "recitation", "# ‏חזרה\n\n## ‏נושא\n")
-        assert md.split("\n")[0] == f"# {RLM}תרגול 3.1"
+        md = render_entry("Recitation 3.1", "recitation", "# חזרה\n\n## נושא\n")
+        assert md.split("\n")[0] == "# תרגול 3.1"
 
     def test_summary_with_only_builtins_gives_block_with_no_bullets(self):
         md = render_entry(
-            "Lecture 1", "lecture", "# ‏כותרת\n\n## ‏תקציר\n\nטקסט\n\n## ‏סיכום\n\nעוד\n"
+            "Lecture 1", "lecture", "# כותרת\n\n## תקציר\n\nטקסט\n\n## סיכום\n\nעוד\n"
         )
-        assert md == f"# {RLM}הרצאה 1\n## {RLM}כותרת"
+        assert md == "# הרצאה 1\n## כותרת"
 
     def test_nested_h3_subtopic_indent(self):
         md = render_entry("Lecture 1", "lecture", "# T\n\n## נושא\n\n### תת\n")
         lines = md.split("\n")
-        assert f"- {RLM}נושא" in lines  # H2 topic at indent 0
-        assert f"  - {RLM}תת" in lines  # H3 subtopic at indent 2
+        assert "- נושא" in lines  # H2 topic at indent 0
+        assert "  - תת" in lines  # H3 subtopic at indent 2
 
 
 class TestRunCollect:
@@ -181,7 +175,7 @@ class TestRunCollect:
         puts = {}
         patches = []
         monkeypatch.setattr(
-            db_client, "get_summary", lambda c, l, k: "# ‏כותרת\n\n## ‏נושא\n"
+            db_client, "get_summary", lambda c, l, k: "# כותרת\n\n## נושא\n"
         )
         monkeypatch.setattr(
             db_client,
@@ -204,9 +198,9 @@ class TestRunCollect:
         assert entry["recitations"] == {"start": "2", "end": "2"}
         assert "generated_at" in entry
         # Entry heading is the Hebrew display label, not the English folder name.
-        assert f"# {RLM}הרצאה 1" in puts["topics.md"]
+        assert "# הרצאה 1" in puts["topics.md"]
         assert "# Lecture 1" not in puts["topics.md"]
-        assert f"## {RLM}כותרת" in puts["topics.md"]
+        assert "## כותרת" in puts["topics.md"]
 
     def test_only_summarized_entries_fetched(self, monkeypatch):
         gets = []

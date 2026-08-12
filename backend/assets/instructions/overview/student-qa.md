@@ -16,17 +16,17 @@ You have received transcripts or excerpts around student questions, including mo
 
 ## Required Structure
 
-# ‏שאלות ותשובות
+# שאלות ותשובות
 
-## ‏[First Topic — clear heading]
-
-**שאלה: [shortened question]**  
-[proffesor answer + main takeaways]
+## [First Topic — clear heading]
 
 **שאלה: [shortened question]**  
 [proffesor answer + main takeaways]
 
-## ‏[Second Topic — clear heading]
+**שאלה: [shortened question]**  
+[proffesor answer + main takeaways]
+
+## [Second Topic — clear heading]
 
 **שאלה: [shortened question]**  
 [proffesor answer + main takeaways]

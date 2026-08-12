@@ -16,9 +16,9 @@ You have received transcripts or excerpts from a lecture where the lecturer hint
 
 ## Required Structure
 
-# ‏הכנה למבחן
+# הכנה למבחן
 
-## ‏התייחסויות למבחן
+## התייחסויות למבחן
 
 **[Hint Title]:** (הרצאה X)  
 [Rephrasing of a hint. Short, Readable, Fluent.]
@@ -26,7 +26,7 @@ You have received transcripts or excerpts from a lecture where the lecturer hint
 **[Hint Title]:** (תרגול Y)  
 [Rephrasing of a hint. Short, Readable, Fluent.]
 
-## ‏דגשים ועקרונות
+## דגשים ועקרונות
 
 **[Emphasis Title]:** (הרצאה Z)  
 [Rephrasing of an emphasis. Short, Readable, Fluent.]

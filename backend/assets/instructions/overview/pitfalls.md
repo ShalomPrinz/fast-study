@@ -16,22 +16,22 @@ You have received transcripts or excerpts from a lecture where the lecturer warn
 
 ## Required Structure
 
-# ‏טעויות נפוצות
+# טעויות נפוצות
 
-## ‏[First Topic — clear heading]
-
-**[Mistake Title]**  
-[mistake explanation + correction]
+## [First Topic — clear heading]
 
 **[Mistake Title]**  
 [mistake explanation + correction]
 
-## ‏[Second Topic — clear heading]
+**[Mistake Title]**  
+[mistake explanation + correction]
+
+## [Second Topic — clear heading]
 
 **[Mistake Title]**...
 
 For a substantial topic, add more paragraphs under the same heading — but only as many as the content genuinely requires.
 
-## ‏[Continue as needed]
+## [Continue as needed]
 
 ...

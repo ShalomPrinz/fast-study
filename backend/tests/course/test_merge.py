@@ -10,7 +10,6 @@ from course.merge import (
     run_merge,
     strip_and_demote,
 )
-from course.summary_md import RLM
 from services import db_client
 
 
@@ -45,27 +44,22 @@ class TestBuiltinRemoval:
         assert "דרופ" not in out
         assert "שמור" in out
 
-    def test_builtin_heading_with_rlm_matched(self):
-        # summarize.md writes "## ‏תקציר" — the RLM must not defeat the BUILTINS lookup.
-        assert strip_and_demote(f"## {RLM}תקציר\n\nטקסט\n") == ""
-
 
 class TestDemotion:
     def test_every_heading_pushed_one_level(self):
         md = "# כותרת\n\n## נושא\n\n### תת\n"
         assert strip_and_demote(md).split("\n") == [
-            f"## {RLM}כותרת",
+            "## כותרת",
             "",
-            f"### {RLM}נושא",
+            "### נושא",
             "",
-            f"#### {RLM}תת",
+            "#### תת",
         ]
 
     def test_h6_saturates_instead_of_seven_hashes(self):
         assert strip_and_demote("###### Deep\n").startswith("###### Deep")
 
-    def test_ascii_heading_gets_no_rlm(self):
-        # Pure-ASCII headings stay LTR, so no RLM is inserted.
+    def test_ascii_heading_demoted(self):
         assert strip_and_demote("## Race Conditions\n") == "### Race Conditions"
 
     def test_body_prose_untouched(self):
@@ -79,9 +73,7 @@ class TestRules:
         assert "---" not in strip_and_demote(md)
 
     def test_star_and_underscore_rules_dropped(self):
-        assert strip_and_demote("## נושא\n\n***\n\n___\n\nגוף\n") == (
-            f"### {RLM}נושא\n\nגוף"
-        )
+        assert strip_and_demote("## נושא\n\n***\n\n___\n\nגוף\n") == ("### נושא\n\nגוף")
 
 
 class TestCodeFences:
@@ -114,15 +106,15 @@ class TestBlankCollapse:
 
 class TestRenderEntry:
     def test_lecture_h1_then_demoted_body(self):
-        out = render_entry("Lecture 5.2", "# ‏מרוצי נתונים\n\n## ‏נושא\n\nגוף\n")
+        out = render_entry("Lecture 5.2", "# מרוצי נתונים\n\n## נושא\n\nגוף\n")
         lines = out.split("\n")
-        assert lines[0] == f"# {RLM}הרצאה 5.2"
-        assert lines[2] == f"## {RLM}מרוצי נתונים"
-        assert f"### {RLM}נושא" in lines
+        assert lines[0] == "# הרצאה 5.2"
+        assert lines[2] == "## מרוצי נתונים"
+        assert "### נושא" in lines
 
     def test_summary_with_only_builtins_gives_header_alone(self):
-        out = render_entry("Lecture 1", "## ‏תקציר\n\nטקסט\n\n## ‏סיכום\n\nעוד\n")
-        assert out == f"# {RLM}הרצאה 1"
+        out = render_entry("Lecture 1", "## תקציר\n\nטקסט\n\n## סיכום\n\nעוד\n")
+        assert out == "# הרצאה 1"
 
 
 class TestBuildAllLecturesMd:
@@ -181,7 +173,7 @@ class TestRunMerge:
         puts = {}
         patches = []
         monkeypatch.setattr(
-            db_client, "get_summary", lambda c, l, k: "# ‏כותרת\n\n## ‏נושא\n\nגוף\n"
+            db_client, "get_summary", lambda c, l, k: "# כותרת\n\n## נושא\n\nגוף\n"
         )
         monkeypatch.setattr(
             db_client,
@@ -195,7 +187,7 @@ class TestRunMerge:
 
         assert run_merge(self.COURSE, node) == {"status": "done"}
         assert list(puts) == ["all-lectures.md"]
-        assert f"# {RLM}הרצאה 1" in puts["all-lectures.md"]
+        assert "# הרצאה 1" in puts["all-lectures.md"]
         assert "גוף" in puts["all-lectures.md"]
 
         course, slug, entry = patches[0]

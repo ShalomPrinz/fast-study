@@ -37,10 +37,6 @@ These requirements are mandatory and must be followed without exception:
 - Each separator is a line containing only three hyphens (`---`) with a blank line above and below. It is a Markdown horizontal rule — never write the words "Required line separator" or any description of it.
 - Do **not** insert `---` anywhere else: not between paragraphs, not between topics, not between subsections, not before/after the title, תקציר, סיכום, or משימות נדרשות.
 
-### Headings
-
-- In every heading, add the Unicode character (RLM, U+200F) **after** the Markdown symbol and **before** the text. Example: `## ‏Heading`. Never place it before the symbol, as Markdown will not recognize it as a heading.
-
 ### Math
 
 - If mathematical formulas appear, write them in LaTeX syntax: `$...$` for inline formulas (e.g. `$E = mc^2$`) and `$$...$$` for a separate centered formula. These will render correctly in the PDF output.
@@ -58,37 +54,37 @@ These requirements are mandatory and must be followed without exception:
 
 # [Suggested title based on content]
 
-## ‏תקציר
+## תקציר
 
 One paragraph of 3–5 sentences describing the overall topic of the recording.
 
 ---
 
-## ‏[First Topic — clear heading]
+## [First Topic — clear heading]
 
 Full content of this topic, phrased clearly and readably. Paragraphs separated by idea. All information, examples, data, and details are preserved.
 
-## ‏[Second Topic — clear heading]
+## [Second Topic — clear heading]
 
 Full content...
 
 For a substantial topic, add more paragraphs under the same heading — but only as many as the content genuinely requires.
 
-## ‏[Continue as needed]
+## [Continue as needed]
 
 ...
 
 ---
 
-## ‏הערות אישיות והדגשות המרצה
+## הערות אישיות והדגשות המרצה
 
 A dedicated paragraph (or paragraphs) collecting all the professor's personal opinions, non-textbook insights, warnings, and emphases from throughout the lecture.
 
-## ‏סיכום
+## סיכום
 
 One or two paragraphs covering the most important insights and conclusions from the content, in continuous and flowing language.
 
-## ‏משימות נדרשות
+## משימות נדרשות
 
 - If tasks, assignments, or action items were mentioned — list them here
 - If none were mentioned — omit this section entirely

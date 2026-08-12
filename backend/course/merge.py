@@ -17,7 +17,6 @@ from course.summary_md import (
     display_name,
     lines_with_code_flag,
     natural_key,
-    strip_rlm,
 )
 
 SLUG = "all-lectures"
@@ -61,7 +60,7 @@ def strip_and_demote(md: str) -> str:
             continue
         m = HEADING_RE.match(line)
         if m:
-            level, text = len(m.group(1)), strip_rlm(m.group(2))
+            level, text = len(m.group(1)), m.group(2).strip()
             # Only an H1/H2 ends a built-in section; deeper headings stay inside it.
             if level <= 2:
                 skipping = level == 2 and text in BUILTINS

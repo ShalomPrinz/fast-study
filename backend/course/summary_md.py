@@ -4,27 +4,16 @@ so the built-in section names live in exactly one place."""
 
 import re
 
-RLM = "‏"  # right-to-left mark
-
 # Built-in H2 sections from summarize.md that are boilerplate, not lecture content.
 BUILTINS = {"תקציר", "הערות אישיות והדגשות המרצה", "סיכום", "משימות נדרשות"}
 
 # Per-entry heading label by kind: "Lecture 5.2" is stored/sorted in English but DISPLAYED "הרצאה 5.2".
 _KIND_LABEL = {"lecture": "הרצאה", "recitation": "תרגול"}
 
-# Tolerates an optional RLM (+ spaces) after the #s — summarize.md writes "## ‏text".
 HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 
 # A markdown horizontal rule on its own line.
 RULE_RE = re.compile(r"^(?:-{3,}|\*{3,}|_{3,})$")
-
-
-def strip_rlm(s: str) -> str:
-    return s.replace(RLM, "").strip()
-
-
-def has_hebrew(s: str) -> bool:
-    return any("֐" <= c <= "׿" for c in s)
 
 
 def natural_key(name: str) -> list:
@@ -42,13 +31,9 @@ def display_name(name: str, kind: str) -> str:
 
 
 def bullet(marker: str, text: str, indent: int = 0) -> str:
-    """One output line. An RLM after the marker keeps Hebrew text RTL in the PDF; pure-ASCII
-    lines get none so they stay LTR."""
+    """One output line: an indented marker and its text."""
 
-    line = " " * indent + marker + " "
-    if has_hebrew(text):
-        line += RLM
-    return line + text
+    return " " * indent + marker + " " + text
 
 
 def lines_with_code_flag(md: str):
@@ -66,7 +51,7 @@ def lines_with_code_flag(md: str):
 
 
 def headings(md: str) -> list[tuple[int, str]]:
-    """Every heading as (level, RLM-stripped text) in document order."""
+    """Every heading as (level, stripped text) in document order."""
 
     found: list[tuple[int, str]] = []
     for line, in_code in lines_with_code_flag(md):
@@ -74,5 +59,5 @@ def headings(md: str) -> list[tuple[int, str]]:
             continue
         m = HEADING_RE.match(line)
         if m:
-            found.append((len(m.group(1)), strip_rlm(m.group(2))))
+            found.append((len(m.group(1)), m.group(2).strip()))
     return found
