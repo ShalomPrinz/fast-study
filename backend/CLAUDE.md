@@ -53,3 +53,5 @@ This applies to "small" changes too — the `pipeline/pdf/` preprocessing helper
 ## Documentation and comment style
 
 Root `CLAUDE.md` covers the general rules. Backend-specific: docstrings are one line, two at most, followed by one blank line before the body. Architecture belongs in `docs/`.
+
+Docs and comments describe the **current state** and the durable WHY — never plans, phase/step numbers, or "was TODO / now done". When behavior changes, edit the affected line to read as if it always worked that way.

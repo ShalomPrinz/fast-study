@@ -58,6 +58,8 @@ since a rename moves the containing directory. None of them may ever become a tr
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
 | `.{slug}.pdf_warning`    | overview/   | same, per overview pdf (see OVERVIEW.md)                  |
 
+Deleting `summary.pdf` drops both of its render markers — each describes that one build and can never outlive it.
+
 ## Tree shape
 
 `read_tree` returns one node per course: `name`, `archived`, `source_url`, `lectures`,

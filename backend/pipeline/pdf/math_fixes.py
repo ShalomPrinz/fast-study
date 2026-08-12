@@ -1,11 +1,11 @@
 import re
 
-from pipeline.pdf.text import _HEBREW, _INLINE_MATH, _LATIN
+from pipeline.pdf.text import _DISPLAY_MATH, _HEBREW, _INLINE_MATH, _LATIN
 
-_MATH_SPAN_RE = re.compile(r"\$\$[\s\S]*?\$\$|" + _INLINE_MATH)
+_MATH_SPAN_RE = re.compile(_DISPLAY_MATH + r"|" + _INLINE_MATH)
 # A code span whose ENTIRE body is one math expression, so spans mixing code and
 # prose (`RSI`) are left as real code.
-_MATH_IN_CODE_RE = re.compile(r"`\s*(\$\$[\s\S]*?\$\$|" + _INLINE_MATH + r")\s*`")
+_MATH_IN_CODE_RE = re.compile(r"`\s*(" + _DISPLAY_MATH + r"|" + _INLINE_MATH + r")\s*`")
 
 # Whole line: opens `$$`, no other `$` or backtick in the body, closes with a lone `$`.
 _UNBALANCED_DISPLAY_MATH_RE = re.compile(

@@ -274,6 +274,16 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
         return {"status": "error", "message": str(e)}
 
 
+def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
+    """Best-effort delete of a render marker: it runs after the render's real outcome is
+    already persisted, so a failing cleanup call must not restate that outcome."""
+
+    try:
+        db_client.delete_file(course, lecture, kind, name)
+    except Exception:
+        log.exception("failed to delete %s", name)
+
+
 def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
     """Render summary.md → summary.pdf via pandoc/XeLaTeX. A render that errored but still
     produced a usable PDF is `done` with the warning persisted to .pdf_warning."""
@@ -298,12 +308,16 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
                 course, lecture, kind, PDF_WARNING_FILE, warning.encode("utf-8")
             )
         else:
-            db_client.delete_file(course, lecture, kind, PDF_WARNING_FILE)
+            _drop_marker(course, lecture, kind, PDF_WARNING_FILE)
+        # The .tex a PREVIOUS hard failure left behind: any `l.<N>` now on offer indexes
+        # this build, so a stale file would send the reader to the wrong line.
+        _drop_marker(course, lecture, kind, PDF_BUILD_TEX_FILE)
         db_client.notify()
         return {"status": "done"}
     except PdfRenderError as e:
         # Keep the generated .tex so the `l.<N>` in the message is lookup-able; it lives
         # in the render's tempdir, so the exception is what carries it out.
+        stored_tex = False
         if e.tex_source:
             try:
                 db_client.put_file_bytes(
@@ -313,8 +327,13 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
                     PDF_BUILD_TEX_FILE,
                     e.tex_source.encode("utf-8"),
                 )
+                stored_tex = True
             except Exception:
                 log.exception("failed to store %s", PDF_BUILD_TEX_FILE)
+        # The old summary.pdf survives, but overwriting the .tex just invalidated its
+        # warning's `l.<N>`. Only that overwrite does — otherwise the old pair still agrees.
+        if stored_tex:
+            _drop_marker(course, lecture, kind, PDF_WARNING_FILE)
         return {"status": "error", "message": str(e)}
     except Exception as e:
         return {"status": "error", "message": str(e)}

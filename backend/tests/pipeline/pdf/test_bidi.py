@@ -433,6 +433,53 @@ class TestForceLtrInlineCode:
         result = force_ltr_inline_code("`a,`")
         assert LRM not in result
 
+    def test_stray_backtick_in_display_math_does_not_eat_the_closer(self):
+        # An odd backtick inside $$…$$ used to pair with the next prose one, swallowing
+        # the closing $$ into a \texttt{} (escaped to \$\$) and leaking math mode.
+        text = "a $$ x = y` z $$ b and `code` end"
+        result = force_ltr_inline_code(text)
+        assert "$$ x = y` z $$" in result
+        assert r"\$\$" not in result
+        assert r"\LR{\texttt{code}}" in result
+
+    def test_math_inside_a_code_span_does_not_split_it(self):
+        # The mirror of the case above: a `$…$` pair living inside a code span. Splitting
+        # on math alone cut the span in two and left the wrap off entirely.
+        assert force_ltr_inline_code("awk: `awk '{print $1, $2}'` here").endswith(
+            r"\LR{\texttt{awk '\{print \$1, \$2\}'}} here"
+        )
+
+    def test_two_code_spans_holding_math_keep_their_own_delimiters(self):
+        # With the span split in two, the orphaned backticks paired ACROSS the spans and
+        # turned the prose between them into code.
+        result = force_ltr_inline_code("`a $x$` and `b $y$`")
+        assert result == r"\LR{\texttt{a \$x\$}} and \LR{\texttt{b \$y\$}}"
+
+    def test_inline_math_is_left_alone(self):
+        text = "מחיר $x + y$ כאן"
+        assert force_ltr_inline_code(text) == text
+
+    def test_code_span_beside_math_still_wrapped(self):
+        # Protecting math must not cost the helper its actual subject.
+        result = force_ltr_inline_code("$a$ ואז `push` ואז $b$")
+        assert r"\LR{\texttt{push}}" in result
+        assert "$a$" in result and "$b$" in result
+
+    def test_double_backtick_span_is_code_to_both_helpers(self):
+        # The two helpers must agree on what a code span is: when the protected-span
+        # pattern called this prose and this one called it code, wrap_english_phrases
+        # wrapped the body and force_ltr_inline_code then swallowed its own \LR{}.
+        result = force_ltr_inline_code(wrap_english_phrases("מלל `` code `` מלל"))
+        # Both delimiters are consumed and the padding spaces dropped, exactly as pandoc
+        # would have read the span — leftover backticks would make it re-parse as code
+        # and print the \LR{} literally.
+        assert result == r"מלל \LR{\texttt{code}} מלל"
+        assert r"\textbackslash{}LR" not in result
+
+    def test_double_backtick_span_keeps_an_inner_backtick(self):
+        # The whole point of the doubled delimiter: a literal backtick in the body.
+        assert force_ltr_inline_code("מלל ``a`b`` מלל") == r"מלל \LR{\texttt{a`b}} מלל"
+
 
 # ---------------------------------------------------------------------------
 # wrap_english_phrases — extended token coverage (paths, versions, filenames)

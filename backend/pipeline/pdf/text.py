@@ -1,15 +1,22 @@
 import re
 
 _LIST_ITEM_RE = re.compile(r"^(\s*(?:[-*+]|\d+\.)\s)")
+_DISPLAY_MATH = r"\$\$[\s\S]*?\$\$"
 # Excludes the backtick: a `$` inside inline code is a literal, and pandoc won't let
 # math cross a code span — so two unrelated code spans must never pair up as "math".
 _INLINE_MATH = r"\$[^\$\n`]+?\$"
-# The one definition of "a span that renders verbatim", shared by every helper that
-# must leave math/code alone. Split on it: the capturing group keeps the delimiters,
-# so odd indices are protected and even ones are ordinary prose. The code alternative
-# stops at a newline so it agrees with `bidi._INLINE_CODE_RE` — a stretch neither of
-# them calls code would otherwise be protected here and skipped there.
-_PROTECTED_RE = re.compile(r"(\$\$[\s\S]*?\$\$|" + _INLINE_MATH + r"|`[^`\n]*`)")
+# Shared with `bidi._INLINE_CODE_RE` so the two can't disagree on what is code — a span
+# only one of them claims comes out double-wrapped. Newline-bounded, matching pandoc.
+_INLINE_CODE_BODY = r"[^`\n]+"
+# Markdown's literal-backtick span. Matched FIRST and whole: taking the inner pair leaves
+# the outer backticks, and pandoc re-reads the span as code, printing the \LR{} literally.
+_DOUBLE_CODE_BODY = r"(?:[^`\n]|`(?!`))+"
+_INLINE_CODE = r"``" + _DOUBLE_CODE_BODY + r"``|`" + _INLINE_CODE_BODY + r"`"
+# The one definition of "renders verbatim", shared by every helper that must leave math AND
+# code alone. The capturing group keeps the delimiters, so split() puts spans at odd indices.
+_PROTECTED_RE = re.compile(
+    r"(" + _DISPLAY_MATH + r"|" + _INLINE_MATH + r"|" + _INLINE_CODE + r")"
+)
 
 _LATEX_SPECIAL = {
     "{": r"\{",

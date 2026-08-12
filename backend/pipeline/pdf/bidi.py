@@ -1,8 +1,17 @@
 import re
 
-from pipeline.pdf.text import _HEBREW, _LATIN, _PROTECTED_RE, _latex_escape
+from pipeline.pdf.text import (
+    _DOUBLE_CODE_BODY,
+    _HEBREW,
+    _INLINE_CODE_BODY,
+    _LATIN,
+    _PROTECTED_RE,
+    _latex_escape,
+)
 
-_INLINE_CODE_RE = re.compile(r"`([^`\n]+)`")
+_INLINE_CODE_RE = re.compile(
+    r"``(" + _DOUBLE_CODE_BODY + r")``|`(" + _INLINE_CODE_BODY + r")`"
+)
 
 # A possessive apostrophe after a sibilant ("Bayes' Rule") glues across the space
 # too, so the run isn't split into two islands. Restricting the lookbehind to s/x/z
@@ -76,7 +85,19 @@ def force_ltr_inline_code(text: str) -> str:
     precedes a digit additionally pins comma-separated number lists (weak bidi)."""
 
     def repl(m: re.Match) -> str:
-        body = _CODE_NUM_COMMA_RE.sub("," + _LRM, _latex_escape(m.group(1)))
+        raw = m.group(1) if m.group(1) is not None else m.group(2)
+        # Markdown strips one padding space from each end of a span that has both.
+        if raw.startswith(" ") and raw.endswith(" ") and raw.strip():
+            raw = raw[1:-1]
+        body = _CODE_NUM_COMMA_RE.sub("," + _LRM, _latex_escape(raw))
         return r"\LR{\texttt{" + body + "}}"
 
-    return _INLINE_CODE_RE.sub(repl, text)
+    # The shared splitter, but rewriting the protected halves rather than skipping them —
+    # code spans are the subject. Math must still split, else a `$…$` inside a code span
+    # cuts it in two and its orphaned backticks pair with the next span's.
+    parts = _PROTECTED_RE.split(text)
+    for i in range(1, len(parts), 2):
+        m = _INLINE_CODE_RE.fullmatch(parts[i])
+        if m:
+            parts[i] = repl(m)
+    return "".join(parts)

@@ -2,7 +2,7 @@ import asyncio
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -642,6 +642,7 @@ class _PdfDb:
         self.deletes: list[str] = []
         self.notifies = 0
         self.stored: dict[str, bytes] = {}
+        self.delete_raises = False
 
     def install(self, stack, convert):
         stack.enter_context(
@@ -661,13 +662,16 @@ class _PdfDb:
 
     def _delete(self, course, lecture, kind, name):
         self.deletes.append(name)
+        if self.delete_raises:
+            raise RuntimeError("database service is down")
 
     def _notify(self):
         self.notifies += 1
 
 
-def _run_exec_pdf(convert) -> tuple[dict, _PdfDb]:
+def _run_exec_pdf(convert, delete_raises=False) -> tuple[dict, _PdfDb]:
     db = _PdfDb()
+    db.delete_raises = delete_raises
     with ExitStack() as stack:
         db.install(stack, convert)
         result = runner._exec_pdf("C1", "L1", "lecture")
@@ -702,12 +706,22 @@ def test_exec_pdf_warning_is_written_after_the_pdf_upload():
     assert db.puts == ["summary.pdf", runner.PDF_WARNING_FILE]
 
 
-def test_exec_pdf_clean_render_clears_a_stale_warning():
+def test_exec_pdf_clean_render_clears_both_stale_markers():
+    """Neither marker may outlive the build it describes: a .pdf_build.tex kept by an
+    EARLIER hard failure would send a later `l.<N>` to the wrong line."""
+
     result, db = _run_exec_pdf(_fake_render(None))
     assert result == {"status": "done"}
-    assert db.deletes == [runner.PDF_WARNING_FILE]
+    assert db.deletes == [runner.PDF_WARNING_FILE, runner.PDF_BUILD_TEX_FILE]
     assert runner.PDF_WARNING_FILE not in db.stored
     assert db.notifies == 1
+
+
+def test_exec_pdf_recovered_render_still_clears_a_stale_build_tex():
+    """The warning is kept, but its `l.<N>` indexes THIS build — not the failed one."""
+
+    _, db = _run_exec_pdf(_fake_render("LaTeX error: boom"))
+    assert db.deletes == [runner.PDF_BUILD_TEX_FILE]
 
 
 def test_exec_pdf_hard_failure_stores_the_generated_tex():
@@ -724,6 +738,60 @@ def test_exec_pdf_hard_failure_stores_the_generated_tex():
     assert db.stored[runner.PDF_BUILD_TEX_FILE] == b"\\documentclass{article}"
     # No PDF was produced, so no warning may be written either.
     assert runner.PDF_WARNING_FILE not in db.stored
+
+
+def test_exec_pdf_hard_failure_clears_a_stale_warning():
+    """Nothing uploads on failure, so an EARLIER recovered render's summary.pdf and its
+    warning survive — but the .pdf_build.tex that warning's `l.<N>` indexes is now this
+    build's, so the marker has to go."""
+
+    def convert(md_path):
+        raise runner.PdfRenderError("LaTeX error: boom (line 9)", tex_source="\\x")
+
+    _, db = _run_exec_pdf(convert)
+    assert db.deletes == [runner.PDF_WARNING_FILE]
+
+
+def test_exec_pdf_failure_with_no_tex_keeps_the_existing_warning():
+    """Only overwriting .pdf_build.tex invalidates the old warning. A pandoc failure or a
+    timeout carries no .tex, so the surviving summary.pdf keeps its badge."""
+
+    def convert(md_path):
+        raise runner.PdfRenderError("pandoc timed out after 60s")
+
+    _, db = _run_exec_pdf(convert)
+    assert db.deletes == []
+
+
+def test_exec_pdf_failed_tex_upload_keeps_the_existing_warning():
+    """The old .pdf_build.tex is untouched when the store failed, so the pair still agrees."""
+
+    def convert(md_path):
+        raise runner.PdfRenderError("LaTeX error: boom (line 9)", tex_source="\\x")
+
+    db = _PdfDb()
+    with ExitStack() as stack:
+        db.install(stack, convert)
+        stack.enter_context(
+            patch.object(
+                runner.db_client,
+                "put_file_bytes",
+                Mock(side_effect=RuntimeError("database service is down")),
+            )
+        )
+        result = runner._exec_pdf("C1", "L1", "lecture")
+    assert result["status"] == "error"
+    assert db.deletes == []
+
+
+def test_exec_pdf_marker_cleanup_failure_does_not_sink_a_good_render():
+    """The PDF is already uploaded when the markers are cleared, so a database blip on
+    that call must not report a successful render as an error (and skip the notify)."""
+
+    result, db = _run_exec_pdf(_fake_render(None), delete_raises=True)
+    assert result == {"status": "done"}
+    assert db.deletes == [runner.PDF_WARNING_FILE, runner.PDF_BUILD_TEX_FILE]
+    assert db.notifies == 1
 
 
 def test_exec_pdf_plain_failure_writes_no_dotfiles():

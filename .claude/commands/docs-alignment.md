@@ -11,6 +11,8 @@ If `$ARGUMENTS` is empty or names no existing root subfolder, list the available
 
 **Focus on ideas, not examples.** Documentation should describe behavior and decisions. Examples can be good only when they are minimal and displayed rarely.
 
+**Plan-agnostic.** Docs and comments describe the **current state** and durable WHY — never plans, phased steps, or "how we got here" history.
+
 ---
 
 ## Step 1 — Write the docs
@@ -21,17 +23,11 @@ You may delete old docs files or refactor them. We need a short description of w
 
 Docs filename convention: upper case & single worded, e.g. DOCS.md. For two words (not recommended), name it DOCS-SECOND.md.
 
-## Step 2 — Plan-agnostic rule
-
-Docs and comments describe the **current state** and durable WHY — never plans, phased steps, or "how we got here" history.
-
-Emphasize it specifically in this service's `CLAUDE.md` (if not already mentioned).
-
-## Step 3 — Thin the code comments
+## Step 2 — Thin the code comments
 
 Reduce comments in the service's code to concise one-liners (two lines max), each specific and earning its place. The full logic lives in the docs (Step 1), not inline. Remove comments that just restate the code. Architecture description lives in the docs, small technical details that can be described shortly lives in code comments.
 
-## Step 4 — CLAUDE.md structure
+## Step 3 — CLAUDE.md structure
 
 Ensure a general `CLAUDE.md` exists for the service. If the service contains distinct sub-services (independent sub-folders that stand on their own), each gets its own dedicated `CLAUDE.md`; the general one covers the service as a whole and points to them.
 

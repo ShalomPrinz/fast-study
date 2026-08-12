@@ -86,8 +86,7 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
 
 
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
-    """Delete a single file in a lecture dir if present; deleting summary.pdf also drops .pdf_warning,
-    which describes THIS pdf and can never outlive it."""
+    """Delete a single file in a lecture dir if present."""
 
     d = lecture_dir(course, lecture, kind)
     p = d / file
@@ -95,6 +94,7 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
         p.unlink()
     if file == "summary.pdf":
         (d / PDF_WARNING_MARKER).unlink(missing_ok=True)
+        (d / PDF_BUILD_TEX_MARKER).unlink(missing_ok=True)
 
 
 def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> None:

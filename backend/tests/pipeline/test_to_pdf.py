@@ -341,6 +341,7 @@ class FakeRun:
         log_text="",
         pandoc_stderr="",
         tex_text="\\documentclass{article}\\begin{document}x\\end{document}",
+        hangs=(),
     ):
         self.pandoc_rc = pandoc_rc
         self.xelatex_rcs = list(xelatex_rcs)
@@ -348,11 +349,22 @@ class FakeRun:
         self.log_text = log_text
         self.pandoc_stderr = pandoc_stderr
         self.tex_text = tex_text
+        # Tools that time out instead of returning: "xelatex" on every call, "xelatex:2"
+        # only on its second.
+        self.hangs = set(hangs)
         self.calls = []
 
-    def __call__(self, cmd, capture_output=False, text=False, cwd=None):
+    def __call__(self, cmd, capture_output=False, text=False, cwd=None, timeout=None):
         self.calls.append((list(cmd), cwd))
+        nth = sum(1 for c, _ in self.calls if c[0] == cmd[0])
         d = Path(cwd)
+        if cmd[0] in self.hangs or f"{cmd[0]}:{nth}" in self.hangs:
+            # A killed xelatex has already truncated and partly rewritten its outputs —
+            # what is left is a headerless fragment, never the previous pass's file.
+            if cmd[0] == "xelatex":
+                (d / "build.pdf").write_bytes(b"%PDF-trunc")
+                (d / "build.log").write_text("truncated", encoding="utf-8")
+            raise subprocess.TimeoutExpired(cmd, timeout)
         if cmd[0] == "pandoc":
             if self.pandoc_rc == 0:
                 (d / "build.tex").write_text(self.tex_text, encoding="utf-8")
@@ -483,3 +495,75 @@ class TestRenderRecovery:
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError, match="Undefined control sequence"):
                 convert_to_pdf(md_path)
+
+    def test_pandoc_failure_message_is_truncated(self):
+        # It reaches the user as a toast, so the unclassifiable case keeps the tail only.
+        fake = FakeRun(pandoc_rc=1, pandoc_stderr="x" * 10_000)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError) as exc:
+                convert_to_pdf(md_path)
+        assert len(str(exc.value)) < 10_000
+        assert str(exc.value).count("x") == 2000
+
+
+class TestToolTimeout:
+    """A wedged tool would hold the caller's per-lecture lock forever, so it is bounded
+    and surfaces as an ordinary render failure."""
+
+    def test_pandoc_hang_raises_before_any_xelatex_run(self):
+        fake = FakeRun(hangs=("pandoc",))
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError, match="pandoc timed out after 60s"):
+                convert_to_pdf(md_path)
+        assert fake.xelatex_cmds == []
+
+    def test_first_pass_hang_raises_and_carries_the_generated_tex(self):
+        fake = FakeRun(hangs=("xelatex",))
+        with _render(fake) as md_path:
+            with pytest.raises(
+                PdfRenderError, match="xelatex timed out after 60s"
+            ) as e:
+                convert_to_pdf(md_path)
+        # pandoc already produced the .tex, so a timeout keeps it debuggable like any
+        # other hard failure.
+        assert e.value.tex_source == fake.tex_text
+
+    def test_second_pass_hang_keeps_pass_1s_pdf_and_warns(self):
+        """Pass 1's PDF is usable and only its references are stale — but pass 2 has
+        already overwritten it on disk, so the salvage must return the saved copy."""
+
+        fake = FakeRun(hangs=("xelatex:2",))
+        with _render(fake) as md_path:
+            pdf_path, warning = convert_to_pdf(md_path)
+            assert Path(pdf_path).read_bytes() == b"%PDF-1.4 stub"
+        assert warning == "xelatex timed out after 60s"
+
+    def test_second_pass_hang_still_reports_a_tex_error_from_pass_1s_log(self):
+        # Pass 2 truncated the log too, so the errors have to come from pass 1's copy.
+        fake = FakeRun(hangs=("xelatex:2",), log_text=ERROR_LOG)
+        with _render(fake) as md_path:
+            _, warning = convert_to_pdf(md_path)
+        assert warning == r"LaTeX error: Undefined control sequence (line 417: \Pi)"
+
+    def test_second_pass_hang_with_no_pass_1_pdf_is_fatal(self):
+        # Nothing to salvage: pass 2's truncated fragment must not be promoted as the PDF.
+        fake = FakeRun(hangs=("xelatex:2",), pdf_bytes=None)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError, match="no usable PDF"):
+                convert_to_pdf(md_path)
+
+    def test_every_tool_call_is_bounded(self):
+        # pandoc + both xelatex passes — no unbounded call may slip back in.
+        fake = FakeRun()
+        timeouts = []
+
+        def spy(cmd, **kwargs):
+            timeouts.append(kwargs.get("timeout"))
+            return fake(cmd, **kwargs)
+
+        with tempfile.TemporaryDirectory() as d:
+            md_path = Path(d) / "summary.md"
+            md_path.write_text("שלום world\n", encoding="utf-8")
+            with patch("subprocess.run", spy):
+                convert_to_pdf(str(md_path))
+        assert timeouts == [60, 60, 60]

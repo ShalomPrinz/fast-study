@@ -54,6 +54,88 @@ class PdfRenderError(RuntimeError):
 
 BUILD_STEM = "build"  # XeLaTeX names its outputs after the .tex stem
 _LOG_TAIL_CHARS = 2000
+# A render is seconds, so a minute is already wedged. Bounded because the caller holds a
+# per-lecture lock across it — a hang would leave that lecture permanently `busy`.
+_TOOL_TIMEOUT_SECONDS = 60
+
+
+def _run_tool(
+    cmd: list[str],
+    cwd: str,
+    tex_source: str | None = None,
+    timeout: int = _TOOL_TIMEOUT_SECONDS,
+):
+    """Run one build tool in `cwd`, converting a hang into a normal render failure."""
+
+    try:
+        return subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=cwd,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        raise PdfRenderError(
+            f"{cmd[0]} timed out after {timeout}s", tex_source
+        ) from None
+
+
+def _read_log(build: Path) -> str:
+    """The build log as it stands right now — each xelatex pass rewrites it from scratch."""
+
+    log_path = build / f"{BUILD_STEM}.log"
+    return (
+        log_path.read_text(encoding="utf-8", errors="replace")
+        if log_path.exists()
+        else ""
+    )
+
+
+def _run_xelatex_passes(
+    build: Path, tex_source: str
+) -> tuple[list[int], str | None, str]:
+    """Run both xelatex passes over build.tex, leaving the PDF to render at build.pdf.
+    Returns (per-pass return codes, pass-2 timeout message or None, text to classify)."""
+
+    # Twice: hyperref/bookmark need a second pass for stable references. nonstopmode keeps
+    # going past errors, so a damaged region degrades to a bad page, not a failed render.
+    built_pdf = build / f"{BUILD_STEM}.pdf"
+    pass1_pdf = build / f"{BUILD_STEM}.pass1.pdf"
+    pass1_log = ""
+    returncodes: list[int] = []
+    pass2_timeout = None
+    for attempt in range(2):
+        try:
+            run = _run_tool(
+                ["xelatex", "-interaction=nonstopmode", f"{BUILD_STEM}.tex"],
+                str(build),
+                tex_source,
+            )
+        except PdfRenderError as e:
+            # A pass-1 timeout leaves no PDF to salvage. Pass 2 only stabilizes
+            # references, so its timeout degrades like any other recoverable error.
+            if attempt == 0:
+                raise
+            pass2_timeout = str(e)
+            break
+        returncodes.append(run.returncode)
+        if attempt == 0:
+            # Pass 2 truncates build.pdf/.log and rewrites them from its first \shipout, so
+            # a killed one leaves a fragment. Keep pass 1's files — that is what's salvaged.
+            pass1_log = _read_log(build)
+            if built_pdf.exists():
+                shutil.copy2(built_pdf, pass1_pdf)
+
+    if pass2_timeout:
+        built_pdf.unlink(missing_ok=True)
+        if pass1_pdf.exists():
+            pass1_pdf.replace(built_pdf)
+
+    # The .log is the full record and xelatex's stdout mirrors it — classifying both
+    # would count every error twice, so stdout is only the fallback when no log exists.
+    combined = (pass1_log if pass2_timeout else _read_log(build)) or run.stdout
+    return returncodes, pass2_timeout, combined
 
 
 @timed_pipeline("pdf")
@@ -123,44 +205,21 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
             f"--lua-filter={LTR_CODE_FILTER}",
             "--standalone",
         ]
-        result = subprocess.run(
-            pandoc_cmd, capture_output=True, text=True, cwd=build_dir
-        )
+        result = _run_tool(pandoc_cmd, build_dir)
         if result.returncode != 0:
             # pandoc relays errors on either stream; with no `! …` at all the failure is
-            # pandoc's own (bad markdown, missing template) and keeps the full log.
+            # pandoc's own and falls back to the stream TAIL, since this reaches a toast.
             raise PdfRenderError(
                 classify(
                     f"{result.stdout}\n{result.stderr}",
-                    f"pandoc failed:\n{result.stderr}",
+                    f"pandoc failed:\n{result.stderr[-_LOG_TAIL_CHARS:]}",
                 )
             )
 
         tex_path = build / f"{BUILD_STEM}.tex"
         tex_source = tex_path.read_text(encoding="utf-8", errors="replace")
 
-        # Twice: hyperref/bookmark need a second pass for stable references — this is
-        # what pandoc's own engine loop did. nonstopmode keeps going past errors, so a
-        # damaged region degrades to a wrong/blank page instead of killing the render.
-        returncodes = []
-        for _ in range(2):
-            run = subprocess.run(
-                ["xelatex", "-interaction=nonstopmode", f"{BUILD_STEM}.tex"],
-                capture_output=True,
-                text=True,
-                cwd=build_dir,
-            )
-            returncodes.append(run.returncode)
-
-        log_path = build / f"{BUILD_STEM}.log"
-        log_text = (
-            log_path.read_text(encoding="utf-8", errors="replace")
-            if log_path.exists()
-            else ""
-        )
-        # The .log is the full record and xelatex's stdout mirrors it — classifying both
-        # would count every error twice, so stdout is only the fallback when no log exists.
-        combined = log_text or run.stdout
+        returncodes, pass2_timeout, combined = _run_xelatex_passes(build, tex_source)
 
         built_pdf = build / f"{BUILD_STEM}.pdf"
         if not built_pdf.exists() or built_pdf.stat().st_size == 0:
@@ -172,9 +231,11 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
                 tex_source=tex_source,
             )
 
-        # XeLaTeX names its output after the .tex stem, so move it onto the caller's path.
         shutil.move(str(built_pdf), str(output_path))
 
+        if pass2_timeout:
+            # Errors already in the log are the more actionable half of this warning.
+            return str(output_path), classify(combined, pass2_timeout)
         if all(rc == 0 for rc in returncodes):
             return str(output_path), None
         # Non-zero but a usable PDF came out: accept it and report the errors as a warning.
