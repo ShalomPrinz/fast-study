@@ -78,7 +78,7 @@ def wrap_english_phrases(text: str) -> str:
 
 def force_ltr_inline_code(text: str) -> str:
     """Render inline code as \\LR{\\textenglish{\\texttt{...}}} — the language switch makes the
-    local base direction LTR (as ltr_code.lua does for blocks), anchoring weak digits/neutrals."""
+    local base direction LTR (as text_direction.lua does for blocks), anchoring weak digits/neutrals."""
 
     def repl(m: re.Match) -> str:
         raw = m.group(1) if m.group(1) is not None else m.group(2)

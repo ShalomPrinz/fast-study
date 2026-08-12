@@ -27,7 +27,9 @@ from pipeline.pdf.text import (
 FONTS_DIR = Path(__file__).parent.parent / "assets" / "fonts"
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 HEBREW_FONT_BOLD = FONTS_DIR / "NotoSansHebrew-Bold.ttf"
-LTR_CODE_FILTER = Path(__file__).parent.parent / "assets" / "filters" / "ltr_code.lua"
+DIRECTION_FILTER = (
+    Path(__file__).parent.parent / "assets" / "filters" / "text_direction.lua"
+)
 
 LATEX_HEADER = r"""
 \usepackage{polyglossia}
@@ -150,8 +152,8 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
         raise FileNotFoundError(f"Font not found: {HEBREW_FONT}")
     if not HEBREW_FONT_BOLD.exists():
         raise FileNotFoundError(f"Font not found: {HEBREW_FONT_BOLD}")
-    if not LTR_CODE_FILTER.exists():
-        raise FileNotFoundError(f"Lua filter not found: {LTR_CODE_FILTER}")
+    if not DIRECTION_FILTER.exists():
+        raise FileNotFoundError(f"Lua filter not found: {DIRECTION_FILTER}")
 
     output_path = input_path.with_suffix(".pdf")
     fonts_dir = str(FONTS_DIR) + "/"
@@ -202,7 +204,7 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
             "-V",
             "linestretch=1.3",
             f"--include-in-header={header_path}",
-            f"--lua-filter={LTR_CODE_FILTER}",
+            f"--lua-filter={DIRECTION_FILTER}",
             "--standalone",
         ]
         result = _run_tool(pandoc_cmd, build_dir)

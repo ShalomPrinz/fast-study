@@ -51,9 +51,13 @@ This TeX Live build (`xelatex 3.141592653-2.6-0.999993`) uses the **e-TeX TeXXeT
 
 Probe with a `\ifx\foo\@undefined NO\else YES\fi` test file before assuming a primitive exists.
 
-## Code blocks
+## The direction filter
 
-`assets/filters/ltr_code.lua` wraps every `CodeBlock` in `\begin{english}`.
+`assets/filters/text_direction.lua` holds the direction fixes that have to happen in pandoc's AST rather than in the markdown or the LaTeX header: code blocks and table column alignment.
+
+### Code blocks
+
+It wraps every `CodeBlock` in `\begin{english}`.
 
 `\begin{LTR}` is not enough: it is just `\beginL...\endL`, a run-direction switch. It fixes token order but NOT **character mirroring** — `(`↔`)`, `{`↔`}`, `<`↔`>` still flip inside fancyvrb's `Verbatim` (what pandoc's `Highlighting` is built on). Mirroring is triggered by the active language's base direction at tokenization time, below the bidi-run level; per-token `\LR{}` doesn't reach it either.
 
@@ -61,9 +65,15 @@ Probe with a `\ifx\foo\@undefined NO\else YES\fi` test file before assuming a pr
 
 Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\pardir TLT...}`, `\renewenvironment{Shaded}{}{}`, per-token `\LR{}`, `--listings`. Note `Shaded` is already `\newenvironment{Shaded}{}{}` in pandoc 2.9 — there is no background to remove, overriding it accomplishes nothing.
 
-### The mono font must cover Hebrew
+#### The mono font must cover Hebrew
 
 `Verbatim` uses the **global `\ttfamily`**, not polyglossia's `\englishfonttt` — even inside `\begin{english}`. A Latin-only mono leaves Hebrew comments as notdef boxes, and XeLaTeX has no per-glyph font fallback (that's LuaTeX/luaotfload). So one dual-script monospace is set globally via `\setmonofont`: **Miriam Mono CLM** (Culmus, dual-script, true monospace). Setting only `\englishfonttt` does nothing.
+
+### Tables
+
+Every `AlignDefault` column becomes `AlignRight`. bidi already reverses the column **order** (the first column renders rightmost), but pandoc emits `l` for an unaligned column, so cell contents stayed flush left with a ragged right edge — an RTL table typeset LTR. An alignment the markdown states explicitly (`:---`, `---:`) is the author's and is left as written.
+
+This has to be an AST rewrite: `l` is a LaTeX built-in column type, so the alternative is redefining it globally, which would also silently flip the explicit ones.
 
 ## Failure messages
 
@@ -93,7 +103,7 @@ A **doubled** delimiter (markdown's way of putting a literal backtick in a span)
 | `normalize_math_spans`          | Pandoc requires no space adjacent to the `$` delimiters.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `ensure_blank_before_lists`     | Pandoc needs a blank line before a list that follows a paragraph. Lines inside a `$$…$$` block are math, not a list, so they never get one.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `wrap_english_phrases`          | The big one — see below.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `force_ltr_inline_code`         | Backtick spans → `\LR{\textenglish{\texttt{…}}}`, skipping math. A plain `\texttt` in an RTL paragraph reverses, so the `\LR{}` keeps the span one LTR run — and it is also what `merge_ltr_math` matches on (its `\LR{` prefix contract). Run direction alone does not fix a comma-separated **number** list: digits are weak European Numbers and the comma is a neutral, so each comma jumps ahead of its number (`98, 183, 37` → `,98 ,183 37`). The `\textenglish{}` language switch makes the local base direction LTR — the same mechanism `ltr_code.lua` uses for code blocks — which is what resolves them in order.                                                                                                                                                                                                              |
+| `force_ltr_inline_code`         | Backtick spans → `\LR{\textenglish{\texttt{…}}}`, skipping math. A plain `\texttt` in an RTL paragraph reverses, so the `\LR{}` keeps the span one LTR run — and it is also what `merge_ltr_math` matches on (its `\LR{` prefix contract). Run direction alone does not fix a comma-separated **number** list: digits are weak European Numbers and the comma is a neutral, so each comma jumps ahead of its number (`98, 183, 37` → `,98 ,183 37`). The `\textenglish{}` language switch makes the local base direction LTR — the same mechanism `text_direction.lua` uses for code blocks — which is what resolves them in order.                                                                                                                                                                                                              |
 | `merge_rtl_math_number`         | The RTL mirror: a number beside a Hebrew `\text{}` sits outside it in LTR math flow, so `240 \text{ תאים}` renders "תאים 240". Pulls that one number INTO the `\RL{}` body (`\RL{}` is text-mode only, so the merged run must live inside the `\text{}`) wrapped in `\ensuremath{}` — it was math before the move, so it must still typeset as math after it; a number already inside the body (`\text{שלב 2 ואילך}`) never was math and is left as text. Only whitespace / `\ ` may separate them (possibly none — the merged run always gets one space, else the number fuses onto the word), one number, one side; a Latin body or a preceding `^`/`_`/digit disqualifies it, and an adjacent `=` stays outside. |
 | `merge_ltr_math`                | An inline-code `\LR{}` and an adjacent `$…$` are two separate LTR islands, which RTL bidi orders right-to-left. Merges them into one run.                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 

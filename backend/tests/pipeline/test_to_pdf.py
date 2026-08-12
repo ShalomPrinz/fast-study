@@ -10,9 +10,9 @@ from unittest.mock import patch
 import pytest
 from pipeline.pdf.math_fixes import merge_ltr_math, merge_rtl_math_number
 from to_pdf import (
+    DIRECTION_FILTER,
     FONTS_DIR,
     LATEX_HEADER,
-    LTR_CODE_FILTER,
     PdfRenderError,
     convert_to_pdf,
 )
@@ -63,45 +63,46 @@ def _pandoc_available():
     return shutil.which("pandoc") is not None
 
 
+def _run_pandoc_latex(md: str) -> str:
+    """Run pandoc with text_direction.lua and return the LaTeX body."""
+    with tempfile.NamedTemporaryFile(
+        mode="w", suffix=".md", delete=False, encoding="utf-8"
+    ) as f:
+        f.write(md)
+        md_path = f.name
+    try:
+        result = subprocess.run(
+            [
+                "pandoc",
+                md_path,
+                "--to=latex",
+                f"--lua-filter={DIRECTION_FILTER}",
+            ],
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"pandoc failed:\n{result.stderr}"
+        return result.stdout
+    finally:
+        os.unlink(md_path)
+
+
 @pytest.mark.skipif(not _pandoc_available(), reason="pandoc not installed")
 class TestLuaFilterLtrCodeBlock:
-    def _run_pandoc_latex(self, md: str) -> str:
-        """Run pandoc with ltr_code.lua and return the LaTeX body."""
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".md", delete=False, encoding="utf-8"
-        ) as f:
-            f.write(md)
-            md_path = f.name
-        try:
-            result = subprocess.run(
-                [
-                    "pandoc",
-                    md_path,
-                    "--to=latex",
-                    f"--lua-filter={LTR_CODE_FILTER}",
-                ],
-                capture_output=True,
-                text=True,
-            )
-            assert result.returncode == 0, f"pandoc failed:\n{result.stderr}"
-            return result.stdout
-        finally:
-            os.unlink(md_path)
-
     def test_code_block_wrapped_in_english(self):
         # Core structure: every code block must be wrapped in
         # \begin{english}...\end{english} (polyglossia language switch).
         # This sets the LOCAL base direction to LTR, which both fixes word
         # order AND disables character mirroring inside fancyvrb's Verbatim.
         # \begin{LTR} (bidi run direction) alone fixes word order but NOT
-        # mirroring — see ltr_code.lua for the full rationale.
-        latex = self._run_pandoc_latex("```\nGET /index.html HTTP/1.1\n```\n")
+        # mirroring — see text_direction.lua for the full rationale.
+        latex = _run_pandoc_latex("```\nGET /index.html HTTP/1.1\n```\n")
         assert r"\begin{english}" in latex
         assert r"\end{english}" in latex
 
     def test_english_wraps_verbatim_for_plain_blocks(self):
         # Plain code block (no language tag) → verbatim is inside english.
-        latex = self._run_pandoc_latex("```\nsome code\n```\n")
+        latex = _run_pandoc_latex("```\nsome code\n```\n")
         assert latex.index(r"\begin{english}") < latex.index(r"\begin{verbatim}")
         assert latex.index(r"\end{verbatim}") < latex.index(r"\end{english}")
 
@@ -109,22 +110,20 @@ class TestLuaFilterLtrCodeBlock:
         # Syntax-highlighted block (language tag) → Shaded/Highlighting inside
         # english. Highlighting is preserved (colours still work); english
         # wraps the whole thing.
-        latex = self._run_pandoc_latex("```python\nimport os\n```\n")
+        latex = _run_pandoc_latex("```python\nimport os\n```\n")
         assert r"\begin{Shaded}" in latex
         assert latex.index(r"\begin{english}") < latex.index(r"\begin{Shaded}")
         assert latex.index(r"\end{Shaded}") < latex.index(r"\end{english}")
 
     def test_code_block_content_preserved(self):
-        latex = self._run_pandoc_latex("```\nGET /index.html HTTP/1.1\n```\n")
+        latex = _run_pandoc_latex("```\nGET /index.html HTTP/1.1\n```\n")
         assert "GET /index.html HTTP/1.1" in latex
 
     def test_brackets_in_source_unmangled(self):
         # The literal bracket characters must appear in the LaTeX source.
         # The polyglossia english environment around them disables XeTeX
         # character mirroring at render time.
-        latex = self._run_pandoc_latex(
-            "```javascript\napp.get('/', (req, res) => {\n```\n"
-        )
+        latex = _run_pandoc_latex("```javascript\napp.get('/', (req, res) => {\n```\n")
         assert "(" in latex
         assert "{" in latex
         # The earlier \LTRverbatim attempt caused "undefined" errors — guard.
@@ -133,7 +132,7 @@ class TestLuaFilterLtrCodeBlock:
     def test_json_block_syntax_highlighted(self):
         # JSON block must use Shaded/Highlighting (colours preserved).
         md = '```json\n{\n  "method": "GET",\n  "url": "/index.html"\n}\n```\n'
-        latex = self._run_pandoc_latex(md)
+        latex = _run_pandoc_latex(md)
         assert r"\begin{english}" in latex
         assert r"\begin{Shaded}" in latex
         # Content appears in tokenised form (e.g. \StringTok, \DataTypeTok)
@@ -142,23 +141,43 @@ class TestLuaFilterLtrCodeBlock:
 
     def test_multiple_code_blocks_each_wrapped(self):
         md = "```\nblock one\n```\n\nsome prose\n\n```\nblock two\n```\n"
-        latex = self._run_pandoc_latex(md)
+        latex = _run_pandoc_latex(md)
         assert latex.count(r"\begin{english}") == 2
         assert latex.count(r"\end{english}") == 2
 
     def test_prose_without_code_block_not_wrapped(self):
         # Plain paragraphs must not get spurious english-env wrapping.
-        latex = self._run_pandoc_latex("Just a paragraph with no code.\n")
+        latex = _run_pandoc_latex("Just a paragraph with no code.\n")
         assert r"\begin{english}" not in latex
 
     def test_filter_file_exists(self):
-        assert LTR_CODE_FILTER.exists(), f"filter missing: {LTR_CODE_FILTER}"
+        assert DIRECTION_FILTER.exists(), f"filter missing: {DIRECTION_FILTER}"
+
+
+@pytest.mark.skipif(not _pandoc_available(), reason="pandoc not installed")
+class TestLuaFilterTableAlignment:
+    """Column alignment is what makes a table read RTL — bidi already reverses the
+    column order, but pandoc's `l` for an unaligned column leaves cells flush left."""
+
+    def test_unaligned_columns_become_right_aligned(self):
+        md = "| א | ב |\n| --- | --- |\n| ערך | value |\n"
+        assert r"\begin{longtable}[]{@{}rr@{}}" in _run_pandoc_latex(md)
+
+    def test_explicit_alignments_are_kept(self):
+        md = "| א | ב | ג |\n| :--- | ---: | :---: |\n| x | y | z |\n"
+        assert r"\begin{longtable}[]{@{}lrc@{}}" in _run_pandoc_latex(md)
+
+    def test_cell_content_preserved(self):
+        md = "| עמודה | column |\n| --- | --- |\n| ערך | value |\n"
+        latex = _run_pandoc_latex(md)
+        assert "עמודה" in latex
+        assert "value" in latex
 
 
 # ---------------------------------------------------------------------------
 # Mono font for code blocks — must cover Hebrew
 #
-# Code blocks are wrapped in \begin{english} (ltr_code.lua), and fancyvrb's
+# Code blocks are wrapped in \begin{english} (text_direction.lua), and fancyvrb's
 # Verbatim uses the GLOBAL \ttfamily — NOT polyglossia's \englishfonttt gloss.
 # A Latin-only mono (Noto Sans Mono / Latin Modern Mono) makes Hebrew comments
 # render as notdef boxes. The fix bundles the dual-script monospace Miriam Mono
