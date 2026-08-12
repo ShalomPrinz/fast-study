@@ -1,5 +1,4 @@
-export type IconName =
-  'external-link' | 'edit' | 'refresh' | 'archive' | 'unarchive' | 'archive-box' | 'search'
+export type IconName = 'external-link' | 'edit' | 'archive' | 'unarchive' | 'archive-box' | 'search'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -30,24 +29,6 @@ const EditIcon = () => (
       strokeLinejoin="round"
     />
     <path d="M8 3.5L9.5 5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-  </svg>
-)
-
-const RefreshIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path
-      d="M11 6.5a4.5 4.5 0 1 1-1.32-3.18"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      strokeLinecap="round"
-    />
-    <path
-      d="M11 1.5V4H8.5"
-      stroke="currentColor"
-      strokeWidth="1.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
   </svg>
 )
 
@@ -117,7 +98,6 @@ const SearchIcon = () => (
 const icons: Record<IconName, () => JSX.Element> = {
   'external-link': ExternalLinkIcon,
   edit: EditIcon,
-  refresh: RefreshIcon,
   archive: ArchiveIcon,
   unarchive: UnarchiveIcon,
   'archive-box': ArchiveBoxIcon,

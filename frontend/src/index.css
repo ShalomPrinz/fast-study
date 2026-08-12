@@ -66,42 +66,6 @@ body,
   flex-shrink: 0;
 }
 
-.sidebar-refresh-btn {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  color: var(--sidebar-muted);
-  cursor: pointer;
-  transition:
-    background 0.1s,
-    color 0.1s;
-}
-
-.sidebar-refresh-btn:hover:not(:disabled) {
-  background: var(--sidebar-hover);
-  color: var(--sidebar-fg);
-}
-
-.sidebar-refresh-btn:disabled {
-  cursor: default;
-}
-
-.sidebar-refresh-btn.spinning svg {
-  animation: sidebar-refresh-spin 0.8s linear infinite;
-}
-
-@keyframes sidebar-refresh-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .sidebar-nav {
   padding: 8px 0;
   flex: 1;
@@ -1304,7 +1268,7 @@ body,
 
 /* ── Downloads page ── */
 
-/* Sidebar-header entry control: the Downloads nav link sits beside refresh */
+/* Sidebar-header entry controls: the Search and Downloads nav links */
 .sidebar-header-actions {
   display: flex;
   align-items: center;

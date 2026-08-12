@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { AppMode } from '@/types'
 import Icon from '@/shared/components/Icon'
-import RefreshCoursesButton from './RefreshCoursesButton'
 import ModeToggle from '@/shared/components/ModeToggle'
 import type { ModeConfig } from '@/shared/components/ModeToggle'
 import CoursesList from '@/features/course-overview/CoursesList'
@@ -25,7 +24,6 @@ export default function Sidebar() {
           <Link className="sidebar-downloads-link" to="/downloads" title="Downloads">
             ⭳
           </Link>
-          <RefreshCoursesButton />
         </div>
       </div>
       <ModeToggle modes={MODES} storageKey="fastStudyMode" />
