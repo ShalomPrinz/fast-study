@@ -1,6 +1,9 @@
 import { useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { courseNotFound } from '@/shared/utils/notFound'
+import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import { toast } from '@/services/toaster'
 import {
   CourseOverviewProvider,
@@ -53,7 +56,22 @@ function CourseOverviewBody() {
 
 export default function CourseView() {
   const { course = '' } = useParams()
+  const { courses, loaded } = useCourseTreeContext()
+
   if (!course) return null
+
+  if (!loaded) {
+    return (
+      <main className="main-view">
+        <div className="spinner" />
+      </main>
+    )
+  }
+
+  // Guarded before the provider mounts, so a course that doesn't exist fires no overview requests.
+  const missing = courseNotFound(courses, course)
+  if (missing) return <NotFoundPanel message={missing} />
+
   return (
     <CourseOverviewProvider course={course}>
       <CourseOverviewBody />

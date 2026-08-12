@@ -332,9 +332,19 @@ body,
   padding: 48px 32px;
 }
 
+.main-view--empty {
+  flex-direction: column;
+  gap: 12px;
+}
+
 .empty-state {
   color: var(--text-muted);
   font-size: 15px;
+}
+
+.empty-state-link {
+  color: var(--accent);
+  font-size: 13px;
 }
 
 /* ── Confirmation modal ── */

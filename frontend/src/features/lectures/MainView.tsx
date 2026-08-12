@@ -14,6 +14,8 @@ import { toastInitResult } from '@/services/toaster'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
+import { lectureNotFound } from '@/shared/utils/notFound'
+import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ProgressBar from '@/shared/components/ProgressBar'
 import Icon from '@/shared/components/Icon'
@@ -76,7 +78,7 @@ function RateLimitPanel({
 
 export default function MainView() {
   const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
-  const { refreshCourses } = useCourseTreeContext()
+  const { courses, loaded, refreshCourses } = useCourseTreeContext()
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null)
@@ -88,13 +90,19 @@ export default function MainView() {
 
   if (!course || !lecture) return null
 
-  if (!files) {
+  if (!loaded) {
     return (
       <main className="main-view">
         <div className="spinner" />
       </main>
     )
   }
+
+  const missing = lectureNotFound(courses, course, lecture, kind)
+  if (missing) return <NotFoundPanel message={missing} />
+
+  // The tree has this lecture, so files is set; the guard is for the type only.
+  if (!files) return null
 
   const runningFile = remote ? STEP_FILE[remote.step] : null
   const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)

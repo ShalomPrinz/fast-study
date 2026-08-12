@@ -14,6 +14,8 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
+import { lectureNotFound } from '@/shared/utils/notFound'
+import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
@@ -23,7 +25,7 @@ export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
   const { getError } = useRunnerStatus()
-  const { refreshCourses } = useCourseTreeContext()
+  const { courses, loaded: treeLoaded, refreshCourses } = useCourseTreeContext()
   const lectureError = getError(course, lecture, kind)
 
   const [content, setContent] = useState('')
@@ -107,6 +109,11 @@ export default function EditSummaryView() {
   }
 
   if (!course || !lecture) return null
+
+  if (treeLoaded) {
+    const missing = lectureNotFound(courses, course, lecture, kind)
+    if (missing) return <NotFoundPanel message={missing} />
+  }
 
   const pdfUrl = cacheBustedUrl(
     fileUrl(course, lecture, 'summary.pdf', kind),

@@ -11,6 +11,7 @@ import { announcePdfWarnings } from '@/features/lectures/utils/pdfWarnings'
 
 interface CourseTreeValue {
   courses: Course[]
+  loaded: boolean
   refreshCourses: () => Promise<void>
 }
 
@@ -18,6 +19,7 @@ const CourseTreeContext = createContext<CourseTreeValue | null>(null)
 
 export function CourseTreeProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([])
+  const [loaded, setLoaded] = useState(false)
   const latest = useLatestRequest()
 
   // PDF render warnings ride the tree, so they are announced here rather than from /status.
@@ -25,11 +27,17 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
   const primed = useRef(false)
 
   async function refreshCourses() {
-    const c = await latest(fetchTree())
-    if (!c) return
-    setCourses(c)
-    announcePdfWarnings(c, warningReports, primed.current)
-    primed.current = true
+    try {
+      const c = await latest(fetchTree())
+      if (!c) return
+      setCourses(c)
+      announcePdfWarnings(c, warningReports, primed.current)
+      primed.current = true
+    } finally {
+      // Set even on failure: an empty tree plus the central ConnectionError toast beats
+      // spinning forever behind a database service that is down.
+      setLoaded(true)
+    }
   }
 
   useEffect(() => {
@@ -49,7 +57,7 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
   )
 
   return (
-    <CourseTreeContext.Provider value={{ courses: sortedCourses, refreshCourses }}>
+    <CourseTreeContext.Provider value={{ courses: sortedCourses, loaded, refreshCourses }}>
       {children}
     </CourseTreeContext.Provider>
   )

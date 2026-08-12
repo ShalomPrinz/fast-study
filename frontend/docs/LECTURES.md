@@ -109,9 +109,10 @@ with no captured position it snaps to the right edge for RTL.
 
 State ownership is deliberate:
 
-- `CourseTreeContext` owns `courses` + `refreshCourses`, refreshes on SSE notify, and sorts each course's
-  lectures/recitations through `sortLectures`. Everything reads it directly — no props, no outlet context.
-  `useLectureRoute` derives the open lecture's `files`/`transcribePartial` from it plus the route params.
+- `CourseTreeContext` owns `courses` + `loaded` + `refreshCourses`, refreshes on SSE notify, and sorts each
+  course's lectures/recitations through `sortLectures`. Everything reads it directly — no props, no outlet
+  context. `useLectureRoute` derives the open lecture's `files`/`transcribePartial` from it plus the route
+  params.
 - `CourseGroup` owns both `expanded` and `recExpanded` and passes 1-prop `ExpandHandle`s down, so the
   recitations sub-group's open state survives collapsing and re-expanding the course. It auto-expands once
   the first time it becomes the selected course (deep links).

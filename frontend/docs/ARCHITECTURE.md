@@ -68,6 +68,13 @@ being a route segment. The static `course`/`downloads`/`search` segments outrank
 `/downloads` is reached from a plain nav link in the sidebar header, not a sidebar mode — clicking any
 sidebar mode navigates away from it, which is the intended "exit on sidebar click".
 
+Route params are user-editable and may name nothing on disk, so the three tree-backed views
+(`MainView`, `EditSummaryView`, `CourseView`) resolve their params against `CourseTreeContext` before
+rendering: spinner until `loaded`, then `NotFoundPanel` with a message from `shared/utils/notFound.ts`.
+That flag exists because an unresolved param and an unfetched tree both look like an empty tree —
+without it a typo'd URL is indistinguishable from loading and spins forever. `CourseView` runs the check
+above `CourseOverviewProvider` so a nonexistent course issues no overview requests.
+
 ## Mode toggles
 
 `shared/components/ModeToggle` is the generic segmented switch: `ModeToggle<M>({ modes, storageKey,
