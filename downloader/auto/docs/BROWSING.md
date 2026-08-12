@@ -39,7 +39,7 @@ Any other target (GitHub, unparseable) is not claimed at all — skipped like a 
 
 ## Video vs material
 
-Every strategy but `moodle-file` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as one of its materials — the same slot the Chrome extension uploads to manually. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the endpoint `server/` uses (`/download-file` vs `/download`+`/download-youtube`), and the database names the file. A second PDF into one lecture appends (`material.2.pdf`) rather than overwriting.
+Every strategy but `moodle-file` and `google-drive` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as one of its materials — the same slot the Chrome extension uploads to manually; a `google-drive` link could be either, and only the download-time probe knows which. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the endpoint `server/` uses (`/download-file` vs `/download`+`/download-youtube`), and the database names the file. A second PDF into one lecture appends (`material.2.pdf`) rather than overwriting.
 
 ## Three download entry points
 
@@ -52,7 +52,7 @@ The browserless pair each resolve exactly one target, so `only` (azoom-split not
 
 ## Mechanism-agnostic Item / ref contract
 
-The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, expandable, section }`. `media` is `'video'` or `'material'` — which file lands on disk, never how it is fetched, so it stays mechanism-agnostic; a `material` item is never `expandable`. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `section` is display metadata — the Moodle course section heading (`section.name`) the item lives under, a sibling field the frontend groups by (never parsed out of `ref`); `''` when the section is unnamed. Expanded playlist children inherit their parent's `section`. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
+The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, resolvedMedia?, expandable, section }`. `media` is `'video'`, `'material'` or `'unknown'` — which file lands on disk, never how it is fetched, so it stays mechanism-agnostic; a `material` item is never `expandable`. Every `google-drive` row is `'unknown'`: the WS payload carries no filename and `/list` never probes, so that is the honest stamp. `resolvedMedia` is the optional sibling saying what a row was actually probed as this session (`'video'`, `'material'`, or `'unsupported'` for a real file this service can't use); it is absent for a row never probed and for every non-Drive row, and a resolved row keeps its original `media` rather than moving segments. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `section` is display metadata — the Moodle course section heading (`section.name`) the item lives under, a sibling field the frontend groups by (never parsed out of `ref`); `''` when the section is unnamed. Expanded playlist children inherit their parent's `section`. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
 
 ## Lazy expansion
 
@@ -77,7 +77,8 @@ the link" (or was removed) yields no name at all and is the same 422, naming Dri
 the URL. `server/`'s download job is fire-and-forget, which is why all of this is decided here.
 Results are memoized per Drive **file id** for the session (`src/core/driveProbeCache.js`), and
 `/download-item` echoes the resolved `media` back beside `ok`. `/list` never probes — it costs an
-HTTP round-trip per row.
+HTTP round-trip per row — but it reads that cache to stamp `resolvedMedia` on rows already probed,
+so the resolved type survives a re-list.
 
 A `moodle-file` item is likewise not expandable and skips the browser: `/download-item` resolves the
 university from the ref's `fileurl`, appends the WS token via `pluginfileUrl` (pluginfile authenticates

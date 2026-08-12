@@ -11,6 +11,8 @@ import {
   downloadYtDlp,
   downloadDriveFile,
 } from '../core/core.js';
+import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
+import { getDriveMedia } from '../core/driveProbeCache.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
@@ -22,15 +24,35 @@ import {
   invalidToken,
 } from '../moodle/wsClient.js';
 
+// Which file a row lands as, decided with no network call: a Drive `url` module carries no
+// filename in the WS payload, so it is honestly 'unknown' until the download-time probe.
+function mediaOf(recording) {
+  if (recording.strategy === 'moodle-file') return 'material';
+  return recording.strategy === 'google-drive' ? 'unknown' : 'video';
+}
+
+// What an 'unknown' row was probed as this session, or undefined when never probed. The cache
+// keeps a real-but-unusable file (e.g. a .zip) as media null — surfaced as 'unsupported'.
+function resolvedMediaOf(recording) {
+  if (recording.strategy !== 'google-drive') return undefined;
+  const fileId = driveFileId(recording.pageUrl);
+  if (!fileId) return undefined;
+  const media = getDriveMedia(fileId);
+  if (media === undefined) return undefined;
+  return media ?? 'unsupported';
+}
+
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
 // unexpanded playlist (pageUrl, no url) is expandable, else downloadable. `media` says which
 // file lands on disk (video.mp4 vs a material PDF), never how it is fetched. See docs/BROWSING.md.
 function toItem(recording) {
+  const resolvedMedia = resolvedMediaOf(recording);
   return {
     ref: encodeRef(recording),
     title: recording.title,
     kind: recording.kind,
-    media: recording.strategy === 'moodle-file' ? 'material' : 'video',
+    media: mediaOf(recording),
+    ...(resolvedMedia ? { resolvedMedia } : {}),
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
   };
