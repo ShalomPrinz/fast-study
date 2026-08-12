@@ -75,6 +75,15 @@ That flag exists because an unresolved param and an unfetched tree both look lik
 without it a typo'd URL is indistinguishable from loading and spins forever. `CourseView` runs the check
 above `CourseOverviewProvider` so a nonexistent course issues no overview requests.
 
+`app/ErrorBoundary` wraps `<App/>` inside `BrowserRouter` — a render error anywhere below it (views,
+`Layout`, providers, sidebar) would otherwise unmount the tree into a blank page. The fallback shows
+timestamp, URL, user agent, stack and component stack with a copy button, so a crash can be reported
+without devtools. It is keyed on `location.pathname`: the fallback replaces the sidebar too, so its
+Home link is the only way out, and only a remount clears the error state. Reload stays as the hard
+reset for a crash that reproduces at `/`. Malformed URLs like `/a%/b` never reach it — the dev server
+and any static host reject the bad escape before React loads, and react-router's own `decodePath`
+warns and passes undecoded segments through to the not-found path above.
+
 ## Mode toggles
 
 `shared/components/ModeToggle` is the generic segmented switch: `ModeToggle<M>({ modes, storageKey,
