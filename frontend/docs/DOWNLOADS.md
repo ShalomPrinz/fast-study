@@ -241,7 +241,7 @@ already terminal before this session saw it is history, not a live outcome.
 
 ## Bulk download
 
-A run's state — `{ running, progress, outcome, summary, paused, saving }` — lives in the session provider's
+A run's state — `{ running, progress, started, staleJobs, outcome, verdicts, summary, paused, saving }` — lives in the session provider's
 `runs` map, keyed by the section's own identity `${course}:${media}:${title}` (the same string that keys the
 `SectionGroup` element). Both qualifiers matter: one Moodle heading usually holds both a video and its
 slides, and a run outlives the course it started in — closing and discovering another course wipes `runs`,
@@ -251,11 +251,45 @@ and the queue's writes keep landing while the user is on another page. Nothing a
 state, `saving` included: a remount mid-save must render the prompt busy, or a second submit would run the
 rest of the queue again in parallel with the first.
 
-The section's own `SectionGroup` may well be unmounted when the last download lands, so the **provider**
-freezes `summary`: on every jobs snapshot it folds each finished run's tally with its started rows' jobs and
-stores the string, once they are all terminal (`runSettled` + `summarize` in `utils/runSummary.ts`). A ref
-with no jobs is not terminal but unqueued — `/jobs` lags the POST — and re-folding forever isn't an option
-either, since a `done` job is evicted 60s later and the summary would decay to "0 downloaded".
+The run state is the single owner of `started`, the refs it has queued: the loop appends to it as each
+download is triggered, and `outcome` (the tally of rows settled without queuing anything) is written when
+the queue ends. The section's own `SectionGroup` may well be unmounted when the last download lands, so the
+**provider** collects and freezes the summary. On every jobs snapshot it records a `done`/`error` verdict for
+each of the run's started refs that doesn't have one yet (`recordVerdicts` in `utils/runSummary.ts`), and
+once `isRunSettled` — the queue is done **and** every ref has a verdict — it folds them with the tally into
+the frozen string (`summarize`). Both functions live in `runSummary.ts` and are unit-tested there; the
+provider is only their caller. Verdicts are accumulated rather than re-derived from the live snapshot because
+the download server evicts a `done` job 60s later: a run whose downloads finish more than a minute apart would
+otherwise lose its earliest rows before the last one settles — which is also why collecting starts from the
+first triggered row rather than at the end of the queue, since triggering a long section alone outlasts that
+window. The `outcome` gate on freezing is load-bearing: mid-run every ref triggered so far can transiently
+have a verdict while items remain to trigger, and freezing there would report a fraction of the section. A
+ref with no jobs records nothing — `/jobs` lags the POST that queued it, and reading that gap as "done"
+would freeze a zero.
+
+A verdict is tied to job identity, not to "any terminal snapshot after the ref entered `started`": it is
+`{ status, jobIds }`, the ids it was read from. The queue captures the ids the ref's jobs already have
+_before_ awaiting the POST into `staleJobs`, and `recordVerdicts` ignores those. Without it the common retry
+path misreports: the browser's snapshot is an SSE round-trip behind the POST and the server never time-evicts
+an `error` job, so a re-triggered failed row would be recorded as failed again from the previous run's
+leftover, and the header would stop ticking while its download is still in flight. That baseline is read from
+a `jobsByRef` ref refreshed during `SectionGroup`'s render, so while the section is unmounted it holds the
+last rendered snapshot rather than the live one — harmless, because nothing creates `ref`-bearing jobs for
+those rows while unmounted: extension jobs carry `ref === null` and `groupJobsByRef` drops them, and the
+per-row retry needs the row on screen.
+
+The ids on the verdict itself cover the mirror case, an attempt that arrives _after_ the trigger: a job in
+neither the baseline nor the verdict's ids is a new attempt (the per-row `Retry ✗` on a row that already
+failed mid-run), so the verdict is discarded and re-recorded from the current jobs — typically nothing yet,
+which un-freezes the run so it waits for the retry's real outcome. Eviction stays harmless because it only
+ever removes ids: a ref whose jobs have vanished keeps what it recorded. Since a verdict can be dropped,
+`isRunSettled` can go false again, and the provider recomputes `summary` on every snapshot rather than
+skipping already-frozen runs — otherwise the superseded string would stay on screen.
+
+A run resets `{ started, staleJobs, outcome, verdicts, summary }` in exactly one place, "Download all"'s own handler.
+Re-entering the queue loop clears nothing, because a passcode resume re-enters it mid-run and the refs and
+verdicts already accumulated belong to that same run. The reconnect abort clears them instead of finishing:
+with no `outcome` there is nothing to report, so nothing should keep ticking either.
 
 "Download all" flattens the section into downloadable leaves — a playlist contributes its children, never
 its own ref, which the backend rejects. It is disabled until every expandable is expanded, and never
@@ -280,9 +314,9 @@ round-trip each per server lifetime rather than one per bulk run. Since the bulk
 recording the verdict is also the only thing that carries the 422's reason out of the run — as the greyed
 row and its column.
 
-The tally holds the **refs** it started, not a count, so the summary is folded from those rows' job status:
-the header shows `Downloading n/N…` while triggering, `Downloading n more…` off the live jobs while the last
-ones finish, and then the frozen `N downloaded, N failed, N unsupported, N already there` (each part appears
+A queued row is never tallied at queue time — its real outcome lives in its jobs, so the summary is folded
+from the started refs' verdicts: the header shows `Downloading n/N…` while triggering, `Downloading n more…`
+off the live jobs of every ref started so far, and then the frozen `N downloaded, N failed, N unsupported, N already there` (each part appears
 only when non-zero). "Download all" stays disabled until they are all terminal. The bulk run never toasts per item itself — a job failure toasts once from the
 provider.
 

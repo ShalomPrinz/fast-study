@@ -44,7 +44,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   const { patchExpansion, setRun } = useDownloadsActions()
   const id = section.id
   // Read, never seed: a remount lands mid-run and must show that run, not start one.
-  const { running, progress, outcome, summary, paused, saving } = runs[id] ?? IDLE_RUN
+  const { running, progress, started, summary, paused, saving } = runs[id] ?? IDLE_RUN
 
   // Refreshed on render only: while mounted the queue sees an SSE tree refresh and a name typed
   // mid-run, and on unmount they freeze, so a background run finishes against what it last saw.
@@ -52,6 +52,8 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   coursesRef.current = courses
   const editsRef = useRef(edits)
   editsRef.current = edits
+  const jobsRef = useRef(jobsByRef)
+  jobsRef.current = jobsByRef
 
   function stateOf(ref: string): ExpandState {
     return expansions[ref] ?? IDLE_EXPAND
@@ -83,20 +85,24 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     return items.flatMap((item) => (item.expandable ? (stateOf(item.ref).children ?? []) : [item]))
   }
 
-  // `summary` stays null: the provider fills it once every started row's jobs are terminal.
+  // `outcome` marks the queue as done; the provider freezes the summary from it once every started
+  // row has a recorded verdict.
   function finish(tally: Tally) {
-    setRun(id, {
-      running: false,
-      progress: null,
-      outcome: { ...tally, started: [...tally.started] },
-      summary: null,
-    })
+    setRun(id, { running: false, progress: null, outcome: { ...tally }, summary: null })
   }
 
   // Triggering is sequential by design (the downloader drives one shared browser session), but the
   // downloads themselves run on — so several rows are in flight by the end of the queue.
-  async function runQueue(queue: Item[], from: number, tally: Tally) {
-    setRun(id, { running: true, outcome: null, summary: null })
+  // Entering clears nothing: a passcode resume re-enters here mid-run, and the started refs and
+  // verdicts already accumulated are the same run's. Only a fresh run resets them.
+  async function runQueue(
+    queue: Item[],
+    from: number,
+    tally: Tally,
+    started: string[],
+    staleJobs: Record<string, readonly string[]>,
+  ) {
+    setRun(id, { running: true })
     for (let i = from; i < queue.length; i++) {
       const item = queue[i]
       setRun(id, { progress: { at: i + 1, total: queue.length } })
@@ -117,21 +123,38 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         tally.skipped++
         continue
       }
+      // Captured before the POST so it cannot contain the job the POST creates: the snapshot the
+      // browser holds is a refresh behind, and a failed row's `error` job is never time-evicted.
+      const stale = jobsForRef(jobsRef.current, item.ref).map((j) => j.id)
       try {
         const { media } = await downloadItem({ ref: item.ref, course, name, kind })
         resolveMedia(item.ref, media)
-        tally.started.push(item.ref)
+        started.push(item.ref)
+        staleJobs[item.ref] = stale
+        // Published as it grows, so the provider can record this row's verdict before the server
+        // evicts its `done` job 60s on — a long section takes longer than that to trigger.
+        setRun(id, { started: [...started], staleJobs: { ...staleJobs } })
       } catch (err) {
         if (isReconnectError(err)) {
           onReconnect()
-          setRun(id, { running: false, progress: null, outcome: null, summary: null })
+          // Abandoned, not finished: with no `outcome` there is nothing to report, so the started
+          // refs go too rather than leave the header ticking on a run that will never freeze.
+          setRun(id, {
+            running: false,
+            progress: null,
+            started: [],
+            staleJobs: {},
+            outcome: null,
+            verdicts: {},
+            summary: null,
+          })
           return
         }
         if (isPasscodeError(err)) {
           // Hold here; submitting the passcode retries this same item. The prompt lives in page
           // state, so a run paused while the user is elsewhere still asks when the section returns.
           setRun(id, {
-            paused: { queue, index: i, tally, reason: err.reason, name },
+            paused: { queue, index: i, tally, started, staleJobs, reason: err.reason, name },
             running: false,
           })
           return
@@ -162,7 +185,13 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     }
     setRun(id, { saving: false, paused: null })
     // A failed save skips the item it gated; a saved passcode retries that same item.
-    void runQueue(paused.queue, failed ? paused.index + 1 : paused.index, paused.tally)
+    void runQueue(
+      paused.queue,
+      failed ? paused.index + 1 : paused.index,
+      paused.tally,
+      paused.started,
+      paused.staleJobs,
+    )
   }
 
   // Cancelling abandons the rest of the queue, not just the gated item.
@@ -175,13 +204,11 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   }
 
   // Queueing ends long before the downloads do, so the header keeps ticking on the live jobs of
-  // every row the run started (per atom, so a zoom pair's second clip still counts) until the
+  // every row the run has started (per atom, so a zoom pair's second clip still counts) until the
   // provider freezes the summary.
-  const active = outcome
-    ? outcome.started
-        .flatMap((ref) => jobsForRef(jobsByRef, ref))
-        .filter((j) => j.status === 'running').length
-    : 0
+  const active = started
+    .flatMap((ref) => jobsForRef(jobsByRef, ref))
+    .filter((j) => j.status === 'running').length
   const busy = running || paused !== null || active > 0
 
   return (
@@ -201,9 +228,12 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         {!progress && summary && <span className="recordings-section-progress">{summary}</span>}
         <button
           className="source-row-btn recordings-download-all"
-          onClick={() =>
-            runQueue(buildQueue(), 0, { started: [], failed: 0, skipped: 0, unsupported: 0 })
-          }
+          onClick={() => {
+            // The one place a run resets: everything the previous run left behind goes before the
+            // first item is triggered.
+            setRun(id, { started: [], staleJobs: {}, outcome: null, verdicts: {}, summary: null })
+            void runQueue(buildQueue(), 0, { failed: 0, skipped: 0, unsupported: 0 }, [], {})
+          }}
           disabled={busy || !allExpanded}
           title={allExpanded ? undefined : 'Expand every playlist in this section first'}
         >

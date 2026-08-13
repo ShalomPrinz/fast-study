@@ -3,9 +3,9 @@ import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
 import type { Item, PasscodeError, ResolvedMedia } from '../services/autoDownloader'
 import { isReconnectError, listRecordings } from '../services/autoDownloader'
-import type { Tally } from '../utils/runSummary'
-import { runSettled, summarize } from '../utils/runSummary'
-import { jobsForRef, useJobsByRef } from './DownloadJobsContext'
+import type { StaleJobs, Tally, Verdicts } from '../utils/runSummary'
+import { isRunSettled, recordVerdicts, summarize } from '../utils/runSummary'
+import { useJobsByRef } from './DownloadJobsContext'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
 
@@ -21,16 +21,25 @@ export interface Paused {
   queue: Item[]
   index: number
   tally: Tally
+  // Carried so the resume re-enters the queue loop with the refs it had already triggered.
+  started: string[]
+  staleJobs: Record<string, readonly string[]>
   reason: PasscodeError['reason']
   name: string
 }
 
 // One section's bulk run, keyed by `${course}:${media}:${title}` — the identity the section renders
-// under. `summary` is frozen once the run's downloads end, since the jobs it folds are evicted later.
+// under. `started` is the authoritative list of the refs this run queued, growing as they are
+// triggered; `staleJobs` records what each of them already had at trigger time, `verdicts` collects
+// their outcomes as they land, and `summary` freezes off all three once the queue is done
+// (`outcome`) and every started row has a verdict.
 export interface SectionRun {
   running: boolean
   progress: { at: number; total: number } | null
+  started: readonly string[]
+  staleJobs: StaleJobs
   outcome: Tally | null
+  verdicts: Verdicts
   summary: string | null
   paused: Paused | null
   saving: boolean
@@ -46,7 +55,10 @@ export const IDLE_EXPAND: ExpandState = {
 export const IDLE_RUN: SectionRun = {
   running: false,
   progress: null,
+  started: [],
+  staleJobs: {},
   outcome: null,
+  verdicts: {},
   summary: null,
   paused: null,
   saving: false,
@@ -128,17 +140,25 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     setRuns((prev) => ({ ...prev, [id]: { ...(prev[id] ?? IDLE_RUN), ...next } }))
   }, [])
 
-  // Freezing happens here rather than in `SectionGroup`, which is exactly the component that may be
-  // unmounted while the last downloads land — and the jobs behind a summary are evicted 60s later.
+  // Collecting and freezing happen here rather than in `SectionGroup`, which is exactly the component
+  // that may be unmounted while the last downloads land.
   const jobsByRef = useJobsByRef()
   useEffect(() => {
     setRuns((prev) => {
       let next: Record<string, SectionRun> | null = null
       for (const [id, run] of Object.entries(prev)) {
-        if (!run.outcome || run.summary || !runSettled(run.outcome.started, jobsByRef)) continue
-        const started = run.outcome.started.map((ref) => jobsForRef(jobsByRef, ref))
+        // Collected from the first triggered row on, not from the end of the queue: the download
+        // server evicts a `done` job 60s later, and triggering a long section takes longer than that.
+        const verdicts =
+          recordVerdicts(run.started, jobsByRef, run.verdicts, run.staleJobs) ?? run.verdicts
+        // Recomputed even for a frozen run: a retry can drop a verdict, and the stale string must go
+        // with it rather than sit on screen while the run is live again.
+        const summary = isRunSettled(run.outcome, run.started, verdicts)
+          ? summarize(run.outcome, run.started, verdicts)
+          : null
+        if (verdicts === run.verdicts && summary === run.summary) continue
         next ??= { ...prev }
-        next[id] = { ...run, summary: summarize(run.outcome, started) }
+        next[id] = { ...run, verdicts, summary }
       }
       return next ?? prev
     })
