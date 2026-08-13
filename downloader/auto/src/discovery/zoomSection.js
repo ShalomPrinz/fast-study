@@ -12,6 +12,9 @@ const LABEL_RE = /(?:הרצאה\s+מספר|הרצאה|שיעור|תרגול|תר
 // href value of any anchor (both quote styles), captured for a zoom.us/rec/share filter.
 const ANCHOR_HREF_RE = /<a\b[^>]*\bhref\s*=\s*(["'])(.*?)\1/gi;
 const shareKey = (u) => (u.split('/rec/share/')[1] || '').split(/[?#]/)[0];
+// The paragraph is used verbatim as the row title, so drop the punctuation that only
+// separated it from the link that followed ('הרצאה מספר 1:' -> 'הרצאה מספר 1').
+const trimLabel = (text) => text.replace(/[\s:.,;\-–—]+$/, '');
 
 function anchorShareUrls(paragraph) {
   const out = [];
@@ -53,7 +56,7 @@ export function parseZoomSummaries(sections) {
       if (urls.length === 0) {
         // Not a link paragraph — if it names a lecture number, remember it as the
         // label for the following link(s).
-        if (LABEL_RE.test(text)) label = text;
+        if (LABEL_RE.test(text)) label = trimLabel(text);
         continue;
       }
 
