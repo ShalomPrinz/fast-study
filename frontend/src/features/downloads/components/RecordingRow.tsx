@@ -62,10 +62,9 @@ const RecordingRow = memo(function RecordingRow({
   // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
   // for free after a reload. Subscribed per ref, so another row's job change doesn't re-render this one.
   const jobs = useRowJobs(item.ref)
-  // What a download in this session proved the row to be, over auto's cached probe answer — so the
-  // type column updates on the same interaction that resolved it, with no re-list.
-  const [probed, setProbed] = useState<ResolvedMedia | undefined>(undefined)
-  const resolved = probed ?? item.resolvedMedia
+  // Auto's cached probe answer, updated in place by a download this session (single-row or bulk) —
+  // so the type column resolves on the same interaction, with no re-list.
+  const resolved = item.resolvedMedia
   // Only an 'unknown' (Google Drive) row has a type worth showing; elsewhere it restates the segment.
   const unknown = item.media === 'unknown'
   const unsupported = unknown && resolved === 'unsupported'
@@ -82,7 +81,6 @@ const RecordingRow = memo(function RecordingRow({
     name: effectiveName,
     kind,
     onReconnect,
-    onResolved: setProbed,
   })
 
   // A material row attaches a PDF to an existing lecture instead of creating one from a video —

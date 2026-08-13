@@ -26,6 +26,7 @@ import {
   resolveRow,
 } from '@/features/downloads/contexts/RowEditsContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
+import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 
 interface Props {
   title: string
@@ -47,6 +48,9 @@ interface Tally {
   started: string[]
   failed: number
   skipped: number
+  // Counted apart from `failed`: nothing went wrong with the run, the file just isn't one auto can
+  // fetch — and unlike a failure it is a permanent verdict the next run skips outright.
+  unsupported: number
 }
 
 // A paused run: the passcode prompt is open; the queue resumes from `index` on submit.
@@ -66,6 +70,7 @@ function summarize(tally: Tally, started: readonly (readonly JobProgress[])[]): 
   const failed = tally.failed + status.filter((s) => s === 'error').length
   const parts = [`${status.filter((s) => s === 'done').length} downloaded`]
   if (failed) parts.push(`${failed} failed`)
+  if (tally.unsupported) parts.push(`${tally.unsupported} unsupported`)
   if (tally.skipped) parts.push(`${tally.skipped} already there`)
   return parts.join(', ')
 }
@@ -75,6 +80,7 @@ function summarize(tally: Tally, started: readonly (readonly JobProgress[])[]): 
 export default function SectionGroup({ title, items, course, onReconnect }: Props) {
   const { courses } = useCourseTreeContext()
   const jobsByRef = useJobsByRef()
+  const resolveMedia = useResolveMedia()
   const [expansions, setExpansions] = useState<Record<string, ExpandState>>({})
   // Keyed by ref and never cleared: an edit outlives an SSE refresh, a re-expand, and a bulk run.
   const [edits, setEdits] = useState<Record<string, RowEdit>>({})
@@ -156,12 +162,19 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         coursesRef.current,
         course,
       )
+      // A known-unsupported row can only fail again, and each attempt burns a Drive probe
+      // round-trip — so a verdict from any earlier download takes it out of the queue for good.
+      if (item.resolvedMedia === 'unsupported') {
+        tally.unsupported++
+        continue
+      }
       if (hasResource(item, name, kind, coursesRef.current, course)) {
         tally.skipped++
         continue
       }
       try {
-        await downloadItem({ ref: item.ref, course, name, kind })
+        const { media } = await downloadItem({ ref: item.ref, course, name, kind })
+        resolveMedia(item.ref, media)
         tally.started.push(item.ref)
       } catch (err) {
         if (isReconnectError(err)) {
@@ -177,7 +190,13 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
           setRunning(false)
           return
         }
-        tally.failed++
+        // The probe's verdict on the file, exactly as in a single-row download — the bulk run
+        // reports one summary and never toasts, so recording it is the only thing that carries
+        // "this is a .zip" out of the run.
+        if (isUnsupportedError(err)) {
+          resolveMedia(item.ref, 'unsupported')
+          tally.unsupported++
+        } else tally.failed++
       }
     }
     finish(tally)
@@ -236,7 +255,9 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         {!progress && summary && <span className="recordings-section-progress">{summary}</span>}
         <button
           className="source-row-btn recordings-download-all"
-          onClick={() => runQueue(buildQueue(), 0, { started: [], failed: 0, skipped: 0 })}
+          onClick={() =>
+            runQueue(buildQueue(), 0, { started: [], failed: 0, skipped: 0, unsupported: 0 })
+          }
           disabled={busy || !allExpanded}
           title={allExpanded ? undefined : 'Expand every playlist in this section first'}
         >

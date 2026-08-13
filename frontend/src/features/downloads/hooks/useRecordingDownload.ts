@@ -1,10 +1,6 @@
 import { useRef, useState } from 'react'
 import type { Kind } from '@/types'
-import type {
-  Item,
-  PasscodeError,
-  ResolvedMedia,
-} from '@/features/downloads/services/autoDownloader'
+import type { Item, PasscodeError } from '@/features/downloads/services/autoDownloader'
 import {
   downloadItem,
   isPasscodeError,
@@ -15,6 +11,7 @@ import {
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { PasscodePromptProps } from '@/features/downloads/components/PasscodePrompt'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
+import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 
 type Result = 'fail' | null
 
@@ -28,16 +25,16 @@ export function useRecordingDownload({
   name: effectiveName,
   kind,
   onReconnect,
-  onResolved,
 }: {
   item: Item
   course: string
   name: string
   kind: Kind
   onReconnect: () => void
-  // What this download proved the file to be — the only moment an 'unknown' row learns its type.
-  onResolved: (media: ResolvedMedia) => void
 }) {
+  // What this download proves the file to be — one of the two moments an 'unknown' row learns its
+  // type (the bulk queue is the other), reported upward so the answer outlives this row.
+  const resolveMedia = useResolveMedia()
   const [pending, setPending] = useState(false)
   const [retryingId, setRetryingId] = useState<string | null>(null)
   const [result, setResult] = useState<Result>(null)
@@ -62,7 +59,7 @@ export function useRecordingDownload({
   ) {
     try {
       const { media } = await downloadItem(args)
-      onResolved(media)
+      resolveMedia(args.ref, media)
     } catch (err) {
       // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.
       if (isReconnectError(err)) onReconnect()
@@ -72,7 +69,7 @@ export function useRecordingDownload({
         setPasscodePrompt(true)
       } else {
         // A 422 is the probe's verdict on this file, so it resolves the row as surely as a success.
-        if (isUnsupportedError(err)) onResolved('unsupported')
+        if (isUnsupportedError(err)) resolveMedia(args.ref, 'unsupported')
         setResult('fail')
         toastDownloadError(name, err)
       }

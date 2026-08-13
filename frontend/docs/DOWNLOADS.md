@@ -51,10 +51,13 @@ An `unknown` row renders one extra narrow column (`.recording-media`): `?` while
 `Video` / `Material` / `Unsupported`. Video and material rows render nothing there — it would only restate
 their segment.
 
-`RecordingRow` holds the resolution as `probed ?? item.resolvedMedia`: `POST /download-item` answers
-`{ media }`, and a 422 `UnsupportedError` is just as much a verdict, so both update the column on the
-same interaction that resolved it — no re-list. The state is the row's own and dies with a re-discover;
-auto's cache is what makes it survive a reload. A row resolved to `material` picks up the whole material
+`RecordingRow` reads `item.resolvedMedia` and nothing else. A download reports the verdict upward through
+`ResolvedMediaContext` — a dispatch-only context whose provider is `DownloadsView`, which stamps it onto
+the matching item in `items`. `POST /download-item` answers `{ media }`, and a 422 `UnsupportedError` is
+just as much a verdict, so both update the column on the interaction that resolved it — no re-list. The
+provider sits above the media segments deliberately: switching segment unmounts every row and every
+`SectionGroup`, so a verdict held in either would be lost on the way back. It still dies with a
+re-discover; auto's cache is what makes it survive a reload. A row resolved to `material` picks up the whole material
 affordance (attach-to dropdown, material count, no overwrite confirm). An `unsupported` row greys out and
 its Download button is disabled; the 422's message names the actual extension and is toasted by
 `toastDownloadError`, which already shows an `UnsupportedError` verbatim.
@@ -80,8 +83,9 @@ setters update with `{ ...prev, [ref]: { ...prev[ref], name } }` — leaving eve
 untouched is what lets the siblings bail out. (An SSE tree refresh still re-renders every row: leaf rows
 consume `CourseTreeContext` for the suggestion and the green highlight.)
 
-The bulk queue does not read either context — it resolves through `SectionGroup`'s `editsRef` mirror, so it
-picks up names typed while the run is in flight.
+The bulk queue does not read either edits context — it resolves through `SectionGroup`'s `editsRef` mirror,
+so it picks up names typed while the run is in flight. It does write to `ResolvedMediaContext`, on the same
+two outcomes a single-row download does, so a bulk run resolves the `unknown` rows it touches.
 
 `hasResource(item, name, kind, courses, course)` is the single already-downloaded rule, so the green row
 and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks
@@ -223,11 +227,19 @@ a name typed while it runs is honoured rather than the snapshot it started with.
 
 Per-item outcomes: `ReconnectError` aborts the whole run and triggers the reconnect flow; a `PasscodeError`
 pauses at that item and opens the prompt (submit saves the passcode and resumes by retrying the same item;
-cancel abandons the rest of the queue); anything else marks it failed and continues.
+cancel abandons the rest of the queue); a 422 marks it `unsupported` (see below); anything else marks it
+failed and continues.
+
+`unsupported` is tallied apart from `failed` because it is not a run problem and, unlike a failure, it is
+permanent: a row already known unsupported is skipped before the request, so four `.zip`s cost one probe
+round-trip each per server lifetime rather than one per bulk run. Since the bulk run never toasts per item,
+recording the verdict is also the only thing that carries the 422's reason out of the run — as the greyed
+row and its column.
 
 The tally holds the **refs** it started, not a count, so the summary is folded with those rows' live job
 status: the header shows `Downloading n/N…` while triggering, `Downloading n more…` while the last jobs
-finish, and only then the `N downloaded, N failed, N already there` summary. "Download all" stays disabled
+finish, and only then the `N downloaded, N failed, N unsupported, N already there` summary (each part
+appears only when non-zero). "Download all" stays disabled
 until they are all terminal. The bulk run never toasts per item itself — a job failure toasts once from the
 provider.
 
