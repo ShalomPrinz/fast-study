@@ -34,6 +34,9 @@ DIRECTION_FILTER = (
 # Preamble pandoc injects via --include-in-header. Package order and the callout box
 # design are load-bearing — see docs/PDF.md.
 LATEX_HEADER = r"""
+\usepackage{fvextra}
+\fvset{breaklines=true, breakanywhere=true, breakautoindent=true, breaksymbolleft={}, breaksymbolright={}, breakanywheresymbolpre={}}
+
 \usepackage{tcolorbox}
 \definecolor{calloutDefinitionTint}{HTML}{EDF3F9}
 \definecolor{calloutDefinitionFrame}{HTML}{1F4E79}

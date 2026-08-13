@@ -69,6 +69,14 @@ Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBe
 
 `Verbatim` uses the **global `\ttfamily`**, not polyglossia's `\englishfonttt` — even inside `\begin{english}`. A Latin-only mono leaves Hebrew comments as notdef boxes, and XeLaTeX has no per-glyph font fallback (that's LuaTeX/luaotfload). So one dual-script monospace is set globally via `\setmonofont`: **Miriam Mono CLM** (Culmus, dual-script, true monospace). Setting only `\englishfonttt` does nothing.
 
+#### Long lines wrap instead of running off the page
+
+`Verbatim` sets each source line in its own box and never warns, so an over-long code line silently ran past the right margin and got clipped — no `Overfull \hbox` to notice it by. `LATEX_HEADER` therefore loads **fvextra** and sets `breaklines` + `breakanywhere` + `breakautoindent`: continuations resume at the original indent level, and a single unbreakable token (a URL, a base64 blob) splits mid-token rather than overflowing.
+
+`breaklines` is an fvextra key, **not** a fancyvrb one — plain `\fvset{breaklines=true}` fails with "`breaklines' undefined in families `FV'". And fvextra pulls in `lineno`, which bidi rejects when loaded after it ("Oops! you have loaded package lineno after bidi package"), so `\usepackage{fvextra}` sits at the very TOP of `LATEX_HEADER`, above polyglossia — same ordering constraint as tcolorbox/graphicx.
+
+All break markers are suppressed (`breaksymbolleft/right`, and `breakanywheresymbolpre`, which otherwise prints a `⌋` at every mid-token break) so the PDF's code stays copy-pasteable.
+
 ### Tables
 
 Every `AlignDefault` column becomes `AlignRight`. bidi already reverses the column **order** (the first column renders rightmost), but pandoc emits `l` for an unaligned column, so cell contents stayed flush left with a ragged right edge — an RTL table typeset LTR. An alignment the markdown states explicitly (`:---`, `---:`) is the author's and is left as written.
