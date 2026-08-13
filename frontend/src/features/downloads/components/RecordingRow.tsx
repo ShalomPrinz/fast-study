@@ -1,7 +1,7 @@
 import { memo, useId, useState } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import type { Item } from '@/features/downloads/services/autoDownloader'
+import type { Item, ResolvedMedia } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
@@ -33,6 +33,13 @@ interface Props {
   expand?: ExpandControl
 }
 
+// The resolved-type column's copy; an unresolved 'unknown' row shows '?'.
+const RESOLVED_LABEL: Record<ResolvedMedia, string> = {
+  video: 'Video',
+  material: 'Material',
+  unsupported: 'Unsupported',
+}
+
 // One discovered recording; an expandable one renders each child as a recursive RecordingRow.
 // Memoized on its own `edit` slice, so typing in one row leaves its siblings untouched.
 const RecordingRow = memo(function RecordingRow({
@@ -55,6 +62,13 @@ const RecordingRow = memo(function RecordingRow({
   // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
   // for free after a reload. Subscribed per ref, so another row's job change doesn't re-render this one.
   const jobs = useRowJobs(item.ref)
+  // What a download in this session proved the row to be, over auto's cached probe answer — so the
+  // type column updates on the same interaction that resolved it, with no re-list.
+  const [probed, setProbed] = useState<ResolvedMedia | undefined>(undefined)
+  const resolved = probed ?? item.resolvedMedia
+  // Only an 'unknown' (Google Drive) row has a type worth showing; elsewhere it restates the segment.
+  const unknown = item.media === 'unknown'
+  const unsupported = unknown && resolved === 'unsupported'
   const {
     download,
     retryClip,
@@ -62,15 +76,29 @@ const RecordingRow = memo(function RecordingRow({
     retryingId,
     failed: queueFailed,
     passcode,
-  } = useRecordingDownload({ item, course, name: effectiveName, kind, onReconnect })
+  } = useRecordingDownload({
+    item,
+    course,
+    name: effectiveName,
+    kind,
+    onReconnect,
+    onResolved: setProbed,
+  })
 
-  // A material row attaches a PDF to an existing lecture instead of creating one from a video.
-  const material = item.media === 'material'
+  // A material row attaches a PDF to an existing lecture instead of creating one from a video —
+  // including an 'unknown' row the probe resolved to a PDF.
+  const material = item.media === 'material' || (unknown && resolved === 'material')
   const listId = useId()
   // Non-blocking state note: a material download appends, so the count is shown rather than confirmed.
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
   // Live tree, so a completed download's SSE refresh flips the row green.
-  const alreadyDownloaded = hasResource(item.media, effectiveName, kind, courses, course)
+  const alreadyDownloaded = hasResource(
+    { media: item.media, resolvedMedia: resolved },
+    effectiveName,
+    kind,
+    courses,
+    course,
+  )
   // A multi-clip recording (jobs.length > 1) turns the main button into a label.
   const status = rowStatus(jobs)
   const split = jobs.length > 1
@@ -153,11 +181,23 @@ const RecordingRow = memo(function RecordingRow({
   return (
     <div className="recording-entry">
       <div
-        className={alreadyDownloaded ? 'recording-row recording-row--downloaded' : 'recording-row'}
+        className={[
+          'recording-row',
+          alreadyDownloaded && 'recording-row--downloaded',
+          unsupported && 'recording-row--unsupported',
+        ]
+          .filter(Boolean)
+          .join(' ')}
       >
         <span className="recording-title" dir="auto" title={item.title}>
           {item.title}
         </span>
+
+        {unknown && (
+          <span className="recording-media" title="File type">
+            {resolved ? RESOLVED_LABEL[resolved] : '?'}
+          </span>
+        )}
 
         <div className="kind-toggle">
           <button
@@ -211,7 +251,8 @@ const RecordingRow = memo(function RecordingRow({
           <button
             className="source-row-btn recording-download-btn"
             onClick={onDownloadClick}
-            disabled={pending || downloading}
+            disabled={pending || downloading || unsupported}
+            title={unsupported ? 'Not a file the downloader can fetch' : undefined}
           >
             {pending ? (
               <span className="recording-spinner" />

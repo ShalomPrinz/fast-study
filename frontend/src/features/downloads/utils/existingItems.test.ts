@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture, MaterialInfo } from '@/types'
+import type { Media, ResolvedMedia } from '../services/autoDownloader'
 import { existingNames, hasResource, materialsOf } from './existingItems'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
@@ -66,27 +67,51 @@ describe('hasResource', () => {
     node('Lecture 3'),
     node('Lecture 4', { materials: ['material.pdf', 'material.2.pdf'] }),
   ])
+  const row = (media: Media, resolvedMedia?: ResolvedMedia) => ({ media, resolvedMedia })
 
   it('is true for a material row when that node holds any material', () => {
-    expect(hasResource('material', 'Lecture 4', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource(row('material'), 'Lecture 4', 'lecture', courses, 'Algebra')).toBe(true)
   })
 
   it('is true for a material row only when that node holds a material', () => {
-    expect(hasResource('material', 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(true)
-    expect(hasResource('material', 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource(row('material'), 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource(row('material'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(false)
   })
 
   it('is true for a video row only when that node holds a video.mp4', () => {
-    expect(hasResource('video', 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(true)
-    expect(hasResource('video', 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource(row('video'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(true)
+    expect(hasResource(row('video'), 'Lecture 2', 'lecture', courses, 'Algebra')).toBe(false)
   })
 
   it('is false for a node that does not exist', () => {
-    expect(hasResource('video', 'Lecture 9', 'lecture', courses, 'Algebra')).toBe(false)
-    expect(hasResource('material', 'Lecture 9', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource(row('video'), 'Lecture 9', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource(row('material'), 'Lecture 9', 'lecture', courses, 'Algebra')).toBe(false)
   })
 
   it('is false for a video row whose node exists but holds no video.mp4', () => {
-    expect(hasResource('video', 'Lecture 3', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource(row('video'), 'Lecture 3', 'lecture', courses, 'Algebra')).toBe(false)
+  })
+
+  it('is false for an unprobed unknown row, whatever is on disk', () => {
+    expect(hasResource(row('unknown'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(false)
+    expect(hasResource(row('unknown'), 'Lecture 4', 'lecture', courses, 'Algebra')).toBe(false)
+  })
+
+  it('follows the probed type once an unknown row is resolved', () => {
+    expect(hasResource(row('unknown', 'video'), 'Lecture 1', 'lecture', courses, 'Algebra')).toBe(
+      true,
+    )
+    expect(
+      hasResource(row('unknown', 'material'), 'Lecture 4', 'lecture', courses, 'Algebra'),
+    ).toBe(true)
+    expect(
+      hasResource(row('unknown', 'material'), 'Lecture 1', 'lecture', courses, 'Algebra'),
+    ).toBe(false)
+  })
+
+  it('is false for a row probed as unsupported — nothing of it can land on disk', () => {
+    expect(
+      hasResource(row('unknown', 'unsupported'), 'Lecture 1', 'lecture', courses, 'Algebra'),
+    ).toBe(false)
   })
 })

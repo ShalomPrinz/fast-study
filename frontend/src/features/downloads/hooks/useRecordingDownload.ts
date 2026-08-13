@@ -1,10 +1,15 @@
 import { useRef, useState } from 'react'
 import type { Kind } from '@/types'
-import type { Item, PasscodeError } from '@/features/downloads/services/autoDownloader'
+import type {
+  Item,
+  PasscodeError,
+  ResolvedMedia,
+} from '@/features/downloads/services/autoDownloader'
 import {
   downloadItem,
   isPasscodeError,
   isReconnectError,
+  isUnsupportedError,
   saveZoomPasscode,
 } from '@/features/downloads/services/autoDownloader'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
@@ -23,12 +28,15 @@ export function useRecordingDownload({
   name: effectiveName,
   kind,
   onReconnect,
+  onResolved,
 }: {
   item: Item
   course: string
   name: string
   kind: Kind
   onReconnect: () => void
+  // What this download proved the file to be — the only moment an 'unknown' row learns its type.
+  onResolved: (media: ResolvedMedia) => void
 }) {
   const [pending, setPending] = useState(false)
   const [retryingId, setRetryingId] = useState<string | null>(null)
@@ -52,8 +60,9 @@ export function useRecordingDownload({
     resume: () => Promise<void>,
   ) {
     try {
-      const started = await downloadItem(args)
-      if (!started) {
+      const { ok, media } = await downloadItem(args)
+      onResolved(media)
+      if (!ok) {
         setResult('fail')
         toastDownloadError(name)
       }
@@ -65,6 +74,8 @@ export function useRecordingDownload({
         setPasscodeReason(err.reason)
         setPasscodePrompt(true)
       } else {
+        // A 422 is the probe's verdict on this file, so it resolves the row as surely as a success.
+        if (isUnsupportedError(err)) onResolved('unsupported')
         setResult('fail')
         toastDownloadError(name, err)
       }

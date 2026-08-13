@@ -1225,7 +1225,7 @@ body,
 .mode-toggle--downloads {
   margin: 0;
   align-self: flex-start;
-  min-width: 220px;
+  min-width: 300px;
 }
 
 .mode-toggle-btn {
@@ -1778,6 +1778,22 @@ body,
   color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* Quiet metadata column on an 'unknown' (Google Drive) row: '?' until a download probes the file,
+   then what it turned out to be. */
+.recording-media {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 56px;
+  text-align: center;
+}
+
+/* A row the probe found to hold a file the downloader can't fetch (e.g. a .zip): nothing to do here. */
+.recording-row--unsupported {
+  opacity: 0.55;
 }
 
 /* Whole-row green tint when the current (name, kind) already exists in the course

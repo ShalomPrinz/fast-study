@@ -13,15 +13,23 @@ export interface AuthStatus {
 }
 
 // Which file the item lands on disk as; the destination is derived server-side from `ref`.
-export type Media = 'video' | 'material'
+// A Google Drive row is 'unknown': its file type is only knowable from a download-time probe.
+export type Media = 'video' | 'material' | 'unknown'
+
+// What a probe found the file to be. 'unsupported' is a real file auto can't use (e.g. a .zip).
+export type ProbedMedia = 'video' | 'material'
+export type ResolvedMedia = ProbedMedia | 'unsupported'
 
 // Mechanism-agnostic discovery item. `ref` is opaque — round-trip it, never parse it.
 // `expandable` → resolve via /list/expand into children; `section` is the Moodle heading ('' if blank).
+// `resolvedMedia` is auto's session probe cache for an 'unknown' row; absent until probed. A row
+// never changes segment once resolved — the resolved type shows as a column instead.
 export interface Item {
   ref: string
   title: string
   kind: Kind
   media: Media
+  resolvedMedia?: ResolvedMedia
   expandable: boolean
   section: string
 }
@@ -108,17 +116,23 @@ export async function expandItem(ref: string): Promise<Item[]> {
   return items
 }
 
-// True once at least one download has started by this request. `only` re-triggers a single named
-// item (a zoom split clip) without re-downloading its siblings — used by per-job retry.
+// `ok` is true once at least one download has started by this request; `media` is what the item
+// actually turned out to be — the answer that resolves an 'unknown' row without a re-list.
+export interface DownloadOutcome {
+  ok: boolean
+  media: ProbedMedia
+}
+
+// `only` re-triggers a single named item (a zoom split clip) without re-downloading its
+// siblings — used by per-job retry.
 export async function downloadItem(args: {
   ref: string
   course: string
   name: string
   kind: Kind
   only?: boolean
-}): Promise<boolean> {
-  const data = await postReconnectAware<{ ok: boolean }>('/download-item', args)
-  return data.ok
+}): Promise<DownloadOutcome> {
+  return postReconnectAware<DownloadOutcome>('/download-item', args)
 }
 
 export async function saveZoomPasscode({

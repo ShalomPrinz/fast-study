@@ -156,13 +156,13 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         coursesRef.current,
         course,
       )
-      if (hasResource(item.media, name, kind, coursesRef.current, course)) {
+      if (hasResource(item, name, kind, coursesRef.current, course)) {
         tally.skipped++
         continue
       }
       try {
-        const started = await downloadItem({ ref: item.ref, course, name, kind })
-        if (started) tally.started.push(item.ref)
+        const { ok } = await downloadItem({ ref: item.ref, course, name, kind })
+        if (ok) tally.started.push(item.ref)
         else tally.failed++
       } catch (err) {
         if (isReconnectError(err)) {

@@ -19,16 +19,23 @@ otherwise still read "connected".
 
 One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order.
 
-Each item carries `media`: `'material'` for a Moodle PDF resource (appended as the lecture's next
-`material.N.pdf`), `'video'`
-for everything else (lands as `video.mp4`). The destination file is derived server-side from the opaque
-`ref` — the frontend only branches its own affordances on `media`, it never sends it.
+Each item carries `media`, one of three values: `'material'` for a Moodle PDF resource (appended as the
+lecture's next `material.N.pdf`), `'unknown'` for a Google Drive row — a Drive `url` module carries no
+filename, so auto genuinely cannot tell a video from a PDF from a `.zip` without a download-time probe —
+and `'video'` for everything else (lands as `video.mp4`). The destination file is derived server-side from
+the opaque `ref` — the frontend only branches its own affordances on `media`, it never sends it.
 
-A `ModeToggle` under the panel header splits the two — **Videos** (default) on the left, **Materials** on
-the right — and `groupSections(items, media)` filters by `media` *before* grouping by `item.section` (the
+An `unknown` item may also carry `resolvedMedia` (`'video' | 'material' | 'unsupported'`), what auto's
+session probe cache found the file to be; it is absent until the file has been probed once, and
+`'unsupported'` means a real file the downloader can't fetch (a `.zip`). **A row never changes segment
+when it resolves** — the answer shows up as a column instead (below).
+
+A `ModeToggle` under the panel header splits the three — **Videos** (default), **Materials**, **Unknown** —
+and `groupSections(items, media)` filters by `media` _before_ grouping by `item.section` (the
 Moodle heading) in first-seen order, blank → "Other". So each side shows only its own sections, a section
-with nothing on the active side doesn't render, and an empty side shows "No recordings found." / "No
-materials found." while both segments stay clickable. `groupSections` is a pure helper (`utils/sections.ts`)
+with nothing on the active side doesn't render, and an empty side shows its own "No recordings found." /
+"No materials found." / "No files of unknown type found." while every segment stays clickable.
+`groupSections` is a pure helper (`utils/sections.ts`)
 precisely so the filter+group rule is testable without a DOM. Everything below a section — including
 "Download all" — therefore operates on one media only: a bulk run covers just the active side.
 
@@ -37,6 +44,20 @@ expand state, the fetched children and the cache, because the bulk queue needs r
 "Download all" button needs to know whether every playlist is expanded. Children are cached on first
 expand, so collapse/re-expand never refetches. Expandable rows render their children as recursive
 `RecordingRow`s.
+
+## Unknown rows and the resolved-type column
+
+An `unknown` row renders one extra narrow column (`.recording-media`): `?` while the type is unknown, then
+`Video` / `Material` / `Unsupported`. Video and material rows render nothing there — it would only restate
+their segment.
+
+`RecordingRow` holds the resolution as `probed ?? item.resolvedMedia`: `POST /download-item` answers
+`{ ok, media }`, and a 422 `UnsupportedError` is just as much a verdict, so both update the column on the
+same interaction that resolved it — no re-list. The state is the row's own and dies with a re-discover;
+auto's cache is what makes it survive a reload. A row resolved to `material` picks up the whole material
+affordance (attach-to dropdown, material count, no overwrite confirm). An `unsupported` row greys out and
+its Download button is disabled; the 422's message names the actual extension and is toasted by
+`toastDownloadError`, which already shows an `UnsupportedError` verbatim.
 
 ## Row name and kind: one source of truth
 
@@ -62,10 +83,12 @@ consume `CourseTreeContext` for the suggestion and the green highlight.)
 The bulk queue does not read either context — it resolves through `SectionGroup`'s `editsRef` mirror, so it
 picks up names typed while the run is in flight.
 
-`hasResource(media, name, kind, courses, course)` is the single already-downloaded rule, so the green row
+`hasResource(item, name, kind, courses, course)` is the single already-downloaded rule, so the green row
 and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks
 what the media implies — `video` → `video.mp4` exists, `material` → `materialsOf(...)` is non-empty. A
-lecture that exists but holds neither is not "already there" for either row.
+lecture that exists but holds neither is not "already there" for either row. `resolvedMedia` wins over
+`media` when present; an unprobed `unknown` row (and an `unsupported` one) has no reliable on-disk target,
+so it is always false rather than ever showing a wrong "already downloaded".
 
 A video row's Download on an existing target opens an overwrite confirm first; the bulk run skips instead.
 For a video row whose base name isn't itself on disk, `splitSiblings` (same lookup) checks for
@@ -101,7 +124,8 @@ prompt don't toast — they steer the UI elsewhere. A failure _after_ the start 
 
 ## Download progress
 
-`POST /download-item` returns `{ ok }` — a 200 only means at least one download was queued, and the
+`POST /download-item` returns `{ ok, media }` — a 200 only means at least one download was queued (`media`
+is what the file turned out to be, which resolves an `unknown` row's column), and the
 curl/yt-dlp job runs on in the background. No job ids come back: the auto-downloader keeps no job state,
 and every job it spawns is stamped with the row's `ref`, so the row re-finds its jobs on the downloader
 server's own `/jobs`. The 200 is never the row's outcome — treating it as one reports "Downloaded ✓"

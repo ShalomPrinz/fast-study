@@ -1,5 +1,5 @@
 import type { Course, Kind, Lecture, MaterialInfo } from '@/types'
-import type { Media } from '../services/autoDownloader'
+import type { Media, ResolvedMedia } from '../services/autoDownloader'
 
 // The live tree's nodes for one course+kind
 function existingNodes(kind: Kind, courses: Course[], course: string): Lecture[] {
@@ -24,14 +24,18 @@ export function materialsOf(
 
 // The single "already on disk" rule: the node named `name` exists and holds the media — a video.mp4
 // for a video row, any material for a material row — so the green row and the bulk skip can't disagree.
+// The probe's answer wins over the listed media; an unprobed 'unknown' row (and an 'unsupported' one)
+// has no reliable on-disk target, so it falls to false rather than ever claiming a false "downloaded".
 export function hasResource(
-  media: Media,
+  item: { media: Media; resolvedMedia?: ResolvedMedia },
   name: string,
   kind: Kind,
   courses: Course[],
   course: string,
 ): boolean {
+  const media = item.resolvedMedia ?? item.media
   if (media === 'material') return materialsOf(name, kind, courses, course).length > 0
+  if (media !== 'video') return false
   const node = existingNodes(kind, courses, course).find((l) => l.name === name)
   return node?.files['video.mp4']?.exists ?? false
 }

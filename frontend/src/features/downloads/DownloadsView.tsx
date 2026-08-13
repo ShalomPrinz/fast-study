@@ -17,6 +17,13 @@ import { DownloadJobsProvider } from './contexts/DownloadJobsContext'
 const MEDIA_MODES: Record<Media, ModeConfig> = {
   video: { label: 'Videos' },
   material: { label: 'Materials' },
+  unknown: { label: 'Unknown' },
+}
+
+const EMPTY_STATE: Record<Media, string> = {
+  video: 'No recordings found.',
+  material: 'No materials found.',
+  unknown: 'No files of unknown type found.',
 }
 
 // Downloads page: BIU account, course source URLs, discovery. See docs/downloads.md.
@@ -105,11 +112,7 @@ export default function DownloadsView() {
                   if (!sections.length)
                     return (
                       !loading &&
-                      !error && (
-                        <div className="recordings-status">
-                          {media === 'material' ? 'No materials found.' : 'No recordings found.'}
-                        </div>
-                      )
+                      !error && <div className="recordings-status">{EMPTY_STATE[media]}</div>
                     )
                   return sections.map(([title, sectionItems]) => (
                     <SectionGroup

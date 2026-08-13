@@ -53,6 +53,11 @@ describe('resolveRow', () => {
     expect(row.name).toBe('Lecture 8')
   })
 
+  it('names an unknown-media row from its title like any other', () => {
+    const row = resolveRow(item('unknown', 'הרצאה 8'), undefined, COURSES, 'Algebra')
+    expect(row.name).toBe('Lecture 8')
+  })
+
   it('re-derives a material row against the recitations when the kind toggle flips', () => {
     const row = resolveRow(
       item('material', 'תרגול 3 - פתרונות'),

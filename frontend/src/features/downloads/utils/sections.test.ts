@@ -1,9 +1,14 @@
 import { describe, it, expect } from 'vitest'
-import type { Item, Media } from '../services/autoDownloader'
+import type { Item, Media, ResolvedMedia } from '../services/autoDownloader'
 import { groupSections } from './sections'
 
-function item(ref: string, section: string, media: Media = 'video'): Item {
-  return { ref, title: ref, kind: 'lecture', media, expandable: false, section }
+function item(
+  ref: string,
+  section: string,
+  media: Media = 'video',
+  resolvedMedia?: ResolvedMedia,
+): Item {
+  return { ref, title: ref, kind: 'lecture', media, resolvedMedia, expandable: false, section }
 }
 
 const refs = (sections: [string, Item[]][]) =>
@@ -14,6 +19,27 @@ describe('groupSections', () => {
     const items = [item('a', 'Week 1'), item('b', 'Week 1', 'material')]
     expect(refs(groupSections(items, 'video'))).toEqual([['Week 1', ['a']]])
     expect(refs(groupSections(items, 'material'))).toEqual([['Week 1', ['b']]])
+  })
+
+  it('isolates unknown rows into their own segment', () => {
+    const items = [
+      item('a', 'Week 1'),
+      item('b', 'Week 1', 'material'),
+      item('c', 'Week 1', 'unknown'),
+    ]
+    expect(refs(groupSections(items, 'unknown'))).toEqual([['Week 1', ['c']]])
+    expect(refs(groupSections(items, 'video'))).toEqual([['Week 1', ['a']]])
+    expect(refs(groupSections(items, 'material'))).toEqual([['Week 1', ['b']]])
+  })
+
+  it('keeps a resolved unknown row in the unknown segment', () => {
+    const items = [
+      item('a', 'Week 1', 'unknown', 'video'),
+      item('b', 'Week 1', 'unknown', 'material'),
+    ]
+    expect(refs(groupSections(items, 'unknown'))).toEqual([['Week 1', ['a', 'b']]])
+    expect(groupSections(items, 'video')).toEqual([])
+    expect(groupSections(items, 'material')).toEqual([])
   })
 
   it('drops a section with nothing on the active side', () => {
