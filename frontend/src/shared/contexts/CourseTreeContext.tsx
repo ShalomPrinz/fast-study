@@ -29,11 +29,14 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
   async function refreshCourses() {
     try {
       const c = await latest(fetchTree())
+      // Superseded: a newer request still owns `loaded`, and flipping it here would expose the
+      // empty tree — routes would flash "not found" before the real tree lands.
       if (!c) return
       setCourses(c)
       announcePdfWarnings(c, warningReports, primed.current)
       primed.current = true
-    } finally {
+      setLoaded(true)
+    } catch {
       // Set even on failure: an empty tree plus the central ConnectionError toast beats
       // spinning forever behind a database service that is down.
       setLoaded(true)

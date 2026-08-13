@@ -72,7 +72,9 @@ Route params are user-editable and may name nothing on disk, so the three tree-b
 (`MainView`, `EditSummaryView`, `CourseView`) resolve their params against `CourseTreeContext` before
 rendering: spinner until `loaded`, then `NotFoundPanel` with a message from `shared/utils/notFound.ts`.
 That flag exists because an unresolved param and an unfetched tree both look like an empty tree —
-without it a typo'd URL is indistinguishable from loading and spins forever. `CourseView` runs the check
+without it a typo'd URL is indistinguishable from loading and spins forever. `loaded` flips only when a
+tree actually lands (or the fetch fails) — never on a response superseded by a newer one, which would
+briefly expose the still-empty tree as "not found". `CourseView` runs the check
 above `CourseOverviewProvider` so a nonexistent course issues no overview requests.
 
 `app/ErrorBoundary` wraps `<App/>` inside `BrowserRouter` — a render error anywhere below it (views,
