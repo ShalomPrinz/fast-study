@@ -161,9 +161,8 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         continue
       }
       try {
-        const { ok } = await downloadItem({ ref: item.ref, course, name, kind })
-        if (ok) tally.started.push(item.ref)
-        else tally.failed++
+        await downloadItem({ ref: item.ref, course, name, kind })
+        tally.started.push(item.ref)
       } catch (err) {
         if (isReconnectError(err)) {
           onReconnect()

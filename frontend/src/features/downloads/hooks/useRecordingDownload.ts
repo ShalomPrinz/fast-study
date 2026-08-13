@@ -53,19 +53,16 @@ export function useRecordingDownload({
 
   // Shared trigger for the row download and per-job retry: funnels the reconnect/passcode gates the
   // same way. Success is the jobs' to report (the snapshot ping drives the row into flight); only a
-  // failure to queue is the trigger's to surface. `resume` re-runs this same intent post-passcode.
+  // failure to queue — which throws — is the trigger's to surface. `resume` re-runs this intent
+  // post-passcode.
   async function runIntent(
     args: { ref: string; course: string; name: string; kind: Kind; only?: boolean },
     name: string,
     resume: () => Promise<void>,
   ) {
     try {
-      const { ok, media } = await downloadItem(args)
+      const { media } = await downloadItem(args)
       onResolved(media)
-      if (!ok) {
-        setResult('fail')
-        toastDownloadError(name)
-      }
     } catch (err) {
       // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.
       if (isReconnectError(err)) onReconnect()

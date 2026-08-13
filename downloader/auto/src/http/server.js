@@ -281,7 +281,7 @@ async function downloadItem(req, res) {
       throw e;
     }
     logResult('/download-item', `ok (${jobs.length} job)`);
-    return send(res, 200, { ok: jobs.length > 0, media: 'material' });
+    return send(res, 200, { media: 'material' });
   }
 
   // A Drive file needs no browser either, but only the download-time filename probe knows
@@ -296,7 +296,7 @@ async function downloadItem(req, res) {
       forceCapture: opts.forceCapture,
     });
     logResult('/download-item', `ok (${jobIds.length} job, ${media})`);
-    return send(res, 200, { ok: jobIds.length > 0, media });
+    return send(res, 200, { media });
   }
 
   // An expanded youtube entry carries its direct url, so it needs no browser either;
@@ -311,7 +311,7 @@ async function downloadItem(req, res) {
       forceCapture: opts.forceCapture,
     });
     logResult('/download-item', `ok (${jobs.length} job)`);
-    return send(res, 200, { ok: jobs.length > 0, media: 'video' });
+    return send(res, 200, { media: 'video' });
   }
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
@@ -341,7 +341,7 @@ async function downloadItem(req, res) {
       }),
     );
     logResult('/download-item', `ok (${jobs.length} jobs)`);
-    return send(res, 200, { ok: jobs.length > 0, media: 'video' });
+    return send(res, 200, { media: 'video' });
   }
 
   // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
@@ -379,7 +379,7 @@ async function downloadItem(req, res) {
     throw e;
   }
   logResult('/download-item', `ok (${jobs.length} job)`);
-  send(res, 200, { ok: jobs.length > 0, media: 'video' });
+  send(res, 200, { media: 'video' });
 }
 
 // Log the shared plain session into Moodle via a one-shot autologin key so the token-gated

@@ -50,6 +50,13 @@ is by *needs a browser*, not by strategy count: a browserless strategy has no pa
 credential, so it must take one explicitly (`downloadMoodleFile`'s required `wstoken`).
 The browserless pair each resolve exactly one target, so `only` (azoom-split notion) doesn't apply to them; all three share the replay cache and `fromCache`.
 
+All three posts (`src/http/serverClient.js`) return `server/`'s job id, and all three throw when a
+200 carries none: `server/` mints the id synchronously in its route (`createJob`, before the size
+probe) and always returns it, and every validation failure is a 4xx `postJson` already throws on —
+so a missing `jobId` is a `server/` contract violation, not a normal outcome to hand back as a
+silent "nothing started". The throw lands on `app.js`'s centralized backstop, which turns it into a
+500 with that message, the same rail as any other unexpected failure.
+
 ## Mechanism-agnostic Item / ref contract
 
 The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, resolvedMedia?, expandable, section }`. `media` is `'video'`, `'material'` or `'unknown'` — which file lands on disk, never how it is fetched, so it stays mechanism-agnostic; a `material` item is never `expandable`. Every `google-drive` row is `'unknown'`: the WS payload carries no filename and `/list` never probes, so that is the honest stamp. `resolvedMedia` is the optional sibling saying what a row was actually probed as this session (`'video'`, `'material'`, or `'unsupported'` for a real file this service can't use); it is absent for a row never probed and for every non-Drive row, and a resolved row keeps its original `media` rather than moving segments. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `section` is display metadata — the Moodle course section heading (`section.name`) the item lives under, a sibling field the frontend groups by (never parsed out of `ref`); `''` when the section is unnamed. Expanded playlist children inherit their parent's `section`. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
@@ -76,7 +83,7 @@ is a fact about the file, unlike yt-dlp's stderr wording. A file that isn't shar
 the link" (or was removed) yields no name at all and is the same 422, naming Drive sharing and
 the URL. `server/`'s download job is fire-and-forget, which is why all of this is decided here.
 Results are memoized per Drive **file id** for the session (`src/core/driveProbeCache.js`), and
-`/download-item` echoes the resolved `media` back beside `ok`. `/list` never probes — it costs an
+`/download-item` echoes the resolved `media` back. `/list` never probes — it costs an
 HTTP round-trip per row — but it reads that cache to stamp `resolvedMedia` on rows already probed,
 so the resolved type survives a re-list.
 

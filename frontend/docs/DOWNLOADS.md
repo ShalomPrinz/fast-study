@@ -52,7 +52,7 @@ An `unknown` row renders one extra narrow column (`.recording-media`): `?` while
 their segment.
 
 `RecordingRow` holds the resolution as `probed ?? item.resolvedMedia`: `POST /download-item` answers
-`{ ok, media }`, and a 422 `UnsupportedError` is just as much a verdict, so both update the column on the
+`{ media }`, and a 422 `UnsupportedError` is just as much a verdict, so both update the column on the
 same interaction that resolved it — no re-list. The state is the row's own and dies with a re-discover;
 auto's cache is what makes it survive a reload. A row resolved to `material` picks up the whole material
 affordance (attach-to dropdown, material count, no overwrite confirm). An `unsupported` row greys out and
@@ -124,9 +124,9 @@ prompt don't toast — they steer the UI elsewhere. A failure _after_ the start 
 
 ## Download progress
 
-`POST /download-item` returns `{ ok, media }` — a 200 only means at least one download was queued (`media`
-is what the file turned out to be, which resolves an `unknown` row's column), and the
-curl/yt-dlp job runs on in the background. No job ids come back: the auto-downloader keeps no job state,
+`POST /download-item` returns `{ media }` — a 200 means queued by construction (every failure to queue is
+an error status), `media` is what the file turned out to be, which resolves an `unknown` row's column, and
+the curl/yt-dlp job runs on in the background. No job ids come back: the auto-downloader keeps no job state,
 and every job it spawns is stamped with the row's `ref`, so the row re-finds its jobs on the downloader
 server's own `/jobs`. The 200 is never the row's outcome — treating it as one reports "Downloaded ✓"
 mid-download and swallows every background failure.

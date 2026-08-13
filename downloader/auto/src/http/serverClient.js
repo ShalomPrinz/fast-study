@@ -25,30 +25,33 @@ async function postJson(path, body) {
  * In-site .mp4 (videostream): server.js replays the captured headers via curl.
  * `fromCache` marks a replayed cap (short-lived token) so server/ can silently re-capture on auth failure.
  * @param {{ url: string, headers: Record<string,string>, course: string, lecture: string, kind?: string, ref?: string|null, fromCache?: boolean }} payload
- * @returns {Promise<string|undefined>} server/'s job id
+ * @returns {Promise<string>} server/'s job id
  */
 export async function postDownload({ url, headers, course, lecture, kind, ref, fromCache }) {
   const body = await postJson('/download', { url, headers, course, lecture, kind, ref, fromCache });
-  return body?.jobId;
+  if (!body?.jobId) throw new Error('POST /download returned no jobId');
+  return body.jobId;
 }
 
 /**
  * Plain URL with no header replay (a tokened Moodle pluginfile URL): server.js fetches it
  * and adds it to the lecture's materials.
  * @param {{ url: string, course: string, lecture: string, kind?: string, ref?: string|null, fromCache?: boolean }} payload
- * @returns {Promise<string|undefined>} server/'s job id
+ * @returns {Promise<string>} server/'s job id
  */
 export async function postDownloadFile({ url, course, lecture, kind, ref, fromCache }) {
   const body = await postJson('/download-file', { url, course, lecture, kind, ref, fromCache });
-  return body?.jobId;
+  if (!body?.jobId) throw new Error('POST /download-file returned no jobId');
+  return body.jobId;
 }
 
 /**
  * YouTube entry: server.js runs yt-dlp (no captured headers — it manages its own session).
  * @param {{ url: string, course: string, lecture: string, kind?: string, ref?: string|null, fromCache?: boolean }} payload
- * @returns {Promise<string|undefined>} server/'s job id
+ * @returns {Promise<string>} server/'s job id
  */
 export async function postDownloadYoutube({ url, course, lecture, kind, ref, fromCache }) {
   const body = await postJson('/download-youtube', { url, course, lecture, kind, ref, fromCache });
-  return body?.jobId;
+  if (!body?.jobId) throw new Error('POST /download-youtube returned no jobId');
+  return body.jobId;
 }

@@ -25,12 +25,13 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | `POST /auth/complete` | —                                                   | `{ connected:true }` (persists the Moodle WS token)                |
 | `POST /list`          | `{ courseUrl }`                                     | `{ items }`                                                        |
 | `POST /list/expand`   | `{ ref }`                                           | `{ items }` (resolve one expandable item → children)               |
-| `POST /download-item` | `{ ref, course, name, kind, only?, forceCapture? }` | `{ ok, media }` (`ok` = at least one download started)              |
+| `POST /download-item` | `{ ref, course, name, kind, only?, forceCapture? }` | `{ media }`                                                        |
 | `POST /zoom/passcode` | `{ course, name?, passcode, scope }`                | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
 | `POST /close`         | —                                                   | `{ ok:true }` (close the persistent browser)                       |
 
-`/download-item` returns 200 once the download is **queued**, not finished: `ok` is true when
-at least one download started (the zoom before/after-break pair spawns two, but the count isn't reported — the page follows the actual outcome on the job stream). `media` is what actually lands
+`/download-item` returns 200 once the download is **queued**, not finished — any failure to queue
+is an error status with a message (the zoom before/after-break pair spawns two jobs, but the count
+isn't reported — the page follows the actual outcome on the job stream). `media` is what actually lands
 (`'video'`|`'material'`); it is the one field a Drive row only learns here, from the download-time
 filename probe (`src/core/driveProbeCache.js` memoizes it per Drive file id for the session).
 auto keeps no job state and hands back no job ids — every spawned job is stamped with the row's `ref`, so the page re-finds them on `server/`'s own `GET /events` / `GET /jobs` by `ref`.

@@ -116,13 +116,8 @@ export async function expandItem(ref: string): Promise<Item[]> {
   return items
 }
 
-// `ok` is true once at least one download has started by this request; `media` is what the item
-// actually turned out to be — the answer that resolves an 'unknown' row without a re-list.
-export interface DownloadOutcome {
-  ok: boolean
-  media: ProbedMedia
-}
-
+// Resolving means queued — every failure leaves as an error (401/409/422/500). `media` is what the
+// item turned out to be: the answer that resolves an 'unknown' row without a re-list.
 // `only` re-triggers a single named item (a zoom split clip) without re-downloading its
 // siblings — used by per-job retry.
 export async function downloadItem(args: {
@@ -131,8 +126,8 @@ export async function downloadItem(args: {
   name: string
   kind: Kind
   only?: boolean
-}): Promise<DownloadOutcome> {
-  return postReconnectAware<DownloadOutcome>('/download-item', args)
+}): Promise<{ media: ProbedMedia }> {
+  return postReconnectAware<{ media: ProbedMedia }>('/download-item', args)
 }
 
 export async function saveZoomPasscode({

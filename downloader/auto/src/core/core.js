@@ -151,7 +151,7 @@ export async function downloadMoodleFile({
     ref,
     fromCache,
   });
-  return [jobId].filter(Boolean);
+  return [jobId];
 }
 
 /**
@@ -178,7 +178,7 @@ export async function downloadYtDlp({ recording, course, name, kind, ref, forceC
     ref,
     fromCache,
   });
-  return [jobId].filter(Boolean);
+  return [jobId];
 }
 
 /**
@@ -217,7 +217,7 @@ export async function downloadDriveFile({
   }
   const post = media === 'video' ? postDownloadYoutube : postDownloadFile;
   const jobId = await post({ url: cap.url, course, lecture: name, kind, ref, fromCache });
-  return { jobIds: [jobId].filter(Boolean), media };
+  return { jobIds: [jobId], media };
 }
 
 /**
@@ -253,7 +253,7 @@ export async function downloadRecording(
   if (only) {
     if (!forceCapture) {
       const hit = getCap(course, name, kind, 'video');
-      if (hit) return [await postCap(hit.cap, name, true)].filter(Boolean);
+      if (hit) return [await postCap(hit.cap, name, true)];
     }
     // Miss/force: one zoom share sniffs BOTH clips, so re-capture the whole recording (using
     // the inverted base name so the split matches) and keep only the cap for the request.
@@ -267,7 +267,7 @@ export async function downloadRecording(
     const chosen =
       targets.find((t) => t.name === name) ?? (targets.length === 1 ? targets[0] : null);
     if (!chosen) throw new Error(`captured clips don't include ${name}`);
-    return [await postCap(chosen.cap, chosen.name, false)].filter(Boolean);
+    return [await postCap(chosen.cap, chosen.name, false)];
   }
 
   // Whole recording. Replay from the cache when every resulting target is cached, else capture.
@@ -278,5 +278,5 @@ export async function downloadRecording(
   const fromCache = Boolean(cached);
   const jobIds = [];
   for (const t of targets) jobIds.push(await postCap(t.cap, t.name, fromCache));
-  return jobIds.filter(Boolean);
+  return jobIds;
 }
