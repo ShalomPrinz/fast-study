@@ -575,13 +575,18 @@ class TestWrapEnglishPhrasesExtended:
         result = wrap_english_phrases("יש 5 סטודנטים")
         assert r"\LR" not in result
 
-    def test_digit_paren_group_keeps_parens_outside_run(self):
-        # A ) right after a digit mirrors to ( inside \LR{} in an RTL doc, so a
-        # digit-terminated parenthetical keeps its parens OUTSIDE the run.
+    def test_digit_paren_end_switches_language(self):
+        # A ) closing the run right after a digit mirrors inside a bare \LR{}; the
+        # \textenglish switch turns mirroring off, which \LR alone cannot do.
         result = wrap_english_phrases("תוכנה (Software 1.0): טקסט")
-        assert r"(\LR{Software 1.0})" in result
-        assert r"\LR{(Software 1.0)}" not in result
+        assert r"\LR{\textenglish{(Software 1.0)}}" in result
         assert r"\RL{:}" in result
+
+    def test_digit_paren_mid_run_stays_bare(self):
+        # Only a run-FINAL `<digit>)` sits on the RTL boundary; one mid-run is safe.
+        result = wrap_english_phrases("הפונקציה raise(SIGUSR1) twice נקראת")
+        assert r"\LR{raise(SIGUSR1) twice}" in result
+        assert r"\textenglish" not in result
 
     def test_letter_paren_group_keeps_parens_inside_run(self):
         # Letter-terminated groups don't mirror — parens stay inside as before.
@@ -590,7 +595,47 @@ class TestWrapEnglishPhrasesExtended:
 
     def test_number_inside_paren_group_with_preceding_word(self):
         result = wrap_english_phrases("המודל (test 1.0) שלנו")
-        assert r"(\LR{test 1.0})" in result
+        assert r"\LR{\textenglish{(test 1.0)}}" in result
+
+    # --- Bracket groups and groups attached to their word ---
+
+    def test_bracket_group_joins_the_run(self):
+        # Two islands ("search", "file content") separated by the neutral brackets
+        # order right-to-left, printing the usage line backwards.
+        result = wrap_english_phrases("הפקודה search [file content] מחפשת")
+        assert r"\LR{search [file content]}" in result
+
+    def test_several_bracket_groups_join_one_run(self):
+        result = wrap_english_phrases("* **add [file name] [text]**")
+        assert r"\LR{add [file name] [text]}" in result
+
+    def test_bracket_group_alone_is_wrapped_whole(self):
+        result = wrap_english_phrases("הקובץ [file name] נשמר")
+        assert r"\LR{[file name]}" in result
+
+    def test_bracket_group_with_hebrew_body_is_left_alone(self):
+        # Not a Latin group at all — the brackets belong to the RTL run.
+        result = wrap_english_phrases("הפרמטר [file content והסבר] אופציונלי")
+        assert r"[\LR{file content} והסבר]" in result
+
+    def test_group_attached_to_word_joins_it(self):
+        # `(` broke the run, so console.log and 'hi' reordered to "('hi')console.log".
+        result = wrap_english_phrases("הוא כתב: console.log('hi') ושמר")
+        assert r"\LR{console.log('hi')}" in result
+
+    def test_quoted_group_body_joins_the_run(self):
+        result = wrap_english_phrases('המערכת ("Basics"), כמו')
+        assert '\\LR{("Basics")}' in result
+
+    def test_index_bracket_attached_to_word(self):
+        result = wrap_english_phrases("המערך arr[i] מכיל")
+        assert r"\LR{arr[i]}" in result
+
+    def test_number_only_group_stays_in_the_rtl_run(self):
+        # A group body still anchors on a Latin word: a bare "(0)" is Hebrew
+        # punctuation around a weak digit and already resolves correctly.
+        result = wrap_english_phrases("ואינה מענישה (0) כאשר המודל צודק")
+        assert r"\LR" not in result
 
     # --- Slash bridging Hebrew and English is a separator, not glued ---
 

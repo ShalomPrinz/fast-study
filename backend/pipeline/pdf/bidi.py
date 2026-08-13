@@ -30,16 +30,20 @@ _NUM = r"[0-9]+(?:[.,][0-9]+)*"
 # Separators kept INSIDE one \LR run, but only when another Latin token follows —
 # a sentence-final period/comma is left for the trailing \RL{} group.
 _SEP = r"(?:[ \t]+-[ \t]+|,[ \t]+|[ \t]+|\.[ \t]+)"
-# A balanced parenthesized group joins the run whole, so its neutral parens can't
-# reorder. Requiring the matching ) keeps a lone ) on the Hebrew side out.
-_GROUP = r"\(" + _WORD + r"(?:" + _SEP + r"(?:" + _WORD + r"|" + _NUM + r"))*\)"
-_ITEM = r"(?:" + _GROUP + r"|" + _WORD + r")"
-_CONT = r"(?:" + _GROUP + r"|" + _WORD + r"|" + _NUM + r")"
+# A quote may hug a group's tokens, so console.log('hi') stays one run.
+_QUOTED = r"['’\"]?(?:" + _WORD + r"|" + _NUM + r")['’\"]?"
+_GROUP_BODY = r"['’\"]?" + _WORD + r"['’\"]?(?:" + _SEP + _QUOTED + r")*"
+# A balanced (…) or […] group joins the run whole, so its neutral delimiters can't
+# reorder. Requiring the matching closer keeps a lone one on the Hebrew side out.
+_GROUP = r"(?:\(" + _GROUP_BODY + r"\)|\[" + _GROUP_BODY + r"\])"
+# A group directly after a word belongs to it — console.log('hi'), arr[i], grep [pattern].
+_ITEM = r"(?:" + _WORD + r"(?:" + _GROUP + r")*|" + _GROUP + r")"
+_CONT = r"(?:" + _ITEM + r"|" + _NUM + r")"
 _MULTI_LATIN_RE = re.compile(r"(" + _ITEM + r"(?:" + _SEP + _CONT + r")*)([.,;:!?]*)")
 _LEADING_PUNCT_RE = re.compile(r"^([.,;:!?]+)")
-# A whole phrase that is one parenthetical ending in a digit: a `)` right after a
-# digit inside \LR{} mirrors, so these parens are kept outside the run.
-_DIGIT_PAREN_GROUP_RE = re.compile(r"^\([^()]*[0-9]\)$")
+# A run ENDING in `<digit>)` mirrors that paren inside a bare \LR{} — the neutral sits
+# on the run's RTL boundary. Mid-run it is safe: raise(SIGUSR1) needs no help.
+_DIGIT_PAREN_END_RE = re.compile(r"[0-9]\)$")
 
 
 def wrap_english_phrases(text: str) -> str:
@@ -48,10 +52,12 @@ def wrap_english_phrases(text: str) -> str:
     def replace(m: re.Match) -> str:
         phrase, punct = m.group(1), m.group(2)
         # Latin tokens carry LaTeX-special chars (the _ in x86_64 enters math mode unescaped).
-        if _DIGIT_PAREN_GROUP_RE.match(phrase):
-            result = "(" + r"\LR{" + _latex_escape(phrase[1:-1]) + "}" + ")"
+        body = _latex_escape(phrase)
+        # The language switch turns mirroring off, which \LR alone cannot do.
+        if _DIGIT_PAREN_END_RE.search(phrase):
+            result = r"\LR{\textenglish{" + body + "}}"
         else:
-            result = r"\LR{" + _latex_escape(phrase) + "}"
+            result = r"\LR{" + body + "}"
         if punct:
             result += r"\RL{" + punct + "}"
         return result
