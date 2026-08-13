@@ -8,7 +8,9 @@ import {
   filenameFromDisposition,
   filenameFromHtml,
   classifyDriveFilename,
+  probeDriveFile,
 } from '../src/extractors/GoogleDriveExtractor.js';
+import { getDriveMedia } from '../src/core/driveProbeCache.js';
 
 const ID = '1AbCdEf-GhIjKlMnOpQrStUvWxYz';
 
@@ -65,4 +67,72 @@ test('extension classification', () => {
   assert.equal(classifyDriveFilename('handout.pdf'), 'material');
   for (const name of ['L1.zip', 'slides.pptx', 'notes', 'code.tar.gz', null])
     assert.equal(classifyDriveFilename(name), null, String(name));
+});
+
+// Stand in for Drive over the probe's whole request chain: `disposition` null + empty bodies is
+// the unshared file. Returns the call counter so a test can assert a cache hit did no I/O.
+function stubFetch(disposition) {
+  const calls = { n: 0 };
+  const real = globalThis.fetch;
+  globalThis.fetch = async () => {
+    calls.n += 1;
+    return {
+      headers: { get: () => disposition },
+      body: { cancel: async () => {} },
+      text: async () => '',
+    };
+  };
+  calls.restore = () => {
+    globalThis.fetch = real;
+  };
+  return calls;
+}
+
+test('an unshared file is memoized and re-thrown from cache with no request', async (t) => {
+  const id = 'unshared-file-id';
+  const url = `https://drive.google.com/file/d/${id}/view`;
+  const calls = stubFetch(null);
+  t.after(calls.restore);
+
+  await assert.rejects(probeDriveFile(url), /not publicly shared.*unshared-file-id/s);
+  assert.ok(calls.n > 0);
+  assert.equal(getDriveMedia(id), null); // /list stamps this row 'unsupported'
+
+  const before = calls.n;
+  await assert.rejects(probeDriveFile(url), /not publicly shared.*unshared-file-id/s);
+  assert.equal(calls.n, before);
+});
+
+test('a .zip round-trips from cache with its filename', async (t) => {
+  const id = 'zip-file-id';
+  const url = `https://drive.google.com/file/d/${id}/view`;
+  const calls = stubFetch('attachment; filename="L1.zip"');
+  t.after(calls.restore);
+
+  const first = await probeDriveFile(url);
+  assert.deepEqual(
+    { filename: first.filename, media: first.media },
+    { filename: 'L1.zip', media: null },
+  );
+
+  const before = calls.n;
+  const cached = await probeDriveFile(url);
+  assert.equal(cached.filename, 'L1.zip');
+  assert.equal(cached.media, null);
+  assert.equal(calls.n, before);
+});
+
+test('a forced probe ignores a cached unshared verdict', async (t) => {
+  const id = 'reshared-file-id';
+  const url = `https://drive.google.com/file/d/${id}/view`;
+  const unshared = stubFetch(null);
+  await assert.rejects(probeDriveFile(url), /not publicly shared/);
+  unshared.restore();
+
+  const shared = stubFetch('attachment; filename="Lecture 1.mp4"');
+  t.after(shared.restore);
+  const probe = await probeDriveFile(url, { force: true });
+  assert.equal(probe.filename, 'Lecture 1.mp4');
+  assert.equal(probe.media, 'video');
+  assert.equal(getDriveMedia(id), 'video');
 });

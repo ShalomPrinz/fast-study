@@ -186,7 +186,8 @@ export async function downloadYtDlp({ recording, course, name, kind, ref, forceC
  * is the one strategy whose media isn't known until it runs — the probe resolves the real
  * filename first and routes on its extension: a video goes to yt-dlp, a PDF becomes one of the
  * lecture's materials, anything else can never succeed and says so (422). Single target; the
- * cap is just a `{url}`, cached under the media that actually lands.
+ * cap is just a `{url}`, cached under the media that actually lands. `forceCapture` also re-runs
+ * the probe, the way back in for a file whose owner shared it only after the first attempt.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
@@ -201,7 +202,9 @@ export async function downloadDriveFile({
   ref,
   forceCapture = false,
 }) {
-  const { filename, media, downloadUrl } = await probeDriveFile(recording.pageUrl);
+  const { filename, media, downloadUrl } = await probeDriveFile(recording.pageUrl, {
+    force: forceCapture,
+  });
   if (!media) {
     const ext = filename.slice(filename.lastIndexOf('.'));
     throw new UnsupportedError(

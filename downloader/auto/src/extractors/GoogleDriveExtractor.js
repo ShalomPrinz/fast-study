@@ -118,29 +118,40 @@ async function fetchDriveFilename(fileId) {
   return filenameFromHtml(await view.text().catch(() => ''));
 }
 
+// One wording for the no-filename verdict, so a cache hit 422s as accurately as a fresh probe.
+function unsharedError(url) {
+  return new UnsupportedError(
+    `Google Drive file is not publicly shared (or was removed): ${url}. Open it in a browser and download manually.`,
+  );
+}
+
 /**
  * Resolve what a Drive link actually is before downloading it. `server/`'s download jobs are
  * fire-and-forget (200 immediately), so the routing decision has to be made here: the filename
- * is a fact about the file, unlike yt-dlp's stderr wording. Memoized per file id for the session.
+ * is a fact about the file, unlike yt-dlp's stderr wording. Memoized per file id for the session,
+ * including the throw below; `force` re-probes, since an owner can flip sharing on mid-session.
  * Throws UnsupportedError (→ 422) when Drive serves no name at all — the file isn't shared
- * "anyone with the link" (or was removed), which no retry can fix.
+ * "anyone with the link" (or was removed).
  * @param {string} url
+ * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
  * @returns {Promise<{ fileId: string, filename: string, media: 'video'|'material'|null,
  *                     downloadUrl: string }>} media null = a real file this service can't use.
  */
-export async function probeDriveFile(url) {
+export async function probeDriveFile(url, { force = false } = {}) {
   const fileId = driveFileId(url);
   if (!fileId) throw new UnsupportedError(`not a Google Drive file link: ${url}`);
   const downloadUrl = driveDownloadUrl(fileId);
 
-  const cached = getDriveProbe(fileId);
-  if (cached) return { fileId, filename: cached.filename, media: cached.media, downloadUrl };
+  const cached = force ? undefined : getDriveProbe(fileId);
+  if (cached) {
+    if (cached.reason === 'unshared') throw unsharedError(url);
+    return { fileId, filename: cached.filename, media: cached.media, downloadUrl };
+  }
 
   const filename = await fetchDriveFilename(fileId);
   if (!filename) {
-    throw new UnsupportedError(
-      `Google Drive file is not publicly shared (or was removed): ${url}. Open it in a browser and download manually.`,
-    );
+    cacheDriveMedia(fileId, null, null, 'unshared');
+    throw unsharedError(url);
   }
   const media = classifyDriveFilename(filename);
   cacheDriveMedia(fileId, media, filename);

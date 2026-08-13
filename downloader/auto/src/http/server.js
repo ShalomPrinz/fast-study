@@ -32,7 +32,8 @@ function mediaOf(recording) {
 }
 
 // What an 'unknown' row was probed as this session, or undefined when never probed. The cache
-// keeps a real-but-unusable file (e.g. a .zip) as media null — surfaced as 'unsupported'.
+// keeps both unusable flavours (a real .zip, or a file Drive serves no name for) as media
+// null — surfaced as 'unsupported'.
 function resolvedMediaOf(recording) {
   if (recording.strategy !== 'google-drive') return undefined;
   const fileId = driveFileId(recording.pageUrl);
