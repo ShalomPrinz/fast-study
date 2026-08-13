@@ -567,6 +567,12 @@ body,
   max-width: 520px;
 }
 
+/* Downloads: a recording row carries a title, a type column, a kind toggle, a name input and a
+   button on one line — several times a lecture panel's furniture, and none of it optional. */
+.lecture-panel--wide {
+  max-width: 860px;
+}
+
 .lecture-panel-title {
   font-size: 20px;
   font-weight: 600;
@@ -1735,7 +1741,9 @@ body,
 
 .recording-title {
   flex: 1;
-  min-width: 0;
+  /* Never 0: every sibling in the row is flex-shrink:0, so the title absorbs the whole overflow.
+     A floor is what makes it ellipsize instead of collapsing to nothing when a column is added. */
+  min-width: 10ch;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1766,9 +1774,11 @@ body,
   color: #fff;
 }
 
+/* Shrinks before the title does — a name is still readable clipped, a missing title is not. */
 .recording-name-input {
   width: 150px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 100px;
 }
 
 /* Materials append rather than overwrite, so the row states how many the target already holds

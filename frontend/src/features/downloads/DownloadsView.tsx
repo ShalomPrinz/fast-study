@@ -75,7 +75,7 @@ export default function DownloadsView() {
     <DownloadJobsProvider>
       <ResolvedMediaContext.Provider value={resolveMedia}>
         <main className="main-view main-view--panel">
-          <div className="lecture-panel">
+          <div className="lecture-panel lecture-panel--wide">
             <h2 className="lecture-panel-title">Downloads</h2>
 
             <AuthPill key={reconnectKey} />
