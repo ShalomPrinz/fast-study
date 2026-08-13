@@ -15,7 +15,7 @@ export interface RowEditsDispatch {
   setKind: (ref: string, kind: Kind) => void
 }
 
-// One section's per-row (name, kind) edits, keyed by item ref — reaches recursive rows without
+// The course's per-row (name, kind) edits, keyed by item ref — reaches recursive rows without
 // prop-drilling, and keeps the green row and the bulk skip rule reading the same values. State and
 // dispatch are separate contexts so a keystroke only invalidates the rows that slice the map:
 // leaf rows read the stable dispatch and take their own slice as a prop.
@@ -24,7 +24,7 @@ export const RowEditsDispatchContext = createContext<RowEditsDispatch | null>(nu
 
 export function useRowEdits(): Record<string, RowEdit> {
   const edits = useContext(RowEditsStateContext)
-  if (!edits) throw new Error('useRowEdits must be used within a <SectionGroup>')
+  if (!edits) throw new Error('useRowEdits must be used within a <DownloadsView>')
   return edits
 }
 
@@ -51,7 +51,7 @@ export function resolveRow(
 
 export function useRowEdit(item: Item, edit: RowEdit | undefined, course: string) {
   const dispatch = useContext(RowEditsDispatchContext)
-  if (!dispatch) throw new Error('useRowEdit must be used within a <SectionGroup>')
+  if (!dispatch) throw new Error('useRowEdit must be used within a <DownloadsView>')
   const { courses } = useCourseTreeContext()
   return {
     ...resolveRow(item, edit, courses, course),

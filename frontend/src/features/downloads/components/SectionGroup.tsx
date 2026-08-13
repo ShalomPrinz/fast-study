@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
-import type { Kind } from '@/types'
+import { useRef, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import type { Item, PasscodeError } from '@/features/downloads/services/autoDownloader'
 import {
@@ -19,27 +19,30 @@ import {
   rowStatus,
   useJobsByRef,
 } from '@/features/downloads/contexts/DownloadJobsContext'
-import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
-import {
-  RowEditsDispatchContext,
-  RowEditsStateContext,
-  resolveRow,
-} from '@/features/downloads/contexts/RowEditsContext'
+import { resolveRow, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
+
+export interface ExpandState {
+  expanded: boolean
+  children: Item[] | null
+  expanding: boolean
+  error: string | null
+}
+
+// State + writer bundled into one prop: the map lives in DownloadsView (so it outlives a segment
+// switch) while this component stays the only place that expands a playlist.
+export interface Expansions {
+  map: Record<string, ExpandState>
+  set: Dispatch<SetStateAction<Record<string, ExpandState>>>
+}
 
 interface Props {
   title: string
   items: Item[]
   course: string
   onReconnect: () => void
-}
-
-interface ExpandState {
-  expanded: boolean
-  children: Item[] | null
-  expanding: boolean
-  error: string | null
+  expansions: Expansions
 }
 
 // `started` holds refs, not a count: a queued download's real outcome lives in its jobs, so the
@@ -75,15 +78,13 @@ function summarize(tally: Tally, started: readonly (readonly JobProgress[])[]): 
   return parts.join(', ')
 }
 
-// One Moodle section + a sequential "Download all" over it. Owns the expand/children cache
+// One Moodle section + a sequential "Download all" over it. Drives the expand/children cache
 // (rows only render it) because the bulk queue needs resolved children. See docs/downloads.md.
-export default function SectionGroup({ title, items, course, onReconnect }: Props) {
+export default function SectionGroup({ title, items, course, onReconnect, expansions }: Props) {
   const { courses } = useCourseTreeContext()
   const jobsByRef = useJobsByRef()
   const resolveMedia = useResolveMedia()
-  const [expansions, setExpansions] = useState<Record<string, ExpandState>>({})
-  // Keyed by ref and never cleared: an edit outlives an SSE refresh, a re-expand, and a bulk run.
-  const [edits, setEdits] = useState<Record<string, RowEdit>>({})
+  const edits = useRowEdits()
   const [running, setRunning] = useState(false)
   const [progress, setProgress] = useState<{ at: number; total: number } | null>(null)
   const [outcome, setOutcome] = useState<Tally | null>(null)
@@ -97,22 +98,12 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
   const editsRef = useRef(edits)
   editsRef.current = edits
 
-  // Structural sharing is load-bearing: replacing only the edited ref's slice leaves every other
-  // slice identical, which is what lets the memoized sibling rows bail out of a keystroke render.
-  const setName = useCallback((ref: string, name: string) => {
-    setEdits((prev) => ({ ...prev, [ref]: { ...prev[ref], name } }))
-  }, [])
-  const setKind = useCallback((ref: string, kind: Kind) => {
-    setEdits((prev) => ({ ...prev, [ref]: { ...prev[ref], kind } }))
-  }, [])
-  const dispatch = useMemo(() => ({ setName, setKind }), [setName, setKind])
-
   function stateOf(ref: string): ExpandState {
-    return expansions[ref] ?? IDLE
+    return expansions.map[ref] ?? IDLE
   }
 
   function patch(ref: string, next: Partial<ExpandState>) {
-    setExpansions((prev) => ({ ...prev, [ref]: { ...(prev[ref] ?? IDLE), ...next } }))
+    expansions.set((prev) => ({ ...prev, [ref]: { ...(prev[ref] ?? IDLE), ...next } }))
   }
 
   // Cached on first expand, so collapse/re-expand never refetches.
@@ -265,25 +256,21 @@ export default function SectionGroup({ title, items, course, onReconnect }: Prop
         </button>
       </div>
 
-      <RowEditsDispatchContext.Provider value={dispatch}>
-        <RowEditsStateContext.Provider value={edits}>
-          {items.map((item) => {
-            const expand: ExpandControl | undefined = item.expandable
-              ? { ...stateOf(item.ref), onToggle: () => toggleExpand(item) }
-              : undefined
-            return (
-              <RecordingRow
-                key={item.ref}
-                item={item}
-                edit={edits[item.ref]}
-                course={course}
-                onReconnect={onReconnect}
-                expand={expand}
-              />
-            )
-          })}
-        </RowEditsStateContext.Provider>
-      </RowEditsDispatchContext.Provider>
+      {items.map((item) => {
+        const expand: ExpandControl | undefined = item.expandable
+          ? { ...stateOf(item.ref), onToggle: () => toggleExpand(item) }
+          : undefined
+        return (
+          <RecordingRow
+            key={item.ref}
+            item={item}
+            edit={edits[item.ref]}
+            course={course}
+            onReconnect={onReconnect}
+            expand={expand}
+          />
+        )
+      })}
 
       {paused && (
         <PasscodePrompt

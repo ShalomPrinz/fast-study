@@ -39,10 +39,12 @@ with nothing on the active side doesn't render, and an empty side shows its own 
 precisely so the filter+group rule is testable without a DOM. Everything below a section — including
 "Download all" — therefore operates on one media only: a bulk run covers just the active side.
 
-An item is either downloadable or `expandable` (a playlist). `SectionGroup` — not the row — owns the
-expand state, the fetched children and the cache, because the bulk queue needs resolved children and the
-"Download all" button needs to know whether every playlist is expanded. Children are cached on first
-expand, so collapse/re-expand never refetches. Expandable rows render their children as recursive
+An item is either downloadable or `expandable` (a playlist). The expand state, the fetched children and
+the cache live in `DownloadsView` — not in the row — because the bulk queue needs resolved children and
+the "Download all" button needs to know whether every playlist is expanded; holding them above the media
+toggle also keeps them alive across a segment switch. `SectionGroup` drives them: it takes the map and its
+writer as one bundled `expansions` prop and owns `toggleExpand`, the only caller. Children are cached on
+first expand, so collapse/re-expand never refetches. Expandable rows render their children as recursive
 `RecordingRow`s.
 
 ## Unknown rows and the resolved-type column
@@ -64,18 +66,21 @@ its Download button is disabled; the 422's message names the actual extension an
 
 ## Row name and kind: one source of truth
 
-`contexts/RowEditsContext.ts` (provided by `SectionGroup`, keyed by `item.ref`) stores **only overrides** —
-`{ name?, kind? }`. `resolveRow` derives `{ kind, suggestion, value, name }` from an override plus the live
-tree. Two consequences fall out of storing overrides rather than values:
+`contexts/RowEditsContext.ts` (provided by `DownloadsView` above the media toggle, keyed by `item.ref`)
+stores **only overrides** — `{ name?, kind? }`. `resolveRow` derives `{ kind, suggestion, value, name }`
+from an override plus the live tree. Two consequences fall out of storing overrides rather than values:
 
 - With no `name` override the displayed name keeps tracking the kind toggle; the first keystroke pins it.
 - The green "already downloaded" row and the bulk queue's skip rule read the same resolved values, so they
   can never disagree.
 
-Edits are never cleared, so they survive an SSE tree refresh, a collapse/re-expand, and a bulk run.
+Edits are never cleared within a course, so they survive an SSE tree refresh, a collapse/re-expand, a bulk
+run, and a segment switch — including the one a probe forces when it moves an `unknown` row to Videos.
+Discovering another course, or closing the panel, resets the map (along with the expansions) so refs from
+two courses can never collide.
 
 The edits live behind **two** contexts: `RowEditsStateContext` (the map) and `RowEditsDispatchContext`
-(`{ setName, setKind }`, identity-stable for the section's lifetime). Only the components that slice the
+(`{ setName, setKind }`, identity-stable for the page's lifetime). Only the components that slice the
 map subscribe to the state context — `SectionGroup` for its top-level rows, and `ChildRows` for an expanded
 playlist's children. `RecordingRow` is `memo`ized and takes its own `edit` slice as a prop, reading only the
 dispatch context via `useRowEdit(item, edit, course)`, so a keystroke re-renders just the edited row. The
@@ -83,9 +88,10 @@ setters update with `{ ...prev, [ref]: { ...prev[ref], name } }` — leaving eve
 untouched is what lets the siblings bail out. (An SSE tree refresh still re-renders every row: leaf rows
 consume `CourseTreeContext` for the suggestion and the green highlight.)
 
-The bulk queue does not read either edits context — it resolves through `SectionGroup`'s `editsRef` mirror,
-so it picks up names typed while the run is in flight. It does write to `ResolvedMediaContext`, on the same
-two outcomes a single-row download does, so a bulk run resolves the `unknown` rows it touches.
+The bulk queue does not read the map during a run — `SectionGroup` mirrors the state context into an
+`editsRef`, so the queue picks up names typed while the run is in flight. It does write to
+`ResolvedMediaContext`, on the same two outcomes a single-row download does, so a bulk run resolves the
+`unknown` rows it touches.
 
 `hasResource(item, name, kind, courses, course)` is the single already-downloaded rule, so the green row
 and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks

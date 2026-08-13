@@ -16,7 +16,7 @@ import {
 } from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 
-// Owned by SectionGroup — the bulk queue needs the same children cache.
+// Driven by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {
   expanded: boolean
   children: Item[] | null
