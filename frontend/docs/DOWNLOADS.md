@@ -15,6 +15,26 @@ A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectK
 `<AuthPill>` — remounting forces a fresh probe, since the pill's cached status predates the 401 and would
 otherwise still read "connected".
 
+## The page session
+
+Everything the page discovers or accumulates — `selected`, `items`, `loading`/`error`, the row edits, the
+playlist expansions, `reconnectKey` and every section's bulk run — lives in `DownloadsSessionProvider`
+(`contexts/DownloadsSessionContext.tsx`), mounted in `Layout` above the outlet. `/downloads` is a route, so
+its view unmounts on any navigation; holding the session above the router is what lets the user open a
+lecture and come back to the same course, the same typed names and a bulk run that kept going. `discover`
+and `close` live there too, so a discovery still in flight when the user navigates away lands anyway.
+
+Two contexts, as with the row edits: state, and an **identity-stable** actions bag. Stability is
+load-bearing — the bulk queue closes over `setRun` and keeps calling it after its `SectionGroup` unmounted,
+and the memoized rows bail out on the setters' identity. The provider renders `{children}` and nothing
+else, so a keystroke in a row re-renders its consumers and leaves the sidebar and the outlet alone.
+
+`DownloadJobsProvider` is mounted in `Layout` too, just outside the session provider (which folds jobs into
+a run's summary). The store is module-level but the provider owns the connection and clears the store on
+unmount, so mounting it app-wide is what keeps the SSE subscription, the snapshot and the error-toast dedupe
+alive across navigation. One consequence: a job that fails while the user is on a lecture page toasts there
+and then, instead of being reseeded away as history by `primed` on a later remount.
+
 ## Discovery
 
 One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order.
@@ -40,10 +60,10 @@ precisely so the filter+group rule is testable without a DOM. Everything below a
 "Download all" — therefore operates on one media only: a bulk run covers just the active side.
 
 An item is either downloadable or `expandable` (a playlist). The expand state, the fetched children and
-the cache live in `DownloadsView` — not in the row — because the bulk queue needs resolved children and
+the cache live in the session provider — not in the row — because the bulk queue needs resolved children and
 the "Download all" button needs to know whether every playlist is expanded; holding them above the media
-toggle also keeps them alive across a segment switch. `SectionGroup` drives them: it takes the map and its
-writer as one bundled `expansions` prop and owns `toggleExpand`, the only caller. Children are cached on
+toggle also keeps them alive across a segment switch. `SectionGroup` drives them: it reads the map and calls
+`patchExpansion`, and owns `toggleExpand`, the only caller. Children are cached on
 first expand, so collapse/re-expand never refetches. Expandable rows render their children as recursive
 `RecordingRow`s.
 
@@ -54,8 +74,8 @@ An `unknown` row renders one extra narrow column (`.recording-media`): `?` while
 their segment.
 
 `RecordingRow` reads `item.resolvedMedia` and nothing else. A download reports the verdict upward through
-`ResolvedMediaContext` — a dispatch-only context whose provider is `DownloadsView`, which stamps it onto
-the matching item in `items`. `POST /download-item` answers `{ media }`, and a 422 `UnsupportedError` is
+`ResolvedMediaContext` — a dispatch-only context provided by `DownloadsView` from the session's
+`resolveMedia`, which stamps it onto the matching item in `items`. `POST /download-item` answers `{ media }`, and a 422 `UnsupportedError` is
 just as much a verdict, so both update the column on the interaction that resolved it — no re-list. The
 provider sits above the media segments deliberately: switching segment unmounts every row and every
 `SectionGroup`, so a verdict held in either would be lost on the way back. It still dies with a
@@ -66,8 +86,8 @@ its Download button is disabled; the 422's message names the actual extension an
 
 ## Row name and kind: one source of truth
 
-`contexts/RowEditsContext.ts` (provided by `DownloadsView` above the media toggle, keyed by `item.ref`)
-stores **only overrides** — `{ name?, kind? }`. `resolveRow` derives `{ kind, suggestion, value, name }`
+`contexts/RowEditsContext.ts` (the map owned by the session provider, exposed by `DownloadsView` above the
+media toggle, keyed by `item.ref`) stores **only overrides** — `{ name?, kind? }`. `resolveRow` derives `{ kind, suggestion, value, name }`
 from an override plus the live tree. Two consequences fall out of storing overrides rather than values:
 
 - With no `name` override the displayed name keeps tracking the kind toggle; the first keystroke pins it.
@@ -75,9 +95,9 @@ from an override plus the live tree. Two consequences fall out of storing overri
   can never disagree.
 
 Edits are never cleared within a course, so they survive an SSE tree refresh, a collapse/re-expand, a bulk
-run, and a segment switch — including the one a probe forces when it moves an `unknown` row to Videos.
-Discovering another course, or closing the panel, resets the map (along with the expansions) so refs from
-two courses can never collide.
+run, a segment switch — including the one a probe forces when it moves an `unknown` row to Videos — and a
+trip to a lecture and back. Discovering another course, or closing the panel, resets the map (along with the
+expansions and the runs) so refs from two courses can never collide.
 
 The edits live behind **two** contexts: `RowEditsStateContext` (the map) and `RowEditsDispatchContext`
 (`{ setName, setKind }`, identity-stable for the page's lifetime). Only the components that slice the
@@ -159,8 +179,8 @@ two jobs for one target, and no superseded `error` survives to flash a stale row
 actually succeeded. The client trusts the snapshot as-is — no client-side dedupe. (A zoom pair's `.1`/`.2`
 halves are distinct targets under one `ref`, so both legitimately coexist.)
 
-`DownloadJobsProvider` (mounted in `DownloadsView` above the panel, so the snapshot survives a close and
-re-discover) owns **one EventSource for the page** and feeds each `/jobs` snapshot into the module-level
+`DownloadJobsProvider` (mounted in `Layout`, so the connection and the snapshot outlive the route) owns
+**one EventSource for the app** — always open, which is the price of following downloads from anywhere — and feeds each `/jobs` snapshot into the module-level
 store in `DownloadJobsContext.tsx`. `open` fires on connect and every auto-reconnect and also refetches, so
 the initial sync and any events missed during a reconnect gap are covered. A failed refetch is a no-op —
 the stream reconnects and pings again.
@@ -221,6 +241,22 @@ already terminal before this session saw it is history, not a live outcome.
 
 ## Bulk download
 
+A run's state — `{ running, progress, outcome, summary, paused, saving }` — lives in the session provider's
+`runs` map, keyed by the section's own identity `${course}:${media}:${title}` (the same string that keys the
+`SectionGroup` element). Both qualifiers matter: one Moodle heading usually holds both a video and its
+slides, and a run outlives the course it started in — closing and discovering another course wipes `runs`,
+but the surviving loop's next write would otherwise re-create the entry under a title the new course shares.
+`SectionGroup` only **reads** its slice, so a remount lands mid-run and shows it rather than starting one,
+and the queue's writes keep landing while the user is on another page. Nothing about a run is component
+state, `saving` included: a remount mid-save must render the prompt busy, or a second submit would run the
+rest of the queue again in parallel with the first.
+
+The section's own `SectionGroup` may well be unmounted when the last download lands, so the **provider**
+freezes `summary`: on every jobs snapshot it folds each finished run's tally with its started rows' jobs and
+stores the string, once they are all terminal (`runSettled` + `summarize` in `utils/runSummary.ts`). A ref
+with no jobs is not terminal but unqueued — `/jobs` lags the POST — and re-folding forever isn't an option
+either, since a `done` job is evicted 60s later and the summary would decay to "0 downloaded".
+
 "Download all" flattens the section into downloadable leaves — a playlist contributes its children, never
 its own ref, which the backend rejects. It is disabled until every expandable is expanded, and never
 auto-expands.
@@ -228,8 +264,10 @@ auto-expands.
 The **triggering** runs sequentially by design: the auto-downloader drives one shared browser session, so
 parallel requests would contend. The downloads themselves run on, so by the end of the queue several rows
 are downloading at once, each with its own bar. The run is in continue mode (already-present items are
-skipped and tallied) and reads both the course tree and the edits through refs, so a mid-run SSE refresh or
-a name typed while it runs is honoured rather than the snapshot it started with.
+skipped and tallied) and reads both the course tree and the edits through refs that refresh on render, so a
+mid-run SSE refresh or a name typed while it runs is honoured rather than the snapshot it started with.
+Those refs freeze when the section unmounts, which is the intent: the rest of a background run keeps the
+names the user typed, and is unaffected by the `edits` map being cleared out from under it.
 
 Per-item outcomes: `ReconnectError` aborts the whole run and triggers the reconnect flow; a `PasscodeError`
 pauses at that item and opens the prompt (submit saves the passcode and resumes by retrying the same item;
@@ -242,11 +280,10 @@ round-trip each per server lifetime rather than one per bulk run. Since the bulk
 recording the verdict is also the only thing that carries the 422's reason out of the run — as the greyed
 row and its column.
 
-The tally holds the **refs** it started, not a count, so the summary is folded with those rows' live job
-status: the header shows `Downloading n/N…` while triggering, `Downloading n more…` while the last jobs
-finish, and only then the `N downloaded, N failed, N unsupported, N already there` summary (each part
-appears only when non-zero). "Download all" stays disabled
-until they are all terminal. The bulk run never toasts per item itself — a job failure toasts once from the
+The tally holds the **refs** it started, not a count, so the summary is folded from those rows' job status:
+the header shows `Downloading n/N…` while triggering, `Downloading n more…` off the live jobs while the last
+ones finish, and then the frozen `N downloaded, N failed, N unsupported, N already there` (each part appears
+only when non-zero). "Download all" stays disabled until they are all terminal. The bulk run never toasts per item itself — a job failure toasts once from the
 provider.
 
 ## Zoom passcode
@@ -255,6 +292,10 @@ provider.
 (`ConfirmModal` can't host an input). It owns its input and scope state, and the parent unmounts it between
 openings so a wrong-passcode re-prompt mounts fresh and empty. Scope defaults to course-wide; "just this
 lecture" narrows it to the one recording.
+
+A bulk run's pause is page state, not component state, so a `PasscodeError` raised while the user is on
+another page (or another segment) still opens the prompt when the section renders again — the run waits
+there instead of hanging on a prompt that never mounted.
 
 In a single row, the passcode prompt and the overwrite confirm can never co-render — the confirm is already
 dismissed by the time `download()` can hit the 409. The modal's own `savingPasscode` busy state drives its

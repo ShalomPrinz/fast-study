@@ -66,7 +66,10 @@ being a route segment. The static `course`/`downloads`/`search` segments outrank
 `/:course/:lecture` pattern in v7 ranking, so they never collide.
 
 `/downloads` is reached from a plain nav link in the sidebar header, not a sidebar mode — clicking any
-sidebar mode navigates away from it, which is the intended "exit on sidebar click".
+sidebar mode navigates away from it, which is the intended "exit on sidebar click". Because that unmounts
+the view, `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
+and `RunnerStatusProvider`, so the page's discovery, edits, in-flight bulk runs and download jobs all outlive
+the route (see `DOWNLOADS.md`).
 
 Route params are user-editable and may name nothing on disk, so the three tree-backed views
 (`MainView`, `EditSummaryView`, `CourseView`) resolve their params against `CourseTreeContext` before

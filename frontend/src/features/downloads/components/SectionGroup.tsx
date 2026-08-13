@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
-import type { Dispatch, SetStateAction } from 'react'
+import { useRef } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import type { Item, PasscodeError } from '@/features/downloads/services/autoDownloader'
+import type { Item } from '@/features/downloads/services/autoDownloader'
 import {
   downloadItem,
   expandItem,
@@ -13,114 +12,66 @@ import {
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'
-import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
-import {
-  jobsForRef,
-  rowStatus,
-  useJobsByRef,
-} from '@/features/downloads/contexts/DownloadJobsContext'
+import { jobsForRef, useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
 import { resolveRow, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
+import type { ExpandState } from '@/features/downloads/contexts/DownloadsSessionContext'
+import type { Tally } from '@/features/downloads/utils/runSummary'
+import {
+  IDLE_EXPAND,
+  IDLE_RUN,
+  useDownloadsActions,
+  useDownloadsSession,
+} from '@/features/downloads/contexts/DownloadsSessionContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 
-export interface ExpandState {
-  expanded: boolean
-  children: Item[] | null
-  expanding: boolean
-  error: string | null
-}
-
-// State + writer bundled into one prop: the map lives in DownloadsView (so it outlives a segment
-// switch) while this component stays the only place that expands a playlist.
-export interface Expansions {
-  map: Record<string, ExpandState>
-  set: Dispatch<SetStateAction<Record<string, ExpandState>>>
-}
-
 interface Props {
-  title: string
+  // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run.
+  section: { id: string; title: string }
   items: Item[]
   course: string
   onReconnect: () => void
-  expansions: Expansions
-}
-
-// `started` holds refs, not a count: a queued download's real outcome lives in its jobs, so the
-// summary is derived from them rather than tallied at queue time.
-interface Tally {
-  started: string[]
-  failed: number
-  skipped: number
-  // Counted apart from `failed`: nothing went wrong with the run, the file just isn't one auto can
-  // fetch — and unlike a failure it is a permanent verdict the next run skips outright.
-  unsupported: number
-}
-
-// A paused run: the passcode prompt is open; the queue resumes from `index` on submit.
-interface Paused {
-  queue: Item[]
-  index: number
-  tally: Tally
-  reason: PasscodeError['reason']
-  name: string
-}
-
-const IDLE: ExpandState = { expanded: false, children: null, expanding: false, error: null }
-
-// A started row counts as failed if any of its jobs failed. `started` is one job list per queued ref.
-function summarize(tally: Tally, started: readonly (readonly JobProgress[])[]): string {
-  const status = started.map(rowStatus)
-  const failed = tally.failed + status.filter((s) => s === 'error').length
-  const parts = [`${status.filter((s) => s === 'done').length} downloaded`]
-  if (failed) parts.push(`${failed} failed`)
-  if (tally.unsupported) parts.push(`${tally.unsupported} unsupported`)
-  if (tally.skipped) parts.push(`${tally.skipped} already there`)
-  return parts.join(', ')
 }
 
 // One Moodle section + a sequential "Download all" over it. Drives the expand/children cache
 // (rows only render it) because the bulk queue needs resolved children. See docs/downloads.md.
-export default function SectionGroup({ title, items, course, onReconnect, expansions }: Props) {
+export default function SectionGroup({ section, items, course, onReconnect }: Props) {
   const { courses } = useCourseTreeContext()
   const jobsByRef = useJobsByRef()
   const resolveMedia = useResolveMedia()
   const edits = useRowEdits()
-  const [running, setRunning] = useState(false)
-  const [progress, setProgress] = useState<{ at: number; total: number } | null>(null)
-  const [outcome, setOutcome] = useState<Tally | null>(null)
-  const [paused, setPaused] = useState<Paused | null>(null)
-  const [saving, setSaving] = useState(false)
+  const { expansions, runs } = useDownloadsSession()
+  const { patchExpansion, setRun } = useDownloadsActions()
+  const id = section.id
+  // Read, never seed: a remount lands mid-run and must show that run, not start one.
+  const { running, progress, outcome, summary, paused, saving } = runs[id] ?? IDLE_RUN
 
-  // Read through refs so the queue sees a mid-run SSE refresh and a name typed mid-run,
-  // rather than the snapshot it started with.
+  // Refreshed on render only: while mounted the queue sees an SSE tree refresh and a name typed
+  // mid-run, and on unmount they freeze, so a background run finishes against what it last saw.
   const coursesRef = useRef(courses)
   coursesRef.current = courses
   const editsRef = useRef(edits)
   editsRef.current = edits
 
   function stateOf(ref: string): ExpandState {
-    return expansions.map[ref] ?? IDLE
-  }
-
-  function patch(ref: string, next: Partial<ExpandState>) {
-    expansions.set((prev) => ({ ...prev, [ref]: { ...(prev[ref] ?? IDLE), ...next } }))
+    return expansions[ref] ?? IDLE_EXPAND
   }
 
   // Cached on first expand, so collapse/re-expand never refetches.
   async function toggleExpand(item: Item) {
     const current = stateOf(item.ref)
     if (current.children) {
-      patch(item.ref, { expanded: !current.expanded })
+      patchExpansion(item.ref, { expanded: !current.expanded })
       return
     }
-    patch(item.ref, { expanding: true, error: null })
+    patchExpansion(item.ref, { expanding: true, error: null })
     try {
       const children = await expandItem(item.ref)
-      patch(item.ref, { children, expanded: true, expanding: false })
+      patchExpansion(item.ref, { children, expanded: true, expanding: false })
     } catch (err) {
       if (isReconnectError(err)) onReconnect()
       const message = isUnsupportedError(err) ? err.message : "Couldn't load entries. Try again."
-      patch(item.ref, { expanding: false, error: isReconnectError(err) ? null : message })
+      patchExpansion(item.ref, { expanding: false, error: isReconnectError(err) ? null : message })
     }
   }
 
@@ -132,20 +83,23 @@ export default function SectionGroup({ title, items, course, onReconnect, expans
     return items.flatMap((item) => (item.expandable ? (stateOf(item.ref).children ?? []) : [item]))
   }
 
+  // `summary` stays null: the provider fills it once every started row's jobs are terminal.
   function finish(tally: Tally) {
-    setRunning(false)
-    setProgress(null)
-    setOutcome({ ...tally, started: [...tally.started] })
+    setRun(id, {
+      running: false,
+      progress: null,
+      outcome: { ...tally, started: [...tally.started] },
+      summary: null,
+    })
   }
 
   // Triggering is sequential by design (the downloader drives one shared browser session), but the
   // downloads themselves run on — so several rows are in flight by the end of the queue.
   async function runQueue(queue: Item[], from: number, tally: Tally) {
-    setRunning(true)
-    setOutcome(null)
+    setRun(id, { running: true, outcome: null, summary: null })
     for (let i = from; i < queue.length; i++) {
       const item = queue[i]
-      setProgress({ at: i + 1, total: queue.length })
+      setRun(id, { progress: { at: i + 1, total: queue.length } })
       // Exactly what the row shows, so the skip rule and the green row can't disagree.
       const { name, kind } = resolveRow(
         item,
@@ -170,15 +124,16 @@ export default function SectionGroup({ title, items, course, onReconnect, expans
       } catch (err) {
         if (isReconnectError(err)) {
           onReconnect()
-          setRunning(false)
-          setProgress(null)
-          setOutcome(null)
+          setRun(id, { running: false, progress: null, outcome: null, summary: null })
           return
         }
         if (isPasscodeError(err)) {
-          // Hold here; submitting the passcode retries this same item.
-          setPaused({ queue, index: i, tally, reason: err.reason, name })
-          setRunning(false)
+          // Hold here; submitting the passcode retries this same item. The prompt lives in page
+          // state, so a run paused while the user is elsewhere still asks when the section returns.
+          setRun(id, {
+            paused: { queue, index: i, tally, reason: err.reason, name },
+            running: false,
+          })
           return
         }
         // The probe's verdict on the file, exactly as in a single-row download — the bulk run
@@ -193,23 +148,21 @@ export default function SectionGroup({ title, items, course, onReconnect, expans
     finish(tally)
   }
 
+  // `saving` is page state, not component state: a remount while the save is in flight must show the
+  // prompt busy, or a second submit would run the rest of the queue a second time, in parallel.
   async function submitPasscode(passcode: string, scope: 'course' | 'lecture') {
-    if (!paused || !passcode) return
-    setSaving(true)
+    if (!paused || !passcode || saving) return
+    setRun(id, { saving: true })
+    let failed = false
     try {
       await saveZoomPasscode({ course, name: paused.name, passcode, scope })
     } catch {
-      setSaving(false)
+      failed = true
       paused.tally.failed++
-      const resume = paused
-      setPaused(null)
-      void runQueue(resume.queue, resume.index + 1, resume.tally)
-      return
     }
-    setSaving(false)
-    const resume = paused
-    setPaused(null)
-    void runQueue(resume.queue, resume.index, resume.tally)
+    setRun(id, { saving: false, paused: null })
+    // A failed save skips the item it gated; a saved passcode retries that same item.
+    void runQueue(paused.queue, failed ? paused.index + 1 : paused.index, paused.tally)
   }
 
   // Cancelling abandons the rest of the queue, not just the gated item.
@@ -218,22 +171,24 @@ export default function SectionGroup({ title, items, course, onReconnect, expans
       paused.tally.failed++
       finish(paused.tally)
     }
-    setPaused(null)
+    setRun(id, { paused: null })
   }
 
-  // The run's real result: queueing ends long before the downloads do, so the tally is folded with
-  // the live jobs of every row it started, looked up by `ref`. `active` counts running jobs (per
-  // atom), so the header keeps ticking until the last clip of a zoom pair lands.
-  const started = outcome ? outcome.started.map((ref) => jobsForRef(jobsByRef, ref)) : []
-  const active = started.flat().filter((j) => j.status === 'running').length
-  const summary = outcome && !active ? summarize(outcome, started) : null
+  // Queueing ends long before the downloads do, so the header keeps ticking on the live jobs of
+  // every row the run started (per atom, so a zoom pair's second clip still counts) until the
+  // provider freezes the summary.
+  const active = outcome
+    ? outcome.started
+        .flatMap((ref) => jobsForRef(jobsByRef, ref))
+        .filter((j) => j.status === 'running').length
+    : 0
   const busy = running || paused !== null || active > 0
 
   return (
     <div className="recordings-section">
       <div className="recordings-section-header">
         <span className="recordings-section-title" dir="auto">
-          {title}
+          {section.title}
         </span>
         {progress && (
           <span className="recordings-section-progress">
