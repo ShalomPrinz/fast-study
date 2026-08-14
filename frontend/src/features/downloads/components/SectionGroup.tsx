@@ -12,10 +12,13 @@ import {
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'
-import { jobsForRef, useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
+import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
 import { resolveRow, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
-import type { ExpandState } from '@/features/downloads/contexts/DownloadsSessionContext'
-import type { Tally } from '@/features/downloads/utils/runSummary'
+import type {
+  ExpandState,
+  Paused,
+  RunTarget,
+} from '@/features/downloads/contexts/DownloadsSessionContext'
 import {
   IDLE_EXPAND,
   IDLE_RUN,
@@ -23,6 +26,7 @@ import {
   useDownloadsSession,
 } from '@/features/downloads/contexts/DownloadsSessionContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
+import { summarize, targetStatus } from '@/features/downloads/utils/runStatus'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 
 interface Props {
@@ -44,7 +48,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   const { patchExpansion, setRun } = useDownloadsActions()
   const id = section.id
   // Read, never seed: a remount lands mid-run and must show that run, not start one.
-  const { running, progress, started, summary, paused, saving } = runs[id] ?? IDLE_RUN
+  const { running, progress, targets, paused, saving } = runs[id] ?? IDLE_RUN
 
   // Refreshed on render only: while mounted the queue sees an SSE tree refresh and a name typed
   // mid-run, and on unmount they freeze, so a background run finishes against what it last saw.
@@ -52,8 +56,6 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   coursesRef.current = courses
   const editsRef = useRef(edits)
   editsRef.current = edits
-  const jobsRef = useRef(jobsByRef)
-  jobsRef.current = jobsByRef
 
   function stateOf(ref: string): ExpandState {
     return expansions[ref] ?? IDLE_EXPAND
@@ -85,23 +87,25 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     return items.flatMap((item) => (item.expandable ? (stateOf(item.ref).children ?? []) : [item]))
   }
 
-  // `outcome` marks the queue as done; the provider freezes the summary from it once every started
-  // row has a recorded verdict.
-  function finish(tally: Tally) {
-    setRun(id, { running: false, progress: null, outcome: { ...tally }, summary: null })
+  // The row a paused run stopped on, recorded as failed to queue — what both ways out of the prompt
+  // do with it.
+  function gatedTarget(paused: Paused): RunTarget {
+    const item = paused.queue[paused.index]
+    const { kind } = resolveRow(item, editsRef.current[item.ref], coursesRef.current, course)
+    return {
+      ref: item.ref,
+      name: paused.name,
+      kind,
+      media: item.resolvedMedia ?? item.media,
+      disposition: 'queue-failed',
+    }
   }
 
   // Triggering is sequential by design (the downloader drives one shared browser session), but the
   // downloads themselves run on — so several rows are in flight by the end of the queue.
-  // Entering clears nothing: a passcode resume re-enters here mid-run, and the started refs and
-  // verdicts already accumulated are the same run's. Only a fresh run resets them.
-  async function runQueue(
-    queue: Item[],
-    from: number,
-    tally: Tally,
-    started: string[],
-    staleJobs: Record<string, readonly string[]>,
-  ) {
+  // Entering clears nothing: a passcode resume re-enters here mid-run, and the targets already
+  // recorded are the same run's. Only a fresh run resets them.
+  async function runQueue(queue: Item[], from: number, targets: RunTarget[]) {
     setRun(id, { running: true })
     for (let i = from; i < queue.length; i++) {
       const item = queue[i]
@@ -113,48 +117,43 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         coursesRef.current,
         course,
       )
+      // Published as the list grows, so a header rendered mid-run reports the rows already done
+      // with rather than waiting for the queue to end.
+      const record = (
+        disposition: RunTarget['disposition'],
+        media: RunTarget['media'] = item.resolvedMedia ?? item.media,
+      ) => {
+        targets.push({ ref: item.ref, name, kind, media, disposition })
+        setRun(id, { targets: [...targets] })
+      }
       // A known-unsupported row can only fail again, and each attempt burns a Drive probe
       // round-trip — so a verdict from any earlier download takes it out of the queue for good.
       if (item.resolvedMedia === 'unsupported') {
-        tally.unsupported++
+        record('unsupported')
         continue
       }
       if (hasResource(item, name, kind, coursesRef.current, course)) {
-        tally.skipped++
+        record('skipped')
         continue
       }
-      // Captured before the POST so it cannot contain the job the POST creates: the snapshot the
-      // browser holds is a refresh behind, and a failed row's `error` job is never time-evicted.
-      const stale = jobsForRef(jobsRef.current, item.ref).map((j) => j.id)
       try {
         const { media } = await downloadItem({ ref: item.ref, course, name, kind })
         resolveMedia(item.ref, media)
-        started.push(item.ref)
-        staleJobs[item.ref] = stale
-        // Published as it grows, so the provider can record this row's verdict before the server
-        // evicts its `done` job 60s on — a long section takes longer than that to trigger.
-        setRun(id, { started: [...started], staleJobs: { ...staleJobs } })
+        // The POST's answer, not the row's: it is what says where on disk this download lands.
+        record('queued', media)
       } catch (err) {
         if (isReconnectError(err)) {
           onReconnect()
-          // Abandoned, not finished: with no `outcome` there is nothing to report, so the started
-          // refs go too rather than leave the header ticking on a run that will never freeze.
-          setRun(id, {
-            running: false,
-            progress: null,
-            started: [],
-            staleJobs: {},
-            outcome: null,
-            verdicts: {},
-            summary: null,
-          })
+          // Abandoned, not finished: there is nothing to report, so the targets go too rather than
+          // leave the header ticking on downloads this run will never see the end of.
+          setRun(id, { running: false, progress: null, targets: [] })
           return
         }
         if (isPasscodeError(err)) {
           // Hold here; submitting the passcode retries this same item. The prompt lives in page
           // state, so a run paused while the user is elsewhere still asks when the section returns.
           setRun(id, {
-            paused: { queue, index: i, tally, started, staleJobs, reason: err.reason, name },
+            paused: { queue, index: i, targets, reason: err.reason, name },
             running: false,
           })
           return
@@ -164,11 +163,11 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         // "this is a .zip" out of the run.
         if (isUnsupportedError(err)) {
           resolveMedia(item.ref, 'unsupported')
-          tally.unsupported++
-        } else tally.failed++
+          record('unsupported', 'unsupported')
+        } else record('queue-failed')
       }
     }
-    finish(tally)
+    setRun(id, { running: false, progress: null })
   }
 
   // `saving` is page state, not component state: a remount while the save is in flight must show the
@@ -181,34 +180,25 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
       await saveZoomPasscode({ course, name: paused.name, passcode, scope })
     } catch {
       failed = true
-      paused.tally.failed++
+      paused.targets.push(gatedTarget(paused))
     }
-    setRun(id, { saving: false, paused: null })
+    setRun(id, { saving: false, paused: null, targets: [...paused.targets] })
     // A failed save skips the item it gated; a saved passcode retries that same item.
-    void runQueue(
-      paused.queue,
-      failed ? paused.index + 1 : paused.index,
-      paused.tally,
-      paused.started,
-      paused.staleJobs,
-    )
+    void runQueue(paused.queue, failed ? paused.index + 1 : paused.index, paused.targets)
   }
 
   // Cancelling abandons the rest of the queue, not just the gated item.
   function cancelPasscode() {
-    if (paused) {
-      paused.tally.failed++
-      finish(paused.tally)
-    }
-    setRun(id, { paused: null })
+    if (!paused) return
+    paused.targets.push(gatedTarget(paused))
+    setRun(id, { paused: null, running: false, progress: null, targets: [...paused.targets] })
   }
 
-  // Queueing ends long before the downloads do, so the header keeps ticking on the live jobs of
-  // every row the run has started (per atom, so a zoom pair's second clip still counts) until the
-  // provider freezes the summary.
-  const active = started
-    .flatMap((ref) => jobsForRef(jobsByRef, ref))
-    .filter((j) => j.status === 'running').length
+  // Queueing ends long before the downloads do, so the header keeps ticking on the targets whose
+  // outcome is still open — neither on disk nor holding a failed job.
+  const active = targets.filter(
+    (t) => targetStatus(t, courses, course, jobsByRef) === 'in-flight',
+  ).length
   const busy = running || paused !== null || active > 0
 
   return (
@@ -225,14 +215,18 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         {!progress && active > 0 && (
           <span className="recordings-section-progress">Downloading {active} more…</span>
         )}
-        {!progress && summary && <span className="recordings-section-progress">{summary}</span>}
+        {!progress && active === 0 && targets.length > 0 && (
+          <span className="recordings-section-progress">
+            {summarize(targets, courses, course, jobsByRef)}
+          </span>
+        )}
         <button
           className="source-row-btn recordings-download-all"
           onClick={() => {
             // The one place a run resets: everything the previous run left behind goes before the
             // first item is triggered.
-            setRun(id, { started: [], staleJobs: {}, outcome: null, verdicts: {}, summary: null })
-            void runQueue(buildQueue(), 0, { failed: 0, skipped: 0, unsupported: 0 }, [], {})
+            setRun(id, { targets: [] })
+            void runQueue(buildQueue(), 0, [])
           }}
           disabled={busy || !allExpanded}
           title={allExpanded ? undefined : 'Expand every playlist in this section first'}

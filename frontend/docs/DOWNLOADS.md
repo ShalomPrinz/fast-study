@@ -29,8 +29,7 @@ load-bearing — the bulk queue closes over `setRun` and keeps calling it after 
 and the memoized rows bail out on the setters' identity. The provider renders `{children}` and nothing
 else, so a keystroke in a row re-renders its consumers and leaves the sidebar and the outlet alone.
 
-`DownloadJobsProvider` is mounted in `Layout` too, just outside the session provider (which folds jobs into
-a run's summary). The store is module-level but the provider owns the connection and clears the store on
+`DownloadJobsProvider` is mounted in `Layout` too, just outside the session provider. The store is module-level but the provider owns the connection and clears the store on
 unmount, so mounting it app-wide is what keeps the SSE subscription, the snapshot and the error-toast dedupe
 alive across navigation. One consequence: a job that fails while the user is on a lecture page toasts there
 and then, instead of being reseeded away as history by `primed` on a later remount.
@@ -191,7 +190,7 @@ re-renders only the rows that _have_ jobs — the memoized rows with none read o
 and bail out. That's the whole win, and on a section where one row is downloading it's the difference
 between one re-render and all of them; grouping allocates a fresh bucket array per ref per snapshot, so a
 row with jobs re-renders on every ping regardless. `useJobsByRef()` hands `SectionGroup` the whole map,
-which is the right scope there: the bulk summary folds arbitrary refs it started. (A context is still mounted, purely to fail loudly when a hook is
+which is the right scope there: the bulk summary reads arbitrary refs the run queued. (A context is still mounted, purely to fail loudly when a hook is
 used outside the provider.)
 
 **Re-attaching after a reload just works.** The grouping keys on `job.ref`, so a download still running
@@ -241,7 +240,7 @@ already terminal before this session saw it is history, not a live outcome.
 
 ## Bulk download
 
-A run's state — `{ running, progress, started, staleJobs, outcome, verdicts, summary, paused, saving }` — lives in the session provider's
+A run's state — `{ running, progress, targets, paused, saving }` — lives in the session provider's
 `runs` map, keyed by the section's own identity `${course}:${media}:${title}` (the same string that keys the
 `SectionGroup` element). Both qualifiers matter: one Moodle heading usually holds both a video and its
 slides, and a run outlives the course it started in — closing and discovering another course wipes `runs`,
@@ -251,45 +250,34 @@ and the queue's writes keep landing while the user is on another page. Nothing a
 state, `saving` included: a remount mid-save must render the prompt busy, or a second submit would run the
 rest of the queue again in parallel with the first.
 
-The run state is the single owner of `started`, the refs it has queued: the loop appends to it as each
-download is triggered, and `outcome` (the tally of rows settled without queuing anything) is written when
-the queue ends. The section's own `SectionGroup` may well be unmounted when the last download lands, so the
-**provider** collects and freezes the summary. On every jobs snapshot it records a `done`/`error` verdict for
-each of the run's started refs that doesn't have one yet (`recordVerdicts` in `utils/runSummary.ts`), and
-once `isRunSettled` — the queue is done **and** every ref has a verdict — it folds them with the tally into
-the frozen string (`summarize`). Both functions live in `runSummary.ts` and are unit-tested there; the
-provider is only their caller. Verdicts are accumulated rather than re-derived from the live snapshot because
-the download server evicts a `done` job 60s later: a run whose downloads finish more than a minute apart would
-otherwise lose its earliest rows before the last one settles — which is also why collecting starts from the
-first triggered row rather than at the end of the queue, since triggering a long section alone outlasts that
-window. The `outcome` gate on freezing is load-bearing: mid-run every ref triggered so far can transiently
-have a verdict while items remain to trigger, and freezing there would report a fraction of the section. A
-ref with no jobs records nothing — `/jobs` lags the POST that queued it, and reading that gap as "done"
-would freeze a zero.
+The run state is the single owner of `targets`, one `{ ref, name, kind, media, disposition }` per row the
+queue got through, appended as it goes. `disposition` is what the run itself decided: `skipped`,
+`unsupported`, `queue-failed` — or `queued`, the only one whose outcome is still open. `media` is the POST's
+answer for a queued row and `resolvedMedia ?? media` otherwise, because it is what says where the download
+lands on disk.
 
-A verdict is tied to job identity, not to "any terminal snapshot after the ref entered `started`": it is
-`{ status, jobIds }`, the ids it was read from. The queue captures the ids the ref's jobs already have
-_before_ awaiting the POST into `staleJobs`, and `recordVerdicts` ignores those. Without it the common retry
-path misreports: the browser's snapshot is an SSE round-trip behind the POST and the server never time-evicts
-an `error` job, so a re-triggered failed row would be recorded as failed again from the previous run's
-leftover, and the header would stop ticking while its download is still in flight. That baseline is read from
-a `jobsByRef` ref refreshed during `SectionGroup`'s render, so while the section is unmounted it holds the
-last rendered snapshot rather than the live one — harmless, because nothing creates `ref`-bearing jobs for
-those rows while unmounted: extension jobs carry `ref === null` and `groupJobsByRef` drops them, and the
-per-row retry needs the row on screen.
+**Nothing about the outcome is stored.** `utils/runStatus.ts` derives it on every render, per target and in
+this order: a recorded non-`queued` disposition wins; else the row landed in the course tree →
+`downloaded`; else its ref holds an `error` job → `failed`; else `in-flight`. `summarize` counts those into
+`N downloaded, N failed, N unsupported, N already there` (each part only when non-zero). Both are pure and
+unit-tested; `SectionGroup` is their only caller and needs no help from the provider, because both sources
+are live contexts that a remount simply re-reads.
 
-The ids on the verdict itself cover the mirror case, an attempt that arrives _after_ the trigger: a job in
-neither the baseline nor the verdict's ids is a new attempt (the per-row `Retry ✗` on a row that already
-failed mid-run), so the verdict is discarded and re-recorded from the current jobs — typically nothing yet,
-which un-freezes the run so it waits for the retry's real outcome. Eviction stays harmless because it only
-ever removes ids: a ref whose jobs have vanished keeps what it recorded. Since a verdict can be dropped,
-`isRunSettled` can go false again, and the provider recomputes `summary` on every snapshot rather than
-skipping already-frozen runs — otherwise the superseded string would stay on screen.
+That works because each half of the derivation is durable where the jobs are not. The tree — read through
+`targetLanded`, which is `hasResource` plus `splitSiblings`, so a zoom share that lands as `name.1`/`.2`
+still counts — owns "downloaded"; the download server evicts a `done` job 60s later precisely because it is
+only bridging until the tree SSE arrives. An `error` job is never time-evicted and `createJob` supersedes any
+earlier terminal job for the same target, so it is positive evidence that the *latest* attempt failed — no
+baseline of pre-existing jobs to subtract. And absence of evidence reads as "still going", which is exactly
+right in the window after the POST where the browser's `/jobs` snapshot has not caught up.
 
-A run resets `{ started, staleJobs, outcome, verdicts, summary }` in exactly one place, "Download all"'s own handler.
-Re-entering the queue loop clears nothing, because a passcode resume re-enters it mid-run and the refs and
-verdicts already accumulated belong to that same run. The reconnect abort clears them instead of finishing:
-with no `outcome` there is nothing to report, so nothing should keep ticking either.
+The line is therefore live: retrying a failed row from its own button improves it, and deleting a lecture
+folder with the page open changes it too.
+
+A run resets `targets` in exactly one place, "Download all"'s own handler. Re-entering the queue loop clears
+nothing, because a passcode resume re-enters it mid-run and the targets already recorded belong to that same
+run. The reconnect abort clears them instead of finishing: the run will never see how those downloads ended,
+so nothing should keep reporting on them either.
 
 "Download all" flattens the section into downloadable leaves — a playlist contributes its children, never
 its own ref, which the backend rejects. It is disabled until every expandable is expanded, and never
@@ -298,27 +286,27 @@ auto-expands.
 The **triggering** runs sequentially by design: the auto-downloader drives one shared browser session, so
 parallel requests would contend. The downloads themselves run on, so by the end of the queue several rows
 are downloading at once, each with its own bar. The run is in continue mode (already-present items are
-skipped and tallied) and reads both the course tree and the edits through refs that refresh on render, so a
+skipped and recorded) and reads both the course tree and the edits through refs that refresh on render, so a
 mid-run SSE refresh or a name typed while it runs is honoured rather than the snapshot it started with.
 Those refs freeze when the section unmounts, which is the intent: the rest of a background run keeps the
 names the user typed, and is unaffected by the `edits` map being cleared out from under it.
 
 Per-item outcomes: `ReconnectError` aborts the whole run and triggers the reconnect flow; a `PasscodeError`
-pauses at that item and opens the prompt (submit saves the passcode and resumes by retrying the same item;
-cancel abandons the rest of the queue); a 422 marks it `unsupported` (see below); anything else marks it
-failed and continues.
+pauses at that item and opens the prompt (submit saves the passcode and resumes by retrying the same item —
+a failed save records it `queue-failed` and resumes at the next; cancel records it `queue-failed` and
+abandons the rest of the queue); a 422 records `unsupported` (see below); anything else records
+`queue-failed` and continues.
 
-`unsupported` is tallied apart from `failed` because it is not a run problem and, unlike a failure, it is
+`unsupported` is counted apart from `failed` because it is not a run problem and, unlike a failure, it is
 permanent: a row already known unsupported is skipped before the request, so four `.zip`s cost one probe
 round-trip each per server lifetime rather than one per bulk run. Since the bulk run never toasts per item,
 recording the verdict is also the only thing that carries the 422's reason out of the run — as the greyed
 row and its column.
 
-A queued row is never tallied at queue time — its real outcome lives in its jobs, so the summary is folded
-from the started refs' verdicts: the header shows `Downloading n/N…` while triggering, `Downloading n more…`
-off the live jobs of every ref started so far, and then the frozen `N downloaded, N failed, N unsupported, N already there` (each part appears
-only when non-zero). "Download all" stays disabled until they are all terminal. The bulk run never toasts per item itself — a job failure toasts once from the
-provider.
+The header renders three states in order: `Downloading n/N…` while the queue triggers, else
+`Downloading n more…` for the targets still `in-flight`, else the derived summary (shown only once the
+section has run at all). "Download all" stays disabled through the first two. The bulk run never toasts per
+item itself — a job failure toasts once from the jobs provider.
 
 ## Zoom passcode
 

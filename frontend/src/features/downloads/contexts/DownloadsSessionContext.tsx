@@ -1,11 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
-import type { Item, PasscodeError, ResolvedMedia } from '../services/autoDownloader'
+import type { Item, Media, PasscodeError, ResolvedMedia } from '../services/autoDownloader'
 import { isReconnectError, listRecordings } from '../services/autoDownloader'
-import type { StaleJobs, Tally, Verdicts } from '../utils/runSummary'
-import { isRunSettled, recordVerdicts, summarize } from '../utils/runSummary'
-import { useJobsByRef } from './DownloadJobsContext'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
 
@@ -16,31 +13,34 @@ export interface ExpandState {
   error: string | null
 }
 
+// One row the run got through, with what the run itself decided about it. `queued` is the only
+// disposition whose outcome is still open — it is read later off the tree and the jobs, keyed on
+// `media`, the POST's answer for a queued row and the row's own media otherwise.
+export interface RunTarget {
+  ref: string
+  name: string
+  kind: Kind
+  media: Media | 'unsupported'
+  disposition: 'queued' | 'skipped' | 'unsupported' | 'queue-failed'
+}
+
 // A paused run: the passcode prompt is open; the queue resumes from `index` on submit.
 export interface Paused {
   queue: Item[]
   index: number
-  tally: Tally
-  // Carried so the resume re-enters the queue loop with the refs it had already triggered.
-  started: string[]
-  staleJobs: Record<string, readonly string[]>
+  // Carried so the resume re-enters the queue loop with the rows it had already got through.
+  targets: RunTarget[]
   reason: PasscodeError['reason']
   name: string
 }
 
 // One section's bulk run, keyed by `${course}:${media}:${title}` — the identity the section renders
-// under. `started` is the authoritative list of the refs this run queued, growing as they are
-// triggered; `staleJobs` records what each of them already had at trigger time, `verdicts` collects
-// their outcomes as they land, and `summary` freezes off all three once the queue is done
-// (`outcome`) and every started row has a verdict.
+// under. `targets` is the authoritative list of the rows this run got through, growing as the queue
+// triggers them; the run's outcome is derived from it on every render, never stored.
 export interface SectionRun {
   running: boolean
   progress: { at: number; total: number } | null
-  started: readonly string[]
-  staleJobs: StaleJobs
-  outcome: Tally | null
-  verdicts: Verdicts
-  summary: string | null
+  targets: readonly RunTarget[]
   paused: Paused | null
   saving: boolean
 }
@@ -55,11 +55,7 @@ export const IDLE_EXPAND: ExpandState = {
 export const IDLE_RUN: SectionRun = {
   running: false,
   progress: null,
-  started: [],
-  staleJobs: {},
-  outcome: null,
-  verdicts: {},
-  summary: null,
+  targets: [],
   paused: null,
   saving: false,
 }
@@ -139,32 +135,6 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const setRun = useCallback((id: string, next: Partial<SectionRun>) => {
     setRuns((prev) => ({ ...prev, [id]: { ...(prev[id] ?? IDLE_RUN), ...next } }))
   }, [])
-
-  // Collecting and freezing happen here rather than in `SectionGroup`, which is exactly the component
-  // that may be unmounted while the last downloads land.
-  const jobsByRef = useJobsByRef()
-  useEffect(() => {
-    setRuns((prev) => {
-      let next: Record<string, SectionRun> | null = null
-      for (const [id, run] of Object.entries(prev)) {
-        // Collected from the first triggered row on, not from the end of the queue: the download
-        // server evicts a `done` job 60s later, and triggering a long section takes longer than that.
-        const verdicts =
-          recordVerdicts(run.started, jobsByRef, run.verdicts, run.staleJobs) ?? run.verdicts
-        // Recomputed even for a frozen run: a retry can drop a verdict, and the stale string must go
-        // with it rather than sit on screen while the run is live again.
-        const summary = isRunSettled(run.outcome, run.started, verdicts)
-          ? summarize(run.outcome, run.started, verdicts)
-          : null
-        if (verdicts === run.verdicts && summary === run.summary) continue
-        next ??= { ...prev }
-        next[id] = { ...run, verdicts, summary }
-      }
-      return next ?? prev
-    })
-    // `runs` is a trigger too, not just a read: a run can end with its jobs already terminal, and
-    // then no further snapshot arrives to freeze it. Returning `prev` unchanged ends the cycle.
-  }, [jobsByRef, runs])
 
   const reconnectHint = useCallback(() => {
     sendUpdateRef.current?.('error', 'BIU session expired. Reconnect your account.')

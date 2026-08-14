@@ -51,3 +51,23 @@ export function splitSiblings(
   const names = existingNames(kind, courses, course)
   return [`${name}.1`, `${name}.2`].filter((n) => names.includes(n))
 }
+
+// Whether a bulk-run target is on disk — the durable answer a run reads its outcome from. The split
+// siblings count: a zoom share queued as `name` lands as `name.1`/`.2`, and nothing else would see it.
+export function targetLanded(
+  target: { name: string; kind: Kind; media: Media | 'unsupported' },
+  courses: Course[],
+  course: string,
+): boolean {
+  const { name, kind } = target
+  // The target's recorded media is already the probe's answer, so it goes in as `resolvedMedia` —
+  // which leaves an 'unknown' target (no reliable on-disk target) falling through to false.
+  const item =
+    target.media === 'unknown'
+      ? { media: 'unknown' as const }
+      : { media: 'unknown' as const, resolvedMedia: target.media }
+  return (
+    hasResource(item, name, kind, courses, course) ||
+    splitSiblings(name, kind, courses, course).length > 0
+  )
+}
