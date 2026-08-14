@@ -3,6 +3,17 @@ from pathlib import Path
 
 RECITATIONS_DIR = "Recitations"
 
+# Windows rejects these in a path component
+ILLEGAL_NAME_CHARS = set('<>:"/\\|?*') | {chr(c) for c in range(32)}
+
+# Device names are reserved with or without an extension, so CON.txt is refused too.
+RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL"} | {
+    f"{p}{i}" for p in ("COM", "LPT") for i in "123456789¹²³"
+}
+
+# Leaves headroom under MAX_PATH
+MAX_NAME_LEN = 80
+
 # Course-level dir for overview pipeline outputs (files belong to the course, not a lecture).
 OVERVIEW_DIR = "overview"
 
@@ -58,16 +69,29 @@ def data_root() -> Path:
     return Path(os.environ["DATA_ROOT"])
 
 
+def safe_name(name: str) -> str:
+    """Reduce a course/lecture name to a component that is legal on NTFS as well as ext4."""
+
+    cleaned = "".join(c for c in name if c not in ILLEGAL_NAME_CHARS).strip()
+    # Windows silently strips trailing dots and spaces, which would desync the name from disk.
+    cleaned = cleaned[:MAX_NAME_LEN].rstrip(". ")
+    if cleaned.split(".")[0].upper() in RESERVED_NAMES:
+        cleaned += "_"
+    if not cleaned:
+        raise ValueError(f"name has no legal characters: {name!r}")
+    return cleaned
+
+
 def course_dir(course: str) -> Path:
     """Return the directory for a single course."""
 
-    return data_root() / course
+    return data_root() / safe_name(course)
 
 
 def overview_dir(course: str) -> Path:
     """Return the course-level overview directory holding cross-lecture study files."""
 
-    return data_root() / course / OVERVIEW_DIR
+    return course_dir(course) / OVERVIEW_DIR
 
 
 def overview_pdf_warning_marker(slug: str) -> str:
@@ -80,5 +104,5 @@ def lecture_dir(course: str, lecture: str, kind: str = "lecture") -> Path:
     """Resolve the directory for a lecture or recitation under its course."""
 
     if kind == "recitation":
-        return data_root() / course / RECITATIONS_DIR / lecture
-    return data_root() / course / lecture
+        return course_dir(course) / RECITATIONS_DIR / safe_name(lecture)
+    return course_dir(course) / safe_name(lecture)

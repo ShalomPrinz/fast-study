@@ -7,7 +7,6 @@ from .paths import (
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
     course_dir,
-    data_root,
     lecture_dir,
 )
 
@@ -15,7 +14,7 @@ from .paths import (
 def create_course(name: str, source_url: str | None = None) -> None:
     """Create a new course directory under DATA_ROOT (idempotent), optionally seeding its source_url."""
 
-    (data_root() / name).mkdir(parents=True, exist_ok=True)
+    course_dir(name).mkdir(parents=True, exist_ok=True)
     if source_url:
         set_course_source_url(name, source_url)
 
@@ -44,18 +43,15 @@ def set_course_archived(name: str, archived: bool) -> None:
 def rename_course(old: str, new: str) -> None:
     """Rename a course directory in place."""
 
-    (data_root() / old).rename(data_root() / new)
+    course_dir(old).rename(course_dir(new))
 
 
 def create_lecture(course: str, name: str, kind: str) -> None:
     """Create a lecture or recitation directory, creating the Recitations parent on demand."""
 
     if kind == "recitation":
-        parent = data_root() / course / RECITATIONS_DIR
-        parent.mkdir(parents=True, exist_ok=True)
-        (parent / name).mkdir(parents=True, exist_ok=True)
-    else:
-        (data_root() / course / name).mkdir(parents=True, exist_ok=True)
+        (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
+    lecture_dir(course, name, kind).mkdir(parents=True, exist_ok=True)
 
 
 def rename_lecture(course: str, old: str, new: str, kind: str) -> None:

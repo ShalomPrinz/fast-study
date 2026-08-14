@@ -13,6 +13,38 @@ build paths; they pass `(course, lecture, kind)` and let `fs/paths.py` resolve t
 `Recitations` level. Re-encoding this layout anywhere else (here or in another service) is the
 one thing that breaks the arrangement.
 
+Every resolver runs course and lecture names through `safe_name()` first (below).
+
+## Names
+
+Course and lecture names become directory names verbatim, and they arrive from two places: a
+user typing one, and the auto-downloader scraping a lecture-site title. ext4 accepts nearly
+anything, NTFS does not — so `שיעור 3: מבוא` works in development and fails on a Windows
+install. `safe_name()` is the single chokepoint, applied inside the resolvers rather than at the
+API boundary so reads and writes agree and no caller can bypass it.
+
+The rule, in order:
+
+| Step    | Rule                                                                                    |
+| ------- | --------------------------------------------------------------------------------------- |
+| Drop    | `<` `>` `:` `"` `/` `\` `\|` `?` `*` and control characters — removed, never substituted |
+| Trim    | Whitespace, then trailing dots and spaces — Windows strips those silently, which would desync the name from the directory |
+| Cap     | 80 characters, leaving headroom under `MAX_PATH` for `DATA_ROOT` + `Recitations/` + the longest artifact name |
+| Reserve | `CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9` take a `_` suffix — reserved with an extension too, so `CON.txt` is refused |
+| Reject  | A name with nothing legal left raises, surfacing as a `400`                              |
+
+The rule is idempotent, which is what the arrangement rests on: a name read back off disk
+resolves to itself, so renames and tree round-trips are stable. `read_course` takes its name
+straight from the `iterdir()` walk and is the one place that deliberately skips sanitizing.
+
+Sanitization is silent — create and rename still return `204`. The effective name reaches the
+user through the tree, which lists real directory names and refreshes over SSE immediately.
+
+Two cases are knowingly unhandled: two names in one course that sanitize identically merge into
+one directory, and no Unicode normalization happens, so a name could round-trip differently
+between macOS and Windows. The first needs titles differing only in dropped punctuation; the
+second only matters if the app ships beyond Windows.
+
 ## Predefined files
 
 `PREDEFINED_FILES` is the lecture-dir contract: exactly these files get a tree entry, and
