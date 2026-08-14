@@ -91,6 +91,8 @@ def _run_tool(
             cmd,
             capture_output=True,
             text=True,
+            encoding="utf-8",  # default is OS locale codepage so force UTF-8
+            errors="replace",
             cwd=cwd,
             timeout=timeout,
         )

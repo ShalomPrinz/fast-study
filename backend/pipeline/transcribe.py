@@ -40,6 +40,8 @@ def get_duration(audio_path: str) -> float:
         ],
         capture_output=True,
         text=True,
+        encoding="utf-8",  # else the OS locale codepage decodes ffprobe's output
+        errors="replace",
         check=True,
     )
     return float(result.stdout.strip())

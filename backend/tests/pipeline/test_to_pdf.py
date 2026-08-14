@@ -80,6 +80,7 @@ def _run_pandoc_latex(md: str) -> str:
             ],
             capture_output=True,
             text=True,
+            encoding="utf-8",  # the LaTeX we assert on is Hebrew
         )
         assert result.returncode == 0, f"pandoc failed:\n{result.stderr}"
         return result.stdout
@@ -411,7 +412,16 @@ class FakeRun:
         self.hangs = set(hangs)
         self.calls = []
 
-    def __call__(self, cmd, capture_output=False, text=False, cwd=None, timeout=None):
+    def __call__(
+        self,
+        cmd,
+        capture_output=False,
+        text=False,
+        encoding=None,
+        errors=None,
+        cwd=None,
+        timeout=None,
+    ):
         self.calls.append((list(cmd), cwd))
         nth = sum(1 for c, _ in self.calls if c[0] == cmd[0])
         d = Path(cwd)
