@@ -115,9 +115,9 @@ export async function runDownloadJob(
       recordDownloadTiming(downloader.tool, finalBytes || bytes, (Date.now() - spawnedAt) / 1000);
       // Not done at exit 0 — the bytes are still in a temp dir nobody else can see.
       // The job turns `done` only once the database has them.
-      const result = await downloader.upload(tempDir, course, lecture, kind, downloader.tool);
-      if (result.ok) finishJob(jobId, 'done');
-      else finishJob(jobId, 'error', result.error);
+      const uploadError = await downloader.upload(tempDir, course, lecture, kind, downloader.tool);
+      if (uploadError) finishJob(jobId, 'error', uploadError);
+      else finishJob(jobId, 'done');
     });
   } catch (err) {
     emitError(`❌ ${downloader.tool} failed: ${err.message}`);

@@ -416,11 +416,11 @@ export function handleZoomPasscode(req, res) {
     return send(res, 400, { error: 'passcode is required' });
   passcodes.save({ course, name, passcode, scope });
   logResult('/zoom/passcode', 'ok');
-  send(res, 200, { ok: true });
+  send(res, 200, {});
 }
 
 export async function handleClose(req, res) {
   logReq('POST', '/close');
   await closeAllSessions();
-  send(res, 200, { ok: true });
+  send(res, 200, {});
 }

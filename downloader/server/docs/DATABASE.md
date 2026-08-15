@@ -29,12 +29,12 @@ atomically at write time, so a lecture holds many materials and a second upload 
 overwriting; the server names nothing. Derived artifacts are left intact (unlike the video PUT),
 since attaching material shouldn't invalidate an existing summary. The allocated `name` is what we log.
 
-`uploadPdf(buf, …)` forwards bytes the extension already fetched: throws on a network error
-(route → 500), returns `{ok:false}` on a database-level failure (route → 502).
+All three upload helpers report the same way: `null` on success, the error message string on
+failure. `uploadPdf(buf, …)` forwards bytes the extension already fetched: it throws on a network
+error (route → 500) and returns the message on a database-level failure (route → 502).
 `uploadMaterial(tempDir, …)` is the job path (`downloaders/fetch.js`): it streams the temp
-PDF (`MATERIAL_TEMP_FILENAME`, a local temp name only), removes the temp dir either way, and
-returns `{ok}` without throwing so the runner can turn it into the job's terminal state — same
-shape as `uploadVideo`.
+PDF (`MATERIAL_TEMP_FILENAME`, a local temp name only), removes the temp dir either way, and never
+throws so the runner can turn its return into the job's terminal state — same as `uploadVideo`.
 
 ## `notifyFrontend` — SSE ping
 

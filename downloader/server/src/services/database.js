@@ -25,7 +25,8 @@ export async function listCourses() {
 // Stream the just-downloaded video.mp4 to the database, then remove the temp dir
 // whether or not the upload succeeded. This PUT also wipes derived audio/transcript/
 // summary (correct for a fresh video). `tool` labels errors (curl / yt-dlp).
-// Returns {ok} rather than throwing — the caller turns it into the job's terminal state.
+// Returns null on success or the error message rather than throwing — the caller turns it
+// into the job's terminal state.
 export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   const file = path.join(tempDir, VIDEO_FILENAME);
   try {
@@ -44,14 +45,14 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     if (!res.ok) {
       const error = body?.error ?? `HTTP ${res.status}`;
       emitError(`❌ ${tool} upload to database failed: ${error}`);
-      return { ok: false, error };
+      return error;
     }
     emitLog(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
-    return { ok: true };
+    return null;
   } catch (err) {
     emitError(`❌ ${tool} upload to database failed: ${err.message}`);
-    return { ok: false, error: err.message };
+    return err.message;
   } finally {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -62,7 +63,8 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
 // Stream the just-downloaded PDF to the /materials endpoint, then remove the temp dir either
 // way. The database allocates the name (material.pdf, material.2.pdf, …) so a second PDF appends
 // instead of overwriting, and derived transcript/summary artifacts are left alone (unlike the video PUT).
-// Returns {ok} rather than throwing — the caller turns it into the job's terminal state.
+// Returns null on success or the error message rather than throwing — the caller turns it
+// into the job's terminal state.
 export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
   const file = path.join(tempDir, MATERIAL_TEMP_FILENAME);
   try {
@@ -81,14 +83,14 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
     if (!res.ok) {
       const error = body?.error ?? `HTTP ${res.status}`;
       emitError(`❌ ${tool} upload to database failed: ${error}`);
-      return { ok: false, error };
+      return error;
     }
     emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
-    return { ok: true };
+    return null;
   } catch (err) {
     emitError(`❌ ${tool} upload to database failed: ${err.message}`);
-    return { ok: false, error: err.message };
+    return err.message;
   } finally {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -98,7 +100,8 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
 
 // Forward already-fetched PDF bytes to the /materials endpoint: the database allocates the
 // name (a second PDF appends) and derived artifacts survive, unlike the video PUT. Throws on
-// network error (route -> 500); returns {ok:false} on a database-level failure (route -> 502).
+// network error (route -> 500); returns null on success or the error message on a
+// database-level failure (route -> 502).
 export async function uploadPdf(buf, course, lecture, kind) {
   const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
   const res = await fetch(url, {
@@ -113,11 +116,11 @@ export async function uploadPdf(buf, course, lecture, kind) {
   if (!res.ok) {
     const error = body?.error ?? `HTTP ${res.status}`;
     emitError(`❌ PDF upload to database failed: ${error}`);
-    return { ok: false, error };
+    return error;
   }
   emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
   notifyFrontend();
-  return { ok: true };
+  return null;
 }
 
 // Non-blocking ping so subscribed sidebars refetch the tree; silent on failure so a

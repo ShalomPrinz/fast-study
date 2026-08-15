@@ -25,8 +25,8 @@ router.post('/upload-pdf', express.raw({ type: '*/*', limit: '1gb' }), async (re
   }
 
   // Network error throws -> 500 (error middleware); database-level failure -> 502.
-  const result = await uploadPdf(buf, course, lecture, kind);
-  if (!result.ok) return res.status(502).json({ error: result.error });
+  const uploadError = await uploadPdf(buf, course, lecture, kind);
+  if (uploadError) return res.status(502).json({ error: uploadError });
   res.json({ status: 'PDF uploaded', target: `${course}/${lecture}` });
 });
 

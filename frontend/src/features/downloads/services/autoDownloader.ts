@@ -137,8 +137,8 @@ export async function saveZoomPasscode({
   name: string
   passcode: string
   scope: 'course' | 'lecture'
-}): Promise<{ ok: boolean }> {
-  return autoDownloader.post<{ ok: boolean }>('/zoom/passcode', {
+}): Promise<void> {
+  await autoDownloader.post<void>('/zoom/passcode', {
     json: { course, name, passcode, scope },
   })
 }

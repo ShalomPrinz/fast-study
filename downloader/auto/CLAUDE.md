@@ -26,8 +26,8 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 | `POST /list`          | `{ courseUrl }`                                     | `{ items }`                                                        |
 | `POST /list/expand`   | `{ ref }`                                           | `{ items }` (resolve one expandable item → children)               |
 | `POST /resolve`       | `{ ref, course, name, kind, only?, forceCapture? }` | `{ media, targets }`                                               |
-| `POST /zoom/passcode` | `{ course, name?, passcode, scope }`                | `{ ok:true }` (store a zoom passcode; `scope:'course'\|'lecture'`) |
-| `POST /close`         | —                                                   | `{ ok:true }` (close the persistent browser)                       |
+| `POST /zoom/passcode` | `{ course, name?, passcode, scope }`                | `{}` (store a zoom passcode; `scope:'course'\|'lecture'`)          |
+| `POST /close`         | —                                                   | `{}` (close the persistent browser)                                |
 
 `/resolve` returns the download targets, never a download: `targets` is
 `[{ name, tool, url, headers?, fromCache }]`, one per file that will land (a zoom before/after-break
