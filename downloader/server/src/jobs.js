@@ -14,7 +14,7 @@ const DONE_BRIDGE_MS = 60 * 1000;
 // resyncs with the id it just received can never miss the job.
 export function createJob({ course, lecture, kind, tool, ref = null, fromCache = false }) {
   // A retry supersedes any terminal predecessor for this target so `/jobs` holds at most
-  // one job per target (mirrors runner.js's removeJob on 200 recapture).
+  // one job per target.
   supersedeTerminal({ course, lecture, kind, ref });
   const id = randomUUID();
   jobs.set(id, {
@@ -88,16 +88,12 @@ function supersedeTerminal({ course, lecture, kind, ref }) {
       job.lecture === lecture &&
       job.kind === kind
     ) {
-      removeJob(id);
+      evict(id);
     }
   }
 }
 
-export function isJobTerminal(id) {
-  return terminal(jobs.get(id));
-}
-
-export function removeJob(id) {
+function evict(id) {
   if (jobs.delete(id)) broadcast();
 }
 

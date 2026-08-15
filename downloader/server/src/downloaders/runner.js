@@ -11,15 +11,7 @@ import {
   formatBytes,
 } from '../progress.js';
 import { recordDownloadTiming } from '../services/timing.js';
-import { recaptureItem } from '../services/autodl.js';
-import {
-  setExpectedBytes,
-  startJob,
-  freezeJobBytes,
-  finishJob,
-  isJobTerminal,
-  removeJob,
-} from '../jobs.js';
+import { setExpectedBytes, startJob, freezeJobBytes, finishJob } from '../jobs.js';
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'fast-study-dl-'));
@@ -42,10 +34,9 @@ function isAuthError(message) {
   );
 }
 
-// Map auto's NON-200 re-capture response to this (superseded) job's terminal message —
-// recovery couldn't proceed, so the reason is user-actionable. (A 200 spawns a fresh job
-// that replaces this row, so the caller drops this job instead of messaging it.)
-function recaptureMessage(status, body) {
+// Map a failed re-resolve to this job's terminal message: recovery couldn't proceed, so the
+// reason has to be user-actionable rather than the raw stderr of the stale attempt.
+function reresolveMessage(status, body) {
   if (status === 401) return 'reconnect Moodle';
   if (status === 409) return 'passcode needed';
   if (status === 422) return `source unsupported${body?.message ? `: ${body.message}` : ''}`;
@@ -56,10 +47,12 @@ function recaptureMessage(status, body) {
 // hand the result to the source's required `upload` (which uploads + cleans + notifies).
 // Adding a source = a new downloaders/*.js registered in index.js; no edits here.
 // `jobId` was created synchronously by the route; every exit path must terminate it.
+// `reresolve` (null when the caller has no ref, e.g. the extension) refreshes a stale cached
+// cap so THIS job re-runs on it — see docs/JOBS.md.
 export async function runDownloadJob(
   downloader,
   input,
-  { course, lecture, kind, jobId, ref = null, fromCache = false },
+  { course, lecture, kind, jobId, fromCache = false, reresolve = null },
 ) {
   const label = `${course}/${lecture}`;
   const tempDir = makeTempDir();
@@ -104,20 +97,20 @@ export async function runDownloadJob(
         const message = `exited with code ${code}${detail ? `\n${detail}` : ''}`;
         removeTempDir(tempDir);
 
-        // recapture from cache. invariant due to usage of forceCapture:true in request.
-        if (isAuthError(detail) && ref && fromCache && !isJobTerminal(jobId)) {
+        // A cached cap's token went stale: re-resolve it fresh and re-run the SAME job. The
+        // fresh input is fromCache:false, so a second auth failure can't loop back here.
+        if (isAuthError(detail) && fromCache && reresolve) {
           emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
-          const { status, body } = await recaptureItem({ ref, course, name: lecture, kind });
-          // 200 = a fresh job (with same ref) was spawned to replace this one, so drop this job.
-          if (status === 200) {
-            removeJob(jobId);
+          const fresh = await reresolve();
+          if (!fresh.ok) {
+            finishJob(jobId, 'error', reresolveMessage(fresh.status, fresh.body));
             return;
           }
-          finishJob(jobId, 'error', recaptureMessage(status, body));
+          runDownloadJob(fresh.downloader, fresh.input, { course, lecture, kind, jobId });
           return;
         }
 
-        // Non-auth error, a fresh-capture auth failure, or no ref → finalize as-is.
+        // Non-auth error, a fresh-capture auth failure, or no re-resolve → finalize as-is.
         emitError(`❌ ${downloader.tool} failed: ${message}`);
         finishJob(
           jobId,

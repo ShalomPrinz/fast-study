@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { ALLOWED_ORIGIN, AUTODL_PORT, SERVER_URL } from './src/lib/config.js';
+import { ALLOWED_ORIGIN, AUTODL_PORT } from './src/lib/config.js';
 import { UnsupportedError } from './src/lib/errors.js';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import {
@@ -10,7 +10,7 @@ import {
   handleAuthComplete,
   handleList,
   handleListExpand,
-  handleDownloadItem,
+  handleResolve,
   handleZoomPasscode,
   handleClose,
 } from './src/http/server.js';
@@ -31,7 +31,7 @@ app.post('/auth/connect', handleAuthConnect);
 app.post('/auth/complete', handleAuthComplete);
 app.post('/list', handleList);
 app.post('/list/expand', handleListExpand);
-app.post('/download-item', handleDownloadItem);
+app.post('/resolve', handleResolve);
 app.post('/zoom/passcode', handleZoomPasscode);
 app.post('/close', handleClose);
 
@@ -54,7 +54,6 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 app.listen(AUTODL_PORT, () => {
   console.log(`\n==========================================`);
   console.log(`🤖 Auto-downloader listening on port ${AUTODL_PORT}`);
-  console.log(`📥 SERVER_URL: ${SERVER_URL}`);
   console.log(`🌐 CORS origin: ${ALLOWED_ORIGIN}`);
   console.log(`==========================================\n`);
 });

@@ -2,8 +2,8 @@
 
 `/downloads` — connect the BIU account, keep each course's source URL, then discover and download
 recordings into the same `DATA_ROOT` courses the pipeline uses. Talks to two services: the auto-downloader
-(:3053) for auth, discovery and queueing, and the downloader server (:3052) for job progress — see
-`SERVICES.md` for their clients and error signals.
+(:3053) for auth and discovery, and the downloader server (:3052) for queueing downloads and their job
+progress — see `SERVICES.md` for their clients and error signals.
 
 ## Auth
 
@@ -74,7 +74,7 @@ their segment.
 
 `RecordingRow` reads `item.resolvedMedia` and nothing else. A download reports the verdict upward through
 `ResolvedMediaContext` — a dispatch-only context provided by `DownloadsView` from the session's
-`resolveMedia`, which stamps it onto the matching item in `items`. `POST /download-item` answers `{ media }`, and a 422 `UnsupportedError` is
+`resolveMedia`, which stamps it onto the matching item in `items`. `POST /download-item` answers with a `media`, and a 422 `UnsupportedError` is
 just as much a verdict, so both update the column on the interaction that resolved it — no re-list. The
 provider sits above the media segments deliberately: switching segment unmounts every row and every
 `SectionGroup`, so a verdict held in either would be lost on the way back. It still dies with a
@@ -153,11 +153,11 @@ prompt don't toast — they steer the UI elsewhere. A failure _after_ the start 
 
 ## Download progress
 
-`POST /download-item` returns `{ media }` — a 200 means queued by construction (every failure to queue is
-an error status), `media` is what the file turned out to be, which resolves an `unknown` row's column, and
-the curl/yt-dlp job runs on in the background. No job ids come back: the auto-downloader keeps no job state,
-and every job it spawns is stamped with the row's `ref`, so the row re-finds its jobs on the downloader
-server's own `/jobs`. The 200 is never the row's outcome — treating it as one reports "Downloaded ✓"
+`POST /download-item` (on the downloader server) returns `{ media, jobIds }` — a 200 means queued by
+construction (every failure to queue is an error status), `media` is what the file turned out to be, which
+resolves an `unknown` row's column, and the curl/yt-dlp job runs on in the background. The row does not
+route by `jobIds`: every spawned job is stamped with the row's `ref`, so the row re-finds its jobs in the
+snapshot below. The 200 is never the row's outcome — treating it as one reports "Downloaded ✓"
 mid-download and swallows every background failure.
 
 The jobs context mirrors the pipeline's `RunnerStatusContext`: `GET /jobs` is the **single source of

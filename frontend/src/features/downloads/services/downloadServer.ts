@@ -1,12 +1,32 @@
 import { createClient, httpError } from '@/services/http'
 import type { DownloadOperation, Kind } from '@/types'
+import type { ProbedMedia } from './autoDownloader'
+import { postReconnectAware } from './autoDownloader'
 
-// Feature-local boundary for the downloader server, which owns every background download job —
-// both the ones the auto-downloader queues and the ones the Chrome extension starts.
+// Feature-local boundary for the downloader server, which queues every background download job and
+// owns its state — both the ones discovery rows trigger and the ones the Chrome extension starts.
 const downloadServer = createClient(
   import.meta.env.VITE_DOWNLOADER_URL ?? 'http://localhost:3052',
   'downloader server',
 )
+
+// Resolving means queued — every failure leaves as an error (401/409/422/500), forwarded verbatim
+// from the auto-downloader, hence the shared reconnect-aware POST. `media` is what the item turned
+// out to be: the answer that resolves an 'unknown' row without a re-list. `only` re-triggers a
+// single named item (a zoom split clip) without re-downloading its siblings — used by per-job retry.
+export async function downloadItem(args: {
+  ref: string
+  course: string
+  name: string
+  kind: Kind
+  only?: boolean
+}): Promise<{ media: ProbedMedia; jobIds: string[] }> {
+  return postReconnectAware<{ media: ProbedMedia; jobIds: string[] }>(
+    downloadServer,
+    '/download-item',
+    args,
+  )
+}
 
 // Which downloader ran it — the backend keeps a timing bucket per tool. Null before the child
 // spawns and the real one is known.

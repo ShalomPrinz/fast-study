@@ -6,10 +6,10 @@ import {
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import {
   listRecordings,
-  downloadRecording,
-  downloadMoodleFile,
-  downloadYtDlp,
-  downloadDriveFile,
+  resolveRecording,
+  resolveMoodleFile,
+  resolveYtDlp,
+  resolveDriveFile,
 } from '../core/core.js';
 import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
 import { getDriveMedia } from '../core/driveProbeCache.js';
@@ -203,7 +203,7 @@ export async function handleListExpand(req, res) {
     throw e; // other failures fall through to the centralized 500 ("try again")
   }
   // Each entry becomes a concrete, downloadable child (has a direct url → not
-  // expandable). The child's ref carries the youtube recording for /download-item.
+  // expandable). The child's ref carries the youtube recording for /resolve.
   const items = entries.map((e) =>
     toItem({
       title: e.title,
@@ -217,29 +217,30 @@ export async function handleListExpand(req, res) {
   send(res, 200, { items });
 }
 
-// Symmetric with /list/expand: an unsupported ref on the download path surfaces as
+// Symmetric with /list/expand: an unsupported ref on the resolve path surfaces as
 // 422, not a 500. Other errors rethrow to the centralized handler.
-export async function handleDownloadItem(req, res) {
+export async function handleResolve(req, res) {
   try {
-    await downloadItem(req, res);
+    await resolveItem(req, res);
   } catch (e) {
     if (e instanceof UnsupportedError) {
-      logResult('/download-item', `unsupported (422): ${e.message}`);
+      logResult('/resolve', `unsupported (422): ${e.message}`);
       return sendUnsupported(res, e.message);
     }
     if (e instanceof PasscodeError) {
       const { course, name } = req.body;
-      logResult('/download-item', `passcode ${e.reason} (409)`);
+      logResult('/resolve', `passcode ${e.reason} (409)`);
       return sendPasscode(res, { reason: e.reason, course, name });
     }
     throw e;
   }
 }
 
-async function downloadItem(req, res) {
+async function resolveItem(req, res) {
   const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body;
-  logReq('POST', '/download-item', `${course}/${name} (${kind})`);
-  // The discovery row's ref groups every server/ job it spawns (incl. a zoom split pair).
+  logReq('POST', '/resolve', `${course}/${name} (${kind})`);
+  // The discovery row's ref groups every server/ job spawned from this resolve (incl. a zoom
+  // split pair); it is also the key each cap is memoized under in the replay cache.
   const rowRef = typeof ref === 'string' ? ref : null;
   const recording = decodeRef(ref);
   if (!recording || typeof recording !== 'object')
@@ -259,12 +260,12 @@ async function downloadItem(req, res) {
   if (recording.strategy === 'moodle-file') {
     const auth = authFor(resolveUniversity(recording.fileurl));
     if (!auth.status().connected) {
-      logResult('/download-item', 'reconnect (401)');
+      logResult('/resolve', 'reconnect (401)');
       return sendReconnect(res);
     }
-    let jobs;
+    let targets;
     try {
-      jobs = await downloadMoodleFile({
+      targets = await resolveMoodleFile({
         recording,
         course,
         name,
@@ -276,19 +277,19 @@ async function downloadItem(req, res) {
     } catch (e) {
       if (invalidToken(e)) {
         auth.markExpired();
-        logResult('/download-item', 'reconnect (401)');
+        logResult('/resolve', 'reconnect (401)');
         return sendReconnect(res);
       }
       throw e;
     }
-    logResult('/download-item', `ok (${jobs.length} job)`);
-    return send(res, 200, { media: 'material' });
+    logResult('/resolve', `ok (${targets.length} target, material)`);
+    return send(res, 200, { media: 'material', targets });
   }
 
-  // A Drive file needs no browser either, but only the download-time filename probe knows
-  // whether it lands as a video or as a material — it reports back which.
+  // A Drive file needs no browser either, but only the filename probe knows whether it lands
+  // as a video or as a material — it reports back which.
   if (recording.strategy === 'google-drive') {
-    const { jobIds, media } = await downloadDriveFile({
+    const { targets, media } = await resolveDriveFile({
       recording,
       course,
       name,
@@ -296,14 +297,14 @@ async function downloadItem(req, res) {
       ref: rowRef,
       forceCapture: opts.forceCapture,
     });
-    logResult('/download-item', `ok (${jobIds.length} job, ${media})`);
-    return send(res, 200, { media });
+    logResult('/resolve', `ok (${targets.length} target, ${media})`);
+    return send(res, 200, { media, targets });
   }
 
   // An expanded youtube entry carries its direct url, so it needs no browser either;
   // videostream must sniff the .mp4 fresh.
   if (recording.strategy === 'youtube-playlist' && recording.url) {
-    const jobs = await downloadYtDlp({
+    const targets = await resolveYtDlp({
       recording,
       course,
       name,
@@ -311,8 +312,8 @@ async function downloadItem(req, res) {
       ref: rowRef,
       forceCapture: opts.forceCapture,
     });
-    logResult('/download-item', `ok (${jobs.length} job)`);
-    return send(res, 200, { media: 'video' });
+    logResult('/resolve', `ok (${targets.length} target, video)`);
+    return send(res, 200, { media: 'video', targets });
   }
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
@@ -329,9 +330,9 @@ async function downloadItem(req, res) {
     // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
     const passcode = passcodes.lookup(course, name);
     await session.open();
-    // A zoom share can hold a before/after-break pair → one job id per captured .mp4.
-    const jobs = await session.withLock(() =>
-      downloadRecording(session.page, {
+    // A zoom share can hold a before/after-break pair → one target per captured .mp4.
+    const targets = await session.withLock(() =>
+      resolveRecording(session.page, {
         recording,
         course,
         name,
@@ -341,8 +342,8 @@ async function downloadItem(req, res) {
         ...opts,
       }),
     );
-    logResult('/download-item', `ok (${jobs.length} jobs)`);
-    return send(res, 200, { media: 'video' });
+    logResult('/resolve', `ok (${targets.length} targets, video)`);
+    return send(res, 200, { media: 'video', targets });
   }
 
   // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
@@ -350,17 +351,17 @@ async function downloadItem(req, res) {
   const uni = resolveUniversity(recording.pageUrl);
   const auth = authFor(uni);
   if (!auth.status().connected) {
-    logResult('/download-item', 'reconnect (401)');
+    logResult('/resolve', 'reconnect (401)');
     return sendReconnect(res);
   }
   const token = auth.loadToken();
 
   await session.open();
-  let jobs;
+  let targets;
   try {
-    jobs = await session.withLock(async () => {
+    targets = await session.withLock(async () => {
       await ensureAutologin(session, token);
-      return downloadRecording(session.page, {
+      return resolveRecording(session.page, {
         recording,
         course,
         name,
@@ -374,13 +375,13 @@ async function downloadItem(req, res) {
     // exception → Reconnect. Other faults (rate-limit lockout, no .mp4) fall to 500.
     if (invalidToken(e)) {
       auth.markExpired();
-      logResult('/download-item', 'reconnect (401)');
+      logResult('/resolve', 'reconnect (401)');
       return sendReconnect(res);
     }
     throw e;
   }
-  logResult('/download-item', `ok (${jobs.length} job)`);
-  send(res, 200, { media: 'video' });
+  logResult('/resolve', `ok (${targets.length} target, video)`);
+  send(res, 200, { media: 'video', targets });
 }
 
 // Log the shared plain session into Moodle via a one-shot autologin key so the token-gated
@@ -402,7 +403,7 @@ async function ensureAutologin(session, token) {
 }
 
 // Persist a zoom passcode for a course (default) or a single lecture (override). The
-// sibling frontend prompt calls this after a 409 `passcode`, then retries /download-item.
+// sibling frontend prompt calls this after a 409 `passcode`, then retries the download.
 export function handleZoomPasscode(req, res) {
   const { course, name, passcode, scope } = req.body;
   logReq('POST', '/zoom/passcode', `${course}${scope === 'lecture' ? `/${name}` : ''} (${scope})`);

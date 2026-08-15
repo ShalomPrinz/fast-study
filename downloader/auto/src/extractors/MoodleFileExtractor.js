@@ -23,7 +23,7 @@ export class MoodleFileExtractor extends VideoExtractor {
   }
 
   /**
-   * One downloadable file. `fileurl` rides along in the ref so /download-item rebuilds the
+   * One downloadable file. `fileurl` rides along in the ref so /resolve rebuilds the
    * tokened URL from the ref alone, with no course re-listing.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {import('./VideoExtractor.js').Recording[]}

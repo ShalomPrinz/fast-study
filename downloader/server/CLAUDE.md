@@ -3,7 +3,8 @@
 The local server for downloading videos and documents. It has no disk conventions of its
 own: it captures a video (curl header-replay or yt-dlp) or receives a PDF, then hands the bytes to the **database service** (8001), which writes them under
 `DATA_ROOT`. It also posts download duration samples to the **backend** (8000), and calls
-**auto/** (3053) to silently re-capture a stale cached token (`docs/JOBS.md`).
+**auto/** (3053) to resolve a discovery row into download targets — and to re-resolve one whose
+cached token went stale (`docs/JOBS.md`).
 
 ## Run
 
@@ -22,7 +23,7 @@ npm --prefix downloader/server start   # node src/index.js, port 3052
 | `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (`/events` + `/jobs`)                                  |
 | `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                   |
 | `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples only                                      |
-| `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — silent re-capture of a stale cached token (`docs/JOBS.md`) |
+| `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve |
 
 If a reloaded extension gets a new ID, set `DOWNLOADER_EXTENSION_ID` or CORS blocks
 the popup.
@@ -33,9 +34,10 @@ the popup.
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                             |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET)                                                                       |
-| `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background (`fromCache` bool marks a replayed cap) |
-| `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`  |
-| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId` (`fromCache` bool)           |
+| `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background                                        |
+| `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`                  |
+| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId`                             |
+| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds}` (auto's 4xx forwarded verbatim) |
 | `GET  /events`                            | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`)                                                     |
 | `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                          |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                         |

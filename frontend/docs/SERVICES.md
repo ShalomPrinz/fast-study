@@ -63,8 +63,8 @@ both; lectures carry no suffix. `overviewGenerateQuery` composes the overview tr
 Feature-local because only the downloads page speaks this protocol. Its discovery `Item` is
 mechanism-agnostic: `ref` is an opaque token to round-trip, never parse.
 
-`/list`, `/list/expand` and `/download-item` go through a bespoke `fetch` rather than the shared client,
-because the client discards the response body and these endpoints encode meaning in it:
+`/list` and `/list/expand` go through `postReconnectAware` — a bespoke `fetch` rather than the shared
+client, because the client discards the response body and these endpoints encode meaning in it:
 
 | HTTP | body                  | thrown                                                                    |
 | ---- | --------------------- | ------------------------------------------------------------------------- |
@@ -72,18 +72,22 @@ because the client discards the response body and these endpoints encode meaning
 | 422  | `status: unsupported` | `UnsupportedError` — permanent; `message` is display-ready, show verbatim |
 | 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`               |
 
-Trade-off: those three endpoints forgo the client's central `ConnectionError` wrapping, so a refused
+Trade-off: `postReconnectAware` forgoes the client's central `ConnectionError` wrapping, so a refused
 connection surfaces as a raw `TypeError` instead of the friendly toast. `PasscodeError` maps the body's
 `name` to `lecture` because `name` collides with `Error.name`.
 
-`downloadItem` returns `{ media }` alone; resolving _is_ success, since every failure to queue leaves as one
-of the errors above (or a 500). No job ids: the jobs belong to the downloader server (below) and are found
-by the row's `ref`.
+`postReconnectAware` and the three error classes are exported and take the `Client` to POST through: the
+downloader server's `/download-item` answers with the same three bodies (it forwards auth's verdict
+verbatim), so it reuses them rather than restating the vocabulary.
 
 ## `features/downloads/services/downloadServer.ts` → downloader server (`VITE_DOWNLOADER_URL`, :3052)
 
-The server that actually runs the downloads owns their job state, so the downloads page talks to two
-services: it queues through the auto-downloader and follows the outcome here.
+The server that runs the downloads owns both the queueing and the job state, so the downloads page talks to
+two services: it discovers and authenticates through the auto-downloader and downloads here.
+
+`downloadItem` POSTs `/download-item` through `postReconnectAware` and returns `{ media, jobIds }`;
+resolving _is_ success, since every failure to queue leaves as one of the errors above (or a 500). Rows
+still find their jobs by the row's `ref`, not by `jobIds`.
 
 `subscribeJobs(onChange)` wraps `GET /events`, which fires one contentless `job:change` ping per job
 transition (no byte count — see `DOWNLOADS.md`); the `open` event calls `onChange` too, for the initial

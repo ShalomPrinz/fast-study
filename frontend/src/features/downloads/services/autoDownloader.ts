@@ -1,3 +1,4 @@
+import type { Client } from '@/services/http'
 import { createClient, httpError } from '@/services/http'
 import type { Kind } from '@/types'
 
@@ -79,8 +80,14 @@ export function isPasscodeError(err: unknown): err is PasscodeError {
 // These endpoints encode meaning in the response body, which the shared client discards — hence
 // a direct fetch. Trade-off: no central ConnectionError wrapping, so a refused connection throws
 // a raw TypeError instead of the friendly "service down" toast.
-async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(autoDownloader.url(path), {
+// Client-parameterized because the same three error bodies come back from both services: the
+// downloader server forwards auth's verdict verbatim when it proxies a download.
+export async function postReconnectAware<T>(
+  client: Client,
+  path: string,
+  body: unknown,
+): Promise<T> {
+  const res = await fetch(client.url(path), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -106,28 +113,18 @@ async function postReconnectAware<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function listRecordings(courseUrl: string): Promise<Item[]> {
-  const { items } = await postReconnectAware<{ items: Item[] }>('/list', { courseUrl })
+  const { items } = await postReconnectAware<{ items: Item[] }>(autoDownloader, '/list', {
+    courseUrl,
+  })
   return items
 }
 
 // Resolve one expandable item into its downloadable children.
 export async function expandItem(ref: string): Promise<Item[]> {
-  const { items } = await postReconnectAware<{ items: Item[] }>('/list/expand', { ref })
+  const { items } = await postReconnectAware<{ items: Item[] }>(autoDownloader, '/list/expand', {
+    ref,
+  })
   return items
-}
-
-// Resolving means queued — every failure leaves as an error (401/409/422/500). `media` is what the
-// item turned out to be: the answer that resolves an 'unknown' row without a re-list.
-// `only` re-triggers a single named item (a zoom split clip) without re-downloading its
-// siblings — used by per-job retry.
-export async function downloadItem(args: {
-  ref: string
-  course: string
-  name: string
-  kind: Kind
-  only?: boolean
-}): Promise<{ media: ProbedMedia }> {
-  return postReconnectAware<{ media: ProbedMedia }>('/download-item', args)
 }
 
 export async function saveZoomPasscode({

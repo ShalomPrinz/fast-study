@@ -1,5 +1,5 @@
 import { resolveExtractor, resolveExtractorForRecording } from './registry.js';
-import { postDownload, postDownloadFile, postDownloadYoutube } from '../http/serverClient.js';
+import { toolFor, toTarget } from './targets.js';
 import { assertPluginfileReadable, pluginfileUrl } from '../moodle/wsClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
@@ -113,7 +113,7 @@ function cachedTargets(recording, course, name, kind) {
 }
 
 /**
- * DOWNLOAD PATH (HTTP), no browser: the WS token turns the Moodle fileurl into a plain HTTP
+ * RESOLVE PATH (HTTP), no browser: the WS token turns the Moodle fileurl into a plain HTTP
  * URL that server/ fetches as one of the lecture's materials. Its own entry point because a
  * strategy that needs no browser must be handed its credential explicitly — folding it into
  * the capture dispatcher made every per-strategy secret look optional. Single target, so
@@ -122,11 +122,11 @@ function cachedTargets(recording, course, name, kind) {
  *           course: string, name: string, kind: string, wstoken: string,
  *           ref?: string|null, forceCapture?: boolean }} args
  *   wstoken is the caller's Moodle WS token — required; pluginfile authenticates by it.
- *   ref is the discovery-row id that spawned this download, stamped onto the server/ job.
+ *   ref is the discovery-row id that spawned this download, stamped onto the cached cap.
  *   forceCapture = bypass the replay cache and re-resolve the url fresh.
- * @returns {Promise<string[]>} server/ job ids (one), followed on server/'s /events.
+ * @returns {Promise<object[]>} one download target for server/ to run.
  */
-export async function downloadMoodleFile({
+export async function resolveMoodleFile({
   recording,
   course,
   name,
@@ -143,26 +143,18 @@ export async function downloadMoodleFile({
     cap = { url };
     cacheCap(course, name, kind, 'material', cap, ref);
   }
-  const jobId = await postDownloadFile({
-    url: cap.url,
-    course,
-    lecture: name,
-    kind,
-    ref,
-    fromCache,
-  });
-  return [jobId];
+  return [toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache })];
 }
 
 /**
- * DOWNLOAD PATH (HTTP), no browser: hand a specific expanded playlist entry (`url`) to yt-dlp
+ * RESOLVE PATH (HTTP), no browser: hand a specific expanded playlist entry (`url`) to yt-dlp
  * via server/. Single target, so there is no `only` semantics; the cap is just a `{url}`.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
- * @returns {Promise<string[]>} server/ job ids (one), followed on server/'s /events.
+ * @returns {Promise<object[]>} one download target for server/ to run.
  */
-export async function downloadYtDlp({ recording, course, name, kind, ref, forceCapture = false }) {
+export async function resolveYtDlp({ recording, course, name, kind, ref, forceCapture = false }) {
   let cap = forceCapture ? null : getCap(course, name, kind, 'video')?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
@@ -170,19 +162,11 @@ export async function downloadYtDlp({ recording, course, name, kind, ref, forceC
     cap = { url: recording.url };
     cacheCap(course, name, kind, 'video', cap, ref);
   }
-  const jobId = await postDownloadYoutube({
-    url: cap.url,
-    course,
-    lecture: name,
-    kind,
-    ref,
-    fromCache,
-  });
-  return [jobId];
+  return [toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache })];
 }
 
 /**
- * DOWNLOAD PATH (HTTP), no browser: a single Google Drive file. Its own entry point because it
+ * RESOLVE PATH (HTTP), no browser: a single Google Drive file. Its own entry point because it
  * is the one strategy whose media isn't known until it runs — the probe resolves the real
  * filename first and routes on its extension: a video goes to yt-dlp, a PDF becomes one of the
  * lecture's materials, anything else can never succeed and says so (422). Single target; the
@@ -191,10 +175,10 @@ export async function downloadYtDlp({ recording, course, name, kind, ref, forceC
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
- * @returns {Promise<{ jobIds: string[], media: 'video'|'material' }>} server/ job ids (one),
- *   followed on server/'s /events, plus what the file turned out to be.
+ * @returns {Promise<{ targets: object[], media: 'video'|'material' }>} one download target,
+ *   plus what the file turned out to be.
  */
-export async function downloadDriveFile({
+export async function resolveDriveFile({
   recording,
   course,
   name,
@@ -218,14 +202,13 @@ export async function downloadDriveFile({
     cap = { url: media === 'video' ? recording.pageUrl : downloadUrl };
     cacheCap(course, name, kind, media, cap, ref);
   }
-  const post = media === 'video' ? postDownloadYoutube : postDownloadFile;
-  const jobId = await post({ url: cap.url, course, lecture: name, kind, ref, fromCache });
-  return { jobIds: [jobId], media };
+  const tool = toolFor(recording.strategy, media);
+  return { targets: [toTarget({ name, cap, tool, fromCache })], media };
 }
 
 /**
- * DOWNLOAD PATH (HTTP), browser capture: resolve one echoed-back recording on the live shared
- * page and hand its target(s) to server/. videostream/zoom sniff the .mp4 fresh; the no-browser
+ * RESOLVE PATH (HTTP), browser capture: resolve one echoed-back recording on the live shared
+ * page into its download target(s). videostream/zoom sniff the .mp4 fresh; the no-browser
  * strategies have their own entry points above. Each resolved cap is kept in the session replay
  * cache (see replayCache.js) so a retry replays it without re-capturing. See docs/BROWSING.md.
  * @param {import('playwright').Page} page  live shared page
@@ -233,34 +216,32 @@ export async function downloadDriveFile({
  *           course: string, name: string, kind: string, passcode?: string|null,
  *           ref?: string|null, only?: boolean, forceCapture?: boolean }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
- *   ref is the discovery-row id that spawned this download — stamped onto every server/
- *   job so a zoom before/after-break split pair groups under the one parent row.
+ *   ref is the discovery-row id that spawned this download — cached with every cap so a zoom
+ *   before/after-break split pair groups under the one parent row.
  *   only = operate on just the single (course,name,kind) target (name may be a zoom split
  *   name); forceCapture = bypass the cache and capture fresh.
- * @returns {Promise<string[]>} server/ job ids — one per started download (zoom's
- *   before/after-break pair yields two), followed on server/'s /events and resyncable
- *   via server/'s /jobs.
+ * @returns {Promise<object[]>} one download target per .mp4 (zoom's before/after-break pair
+ *   yields two), each `{ name, tool:'curl', url, headers, fromCache }`.
  */
-export async function downloadRecording(
+export async function resolveRecording(
   page,
   { recording, course, name, kind, passcode, ref, only = false, forceCapture = false },
 ) {
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
 
-  const postCap = (cap, lecture, fromCache) =>
-    postDownload({ url: cap.url, headers: cap.headers, course, lecture, kind, ref, fromCache });
+  const tool = toolFor(recording.strategy);
 
   // `only`: operate on just the one requested (course,name,kind) target (name may be a zoom
   // split name). A cache hit is keyed directly by that name — no splitting needed.
   if (only) {
     if (!forceCapture) {
       const hit = getCap(course, name, kind, 'video');
-      if (hit) return [await postCap(hit.cap, name, true)];
+      if (hit) return [toTarget({ name, cap: hit.cap, tool, fromCache: true })];
     }
     // Miss/force: one zoom share sniffs BOTH clips, so re-capture the whole recording (using
     // the inverted base name so the split matches) and keep only the cap for the request.
-    const targets = await captureTargets(page, recording, extractor, {
+    const captured = await captureTargets(page, recording, extractor, {
       name: baseName(name),
       course,
       kind,
@@ -268,9 +249,9 @@ export async function downloadRecording(
       ref,
     });
     const chosen =
-      targets.find((t) => t.name === name) ?? (targets.length === 1 ? targets[0] : null);
+      captured.find((t) => t.name === name) ?? (captured.length === 1 ? captured[0] : null);
     if (!chosen) throw new Error(`captured clips don't include ${name}`);
-    return [await postCap(chosen.cap, chosen.name, false)];
+    return [toTarget({ name: chosen.name, cap: chosen.cap, tool, fromCache: false })];
   }
 
   // Whole recording. Replay from the cache when every resulting target is cached, else capture.
@@ -279,7 +260,5 @@ export async function downloadRecording(
     cached ??
     (await captureTargets(page, recording, extractor, { name, course, kind, passcode, ref }));
   const fromCache = Boolean(cached);
-  const jobIds = [];
-  for (const t of targets) jobIds.push(await postCap(t.cap, t.name, fromCache));
-  return jobIds;
+  return targets.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache }));
 }

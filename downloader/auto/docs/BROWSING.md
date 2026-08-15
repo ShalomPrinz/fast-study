@@ -39,23 +39,22 @@ Any other target (GitHub, unparseable) is not claimed at all — skipped like a 
 
 ## Video vs material
 
-Every strategy but `moodle-file` and `google-drive` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as one of its materials — the same slot the Chrome extension uploads to manually; a `google-drive` link could be either, and only the download-time probe knows which. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the endpoint `server/` uses (`/download-file` vs `/download`+`/download-youtube`), and the database names the file. A second PDF into one lecture appends (`material.2.pdf`) rather than overwriting.
+Every strategy but `moodle-file` and `google-drive` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as one of its materials — the same slot the Chrome extension uploads to manually; a `google-drive` link could be either, and only the download-time probe knows which. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the `tool` each resolved target names (`fetch` vs `curl`/`ytdlp`), and the database names the file. A second PDF into one lecture appends (`material.2.pdf`) rather than overwriting.
 
-## Three download entry points
+## Four resolve entry points
 
-`core/core.js` exports one function per download shape, and `/download-item` picks between them
-in the strategy branching it already does: `downloadRecording(page, …)` (the browser-capture
-dispatcher — `videostream`, `zoom`), `downloadMoodleFile(…)` and `downloadYtDlp(…)`. The split
-is by *needs a browser*, not by strategy count: a browserless strategy has no page to carry its
-credential, so it must take one explicitly (`downloadMoodleFile`'s required `wstoken`).
-The browserless pair each resolve exactly one target, so `only` (azoom-split notion) doesn't apply to them; all three share the replay cache and `fromCache`.
+`core/core.js` exports one function per resolve shape, and `/resolve` picks between them in the
+strategy branching it already does: `resolveRecording(page, …)` (the browser-capture dispatcher —
+`videostream`, `zoom`), `resolveMoodleFile(…)`, `resolveYtDlp(…)` and `resolveDriveFile(…)`. The
+split is by *needs a browser*, not by strategy count: a browserless strategy has no page to carry
+its credential, so it must take one explicitly (`resolveMoodleFile`'s required `wstoken`). The
+browserless three each resolve exactly one target, so `only` (a zoom-split notion) doesn't apply to
+them; all four share the replay cache and stamp `fromCache` on what they return.
 
-All three posts (`src/http/serverClient.js`) return `server/`'s job id, and all three throw when a
-200 carries none: `server/` mints the id synchronously in its route (`createJob`, before the size
-probe) and always returns it, and every validation failure is a 4xx `postJson` already throws on —
-so a missing `jobId` is a `server/` contract violation, not a normal outcome to hand back as a
-silent "nothing started". The throw lands on `app.js`'s centralized backstop, which turns it into a
-500 with that message, the same rail as any other unexpected failure.
+Each returns download **targets**, never a download: `{ name, tool, url, headers?, fromCache }`
+(`core/targets.js`), where `tool` is the key of the `server/` downloader that can fetch this cap
+(`curl` replays captured headers, `ytdlp` resolves a YouTube/Drive video page, `fetch` takes a
+plain tokened URL). `server/` creates and owns the job per target; this service holds no job state.
 
 ## Mechanism-agnostic Item / ref contract
 
@@ -69,33 +68,33 @@ runs `yt-dlp --flat-playlist` straight on that URL. Non-YouTube targets are alre
 list time by `canHandle` (see Keyword gating), so the YouTube-host check in `listEntries` is now
 a fallback: an echoed ref can still reach expand/download, and a non-YouTube (or unparseable)
 host there is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500
-"try again"); the same mapping applies on `/download-item`.
+"try again"); the same mapping applies on `/resolve`.
 
 A `google-drive` item is **not** expandable — it is one concrete file. Nothing in the WS payload
 says _what_ that file is (a Drive link in a recordings section is as easily `L1.zip` as a
-lecture video), so `/download-item` skips the browser and probes the file's real name first
+lecture video), so `/resolve` skips the browser and probes the file's real name first
 (`probeDriveFile`), then routes on its extension: `.mp4`/`.mkv`/`.mov`/`.webm`/`.m4v`/`.avi` →
-`server/`'s `/download-youtube` (yt-dlp on the `pageUrl`), `.pdf` → `/download-file` as one of the
-lecture's materials, anything else → `422 {status:'unsupported'}` naming the actual extension.
+a `ytdlp` target on the `pageUrl`, `.pdf` → a `fetch` target landing as one of the lecture's
+materials, anything else → `422 {status:'unsupported'}` naming the actual extension.
 The probe reads `Content-Disposition` off `uc?export=download&id=<ID>` (one request; a large
 file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallbacks) — the filename
 is a fact about the file, unlike yt-dlp's stderr wording. A file that isn't shared "anyone with
 the link" (or was removed) yields no name at all and is the same 422, naming Drive sharing and
-the URL. `server/`'s download job is fire-and-forget, which is why all of this is decided here.
+the URL. `server/`'s download job is fire-and-forget once started, which is why all of this is decided here.
 Every verdict is memoized per Drive **file id** for the session (`src/core/driveProbeCache.js`) —
 the unshared one included, stored as `reason:'unshared'` so a repeat attempt 422s with the same
 accurate message instead of re-paying the probe; `forceCapture` re-probes it, the way back in once
-the owner shares the file. `/download-item` echoes the resolved `media` back. `/list` never probes — it costs an
+the owner shares the file. `/resolve` echoes the resolved `media` back. `/list` never probes — it costs an
 HTTP round-trip per row — but it reads that cache to stamp `resolvedMedia` on rows already probed,
 so the resolved type survives a re-list.
 
-A `moodle-file` item is likewise not expandable and skips the browser: `/download-item` resolves the
+A `moodle-file` item is likewise not expandable and skips the browser: `/resolve` resolves the
 university from the ref's `fileurl`, appends the WS token via `pluginfileUrl` (pluginfile authenticates
-by query-string token, and `fileurl` may already carry `?forcedownload=1`), and posts that URL to
-`server/`'s `/download-file`. Going through a tracked job rather than a blocking fetch buys the PDF the
+by query-string token, and `fileurl` may already carry `?forcedownload=1`), and returns that URL as a
+`fetch` target. Going through a tracked job rather than a blocking fetch buys the PDF the
 same progress/retry/`ref`-grouping as a video. A missing token is `401 {status:'reconnect'}`, same as
 `/list`. A *dead* one needs a one-byte preflight (`assertPluginfileReadable`) because pluginfile answers
 it with **HTTP 200 + Moodle's JSON exception body**, never a 403: unchecked, `server/`'s fire-and-forget
 job saves that blob as a material and reports success. The preflight turns it back into
 `invalidtoken` → `markExpired` + reconnect. The resolved `{url}` cap is cached like any other, so a retry
-replays it and `fromCache` lets `server/` re-capture silently when the token has since expired.
+replays it and `fromCache` lets `server/` re-resolve silently when the token has since expired.

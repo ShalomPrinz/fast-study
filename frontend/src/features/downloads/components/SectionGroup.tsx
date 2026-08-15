@@ -2,13 +2,13 @@ import { useRef } from 'react'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import type { Item } from '@/features/downloads/services/autoDownloader'
 import {
-  downloadItem,
   expandItem,
   isPasscodeError,
   isReconnectError,
   isUnsupportedError,
   saveZoomPasscode,
 } from '@/features/downloads/services/autoDownloader'
+import { downloadItem } from '@/features/downloads/services/downloadServer'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'

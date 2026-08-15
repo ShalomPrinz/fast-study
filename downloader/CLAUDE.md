@@ -40,16 +40,16 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 ## Auto-downloader HTTP service (`auto/`, port 3053)
 
-`auto/` is a **separate package** (its own `node_modules`) so Playwright and its browser binaries never leak into `server/`'s much lighter dependency set. Given a course URL it authenticates via a long-lived Moodle Web-Services token (one-time headed grab), discovers the recordings (and the course's PDF handouts), and downloads them by reusing `server/`'s `/download`, `/download-youtube` and `/download-file`. It is documented in its own **`auto/CLAUDE.md`** (what it is, how to run it, the mechanism-agnostic HTTP surface + endpoint table) with the deep logic in **`auto/docs/`** (`SESSIONS.md`, `ZOOM.md`, `BROWSING.md`, `AUTH.md`, `MOODLE.md`). Don't restate that here.
+`auto/` is a **separate package** (its own `node_modules`) so Playwright and its browser binaries never leak into `server/`'s much lighter dependency set. Given a course URL it authenticates via a long-lived Moodle Web-Services token (one-time headed grab), discovers the recordings (and the course's PDF handouts), and resolves any of them into the download targets `server/` then fetches (`POST /resolve`). It is documented in its own **`auto/CLAUDE.md`** (what it is, how to run it, the mechanism-agnostic HTTP surface + endpoint table) with the deep logic in **`auto/docs/`** (`SESSIONS.md`, `ZOOM.md`, `BROWSING.md`, `AUTH.md`, `MOODLE.md`). Don't restate that here.
 
 ## Service edges
 
-`server/` → **database** (8001) for every file it saves, → **backend** (8000) for
-download duration samples (`POST /timing`, per-tool ETA buckets — `server/docs/JOBS.md`),
-and → **auto/** (3053) to silently re-capture a stale cached token on an auth failure.
-`auto/` → `server/` for downloads. From outside, the extension popup calls `server/`, and the
-frontend calls both `server/` (job events + resync) and `auto/` (listing, auto-download,
-auth, passcodes).
+The graph is acyclic: `server/` → **auto/** (3053) to resolve a discovery row into download
+targets (and to re-resolve one whose cached token went stale), → **database** (8001) for every
+file it saves, and → **backend** (8000) for download duration samples (`POST /timing`, per-tool
+ETA buckets — `server/docs/JOBS.md`). `auto/` calls nothing of ours. From outside, the extension
+popup calls `server/`, and the frontend calls `server/` for every download (start, job events,
+resync) and `auto/` for listing, auth and passcodes.
 
 ## Why these specific hacks (extension)
 

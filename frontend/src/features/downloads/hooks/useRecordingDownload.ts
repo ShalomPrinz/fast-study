@@ -2,12 +2,12 @@ import { useRef, useState } from 'react'
 import type { Kind } from '@/types'
 import type { Item, PasscodeError } from '@/features/downloads/services/autoDownloader'
 import {
-  downloadItem,
   isPasscodeError,
   isReconnectError,
   isUnsupportedError,
   saveZoomPasscode,
 } from '@/features/downloads/services/autoDownloader'
+import { downloadItem } from '@/features/downloads/services/downloadServer'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { PasscodePromptProps } from '@/features/downloads/components/PasscodePrompt'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
