@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { downloaders } from '../downloaders/index.js';
 import { isSafeName, validateKind } from '../validate.js';
-import { resolve } from '../services/autodl.js';
+import { resolve, resolved } from '../services/autodl.js';
 import { startJob } from './download.js';
 
 const router = Router();
@@ -23,7 +23,7 @@ function toRun(target) {
 // which is what stops a second retry — see docs/JOBS.md.
 function makeReresolve({ ref, course, name, kind }) {
   return async () => {
-    const { ok, status, body } = await resolve({
+    const { status, body } = await resolve({
       ref,
       course,
       name,
@@ -31,11 +31,13 @@ function makeReresolve({ ref, course, name, kind }) {
       only: true,
       forceCapture: true,
     });
-    if (!ok) return { ok: false, status, body };
+    if (!resolved(status)) return { status, body };
     const fresh = body?.targets?.find((t) => t.name === name) ?? body?.targets?.[0];
     const run = fresh && toRun(fresh);
-    if (!run) return { ok: false, status, body: { error: 'auto returned no usable target' } };
-    return { ok: true, ...run };
+    // A 2xx we can't run is still a failed re-resolve, so the 502 is SYNTHESIZED here — the
+    // same verdict `/download-item` gives this condition. `status` is not always auto's own.
+    if (!run) return { status: 502, body: { error: 'auto returned no usable target' } };
+    return { status, ...run };
   };
 }
 
@@ -52,7 +54,7 @@ router.post('/download-item', async (req, res) => {
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  const { ok, status, body } = await resolve({
+  const { status, body } = await resolve({
     ref,
     course,
     name,
@@ -60,7 +62,7 @@ router.post('/download-item', async (req, res) => {
     only: only === true,
     forceCapture: forceCapture === true,
   });
-  if (!ok) {
+  if (!resolved(status)) {
     return res.status(status || 502).json(body ?? { error: 'auto-downloader unreachable' });
   }
 

@@ -11,6 +11,7 @@ import {
   formatBytes,
 } from '../progress.js';
 import { recordDownloadTiming } from '../services/timing.js';
+import { resolved } from '../services/autodl.js';
 import { setExpectedBytes, startJob, freezeJobBytes, finishJob } from '../jobs.js';
 
 function makeTempDir() {
@@ -102,7 +103,7 @@ export async function runDownloadJob(
         if (isAuthError(detail) && fromCache && reresolve) {
           emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
           const fresh = await reresolve();
-          if (!fresh.ok) {
+          if (!resolved(fresh.status)) {
             finishJob(jobId, 'error', reresolveMessage(fresh.status, fresh.body));
             return;
           }
