@@ -1,9 +1,9 @@
-// The pure halves of the section-run engine: the driver's status → outcome mapping, and the
-// registry's one-run-per-section rule. `createRun` registers without driving, so nothing here
-// touches auto/ or the network.
+// The pure halves of the section-run engine: the driver's status → outcome mapping, the registry's
+// one-run-per-section rule, and the queue loop itself. `createRun` registers without driving and
+// `drive` takes its trigger, so nothing here touches auto/ or the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRun, listRuns, outcomeFor } from '../src/runs.js';
+import { createRun, drive, listRuns, outcomeFor, startRun } from '../src/runs.js';
 
 test('a 2xx queues the target', () => {
   assert.deepEqual(outcomeFor(200), { disposition: 'queued' });
@@ -61,6 +61,71 @@ test('a second run for the same section replaces the first outright', () => {
   assert.equal(forSection.length, 1);
   assert.equal(forSection[0].id, second.id);
   assert.notEqual(second.id, first.id);
+});
+
+// Two tabs on the same course (or one that missed a ping) must not put two drivers on one section.
+// All-decided targets keep `startRun`'s driver off the network.
+test('a submit for a section already active joins the run in flight', () => {
+  const decided = [target('a', 'skipped')];
+  const first = createRun({ sectionId: 'c:video:join', course: 'c', targets: decided });
+  assert.equal(startRun({ sectionId: 'c:video:join', course: 'c', targets: decided }), first.id);
+
+  first.status = 'paused';
+  assert.equal(startRun({ sectionId: 'c:video:join', course: 'c', targets: decided }), first.id);
+  assert.equal(listRuns().filter((r) => r.sectionId === 'c:video:join').length, 1);
+});
+
+test('a submit for a section whose run ended starts a fresh one', () => {
+  const decided = [target('a', 'skipped')];
+  for (const status of ['done', 'reconnect', 'cancelled']) {
+    const previous = createRun({ sectionId: 'c:video:over', course: 'c', targets: decided });
+    previous.status = status;
+    const id = startRun({ sectionId: 'c:video:over', course: 'c', targets: decided });
+    assert.notEqual(id, previous.id);
+  }
+});
+
+const answers =
+  (byName) =>
+  async ({ name }) => {
+    const answer = byName[name];
+    if (answer instanceof Error) throw answer;
+    return answer;
+  };
+
+// A non-conforming 2xx body from auto (say `targets` that isn't an array) throws inside the
+// trigger. That must cost the row, not wedge the section at `running` forever.
+test('a throw while triggering fails just that target', async () => {
+  const run = createRun({
+    sectionId: 'c:video:throw',
+    course: 'c',
+    targets: [target('a'), target('b'), target('c')],
+  });
+  await drive(
+    run,
+    0,
+    answers({
+      a: { status: 200, body: { media: 'video' } },
+      b: new TypeError('body.targets.map is not a function'),
+      c: { status: 200, body: {} },
+    }),
+  );
+  assert.deepEqual(
+    run.targets.map((t) => t.disposition),
+    ['queued', 'queue-failed', 'queued'],
+  );
+  assert.deepEqual({ status: run.status, at: run.at }, { status: 'done', at: 3 });
+});
+
+// The pre-decided rows are advanced past in one step, so `at` still lands on the total.
+test('a fully pre-decided section completes without triggering anything', async () => {
+  const run = createRun({
+    sectionId: 'c:video:alldone',
+    course: 'c',
+    targets: ['a', 'b', 'c'].map((n) => target(n, 'skipped')),
+  });
+  await drive(run, 0, () => assert.fail('a decided target must never be triggered'));
+  assert.deepEqual({ status: run.status, at: run.at }, { status: 'done', at: 3 });
 });
 
 test('a different section keeps its own run', () => {

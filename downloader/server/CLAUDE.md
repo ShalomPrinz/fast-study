@@ -39,7 +39,7 @@ the popup.
 | `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`                  |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId`                             |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds}` (auto's 4xx forwarded verbatim) |
-| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId}`; drives that section's bulk queue in the background (`docs/RUNS.md`)         |
+| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId}`; drives that section's bulk queue in the background, or joins its active run (`docs/RUNS.md`) |
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                       |
 | `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                              |
 | `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition (`docs/JOBS.md`, `docs/RUNS.md`)                       |

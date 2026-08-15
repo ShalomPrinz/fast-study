@@ -44,7 +44,11 @@ export function createRun({ sectionId, course, targets }) {
   return run;
 }
 
+// A submit for a section already running or parked joins that run instead of starting a second
+// driver over the same rows — two drivers would re-trigger every remaining row concurrently.
 export function startRun(args) {
+  const active = runs.get(args.sectionId);
+  if (active && (active.status === 'running' || active.status === 'paused')) return active.id;
   const run = createRun(args);
   void drive(run, 0);
   return run.id;
@@ -89,48 +93,64 @@ function isCurrent(run) {
 
 // Trigger the queue sequentially from `from`. Sequential by design: auto/ serializes browser work
 // per call anyway, and the downloads themselves run on, so several land in parallel regardless.
-async function drive(run, from) {
+// `trigger` is the seam the tests drive the queue through; production always uses `downloadItem`.
+export async function drive(run, from, trigger = downloadItem) {
   run.status = 'running';
   run.paused = null;
   broadcastRuns();
-  for (let i = from; i < run.targets.length; i++) {
-    if (!isCurrent(run)) return;
-    const target = run.targets[i];
-    run.at = i + 1;
-    if (target.disposition !== 'pending') {
+  try {
+    for (let i = from; i < run.targets.length; i++) {
+      if (!isCurrent(run)) return;
+      // A stretch of caller-decided rows needs no work at all: skip to its end and broadcast once,
+      // since every frame costs each connected client a `GET /runs`.
+      while (i + 1 < run.targets.length && run.targets[i].disposition !== 'pending') i++;
+      const target = run.targets[i];
+      run.at = i + 1;
       broadcastRuns();
-      continue;
-    }
-    broadcastRuns();
-    const { status, body } = await downloadItem({
-      ref: target.ref,
-      course: run.course,
-      name: target.name,
-      kind: target.kind,
-    });
-    if (!isCurrent(run)) return;
+      if (target.disposition !== 'pending') continue;
 
-    const outcome = outcomeFor(status);
-    if (outcome.status === 'reconnect') {
-      run.status = 'reconnect';
+      // Contained per target: a malformed answer from auto/ fails this row, never the whole run.
+      let outcome = { disposition: 'queue-failed' };
+      let body = null;
+      try {
+        const res = await trigger({
+          ref: target.ref,
+          course: run.course,
+          name: target.name,
+          kind: target.kind,
+        });
+        body = res.body;
+        outcome = outcomeFor(res.status);
+      } catch {
+        /* keep the queue-failed default */
+      }
+      if (!isCurrent(run)) return;
+
+      if (outcome.status === 'reconnect') {
+        run.status = 'reconnect';
+        broadcastRuns();
+        return;
+      }
+      if (outcome.status === 'paused') {
+        // Held indefinitely: the run owns no browser lock while parked, and a timeout would discard
+        // work the user is one passcode away from resuming.
+        run.status = 'paused';
+        run.paused = { index: i, reason: body?.reason ?? 'missing', name: target.name };
+        broadcastRuns();
+        return;
+      }
+      target.disposition = outcome.disposition;
+      // `media` is the POST's answer for a queued row — it says where on disk the file lands.
+      if (outcome.disposition === 'queued') target.media = body?.media ?? target.media;
+      if (outcome.disposition === 'unsupported') target.media = 'unsupported';
       broadcastRuns();
-      return;
     }
-    if (outcome.status === 'paused') {
-      // Held indefinitely: the run owns no browser lock while parked, and a timeout would discard
-      // work the user is one passcode away from resuming.
-      run.status = 'paused';
-      run.paused = { index: i, reason: body?.reason ?? 'missing', name: target.name };
-      broadcastRuns();
-      return;
-    }
-    target.disposition = outcome.disposition;
-    // `media` is the POST's answer for a queued row — it says where on disk the file lands.
-    if (outcome.disposition === 'queued') target.media = body?.media ?? target.media;
-    if (outcome.disposition === 'unsupported') target.media = 'unsupported';
-    broadcastRuns();
+    run.status = 'done';
+  } catch {
+    // Nothing outside a target's own work is expected to throw; abandoning the run is still better
+    // than leaving it `running` forever, which would disable the section's button until a restart.
+    run.status = 'cancelled';
   }
-  run.status = 'done';
   run.paused = null;
   broadcastRuns();
 }

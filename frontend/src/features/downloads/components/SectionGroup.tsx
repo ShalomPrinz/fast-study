@@ -145,8 +145,13 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   }
 
   // Cancelling abandons the rest of the queue, not just the gated item.
-  function cancelPasscode() {
-    if (run) void cancelRun(run.id)
+  async function cancelPasscode() {
+    if (!run) return
+    try {
+      await cancelRun(run.id)
+    } catch (err) {
+      toastDownloadError(section.title, err)
+    }
   }
 
   // Queueing ends long before the downloads do, so the header keeps ticking on the targets whose
@@ -209,7 +214,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
           reason={paused.reason}
           busy={saving}
           onSubmit={submitPasscode}
-          onCancel={cancelPasscode}
+          onCancel={() => void cancelPasscode()}
         />
       )}
     </div>

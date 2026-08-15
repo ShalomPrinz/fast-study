@@ -26,9 +26,22 @@ is what makes a run re-findable after a reload with no id to remember, and it re
 time-based eviction — a section holds one record, forever or until the process dies. Runs are
 in-memory only: a run that dies with the process is not recovered.
 
+**A submit for a section already `running` or `paused` joins it**: `POST /download-section` answers
+the in-flight `{runId}` and starts no second driver. An active section is already reflected in the
+UI, so a duplicate submit (two tabs on the course, or one that missed a ping) should join rather
+than restart or error at the user — and two drivers over one section would re-trigger every
+remaining row concurrently, since the caller's `skipped` verdicts were computed against a course
+tree that has not refreshed yet. Replacement is what happens for a run in a terminal status
+(`done` | `reconnect` | `cancelled`).
+
 The driver holds its own reference to the run, so it re-checks the registry around every await: a
 run that was cancelled or replaced by a newer one for the same section stops where it is, and the
 next transition it would have written never lands.
+
+**A throw is contained to its target.** Anything that fails while triggering a row — auto
+unreachable, a 2xx whose body doesn't conform — records that row `queue-failed` and the queue
+continues; there is no retry. A throw from outside a target's work abandons the run as `cancelled`.
+A run is never left silently at `running`, which would disable the section's button until a restart.
 
 ## Dispositions
 
@@ -99,11 +112,13 @@ queue from the start.
 
 | Method + path            | Body → answer                                                      |
 | ------------------------ | ------------------------------------------------------------------ |
-| `POST /download-section` | `{sectionId, course, targets}` → `{runId}`, queue driven in the background |
+| `POST /download-section` | `{sectionId, course, targets}` → `{runId}` — the section's active run, or a new one driven in the background |
 | `POST /runs/:id/resume`  | `{skip?}` → `{}` (404 unknown, 409 not parked)                     |
 | `POST /runs/:id/cancel`  | → `{}` (404 unknown)                                                |
 | `GET  /runs`             | `{runs}` — every current run, one per section                       |
 
 `GET /runs` is the resync, exactly as `/jobs` is for jobs: every transition fires one contentless
 `run:change` frame on the same `/events` stream, and the client refetches. There is no second
-stream and no polling.
+stream and no polling. A frame costs each connected client a `GET /runs`, so the driver advances
+`at` past a whole stretch of caller-decided rows on one frame — an all-skipped section is a couple
+of frames, not one per row.

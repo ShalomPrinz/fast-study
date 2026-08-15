@@ -251,7 +251,10 @@ losing the progress and a prompt the user was one keystroke from answering. This
 
 `SectionRunsProvider` (`contexts/SectionRunsContext.tsx`, mounted in `Layout` inside the session provider)
 is that reflection: one `EventSource` for the contentless `run:change` ping, a `GET /runs` refetch per ping,
-and a module-level store keyed by `sectionId` that `useSectionRun(id)` subscribes to per section. The key is
+and a module-level store keyed by `sectionId` that `useSectionRun(id)` subscribes to per section. Refetches
+carry a monotonic sequence and only the newest one publishes: the driver pings several times per target, so
+overlapping `GET /runs` can answer out of order, and an older reply landing after the terminal `done`
+snapshot would strand the section on "Downloading…" — `done` is the last frame a run emits. The key is
 the section's own identity `${course}:${media}:${title}` (the same string that keys the `SectionGroup`
 element) and the server holds one run per key. Both qualifiers matter: one Moodle heading usually holds both
 a video and its slides, and a run outlives the course it started in.

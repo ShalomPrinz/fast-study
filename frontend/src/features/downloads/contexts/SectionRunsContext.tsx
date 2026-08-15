@@ -64,10 +64,20 @@ export function SectionRunsProvider({ children }: { children: ReactNode }) {
       primed.current = true
       publish(snapshot)
     }
-    // A failed fetch is a no-op; the stream reconnects and pings again.
+    // The driver pings several times per target, so multiple `GET /runs` overlap and can answer out of
+    // order. Publishing only the newest sequence keeps an older reply from overwriting the terminal
+    // `done` snapshot — `done` is the last frame a run emits, so a lost one strands the section
+    // "Downloading…" forever. A failed fetch is a no-op; the stream reconnects and pings again.
+    let issued = 0
+    let published = 0
     const refresh = () => {
+      const seq = ++issued
       void fetchRuns()
-        .then(handleSnapshot)
+        .then((snapshot) => {
+          if (seq <= published) return
+          published = seq
+          handleSnapshot(snapshot)
+        })
         .catch(() => {})
     }
     const close = subscribeRuns(refresh)

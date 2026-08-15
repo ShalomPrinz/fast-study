@@ -12,8 +12,8 @@ function targetError(target) {
   return validateKind(target.kind)?.error ?? null;
 }
 
-// Start (or restart) this section's bulk run. Answers the run id immediately — the queue is
-// driven in the background and followed over `/events` + `GET /runs`.
+// Start (or restart) this section's bulk run, or join the one already in flight. Answers the run id
+// immediately — the queue is driven in the background and followed over `/events` + `GET /runs`.
 router.post('/download-section', (req, res) => {
   const { sectionId, course, targets } = req.body ?? {};
   if (typeof sectionId !== 'string' || !sectionId) {
