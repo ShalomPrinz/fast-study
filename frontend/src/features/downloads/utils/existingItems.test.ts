@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture, MaterialInfo } from '@/types'
 import type { Media, ResolvedMedia } from '../services/autoDownloader'
-import { existingNames, hasResource, materialsOf } from './existingItems'
+import { existingNames, hasResource, materialsOf, targetLanded } from './existingItems'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }
@@ -113,5 +113,28 @@ describe('hasResource', () => {
     expect(
       hasResource(row('unknown', 'unsupported'), 'Lecture 1', 'lecture', courses, 'Algebra'),
     ).toBe(false)
+  })
+})
+
+describe('targetLanded', () => {
+  const landed = (name: string, media: Media | 'unsupported', courses: Course[]) =>
+    targetLanded({ name, kind: 'lecture', media }, courses, 'Algebra')
+
+  it('is true when the queued name itself holds the media', () => {
+    expect(landed('Lecture 1', 'video', tree([node('Lecture 1', { video: true })]))).toBe(true)
+  })
+
+  it('is true when a split sibling holds the media instead of the queued name', () => {
+    const courses = tree([node('Lecture 1.1', { video: true }), node('Lecture 1.2')])
+    expect(landed('Lecture 1', 'video', courses)).toBe(true)
+  })
+
+  it('is false when the siblings exist but hold nothing — an earlier run left them bare', () => {
+    const courses = tree([node('Lecture 1.1'), node('Lecture 1.2')])
+    expect(landed('Lecture 1', 'video', courses)).toBe(false)
+  })
+
+  it('is false for an unprobed unknown target, even with the node on disk', () => {
+    expect(landed('Lecture 1', 'unknown', tree([node('Lecture 1', { video: true })]))).toBe(false)
   })
 })

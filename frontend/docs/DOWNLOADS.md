@@ -257,22 +257,41 @@ answer for a queued row and `resolvedMedia ?? media` otherwise, because it is wh
 lands on disk.
 
 **Nothing about the outcome is stored.** `utils/runStatus.ts` derives it on every render, per target and in
-this order: a recorded non-`queued` disposition wins; else the row landed in the course tree →
-`downloaded`; else its ref holds an `error` job → `failed`; else `in-flight`. `summarize` counts those into
-`N downloaded, N failed, N unsupported, N already there` (each part only when non-zero). Both are pure and
-unit-tested; `SectionGroup` is their only caller and needs no help from the provider, because both sources
-are live contexts that a remount simply re-reads.
+this order: a recorded non-`queued` disposition wins; else one of the target's jobs is `running` →
+`in-flight`; else the row landed in the course tree → `downloaded`; else one of its jobs is an `error` →
+`failed`; else `in-flight`. `summarize` counts those into `N downloaded, N failed, N unsupported, N already
+there` (each part only when non-zero). Both are pure and unit-tested; `SectionGroup` is their only caller and
+needs no help from the provider, because both sources are live contexts that a remount simply re-reads.
+
+A running job outranks the tree because a zoom share downloads as two clips: once `name.1` lands the tree
+would already say `downloaded` while `name.2` is still going, and the section would free its "Download all"
+button mid-run. "The target's jobs" is `ref` **and** name-scoped (`name`, `name.1`, `name.2`): a job is keyed
+by lecture name while the target is keyed by ref, so a row renamed between runs leaves the old name's jobs
+under the same ref, and they are not this target's outcome.
 
 That works because each half of the derivation is durable where the jobs are not. The tree — read through
-`targetLanded`, which is `hasResource` plus `splitSiblings`, so a zoom share that lands as `name.1`/`.2`
-still counts — owns "downloaded"; the download server evicts a `done` job 60s later precisely because it is
-only bridging until the tree SSE arrives. An `error` job is never time-evicted and `createJob` supersedes any
-earlier terminal job for the same target, so it is positive evidence that the *latest* attempt failed — no
+`targetLanded`, which asks `hasResource` about `name`, `name.1` and `name.2` alike, so a zoom share that
+lands as split clips still counts — owns "downloaded"; the download server evicts a `done` job 60s later
+precisely because it is only bridging until the tree SSE arrives. Every candidate name goes through the one
+`hasResource` rule so that a bare `name.1` folder left by an earlier run cannot read as landed on a row the
+queue's own skip would still queue. An `error` job is never time-evicted and `createJob` supersedes any
+earlier terminal job for the same target, so it is positive evidence that the _latest_ attempt failed — no
 baseline of pre-existing jobs to subtract. And absence of evidence reads as "still going", which is exactly
 right in the window after the POST where the browser's `/jobs` snapshot has not caught up.
 
 The line is therefore live: retrying a failed row from its own button improves it, and deleting a lecture
 folder with the page open changes it too.
+
+Three limits follow from deriving with no memory:
+
+- Deleting a downloaded lecture with the page open flips its target back to `in-flight` permanently — the
+  tree no longer holds it and its `done` job was evicted long ago. The section header stays stuck on that
+  target and "Download all" stays disabled until the page is reloaded.
+- For one SSE round-trip after a retry POST, the just-superseded `error` job is still in the browser's
+  snapshot, so the target flickers through `failed` before the fresh `running` job arrives.
+- A half-failed zoom pair reads as `downloaded`: with no job running, the `.1` clip on disk satisfies
+  `targetLanded` before the `error` job for `.2` is reached. Per-half accounting needs the POST to return
+  job ids, which it does not.
 
 A run resets `targets` in exactly one place, "Download all"'s own handler. Re-entering the queue loop clears
 nothing, because a passcode resume re-enters it mid-run and the targets already recorded belong to that same

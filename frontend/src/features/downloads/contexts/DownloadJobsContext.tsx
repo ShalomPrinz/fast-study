@@ -115,8 +115,8 @@ export function useRowJobs(ref: string): readonly JobProgress[] {
   )
 }
 
-// The whole map, for the bulk-queue summary — it folds arbitrary refs it started, so re-rendering
-// it on every snapshot is the correct scope, not a leak.
+// The whole map, for the bulk-queue summary — it re-derives every target's status from the current
+// snapshot, so re-rendering it on every snapshot is the correct scope, not a leak.
 export function useJobsByRef(): JobsByRef {
   useProviderGuard()
   return useSyncExternalStore(subscribe, () => jobsByRef)

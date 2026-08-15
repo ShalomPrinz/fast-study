@@ -60,14 +60,11 @@ export function targetLanded(
   course: string,
 ): boolean {
   const { name, kind } = target
-  // The target's recorded media is already the probe's answer, so it goes in as `resolvedMedia` —
-  // which leaves an 'unknown' target (no reliable on-disk target) falling through to false.
-  const item =
-    target.media === 'unknown'
-      ? { media: 'unknown' as const }
-      : { media: 'unknown' as const, resolvedMedia: target.media }
-  return (
-    hasResource(item, name, kind, courses, course) ||
-    splitSiblings(name, kind, courses, course).length > 0
-  )
+  // An unprobed 'unknown' target has no reliable on-disk target, so it never claims to have landed.
+  if (target.media === 'unknown') return false
+  // The target's recorded media is already the probe's answer, so it goes in as `resolvedMedia`.
+  const item = { media: 'unknown' as const, resolvedMedia: target.media }
+  // Every candidate goes through `hasResource`'s one rule — a sibling must hold the media itself, or a
+  // bare node left by an earlier run reads as landed on a row the queue's own skip would not skip.
+  return [name, `${name}.1`, `${name}.2`].some((n) => hasResource(item, n, kind, courses, course))
 }

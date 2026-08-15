@@ -82,6 +82,25 @@ describe('targetStatus', () => {
     expect(status(target(), tree([]), done)).toBe('in-flight')
   })
 
+  it('stays in flight while a zoom share still runs clip 2, though clip 1 landed', () => {
+    const courses = tree([node('Lecture 1.1', true)])
+    const jobs = groupJobsByRef([
+      job({ id: 'a', lecture: 'Lecture 1.1', status: 'done' }),
+      job({ id: 'b', lecture: 'Lecture 1.2' }),
+    ])
+    expect(status(target(), courses, jobs)).toBe('in-flight')
+  })
+
+  it('ignores split siblings left by an earlier run that hold no video', () => {
+    const courses = tree([node('Lecture 1.1'), node('Lecture 1.2')])
+    expect(status(target(), courses)).toBe('in-flight')
+  })
+
+  it("ignores an error job left under the ref by the row's previous name", () => {
+    const jobs = groupJobsByRef([job({ id: 'a', lecture: 'Old name', status: 'error' })])
+    expect(status(target(), tree([]), jobs)).toBe('in-flight')
+  })
+
   it('lets the tree win over an error job left by an earlier attempt', () => {
     const jobs = groupJobsByRef([job({ id: 'a', status: 'error' })])
     expect(status(target(), tree([node('Lecture 1', true)]), jobs)).toBe('downloaded')
@@ -105,7 +124,9 @@ describe('targetStatus', () => {
 describe('summarize', () => {
   it('counts a queued row as downloaded only once the tree holds it', () => {
     const targets = [target(), target({ ref: 'r2', name: 'Lecture 2' })]
-    const jobs = groupJobsByRef([job({ id: 'a', ref: 'r2', status: 'error' })])
+    const jobs = groupJobsByRef([
+      job({ id: 'a', ref: 'r2', lecture: 'Lecture 2', status: 'error' }),
+    ])
     expect(summarize(targets, tree([node('Lecture 1', true)]), 'Algebra', jobs)).toBe(
       '1 downloaded, 1 failed',
     )
