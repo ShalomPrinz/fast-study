@@ -1,6 +1,6 @@
 import { createClient, httpError } from '@/services/http'
 import type { DownloadOperation, Kind } from '@/types'
-import type { ProbedMedia } from './autoDownloader'
+import type { Media, PasscodeError, ProbedMedia } from './autoDownloader'
 import { postReconnectAware } from './autoDownloader'
 
 // Feature-local boundary for the downloader server, which queues every background download job and
@@ -65,12 +65,83 @@ export async function fetchJobs(): Promise<DownloadJob[]> {
 // end). `open` fires on connect and every auto-reconnect, so calling `onChange` there gives the
 // initial sync plus a resync for any events missed during a reconnect gap.
 export function subscribeJobs(onChange: () => void): () => void {
+  return subscribe('job:change', onChange)
+}
+
+// The same contract one level up: `run:change` fires on every section-run transition. Its own
+// subscription rather than a shared one, so the runs reflection and the jobs reflection stay
+// independent — the price is a second connection to the same `/events` stream.
+export function subscribeRuns(onChange: () => void): () => void {
+  return subscribe('run:change', onChange)
+}
+
+function subscribe(event: 'job:change' | 'run:change', onChange: () => void): () => void {
   const es = new EventSource(downloadServer.url('/events'))
   es.addEventListener('open', onChange)
-  es.addEventListener('job:change', onChange)
+  es.addEventListener(event, onChange)
   return () => {
     es.removeEventListener('open', onChange)
-    es.removeEventListener('job:change', onChange)
+    es.removeEventListener(event, onChange)
     es.close()
   }
+}
+
+// One row of a section's bulk run, and what the run itself decided about it. Mirrors the server's
+// target shape one-for-one (`downloader/server/docs/RUNS.md` — change one, change the other).
+// `pending` means the queue has not reached the row yet; `queued` is the only disposition whose
+// outcome is still open — it is read later off the tree and the jobs, keyed on `media`, the POST's
+// answer for a queued row and the row's own media otherwise.
+export interface RunTarget {
+  ref: string
+  name: string
+  kind: Kind
+  media: Media | 'unsupported'
+  disposition: 'pending' | 'queued' | 'skipped' | 'unsupported' | 'queue-failed'
+}
+
+// One section's bulk run as the server holds it: at most one per `sectionId`, which is the
+// frontend's own `${course}:${media}:${title}`. `at` is the 1-based position the queue is on.
+export interface SectionRun {
+  id: string
+  sectionId: string
+  course: string
+  targets: RunTarget[]
+  at: number
+  total: number
+  status: 'running' | 'paused' | 'done' | 'reconnect' | 'cancelled'
+  paused: { index: number; reason: PasscodeError['reason']; name: string } | null
+}
+
+// Hand the whole section queue to the server, which drives it and owns its progress from here on.
+// Replaces whatever run that section had. Targets arrive with `skipped`/`unsupported` already
+// stamped: that rule reads the live course tree, which only the page has.
+export async function startSectionRun(args: {
+  sectionId: string
+  course: string
+  targets: RunTarget[]
+}): Promise<string> {
+  const { runId } = await downloadServer.post<{ runId: string }>('/download-section', {
+    json: args,
+  })
+  return runId
+}
+
+// Continue a run parked at a passcode gate; `skip` gives up on the gated row and moves to the next.
+// The passcode itself is saved through auto first — the passcode store stays there.
+export async function resumeRun(id: string, skip = false): Promise<void> {
+  await downloadServer.post<void>(`/runs/${encodeURIComponent(id)}/resume`, { json: { skip } })
+}
+
+// Abandons the rest of the queue, not just the row it is parked on.
+export async function cancelRun(id: string): Promise<void> {
+  await downloadServer.post<void>(`/runs/${encodeURIComponent(id)}/cancel`)
+}
+
+// Every current run, one per section — the resync for `run:change`, exactly as `/jobs` is for jobs.
+// Bypasses the shared client for the same reason `fetchJobs` does.
+export async function fetchRuns(): Promise<SectionRun[]> {
+  const res = await fetch(downloadServer.url('/runs'))
+  if (!res.ok) throw httpError(res)
+  const data = (await res.json()) as { runs?: SectionRun[] }
+  return data.runs ?? []
 }

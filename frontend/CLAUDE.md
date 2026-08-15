@@ -23,7 +23,7 @@ npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for 
 | `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding |
 | `docs/LECTURES.md`        | pipeline constants, materials, runner/in-flight state, edit view, sidebar tree |
 | `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating           |
-| `docs/DOWNLOADS.md`       | auth, discovery, videos/materials toggle, row edits, bulk queue, passcode    |
+| `docs/DOWNLOADS.md`       | auth, discovery, videos/materials toggle, row edits, reflected bulk run, passcode |
 | `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.

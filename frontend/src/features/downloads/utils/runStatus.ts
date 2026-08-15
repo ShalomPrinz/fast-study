@@ -1,12 +1,15 @@
 import type { Course } from '@/types'
 import type { JobProgress, JobsByRef } from '../contexts/DownloadJobsContext'
 import { jobsForRef } from '../contexts/DownloadJobsContext'
-import type { RunTarget } from '../contexts/DownloadsSessionContext'
+import type { RunTarget } from '../services/downloadServer'
 import { targetLanded } from './existingItems'
 
 // `unsupported` is kept apart from `failed`: nothing went wrong with the run, the file just isn't one
 // auto can fetch — and unlike a failure it is a permanent verdict the next run skips outright.
-export type TargetStatus = 'downloaded' | 'failed' | 'unsupported' | 'skipped' | 'in-flight'
+// `pending` is a row the queue has not reached: no evidence about it means "not started", not
+// "in flight" — the run holds its whole queue from the start, so absence of a job proves nothing.
+export type TargetStatus =
+  'downloaded' | 'failed' | 'unsupported' | 'skipped' | 'in-flight' | 'pending'
 
 // This target's jobs. A job is keyed by lecture name and the target by ref, so a row renamed between
 // runs leaves the old name's jobs under the same ref — they are not this target's outcome.
@@ -28,6 +31,7 @@ export function targetStatus(
   course: string,
   jobsByRef: JobsByRef,
 ): TargetStatus {
+  if (target.disposition === 'pending') return 'pending'
   if (target.disposition === 'skipped') return 'skipped'
   if (target.disposition === 'unsupported') return 'unsupported'
   if (target.disposition === 'queue-failed') return 'failed'
@@ -38,8 +42,8 @@ export function targetStatus(
   return 'in-flight'
 }
 
-// The section header's line. In-flight targets are counted nowhere — the header shows them as their
-// own state before it falls through to this.
+// The section header's line. In-flight and not-yet-reached targets are counted nowhere — the header
+// shows the queue's own progress before it falls through to this.
 export function summarize(
   targets: readonly RunTarget[],
   courses: Course[],

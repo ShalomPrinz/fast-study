@@ -2,8 +2,8 @@
 
 `/downloads` — connect the BIU account, keep each course's source URL, then discover and download
 recordings into the same `DATA_ROOT` courses the pipeline uses. Talks to two services: the auto-downloader
-(:3053) for auth and discovery, and the downloader server (:3052) for queueing downloads and their job
-progress — see `SERVICES.md` for their clients and error signals.
+(:3053) for auth and discovery, and the downloader server (:3052) for queueing downloads, their job progress
+and each section's bulk run — see `SERVICES.md` for their clients and error signals.
 
 ## Auth
 
@@ -18,21 +18,22 @@ otherwise still read "connected".
 ## The page session
 
 Everything the page discovers or accumulates — `selected`, `items`, `loading`/`error`, the row edits, the
-playlist expansions, `reconnectKey` and every section's bulk run — lives in `DownloadsSessionProvider`
+playlist expansions and `reconnectKey` — lives in `DownloadsSessionProvider`
 (`contexts/DownloadsSessionContext.tsx`), mounted in `Layout` above the outlet. `/downloads` is a route, so
 its view unmounts on any navigation; holding the session above the router is what lets the user open a
-lecture and come back to the same course, the same typed names and a bulk run that kept going. `discover`
+lecture and come back to the same course and the same typed names. `discover`
 and `close` live there too, so a discovery still in flight when the user navigates away lands anyway.
 
 Two contexts, as with the row edits: state, and an **identity-stable** actions bag. Stability is
-load-bearing — the bulk queue closes over `setRun` and keeps calling it after its `SectionGroup` unmounted,
-and the memoized rows bail out on the setters' identity. The provider renders `{children}` and nothing
-else, so a keystroke in a row re-renders its consumers and leaves the sidebar and the outlet alone.
+load-bearing — the memoized rows bail out on the setters' identity. The provider renders `{children}` and
+nothing else, so a keystroke in a row re-renders its consumers and leaves the sidebar and the outlet alone.
 
-`DownloadJobsProvider` is mounted in `Layout` too, just outside the session provider. The store is module-level but the provider owns the connection and clears the store on
-unmount, so mounting it app-wide is what keeps the SSE subscription, the snapshot and the error-toast dedupe
-alive across navigation. One consequence: a job that fails while the user is on a lecture page toasts there
-and then, instead of being reseeded away as history by `primed` on a later remount.
+`DownloadJobsProvider` is mounted in `Layout` too, just outside the session provider, and
+`SectionRunsProvider` just inside it (it raises the session's own reconnect hint). Both stores are
+module-level but each provider owns its connection and clears its store on
+unmount, so mounting them app-wide is what keeps the SSE subscriptions, the snapshots and the error-toast
+dedupe alive across navigation. One consequence: a job that fails while the user is on a lecture page toasts
+there and then, instead of being reseeded away as history by `primed` on a later remount.
 
 ## Discovery
 
@@ -107,10 +108,11 @@ setters update with `{ ...prev, [ref]: { ...prev[ref], name } }` — leaving eve
 untouched is what lets the siblings bail out. (An SSE tree refresh still re-renders every row: leaf rows
 consume `CourseTreeContext` for the suggestion and the green highlight.)
 
-The bulk queue does not read the map during a run — `SectionGroup` mirrors the state context into an
-`editsRef`, so the queue picks up names typed while the run is in flight. It does write to
-`ResolvedMediaContext`, on the same two outcomes a single-row download does, so a bulk run resolves the
-`unknown` rows it touches.
+The bulk queue reads the map **once**, at submit: the whole section is resolved into targets and handed to
+the server, so a name typed after that is not picked up by the run already in flight. It still feeds
+`ResolvedMediaContext`, now off the run's own recorded verdicts rather than per-item responses, so a bulk
+run resolves the `unknown` rows it touches — reported once per ref, since every `run:change` ping re-reads
+the same targets.
 
 `hasResource(item, name, kind, courses, course)` is the single already-downloaded rule, so the green row
 and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks
@@ -240,28 +242,38 @@ already terminal before this session saw it is history, not a live outcome.
 
 ## Bulk download
 
-A run's state — `{ running, progress, targets, paused, saving }` — lives in the session provider's
-`runs` map, keyed by the section's own identity `${course}:${media}:${title}` (the same string that keys the
-`SectionGroup` element). Both qualifiers matter: one Moodle heading usually holds both a video and its
-slides, and a run outlives the course it started in — closing and discovering another course wipes `runs`,
-but the surviving loop's next write would otherwise re-create the entry under a title the new course shares.
-`SectionGroup` only **reads** its slice, so a remount lands mid-run and shows it rather than starting one,
-and the queue's writes keep landing while the user is on another page. Nothing about a run is component
-state, `saving` included: a remount mid-save must render the prompt busy, or a second submit would run the
-rest of the queue again in parallel with the first.
+**The page starts a run and then only reflects it.** "Download all" is one `POST /download-section`; the
+queue, its progress, each row's disposition and the passcode pause are the downloader server's
+(`downloader/server/docs/RUNS.md`), and the page reads them back. So a run survives a segment switch, a
+closed recordings panel, a reload and a closed tab — the client-side queue it replaced died with the tab,
+losing the progress and a prompt the user was one keystroke from answering. This mirrors
+`RunnerStatusContext` over the pipeline runner, and `DownloadJobsContext` structurally.
 
-The run state is the single owner of `targets`, one `{ ref, name, kind, media, disposition }` per row the
-queue got through, appended as it goes. `disposition` is what the run itself decided: `skipped`,
-`unsupported`, `queue-failed` — or `queued`, the only one whose outcome is still open. `media` is the POST's
-answer for a queued row and `resolvedMedia ?? media` otherwise, because it is what says where the download
-lands on disk.
+`SectionRunsProvider` (`contexts/SectionRunsContext.tsx`, mounted in `Layout` inside the session provider)
+is that reflection: one `EventSource` for the contentless `run:change` ping, a `GET /runs` refetch per ping,
+and a module-level store keyed by `sectionId` that `useSectionRun(id)` subscribes to per section. The key is
+the section's own identity `${course}:${media}:${title}` (the same string that keys the `SectionGroup`
+element) and the server holds one run per key. Both qualifiers matter: one Moodle heading usually holds both
+a video and its slides, and a run outlives the course it started in.
+
+A run is `{ id, sectionId, course, targets, at, total, status, paused }`. `status` is
+`running | paused | done | reconnect | cancelled`, `at` is the 1-based position the queue is on, and `paused`
+is `{ index, reason, name }` or null. `RunTarget` — `{ ref, name, kind, media, disposition }` — is a
+**cross-wire contract**: TypeScript in `services/downloadServer.ts`, plain JS in the server's `runs.js`.
+Change one, change the other. `disposition` is what the run itself decided: `pending` (the queue has not
+reached it), `skipped`, `unsupported`, `queue-failed` — or `queued`, the only one whose outcome is still
+open. `media` is the POST's answer for a queued row and `resolvedMedia ?? media` otherwise, because it is
+what says where the download lands on disk.
 
 **Nothing about the outcome is stored.** `utils/runStatus.ts` derives it on every render, per target and in
-this order: a recorded non-`queued` disposition wins; else one of the target's jobs is `running` →
-`in-flight`; else the row landed in the course tree → `downloaded`; else one of its jobs is an `error` →
-`failed`; else `in-flight`. `summarize` counts those into `N downloaded, N failed, N unsupported, N already
-there` (each part only when non-zero). Both are pure and unit-tested; `SectionGroup` is their only caller and
-needs no help from the provider, because both sources are live contexts that a remount simply re-reads.
+this order: `pending` is not-yet-started and stops there; a recorded non-`queued` disposition wins; else one
+of the target's jobs is `running` → `in-flight`; else the row landed in the course tree → `downloaded`; else
+one of its jobs is an `error` → `failed`; else `in-flight`. `pending` needs its own answer precisely because
+the run holds its whole queue from the start: absence of a job means "not triggered yet" for those rows,
+where for a `queued` row it means "the snapshot has not caught up". `summarize` counts those into
+`N downloaded, N failed, N unsupported, N already there` (each part only when non-zero; `pending` and
+`in-flight` are counted nowhere). Both are pure and unit-tested; `SectionGroup` is their only caller, and its
+three inputs — the run, the tree and the jobs — are all live reflections a remount simply re-reads.
 
 A running job outranks the tree because a zoom share downloads as two clips: once `name.1` lands the tree
 would already say `downloaded` while `name.2` is still going, and the section would free its "Download all"
@@ -284,37 +296,36 @@ folder with the page open changes it too.
 
 Three limits follow from deriving with no memory:
 
-- Deleting a downloaded lecture with the page open flips its target back to `in-flight` permanently — the
-  tree no longer holds it and its `done` job was evicted long ago. The section header stays stuck on that
-  target and "Download all" stays disabled until the page is reloaded.
+- Deleting a downloaded lecture flips its target back to `in-flight` permanently — the tree no longer holds
+  it and its `done` job was evicted long ago. The section header stays stuck on that target and "Download
+  all" stays disabled until another run for that section replaces the record (a reload does not: the run is
+  the server's).
 - For one SSE round-trip after a retry POST, the just-superseded `error` job is still in the browser's
   snapshot, so the target flickers through `failed` before the fresh `running` job arrives.
 - A half-failed zoom pair reads as `downloaded`: with no job running, the `.1` clip on disk satisfies
   `targetLanded` before the `error` job for `.2` is reached. Per-half accounting needs the POST to return
   job ids, which it does not.
 
-A run resets `targets` in exactly one place, "Download all"'s own handler. Re-entering the queue loop clears
-nothing, because a passcode resume re-enters it mid-run and the targets already recorded belong to that same
-run. The reconnect abort clears them instead of finishing: the run will never see how those downloads ended,
-so nothing should keep reporting on them either.
-
 "Download all" flattens the section into downloadable leaves — a playlist contributes its children, never
 its own ref, which the backend rejects. It is disabled until every expandable is expanded, and never
-auto-expands.
+auto-expands. Each leaf is resolved into a `RunTarget` **at submit**: the name and kind the row shows
+(`resolveRow`), plus the two verdicts this page owns because they read the live course tree — `skipped` for
+a row already on disk (`hasResource`, the same rule that tints the row green, so the two can never disagree)
+and `unsupported` for a row a probe already condemned. Everything else goes over as `pending`. Starting a run
+replaces whatever run that section had.
+
+**Two costs of the run being server-owned**, both accepted: a name typed *while the queue runs* is no longer
+picked up when that row's turn arrives — the server got every name up front — and a row downloaded by
+something outside this run mid-queue is no longer skipped, since the skip set was computed at submit; it is
+re-triggered and overwrites itself.
 
 The **triggering** runs sequentially by design: the auto-downloader drives one shared browser session, so
 parallel requests would contend. The downloads themselves run on, so by the end of the queue several rows
-are downloading at once, each with its own bar. The run is in continue mode (already-present items are
-skipped and recorded) and reads both the course tree and the edits through refs that refresh on render, so a
-mid-run SSE refresh or a name typed while it runs is honoured rather than the snapshot it started with.
-Those refs freeze when the section unmounts, which is the intent: the rest of a background run keeps the
-names the user typed, and is unaffected by the `edits` map being cleared out from under it.
+are downloading at once, each with its own bar.
 
-Per-item outcomes: `ReconnectError` aborts the whole run and triggers the reconnect flow; a `PasscodeError`
-pauses at that item and opens the prompt (submit saves the passcode and resumes by retrying the same item —
-a failed save records it `queue-failed` and resumes at the next; cancel records it `queue-failed` and
-abandons the rest of the queue); a 422 records `unsupported` (see below); anything else records
-`queue-failed` and continues.
+Per-item outcomes are the server's, and it maps them exactly as the client-side queue used to: a 401 stops
+the run at `reconnect`; a 409 parks it at that index with `paused`; a 422 records `unsupported` (see below);
+anything else records `queue-failed` and continues.
 
 `unsupported` is counted apart from `failed` because it is not a run problem and, unlike a failure, it is
 permanent: a row already known unsupported is skipped before the request, so four `.zip`s cost one probe
@@ -322,10 +333,15 @@ round-trip each per server lifetime rather than one per bulk run. Since the bulk
 recording the verdict is also the only thing that carries the 422's reason out of the run — as the greyed
 row and its column.
 
-The header renders three states in order: `Downloading n/N…` while the queue triggers, else
-`Downloading n more…` for the targets still `in-flight`, else the derived summary (shown only once the
-section has run at all). "Download all" stays disabled through the first two. The bulk run never toasts per
+The header renders three states in order: `Downloading {at}/{total}…` while the run is `running` or `paused`,
+else `Downloading n more…` for the targets still `in-flight`, else the derived summary (shown only once the
+section has a run at all). "Download all" stays disabled through the first two. The bulk run never toasts per
 item itself — a job failure toasts once from the jobs provider.
+
+A run that ends at `reconnect` raises the page's "BIU session expired" hint, and the provider — not the
+section — owns that: a status is re-read on every ping, so it fires **once per run id**, held in a set beside
+a `primed` flag that seeds the first snapshot. A run already aborted before the page loaded is history, and
+the auth pill probes on mount anyway.
 
 ## Zoom passcode
 
@@ -334,9 +350,15 @@ item itself — a job failure toasts once from the jobs provider.
 openings so a wrong-passcode re-prompt mounts fresh and empty. Scope defaults to course-wide; "just this
 lecture" narrows it to the one recording.
 
-A bulk run's pause is page state, not component state, so a `PasscodeError` raised while the user is on
-another page (or another segment) still opens the prompt when the section renders again — the run waits
-there instead of hanging on a prompt that never mounted.
+A bulk run's pause is a **rendered status, not held state**: the prompt renders whenever the reflected run
+reads `paused`, from `run.paused.{reason,name}`. So a gate hit while the user is on another page — or after
+a reload — still asks when the section renders again, and the server holds the queue there indefinitely
+rather than hanging on a prompt that never mounted. Submitting saves the passcode through auto (the passcode
+store stays there) and then `POST /runs/:id/resume`, which retries that same row; a failed save resumes with
+`{skip:true}`, giving up on the gated row and continuing from the next. Cancel is `POST /runs/:id/cancel` and
+abandons the rest of the queue, not just the gated row. The only run state left in `SectionGroup` is the
+save's own in-flight flag, which drives the prompt's busy state; a double submit is the server's to reject
+(409 on a run that is no longer parked), not a race the component guards.
 
 In a single row, the passcode prompt and the overwrite confirm can never co-render — the confirm is already
 dismissed by the time `download()` can hit the 409. The modal's own `savingPasscode` busy state drives its

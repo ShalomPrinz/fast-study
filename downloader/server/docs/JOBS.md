@@ -76,6 +76,9 @@ The frame carries no state; it only says "something changed, refetch". On it the
 re-`GET`s `/jobs`, which is the single source of truth. The queued ping matters: it lets
 the frontend flip a row to in-flight the instant the job registers, before the child spawns.
 
+The same stream also carries `run:change` for the section-run registry (`docs/RUNS.md`) — one
+stream, two contentless events, each pointing at its own resync endpoint.
+
 Bytes are still measured on the interval — `progress.js` needs them for the console and
 `jobs.js` reads the same `entry` — but they never reach the wire.
 

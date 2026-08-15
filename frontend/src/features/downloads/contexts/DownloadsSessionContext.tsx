@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
-import type { Item, Media, PasscodeError, ResolvedMedia } from '../services/autoDownloader'
+import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isReconnectError, listRecordings } from '../services/autoDownloader'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
@@ -13,51 +13,11 @@ export interface ExpandState {
   error: string | null
 }
 
-// One row the run got through, with what the run itself decided about it. `queued` is the only
-// disposition whose outcome is still open — it is read later off the tree and the jobs, keyed on
-// `media`, the POST's answer for a queued row and the row's own media otherwise.
-export interface RunTarget {
-  ref: string
-  name: string
-  kind: Kind
-  media: Media | 'unsupported'
-  disposition: 'queued' | 'skipped' | 'unsupported' | 'queue-failed'
-}
-
-// A paused run: the passcode prompt is open; the queue resumes from `index` on submit.
-export interface Paused {
-  queue: Item[]
-  index: number
-  // Carried so the resume re-enters the queue loop with the rows it had already got through.
-  targets: RunTarget[]
-  reason: PasscodeError['reason']
-  name: string
-}
-
-// One section's bulk run, keyed by `${course}:${media}:${title}` — the identity the section renders
-// under. `targets` is the authoritative list of the rows this run got through, growing as the queue
-// triggers them; the run's outcome is derived from it on every render, never stored.
-export interface SectionRun {
-  running: boolean
-  progress: { at: number; total: number } | null
-  targets: readonly RunTarget[]
-  paused: Paused | null
-  saving: boolean
-}
-
 export const IDLE_EXPAND: ExpandState = {
   expanded: false,
   children: null,
   expanding: false,
   error: null,
-}
-
-export const IDLE_RUN: SectionRun = {
-  running: false,
-  progress: null,
-  targets: [],
-  paused: null,
-  saving: false,
 }
 
 interface DownloadsSessionState {
@@ -67,7 +27,6 @@ interface DownloadsSessionState {
   error: string | null
   edits: Record<string, RowEdit>
   expansions: Record<string, ExpandState>
-  runs: Record<string, SectionRun>
   reconnectKey: number
 }
 
@@ -78,14 +37,13 @@ interface DownloadsSessionActions {
   resolveMedia: ResolveMedia
   rowEdits: RowEditsDispatch
   patchExpansion: (ref: string, next: Partial<ExpandState>) => void
-  setRun: (id: string, next: Partial<SectionRun>) => void
 }
 
 // The whole Downloads page session, mounted in `Layout` so it outlives the route: discovery, row
-// edits, playlist expansions and every section's bulk run survive a trip to a lecture and back.
+// edits and playlist expansions survive a trip to a lecture and back. The bulk runs themselves are
+// the server's (`SectionRunsContext`), so they outlive the tab too.
 const DownloadsSessionStateContext = createContext<DownloadsSessionState | null>(null)
-// Split out and identity-stable: the bulk queue keeps calling `setRun` long after its SectionGroup
-// unmounted, and the memoized rows' bail-out depends on these setters never changing.
+// Split out and identity-stable: the memoized rows' bail-out depends on these setters never changing.
 const DownloadsSessionActionsContext = createContext<DownloadsSessionActions | null>(null)
 
 type UpdateKind = 'info' | 'warning' | 'error'
@@ -101,11 +59,10 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reconnectKey, setReconnectKey] = useState(0)
-  // Keyed by item ref / section id and living above the media toggle, so a typed name, a kind
-  // toggle, a playlist's cached children and a run in flight all survive a segment switch.
+  // Keyed by item ref and living above the media toggle, so a typed name, a kind toggle and a
+  // playlist's cached children all survive a segment switch.
   const [edits, setEdits] = useState<Record<string, RowEdit>>({})
   const [expansions, setExpansions] = useState<Record<string, ExpandState>>({})
-  const [runs, setRuns] = useState<Record<string, SectionRun>>({})
 
   const sendUpdateRef = useRef(sendUpdate)
   sendUpdateRef.current = sendUpdate
@@ -132,21 +89,17 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     setExpansions((prev) => ({ ...prev, [ref]: { ...(prev[ref] ?? IDLE_EXPAND), ...next } }))
   }, [])
 
-  const setRun = useCallback((id: string, next: Partial<SectionRun>) => {
-    setRuns((prev) => ({ ...prev, [id]: { ...(prev[id] ?? IDLE_RUN), ...next } }))
-  }, [])
-
   const reconnectHint = useCallback(() => {
     sendUpdateRef.current?.('error', 'BIU session expired. Reconnect your account.')
     setReconnectKey((k) => k + 1)
   }, [])
 
-  // Everything keyed by ref or section id goes together: refs from two courses must never collide.
+  // Everything keyed by ref goes together: refs from two courses must never collide. The runs are
+  // not here — they are the server's, and their section ids are course-qualified anyway.
   const clear = useCallback(() => {
     setItems([])
     setEdits({})
     setExpansions({})
-    setRuns({})
     setError(null)
   }, [])
 
@@ -178,12 +131,12 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   }, [clear])
 
   const actions = useMemo(
-    () => ({ discover, close, reconnectHint, resolveMedia, rowEdits, patchExpansion, setRun }),
-    [discover, close, reconnectHint, resolveMedia, rowEdits, patchExpansion, setRun],
+    () => ({ discover, close, reconnectHint, resolveMedia, rowEdits, patchExpansion }),
+    [discover, close, reconnectHint, resolveMedia, rowEdits, patchExpansion],
   )
   const state = useMemo(
-    () => ({ selected, items, loading, error, edits, expansions, runs, reconnectKey }),
-    [selected, items, loading, error, edits, expansions, runs, reconnectKey],
+    () => ({ selected, items, loading, error, edits, expansions, reconnectKey }),
+    [selected, items, loading, error, edits, expansions, reconnectKey],
   )
 
   // Rendering `{children}` and nothing else is what keeps the sidebar and the outlet out of this:

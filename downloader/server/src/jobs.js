@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { measureBytes } from './progress.js';
-import { broadcast } from './events.js';
+import { broadcastJobs } from './events.js';
 import { operationForTool } from './services/timing.js';
 
 // The download registry a consumer outside this process can read (docs/JOBS.md).
@@ -32,7 +32,7 @@ export function createJob({ course, lecture, kind, tool, ref = null, fromCache =
     message: null,
     entry: null,
   });
-  broadcast(); // a queued job must ping so the frontend row flips to in-flight
+  broadcastJobs(); // a queued job must ping so the frontend row flips to in-flight
   return id;
 }
 
@@ -50,7 +50,7 @@ export function startJob(id, entry) {
   job.status = 'running';
   job.entry = entry;
   job.startedAt = Date.now();
-  broadcast();
+  broadcastJobs();
 }
 
 // Take the final measurement while the temp dir still exists — the upload deletes it.
@@ -73,7 +73,7 @@ export function finishJob(id, status, message = null) {
   freezeJobBytes(id);
   job.status = status;
   job.message = message;
-  broadcast();
+  broadcastJobs();
   // Delete after short timeout. See @docs/JOBS.md.
   if (status === 'done') setTimeout(() => jobs.delete(id), DONE_BRIDGE_MS).unref();
 }
@@ -94,7 +94,7 @@ function supersedeTerminal({ course, lecture, kind, ref }) {
 }
 
 function evict(id) {
-  if (jobs.delete(id)) broadcast();
+  if (jobs.delete(id)) broadcastJobs();
 }
 
 function liveBytes(job) {

@@ -1,6 +1,6 @@
-// Push side of the job registry (docs/JOBS.md): pure notification. Every transition
-// fires one contentless `job:change` frame; the frame carries no state, it only tells
-// the client to refetch `/jobs`, which is the single source of truth.
+// Push side of the two registries (docs/JOBS.md, docs/RUNS.md): pure notification. Every
+// transition fires one contentless frame — `job:change` or `run:change`; the frame carries no
+// state, it only tells the client to refetch `/jobs` or `/runs`, the single sources of truth.
 const subscribers = new Set();
 
 // A silent stream is killed by idle timeouts; a comment line keeps it warm.
@@ -30,8 +30,8 @@ export function subscribe(res) {
 }
 
 // Fire-and-forget: a broken subscriber is dropped, never allowed to fail a download.
-export function broadcast() {
-  const frame = 'event: job:change\ndata: {}\n\n';
+function send(event) {
+  const frame = `event: ${event}\ndata: {}\n\n`;
   for (const res of subscribers) {
     try {
       res.write(frame);
@@ -39,4 +39,12 @@ export function broadcast() {
       subscribers.delete(res);
     }
   }
+}
+
+export function broadcastJobs() {
+  send('job:change');
+}
+
+export function broadcastRuns() {
+  send('run:change');
 }

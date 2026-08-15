@@ -89,15 +89,22 @@ two services: it discovers and authenticates through the auto-downloader and dow
 resolving _is_ success, since every failure to queue leaves as one of the errors above (or a 500). Rows
 still find their jobs by the row's `ref`, not by `jobIds`.
 
-`subscribeJobs(onChange)` wraps `GET /events`, which fires one contentless `job:change` ping per job
-transition (no byte count — see `DOWNLOADS.md`); the `open` event calls `onChange` too, for the initial
-sync and every reconnect resync. This is the one `EventSource` outside `services/events.ts`, and it belongs
-here because the stream is this feature's service, not the database's notify channel.
+`subscribeJobs(onChange)` and `subscribeRuns(onChange)` each wrap `GET /events`, which fires one contentless
+`job:change` ping per job transition (no byte count — see `DOWNLOADS.md`) and one `run:change` ping per
+section-run transition; the `open` event calls `onChange` too, for the initial sync and every reconnect
+resync. These are the only `EventSource`s outside `services/events.ts`, and they belong here because the
+stream is this feature's service, not the database's notify channel. Two subscriptions over one endpoint
+means two connections — the price of keeping the jobs reflection and the runs reflection independent.
 
-`fetchJobs()` reads `GET /jobs`, the single source of truth the ping tells you to refetch: every non-evicted
-job (each carrying the discovery-row `ref` it belongs to, including ones the Chrome extension started). It
-bypasses the shared client for the opposite reason to the three endpoints above — the client toasts every
+`fetchJobs()` reads `GET /jobs` and `fetchRuns()` reads `GET /runs` — the single sources of truth the pings
+tell you to refetch: every non-evicted job (each carrying the discovery-row `ref` it belongs to, including
+ones the Chrome extension started), and every current section run, one per `sectionId`. Both bypass the
+shared client for the opposite reason to the three endpoints above — the client toasts every
 `ConnectionError`, and a reconnect loop against a downed service would stack one toast per attempt.
+
+`startSectionRun`, `resumeRun` and `cancelRun` POST `/download-section`, `/runs/:id/resume` and
+`/runs/:id/cancel`; they go through the shared client, since a user action against a downed server _should_
+toast. `RunTarget` and `SectionRun` live here — they are the server's shapes verbatim (`DOWNLOADS.md`).
 
 `DownloadTool` (`curl` / `yt-dlp`) is null before the child spawns and the real one is known. `startedAt` is
 the **server's** epoch ms; the ETA bar compares it to the browser's `Date.now()`, which assumes the two

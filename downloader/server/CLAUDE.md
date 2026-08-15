@@ -10,6 +10,7 @@ cached token went stale (`docs/JOBS.md`).
 
 ```bash
 npm --prefix downloader/server start   # node src/index.js, port 3052
+npm --prefix downloader/server test    # node --test, pure logic only (no network, no subprocess)
 ```
 
 `yt-dlp` and `curl` must be installed system-wide (the server shells out to them).
@@ -20,7 +21,7 @@ npm --prefix downloader/server start   # node src/index.js, port 3052
 | ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
 | `DOWNLOADER_PORT`         | `3052`                             | listen port                                                                 |
 | `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                       |
-| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (`/events` + `/jobs`)                                  |
+| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`)               |
 | `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                   |
 | `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples only                                      |
 | `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve |
@@ -38,8 +39,12 @@ the popup.
 | `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`                  |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId`                             |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds}` (auto's 4xx forwarded verbatim) |
-| `GET  /events`                            | SSE: contentless `job:change` ping per transition (`docs/JOBS.md`)                                                     |
+| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId}`; drives that section's bulk queue in the background (`docs/RUNS.md`)         |
+| `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                       |
+| `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                              |
+| `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition (`docs/JOBS.md`, `docs/RUNS.md`)                       |
 | `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                          |
+| `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                            |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                         |
 
 `kind` is `lecture` (default) or `recitation`.
@@ -48,12 +53,17 @@ the popup.
 
 `downloaders/` holds one descriptor per source — `curl` (header replay), `ytdlp`, and `fetch` (plain
 URL). Each names its own `upload` (required): `uploadVideo` for the two video sources, `uploadMaterial` for `fetch`.
-`jobs.js` is the state (job registry over the download entries), `events.js` the notification (SSE fan-out of the contentless `job:change` ping). All `DATABASE_URL` I/O goes through `services/database.js`.
+`jobs.js` is the state (job registry over the download entries) and `runs.js` the state one level up
+(section-run registry + the queue driver, which calls `downloadItem` directly rather than over HTTP);
+`events.js` is the notification for both (SSE fan-out of the contentless `job:change` / `run:change`
+pings). All `DATABASE_URL` I/O goes through `services/database.js`.
 
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
 DASH + JS-runtime, size probe), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
 vs yt-dlp-dir measure), `JOBS.md` (job lifecycle, event stream vs resync,
-`done` = uploaded, per-tool timing samples), `DATABASE.md` (video PUT wipes derived artifacts vs the
+`done` = uploaded, per-tool timing samples), `RUNS.md` (one run per section, dispositions, the
+indefinite passcode pause, the caller-owned skip rule, the `RunTarget` cross-wire contract),
+`DATABASE.md` (video PUT wipes derived artifacts vs the
 appending `/materials` POST, `/tree` reshape, notify ping).
 
 ## Conventions

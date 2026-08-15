@@ -52,35 +52,32 @@ function makeReresolve({ ref, course, name, kind }) {
   };
 }
 
-// Download one discovery row: auto/ resolves the ref into targets, this server runs each as a
-// job. auto's 401/409/422 bodies are forwarded verbatim — they are the frontend's contract.
-// `only`/`forceCapture` are auto's, passed through untouched: a per-clip retry sends
-// `only:true` with a zoom split name, which only auto's `only` branch resolves correctly.
-router.post('/download-item', async (req, res) => {
-  const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body ?? {};
-  if (typeof ref !== 'string' || !ref) return res.status(400).json({ error: 'valid ref required' });
-  if (!isSafeName(course) || !isSafeName(name)) {
-    return res.status(400).json({ error: 'course and name are required' });
-  }
-  const kindErr = validateKind(kind);
-  if (kindErr) return res.status(400).json(kindErr);
-
-  const { status, body } = await resolve({
-    ref,
-    course,
-    name,
-    kind,
-    only: only === true,
-    forceCapture: forceCapture === true,
-  });
+/**
+ * Download one discovery row: auto/ resolves the ref into targets, this server runs each as a
+ * job. The answer is `{status, body}` rather than a thrown error because auto's 401/409/422
+ * bodies are forwarded verbatim — they are the caller's contract, and both callers (the route
+ * below and the section-run driver in `runs.js`) branch on that status.
+ * `only`/`forceCapture` are auto's, passed through untouched: a per-clip retry sends
+ * `only:true` with a zoom split name, which only auto's `only` branch resolves correctly.
+ * @returns {Promise<{status: number, body: object}>} 200 → `{media, jobIds}`
+ */
+export async function downloadItem({
+  ref,
+  course,
+  name,
+  kind,
+  only = false,
+  forceCapture = false,
+}) {
+  const { status, body } = await resolve({ ref, course, name, kind, only, forceCapture });
   if (!resolved(status)) {
-    return res.status(status || 502).json(body ?? { error: 'auto-downloader unreachable' });
+    return { status: status || 502, body: body ?? { error: 'auto-downloader unreachable' } };
   }
 
   const targets = body?.targets ?? [];
   const runs = targets.map(toRun);
   if (!targets.length || runs.some((r) => !r)) {
-    return res.status(502).json({ error: 'auto returned no usable target' });
+    return { status: 502, body: { error: 'auto returned no usable target' } };
   }
 
   const jobIds = runs.map(({ downloader, input }, i) =>
@@ -93,7 +90,27 @@ router.post('/download-item', async (req, res) => {
       reresolve: makeReresolve({ ref, course, name: targets[i].name, kind }),
     }),
   );
-  res.json({ media: body.media, jobIds });
+  return { status: 200, body: { media: body.media, jobIds } };
+}
+
+router.post('/download-item', async (req, res) => {
+  const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body ?? {};
+  if (typeof ref !== 'string' || !ref) return res.status(400).json({ error: 'valid ref required' });
+  if (!isSafeName(course) || !isSafeName(name)) {
+    return res.status(400).json({ error: 'course and name are required' });
+  }
+  const kindErr = validateKind(kind);
+  if (kindErr) return res.status(400).json(kindErr);
+
+  const { status, body } = await downloadItem({
+    ref,
+    course,
+    name,
+    kind,
+    only: only === true,
+    forceCapture: forceCapture === true,
+  });
+  res.status(status).json(body);
 });
 
 export default router;

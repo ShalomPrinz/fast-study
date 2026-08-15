@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
-import type { DownloadJob } from '../services/downloadServer'
+import type { DownloadJob, RunTarget } from '../services/downloadServer'
 import { groupJobsByRef } from '../contexts/DownloadJobsContext'
-import type { RunTarget } from '../contexts/DownloadsSessionContext'
 import { summarize, targetStatus } from './runStatus'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
@@ -116,6 +115,11 @@ describe('targetStatus', () => {
     expect(status(target({ disposition: 'queue-failed' }), courses, jobs)).toBe('failed')
   })
 
+  it('leaves a row the queue has not reached pending, not in flight', () => {
+    const jobs = groupJobsByRef([job({ id: 'a', status: 'error' })])
+    expect(status(target({ disposition: 'pending' }), tree([]), jobs)).toBe('pending')
+  })
+
   it('never claims an unprobed unknown row landed', () => {
     expect(status(target({ media: 'unknown' }), tree([node('Lecture 1', true)]))).toBe('in-flight')
   })
@@ -145,5 +149,14 @@ describe('summarize', () => {
 
   it('counts in-flight rows nowhere — the header shows them as their own state', () => {
     expect(summarize([target()], tree([]), 'Algebra', NO_JOBS)).toBe('0 downloaded')
+  })
+
+  it('counts the queue tail nowhere either, so a cancelled run reports only what it did', () => {
+    const targets = [
+      target({ disposition: 'skipped' }),
+      target({ ref: 'r2', name: 'Lecture 2', disposition: 'pending' }),
+      target({ ref: 'r3', name: 'Lecture 3', disposition: 'pending' }),
+    ]
+    expect(summarize(targets, tree([]), 'Algebra', NO_JOBS)).toBe('0 downloaded, 1 already there')
   })
 })

@@ -1,0 +1,109 @@
+# Section runs (`src/runs.js`)
+
+A **run** is one section's bulk "download all": the queue, its progress, each row's disposition
+and the passcode pause, owned here rather than in the page that started it. `jobs.js` tracks one
+file; a run tracks the sweep that triggers many, the same way `backend/runner.py` owns the pipeline
+sweep and the frontend only reflects it.
+
+**Why server-side.** The client-side queue dies with the tab: a reload mid-sweep loses the
+progress, the recorded dispositions and a passcode prompt the user was one keystroke from
+answering. Held here, the queue keeps triggering and the page is a view of it.
+
+## The record
+
+```js
+{ id, sectionId, course, targets, at, total, status, paused }
+```
+
+- **`sectionId`** is the frontend's section identity, `${course}:${media}:${title}`.
+- **`at`** is the 1-based position the queue is on; `total` is `targets.length`.
+- **`status`** is `running | paused | done | reconnect | cancelled`.
+- **`paused`** is `{ index, reason, name }` or null — `reason` is auto's passcode reason
+  (`missing` | `incorrect`).
+
+**One run per `sectionId`.** Starting a run replaces that section's previous record outright. That
+is what makes a run re-findable after a reload with no id to remember, and it removes any need for
+time-based eviction — a section holds one record, forever or until the process dies. Runs are
+in-memory only: a run that dies with the process is not recovered.
+
+The driver holds its own reference to the run, so it re-checks the registry around every await: a
+run that was cancelled or replaced by a newer one for the same section stops where it is, and the
+next transition it would have written never lands.
+
+## Dispositions
+
+Each target is `{ ref, name, kind, media, disposition }`, and its disposition is what the run
+itself decided about that row:
+
+| disposition   | meaning                                                                    |
+| ------------- | -------------------------------------------------------------------------- |
+| `pending`     | the queue has not reached it yet                                           |
+| `skipped`     | the caller decided it was already on disk (see below)                      |
+| `queued`      | triggered; jobs exist, and its outcome is read later off the tree and jobs |
+| `unsupported` | auto 422'd — the source genuinely can't be handled                          |
+| `queue-failed`| anything else failed while triggering it                                    |
+
+`queued` is the only disposition whose outcome is still open. The run never derives an outcome:
+"did this land" is read from the database course tree plus `/jobs`, both live, by whoever renders
+the run. `media` is the POST's answer for a `queued` row (it says where on disk the file lands) and
+the row's own media otherwise.
+
+## The status mapping
+
+The driver maps the orchestrator's status (`downloadItem`, the same function `POST /download-item`
+answers with) onto the run, and it is the exact mapping the frontend's client-side queue has always
+used:
+
+- **2xx** → `disposition:'queued'`, continue.
+- **401** → `status:'reconnect'`, stop. The Moodle session is gone; every remaining row would fail
+  the same way.
+- **409** → `status:'paused'` holding at this index (below).
+- **422** → `disposition:'unsupported'`, continue — one row's verdict, not the run's.
+- **anything else** (500, 502, auto unreachable) → `disposition:'queue-failed'`, continue.
+
+## Pause and resume
+
+A 409 parks the run at its index and holds **indefinitely** — no timeout. auto's `withLock`
+serializes browser work per call, so a parked run owns no browser lock and costs nothing but a Map
+entry; a timeout would silently discard work the user is one passcode away from resuming.
+
+`POST /runs/:id/resume` re-enters the driver at the paused index, retrying that same row. The
+passcode is **not** in this request: the client saves it through auto's `POST /zoom/passcode` first,
+because the passcode store (`auto/src/lib/passcodes.js`) stays in auto under the service split.
+`{skip:true}` instead marks the gated row `queue-failed` and continues from the next index — what a
+user who gives up on that one row wants. Resume is rejected (409) on a run that isn't parked;
+re-entering a running driver would trigger every remaining row a second time.
+
+`POST /runs/:id/cancel` abandons the remainder and sets `status:'cancelled'` — cancelling a passcode
+prompt gives up the whole sweep, not just the gated row.
+
+## The skip rule stays with the caller
+
+Targets arrive with `skipped` already stamped on the rows the caller knows are on disk. That rule
+reads the live course tree, which only the frontend has, and the invariant that the green row and
+the queue's skip can never disagree is worth more than moving the rule here. **The accepted cost:**
+a row that becomes downloaded by something *outside this run* mid-queue is no longer skipped — it is
+re-triggered and simply overwrites itself. The signal that would justify moving the rule is that
+happening often enough to waste real bandwidth.
+
+## `RunTarget` is a cross-wire contract
+
+The target shape above is TypeScript in
+`frontend/src/features/downloads/services/downloadServer.ts` (`RunTarget`) and plain JS
+here. **Change one, change the other** — like `shared/utils/inFlightKey.ts` ↔ `runner.py::_skey`
+and `popup.js::suggestLectureName` ↔ `nextName.ts`. The server adds `pending` to the union: a
+client-side queue only ever recorded a row it had already got through, while a run holds its whole
+queue from the start.
+
+## Endpoints
+
+| Method + path            | Body → answer                                                      |
+| ------------------------ | ------------------------------------------------------------------ |
+| `POST /download-section` | `{sectionId, course, targets}` → `{runId}`, queue driven in the background |
+| `POST /runs/:id/resume`  | `{skip?}` → `{}` (404 unknown, 409 not parked)                     |
+| `POST /runs/:id/cancel`  | → `{}` (404 unknown)                                                |
+| `GET  /runs`             | `{runs}` — every current run, one per section                       |
+
+`GET /runs` is the resync, exactly as `/jobs` is for jobs: every transition fires one contentless
+`run:change` frame on the same `/events` stream, and the client refetches. There is no second
+stream and no polling.

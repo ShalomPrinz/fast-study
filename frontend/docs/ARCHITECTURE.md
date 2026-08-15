@@ -40,9 +40,10 @@ the first subscriber and ref-counts it closed on the last; `useNotify(cb)` is th
 polls. The backend fires a notify on every meaningful state change, and the downloader POSTs
 `${database}/notify` after a download, so a completed download updates the UI live.
 
-The downloader server has its own, separate stream (`GET /events`, opened by `DownloadJobsProvider` through
-`downloadServer.ts`) carrying a download's start and end. It is push-only too; the one HTTP fetch beside it,
-`GET /jobs`, runs once per connect to give the memoryless stream a starting state (see `DOWNLOADS.md`).
+The downloader server has its own, separate stream (`GET /events`, opened through `downloadServer.ts` by
+`DownloadJobsProvider` for a download's start and end, and by `SectionRunsProvider` for a section run's
+transitions). It is push-only too; the fetches beside it, `GET /jobs` and `GET /runs`, run once per connect
+to give the memoryless stream a starting state (see `DOWNLOADS.md`).
 
 Any fetcher that can be re-triggered by a notify burst wraps its promise in `useLatestRequest()`, which
 resolves only the newest call (superseded ones resolve `undefined`) so a late response can't overwrite a

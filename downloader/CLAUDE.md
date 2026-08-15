@@ -36,7 +36,7 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 ## Local helper server (`server/`, port 3052)
 
-`server/` is the Node (express) server the extension talks to over HTTP. Given a captured `.mp4` (+ headers), a YouTube URL, or PDF bytes, it downloads/forwards the file to the database service (which owns the on-disk layout, including `?kind=recitation`). It is documented in its own **`server/CLAUDE.md`** (run command, config, endpoint table, module layout) with the deep logic in **`server/docs/`** (`DOWNLOAD.md`, `PROGRESS.md`, `JOBS.md`, `DATABASE.md`). Don't restate that here.
+`server/` is the Node (express) server the extension talks to over HTTP. Given a captured `.mp4` (+ headers), a YouTube URL, or PDF bytes, it downloads/forwards the file to the database service (which owns the on-disk layout, including `?kind=recitation`). It also owns each section's bulk "download all" — the queue, its progress and its passcode pause live in the server, so a run survives the page (`server/docs/RUNS.md`). It is documented in its own **`server/CLAUDE.md`** (run command, config, endpoint table, module layout) with the deep logic in **`server/docs/`** (`DOWNLOAD.md`, `PROGRESS.md`, `JOBS.md`, `RUNS.md`, `DATABASE.md`). Don't restate that here.
 
 ## Auto-downloader HTTP service (`auto/`, port 3053)
 
@@ -48,7 +48,7 @@ The graph is acyclic: `server/` → **auto/** (3053) to resolve a discovery row 
 targets (and to re-resolve one whose cached token went stale), → **database** (8001) for every
 file it saves, and → **backend** (8000) for download duration samples (`POST /timing`, per-tool
 ETA buckets — `server/docs/JOBS.md`). `auto/` calls nothing of ours. From outside, the extension
-popup calls `server/`, and the frontend calls `server/` for every download (start, job events,
+popup calls `server/`, and the frontend calls `server/` for every download (start, job and run events,
 resync) and `auto/` for listing, auth and passcodes.
 
 ## Why these specific hacks (extension)
@@ -61,4 +61,4 @@ resync) and `auto/` for listing, auth and passcodes.
 - `suggestLectureName` / `suggestRecitationName` in `popup.js` duplicate logic from `frontend/src/features/lectures/utils/nextName.ts`. If the naming convention changes, update both.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
 - Server-specific conventions (argv-array spawn, always `video.mp4`, database-allocated material names, probe-on-raw-http) live in `server/CLAUDE.md`.
-- Only pure logic is unit-tested (`npm --prefix downloader/auto test`, node's built-in runner, no deps); the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior no diff review can predict — exercise the real _endpoint_, but never against real _data_.
+- Only pure logic is unit-tested (`npm --prefix downloader/auto test`, `npm --prefix downloader/server test`, node's built-in runner, no deps); the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior no diff review can predict — exercise the real _endpoint_, but never against real _data_.
