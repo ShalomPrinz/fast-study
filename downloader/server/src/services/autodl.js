@@ -1,7 +1,7 @@
 import { AUTODL_URL } from '../config.js';
 
-// auto/ answered with targets. Anything else — its 4xx contract, a 5xx, status 0 (unreachable),
-// or a 502 the caller synthesized — is a failure to forward or report.
+// auto/ answered with targets. Anything else — its 4xx contract, a 5xx, or status 0
+// (unreachable) — is a failure to forward or report.
 export function resolved(status) {
   return status >= 200 && status < 300;
 }

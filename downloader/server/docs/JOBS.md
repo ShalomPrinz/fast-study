@@ -45,11 +45,17 @@ On a terminal non-zero exit the runner classifies the stderr tail with `isAuthEr
 
 - **auth error AND `fromCache` true AND a `reresolve` closure** → the replayed token went stale.
   The runner calls `reresolve()`, which asks auto/ for this one target fresh (`{ref, course,
-  name:<target>, kind, only:true, forceCapture:true}`, `services/autodl.js`). On success it re-runs
-  **the same `jobId`** on the fresh cap — the job never leaves `/jobs`, and its id stays the caller's
-  attempt identity. If auto/ answers non-2xx (or is unreachable) recovery can't proceed, so the job
-  is finalized `error` with the actionable reason — 401 "reconnect Moodle", 409 "passcode needed",
-  422 "source unsupported", else "re-capture failed".
+name:<target>, kind, only:true, forceCapture:true}`, `services/autodl.js`). It answers either
+  `{downloader, input}` — and the runner re-runs **the same `jobId`** on that fresh cap, so the job
+  never leaves `/jobs` and its id stays the caller's attempt identity — or `{error}`, a
+  ready-to-display terminal message the runner finalizes the job with.
+
+  The message is built in `routes/downloadItem.js`, not the runner: what auto's statuses mean is the
+  resolver edge's knowledge, and the runner is source-agnostic. 401 → "reconnect Moodle", 409 →
+  "passcode needed", 422 → "source unsupported", unreachable/other → "re-capture failed: …". A 2xx
+  carrying no usable target is the same generic failure ("re-capture failed: auto returned no usable
+  target") — no status describes it, since auto's own was a 200.
+
 - **otherwise** (non-auth error, a `fromCache:false` auth failure, or no closure) → finalized
   as-is; a fresh-capture auth failure reads "authentication failed".
 

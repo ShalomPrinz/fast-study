@@ -11,7 +11,6 @@ import {
   formatBytes,
 } from '../progress.js';
 import { recordDownloadTiming } from '../services/timing.js';
-import { resolved } from '../services/autodl.js';
 import { setExpectedBytes, startJob, freezeJobBytes, finishJob } from '../jobs.js';
 
 function makeTempDir() {
@@ -35,21 +34,13 @@ function isAuthError(message) {
   );
 }
 
-// Map a failed re-resolve to this job's terminal message: recovery couldn't proceed, so the
-// reason has to be user-actionable rather than the raw stderr of the stale attempt.
-function reresolveMessage(status, body) {
-  if (status === 401) return 'reconnect Moodle';
-  if (status === 409) return 'passcode needed';
-  if (status === 422) return `source unsupported${body?.message ? `: ${body.message}` : ''}`;
-  return `re-capture failed: ${body?.error ?? `HTTP ${status || 'network'}`}`;
-}
-
 // Source-agnostic runner: probe size, spawn the silent child in a temp dir, and on clean exit
 // hand the result to the source's required `upload` (which uploads + cleans + notifies).
 // Adding a source = a new downloaders/*.js registered in index.js; no edits here.
 // `jobId` was created synchronously by the route; every exit path must terminate it.
-// `reresolve` (null when the caller has no ref, e.g. the extension) refreshes a stale cached
-// cap so THIS job re-runs on it — see docs/JOBS.md.
+// `reresolve` (null when the caller has no ref, e.g. the extension) refreshes a stale cached cap
+// so THIS job re-runs on it: `{downloader, input}` to re-run, or `{error}` — a ready-to-display
+// terminal message, since only the resolver edge knows what its failures mean. See docs/JOBS.md.
 export async function runDownloadJob(
   downloader,
   input,
@@ -103,8 +94,8 @@ export async function runDownloadJob(
         if (isAuthError(detail) && fromCache && reresolve) {
           emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
           const fresh = await reresolve();
-          if (!resolved(fresh.status)) {
-            finishJob(jobId, 'error', reresolveMessage(fresh.status, fresh.body));
+          if (fresh.error) {
+            finishJob(jobId, 'error', fresh.error);
             return;
           }
           runDownloadJob(fresh.downloader, fresh.input, { course, lecture, kind, jobId });

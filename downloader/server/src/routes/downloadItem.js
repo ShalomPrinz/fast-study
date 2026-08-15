@@ -18,9 +18,20 @@ function toRun(target) {
   };
 }
 
+// Map a failed re-resolve to the job's terminal message: recovery couldn't proceed, so the
+// reason has to be user-actionable rather than the raw stderr of the stale attempt. Lives here
+// because what auto's statuses MEAN is the resolver edge's knowledge, not the runner's.
+function reresolveMessage(status, body) {
+  if (status === 401) return 'reconnect Moodle';
+  if (status === 409) return 'passcode needed';
+  if (status === 422) return `source unsupported${body?.message ? `: ${body.message}` : ''}`;
+  return `re-capture failed: ${body?.error ?? `HTTP ${status || 'network'}`}`;
+}
+
 // Re-resolve ONE target fresh after its cached cap auth-failed mid-download, so the runner can
-// re-run the same job. `only`+`forceCapture` is what makes the answer a fresh (non-cached) cap,
-// which is what stops a second retry — see docs/JOBS.md.
+// re-run the same job: `{downloader, input}` to re-run, or `{error}` with the terminal message.
+// `only`+`forceCapture` is what makes the answer a fresh (non-cached) cap, which is what stops a
+// second retry — see docs/JOBS.md.
 function makeReresolve({ ref, course, name, kind }) {
   return async () => {
     const { status, body } = await resolve({
@@ -31,13 +42,13 @@ function makeReresolve({ ref, course, name, kind }) {
       only: true,
       forceCapture: true,
     });
-    if (!resolved(status)) return { status, body };
+    if (!resolved(status)) return { error: reresolveMessage(status, body) };
     const fresh = body?.targets?.find((t) => t.name === name) ?? body?.targets?.[0];
     const run = fresh && toRun(fresh);
-    // A 2xx we can't run is still a failed re-resolve, so the 502 is SYNTHESIZED here — the
-    // same verdict `/download-item` gives this condition. `status` is not always auto's own.
-    if (!run) return { status: 502, body: { error: 'auto returned no usable target' } };
-    return { status, ...run };
+    // A 2xx we can't run is still a failed re-resolve; it reads as the generic failure because
+    // no status describes it — auto's own was a 200.
+    if (!run) return { error: 're-capture failed: auto returned no usable target' };
+    return run;
   };
 }
 
