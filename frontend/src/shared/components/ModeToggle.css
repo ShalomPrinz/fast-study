@@ -1,0 +1,44 @@
+/* Sidebar mode toggle: compact two-segment switch below the "Fast Study" title */
+.mode-toggle {
+  display: flex;
+  gap: 2px;
+  margin: 8px 12px 4px;
+  padding: 2px;
+  background: var(--sidebar-hover);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+/* Same switch in the downloads panel, which spaces its own children — no sidebar margins. */
+/* Order-sensitive: this modifier overrides `.mode-toggle`'s margin at equal specificity, so the
+   two must stay in this file in this order. */
+.mode-toggle--downloads {
+  margin: 0;
+  align-self: flex-start;
+  min-width: 300px;
+}
+
+.mode-toggle-btn {
+  flex: 1;
+  padding: 5px 8px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  color: var(--sidebar-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.mode-toggle-btn:hover {
+  color: var(--sidebar-fg);
+}
+
+.mode-toggle-btn.active {
+  background: var(--sidebar-selected);
+  color: #fff;
+}

@@ -502,30 +502,6 @@
   cursor: not-allowed;
 }
 
-.run-all-btn {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--accent);
-  font: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-
-.run-all-btn:hover:not(:disabled) {
-  background: var(--accent-dim);
-}
-
-.run-all-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 .runner-panel {
   display: flex;
   flex-direction: column;
@@ -834,147 +810,12 @@
 
 /* ── courses mode ── */
 
-/* Sidebar mode toggle: compact two-segment switch below the "Fast Study" title */
-.mode-toggle {
-  display: flex;
-  gap: 2px;
-  margin: 8px 12px 4px;
-  padding: 2px;
-  background: var(--sidebar-hover);
-  border-radius: 8px;
-  flex-shrink: 0;
-}
-
-/* Same switch in the downloads panel, which spaces its own children — no sidebar margins. */
-.mode-toggle--downloads {
-  margin: 0;
-  align-self: flex-start;
-  min-width: 300px;
-}
-
-.mode-toggle-btn {
-  flex: 1;
-  padding: 5px 8px;
-  background: none;
-  border: none;
-  border-radius: 6px;
-  color: var(--sidebar-muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition:
-    background 0.12s,
-    color 0.12s;
-}
-
-.mode-toggle-btn:hover {
-  color: var(--sidebar-fg);
-}
-
-.mode-toggle-btn.active {
-  background: var(--sidebar-selected);
-  color: #fff;
-}
-
 /* Flat course list — no tree indent */
+/* Stays here until `.lecture-list` moves: `CoursesList` renders `lecture-list course-list` and this
+   overrides `.lecture-list`'s padding-left at equal specificity, so both must land in one file. */
 .course-list {
   padding-left: 4px;
   padding-right: 4px;
-}
-
-/* Course view */
-
-.course-global-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.course-branch {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-
-.course-branch-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.course-branch-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* Title stacked over its optional subtitle, sitting beside the caret */
-.course-branch-heading {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.course-branch-subtitle {
-  font-size: 0.8em;
-  color: var(--text-muted);
-}
-
-/* Caret + title act as one clickable expand/collapse toggle, filling the row's left side */
-.course-branch-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-  color: inherit;
-  font: inherit;
-}
-
-.course-branch-caret {
-  font-size: 20px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-/* Per-slug pipeline breakdown revealed under the header (one file-row per phase) */
-.course-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-left: 18px;
-}
-
-.course-branch-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-/* Per-extractor status marker (empty-state dot), sized to line up with the ✓ / spinner slot */
-.course-stage-dot {
-  width: 8px;
-  height: 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.course-stage-error {
-  color: var(--text-warning);
-  font-size: 13px;
-  cursor: help;
 }
 
 /* ── Downloads page ── */

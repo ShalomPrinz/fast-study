@@ -23,6 +23,7 @@ import '@/styles/spinner.css'
 import '@/styles/panel.css'
 import '@/styles/file-row.css'
 import '@/styles/modal.css'
+import '@/features/course-overview/components/GenerateAllButton.css'
 
 interface RotateTarget {
   file: FileName

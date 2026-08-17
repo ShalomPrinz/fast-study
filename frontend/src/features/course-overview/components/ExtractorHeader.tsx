@@ -8,6 +8,7 @@ import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import BranchIndicator from './BranchIndicator'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
+import './ExtractorHeader.css'
 
 export default function ExtractorHeader() {
   const { course, files, meta, status, generate } = useCourseOverview()

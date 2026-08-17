@@ -1,0 +1,14 @@
+/* Per-extractor status marker (empty-state dot), sized to line up with the ✓ / spinner slot */
+.course-stage-dot {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.course-stage-error {
+  color: var(--text-warning);
+  font-size: 13px;
+  cursor: help;
+}

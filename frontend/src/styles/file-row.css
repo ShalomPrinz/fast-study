@@ -11,3 +11,12 @@
   align-items: center;
   justify-content: space-between;
 }
+
+/* `ExtractorRow` renders `file-row course-branch`; this overrides `.file-row`'s align-items at
+   equal specificity, so it lives here, below `.file-row`, rather than beside its component. */
+.course-branch {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}

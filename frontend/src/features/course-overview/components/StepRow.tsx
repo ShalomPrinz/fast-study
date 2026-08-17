@@ -10,6 +10,7 @@ import { useExtractor } from '@/features/course-overview/contexts/ExtractorConte
 import '@/styles/spinner.css'
 import '@/styles/file-row.css'
 import '@/styles/modal.css'
+import './BranchIndicator.css'
 
 export default function StepRow({ step }: { step: OverviewStep }) {
   const { course, files, status, generate } = useCourseOverview()
