@@ -1,0 +1,20 @@
+.search-result-snippet {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* Snippets from the same lecture share one block, so they need a separator of their own. */
+.search-result-snippet + .search-result-snippet {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 2px solid #bbbbbb;
+}
+
+.search-mark {
+  background: #fde68a;
+  color: var(--text);
+  border-radius: 3px;
+  padding: 0 1px;
+}

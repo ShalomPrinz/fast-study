@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import '@/styles/panel.css'
+import './NotFoundPanel.css'
 
 export default function NotFoundPanel({ message }: { message: string }) {
   return (

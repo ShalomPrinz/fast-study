@@ -6,6 +6,7 @@ import {
   completeAuth,
 } from '@/features/downloads/services/autoDownloader'
 import { toast } from '@/services/toaster'
+import './AuthPill.css'
 
 type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing'
 

@@ -1,0 +1,87 @@
+/* Row controls shared across the downloads page: AddCourseRow, CourseSourceRow,
+   RecordingJobList, RecordingRow, SectionGroup, PasscodePrompt. */
+
+/* PasscodePrompt renders "source-row-input passcode-input" — both set font-size at equal
+   specificity, so .source-row-input must keep following .passcode-input in source order. */
+.passcode-input {
+  width: 100%;
+  margin-bottom: 12px;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.source-row-input {
+  min-width: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+/* RecordingRow renders "source-row-input recording-name-input" — collides on min-width at
+   equal specificity, so it lives here, after the class it overrides. */
+/* Shrinks before the title does — a name is still readable clipped, a missing title is not. */
+.recording-name-input {
+  width: 150px;
+  flex-shrink: 1;
+  min-width: 100px;
+}
+
+.source-row-btn {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.source-row-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.source-row-btn--ghost {
+  background: transparent;
+  border-color: #d1d5db;
+  color: var(--text-muted);
+}
+
+/* The three "source-row-btn X" variants below override it at equal specificity (background,
+   border, color, padding, font-size), so they must stay in this file, after it. */
+/* Reads as the section-wide action, not a row's Download: outlined rather than filled. */
+.recordings-download-all {
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.recordings-download-all:disabled {
+  color: var(--text-muted);
+  border-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+.recording-job-btn {
+  flex-shrink: 0;
+  min-width: 96px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
+/* Split rows (a zoom pair) delegate re-download/retry to the per-clip buttons, so the main control
+   is a plain status label — no button chrome, no hover, no pointer. */
+.recording-download-btn--label {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+  cursor: default;
+}

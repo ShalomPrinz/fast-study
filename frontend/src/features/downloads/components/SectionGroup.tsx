@@ -35,6 +35,8 @@ import {
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
+import '@/styles/source-row.css'
+import './SectionGroup.css'
 
 interface Props {
   // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run.

@@ -1,0 +1,53 @@
+.course-branch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.course-branch-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Title stacked over its optional subtitle, sitting beside the caret */
+.course-branch-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.course-branch-subtitle {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+
+/* Caret + title act as one clickable expand/collapse toggle, filling the row's left side */
+.course-branch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+
+.course-branch-caret {
+  font-size: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.course-branch-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}

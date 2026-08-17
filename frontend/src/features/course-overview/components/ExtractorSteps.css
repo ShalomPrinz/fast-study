@@ -1,0 +1,7 @@
+/* Per-slug pipeline breakdown revealed under the header (one file-row per phase) */
+.course-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 18px;
+}

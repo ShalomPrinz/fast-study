@@ -1,0 +1,12 @@
+.new-course-input {
+  display: block;
+  width: 100%;
+  padding: 5px 12px;
+  background: var(--sidebar-hover);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  color: var(--sidebar-fg);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}

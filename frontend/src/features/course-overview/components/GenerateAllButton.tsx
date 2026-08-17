@@ -1,6 +1,8 @@
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { startedSlug } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
+import '@/styles/spinner.css'
+import './GenerateAllButton.css'
 
 export default function GenerateAllButton() {
   const { extractors, files, status, generate } = useCourseOverview()

@@ -47,6 +47,23 @@ if [ ${#jsts[@]} -gt 0 ]; then
   fi
 fi
 
+# CSS lives beside the component that uses it — see frontend/docs/ARCHITECTURE.md. These three
+# greps are the whole enforcement: a global stylesheet can only come back through main.tsx.
+main_tsx="frontend/src/main.tsx"
+css_bad=""
+if [ -f "$main_tsx" ]; then
+  stray="$(grep -nE "^import .*\.css'" "$main_tsx" | grep -v "styles/tokens.css" || true)"
+  [ -n "$stray" ] && css_bad+="main.tsx imports a stylesheet other than styles/tokens.css:"$'\n'"$stray"$'\n'
+fi
+if [ -f frontend/src/styles/tokens.css ]; then
+  cls="$(grep -nE '^\s*\.[a-zA-Z]' frontend/src/styles/tokens.css || true)"
+  [ -n "$cls" ] && css_bad+="tokens.css holds the reset and :root only — no class selectors:"$'\n'"$cls"$'\n'
+fi
+[ -f frontend/src/index.css ] && css_bad+="frontend/src/index.css is back; component CSS belongs beside its component."$'\n'
+if [ -n "$css_bad" ]; then
+  failures+="[css]"$'\n'"$css_bad"$'\n'
+fi
+
 if [ -z "$failures" ]; then
   rm -f "$state"
   if [ $((${#py[@]} + ${#jsts[@]})) -eq 0 ]; then

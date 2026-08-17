@@ -5,6 +5,8 @@ import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import Icon from '@/shared/components/Icon'
+import '@/styles/source-row.css'
+import './CourseSourceRow.css'
 
 interface Props {
   course: Course

@@ -1,0 +1,98 @@
+.file-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.file-missing {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Materials are inputs to the summary, not pipeline outputs, so they get their own labelled list. */
+.material-list-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* The --* variants below land on the same element as .material-indicator (the class string is built by
+   materialIndicator()), so they must stay in this file, in this order. */
+.material-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.material-indicator-symbol {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.material-indicator--will-use {
+  color: #2563eb;
+}
+.material-indicator--used {
+  color: #16a34a;
+}
+.material-indicator--missing {
+  color: #d97706;
+}
+/* Some but not all materials predate the summary — milder than a full miss, so amber, not grey. */
+.material-indicator--partial {
+  color: #b45309;
+}
+.material-indicator--was-missing {
+  color: #6b7280;
+}
+
+.lecture-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--error, #d33);
+  border-radius: 8px;
+  background: rgba(211, 51, 51, 0.08);
+  color: var(--error, #d33);
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.lecture-error strong {
+  margin-right: 6px;
+}
+
+.rate-limit-panel {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #7f1d1d;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.rate-limit-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.rate-limit-progress {
+  margin: 0;
+  font-weight: 500;
+}
+
+.rate-limit-countdown {
+  margin: 0;
+  font-weight: 600;
+  color: #b91c1c;
+}

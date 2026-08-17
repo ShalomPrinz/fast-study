@@ -6,6 +6,7 @@ import { DownloadsSessionProvider } from '@/features/downloads/contexts/Download
 import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsContext'
 import { ToastContainer, toast } from '@/services/toaster'
 import Sidebar from '@/shared/sidebar'
+import './Layout.css'
 
 export default function Layout() {
   return (

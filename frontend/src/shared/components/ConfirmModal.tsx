@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom'
+import '@/styles/modal.css'
+import './ConfirmModal.css'
 
 interface Props {
   message: string

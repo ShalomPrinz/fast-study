@@ -14,6 +14,9 @@ import {
   useDownloadsActions,
   useDownloadsSession,
 } from '@/features/downloads/contexts/DownloadsSessionContext'
+import '@/styles/panel.css'
+import '@/shared/components/ModeToggle.css'
+import './DownloadsView.css'
 
 // Order matters: it drives the segment order and the default side (videos).
 const MEDIA_MODES: Record<Media, ModeConfig> = {

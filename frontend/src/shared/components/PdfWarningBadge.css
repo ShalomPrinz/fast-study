@@ -1,0 +1,12 @@
+.pdf-badge {
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.pdf-badge-symbol {
+  font-size: 12px;
+  line-height: 1;
+}

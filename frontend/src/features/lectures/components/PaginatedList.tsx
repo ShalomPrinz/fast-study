@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import './PaginatedList.css'
 
 interface Props<T> {
   items: T[]

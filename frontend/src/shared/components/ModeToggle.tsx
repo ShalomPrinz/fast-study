@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ComponentType, ReactNode } from 'react'
+import './ModeToggle.css'
 
 export interface ModeConfig {
   label: string

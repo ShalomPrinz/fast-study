@@ -1,0 +1,28 @@
+/* Page-level passcode notice: an attention state, not an error — the run is waiting, not broken. */
+.recordings-paused-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.recordings-paused-entry {
+  padding: 7px 10px;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  background: #fffbeb;
+  font: inherit;
+  font-size: 12px;
+  color: #92400e;
+  text-align: start;
+}
+
+/* Only an entry in the open course can jump to its segment; the rest stay plain text. */
+.recordings-paused-entry--link {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.recordings-paused-entry--link:hover {
+  background: #fef3c7;
+}

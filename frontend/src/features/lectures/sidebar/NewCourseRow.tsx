@@ -3,6 +3,8 @@ import { createCourse } from '@/services/database'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
+import '@/styles/sidebar-tree.css'
+import './NewCourseRow.css'
 
 export default function NewCourseRow() {
   const { refreshCourses } = useCourseTreeContext()

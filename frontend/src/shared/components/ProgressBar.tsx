@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { TimingStats } from '@/types'
 import { formatDuration } from '@/shared/utils/format'
+import './ProgressBar.css'
 
 interface Props {
   stats: TimingStats | null | undefined

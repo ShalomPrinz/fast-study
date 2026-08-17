@@ -1,0 +1,36 @@
+/* Order-sensitive: `GenerateAllButton` renders `run-all-btn course-global-btn`, and
+   `.course-global-btn` overrides `.run-all-btn`'s display at equal specificity — the two must stay
+   in this file in this order. `MainView.tsx` is the other `.run-all-btn` user and imports this. */
+.run-all-btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.run-all-btn:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.run-all-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Course view */
+
+.course-global-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}

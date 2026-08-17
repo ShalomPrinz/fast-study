@@ -2,6 +2,10 @@ import type { TimingStats } from '@/types'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ProgressBar from '@/shared/components/ProgressBar'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
+import '@/styles/source-row.css'
+import '@/shared/components/ProgressBar.css'
+import './RecordingRow.css'
+import './RecordingJobList.css'
 
 const NO_ESTIMATE: TimingStats = { message: 'not-enough-data' }
 

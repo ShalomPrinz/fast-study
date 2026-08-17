@@ -3,6 +3,7 @@ import { fileUrl } from '@/services/database'
 import type { CourseSummary } from '@/types'
 import type { Hit } from '../utils/search'
 import SearchSnippet from './SearchSnippet'
+import './SearchResult.css'
 
 interface Props {
   summary: CourseSummary

@@ -9,6 +9,8 @@ import CourseHeader from './CourseHeader'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 import RecitationsGroup from './RecitationsGroup'
+import '@/styles/sidebar-tree.css'
+import './CourseGroup.css'
 
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()

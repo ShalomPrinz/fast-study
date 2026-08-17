@@ -10,6 +10,7 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { usePendingUpload } from '@/features/lectures/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
 import { useLectureListKind } from './LectureListContext'
+import '@/styles/sidebar-tree.css'
 
 export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const { course } = useCourseGroup()

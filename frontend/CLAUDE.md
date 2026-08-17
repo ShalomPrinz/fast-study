@@ -36,6 +36,9 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 - UI lives in components, not contexts or hooks — those expose state and callbacks only.
 - Import via `@/` for anything outside the current directory; siblings may be relative.
 - Tests are vitest `*.test.ts` colocated with the pure logic they cover; there is no DOM test setup.
+- A component's styles live in `X.css` beside `X.tsx`, or in a named `src/styles/*.css` when 2+ components
+  share the class; every component imports every stylesheet that affects it. There is no global stylesheet
+  beyond `styles/tokens.css`, and cross-file rules disambiguate by specificity, never source order.
 
 ## Documentation style
 

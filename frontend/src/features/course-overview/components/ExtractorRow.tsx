@@ -8,6 +8,8 @@ import { ExtractorContext } from '@/features/course-overview/contexts/ExtractorC
 import type { ExtractorValue } from '@/features/course-overview/contexts/ExtractorContext'
 import ExtractorHeader from './ExtractorHeader'
 import ExtractorSteps from './ExtractorSteps'
+import '@/styles/modal.css'
+import '@/styles/file-row.css'
 
 export default function ExtractorRow({ extractor }: { extractor: OverviewExtractor }) {
   const { files, status, generate } = useCourseOverview()

@@ -19,6 +19,12 @@ import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ProgressBar from '@/shared/components/ProgressBar'
 import Icon from '@/shared/components/Icon'
+import '@/styles/spinner.css'
+import '@/styles/panel.css'
+import '@/styles/file-row.css'
+import '@/styles/modal.css'
+import '@/features/course-overview/components/GenerateAllButton.css'
+import './MainView.css'
 
 interface RotateTarget {
   file: FileName

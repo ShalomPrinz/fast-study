@@ -1,4 +1,5 @@
 import type { Hit } from '../utils/search'
+import './SearchSnippet.css'
 
 // One snippet with each occurrence highlighted by slicing at the hit's offsets — never raw HTML.
 export default function SearchSnippet({ hit }: { hit: Hit }) {

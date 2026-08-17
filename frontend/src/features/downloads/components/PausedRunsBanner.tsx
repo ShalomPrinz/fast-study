@@ -1,6 +1,7 @@
 import { usePausedRuns } from '@/features/downloads/contexts/SectionRunsContext'
 import { parseSectionId } from '@/features/downloads/utils/sections'
 import type { Media } from '@/features/downloads/services/autoDownloader'
+import './PausedRunsBanner.css'
 
 interface Props {
   course: string

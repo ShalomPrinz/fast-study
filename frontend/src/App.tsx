@@ -5,6 +5,7 @@ import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
 import DownloadsView from '@/features/downloads/DownloadsView'
 import SearchView from '@/features/search/SearchView'
+import '@/styles/panel.css'
 
 function EmptyState() {
   return (

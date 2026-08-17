@@ -11,6 +11,9 @@ import {
 } from '@/features/course-overview/contexts/CourseOverviewContext'
 import GenerateAllButton from '@/features/course-overview/components/GenerateAllButton'
 import ExtractorRow from '@/features/course-overview/components/ExtractorRow'
+import '@/styles/spinner.css'
+import '@/styles/panel.css'
+import '@/styles/file-row.css'
 
 function CourseOverviewBody() {
   const { course, extractors, status } = useCourseOverview()

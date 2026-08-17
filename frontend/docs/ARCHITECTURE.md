@@ -13,7 +13,8 @@ Corollary: never add a backend endpoint to answer "does file X exist" — that i
 
 | Dir                                   | Rule                                                                                             |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| root (`App`, `types.ts`, `index.css`) | flat, no subdirs                                                                                 |
+| root (`App`, `types.ts`)              | flat, no subdirs                                                                                 |
+| `styles/`                             | `tokens.css` plus the shared-vocabulary stylesheets — see Styling                                |
 | `app/`                                | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container                        |
 | `services/`                           | one file per external concern, shared by all features, never split per feature                   |
 | `shared/`                             | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
@@ -106,6 +107,28 @@ with `Record<Media, …>` and key `fastStudyDownloadsMedia`, since it filters it
 
 ## Styling
 
-One flat `index.css` with CSS custom properties — no CSS modules or styled-components. Any user-supplied
-text (course, lecture, section, recording titles) renders with `dir="auto"` so Hebrew resolves RTL per
-element. Font stack is Noto Sans Hebrew with system fallbacks.
+Plain CSS, no modules and no styled-components — class names are global and byte-identical to the
+`className` strings, so one grep for a class hits both its markup and its rule.
+
+A component's CSS lives in `X.css` beside `X.tsx` and is imported by it. A class rendered by two or more
+components instead lives in a named shared-vocabulary stylesheet under `src/styles/` — `file-row`, `modal`,
+`panel`, `spinner`, `source-row`, `sidebar-tree` — and **every component using that class imports the
+stylesheet**, never relying on a parent to import on its behalf. Vite dedupes repeated imports, so this
+costs nothing and keeps a component's import list an exhaustive list of what can style it. A file earns a
+place in `src/styles/` only by having multiple component users; that is a fact you can regenerate by
+grepping `className` across `src/`.
+
+`src/styles/tokens.css` is the only global stylesheet: the reset, `html/body/#root`, and the `:root` custom
+properties. It holds no class selector, and `main.tsx` imports it and nothing else. `.claude/lint.sh`
+enforces both, plus the absence of a root `index.css`.
+
+**No cross-file rule may depend on source order.** Import order follows Vite's module graph and differs
+between dev (per-module `<style>` tags) and prod (one extracted, concatenated sheet), so two same-specificity
+rules that used to resolve by position now resolve unpredictably. Disambiguate by specificity. Where two
+rules genuinely collide on the same element at equal specificity — `.lecture-list` / `.course-list`,
+`.source-row-input` / `.passcode-input`, `.file-row` / `.course-branch` — both live in one file in the
+winning order, with a comment naming the dependency; that is why a few single-user classes sit in a shared
+stylesheet. Verify a suspected collision against the built bundle, not the dev server.
+
+Any user-supplied text (course, lecture, section, recording titles) renders with `dir="auto"` so Hebrew
+resolves RTL per element. Font stack is Noto Sans Hebrew with system fallbacks.
