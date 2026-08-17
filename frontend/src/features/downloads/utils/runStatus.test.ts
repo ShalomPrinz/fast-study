@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
 import type { DownloadJob, RunTarget } from '../services/downloadServer'
 import { groupJobsByRef } from '../contexts/DownloadJobsContext'
-import { summarize, targetStatus } from './runStatus'
+import { runningCount, summarize, targetStatus, unverifiedCount } from './runStatus'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }
@@ -122,6 +122,63 @@ describe('targetStatus', () => {
 
   it('never claims an unprobed unknown row landed', () => {
     expect(status(target({ media: 'unknown' }), tree([node('Lecture 1', true)]))).toBe('in-flight')
+  })
+})
+
+describe('runningCount', () => {
+  it('counts only rows with a job actually running', () => {
+    const targets = [target(), target({ ref: 'r2', name: 'Lecture 2' })]
+    const jobs = groupJobsByRef([
+      job({ id: 'a', status: 'running' }),
+      job({ id: 'b', ref: 'r2', lecture: 'Lecture 2', status: 'done' }),
+    ])
+    expect(runningCount(targets, jobs)).toBe(1)
+  })
+
+  it('counts a row with no evidence nowhere — that is the fallback that used to wedge', () => {
+    expect(runningCount([target()], NO_JOBS)).toBe(0)
+  })
+
+  it('counts a split row once, however many of its clips are running', () => {
+    const jobs = groupJobsByRef([
+      job({ id: 'a', lecture: 'Lecture 1.1' }),
+      job({ id: 'b', lecture: 'Lecture 1.2' }),
+    ])
+    expect(runningCount([target()], jobs)).toBe(1)
+  })
+})
+
+describe('unverifiedCount', () => {
+  const count = (targets: RunTarget[], courses: Course[], jobs = NO_JOBS) =>
+    unverifiedCount(targets, courses, 'Algebra', jobs)
+
+  it('counts a queued row with no job left and nothing in the tree', () => {
+    expect(count([target()], tree([]))).toBe(1)
+  })
+
+  it('does not count a row the tree holds, under either split name', () => {
+    expect(count([target()], tree([node('Lecture 1', true)]))).toBe(0)
+    expect(count([target()], tree([node('Lecture 1.2', true)]))).toBe(0)
+  })
+
+  it('does not count a row that still has a job — that one is genuinely in flight', () => {
+    const jobs = groupJobsByRef([job({ id: 'a' })])
+    expect(count([target()], tree([]), jobs)).toBe(0)
+  })
+
+  it('does not count a row whose failure is on record', () => {
+    const jobs = groupJobsByRef([job({ id: 'a', status: 'error' })])
+    expect(count([target()], tree([]), jobs)).toBe(0)
+  })
+
+  it('only queued rows can go unaccounted for; the queue never reached the rest', () => {
+    const targets = [
+      target({ ref: 'r1', disposition: 'pending' }),
+      target({ ref: 'r2', name: 'Lecture 2', disposition: 'skipped' }),
+      target({ ref: 'r3', name: 'Lecture 3', disposition: 'queue-failed' }),
+      target({ ref: 'r4', name: 'Lecture 4', disposition: 'unsupported' }),
+    ]
+    expect(count(targets, tree([]))).toBe(0)
   })
 })
 

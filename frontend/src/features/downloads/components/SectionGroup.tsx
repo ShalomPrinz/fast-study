@@ -22,7 +22,7 @@ import {
 } from '@/features/downloads/contexts/DownloadsSessionContext'
 import { useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
-import { summarize, targetStatus } from '@/features/downloads/utils/runStatus'
+import { runningCount, summarize, unverifiedCount } from '@/features/downloads/utils/runStatus'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 
@@ -154,15 +154,17 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     }
   }
 
-  // Queueing ends long before the downloads do, so the header keeps ticking on the targets whose
-  // outcome is still open — neither on disk nor holding a failed job.
-  const active = targets.filter(
-    (t) => targetStatus(t, courses, course, jobsByRef) === 'in-flight',
-  ).length
+  // Queueing ends long before the downloads do, so the header keeps ticking on the rows whose jobs
+  // are still running. A running job is the whole signal, exactly as it is for a single row's own
+  // button: it cannot outlive the work, so the section always frees itself.
+  const active = runningCount(targets, jobsByRef)
   // The queue is the server's, so `busy` is its status — still OR'd with the live jobs, which
   // outlive the queue itself.
   const queueing = run?.status === 'running' || run?.status === 'paused'
   const busy = queueing || active > 0
+  // Rows a stopped run can no longer account for. They no longer hold the section busy, but the
+  // summary would silently omit them, so the section says how many and why.
+  const stalled = queueing ? 0 : unverifiedCount(targets, courses, course, jobsByRef)
 
   return (
     <div className="recordings-section">
@@ -192,6 +194,13 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
           {busy ? 'Downloading…' : '⭳ Download all'}
         </button>
       </div>
+
+      {stalled > 0 && (
+        <div className="recordings-section-stalled">
+          Couldn&apos;t confirm {stalled} {stalled === 1 ? 'download' : 'downloads'} — the lecture
+          may have been deleted or renamed since, or the file saved under a different name.
+        </div>
+      )}
 
       {items.map((item) => {
         const expand: ExpandControl | undefined = item.expandable

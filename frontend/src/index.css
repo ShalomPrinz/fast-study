@@ -1694,6 +1694,16 @@ body,
   cursor: not-allowed;
 }
 
+/* Not an error — the run simply can't account for these rows, and nothing here can resolve them. */
+.recordings-section-stalled {
+  padding: 7px 10px;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  background: #fffbeb;
+  font-size: 12px;
+  color: #92400e;
+}
+
 .recording-row {
   display: flex;
   align-items: center;

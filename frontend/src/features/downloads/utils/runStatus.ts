@@ -42,6 +42,34 @@ export function targetStatus(
   return 'in-flight'
 }
 
+// Targets actually downloading right now. Positive evidence only — a job of theirs is running —
+// which is the same rule a single row's own button uses, and the reason the section can never be
+// held busy by a row nothing is working on. `targetStatus`'s "no evidence yet" fallback deliberately
+// has no part in this: it is an honest answer for the summary, but as a busy signal it never expires.
+export function runningCount(targets: readonly RunTarget[], jobsByRef: JobsByRef): number {
+  return targets.filter((t) => jobsForTarget(jobsByRef, t).some((j) => j.status === 'running'))
+    .length
+}
+
+// Targets the run can no longer say anything about: it triggered them, no job is left to speak for
+// them, and nothing under their name is in the tree. The causes are all outside the run — the
+// lecture was deleted or renamed, the name desynced from disk, or the tree is unreachable — so the
+// section says so rather than counting them as downloaded or failed. Only meaningful once the run
+// has stopped; while it runs this is just the window before the evidence arrives.
+export function unverifiedCount(
+  targets: readonly RunTarget[],
+  courses: Course[],
+  course: string,
+  jobsByRef: JobsByRef,
+): number {
+  return targets.filter(
+    (t) =>
+      t.disposition === 'queued' &&
+      jobsForTarget(jobsByRef, t).length === 0 &&
+      !targetLanded(t, courses, course),
+  ).length
+}
+
 // The section header's line. In-flight and not-yet-reached targets are counted nowhere — the header
 // shows the queue's own progress before it falls through to this.
 export function summarize(

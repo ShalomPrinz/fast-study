@@ -297,12 +297,26 @@ right in the window after the POST where the browser's `/jobs` snapshot has not 
 The line is therefore live: retrying a failed row from its own button improves it, and deleting a lecture
 folder with the page open changes it too.
 
-Three limits follow from deriving with no memory:
+**Busy is positive evidence, never the fallback.** The derivation's last branch — absence of evidence reads
+as "still going" — is honest for a summary but has no expiry, so it must not decide whether the section is
+busy: a `queued` row that permanently loses both its sources would hold "Download all" disabled forever, and
+that button is the only thing that could replace the run. `runningCount` is therefore its own rule — a target
+with a `running` job — which is exactly what a single row's own button uses (`rowStatus(jobs) === 'running'`,
+`RecordingRow.tsx`), and why the single-download path never had this failure mode. A running job cannot
+outlive the work, so the section always frees itself. It still covers the tail after the queue finishes,
+because the jobs are what outlive the queue.
 
-- Deleting a downloaded lecture flips its target back to `in-flight` permanently — the tree no longer holds
-  it and its `done` job was evicted long ago. The section header stays stuck on that target and "Download
-  all" stays disabled until another run for that section replaces the record (a reload does not: the run is
-  the server's).
+**Unverified rows.** `unverifiedCount` names the set the run can no longer account for (`queued`, no jobs at
+all, not in the tree), meaningful only once the run has stopped. They no longer hold the section busy, but
+`summarize` counts them nowhere, so a 4-row section would silently read "3 downloaded". Instead the section
+renders a warning line below the header saying how many and why — the causes are all outside the run and
+unguessable from here: the lecture was deleted or renamed after landing, the name the run holds desynced
+from the one on disk, or the tree is briefly unreachable (`CourseTreeContext` publishes an empty tree on
+failure, which flips every landed row at once). There is no action attached because none of them is fixable
+from this page.
+
+Two limits follow from deriving with no memory:
+
 - For one SSE round-trip after a retry POST, the just-superseded `error` job is still in the browser's
   snapshot, so the target flickers through `failed` before the fresh `running` job arrives.
 - A half-failed zoom pair reads as `downloaded`: with no job running, the `.1` clip on disk satisfies
@@ -337,8 +351,9 @@ recording the verdict is also the only thing that carries the 422's reason out o
 row and its column.
 
 The header renders three states in order: `Downloading {at}/{total}…` while the run is `running` or `paused`,
-else `Downloading n more…` for the targets still `in-flight`, else the derived summary (shown only once the
-section has a run at all). "Download all" stays disabled through the first two. The bulk run never toasts per
+else `Downloading n more…` for the targets with a running job, else the derived summary (shown only once the
+section has a run at all). "Download all" stays disabled through the first two, and the unverified warning
+renders below the header independently of which of the three is showing. The bulk run never toasts per
 item itself — a job failure toasts once from the jobs provider.
 
 A run that ends at `reconnect` raises the page's "BIU session expired" hint, and the provider — not the
