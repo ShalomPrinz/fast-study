@@ -3,6 +3,7 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { lectureRoute } from '@/shared/utils/url'
 import type { InFlightEntry } from '@/types'
 import '@/styles/sidebar-tree.css'
+import './RunnerPipelineRow.css'
 
 function RunnerInactive({ onClick }: { onClick: () => void }) {
   return (
