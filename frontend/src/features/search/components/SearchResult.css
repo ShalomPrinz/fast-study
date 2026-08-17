@@ -1,0 +1,44 @@
+.search-result {
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+/* The whole header row is the open-PDF control — one tab stop, one click target. */
+.search-result-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.search-result-head:hover:enabled {
+  color: var(--accent);
+}
+
+.search-result-head:hover:enabled .search-result-kind {
+  color: var(--accent);
+}
+
+.search-result-head:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.search-result-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.search-result-kind {
+  font-size: 11px;
+  color: var(--text-muted);
+}
