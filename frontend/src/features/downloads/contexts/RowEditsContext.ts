@@ -28,6 +28,12 @@ export function useRowEdits(): Record<string, RowEdit> {
   return edits
 }
 
+export function useRowEditsDispatch(): RowEditsDispatch {
+  const dispatch = useContext(RowEditsDispatchContext)
+  if (!dispatch) throw new Error('useRowEditsDispatch must be used within a <DownloadsView>')
+  return dispatch
+}
+
 interface Resolved {
   kind: Kind
   suggestion: string
@@ -50,8 +56,7 @@ export function resolveRow(
 }
 
 export function useRowEdit(item: Item, edit: RowEdit | undefined, course: string) {
-  const dispatch = useContext(RowEditsDispatchContext)
-  if (!dispatch) throw new Error('useRowEdit must be used within a <DownloadsView>')
+  const dispatch = useRowEditsDispatch()
   const { courses } = useCourseTreeContext()
   return {
     ...resolveRow(item, edit, courses, course),

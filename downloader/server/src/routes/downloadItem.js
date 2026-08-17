@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { downloaders } from '../downloaders/index.js';
-import { isSafeName, validateKind } from '../validate.js';
+import { storedName, validateKind } from '../validate.js';
 import { resolve, resolved } from '../services/autodl.js';
 import { startJob } from './download.js';
 
@@ -59,16 +59,21 @@ function makeReresolve({ ref, course, name, kind }) {
  * below and the section-run driver in `runs.js`) branch on that status.
  * `only`/`forceCapture` are auto's, passed through untouched: a per-clip retry sends
  * `only:true` with a zoom split name, which only auto's `only` branch resolves correctly.
- * @returns {Promise<{status: number, body: object}>} 200 → `{media, jobIds}`
+ * Names are canonicalized here, so `renames` reports the row whose spelling the server rewrote
+ * (empty for the section-run driver, whose targets are already canonical).
+ * @returns {Promise<{status: number, body: object}>} 200 → `{media, jobIds, renames}`
  */
 export async function downloadItem({
   ref,
-  course,
-  name,
+  course: rawCourse,
+  name: rawName,
   kind,
   only = false,
   forceCapture = false,
 }) {
+  const course = storedName(rawCourse);
+  const name = storedName(rawName);
+  const renames = name === rawName ? [] : [{ ref, name }];
   const { status, body } = await resolve({ ref, course, name, kind, only, forceCapture });
   if (!resolved(status)) {
     return { status: status || 502, body: body ?? { error: 'auto-downloader unreachable' } };
@@ -80,24 +85,26 @@ export async function downloadItem({
     return { status: 502, body: { error: 'auto returned no usable target' } };
   }
 
+  // The job's lecture is the stored spelling; a zoom split's `.1`/`.2` can push a long base past
+  // the length budget. `reresolve` keeps auto's own name, which is the key into its replay cache.
   const jobIds = runs.map(({ downloader, input }, i) =>
     startJob(downloader, input, {
       course,
-      lecture: targets[i].name,
+      lecture: storedName(targets[i].name),
       kind,
       ref,
       fromCache: targets[i].fromCache === true,
       reresolve: makeReresolve({ ref, course, name: targets[i].name, kind }),
     }),
   );
-  return { status: 200, body: { media: body.media, jobIds } };
+  return { status: 200, body: { media: body.media, jobIds, renames } };
 }
 
 router.post('/download-item', async (req, res) => {
   const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body ?? {};
   if (typeof ref !== 'string' || !ref) return res.status(400).json({ error: 'valid ref required' });
-  if (!isSafeName(course) || !isSafeName(name)) {
-    return res.status(400).json({ error: 'course and name are required' });
+  if (!storedName(course) || !storedName(name)) {
+    return res.status(400).json({ error: 'course and name with a legal character are required' });
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);

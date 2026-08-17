@@ -108,11 +108,20 @@ and `popup.js::suggestLectureName` ↔ `nextName.ts`. The server adds `pending` 
 client-side queue only ever recorded a row it had already got through, while a run holds its whole
 queue from the start.
 
+`name` is **canonicalized on arrival** by `validate.js::storedName`, which ports
+`database/fs/paths.py::safe_name` (the authority — change one, change the other). The database
+rewrites a name on its way to disk (`Lecture: 3` → `Lecture 3`), so a run that kept the submitted
+spelling would compare forever against a tree holding the stored one. The run's targets, job
+titles and PUTs therefore all carry the stored spelling, and `POST /download-section` answers
+`renames: [{ ref, name }]` — one entry per row the server rewrote, `[]` when nothing changed — so
+the caller can re-label its rows. A name `storedName` rejects — traversal, or nothing legal left
+after the rewrite — is a 400, not a run. `POST /download-item` reports the same `renames` for its single row.
+
 ## Endpoints
 
 | Method + path            | Body → answer                                                      |
 | ------------------------ | ------------------------------------------------------------------ |
-| `POST /download-section` | `{sectionId, course, targets}` → `{runId}` — the section's active run, or a new one driven in the background |
+| `POST /download-section` | `{sectionId, course, targets}` → `{runId, renames}` — the section's active run, or a new one driven in the background |
 | `POST /runs/:id/resume`  | `{skip?}` → `{}` (404 unknown, 409 not parked)                     |
 | `POST /runs/:id/cancel`  | → `{}` (404 unknown)                                                |
 | `GET  /runs`             | `{runs}` — every current run, one per section                       |

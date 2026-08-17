@@ -114,6 +114,14 @@ the server, so a name typed after that is not picked up by the run already in fl
 run resolves the `unknown` rows it touches — reported once per ref, since every `run:change` ping re-reads
 the same targets.
 
+**The server owns the on-disk spelling.** Both submit endpoints canonicalize every name they are given
+(`Lecture: 3` → `Lecture 3` — `:` is illegal on NTFS) and answer with `renames: [{ ref, name }]` for the rows
+they changed, `[]` otherwise; the answer comes back before any file lands, since both endpoints only enqueue.
+`applyRenames` (`utils/renames.ts`) writes each canonical name back through `setName` and warns once — one
+toast per submission, never one per row. The stored name is therefore the on-disk one, which is what lets the
+green row, the bulk skip and `targetLanded` match at all; there is no client-side sanitizing and no
+normalizing at comparison time, which would only hide the desync.
+
 `hasResource(item, name, kind, courses, course)` is the single already-downloaded rule, so the green row
 and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks
 what the media implies — `video` → `video.mp4` exists, `material` → `materialsOf(...)` is non-empty. A
@@ -155,7 +163,7 @@ prompt don't toast — they steer the UI elsewhere. A failure _after_ the start 
 
 ## Download progress
 
-`POST /download-item` (on the downloader server) returns `{ media, jobIds }` — a 200 means queued by
+`POST /download-item` (on the downloader server) returns `{ media, jobIds, renames }` — a 200 means queued by
 construction (every failure to queue is an error status), `media` is what the file turned out to be, which
 resolves an `unknown` row's column, and the curl/yt-dlp job runs on in the background. The row does not
 route by `jobIds`: every spawned job is stamped with the row's `ref`, so the row re-finds its jobs in the
@@ -329,7 +337,8 @@ auto-expands. Each leaf is resolved into a `RunTarget` **at submit**: the name a
 (`resolveRow`), plus the two verdicts this page owns because they read the live course tree — `skipped` for
 a row already on disk (`hasResource`, the same rule that tints the row green, so the two can never disagree)
 and `unsupported` for a row a probe already condemned. Everything else goes over as `pending`. Starting a run
-replaces whatever run that section had.
+replaces whatever run that section had. The POST answers `{ runId, renames }`; the run itself is read back off
+`/runs`, so `startSectionRun` returns only the renames (above).
 
 **Two costs of the run being server-owned**, both accepted: a name typed *while the queue runs* is no longer
 picked up when that row's turn arrives — the server got every name up front — and a row downloaded by

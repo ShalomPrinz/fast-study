@@ -13,7 +13,11 @@ import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import type { ExpandControl } from './RecordingRow'
 import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
-import { resolveRow, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
+import {
+  resolveRow,
+  useRowEdits,
+  useRowEditsDispatch,
+} from '@/features/downloads/contexts/RowEditsContext'
 import type { ExpandState } from '@/features/downloads/contexts/DownloadsSessionContext'
 import {
   IDLE_EXPAND,
@@ -24,6 +28,7 @@ import { useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
 import { runningCount, summarize, unverifiedCount } from '@/features/downloads/utils/runStatus'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
+import { applyRenames } from '@/features/downloads/utils/renames'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 
 interface Props {
@@ -44,6 +49,9 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   const jobsByRef = useJobsByRef()
   const resolveMedia = useResolveMedia()
   const edits = useRowEdits()
+  // The server's canonical spelling replaces each renamed row's name, so the skip rule and the run's
+  // landed check compare against disk.
+  const { setName } = useRowEditsDispatch()
   const { expansions } = useDownloadsSession()
   const { patchExpansion } = useDownloadsActions()
   const id = section.id
@@ -106,7 +114,8 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     const targets = buildTargets()
     if (!targets.length) return
     try {
-      await startSectionRun({ sectionId: id, course, targets })
+      const renames = await startSectionRun({ sectionId: id, course, targets })
+      applyRenames(renames, targets, setName)
     } catch (err) {
       toastDownloadError(section.title, err)
     }

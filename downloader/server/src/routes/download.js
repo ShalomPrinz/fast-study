@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { downloaders, runDownloadJob } from '../downloaders/index.js';
 import { YTDLP_HOST_RE } from '../downloaders/ytdlp.js';
-import { isSafeName, validateKind } from '../validate.js';
+import { storedName, validateKind } from '../validate.js';
 import { createJob } from '../jobs.js';
 
 const router = Router();
@@ -29,6 +29,13 @@ export function startJob(
   return jobId;
 }
 
+// Both names in the spelling the database stores, or null when either can't become one — so a job
+// started here is titled and written exactly like disk, same as `/download-item`.
+function storedNames(course, lecture) {
+  const stored = { course: storedName(course), lecture: storedName(lecture) };
+  return stored.course && stored.lecture ? stored : null;
+}
+
 // The extension reads `status`/`target` verbatim, so the three public routes keep answering
 // with them alongside the job id.
 function startAndAnswer(res, downloader, input, { course, lecture, kind }) {
@@ -41,13 +48,16 @@ router.post('/download', (req, res) => {
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
     return res.status(400).json({ error: 'valid url required' });
   }
-  if (!isSafeName(course) || !isSafeName(lecture)) {
-    return res.status(400).json({ error: 'course and lecture are required' });
+  const names = storedNames(course, lecture);
+  if (!names) {
+    return res
+      .status(400)
+      .json({ error: 'course and lecture with a legal character are required' });
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  startAndAnswer(res, downloaders.curl, { url, headers }, { course, lecture, kind });
+  startAndAnswer(res, downloaders.curl, { url, headers }, { ...names, kind });
 });
 
 // Plain URL (no header replay) added to the lecture's materials.
@@ -56,13 +66,16 @@ router.post('/download-file', (req, res) => {
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
     return res.status(400).json({ error: 'valid url required' });
   }
-  if (!isSafeName(course) || !isSafeName(lecture)) {
-    return res.status(400).json({ error: 'course and lecture are required' });
+  const names = storedNames(course, lecture);
+  if (!names) {
+    return res
+      .status(400)
+      .json({ error: 'course and lecture with a legal character are required' });
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  startAndAnswer(res, downloaders.fetch, { url }, { course, lecture, kind });
+  startAndAnswer(res, downloaders.fetch, { url }, { ...names, kind });
 });
 
 router.post('/download-youtube', (req, res) => {
@@ -74,13 +87,16 @@ router.post('/download-youtube', (req, res) => {
   if (!host || !YTDLP_HOST_RE.test(host)) {
     return res.status(400).json({ error: 'valid youtube or google drive url required' });
   }
-  if (!isSafeName(course) || !isSafeName(lecture)) {
-    return res.status(400).json({ error: 'course and lecture are required' });
+  const names = storedNames(course, lecture);
+  if (!names) {
+    return res
+      .status(400)
+      .json({ error: 'course and lecture with a legal character are required' });
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
 
-  startAndAnswer(res, downloaders.ytdlp, { url }, { course, lecture, kind });
+  startAndAnswer(res, downloaders.ytdlp, { url }, { ...names, kind });
 });
 
 export default router;

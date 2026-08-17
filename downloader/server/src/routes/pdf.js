@@ -2,16 +2,21 @@ import { Router } from 'express';
 import express from 'express';
 import { uploadPdf } from '../services/database.js';
 import { emitLog, formatBytes } from '../progress.js';
-import { isSafeName, validateKind } from '../validate.js';
+import { storedName, validateKind } from '../validate.js';
 
 const router = Router();
 
 // The popup fetches the PDF itself (its session cookies authenticate) and streams
 // the raw bytes here; express.raw collects them into a Buffer.
 router.post('/upload-pdf', express.raw({ type: '*/*', limit: '1gb' }), async (req, res) => {
-  const { course = '', lecture = '', kind = 'lecture' } = req.query;
-  if (!isSafeName(course) || !isSafeName(lecture)) {
-    return res.status(400).json({ error: 'course and lecture are required' });
+  const { course: rawCourse = '', lecture: rawLecture = '', kind = 'lecture' } = req.query;
+  // The stored spelling from here on, so the log line and the PUT agree with disk.
+  const course = storedName(rawCourse);
+  const lecture = storedName(rawLecture);
+  if (!course || !lecture) {
+    return res
+      .status(400)
+      .json({ error: 'course and lecture with a legal character are required' });
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);

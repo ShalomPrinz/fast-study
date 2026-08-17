@@ -10,6 +10,13 @@ const downloadServer = createClient(
   'downloader server',
 )
 
+// A name the server rewrote to be legal on disk, keyed by the submitted row's `ref`. Only the rows
+// it actually changed are listed, so an untouched submission answers with [].
+export interface Rename {
+  ref: string
+  name: string
+}
+
 // Resolving means queued — every failure leaves as an error (401/409/422/500), forwarded verbatim
 // from the auto-downloader, hence the shared reconnect-aware POST. `media` is what the item turned
 // out to be: the answer that resolves an 'unknown' row without a re-list. `only` re-triggers a
@@ -20,8 +27,8 @@ export async function downloadItem(args: {
   name: string
   kind: Kind
   only?: boolean
-}): Promise<{ media: ProbedMedia; jobIds: string[] }> {
-  return postReconnectAware<{ media: ProbedMedia; jobIds: string[] }>(
+}): Promise<{ media: ProbedMedia; jobIds: string[]; renames?: Rename[] }> {
+  return postReconnectAware<{ media: ProbedMedia; jobIds: string[]; renames?: Rename[] }>(
     downloadServer,
     '/download-item',
     args,
@@ -114,16 +121,18 @@ export interface SectionRun {
 
 // Hand the whole section queue to the server, which drives it and owns its progress from here on.
 // Replaces whatever run that section had. Targets arrive with `skipped`/`unsupported` already
-// stamped: that rule reads the live course tree, which only the page has.
+// stamped: that rule reads the live course tree, which only the page has. Answers with the names it
+// rewrote — the run itself is read back off `/runs`, so the run id is of no use here.
 export async function startSectionRun(args: {
   sectionId: string
   course: string
   targets: RunTarget[]
-}): Promise<string> {
-  const { runId } = await downloadServer.post<{ runId: string }>('/download-section', {
-    json: args,
-  })
-  return runId
+}): Promise<Rename[]> {
+  const { renames } = await downloadServer.post<{ runId: string; renames?: Rename[] }>(
+    '/download-section',
+    { json: args },
+  )
+  return renames ?? []
 }
 
 // Continue a run parked at a passcode gate; `skip` gives up on the gated row and moves to the next.

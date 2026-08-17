@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { cancelRun, getRun, listRuns, resumeRun, startRun } from '../runs.js';
-import { isSafeName, validateKind } from '../validate.js';
+import { storedName, validateKind } from '../validate.js';
 
 const router = Router();
 
@@ -8,7 +8,7 @@ const router = Router();
 // other). Only `disposition` may be absent: the caller sets it just for a row it already decided.
 function targetError(target) {
   if (typeof target?.ref !== 'string' || !target.ref) return 'each target needs a valid ref';
-  if (!isSafeName(target.name)) return 'each target needs a name';
+  if (!storedName(target.name)) return 'each target needs a name with a legal character';
   return validateKind(target.kind)?.error ?? null;
 }
 
@@ -19,7 +19,10 @@ router.post('/download-section', (req, res) => {
   if (typeof sectionId !== 'string' || !sectionId) {
     return res.status(400).json({ error: 'valid sectionId required' });
   }
-  if (!isSafeName(course)) return res.status(400).json({ error: 'course is required' });
+  const storedCourse = storedName(course);
+  if (!storedCourse) {
+    return res.status(400).json({ error: 'course with a legal character is required' });
+  }
   if (!Array.isArray(targets) || !targets.length) {
     return res.status(400).json({ error: 'targets must be a non-empty array' });
   }
@@ -27,7 +30,16 @@ router.post('/download-section', (req, res) => {
     const error = targetError(target);
     if (error) return res.status(400).json({ error });
   }
-  res.json({ runId: startRun({ sectionId, course, targets }) });
+  // The run carries the stored spelling from here on, so its targets, job titles and PUTs all
+  // agree with disk; `renames` tells the caller which rows it must re-label.
+  const canonical = targets.map((target) => ({ ...target, name: storedName(target.name) }));
+  const renames = canonical
+    .filter((target, i) => target.name !== targets[i].name)
+    .map(({ ref, name }) => ({ ref, name }));
+  res.json({
+    runId: startRun({ sectionId, course: storedCourse, targets: canonical }),
+    renames,
+  });
 });
 
 // Continue a run parked at a passcode gate. The passcode itself is saved through auto's

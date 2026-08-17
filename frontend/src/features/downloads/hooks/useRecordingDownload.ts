@@ -11,7 +11,9 @@ import { downloadItem } from '@/features/downloads/services/downloadServer'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { PasscodePromptProps } from '@/features/downloads/components/PasscodePrompt'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
+import { applyRenames } from '@/features/downloads/utils/renames'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
+import { useRowEditsDispatch } from '@/features/downloads/contexts/RowEditsContext'
 
 type Result = 'fail' | null
 
@@ -35,6 +37,8 @@ export function useRecordingDownload({
   // What this download proves the file to be — one of the two moments an 'unknown' row learns its
   // type (the bulk queue is the other), reported upward so the answer outlives this row.
   const resolveMedia = useResolveMedia()
+  // The server's canonical spelling replaces the row's name, so the row compares against disk.
+  const { setName } = useRowEditsDispatch()
   const [pending, setPending] = useState(false)
   const [retryingId, setRetryingId] = useState<string | null>(null)
   const [result, setResult] = useState<Result>(null)
@@ -58,8 +62,9 @@ export function useRecordingDownload({
     resume: () => Promise<void>,
   ) {
     try {
-      const { media } = await downloadItem(args)
+      const { media, renames } = await downloadItem(args)
       resolveMedia(args.ref, media)
+      applyRenames(renames, [args], setName)
     } catch (err) {
       // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.
       if (isReconnectError(err)) onReconnect()

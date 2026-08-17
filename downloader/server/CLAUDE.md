@@ -38,8 +38,8 @@ the popup.
 | `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background                                        |
 | `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`                  |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId`                             |
-| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds}` (auto's 4xx forwarded verbatim) |
-| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId}`; drives that section's bulk queue in the background, or joins its active run (`docs/RUNS.md`) |
+| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim) |
+| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives that section's bulk queue in the background, or joins its active run (`docs/RUNS.md`) |
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                       |
 | `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                              |
 | `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition (`docs/JOBS.md`, `docs/RUNS.md`)                       |
@@ -71,6 +71,10 @@ appending `/materials` POST, `/tree` reshape, notify ping).
 - ESM only (`import`, never `require`).
 - Subprocesses via `execFile`/`spawn` with **argv arrays, never shell strings** — a
   captured header value must not be able to inject.
+- Every course/lecture name arriving at a route goes through `validate.js::storedName`, which
+  rejects traversal and then rewrites the rest into the spelling the database stores (a port of
+  `database/fs/paths.py::safe_name` — change one, change the other); `null` is a 400. What it
+  rewrote is reported back as `renames` by `/download-item` and `/download-section`.
 - Saved video is always `video.mp4` (`config.js`); PDFs are POSTed to the database's
   `/materials`, which allocates the name (`material.pdf`, `material.2.pdf`, …) — the server
   never names a material, so a lecture can hold several.
