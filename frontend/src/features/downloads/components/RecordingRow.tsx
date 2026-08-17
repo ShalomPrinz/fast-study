@@ -16,6 +16,8 @@ import {
 } from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 import '@/styles/source-row.css'
+import '@/features/downloads/DownloadsView.css'
+import './RecordingRow.css'
 
 // Driven by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {
