@@ -1,4 +1,5 @@
 import type { InlineEdit } from '@/types'
+import './InlineEditInput.css'
 
 interface Props {
   edit: InlineEdit

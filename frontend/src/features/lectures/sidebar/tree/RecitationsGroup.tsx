@@ -5,6 +5,7 @@ import { LectureListProvider } from './LectureListContext'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 import '@/styles/sidebar-tree.css'
+import './RecitationsGroup.css'
 
 // `expand` is owned by CourseGroup, so this stays open across a course collapse/re-expand.
 export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {

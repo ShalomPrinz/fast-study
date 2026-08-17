@@ -9,6 +9,7 @@ import Icon from '@/shared/components/Icon'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
+import './CourseHeader.css'
 
 // Reflects and mutates the expand state: toggle on click, open when adding a lecture.
 export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
