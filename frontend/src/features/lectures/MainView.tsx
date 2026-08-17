@@ -22,6 +22,7 @@ import Icon from '@/shared/components/Icon'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
 import '@/styles/file-row.css'
+import '@/styles/modal.css'
 
 interface RotateTarget {
   file: FileName

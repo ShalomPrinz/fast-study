@@ -9,6 +9,7 @@ import { useCourseOverview } from '@/features/course-overview/contexts/CourseOve
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
 import '@/styles/spinner.css'
 import '@/styles/file-row.css'
+import '@/styles/modal.css'
 
 export default function StepRow({ step }: { step: OverviewStep }) {
   const { course, files, status, generate } = useCourseOverview()

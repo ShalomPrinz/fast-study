@@ -1,6 +1,7 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import '@/styles/panel.css'
+import '@/styles/modal.css'
 import './ErrorBoundary.css'
 
 // Last-resort net for render errors: without it React unmounts the whole tree and leaves a blank
