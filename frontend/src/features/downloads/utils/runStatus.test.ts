@@ -2,7 +2,13 @@ import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
 import type { DownloadJob, RunTarget } from '../services/downloadServer'
 import { groupJobsByRef } from '../contexts/DownloadJobsContext'
-import { runningCount, summarize, targetStatus, unverifiedCount } from './runStatus'
+import {
+  notStartedCount,
+  runningCount,
+  summarize,
+  targetStatus,
+  unverifiedCount,
+} from './runStatus'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }
@@ -179,6 +185,26 @@ describe('unverifiedCount', () => {
       target({ ref: 'r4', name: 'Lecture 4', disposition: 'unsupported' }),
     ]
     expect(count(targets, tree([]))).toBe(0)
+  })
+})
+
+describe('notStartedCount', () => {
+  it('counts the rows a run that stopped early never reached', () => {
+    const targets = [
+      target({ ref: 'r1' }),
+      target({ ref: 'r2', name: 'Lecture 2', disposition: 'pending' }),
+      target({ ref: 'r3', name: 'Lecture 3', disposition: 'pending' }),
+    ]
+    expect(notStartedCount(targets)).toBe(2)
+  })
+
+  it('counts nothing for a run that walked its whole queue', () => {
+    const targets = [
+      target({ ref: 'r1', disposition: 'skipped' }),
+      target({ ref: 'r2', name: 'Lecture 2', disposition: 'unsupported' }),
+      target({ ref: 'r3', name: 'Lecture 3', disposition: 'queue-failed' }),
+    ]
+    expect(notStartedCount(targets)).toBe(0)
   })
 })
 

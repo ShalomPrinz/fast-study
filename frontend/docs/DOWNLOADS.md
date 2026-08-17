@@ -326,6 +326,13 @@ from the one on disk, or the tree is briefly unreachable (`CourseTreeContext` pu
 failure, which flips every landed row at once). There is no action attached because none of them is fixable
 from this page.
 
+**Rows the run never reached.** The driver decides every row it walks past, so a `pending` target left once
+the run has stopped is proof the run stopped short — `notStartedCount` is that count, and the section renders
+it as a second warning line. Without it a 401 at row 3 of 20 reads "2 downloaded", pixel-identical to a
+finished section with 17 rows silently untouched, and the `reconnect` toast that explained it is seconds gone.
+This one does carry an action, because the run's own status says why it stopped: reconnect and run the section
+again after a `reconnect`, run it again after a cancel.
+
 Two limits follow from deriving with no memory:
 
 - For one SSE round-trip after a retry POST, the just-superseded `error` job is still in the browser's
@@ -364,8 +371,9 @@ row and its column.
 
 The header renders three states in order: `Downloading {at}/{total}…` while the run is `running` or `paused`,
 else `Downloading n more…` for the targets with a running job, else the derived summary (shown only once the
-section has a run at all). "Download all" stays disabled through the first two, and the unverified warning
-renders below the header independently of which of the three is showing. The bulk run never toasts per
+section has a run at all). "Download all" stays disabled through the first two, and the two warning lines —
+never-reached rows, then unverified ones — render below the header independently of which of the three is
+showing. The bulk run never toasts per
 item itself — a job failure toasts once from the jobs provider.
 
 A run that ends at `reconnect` raises the page's "BIU session expired" hint, and the provider — not the

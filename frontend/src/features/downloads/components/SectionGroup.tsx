@@ -26,7 +26,12 @@ import {
 } from '@/features/downloads/contexts/DownloadsSessionContext'
 import { useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
-import { runningCount, summarize, unverifiedCount } from '@/features/downloads/utils/runStatus'
+import {
+  notStartedCount,
+  runningCount,
+  summarize,
+  unverifiedCount,
+} from '@/features/downloads/utils/runStatus'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
@@ -174,6 +179,15 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   // Rows a stopped run can no longer account for. They no longer hold the section busy, but the
   // summary would silently omit them, so the section says how many and why.
   const stalled = queueing ? 0 : unverifiedCount(targets, courses, course, jobsByRef)
+  // Rows the run stopped short of. The summary omits them too, so a run halted at row 3 of 20 would
+  // read exactly like a finished one — and unlike the unverified rows, this one has an action.
+  const notStarted = queueing ? 0 : notStartedCount(targets)
+  const stoppedBecause =
+    run?.status === 'reconnect'
+      ? 'the BIU session expired. Reconnect, then run the section again.'
+      : run?.status === 'cancelled'
+        ? 'the run was cancelled. Run the section again to pick them up.'
+        : 'the run stopped early. Run the section again to pick them up.'
 
   return (
     <div className="recordings-section">
@@ -203,6 +217,12 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
           {busy ? 'Downloading…' : '⭳ Download all'}
         </button>
       </div>
+
+      {notStarted > 0 && (
+        <div className="recordings-section-stalled">
+          {notStarted} {notStarted === 1 ? 'row' : 'rows'} never started — {stoppedBecause}
+        </div>
+      )}
 
       {stalled > 0 && (
         <div className="recordings-section-stalled">

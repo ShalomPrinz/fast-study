@@ -70,6 +70,12 @@ export function unverifiedCount(
   ).length
 }
 
+// Targets the queue never reached. A run that walks to the end decides every row, so a `pending` row
+// left once the run has stopped is proof it stopped early — a 401, a cancel, or an abandoned run.
+export function notStartedCount(targets: readonly RunTarget[]): number {
+  return targets.filter((t) => t.disposition === 'pending').length
+}
+
 // The section header's line. In-flight and not-yet-reached targets are counted nowhere — the header
 // shows the queue's own progress before it falls through to this.
 export function summarize(
