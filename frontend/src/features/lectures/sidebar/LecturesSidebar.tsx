@@ -4,6 +4,7 @@ import { PendingUploadProvider } from './PendingUploadModal'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import CourseGroup from './tree/CourseGroup'
 import ArchivedSection from './tree/ArchivedSection'
+import '@/styles/sidebar-tree.css'
 
 export default function LecturesSidebar() {
   return (

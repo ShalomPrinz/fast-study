@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { lectureRoute } from '@/shared/utils/url'
 import type { InFlightEntry } from '@/types'
+import '@/styles/sidebar-tree.css'
 
 function RunnerInactive({ onClick }: { onClick: () => void }) {
   return (

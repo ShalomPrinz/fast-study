@@ -2,6 +2,8 @@ import { useState } from 'react'
 import Icon from '@/shared/components/Icon'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import CourseGroup from './CourseGroup'
+import '@/styles/sidebar-tree.css'
+import './ArchivedSection.css'
 
 export default function ArchivedSection() {
   const { courses } = useCourseTreeContext()

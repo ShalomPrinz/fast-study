@@ -5,6 +5,7 @@ import ModeToggle from '@/shared/components/ModeToggle'
 import type { ModeConfig } from '@/shared/components/ModeToggle'
 import CoursesList from '@/features/course-overview/CoursesList'
 import LecturesSidebar from '@/features/lectures/sidebar/LecturesSidebar'
+import './Sidebar.css'
 
 // Order matters: it drives the ModeToggle segment order and its default (lectures).
 const MODES: Record<AppMode, ModeConfig> = {

@@ -1,0 +1,60 @@
+.sidebar-nav {
+  padding: 8px 0;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0; /* let the flex child shrink so overflow-y actually scrolls */
+}
+
+/* Make the per-course + button read as an archive action while Shift is held. */
+.course-archive-btn {
+  color: var(--accent);
+}
+
+.new-course-row {
+  padding: 6px 8px 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.new-course-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  color: var(--sidebar-muted);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.new-course-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-fg);
+  border-color: var(--accent);
+}
+
+/* Keep .course-add-btn below .course-archive-btn: CourseHeader puts both on one
+   button and they collide on color at equal specificity, so order decides. */
+.course-add-btn {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: var(--sidebar-muted);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.course-add-btn:hover {
+  background: var(--sidebar-hover);
+  color: var(--sidebar-fg);
+}
