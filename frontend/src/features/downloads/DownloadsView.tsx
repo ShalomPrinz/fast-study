@@ -7,7 +7,8 @@ import AuthPill from '@/features/downloads/components/AuthPill'
 import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
 import AddCourseRow from '@/features/downloads/components/AddCourseRow'
 import SectionGroup from '@/features/downloads/components/SectionGroup'
-import { groupSections } from '@/features/downloads/utils/sections'
+import PausedRunsBanner from '@/features/downloads/components/PausedRunsBanner'
+import { groupSections, sectionId } from '@/features/downloads/utils/sections'
 import { RowEditsDispatchContext, RowEditsStateContext } from './contexts/RowEditsContext'
 import {
   useDownloadsActions,
@@ -75,27 +76,34 @@ export default function DownloadsView() {
                     storageKey="fastStudyDownloadsMedia"
                     className="mode-toggle--downloads"
                   >
-                    {(media) => {
+                    {(media, selectMedia) => {
                       const sections = groupSections(items, media)
-                      if (!sections.length)
-                        return (
-                          !loading &&
-                          !error && <div className="recordings-status">{EMPTY_STATE[media]}</div>
-                        )
-                      return sections.map(([title, sectionItems]) => {
-                        // Course- and media-qualified: a bare title would hand a section another
-                        // course's bulk-run state, or the video side's to the materials side.
-                        const id = `${selected}:${media}:${title}`
-                        return (
-                          <SectionGroup
-                            key={id}
-                            section={{ id, title }}
-                            items={sectionItems}
+                      return (
+                        <>
+                          <PausedRunsBanner
                             course={selected}
-                            onReconnect={reconnectHint}
+                            media={media}
+                            onSelectMedia={selectMedia}
                           />
-                        )
-                      })
+                          {!sections.length
+                            ? !loading &&
+                              !error && (
+                                <div className="recordings-status">{EMPTY_STATE[media]}</div>
+                              )
+                            : sections.map(([title, sectionItems]) => {
+                                const id = sectionId(selected, media, title)
+                                return (
+                                  <SectionGroup
+                                    key={id}
+                                    section={{ id, title }}
+                                    items={sectionItems}
+                                    course={selected}
+                                    onReconnect={reconnectHint}
+                                  />
+                                )
+                              })}
+                        </>
+                      )
                     }}
                   </ModeToggle>
                 </RowEditsStateContext.Provider>

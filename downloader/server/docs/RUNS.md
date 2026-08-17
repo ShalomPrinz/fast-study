@@ -16,7 +16,9 @@ answering. Held here, the queue keeps triggering and the page is a view of it.
 ```
 
 - **`sectionId`** is the frontend's section identity, `${course}:${media}:${title}`.
-- **`at`** is the 1-based position the queue is on; `total` is `targets.length`.
+- **`at`** is the 1-based position the queue is on; `total` is `targets.length`. It is the queue's
+  position, not a count of work done: rows the queue only walked past (`skipped`, `unsupported`) are
+  behind it, so a section of two skips and one download reads `3/3` while that one download starts.
 - **`status`** is `running | paused | done | reconnect | cancelled`.
 - **`paused`** is `{ index, reason, name }` or null — `reason` is auto's passcode reason
   (`missing` | `incorrect`).

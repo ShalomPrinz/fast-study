@@ -10,7 +10,8 @@ interface Props<M extends string> {
   modes: Record<M, ModeConfig>
   storageKey: string
   className?: string
-  children?: (mode: M) => ReactNode
+  // `selectMode` lets a body switch segments itself — e.g. jumping to the section a run is stuck on.
+  children?: (mode: M, selectMode: (m: M) => void) => ReactNode
 }
 
 // A localStorage-persisted segmented switch. Segment order and the default mode both follow
@@ -48,7 +49,7 @@ export default function ModeToggle<M extends string>({
           </button>
         ))}
       </div>
-      {Body ? <Body /> : children?.(mode)}
+      {Body ? <Body /> : children?.(mode, selectMode)}
     </>
   )
 }

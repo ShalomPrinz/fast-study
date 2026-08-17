@@ -16,6 +16,7 @@ import { useDownloadsActions } from './DownloadsSessionContext'
 // `run:change` ping re-renders only the sections that have a run. It outlives the provider, so the
 // provider clears it on unmount — a stale snapshot would show a run that is no longer there.
 let runsBySection: ReadonlyMap<string, SectionRun> = new Map()
+let pausedRuns: readonly SectionRun[] = []
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void): () => void {
@@ -25,6 +26,13 @@ function subscribe(listener: () => void): () => void {
 
 function publish(snapshot: SectionRun[]) {
   runsBySection = new Map(snapshot.map((run) => [run.sectionId, run]))
+  const paused = snapshot.filter((run) => run.status === 'paused')
+  // Keep the previous array when the same runs are still parked: `useSyncExternalStore` compares
+  // snapshots by identity, and every ping decodes fresh objects, so a bare filter would re-render
+  // the banner on every progress frame anywhere on the page. Keyed by id alone, so it carries run
+  // identity only — a consumer reading a mutable field off it must widen this comparison first.
+  if (paused.length !== pausedRuns.length || paused.some((run, i) => run.id !== pausedRuns[i].id))
+    pausedRuns = paused
   for (const listener of listeners) listener()
 }
 
@@ -40,6 +48,14 @@ export function useSectionRun(sectionId: string): SectionRun | null {
     subscribe,
     useCallback(() => runsBySection.get(sectionId) ?? null, [sectionId]),
   )
+}
+
+// Every run parked at a passcode gate, whichever course or segment it belongs to — a paused run is
+// the one status waiting on the user, and its own `SectionGroup` may be off-screen or undiscovered.
+export function usePausedRuns(): readonly SectionRun[] {
+  if (!useContext(SectionRunsContext))
+    throw new Error('usePausedRuns must be used inside <SectionRunsProvider>')
+  return useSyncExternalStore(subscribe, () => pausedRuns)
 }
 
 // Reflects the downloader server's section runs and nothing more, the way `RunnerStatusContext`

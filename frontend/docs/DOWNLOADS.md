@@ -267,7 +267,9 @@ go through the same `sequencedRefresh` as the jobs reflection — the driver pin
 overlapping `GET /runs` can answer out of order, and an older reply landing after the terminal `done`
 snapshot would strand the section on "Downloading…" — `done` is the last frame a run emits. The key is
 the section's own identity `${course}:${media}:${title}` (the same string that keys the `SectionGroup`
-element) and the server holds one run per key. Both qualifiers matter: one Moodle heading usually holds both
+element), built and read back through `sectionId`/`parseSectionId` in `utils/sections.ts` so the two stay in
+step — parsing takes the first two colons as delimiters (a course name can't hold one, media is an enum) and
+everything after as the title. The server holds one run per key. Both qualifiers matter: one Moodle heading usually holds both
 a video and its slides, and a run outlives the course it started in.
 
 A run is `{ id, sectionId, course, targets, at, total, status, paused }`. `status` is
@@ -397,6 +399,25 @@ store stays there) and then `POST /runs/:id/resume`, which retries that same row
 abandons the rest of the queue, not just the gated row. The only run state left in `SectionGroup` is the
 save's own in-flight flag, which drives the prompt's busy state; a double submit is the server's to reject
 (409 on a run that is no longer parked), not a race the component guards.
+
+Because the prompt renders only inside its own `SectionGroup`, `PausedRunsBanner` sits above the sections and
+lists every paused run the store holds — `usePausedRuns` reads them off the same module store, handing out a
+cached array so an unchanged paused set doesn't re-render the banner on every progress ping. **The cache is
+keyed by run id only**: the same parked runs keep the previous array even as their records change underneath,
+so a consumer that reads more than `id`/`sectionId`/`course` off it (a re-parked `paused.index`, a `reason`
+flipping `missing`→`incorrect`) would be served the stale copy and must widen the comparison first.
+
+An entry is a button only when its section is in the open course but on **another** segment: clicking it
+calls the `ModeToggle` body's `selectMode` and the prompt mounts with the section. Everything else is plain
+text, because there is nowhere to jump — a run on the open segment already renders its own prompt just below,
+another course's rows were never discovered, and an id this page can't parse names no segment at all. The
+course is prefixed ("Course Y · Section X is waiting for a passcode") whenever the run belongs to a different
+course, including the unparseable case, where it is all the entry can say about where the run is.
+
+The banner is mounted **inside the open course panel**, under the `ModeToggle` body that owns the segment it
+switches to. So it is scoped to `/downloads` with a course open: closing the panel or navigating away hides
+it, and a run parked in another course is surfaced only while some course is open. That is the same reach the
+sections themselves have, and a page-wide notice would need the paused set lifted above the route.
 
 In a single row, the passcode prompt and the overwrite confirm can never co-render — the confirm is already
 dismissed by the time `download()` can hit the 409. The modal's own `savingPasscode` busy state drives its

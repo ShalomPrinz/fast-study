@@ -96,7 +96,8 @@ warns and passes undecoded segments through to the not-found path above.
 className?, children? })`. It owns the mode as component state persisted in `localStorage` under
 `storageKey`; insertion order of `modes` is both the segment order and the default, and an unknown
 stored key falls back to that default. A mode either names a zero-prop `Component` or the caller passes
-`children(mode)` when it needs the selected value rather than a body.
+`children(mode, selectMode)` when it needs the selected value rather than a body — `selectMode` lets the body
+switch segments itself, which is how the downloads passcode banner jumps to a stuck section.
 
 `Sidebar` uses the `Component` form with `Record<AppMode, …>` and key `fastStudyMode`; mode bodies take
 no props and each derives its own selection from the route. `DownloadsView` uses the `children` form

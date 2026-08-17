@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Item, Media, ResolvedMedia } from '../services/autoDownloader'
-import { groupSections } from './sections'
+import { groupSections, parseSectionId, sectionId } from './sections'
 
 function item(
   ref: string,
@@ -63,5 +63,40 @@ describe('groupSections', () => {
   it('returns nothing when the active side is empty', () => {
     expect(groupSections([item('a', 'Week 1')], 'material')).toEqual([])
     expect(groupSections([], 'video')).toEqual([])
+  })
+})
+
+describe('parseSectionId', () => {
+  it('round-trips what sectionId builds', () => {
+    expect(parseSectionId(sectionId('Algebra', 'video', 'Week 1'))).toEqual({
+      course: 'Algebra',
+      media: 'video',
+      title: 'Week 1',
+    })
+  })
+
+  it('keeps colons in the title', () => {
+    expect(parseSectionId(sectionId('Algebra', 'material', 'Week 1: intro: part 2'))).toEqual({
+      course: 'Algebra',
+      media: 'material',
+      title: 'Week 1: intro: part 2',
+    })
+  })
+
+  it('handles every media', () => {
+    for (const media of ['video', 'material', 'unknown'] as Media[])
+      expect(parseSectionId(sectionId('C', media, 'S'))?.media).toBe(media)
+  })
+
+  it('rejects an unknown media segment', () => {
+    expect(parseSectionId('Algebra:audio:Week 1')).toBeNull()
+  })
+
+  it('rejects ids missing a part', () => {
+    expect(parseSectionId('Algebra:video')).toBeNull()
+    expect(parseSectionId('Algebra')).toBeNull()
+    expect(parseSectionId('')).toBeNull()
+    expect(parseSectionId(':video:Week 1')).toBeNull()
+    expect(parseSectionId('Algebra:video:')).toBeNull()
   })
 })
