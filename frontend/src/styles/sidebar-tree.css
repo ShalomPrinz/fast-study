@@ -5,8 +5,11 @@
   min-height: 0; /* let the flex child shrink so overflow-y actually scrolls */
 }
 
-/* Make the per-course + button read as an archive action while Shift is held. */
-.course-archive-btn {
+/* Make the per-course + button read as an archive action while Shift is held.
+   CourseHeader puts both classes on one button, so these must out-specify
+   .course-add-btn and its :hover rather than rely on source order. */
+.course-add-btn.course-archive-btn,
+.course-add-btn.course-archive-btn:hover {
   color: var(--accent);
 }
 
@@ -36,8 +39,6 @@
   border-color: var(--accent);
 }
 
-/* Keep .course-add-btn below .course-archive-btn: CourseHeader puts both on one
-   button and they collide on color at equal specificity, so order decides. */
 .course-add-btn {
   flex-shrink: 0;
   width: 22px;
