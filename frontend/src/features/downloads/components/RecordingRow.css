@@ -111,3 +111,41 @@
   background: #e7f7e6;
   border-color: #b6e0b0;
 }
+
+/* The main row line plus its progress block stacked beneath it. */
+.recording-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recording-download-btn {
+  flex-shrink: 0;
+  min-width: 110px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* .recording-spinner lives here rather than beside RecordingJobList, which also renders it and
+   imports this sheet; --dark overrides it on the same element, so the pair stays base-first. */
+.recording-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: recording-spin 0.7s linear infinite;
+}
+
+/* Caret spinner sits on the light row background, not the accent button. */
+.recording-spinner--dark {
+  border-color: rgba(0, 0, 0, 0.2);
+  border-top-color: var(--text-muted);
+}
+
+@keyframes recording-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
