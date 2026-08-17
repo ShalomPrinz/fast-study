@@ -20,6 +20,7 @@ import PdfViewer from '@/features/lectures/components/PdfViewer'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
+import '@/styles/spinner.css'
 
 export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()

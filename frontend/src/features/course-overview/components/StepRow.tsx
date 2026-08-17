@@ -7,6 +7,8 @@ import Icon from '@/shared/components/Icon'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
+import '@/styles/spinner.css'
+import '@/styles/file-row.css'
 
 export default function StepRow({ step }: { step: OverviewStep }) {
   const { course, files, status, generate } = useCourseOverview()

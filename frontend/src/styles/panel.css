@@ -1,0 +1,37 @@
+.main-view {
+  flex: 1;
+  background: var(--main-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+}
+
+.main-view--panel {
+  align-items: flex-start;
+  padding: 48px 32px;
+}
+
+.main-view--empty {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-state {
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* Lives here, not beside ErrorBoundary: `.main-view error-view` overrides .main-view at equal
+   specificity, so the two rules must stay in one file in this order. */
+/* The boundary replaces the whole tree, so this is not a flex child of .layout and has no height. */
+.error-view {
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+  min-height: 100%;
+  padding: 96px 32px 48px;
+  background: #fbfbfd;
+  text-align: center;
+}

@@ -1,0 +1,13 @@
+/* Order-sensitive: `.file-row--running` overrides `.file-row`'s align-items at equal specificity,
+   so `.file-row` must stay above it in this file. */
+.file-row--running {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.file-row-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

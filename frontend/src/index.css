@@ -283,50 +283,7 @@
   outline: none;
 }
 
-/* ── Main view ── */
-
-.main-view {
-  flex: 1;
-  background: var(--main-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: auto;
-}
-
-.main-view--panel {
-  align-items: flex-start;
-  padding: 48px 32px;
-}
-
-.main-view--empty {
-  flex-direction: column;
-  gap: 12px;
-}
-
-.empty-state {
-  color: var(--text-muted);
-  font-size: 15px;
-}
-
-.empty-state-link {
-  color: var(--accent);
-  font-size: 13px;
-}
-
 /* ── Error boundary fallback ── */
-
-/* The boundary replaces the whole tree, so this is not a flex child of .layout and has no height. */
-.error-view {
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 14px;
-  min-height: 100%;
-  padding: 96px 32px 48px;
-  background: #fbfbfd;
-  text-align: center;
-}
 
 .error-title {
   font-size: 22px;
@@ -813,83 +770,6 @@
   margin: 0;
   font-weight: 600;
   color: #b91c1c;
-}
-
-/* ── Spinner ── */
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e5e7eb;
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: spin 0.75s linear infinite;
-  flex-shrink: 0;
-}
-
-.spinner--sm {
-  width: 18px;
-  height: 18px;
-  border-width: 2px;
-}
-
-/* ── Progress bar ── */
-
-.file-row--running {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-}
-
-.file-row-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.progress-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-top: 8px;
-}
-
-.progress-track {
-  height: 4px;
-  background: #e5e7eb;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: 2px;
-  transition: width 0.5s linear;
-}
-
-.progress-fill--overflow {
-  background: #f59e0b;
-}
-
-.progress-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 5px;
-}
-
-.progress-label--overflow {
-  color: #d97706;
-}
-
-.progress-label--muted {
-  font-style: italic;
 }
 
 /* ── Edit Summary view ── */

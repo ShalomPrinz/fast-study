@@ -1,5 +1,6 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import '@/styles/panel.css'
 
 // Last-resort net for render errors: without it React unmounts the whole tree and leaves a blank
 // page with no way back. It sits outside <Routes>, so the fallback replaces everything including

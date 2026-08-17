@@ -4,6 +4,7 @@ import type { CourseSummary } from '@/types'
 import { useCourseSummaries } from './hooks/useCourseSummaries'
 import { buildHit, findMatches, groupMatches, type Hit, type MatchGroup } from './utils/search'
 import SearchResult from './components/SearchResult'
+import '@/styles/panel.css'
 
 const COURSE_STORAGE_KEY = 'fastStudySearchCourse'
 
