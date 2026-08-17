@@ -4,270 +4,7 @@
   overflow: hidden;
 }
 
-/* ── Confirmation modal ── */
-
-/* Zoom passcode prompt: masked input + scope toggle inside the shared .modal shell */
-/* Stays here until .source-row-input moves: both land on one <input> and collide on
-   font-size, so .source-row-input must keep following .passcode-input in source order. */
-.passcode-input {
-  width: 100%;
-  margin-bottom: 12px;
-  font-size: 14px;
-  letter-spacing: 2px;
-}
-
-.passcode-scope {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text);
-  margin-bottom: 18px;
-  cursor: pointer;
-}
-
 /* ── Downloads page ── */
-
-/* Sidebar-header entry controls: the Search and Downloads nav links */
-.sidebar-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sidebar-downloads-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
-  color: var(--sidebar-muted);
-  text-decoration: none;
-  font-size: 15px;
-  transition:
-    background 0.1s,
-    color 0.1s;
-}
-
-.sidebar-downloads-link:hover {
-  background: var(--sidebar-hover);
-  color: var(--accent);
-}
-
-/* Auth pill: BIU account connection status */
-.auth-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 24px;
-}
-
-.auth-pill--muted {
-  background: #f3f4f6;
-  color: var(--text-muted);
-}
-
-.auth-pill--connected {
-  background: #e7f7e6;
-  color: #2f7a29;
-}
-
-.auth-pill--disconnected {
-  background: #fdeaea;
-  color: #b3261e;
-}
-
-.auth-pill--pending {
-  background: #fff5e0;
-  color: #9a6a00;
-}
-
-.auth-pill-btn {
-  padding: 3px 12px;
-  border-radius: 999px;
-  border: 1px solid currentColor;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.auth-pill-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.06);
-}
-
-.auth-pill-btn:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-/* Course source-URL list */
-.source-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-/* Shared 3-column grid so the URL column starts at the same x on every row
-   (name | URL/link | edit-or-actions). Reused by .source-add-row for alignment. */
-.source-row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-}
-
-/* Fixed grid track caps the name; ellipsis-truncate so it can't push the URL. */
-.source-row-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* Real link — truncates with ellipsis while href/title carry the full URL. */
-.source-row-url-text {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
-  font-size: 13px;
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.source-row-url-text:hover {
-  text-decoration: underline;
-}
-
-/* "+ add source URL": the only click target when there's nothing to link to. */
-.source-row-url {
-  justify-self: start;
-  text-align: left;
-  background: none;
-  border: none;
-  padding: 4px 0;
-  font: inherit;
-  font-size: 13px;
-  font-style: italic;
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-.source-row-url:hover {
-  color: var(--accent);
-}
-
-.source-row-edit-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0 2px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  transition: color 0.12s;
-}
-
-.source-row-edit-btn:hover {
-  color: var(--accent);
-}
-
-.source-row-input {
-  min-width: 0;
-  padding: 5px 10px;
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  font: inherit;
-  font-size: 13px;
-  outline: none;
-}
-
-.source-add-row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px dashed #d1d5db;
-  border-radius: 8px;
-}
-
-.source-add-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.source-add-btn {
-  display: block;
-  width: 100%;
-  padding: 9px 12px;
-  background: none;
-  border: 1px dashed #d1d5db;
-  border-radius: 8px;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.source-add-btn:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
-.source-row-btn {
-  padding: 6px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.source-row-btn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.source-row-btn--ghost {
-  background: transparent;
-  border-color: #d1d5db;
-  color: var(--text-muted);
-}
-
-/* Selected course (its recordings are loaded) — highlight the whole row, not
-   the Load-recordings button. Accent-tinted to match the app's single palette. */
-.source-row--selected {
-  background: rgba(137, 180, 250, 0.14);
-  border-color: var(--accent);
-}
-
-.source-row-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 /* Discovered-recordings panel (in-page, one selected course at a time) */
 .recordings-panel {
@@ -345,20 +82,6 @@
 .recordings-section-progress {
   font-size: 12px;
   color: var(--text-muted);
-}
-
-/* Reads as the section-wide action, not a row's Download: outlined rather than filled. */
-.recordings-download-all {
-  flex-shrink: 0;
-  background: transparent;
-  color: var(--accent);
-  border: 1px solid var(--accent);
-}
-
-.recordings-download-all:disabled {
-  color: var(--text-muted);
-  border-color: #d1d5db;
-  cursor: not-allowed;
 }
 
 /* Not an error — the run simply can't account for these rows, and nothing here can resolve them. */
@@ -480,13 +203,6 @@
   color: #fff;
 }
 
-/* Shrinks before the title does — a name is still readable clipped, a missing title is not. */
-.recording-name-input {
-  width: 150px;
-  flex-shrink: 1;
-  min-width: 100px;
-}
-
 /* Materials append rather than overwrite, so the row states how many the target already holds
    instead of raising a confirm. */
 .recording-material-count {
@@ -574,15 +290,6 @@ p.recording-progress {
   justify-content: center;
 }
 
-/* Split rows (a zoom pair) delegate re-download/retry to the per-clip buttons, so the main control
-   is a plain status label — no button chrome, no hover, no pointer. */
-.recording-download-btn--label {
-  background: transparent;
-  border-color: transparent;
-  color: var(--text-muted);
-  cursor: default;
-}
-
 /* A terminal job's per-clip control (Retry / Re-download) sits inline beside its clip title,
    right-aligned so a row of clips reads as title … button. */
 .recording-progress-job--action {
@@ -596,16 +303,6 @@ p.recording-progress {
 .recording-progress-job--action .recording-progress-title {
   flex: 1;
   min-width: 0;
-}
-
-.recording-job-btn {
-  flex-shrink: 0;
-  min-width: 96px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  padding: 3px 10px;
 }
 
 .recording-spinner {

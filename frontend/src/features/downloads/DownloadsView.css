@@ -1,0 +1,6 @@
+/* Course source-URL list */
+.source-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}

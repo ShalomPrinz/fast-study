@@ -15,6 +15,7 @@ import {
   splitSiblings,
 } from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
+import '@/styles/source-row.css'
 
 // Driven by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {
