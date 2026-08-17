@@ -11,6 +11,7 @@ import type { DownloadOperation, Kind } from '@/types'
 import type { DownloadJob } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
+import { sequencedRefresh } from '../utils/sequencedRefresh'
 
 // One download job as the display atom for a titled ETA bar. Carries the fields a per-job retry
 // needs to re-issue `/download-item` (ref/course/title=lecture/kind).
@@ -148,13 +149,11 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
       primed.current = true
       publish(snap)
     }
-    // A failed fetch is a no-op; the stream reconnects and pings again.
-    const refresh = () => {
-      void fetchJobs()
-        .then(handleSnapshot)
-        .catch(() => {})
-    }
-    const close = subscribeJobs(refresh)
+    // Sequenced because the last job's `done` is the final ping: an older `/jobs` reply landing after
+    // it would republish that job as `running`, leaving a live ETA bar and a section wedged with
+    // "Download all" disabled until some unrelated job transitions.
+    const onJobsChanged = sequencedRefresh(fetchJobs, handleSnapshot)
+    const close = subscribeJobs(onJobsChanged)
     // Clearing on unmount keeps the store's lifetime equal to the provider's: without it, a remount
     // after the downloader went down renders the last snapshot forever (a failed refetch is a no-op).
     return () => {

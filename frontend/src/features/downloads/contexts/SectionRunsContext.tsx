@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from 'react'
 import type { SectionRun } from '../services/downloadServer'
 import { fetchRuns, subscribeRuns } from '../services/downloadServer'
+import { sequencedRefresh } from '../utils/sequencedRefresh'
 import { useDownloadsActions } from './DownloadsSessionContext'
 
 // Module-level store: `GET /runs` grouped by section id, with per-section subscriptions on top, so a
@@ -64,23 +65,10 @@ export function SectionRunsProvider({ children }: { children: ReactNode }) {
       primed.current = true
       publish(snapshot)
     }
-    // The driver pings several times per target, so multiple `GET /runs` overlap and can answer out of
-    // order. Publishing only the newest sequence keeps an older reply from overwriting the terminal
-    // `done` snapshot — `done` is the last frame a run emits, so a lost one strands the section
-    // "Downloading…" forever. A failed fetch is a no-op; the stream reconnects and pings again.
-    let issued = 0
-    let published = 0
-    const refresh = () => {
-      const seq = ++issued
-      void fetchRuns()
-        .then((snapshot) => {
-          if (seq <= published) return
-          published = seq
-          handleSnapshot(snapshot)
-        })
-        .catch(() => {})
-    }
-    const close = subscribeRuns(refresh)
+    // Sequenced because `done` is the last frame a run emits: an older `/runs` reply landing after it
+    // would strand the section on "Downloading…" with nothing left to ping a correction.
+    const onRunsChanged = sequencedRefresh(fetchRuns, handleSnapshot)
+    const close = subscribeRuns(onRunsChanged)
     return () => {
       cancelled = true
       close()

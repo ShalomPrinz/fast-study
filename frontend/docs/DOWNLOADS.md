@@ -192,7 +192,10 @@ halves are distinct targets under one `ref`, so both legitimately coexist.)
 **one EventSource for the app** — always open, which is the price of following downloads from anywhere — and feeds each `/jobs` snapshot into the module-level
 store in `DownloadJobsContext.tsx`. `open` fires on connect and every auto-reconnect and also refetches, so
 the initial sync and any events missed during a reconnect gap are covered. A failed refetch is a no-op —
-the stream reconnects and pings again.
+the stream reconnects and pings again. Refetches go through `utils/sequencedRefresh.ts`, so only the newest
+reply publishes: the last job's `done` is the final ping, and an older reply landing after it would
+republish that job as `running` — a live ETA bar and a section wedged with "Download all" disabled, with
+nothing left to correct it until some unrelated job transitions.
 
 The store keeps no context value: each snapshot is grouped **once** into a `Map<ref, JobProgress[]>`, and
 rows read it through `useSyncExternalStore`. `useRowJobs(ref)` subscribes a row to its own ref, so a ping
@@ -260,7 +263,7 @@ losing the progress and a prompt the user was one keystroke from answering. This
 `SectionRunsProvider` (`contexts/SectionRunsContext.tsx`, mounted in `Layout` inside the session provider)
 is that reflection: one `EventSource` for the contentless `run:change` ping, a `GET /runs` refetch per ping,
 and a module-level store keyed by `sectionId` that `useSectionRun(id)` subscribes to per section. Refetches
-carry a monotonic sequence and only the newest one publishes: the driver pings several times per target, so
+go through the same `sequencedRefresh` as the jobs reflection — the driver pings several times per target, so
 overlapping `GET /runs` can answer out of order, and an older reply landing after the terminal `done`
 snapshot would strand the section on "Downloading…" — `done` is the last frame a run emits. The key is
 the section's own identity `${course}:${media}:${title}` (the same string that keys the `SectionGroup`
