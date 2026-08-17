@@ -24,6 +24,7 @@ import '@/styles/panel.css'
 import '@/styles/file-row.css'
 import '@/styles/modal.css'
 import '@/features/course-overview/components/GenerateAllButton.css'
+import './MainView.css'
 
 interface RotateTarget {
   file: FileName

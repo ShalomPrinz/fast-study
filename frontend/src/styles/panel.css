@@ -22,6 +22,25 @@
   font-size: 15px;
 }
 
+.lecture-panel {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* Downloads: a recording row carries a title, a type column, a kind toggle, a name input and a
+   button on one line — several times a lecture panel's furniture, and none of it optional. */
+/* Overrides `.lecture-panel`'s max-width at equal specificity, so it must stay below it here. */
+.lecture-panel--wide {
+  max-width: 860px;
+}
+
+.lecture-panel-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
 /* Lives here, not beside ErrorBoundary: `.main-view error-view` overrides .main-view at equal
    specificity, so the two rules must stay in one file in this order. */
 /* The boundary replaces the whole tree, so this is not a flex child of .layout and has no height. */

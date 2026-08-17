@@ -1,0 +1,12 @@
+.file-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.file-missing {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}

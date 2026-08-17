@@ -1,3 +1,117 @@
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.file-row {
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.file-row--present {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.file-name {
+  font-size: 13px;
+  font-family: 'Courier New', monospace;
+  color: var(--text);
+}
+
+.file-row-right {
+  display: flex;
+  align-items: center;
+}
+
+.file-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-slot--status {
+  min-width: 28px;
+  justify-content: flex-end;
+}
+
+.file-slot--rotate {
+  width: 24px;
+}
+
+.file-slot--open {
+  width: 22px;
+}
+
+.file-check {
+  color: #16a34a;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.file-open-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 0 2px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  transition: color 0.12s;
+}
+
+.file-open-btn:hover {
+  color: var(--accent);
+}
+
+.file-rotate-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  color: var(--text-muted);
+  padding: 0 2px;
+  line-height: 1;
+  transition: color 0.12s;
+}
+
+.file-rotate-btn:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+.file-rotate-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.file-action-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.file-action-btn:hover:not(:disabled) {
+  background: var(--accent-dim);
+}
+
+.file-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Order-sensitive: `.file-row--running` overrides `.file-row`'s align-items at equal specificity,
    so `.file-row` must stay above it in this file. */
 .file-row--running {

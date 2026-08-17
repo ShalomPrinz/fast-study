@@ -1,5 +1,6 @@
 import type { BranchStatus } from '@/features/course-overview/constants/overview'
 import '@/styles/spinner.css'
+import '@/styles/file-row.css'
 import './BranchIndicator.css'
 
 // Status glyph for one extractor's final PDF.
