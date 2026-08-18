@@ -25,6 +25,14 @@
   flex-shrink: 0;
 }
 
+/* `margin-top: auto` pins the footer to the bottom when the nav regions don't fill the sidebar. */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 8px 12px;
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
 /* Sidebar-header entry controls: the Search and Downloads nav links */
 .sidebar-header-actions {
   display: flex;

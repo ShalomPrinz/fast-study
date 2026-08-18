@@ -1,0 +1,4 @@
+/* The switcher sits in the sidebar footer, so it drops the mode toggle's top-of-sidebar margins. */
+.language-switcher.mode-toggle {
+  margin: 0;
+}

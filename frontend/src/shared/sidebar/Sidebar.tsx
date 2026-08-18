@@ -5,6 +5,7 @@ import ModeToggle from '@/shared/components/ModeToggle'
 import type { ModeConfig } from '@/shared/components/ModeToggle'
 import CoursesList from '@/features/course-overview/CoursesList'
 import LecturesSidebar from '@/features/lectures/sidebar/LecturesSidebar'
+import LanguageSwitcher from './LanguageSwitcher'
 import './Sidebar.css'
 
 // Order matters: it drives the ModeToggle segment order and its default (lectures).
@@ -28,6 +29,9 @@ export default function Sidebar() {
         </div>
       </div>
       <ModeToggle modes={MODES} storageKey="fastStudyMode" />
+      <div className="sidebar-footer">
+        <LanguageSwitcher />
+      </div>
     </aside>
   )
 }
