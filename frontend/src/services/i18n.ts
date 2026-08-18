@@ -24,6 +24,11 @@ export function resolveLocale(stored: string | null, browserLanguage?: string): 
   return 'he'
 }
 
+// Hebrew is the only RTL locale shipped; `dir` and any direction-sensitive glyph derive from this.
+export function isRtl(locale: string): boolean {
+  return locale === 'he'
+}
+
 export function initialLocale(): Locale {
   return resolveLocale(localStorage.getItem(STORAGE_KEY), navigator.language)
 }
@@ -35,5 +40,5 @@ export async function activateLocale(locale: Locale): Promise<void> {
   i18n.loadAndActivate({ locale, messages })
   localStorage.setItem(STORAGE_KEY, locale)
   document.documentElement.lang = locale
-  document.documentElement.dir = locale === 'he' ? 'rtl' : 'ltr'
+  document.documentElement.dir = isRtl(locale) ? 'rtl' : 'ltr'
 }

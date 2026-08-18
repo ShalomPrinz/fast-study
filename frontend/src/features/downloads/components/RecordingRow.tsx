@@ -21,6 +21,7 @@ import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDow
 import '@/styles/source-row.css'
 import '@/features/downloads/DownloadsView.css'
 import './RecordingRow.css'
+import Chevron from '@/shared/components/Chevron'
 
 // Driven by SectionGroup — the bulk queue needs the same children cache.
 export interface ExpandControl {
@@ -162,10 +163,8 @@ const RecordingRow = memo(function RecordingRow({
           >
             {expand.expanding ? (
               <span className="recording-spinner recording-spinner--dark" />
-            ) : expand.expanded ? (
-              '▾'
             ) : (
-              '▸'
+              <Chevron open={expand.expanded} />
             )}
           </button>
           <span className="recording-title" dir="auto" title={item.title}>

@@ -7,6 +7,7 @@ import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 import '@/styles/sidebar-tree.css'
 import './RecitationsGroup.css'
+import Chevron from '@/shared/components/Chevron'
 
 // `expand` is owned by CourseGroup, so this stays open across a course collapse/re-expand.
 export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
@@ -24,7 +25,9 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
     <li className="recitations-group">
       <div className="recitations-header">
         <button className="course-toggle recitations-toggle" onClick={expand.toggle} dir="auto">
-          <span className="chevron">{expand.isOpen ? '▾' : '▸'}</span>
+          <span className="chevron">
+            <Chevron open={expand.isOpen} />
+          </span>
           <span>
             <Trans>Recitations</Trans>
           </span>

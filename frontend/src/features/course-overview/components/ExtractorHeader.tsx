@@ -11,6 +11,7 @@ import { useCourseOverview } from '@/features/course-overview/contexts/CourseOve
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
 import '@/styles/file-row.css'
 import './ExtractorHeader.css'
+import Chevron from '@/shared/components/Chevron'
 
 export default function ExtractorHeader() {
   const { t } = useLingui()
@@ -32,7 +33,9 @@ export default function ExtractorHeader() {
   return (
     <div className="course-branch-header">
       <button className="course-branch-toggle" onClick={toggleExpanded} aria-expanded={expanded}>
-        <span className="course-branch-caret">{expanded ? '▾' : '▸'}</span>
+        <span className="course-branch-caret">
+          <Chevron open={expanded} />
+        </span>
         <span className="course-branch-heading">
           <span className="course-branch-name">{title}</span>
           {entry && (
