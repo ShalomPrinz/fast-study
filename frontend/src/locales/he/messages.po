@@ -33,22 +33,22 @@ msgstr "{0, plural, one {תוצאה אחת} two {# תוצאות} other {# תוצ
 #. placeholder {0}: count('skipped')
 #: src/features/downloads/utils/runStatus.ts:94
 msgid "{0, plural, other {# already there}}"
-msgstr "{0, plural, other {# כבר קיימות}}"
+msgstr "{0, plural, one {אחת כבר קיימת} two {# כבר קיימות} other {# כבר קיימות}}"
 
 #. placeholder {0}: count('downloaded')
 #: src/features/downloads/utils/runStatus.ts:90
 msgid "{0, plural, other {# downloaded}}"
-msgstr "{0, plural, other {# הורדו}}"
+msgstr "{0, plural, one {אחת הורדה} two {# הורדו} other {# הורדו}}"
 
 #. placeholder {0}: count('failed')
 #: src/features/downloads/utils/runStatus.ts:91
 msgid "{0, plural, other {# failed}}"
-msgstr "{0, plural, other {# נכשלו}}"
+msgstr "{0, plural, one {אחת נכשלה} two {# נכשלו} other {# נכשלו}}"
 
 #. placeholder {0}: count('unsupported')
 #: src/features/downloads/utils/runStatus.ts:93
 msgid "{0, plural, other {# unsupported}}"
-msgstr "{0, plural, other {# לא נתמכות}}"
+msgstr "{0, plural, one {אחת לא נתמכת} two {# לא נתמכות} other {# לא נתמכות}}"
 
 #. placeholder {0}: job.title
 #: src/features/downloads/components/RecordingRow.tsx:147
@@ -76,7 +76,7 @@ msgstr "{count, plural, one {חומר אחד ישמש} two {# חומרים יש�
 
 #: src/features/lectures/utils/materialIndicator.ts:58
 msgid "{count, plural, other {summary used only {used} of # materials}}"
-msgstr "{count, plural, other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
+msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
 
 #: src/features/downloads/components/RecordingRow.tsx:127
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
@@ -439,6 +439,10 @@ msgstr "הרצאה"
 msgid "Lecture {0}"
 msgstr "הרצאה {0}"
 
+#: src/features/lectures/utils/nextName.ts:44
+msgid "Lecture 1"
+msgstr "הרצאה 1"
+
 #: src/features/downloads/components/RecordingRow.tsx:235
 msgid "Lecture name"
 msgstr "שם ההרצאה"
@@ -641,6 +645,11 @@ msgstr "תרגול"
 #: src/features/course-overview/utils/overview.ts:14
 msgid "Recitation {0}"
 msgstr "תרגול {0}"
+
+#: src/features/lectures/utils/nextName.ts:51
+#: src/features/lectures/utils/nextName.ts:56
+msgid "Recitation 1"
+msgstr "תרגול 1"
 
 #: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
 msgid "Recitation name…"

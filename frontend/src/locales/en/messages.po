@@ -439,6 +439,10 @@ msgstr "Lecture"
 msgid "Lecture {0}"
 msgstr "Lecture {0}"
 
+#: src/features/lectures/utils/nextName.ts:44
+msgid "Lecture 1"
+msgstr "Lecture 1"
+
 #: src/features/downloads/components/RecordingRow.tsx:235
 msgid "Lecture name"
 msgstr "Lecture name"
@@ -641,6 +645,11 @@ msgstr "Recitation"
 #: src/features/course-overview/utils/overview.ts:14
 msgid "Recitation {0}"
 msgstr "Recitation {0}"
+
+#: src/features/lectures/utils/nextName.ts:51
+#: src/features/lectures/utils/nextName.ts:56
+msgid "Recitation 1"
+msgstr "Recitation 1"
 
 #: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
 msgid "Recitation name…"
