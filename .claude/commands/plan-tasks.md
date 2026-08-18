@@ -1,20 +1,27 @@
 ---
-description: Turn TODOS.md into per-task prompt files ready for /implement.
+description: Turn one task — the first in TODOS.md, or the one given as an argument — into a well-planned prompt file ready for implementation.
+argument-hint: [optional task description]
 ---
 
-Read `TODOS.md` from the project root.
+This command plans **exactly one task**. Everything below is scoped to that single task.
 
-If `TODOS.md` does not exist or is empty, tell the user there are no tasks there and stop.
+## Picking the task
+
+- **If arguments were passed to this command** (e.g. `/plan-tasks fix that bug in this file`), that text _is_ the task. Do **not** read `TODOS.md` at all — ignore it entirely for this run.
+- **Otherwise**, read `TODOS.md` from the project root in full, then work only on the **first task listed there**. Reading the whole file is for context — so you understand what the first task does and does not cover, and what belongs to later tasks — not for planning the rest.
+  - If `TODOS.md` does not exist or is empty, tell the user there are no tasks there and stop.
+
+One task can still yield several prompt files, but every one of them must serve that same task. Never plan a prompt for a later `TODOS.md` item.
 
 ---
 
 ## Step 1 — Understand
 
-Read `CLAUDE.md` to ground yourself in the current state of the codebase before interpreting the todos.
+Read `CLAUDE.md`.
 
-Parse `TODOS.md` and identify each distinct change the user wants. A "distinct change" is anything that:
+Work out exactly what the task asks for and where in the codebase it lands. Identify whether it is one coherent change or several distinct changes that happen to be written as one item — a "distinct change" is anything that:
 
-- Touches a different part of the codebase than another item
+- Touches a different part of the codebase than another part of the task
 - Has a different type (bug fix vs feature vs refactor)
 - Would produce a cleaner, more focused prompt on its own
 
@@ -22,7 +29,7 @@ Parse `TODOS.md` and identify each distinct change the user wants. A "distinct c
 
 ## Step 2 — Clarify
 
-Before generating anything, identify any todo that is ambiguous, underspecified, or has more than one reasonable interpretation. For each one, ask a single focused question. Do not ask about things you can infer from the codebase or from CLAUDE.md.
+Before generating anything, decide whether the task is ambiguous, underspecified, or has more than one reasonable interpretation. If so, ask a single focused question per open point. Do not ask about things you can infer from the codebase or from CLAUDE.md.
 
 If the user asked for worktree mode (see **Worktree mode** below) and the plan from Step 3 has more than one prompt, ask here which of them should get the worktree section — one question listing the prompts, not one question per prompt.
 
@@ -32,13 +39,13 @@ Wait for the user's answers before continuing.
 
 ## Step 3 — Plan
 
-Decide how to split the todos into prompts. Each prompt should be:
+Decide whether this task needs one prompt or several. Each prompt should be:
 
 - Focused on one coherent change
 - Executable independently without depending on another prompt in the same batch (unless you explicitly mark a dependency, then ask the user what he prefers to do)
 - Small enough that Claude Code can hold the full context in one session
 
-Group related small items together. Split large items that touch multiple unrelated areas.
+Default to a single prompt. Split into more only when the task genuinely touches multiple unrelated areas.
 
 ---
 
@@ -107,7 +114,7 @@ Each file must follow this structure exactly:
 
 **User Raw Description:**
 
-> Copy verbatim the exact text from TODOS.md that this prompt addresses. Do not paraphrase. If multiple todo items are grouped into this prompt, include all of them.
+> Copy verbatim the exact text of the task — from `TODOS.md`, or the argument text the user passed to this command. Do not paraphrase. If the task was split across several prompts, include the part of the text this prompt addresses.
 
 **Context:**
 
@@ -122,7 +129,7 @@ One sentence. The end state after this prompt is executed.
 
 (Optional) **Out of Scope:**
 
-> Anything the user mentioned or implied that should NOT be done in this prompt. Explicit boundaries prevent Claude Code from over-reaching.
+> Anything the user mentioned or implied that should NOT be done in this prompt. Explicit boundaries prevent Claude Code from over-reaching. Anything belonging to a later `TODOS.md` task is out of scope by definition.
 
 **Deliverables:**
 
@@ -132,9 +139,9 @@ One sentence. The end state after this prompt is executed.
 
 ---
 
-After writing all files, print a summary table:
+After writing the file(s), print a summary table:
 
 | File | Type | Depends on | One-line summary |
 | ---- | ---- | ---------- | ---------------- |
 
-Then stop. Do not execute any of the prompts.
+Then stop. Do not execute any of the prompts, and do not plan any further task.
