@@ -103,7 +103,7 @@
 
 /* Kept after `.edit-panel`: both apply to `edit-panel edit-panel--pdf`. */
 .edit-panel--pdf {
-  border-right: 1px solid #e5e7eb;
+  border-inline-end: 1px solid #e5e7eb;
 }
 
 .edit-loading {

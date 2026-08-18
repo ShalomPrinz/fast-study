@@ -3,5 +3,5 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding-left: 18px;
+  padding-inline-start: 18px;
 }

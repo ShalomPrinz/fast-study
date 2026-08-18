@@ -34,7 +34,7 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  text-align: left;
+  text-align: start;
   color: inherit;
   font: inherit;
 }

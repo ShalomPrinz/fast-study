@@ -28,7 +28,7 @@
   color: var(--sidebar-muted);
   font: inherit;
   font-size: 12px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: all 0.1s;
 }
@@ -73,7 +73,7 @@
   font: inherit;
   font-size: 13px;
   font-weight: 600;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   border-radius: 6px;
 }
@@ -90,7 +90,7 @@
 
 .lecture-list {
   list-style: none;
-  padding-left: 8px;
+  padding-inline-start: 8px;
 }
 
 .lecture-btn {
@@ -103,7 +103,7 @@
   color: var(--sidebar-fg);
   font: inherit;
   font-size: 13px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   border-radius: 6px;
   opacity: 0.85;
@@ -134,15 +134,14 @@
 }
 
 /* Keep below .lecture-list: the recitations <ul> carries both and they collide
-   on padding-left at equal specificity. */
+   on padding-inline-start at equal specificity. */
 .recitation-list {
-  padding-left: 12px;
+  padding-inline-start: 12px;
 }
 
 /* Flat course list — no tree indent */
 /* Keep below .lecture-list: `CoursesList` renders `lecture-list course-list` and this
-   overrides `.lecture-list`'s padding-left at equal specificity. */
+   overrides `.lecture-list`'s padding-inline-start at equal specificity. */
 .course-list {
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-inline: 4px;
 }

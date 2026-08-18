@@ -8,7 +8,7 @@
   /* Sidebar itself doesn't scroll — each nav region scrolls independently so the
      archived panel and footer stay put while the active list scrolls (VSCode-style split). */
   overflow: hidden;
-  border-right: 1px solid var(--border);
+  border-inline-end: 1px solid var(--border);
 }
 
 .sidebar-header {
@@ -16,7 +16,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 18px 12px 14px 16px;
+  padding-block: 18px 14px;
+  padding-inline: 16px 12px;
   font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.02em;
