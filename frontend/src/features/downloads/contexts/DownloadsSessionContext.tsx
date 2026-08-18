@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
+import { t } from '@lingui/core/macro'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
@@ -90,7 +91,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   }, [])
 
   const reconnectHint = useCallback(() => {
-    sendUpdateRef.current?.('error', 'BIU session expired. Reconnect your account.')
+    sendUpdateRef.current?.('error', t`BIU session expired. Reconnect your account.`)
     setReconnectKey((k) => k + 1)
   }, [])
 

@@ -1,7 +1,6 @@
+import { t } from '@lingui/core/macro'
 import { toast } from '@/services/toaster'
 import type { Rename } from '../services/downloadServer'
-
-const RULE = "some characters can't be used in a folder name"
 
 // The server canonicalizes every submitted name for disk and reports what it changed. Adopting its
 // spelling as the row's name is what keeps the green "already downloaded" row and a run's landed
@@ -15,7 +14,11 @@ export function applyRenames(
   for (const { ref, name } of renames) setName(ref, name)
   // One toast for more than one rename, without specific details.
   if (renames.length > 1) {
-    toast('warning', `Renamed ${renames.length} downloads — ${RULE}.`)
+    const count = renames.length
+    toast(
+      'warning',
+      t`Renamed ${count} downloads — some characters can't be used in a folder name.`,
+    )
     return
   }
 
@@ -24,6 +27,8 @@ export function applyRenames(
   const before = submitted.find((s) => s.ref === ref)?.name
   toast(
     'warning',
-    before ? `Renamed "${before}" to "${name}" — ${RULE}.` : `Renamed to "${name}" — ${RULE}.`,
+    before
+      ? t`Renamed "${before}" to "${name}" — some characters can't be used in a folder name.`
+      : t`Renamed to "${name}" — some characters can't be used in a folder name.`,
   )
 }

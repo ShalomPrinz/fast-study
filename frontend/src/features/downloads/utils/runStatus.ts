@@ -1,3 +1,4 @@
+import { plural } from '@lingui/core/macro'
 import type { Course } from '@/types'
 import type { JobProgress, JobsByRef } from '../contexts/DownloadJobsContext'
 import { jobsForRef } from '../contexts/DownloadJobsContext'
@@ -86,9 +87,10 @@ export function summarize(
 ): string {
   const status = targets.map((t) => targetStatus(t, courses, course, jobsByRef))
   const count = (s: TargetStatus) => status.filter((x) => x === s).length
-  const parts = [`${count('downloaded')} downloaded`]
-  if (count('failed')) parts.push(`${count('failed')} failed`)
-  if (count('unsupported')) parts.push(`${count('unsupported')} unsupported`)
-  if (count('skipped')) parts.push(`${count('skipped')} already there`)
+  const parts = [plural(count('downloaded'), { other: '# downloaded' })]
+  if (count('failed')) parts.push(plural(count('failed'), { other: '# failed' }))
+  if (count('unsupported'))
+    parts.push(plural(count('unsupported'), { other: '# unsupported' }))
+  if (count('skipped')) parts.push(plural(count('skipped'), { other: '# already there' }))
   return parts.join(', ')
 }

@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { lectureRoute } from '@/shared/utils/url'
@@ -9,13 +10,14 @@ function RunnerInactive({ onClick }: { onClick: () => void }) {
   return (
     <div className="new-course-row">
       <button className="new-course-btn" onClick={onClick}>
-        ⟳ Run incomplete pipelines
+        <Trans>⟳ Run incomplete pipelines</Trans>
       </button>
     </div>
   )
 }
 
 function InFlightRow({ entry }: { entry: InFlightEntry }) {
+  const { t } = useLingui()
   const navigate = useNavigate()
   const sleeping = entry.sleepingUntil
   const onClick = () => navigate(lectureRoute(entry.course, entry.lecture, entry.kind))
@@ -25,7 +27,7 @@ function InFlightRow({ entry }: { entry: InFlightEntry }) {
         {entry.course} / {entry.lecture}
       </span>
       <span className="runner-inflight-step">
-        {sleeping ? `rate-limited until ${new Date(sleeping).toLocaleTimeString()}` : entry.step}
+        {sleeping ? t`rate-limited until ${new Date(sleeping).toLocaleTimeString()}` : entry.step}
       </span>
     </button>
   )
@@ -51,11 +53,15 @@ export default function RunnerPipelineRow() {
 
   // `done` counts finished lectures; display the 1-indexed current one, capped at total.
   const runnerCurrent = Math.min(status!.runner.done + 1, status!.runner.total)
-  const runnerCurrentDisplay = `(${runnerCurrent}/${status!.runner.total})`
+  const runnerTotal = status!.runner.total
 
   return (
     <div className="runner-panel">
-      <div className="runner-panel-header">Running pipelines… {runnerCurrentDisplay}</div>
+      <div className="runner-panel-header">
+        <Trans>
+          Running pipelines… ({runnerCurrent}/{runnerTotal})
+        </Trans>
+      </div>
       {inFlightRows}
     </div>
   )

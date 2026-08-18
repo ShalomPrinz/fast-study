@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
 import ReactDOM from 'react-dom'
 import type { PasscodeError } from '@/features/downloads/services/autoDownloader'
 import '@/styles/modal.css'
@@ -15,6 +16,7 @@ export interface PasscodePromptProps {
 // Masked passcode modal — ConfirmModal's portal/Escape shape, which can't host an input.
 // The parent unmounts it between openings, so a re-prompt mounts fresh with an empty field.
 export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: PasscodePromptProps) {
+  const { t } = useLingui()
   const [value, setValue] = useState('')
   const [justThisLecture, setJustThisLecture] = useState(false)
 
@@ -28,8 +30,8 @@ export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: Pas
 
   const message =
     reason === 'incorrect'
-      ? "That passcode didn't work. Try another one"
-      : 'Enter the zoom passcode for this recording'
+      ? t`That passcode didn't work. Try another one`
+      : t`Enter the zoom passcode for this recording`
 
   return ReactDOM.createPortal(
     <div className="modal-overlay" onClick={onCancel}>
@@ -46,7 +48,7 @@ export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: Pas
             type="password"
             value={value}
             onChange={(e) => setValue(e.target.value)}
-            placeholder="Passcode"
+            placeholder={t`Passcode`}
             dir="ltr"
             autoFocus
           />
@@ -56,14 +58,14 @@ export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: Pas
               checked={justThisLecture}
               onChange={(e) => setJustThisLecture(e.target.checked)}
             />
-            just this lecture
+            <Trans>just this lecture</Trans>
           </label>
           <div className="modal-actions">
             <button type="button" className="modal-btn modal-btn--no" onClick={onCancel}>
-              Cancel
+              <Trans>Cancel</Trans>
             </button>
             <button type="submit" className="modal-btn" disabled={busy || !value.trim()}>
-              Submit
+              <Trans>Submit</Trans>
             </button>
           </div>
         </form>

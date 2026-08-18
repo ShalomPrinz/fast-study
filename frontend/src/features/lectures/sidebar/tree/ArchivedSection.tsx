@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import CourseGroup from './CourseGroup'
@@ -10,6 +11,7 @@ export default function ArchivedSection() {
   const [showArchived, setShowArchived] = useState(false)
 
   const archived = courses.filter((c) => c.archived)
+  const archivedCount = archived.length
 
   return (
     <>
@@ -18,13 +20,17 @@ export default function ArchivedSection() {
         onClick={() => setShowArchived((v) => !v)}
       >
         <Icon icon="archive-box" />
-        <span>Archived ({archived.length})</span>
+        <span>
+          <Trans>Archived ({archivedCount})</Trans>
+        </span>
       </button>
 
       {showArchived && (
         <nav className="sidebar-nav archived-panel">
           {archived.length === 0 ? (
-            <div className="archived-empty">No archived courses</div>
+            <div className="archived-empty">
+              <Trans>No archived courses</Trans>
+            </div>
           ) : (
             archived.map((c) => <CourseGroup key={c.name} course={c} />)
           )}

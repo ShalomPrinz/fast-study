@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import {
   fetchSummaryContent,
@@ -24,6 +25,7 @@ import '@/styles/spinner.css'
 import './EditSummaryView.css'
 
 export default function EditSummaryView() {
+  const { t } = useLingui()
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
   const { getError } = useRunnerStatus()
@@ -92,7 +94,7 @@ export default function EditSummaryView() {
     try {
       await saveSummaryContent(course, lecture, content, kind)
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Failed to save summary'
+      const message = e instanceof Error ? e.message : t`Failed to save summary`
       if (!isConnectionError(e)) toast('error', message) // connection errors are toasted centrally
       setError(message)
       setGenerating(false)
@@ -102,8 +104,11 @@ export default function EditSummaryView() {
     await deleteFile(course, lecture, 'summary.pdf', kind)
     const initResult = await runStep(course, lecture, 'pdf', kind)
     if (initResult.status !== 'started') {
-      toastInitResult(initResult, { busy: 'Step already running', error: 'Failed to generate PDF' })
-      if (initResult.status === 'error') setError(initResult.message ?? 'Failed to generate PDF')
+      toastInitResult(initResult, {
+        busy: t`Step already running`,
+        error: t`Failed to generate PDF`,
+      })
+      if (initResult.status === 'error') setError(initResult.message ?? t`Failed to generate PDF`)
       setGenerating(false)
       return
     }
@@ -126,7 +131,7 @@ export default function EditSummaryView() {
     <div className="edit-view">
       <div className="edit-toolbar">
         <button className="edit-back-btn" onClick={() => navigate(-1)}>
-          ← Back
+          <Trans>← Back</Trans>
         </button>
         <h2 className="edit-title" dir="auto">
           {lecture}
@@ -137,16 +142,16 @@ export default function EditSummaryView() {
             className="edit-action-btn"
             onClick={handleRevert}
             disabled={!hasOriginal || generating || loading}
-            title={hasOriginal ? 'Restore the original summary' : 'No original to revert to'}
+            title={hasOriginal ? t`Restore the original summary` : t`No original to revert to`}
           >
-            Revert to Original
+            <Trans>Revert to Original</Trans>
           </button>
           <button
             className="edit-action-btn edit-action-btn--primary"
             onClick={handleGeneratePdf}
             disabled={generating || loading}
           >
-            {generating ? 'Generating…' : 'Generate PDF'}
+            {generating ? t`Generating…` : t`Generate PDF`}
           </button>
         </div>
       </div>

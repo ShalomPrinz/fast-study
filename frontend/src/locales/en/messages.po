@@ -6,3 +6,873 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: @lingui/cli\n"
 "Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#: src/features/search/SearchView.tsx:165
+msgid " — showing {shownFindings}"
+msgstr " — showing {shownFindings}"
+
+#: src/shared/utils/notFound.ts:24
+msgid "\"{course}\" has no lecture named \"{lecture}\"."
+msgstr "\"{course}\" has no lecture named \"{lecture}\"."
+
+#: src/shared/utils/notFound.ts:23
+msgid "\"{course}\" has no recitation named \"{lecture}\"."
+msgstr "\"{course}\" has no recitation named \"{lecture}\"."
+
+#. placeholder {0}: matches.length
+#: src/features/search/SearchView.tsx:163
+msgid "{0, plural, one {# result} other {# results}}"
+msgstr "{0, plural, one {# result} other {# results}}"
+
+#. placeholder {0}: count('skipped')
+#: src/features/downloads/utils/runStatus.ts:94
+msgid "{0, plural, other {# already there}}"
+msgstr "{0, plural, other {# already there}}"
+
+#. placeholder {0}: count('downloaded')
+#: src/features/downloads/utils/runStatus.ts:90
+msgid "{0, plural, other {# downloaded}}"
+msgstr "{0, plural, other {# downloaded}}"
+
+#. placeholder {0}: count('failed')
+#: src/features/downloads/utils/runStatus.ts:91
+msgid "{0, plural, other {# failed}}"
+msgstr "{0, plural, other {# failed}}"
+
+#. placeholder {0}: count('unsupported')
+#: src/features/downloads/utils/runStatus.ts:93
+msgid "{0, plural, other {# unsupported}}"
+msgstr "{0, plural, other {# unsupported}}"
+
+#. placeholder {0}: job.title
+#: src/features/downloads/components/RecordingRow.tsx:147
+msgid "{0} already exists in {course}. Download again and overwrite?"
+msgstr "{0} already exists in {course}. Download again and overwrite?"
+
+#. placeholder {0}: formatDuration(remaining)
+#: src/shared/components/ProgressBar.tsx:54
+msgid "{0} remaining"
+msgstr "{0} remaining"
+
+#. placeholder {0}: progress.completed
+#. placeholder {1}: progress.total
+#: src/features/lectures/MainView.tsx:79
+msgid "{0}/{1} chunks transcribed so far"
+msgstr "{0}/{1} chunks transcribed so far"
+
+#: src/features/lectures/utils/materialIndicator.ts:44
+msgid "{count, plural, other {# materials were used}}"
+msgstr "{count, plural, other {# materials were used}}"
+
+#: src/features/lectures/utils/materialIndicator.ts:26
+msgid "{count, plural, other {# materials will be used}}"
+msgstr "{count, plural, other {# materials will be used}}"
+
+#: src/features/lectures/utils/materialIndicator.ts:58
+msgid "{count, plural, other {summary used only {used} of # materials}}"
+msgstr "{count, plural, other {summary used only {used} of # materials}}"
+
+#: src/features/downloads/components/RecordingRow.tsx:127
+msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
+msgstr "{effectiveName} already exists in {course}. Download again and overwrite?"
+
+#: src/features/downloads/components/RecordingRow.tsx:136
+msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
+msgstr "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
+
+#: src/features/search/SearchView.tsx:164
+msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
+msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
+
+#: src/features/downloads/components/RecordingRow.tsx:247
+msgid "{materialCount, plural, one {# material} other {# materials}}"
+msgstr "{materialCount, plural, one {# material} other {# materials}}"
+
+#: src/features/lectures/MainView.tsx:370
+msgid "{materialToDelete} will be deleted."
+msgstr "{materialToDelete} will be deleted."
+
+#: src/features/lectures/utils/materialIndicator.ts:44
+msgid "{name} was used"
+msgstr "{name} was used"
+
+#: src/features/lectures/utils/materialIndicator.ts:25
+msgid "{name} will be used"
+msgstr "{name} will be used"
+
+#: src/features/lectures/components/PaginatedList.tsx:38
+msgid "{nextLoad, plural, one {Load # more} other {Load # more}}"
+msgstr "{nextLoad, plural, one {Load # more} other {Load # more}}"
+
+#: src/features/downloads/components/SectionGroup.tsx:232
+msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
+msgstr "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
+
+#: src/features/downloads/components/SectionGroup.tsx:241
+msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
+msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
+
+#: src/features/lectures/EditSummaryView.tsx:134
+msgid "← Back"
+msgstr "← Back"
+
+#: src/features/downloads/components/CourseSourceRow.tsx:66
+msgid "+ add source URL"
+msgstr "+ add source URL"
+
+#: src/features/downloads/components/AddCourseRow.tsx:39
+#: src/features/lectures/sidebar/NewCourseRow.tsx:42
+msgid "+ New Course"
+msgstr "+ New Course"
+
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:13
+msgid "⟳ Run incomplete pipelines"
+msgstr "⟳ Run incomplete pipelines"
+
+#: src/features/downloads/components/SectionGroup.tsx:226
+msgid "⭳ Download all"
+msgstr "⭳ Download all"
+
+#: src/features/downloads/components/PausedRunsBanner.tsx:28
+msgid "A section is waiting for a passcode"
+msgstr "A section is waiting for a passcode"
+
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:90
+msgid "Add lecture"
+msgstr "Add lecture"
+
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:33
+msgid "Add recitation"
+msgstr "Add recitation"
+
+#: src/features/course-overview/constants/overview.ts:14
+msgid "Analyze"
+msgstr "Analyze"
+
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:85
+msgid "Archive course"
+msgstr "Archive course"
+
+#: src/features/lectures/sidebar/tree/ArchivedSection.tsx:24
+msgid "Archived ({archivedCount})"
+msgstr "Archived ({archivedCount})"
+
+#: src/features/course-overview/components/StepRow.tsx:92
+msgid "Are you sure you want to re-generate?"
+msgstr "Are you sure you want to re-generate?"
+
+#: src/features/downloads/components/RecordingRow.tsx:235
+msgid "Attach material to"
+msgstr "Attach material to"
+
+#: src/features/lectures/constants/pipeline.ts:41
+msgid "Audio extraction failed"
+msgstr "Audio extraction failed"
+
+#: src/features/downloads/components/AuthPill.tsx:81
+msgid "BIU account connected ✓"
+msgstr "BIU account connected ✓"
+
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:94
+msgid "BIU session expired. Reconnect your account."
+msgstr "BIU session expired. Reconnect your account."
+
+#: src/services/http.ts:15
+msgid "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
+msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
+
+#: src/features/downloads/components/AddCourseRow.tsx:73
+#: src/features/downloads/components/PasscodePrompt.tsx:65
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/features/downloads/components/AuthPill.tsx:58
+msgid "checking account…"
+msgstr "checking account…"
+
+#: src/features/downloads/DownloadsView.tsx:74
+msgid "close"
+msgstr "close"
+
+#: src/features/downloads/components/RecordingRow.tsx:158
+msgid "Collapse"
+msgstr "Collapse"
+
+#: src/features/course-overview/constants/overview.ts:15
+msgid "Collect"
+msgstr "Collect"
+
+#: src/features/course-overview/constants/overview.ts:16
+msgid "Compile"
+msgstr "Compile"
+
+#: src/features/downloads/components/AuthPill.tsx:87
+msgid "Connect"
+msgstr "Connect"
+
+#: src/features/course-overview/components/GenerateAllButton.tsx:34
+msgid "Continue Generating"
+msgstr "Continue Generating"
+
+#: src/features/lectures/MainView.tsx:189
+msgid "Continue transcription"
+msgstr "Continue transcription"
+
+#: src/app/ErrorBoundary.tsx:34
+msgid "Copied!"
+msgstr "Copied!"
+
+#: src/app/ErrorBoundary.tsx:34
+msgid "Copy details"
+msgstr "Copy details"
+
+#: src/features/downloads/utils/downloadErrors.ts:21
+msgid "Couldn't download \"{name}\": {detail}"
+msgstr "Couldn't download \"{name}\": {detail}"
+
+#: src/features/downloads/utils/downloadErrors.ts:10
+#: src/features/downloads/utils/downloadErrors.ts:22
+msgid "Couldn't download \"{name}\". Try again."
+msgstr "Couldn't download \"{name}\". Try again."
+
+#: src/features/downloads/components/SectionGroup.tsx:95
+msgid "Couldn't load entries. Try again."
+msgstr "Couldn't load entries. Try again."
+
+#: src/features/search/hooks/useCourseSummaries.ts:35
+msgid "Couldn't load summaries for {course}."
+msgstr "Couldn't load summaries for {course}."
+
+#: src/shared/utils/notFound.ts:8
+msgid "Course \"{course}\" doesn't exist."
+msgstr "Course \"{course}\" doesn't exist."
+
+#: src/features/downloads/components/AddCourseRow.tsx:53
+#: src/features/lectures/sidebar/NewCourseRow.tsx:37
+msgid "Course name…"
+msgstr "Course name…"
+
+#: src/shared/sidebar/Sidebar.tsx:18
+msgid "Courses"
+msgstr "Courses"
+
+#: src/features/downloads/components/AddCourseRow.tsx:70
+msgid "Create"
+msgstr "Create"
+
+#. placeholder {0}: m.name
+#: src/features/lectures/MainView.tsx:317
+msgid "Delete {0}"
+msgstr "Delete {0}"
+
+#: src/features/downloads/components/AuthPill.tsx:71
+msgid "Done"
+msgstr "Done"
+
+#: src/features/downloads/components/RecordingRow.tsx:272
+msgid "Download"
+msgstr "Download"
+
+#: src/features/downloads/components/RecordingRow.tsx:254
+#: src/features/downloads/components/RecordingRow.tsx:270
+msgid "Downloaded ✓"
+msgstr "Downloaded ✓"
+
+#. placeholder {0}: run.at
+#. placeholder {1}: run.total
+#: src/features/downloads/components/SectionGroup.tsx:205
+msgid "Downloading {0}/{1}…"
+msgstr "Downloading {0}/{1}…"
+
+#: src/features/downloads/components/SectionGroup.tsx:212
+msgid "Downloading {active} more…"
+msgstr "Downloading {active} more…"
+
+#: src/features/downloads/components/RecordingRow.tsx:254
+#: src/features/downloads/components/RecordingRow.tsx:266
+#: src/features/downloads/components/SectionGroup.tsx:226
+msgid "Downloading…"
+msgstr "Downloading…"
+
+#: src/features/downloads/DownloadsView.tsx:49
+#: src/shared/sidebar/Sidebar.tsx:30
+msgid "Downloads"
+msgstr "Downloads"
+
+#: src/features/lectures/constants/pipeline.ts:45
+msgid "Drive upload failed"
+msgstr "Drive upload failed"
+
+#: src/features/downloads/components/CourseSourceRow.tsx:80
+msgid "Edit source URL"
+msgstr "Edit source URL"
+
+#: src/features/lectures/MainView.tsx:259
+msgid "Edit summary"
+msgstr "Edit summary"
+
+#: src/features/downloads/components/PasscodePrompt.tsx:34
+msgid "Enter the zoom passcode for this recording"
+msgstr "Enter the zoom passcode for this recording"
+
+#: src/shared/components/ProgressBar.tsx:28
+msgid "Estimating…"
+msgstr "Estimating…"
+
+#: src/features/downloads/components/RecordingRow.tsx:158
+msgid "Expand"
+msgstr "Expand"
+
+#: src/features/downloads/components/SectionGroup.tsx:224
+msgid "Expand every playlist in this section first"
+msgstr "Expand every playlist in this section first"
+
+#: src/features/course-overview/constants/overview.ts:17
+#: src/features/lectures/constants/pipeline.ts:18
+msgid "Export PDF"
+msgstr "Export PDF"
+
+#: src/features/course-overview/constants/overview.ts:13
+msgid "Extract"
+msgstr "Extract"
+
+#: src/features/lectures/constants/pipeline.ts:15
+msgid "Extract Audio"
+msgstr "Extract Audio"
+
+#: src/features/course-overview/constants/overview.ts:72
+#: src/features/course-overview/CourseView.tsx:34
+msgid "failed"
+msgstr "failed"
+
+#: src/features/downloads/components/RecordingRow.tsx:254
+msgid "Failed ✗"
+msgstr "Failed ✗"
+
+#: src/features/downloads/components/AuthPill.tsx:50
+msgid "Failed to complete login. Try reconnecting."
+msgstr "Failed to complete login. Try reconnecting."
+
+#: src/features/lectures/EditSummaryView.tsx:109
+#: src/features/lectures/EditSummaryView.tsx:111
+msgid "Failed to generate PDF"
+msgstr "Failed to generate PDF"
+
+#: src/features/downloads/components/AuthPill.tsx:39
+msgid "Failed to launch the login browser."
+msgstr "Failed to launch the login browser."
+
+#: src/features/lectures/EditSummaryView.tsx:97
+msgid "Failed to save summary"
+msgstr "Failed to save summary"
+
+#: src/features/downloads/components/RecordingRow.tsx:203
+msgid "File type"
+msgstr "File type"
+
+#: src/features/downloads/components/AuthPill.tsx:68
+msgid "finish login in the browser window"
+msgstr "finish login in the browser window"
+
+#: src/features/downloads/components/AuthPill.tsx:71
+msgid "finishing…"
+msgstr "finishing…"
+
+#: src/features/course-overview/components/ExtractorHeader.tsx:73
+msgid "Generate"
+msgstr "Generate"
+
+#: src/features/course-overview/components/GenerateAllButton.tsx:34
+msgid "Generate All"
+msgstr "Generate All"
+
+#: src/features/lectures/EditSummaryView.tsx:154
+msgid "Generate PDF"
+msgstr "Generate PDF"
+
+#: src/features/course-overview/components/StepRow.tsx:91
+msgid "Generating from {stepLabel} step will rebuild:"
+msgstr "Generating from {stepLabel} step will rebuild:"
+
+#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/lectures/EditSummaryView.tsx:154
+msgid "Generating…"
+msgstr "Generating…"
+
+#: src/features/lectures/MainView.tsx:75
+msgid "Groq rate limit reached"
+msgstr "Groq rate limit reached"
+
+#: src/app/ErrorBoundary.tsx:61
+#: src/shared/components/NotFoundPanel.tsx:13
+msgid "Home"
+msgstr "Home"
+
+#: src/features/downloads/components/PasscodePrompt.tsx:61
+msgid "just this lecture"
+msgstr "just this lecture"
+
+#: src/shared/sidebar/LanguageSwitcher.tsx:14
+msgid "Language"
+msgstr "Language"
+
+#: src/features/lectures/MainView.tsx:341
+msgid "Last error:"
+msgstr "Last error:"
+
+#: src/features/search/components/SearchResult.tsx:29
+msgid "lecture"
+msgstr "lecture"
+
+#: src/features/downloads/components/RecordingRow.tsx:215
+msgid "Lecture"
+msgstr "Lecture"
+
+#. placeholder {0}: range.start
+#: src/features/course-overview/utils/overview.ts:8
+msgid "Lecture {0}"
+msgstr "Lecture {0}"
+
+#: src/features/downloads/components/RecordingRow.tsx:235
+msgid "Lecture name"
+msgstr "Lecture name"
+
+#: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
+msgid "Lecture name…"
+msgstr "Lecture name…"
+
+#: src/features/search/SearchView.tsx:141
+#: src/shared/sidebar/Sidebar.tsx:17
+msgid "Lectures"
+msgstr "Lectures"
+
+#. placeholder {0}: range.start
+#. placeholder {1}: range.end
+#: src/features/course-overview/utils/overview.ts:9
+msgid "Lectures {0}-{1}"
+msgstr "Lectures {0}-{1}"
+
+#: src/features/downloads/components/CourseSourceRow.tsx:77
+msgid "Load recordings"
+msgstr "Load recordings"
+
+#: src/features/downloads/DownloadsView.tsx:79
+msgid "Loading recordings…"
+msgstr "Loading recordings…"
+
+#: src/features/search/SearchView.tsx:155
+msgid "Loading summaries…"
+msgstr "Loading summaries…"
+
+#: src/features/downloads/components/CourseSourceRow.tsx:77
+msgid "Loading…"
+msgstr "Loading…"
+
+#: src/features/search/SearchView.tsx:128
+msgid "Match whole word"
+msgstr "Match whole word"
+
+#: src/features/downloads/components/RecordingRow.tsx:45
+msgid "Material"
+msgstr "Material"
+
+#: src/features/downloads/DownloadsView.tsx:34
+#: src/features/lectures/MainView.tsx:293
+msgid "Materials"
+msgstr "Materials"
+
+#: src/shared/components/ConfirmModal.tsx:44
+msgid "No"
+msgstr "No"
+
+#: src/features/lectures/sidebar/tree/ArchivedSection.tsx:32
+msgid "No archived courses"
+msgstr "No archived courses"
+
+#: src/features/downloads/DownloadsView.tsx:41
+msgid "No files of unknown type found."
+msgstr "No files of unknown type found."
+
+#: src/features/course-overview/utils/overview.ts:7
+msgid "No Lectures"
+msgstr "No Lectures"
+
+#: src/features/lectures/utils/materialIndicator.ts:29
+msgid "no material found"
+msgstr "no material found"
+
+#: src/features/downloads/DownloadsView.tsx:40
+msgid "No materials found."
+msgstr "No materials found."
+
+#: src/features/lectures/EditSummaryView.tsx:145
+msgid "No original to revert to"
+msgstr "No original to revert to"
+
+#: src/features/search/components/SearchResult.tsx:22
+msgid "No PDF for this lecture"
+msgstr "No PDF for this lecture"
+
+#: src/features/lectures/components/PdfViewer.tsx:64
+msgid "No PDF yet — click \"Generate PDF\" to create one."
+msgstr "No PDF yet — click \"Generate PDF\" to create one."
+
+#: src/features/course-overview/utils/overview.ts:13
+msgid "No Recitations"
+msgstr "No Recitations"
+
+#: src/features/downloads/DownloadsView.tsx:39
+msgid "No recordings found."
+msgstr "No recordings found."
+
+#: src/features/downloads/components/RecordingRow.tsx:261
+msgid "Not a file the downloader can fetch"
+msgstr "Not a file the downloader can fetch"
+
+#: src/features/downloads/components/AuthPill.tsx:86
+msgid "not connected"
+msgstr "not connected"
+
+#: src/shared/components/ProgressBar.tsx:33
+msgid "Not enough data to estimate"
+msgstr "Not enough data to estimate"
+
+#: src/features/lectures/MainView.tsx:224
+msgid "not provided"
+msgstr "not provided"
+
+#: src/features/lectures/sidebar/PendingUploadModal.tsx:50
+msgid "Note: This will delete all files in this lecture."
+msgstr "Note: This will delete all files in this lecture."
+
+#: src/shared/contexts/RunnerStatusContext.tsx:81
+msgid "Nothing to run - All pipelines complete"
+msgstr "Nothing to run - All pipelines complete"
+
+#: src/shared/contexts/RunnerStatusContext.tsx:87
+msgid "Nothing to run - All remaining pipelines already running"
+msgstr "Nothing to run - All remaining pipelines already running"
+
+#: src/features/lectures/sidebar/tree/LectureItem.tsx:55
+msgid "Only .mp4 files are allowed"
+msgstr "Only .mp4 files are allowed"
+
+#: src/features/lectures/MainView.tsx:268
+msgid "Open in Drive"
+msgstr "Open in Drive"
+
+#: src/features/lectures/MainView.tsx:306
+msgid "Open material in new tab"
+msgstr "Open material in new tab"
+
+#: src/features/course-overview/components/ExtractorHeader.tsx:54
+#: src/features/course-overview/components/StepRow.tsx:66
+#: src/features/lectures/MainView.tsx:248
+#: src/features/search/components/SearchResult.tsx:22
+msgid "Open PDF in new tab"
+msgstr "Open PDF in new tab"
+
+#: src/features/course-overview/components/ExtractorHeader.tsx:28
+#: src/features/course-overview/components/ExtractorRow.tsx:30
+#: src/features/course-overview/components/GenerateAllButton.tsx:23
+#: src/features/course-overview/components/StepRow.tsx:41
+msgid "Overview failed to start"
+msgstr "Overview failed to start"
+
+#: src/features/course-overview/components/ExtractorHeader.tsx:27
+#: src/features/course-overview/components/ExtractorRow.tsx:29
+#: src/features/course-overview/components/GenerateAllButton.tsx:22
+#: src/features/course-overview/components/StepRow.tsx:40
+msgid "Overview is already running for this course"
+msgstr "Overview is already running for this course"
+
+#: src/features/downloads/components/PasscodePrompt.tsx:51
+msgid "Passcode"
+msgstr "Passcode"
+
+#: src/features/lectures/constants/pipeline.ts:44
+msgid "PDF export failed"
+msgstr "PDF export failed"
+
+#: src/features/lectures/MainView.tsx:147
+msgid "Pipeline already running"
+msgstr "Pipeline already running"
+
+#: src/features/lectures/MainView.tsx:148
+msgid "Pipeline failed to start"
+msgstr "Pipeline failed to start"
+
+#. placeholder {0}: new Date(sleeping).toLocaleTimeString()
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:30
+msgid "rate-limited until {0}"
+msgstr "rate-limited until {0}"
+
+#: src/features/downloads/components/RecordingJobList.tsx:49
+msgid "Re-download ↻"
+msgstr "Re-download ↻"
+
+#: src/features/course-overview/components/ExtractorHeader.tsx:65
+msgid "Re-generate {title}"
+msgstr "Re-generate {title}"
+
+#: src/features/course-overview/components/StepRow.tsx:77
+msgid "Re-generate from {stepLabel}"
+msgstr "Re-generate from {stepLabel}"
+
+#: src/features/lectures/MainView.tsx:85
+msgid "Ready to retry"
+msgstr "Ready to retry"
+
+#: src/features/search/components/SearchResult.tsx:29
+msgid "recitation"
+msgstr "recitation"
+
+#: src/features/downloads/components/RecordingRow.tsx:223
+msgid "Recitation"
+msgstr "Recitation"
+
+#. placeholder {0}: range.start
+#: src/features/course-overview/utils/overview.ts:14
+msgid "Recitation {0}"
+msgstr "Recitation {0}"
+
+#: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
+msgid "Recitation name…"
+msgstr "Recitation name…"
+
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:29
+#: src/features/search/SearchView.tsx:149
+msgid "Recitations"
+msgstr "Recitations"
+
+#. placeholder {0}: range.start
+#. placeholder {1}: range.end
+#: src/features/course-overview/utils/overview.ts:15
+msgid "Recitations {0}-{1}"
+msgstr "Recitations {0}-{1}"
+
+#: src/features/downloads/components/AuthPill.tsx:87
+msgid "Reconnect"
+msgstr "Reconnect"
+
+#: src/features/downloads/DownloadsView.tsx:71
+msgid "Recordings · {selected}"
+msgstr "Recordings · {selected}"
+
+#: src/app/ErrorBoundary.tsx:65
+msgid "Reload"
+msgstr "Reload"
+
+#: src/features/downloads/utils/renames.ts:31
+msgid "Renamed \"{before}\" to \"{name}\" — some characters can't be used in a folder name."
+msgstr "Renamed \"{before}\" to \"{name}\" — some characters can't be used in a folder name."
+
+#: src/features/downloads/utils/renames.ts:20
+msgid "Renamed {count} downloads — some characters can't be used in a folder name."
+msgstr "Renamed {count} downloads — some characters can't be used in a folder name."
+
+#: src/features/downloads/utils/renames.ts:32
+msgid "Renamed to \"{name}\" — some characters can't be used in a folder name."
+msgstr "Renamed to \"{name}\" — some characters can't be used in a folder name."
+
+#. placeholder {0}: pending.lecture
+#: src/features/lectures/sidebar/PendingUploadModal.tsx:49
+msgid "Replace existing video.mp4 in \"{0}\"?"
+msgstr "Replace existing video.mp4 in \"{0}\"?"
+
+#: src/features/lectures/EditSummaryView.tsx:145
+msgid "Restore the original summary"
+msgstr "Restore the original summary"
+
+#: src/features/downloads/components/RecordingJobList.tsx:47
+#: src/features/downloads/components/RecordingRow.tsx:268
+msgid "Retry ✗"
+msgstr "Retry ✗"
+
+#. placeholder {0}: formatDuration(remaining)
+#: src/features/lectures/MainView.tsx:85
+msgid "Retry in {0}"
+msgstr "Retry in {0}"
+
+#: src/features/lectures/EditSummaryView.tsx:147
+msgid "Revert to Original"
+msgstr "Revert to Original"
+
+#: src/features/lectures/MainView.tsx:232
+msgid "Rotate {file}"
+msgstr "Rotate {file}"
+
+#: src/features/lectures/MainView.tsx:334
+msgid "Run Remaining"
+msgstr "Run Remaining"
+
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:61
+msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
+msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
+
+#: src/features/lectures/sidebar/PendingUploadModal.tsx:34
+msgid "Saved to {lecture}"
+msgstr "Saved to {lecture}"
+
+#: src/shared/sidebar/Sidebar.tsx:27
+msgid "Search"
+msgstr "Search"
+
+#: src/features/search/SearchView.tsx:101
+msgid "Search summaries"
+msgstr "Search summaries"
+
+#: src/features/search/SearchView.tsx:121
+msgid "Search this course's summaries…"
+msgstr "Search this course's summaries…"
+
+#. placeholder {0}: parsed.title
+#: src/features/downloads/components/PausedRunsBanner.tsx:27
+msgid "Section {0} is waiting for a passcode"
+msgstr "Section {0} is waiting for a passcode"
+
+#: src/App.tsx:15
+msgid "Select a lecture to get started"
+msgstr "Select a lecture to get started"
+
+#: src/features/downloads/components/AuthPill.tsx:86
+msgid "session expired"
+msgstr "session expired"
+
+#: src/features/search/SearchView.tsx:185
+msgid "Show more"
+msgstr "Show more"
+
+#: src/app/ErrorBoundary.tsx:52
+msgid "Something went wrong"
+msgstr "Something went wrong"
+
+#: src/app/ErrorBoundary.tsx:55
+msgid "Sorry about it. Go home to keep working, or copy the details below to report it."
+msgstr "Sorry about it. Go home to keep working, or copy the details below to report it."
+
+#: src/features/downloads/components/AddCourseRow.tsx:65
+msgid "Source URL (optional)…"
+msgstr "Source URL (optional)…"
+
+#: src/features/lectures/EditSummaryView.tsx:108
+#: src/features/lectures/MainView.tsx:132
+msgid "Step already running"
+msgstr "Step already running"
+
+#: src/features/downloads/components/PasscodePrompt.tsx:68
+msgid "Submit"
+msgstr "Submit"
+
+#: src/features/lectures/constants/pipeline.ts:43
+msgid "Summarization failed"
+msgstr "Summarization failed"
+
+#: src/features/lectures/constants/pipeline.ts:17
+msgid "Summarize"
+msgstr "Summarize"
+
+#: src/features/lectures/utils/materialIndicator.ts:51
+msgid "summary did not use {name}"
+msgstr "summary did not use {name}"
+
+#: src/features/lectures/utils/materialIndicator.ts:51
+msgid "summary did not use any material"
+msgstr "summary did not use any material"
+
+#: src/features/lectures/utils/materialIndicator.ts:34
+msgid "summary did not use material"
+msgstr "summary did not use material"
+
+#: src/features/lectures/utils/pdfBadge.ts:6
+msgid "summary.pdf is older than summary.md. Re-generate it."
+msgstr "summary.pdf is older than summary.md. Re-generate it."
+
+#. placeholder {0}: formatDuration(elapsed)
+#. placeholder {1}: formatDuration(longest)
+#: src/shared/components/ProgressBar.tsx:53
+msgid "Taking longer than expected · {0} · longest recorded: {1}"
+msgstr "Taking longer than expected · {0} · longest recorded: {1}"
+
+#: src/features/downloads/components/PasscodePrompt.tsx:33
+msgid "That passcode didn't work. Try another one"
+msgstr "That passcode didn't work. Try another one"
+
+#: src/features/downloads/components/SectionGroup.tsx:192
+msgid "the BIU session expired. Reconnect, then run the section again."
+msgstr "the BIU session expired. Reconnect, then run the section again."
+
+#: src/features/lectures/MainView.tsx:354
+msgid "The following files will be deleted:"
+msgstr "The following files will be deleted:"
+
+#: src/features/course-overview/components/ExtractorRow.tsx:50
+msgid "The following files will be re-generated:"
+msgstr "The following files will be re-generated:"
+
+#: src/features/lectures/MainView.tsx:371
+msgid "The other materials keep their names."
+msgstr "The other materials keep their names."
+
+#: src/features/downloads/components/SectionGroup.tsx:195
+msgid "the run stopped early. Run the section again to pick them up."
+msgstr "the run stopped early. Run the section again to pick them up."
+
+#: src/features/downloads/components/SectionGroup.tsx:194
+msgid "the run was cancelled. Run the section again to pick them up."
+msgstr "the run was cancelled. Run the section again to pick them up."
+
+#. placeholder {0}: rotateTarget.file
+#: src/features/lectures/MainView.tsx:355
+msgid "Then {0} will be regenerated."
+msgstr "Then {0} will be regenerated."
+
+#: src/features/lectures/constants/pipeline.ts:16
+msgid "Transcribe"
+msgstr "Transcribe"
+
+#: src/features/lectures/constants/pipeline.ts:42
+msgid "Transcription failed"
+msgstr "Transcription failed"
+
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:85
+msgid "Unarchive course"
+msgstr "Unarchive course"
+
+#: src/features/downloads/DownloadsView.tsx:35
+msgid "Unknown"
+msgstr "Unknown"
+
+#: src/features/downloads/components/RecordingRow.tsx:46
+msgid "Unsupported"
+msgstr "Unsupported"
+
+#: src/features/lectures/sidebar/PendingUploadModal.tsx:35
+msgid "Upload failed"
+msgstr "Upload failed"
+
+#: src/features/lectures/constants/pipeline.ts:19
+msgid "Upload to Drive"
+msgstr "Upload to Drive"
+
+#: src/features/lectures/sidebar/PendingUploadModal.tsx:33
+msgid "Uploading video…"
+msgstr "Uploading video…"
+
+#: src/features/downloads/components/RecordingRow.tsx:44
+msgid "Video"
+msgstr "Video"
+
+#: src/features/downloads/DownloadsView.tsx:33
+msgid "Videos"
+msgstr "Videos"
+
+#: src/shared/components/ConfirmModal.tsx:41
+msgid "Yes"
+msgstr "Yes"

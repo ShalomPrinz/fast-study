@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import type { OverviewStep } from '@/features/course-overview/constants/overview'
 import { overviewFileUrl } from '@/services/database'
 import { toastInitResult } from '@/services/toaster'
@@ -13,6 +14,7 @@ import '@/styles/modal.css'
 import './BranchIndicator.css'
 
 export default function StepRow({ step }: { step: OverviewStep }) {
+  const { t } = useLingui()
   const { course, files, status, generate } = useCourseOverview()
   const { extractor } = useExtractor()
   const { slug, phases } = extractor
@@ -24,6 +26,7 @@ export default function StepRow({ step }: { step: OverviewStep }) {
   const stepRunning = st?.status === 'running' && st?.phase === step.phase
   const isPdf = step.phase === 'to_pdf'
   const bs = branchStatus(status, files, slug, phases)
+  const stepLabel = t(step.label)
 
   // Re-generating from this phase rebuilds it and every later one.
   const steps = stepsFor(phases)
@@ -34,8 +37,8 @@ export default function StepRow({ step }: { step: OverviewStep }) {
     setRegenerateOpen(false)
     const result = await generate([slug], step.phase)
     toastInitResult(result, {
-      busy: 'Overview is already running for this course',
-      error: 'Overview failed to start',
+      busy: t`Overview is already running for this course`,
+      error: t`Overview failed to start`,
     })
   }
 
@@ -60,7 +63,7 @@ export default function StepRow({ step }: { step: OverviewStep }) {
               {isPdf && exists && (
                 <button
                   className="file-open-btn"
-                  title="Open PDF in new tab"
+                  title={t`Open PDF in new tab`}
                   onClick={() => window.open(overviewFileUrl(course, fileName), '_blank')}
                 >
                   <Icon icon="external-link" />
@@ -71,7 +74,7 @@ export default function StepRow({ step }: { step: OverviewStep }) {
               {exists && (
                 <button
                   className="file-rotate-btn"
-                  title={`Re-generate from ${step.label}`}
+                  title={t`Re-generate from ${stepLabel}`}
                   onClick={() => setRegenerateOpen(true)}
                   disabled={bs.running}
                 >
@@ -85,8 +88,8 @@ export default function StepRow({ step }: { step: OverviewStep }) {
 
       {regenerateOpen && (
         <ConfirmModal
-          message={`Generating from ${step.label} step will rebuild:`}
-          postMessage="Are you sure you want to re-generate?"
+          message={t`Generating from ${stepLabel} step will rebuild:`}
+          postMessage={t`Are you sure you want to re-generate?`}
           detail={
             <ul className="modal-file-list">
               {rebuilds.map((f) => (

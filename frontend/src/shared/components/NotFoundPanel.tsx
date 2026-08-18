@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { Link } from 'react-router-dom'
 import '@/styles/panel.css'
 import './NotFoundPanel.css'
@@ -9,7 +10,7 @@ export default function NotFoundPanel({ message }: { message: string }) {
         {message}
       </p>
       <Link className="empty-state-link" to="/">
-        Home
+        <Trans>Home</Trans>
       </Link>
     </main>
   )

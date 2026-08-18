@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
 import { formatDuration } from '@/shared/utils/format'
 import './ProgressBar.css'
@@ -13,6 +14,7 @@ interface Props {
 
 // ETA bar: elapsed time against a given estimate, ticking client-side.
 export default function ProgressBar({ stats, startedAt, completedFraction = 0, className }: Props) {
+  const { t } = useLingui()
   const [elapsed, setElapsed] = useState(() => (Date.now() - startedAt) / 1000)
 
   useEffect(() => {
@@ -23,12 +25,12 @@ export default function ProgressBar({ stats, startedAt, completedFraction = 0, c
   const extra = className ? ` ${className}` : ''
 
   if (stats === null || stats === undefined) {
-    return <p className={`progress-label progress-label--muted${extra}`}>Estimating…</p>
+    return <p className={`progress-label progress-label--muted${extra}`}>{t`Estimating…`}</p>
   }
 
   if ('message' in stats) {
     return (
-      <p className={`progress-label progress-label--muted${extra}`}>Not enough data to estimate</p>
+      <p className={`progress-label progress-label--muted${extra}`}>{t`Not enough data to estimate`}</p>
     )
   }
 
@@ -48,8 +50,8 @@ export default function ProgressBar({ stats, startedAt, completedFraction = 0, c
       </div>
       <p className={`progress-label${overflowing ? ' progress-label--overflow' : ''}`}>
         {overflowing
-          ? `Taking longer than expected · ${formatDuration(elapsed)} · longest recorded: ${formatDuration(longest)}`
-          : `${formatDuration(remaining)} remaining`}
+          ? t`Taking longer than expected · ${formatDuration(elapsed)} · longest recorded: ${formatDuration(longest)}`
+          : t`${formatDuration(remaining)} remaining`}
       </p>
     </div>
   )

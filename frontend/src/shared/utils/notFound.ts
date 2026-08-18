@@ -1,10 +1,11 @@
+import { t } from '@lingui/core/macro'
 import type { Course, Kind } from '@/types'
 
 // Route params name a course/lecture that may not exist on disk. These build the message for that
 // case, and return null when the target is real.
 
 export function courseNotFound(courses: Course[], course: string): string | null {
-  return courses.some((c) => c.name === course) ? null : `Course "${course}" doesn't exist.`
+  return courses.some((c) => c.name === course) ? null : t`Course "${course}" doesn't exist.`
 }
 
 export function lectureNotFound(
@@ -17,5 +18,8 @@ export function lectureNotFound(
   if (!found) return courseNotFound(courses, course)
   const list = kind === 'recitation' ? found.recitations : found.lectures
   if (list.some((l) => l.name === lecture)) return null
-  return `"${course}" has no ${kind} named "${lecture}".`
+  // Two whole messages rather than an interpolated kind: the noun inflects with the sentence.
+  return kind === 'recitation'
+    ? t`"${course}" has no recitation named "${lecture}".`
+    : t`"${course}" has no lecture named "${lecture}".`
 }

@@ -1,4 +1,7 @@
 import { memo, useId, useState } from 'react'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { msg } from '@lingui/core/macro'
+import type { MessageDescriptor } from '@lingui/core'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item, ResolvedMedia } from '@/features/downloads/services/autoDownloader'
@@ -37,10 +40,10 @@ interface Props {
 }
 
 // The resolved-type column's copy; an unresolved 'unknown' row shows '?'.
-const RESOLVED_LABEL: Record<ResolvedMedia, string> = {
-  video: 'Video',
-  material: 'Material',
-  unsupported: 'Unsupported',
+const RESOLVED_LABEL: Record<ResolvedMedia, MessageDescriptor> = {
+  video: msg`Video`,
+  material: msg`Material`,
+  unsupported: msg`Unsupported`,
 }
 
 // One discovered recording; an expandable one renders each child as a recursive RecordingRow.
@@ -52,6 +55,7 @@ const RecordingRow = memo(function RecordingRow({
   onReconnect,
   expand,
 }: Props) {
+  const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   // Name/kind live in SectionGroup so this row and the bulk queue agree.
   const {
@@ -120,18 +124,19 @@ const RecordingRow = memo(function RecordingRow({
     // only otherwise warn if a zoom split ('${name}.1'/'.2') exists — this row might split onto it.
     if (alreadyDownloaded || status === 'done') {
       setConfirm({
-        message: `${effectiveName} already exists in ${course}. Download again and overwrite?`,
+        message: t`${effectiveName} already exists in ${course}. Download again and overwrite?`,
         run: download,
       })
       return
     }
     const siblings = splitSiblings(effectiveName, kind, courses, course)
-    if (siblings.length)
+    if (siblings.length) {
+      const existing = siblings.join(', ')
       setConfirm({
-        message: `${effectiveName} may split into parts that overwrite existing ${siblings.join(', ')} in ${course}. Download anyway?`,
+        message: t`${effectiveName} may split into parts that overwrite existing ${existing} in ${course}. Download anyway?`,
         run: download,
       })
-    else download()
+    } else download()
   }
 
   // A per-clip button in a split row: a done clip overwrites, so confirm naming that clip; an
@@ -139,7 +144,7 @@ const RecordingRow = memo(function RecordingRow({
   const onClipAction = (job: JobProgress) =>
     job.status === 'done'
       ? setConfirm({
-          message: `${job.title} already exists in ${course}. Download again and overwrite?`,
+          message: t`${job.title} already exists in ${course}. Download again and overwrite?`,
           run: () => retryClip(job),
         })
       : retryClip(job)
@@ -150,7 +155,7 @@ const RecordingRow = memo(function RecordingRow({
         <div className="recording-row recording-row--expandable">
           <button
             className="recording-caret"
-            aria-label={expand.expanded ? 'Collapse' : 'Expand'}
+            aria-label={expand.expanded ? t`Collapse` : t`Expand`}
             aria-expanded={expand.expanded}
             onClick={expand.onToggle}
             disabled={expand.expanding}
@@ -195,8 +200,8 @@ const RecordingRow = memo(function RecordingRow({
         </span>
 
         {unknown && (
-          <span className="recording-media" title="File type">
-            {resolved ? RESOLVED_LABEL[resolved] : '?'}
+          <span className="recording-media" title={t`File type`}>
+            {resolved ? t(RESOLVED_LABEL[resolved]) : '?'}
           </span>
         )}
 
@@ -207,7 +212,7 @@ const RecordingRow = memo(function RecordingRow({
             }
             onClick={() => setKind('lecture')}
           >
-            Lecture
+            <Trans>Lecture</Trans>
           </button>
           <button
             className={
@@ -215,7 +220,7 @@ const RecordingRow = memo(function RecordingRow({
             }
             onClick={() => setKind('recitation')}
           >
-            Recitation
+            <Trans>Recitation</Trans>
           </button>
         </div>
 
@@ -227,7 +232,7 @@ const RecordingRow = memo(function RecordingRow({
           onChange={(e) => setName(e.target.value)}
           placeholder={suggestion}
           list={material ? listId : undefined}
-          aria-label={material ? 'Attach material to' : 'Lecture name'}
+          aria-label={material ? t`Attach material to` : t`Lecture name`}
           dir="auto"
         />
         {material && (
@@ -239,32 +244,32 @@ const RecordingRow = memo(function RecordingRow({
         )}
         {materialCount > 0 && (
           <span className="recording-material-count">
-            {materialCount} material{materialCount > 1 ? 's' : ''}
+            <Plural value={materialCount} one="# material" other="# materials" />
           </span>
         )}
 
         {split ? (
           // Per-clip buttons own re-download/retry, so the main button is just a status label here.
           <span className="source-row-btn recording-download-btn recording-download-btn--label">
-            {downloading ? 'Downloading…' : status === 'error' ? 'Failed ✗' : 'Downloaded ✓'}
+            {downloading ? t`Downloading…` : status === 'error' ? t`Failed ✗` : t`Downloaded ✓`}
           </span>
         ) : (
           <button
             className="source-row-btn recording-download-btn"
             onClick={onDownloadClick}
             disabled={pending || downloading || unsupported}
-            title={unsupported ? 'Not a file the downloader can fetch' : undefined}
+            title={unsupported ? t`Not a file the downloader can fetch` : undefined}
           >
             {pending ? (
               <span className="recording-spinner" />
             ) : downloading ? (
-              'Downloading…'
+              t`Downloading…`
             ) : queueFailed || status === 'error' ? (
-              'Retry ✗'
+              t`Retry ✗`
             ) : status === 'done' ? (
-              'Downloaded ✓'
+              t`Downloaded ✓`
             ) : (
-              'Download'
+              t`Download`
             )}
           </button>
         )}

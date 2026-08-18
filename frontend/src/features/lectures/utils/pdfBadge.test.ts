@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { FileStatus, FileInfo } from '@/types'
-import { pdfBadge, STALE_PDF_TITLE } from './pdfBadge'
+import { pdfBadge, stalePdfTitle } from './pdfBadge'
 
 const info = (over: Partial<FileInfo> = {}): FileInfo => ({
   exists: false,
@@ -30,7 +30,7 @@ describe('pdfBadge', () => {
   it('reports stale when summary.md is newer — the post-revert case', () => {
     expect(pdfBadge(files({ exists: true, mtime: 100 }, { exists: true, mtime: 200 }))).toEqual({
       kind: 'stale',
-      title: STALE_PDF_TITLE,
+      title: stalePdfTitle(),
     })
   })
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { Step, FileName, MaterialInfo } from '@/types'
 import { deleteFile, deleteMaterial, fileUrl, materialUrl } from '@/services/database'
@@ -58,6 +59,7 @@ function RateLimitPanel({
   sleepingUntil: string
   progress: { completed: number; total: number } | null
 }) {
+  const { t } = useLingui()
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -69,20 +71,25 @@ function RateLimitPanel({
 
   return (
     <div className="rate-limit-panel">
-      <h4 className="rate-limit-title">Groq rate limit reached</h4>
+      <h4 className="rate-limit-title">
+        <Trans>Groq rate limit reached</Trans>
+      </h4>
       {progress && (
         <p className="rate-limit-progress">
-          {progress.completed}/{progress.total} chunks transcribed so far
+          <Trans>
+            {progress.completed}/{progress.total} chunks transcribed so far
+          </Trans>
         </p>
       )}
       <p className="rate-limit-countdown">
-        {remaining > 0 ? `Retry in ${formatDuration(remaining)}` : 'Ready to retry'}
+        {remaining > 0 ? t`Retry in ${formatDuration(remaining)}` : t`Ready to retry`}
       </p>
     </div>
   )
 }
 
 export default function MainView() {
+  const { t } = useLingui()
   const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
   const { courses, loaded, refreshCourses } = useCourseTreeContext()
   const navigate = useNavigate()
@@ -121,7 +128,10 @@ export default function MainView() {
 
   async function handleStep(step: Step) {
     const initResult = await runStep(course, lecture, step, kind)
-    toastInitResult(initResult, { busy: 'Step already running', error: STEP_ERROR_LABEL[step] })
+    toastInitResult(initResult, {
+      busy: t`Step already running`,
+      error: t(STEP_ERROR_LABEL[step]),
+    })
     refreshCourses()
   }
 
@@ -133,7 +143,10 @@ export default function MainView() {
 
   async function handleRunRemaining() {
     const result = await runPipeline(course, lecture, kind)
-    toastInitResult(result, { busy: 'Pipeline already running', error: 'Pipeline failed to start' })
+    toastInitResult(result, {
+      busy: t`Pipeline already running`,
+      error: t`Pipeline failed to start`,
+    })
     refreshCourses()
   }
 
@@ -172,7 +185,9 @@ export default function MainView() {
             const prereqMet = !prereq || files[prereq].exists
             const isResumeTranscribe =
               file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
-            const buttonLabel = isResumeTranscribe ? 'Continue transcription' : actionLabel
+            const buttonLabel = isResumeTranscribe
+              ? t`Continue transcription`
+              : actionLabel && t(actionLabel)
 
             return (
               <div
@@ -205,14 +220,16 @@ export default function MainView() {
                           {buttonLabel}
                         </button>
                       ) : (
-                        <span className="file-missing">not provided</span>
+                        <span className="file-missing">
+                          <Trans>not provided</Trans>
+                        </span>
                       )}
                     </span>
                     {hasAnyStepFile && exists && step && (
                       <span className="file-slot file-slot--rotate">
                         <button
                           className="file-rotate-btn"
-                          title={`Rotate ${file}`}
+                          title={t`Rotate ${file}`}
                           onClick={() => openRotateModal(file, step)}
                           disabled={inflight}
                         >
@@ -228,7 +245,7 @@ export default function MainView() {
                         {file === 'summary.pdf' && pdfExists && (
                           <button
                             className="file-open-btn"
-                            title="Open PDF in new tab"
+                            title={t`Open PDF in new tab`}
                             onClick={() =>
                               window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank')
                             }
@@ -239,7 +256,7 @@ export default function MainView() {
                         {file === 'summary.md' && summaryExists && (
                           <button
                             className="file-open-btn"
-                            title="Edit summary"
+                            title={t`Edit summary`}
                             onClick={() => navigate({ pathname: 'edit', search: kindQuery(kind) })}
                           >
                             <Icon icon="edit" />
@@ -248,7 +265,7 @@ export default function MainView() {
                         {file === 'drive_url.txt' && exists && (
                           <button
                             className="file-open-btn"
-                            title="Open in Drive"
+                            title={t`Open in Drive`}
                             onClick={() => window.open(files['drive_url.txt'].url, '_blank')}
                           >
                             <Icon icon="external-link" />
@@ -272,7 +289,9 @@ export default function MainView() {
 
         {materials.length > 0 && (
           <>
-            <h3 className="material-list-title">Materials</h3>
+            <h3 className="material-list-title">
+              <Trans>Materials</Trans>
+            </h3>
             <div className="file-list material-list">
               {materials.map((m) => (
                 <div key={m.name} className="file-row file-row--present">
@@ -284,7 +303,7 @@ export default function MainView() {
                       <span className="file-slot file-slot--open">
                         <button
                           className="file-open-btn"
-                          title="Open material in new tab"
+                          title={t`Open material in new tab`}
                           onClick={() =>
                             window.open(materialUrl(course, lecture, m.name, kind), '_blank')
                           }
@@ -295,7 +314,7 @@ export default function MainView() {
                       <span className="file-slot file-slot--rotate">
                         <button
                           className="file-rotate-btn"
-                          title={`Delete ${m.name}`}
+                          title={t`Delete ${m.name}`}
                           onClick={() => setMaterialToDelete(m.name)}
                           disabled={inflight}
                         >
@@ -312,13 +331,16 @@ export default function MainView() {
 
         {hasActions && (
           <button className="run-all-btn" onClick={handleRunRemaining} disabled={inflight}>
-            Run Remaining
+            <Trans>Run Remaining</Trans>
           </button>
         )}
 
         {lectureError && (
           <div className="lecture-error" role="alert">
-            <strong>Last error:</strong> {lectureError}
+            <strong>
+              <Trans>Last error:</Trans>
+            </strong>{' '}
+            {lectureError}
           </div>
         )}
 
@@ -329,8 +351,8 @@ export default function MainView() {
 
       {rotateTarget && (
         <ConfirmModal
-          message="The following files will be deleted:"
-          postMessage={`Then ${rotateTarget.file} will be regenerated.`}
+          message={t`The following files will be deleted:`}
+          postMessage={t`Then ${rotateTarget.file} will be regenerated.`}
           detail={
             <ul className="modal-file-list">
               {rotateTarget.toDelete.map((f) => (
@@ -345,8 +367,8 @@ export default function MainView() {
 
       {materialToDelete && (
         <ConfirmModal
-          message={`${materialToDelete} will be deleted.`}
-          postMessage="The other materials keep their names."
+          message={t`${materialToDelete} will be deleted.`}
+          postMessage={t`The other materials keep their names.`}
           onConfirm={() => confirmDeleteMaterial(materialToDelete)}
           onCancel={() => setMaterialToDelete(null)}
         />

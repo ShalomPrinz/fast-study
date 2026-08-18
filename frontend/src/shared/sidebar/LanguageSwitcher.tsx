@@ -1,4 +1,4 @@
-import { useLingui } from '@lingui/react'
+import { useLingui } from '@lingui/react/macro'
 import { LOCALES, activateLocale } from '@/services/i18n'
 import type { Locale } from '@/services/i18n'
 import '@/styles/segmented.css'
@@ -8,10 +8,10 @@ import './LanguageSwitcher.css'
 const LABELS: Record<Locale, string> = { he: 'עברית', en: 'English' }
 
 export default function LanguageSwitcher() {
-  const { i18n } = useLingui()
+  const { t, i18n } = useLingui()
 
   return (
-    <div className="mode-toggle language-switcher">
+    <div className="mode-toggle language-switcher" role="group" aria-label={t`Language`}>
       {LOCALES.map((locale) => (
         <button
           key={locale}

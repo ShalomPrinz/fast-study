@@ -1,4 +1,5 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { Link, useLocation } from 'react-router-dom'
 import '@/styles/panel.css'
 import '@/styles/modal.css'
@@ -21,6 +22,7 @@ function buildReport(error: Error, componentStack: string): string {
 }
 
 function CopyButton({ report }: { report: string }) {
+  const { t } = useLingui()
   const [copied, setCopied] = useState(false)
   async function copy() {
     await navigator.clipboard.writeText(report)
@@ -29,7 +31,7 @@ function CopyButton({ report }: { report: string }) {
   }
   return (
     <button className={`modal-btn error-btn${copied ? ' error-btn--copied' : ''}`} onClick={copy}>
-      {copied ? 'Copied!' : 'Copy details'}
+      {copied ? t`Copied!` : t`Copy details`}
     </button>
   )
 }
@@ -46,17 +48,21 @@ class Boundary extends Component<{ children: ReactNode }, { report: string | nul
     if (!report) return this.props.children
     return (
       <main className="main-view error-view">
-        <h1 className="error-title">Something went wrong</h1>
+        <h1 className="error-title">
+          <Trans>Something went wrong</Trans>
+        </h1>
         <p className="error-hint">
-          Sorry about it. Go home to keep working, or copy the details below to report it.
+          <Trans>
+            Sorry about it. Go home to keep working, or copy the details below to report it.
+          </Trans>
         </p>
         <div className="error-actions">
           <Link className="modal-btn error-btn error-btn--primary" to="/">
-            Home
+            <Trans>Home</Trans>
           </Link>
           {/* A crash in Layout or the providers re-crashes at "/", so keep a hard reset around. */}
           <button className="modal-btn error-btn" onClick={() => window.location.reload()}>
-            Reload
+            <Trans>Reload</Trans>
           </button>
           <CopyButton report={report} />
         </div>

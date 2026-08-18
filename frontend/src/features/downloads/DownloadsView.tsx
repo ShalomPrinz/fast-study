@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro'
 import { ResolvedMediaContext } from './contexts/ResolvedMediaContext'
 import ModeToggle from '@/shared/components/ModeToggle'
 import type { ModeConfig } from '@/shared/components/ModeToggle'
@@ -18,32 +19,35 @@ import '@/styles/panel.css'
 import '@/styles/segmented.css'
 import './DownloadsView.css'
 
-// Order matters: it drives the segment order and the default side (videos).
-const MEDIA_MODES: Record<Media, ModeConfig> = {
-  video: { label: 'Videos' },
-  material: { label: 'Materials' },
-  unknown: { label: 'Unknown' },
-}
-
-const EMPTY_STATE: Record<Media, string> = {
-  video: 'No recordings found.',
-  material: 'No materials found.',
-  unknown: 'No files of unknown type found.',
-}
-
 // Downloads page: BIU account, course source URLs, discovery. See docs/downloads.md.
 export default function DownloadsView() {
+  const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
 
   const { selected, items, loading, error, edits, reconnectKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
 
+  // Order matters: it drives the segment order and the default side (videos).
+  const mediaModes: Record<Media, ModeConfig> = {
+    video: { label: t`Videos` },
+    material: { label: t`Materials` },
+    unknown: { label: t`Unknown` },
+  }
+
+  const emptyState: Record<Media, string> = {
+    video: t`No recordings found.`,
+    material: t`No materials found.`,
+    unknown: t`No files of unknown type found.`,
+  }
+
   return (
     <ResolvedMediaContext.Provider value={resolveMedia}>
       <main className="main-view main-view--panel">
         <div className="lecture-panel lecture-panel--wide">
-          <h2 className="lecture-panel-title">Downloads</h2>
+          <h2 className="lecture-panel-title">
+            <Trans>Downloads</Trans>
+          </h2>
 
           <AuthPill key={reconnectKey} />
 
@@ -64,18 +68,22 @@ export default function DownloadsView() {
             <div className="recordings-panel">
               <div className="recordings-header">
                 <span className="recordings-title" dir="auto">
-                  Recordings · {selected}
+                  <Trans>Recordings · {selected}</Trans>
                 </span>
                 <button className="recordings-close" onClick={close}>
-                  close
+                  <Trans>close</Trans>
                 </button>
               </div>
-              {loading && <div className="recordings-status">Loading recordings…</div>}
+              {loading && (
+                <div className="recordings-status">
+                  <Trans>Loading recordings…</Trans>
+                </div>
+              )}
               {error && <div className="recordings-status recordings-status--error">{error}</div>}
               <RowEditsDispatchContext.Provider value={rowEdits}>
                 <RowEditsStateContext.Provider value={edits}>
                   <ModeToggle
-                    modes={MEDIA_MODES}
+                    modes={mediaModes}
                     storageKey="fastStudyDownloadsMedia"
                     className="mode-toggle--downloads"
                   >
@@ -91,7 +99,7 @@ export default function DownloadsView() {
                           {!sections.length
                             ? !loading &&
                               !error && (
-                                <div className="recordings-status">{EMPTY_STATE[media]}</div>
+                                <div className="recordings-status">{emptyState[media]}</div>
                               )
                             : sections.map(([title, sectionItems]) => {
                                 const id = sectionId(selected, media, title)

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Trans } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -59,7 +60,9 @@ export default function PdfViewer({ url, show, generating }: Props) {
   if (!show) {
     return (
       <div className="pdf-placeholder">
-        <p>No PDF yet — click "Generate PDF" to create one.</p>
+        <p>
+          <Trans>No PDF yet — click "Generate PDF" to create one.</Trans>
+        </p>
       </div>
     )
   }

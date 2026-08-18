@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ProgressBar from '@/shared/components/ProgressBar'
@@ -20,6 +21,7 @@ function JobProgressBar({
   showTitle: boolean
   retry?: { onRetry: () => void; busy: boolean }
 }) {
+  const { t } = useLingui()
   const sized = job.expectedBytes != null
   const stats = useTimingStats(sized ? job.operation : null, job.expectedBytes ?? 0)
   const title = showTitle && (
@@ -42,9 +44,9 @@ function JobProgressBar({
           {retry.busy ? (
             <span className="recording-spinner" />
           ) : job.status === 'error' ? (
-            'Retry ✗'
+            t`Retry ✗`
           ) : (
-            'Re-download ↻'
+            t`Re-download ↻`
           )}
         </button>
       </div>

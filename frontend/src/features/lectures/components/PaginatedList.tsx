@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { Plural } from '@lingui/react/macro'
 import './PaginatedList.css'
 
 interface Props<T> {
@@ -34,7 +35,7 @@ export default function PaginatedList<T>({
       {hidden > 0 && (
         <li>
           <button className="load-more-btn" onClick={loadMore} type="button">
-            Load {nextLoad} more
+            <Plural value={nextLoad} one="Load # more" other="Load # more" />
           </button>
         </li>
       )}

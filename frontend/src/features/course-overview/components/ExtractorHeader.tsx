@@ -1,3 +1,4 @@
+import { Trans, useLingui } from '@lingui/react/macro'
 import { overviewFileUrl } from '@/services/database'
 import { formatMonthDate, formatFullTimestamp } from '@/shared/utils/format'
 import { formatRange } from '@/features/course-overview/utils/overview'
@@ -12,6 +13,7 @@ import '@/styles/file-row.css'
 import './ExtractorHeader.css'
 
 export default function ExtractorHeader() {
+  const { t } = useLingui()
   const { course, files, meta, status, generate } = useCourseOverview()
   const { extractor, expanded, toggleExpanded, confirmRegenerate } = useExtractor()
   const { slug, title, phases } = extractor
@@ -22,8 +24,8 @@ export default function ExtractorHeader() {
   async function handleGenerate() {
     const result = await generate([slug])
     toastInitResult(result, {
-      busy: 'Overview is already running for this course',
-      error: 'Overview failed to start',
+      busy: t`Overview is already running for this course`,
+      error: t`Overview failed to start`,
     })
   }
 
@@ -49,7 +51,7 @@ export default function ExtractorHeader() {
         {bs.done && (
           <button
             className="file-open-btn"
-            title="Open PDF in new tab"
+            title={t`Open PDF in new tab`}
             onClick={() =>
               window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')
             }
@@ -60,7 +62,7 @@ export default function ExtractorHeader() {
         {bs.done ? (
           <button
             className="file-rotate-btn"
-            title={`Re-generate ${title}`}
+            title={t`Re-generate ${title}`}
             onClick={confirmRegenerate}
             disabled={bs.running}
           >
@@ -68,7 +70,7 @@ export default function ExtractorHeader() {
           </button>
         ) : (
           <button className="file-action-btn" onClick={handleGenerate} disabled={bs.running}>
-            Generate
+            <Trans>Generate</Trans>
           </button>
         )}
       </span>
