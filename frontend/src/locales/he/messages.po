@@ -431,6 +431,7 @@ msgid "lecture"
 msgstr "הרצאה"
 
 #: src/features/downloads/components/RecordingRow.tsx:215
+#: src/features/downloads/utils/nameFromTitle.ts:37
 msgid "Lecture"
 msgstr "הרצאה"
 
@@ -439,7 +440,7 @@ msgstr "הרצאה"
 msgid "Lecture {0}"
 msgstr "הרצאה {0}"
 
-#: src/features/lectures/utils/nextName.ts:44
+#: src/features/lectures/utils/nextName.ts:58
 msgid "Lecture 1"
 msgstr "הרצאה 1"
 
@@ -638,6 +639,7 @@ msgid "recitation"
 msgstr "תרגול"
 
 #: src/features/downloads/components/RecordingRow.tsx:223
+#: src/features/downloads/utils/nameFromTitle.ts:37
 msgid "Recitation"
 msgstr "תרגול"
 
@@ -646,8 +648,8 @@ msgstr "תרגול"
 msgid "Recitation {0}"
 msgstr "תרגול {0}"
 
-#: src/features/lectures/utils/nextName.ts:51
-#: src/features/lectures/utils/nextName.ts:56
+#: src/features/lectures/utils/nextName.ts:65
+#: src/features/lectures/utils/nextName.ts:70
 msgid "Recitation 1"
 msgstr "תרגול 1"
 

@@ -32,6 +32,20 @@ export function latestName(names: string[], kind: Kind): LatestName | null {
   return parsed.reduce((a, b) => (a.n > b.n || (a.n === b.n && a.sub > b.sub) ? a : b))
 }
 
+// The prefix a course already uses for a kind, so a new name copies its language. Null when the
+// course is unknown or nothing in it parses.
+export function sessionPrefix(courses: Course[], courseName: string, kind: Kind): string | null {
+  const course = courses.find((c) => c.name === courseName)
+  if (!course) return null
+  const items = kind === 'recitation' ? (course.recitations ?? []) : course.lectures
+  return (
+    latestName(
+      items.map((i) => i.name),
+      kind,
+    )?.prefix ?? null
+  )
+}
+
 // These become directory names under DATA_ROOT, so they follow the course's own naming rather than
 // any fixed language; only a course with nothing to copy falls back to the UI locale's wording.
 function suggestLectureName(courses: Course[], courseName: string): string {
