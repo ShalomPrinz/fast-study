@@ -24,6 +24,8 @@ Parse `TODOS.md` and identify each distinct change the user wants. A "distinct c
 
 Before generating anything, identify any todo that is ambiguous, underspecified, or has more than one reasonable interpretation. For each one, ask a single focused question. Do not ask about things you can infer from the codebase or from CLAUDE.md.
 
+If the user asked for worktree mode (see **Worktree mode** below) and the plan from Step 3 has more than one prompt, ask here which of them should get the worktree section — one question listing the prompts, not one question per prompt.
+
 Wait for the user's answers before continuing.
 
 ---
@@ -37,6 +39,48 @@ Decide how to split the todos into prompts. Each prompt should be:
 - Small enough that Claude Code can hold the full context in one session
 
 Group related small items together. Split large items that touch multiple unrelated areas.
+
+---
+
+## Worktree mode
+
+Off by default. It turns on only when the user says **"use worktree"** (or asks for one in other words) for this run. When it is on:
+
+- One prompt in the plan → that prompt gets the section.
+- More than one → ask in Step 2 which ones get it; only those do.
+
+Pick a short `snake_case` topic slug per prompt naming the change (`support_i18n`, `unknown_url_modules`) — not the full prompt file name. Each worktree-enabled prompt gets its own slug.
+
+Emit this section verbatim into the prompt file with `<slug>` replaced throughout, and the repo root path taken from the actual project root. Drop the `npm install` lines the prompt's service does not need.
+
+````
+### Where the work lives — read before anything else
+
+All work happens in a git worktree dedicated to this task. **Create it first, before reading further or touching any file:**
+
+```
+git -C <repo-root> worktree add -b <slug> <repo-root>-<slug> main
+```
+
+Then run every command from **`<repo-root>-<slug>`**, on the local branch **`<slug>`**. Do not `cd` to `<repo-root>` — it stays on `main`, untouched.
+
+A fresh worktree has none of the git-ignored files the services need. **Run these next, before any other work** — every service reads `.env` from the repo root, and without `node_modules` the lint and test commands will not run:
+
+```
+cp <repo-root>/.env <repo-root>-<slug>/.env
+cd <repo-root>-<slug> && npm install
+cd <repo-root>-<slug>/frontend && npm install
+```
+
+- Commits are authorised **only** on this branch and **only** for this task.
+- Do not merge, rebase onto, fast-forward or otherwise touch `main`. Do not push, do not open a PR.
+- When the last step is done, **stop**. Leave the branch sitting locally for the user to review and merge.
+- If the work has to be abandoned mid-way, leave the branch as-is and report; do not reset or delete it.
+
+Commit message format: a one-line summary starting with `<service>: ` or `<feature>: `. No other body text.
+
+> **Worktree tooling note:** this session's Bash tool refuses heredocs and multi-part commands with redirects while worktree-isolated. Use the Write/Edit tools for file creation, and keep shell commands simple.
+````
 
 ---
 
@@ -58,6 +102,8 @@ Each file must follow this structure exactly:
 
 **Type:** Feature | Bugfix | Refactor | UI | Infrastructure | Tests
 (Optional) **Depends on:** [prompt file name]
+
+(Only in worktree mode) The **Where the work lives** section, placed here — above **User Raw Description**, so it is the first thing read.
 
 **User Raw Description:**
 
