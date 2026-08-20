@@ -29,7 +29,9 @@ function setStatus(text, color) {
   if (color) el.style.color = color;
 }
 
-// Mirrors nextName.ts::suggestName so popup choices stay consistent with the app.
+// Mirrors nextName.ts::suggestName for English-named courses only — the app infers the prefix from
+// the course's own children, this regex still requires the word "Lecture". A Hebrew course therefore
+// gets 'Lecture 1' from mode='next' and '' from mode='latest'.
 // mode='next' suggests the next-to-create name (video flow — fresh lecture).
 // mode='latest' returns the most recent existing name (PDF flow — attach material
 // to the lecture the user just watched).

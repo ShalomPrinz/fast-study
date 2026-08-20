@@ -3,6 +3,8 @@ import type { Course, Kind } from '@/types'
 
 // Any prefix followed by a number, so a course names its sessions in whatever language it uses.
 // A recitation has no sub-session form, so `תרגול 3.1` is rejected rather than parsed.
+// This assumes a course holds only indexed sessions: a stray `סיכום 2024` parses too, and its year
+// outranks every real lecture number.
 const PATTERN = /^(.+?)\s+(\d+)(?:\.(\d+))?$/
 
 export interface LatestName {
@@ -12,8 +14,8 @@ export interface LatestName {
   sub: number
 }
 
-// The newest name in a list — highest number, then highest sub. Array order is ignored, so the
-// frontend and the extension popup agree on what "latest" means. Null when none parse.
+// The newest name in a list — highest number, then highest sub. Array order is ignored, so listing
+// order can't change the answer. Null when none parse.
 export function latestName(names: string[], kind: Kind): LatestName | null {
   const parsed = names
     .map((name) => {
