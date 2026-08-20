@@ -46,6 +46,16 @@ export function sessionPrefix(courses: Course[], courseName: string, kind: Kind)
   )
 }
 
+// The wording a course with nothing to copy falls back to. The `directory name` context keeps this
+// msgid separate from the UI's `Lecture` / `Recitation` button copy: the two render the same word
+// today, but this one becomes a directory under DATA_ROOT, and a translator shortening a button
+// label to fit the segmented control must not rename directories.
+export function fallbackPrefix(kind: Kind): string {
+  return kind === 'recitation'
+    ? t({ message: 'Recitation', context: 'directory name' })
+    : t({ message: 'Lecture', context: 'directory name' })
+}
+
 // These become directory names under DATA_ROOT, so they follow the course's own naming rather than
 // any fixed language; only a course with nothing to copy falls back to the UI locale's wording.
 function suggestLectureName(courses: Course[], courseName: string): string {
@@ -55,19 +65,19 @@ function suggestLectureName(courses: Course[], courseName: string): string {
     course.lectures.map((l) => l.name),
     'lecture',
   )
-  if (!latest) return t`Lecture 1`
+  if (!latest) return `${fallbackPrefix('lecture')} 1`
   if (latest.sub === 1) return `${latest.prefix} ${latest.n}.2`
   return `${latest.prefix} ${latest.n + 1}`
 }
 
 function suggestRecitationName(courses: Course[], courseName: string): string {
   const course = courses.find((c) => c.name === courseName)
-  if (!course) return t`Recitation 1`
+  if (!course) return `${fallbackPrefix('recitation')} 1`
   const latest = latestName(
     (course.recitations ?? []).map((l) => l.name),
     'recitation',
   )
-  return latest ? `${latest.prefix} ${latest.n + 1}` : t`Recitation 1`
+  return latest ? `${latest.prefix} ${latest.n + 1}` : `${fallbackPrefix('recitation')} 1`
 }
 
 export function suggestName(courses: Course[], courseName: string, kind: Kind): string {

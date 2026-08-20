@@ -1,6 +1,5 @@
-import { t } from '@lingui/core/macro'
 import type { Course, Kind } from '@/types'
-import { sessionPrefix, suggestName } from '@/features/lectures/utils/nextName'
+import { fallbackPrefix, sessionPrefix, suggestName } from '@/features/lectures/utils/nextName'
 
 const HEBREW_SUB = 'אבגדהוזחטי' // ordered, א -> 1 … י -> 10; later letters and final forms don't count
 
@@ -33,8 +32,7 @@ export function suggestItemName(
   const text = String(title ?? '')
   const m = text.match(/\d+/)
   if (m) {
-    const prefix =
-      sessionPrefix(courses, course, kind) ?? (kind === 'recitation' ? t`Recitation` : t`Lecture`)
+    const prefix = sessionPrefix(courses, course, kind) ?? fallbackPrefix(kind)
     const number = parseInt(m[0], 10)
     const sub = subNumber(text.slice(m.index! + m[0].length))
     return sub === null ? `${prefix} ${number}` : `${prefix} ${number}.${sub}`

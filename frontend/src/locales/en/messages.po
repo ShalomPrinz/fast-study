@@ -51,7 +51,7 @@ msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, other {# unsupported}}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:147
+#: src/features/downloads/components/RecordingRow.tsx:148
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
@@ -78,11 +78,11 @@ msgstr "{count, plural, other {# materials will be used}}"
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:127
+#: src/features/downloads/components/RecordingRow.tsx:128
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} already exists in {course}. Download again and overwrite?"
 
-#: src/features/downloads/components/RecordingRow.tsx:136
+#: src/features/downloads/components/RecordingRow.tsx:137
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 
@@ -90,7 +90,7 @@ msgstr "{effectiveName} may split into parts that overwrite existing {existing} 
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:247
+#: src/features/downloads/components/RecordingRow.tsx:246
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
@@ -143,11 +143,11 @@ msgstr "⭳ Download all"
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:90
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:93
 msgid "Add lecture"
 msgstr "Add lecture"
 
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:33
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:36
 msgid "Add recitation"
 msgstr "Add recitation"
 
@@ -155,7 +155,7 @@ msgstr "Add recitation"
 msgid "Analyze"
 msgstr "Analyze"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:85
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:88
 msgid "Archive course"
 msgstr "Archive course"
 
@@ -167,7 +167,7 @@ msgstr "Archived ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
-#: src/features/downloads/components/RecordingRow.tsx:235
+#: src/features/downloads/components/RecordingRow.tsx:234
 msgid "Attach material to"
 msgstr "Attach material to"
 
@@ -200,7 +200,7 @@ msgstr "checking account…"
 msgid "close"
 msgstr "close"
 
-#: src/features/downloads/components/RecordingRow.tsx:158
+#: src/features/downloads/components/RecordingRow.tsx:159
 msgid "Collapse"
 msgstr "Collapse"
 
@@ -275,12 +275,12 @@ msgstr "Delete {0}"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/RecordingRow.tsx:272
+#: src/features/downloads/components/RecordingRow.tsx:271
 msgid "Download"
 msgstr "Download"
 
-#: src/features/downloads/components/RecordingRow.tsx:254
-#: src/features/downloads/components/RecordingRow.tsx:270
+#: src/features/downloads/components/RecordingRow.tsx:253
+#: src/features/downloads/components/RecordingRow.tsx:269
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
@@ -294,8 +294,8 @@ msgstr "Downloading {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
-#: src/features/downloads/components/RecordingRow.tsx:254
-#: src/features/downloads/components/RecordingRow.tsx:266
+#: src/features/downloads/components/RecordingRow.tsx:253
+#: src/features/downloads/components/RecordingRow.tsx:265
 #: src/features/downloads/components/SectionGroup.tsx:226
 msgid "Downloading…"
 msgstr "Downloading…"
@@ -325,7 +325,7 @@ msgstr "Enter the zoom passcode for this recording"
 msgid "Estimating…"
 msgstr "Estimating…"
 
-#: src/features/downloads/components/RecordingRow.tsx:158
+#: src/features/downloads/components/RecordingRow.tsx:159
 msgid "Expand"
 msgstr "Expand"
 
@@ -351,7 +351,7 @@ msgstr "Extract Audio"
 msgid "failed"
 msgstr "failed"
 
-#: src/features/downloads/components/RecordingRow.tsx:254
+#: src/features/downloads/components/RecordingRow.tsx:253
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
@@ -372,7 +372,7 @@ msgstr "Failed to launch the login browser."
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
-#: src/features/downloads/components/RecordingRow.tsx:203
+#: src/features/downloads/components/RecordingRow.tsx:202
 msgid "File type"
 msgstr "File type"
 
@@ -384,7 +384,7 @@ msgstr "finish login in the browser window"
 msgid "finishing…"
 msgstr "finishing…"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:73
+#: src/features/course-overview/components/ExtractorHeader.tsx:76
 msgid "Generate"
 msgstr "Generate"
 
@@ -430,8 +430,12 @@ msgstr "Last error:"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/RecordingRow.tsx:215
-#: src/features/downloads/utils/nameFromTitle.ts:37
+#: src/features/downloads/components/RecordingRow.tsx:214
+msgid "Lecture"
+msgstr "Lecture"
+
+#: src/features/lectures/utils/nextName.ts:56
+msgctxt "directory name"
 msgid "Lecture"
 msgstr "Lecture"
 
@@ -441,10 +445,10 @@ msgid "Lecture {0}"
 msgstr "Lecture {0}"
 
 #: src/features/lectures/utils/nextName.ts:58
-msgid "Lecture 1"
-msgstr "Lecture 1"
+#~ msgid "Lecture 1"
+#~ msgstr "Lecture 1"
 
-#: src/features/downloads/components/RecordingRow.tsx:235
+#: src/features/downloads/components/RecordingRow.tsx:234
 msgid "Lecture name"
 msgstr "Lecture name"
 
@@ -483,7 +487,7 @@ msgstr "Loading…"
 msgid "Match whole word"
 msgstr "Match whole word"
 
-#: src/features/downloads/components/RecordingRow.tsx:45
+#: src/features/downloads/components/RecordingRow.tsx:46
 msgid "Material"
 msgstr "Material"
 
@@ -536,7 +540,7 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/components/RecordingRow.tsx:261
+#: src/features/downloads/components/RecordingRow.tsx:260
 msgid "Not a file the downloader can fetch"
 msgstr "Not a file the downloader can fetch"
 
@@ -576,21 +580,21 @@ msgstr "Open in Drive"
 msgid "Open material in new tab"
 msgstr "Open material in new tab"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:54
+#: src/features/course-overview/components/ExtractorHeader.tsx:57
 #: src/features/course-overview/components/StepRow.tsx:66
 #: src/features/lectures/MainView.tsx:248
 #: src/features/search/components/SearchResult.tsx:22
 msgid "Open PDF in new tab"
 msgstr "Open PDF in new tab"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:28
+#: src/features/course-overview/components/ExtractorHeader.tsx:29
 #: src/features/course-overview/components/ExtractorRow.tsx:30
 #: src/features/course-overview/components/GenerateAllButton.tsx:23
 #: src/features/course-overview/components/StepRow.tsx:41
 msgid "Overview failed to start"
 msgstr "Overview failed to start"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:27
+#: src/features/course-overview/components/ExtractorHeader.tsx:28
 #: src/features/course-overview/components/ExtractorRow.tsx:29
 #: src/features/course-overview/components/GenerateAllButton.tsx:22
 #: src/features/course-overview/components/StepRow.tsx:40
@@ -622,7 +626,7 @@ msgstr "rate-limited until {0}"
 msgid "Re-download ↻"
 msgstr "Re-download ↻"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:65
+#: src/features/course-overview/components/ExtractorHeader.tsx:68
 msgid "Re-generate {title}"
 msgstr "Re-generate {title}"
 
@@ -638,8 +642,12 @@ msgstr "Ready to retry"
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/RecordingRow.tsx:223
-#: src/features/downloads/utils/nameFromTitle.ts:37
+#: src/features/downloads/components/RecordingRow.tsx:222
+msgid "Recitation"
+msgstr "Recitation"
+
+#: src/features/lectures/utils/nextName.ts:55
+msgctxt "directory name"
 msgid "Recitation"
 msgstr "Recitation"
 
@@ -650,14 +658,14 @@ msgstr "Recitation {0}"
 
 #: src/features/lectures/utils/nextName.ts:65
 #: src/features/lectures/utils/nextName.ts:70
-msgid "Recitation 1"
-msgstr "Recitation 1"
+#~ msgid "Recitation 1"
+#~ msgstr "Recitation 1"
 
 #: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
 msgid "Recitation name…"
 msgstr "Recitation name…"
 
-#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:29
+#: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
 #: src/features/search/SearchView.tsx:149
 msgid "Recitations"
 msgstr "Recitations"
@@ -702,7 +710,7 @@ msgid "Restore the original summary"
 msgstr "Restore the original summary"
 
 #: src/features/downloads/components/RecordingJobList.tsx:47
-#: src/features/downloads/components/RecordingRow.tsx:268
+#: src/features/downloads/components/RecordingRow.tsx:267
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
@@ -852,7 +860,7 @@ msgstr "Transcribe"
 msgid "Transcription failed"
 msgstr "Transcription failed"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:85
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:88
 msgid "Unarchive course"
 msgstr "Unarchive course"
 
@@ -860,7 +868,7 @@ msgstr "Unarchive course"
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/features/downloads/components/RecordingRow.tsx:46
+#: src/features/downloads/components/RecordingRow.tsx:47
 msgid "Unsupported"
 msgstr "Unsupported"
 
@@ -876,7 +884,7 @@ msgstr "Upload to Drive"
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/RecordingRow.tsx:44
+#: src/features/downloads/components/RecordingRow.tsx:45
 msgid "Video"
 msgstr "Video"
 
