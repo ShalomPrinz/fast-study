@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import type { CourseSummary } from '@/types'
 import { useCourseSummaries } from './hooks/useCourseSummaries'
@@ -14,6 +15,7 @@ const PAGE_SIZE = 20
 
 // Client-side search over one course's summaries. See docs/search.md.
 export default function SearchView() {
+  const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
 
@@ -95,7 +97,9 @@ export default function SearchView() {
   return (
     <main className="main-view main-view--panel">
       <div className="search-panel">
-        <h2 className="lecture-panel-title">Search summaries</h2>
+        <h2 className="lecture-panel-title">
+          <Trans>Search summaries</Trans>
+        </h2>
 
         <div className="search-controls">
           <select
@@ -114,14 +118,14 @@ export default function SearchView() {
             className="search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search this course's summaries…"
+            placeholder={t`Search this course's summaries…`}
             dir="auto"
             autoFocus
           />
           <button
             className={`search-toggle${wholeWord ? ' active' : ''}`}
             onClick={() => setWholeWord((w) => !w)}
-            title="Match whole word"
+            title={t`Match whole word`}
           >
             ab
           </button>
@@ -134,7 +138,7 @@ export default function SearchView() {
               checked={includeLectures}
               onChange={(e) => setIncludeLectures(e.target.checked)}
             />
-            Lectures
+            <Trans>Lectures</Trans>
           </label>
           <label className="search-filter">
             <input
@@ -142,17 +146,23 @@ export default function SearchView() {
               checked={includeRecitations}
               onChange={(e) => setIncludeRecitations(e.target.checked)}
             />
-            Recitations
+            <Trans>Recitations</Trans>
           </label>
         </div>
 
-        {loading && <div className="search-status">Loading summaries…</div>}
+        {loading && (
+          <div className="search-status">
+            <Trans>Loading summaries…</Trans>
+          </div>
+        )}
         {error && <div className="search-status search-status--error">{error}</div>}
         {!loading && !error && query.trim() && (
+          // Two counts, so two messages: one message would need a plural nested in a plural,
+          // and each half already reads as a phrase on its own.
           <div className="search-status">
-            {matches.length} {matches.length === 1 ? 'result' : 'results'} in {lectures}{' '}
-            {lectures === 1 ? 'lecture' : 'lectures'}
-            {shownFindings < matches.length && ` — showing ${shownFindings}`}
+            <Plural value={matches.length} one="# result" other="# results" />{' '}
+            <Plural value={lectures} one="in # lecture" other="in # lectures" />
+            {shownFindings < matches.length && <Trans> — showing {shownFindings}</Trans>}
           </div>
         )}
 
@@ -172,7 +182,7 @@ export default function SearchView() {
             would otherwise be re-selected unchanged and the click would do nothing. */}
         {shownFindings < matches.length && (
           <button className="search-more" onClick={() => setShown(shownFindings + PAGE_SIZE)}>
-            Show more
+            <Trans>Show more</Trans>
           </button>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { Trans } from '@lingui/react/macro'
 import { Routes, Route } from 'react-router-dom'
 import Layout from '@/app/Layout'
 import MainView from '@/features/lectures/MainView'
@@ -10,7 +11,9 @@ import '@/styles/panel.css'
 function EmptyState() {
   return (
     <main className="main-view main-view--empty">
-      <p className="empty-state">Select a lecture to get started</p>
+      <p className="empty-state">
+        <Trans>Select a lecture to get started</Trans>
+      </p>
     </main>
   )
 }

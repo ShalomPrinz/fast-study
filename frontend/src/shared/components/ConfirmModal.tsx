@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { Trans } from '@lingui/react/macro'
 import ReactDOM from 'react-dom'
 import '@/styles/modal.css'
 import './ConfirmModal.css'
@@ -37,10 +38,10 @@ export default function ConfirmModal({
         {postMessage && <p className="modal-message">{postMessage}</p>}
         <div className="modal-actions">
           <button className="modal-btn modal-btn--yes" onClick={onConfirm}>
-            Yes
+            <Trans>Yes</Trans>
           </button>
           <button className="modal-btn modal-btn--no" autoFocus onClick={onCancel}>
-            No
+            <Trans>No</Trans>
           </button>
         </div>
       </div>

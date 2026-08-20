@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
+import { plural } from '@lingui/core/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import type { Item } from '@/features/downloads/services/autoDownloader'
 import {
@@ -52,6 +54,7 @@ const NO_TARGETS: readonly RunTarget[] = Object.freeze([])
 // switch or a reload lands mid-run and shows it. Drives the expand/children cache (rows only render
 // it) because the queue it submits needs the resolved children. See docs/DOWNLOADS.md.
 export default function SectionGroup({ section, items, course, onReconnect }: Props) {
+  const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   const jobsByRef = useJobsByRef()
   const resolveMedia = useResolveMedia()
@@ -89,7 +92,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
       patchExpansion(item.ref, { children, expanded: true, expanding: false })
     } catch (err) {
       if (isReconnectError(err)) onReconnect()
-      const message = isUnsupportedError(err) ? err.message : "Couldn't load entries. Try again."
+      const message = isUnsupportedError(err) ? err.message : t`Couldn't load entries. Try again.`
       patchExpansion(item.ref, { expanding: false, error: isReconnectError(err) ? null : message })
     }
   }
@@ -186,10 +189,10 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   const notStarted = queueing ? 0 : notStartedCount(targets)
   const stoppedBecause =
     run?.status === 'reconnect'
-      ? 'the BIU session expired. Reconnect, then run the section again.'
+      ? t`the BIU session expired. Reconnect, then run the section again.`
       : run?.status === 'cancelled'
-        ? 'the run was cancelled. Run the section again to pick them up.'
-        : 'the run stopped early. Run the section again to pick them up.'
+        ? t`the run was cancelled. Run the section again to pick them up.`
+        : t`the run stopped early. Run the section again to pick them up.`
 
   return (
     <div className="recordings-section">
@@ -199,11 +202,15 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         </span>
         {queueing && run && (
           <span className="recordings-section-progress">
-            Downloading {run.at}/{run.total}…
+            <Trans>
+              Downloading {run.at}/{run.total}…
+            </Trans>
           </span>
         )}
         {!queueing && active > 0 && (
-          <span className="recordings-section-progress">Downloading {active} more…</span>
+          <span className="recordings-section-progress">
+            <Trans>Downloading {active} more…</Trans>
+          </span>
         )}
         {!queueing && active === 0 && targets.length > 0 && (
           <span className="recordings-section-progress">
@@ -214,22 +221,28 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
           className="source-row-btn recordings-download-all"
           onClick={() => void startAll()}
           disabled={busy || !allExpanded}
-          title={allExpanded ? undefined : 'Expand every playlist in this section first'}
+          title={allExpanded ? undefined : t`Expand every playlist in this section first`}
         >
-          {busy ? 'Downloading…' : '⭳ Download all'}
+          {busy ? t`Downloading…` : t`⭳ Download all`}
         </button>
       </div>
 
       {notStarted > 0 && (
         <div className="recordings-section-stalled">
-          {notStarted} {notStarted === 1 ? 'row' : 'rows'} never started — {stoppedBecause}
+          {plural(notStarted, {
+            one: `# row never started — ${stoppedBecause}`,
+            other: `# rows never started — ${stoppedBecause}`,
+          })}
         </div>
       )}
 
       {stalled > 0 && (
         <div className="recordings-section-stalled">
-          Couldn&apos;t confirm {stalled} {stalled === 1 ? 'download' : 'downloads'} — the lecture
-          may have been deleted or renamed since, or the file saved under a different name.
+          <Plural
+            value={stalled}
+            one="Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name."
+            other="Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name."
+          />
         </div>
       )}
 

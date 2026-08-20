@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
 import { renameCourse, setCourseArchived } from '@/services/database'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
@@ -10,9 +11,11 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
+import Chevron from '@/shared/components/Chevron'
 
 // Reflects and mutates the expand state: toggle on click, open when adding a lecture.
 export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
+  const { t } = useLingui()
   const { course, add } = useCourseGroup()
   const { selected, onSelect } = useSelection()
   const { refreshCourses } = useCourseTreeContext()
@@ -71,7 +74,9 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           }}
           dir="auto"
         >
-          <span className="chevron">{expand.isOpen ? '▾' : '▸'}</span>
+          <span className="chevron">
+            <Chevron open={expand.isOpen} />
+          </span>
           <span>{course.name}</span>
         </button>
       )}
@@ -80,12 +85,12 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           <button
             className="course-add-btn course-archive-btn"
             onClick={toggleArchived}
-            title={course.archived ? 'Unarchive course' : 'Archive course'}
+            title={course.archived ? t`Unarchive course` : t`Archive course`}
           >
             <Icon icon={course.archived ? 'unarchive' : 'archive'} />
           </button>
         ) : (
-          <button className="course-add-btn" onClick={startAdding} title="Add lecture">
+          <button className="course-add-btn" onClick={startAdding} title={t`Add lecture`}>
             +
           </button>
         ))}

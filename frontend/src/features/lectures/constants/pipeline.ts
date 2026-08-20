@@ -1,22 +1,27 @@
+import { msg } from '@lingui/core/macro'
+import type { MessageDescriptor } from '@lingui/core'
 import type { Step, FileName } from '@/types'
+
+// Labels are message descriptors, not strings: this table is module-level, so it is built once,
+// before a locale exists. Rendering sites resolve them against the active catalog.
 
 export const PIPELINE: Array<{
   file: FileName
   step?: Step
-  actionLabel?: string
+  actionLabel?: MessageDescriptor
   prereq?: FileName
 }> = [
   { file: 'video.mp4' },
-  { file: 'audio.mp3', step: 'audio', actionLabel: 'Extract Audio', prereq: 'video.mp4' },
-  { file: 'transcript.txt', step: 'transcribe', actionLabel: 'Transcribe', prereq: 'audio.mp3' },
-  { file: 'summary.md', step: 'summarize', actionLabel: 'Summarize', prereq: 'transcript.txt' },
-  { file: 'summary.pdf', step: 'pdf', actionLabel: 'Export PDF', prereq: 'summary.md' },
-  { file: 'drive_url.txt', step: 'drive', actionLabel: 'Upload to Drive', prereq: 'summary.pdf' },
+  { file: 'audio.mp3', step: 'audio', actionLabel: msg`Extract Audio`, prereq: 'video.mp4' },
+  { file: 'transcript.txt', step: 'transcribe', actionLabel: msg`Transcribe`, prereq: 'audio.mp3' },
+  { file: 'summary.md', step: 'summarize', actionLabel: msg`Summarize`, prereq: 'transcript.txt' },
+  { file: 'summary.pdf', step: 'pdf', actionLabel: msg`Export PDF`, prereq: 'summary.md' },
+  { file: 'drive_url.txt', step: 'drive', actionLabel: msg`Upload to Drive`, prereq: 'summary.pdf' },
 ]
 
 const STEP_FILE_MUT: Partial<Record<Step, FileName>> = {}
 const STEP_INPUT_FILE_MUT: Partial<Record<Step, FileName>> = {}
-const STEP_LABEL_MUT: Partial<Record<Step, string>> = {}
+const STEP_LABEL_MUT: Partial<Record<Step, MessageDescriptor>> = {}
 const STEP_SET_MUT = new Set<string>()
 
 for (const p of PIPELINE) {
@@ -29,13 +34,13 @@ for (const p of PIPELINE) {
 
 export const STEP_FILE: Partial<Record<Step, FileName>> = STEP_FILE_MUT
 export const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = STEP_INPUT_FILE_MUT
-export const STEP_LABEL: Partial<Record<Step, string>> = STEP_LABEL_MUT
+export const STEP_LABEL: Partial<Record<Step, MessageDescriptor>> = STEP_LABEL_MUT
 export const STEP_SET: Set<string> = STEP_SET_MUT
 
-export const STEP_ERROR_LABEL: Record<Step, string> = {
-  audio: 'Audio extraction failed',
-  transcribe: 'Transcription failed',
-  summarize: 'Summarization failed',
-  pdf: 'PDF export failed',
-  drive: 'Drive upload failed',
+export const STEP_ERROR_LABEL: Record<Step, MessageDescriptor> = {
+  audio: msg`Audio extraction failed`,
+  transcribe: msg`Transcription failed`,
+  summarize: msg`Summarization failed`,
+  pdf: msg`PDF export failed`,
+  drive: msg`Drive upload failed`,
 }

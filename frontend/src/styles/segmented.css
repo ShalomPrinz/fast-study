@@ -1,4 +1,4 @@
-/* Sidebar mode toggle: compact two-segment switch below the "Fast Study" title */
+/* Compact segmented switch, shared by the sidebar mode toggle and the language switcher */
 .mode-toggle {
   display: flex;
   gap: 2px;

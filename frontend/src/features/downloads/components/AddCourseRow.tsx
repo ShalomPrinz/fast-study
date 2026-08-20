@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { createCourse } from '@/services/database'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import '@/styles/source-row.css'
@@ -6,6 +7,7 @@ import './AddCourseRow.css'
 
 // Plain inputs, not InlineEditInput: moving between the name and URL fields must not blur-cancel.
 export default function AddCourseRow() {
+  const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
   const [adding, setAdding] = useState(false)
   const [name, setName] = useState('')
@@ -34,7 +36,7 @@ export default function AddCourseRow() {
   if (!adding) {
     return (
       <button className="source-add-btn" onClick={() => setAdding(true)}>
-        + New Course
+        <Trans>+ New Course</Trans>
       </button>
     )
   }
@@ -48,7 +50,7 @@ export default function AddCourseRow() {
         onKeyDown={(e) => {
           if (e.key === 'Escape') reset()
         }}
-        placeholder="Course name…"
+        placeholder={t`Course name…`}
         dir="auto"
         autoFocus
       />
@@ -60,15 +62,15 @@ export default function AddCourseRow() {
           if (e.key === 'Enter') commit()
           if (e.key === 'Escape') reset()
         }}
-        placeholder="Source URL (optional)…"
+        placeholder={t`Source URL (optional)…`}
         dir="auto"
       />
       <div className="source-add-actions">
         <button className="source-row-btn" onClick={commit} disabled={saving || !name.trim()}>
-          Create
+          <Trans>Create</Trans>
         </button>
         <button className="source-row-btn source-row-btn--ghost" onClick={reset}>
-          Cancel
+          <Trans>Cancel</Trans>
         </button>
       </div>
     </div>

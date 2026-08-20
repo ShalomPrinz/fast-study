@@ -1,17 +1,20 @@
+import { msg, t } from '@lingui/core/macro'
+import type { MessageDescriptor } from '@lingui/core'
 import type { CoursePhase, CourseStatus, CourseFile } from '@/types'
 
 export interface OverviewStep {
   phase: CoursePhase
   suffix: string // the file {slug}{suffix} this phase produces
-  label: string // human-readable action name (UI only)
+  // Human-readable action name (UI only). A descriptor, since this table outlives any locale.
+  label: MessageDescriptor
 }
 
 export const OVERVIEW_STEPS: readonly OverviewStep[] = [
-  { phase: 'extract', suffix: '.txt', label: 'Extract' },
-  { phase: 'analyze', suffix: '.md', label: 'Analyze' },
-  { phase: 'topics', suffix: '.md', label: 'Collect' },
-  { phase: 'compile', suffix: '.md', label: 'Compile' },
-  { phase: 'to_pdf', suffix: '.pdf', label: 'Export PDF' },
+  { phase: 'extract', suffix: '.txt', label: msg`Extract` },
+  { phase: 'analyze', suffix: '.md', label: msg`Analyze` },
+  { phase: 'topics', suffix: '.md', label: msg`Collect` },
+  { phase: 'compile', suffix: '.md', label: msg`Compile` },
+  { phase: 'to_pdf', suffix: '.pdf', label: msg`Export PDF` },
 ]
 
 export function stepsFor(phases: CoursePhase[]): OverviewStep[] {
@@ -66,7 +69,7 @@ export function branchStatus(
   return {
     running: st?.status === 'running',
     done: last !== undefined,
-    error: st?.status === 'error' ? (st.message ?? 'failed') : null,
+    error: st?.status === 'error' ? (st.message ?? t`failed`) : null,
     warning: last?.warning ?? null,
   }
 }

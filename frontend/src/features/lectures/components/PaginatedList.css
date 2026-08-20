@@ -8,7 +8,7 @@
   color: var(--accent);
   font: inherit;
   font-size: 12px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   border-radius: 6px;
   opacity: 0.8;

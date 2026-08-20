@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import type { Kind } from '@/types'
 import { uploadVideo } from '@/services/database'
 import { toastPromise } from '@/services/toaster'
@@ -23,14 +24,15 @@ const PendingUploadContext = createContext<PendingUploadValue | null>(null)
 
 // Renders its own confirm modal, so consumers just call trigger/confirm.
 export function PendingUploadProvider({ children }: { children: ReactNode }) {
+  const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
   const [pending, setPending] = useState<PendingUpload | null>(null)
 
   async function trigger(course: string, lecture: string, file: File, kind: Kind) {
     await toastPromise(uploadVideo(course, lecture, file, kind), {
-      pending: 'Uploading video…',
-      success: `Saved to ${lecture}`,
-      error: 'Upload failed',
+      pending: t`Uploading video…`,
+      success: t`Saved to ${lecture}`,
+      error: t`Upload failed`,
     })
     refreshCourses()
   }
@@ -44,8 +46,8 @@ export function PendingUploadProvider({ children }: { children: ReactNode }) {
       {children}
       {pending && (
         <ConfirmModal
-          message={`Replace existing video.mp4 in "${pending.lecture}"?`}
-          warning="Note: This will delete all files in this lecture."
+          message={t`Replace existing video.mp4 in "${pending.lecture}"?`}
+          warning={t`Note: This will delete all files in this lecture.`}
           onConfirm={() => {
             const { course, lecture, file, kind } = pending
             setPending(null)

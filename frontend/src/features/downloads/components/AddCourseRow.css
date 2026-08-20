@@ -23,7 +23,7 @@
   color: var(--text-muted);
   font: inherit;
   font-size: 13px;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: all 0.1s;
 }

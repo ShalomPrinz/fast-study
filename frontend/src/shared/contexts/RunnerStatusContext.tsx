@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { t } from '@lingui/core/macro'
 import type { RunnerStatus, InFlightEntry, Kind } from '@/types'
 import { runAll, fetchRunnerStatus } from '@/services/backend'
 import { isConnectionError } from '@/services/http'
@@ -77,11 +78,14 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     try {
       const s = await runAll()
       if (s === 'empty_queue') {
-        sendUpdateRef.current?.('info', 'Nothing to run - All pipelines complete')
+        sendUpdateRef.current?.('info', t`Nothing to run - All pipelines complete`)
         return
       }
       if (s === 'all_in_flight') {
-        sendUpdateRef.current?.('info', 'Nothing to run - All remaining pipelines already running')
+        sendUpdateRef.current?.(
+          'info',
+          t`Nothing to run - All remaining pipelines already running`,
+        )
         return
       }
       setStatus(s)

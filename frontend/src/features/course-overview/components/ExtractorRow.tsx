@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import type { OverviewExtractor } from '@/types'
 import { toastInitResult } from '@/services/toaster'
 import { generatedFiles, branchStatus } from '@/features/course-overview/constants/overview'
@@ -12,6 +13,7 @@ import '@/styles/modal.css'
 import '@/styles/file-row.css'
 
 export default function ExtractorRow({ extractor }: { extractor: OverviewExtractor }) {
+  const { t } = useLingui()
   const { files, status, generate } = useCourseOverview()
   const { slug, phases } = extractor
   const [expanded, setExpanded] = useState(false)
@@ -24,8 +26,8 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
     setRegenerateOpen(false)
     const result = await generate([slug])
     toastInitResult(result, {
-      busy: 'Overview is already running for this course',
-      error: 'Overview failed to start',
+      busy: t`Overview is already running for this course`,
+      error: t`Overview failed to start`,
     })
   }
 
@@ -45,7 +47,7 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
 
       {regenerateOpen && (
         <ConfirmModal
-          message="The following files will be re-generated:"
+          message={t`The following files will be re-generated:`}
           detail={
             <ul className="modal-file-list">
               {generatedFiles(slug, phases).map((f) => (

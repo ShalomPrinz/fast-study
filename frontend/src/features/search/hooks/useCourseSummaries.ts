@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { t } from '@lingui/core/macro'
 import type { CourseSummary } from '@/types'
 import { fetchCourseSummaries } from '@/services/database'
 
@@ -31,7 +32,7 @@ export function useCourseSummaries(course: string | null) {
         if (current) setSummaries(s)
       })
       .catch(() => {
-        if (current) setError(`Couldn't load summaries for ${course}.`)
+        if (current) setError(t`Couldn't load summaries for ${course}.`)
       })
       .finally(() => {
         if (current) setLoading(false)

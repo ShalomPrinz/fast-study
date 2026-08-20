@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { createCourse } from '@/services/database'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -7,6 +8,7 @@ import '@/styles/sidebar-tree.css'
 import './NewCourseRow.css'
 
 export default function NewCourseRow() {
+  const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
   const [addingCourse, setAddingCourse] = useState(false)
   const addCourseEdit = useInlineEdit(addingCourse || null)
@@ -32,12 +34,12 @@ export default function NewCourseRow() {
           edit={addCourseEdit}
           onCommit={commit}
           onCancel={cancel}
-          placeholder="Course name…"
+          placeholder={t`Course name…`}
           className="new-course-input"
         />
       ) : (
         <button className="new-course-btn" onClick={() => setAddingCourse(true)}>
-          + New Course
+          <Trans>+ New Course</Trans>
         </button>
       )}
     </div>

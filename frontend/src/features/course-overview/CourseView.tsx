@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import { useParams } from 'react-router-dom'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -16,6 +17,7 @@ import '@/styles/panel.css'
 import '@/styles/file-row.css'
 
 function CourseOverviewBody() {
+  const { t } = useLingui()
   const { course, extractors, status } = useCourseOverview()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
 
@@ -28,7 +30,8 @@ function CourseOverviewBody() {
       if (st.status !== 'error') continue
       const key = `${course}/${slug}`
       valid.add(key)
-      reportError(key, `${titleBySlug.get(slug) ?? slug}: ${st.message ?? 'failed'}`)
+      const title = titleBySlug.get(slug) ?? slug
+      reportError(key, `${title}: ${st.message ?? t`failed`}`)
     }
     // Prune only this course's keys, or returning to another course would re-toast its errors.
     pruneErrors(valid, (k) => k.startsWith(`${course}/`))

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { FileStatus, FileInfo } from '@/types'
-import { pdfBadge, STALE_PDF_TITLE } from './pdfBadge'
+import { pdfBadge } from './pdfBadge'
 
 const info = (over: Partial<FileInfo> = {}): FileInfo => ({
   exists: false,
@@ -27,10 +27,12 @@ describe('pdfBadge', () => {
     expect(pdfBadge(files({ exists: true, mtime: 200 }, { exists: true, mtime: 100 }))).toBeNull()
   })
 
+  // The English literal, not stalePdfTitle(): asserting against the function the implementation
+  // calls would pass for any title it returned. test-setup activates the source catalog.
   it('reports stale when summary.md is newer — the post-revert case', () => {
     expect(pdfBadge(files({ exists: true, mtime: 100 }, { exists: true, mtime: 200 }))).toEqual({
       kind: 'stale',
-      title: STALE_PDF_TITLE,
+      title: 'summary.pdf is older than summary.md. Re-generate it.',
     })
   })
 

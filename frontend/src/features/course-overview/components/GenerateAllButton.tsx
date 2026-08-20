@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { startedSlug } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
@@ -5,6 +6,7 @@ import '@/styles/spinner.css'
 import './GenerateAllButton.css'
 
 export default function GenerateAllButton() {
+  const { t } = useLingui()
   const { extractors, files, status, generate } = useCourseOverview()
   const running = status?.running ?? false
 
@@ -17,8 +19,8 @@ export default function GenerateAllButton() {
   async function handleGenerate() {
     const result = await generate(undefined, undefined, true)
     toastInitResult(result, {
-      busy: 'Overview is already running for this course',
-      error: 'Overview failed to start',
+      busy: t`Overview is already running for this course`,
+      error: t`Overview failed to start`,
     })
   }
 
@@ -29,7 +31,7 @@ export default function GenerateAllButton() {
       disabled={running || extractors === null}
     >
       {running && <span className="spinner spinner--sm" />}
-      {running ? 'Generating…' : hasStarted ? 'Continue Generating' : 'Generate All'}
+      {running ? t`Generating…` : hasStarted ? t`Continue Generating` : t`Generate All`}
     </button>
   )
 }

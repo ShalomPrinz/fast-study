@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import type { Lecture } from '@/types'
 import { renameLecture } from '@/services/database'
 import { toast } from '@/services/toaster'
@@ -13,6 +14,7 @@ import { useLectureListKind } from './LectureListContext'
 import '@/styles/sidebar-tree.css'
 
 export default function LectureItem({ lecture }: { lecture: Lecture }) {
+  const { t } = useLingui()
   const { course } = useCourseGroup()
   const kind = useLectureListKind()
   const { selected, onSelect } = useSelection()
@@ -50,7 +52,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     const file = e.dataTransfer.files[0]
     if (!file) return
     if (!file.name.toLowerCase().endsWith('.mp4') && file.type !== 'video/mp4') {
-      toast('error', 'Only .mp4 files are allowed')
+      toast('error', t`Only .mp4 files are allowed`)
       return
     }
     const found = findLecture(courses, course.name, lecture.name, kind)

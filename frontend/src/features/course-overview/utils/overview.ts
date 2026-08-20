@@ -1,14 +1,21 @@
+import { t } from '@lingui/core/macro'
 import type { OverviewMeta, OverviewRange } from '@/types'
 
-// "Lectures 2-9" / "Lecture 2" / "No Lectures", by range.
-function rangePart(range: OverviewRange, singular: string): string {
-  const plural = singular + 's' // assumes all relevant pluralization is just adding "s"
-  if (!range) return `No ${plural}`
-  if (range.start === range.end) return `${singular} ${range.start}`
-  return `${plural} ${range.start}-${range.end}`
+// "Lectures 2-9" / "Lecture 2" / "No Lectures", by range. Spelled out per kind rather than
+// derived from a singular, since no locale pluralises by appending a letter.
+function lecturePart(range: OverviewRange): string {
+  if (!range) return t`No Lectures`
+  if (range.start === range.end) return t`Lecture ${range.start}`
+  return t`Lectures ${range.start}-${range.end}`
+}
+
+function recitationPart(range: OverviewRange): string {
+  if (!range) return t`No Recitations`
+  if (range.start === range.end) return t`Recitation ${range.start}`
+  return t`Recitations ${range.start}-${range.end}`
 }
 
 // Lectures always first: "Lectures 2-9, Recitations 1-4".
 export function formatRange(entry: OverviewMeta[string]): string {
-  return `${rangePart(entry.lectures, 'Lecture')}, ${rangePart(entry.recitations, 'Recitation')}`
+  return `${lecturePart(entry.lectures)}, ${recitationPart(entry.recitations)}`
 }

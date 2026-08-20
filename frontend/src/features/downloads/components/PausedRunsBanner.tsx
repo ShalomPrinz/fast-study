@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro'
 import { usePausedRuns } from '@/features/downloads/contexts/SectionRunsContext'
 import { parseSectionId } from '@/features/downloads/utils/sections'
 import type { Media } from '@/features/downloads/services/autoDownloader'
@@ -14,6 +15,7 @@ interface Props {
 // Only a run in the open course, on a segment other than the open one, is a jump target — another
 // course's rows aren't discovered yet, and a run on this segment already renders its own prompt.
 export default function PausedRunsBanner({ course, media, onSelectMedia }: Props) {
+  const { t } = useLingui()
   const paused = usePausedRuns()
   if (!paused.length) return null
 
@@ -22,8 +24,8 @@ export default function PausedRunsBanner({ course, media, onSelectMedia }: Props
       {paused.map((run) => {
         const parsed = parseSectionId(run.sectionId)
         const label = parsed
-          ? `Section ${parsed.title} is waiting for a passcode`
-          : 'A section is waiting for a passcode'
+          ? t`Section ${parsed.title} is waiting for a passcode`
+          : t`A section is waiting for a passcode`
         // Nothing to jump to: another course, an id this page can't read, or the open segment —
         // where the section is already on screen with its prompt, so a link would do nothing.
         if (!parsed || parsed.course !== course || parsed.media === media)

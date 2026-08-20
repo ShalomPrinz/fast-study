@@ -1,3 +1,4 @@
+import { t } from '@lingui/core/macro'
 import { toastConnectionError } from '@/services/toaster'
 
 export function httpError(res: Response): Error {
@@ -11,7 +12,7 @@ export class ConnectionError extends Error {
     public baseUrl: string,
     public cause?: unknown,
   ) {
-    super(`Can't reach ${serviceName} at ${baseUrl}. Make sure it's running.`)
+    super(t`Can't reach ${serviceName} at ${baseUrl}. Make sure it's running.`)
     this.name = 'ConnectionError'
   }
 }

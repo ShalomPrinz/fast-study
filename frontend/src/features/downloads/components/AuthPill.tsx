@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
 import type { AuthStatus } from '@/features/downloads/services/autoDownloader'
 import {
   fetchAuthStatus,
@@ -12,6 +13,7 @@ type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing'
 
 // Connect pops a headed browser on the host for MFA; Done persists the session.
 export default function AuthPill() {
+  const { t } = useLingui()
   const [status, setStatus] = useState<AuthStatus | null>(null)
   const [phase, setPhase] = useState<Phase>('loading')
 
@@ -34,7 +36,7 @@ export default function AuthPill() {
       await connectAuth()
       setPhase('pending')
     } catch {
-      toast('error', 'Failed to launch the login browser.')
+      toast('error', t`Failed to launch the login browser.`)
       setPhase('idle')
     }
   }
@@ -45,22 +47,28 @@ export default function AuthPill() {
       await completeAuth()
       await refresh()
     } catch {
-      toast('error', 'Failed to complete login. Try reconnecting.')
+      toast('error', t`Failed to complete login. Try reconnecting.`)
     }
     setPhase('idle')
   }
 
   if (phase === 'loading') {
-    return <div className="auth-pill auth-pill--muted">checking account…</div>
+    return (
+      <div className="auth-pill auth-pill--muted">
+        <Trans>checking account…</Trans>
+      </div>
+    )
   }
 
   if (phase === 'pending' || phase === 'connecting' || phase === 'completing') {
     const busy = phase !== 'pending'
     return (
       <div className="auth-pill auth-pill--pending">
-        <span>finish login in the browser window</span>
+        <span>
+          <Trans>finish login in the browser window</Trans>
+        </span>
         <button className="auth-pill-btn" onClick={handleComplete} disabled={busy}>
-          {phase === 'completing' ? 'finishing…' : 'Done'}
+          {phase === 'completing' ? t`finishing…` : t`Done`}
         </button>
       </div>
     )
@@ -68,11 +76,15 @@ export default function AuthPill() {
 
   const expired = status?.expired
   if (status?.connected && !expired) {
-    return <div className="auth-pill auth-pill--connected">BIU account connected ✓</div>
+    return (
+      <div className="auth-pill auth-pill--connected">
+        <Trans>BIU account connected ✓</Trans>
+      </div>
+    )
   }
 
-  const label = expired ? 'session expired' : 'not connected'
-  const action = expired ? 'Reconnect' : 'Connect'
+  const label = expired ? t`session expired` : t`not connected`
+  const action = expired ? t`Reconnect` : t`Connect`
   return (
     <div className="auth-pill auth-pill--disconnected">
       <span>{label}</span>
