@@ -8,8 +8,14 @@ import App from './App'
 import ErrorBoundary from '@/app/ErrorBoundary'
 import { activateLocale, initialLocale } from '@/services/i18n'
 
-// Activation is awaited before the first render so no frame paints untranslated.
-await activateLocale(initialLocale())
+// Activation is awaited before the first render so no frame paints untranslated. A failure here
+// would leave `render` unreached and the page blank, so English is the last resort — the crash
+// panel is only reachable once something is mounted.
+try {
+  await activateLocale(initialLocale())
+} catch {
+  await activateLocale('en').catch(() => {})
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

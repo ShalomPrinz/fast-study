@@ -16,6 +16,24 @@ function isLocale(value: string | null): value is Locale {
   return value !== null && (LOCALES as readonly string[]).includes(value)
 }
 
+// Storage access throws with cookies blocked or in some private modes; a lost preference must never
+// cost the app a render, so both directions degrade to "no stored choice".
+function readStored(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
+function writeStored(locale: Locale): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, locale)
+  } catch {
+    // best effort
+  }
+}
+
 // A stored choice wins; otherwise anything the browser reports that isn't English means Hebrew,
 // since every non-English reader of this app is a Hebrew speaker.
 export function resolveLocale(stored: string | null, browserLanguage?: string): Locale {
@@ -30,15 +48,21 @@ export function isRtl(locale: string): boolean {
 }
 
 export function initialLocale(): Locale {
-  return resolveLocale(localStorage.getItem(STORAGE_KEY), navigator.language)
+  return resolveLocale(readStored(), navigator.language)
 }
 
-// Loads the catalog, activates it, remembers the choice, and points the document at the new
-// language — `dir` here is what flips the whole UI between LTR and RTL.
+// Loads the catalog, activates it, and points the document at the new language — `dir` here is what
+// flips the whole UI between LTR and RTL. Deliberately does not persist: only an explicit pick is
+// remembered, so a boot-time guess never outranks a later browser-language change forever.
 export async function activateLocale(locale: Locale): Promise<void> {
   const { messages } = await CATALOGS[locale]()
   i18n.loadAndActivate({ locale, messages })
-  localStorage.setItem(STORAGE_KEY, locale)
   document.documentElement.lang = locale
   document.documentElement.dir = isRtl(locale) ? 'rtl' : 'ltr'
+}
+
+// The switcher's entry point: the same activation plus the stored choice that outranks the browser.
+export async function chooseLocale(locale: Locale): Promise<void> {
+  await activateLocale(locale)
+  writeStored(locale)
 }

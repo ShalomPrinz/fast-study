@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro'
-import { LOCALES, activateLocale } from '@/services/i18n'
+import { LOCALES, chooseLocale } from '@/services/i18n'
 import type { Locale } from '@/services/i18n'
 import '@/styles/segmented.css'
 import './LanguageSwitcher.css'
@@ -17,7 +17,7 @@ export default function LanguageSwitcher() {
           key={locale}
           lang={locale}
           className={`mode-toggle-btn${i18n.locale === locale ? ' active' : ''}`}
-          onClick={() => void activateLocale(locale)}
+          onClick={() => void chooseLocale(locale)}
         >
           {LABELS[locale]}
         </button>
