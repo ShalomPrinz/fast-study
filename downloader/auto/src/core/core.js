@@ -64,7 +64,7 @@ export function listRecordings(sections) {
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
-    if (!extractor) continue; // non-PDF resource/non-recording url/unknown → skip
+    if (!extractor) continue; // non-PDF resource / non-http url target / unknown modType → skip
     for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
   }
   return recordings;

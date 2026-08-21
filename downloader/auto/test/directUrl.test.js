@@ -54,6 +54,18 @@ test('takes every other off-site link', () => {
   );
 });
 
+test('a keyword-less title no longer drops a Drive or YouTube link', () => {
+  const plain = (url) => ({ ...activity(url), title: 'L4', sectionName: 'חומרי עזר' });
+  assert.equal(
+    resolveExtractor(plain('https://www.youtube.com/playlist?list=PL1')).strategy,
+    'youtube-playlist',
+  );
+  assert.equal(
+    resolveExtractor(plain('https://drive.google.com/file/d/abc123/view')).strategy,
+    'google-drive',
+  );
+});
+
 test('the keyword hint rides along without gating the claim', () => {
   const plain = { ...activity('https://files.test/L1.mp4'), title: 'סילבוס', sectionName: 'כללי' };
   assert.ok(direct.canHandle(plain));

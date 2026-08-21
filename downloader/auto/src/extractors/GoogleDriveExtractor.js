@@ -134,18 +134,14 @@ export class GoogleDriveExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a `url` module only when a recording keyword is present AND its direct
-   * external target is a single Drive file. Both gates are needed: a Google Doc titled
-   * "…לתרגילים" passes the keyword gate, and only the single-file path check rejects it.
+   * Claim a `url` module whose direct external target is a single Drive file. The target is a
+   * fact about the URL; what the file IS stays unknown until the download-time probe, and the
+   * row lists as Unknown until then rather than being dropped on a title's say-so.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
   canHandle(activity) {
-    return (
-      activity.modType === 'url' &&
-      isRecording(activity.sectionName, activity.title) &&
-      isDriveFileUrl(activity.externalUrl)
-    );
+    return activity.modType === 'url' && isDriveFileUrl(activity.externalUrl);
   }
 
   /**

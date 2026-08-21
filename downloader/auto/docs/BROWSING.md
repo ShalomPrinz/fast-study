@@ -22,22 +22,25 @@ cards, so the module parser never sees them.
 WS `section.name` / `module.name` are HTML strings (Moodle wraps subsection headings in
 `<span class="course-mod_subsection">…</span>`), so both parsers flatten them through
 `stripTags` (`lib/html.js`) before they become `sectionName`/`title` — the frontend renders
-those as text, and the keyword gate matches over them.
+those as text, and the `isRecording` hint matches over them.
 
-## Keyword gating
+## Every `url` module is listed
 
-`isRecording(sectionName, title)` matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading. **Only the `url` extractors are gated**, and each is gated twice: a recording keyword AND a target check. A Moodle `url` module is an opaque off-site link — a YouTube playlist or a Drive video, but equally a syllabus, reading, Google Doc, or Drive folder — but its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so the target check is a pure function of the URL:
+A Moodle `url` module is an opaque off-site link — a YouTube playlist or a Drive video, but equally a syllabus, reading, Google Doc, or Drive folder. Its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so **the target URL is the only thing routing reads**; nothing is dropped for what its title says:
 
 - `YoutubePlaylistExtractor` — `YOUTUBE_HOSTS.has(safeHost(externalUrl))`.
-- `GoogleDriveExtractor` — a Drive host (`drive.google.com`/`docs.google.com`) **and** a single-file path (`/file/d/<id>/…`, `/open?id=`, `/uc?id=`). The path half carries real weight: a Google Doc titled `…לתרגילים` passes the keyword gate, and only the path check keeps it unclaimed. Folder links (`/drive/folders/<id>`) are likewise unclaimed.
+- `GoogleDriveExtractor` — a Drive host (`drive.google.com`/`docs.google.com`) **and** a single-file path (`/file/d/<id>/…`, `/open?id=`, `/uc?id=`).
+- `DirectUrlExtractor` — the catch-all, registered **last** in `EXTRACTORS`: any absolute `http(s)` target the two above didn't claim, including a Drive _folder_ link. It lists the row as `'unknown'` and lets the download-time probe answer.
 
-Every other `url` module — any absolute `http(s)` target, whatever the host — falls to `DirectUrlExtractor`, registered **last** in `EXTRACTORS` so the two above keep their own targets. It claims on the URL scheme alone and lists the row as `'unknown'`: nothing in the WS payload says what an off-site link is, and a title is a guess, so the download-time probe answers instead of the listing dropping the row. A non-`http(s)` target (`mailto:`, a relative path, junk) is claimed by nobody and skipped. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
+A non-`http(s)` target (`mailto:`, a relative path, junk) is claimed by nobody and skipped. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
+
+There is **no keyword gate**. `isRecording(sectionName, title)` still matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading, but it now only rides along as the `likelyRecording` hint on the `Item`: a keyword is a guess about content made from a title, so a Drive video called `L4` used to vanish while `L1.zip` in a recordings section got through. The frontend uses a false to group a _video_ under a synthetic "Other Videos" heading, which keeps a stray course link out of the lecture sections without hiding it.
 
 Adding a share-page extractor later (Dropbox `?dl=1`, OneDrive `?download=1`, a Docs export) means registering it **before** `DirectUrlExtractor` and giving it its own resolve branch; until then those pages probe as `text/html` and grey in place as unsupported.
 
 ## Mimetype gating (`resource` files)
 
-`MoodleFileExtractor` claims a `resource` activity on `mimetype === 'application/pdf'` alone — deliberately **not** keyword-gated like the `url` extractors. A mimetype is exact where a keyword is a guess, and the two error directions are not symmetric: a listed grade-sheet PDF costs one ignored row, a missed slide deck costs the material. Non-PDF resource files (docx, zip) stay unclaimed.
+`MoodleFileExtractor` claims a `resource` activity on `mimetype === 'application/pdf'` alone. A mimetype is exact where a keyword is a guess, and the two error directions are not symmetric: a listed grade-sheet PDF costs one ignored row, a missed slide deck costs the material. Non-PDF resource files (docx, zip) stay unclaimed.
 
 ## Video vs material
 
@@ -68,7 +71,7 @@ The frontend never sees the download mechanism. `/list` and `/list/expand` retur
 An unexpanded playlist (`url` module) lists as ONE `expandable` item. Its `pageUrl` is the
 module's **direct external target** (`contents[0].fileurl`) — no redirect hop. `/list/expand`
 runs `yt-dlp --flat-playlist` straight on that URL. Non-YouTube targets are already filtered at
-list time by `canHandle` (see Keyword gating), so the YouTube-host check in `listEntries` is now
+list time by `canHandle` (see above), so the YouTube-host check in `listEntries` is now
 a fallback: an echoed ref can still reach expand/download, and a non-YouTube (or unparseable)
 host there is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500
 "try again"); the same mapping applies on `/resolve`.

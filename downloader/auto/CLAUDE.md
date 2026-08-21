@@ -56,7 +56,7 @@ both clips), then returns only the cap whose split name matches the request.
 
 - **`docs/SESSIONS.md`** — persistent per-profile browsers, `withLock` mutex, idle timeout, the launch matrix.
 - **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + managed Xvfb; the UA/GPU constraints; passcode gate; before/after-break split.
-- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, keyword/mimetype gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, listed as `unknown` media, probed by filename at download → yt-dlp or material), `zoom`, `moodle-file` (course-hosted PDF → lecture material), `direct-url` (the catch-all `url` module, listed as `unknown` media, probed by URL path then headers at download).
+- **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, target-URL routing (every `url` module is listed; the recording keywords are only the `likelyRecording` hint), mimetype gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, listed as `unknown` media, probed by filename at download → yt-dlp or material), `zoom`, `moodle-file` (course-hosted PDF → lecture material), `direct-url` (the catch-all `url` module, listed as `unknown` media, probed by URL path then headers at download).
 - **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
 
 Dev-stack wiring: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

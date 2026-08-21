@@ -6,8 +6,8 @@
 // (Hebrew: תרגול/תרגיל = recitation; תרגולים contains תרגול so it matches too.)
 const RECITATION_KEYWORDS = ['תרגולים', 'תרגול', 'תרגיל', 'recitation', 'tirgul'];
 
-// Hints that a `url` module is a recording playlist, not an unrelated link (syllabus,
-// reading, drive folder). (Hebrew: הקלטות/הקלטה = recordings; הרצאות/הרצאה = lectures.)
+// Hints that a `url` module is a lecture recording rather than a stray course link (syllabus,
+// reading, drive folder) — a grouping hint only; see isRecording. (Hebrew: הקלטות/הקלטה = recordings; הרצאות/הרצאה = lectures.)
 const RECORDING_KEYWORDS = [
   'הקלטות',
   'הרצאות',
@@ -31,13 +31,13 @@ export function classifyKind(sectionName, title) {
 }
 
 /**
- * Does this activity's section heading OR title mark it as a recording?
+ * Does this activity's section heading OR title read like a recording? A HINT, never a gate:
+ * a keyword is a guess about content made from a title, so every `url` module is listed either
+ * way and the frontend only uses a false to group the row under "Other Videos".
  * @param {string} sectionName
  * @param {string} title
  * @returns {boolean}
  */
-// Allow-list gating which `url` modules are treated as recordings — considers the
-// owning section heading AND the activity's own title.
 export function isRecording(sectionName, title) {
   const hay = `${sectionName} ${title}`.toLowerCase();
   return RECORDING_KEYWORDS.some((k) => hay.includes(k.toLowerCase()));
