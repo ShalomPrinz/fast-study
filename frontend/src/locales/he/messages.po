@@ -110,11 +110,11 @@ msgstr "{name} ישמש"
 msgid "{nextLoad, plural, one {Load # more} other {Load # more}}"
 msgstr "{nextLoad, plural, one {טען עוד אחד} two {טען עוד #} other {טען עוד #}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:232
+#: src/features/downloads/components/SectionGroup.tsx:233
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {שורה אחת לא התחילה — {stoppedBecause}} two {# שורות לא התחילו — {stoppedBecause}} other {# שורות לא התחילו — {stoppedBecause}}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:241
+#: src/features/downloads/components/SectionGroup.tsx:242
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.}}"
 
@@ -135,7 +135,7 @@ msgstr "+ קורס חדש"
 msgid "⟳ Run incomplete pipelines"
 msgstr "⟳ הרץ צינורות לא שלמים"
 
-#: src/features/downloads/components/SectionGroup.tsx:226
+#: src/features/downloads/components/SectionGroup.tsx:227
 msgid "⭳ Download all"
 msgstr "⭳ הורד הכל"
 
@@ -241,7 +241,7 @@ msgstr "לא ניתן להוריד את \"{name}\": {detail}"
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
-#: src/features/downloads/components/SectionGroup.tsx:95
+#: src/features/downloads/components/SectionGroup.tsx:96
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 
@@ -286,17 +286,17 @@ msgstr "הורד ✓"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:205
+#: src/features/downloads/components/SectionGroup.tsx:206
 msgid "Downloading {0}/{1}…"
 msgstr "מוריד {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:212
+#: src/features/downloads/components/SectionGroup.tsx:213
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
 #: src/features/downloads/components/RecordingRow.tsx:253
 #: src/features/downloads/components/RecordingRow.tsx:265
-#: src/features/downloads/components/SectionGroup.tsx:226
+#: src/features/downloads/components/SectionGroup.tsx:227
 msgid "Downloading…"
 msgstr "מוריד…"
 
@@ -329,7 +329,7 @@ msgstr "מעריך…"
 msgid "Expand"
 msgstr "הרחב"
 
-#: src/features/downloads/components/SectionGroup.tsx:224
+#: src/features/downloads/components/SectionGroup.tsx:225
 msgid "Expand every playlist in this section first"
 msgstr "יש להרחיב תחילה כל רשימת השמעה בקטע זה"
 
@@ -587,6 +587,10 @@ msgstr "פתח את החומר בלשונית חדשה"
 msgid "Open PDF in new tab"
 msgstr "פתח את ה-PDF בלשונית חדשה"
 
+#: src/features/downloads/utils/sections.ts:10
+msgid "Other"
+msgstr "אחר"
+
 #: src/features/course-overview/components/ExtractorHeader.tsx:29
 #: src/features/course-overview/components/ExtractorRow.tsx:30
 #: src/features/course-overview/components/GenerateAllButton.tsx:23
@@ -751,7 +755,7 @@ msgstr "חיפוש בסיכומים"
 msgid "Search this course's summaries…"
 msgstr "חפש בסיכומים של הקורס…"
 
-#. placeholder {0}: parsed.title
+#. placeholder {0}: sectionTitle(parsed.title)
 #: src/features/downloads/components/PausedRunsBanner.tsx:27
 msgid "Section {0} is waiting for a passcode"
 msgstr "הקטע {0} ממתין לקוד גישה"
@@ -823,7 +827,7 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הארוך ביותר ש
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/features/downloads/components/SectionGroup.tsx:192
+#: src/features/downloads/components/SectionGroup.tsx:193
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "החיבור לבר-אילן פג. התחבר מחדש והרץ את הקטע שוב."
 
@@ -839,11 +843,11 @@ msgstr "הקבצים הבאים ייוצרו מחדש:"
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
-#: src/features/downloads/components/SectionGroup.tsx:195
+#: src/features/downloads/components/SectionGroup.tsx:196
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "הריצה נעצרה מוקדם. הרץ את הקטע שוב כדי להשלים אותן."
 
-#: src/features/downloads/components/SectionGroup.tsx:194
+#: src/features/downloads/components/SectionGroup.tsx:195
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "הריצה בוטלה. הרץ את הקטע שוב כדי להשלים אותן."
 

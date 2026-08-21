@@ -36,6 +36,7 @@ import {
 } from '@/features/downloads/utils/runStatus'
 import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
+import { sectionTitle } from '@/features/downloads/utils/sections'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import '@/styles/source-row.css'
 import './SectionGroup.css'
@@ -127,7 +128,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
       const renames = await startSectionRun({ sectionId: id, course, targets })
       applyRenames(renames, targets, setName)
     } catch (err) {
-      toastDownloadError(section.title, err)
+      toastDownloadError(sectionTitle(section.title), err)
     }
   }
 
@@ -169,7 +170,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     try {
       await cancelRun(run.id)
     } catch (err) {
-      toastDownloadError(section.title, err)
+      toastDownloadError(sectionTitle(section.title), err)
     }
   }
 
@@ -198,7 +199,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     <div className="recordings-section">
       <div className="recordings-section-header">
         <span className="recordings-section-title" dir="auto">
-          {section.title}
+          {sectionTitle(section.title)}
         </span>
         {queueing && run && (
           <span className="recordings-section-progress">

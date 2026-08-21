@@ -1,6 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
+import { i18n } from '@lingui/core'
+import { messages as en } from '@/locales/en/messages.po'
+import { messages as he } from '@/locales/he/messages.po'
 import type { Item, Media, ResolvedMedia } from '../services/autoDownloader'
-import { groupSections, parseSectionId, sectionId } from './sections'
+import { OTHER_SECTION, groupSections, parseSectionId, sectionId, sectionTitle } from './sections'
 
 function item(
   ref: string,
@@ -98,5 +101,27 @@ describe('parseSectionId', () => {
     expect(parseSectionId('')).toBeNull()
     expect(parseSectionId(':video:Week 1')).toBeNull()
     expect(parseSectionId('Algebra:video:')).toBeNull()
+  })
+})
+
+describe('sectionTitle', () => {
+  afterEach(() => i18n.loadAndActivate({ locale: 'en', messages: en }))
+
+  it('passes a real heading through untouched', () => {
+    expect(sectionTitle('Week 1')).toBe('Week 1')
+    i18n.loadAndActivate({ locale: 'he', messages: he })
+    expect(sectionTitle('Week 1')).toBe('Week 1')
+  })
+
+  it('translates the Other sentinel', () => {
+    i18n.loadAndActivate({ locale: 'he', messages: he })
+    expect(sectionTitle(OTHER_SECTION)).toBe('אחר')
+  })
+
+  it('leaves the run key locale-independent', () => {
+    const id = sectionId('Algebra', 'video', OTHER_SECTION)
+    i18n.loadAndActivate({ locale: 'he', messages: he })
+    expect(sectionId('Algebra', 'video', OTHER_SECTION)).toBe(id)
+    expect(parseSectionId(id)?.title).toBe('Other')
   })
 })

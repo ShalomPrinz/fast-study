@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import { usePausedRuns } from '@/features/downloads/contexts/SectionRunsContext'
-import { parseSectionId } from '@/features/downloads/utils/sections'
+import { parseSectionId, sectionTitle } from '@/features/downloads/utils/sections'
 import type { Media } from '@/features/downloads/services/autoDownloader'
 import './PausedRunsBanner.css'
 
@@ -24,7 +24,7 @@ export default function PausedRunsBanner({ course, media, onSelectMedia }: Props
       {paused.map((run) => {
         const parsed = parseSectionId(run.sectionId)
         const label = parsed
-          ? t`Section ${parsed.title} is waiting for a passcode`
+          ? t`Section ${sectionTitle(parsed.title)} is waiting for a passcode`
           : t`A section is waiting for a passcode`
         // Nothing to jump to: another course, an id this page can't read, or the open segment —
         // where the section is already on screen with its prompt, so a link would do nothing.

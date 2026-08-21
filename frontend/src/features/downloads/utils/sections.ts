@@ -1,7 +1,14 @@
+import { t } from '@lingui/core/macro'
 import type { Item, Media } from '../services/autoDownloader'
 
 // Items whose Moodle heading is blank still need a home.
-const OTHER_SECTION = 'Other'
+export const OTHER_SECTION = 'Other'
+
+// A section heading for display. The sentinel is a run key, so it is translated here at render time
+// and never at its definition — translating it there would make every run key locale-dependent.
+export function sectionTitle(title: string): string {
+  return title === OTHER_SECTION ? t`Other` : title
+}
 
 const MEDIA: readonly string[] = ['video', 'material', 'unknown'] satisfies Media[]
 
