@@ -131,7 +131,7 @@ msgstr "+ add source URL"
 msgid "+ New Course"
 msgstr "+ New Course"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:13
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:14
 msgid "⟳ Run incomplete pipelines"
 msgstr "⟳ Run incomplete pipelines"
 
@@ -434,7 +434,7 @@ msgstr "lecture"
 msgid "Lecture"
 msgstr "Lecture"
 
-#: src/features/lectures/utils/nextName.ts:56
+#: src/features/lectures/utils/nextName.ts:58
 msgctxt "directory name"
 msgid "Lecture"
 msgstr "Lecture"
@@ -617,8 +617,8 @@ msgstr "Pipeline already running"
 msgid "Pipeline failed to start"
 msgstr "Pipeline failed to start"
 
-#. placeholder {0}: new Date(sleeping).toLocaleTimeString()
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:30
+#. placeholder {0}: formatClockTime(sleeping)
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:31
 msgid "rate-limited until {0}"
 msgstr "rate-limited until {0}"
 
@@ -646,7 +646,7 @@ msgstr "recitation"
 msgid "Recitation"
 msgstr "Recitation"
 
-#: src/features/lectures/utils/nextName.ts:55
+#: src/features/lectures/utils/nextName.ts:57
 msgctxt "directory name"
 msgid "Recitation"
 msgstr "Recitation"
@@ -731,7 +731,7 @@ msgstr "Rotate {file}"
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:61
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:62
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 

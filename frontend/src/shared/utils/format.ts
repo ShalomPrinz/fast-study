@@ -1,7 +1,9 @@
+import { i18n } from '@lingui/core'
+
+// Colon-numeric elapsed time, e.g. "5:30" / "0:45" — locale-neutral, so it reads the same in any language.
 export function formatDuration(seconds: number): string {
   const s = Math.round(seconds)
-  if (s < 60) return `${s}s`
-  return `${Math.floor(s / 60)}m ${s % 60}s`
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
 // English ordinal; 11th–13th break the 1st/2nd/3rd rule and are special-cased.
@@ -20,15 +22,18 @@ function ordinal(n: number): string {
   }
 }
 
-// Short monthly date, e.g. "10th July".
+// Short monthly date, e.g. "10th July" / "10 ביולי".
 export function formatMonthDate(iso: string): string {
   const d = new Date(iso)
-  return `${ordinal(d.getDate())} ${d.toLocaleString('en-GB', { month: 'long' })}`
+  // Intl has no ordinal day option, so English is built by hand to keep "10th July" rather than "10 July".
+  if (i18n.locale.startsWith('en'))
+    return `${ordinal(d.getDate())} ${d.toLocaleString(i18n.locale, { month: 'long' })}`
+  return new Intl.DateTimeFormat(i18n.locale, { day: 'numeric', month: 'long' }).format(d)
 }
 
 // Full readable timestamp, e.g. "Friday, 10 July 2026, 14:32".
 export function formatFullTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString('en-GB', {
+  return new Date(iso).toLocaleString(i18n.locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -36,4 +41,9 @@ export function formatFullTimestamp(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+// Clock time only, e.g. "14:32".
+export function formatClockTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString(i18n.locale, { hour: '2-digit', minute: '2-digit' })
 }

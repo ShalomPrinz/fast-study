@@ -1,6 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { formatClockTime } from '@/shared/utils/format'
 import { lectureRoute } from '@/shared/utils/url'
 import type { InFlightEntry } from '@/types'
 import '@/styles/sidebar-tree.css'
@@ -27,7 +28,7 @@ function InFlightRow({ entry }: { entry: InFlightEntry }) {
         {entry.course} / {entry.lecture}
       </span>
       <span className="runner-inflight-step">
-        {sleeping ? t`rate-limited until ${new Date(sleeping).toLocaleTimeString()}` : entry.step}
+        {sleeping ? t`rate-limited until ${formatClockTime(sleeping)}` : entry.step}
       </span>
     </button>
   )
