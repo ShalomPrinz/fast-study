@@ -56,7 +56,15 @@ Moodle heading) in first-seen order, blank → "Other". So each side shows only 
 with nothing on the active side doesn't render, and an empty side shows its own "No recordings found." /
 "No materials found." / "No files of unknown type found." while every segment stays clickable.
 `groupSections` is a pure helper (`utils/sections.ts`)
-precisely so the filter+group rule is testable without a DOM. Everything below a section — including
+precisely so the filter+group rule is testable without a DOM.
+
+On the **Videos** side only, a row auto stamped `likelyRecording: false` — a `url` module whose Moodle
+heading and title carry no recording keyword, so a stray course link rather than a lecture — is pulled
+out of its heading into a synthetic **Other Videos** bucket placed last. auto lists every `url` module
+now, so this is what keeps a random course YouTube link out of the lecture sections without hiding it;
+the tradeoff is that those rows lose their real heading and are downloaded per row. The bucket is a
+leftover pile spanning every heading in the course, so it is marked `synthetic` rather than recognised
+by its title — a real Moodle heading spelled "Other Videos" is a different section, and stays one. Everything below a section — including
 "Download all" — therefore operates on one media only: a bulk run covers just the active side.
 
 An item is either downloadable or `expandable` (a playlist). The expand state, the fetched children and
@@ -352,7 +360,7 @@ and `unsupported` for a row a probe already condemned. Everything else goes over
 replaces whatever run that section had. The POST answers `{ runId, renames }`; the run itself is read back off
 `/runs`, so `startSectionRun` returns only the renames (above).
 
-**Two costs of the run being server-owned**, both accepted: a name typed *while the queue runs* is no longer
+**Two costs of the run being server-owned**, both accepted: a name typed _while the queue runs_ is no longer
 picked up when that row's turn arrives — the server got every name up front — and a row downloaded by
 something outside this run mid-queue is no longer skipped, since the skip set was computed at submit; it is
 re-triggered and overwrites itself.

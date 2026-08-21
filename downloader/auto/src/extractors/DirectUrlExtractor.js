@@ -1,4 +1,5 @@
 import { VideoExtractor } from './VideoExtractor.js';
+import { isRecording } from '../discovery/moodleCourse.js';
 
 /**
  * Is this an absolute http(s) target? Anything else (mailto:, a relative fragment,
@@ -51,6 +52,7 @@ export class DirectUrlExtractor extends VideoExtractor {
         kind: activity.kind,
         strategy: 'direct-url',
         section: activity.sectionName,
+        likelyRecording: isRecording(activity.sectionName, activity.title),
       },
     ];
   }

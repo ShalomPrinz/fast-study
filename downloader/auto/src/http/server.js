@@ -56,7 +56,8 @@ function resolvedMediaOf(recording) {
 
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
 // unexpanded playlist (pageUrl, no url) is expandable, else downloadable. `media` says which
-// file lands on disk (video.mp4 vs a material PDF), never how it is fetched. See docs/BROWSING.md.
+// file lands on disk (video.mp4 vs a material PDF), never how it is fetched. `likelyRecording` is
+// the keyword HINT, never a gate — only a `url` module can carry a false. See docs/BROWSING.md.
 function toItem(recording) {
   const resolvedMedia = resolvedMediaOf(recording);
   return {
@@ -65,6 +66,7 @@ function toItem(recording) {
     kind: recording.kind,
     media: mediaOf(recording),
     ...(resolvedMedia ? { resolvedMedia } : {}),
+    likelyRecording: recording.likelyRecording !== false,
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
   };
@@ -222,6 +224,8 @@ export async function handleListExpand(req, res) {
       kind: recording.kind,
       strategy: recording.strategy,
       section: recording.section,
+      // A playlist's children inherit its verdict: a video title says nothing on its own.
+      likelyRecording: recording.likelyRecording,
     }),
   );
   logResult('/list/expand', `${items.length} items`);

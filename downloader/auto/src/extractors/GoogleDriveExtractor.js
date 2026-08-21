@@ -161,6 +161,7 @@ export class GoogleDriveExtractor extends VideoExtractor {
         kind: activity.kind,
         strategy: 'google-drive',
         section: activity.sectionName,
+        likelyRecording: isRecording(activity.sectionName, activity.title),
       },
     ];
   }

@@ -54,6 +54,12 @@ test('takes every other off-site link', () => {
   );
 });
 
+test('the keyword hint rides along without gating the claim', () => {
+  const plain = { ...activity('https://files.test/L1.mp4'), title: 'סילבוס', sectionName: 'כללי' };
+  assert.ok(direct.canHandle(plain));
+  assert.equal(direct.toRecordings(plain)[0].likelyRecording, false);
+});
+
 test('a listed row is one unexpandable unknown target', () => {
   const [rec] = direct.toRecordings(activity('https://files.test/L1.mp4'));
   assert.deepEqual(rec, {
@@ -62,5 +68,6 @@ test('a listed row is one unexpandable unknown target', () => {
     kind: 'lecture',
     strategy: 'direct-url',
     section: 'הקלטות',
+    likelyRecording: true,
   });
 });

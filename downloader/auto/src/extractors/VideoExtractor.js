@@ -9,12 +9,14 @@
  *
  * A listed recording — cheap metadata + which download strategy resolves it.
  * `section` is the Moodle course section heading (display metadata for grouping; '' when unnamed).
+ * `likelyRecording` is the keyword hint (see `isRecording`); only a `url` module carries it, and
+ * only the frontend's grouping reads it — nothing gates on it.
  * Every strategy but `moodle-file` carries a `pageUrl`; `moodle-file` carries the Moodle
  * `fileurl` the tokened download URL is built from instead.
  * @typedef {{ title: string, pageUrl?: string, fileurl?: string, filename?: string,
  *             kind: 'lecture'|'recitation',
  *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file'|'direct-url',
- *             section: string }} Recording
+ *             section: string, likelyRecording?: boolean }} Recording
  *
  * A recording resolved for download — url = the .mp4 (videostream) or a YouTube
  * URL (playlist entry). Shape maps straight onto server.js's download endpoints.

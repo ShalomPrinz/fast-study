@@ -98,16 +98,14 @@ export default function DownloadsView() {
                           />
                           {!sections.length
                             ? !loading &&
-                              !error && (
-                                <div className="recordings-status">{emptyState[media]}</div>
-                              )
-                            : sections.map(([title, sectionItems]) => {
-                                const id = sectionId(selected, media, title)
+                              !error && <div className="recordings-status">{emptyState[media]}</div>
+                            : sections.map((section) => {
+                                const id = sectionId(selected, media, section.title)
                                 return (
                                   <SectionGroup
                                     key={id}
-                                    section={{ id, title }}
-                                    items={sectionItems}
+                                    section={{ ...section, id }}
+                                    items={section.items}
                                     course={selected}
                                     onReconnect={reconnectHint}
                                   />

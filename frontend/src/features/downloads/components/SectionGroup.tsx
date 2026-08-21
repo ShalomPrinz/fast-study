@@ -43,7 +43,8 @@ import './SectionGroup.css'
 
 interface Props {
   // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run.
-  section: { id: string; title: string }
+  // `synthetic` marks the leftover `Other Videos` pile, whose title is ours rather than Moodle's.
+  section: { id: string; title: string; synthetic: boolean }
   items: Item[]
   course: string
   onReconnect: () => void
@@ -66,6 +67,9 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   const { expansions } = useDownloadsSession()
   const { patchExpansion } = useDownloadsActions()
   const id = section.id
+  // The synthetic bucket's title is a label we mint, so it is translated here; a Moodle heading
+  // spelled the same is a real section and passes through untouched.
+  const label = section.synthetic ? t`Other Videos` : sectionTitle(section.title)
   const run = useSectionRun(id)
   // The passcode save's own in-flight state — the only thing about a run this component still owns.
   // A double submit is the server's to reject (409 on a run that is no longer parked).
@@ -128,7 +132,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
       const renames = await startSectionRun({ sectionId: id, course, targets })
       applyRenames(renames, targets, setName)
     } catch (err) {
-      toastDownloadError(sectionTitle(section.title), err)
+      toastDownloadError(label, err)
     }
   }
 
@@ -170,7 +174,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     try {
       await cancelRun(run.id)
     } catch (err) {
-      toastDownloadError(sectionTitle(section.title), err)
+      toastDownloadError(label, err)
     }
   }
 
@@ -199,7 +203,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     <div className="recordings-section">
       <div className="recordings-section-header">
         <span className="recordings-section-title" dir="auto">
-          {sectionTitle(section.title)}
+          {label}
         </span>
         {queueing && run && (
           <span className="recordings-section-progress">

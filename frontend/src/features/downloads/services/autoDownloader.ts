@@ -25,6 +25,8 @@ export type ResolvedMedia = ProbedMedia | 'unsupported'
 // `expandable` → resolve via /list/expand into children; `section` is the Moodle heading ('' if blank).
 // `resolvedMedia` is auto's session probe cache for an 'unknown' row; absent until probed. A row
 // never changes segment once resolved — the resolved type shows as a column instead.
+// `likelyRecording` is auto's keyword hint, never a gate: false groups a video out of the lecture
+// sections and into `Other Videos`.
 export interface Item {
   ref: string
   title: string
@@ -33,6 +35,7 @@ export interface Item {
   resolvedMedia?: ResolvedMedia
   expandable: boolean
   section: string
+  likelyRecording?: boolean
 }
 
 // HTTP 401 { status: 'reconnect' }: the stored BIU session is gone. Distinct type so the UI

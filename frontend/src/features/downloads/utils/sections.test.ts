@@ -3,7 +3,15 @@ import { i18n } from '@lingui/core'
 import { messages as en } from '@/locales/en/messages.po'
 import { messages as he } from '@/locales/he/messages.po'
 import type { Item, Media, ResolvedMedia } from '../services/autoDownloader'
-import { OTHER_SECTION, groupSections, parseSectionId, sectionId, sectionTitle } from './sections'
+import type { Section } from './sections'
+import {
+  OTHER_SECTION,
+  OTHER_VIDEOS_SECTION,
+  groupSections,
+  parseSectionId,
+  sectionId,
+  sectionTitle,
+} from './sections'
 
 function item(
   ref: string,
@@ -14,8 +22,12 @@ function item(
   return { ref, title: ref, kind: 'lecture', media, resolvedMedia, expandable: false, section }
 }
 
-const refs = (sections: [string, Item[]][]) =>
-  sections.map(([title, items]) => [title, items.map((i) => i.ref)])
+// A row the keyword hint says is not a lecture recording.
+function stray(ref: string, section: string, media: Media = 'video'): Item {
+  return { ...item(ref, section, media), likelyRecording: false }
+}
+
+const refs = (sections: Section[]) => sections.map((s) => [s.title, s.items.map((i) => i.ref)])
 
 describe('groupSections', () => {
   it('keeps only the active media', () => {
@@ -66,6 +78,43 @@ describe('groupSections', () => {
   it('returns nothing when the active side is empty', () => {
     expect(groupSections([item('a', 'Week 1')], 'material')).toEqual([])
     expect(groupSections([], 'video')).toEqual([])
+  })
+})
+
+describe('the Other Videos bucket', () => {
+  it('pulls a non-recording video out of its heading, last', () => {
+    const items = [stray('x', 'Week 1'), item('a', 'Week 1'), item('b', 'Week 2')]
+    expect(refs(groupSections(items, 'video'))).toEqual([
+      ['Week 1', ['a']],
+      ['Week 2', ['b']],
+      [OTHER_VIDEOS_SECTION, ['x']],
+    ])
+  })
+
+  it('is absent when every video is a likely recording', () => {
+    const sections = groupSections([item('a', 'Week 1')], 'video')
+    expect(sections.every((s) => !s.synthetic)).toBe(true)
+  })
+
+  it('only marks the bucket synthetic', () => {
+    const sections = groupSections([item('a', 'Week 1'), stray('x', 'Week 1')], 'video')
+    expect(sections.map((s) => s.synthetic)).toEqual([false, true])
+  })
+
+  it('leaves the other segments grouped by heading', () => {
+    const items = [stray('x', 'Week 1', 'material'), stray('y', 'Week 1', 'unknown')]
+    expect(refs(groupSections(items, 'material'))).toEqual([['Week 1', ['x']]])
+    expect(refs(groupSections(items, 'unknown'))).toEqual([['Week 1', ['y']]])
+  })
+
+  it('keeps a real heading spelled the same as its own section', () => {
+    const items = [item('a', OTHER_VIDEOS_SECTION), stray('x', 'Week 1')]
+    const sections = groupSections(items, 'video')
+    expect(refs(sections)).toEqual([
+      [OTHER_VIDEOS_SECTION, ['a']],
+      [OTHER_VIDEOS_SECTION, ['x']],
+    ])
+    expect(sections.map((s) => s.synthetic)).toEqual([false, true])
   })
 })
 

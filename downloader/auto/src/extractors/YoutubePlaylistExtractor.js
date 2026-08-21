@@ -72,6 +72,7 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
         kind: activity.kind,
         strategy: 'youtube-playlist',
         section: activity.sectionName,
+        likelyRecording: isRecording(activity.sectionName, activity.title),
       },
     ];
   }
