@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -13,19 +13,19 @@ import type { RunTarget } from '@/features/downloads/services/downloadServer'
 import { cancelRun, resumeRun, startSectionRun } from '@/features/downloads/services/downloadServer'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
-import type { ExpandControl } from './RecordingRow'
 import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
 import {
   resolveRow,
   useRowEdits,
   useRowEditsDispatch,
 } from '@/features/downloads/contexts/RowEditsContext'
-import type { ExpandState } from '@/features/downloads/contexts/DownloadsSessionContext'
+import type { ExpandState } from '@/features/downloads/contexts/RowExpansionsContext'
 import {
   IDLE_EXPAND,
-  useDownloadsActions,
-  useDownloadsSession,
-} from '@/features/downloads/contexts/DownloadsSessionContext'
+  expansionOf,
+  patchExpansion,
+  useAllExpansions,
+} from '@/features/downloads/contexts/RowExpansionsContext'
 import { useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
 import {
@@ -63,8 +63,9 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   // The server's canonical spelling replaces each renamed row's name, so the skip rule and the run's
   // landed check compare against disk.
   const { setName } = useRowEditsDispatch()
-  const { expansions } = useDownloadsSession()
-  const { patchExpansion } = useDownloadsActions()
+  // The whole map: the bulk queue needs every playlist's children, and "Download all" needs to know
+  // they are all expanded. The rows themselves subscribe per ref.
+  const expansions = useAllExpansions()
   const id = section.id
   const run = useSectionRun(id)
   // The passcode save's own in-flight state — the only thing about a run this component still owns.
@@ -80,23 +81,31 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     return expansions[ref] ?? IDLE_EXPAND
   }
 
-  // Cached on first expand, so collapse/re-expand never refetches.
-  async function toggleExpand(item: Item) {
-    const current = stateOf(item.ref)
-    if (current.children) {
-      patchExpansion(item.ref, { expanded: !current.expanded })
-      return
-    }
-    patchExpansion(item.ref, { expanding: true, error: null })
-    try {
-      const children = await expandItem(item.ref)
-      patchExpansion(item.ref, { children, expanded: true, expanding: false })
-    } catch (err) {
-      if (isReconnectError(err)) onReconnect()
-      const message = isUnsupportedError(err) ? err.message : t`Couldn't load entries. Try again.`
-      patchExpansion(item.ref, { expanding: false, error: isReconnectError(err) ? null : message })
-    }
-  }
+  // Cached on first expand, so collapse/re-expand never refetches. Stable across renders — it reads
+  // the current state through the store rather than closing over `expansions`, because a changing
+  // identity here would re-render every memoized playlist row on every keystroke and every job ping.
+  const toggleExpand = useCallback(
+    async (item: Item) => {
+      const current = expansionOf(item.ref)
+      if (current.children) {
+        patchExpansion(item.ref, { expanded: !current.expanded })
+        return
+      }
+      patchExpansion(item.ref, { expanding: true, error: null })
+      try {
+        const children = await expandItem(item.ref)
+        patchExpansion(item.ref, { children, expanded: true, expanding: false })
+      } catch (err) {
+        if (isReconnectError(err)) onReconnect()
+        const message = isUnsupportedError(err) ? err.message : t`Couldn't load entries. Try again.`
+        patchExpansion(item.ref, {
+          expanding: false,
+          error: isReconnectError(err) ? null : message,
+        })
+      }
+    },
+    [onReconnect, t],
+  )
 
   const expandables = items.filter((i) => i.expandable)
   const allExpanded = expandables.every((i) => stateOf(i.ref).children !== null)
@@ -247,21 +256,16 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         </div>
       )}
 
-      {items.map((item) => {
-        const expand: ExpandControl | undefined = item.expandable
-          ? { ...stateOf(item.ref), onToggle: () => toggleExpand(item) }
-          : undefined
-        return (
-          <RecordingRow
-            key={item.ref}
-            item={item}
-            edit={edits[item.ref]}
-            course={course}
-            onReconnect={onReconnect}
-            expand={expand}
-          />
-        )
-      })}
+      {items.map((item) => (
+        <RecordingRow
+          key={item.ref}
+          item={item}
+          edit={edits[item.ref]}
+          course={course}
+          onReconnect={onReconnect}
+          onToggle={toggleExpand}
+        />
+      ))}
 
       {paused && (
         <PasscodePrompt

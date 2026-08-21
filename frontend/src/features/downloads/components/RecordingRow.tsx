@@ -11,6 +11,7 @@ import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsCont
 import { rowStatus, useRowJobs } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
 import { useRowEdit, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
+import { useRowExpansion } from '@/features/downloads/contexts/RowExpansionsContext'
 import {
   existingNames,
   hasResource,
@@ -23,21 +24,13 @@ import '@/features/downloads/DownloadsView.css'
 import './RecordingRow.css'
 import Chevron from '@/shared/components/Chevron'
 
-// Driven by SectionGroup — the bulk queue needs the same children cache.
-export interface ExpandControl {
-  expanded: boolean
-  children: Item[] | null
-  expanding: boolean
-  error: string | null
-  onToggle: () => void
-}
-
 interface Props {
   item: Item
   edit: RowEdit | undefined
   course: string
   onReconnect: () => void
-  expand?: ExpandControl
+  // Absent for a playlist's children, which are never expandable themselves.
+  onToggle?: (item: Item) => void
 }
 
 // The resolved-type column's copy; an unresolved 'unknown' row shows '?'.
@@ -54,7 +47,7 @@ const RecordingRow = memo(function RecordingRow({
   edit,
   course,
   onReconnect,
-  expand,
+  onToggle,
 }: Props) {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
@@ -70,6 +63,9 @@ const RecordingRow = memo(function RecordingRow({
   // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
   // for free after a reload. Subscribed per ref, so another row's job change doesn't re-render this one.
   const jobs = useRowJobs(item.ref)
+  // Subscribed per ref, so expanding one playlist leaves every other row alone. The state itself is
+  // SectionGroup's — the bulk queue needs the same children cache.
+  const expand = useRowExpansion(item.ref)
   // Auto's cached probe answer, updated in place by a download this session (single-row or bulk) —
   // so the type column resolves on the same interaction, with no re-list.
   const resolved = item.resolvedMedia
@@ -150,7 +146,7 @@ const RecordingRow = memo(function RecordingRow({
         })
       : retryClip(job)
 
-  if (item.expandable && expand) {
+  if (item.expandable && onToggle) {
     return (
       <div className="recording-expandable">
         <div className="recording-row recording-row--expandable">
@@ -158,7 +154,7 @@ const RecordingRow = memo(function RecordingRow({
             className="recording-caret"
             aria-label={expand.expanded ? t`Collapse` : t`Expand`}
             aria-expanded={expand.expanded}
-            onClick={expand.onToggle}
+            onClick={() => onToggle(item)}
             disabled={expand.expanding}
           >
             {expand.expanding ? (

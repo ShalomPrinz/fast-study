@@ -17,8 +17,8 @@ otherwise still read "connected".
 
 ## The page session
 
-Everything the page discovers or accumulates — `selected`, `items`, `loading`/`error`, the row edits, the
-playlist expansions and `reconnectKey` — lives in `DownloadsSessionProvider`
+Everything the page discovers or accumulates — `selected`, `items`, `loading`/`error`, the row edits and
+`reconnectKey` — lives in `DownloadsSessionProvider`
 (`contexts/DownloadsSessionContext.tsx`), mounted in `Layout` above the outlet. `/downloads` is a route, so
 its view unmounts on any navigation; holding the session above the router is what lets the user open a
 lecture and come back to the same course and the same typed names. `discover`
@@ -60,12 +60,18 @@ precisely so the filter+group rule is testable without a DOM. Everything below a
 "Download all" — therefore operates on one media only: a bulk run covers just the active side.
 
 An item is either downloadable or `expandable` (a playlist). The expand state, the fetched children and
-the cache live in the session provider — not in the row — because the bulk queue needs resolved children and
-the "Download all" button needs to know whether every playlist is expanded; holding them above the media
-toggle also keeps them alive across a segment switch. `SectionGroup` drives them: it reads the map and calls
-`patchExpansion`, and owns `toggleExpand`, the only caller. Children are cached on
-first expand, so collapse/re-expand never refetches. Expandable rows render their children as recursive
-`RecordingRow`s.
+the cache live in a module-level store (`contexts/RowExpansionsContext.ts`) rather than in the row, because
+the bulk queue needs resolved children and the "Download all" button needs to know whether every playlist is
+expanded; living outside the components also keeps them alive across a segment switch. `SectionGroup` drives
+them: it subscribes to the whole map (`useAllExpansions`) for those two rules, and owns `toggleExpand`, the
+only caller of `patchExpansion` — a `useCallback` stable across renders, which reads the current state
+through the store instead of closing over the map. Each `RecordingRow` subscribes to its own ref
+(`useRowExpansion`), so one playlist's expand re-renders that row alone; a never-expanded ref reads the
+shared `IDLE_EXPAND`. Children are cached on first expand, so collapse/re-expand never refetches. Expandable
+rows render their children as recursive `RecordingRow`s.
+
+The store outlives every component, so the session's `clear()` calls `clearExpansions()` — course switch and
+close must not leave another course's refs behind.
 
 ## Unknown rows and the resolved-type column
 

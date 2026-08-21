@@ -4,22 +4,9 @@ import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isReconnectError, listRecordings } from '../services/autoDownloader'
+import { clearExpansions } from './RowExpansionsContext'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
-
-export interface ExpandState {
-  expanded: boolean
-  children: Item[] | null
-  expanding: boolean
-  error: string | null
-}
-
-export const IDLE_EXPAND: ExpandState = {
-  expanded: false,
-  children: null,
-  expanding: false,
-  error: null,
-}
 
 interface DownloadsSessionState {
   selected: string | null
@@ -27,7 +14,6 @@ interface DownloadsSessionState {
   loading: boolean
   error: string | null
   edits: Record<string, RowEdit>
-  expansions: Record<string, ExpandState>
   reconnectKey: number
 }
 
@@ -37,7 +23,6 @@ interface DownloadsSessionActions {
   reconnectHint: () => void
   resolveMedia: ResolveMedia
   rowEdits: RowEditsDispatch
-  patchExpansion: (ref: string, next: Partial<ExpandState>) => void
 }
 
 // The whole Downloads page session, mounted in `Layout` so it outlives the route: discovery, row
@@ -63,7 +48,6 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   // Keyed by item ref and living above the media toggle, so a typed name, a kind toggle and a
   // playlist's cached children all survive a segment switch.
   const [edits, setEdits] = useState<Record<string, RowEdit>>({})
-  const [expansions, setExpansions] = useState<Record<string, ExpandState>>({})
 
   const sendUpdateRef = useRef(sendUpdate)
   sendUpdateRef.current = sendUpdate
@@ -81,13 +65,9 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   // A probe verdict is stamped onto the item itself, so it outlives the row and a segment switch —
   // and a later /list simply restates it from auto's own cache. Only the resolved item's identity
   // changes, leaving the memoized sibling rows alone. A ref that isn't here (an expanded playlist
-  // child, whose items live in `expansions`) is a no-op — those are never 'unknown' rows.
+  // child, whose items live in the expansions store) is a no-op — those are never 'unknown' rows.
   const resolveMedia = useCallback((ref: string, media: ResolvedMedia) => {
     setItems((prev) => prev.map((i) => (i.ref === ref ? { ...i, resolvedMedia: media } : i)))
-  }, [])
-
-  const patchExpansion = useCallback((ref: string, next: Partial<ExpandState>) => {
-    setExpansions((prev) => ({ ...prev, [ref]: { ...(prev[ref] ?? IDLE_EXPAND), ...next } }))
   }, [])
 
   const reconnectHint = useCallback(() => {
@@ -100,7 +80,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const clear = useCallback(() => {
     setItems([])
     setEdits({})
-    setExpansions({})
+    clearExpansions()
     setError(null)
   }, [])
 
@@ -132,12 +112,12 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   }, [clear])
 
   const actions = useMemo(
-    () => ({ discover, close, reconnectHint, resolveMedia, rowEdits, patchExpansion }),
-    [discover, close, reconnectHint, resolveMedia, rowEdits, patchExpansion],
+    () => ({ discover, close, reconnectHint, resolveMedia, rowEdits }),
+    [discover, close, reconnectHint, resolveMedia, rowEdits],
   )
   const state = useMemo(
-    () => ({ selected, items, loading, error, edits, expansions, reconnectKey }),
-    [selected, items, loading, error, edits, expansions, reconnectKey],
+    () => ({ selected, items, loading, error, edits, reconnectKey }),
+    [selected, items, loading, error, edits, reconnectKey],
   )
 
   // Rendering `{children}` and nothing else is what keeps the sidebar and the outlet out of this:
