@@ -116,9 +116,11 @@ export async function probeUrl(url, { force = false } = {}) {
 
   const byName = classifyFilename(filename);
   const byType = classifyContentType(res.headers.get('content-type'));
-  // A name carrying an extension settles it either way — `L1.zip` is a definite no, not a maybe.
+  // A name carrying an extension settles it either way — `L1.zip` is a definite no, not a maybe, so
+  // the name WINS over the type. Hosts mistype archives as video/mp4; a filename is the stronger
+  // evidence, and letting the type override it would point yt-dlp at an archive.
   const namedFile = NAMED_FILE.test(String(filename ?? ''));
-  const media = byName ?? byType ?? null;
+  const media = namedFile ? byName : (byType ?? null);
   const certain = namedFile || byType !== undefined;
 
   if (certain) cacheProbe(probeKey, media, filename);

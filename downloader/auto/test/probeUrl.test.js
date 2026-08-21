@@ -125,6 +125,17 @@ test('a named file is certain either way, even under a generic content type', as
   assert.equal(getProbedMedia(probeKeyForUrl('https://cdn.test/t8/bundle')), null);
 });
 
+test('an unusable filename beats a sloppy Content-Type', async (t) => {
+  const calls = stubFetch({
+    'content-disposition': 'attachment; filename="L1.zip"',
+    'content-type': 'video/mp4',
+  });
+  t.after(calls.restore);
+
+  const probe = await probeUrl('https://cdn.test/t11/bundle');
+  assert.deepEqual({ media: probe.media, certain: probe.certain }, { media: null, certain: true });
+});
+
 test('a malformed RFC 5987 filename falls through instead of throwing', async (t) => {
   const calls = stubFetch({
     'content-disposition': `attachment; filename*=UTF-8''%E0%A4%A; filename="L9.pdf"`,
