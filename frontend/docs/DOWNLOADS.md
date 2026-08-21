@@ -64,7 +64,14 @@ out of its heading into a synthetic **Other Videos** bucket placed last. auto li
 now, so this is what keeps a random course YouTube link out of the lecture sections without hiding it;
 the tradeoff is that those rows lose their real heading and are downloaded per row. The bucket is a
 leftover pile spanning every heading in the course, so it is marked `synthetic` rather than recognised
-by its title — a real Moodle heading spelled "Other Videos" is a different section, and stays one. Everything below a section — including
+by its title — a real Moodle heading spelled "Other Videos" is a different section, and stays one.
+
+That bucket has **no run identity at all**: `DownloadsView` passes `section.id = null` and a fixed React
+key for it, so it renders no "Download all", starts no server run, and shares nothing with a real heading
+of the same name. Giving it a `sectionId` would be the actual bug — `runs.js` keys its run map by
+`${course}:${media}:${title}`, so the two sections would share one run slot, one `useSectionRun`
+subscription and one React key. `useSectionRun` therefore takes `string | null` and a null id always
+reads as "no run", which every consumer already handles as the idle state. Everything below a section — including
 "Download all" — therefore operates on one media only: a bulk run covers just the active side.
 
 An item is either downloadable or `expandable` (a playlist). The expand state, the fetched children and

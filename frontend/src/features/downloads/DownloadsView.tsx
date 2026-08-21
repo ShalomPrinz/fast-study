@@ -100,10 +100,15 @@ export default function DownloadsView() {
                             ? !loading &&
                               !error && <div className="recordings-status">{emptyState[media]}</div>
                             : sections.map((section) => {
-                                const id = sectionId(selected, media, section.title)
+                                // The synthetic bucket gets no run identity at all: it spans every
+                                // heading in the course, and an id would collide with a real
+                                // heading spelled the same — one run slot for two sections.
+                                const id = section.synthetic
+                                  ? null
+                                  : sectionId(selected, media, section.title)
                                 return (
                                   <SectionGroup
-                                    key={id}
+                                    key={id ?? 'other-videos'}
                                     section={{ ...section, id }}
                                     items={section.items}
                                     course={selected}

@@ -42,9 +42,10 @@ import '@/styles/source-row.css'
 import './SectionGroup.css'
 
 interface Props {
-  // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run.
-  // `synthetic` marks the leftover `Other Videos` pile, whose title is ours rather than Moodle's.
-  section: { id: string; title: string; synthetic: boolean }
+  // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run —
+  // null for the synthetic `Other Videos` pile, which has no run and no bulk button.
+  // `synthetic` marks that pile, whose title is ours rather than Moodle's.
+  section: { id: string | null; title: string; synthetic: boolean }
   items: Item[]
   course: string
   onReconnect: () => void
@@ -126,6 +127,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   }
 
   async function startAll() {
+    if (!id) return
     const targets = buildTargets()
     if (!targets.length) return
     try {
@@ -222,14 +224,16 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
             {summarize(targets, courses, course, jobsByRef)}
           </span>
         )}
-        <button
-          className="source-row-btn recordings-download-all"
-          onClick={() => void startAll()}
-          disabled={busy || !allExpanded}
-          title={allExpanded ? undefined : t`Expand every playlist in this section first`}
-        >
-          {busy ? t`Downloading…` : t`⭳ Download all`}
-        </button>
+        {id !== null && (
+          <button
+            className="source-row-btn recordings-download-all"
+            onClick={() => void startAll()}
+            disabled={busy || !allExpanded}
+            title={allExpanded ? undefined : t`Expand every playlist in this section first`}
+          >
+            {busy ? t`Downloading…` : t`⭳ Download all`}
+          </button>
+        )}
       </div>
 
       {notStarted > 0 && (
