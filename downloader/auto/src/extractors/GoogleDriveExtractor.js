@@ -2,7 +2,7 @@ import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
 import { cacheProbe, getProbe } from '../core/probeCache.js';
-import { NAMED_FILE, classifyFilename } from '../lib/fileMedia.js';
+import { NAMED_FILE, classifyFilename, filenameFromDisposition } from '../lib/fileMedia.js';
 
 // Hosts that serve Google Drive file links. Anything else isn't Drive.
 const DRIVE_HOSTS = new Set(['drive.google.com', 'docs.google.com']);
@@ -42,24 +42,6 @@ export function driveFileId(url) {
 /** The anonymous direct-download URL for a file id — what both the probe and `server/` fetch. */
 export function driveDownloadUrl(fileId) {
   return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
-}
-
-/**
- * Filename out of a `Content-Disposition` header, or null. Handles both the plain
- * `filename="L1.zip"` and the RFC 5987 `filename*=UTF-8''L1.zip` Drive sends for non-ASCII names.
- * @param {string|null|undefined} header
- * @returns {string|null}
- */
-export function filenameFromDisposition(header) {
-  if (!header) return null;
-  const ext = /filename\*=\s*[^']*''([^;]+)/i.exec(header);
-  if (ext) {
-    const decoded = decodeURIComponent(ext[1].trim());
-    if (NAMED_FILE.test(decoded)) return decoded;
-  }
-  const plain = /filename\s*=\s*"([^"]+)"|filename\s*=\s*([^;]+)/i.exec(header);
-  const name = (plain?.[1] ?? plain?.[2] ?? '').trim();
-  return NAMED_FILE.test(name) ? name : null;
 }
 
 /**

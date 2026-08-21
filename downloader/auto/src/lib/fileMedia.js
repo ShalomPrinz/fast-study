@@ -21,3 +21,21 @@ export function classifyFilename(filename) {
   if (VIDEO_EXTENSIONS.has(ext)) return 'video';
   return ext === 'pdf' ? 'material' : null;
 }
+
+/**
+ * Filename out of a `Content-Disposition` header, or null. Handles both the plain
+ * `filename="L1.zip"` and the RFC 5987 `filename*=UTF-8''L1.zip` form used for non-ASCII names.
+ * @param {string|null|undefined} header
+ * @returns {string|null}
+ */
+export function filenameFromDisposition(header) {
+  if (!header) return null;
+  const ext = /filename\*=\s*[^']*''([^;]+)/i.exec(header);
+  if (ext) {
+    const decoded = decodeURIComponent(ext[1].trim());
+    if (NAMED_FILE.test(decoded)) return decoded;
+  }
+  const plain = /filename\s*=\s*"([^"]+)"|filename\s*=\s*([^;]+)/i.exec(header);
+  const name = (plain?.[1] ?? plain?.[2] ?? '').trim();
+  return NAMED_FILE.test(name) ? name : null;
+}

@@ -5,10 +5,10 @@ import assert from 'node:assert/strict';
 import {
   driveFileId,
   driveDownloadUrl,
-  filenameFromDisposition,
   filenameFromHtml,
   probeDriveFile,
 } from '../src/extractors/GoogleDriveExtractor.js';
+import { filenameFromDisposition } from '../src/lib/fileMedia.js';
 import { getProbedMedia } from '../src/core/probeCache.js';
 
 const ID = '1AbCdEf-GhIjKlMnOpQrStUvWxYz';
