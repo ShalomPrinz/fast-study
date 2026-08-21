@@ -4,6 +4,7 @@ import { assertPluginfileReadable, pluginfileUrl } from '../moodle/wsClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
 import { probeDriveFile } from '../extractors/GoogleDriveExtractor.js';
+import { probeUrl } from '../lib/probeUrl.js';
 import { UnsupportedError } from '../lib/errors.js';
 import { splitName } from '../lib/naming.js';
 import { cacheCap, getCap } from './replayCache.js';
@@ -200,6 +201,44 @@ export async function resolveDriveFile({
   if (!cap) {
     // yt-dlp resolves the /file/d/ page itself; /download-file needs the direct-download URL.
     cap = { url: media === 'video' ? recording.pageUrl : downloadUrl };
+    cacheCap(course, name, kind, media, cap, ref);
+  }
+  const tool = toolFor(recording.strategy, media);
+  return { targets: [toTarget({ name, cap, tool, fromCache })], media };
+}
+
+/**
+ * RESOLVE PATH (HTTP), no browser: any other off-site link. Mirrors resolveDriveFile — the media
+ * isn't known until it runs, so the two-tier probe (`probeUrl`) decides first and the target is
+ * built under whatever it turned out to be. Single target; the cap is just a `{url}`.
+ * `forceCapture` also re-runs the probe, the way back in for a link that only started working
+ * after the first attempt.
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
+ *           course: string, name: string, kind: string, ref?: string|null,
+ *           forceCapture?: boolean }} args
+ * @returns {Promise<{ targets: object[], media: 'video'|'material' }>} one download target,
+ *   plus what the link turned out to be.
+ */
+export async function resolveDirectUrl({
+  recording,
+  course,
+  name,
+  kind,
+  ref,
+  forceCapture = false,
+}) {
+  const url = recording.pageUrl;
+  const { media, filename } = await probeUrl(url, { force: forceCapture });
+  if (!media) {
+    const what = filename
+      ? `a ${filename.slice(filename.lastIndexOf('.'))} file`
+      : 'not a downloadable file (the link serves a web page, or could not be read)';
+    throw new UnsupportedError(`${url} is ${what}. Open it in a browser and download manually.`);
+  }
+  let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
+  const fromCache = Boolean(cap);
+  if (!cap) {
+    cap = { url };
     cacheCap(course, name, kind, media, cap, ref);
   }
   const tool = toolFor(recording.strategy, media);

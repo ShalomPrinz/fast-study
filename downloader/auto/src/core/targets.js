@@ -4,15 +4,16 @@
 /**
  * Pick server/'s downloader key for a strategy. A browser-captured .mp4 is only fetchable by
  * replaying its captured headers (curl); yt-dlp owns the pages whose real stream it resolves
- * itself (YouTube, a Drive video); everything else is a plain tokened URL.
+ * itself (YouTube, a Drive or direct video); everything else is a plain tokened URL.
  * @param {string} strategy  the Recording strategy
- * @param {'video'|'material'} [media]  only google-drive needs it — the probe decides its media
+ * @param {'video'|'material'} [media]  only the probed strategies need it — the probe decides theirs
  * @returns {'curl'|'fetch'|'ytdlp'}
  */
 export function toolFor(strategy, media) {
   if (strategy === 'moodle-file') return 'fetch';
   if (strategy === 'youtube-playlist') return 'ytdlp';
-  if (strategy === 'google-drive') return media === 'video' ? 'ytdlp' : 'fetch';
+  if (strategy === 'google-drive' || strategy === 'direct-url')
+    return media === 'video' ? 'ytdlp' : 'fetch';
   return 'curl'; // videostream, zoom — browser capture
 }
 

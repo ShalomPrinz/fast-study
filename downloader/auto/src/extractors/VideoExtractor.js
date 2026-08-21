@@ -13,7 +13,7 @@
  * `fileurl` the tokened download URL is built from instead.
  * @typedef {{ title: string, pageUrl?: string, fileurl?: string, filename?: string,
  *             kind: 'lecture'|'recitation',
- *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file',
+ *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file'|'direct-url',
  *             section: string }} Recording
  *
  * A recording resolved for download — url = the .mp4 (videostream) or a YouTube

@@ -10,9 +10,11 @@ import {
   resolveMoodleFile,
   resolveYtDlp,
   resolveDriveFile,
+  resolveDirectUrl,
 } from '../core/core.js';
 import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
 import { getProbedMedia } from '../core/probeCache.js';
+import { probeKeyForUrl } from '../lib/probeUrl.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
@@ -24,17 +26,21 @@ import {
   invalidToken,
 } from '../moodle/wsClient.js';
 
-// Which file a row lands as, decided with no network call: a Drive `url` module carries no
-// filename in the WS payload, so it is honestly 'unknown' until the download-time probe.
+// Strategies whose row type is only knowable from a download-time probe — the WS payload names
+// no file for an off-site link, so 'unknown' is the honest stamp until one runs.
+const PROBED = new Set(['google-drive', 'direct-url']);
+
+// Which file a row lands as, decided with no network call.
 function mediaOf(recording) {
   if (recording.strategy === 'moodle-file') return 'material';
-  return recording.strategy === 'google-drive' ? 'unknown' : 'video';
+  return PROBED.has(recording.strategy) ? 'unknown' : 'video';
 }
 
 // The cache key a row's own strategy probes under, or null for a strategy that never probes.
 function probeKeyOf(recording) {
-  if (recording.strategy !== 'google-drive') return null;
-  return driveFileId(recording.pageUrl);
+  if (recording.strategy === 'google-drive') return driveFileId(recording.pageUrl);
+  if (recording.strategy === 'direct-url') return probeKeyForUrl(recording.pageUrl);
+  return null;
 }
 
 // What an 'unknown' row was probed as this session, or undefined when never probed. The cache
@@ -295,6 +301,21 @@ async function resolveItem(req, res) {
   // as a video or as a material — it reports back which.
   if (recording.strategy === 'google-drive') {
     const { targets, media } = await resolveDriveFile({
+      recording,
+      course,
+      name,
+      kind,
+      ref: rowRef,
+      forceCapture: opts.forceCapture,
+    });
+    logResult('/resolve', `ok (${targets.length} target, ${media})`);
+    return send(res, 200, { media, targets });
+  }
+
+  // Any other off-site link is browserless too, and equally opaque until probed — same shape as
+  // the Drive branch, a different probe behind it.
+  if (recording.strategy === 'direct-url') {
+    const { targets, media } = await resolveDirectUrl({
       recording,
       course,
       name,
