@@ -81,7 +81,7 @@ file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallback
 is a fact about the file, unlike yt-dlp's stderr wording. A file that isn't shared "anyone with
 the link" (or was removed) yields no name at all and is the same 422, naming Drive sharing and
 the URL. `server/`'s download job is fire-and-forget once started, which is why all of this is decided here.
-Every verdict is memoized per Drive **file id** for the session (`src/core/driveProbeCache.js`) —
+Every verdict is memoized per Drive **file id** for the session (`src/core/probeCache.js`) —
 the unshared one included, stored as `reason:'unshared'` so a repeat attempt 422s with the same
 accurate message instead of re-paying the probe; `forceCapture` re-probes it, the way back in once
 the owner shares the file. `/resolve` echoes the resolved `media` back. `/list` never probes — it costs an

@@ -9,7 +9,7 @@ import {
   filenameFromHtml,
   probeDriveFile,
 } from '../src/extractors/GoogleDriveExtractor.js';
-import { getDriveMedia } from '../src/core/driveProbeCache.js';
+import { getProbedMedia } from '../src/core/probeCache.js';
 
 const ID = '1AbCdEf-GhIjKlMnOpQrStUvWxYz';
 
@@ -87,7 +87,7 @@ test('an unshared file is memoized and re-thrown from cache with no request', as
 
   await assert.rejects(probeDriveFile(url), /not publicly shared.*unshared-file-id/s);
   assert.ok(calls.n > 0);
-  assert.equal(getDriveMedia(id), null); // /list stamps this row 'unsupported'
+  assert.equal(getProbedMedia(id), null); // /list stamps this row 'unsupported'
 
   const before = calls.n;
   await assert.rejects(probeDriveFile(url), /not publicly shared.*unshared-file-id/s);
@@ -125,5 +125,5 @@ test('a forced probe ignores a cached unshared verdict', async (t) => {
   const probe = await probeDriveFile(url, { force: true });
   assert.equal(probe.filename, 'Lecture 1.mp4');
   assert.equal(probe.media, 'video');
-  assert.equal(getDriveMedia(id), 'video');
+  assert.equal(getProbedMedia(id), 'video');
 });

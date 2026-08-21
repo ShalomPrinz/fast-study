@@ -34,7 +34,7 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 pair yields two, named `<base>.1`/`<base>.2`). `tool` is `'curl'`|`'fetch'`|`'ytdlp'` — the key of the
 `server/` downloader that can fetch this cap; `headers` rides only with `curl`, the one tool that
 replays them. `media` is what actually lands (`'video'`|`'material'`); it is the one field a Drive row
-only learns here, from the filename probe (`src/core/driveProbeCache.js` memoizes it per Drive file id
+only learns here, from the filename probe (`src/core/probeCache.js` memoizes it per Drive file id
 for the session). auto keeps no job state and mints no job ids — `server/` creates a job per target and
 owns the lifecycle from there (`server/docs/JOBS.md`).
 

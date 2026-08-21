@@ -12,7 +12,7 @@ import {
   resolveDriveFile,
 } from '../core/core.js';
 import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
-import { getDriveMedia } from '../core/driveProbeCache.js';
+import { getProbedMedia } from '../core/probeCache.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
@@ -31,14 +31,19 @@ function mediaOf(recording) {
   return recording.strategy === 'google-drive' ? 'unknown' : 'video';
 }
 
+// The cache key a row's own strategy probes under, or null for a strategy that never probes.
+function probeKeyOf(recording) {
+  if (recording.strategy !== 'google-drive') return null;
+  return driveFileId(recording.pageUrl);
+}
+
 // What an 'unknown' row was probed as this session, or undefined when never probed. The cache
-// keeps both unusable flavours (a real .zip, or a file Drive serves no name for) as media
+// keeps both unusable flavours (a real .zip, or a file the host serves no name for) as media
 // null — surfaced as 'unsupported'.
 function resolvedMediaOf(recording) {
-  if (recording.strategy !== 'google-drive') return undefined;
-  const fileId = driveFileId(recording.pageUrl);
-  if (!fileId) return undefined;
-  const media = getDriveMedia(fileId);
+  const key = probeKeyOf(recording);
+  if (!key) return undefined;
+  const media = getProbedMedia(key);
   if (media === undefined) return undefined;
   return media ?? 'unsupported';
 }

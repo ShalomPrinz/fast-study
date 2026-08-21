@@ -1,7 +1,7 @@
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
-import { cacheDriveMedia, getDriveProbe } from '../core/driveProbeCache.js';
+import { cacheProbe, getProbe } from '../core/probeCache.js';
 import { NAMED_FILE, classifyFilename } from '../lib/fileMedia.js';
 
 // Hosts that serve Google Drive file links. Anything else isn't Drive.
@@ -122,7 +122,7 @@ export async function probeDriveFile(url, { force = false } = {}) {
   if (!fileId) throw new UnsupportedError(`not a Google Drive file link: ${url}`);
   const downloadUrl = driveDownloadUrl(fileId);
 
-  const cached = force ? undefined : getDriveProbe(fileId);
+  const cached = force ? undefined : getProbe(fileId);
   if (cached) {
     if (cached.reason === 'unshared') throw unsharedError(url);
     return { fileId, filename: cached.filename, media: cached.media, downloadUrl };
@@ -130,11 +130,11 @@ export async function probeDriveFile(url, { force = false } = {}) {
 
   const filename = await fetchDriveFilename(fileId);
   if (!filename) {
-    cacheDriveMedia(fileId, null, null, 'unshared');
+    cacheProbe(fileId, null, null, 'unshared');
     throw unsharedError(url);
   }
   const media = classifyFilename(filename);
-  cacheDriveMedia(fileId, media, filename);
+  cacheProbe(fileId, media, filename);
   return { fileId, filename, media, downloadUrl };
 }
 
