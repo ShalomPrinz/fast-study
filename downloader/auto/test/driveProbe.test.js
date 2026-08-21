@@ -1,5 +1,5 @@
-// The pure halves of the Drive filename probe: URL → file id, response → filename,
-// filename → media. The fetch itself is exercised against the real endpoint, not here.
+// The pure halves of the Drive filename probe: URL → file id, response → filename.
+// The fetch itself is exercised against the real endpoint, not here.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
@@ -7,7 +7,6 @@ import {
   driveDownloadUrl,
   filenameFromDisposition,
   filenameFromHtml,
-  classifyDriveFilename,
   probeDriveFile,
 } from '../src/extractors/GoogleDriveExtractor.js';
 import { getDriveMedia } from '../src/core/driveProbeCache.js';
@@ -59,14 +58,6 @@ test('a sign-in / error page yields no filename', () => {
   assert.equal(filenameFromHtml('<title>Meet Google Drive - Google Drive</title>'), null);
   assert.equal(filenameFromHtml('<title>Sign in - Google Accounts</title>'), null);
   assert.equal(filenameFromHtml(''), null);
-});
-
-test('extension classification', () => {
-  for (const name of ['a.mp4', 'a.MKV', 'a.mov', 'a.webm', 'a.m4v', 'a.avi'])
-    assert.equal(classifyDriveFilename(name), 'video', name);
-  assert.equal(classifyDriveFilename('handout.pdf'), 'material');
-  for (const name of ['L1.zip', 'slides.pptx', 'notes', 'code.tar.gz', null])
-    assert.equal(classifyDriveFilename(name), null, String(name));
 });
 
 // Stand in for Drive over the probe's whole request chain: `disposition` null + empty bodies is

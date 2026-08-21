@@ -2,6 +2,7 @@ import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
 import { cacheDriveMedia, getDriveProbe } from '../core/driveProbeCache.js';
+import { NAMED_FILE, classifyFilename } from '../lib/fileMedia.js';
 
 // Hosts that serve Google Drive file links. Anything else isn't Drive.
 const DRIVE_HOSTS = new Set(['drive.google.com', 'docs.google.com']);
@@ -43,11 +44,6 @@ export function driveDownloadUrl(fileId) {
   return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 }
 
-// A name only counts as resolved when it carries an extension: that is what the routing
-// reads, and it also rejects the page titles Drive serves instead ("Sign in", "Virus scan
-// warning") when the file isn't readable anonymously.
-const NAMED_FILE = /^(.+)\.([A-Za-z0-9]{1,5})$/;
-
 /**
  * Filename out of a `Content-Disposition` header, or null. Handles both the plain
  * `filename="L1.zip"` and the RFC 5987 `filename*=UTF-8''L1.zip` Drive sends for non-ASCII names.
@@ -84,22 +80,6 @@ export function filenameFromHtml(html) {
     if (name && NAMED_FILE.test(name)) return name;
   }
   return null;
-}
-
-// Containers yt-dlp actually produces here; anything else it cannot turn into video.mp4.
-const VIDEO_EXTENSIONS = new Set(['mp4', 'mkv', 'mov', 'webm', 'm4v', 'avi']);
-
-/**
- * Which file a Drive filename would land as: 'video' (yt-dlp), 'material' (a lecture PDF),
- * or null for anything this service can't use (archives, slides decks, …).
- * @param {string|null} filename
- * @returns {'video'|'material'|null}
- */
-export function classifyDriveFilename(filename) {
-  const ext = NAMED_FILE.exec(String(filename ?? ''))?.[2]?.toLowerCase();
-  if (!ext) return null;
-  if (VIDEO_EXTENSIONS.has(ext)) return 'video';
-  return ext === 'pdf' ? 'material' : null;
 }
 
 // Ask Drive for the file's real name without an API key. The direct-download URL answers a
@@ -153,7 +133,7 @@ export async function probeDriveFile(url, { force = false } = {}) {
     cacheDriveMedia(fileId, null, null, 'unshared');
     throw unsharedError(url);
   }
-  const media = classifyDriveFilename(filename);
+  const media = classifyFilename(filename);
   cacheDriveMedia(fileId, media, filename);
   return { fileId, filename, media, downloadUrl };
 }
