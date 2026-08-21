@@ -101,12 +101,24 @@ request. Tier 2: one `HEAD` (a ranged one-byte `GET` for hosts that reject HEAD)
 redirects, reading the `Content-Disposition` filename first and the `Content-Type` second. Both
 tiers route through the one extension table `classifyFilename` owns (`src/lib/fileMedia.js`), so a
 Drive link and a plain URL can never disagree about what a `.mp4` is. `text/html` is a share page
-or a syllabus doc → `null`; a network failure → `null` too, never a throw that would kill the
-listing. A `null` verdict is `422 {status:'unsupported'}` from `/resolve`, naming what the link
-turned out to be. Verdicts memoize under the normalized URL in the same
-`src/core/probeCache.js` the Drive probe uses — it is keyed by an opaque **probe key**, the Drive
-file id on one side and the URL on the other — so a second attempt on an unsupported row costs no
-round-trip, and `forceCapture` re-probes.
+or a syllabus doc → `null`, and so is a name carrying an unusable extension (`L1.zip`). Both are
+**certain** verdicts about the file: `/resolve` answers `422 {status:'unsupported'}` naming what the
+link turned out to be, and the row greys in place.
+
+A verdict is **uncertain** when the probe learned nothing about the file rather than learning it is
+unusable — the host never answered (offline, DNS, TLS, 404, or the 15s timeout each request carries,
+since Node's `fetch` has none and `server/` walks a section queue one row at a time), or it answered
+as generic binary (`application/octet-stream`, the common CDN type for an mp4 behind an opaque path)
+with no filename anywhere. That is a plain `500` "try again", never a 422, and it is **not cached**:
+a 422 disables the row's download button for the rest of the session, which must not be the price of
+one bad moment on the network. `probeUrl` still never throws — the caller decides what a verdict
+means.
+
+Certain verdicts memoize under the normalized URL in the same `src/core/probeCache.js` the Drive
+probe uses — it is keyed by an opaque **probe key**, the Drive file id on one side and the URL on the
+other — so a second attempt on an unsupported row costs no round-trip, and `forceCapture` re-probes.
+A tier-1 answer is derived from the URL itself, so `forceCapture` skips the cache but cannot change
+it.
 
 A `moodle-file` item is likewise not expandable and skips the browser: `/resolve` resolves the
 university from the ref's `fileurl`, appends the WS token via `pluginfileUrl` (pluginfile authenticates

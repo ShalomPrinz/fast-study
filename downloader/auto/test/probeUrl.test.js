@@ -63,7 +63,7 @@ test('tier 2: Content-Type decides when nothing names the file', async (t) => {
   assert.equal((await probeUrl('https://cdn.test/t2b/asset')).media, 'material');
 });
 
-test('a share page (text/html) is an honest null', async (t) => {
+test('a share page (text/html) is an honest, remembered null', async (t) => {
   const calls = stubFetch({ 'content-type': 'text/html; charset=utf-8' });
   t.after(calls.restore);
 
@@ -81,14 +81,79 @@ test('a real file this service cannot use is null, not a throw', async (t) => {
   assert.equal(probe.filename, 'L1.zip');
 });
 
-test('a network failure is null, never a throw', async (t) => {
-  const calls = stubFetch({}, { throws: true });
-  t.after(calls.restore);
+test('a network failure is uncertain, never a throw and never cached', async (t) => {
+  const url = 'https://offline.test/t5/whatever';
+  const down = stubFetch({}, { throws: true });
 
-  const probe = await probeUrl('https://offline.test/t5/whatever');
+  const probe = await probeUrl(url);
   assert.equal(probe.media, null);
   assert.equal(probe.filename, null);
-  assert.equal(calls.n, 2); // HEAD, then the ranged GET fallback
+  assert.equal(probe.certain, false);
+  assert.equal(down.n, 2); // HEAD, then the ranged GET fallback
+  // Nothing was remembered, so /list never greys the row and the next click probes again.
+  assert.equal(getProbedMedia(probeKeyForUrl(url)), undefined);
+  down.restore();
+
+  const up = stubFetch({ 'content-disposition': 'attachment; filename="L5.mp4"' });
+  t.after(up.restore);
+  const retry = await probeUrl(url);
+  assert.deepEqual(
+    { media: retry.media, certain: retry.certain },
+    { media: 'video', certain: true },
+  );
+});
+
+test('a nameless generic-binary response is uncertain, not a permanent no', async (t) => {
+  const url = 'https://cdn.test/t7/opaque';
+  const calls = stubFetch({ 'content-type': 'application/octet-stream' });
+  t.after(calls.restore);
+
+  const probe = await probeUrl(url);
+  assert.deepEqual({ media: probe.media, certain: probe.certain }, { media: null, certain: false });
+  assert.equal(getProbedMedia(probeKeyForUrl(url)), undefined);
+});
+
+test('a named file is certain either way, even under a generic content type', async (t) => {
+  const calls = stubFetch({
+    'content-type': 'application/octet-stream',
+    'content-disposition': 'attachment; filename="L1.zip"',
+  });
+  t.after(calls.restore);
+
+  const probe = await probeUrl('https://cdn.test/t8/bundle');
+  assert.deepEqual({ media: probe.media, certain: probe.certain }, { media: null, certain: true });
+  assert.equal(getProbedMedia(probeKeyForUrl('https://cdn.test/t8/bundle')), null);
+});
+
+test('a malformed RFC 5987 filename falls through instead of throwing', async (t) => {
+  const calls = stubFetch({
+    'content-disposition': `attachment; filename*=UTF-8''%E0%A4%A; filename="L9.pdf"`,
+  });
+  t.after(calls.restore);
+
+  const probe = await probeUrl('https://cdn.test/t9/asset');
+  assert.deepEqual(
+    { media: probe.media, filename: probe.filename },
+    {
+      media: 'material',
+      filename: 'L9.pdf',
+    },
+  );
+});
+
+test('a probe that never answers is aborted rather than hanging', async (t) => {
+  const real = globalThis.fetch;
+  let signals = 0;
+  globalThis.fetch = async (_url, init) => {
+    signals += init?.signal ? 1 : 0;
+    throw new Error('aborted');
+  };
+  t.after(() => {
+    globalThis.fetch = real;
+  });
+
+  await probeUrl('https://slow.test/t10/asset');
+  assert.equal(signals, 2); // both attempts carry the timeout signal
 });
 
 test('a verdict is memoized, and force re-probes it', async (t) => {

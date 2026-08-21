@@ -213,6 +213,10 @@ export async function resolveDriveFile({
  * built under whatever it turned out to be. Single target; the cap is just a `{url}`.
  * `forceCapture` also re-runs the probe, the way back in for a link that only started working
  * after the first attempt.
+ *
+ * An UNCERTAIN verdict (the host never answered, or answered as generic binary with no name) is a
+ * plain Error, not UnsupportedError: it becomes a 500 "try again" and the row stays clickable,
+ * where a 422 would grey the button out for the rest of the session over one bad moment.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
@@ -228,11 +232,14 @@ export async function resolveDirectUrl({
   forceCapture = false,
 }) {
   const url = recording.pageUrl;
-  const { media, filename } = await probeUrl(url, { force: forceCapture });
+  const { media, filename, certain } = await probeUrl(url, { force: forceCapture });
   if (!media) {
-    const what = filename
-      ? `a ${filename.slice(filename.lastIndexOf('.'))} file`
-      : 'not a downloadable file (the link serves a web page, or could not be read)';
+    if (!certain) throw new Error(`couldn't read what ${url} is — the host didn't answer usefully`);
+    // A CDN path can name the file without an extension ('…/asset'), so slice only on a real dot —
+    // otherwise the message would invent one out of the last character.
+    const dot = filename ? filename.lastIndexOf('.') : -1;
+    const what =
+      dot > 0 ? `a ${filename.slice(dot + 1)} file, not a video` : 'a web page, not a file';
     throw new UnsupportedError(`${url} is ${what}. Open it in a browser and download manually.`);
   }
   let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;

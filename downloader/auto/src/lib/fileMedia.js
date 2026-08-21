@@ -32,7 +32,14 @@ export function filenameFromDisposition(header) {
   if (!header) return null;
   const ext = /filename\*=\s*[^']*''([^;]+)/i.exec(header);
   if (ext) {
-    const decoded = decodeURIComponent(ext[1].trim());
+    // A stray % in the header makes decodeURIComponent throw; an arbitrary host can send one, and
+    // a malformed name is a reason to fall through to the plain form, never to fail the probe.
+    let decoded;
+    try {
+      decoded = decodeURIComponent(ext[1].trim());
+    } catch {
+      decoded = '';
+    }
     if (NAMED_FILE.test(decoded)) return decoded;
   }
   const plain = /filename\s*=\s*"([^"]+)"|filename\s*=\s*([^;]+)/i.exec(header);
