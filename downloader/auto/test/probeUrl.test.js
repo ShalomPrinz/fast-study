@@ -30,24 +30,29 @@ test('probe key drops the fragment and nothing else', () => {
   assert.equal(probeKeyForUrl('not a url'), 'not a url');
 });
 
-test('tier 1: a URL that names a media file answers with no request', async (t) => {
+test("the URL's own filename decides when the headers say nothing", async (t) => {
   const calls = stubFetch({});
   t.after(calls.restore);
 
   const video = await probeUrl('https://files.test/t1/lecture3.mp4');
   assert.deepEqual(
     { media: video.media, filename: video.filename },
-    {
-      media: 'video',
-      filename: 'lecture3.mp4',
-    },
+    { media: 'video', filename: 'lecture3.mp4' },
   );
   const material = await probeUrl('https://files.test/t1/notes.pdf?v=2');
   assert.equal(material.media, 'material');
-  assert.equal(calls.n, 0);
 });
 
-test('tier 2: Content-Disposition names the file behind an opaque path', async (t) => {
+test('a login wall behind a .pdf URL is unsupported, not a material', async (t) => {
+  // The corruption this guards: curl --fail sees 200 and would save the login page as material.pdf.
+  const calls = stubFetch({ 'content-type': 'text/html; charset=utf-8' });
+  t.after(calls.restore);
+
+  const probe = await probeUrl('https://moodle.test/t12/syllabus.pdf');
+  assert.deepEqual({ media: probe.media, certain: probe.certain }, { media: null, certain: true });
+});
+
+test('Content-Disposition names the file behind an opaque path', async (t) => {
   const calls = stubFetch({ 'content-disposition': 'attachment; filename="Lecture 4.mp4"' });
   t.after(calls.restore);
 
@@ -57,7 +62,7 @@ test('tier 2: Content-Disposition names the file behind an opaque path', async (
   assert.equal(calls.n, 1);
 });
 
-test('tier 2: Content-Type decides when nothing names the file', async (t) => {
+test('Content-Type decides when no disposition names the file', async (t) => {
   const calls = stubFetch({ 'content-type': 'application/pdf; charset=binary' });
   t.after(calls.restore);
   assert.equal((await probeUrl('https://cdn.test/t2b/asset')).media, 'material');

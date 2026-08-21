@@ -43,7 +43,7 @@ import './SectionGroup.css'
 
 interface Props {
   // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run —
-  // null for the synthetic `Other Videos` pile, which has no run and no bulk button.
+  // null for the synthetic `Other links` pile, which has no run and no bulk button.
   // `synthetic` marks that pile, whose title is ours rather than Moodle's.
   section: { id: string | null; title: string; synthetic: boolean }
   items: Item[]
@@ -69,8 +69,9 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   const { patchExpansion } = useDownloadsActions()
   const id = section.id
   // The synthetic bucket's title is a label we mint, so it is translated here; a Moodle heading
-  // spelled the same is a real section and passes through untouched.
-  const label = section.synthetic ? t`Other Videos` : sectionTitle(section.title)
+  // spelled the same is a real section and passes through untouched. Media-neutral wording: the
+  // bucket holds stray videos on one segment and stray unknown links on another.
+  const label = section.synthetic ? t`Other links` : sectionTitle(section.title)
   const run = useSectionRun(id)
   // The passcode save's own in-flight state — the only thing about a run this component still owns.
   // A double submit is the server's to reject (409 on a run that is no longer parked).

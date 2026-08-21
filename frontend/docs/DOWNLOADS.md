@@ -58,17 +58,20 @@ with nothing on the active side doesn't render, and an empty side shows its own 
 `groupSections` is a pure helper (`utils/sections.ts`)
 precisely so the filter+group rule is testable without a DOM.
 
-On the **Videos** side only, a row auto stamped `likelyRecording: false` — a `url` module whose Moodle
-heading and title carry no recording keyword, so a stray course link rather than a lecture — is pulled
-out of its heading into a synthetic **Other Videos** bucket placed last. auto lists every `url` module
-now, so this is what keeps a random course YouTube link out of the lecture sections without hiding it;
-the tradeoff is that those rows lose their real heading and are downloaded per row. The bucket is a
-leftover pile spanning every heading in the course, so it is marked `synthetic` rather than recognised
-by its title — a real Moodle heading spelled "Other Videos" is a different section, and stays one.
+A row auto stamped `likelyRecording: false` — a `url` module whose Moodle heading and title carry no
+recording keyword, so a stray course link rather than a lecture — is pulled out of its heading into a
+synthetic **Other links** bucket placed last, on whichever segment it lands. auto lists every `url`
+module now, so this is what keeps a random course YouTube link out of the lecture sections without
+hiding it; the tradeoff is that those rows lose their real heading and are downloaded per row. It
+applies to the **Unknown** segment too, and that is where it matters most: every newly-listed
+`direct-url` row is `media: 'unknown'`, so without it the strays would sit interleaved with real
+headings _and_ a section's "Download all" would serially probe each dead link. The bucket is marked
+`synthetic` rather than recognised by its title — a real Moodle heading spelled "Other Links" is a
+different section, and stays one.
 
 That bucket has **no run identity at all**: `DownloadsView` passes `section.id = null` and a fixed React
-key for it, so it renders no "Download all", starts no server run, and shares nothing with a real heading
-of the same name. Giving it a `sectionId` would be the actual bug — `runs.js` keys its run map by
+key for it, so it renders no "Download all", starts no server run, keeps its rows out of every bulk
+queue, and shares nothing with a real heading of the same name. Giving it a `sectionId` would be the actual bug — `runs.js` keys its run map by
 `${course}:${media}:${title}`, so the two sections would share one run slot, one `useSectionRun`
 subscription and one React key. `useSectionRun` therefore takes `string | null` and a null id always
 reads as "no run", which every consumer already handles as the idle state. Everything below a section — including

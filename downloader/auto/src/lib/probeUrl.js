@@ -1,7 +1,5 @@
-// What an arbitrary off-site link actually is, decided the cheapest way that still answers
-// honestly. Two tiers only: a URL that already names a file needs no request at all, and
-// everything else costs one header-only round-trip. Never throws — the caller decides what a
-// verdict means, and only a CERTAIN one is remembered (see `certain` below).
+// What an arbitrary off-site link actually is, from one header-only round trip. Never throws — the
+// caller decides what a verdict means, and only a CERTAIN one is remembered (see `certain` below).
 import { NAMED_FILE, classifyFilename, filenameFromDisposition } from './fileMedia.js';
 import { cacheProbe, getProbe } from '../core/probeCache.js';
 
@@ -75,16 +73,28 @@ async function fetchHeaders(url) {
   return null;
 }
 
+// Does this name carry an extension to route on? A bare CDN path segment ('asset') does not.
+function isNamedFile(name) {
+  return NAMED_FILE.test(String(name ?? ''));
+}
+
 /**
- * Resolve what a link is before downloading it. Tier 1 reads the URL's own filename; tier 2 asks
- * the host for `Content-Disposition` / `Content-Type`.
+ * Resolve what a link is before downloading it. Always asks the host — one header-only round trip —
+ * and weighs three pieces of evidence from it, strongest first:
  *
- * `certain` separates a verdict about the FILE from a failure to reach it: an unreachable host, or
+ *  1. the `Content-Disposition` filename: the host explicitly naming the file. `L1.zip` is a
+ *     definite no even under a `video/mp4` type, because hosts mistype archives and a stated name
+ *     does not lie.
+ *  2. `Content-Type`: `text/html` is a definite no — a login wall, a share page, a syllabus doc.
+ *  3. the URL's own filename, as a fallback. It is only a guess: `…/syllabus.pdf` behind SSO answers
+ *     `200 text/html` with the login page, and `server/`'s `curl --fail` would save that as the
+ *     lecture's material. The type above vetoes the guess, which is why this is never read first.
+ *
+ * `certain` separates a verdict about the FILE from a failure to learn one: an unreachable host, or
  * a nameless response typed only as generic binary, is `{ media: null, certain: false }` — worth
  * retrying, never remembered. Only certain verdicts are memoized (per normalized URL, for the
  * session, the definite `null`s included), so a row can never be permanently greyed out by one bad
- * moment on the network. A URL that names its own file is decided from the name; `force` skips the
- * cache but cannot change that answer, since no request produced it.
+ * moment on the network.
  * @param {string} url
  * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
  * @returns {Promise<{ probeKey: string, media: 'video'|'material'|null, filename: string|null,
@@ -97,32 +107,23 @@ export async function probeUrl(url, { force = false } = {}) {
   if (cached)
     return { probeKey, media: cached.media, filename: cached.filename ?? null, certain: true };
 
-  const named = pathFilename(url);
-  const fromPath = classifyFilename(named);
-  if (fromPath) {
-    cacheProbe(probeKey, fromPath, named);
-    return { probeKey, media: fromPath, filename: named, certain: true };
-  }
-
   const res = await fetchHeaders(url);
   if (!res) return { probeKey, media: null, filename: null, certain: false };
 
-  // The name the host states beats the one the URL implies: a redirect to a CDN path can be
-  // opaque while the disposition still says `lecture3.mp4`.
-  const filename =
-    filenameFromDisposition(res.headers.get('content-disposition')) ||
-    pathFilename(res.url) ||
-    null;
-
-  const byName = classifyFilename(filename);
+  const stated = filenameFromDisposition(res.headers.get('content-disposition'));
+  // The redirect target names the file more often than the link does — a share URL resolves to the
+  // CDN path — so prefer it, and fall back to the original link when it is opaque.
+  const guessed = pathFilename(res.url) || pathFilename(url) || null;
   const byType = classifyContentType(res.headers.get('content-type'));
-  // A name carrying an extension settles it either way — `L1.zip` is a definite no, not a maybe, so
-  // the name WINS over the type. Hosts mistype archives as video/mp4; a filename is the stronger
-  // evidence, and letting the type override it would point yt-dlp at an archive.
-  const namedFile = NAMED_FILE.test(String(filename ?? ''));
-  const media = namedFile ? byName : (byType ?? null);
-  const certain = namedFile || byType !== undefined;
 
+  let media = null;
+  let certain = true;
+  if (isNamedFile(stated)) media = classifyFilename(stated);
+  else if (byType !== undefined) media = byType;
+  else if (isNamedFile(guessed)) media = classifyFilename(guessed);
+  else certain = false;
+
+  const filename = stated || guessed;
   if (certain) cacheProbe(probeKey, media, filename);
   return { probeKey, media, filename, certain };
 }

@@ -95,30 +95,35 @@ HTTP round-trip per row — but it reads that cache to stamp `resolvedMedia` on 
 so the resolved type survives a re-list.
 
 A `direct-url` item is not expandable either, and resolves the same shape as a Drive one with a
-generic probe behind it (`src/lib/probeUrl.js`, two tiers, no browser). Tier 1: the URL path
-already names a file (`…/lecture3.mp4`, `…/notes.pdf`) → decided from the extension with no
-request. Tier 2: one `HEAD` (a ranged one-byte `GET` for hosts that reject HEAD), following
-redirects, reading the `Content-Disposition` filename first and the `Content-Type` second. Both
-tiers route through the one extension table `classifyFilename` owns (`src/lib/fileMedia.js`), so a
-Drive link and a plain URL can never disagree about what a `.mp4` is. `text/html` is a share page
-or a syllabus doc → `null`, and so is a name carrying an unusable extension (`L1.zip`). Both are
-**certain** verdicts about the file: `/resolve` answers `422 {status:'unsupported'}` naming what the
-link turned out to be, and the row greys in place.
+generic probe behind it (`src/lib/probeUrl.js`, no browser). It always asks the host — one
+header-only round trip, `HEAD` with a ranged one-byte `GET` fallback for hosts that reject HEAD,
+following redirects — and weighs three pieces of evidence from that one response, strongest first:
 
-A verdict is **uncertain** when the probe learned nothing about the file rather than learning it is
-unusable — the host never answered (offline, DNS, TLS, 404, or the 15s timeout each request carries,
-since Node's `fetch` has none and `server/` walks a section queue one row at a time), or it answered
-as generic binary (`application/octet-stream`, the common CDN type for an mp4 behind an opaque path)
-with no filename anywhere. That is a plain `500` "try again", never a 422, and it is **not cached**:
-a 422 disables the row's download button for the rest of the session, which must not be the price of
-one bad moment on the network. `probeUrl` still never throws — the caller decides what a verdict
-means.
+1. the `Content-Disposition` filename — the host explicitly naming the file. It beats the type:
+   `L1.zip` under a sloppy `Content-Type: video/mp4` is still a definite no, and pointing yt-dlp at
+   an archive would be the alternative.
+2. `Content-Type` — `text/html` is a definite no (a login wall, a share page, a syllabus doc).
+3. the URL's own filename (`…/lecture3.mp4`), as a **fallback only**. It is a guess about a string:
+   an SSO-walled `…/syllabus.pdf` answers `200 text/html` with the login page, and `server/`'s
+   `curl -L --fail` would happily save that HTML as the lecture's material. The type above vetoes
+   the guess, which is why the URL is never read first.
+
+All of it routes through the one extension table `classifyFilename` owns (`src/lib/fileMedia.js`),
+so a Drive link and a plain URL can never disagree about what a `.mp4` is. `probeUrl` never throws.
+
+A verdict about the file — usable, or definitely not — is **certain**: `/resolve` answers
+`422 {status:'unsupported'}` naming what the link turned out to be, and the row greys in place.
+
+A verdict is **uncertain** when the probe learned nothing rather than learning the file is unusable
+— the host never answered (offline, DNS, TLS, 404, or the 15s timeout each request carries, since
+Node's `fetch` has none and `server/` walks a section queue one row at a time), or it answered as
+generic binary (`application/octet-stream`) with nothing naming the file. That is a plain `500` "try
+again", never a 422, and it is **not cached**: a 422 disables the row's download button for the rest
+of the session, which must not be the price of one bad moment on the network.
 
 Certain verdicts memoize under the normalized URL in the same `src/core/probeCache.js` the Drive
 probe uses — it is keyed by an opaque **probe key**, the Drive file id on one side and the URL on the
 other — so a second attempt on an unsupported row costs no round-trip, and `forceCapture` re-probes.
-A tier-1 answer is derived from the URL itself, so `forceCapture` skips the cache but cannot change
-it.
 
 A `moodle-file` item is likewise not expandable and skips the browser: `/resolve` resolves the
 university from the ref's `fileurl`, appends the WS token via `pluginfileUrl` (pluginfile authenticates

@@ -25,8 +25,8 @@ export type ResolvedMedia = ProbedMedia | 'unsupported'
 // `expandable` → resolve via /list/expand into children; `section` is the Moodle heading ('' if blank).
 // `resolvedMedia` is auto's session probe cache for an 'unknown' row; absent until probed. A row
 // never changes segment once resolved — the resolved type shows as a column instead.
-// `likelyRecording` is auto's keyword hint, never a gate: false groups a video out of the lecture
-// sections and into `Other Videos`.
+// `likelyRecording` is auto's keyword hint, never a gate: false groups a row out of the lecture
+// sections and into the synthetic `Other links` bucket, which starts no bulk run.
 export interface Item {
   ref: string
   title: string

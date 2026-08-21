@@ -6,7 +6,7 @@ import type { Item, Media, ResolvedMedia } from '../services/autoDownloader'
 import type { Section } from './sections'
 import {
   OTHER_SECTION,
-  OTHER_VIDEOS_SECTION,
+  OTHER_LINKS_SECTION,
   groupSections,
   parseSectionId,
   sectionId,
@@ -81,17 +81,17 @@ describe('groupSections', () => {
   })
 })
 
-describe('the Other Videos bucket', () => {
-  it('pulls a non-recording video out of its heading, last', () => {
+describe('the Other links bucket', () => {
+  it('pulls a non-recording row out of its heading, last', () => {
     const items = [stray('x', 'Week 1'), item('a', 'Week 1'), item('b', 'Week 2')]
     expect(refs(groupSections(items, 'video'))).toEqual([
       ['Week 1', ['a']],
       ['Week 2', ['b']],
-      [OTHER_VIDEOS_SECTION, ['x']],
+      [OTHER_LINKS_SECTION, ['x']],
     ])
   })
 
-  it('is absent when every video is a likely recording', () => {
+  it('is absent when every row is a likely recording', () => {
     const sections = groupSections([item('a', 'Week 1')], 'video')
     expect(sections.every((s) => !s.synthetic)).toBe(true)
   })
@@ -101,18 +101,25 @@ describe('the Other Videos bucket', () => {
     expect(sections.map((s) => s.synthetic)).toEqual([false, true])
   })
 
-  it('leaves the other segments grouped by heading', () => {
-    const items = [stray('x', 'Week 1', 'material'), stray('y', 'Week 1', 'unknown')]
-    expect(refs(groupSections(items, 'material'))).toEqual([['Week 1', ['x']]])
-    expect(refs(groupSections(items, 'unknown'))).toEqual([['Week 1', ['y']]])
+  it('catches a stray unknown row too — that is where the new links land', () => {
+    const items = [item('a', 'Week 1', 'unknown'), stray('y', 'Week 1', 'unknown')]
+    expect(refs(groupSections(items, 'unknown'))).toEqual([
+      ['Week 1', ['a']],
+      [OTHER_LINKS_SECTION, ['y']],
+    ])
+  })
+
+  it('has no run identity, so no bulk run can queue its rows', () => {
+    const [bucket] = groupSections([stray('y', 'Week 1', 'unknown')], 'unknown')
+    expect(bucket.synthetic).toBe(true)
   })
 
   it('keeps a real heading spelled the same as its own section', () => {
-    const items = [item('a', OTHER_VIDEOS_SECTION), stray('x', 'Week 1')]
+    const items = [item('a', OTHER_LINKS_SECTION), stray('x', 'Week 1')]
     const sections = groupSections(items, 'video')
     expect(refs(sections)).toEqual([
-      [OTHER_VIDEOS_SECTION, ['a']],
-      [OTHER_VIDEOS_SECTION, ['x']],
+      [OTHER_LINKS_SECTION, ['a']],
+      [OTHER_LINKS_SECTION, ['x']],
     ])
     expect(sections.map((s) => s.synthetic)).toEqual([false, true])
   })

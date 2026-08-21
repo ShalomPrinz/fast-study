@@ -110,11 +110,11 @@ msgstr "{name} will be used"
 msgid "{nextLoad, plural, one {Load # more} other {Load # more}}"
 msgstr "{nextLoad, plural, one {Load # more} other {Load # more}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:237
+#: src/features/downloads/components/SectionGroup.tsx:242
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:246
+#: src/features/downloads/components/SectionGroup.tsx:251
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 
@@ -135,7 +135,7 @@ msgstr "+ New Course"
 msgid "⟳ Run incomplete pipelines"
 msgstr "⟳ Run incomplete pipelines"
 
-#: src/features/downloads/components/SectionGroup.tsx:231
+#: src/features/downloads/components/SectionGroup.tsx:235
 msgid "⭳ Download all"
 msgstr "⭳ Download all"
 
@@ -241,7 +241,7 @@ msgstr "Couldn't download \"{name}\": {detail}"
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "Couldn't download \"{name}\". Try again."
 
-#: src/features/downloads/components/SectionGroup.tsx:100
+#: src/features/downloads/components/SectionGroup.tsx:102
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
 
@@ -286,17 +286,17 @@ msgstr "Downloaded ✓"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:210
+#: src/features/downloads/components/SectionGroup.tsx:213
 msgid "Downloading {0}/{1}…"
 msgstr "Downloading {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:217
+#: src/features/downloads/components/SectionGroup.tsx:220
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
 #: src/features/downloads/components/RecordingRow.tsx:253
 #: src/features/downloads/components/RecordingRow.tsx:265
-#: src/features/downloads/components/SectionGroup.tsx:231
+#: src/features/downloads/components/SectionGroup.tsx:235
 msgid "Downloading…"
 msgstr "Downloading…"
 
@@ -329,7 +329,7 @@ msgstr "Estimating…"
 msgid "Expand"
 msgstr "Expand"
 
-#: src/features/downloads/components/SectionGroup.tsx:229
+#: src/features/downloads/components/SectionGroup.tsx:233
 msgid "Expand every playlist in this section first"
 msgstr "Expand every playlist in this section first"
 
@@ -591,9 +591,13 @@ msgstr "Open PDF in new tab"
 msgid "Other"
 msgstr "Other"
 
+#: src/features/downloads/components/SectionGroup.tsx:74
+msgid "Other links"
+msgstr "Other links"
+
 #: src/features/downloads/components/SectionGroup.tsx:72
-msgid "Other Videos"
-msgstr "Other Videos"
+#~ msgid "Other Videos"
+#~ msgstr "Other Videos"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:29
 #: src/features/course-overview/components/ExtractorRow.tsx:30
@@ -831,7 +835,7 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
-#: src/features/downloads/components/SectionGroup.tsx:197
+#: src/features/downloads/components/SectionGroup.tsx:200
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "the BIU session expired. Reconnect, then run the section again."
 
@@ -847,11 +851,11 @@ msgstr "The following files will be re-generated:"
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
-#: src/features/downloads/components/SectionGroup.tsx:200
+#: src/features/downloads/components/SectionGroup.tsx:203
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
-#: src/features/downloads/components/SectionGroup.tsx:199
+#: src/features/downloads/components/SectionGroup.tsx:202
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
