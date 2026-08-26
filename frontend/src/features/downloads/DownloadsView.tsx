@@ -108,7 +108,7 @@ export default function DownloadsView() {
                                   : sectionId(selected, media, section.title)
                                 return (
                                   <SectionGroup
-                                    key={id ?? 'other-videos'}
+                                    key={id ?? 'other-links'}
                                     section={{ ...section, id }}
                                     items={section.items}
                                     course={selected}

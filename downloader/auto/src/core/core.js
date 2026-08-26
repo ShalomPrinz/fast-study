@@ -209,7 +209,7 @@ export async function resolveDriveFile({
 
 /**
  * RESOLVE PATH (HTTP), no browser: any other off-site link. Mirrors resolveDriveFile — the media
- * isn't known until it runs, so the two-tier probe (`probeUrl`) decides first and the target is
+ * isn't known until it runs, so the probe (`probeUrl`) asks the host first and the target is
  * built under whatever it turned out to be. Single target; the cap is just a `{url}`.
  * `forceCapture` also re-runs the probe, the way back in for a link that only started working
  * after the first attempt.

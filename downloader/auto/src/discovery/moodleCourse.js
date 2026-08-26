@@ -33,7 +33,7 @@ export function classifyKind(sectionName, title) {
 /**
  * Does this activity's section heading OR title read like a recording? A HINT, never a gate:
  * a keyword is a guess about content made from a title, so every `url` module is listed either
- * way and the frontend only uses a false to group the row under "Other Videos".
+ * way and the frontend only uses a false to group the row under "Other links".
  * @param {string} sectionName
  * @param {string} title
  * @returns {boolean}

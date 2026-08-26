@@ -1,5 +1,5 @@
-// The generic two-tier probe. Tier 1 is pure; tier 2 runs against a stubbed fetch, so every
-// test uses its own URL — the cache is process-lifetime by design.
+// The generic probe. Every case runs against a stubbed fetch, and each test uses its own URL —
+// the cache is process-lifetime by design.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { probeUrl, probeKeyForUrl } from '../src/lib/probeUrl.js';
