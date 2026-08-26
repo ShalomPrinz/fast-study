@@ -1,27 +1,26 @@
 .pdf-viewer {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg);
 }
 
-.pdf-zoom-bar {
+/* Zoom, page indicator and open-in-new-tab, at the end of the pane's own header strip. */
+.pdf-tools {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: var(--space-1) var(--space-4);
-  border-bottom: 1px solid var(--sidebar-line);
-  background: var(--sidebar-bg);
-  flex-shrink: 0;
 }
 
 .pdf-zoom-btn {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   border: 1px solid var(--control-line);
   border-radius: var(--r-sm);
   background: var(--surface);
-  color: var(--text);
+  color: var(--text-2);
   font-size: var(--fs-section);
   line-height: 1;
   cursor: pointer;
@@ -29,36 +28,47 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
 .pdf-zoom-btn:hover {
   background: var(--surface-sunken);
+  color: var(--accent);
 }
 
 .pdf-zoom-label {
   font-size: var(--fs-meta);
-  color: var(--sidebar-muted);
+  color: var(--text-3);
   min-width: 36px;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
-/* The dark mat a PDF page sits on — deliberately outside the palette so the white page reads as
-   paper rather than as another app surface. */
+.pdf-page-indicator {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+}
+
+/* The page is the only paper in the view: it sits on the app canvas and is lifted off it. */
 .pdf-scroll-container {
   flex: 1;
   overflow: auto;
-  background: #525659; /* PDF viewer mat, not a UI surface */
   display: flex;
   flex-direction: column;
   align-items: safe center;
-  padding: var(--space-4) 0;
-  gap: var(--space-3);
+  padding: var(--space-7) var(--space-6);
+  gap: var(--space-5);
 }
 
 /* react-pdf applies this class itself; it appears in no .tsx. Kept beside its
    `.pdf-scroll-container` ancestor so the descendant selector stays in one file. */
 .pdf-scroll-container .react-pdf__Page {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
 }
 
 .pdf-doc-loading {

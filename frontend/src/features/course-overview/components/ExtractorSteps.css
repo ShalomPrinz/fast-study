@@ -1,7 +1,86 @@
-/* Per-slug pipeline breakdown revealed under the header (one file-row per phase) */
-.course-steps {
+/* Recessed onto the app canvas so the open branch reads as a drawer under its row. Indented to the
+   card's divider inset, so the phase run lines up with the branch title above it. */
+.overview-phases {
+  padding: 0 var(--space-6) var(--space-6);
+  padding-inline-start: var(--pipeline-inset);
+  background: var(--bg);
+}
+
+.overview-phase-run {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+/* One phase: its node and name, joined to the previous phase by a hairline connector. */
+.overview-phase {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  cursor: pointer;
+}
+
+.overview-phase + .overview-phase::before {
+  content: '';
+  width: 20px;
+  height: 1px;
+  background: var(--line);
+}
+
+.overview-phase:disabled {
+  cursor: default;
+}
+
+.overview-phase:hover:not(:disabled) {
+  color: var(--accent);
+}
+
+/* Keep below `.overview-phase`, whose colour they override at equal specificity. */
+.overview-phase--done {
+  color: var(--text-2);
+}
+
+.overview-phase--running {
+  color: var(--accent);
+}
+
+.overview-phase-node {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--line-soft);
+}
+
+/* Keep below `.overview-phase-node`, whose background it overrides at equal specificity. */
+.overview-phase-node--done {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.overview-file-chips {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
-  padding-inline-start: var(--space-6);
+}
+
+/* Outlined and monospace: these are filenames on disk, not a state. Outspecifies `.chip`'s own
+   background and colour, which live in another file. */
+.chip.overview-file-chip {
+  padding: var(--space-1) var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+  font-family: var(--font-mono);
 }

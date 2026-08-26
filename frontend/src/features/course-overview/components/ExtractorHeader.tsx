@@ -3,13 +3,18 @@ import { overviewFileUrl } from '@/services/database'
 import { formatMonthDate, formatFullTimestamp } from '@/shared/utils/format'
 import { formatRange } from '@/features/course-overview/utils/overview'
 import { toastInitResult } from '@/services/toaster'
-import { lastGeneratedFile, branchStatus } from '@/features/course-overview/constants/overview'
+import {
+  lastGeneratedFile,
+  branchStatus,
+  stepsFor,
+} from '@/features/course-overview/constants/overview'
 import Icon from '@/shared/components/Icon'
+import StatusNode from '@/shared/components/StatusNode'
+import type { StatusNodeState } from '@/shared/components/StatusNode'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
-import BranchIndicator from './BranchIndicator'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
-import '@/styles/file-row.css'
+import '@/styles/pipeline-card.css'
 import '@/styles/button.css'
 import './ExtractorHeader.css'
 import Chevron from '@/shared/components/Chevron'
@@ -22,6 +27,20 @@ export default function ExtractorHeader() {
   const bs = branchStatus(status, files, slug, phases)
   const entry = meta[slug]
 
+  const state: StatusNodeState = bs.running
+    ? 'running'
+    : bs.error
+      ? 'failed'
+      : bs.done
+        ? 'done'
+        : 'pending'
+
+  // A running branch replaces its actions with the phase it is on, the way a running pipeline row
+  // replaces its action with an ETA — there is no per-branch time estimate to show instead.
+  const st = status?.extractors[slug]
+  const runningPhase = stepsFor(phases).find((s) => s.phase === st?.phase)
+  const phaseLabel = runningPhase ? t(runningPhase.label) : null
+
   // The context never toasts; components do.
   async function handleGenerate() {
     const result = await generate([slug])
@@ -32,15 +51,16 @@ export default function ExtractorHeader() {
   }
 
   return (
-    <div className="course-branch-header">
-      <button className="course-branch-toggle" onClick={toggleExpanded} aria-expanded={expanded}>
-        <span className="course-branch-caret">
+    <div className="pipeline-row">
+      <StatusNode state={state} title={bs.error ?? undefined} />
+      <button className="overview-branch-toggle" onClick={toggleExpanded} aria-expanded={expanded}>
+        <span className="overview-branch-caret">
           <Chevron open={expanded} />
         </span>
-        <span className="course-branch-heading">
-          <span className="course-branch-name">{title}</span>
+        <span className="overview-branch-heading">
+          <span className="overview-branch-name">{title}</span>
           {entry && (
-            <span className="course-branch-subtitle">
+            <span className="overview-branch-subtitle">
               {formatRange(entry)} ·{' '}
               <span title={formatFullTimestamp(entry.generatedAt)}>
                 {formatMonthDate(entry.generatedAt)}
@@ -49,35 +69,39 @@ export default function ExtractorHeader() {
           )}
         </span>
       </button>
-      <span className="course-branch-actions">
-        <BranchIndicator status={bs} />
-        <PdfWarningBadge badge={bs.warning ? { kind: 'warning', title: bs.warning } : null} />
-        {bs.done && (
-          <button
-            className="file-open-btn"
-            title={t`Open PDF in new tab`}
-            onClick={() =>
-              window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')
-            }
-          >
-            <Icon icon="external-link" />
-          </button>
-        )}
-        {bs.done ? (
-          <button
-            className="file-rotate-btn"
-            title={t`Re-generate ${title}`}
-            onClick={confirmRegenerate}
-            disabled={bs.running}
-          >
-            ↺
-          </button>
-        ) : (
-          <button className="btn btn--ghost" onClick={handleGenerate} disabled={bs.running}>
-            <Trans>Generate</Trans>
-          </button>
-        )}
-      </span>
+      {bs.running ? (
+        <span className="overview-branch-running">
+          {phaseLabel ? t`${phaseLabel}…` : t`Generating…`}
+        </span>
+      ) : (
+        <span className="overview-branch-actions">
+          <PdfWarningBadge badge={bs.warning ? { kind: 'warning', title: bs.warning } : null} />
+          {bs.done && (
+            <button
+              className="pipeline-icon-btn"
+              title={t`Open PDF in new tab`}
+              onClick={() =>
+                window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')
+              }
+            >
+              <Icon icon="external-link" />
+            </button>
+          )}
+          {bs.done ? (
+            <button
+              className="pipeline-icon-btn"
+              title={t`Re-generate ${title}`}
+              onClick={confirmRegenerate}
+            >
+              <Icon icon="rotate" />
+            </button>
+          ) : (
+            <button className="btn btn--ghost" onClick={handleGenerate}>
+              <Trans>Generate</Trans>
+            </button>
+          )}
+        </span>
+      )}
     </div>
   )
 }

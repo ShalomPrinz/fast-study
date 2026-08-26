@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { OverviewExtractor } from '@/types'
 import { toastInitResult } from '@/services/toaster'
-import { generatedFiles, branchStatus } from '@/features/course-overview/constants/overview'
+import { generatedFiles } from '@/features/course-overview/constants/overview'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { ExtractorContext } from '@/features/course-overview/contexts/ExtractorContext'
@@ -10,16 +10,15 @@ import type { ExtractorValue } from '@/features/course-overview/contexts/Extract
 import ExtractorHeader from './ExtractorHeader'
 import ExtractorSteps from './ExtractorSteps'
 import '@/styles/modal.css'
-import '@/styles/file-row.css'
+import '@/styles/pipeline-card.css'
+import './ExtractorRow.css'
 
 export default function ExtractorRow({ extractor }: { extractor: OverviewExtractor }) {
   const { t } = useLingui()
-  const { files, status, generate } = useCourseOverview()
+  const { generate } = useCourseOverview()
   const { slug, phases } = extractor
   const [expanded, setExpanded] = useState(false)
   const [regenerateOpen, setRegenerateOpen] = useState(false)
-
-  const bs = branchStatus(status, files, slug, phases)
 
   // No skipExisting: an explicit re-generate overwrites.
   async function regenerate() {
@@ -40,7 +39,9 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
 
   return (
     <ExtractorContext.Provider value={value}>
-      <div className={`file-row course-branch${bs.done ? ' file-row--present' : ''}`}>
+      {/* Wraps the row and its phase run as one branch, so the card's divider falls between
+          branches rather than between a row and the panel it opened. */}
+      <div className="overview-branch">
         <ExtractorHeader />
         <ExtractorSteps />
       </div>

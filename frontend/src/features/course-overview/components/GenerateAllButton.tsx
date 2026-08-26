@@ -4,7 +4,6 @@ import { startedSlug } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
-import './GenerateAllButton.css'
 
 export default function GenerateAllButton() {
   const { t } = useLingui()
@@ -27,7 +26,7 @@ export default function GenerateAllButton() {
 
   return (
     <button
-      className="btn btn--primary run-all-btn course-global-btn"
+      className="btn btn--primary"
       onClick={handleGenerate}
       disabled={running || extractors === null}
     >

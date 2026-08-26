@@ -25,6 +25,17 @@
   overflow: hidden;
 }
 
+/* The scrolling half of a `.main-view--page`, and the measure its content is read at. */
+.page-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-7) var(--space-8);
+}
+
+.page-column {
+  max-width: 660px;
+}
+
 /* Nothing-to-show card: icon tile over a one-line title, dashed so it reads as a slot, not a panel. */
 .empty-state {
   width: 330px;

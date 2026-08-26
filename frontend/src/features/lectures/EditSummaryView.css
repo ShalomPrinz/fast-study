@@ -9,15 +9,54 @@
 .edit-toolbar {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-5);
   padding: var(--space-4) var(--space-7);
   border-bottom: 1px solid var(--line);
+  background: var(--surface);
   flex-shrink: 0;
+}
+
+/* A navigation affordance rather than an action, so it carries no button chrome. */
+.edit-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+
+.edit-back:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+/* The chevron points back along the reading direction, which reverses in Hebrew. */
+[dir='rtl'] .edit-back svg {
+  transform: scaleX(-1);
+}
+
+.edit-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  flex-shrink: 0;
+  background: var(--line);
 }
 
 .edit-title {
   flex: 1;
-  font-size: var(--fs-section);
+  min-width: 0;
+  font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -25,8 +64,17 @@
   text-overflow: ellipsis;
 }
 
+/* Wide enough for a sentence, unlike the icon-only badge on a pipeline row. Outspecifies `.chip`'s
+   own padding, which lives in another file. */
+.chip.edit-pdf-chip {
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  cursor: help;
+}
+
 .edit-toolbar-actions {
   display: flex;
+  align-items: center;
   gap: var(--space-3);
   flex-shrink: 0;
 }
@@ -48,6 +96,7 @@
 
 .edit-panel {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -58,6 +107,22 @@
   border-inline-end: 1px solid var(--line);
 }
 
+/* The counterpart of the PDF pane's page indicator: what the buffer owes the file on disk. */
+.edit-unsaved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-meta);
+  color: var(--warn);
+}
+
+.edit-unsaved-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 .edit-loading {
   flex: 1;
   display: flex;
@@ -65,6 +130,8 @@
   justify-content: center;
 }
 
+/* Hebrew markdown, so never monospace — it is prose with marks in it, read at the pipeline row's
+   size with the extra leading long RTL paragraphs need. */
 .summary-editor {
   flex: 1;
   width: 100%;
@@ -72,8 +139,8 @@
   outline: none;
   resize: none;
   font-family: var(--font-ui);
-  font-size: var(--fs-section);
-  line-height: 1.65;
+  font-size: var(--fs-row);
+  line-height: 1.85;
   padding: var(--space-7);
   color: var(--text);
   background: var(--surface);

@@ -30,6 +30,7 @@ import '@/styles/panel.css'
 import '@/styles/modal.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
+import '@/styles/pipeline-card.css'
 import './MainView.css'
 
 interface RotateTarget {
@@ -185,13 +186,13 @@ export default function MainView() {
   // idle half-done lecture says nothing here; the card's own caption already counts its stages.
   const runningEntry = remote ? PIPELINE.find((p) => p.step === remote.step) : undefined
   const stateItem = runningEntry ? (
-    <span className="lecture-state lecture-state--running">
-      <span className="lecture-state-dot" />
+    <span className="page-header-state page-header-state--running">
+      <span className="page-header-state-dot" />
       {runningStateText(runningEntry)}
     </span>
   ) : doneCount === stageCount ? (
-    <span className="lecture-state lecture-state--done">
-      <span className="lecture-state-dot" />
+    <span className="page-header-state page-header-state--done">
+      <span className="page-header-state-dot" />
       <Trans>Complete</Trans>
     </span>
   ) : null
@@ -244,8 +245,8 @@ export default function MainView() {
         }
       />
 
-      <div className="lecture-body">
-        <div className="lecture-column">
+      <div className="page-body">
+        <div className="page-column">
           <div className="section-head">
             <h2 className="section-title">
               <Trans>Pipeline</Trans>

@@ -1,20 +1,19 @@
 import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { OverviewStep } from '@/features/course-overview/constants/overview'
-import { overviewFileUrl } from '@/services/database'
 import { toastInitResult } from '@/services/toaster'
 import { stepsFor, branchStatus } from '@/features/course-overview/constants/overview'
-import Icon from '@/shared/components/Icon'
-import StatusNode from '@/shared/components/StatusNode'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
-import '@/styles/file-row.css'
+import './ExtractorSteps.css'
 import '@/styles/modal.css'
 
+// One phase of a branch's run. A phase whose file is on disk doubles as the re-generate control for
+// itself and every phase after it — the only per-phase action, so it needs no separate button.
 export default function StepRow({ step }: { step: OverviewStep }) {
   const { t } = useLingui()
-  const { course, files, status, generate } = useCourseOverview()
+  const { files, status, generate } = useCourseOverview()
   const { extractor } = useExtractor()
   const { slug, phases } = extractor
   const [regenerateOpen, setRegenerateOpen] = useState(false)
@@ -23,7 +22,6 @@ export default function StepRow({ step }: { step: OverviewStep }) {
   const exists = files.some((f) => f.name === fileName)
   const st = status?.extractors[slug]
   const stepRunning = st?.status === 'running' && st?.phase === step.phase
-  const isPdf = step.phase === 'to_pdf'
   const bs = branchStatus(status, files, slug, phases)
   const stepLabel = t(step.label)
 
@@ -41,49 +39,31 @@ export default function StepRow({ step }: { step: OverviewStep }) {
     })
   }
 
+  const modifier = exists ? ' overview-phase--done' : stepRunning ? ' overview-phase--running' : ''
+
   return (
     <>
-      <div
-        className={`file-row${exists ? ' file-row--present' : ''}${stepRunning ? ' file-row--running' : ''}`}
+      <button
+        className={`overview-phase${modifier}`}
+        title={exists ? t`Re-generate from ${stepLabel}` : undefined}
+        onClick={() => setRegenerateOpen(true)}
+        disabled={!exists || bs.running}
       >
-        <div className="file-row-header">
-          <span className="file-name">{fileName}</span>
-          <span className="file-row-right">
-            <span className="file-slot file-slot--status">
-              {stepRunning ? (
-                <StatusNode state="running" />
-              ) : exists ? (
-                <StatusNode state="done" />
-              ) : (
-                <StatusNode state="pending" />
-              )}
-            </span>
-            <span className="file-slot file-slot--open">
-              {isPdf && exists && (
-                <button
-                  className="file-open-btn"
-                  title={t`Open PDF in new tab`}
-                  onClick={() => window.open(overviewFileUrl(course, fileName), '_blank')}
-                >
-                  <Icon icon="external-link" />
-                </button>
-              )}
-            </span>
-            <span className="file-slot file-slot--rotate">
-              {exists && (
-                <button
-                  className="file-rotate-btn"
-                  title={t`Re-generate from ${stepLabel}`}
-                  onClick={() => setRegenerateOpen(true)}
-                  disabled={bs.running}
-                >
-                  ↺
-                </button>
-              )}
-            </span>
-          </span>
-        </div>
-      </div>
+        <span className={`overview-phase-node${exists ? ' overview-phase-node--done' : ''}`}>
+          {exists && (
+            <svg width="9" height="9" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <path
+                d="M2.5 6.2l2.4 2.4L9.5 4"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          )}
+        </span>
+        {stepLabel}
+      </button>
 
       {regenerateOpen && (
         <ConfirmModal

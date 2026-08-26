@@ -1,9 +1,11 @@
 import { useState, useRef } from 'react'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
+import Icon from '@/shared/components/Icon'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import '@/styles/spinner.css'
+import '@/styles/pane-header.css'
 import './PdfViewer.css'
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
@@ -18,7 +20,9 @@ interface Props {
 }
 
 export default function PdfViewer({ url, show, generating }: Props) {
+  const { t } = useLingui()
   const [numPages, setNumPages] = useState(0)
+  const [page, setPage] = useState(1)
   const [scale, setScale] = useState(1.2)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const capturedScrollRef = useRef({ top: 0, left: 0 })
@@ -48,58 +52,91 @@ export default function PdfViewer({ url, show, generating }: Props) {
     }
   }
 
-  // Wins over the placeholder so a first-ever generate spins too, instead of flashing "no PDF yet".
-  if (generating) {
-    return (
-      <div className="pdf-doc-loading">
-        <div className="spinner" />
-      </div>
-    )
-  }
-
-  if (!show) {
-    return (
-      <div className="pdf-placeholder">
-        <p>
-          <Trans>No PDF yet — click "Generate PDF" to create one.</Trans>
-        </p>
-      </div>
-    )
+  // The indicator names the page under the middle of the viewport. react-pdf owns the page class,
+  // so the rendered pages are read off the DOM rather than tracked in state.
+  const handleScroll = () => {
+    const container = scrollContainerRef.current
+    if (!container) return
+    const middle = container.getBoundingClientRect().top + container.clientHeight / 2
+    const pages = Array.from(container.querySelectorAll<HTMLElement>('.react-pdf__Page'))
+    const idx = pages.findIndex((p) => p.getBoundingClientRect().bottom > middle)
+    setPage(idx === -1 ? Math.max(pages.length, 1) : idx + 1)
   }
 
   return (
     <div className="pdf-viewer">
-      <div className="pdf-zoom-bar">
-        <button className="pdf-zoom-btn" onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}>
-          −
-        </button>
-        <span className="pdf-zoom-label">{Math.round(scale * 100)}%</span>
-        <button className="pdf-zoom-btn" onClick={() => setScale((s) => Math.min(s + 0.2, 4))}>
-          +
-        </button>
+      <div className="pane-header">
+        <span className="pane-label">
+          <Trans>Current PDF</Trans>
+        </span>
+        {show && !generating && (
+          <div className="pdf-tools">
+            <button
+              className="pdf-zoom-btn"
+              title={t`Zoom out`}
+              onClick={() => setScale((s) => Math.max(s - 0.2, 0.4))}
+            >
+              −
+            </button>
+            <span className="pdf-zoom-label">{Math.round(scale * 100)}%</span>
+            <button
+              className="pdf-zoom-btn"
+              title={t`Zoom in`}
+              onClick={() => setScale((s) => Math.min(s + 0.2, 4))}
+            >
+              +
+            </button>
+            {numPages > 0 && (
+              <span className="pdf-page-indicator">
+                {page} / {numPages}
+              </span>
+            )}
+            <button
+              className="pdf-zoom-btn"
+              title={t`Open PDF in new tab`}
+              onClick={() => window.open(url, '_blank')}
+            >
+              <Icon icon="external-link" />
+            </button>
+          </div>
+        )}
       </div>
-      <div className="pdf-scroll-container" ref={scrollContainerRef}>
-        <Document
-          file={url}
-          onLoadSuccess={({ numPages: n }) => setNumPages(n)}
-          loading={
-            <div className="pdf-doc-loading">
-              <div className="spinner" />
-            </div>
-          }
-        >
-          {Array.from({ length: numPages }, (_, i) => (
-            <Page
-              key={i}
-              pageNumber={i + 1}
-              scale={scale}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              onRenderSuccess={handlePageRendered}
-            />
-          ))}
-        </Document>
-      </div>
+
+      {/* Wins over the placeholder so a first-ever generate spins too, instead of flashing "no PDF yet". */}
+      {generating ? (
+        <div className="pdf-doc-loading">
+          <div className="spinner" />
+        </div>
+      ) : !show ? (
+        <div className="pdf-placeholder">
+          <p>
+            <Trans>No PDF yet — use "Re-export PDF" to create one.</Trans>
+          </p>
+        </div>
+      ) : (
+        <div className="pdf-scroll-container" ref={scrollContainerRef} onScroll={handleScroll}>
+          <Document
+            file={url}
+            onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+            loading={
+              <div className="pdf-doc-loading">
+                <div className="spinner" />
+              </div>
+            }
+          >
+            {Array.from({ length: numPages }, (_, i) => (
+              <Page
+                key={i}
+                pageNumber={i + 1}
+                scale={scale}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+                onRenderSuccess={handlePageRendered}
+              />
+            ))}
+          </Document>
+        </div>
+      )}
     </div>
   )
 }

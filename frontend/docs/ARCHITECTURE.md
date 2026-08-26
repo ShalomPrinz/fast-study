@@ -116,7 +116,7 @@ Plain CSS, no modules and no styled-components — class names are global and by
 
 A component's CSS lives in `X.css` beside `X.tsx` and is imported by it. A class rendered by two or more
 components instead lives in a named shared-vocabulary stylesheet under `src/styles/` — `button`, `chip`,
-`file-row`, `modal`, `panel`, `segmented`, `source-row`, `sidebar-tree`, `spinner` — and **every component
+`modal`, `pane-header`, `panel`, `pipeline-card`, `segmented`, `source-row`, `sidebar-tree`, `spinner` — and **every component
 using that class imports the stylesheet**, never relying on a parent to import on its behalf. Vite dedupes
 repeated imports, so this costs nothing and keeps a component's import list an exhaustive list of what can
 style it. A file earns a place in `src/styles/` only by having multiple component users; that is a fact you
@@ -147,8 +147,7 @@ scales are:
 
 The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
 and the accent appears as text, a border or a soft tint. `--accent-on-dark` is its counterpart on the
-sidebar, which is the only dark surface. The one hardcoded colour left in the app is the mat behind a PDF
-page (`PdfViewer.css`), which is deliberately outside the palette so the page reads as paper.
+sidebar, which is the only dark surface. No hardcoded colour is left in `src/**/*.css`.
 
 Fonts are self-hosted through `@fontsource`, imported per weight from `main.tsx`, so the app renders
 correctly with no network. Heebo is Hebrew-first, so Hebrew and Latin share one ramp instead of falling
@@ -159,15 +158,17 @@ back mid-string; JetBrains Mono carries filenames, counts and durations.
 `.btn` plus `--primary` / `--ghost` / `--danger` is the whole button vocabulary; `.chip` plus its five
 colour variants is the whole state-label vocabulary. `StatusNode` renders the four run states (`done`,
 `running`, `pending`, `failed`) at one size, and is what the lecture pipeline, the course branches and
-their steps all read from. `ConfirmModal`, `ProgressBar` and the `.empty-state` card are the other
-cross-feature pieces. The react-toastify surface is skinned once in `services/toaster.css`, beside the only
+their steps all read from. `PageHeader` opens every full-page view — title, metadata row, one primary
+action — and `.pipeline-card` is the card its rows sit in, on the lecture pipeline and the course
+overview alike. `ConfirmModal`, `ProgressBar` and the `.empty-state` card are the other cross-feature
+pieces. The react-toastify surface is skinned once in `services/toaster.css`, beside the only
 file that imports the library.
 
 **No cross-file rule may depend on source order.** Import order follows Vite's module graph and differs
 between dev (per-module `<style>` tags) and prod (one extracted, concatenated sheet), so two same-specificity
 rules that used to resolve by position now resolve unpredictably. Disambiguate by specificity. Where two
 rules genuinely collide on the same element at equal specificity — `.lecture-list` / `.course-list`,
-`.source-row-input` / `.passcode-input`, `.file-row` / `.course-branch` — both live in one file in the
+`.source-row-input` / `.passcode-input`, `.pipeline-row` / `.pipeline-row--running` — both live in one file in the
 winning order, with a comment naming the dependency; that is why a few single-user classes sit in a shared
 stylesheet. Verify a suspected collision against the built bundle, not the dev server.
 

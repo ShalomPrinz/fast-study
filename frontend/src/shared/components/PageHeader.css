@@ -47,3 +47,26 @@
   gap: var(--space-3);
   flex-shrink: 0;
 }
+
+/* Live state as a metadata fact: a coloured dot plus one line, handed in by the view. */
+.page-header-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+}
+
+.page-header-state-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.page-header-state--running {
+  color: var(--accent);
+}
+
+.page-header-state--done {
+  color: var(--ok);
+}

@@ -17,12 +17,14 @@ import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
 import { lectureNotFound } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
+import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
-import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
+import '@/styles/chip.css'
+import '@/styles/pane-header.css'
 import './EditSummaryView.css'
 
 export default function EditSummaryView() {
@@ -34,6 +36,8 @@ export default function EditSummaryView() {
   const lectureError = getError(course, lecture, kind)
 
   const [content, setContent] = useState('')
+  // What is on disk, so the toolbar and the editor pane can tell an edited buffer from a clean one.
+  const [savedContent, setSavedContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
@@ -76,8 +80,24 @@ export default function EditSummaryView() {
     const data = await latest(fetchSummaryContent(course, lecture, kind))
     if (!data) return
     setContent(data.content)
+    setSavedContent(data.content)
     setHasOriginal(data.hasOriginal)
     setLoading(false)
+  }
+
+  // Writes the editor buffer to summary.md; false means it failed and was already reported.
+  async function persist(): Promise<boolean> {
+    try {
+      await saveSummaryContent(course, lecture, content, kind)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : t`Failed to save summary`
+      if (!isConnectionError(e)) toast('error', message) // connection errors are toasted centrally
+      setError(message)
+      return false
+    }
+    setSavedContent(content)
+    setHasOriginal(true)
+    return true
   }
 
   async function handleRevert() {
@@ -89,19 +109,19 @@ export default function EditSummaryView() {
     refreshCourses()
   }
 
+  async function handleSave() {
+    setError('')
+    // A save without a re-export leaves the PDF behind, and the chip saying so reads tree mtimes.
+    if (await persist()) refreshCourses()
+  }
+
   async function handleGeneratePdf() {
     setGenerating(true)
     setError('')
-    try {
-      await saveSummaryContent(course, lecture, content, kind)
-    } catch (e) {
-      const message = e instanceof Error ? e.message : t`Failed to save summary`
-      if (!isConnectionError(e)) toast('error', message) // connection errors are toasted centrally
-      setError(message)
+    if (!(await persist())) {
       setGenerating(false)
       return
     }
-    setHasOriginal(true)
     await deleteFile(course, lecture, 'summary.pdf', kind)
     const initResult = await runStep(course, lecture, 'pdf', kind)
     if (initResult.status !== 'started') {
@@ -127,17 +147,28 @@ export default function EditSummaryView() {
     fileUrl(course, lecture, 'summary.pdf', kind),
     files?.['summary.pdf'].mtime ?? null,
   )
+  const badge = files && pdfBadge(files)
+  const dirty = !loading && content !== savedContent
 
   return (
     <div className="edit-view">
       <div className="edit-toolbar">
-        <button className="btn btn--ghost" onClick={() => navigate(-1)}>
-          <Trans>← Back</Trans>
+        <button className="edit-back" onClick={() => navigate(-1)}>
+          <Icon icon="chevron-start" />
+          <Trans>Back</Trans>
         </button>
+        <span className="edit-toolbar-divider" />
         <h2 className="edit-title" dir="auto">
           {lecture}
         </h2>
-        <PdfWarningBadge badge={files && pdfBadge(files)} />
+        {badge && (
+          <span className="chip chip--warn edit-pdf-chip" title={badge.title} role="status">
+            <Icon icon="warning" />
+            {badge.kind === 'stale'
+              ? t`PDF is older than this summary`
+              : t`PDF rendered with warnings`}
+          </span>
+        )}
         <div className="edit-toolbar-actions">
           <button
             className="btn btn--ghost"
@@ -145,14 +176,21 @@ export default function EditSummaryView() {
             disabled={!hasOriginal || generating || loading}
             title={hasOriginal ? t`Restore the original summary` : t`No original to revert to`}
           >
-            <Trans>Revert to Original</Trans>
+            <Trans>Revert to original</Trans>
           </button>
           <button
-            className="btn btn--primary"
+            className="btn btn--ghost"
             onClick={handleGeneratePdf}
             disabled={generating || loading}
           >
-            {generating ? t`Generating…` : t`Generate PDF`}
+            {generating ? t`Generating…` : t`Re-export PDF`}
+          </button>
+          <button
+            className="btn btn--primary"
+            onClick={handleSave}
+            disabled={!dirty || generating || loading}
+          >
+            <Trans>Save</Trans>
           </button>
         </div>
       </div>
@@ -165,6 +203,15 @@ export default function EditSummaryView() {
         </div>
 
         <div className="edit-panel edit-panel--text">
+          <div className="pane-header">
+            <span className="pane-label">summary.md</span>
+            {dirty && (
+              <span className="edit-unsaved" role="status">
+                <span className="edit-unsaved-dot" />
+                <Trans>Unsaved changes</Trans>
+              </span>
+            )}
+          </div>
           {loading ? (
             <div className="edit-loading">
               <div className="spinner" />

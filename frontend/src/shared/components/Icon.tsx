@@ -14,6 +14,8 @@ export type IconName =
   | 'trash'
   | 'overflow'
   | 'file'
+  | 'chevron-start'
+  | 'warning'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -219,6 +221,27 @@ const FileIcon = () => (
   </svg>
 )
 
+// Points backwards along the reading direction, so a Hebrew page must mirror it in CSS.
+const ChevronStartIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M9.5 3.5L5 8l4.5 4.5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
+// Warning triangle — labels a non-fatal state, never a failure.
+const WarningIcon = () => (
+  <svg width="11" height="11" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M6 1.8l4.4 7.6H1.6z" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" />
+    <path d="M6 5v2" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+)
+
 const icons: Record<IconName, () => JSX.Element> = {
   'external-link': ExternalLinkIcon,
   edit: EditIcon,
@@ -235,6 +258,8 @@ const icons: Record<IconName, () => JSX.Element> = {
   trash: TrashIcon,
   overflow: OverflowIcon,
   file: FileIcon,
+  'chevron-start': ChevronStartIcon,
+  warning: WarningIcon,
 }
 
 export default function Icon({ icon }: { icon: IconName }) {

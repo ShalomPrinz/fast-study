@@ -25,7 +25,8 @@ the lecture name as title, a metadata row (running step or `Complete`, video siz
 and the page's single primary button, `Run Remaining`, beside a `LectureActionsMenu` overflow holding
 the per-file actions — edit summary, open PDF, open in Drive — that no longer sit on their rows.
 
-Below it, `.pipeline-card` is **one** bordered card holding all six stages, parted by rules inset to
+Below it, `.pipeline-card` (shared with the course overview, in `styles/pipeline-card.css`) is **one**
+bordered card holding all six stages, parted by rules inset to
 clear the status column, not six boxes. Each row is a `StatusNode`, the stage name, and the raw
 filename plus size as a monospace subtitle; completion is carried by the node alone, never by tinting
 the row. The running row sits on `--surface-sunken`, swaps in `runningLabel`, and lays its body out as
@@ -83,12 +84,13 @@ re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs 
 `summary.pdf` that badge is **one** of, chosen by `pdfBadge(files)`: a render warning
 (⚠) if there is one, else a stale marker (≠) when `summary.md` has a newer `mtime` than `summary.pdf`.
 The warning wins because it describes _this_ PDF; staleness resurfaces on its own once it clears. It
-appears on the `summary.pdf` row in `MainView` and in the `EditSummaryView` toolbar, whose preview pane
-would otherwise show the outdated render with no hint.
+appears on the `summary.pdf` row in `MainView`; the `EditSummaryView` toolbar spells the same
+`pdfBadge(files)` out as a `--warn` chip, since its preview pane would otherwise show the outdated
+render with no hint and the toolbar has room for the sentence.
 
 Staleness means the PDF no longer reflects the summary — after a revert, an edit that never regenerated,
 or a re-run `summarize`. A **missing** PDF is never stale, which is what keeps a pending re-render quiet:
-every path that re-renders (rotate, edit-view save) deletes `summary.pdf` first, and a fresh pipeline has
+every path that re-renders (rotate, edit-view re-export) deletes `summary.pdf` first, and a fresh pipeline has
 not written one yet. Equal mtimes don't warn, so a same-second render can't flicker.
 
 ### Render warnings
@@ -99,7 +101,7 @@ It is non-fatal, message on hover, and `CourseTreeContext` announces it once thr
 `announcePdfWarnings`: the first applied tree only seeds, so warnings predating page load don't toast,
 and a vanished warning is pruned so it can fire again. It lives on the tree, not `/status`, which is why
 it is announced there and not in
-`RunnerStatusContext`. Deleting `summary.pdf` (rotate, edit-view save) drops `.pdf_warning` inside the
+`RunnerStatusContext`. Deleting `summary.pdf` (rotate, edit-view re-export) drops `.pdf_warning` inside the
 database service, so no frontend path clears it.
 
 `useRemoteInflightState` turns the entry for the currently open lecture into a render descriptor: step,
@@ -114,7 +116,16 @@ with the chunk progress instead of a failure.
 
 ## Edit summary view
 
-Save → delete `summary.pdf` → run the `pdf` step, then wait for SSE. The effect that watches
+A toolbar over two labelled panes. The toolbar runs: back, a rule, the lecture name (`dir="auto"`), the
+stale/warning PDF chip, then `Revert to original` and `Re-export PDF` as ghosts beside the primary `Save`.
+The left pane heads its PDF with `Current PDF`, the zoom controls, the page under the middle of the
+viewport and an open-in-new-tab button; the right pane heads the plain `<textarea>` with `summary.md` and,
+whenever the buffer differs from what was last read or written, an amber `Unsaved changes` dot. The editor
+holds Hebrew markdown, so it is set in the UI font with wide leading, never monospace.
+
+`Save` writes `summary.md` and asks for a tree refresh, because the write leaves `summary.pdf` behind and
+the chip that says so reads tree mtimes. `Re-export PDF` is the older, longer path and still saves first:
+save → delete `summary.pdf` → run the `pdf` step, then wait for SSE. The effect that watches
 `files`/`lectureError` runs on every refresh, so a `pdfFiredRef` gate limits it to the run this view
 started — otherwise a sibling file change or another lecture's error would clear the generating state,
 and the self-inflicted missing PDF mid-run would flash the "no PDF yet" placeholder. `PdfViewer`'s

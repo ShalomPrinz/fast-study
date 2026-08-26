@@ -25,10 +25,20 @@ msgstr "\"{course}\" has no lecture named \"{lecture}\"."
 msgid "\"{course}\" has no recitation named \"{lecture}\"."
 msgstr "\"{course}\" has no recitation named \"{lecture}\"."
 
+#. placeholder {0}: lectures.length
+#: src/features/course-overview/CourseView.tsx:67
+msgid "{0, plural, one {# lecture} other {# lectures}}"
+msgstr "{0, plural, one {# lecture} other {# lectures}}"
+
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:204
+#: src/features/lectures/MainView.tsx:205
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
+
+#. placeholder {0}: recitations.length
+#: src/features/course-overview/CourseView.tsx:70
+msgid "{0, plural, one {# recitation} other {# recitations}}"
+msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
 #: src/features/search/SearchView.tsx:164
@@ -62,7 +72,7 @@ msgstr "{0} already exists in {course}. Download again and overwrite?"
 
 #. placeholder {0}: chunks.completed
 #. placeholder {1}: chunks.total
-#: src/features/lectures/MainView.tsx:271
+#: src/features/lectures/MainView.tsx:272
 msgid "{0} of {1} chunks"
 msgstr "{0} of {1} chunks"
 
@@ -72,13 +82,13 @@ msgid "{0} remaining"
 msgstr "{0} remaining"
 
 #. placeholder {0}: formatBytes(videoSize)
-#: src/features/lectures/MainView.tsx:201
+#: src/features/lectures/MainView.tsx:202
 msgid "{0} video"
 msgstr "{0} video"
 
 #. placeholder {0}: progress.completed
 #. placeholder {1}: progress.total
-#: src/features/lectures/MainView.tsx:80
+#: src/features/lectures/MainView.tsx:81
 msgid "{0}/{1} chunks transcribed so far"
 msgstr "{0}/{1} chunks transcribed so far"
 
@@ -94,7 +104,7 @@ msgstr "{count, plural, other {# materials will be used}}"
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
 
-#: src/features/lectures/MainView.tsx:253
+#: src/features/lectures/MainView.tsx:254
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
@@ -106,6 +116,11 @@ msgstr "{effectiveName} already exists in {course}. Download again and overwrite
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 
+#. placeholder {0}: extractors.length
+#: src/features/course-overview/CourseView.tsx:95
+msgid "{generated} of {0} generated"
+msgstr "{generated} of {0} generated"
+
 #: src/features/search/SearchView.tsx:165
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
@@ -114,7 +129,7 @@ msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
-#: src/features/lectures/MainView.tsx:408
+#: src/features/lectures/MainView.tsx:409
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} will be deleted."
 
@@ -134,7 +149,15 @@ msgstr "{nextLoad, plural, one {Load # more} other {Load # more}}"
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 
-#: src/features/lectures/MainView.tsx:181
+#: src/features/course-overview/components/ExtractorHeader.tsx:74
+msgid "{phaseLabel}…"
+msgstr "{phaseLabel}…"
+
+#: src/features/course-overview/CourseView.tsx:72
+msgid "{processed} fully processed"
+msgstr "{processed} fully processed"
+
+#: src/features/lectures/MainView.tsx:182
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · step {stepNumber} of {stageCount}"
 
@@ -143,8 +166,8 @@ msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may ha
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 
 #: src/features/lectures/EditSummaryView.tsx:135
-msgid "← Back"
-msgstr "← Back"
+#~ msgid "← Back"
+#~ msgstr "← Back"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:67
 msgid "+ add source URL"
@@ -186,7 +209,7 @@ msgstr "Archive course"
 msgid "Archived ({archivedCount})"
 msgstr "Archived ({archivedCount})"
 
-#: src/features/course-overview/components/StepRow.tsx:91
+#: src/features/course-overview/components/StepRow.tsx:71
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
@@ -201,6 +224,10 @@ msgstr "Audio"
 #: src/features/lectures/constants/pipeline.ts:80
 msgid "Audio extraction failed"
 msgstr "Audio extraction failed"
+
+#: src/features/lectures/EditSummaryView.tsx:158
+msgid "Back"
+msgstr "Back"
 
 #: src/features/downloads/components/AuthPill.tsx:81
 msgid "BIU account connected ✓"
@@ -239,7 +266,7 @@ msgstr "Collect"
 msgid "Compile"
 msgstr "Compile"
 
-#: src/features/lectures/MainView.tsx:195
+#: src/features/lectures/MainView.tsx:196
 msgid "Complete"
 msgstr "Complete"
 
@@ -247,11 +274,11 @@ msgstr "Complete"
 msgid "Connect"
 msgstr "Connect"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:35
+#: src/features/course-overview/components/GenerateAllButton.tsx:34
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:264
+#: src/features/lectures/MainView.tsx:265
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -289,6 +316,10 @@ msgstr "Course \"{course}\" doesn't exist."
 msgid "Course name…"
 msgstr "Course name…"
 
+#: src/features/course-overview/CourseView.tsx:92
+msgid "Course overview"
+msgstr "Course overview"
+
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Courses"
 msgstr "Courses"
@@ -297,8 +328,12 @@ msgstr "Courses"
 msgid "Create"
 msgstr "Create"
 
+#: src/features/lectures/components/PdfViewer.tsx:70
+msgid "Current PDF"
+msgstr "Current PDF"
+
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:363
+#: src/features/lectures/MainView.tsx:364
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
@@ -348,7 +383,7 @@ msgstr "Drive upload failed"
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
-#: src/features/lectures/MainView.tsx:211
+#: src/features/lectures/MainView.tsx:212
 msgid "Edit summary"
 msgstr "Edit summary"
 
@@ -390,7 +425,7 @@ msgid "Extracting audio"
 msgstr "Extracting audio"
 
 #: src/features/course-overview/constants/overview.ts:72
-#: src/features/course-overview/CourseView.tsx:34
+#: src/features/course-overview/CourseView.tsx:39
 msgid "failed"
 msgstr "failed"
 
@@ -402,8 +437,8 @@ msgstr "Failed ✗"
 msgid "Failed to complete login. Try reconnecting."
 msgstr "Failed to complete login. Try reconnecting."
 
-#: src/features/lectures/EditSummaryView.tsx:110
-#: src/features/lectures/EditSummaryView.tsx:112
+#: src/features/lectures/EditSummaryView.tsx:130
+#: src/features/lectures/EditSummaryView.tsx:132
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
@@ -411,7 +446,7 @@ msgstr "Failed to generate PDF"
 msgid "Failed to launch the login browser."
 msgstr "Failed to launch the login browser."
 
-#: src/features/lectures/EditSummaryView.tsx:98
+#: src/features/lectures/EditSummaryView.tsx:93
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
@@ -431,28 +466,33 @@ msgstr "finishing…"
 msgid "Fully processed lectures"
 msgstr "Fully processed lectures"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:77
+#: src/features/course-overview/components/ExtractorHeader.tsx:100
 msgid "Generate"
 msgstr "Generate"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:35
+#: src/features/course-overview/components/GenerateAllButton.tsx:34
 msgid "Generate All"
 msgstr "Generate All"
 
 #: src/features/lectures/EditSummaryView.tsx:155
-msgid "Generate PDF"
-msgstr "Generate PDF"
+#~ msgid "Generate PDF"
+#~ msgstr "Generate PDF"
 
-#: src/features/course-overview/components/StepRow.tsx:90
+#: src/features/course-overview/CourseView.tsx:63
+msgid "Generating · {runningTitle}"
+msgstr "Generating · {runningTitle}"
+
+#: src/features/course-overview/components/StepRow.tsx:70
 msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "Generating from {stepLabel} step will rebuild:"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:35
-#: src/features/lectures/EditSummaryView.tsx:155
+#: src/features/course-overview/components/ExtractorHeader.tsx:74
+#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/lectures/EditSummaryView.tsx:184
 msgid "Generating…"
 msgstr "Generating…"
 
-#: src/features/lectures/MainView.tsx:76
+#: src/features/lectures/MainView.tsx:77
 msgid "Groq rate limit reached"
 msgstr "Groq rate limit reached"
 
@@ -469,7 +509,7 @@ msgstr "just this lecture"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:378
+#: src/features/lectures/MainView.tsx:379
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -539,7 +579,7 @@ msgid "Material"
 msgstr "Material"
 
 #: src/features/downloads/DownloadsView.tsx:34
-#: src/features/lectures/MainView.tsx:344
+#: src/features/lectures/MainView.tsx:345
 msgid "Materials"
 msgstr "Materials"
 
@@ -575,7 +615,7 @@ msgstr "no material found"
 msgid "No materials found."
 msgstr "No materials found."
 
-#: src/features/lectures/EditSummaryView.tsx:146
+#: src/features/lectures/EditSummaryView.tsx:175
 msgid "No original to revert to"
 msgstr "No original to revert to"
 
@@ -584,8 +624,12 @@ msgid "No PDF for this lecture"
 msgstr "No PDF for this lecture"
 
 #: src/features/lectures/components/PdfViewer.tsx:64
-msgid "No PDF yet — click \"Generate PDF\" to create one."
-msgstr "No PDF yet — click \"Generate PDF\" to create one."
+#~ msgid "No PDF yet — click \"Generate PDF\" to create one."
+#~ msgstr "No PDF yet — click \"Generate PDF\" to create one."
+
+#: src/features/lectures/components/PdfViewer.tsx:113
+msgid "No PDF yet — use \"Re-export PDF\" to create one."
+msgstr "No PDF yet — use \"Re-export PDF\" to create one."
 
 #: src/features/course-overview/utils/overview.ts:13
 msgid "No Recitations"
@@ -607,7 +651,7 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/MainView.tsx:332
+#: src/features/lectures/MainView.tsx:333
 msgid "not provided"
 msgstr "not provided"
 
@@ -627,17 +671,17 @@ msgstr "Nothing to run - All remaining pipelines already running"
 msgid "Only .mp4 files are allowed"
 msgstr "Only .mp4 files are allowed"
 
-#: src/features/lectures/MainView.tsx:219
+#: src/features/lectures/MainView.tsx:220
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
-#: src/features/lectures/MainView.tsx:353
+#: src/features/lectures/MainView.tsx:354
 msgid "Open material in new tab"
 msgstr "Open material in new tab"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:58
-#: src/features/course-overview/components/StepRow.tsx:65
-#: src/features/lectures/MainView.tsx:215
+#: src/features/course-overview/components/ExtractorHeader.tsx:82
+#: src/features/lectures/components/PdfViewer.tsx:96
+#: src/features/lectures/MainView.tsx:216
 #: src/features/search/components/SearchResult.tsx:22
 msgid "Open PDF in new tab"
 msgstr "Open PDF in new tab"
@@ -654,17 +698,17 @@ msgstr "Other links"
 #~ msgid "Other Videos"
 #~ msgstr "Other Videos"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:30
-#: src/features/course-overview/components/ExtractorRow.tsx:30
-#: src/features/course-overview/components/GenerateAllButton.tsx:24
-#: src/features/course-overview/components/StepRow.tsx:40
+#: src/features/course-overview/components/ExtractorHeader.tsx:49
+#: src/features/course-overview/components/ExtractorRow.tsx:29
+#: src/features/course-overview/components/GenerateAllButton.tsx:23
+#: src/features/course-overview/components/StepRow.tsx:38
 msgid "Overview failed to start"
 msgstr "Overview failed to start"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:29
-#: src/features/course-overview/components/ExtractorRow.tsx:29
-#: src/features/course-overview/components/GenerateAllButton.tsx:23
-#: src/features/course-overview/components/StepRow.tsx:39
+#: src/features/course-overview/components/ExtractorHeader.tsx:48
+#: src/features/course-overview/components/ExtractorRow.tsx:28
+#: src/features/course-overview/components/GenerateAllButton.tsx:22
+#: src/features/course-overview/components/StepRow.tsx:37
 msgid "Overview is already running for this course"
 msgstr "Overview is already running for this course"
 
@@ -680,15 +724,23 @@ msgstr "PDF"
 msgid "PDF export failed"
 msgstr "PDF export failed"
 
-#: src/features/lectures/MainView.tsx:251
+#: src/features/lectures/EditSummaryView.tsx:167
+msgid "PDF is older than this summary"
+msgstr "PDF is older than this summary"
+
+#: src/features/lectures/EditSummaryView.tsx:167
+msgid "PDF rendered with warnings"
+msgstr "PDF rendered with warnings"
+
+#: src/features/lectures/MainView.tsx:252
 msgid "Pipeline"
 msgstr "Pipeline"
 
-#: src/features/lectures/MainView.tsx:151
+#: src/features/lectures/MainView.tsx:152
 msgid "Pipeline already running"
 msgstr "Pipeline already running"
 
-#: src/features/lectures/MainView.tsx:152
+#: src/features/lectures/MainView.tsx:153
 msgid "Pipeline failed to start"
 msgstr "Pipeline failed to start"
 
@@ -701,15 +753,19 @@ msgstr "rate-limited until {0}"
 msgid "Re-download ↻"
 msgstr "Re-download ↻"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:69
+#: src/features/lectures/EditSummaryView.tsx:184
+msgid "Re-export PDF"
+msgstr "Re-export PDF"
+
+#: src/features/course-overview/components/ExtractorHeader.tsx:93
 msgid "Re-generate {title}"
 msgstr "Re-generate {title}"
 
-#: src/features/course-overview/components/StepRow.tsx:76
+#: src/features/course-overview/components/StepRow.tsx:48
 msgid "Re-generate from {stepLabel}"
 msgstr "Re-generate from {stepLabel}"
 
-#: src/features/lectures/MainView.tsx:86
+#: src/features/lectures/MainView.tsx:87
 msgid "Ready to retry"
 msgstr "Ready to retry"
 
@@ -780,7 +836,7 @@ msgstr "Renamed to \"{name}\" — some characters can't be used in a folder name
 msgid "Replace existing video.mp4 in \"{0}\"?"
 msgstr "Replace existing video.mp4 in \"{0}\"?"
 
-#: src/features/lectures/EditSummaryView.tsx:146
+#: src/features/lectures/EditSummaryView.tsx:175
 msgid "Restore the original summary"
 msgstr "Restore the original summary"
 
@@ -790,15 +846,19 @@ msgid "Retry ✗"
 msgstr "Retry ✗"
 
 #. placeholder {0}: formatDuration(remaining)
-#: src/features/lectures/MainView.tsx:86
+#: src/features/lectures/MainView.tsx:87
 msgid "Retry in {0}"
 msgstr "Retry in {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:148
-msgid "Revert to Original"
-msgstr "Revert to Original"
+#: src/features/lectures/EditSummaryView.tsx:177
+msgid "Revert to original"
+msgstr "Revert to original"
 
-#: src/features/lectures/MainView.tsx:314
+#: src/features/lectures/EditSummaryView.tsx:148
+#~ msgid "Revert to Original"
+#~ msgstr "Revert to Original"
+
+#: src/features/lectures/MainView.tsx:315
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
@@ -806,13 +866,17 @@ msgstr "Rotate {file}"
 msgid "Run incomplete pipelines"
 msgstr "Run incomplete pipelines"
 
-#: src/features/lectures/MainView.tsx:240
+#: src/features/lectures/MainView.tsx:241
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:63
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
+
+#: src/features/lectures/EditSummaryView.tsx:191
+msgid "Save"
+msgstr "Save"
 
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:34
 msgid "Saved to {lecture}"
@@ -859,8 +923,8 @@ msgstr "Sorry about it. Go home to keep working, or copy the details below to re
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/lectures/EditSummaryView.tsx:109
-#: src/features/lectures/MainView.tsx:136
+#: src/features/lectures/EditSummaryView.tsx:129
+#: src/features/lectures/MainView.tsx:137
 msgid "Step already running"
 msgstr "Step already running"
 
@@ -914,15 +978,15 @@ msgstr "That passcode didn't work. Try another one"
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "the BIU session expired. Reconnect, then run the section again."
 
-#: src/features/lectures/MainView.tsx:392
+#: src/features/lectures/MainView.tsx:393
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
-#: src/features/course-overview/components/ExtractorRow.tsx:50
+#: src/features/course-overview/components/ExtractorRow.tsx:51
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
-#: src/features/lectures/MainView.tsx:409
+#: src/features/lectures/MainView.tsx:410
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -935,7 +999,7 @@ msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:393
+#: src/features/lectures/MainView.tsx:394
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
@@ -962,6 +1026,10 @@ msgstr "Unarchive course"
 #: src/features/downloads/DownloadsView.tsx:35
 msgid "Unknown"
 msgstr "Unknown"
+
+#: src/features/lectures/EditSummaryView.tsx:209
+msgid "Unsaved changes"
+msgstr "Unsaved changes"
 
 #: src/features/downloads/components/RecordingRow.tsx:41
 msgid "Unsupported"
@@ -995,3 +1063,11 @@ msgstr "Videos"
 #: src/shared/components/ConfirmModal.tsx:42
 msgid "Yes"
 msgstr "Yes"
+
+#: src/features/lectures/components/PdfViewer.tsx:84
+msgid "Zoom in"
+msgstr "Zoom in"
+
+#: src/features/lectures/components/PdfViewer.tsx:76
+msgid "Zoom out"
+msgstr "Zoom out"
