@@ -11,14 +11,14 @@ Corollary: never add a backend endpoint to answer "does file X exist" — that i
 
 ## Layering
 
-| Dir                                   | Rule                                                                                             |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| root (`App`, `types.ts`)              | flat, no subdirs                                                                                 |
-| `styles/`                             | `tokens.css` plus the shared-vocabulary stylesheets — see Styling                                |
-| `app/`                                | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container                        |
-| `services/`                           | one file per external concern, shared by all features, never split per feature                   |
-| `shared/`                             | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
-| `features/<x>/`                       | one slice per mode/page: views, sidebar body, components, hooks, contexts, constants, utils      |
+| Dir                      | Rule                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| root (`App`, `types.ts`) | flat, no subdirs                                                                                 |
+| `styles/`                | `tokens.css` plus the shared-vocabulary stylesheets — see Styling                                |
+| `app/`                   | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container                        |
+| `services/`              | one file per external concern, shared by all features, never split per feature                   |
+| `shared/`                | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
+| `features/<x>/`          | one slice per mode/page: views, sidebar body, components, hooks, contexts, constants, utils      |
 
 A primitive lives in `features/<x>/components` until a second feature needs it; then it moves to `shared/`.
 A feature may own a service (`features/downloads/services/autoDownloader.ts`, `downloadServer.ts`) when the concern is its alone.
@@ -111,16 +111,53 @@ Plain CSS, no modules and no styled-components — class names are global and by
 `className` strings, so one grep for a class hits both its markup and its rule.
 
 A component's CSS lives in `X.css` beside `X.tsx` and is imported by it. A class rendered by two or more
-components instead lives in a named shared-vocabulary stylesheet under `src/styles/` — `file-row`, `modal`,
-`panel`, `spinner`, `source-row`, `sidebar-tree` — and **every component using that class imports the
-stylesheet**, never relying on a parent to import on its behalf. Vite dedupes repeated imports, so this
-costs nothing and keeps a component's import list an exhaustive list of what can style it. A file earns a
-place in `src/styles/` only by having multiple component users; that is a fact you can regenerate by
-grepping `className` across `src/`.
+components instead lives in a named shared-vocabulary stylesheet under `src/styles/` — `button`, `chip`,
+`file-row`, `modal`, `panel`, `segmented`, `source-row`, `sidebar-tree`, `spinner` — and **every component
+using that class imports the stylesheet**, never relying on a parent to import on its behalf. Vite dedupes
+repeated imports, so this costs nothing and keeps a component's import list an exhaustive list of what can
+style it. A file earns a place in `src/styles/` only by having multiple component users; that is a fact you
+can regenerate by grepping `className` across `src/`.
 
 `src/styles/tokens.css` is the only global stylesheet: the reset, `html/body/#root`, and the `:root` custom
-properties. It holds no class selector, and `main.tsx` imports it and nothing else. `.claude/lint.sh`
-enforces both, plus the absence of a root `index.css`.
+properties. It holds no class selector, and `main.tsx` imports it and the font weights and nothing else.
+`.claude/lint.sh` enforces both, plus the absence of a root `index.css`.
+
+### The token layer
+
+Every colour, size and spacing step in `src/**/*.css` resolves to a `tokens.css` custom property. The
+scales are:
+
+| Group     | Tokens                                                                                                                     |
+| --------- | -------------------------------------------------------------------------------------------------------------------------- |
+| surfaces  | `--bg` (app canvas), `--surface` (cards), `--surface-sunken` (a row mid-run)                                               |
+| text      | `--text` → `--text-4`, darkest to faintest                                                                                 |
+| lines     | `--line`, `--line-soft`, `--control-line` (input and button borders)                                                       |
+| primary   | `--ink` — the one filled button per page                                                                                   |
+| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-ink`, `--accent-on-dark`                                          |
+| status    | `--ok`/`--ok-soft`/`--ok-dot`, `--warn`/`--warn-soft`, `--danger`/`--danger-soft`, `--highlight`                           |
+| sidebar   | `--sidebar-bg`, `--sidebar-raise`, `--sidebar-line`, `--sidebar-fg`, `--sidebar-muted`, `--sidebar-dim`, `--sidebar-width` |
+| space     | `--space-1` 4px → `--space-8` 40px                                                                                         |
+| radius    | `--r-sm` 8px, `--r` 9px, `--r-lg` 12px, `--r-xl` 14px, `--r-pill`                                                          |
+| type      | `--font-ui`, `--font-mono`, `--fs-title` 26 → `--fs-fine` 11                                                               |
+| elevation | `--shadow-sm`, `--shadow-md` (toasts), `--shadow-lg` (modals)                                                              |
+
+The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
+and the accent appears as text, a border or a soft tint. `--accent-on-dark` is its counterpart on the
+sidebar, which is the only dark surface. The one hardcoded colour left in the app is the mat behind a PDF
+page (`PdfViewer.css`), which is deliberately outside the palette so the page reads as paper.
+
+Fonts are self-hosted through `@fontsource`, imported per weight from `main.tsx`, so the app renders
+correctly with no network. Heebo is Hebrew-first, so Hebrew and Latin share one ramp instead of falling
+back mid-string; JetBrains Mono carries filenames, counts and durations.
+
+### Shared primitives
+
+`.btn` plus `--primary` / `--ghost` / `--danger` is the whole button vocabulary; `.chip` plus its five
+colour variants is the whole state-label vocabulary. `StatusNode` renders the four run states (`done`,
+`running`, `pending`, `failed`) at one size, and is what the lecture pipeline, the course branches and
+their steps all read from. `ConfirmModal`, `ProgressBar` and the `.empty-state` card are the other
+cross-feature pieces. The react-toastify surface is skinned once in `services/toaster.css`, beside the only
+file that imports the library.
 
 **No cross-file rule may depend on source order.** Import order follows Vite's module graph and differs
 between dev (per-module `<style>` tags) and prod (one extracted, concatenated sheet), so two same-specificity
@@ -131,4 +168,4 @@ winning order, with a comment naming the dependency; that is why a few single-us
 stylesheet. Verify a suspected collision against the built bundle, not the dev server.
 
 Any user-supplied text (course, lecture, section, recording titles) renders with `dir="auto"` so Hebrew
-resolves RTL per element. Font stack is Noto Sans Hebrew with system fallbacks.
+resolves RTL per element.
