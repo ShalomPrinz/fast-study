@@ -6,6 +6,19 @@ export function formatDuration(seconds: number): string {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
+// Binary file size, one decimal above a kilobyte, e.g. "1.2 GB". Like `formatDuration` the unit
+// symbols are locale-neutral, so the string reads the same in any language.
+export function formatBytes(bytes: number): string {
+  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  let value = bytes
+  let unit = 0
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024
+    unit++
+  }
+  return `${unit === 0 ? value : value.toFixed(1)} ${units[unit]}`
+}
+
 // English ordinal; 11th–13th break the 1st/2nd/3rd rule and are special-cased.
 function ordinal(n: number): string {
   const mod100 = n % 100

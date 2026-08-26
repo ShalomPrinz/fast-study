@@ -5,18 +5,57 @@ import type { Step, FileName } from '@/types'
 // Labels are message descriptors, not strings: this table is module-level, so it is built once,
 // before a locale exists. Rendering sites resolve them against the active catalog.
 
+// `stageLabel` names the stage both pending and done; `runningLabel` replaces it only while the step
+// is in flight. There is deliberately no past-tense third form — a done row reuses `stageLabel`.
 export const PIPELINE: Array<{
   file: FileName
+  stageLabel: MessageDescriptor
   step?: Step
+  runningLabel?: MessageDescriptor
   actionLabel?: MessageDescriptor
   prereq?: FileName
 }> = [
-  { file: 'video.mp4' },
-  { file: 'audio.mp3', step: 'audio', actionLabel: msg`Extract Audio`, prereq: 'video.mp4' },
-  { file: 'transcript.txt', step: 'transcribe', actionLabel: msg`Transcribe`, prereq: 'audio.mp3' },
-  { file: 'summary.md', step: 'summarize', actionLabel: msg`Summarize`, prereq: 'transcript.txt' },
-  { file: 'summary.pdf', step: 'pdf', actionLabel: msg`Export PDF`, prereq: 'summary.md' },
-  { file: 'drive_url.txt', step: 'drive', actionLabel: msg`Upload to Drive`, prereq: 'summary.pdf' },
+  { file: 'video.mp4', stageLabel: msg`Video` },
+  {
+    file: 'audio.mp3',
+    stageLabel: msg`Audio`,
+    step: 'audio',
+    runningLabel: msg`Extracting audio`,
+    actionLabel: msg`Extract Audio`,
+    prereq: 'video.mp4',
+  },
+  {
+    file: 'transcript.txt',
+    stageLabel: msg`Transcript`,
+    step: 'transcribe',
+    runningLabel: msg`Transcribing`,
+    actionLabel: msg`Transcribe`,
+    prereq: 'audio.mp3',
+  },
+  {
+    file: 'summary.md',
+    stageLabel: msg`Summary`,
+    step: 'summarize',
+    runningLabel: msg`Summarizing`,
+    actionLabel: msg`Summarize`,
+    prereq: 'transcript.txt',
+  },
+  {
+    file: 'summary.pdf',
+    stageLabel: msg`PDF`,
+    step: 'pdf',
+    runningLabel: msg`Exporting PDF`,
+    actionLabel: msg`Export PDF`,
+    prereq: 'summary.md',
+  },
+  {
+    file: 'drive_url.txt',
+    stageLabel: msg`Drive`,
+    step: 'drive',
+    runningLabel: msg`Uploading to Drive`,
+    actionLabel: msg`Upload to Drive`,
+    prereq: 'summary.pdf',
+  },
 ]
 
 const STEP_FILE_MUT: Partial<Record<Step, FileName>> = {}

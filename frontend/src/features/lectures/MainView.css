@@ -1,34 +1,210 @@
-.file-name-wrap {
+.lecture-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-7) var(--space-8);
+}
+
+.lecture-column {
+  max-width: 660px;
+}
+
+/* Caption above a card: an uppercase label on the left, a count on the right. */
+.section-head {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+/* Keep below `.section-head`, whose margin it overrides at equal specificity. */
+.section-head--materials {
+  margin-top: var(--space-7);
+}
+
+.section-title {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.section-count {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Live state in the page header: a coloured dot plus one line of state. */
+.lecture-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+}
+
+.lecture-state-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.lecture-state--running {
+  color: var(--accent);
+}
+
+.lecture-state--done {
+  color: var(--ok);
+}
+
+/* One connected card, not six boxes: the stages share a border and are parted by inset rules. */
+.pipeline-card {
+  /* Row padding + the 22px status column + its gap — where the stage labels start, and so where
+     the dividers start too. */
+  --pipeline-inset: calc(var(--space-6) + 22px + var(--space-5));
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.pipeline-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6);
+}
+
+.pipeline-row + .pipeline-row::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--pipeline-inset);
+  inset-inline-end: 0;
+  height: 1px;
+  background: var(--line-soft);
+}
+
+/* Keep below `.pipeline-row`: it overrides that rule's align-items at equal specificity. */
+.pipeline-row--running {
+  align-items: flex-start;
+  background: var(--surface-sunken);
+}
+
+.pipeline-row-body {
+  flex: 1;
   min-width: 0;
 }
 
-.file-missing {
+/* A running row lays its body out as a grid so `ProgressBar`'s own ETA label can sit at the end of
+   the stage line while its track spans the full width beneath. */
+.pipeline-row--running .pipeline-row-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-4);
+}
+
+.pipeline-row--running .pipeline-file {
+  grid-column: 1 / -1;
+}
+
+.pipeline-stage-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pipeline-stage {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pipeline-stage--pending {
+  color: var(--text-2);
+}
+
+.pipeline-file {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.pipeline-missing {
   font-size: var(--fs-meta);
   color: var(--text-3);
   font-style: italic;
 }
 
-/* Materials are inputs to the summary, not pipeline outputs, so they get their own labelled list. */
-.material-list-title {
-  font-size: var(--fs-meta);
-  font-weight: 600;
-  color: var(--text-3);
-  margin-bottom: var(--space-2);
+.pipeline-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  color: var(--text-4);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
-.material-indicator-symbol {
+.pipeline-icon-btn:hover:not(:disabled) {
+  background: var(--line-soft);
+  color: var(--accent);
+}
+
+.pipeline-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* `ProgressBar` carries the class on its wrapper when it has an estimate and on the bare label when
+   it has none; `display: contents` lifts the track and label into the row grid in the first case. */
+.progress-wrap.pipeline-progress {
+  display: contents;
+}
+
+.pipeline-progress .progress-label,
+.progress-label.pipeline-progress {
+  grid-row: 1;
+  grid-column: 2;
+  margin-top: 0;
+  color: var(--accent);
   font-size: var(--fs-meta);
-  line-height: 1;
+  font-weight: 500;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.pipeline-progress .progress-track {
+  grid-column: 1 / -1;
+  margin-top: var(--space-3);
+}
+
+/* Keep below the rule above, which it overrides at equal specificity: the overflow message is a
+   whole sentence, far too long for the stage line, so it takes a full-width row of its own. */
+.pipeline-progress .progress-label--overflow {
+  grid-row: auto;
+  grid-column: 1 / -1;
+  margin-top: var(--space-2);
+  color: var(--warn);
+  text-align: start;
 }
 
 /* Five semantic states on one chip (the class string is built by materialIndicator()). Each
    outspecifies `.chip`'s own colours, which live in another file — never source order. */
 .chip.material-indicator--will-use {
   background: var(--accent-soft);
-  color: var(--accent);
+  color: var(--accent-ink);
 }
 .chip.material-indicator--used {
   background: var(--ok-soft);
@@ -48,10 +224,68 @@
   color: var(--text-3);
 }
 
+/* Materials are summarize inputs, not pipeline outputs, so they read as a row of removable chips
+   rather than as stages of their own. */
+.material-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Outlined rather than filled, so a material never reads as a state chip. Outspecifies `.chip`'s
+   own background and padding, which live in another file. */
+.chip.material-chip {
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--fs-meta);
+}
+
+/* Direct child only — the delete button holds an svg of its own. */
+.material-chip > svg {
+  color: var(--text-4);
+  flex-shrink: 0;
+}
+
+.material-chip-name {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.material-chip-name:hover {
+  color: var(--accent);
+}
+
+.material-chip-delete {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-4);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.material-chip-delete:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.material-chip-delete:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .lecture-error {
-  margin-top: var(--space-4);
+  margin-top: var(--space-6);
   padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--danger-soft);
+  border: 1px solid var(--danger);
   border-radius: var(--r-lg);
   background: var(--danger-soft);
   color: var(--danger);
@@ -67,7 +301,7 @@
 .rate-limit-panel {
   margin-top: var(--space-6);
   padding: var(--space-5) var(--space-6);
-  border: 1px solid var(--warn-soft);
+  border: 1px solid var(--warn);
   border-radius: var(--r-lg);
   background: var(--warn-soft);
   color: var(--text-2);

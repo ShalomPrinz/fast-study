@@ -4,13 +4,32 @@ The default sidebar mode plus the two lecture views (`MainView`, `EditSummaryVie
 
 ## Pipeline steps are declared once
 
-`constants/pipeline.ts` holds `PIPELINE` — the ordered `{ file, step, actionLabel, prereq }` chain
+`constants/pipeline.ts` holds `PIPELINE` — the ordered
+`{ file, stageLabel, step, runningLabel, actionLabel, prereq }` chain
 (video → audio → transcript → summary.md → summary.pdf → drive_url.txt) — and derives `STEP_FILE`,
 `STEP_INPUT_FILE`, `STEP_LABEL`, `STEP_ERROR_LABEL`, `STEP_SET` from it. Never hard-code a step name,
 its output file or its prerequisite anywhere else.
 
+Three label sets, all `msg` descriptors resolved at the render site: `stageLabel` names the stage
+(`Video`, `Audio`, `Transcript`, …) whether it is pending or done, `runningLabel` replaces it only while
+the step is in flight (`Extracting audio`, `Transcribing`, …), and `actionLabel` is the button that
+starts it. There is deliberately no past-tense fourth form — a done row reuses `stageLabel`.
+
 A step's button is enabled only when its prereq file exists and nothing is in flight for the lecture.
 `transcript.partial.txt` present but `transcript.txt` missing relabels the action "Continue transcription".
+
+## The lecture view
+
+`MainView` is a `PageHeader` band above one scrolling body. The header carries the course as eyebrow,
+the lecture name as title, a metadata row (running step or `Complete`, video size, material count),
+and the page's single primary button, `Run Remaining`, beside a `LectureActionsMenu` overflow holding
+the per-file actions — edit summary, open PDF, open in Drive — that no longer sit on their rows.
+
+Below it, `.pipeline-card` is **one** bordered card holding all six stages, parted by rules inset to
+clear the status column, not six boxes. Each row is a `StatusNode`, the stage name, and the raw
+filename plus size as a monospace subtitle; completion is carried by the node alone, never by tinting
+the row. The running row sits on `--surface-sunken`, swaps in `runningLabel`, and lays its body out as
+a grid so `ProgressBar`'s own ETA label lands at the end of the stage line with the track beneath.
 
 ## Rotate
 
@@ -22,16 +41,18 @@ per-step list.
 
 A lecture holds any number of materials — `material.pdf`, `material.2.pdf`, … — carried on the tree entry
 as `materials: {name, size, mtime}[]` beside `files` (always present, `[]` when none, index order). They
-are summarize inputs rather than pipeline outputs, so `MainView` lists them under their own "Materials"
-heading, each openable and deletable **by name** via the per-file routes. Deleting one never renames the
-others, so a held URL stays valid and the indices simply gain gaps.
+are summarize inputs rather than pipeline outputs, so `MainView` shows them as a row of outlined chips
+under their own "Materials" heading rather than as stages — the chip's name opens the file and its trash
+button deletes it, both **by name** via the per-file routes. Deleting one never renames the others, so a
+held URL stays valid and the indices simply gain gaps.
 
-`materialIndicator(materials, summaryExists, summaryMtime)` (pure, in `utils/`) drives the note next to
-`summary.md`. With no summary yet: `⚠ no material found`, or `will be used`. With a summary, each
-material's mtime is compared against it and the counts pick the state — all older → `was used` (📎, green),
-none older → `did not use any material` (⊘, grey; a lone material is named instead of counted), and in
-between → `summary used only N of M materials` (📎, amber). A partial miss keeps the 📎: the ⊘ overstates it.
-The copy names a single material and counts several throughout.
+`materialIndicator(materials, summaryExists, summaryMtime)` (pure, in `utils/`) drives the chip on the
+Summary row. With no summary yet: `no material found`, or `will be used`. With a summary, each material's
+mtime is compared against it and the counts pick the state — all older → `was used` (green), none older →
+`did not use any material` (grey; a lone material is named instead of counted), and in between →
+`summary used only N of M materials` (amber, milder than a total miss). The copy names a single material
+and counts several throughout. The chip carries the text and the colour; the `symbol` the function also
+returns is unrendered — the redesign dropped every emoji from this view.
 
 **mtime is a proxy for "was fed to the model", not a record of it.** Re-downloading an unchanged PDF bumps
 its mtime and so reads as unused, and the partial count inherits that fuzziness. Being exact would need the
@@ -61,7 +82,7 @@ re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs 
 `PdfWarningBadge` (shared — the course overview reuses it) renders the badge it is handed. For
 `summary.pdf` that badge is **one** of, chosen by `pdfBadge(files)`: a render warning
 (⚠) if there is one, else a stale marker (≠) when `summary.md` has a newer `mtime` than `summary.pdf`.
-The warning wins because it describes *this* PDF; staleness resurfaces on its own once it clears. It
+The warning wins because it describes _this_ PDF; staleness resurfaces on its own once it clears. It
 appears on the `summary.pdf` row in `MainView` and in the `EditSummaryView` toolbar, whose preview pane
 would otherwise show the outdated render with no hint.
 
@@ -104,6 +125,21 @@ while the file on disk is unchanged.
 `PdfViewer` captures scroll during the render phase before React commits the new URL (the old pages are
 still mounted, so `scrollTop` is the real position) and restores it from each page's `onRenderSuccess`;
 with no captured position it snaps to the right edge for RTL.
+
+## Sidebar
+
+`Sidebar` opens with the brand, then four nav rows — Lectures, Courses, Downloads, Search. Downloads
+and Search are routes; Lectures and Courses swap the tree body below and own that choice themselves,
+persisted under `localStorage['fastStudyMode']` (the key the segmented `ModeToggle` they replaced used,
+so an existing choice carried over). A route row outranks the tree rows for the active highlight.
+Downloads carries a badge counting running jobs, read off `DownloadJobsContext`. The footer holds
+`New course` and `LanguageSwitcher`; every glyph in the sidebar is inline SVG from `Icon`.
+
+`utils/lectureProgress.ts` feeds the tree's two progress signals: `isLectureComplete` (defined as
+`drive_url.txt` existing — the last pipeline output) gives each lecture row its leading dot, green when
+complete, accent while a step of it is in flight, hollow otherwise; `courseProgress` gives each course
+header its right-aligned `N/M`, lectures and recitations together, and returns `0/0` for an archived
+course so the badge stays off there.
 
 ## Sidebar tree
 

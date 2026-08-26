@@ -1,3 +1,33 @@
+/* The idle trigger: a dashed slot at the head of the tree, so it reads as an action the sidebar
+   offers rather than as one more tree row. */
+.runner-run-row {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--sidebar-line);
+}
+
+.runner-run-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  background: none;
+  border: 1px dashed var(--sidebar-line);
+  border-radius: var(--r-sm);
+  color: var(--sidebar-muted);
+  font: inherit;
+  font-size: var(--fs-meta);
+  text-align: start;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.runner-run-btn:hover {
+  background: var(--sidebar-raise);
+  color: var(--sidebar-fg);
+  border-color: var(--accent-on-dark);
+}
+
 .runner-panel {
   display: flex;
   flex-direction: column;

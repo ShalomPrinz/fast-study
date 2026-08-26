@@ -6,7 +6,9 @@ import { toast } from '@/services/toaster'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { findLecture } from '@/features/lectures/utils/courseTree'
+import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { usePendingUpload } from '@/features/lectures/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
@@ -19,6 +21,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const kind = useLectureListKind()
   const { selected, onSelect } = useSelection()
   const { courses, refreshCourses } = useCourseTreeContext()
+  const { isInFlight } = useRunnerStatus()
   const upload = usePendingUpload()
 
   const [renaming, setRenaming] = useState(false)
@@ -29,6 +32,9 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     selected?.course === course.name &&
     selected?.lecture === lecture.name &&
     selected?.kind === kind
+
+  const running = isInFlight(course.name, lecture.name, kind)
+  const dotState = isLectureComplete(lecture) ? 'done' : running ? 'running' : null
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()
@@ -94,7 +100,8 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
         onDrop={handleDrop}
         dir="auto"
       >
-        {lecture.name}
+        <span className={`lecture-dot${dotState ? ` lecture-dot--${dotState}` : ''}`} />
+        <span className="lecture-name">{lecture.name}</span>
       </button>
     </li>
   )

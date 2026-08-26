@@ -1,5 +1,4 @@
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import NewCourseRow from './NewCourseRow'
 import { PendingUploadProvider } from './PendingUploadModal'
 import RunnerPipelineRow from './RunnerPipelineRow'
 import CourseGroup from './tree/CourseGroup'
@@ -20,7 +19,6 @@ function LecturesSidebarBody() {
 
   return (
     <>
-      <NewCourseRow />
       <RunnerPipelineRow />
       <nav className="sidebar-nav">
         {active.map((c) => (

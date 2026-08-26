@@ -17,6 +17,14 @@
   gap: var(--space-5);
 }
 
+/* A `PageHeader` band pinned above a body that scrolls on its own, so the header stays put. */
+.main-view--page {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
 /* Nothing-to-show card: icon tile over a one-line title, dashed so it reads as a slot, not a panel. */
 .empty-state {
   width: 330px;

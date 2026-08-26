@@ -8,6 +8,7 @@ import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import Icon from '@/shared/components/Icon'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
+import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
@@ -23,6 +24,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
 
   const [renaming, setRenaming] = useState(false)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
+  const progress = courseProgress(course)
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()
@@ -77,7 +79,12 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           <span className="chevron">
             <Chevron open={expand.isOpen} />
           </span>
-          <span>{course.name}</span>
+          <span className="course-name">{course.name}</span>
+          {progress.total > 0 && (
+            <span className="course-count" title={t`Fully processed lectures`}>
+              {progress.complete}/{progress.total}
+            </span>
+          )}
         </button>
       )}
       {!renaming &&

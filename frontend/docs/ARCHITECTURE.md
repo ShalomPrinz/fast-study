@@ -67,8 +67,9 @@ fresher one.
 being a route segment. The static `course`/`downloads`/`search` segments outrank the dynamic
 `/:course/:lecture` pattern in v7 ranking, so they never collide.
 
-`/downloads` is reached from a plain nav link in the sidebar header, not a sidebar mode — clicking any
-sidebar mode navigates away from it, which is the intended "exit on sidebar click". Because that unmounts
+`/downloads` and `/search` are two of the sidebar's four nav rows, and the only two that are routes —
+Lectures and Courses swap the tree below without navigating. Clicking anything in that tree navigates
+away from `/downloads`, which is the intended "exit on sidebar click". Because that unmounts
 the view, `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
 and `RunnerStatusProvider`, so the page's discovery, edits, in-flight bulk runs and download jobs all outlive
 the route (see `DOWNLOADS.md`).
@@ -100,10 +101,13 @@ stored key falls back to that default. A mode either names a zero-prop `Componen
 `children(mode, selectMode)` when it needs the selected value rather than a body — `selectMode` lets the body
 switch segments itself, which is how the downloads passcode banner jumps to a stuck section.
 
-`Sidebar` uses the `Component` form with `Record<AppMode, …>` and key `fastStudyMode`; mode bodies take
-no props and each derives its own selection from the route. `DownloadsView` uses the `children` form
-with `Record<Media, …>` and key `fastStudyDownloadsMedia`, since it filters items by the selected media.
-`.mode-toggle--downloads` is a margins-only modifier over the shared `.mode-toggle` CSS.
+`DownloadsView` uses the `children` form with `Record<Media, …>` and key `fastStudyDownloadsMedia`,
+since it filters items by the selected media. `.mode-toggle--downloads` is a margins-only modifier over
+the shared `.mode-toggle` CSS; `LanguageSwitcher` reuses the same CSS without the component.
+
+`Sidebar` is the other `AppMode` holder, but not through `ModeToggle`: its Lectures and Courses nav
+rows own the mode themselves, still persisted under `fastStudyMode` so an existing choice survived the
+switch away from the segmented control.
 
 ## Styling
 

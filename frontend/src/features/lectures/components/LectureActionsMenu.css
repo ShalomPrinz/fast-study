@@ -1,0 +1,46 @@
+.actions-menu {
+  position: relative;
+}
+
+/* Square icon-only button, so it drops `.btn`'s text padding. Keeps `.btn--ghost`'s border and
+   hover, which is why it out-specifies neither — it only overrides padding and size. */
+.actions-menu-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: var(--r);
+  color: var(--text-2);
+}
+
+.actions-menu-list {
+  position: absolute;
+  z-index: 10;
+  inset-block-start: calc(100% + var(--space-1));
+  inset-inline-end: 0;
+  min-width: 190px;
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.actions-menu-item {
+  padding: var(--space-3) var(--space-4);
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-meta);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.actions-menu-item:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}

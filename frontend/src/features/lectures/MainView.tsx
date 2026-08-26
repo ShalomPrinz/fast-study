@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Fragment, useState, useEffect } from 'react'
+import type { ReactNode } from 'react'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { Step, FileName, MaterialInfo } from '@/types'
 import { deleteFile, deleteMaterial, fileUrl, materialUrl } from '@/services/database'
@@ -10,7 +11,7 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
-import { formatDuration } from '@/shared/utils/format'
+import { formatBytes, formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
@@ -18,16 +19,17 @@ import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import { lectureNotFound } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
+import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
+import LectureActionsMenu from './components/LectureActionsMenu'
+import type { LectureAction } from './components/LectureActionsMenu'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
-import '@/styles/file-row.css'
 import '@/styles/modal.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
-import '@/features/course-overview/components/GenerateAllButton.css'
 import './MainView.css'
 
 interface RotateTarget {
@@ -36,6 +38,7 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
+// The chip on the Summary row: how the lecture's materials relate to the summary it will produce.
 function MaterialIndicator({
   materials,
   summaryExists,
@@ -45,14 +48,9 @@ function MaterialIndicator({
   summaryExists: boolean
   summaryMtime: number | null
 }) {
-  const { symbol, text, cls } = materialIndicator(materials, summaryExists, summaryMtime)
+  const { text, cls } = materialIndicator(materials, summaryExists, summaryMtime)
 
-  return (
-    <span className={`chip material-indicator ${cls}`}>
-      <span className="material-indicator-symbol">{symbol}</span>
-      <span className="material-indicator-text">{text}</span>
-    </span>
-  )
+  return <span className={`chip material-indicator ${cls}`}>{text}</span>
 }
 
 function RateLimitPanel({
@@ -128,6 +126,9 @@ export default function MainView() {
   const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
 
   const summaryMtime = files['summary.md'].mtime
+  const stageCount = PIPELINE.length
+  const doneCount = PIPELINE.filter(({ file }) => files[file].exists).length
+  const videoSize = files['video.mp4'].exists ? files['video.mp4'].size : null
 
   async function handleStep(step: Step) {
     const initResult = await runStep(course, lecture, step, kind)
@@ -174,186 +175,216 @@ export default function MainView() {
     handleRotate(step, toDelete)
   }
 
+  function runningStateText(entry: (typeof PIPELINE)[number]): string {
+    const stage = t(entry.runningLabel ?? entry.stageLabel)
+    const stepNumber = PIPELINE.indexOf(entry) + 1
+    return t`${stage} · step ${stepNumber} of ${stageCount}`
+  }
+
+  // The header's state line covers the two states worth calling out — running, and finished. An
+  // idle half-done lecture says nothing here; the card's own caption already counts its stages.
+  const runningEntry = remote ? PIPELINE.find((p) => p.step === remote.step) : undefined
+  const stateItem = runningEntry ? (
+    <span className="lecture-state lecture-state--running">
+      <span className="lecture-state-dot" />
+      {runningStateText(runningEntry)}
+    </span>
+  ) : doneCount === stageCount ? (
+    <span className="lecture-state lecture-state--done">
+      <span className="lecture-state-dot" />
+      <Trans>Complete</Trans>
+    </span>
+  ) : null
+
+  const metaItems: ReactNode[] = [
+    stateItem,
+    videoSize !== null ? <span>{t`${formatBytes(videoSize)} video`}</span> : null,
+    materials.length > 0 ? (
+      <span>
+        <Plural value={materials.length} one="# material" other="# materials" />
+      </span>
+    ) : null,
+  ].filter((item) => item !== null)
+
+  const overflowActions: LectureAction[] = [
+    summaryExists && {
+      label: t`Edit summary`,
+      onClick: () => navigate({ pathname: 'edit', search: kindQuery(kind) }),
+    },
+    pdfExists && {
+      label: t`Open PDF in new tab`,
+      onClick: () => window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank'),
+    },
+    pdfUploaded && {
+      label: t`Open in Drive`,
+      onClick: () => window.open(files!['drive_url.txt'].url, '_blank'),
+    },
+  ].filter(Boolean) as LectureAction[]
+
   return (
-    <main className="main-view main-view--panel">
-      <div className="lecture-panel">
-        <h2 className="lecture-panel-title" dir="auto">
-          {lecture}
-        </h2>
+    <main className="main-view main-view--page">
+      <PageHeader
+        eyebrow={course}
+        title={lecture}
+        meta={metaItems.map((item, i) => (
+          <Fragment key={i}>
+            {i > 0 && <PageHeaderDot />}
+            {item}
+          </Fragment>
+        ))}
+        actions={
+          <>
+            <LectureActionsMenu actions={overflowActions} />
+            {hasActions && (
+              <button className="btn btn--primary" onClick={handleRunRemaining} disabled={inflight}>
+                <Trans>Run Remaining</Trans>
+              </button>
+            )}
+          </>
+        }
+      />
 
-        <div className="file-list">
-          {PIPELINE.map(({ file, step, actionLabel, prereq }) => {
-            const exists = files[file].exists
-            const isRunning = runningFile === file
-            const prereqMet = !prereq || files[prereq].exists
-            const isResumeTranscribe =
-              file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
-            const buttonLabel = isResumeTranscribe
-              ? t`Continue transcription`
-              : actionLabel && t(actionLabel)
+      <div className="lecture-body">
+        <div className="lecture-column">
+          <div className="section-head">
+            <h2 className="section-title">
+              <Trans>Pipeline</Trans>
+            </h2>
+            <span className="section-count">{t`${doneCount} of ${stageCount} complete`}</span>
+          </div>
 
-            return (
-              <div
-                key={file}
-                className={`file-row${exists ? ' file-row--present' : ''}${isRunning ? ' file-row--running' : ''}`}
-              >
-                <div className="file-row-header">
-                  <span className="file-name-wrap">
-                    <span className="file-name">{file}</span>
-                    {file === 'summary.md' && (
-                      <MaterialIndicator
-                        materials={materials}
-                        summaryExists={summaryExists}
-                        summaryMtime={summaryMtime}
+          <div className="pipeline-card">
+            {PIPELINE.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
+              const exists = files[file].exists
+              const isRunning = runningFile === file
+              const prereqMet = !prereq || files[prereq].exists
+              const isResumeTranscribe =
+                file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
+              const buttonLabel = isResumeTranscribe
+                ? t`Continue transcription`
+                : actionLabel && t(actionLabel)
+
+              const chunks = remote?.progress
+              const size = files[file].size
+              const subtitle =
+                isRunning && chunks
+                  ? t`${chunks.completed} of ${chunks.total} chunks`
+                  : exists && size !== null
+                    ? formatBytes(size)
+                    : null
+
+              return (
+                <div
+                  key={file}
+                  className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}`}
+                >
+                  <StatusNode state={exists ? 'done' : isRunning ? 'running' : 'pending'} />
+                  <div className="pipeline-row-body">
+                    <div className="pipeline-stage-line">
+                      <span
+                        className={`pipeline-stage${exists || isRunning ? '' : ' pipeline-stage--pending'}`}
+                      >
+                        {isRunning && runningLabel ? t(runningLabel) : t(stageLabel)}
+                      </span>
+                      {file === 'summary.md' && (
+                        <MaterialIndicator
+                          materials={materials}
+                          summaryExists={summaryExists}
+                          summaryMtime={summaryMtime}
+                        />
+                      )}
+                      {file === 'summary.pdf' && <PdfWarningBadge badge={pdfBadge(files)} />}
+                    </div>
+                    <p className="pipeline-file">
+                      {file}
+                      {subtitle && ` · ${subtitle}`}
+                    </p>
+                    {isRunning && remote && (
+                      <ProgressBar
+                        stats={remote.timingStats}
+                        startedAt={remote.startedAt}
+                        completedFraction={remote.completedFraction}
+                        className="pipeline-progress"
                       />
                     )}
-                  </span>
-                  <span className="file-row-right">
-                    <span className="file-slot file-slot--status">
-                      {exists ? (
-                        <StatusNode state="done" />
-                      ) : isRunning ? (
-                        <StatusNode state="running" />
-                      ) : step ? (
-                        <button
-                          className="btn btn--ghost"
-                          onClick={() => handleStep(step)}
-                          disabled={inflight || !prereqMet}
-                        >
-                          {buttonLabel}
-                        </button>
-                      ) : (
-                        <span className="file-missing">
-                          <Trans>not provided</Trans>
-                        </span>
-                      )}
-                    </span>
-                    {hasAnyStepFile && exists && step && (
-                      <span className="file-slot file-slot--rotate">
-                        <button
-                          className="file-rotate-btn"
-                          title={t`Rotate ${file}`}
-                          onClick={() => openRotateModal(file, step)}
-                          disabled={inflight}
-                        >
-                          ↺
-                        </button>
-                      </span>
-                    )}
-                    {file === 'summary.pdf' && <PdfWarningBadge badge={files && pdfBadge(files)} />}
-                    {((file === 'summary.pdf' && pdfExists) ||
-                      (file === 'summary.md' && summaryExists) ||
-                      (file === 'drive_url.txt' && pdfUploaded)) && (
-                      <span className="file-slot file-slot--open">
-                        {file === 'summary.pdf' && pdfExists && (
-                          <button
-                            className="file-open-btn"
-                            title={t`Open PDF in new tab`}
-                            onClick={() =>
-                              window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank')
-                            }
-                          >
-                            <Icon icon="external-link" />
-                          </button>
-                        )}
-                        {file === 'summary.md' && summaryExists && (
-                          <button
-                            className="file-open-btn"
-                            title={t`Edit summary`}
-                            onClick={() => navigate({ pathname: 'edit', search: kindQuery(kind) })}
-                          >
-                            <Icon icon="edit" />
-                          </button>
-                        )}
-                        {file === 'drive_url.txt' && exists && (
-                          <button
-                            className="file-open-btn"
-                            title={t`Open in Drive`}
-                            onClick={() => window.open(files['drive_url.txt'].url, '_blank')}
-                          >
-                            <Icon icon="external-link" />
-                          </button>
-                        )}
-                      </span>
-                    )}
-                  </span>
-                </div>
-                {isRunning && remote && (
-                  <ProgressBar
-                    stats={remote.timingStats}
-                    startedAt={remote.startedAt}
-                    completedFraction={remote.completedFraction}
-                  />
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {materials.length > 0 && (
-          <>
-            <h3 className="material-list-title">
-              <Trans>Materials</Trans>
-            </h3>
-            <div className="file-list material-list">
-              {materials.map((m) => (
-                <div key={m.name} className="file-row file-row--present">
-                  <div className="file-row-header">
-                    <span className="file-name-wrap">
-                      <span className="file-name">{m.name}</span>
-                    </span>
-                    <span className="file-row-right">
-                      <span className="file-slot file-slot--open">
-                        <button
-                          className="file-open-btn"
-                          title={t`Open material in new tab`}
-                          onClick={() =>
-                            window.open(materialUrl(course, lecture, m.name, kind), '_blank')
-                          }
-                        >
-                          <Icon icon="external-link" />
-                        </button>
-                      </span>
-                      <span className="file-slot file-slot--rotate">
-                        <button
-                          className="file-rotate-btn"
-                          title={t`Delete ${m.name}`}
-                          onClick={() => setMaterialToDelete(m.name)}
-                          disabled={inflight}
-                        >
-                          🗑
-                        </button>
-                      </span>
-                    </span>
                   </div>
+                  {exists && step && hasAnyStepFile && (
+                    <button
+                      className="pipeline-icon-btn"
+                      title={t`Rotate ${file}`}
+                      onClick={() => openRotateModal(file, step)}
+                      disabled={inflight}
+                    >
+                      <Icon icon="rotate" />
+                    </button>
+                  )}
+                  {!exists && !isRunning && step && (
+                    <button
+                      className="btn btn--ghost"
+                      onClick={() => handleStep(step)}
+                      disabled={inflight || !prereqMet}
+                    >
+                      {buttonLabel}
+                    </button>
+                  )}
+                  {!exists && !step && (
+                    <span className="pipeline-missing">
+                      <Trans>not provided</Trans>
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {hasActions && (
-          <button
-            className="btn btn--primary run-all-btn"
-            onClick={handleRunRemaining}
-            disabled={inflight}
-          >
-            <Trans>Run Remaining</Trans>
-          </button>
-        )}
-
-        {lectureError && (
-          <div className="lecture-error" role="alert">
-            <strong>
-              <Trans>Last error:</Trans>
-            </strong>{' '}
-            {lectureError}
+              )
+            })}
           </div>
-        )}
 
-        {remote?.sleepingUntil != null && (
-          <RateLimitPanel sleepingUntil={remote.sleepingUntil} progress={remote.progress} />
-        )}
+          {materials.length > 0 && (
+            <>
+              <div className="section-head section-head--materials">
+                <h2 className="section-title">
+                  <Trans>Materials</Trans>
+                </h2>
+              </div>
+              <div className="material-chips">
+                {materials.map((m) => (
+                  <span key={m.name} className="chip material-chip">
+                    <Icon icon="file" />
+                    <button
+                      className="material-chip-name"
+                      title={t`Open material in new tab`}
+                      onClick={() =>
+                        window.open(materialUrl(course, lecture, m.name, kind), '_blank')
+                      }
+                      dir="auto"
+                    >
+                      {m.name}
+                    </button>
+                    <button
+                      className="material-chip-delete"
+                      title={t`Delete ${m.name}`}
+                      onClick={() => setMaterialToDelete(m.name)}
+                      disabled={inflight}
+                    >
+                      <Icon icon="trash" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
+
+          {lectureError && (
+            <div className="lecture-error" role="alert">
+              <strong>
+                <Trans>Last error:</Trans>
+              </strong>{' '}
+              {lectureError}
+            </div>
+          )}
+
+          {remote?.sleepingUntil != null && (
+            <RateLimitPanel sleepingUntil={remote.sleepingUntil} progress={remote.progress} />
+          )}
+        </div>
       </div>
 
       {rotateTarget && (

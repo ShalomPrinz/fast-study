@@ -4,14 +4,15 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { formatClockTime } from '@/shared/utils/format'
 import { lectureRoute } from '@/shared/utils/url'
 import type { InFlightEntry } from '@/types'
-import '@/styles/sidebar-tree.css'
+import Icon from '@/shared/components/Icon'
 import './RunnerPipelineRow.css'
 
 function RunnerInactive({ onClick }: { onClick: () => void }) {
   return (
-    <div className="new-course-row">
-      <button className="new-course-btn" onClick={onClick}>
-        <Trans>⟳ Run incomplete pipelines</Trans>
+    <div className="runner-run-row">
+      <button className="runner-run-btn" onClick={onClick}>
+        <Icon icon="rotate" />
+        <Trans>Run incomplete pipelines</Trans>
       </button>
     </div>
   )

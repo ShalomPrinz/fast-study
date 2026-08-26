@@ -13,32 +13,6 @@
   color: var(--accent-on-dark);
 }
 
-.new-course-row {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--sidebar-line);
-}
-
-.new-course-btn {
-  display: block;
-  width: 100%;
-  padding: var(--space-3) var(--space-4);
-  background: none;
-  border: 1px dashed var(--sidebar-line);
-  border-radius: var(--r-sm);
-  color: var(--sidebar-muted);
-  font: inherit;
-  font-size: var(--fs-meta);
-  text-align: start;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.new-course-btn:hover {
-  background: var(--sidebar-raise);
-  color: var(--sidebar-fg);
-  border-color: var(--accent-on-dark);
-}
-
 .course-add-btn {
   flex-shrink: 0;
   width: 22px;
@@ -93,8 +67,56 @@
   padding-inline-start: var(--space-3);
 }
 
+.course-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Right-aligned `N/M` of fully-processed lectures, inside the course toggle. */
+.course-count {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  font-size: var(--fs-fine);
+  font-weight: 400;
+  color: var(--sidebar-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Where a lecture is up to, at a glance: filled green when its pipeline finished, accent while a
+   step of it is running, hollow otherwise. */
+.lecture-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--sidebar-dim);
+}
+
+/* Keep below `.lecture-dot`, whose border they replace at equal specificity. */
+.lecture-dot--done {
+  border-color: var(--ok-dot);
+  background: var(--ok-dot);
+}
+
+.lecture-dot--running {
+  border-color: var(--accent-on-dark);
+  background: var(--accent-on-dark);
+}
+
+.lecture-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .lecture-btn {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   width: calc(100% - var(--space-3));
   margin: 1px var(--space-1);
   padding: var(--space-2) var(--space-4);

@@ -4,7 +4,6 @@ import { createCourse } from '@/services/database'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
-import '@/styles/sidebar-tree.css'
 import './NewCourseRow.css'
 
 export default function NewCourseRow() {
@@ -39,7 +38,10 @@ export default function NewCourseRow() {
         />
       ) : (
         <button className="new-course-btn" onClick={() => setAddingCourse(true)}>
-          <Trans>+ New Course</Trans>
+          <span className="new-course-plus" aria-hidden="true">
+            +
+          </span>
+          <Trans>New course</Trans>
         </button>
       )}
     </div>
