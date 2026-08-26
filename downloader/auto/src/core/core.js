@@ -4,6 +4,7 @@ import { assertPluginfileReadable, pluginfileUrl } from '../moodle/wsClient.js';
 import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
 import { probeDriveFile } from '../extractors/GoogleDriveExtractor.js';
+import { probeUrl } from '../lib/probeUrl.js';
 import { UnsupportedError } from '../lib/errors.js';
 import { splitName } from '../lib/naming.js';
 import { cacheCap, getCap } from './replayCache.js';
@@ -63,7 +64,7 @@ export function listRecordings(sections) {
   const recordings = [];
   for (const activity of activities) {
     const extractor = resolveExtractor(activity);
-    if (!extractor) continue; // non-PDF resource/non-recording url/unknown → skip
+    if (!extractor) continue; // non-PDF resource / non-http url target / unknown modType → skip
     for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
   }
   return recordings;
@@ -200,6 +201,55 @@ export async function resolveDriveFile({
   if (!cap) {
     // yt-dlp resolves the /file/d/ page itself; /download-file needs the direct-download URL.
     cap = { url: media === 'video' ? recording.pageUrl : downloadUrl };
+    cacheCap(course, name, kind, media, cap, ref);
+  }
+  const tool = toolFor(recording.strategy, media);
+  return { targets: [toTarget({ name, cap, tool, fromCache })], media };
+}
+
+/**
+ * RESOLVE PATH (HTTP), no browser: any other off-site link. Mirrors resolveDriveFile — the media
+ * isn't known until it runs, so the probe (`probeUrl`) asks the host first and the target is
+ * built under whatever it turned out to be. Single target; the cap is just a `{url}`.
+ * `forceCapture` also re-runs the probe, the way back in for a link that only started working
+ * after the first attempt.
+ *
+ * An UNCERTAIN verdict (the host never answered, or answered as generic binary with no name) is a
+ * plain Error, not UnsupportedError: it becomes a 500 "try again" and the row stays clickable,
+ * where a 422 would grey the button out for the rest of the session over one bad moment.
+ * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
+ *           course: string, name: string, kind: string, ref?: string|null,
+ *           forceCapture?: boolean }} args
+ * @returns {Promise<{ targets: object[], media: 'video'|'material' }>} one download target,
+ *   plus what the link turned out to be.
+ */
+export async function resolveDirectUrl({
+  recording,
+  course,
+  name,
+  kind,
+  ref,
+  forceCapture = false,
+}) {
+  const url = recording.pageUrl;
+  const { media, filename, certain, reason } = await probeUrl(url, { force: forceCapture });
+  if (!media) {
+    if (!certain) throw new Error(`couldn't read what ${url} is — the host didn't answer usefully`);
+    if (reason === 'missing')
+      throw new UnsupportedError(
+        `${url} no longer exists — the host says the link is dead. Check the course page for a new one.`,
+      );
+    // A CDN path can name the file without an extension ('…/asset'), so slice only on a real dot —
+    // otherwise the message would invent one out of the last character.
+    const dot = filename ? filename.lastIndexOf('.') : -1;
+    const what =
+      dot > 0 ? `a ${filename.slice(dot + 1)} file, not a video` : 'a web page, not a file';
+    throw new UnsupportedError(`${url} is ${what}. Open it in a browser and download manually.`);
+  }
+  let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
+  const fromCache = Boolean(cap);
+  if (!cap) {
+    cap = { url };
     cacheCap(course, name, kind, media, cap, ref);
   }
   const tool = toolFor(recording.strategy, media);

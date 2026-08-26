@@ -28,10 +28,10 @@ function unsupported(host) {
 }
 
 /**
- * Moodle `url` module that links off-site. canHandle claims recording-keyword `url`
- * activities whose direct external target (contents[].fileurl) is a YouTube host —
- * the target host is known at list time with no fetch/redirect hop, so non-YouTube
- * links (Drive, GitHub, …) are simply not claimed rather than surfaced and rejected.
+ * Moodle `url` module that links off-site. canHandle claims `url` activities whose direct
+ * external target (contents[].fileurl) is a YouTube host — the host is known at list time
+ * with no fetch/redirect hop, so non-YouTube links (Drive, GitHub, …) fall to their own
+ * extractor rather than being surfaced here and rejected on expand.
  * The expand-time 422 in listEntries is now only a fallback (an echoed ref can still
  * reach the download path).
  */
@@ -42,20 +42,15 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a `url` module only when a recording keyword is present AND its direct
-   * external target is a YouTube host. Gating on the host here (known from
-   * contents[].fileurl, no fetch) keeps unrelated links (syllabus, reading) and
-   * non-YouTube recording sources (Drive, …) off the list instead of surfacing them
-   * and rejecting on expand. Unparseable target (safeHost → null) → not claimed.
+   * Claim a `url` module whose direct external target is a YouTube host (known from
+   * contents[].fileurl, no fetch). The host is what makes the row expandable; whether it looks
+   * like a lecture is `likelyRecording`'s job, a display hint rather than a reason to drop it.
+   * Unparseable target (safeHost → null) → not claimed.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
   canHandle(activity) {
-    return (
-      activity.modType === 'url' &&
-      isRecording(activity.sectionName, activity.title) &&
-      YOUTUBE_HOSTS.has(safeHost(activity.externalUrl))
-    );
+    return activity.modType === 'url' && YOUTUBE_HOSTS.has(safeHost(activity.externalUrl));
   }
 
   /**
@@ -72,6 +67,7 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
         kind: activity.kind,
         strategy: 'youtube-playlist',
         section: activity.sectionName,
+        likelyRecording: isRecording(activity.sectionName, activity.title),
       },
     ];
   }

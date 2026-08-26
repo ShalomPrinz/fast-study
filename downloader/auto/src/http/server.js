@@ -10,9 +10,11 @@ import {
   resolveMoodleFile,
   resolveYtDlp,
   resolveDriveFile,
+  resolveDirectUrl,
 } from '../core/core.js';
 import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
-import { getDriveMedia } from '../core/driveProbeCache.js';
+import { getProbedMedia } from '../core/probeCache.js';
+import { probeKeyForUrl } from '../lib/probeUrl.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
 import { UnsupportedError, PasscodeError } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
@@ -24,28 +26,38 @@ import {
   invalidToken,
 } from '../moodle/wsClient.js';
 
-// Which file a row lands as, decided with no network call: a Drive `url` module carries no
-// filename in the WS payload, so it is honestly 'unknown' until the download-time probe.
+// Strategies whose row type is only knowable from a download-time probe — the WS payload names
+// no file for an off-site link, so 'unknown' is the honest stamp until one runs.
+const PROBED = new Set(['google-drive', 'direct-url']);
+
+// Which file a row lands as, decided with no network call.
 function mediaOf(recording) {
   if (recording.strategy === 'moodle-file') return 'material';
-  return recording.strategy === 'google-drive' ? 'unknown' : 'video';
+  return PROBED.has(recording.strategy) ? 'unknown' : 'video';
+}
+
+// The cache key a row's own strategy probes under, or null for a strategy that never probes.
+function probeKeyOf(recording) {
+  if (recording.strategy === 'google-drive') return driveFileId(recording.pageUrl);
+  if (recording.strategy === 'direct-url') return probeKeyForUrl(recording.pageUrl);
+  return null;
 }
 
 // What an 'unknown' row was probed as this session, or undefined when never probed. The cache
-// keeps both unusable flavours (a real .zip, or a file Drive serves no name for) as media
+// keeps both unusable flavours (a real .zip, or a file the host serves no name for) as media
 // null — surfaced as 'unsupported'.
 function resolvedMediaOf(recording) {
-  if (recording.strategy !== 'google-drive') return undefined;
-  const fileId = driveFileId(recording.pageUrl);
-  if (!fileId) return undefined;
-  const media = getDriveMedia(fileId);
+  const key = probeKeyOf(recording);
+  if (!key) return undefined;
+  const media = getProbedMedia(key);
   if (media === undefined) return undefined;
   return media ?? 'unsupported';
 }
 
 // Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
 // unexpanded playlist (pageUrl, no url) is expandable, else downloadable. `media` says which
-// file lands on disk (video.mp4 vs a material PDF), never how it is fetched. See docs/BROWSING.md.
+// file lands on disk (video.mp4 vs a material PDF), never how it is fetched. `likelyRecording` is
+// the keyword HINT, never a gate — only a `url` module can carry a false. See docs/BROWSING.md.
 function toItem(recording) {
   const resolvedMedia = resolvedMediaOf(recording);
   return {
@@ -54,6 +66,7 @@ function toItem(recording) {
     kind: recording.kind,
     media: mediaOf(recording),
     ...(resolvedMedia ? { resolvedMedia } : {}),
+    likelyRecording: recording.likelyRecording !== false,
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
   };
@@ -211,6 +224,8 @@ export async function handleListExpand(req, res) {
       kind: recording.kind,
       strategy: recording.strategy,
       section: recording.section,
+      // A playlist's children inherit its verdict: a video title says nothing on its own.
+      likelyRecording: recording.likelyRecording,
     }),
   );
   logResult('/list/expand', `${items.length} items`);
@@ -290,6 +305,21 @@ async function resolveItem(req, res) {
   // as a video or as a material — it reports back which.
   if (recording.strategy === 'google-drive') {
     const { targets, media } = await resolveDriveFile({
+      recording,
+      course,
+      name,
+      kind,
+      ref: rowRef,
+      forceCapture: opts.forceCapture,
+    });
+    logResult('/resolve', `ok (${targets.length} target, ${media})`);
+    return send(res, 200, { media, targets });
+  }
+
+  // Any other off-site link is browserless too, and equally opaque until probed — same shape as
+  // the Drive branch, a different probe behind it.
+  if (recording.strategy === 'direct-url') {
+    const { targets, media } = await resolveDirectUrl({
       recording,
       course,
       name,

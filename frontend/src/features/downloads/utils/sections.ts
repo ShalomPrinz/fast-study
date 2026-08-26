@@ -4,6 +4,18 @@ import type { Item, Media } from '../services/autoDownloader'
 // Items whose Moodle heading is blank still need a home.
 export const OTHER_SECTION = 'Other'
 
+// The synthetic bucket holding every row the keyword hint says is not a lecture recording. Not a
+// Moodle heading — a real one spelled the same is a different section, told apart by `synthetic`.
+export const OTHER_LINKS_SECTION = 'Other Links'
+
+// One rendered group of rows. `synthetic` marks the leftover pile: it spans every heading in the
+// course, so it is not a section the server can run and it carries no localized Moodle title.
+export interface Section {
+  title: string
+  items: Item[]
+  synthetic: boolean
+}
+
 // A section heading for display. The sentinel is a run key, so it is translated here at render time
 // and never at its definition — translating it there would make every run key locale-dependent.
 export function sectionTitle(title: string): string {
@@ -31,15 +43,29 @@ export function parseSectionId(id: string): { course: string; media: Media; titl
 }
 
 // The active media's items, grouped by Moodle heading in first-seen order — so a section with
-// nothing on this side is absent rather than empty.
-export function groupSections(items: Item[], media: Media): [string, Item[]][] {
+// nothing on this side is absent rather than empty. A row the keyword hint says is not a recording
+// (a random course YouTube link, a syllabus PDF) is pulled out of its heading into the synthetic
+// bucket last — visible, but out of the lecture sections, and out of any bulk run: only a `url`
+// module can carry the false, and those are exactly the rows listing now claims on the URL alone.
+export function groupSections(items: Item[], media: Media): Section[] {
   const map = new Map<string, Item[]>()
+  const strays: Item[] = []
   for (const item of items) {
     if (item.media !== media) continue
+    if (item.likelyRecording === false) {
+      strays.push(item)
+      continue
+    }
     const key = item.section || OTHER_SECTION
     const bucket = map.get(key)
     if (bucket) bucket.push(item)
     else map.set(key, [item])
   }
-  return [...map]
+  const sections = [...map].map(([title, sectionItems]) => ({
+    title,
+    items: sectionItems,
+    synthetic: false,
+  }))
+  if (strays.length) sections.push({ title: OTHER_LINKS_SECTION, items: strays, synthetic: true })
+  return sections
 }

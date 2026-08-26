@@ -39,14 +39,18 @@ function publish(snapshot: SectionRun[]) {
 // Guard only — the runs themselves come from the module store, not from the context value.
 const SectionRunsContext = createContext(false)
 
-// One section's run, or null while it has never run. `null` is a stable snapshot identity, which is
-// what lets a section with no run bail out of every ping.
-export function useSectionRun(sectionId: string): SectionRun | null {
+// One section's run, or null while it has never run — and always null for a section with no id, the
+// synthetic bucket that starts none. `null` is a stable snapshot identity, which is what lets a
+// section with no run bail out of every ping.
+export function useSectionRun(sectionId: string | null): SectionRun | null {
   if (!useContext(SectionRunsContext))
     throw new Error('useSectionRun must be used inside <SectionRunsProvider>')
   return useSyncExternalStore(
     subscribe,
-    useCallback(() => runsBySection.get(sectionId) ?? null, [sectionId]),
+    useCallback(
+      () => (sectionId === null ? null : (runsBySection.get(sectionId) ?? null)),
+      [sectionId],
+    ),
   )
 }
 

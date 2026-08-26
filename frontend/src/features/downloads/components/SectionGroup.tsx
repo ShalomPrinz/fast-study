@@ -42,8 +42,10 @@ import '@/styles/source-row.css'
 import './SectionGroup.css'
 
 interface Props {
-  // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run.
-  section: { id: string; title: string }
+  // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run —
+  // null for the synthetic `Other links` pile, which has no run and no bulk button.
+  // `synthetic` marks that pile, whose title is ours rather than Moodle's.
+  section: { id: string | null; title: string; synthetic: boolean }
   items: Item[]
   course: string
   onReconnect: () => void
@@ -67,6 +69,10 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   // they are all expanded. The rows themselves subscribe per ref.
   const expansions = useAllExpansions()
   const id = section.id
+  // The synthetic bucket's title is a label we mint, so it is translated here; a Moodle heading
+  // spelled the same is a real section and passes through untouched. Media-neutral wording: the
+  // bucket holds stray videos on one segment and stray unknown links on another.
+  const label = section.synthetic ? t`Other links` : sectionTitle(section.title)
   const run = useSectionRun(id)
   // The passcode save's own in-flight state — the only thing about a run this component still owns.
   // A double submit is the server's to reject (409 on a run that is no longer parked).
@@ -131,13 +137,14 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   }
 
   async function startAll() {
+    if (!id) return
     const targets = buildTargets()
     if (!targets.length) return
     try {
       const renames = await startSectionRun({ sectionId: id, course, targets })
       applyRenames(renames, targets, setName)
     } catch (err) {
-      toastDownloadError(sectionTitle(section.title), err)
+      toastDownloadError(label, err)
     }
   }
 
@@ -179,7 +186,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     try {
       await cancelRun(run.id)
     } catch (err) {
-      toastDownloadError(sectionTitle(section.title), err)
+      toastDownloadError(label, err)
     }
   }
 
@@ -208,7 +215,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     <div className="recordings-section">
       <div className="recordings-section-header">
         <span className="recordings-section-title" dir="auto">
-          {sectionTitle(section.title)}
+          {label}
         </span>
         {queueing && run && (
           <span className="recordings-section-progress">
@@ -227,14 +234,16 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
             {summarize(targets, courses, course, jobsByRef)}
           </span>
         )}
-        <button
-          className="source-row-btn recordings-download-all"
-          onClick={() => void startAll()}
-          disabled={busy || !allExpanded}
-          title={allExpanded ? undefined : t`Expand every playlist in this section first`}
-        >
-          {busy ? t`Downloading…` : t`⭳ Download all`}
-        </button>
+        {id !== null && (
+          <button
+            className="source-row-btn recordings-download-all"
+            onClick={() => void startAll()}
+            disabled={busy || !allExpanded}
+            title={allExpanded ? undefined : t`Expand every playlist in this section first`}
+          >
+            {busy ? t`Downloading…` : t`⭳ Download all`}
+          </button>
+        )}
       </div>
 
       {notStarted > 0 && (

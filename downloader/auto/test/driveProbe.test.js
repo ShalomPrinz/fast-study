@@ -1,16 +1,15 @@
-// The pure halves of the Drive filename probe: URL → file id, response → filename,
-// filename → media. The fetch itself is exercised against the real endpoint, not here.
+// The pure halves of the Drive filename probe: URL → file id, response → filename.
+// The fetch itself is exercised against the real endpoint, not here.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   driveFileId,
   driveDownloadUrl,
-  filenameFromDisposition,
   filenameFromHtml,
-  classifyDriveFilename,
   probeDriveFile,
 } from '../src/extractors/GoogleDriveExtractor.js';
-import { getDriveMedia } from '../src/core/driveProbeCache.js';
+import { filenameFromDisposition } from '../src/lib/fileMedia.js';
+import { getProbedMedia } from '../src/core/probeCache.js';
 
 const ID = '1AbCdEf-GhIjKlMnOpQrStUvWxYz';
 
@@ -61,14 +60,6 @@ test('a sign-in / error page yields no filename', () => {
   assert.equal(filenameFromHtml(''), null);
 });
 
-test('extension classification', () => {
-  for (const name of ['a.mp4', 'a.MKV', 'a.mov', 'a.webm', 'a.m4v', 'a.avi'])
-    assert.equal(classifyDriveFilename(name), 'video', name);
-  assert.equal(classifyDriveFilename('handout.pdf'), 'material');
-  for (const name of ['L1.zip', 'slides.pptx', 'notes', 'code.tar.gz', null])
-    assert.equal(classifyDriveFilename(name), null, String(name));
-});
-
 // Stand in for Drive over the probe's whole request chain: `disposition` null + empty bodies is
 // the unshared file. Returns the call counter so a test can assert a cache hit did no I/O.
 function stubFetch(disposition) {
@@ -96,7 +87,7 @@ test('an unshared file is memoized and re-thrown from cache with no request', as
 
   await assert.rejects(probeDriveFile(url), /not publicly shared.*unshared-file-id/s);
   assert.ok(calls.n > 0);
-  assert.equal(getDriveMedia(id), null); // /list stamps this row 'unsupported'
+  assert.equal(getProbedMedia(id), null); // /list stamps this row 'unsupported'
 
   const before = calls.n;
   await assert.rejects(probeDriveFile(url), /not publicly shared.*unshared-file-id/s);
@@ -134,5 +125,5 @@ test('a forced probe ignores a cached unshared verdict', async (t) => {
   const probe = await probeDriveFile(url, { force: true });
   assert.equal(probe.filename, 'Lecture 1.mp4');
   assert.equal(probe.media, 'video');
-  assert.equal(getDriveMedia(id), 'video');
+  assert.equal(getProbedMedia(id), 'video');
 });

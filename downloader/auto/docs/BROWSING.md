@@ -22,31 +22,37 @@ cards, so the module parser never sees them.
 WS `section.name` / `module.name` are HTML strings (Moodle wraps subsection headings in
 `<span class="course-mod_subsection">…</span>`), so both parsers flatten them through
 `stripTags` (`lib/html.js`) before they become `sectionName`/`title` — the frontend renders
-those as text, and the keyword gate matches over them.
+those as text, and the `isRecording` hint matches over them.
 
-## Keyword gating
+## Every `url` module is listed
 
-`isRecording(sectionName, title)` matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading. **Only the `url` extractors are gated**, and each is gated twice: a recording keyword AND a target check. A Moodle `url` module is an opaque off-site link — a YouTube playlist or a Drive video, but equally a syllabus, reading, Google Doc, or Drive folder — but its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so the target check is a pure function of the URL:
+A Moodle `url` module is an opaque off-site link — a YouTube playlist or a Drive video, but equally a syllabus, reading, Google Doc, or Drive folder. Its external target (`contents[0].fileurl`) is known at list time with no fetch/redirect hop, so **the target URL is the only thing routing reads**; nothing is dropped for what its title says:
 
 - `YoutubePlaylistExtractor` — `YOUTUBE_HOSTS.has(safeHost(externalUrl))`.
-- `GoogleDriveExtractor` — a Drive host (`drive.google.com`/`docs.google.com`) **and** a single-file path (`/file/d/<id>/…`, `/open?id=`, `/uc?id=`). The path half carries real weight: a Google Doc titled `…לתרגילים` passes the keyword gate, and only the path check keeps it unclaimed. Folder links (`/drive/folders/<id>`) are likewise unclaimed.
+- `GoogleDriveExtractor` — a Drive host (`drive.google.com`/`docs.google.com`) **and** a single-file path (`/file/d/<id>/…`, `/open?id=`, `/uc?id=`).
+- `DirectUrlExtractor` — the catch-all, registered **last** in `EXTRACTORS`: any absolute `http(s)` target the two above didn't claim, including a Drive _folder_ link. It lists the row as `'unknown'` and lets the download-time probe answer.
 
-Any other target (GitHub, unparseable) is not claimed at all — skipped like a syllabus link — rather than surfaced and rejected on expand. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
+A non-`http(s)` target (`mailto:`, a relative path, junk) is claimed by nobody and skipped. `videostream` (in-site video, matched by module type) and `zoom` (synthetic, minted only from a real `zoom.us/rec/share` link) are already unambiguous.
+
+There is **no keyword gate**. `isRecording(sectionName, title)` still matches `RECORDING_KEYWORDS` (הקלטות/הרצאות/תרגולים/… /recording/lecture, case-insensitively) over the activity title AND its section heading, but it now only rides along as the `likelyRecording` hint on the `Item`: a keyword is a guess about content made from a title, so a Drive video called `L4` used to vanish while `L1.zip` in a recordings section got through. The frontend uses a false to group the row under a synthetic "Other links" heading — on every segment, since a stray link lists as `unknown` until it is probed — which keeps it out of the lecture sections without hiding it.
+
+Adding a share-page extractor later (Dropbox `?dl=1`, OneDrive `?download=1`, a Docs export) means registering it **before** `DirectUrlExtractor` and giving it its own resolve branch; until then those pages probe as `text/html` and grey in place as unsupported.
 
 ## Mimetype gating (`resource` files)
 
-`MoodleFileExtractor` claims a `resource` activity on `mimetype === 'application/pdf'` alone — deliberately **not** keyword-gated like the `url` extractors. A mimetype is exact where a keyword is a guess, and the two error directions are not symmetric: a listed grade-sheet PDF costs one ignored row, a missed slide deck costs the material. Non-PDF resource files (docx, zip) stay unclaimed.
+`MoodleFileExtractor` claims a `resource` activity on `mimetype === 'application/pdf'` alone. A mimetype is exact where a keyword is a guess, and the two error directions are not symmetric: a listed grade-sheet PDF costs one ignored row, a missed slide deck costs the material. Non-PDF resource files (docx, zip) stay unclaimed.
 
 ## Video vs material
 
 Every strategy but `moodle-file` and `google-drive` resolves a video that lands as the lecture's `video.mp4`; `moodle-file` resolves a PDF that lands as one of its materials — the same slot the Chrome extension uploads to manually; a `google-drive` link could be either, and only the download-time probe knows which. Only `kind` (`lecture`/`recitation`) picks the folder; the media type picks the `tool` each resolved target names (`fetch` vs `curl`/`ytdlp`), and the database names the file. A second PDF into one lecture appends (`material.2.pdf`) rather than overwriting.
 
-## Four resolve entry points
+## Five resolve entry points
 
 `core/core.js` exports one function per resolve shape, and `/resolve` picks between them in the
 strategy branching it already does: `resolveRecording(page, …)` (the browser-capture dispatcher —
-`videostream`, `zoom`), `resolveMoodleFile(…)`, `resolveYtDlp(…)` and `resolveDriveFile(…)`. The
-split is by *needs a browser*, not by strategy count: a browserless strategy has no page to carry
+`videostream`, `zoom`), `resolveMoodleFile(…)`, `resolveYtDlp(…)`, `resolveDriveFile(…)` and
+`resolveDirectUrl(…)`. The
+split is by _needs a browser_, not by strategy count: a browserless strategy has no page to carry
 its credential, so it must take one explicitly (`resolveMoodleFile`'s required `wstoken`). The
 browserless three each resolve exactly one target, so `only` (a zoom-split notion) doesn't apply to
 them; all four share the replay cache and stamp `fromCache` on what they return.
@@ -58,14 +64,14 @@ plain tokened URL). `server/` creates and owns the job per target; this service 
 
 ## Mechanism-agnostic Item / ref contract
 
-The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, resolvedMedia?, expandable, section }`. `media` is `'video'`, `'material'` or `'unknown'` — which file lands on disk, never how it is fetched, so it stays mechanism-agnostic; a `material` item is never `expandable`. Every `google-drive` row is `'unknown'`: the WS payload carries no filename and `/list` never probes, so that is the honest stamp. `resolvedMedia` is the optional sibling saying what a row was actually probed as this session (`'video'`, `'material'`, or `'unsupported'` for a real file this service can't use); it is absent for a row never probed and for every non-Drive row, and a resolved row keeps its original `media` rather than moving segments. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `section` is display metadata — the Moodle course section heading (`section.name`) the item lives under, a sibling field the frontend groups by (never parsed out of `ref`); `''` when the section is unnamed. Expanded playlist children inherit their parent's `section`. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
+The frontend never sees the download mechanism. `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording }`. `media` is `'video'`, `'material'` or `'unknown'` — which file lands on disk, never how it is fetched, so it stays mechanism-agnostic; a `material` item is never `expandable`. Every `google-drive` and `direct-url` row is `'unknown'`: the WS payload carries no filename and `/list` never probes, so that is the honest stamp. `resolvedMedia` is the optional sibling saying what a row was actually probed as this session (`'video'`, `'material'`, or `'unsupported'` for a real file this service can't use); it is absent for a row never probed and for every unprobed strategy, and a resolved row keeps its original `media` rather than moving segments. `ref` opaquely encodes the internal `Recording` (base64url JSON, `src/lib/ref.js`) — stateless, no server-side map; the frontend round-trips it and never parses it. `section` is display metadata — the Moodle course section heading (`section.name`) the item lives under, a sibling field the frontend groups by (never parsed out of `ref`); `''` when the section is unnamed. Expanded playlist children inherit their parent's `section`. `likelyRecording` is the `isRecording` keyword hint (heading + title) carried as display metadata, never a gate: it is `false` only for a `url` module that reads like a stray course link, and the frontend uses it to group such a row under a synthetic "Other links" heading in whichever segment it lists on. Every non-`url` strategy is `true` — a `videostream` module or a zoom share is unambiguously a recording — and a playlist's expanded children inherit the parent's verdict, since a single video title says nothing on its own. `strategy`/`pageUrl`/`videostream`/`youtube`/`playlist`/`zoom`/`passcode` must never appear in a response.
 
 ## Lazy expansion
 
 An unexpanded playlist (`url` module) lists as ONE `expandable` item. Its `pageUrl` is the
 module's **direct external target** (`contents[0].fileurl`) — no redirect hop. `/list/expand`
 runs `yt-dlp --flat-playlist` straight on that URL. Non-YouTube targets are already filtered at
-list time by `canHandle` (see Keyword gating), so the YouTube-host check in `listEntries` is now
+list time by `canHandle` (see above), so the YouTube-host check in `listEntries` is now
 a fallback: an echoed ref can still reach expand/download, and a non-YouTube (or unparseable)
 host there is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500
 "try again"); the same mapping applies on `/resolve`.
@@ -81,19 +87,53 @@ file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallback
 is a fact about the file, unlike yt-dlp's stderr wording. A file that isn't shared "anyone with
 the link" (or was removed) yields no name at all and is the same 422, naming Drive sharing and
 the URL. `server/`'s download job is fire-and-forget once started, which is why all of this is decided here.
-Every verdict is memoized per Drive **file id** for the session (`src/core/driveProbeCache.js`) —
+Every verdict is memoized per Drive **file id** for the session (`src/core/probeCache.js`) —
 the unshared one included, stored as `reason:'unshared'` so a repeat attempt 422s with the same
 accurate message instead of re-paying the probe; `forceCapture` re-probes it, the way back in once
 the owner shares the file. `/resolve` echoes the resolved `media` back. `/list` never probes — it costs an
 HTTP round-trip per row — but it reads that cache to stamp `resolvedMedia` on rows already probed,
 so the resolved type survives a re-list.
 
+A `direct-url` item is not expandable either, and resolves the same shape as a Drive one with a
+generic probe behind it (`src/lib/probeUrl.js`, no browser). It always asks the host — one
+header-only round trip, `HEAD` with a ranged one-byte `GET` fallback for hosts that reject HEAD,
+following redirects — and weighs three pieces of evidence from that one response, strongest first:
+
+1. the `Content-Disposition` filename — the host explicitly naming the file. It beats the type:
+   `L1.zip` under a sloppy `Content-Type: video/mp4` is still a definite no, and pointing yt-dlp at
+   an archive would be the alternative.
+2. `Content-Type` — `text/html` is a definite no (a login wall, a share page, a syllabus doc).
+3. the URL's own filename (`…/lecture3.mp4`), as a **fallback only**. It is a guess about a string:
+   an SSO-walled `…/syllabus.pdf` answers `200 text/html` with the login page, and `server/`'s
+   `curl -L --fail` would happily save that HTML as the lecture's material. The type above vetoes
+   the guess, which is why the URL is never read first.
+
+All of it routes through the one extension table `classifyFilename` owns (`src/lib/fileMedia.js`),
+so a Drive link and a plain URL can never disagree about what a `.mp4` is. `probeUrl` never throws.
+
+A verdict about the link — usable, or definitely not — is **certain**: `/resolve` answers
+`422 {status:'unsupported'}` naming what the link turned out to be, and the row greys in place. A
+`404`/`410` counts as certain even behind a `…/lecture.mp4` path (`reason: 'missing'`, a 422 saying
+the link is dead): the host was asked, and its answer is that there is nothing there.
+
+A verdict is **uncertain** when the probe learned nothing rather than learning the link is unusable
+— nothing answered at all (offline, DNS, TLS, or the 15s timeout each request carries, since Node's
+`fetch` has none and `server/` walks a section queue one row at a time), the host refused in a way
+that can pass later (a `403` login wall, a `429`, a `5xx`), or it answered as generic binary
+(`application/octet-stream`) with nothing naming the file. That is a plain `500` "try again", never
+a 422, and it is **not cached**: a 422 disables the row's download button for the rest of the
+session, which must not be the price of one bad moment on the network.
+
+Certain verdicts memoize under the normalized URL in the same `src/core/probeCache.js` the Drive
+probe uses — it is keyed by an opaque **probe key**, the Drive file id on one side and the URL on the
+other — so a second attempt on an unsupported row costs no round-trip, and `forceCapture` re-probes.
+
 A `moodle-file` item is likewise not expandable and skips the browser: `/resolve` resolves the
 university from the ref's `fileurl`, appends the WS token via `pluginfileUrl` (pluginfile authenticates
 by query-string token, and `fileurl` may already carry `?forcedownload=1`), and returns that URL as a
 `fetch` target. Going through a tracked job rather than a blocking fetch buys the PDF the
 same progress/retry/`ref`-grouping as a video. A missing token is `401 {status:'reconnect'}`, same as
-`/list`. A *dead* one needs a one-byte preflight (`assertPluginfileReadable`) because pluginfile answers
+`/list`. A _dead_ one needs a one-byte preflight (`assertPluginfileReadable`) because pluginfile answers
 it with **HTTP 200 + Moodle's JSON exception body**, never a 403: unchecked, `server/`'s fire-and-forget
 job saves that blob as a material and reports success. The preflight turns it back into
 `invalidtoken` → `markExpired` + reconnect. The resolved `{url}` cap is cached like any other, so a retry

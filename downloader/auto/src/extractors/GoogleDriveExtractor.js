@@ -1,7 +1,8 @@
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
-import { cacheDriveMedia, getDriveProbe } from '../core/driveProbeCache.js';
+import { cacheProbe, getProbe } from '../core/probeCache.js';
+import { NAMED_FILE, classifyFilename, filenameFromDisposition } from '../lib/fileMedia.js';
 
 // Hosts that serve Google Drive file links. Anything else isn't Drive.
 const DRIVE_HOSTS = new Set(['drive.google.com', 'docs.google.com']);
@@ -43,29 +44,6 @@ export function driveDownloadUrl(fileId) {
   return `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`;
 }
 
-// A name only counts as resolved when it carries an extension: that is what the routing
-// reads, and it also rejects the page titles Drive serves instead ("Sign in", "Virus scan
-// warning") when the file isn't readable anonymously.
-const NAMED_FILE = /^(.+)\.([A-Za-z0-9]{1,5})$/;
-
-/**
- * Filename out of a `Content-Disposition` header, or null. Handles both the plain
- * `filename="L1.zip"` and the RFC 5987 `filename*=UTF-8''L1.zip` Drive sends for non-ASCII names.
- * @param {string|null|undefined} header
- * @returns {string|null}
- */
-export function filenameFromDisposition(header) {
-  if (!header) return null;
-  const ext = /filename\*=\s*[^']*''([^;]+)/i.exec(header);
-  if (ext) {
-    const decoded = decodeURIComponent(ext[1].trim());
-    if (NAMED_FILE.test(decoded)) return decoded;
-  }
-  const plain = /filename\s*=\s*"([^"]+)"|filename\s*=\s*([^;]+)/i.exec(header);
-  const name = (plain?.[1] ?? plain?.[2] ?? '').trim();
-  return NAMED_FILE.test(name) ? name : null;
-}
-
 /**
  * Filename out of a Drive HTML page, or null: the confirm interstitial a large file answers
  * with names it in `uc-name-size`/the virus-scan sentence, and `/view` puts it in the `<title>`.
@@ -84,22 +62,6 @@ export function filenameFromHtml(html) {
     if (name && NAMED_FILE.test(name)) return name;
   }
   return null;
-}
-
-// Containers yt-dlp actually produces here; anything else it cannot turn into video.mp4.
-const VIDEO_EXTENSIONS = new Set(['mp4', 'mkv', 'mov', 'webm', 'm4v', 'avi']);
-
-/**
- * Which file a Drive filename would land as: 'video' (yt-dlp), 'material' (a lecture PDF),
- * or null for anything this service can't use (archives, slides decks, …).
- * @param {string|null} filename
- * @returns {'video'|'material'|null}
- */
-export function classifyDriveFilename(filename) {
-  const ext = NAMED_FILE.exec(String(filename ?? ''))?.[2]?.toLowerCase();
-  if (!ext) return null;
-  if (VIDEO_EXTENSIONS.has(ext)) return 'video';
-  return ext === 'pdf' ? 'material' : null;
 }
 
 // Ask Drive for the file's real name without an API key. The direct-download URL answers a
@@ -142,7 +104,7 @@ export async function probeDriveFile(url, { force = false } = {}) {
   if (!fileId) throw new UnsupportedError(`not a Google Drive file link: ${url}`);
   const downloadUrl = driveDownloadUrl(fileId);
 
-  const cached = force ? undefined : getDriveProbe(fileId);
+  const cached = force ? undefined : getProbe(fileId);
   if (cached) {
     if (cached.reason === 'unshared') throw unsharedError(url);
     return { fileId, filename: cached.filename, media: cached.media, downloadUrl };
@@ -150,11 +112,11 @@ export async function probeDriveFile(url, { force = false } = {}) {
 
   const filename = await fetchDriveFilename(fileId);
   if (!filename) {
-    cacheDriveMedia(fileId, null, null, 'unshared');
+    cacheProbe(fileId, null, null, 'unshared');
     throw unsharedError(url);
   }
-  const media = classifyDriveFilename(filename);
-  cacheDriveMedia(fileId, media, filename);
+  const media = classifyFilename(filename);
+  cacheProbe(fileId, media, filename);
   return { fileId, filename, media, downloadUrl };
 }
 
@@ -172,18 +134,14 @@ export class GoogleDriveExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a `url` module only when a recording keyword is present AND its direct
-   * external target is a single Drive file. Both gates are needed: a Google Doc titled
-   * "…לתרגילים" passes the keyword gate, and only the single-file path check rejects it.
+   * Claim a `url` module whose direct external target is a single Drive file. The target is a
+   * fact about the URL; what the file IS stays unknown until the download-time probe, and the
+   * row lists as Unknown until then rather than being dropped on a title's say-so.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */
   canHandle(activity) {
-    return (
-      activity.modType === 'url' &&
-      isRecording(activity.sectionName, activity.title) &&
-      isDriveFileUrl(activity.externalUrl)
-    );
+    return activity.modType === 'url' && isDriveFileUrl(activity.externalUrl);
   }
 
   /**
@@ -199,6 +157,7 @@ export class GoogleDriveExtractor extends VideoExtractor {
         kind: activity.kind,
         strategy: 'google-drive',
         section: activity.sectionName,
+        likelyRecording: isRecording(activity.sectionName, activity.title),
       },
     ];
   }

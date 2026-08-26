@@ -7,6 +7,7 @@ import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor
 import { GoogleDriveExtractor } from '../extractors/GoogleDriveExtractor.js';
 import { ZoomExtractor } from '../extractors/ZoomExtractor.js';
 import { MoodleFileExtractor } from '../extractors/MoodleFileExtractor.js';
+import { DirectUrlExtractor } from '../extractors/DirectUrlExtractor.js';
 
 // Universities own AUTH (per host). The one-time headed token grab yields a long-lived
 // Moodle WS token; the token authenticates the stateless REST API thereafter.
@@ -26,6 +27,7 @@ const EXTRACTORS = [
   new GoogleDriveExtractor(), // modType 'url'          → Google Drive single video file
   new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
   new MoodleFileExtractor(), // modType 'resource'     → course-hosted PDF → lecture material
+  new DirectUrlExtractor(), // modType 'url' (last)    → any other off-site link → probed on download
 ];
 
 /**
