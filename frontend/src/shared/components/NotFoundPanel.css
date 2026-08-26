@@ -1,4 +1,5 @@
 .empty-state-link {
   color: var(--accent);
-  font-size: 13px;
+  font-size: var(--fs-meta);
+  font-weight: 500;
 }

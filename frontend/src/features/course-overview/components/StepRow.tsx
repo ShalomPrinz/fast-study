@@ -5,13 +5,12 @@ import { overviewFileUrl } from '@/services/database'
 import { toastInitResult } from '@/services/toaster'
 import { stepsFor, branchStatus } from '@/features/course-overview/constants/overview'
 import Icon from '@/shared/components/Icon'
+import StatusNode from '@/shared/components/StatusNode'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
-import '@/styles/spinner.css'
 import '@/styles/file-row.css'
 import '@/styles/modal.css'
-import './BranchIndicator.css'
 
 export default function StepRow({ step }: { step: OverviewStep }) {
   const { t } = useLingui()
@@ -52,11 +51,11 @@ export default function StepRow({ step }: { step: OverviewStep }) {
           <span className="file-row-right">
             <span className="file-slot file-slot--status">
               {stepRunning ? (
-                <div className="spinner spinner--sm" />
+                <StatusNode state="running" />
               ) : exists ? (
-                <span className="file-check">✓</span>
+                <StatusNode state="done" />
               ) : (
-                <span className="course-stage-dot" />
+                <StatusNode state="pending" />
               )}
             </span>
             <span className="file-slot file-slot--open">

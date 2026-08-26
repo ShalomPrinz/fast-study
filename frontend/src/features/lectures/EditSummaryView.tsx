@@ -22,6 +22,7 @@ import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
+import '@/styles/button.css'
 import './EditSummaryView.css'
 
 export default function EditSummaryView() {
@@ -130,7 +131,7 @@ export default function EditSummaryView() {
   return (
     <div className="edit-view">
       <div className="edit-toolbar">
-        <button className="edit-back-btn" onClick={() => navigate(-1)}>
+        <button className="btn btn--ghost" onClick={() => navigate(-1)}>
           <Trans>← Back</Trans>
         </button>
         <h2 className="edit-title" dir="auto">
@@ -139,7 +140,7 @@ export default function EditSummaryView() {
         <PdfWarningBadge badge={files && pdfBadge(files)} />
         <div className="edit-toolbar-actions">
           <button
-            className="edit-action-btn"
+            className="btn btn--ghost"
             onClick={handleRevert}
             disabled={!hasOriginal || generating || loading}
             title={hasOriginal ? t`Restore the original summary` : t`No original to revert to`}
@@ -147,7 +148,7 @@ export default function EditSummaryView() {
             <Trans>Revert to Original</Trans>
           </button>
           <button
-            className="edit-action-btn edit-action-btn--primary"
+            className="btn btn--primary"
             onClick={handleGeneratePdf}
             disabled={generating || loading}
           >

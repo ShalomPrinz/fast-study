@@ -4,6 +4,7 @@ import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ProgressBar from '@/shared/components/ProgressBar'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import '@/styles/source-row.css'
+import '@/styles/button.css'
 import '@/shared/components/ProgressBar.css'
 import './RecordingRow.css'
 import './RecordingJobList.css'
@@ -37,7 +38,7 @@ function JobProgressBar({
       <div className="recording-progress-job recording-progress-job--action">
         {title}
         <button
-          className="source-row-btn recording-job-btn"
+          className="btn btn--ghost recording-job-btn"
           onClick={retry.onRetry}
           disabled={retry.busy}
         >

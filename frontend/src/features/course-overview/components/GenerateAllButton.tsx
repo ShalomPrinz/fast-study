@@ -3,6 +3,7 @@ import { useCourseOverview } from '@/features/course-overview/contexts/CourseOve
 import { startedSlug } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
 import '@/styles/spinner.css'
+import '@/styles/button.css'
 import './GenerateAllButton.css'
 
 export default function GenerateAllButton() {
@@ -26,7 +27,7 @@ export default function GenerateAllButton() {
 
   return (
     <button
-      className="run-all-btn course-global-btn"
+      className="btn btn--primary run-all-btn course-global-btn"
       onClick={handleGenerate}
       disabled={running || extractors === null}
     >

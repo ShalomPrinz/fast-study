@@ -3,22 +3,23 @@
 .recording-row {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
 }
 
 .recording-row--expandable {
-  color: var(--text-muted);
+  color: var(--text-3);
 }
 
 .recording-caret {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: var(--fs-body);
+  color: var(--text-3);
   padding: 0 2px;
   line-height: 1;
   display: inline-flex;
@@ -33,16 +34,16 @@
 .recording-expandable {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .recording-children {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-inline-start: 20px;
-  padding-inline-start: 10px;
-  border-inline-start: 2px solid #e5e7eb;
+  gap: var(--space-2);
+  margin-inline-start: var(--space-7);
+  padding-inline-start: var(--space-4);
+  border-inline-start: 2px solid var(--line);
 }
 
 .recording-title {
@@ -53,38 +54,39 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--fs-row);
   color: var(--text);
 }
 
 .kind-toggle {
   display: inline-flex;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
   overflow: hidden;
   flex-shrink: 0;
 }
 
 .kind-toggle-btn {
-  padding: 4px 10px;
+  padding: var(--space-1) var(--space-4);
   background: transparent;
   border: none;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--text-3);
 }
 
 .kind-toggle-btn--active {
-  background: var(--accent);
-  color: #fff;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 600;
 }
 
 /* Materials append rather than overwrite, so the row states how many the target already holds
    instead of raising a confirm. */
 .recording-material-count {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: var(--fs-fine);
+  color: var(--text-3);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -92,8 +94,8 @@
 /* Quiet metadata column on an 'unknown' (Google Drive) row: '?' until a download probes the file,
    then what it turned out to be. */
 .recording-media {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: var(--fs-fine);
+  color: var(--text-3);
   white-space: nowrap;
   flex-shrink: 0;
   min-width: 56px;
@@ -108,40 +110,37 @@
 /* Whole-row green tint when the current (name, kind) already exists in the course
    tree; updates live as the name/kind is edited and after a download's SSE refresh. */
 .recording-row--downloaded {
-  background: #e7f7e6;
-  border-color: #b6e0b0;
+  background: var(--ok-soft);
+  border-color: var(--ok-soft);
 }
 
 /* The main row line plus its progress block stacked beneath it. */
 .recording-entry {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .recording-download-btn {
-  flex-shrink: 0;
   min-width: 110px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* .recording-spinner lives here rather than beside RecordingJobList, which also renders it and
-   imports this sheet; --dark overrides it on the same element, so the pair stays base-first. */
+/* Split rows (a zoom pair) delegate re-download/retry to the per-clip buttons, so the main control
+   is a plain status label — it carries the bare `.btn` metrics and no variant, hence no chrome or
+   hover. Outspecifies `.btn`'s colour rather than relying on cross-file order. */
+.btn.recording-download-btn--label {
+  color: var(--text-3);
+  cursor: default;
+}
+
+/* .recording-spinner lives here rather than beside RecordingJobList, which also renders it. */
 .recording-spinner {
   width: 13px;
   height: 13px;
-  border: 2px solid rgba(255, 255, 255, 0.4);
-  border-top-color: #fff;
+  border: 2px solid var(--line);
+  border-top-color: var(--text-3);
   border-radius: 50%;
   animation: recording-spin 0.7s linear infinite;
-}
-
-/* Caret spinner sits on the light row background, not the accent button. */
-.recording-spinner--dark {
-  border-color: rgba(0, 0, 0, 0.2);
-  border-top-color: var(--text-muted);
 }
 
 @keyframes recording-spin {

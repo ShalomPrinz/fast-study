@@ -1,6 +1,6 @@
 .modal-warning {
-  font-size: 13px;
-  color: var(--text-warning);
-  margin-bottom: 20px;
+  font-size: var(--fs-body);
+  color: var(--danger);
+  margin-bottom: var(--space-6);
   line-height: 1.5;
 }

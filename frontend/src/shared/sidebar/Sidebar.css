@@ -8,29 +8,29 @@
   /* Sidebar itself doesn't scroll — each nav region scrolls independently so the
      archived panel and footer stay put while the active list scrolls (VSCode-style split). */
   overflow: hidden;
-  border-inline-end: 1px solid var(--border);
+  border-inline-end: 1px solid var(--sidebar-line);
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-block: 18px 14px;
-  padding-inline: 16px 12px;
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--accent);
-  border-bottom: 1px solid var(--border);
+  gap: var(--space-3);
+  padding-block: var(--space-6) var(--space-5);
+  padding-inline: var(--space-6) var(--space-4);
+  font-size: var(--fs-row);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--surface);
+  border-bottom: 1px solid var(--sidebar-line);
   flex-shrink: 0;
 }
 
 /* `margin-top: auto` pins the footer to the bottom when the nav regions don't fill the sidebar. */
 .sidebar-footer {
   margin-top: auto;
-  padding: 8px 12px;
-  border-top: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--sidebar-line);
   flex-shrink: 0;
 }
 
@@ -38,7 +38,7 @@
 .sidebar-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .sidebar-downloads-link {
@@ -47,16 +47,16 @@
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   color: var(--sidebar-muted);
   text-decoration: none;
-  font-size: 15px;
+  font-size: var(--fs-row);
   transition:
     background 0.1s,
     color 0.1s;
 }
 
 .sidebar-downloads-link:hover {
-  background: var(--sidebar-hover);
-  color: var(--accent);
+  background: var(--sidebar-raise);
+  color: var(--accent-on-dark);
 }

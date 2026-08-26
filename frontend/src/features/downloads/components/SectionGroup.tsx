@@ -39,6 +39,7 @@ import { applyRenames } from '@/features/downloads/utils/renames'
 import { sectionTitle } from '@/features/downloads/utils/sections'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import '@/styles/source-row.css'
+import '@/styles/button.css'
 import './SectionGroup.css'
 
 interface Props {
@@ -236,7 +237,7 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         )}
         {id !== null && (
           <button
-            className="source-row-btn recordings-download-all"
+            className="btn btn--ghost"
             onClick={() => void startAll()}
             disabled={busy || !allExpanded}
             title={allExpanded ? undefined : t`Expand every playlist in this section first`}

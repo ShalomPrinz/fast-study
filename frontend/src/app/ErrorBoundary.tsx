@@ -2,7 +2,7 @@ import { Component, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Link, useLocation } from 'react-router-dom'
 import '@/styles/panel.css'
-import '@/styles/modal.css'
+import '@/styles/button.css'
 import './ErrorBoundary.css'
 
 // Last-resort net for render errors: without it React unmounts the whole tree and leaves a blank
@@ -30,7 +30,10 @@ function CopyButton({ report }: { report: string }) {
     setTimeout(() => setCopied(false), 2500)
   }
   return (
-    <button className={`modal-btn error-btn${copied ? ' error-btn--copied' : ''}`} onClick={copy}>
+    <button
+      className={`btn btn--ghost error-btn${copied ? ' error-btn--copied' : ''}`}
+      onClick={copy}
+    >
       {copied ? t`Copied!` : t`Copy details`}
     </button>
   )
@@ -48,6 +51,9 @@ class Boundary extends Component<{ children: ReactNode }, { report: string | nul
     if (!report) return this.props.children
     return (
       <main className="main-view error-view">
+        <span className="error-icon" aria-hidden="true">
+          !
+        </span>
         <h1 className="error-title">
           <Trans>Something went wrong</Trans>
         </h1>
@@ -57,11 +63,11 @@ class Boundary extends Component<{ children: ReactNode }, { report: string | nul
           </Trans>
         </p>
         <div className="error-actions">
-          <Link className="modal-btn error-btn error-btn--primary" to="/">
+          <Link className="btn btn--primary error-btn" to="/">
             <Trans>Home</Trans>
           </Link>
           {/* A crash in Layout or the providers re-crashes at "/", so keep a hard reset around. */}
-          <button className="modal-btn error-btn" onClick={() => window.location.reload()}>
+          <button className="btn btn--ghost error-btn" onClick={() => window.location.reload()}>
             <Trans>Reload</Trans>
           </button>
           <CopyButton report={report} />

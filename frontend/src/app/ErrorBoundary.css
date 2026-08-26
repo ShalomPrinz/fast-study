@@ -1,60 +1,62 @@
+.error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-lg);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-section);
+  font-weight: 700;
+}
+
 .error-title {
-  font-size: 22px;
-  font-weight: 600;
+  font-size: var(--fs-title);
+  font-weight: 700;
   color: var(--text);
   letter-spacing: -0.01em;
 }
 
 .error-hint {
   max-width: 70ch;
-  color: var(--text-muted);
-  font-size: 14px;
+  color: var(--text-3);
+  font-size: var(--fs-body);
   line-height: 1.6;
 }
 
 .error-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 6px;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .error-btn {
   text-decoration: none;
   min-width: 104px;
-  text-align: center;
-}
-
-/* Two classes deep on purpose: .modal-btn is defined further down and would otherwise win. */
-.error-actions .error-btn--primary {
-  border-color: var(--accent);
-  color: #3b6fb8;
-  font-weight: 500;
-}
-
-.error-actions .error-btn--primary:hover {
-  background: #eef4fd;
 }
 
 /* Copy confirmation reads as a state change on the button, so the eye stays in one place. */
-.error-actions .error-btn--copied,
-.error-actions .error-btn--copied:hover {
-  border-color: #7fc47a;
-  background: #eef8ec;
-  color: #2f7a34;
-  font-weight: 500;
+/* Outspecifies `.btn--ghost` rather than relying on cross-file order. */
+.btn.error-btn--copied,
+.btn.error-btn--copied:hover {
+  border-color: var(--ok);
+  background: var(--ok-soft);
+  color: var(--ok);
 }
 
 .error-report {
   width: min(760px, 100%);
   max-height: 42vh;
-  margin-top: 10px;
+  margin-top: var(--space-4);
   overflow: auto;
-  padding: 16px 18px;
-  border: 1px solid #e5e5ea;
-  border-radius: 8px;
-  background: #ffffff;
-  color: var(--text-muted);
-  font-size: 12px;
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--text-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
   line-height: 1.65;
   white-space: pre-wrap;
   text-align: start;

@@ -2,11 +2,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .course-branch-name {
-  font-size: 14px;
+  font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text);
 }
@@ -19,15 +19,15 @@
 }
 
 .course-branch-subtitle {
-  font-size: 0.8em;
-  color: var(--text-muted);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
 }
 
 /* Caret + title act as one clickable expand/collapse toggle, filling the row's left side */
 .course-branch-toggle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   flex: 1;
   min-width: 0;
   background: none;
@@ -40,14 +40,14 @@
 }
 
 .course-branch-caret {
-  font-size: 20px;
-  color: var(--text-muted);
+  font-size: var(--fs-section);
+  color: var(--text-3);
   flex-shrink: 0;
 }
 
 .course-branch-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   flex-shrink: 0;
 }

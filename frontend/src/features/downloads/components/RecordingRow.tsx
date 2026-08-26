@@ -20,6 +20,7 @@ import {
 } from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 import '@/styles/source-row.css'
+import '@/styles/button.css'
 import '@/features/downloads/DownloadsView.css'
 import './RecordingRow.css'
 import Chevron from '@/shared/components/Chevron'
@@ -158,7 +159,7 @@ const RecordingRow = memo(function RecordingRow({
             disabled={expand.expanding}
           >
             {expand.expanding ? (
-              <span className="recording-spinner recording-spinner--dark" />
+              <span className="recording-spinner" />
             ) : (
               <Chevron open={expand.expanded} />
             )}
@@ -245,12 +246,12 @@ const RecordingRow = memo(function RecordingRow({
 
         {split ? (
           // Per-clip buttons own re-download/retry, so the main button is just a status label here.
-          <span className="source-row-btn recording-download-btn recording-download-btn--label">
+          <span className="btn recording-download-btn recording-download-btn--label">
             {downloading ? t`Downloading…` : status === 'error' ? t`Failed ✗` : t`Downloaded ✓`}
           </span>
         ) : (
           <button
-            className="source-row-btn recording-download-btn"
+            className="btn btn--ghost recording-download-btn"
             onClick={onDownloadClick}
             disabled={pending || downloading || unsupported}
             title={unsupported ? t`Not a file the downloader can fetch` : undefined}

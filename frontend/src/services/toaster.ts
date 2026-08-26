@@ -1,6 +1,7 @@
 // The only `react-toastify` import site — everything else toasts through these helpers.
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import './toaster.css'
 import type { RunInitResult } from '@/types'
 import type { ConnectionError } from '@/services/http'
 

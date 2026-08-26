@@ -1,19 +1,19 @@
 .runner-panel {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 12px;
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
-  background: var(--accent-dim);
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--sidebar-line);
+  border-bottom: 1px solid var(--sidebar-line);
+  background: var(--sidebar-raise);
 }
 
 .runner-panel-header {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 600;
-  color: var(--accent);
+  color: var(--accent-on-dark);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .runner-inflight-row {
@@ -21,9 +21,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 2px;
-  padding: 6px 8px;
+  padding: var(--space-2) var(--space-3);
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -35,16 +35,16 @@
 }
 
 .runner-inflight-row:hover {
-  background: var(--bg);
-  border-color: var(--accent);
+  background: var(--sidebar-bg);
+  border-color: var(--accent-on-dark);
 }
 
 .runner-inflight-lecture {
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 500;
 }
 
 .runner-inflight-step {
-  font-size: 11px;
+  font-size: var(--fs-fine);
   opacity: 0.7;
 }

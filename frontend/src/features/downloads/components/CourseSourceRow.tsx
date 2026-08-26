@@ -7,6 +7,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import Icon from '@/shared/components/Icon'
 import '@/styles/source-row.css'
+import '@/styles/button.css'
 import './CourseSourceRow.css'
 
 interface Props {
@@ -69,11 +70,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
       {!editing && course.source_url && (
         <div className="source-row-actions">
           {onDiscover && (
-            <button
-              className="source-row-btn source-row-btn--ghost"
-              onClick={onDiscover}
-              disabled={discovering}
-            >
+            <button className="btn btn--ghost" onClick={onDiscover} disabled={discovering}>
               {discovering ? t`Loading…` : t`Load recordings`}
             </button>
           )}

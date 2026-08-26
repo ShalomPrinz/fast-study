@@ -5,8 +5,8 @@
 }
 
 .archived-empty {
-  padding: 12px 16px;
-  font-size: 12px;
+  padding: var(--space-4) var(--space-6);
+  font-size: var(--fs-meta);
   color: var(--sidebar-muted);
 }
 
@@ -15,14 +15,14 @@
   margin-top: auto; /* pin to the very bottom when no archived panel is open */
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   width: 100%;
-  padding: 10px 16px;
+  padding: var(--space-4) var(--space-6);
   background: none;
   border: none;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--sidebar-line);
   color: var(--sidebar-muted);
-  font-size: 13px;
+  font-size: var(--fs-body);
   cursor: pointer;
   transition:
     background 0.1s,
@@ -31,7 +31,7 @@
 
 .archived-footer-btn:hover,
 .archived-footer-btn.active {
-  background: var(--sidebar-hover);
+  background: var(--sidebar-raise);
   color: var(--sidebar-fg);
 }
 

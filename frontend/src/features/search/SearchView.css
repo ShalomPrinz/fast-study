@@ -6,31 +6,32 @@
 .search-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .search-course {
   flex-shrink: 0;
   max-width: 220px;
-  padding: 7px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-body);
 }
 
 .search-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-row);
   outline: none;
 }
 
@@ -41,68 +42,55 @@
 /* VS Code-style sticky toggle: pressed state is the accent tint, not a separate control. */
 .search-toggle {
   flex-shrink: 0;
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text-muted);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-3);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-body);
   cursor: pointer;
 }
 
 .search-toggle.active {
-  background: var(--accent-dim);
+  background: var(--accent-soft);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--accent-ink);
 }
 
 .search-filters {
   display: flex;
-  gap: 16px;
-  margin-bottom: 14px;
+  gap: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 
 .search-filter {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-muted);
+  gap: var(--space-2);
+  font-size: var(--fs-body);
+  color: var(--text-3);
   cursor: pointer;
 }
 
 .search-status {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 10px;
+  font-size: var(--fs-body);
+  color: var(--text-3);
+  margin-bottom: var(--space-4);
 }
 
 /* Stays after .search-status: same specificity, and both sit on the error element. */
 .search-status--error {
-  color: var(--text-warning);
+  color: var(--danger);
 }
 
 .search-results {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 .search-more {
   align-self: flex-start;
-  margin-top: 10px;
-  padding: 7px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.search-more:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  margin-top: var(--space-4);
 }

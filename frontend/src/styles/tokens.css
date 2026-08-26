@@ -7,22 +7,77 @@
 }
 
 :root {
-  --sidebar-width: 280px;
-  --sidebar-bg: #1e1e2e;
-  --sidebar-fg: #cdd6f4;
-  --sidebar-muted: #7f849c;
-  --sidebar-hover: #313244;
-  --sidebar-selected: #45475a;
-  --accent: #89b4fa;
-  --accent-dim: #1e3a5f;
-  --border: #313244;
-  --main-bg: #ffffff;
-  --text: #1e1e2e;
-  --text-muted: #6c7086;
-  --text-warning: #d51313;
-  --green: #a6e3a1;
-  --red: #f38ba8;
-  font-family: 'Inter', 'Noto Sans Hebrew', 'Segoe UI', Arial, sans-serif;
+  /* Surfaces: --bg is the app canvas, --surface the cards and panels sitting on it. */
+  --bg: #fbfbfd;
+  --surface: #ffffff;
+  --surface-sunken: #f7f8ff;
+
+  --text: #17171f;
+  --text-2: #55596b;
+  --text-3: #8b8f9f;
+  --text-4: #a4a8b8;
+
+  --line: #e8e9ef;
+  --line-soft: #f0f1f5;
+  --control-line: #dcdee7;
+
+  /* The single filled button per page — the accent never carries a fill on white, where it fails contrast. */
+  --ink: #17171f;
+
+  --accent: #4f5bd5;
+  --accent-hover: #4049b8;
+  --accent-soft: #eef1fd;
+  --accent-ink: #4453c4;
+  /* Light enough to read on the dark sidebar, where the accent proper goes muddy. */
+  --accent-on-dark: #98b0ff;
+
+  --ok: #2f7d54;
+  --ok-soft: #e7f4ec;
+  --ok-dot: #3f9f6a;
+  --warn: #b45309;
+  --warn-soft: #fdf4e7;
+  --danger: #c0392f;
+  --danger-soft: #fdf1ef;
+  --highlight: #fdf0c8;
+
+  --sidebar-bg: #1b1b26;
+  --sidebar-raise: #2c2c3d;
+  --sidebar-line: #2a2a38;
+  --sidebar-fg: #d7d9e6;
+  --sidebar-muted: #8a8fa3;
+  --sidebar-dim: #6f7488;
+  --sidebar-width: 268px;
+
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 10px;
+  --space-5: 14px;
+  --space-6: 18px;
+  --space-7: 26px;
+  --space-8: 40px;
+
+  --r-sm: 8px;
+  --r: 9px;
+  --r-lg: 12px;
+  --r-xl: 14px;
+  --r-pill: 999px;
+
+  /* Heebo is Hebrew-first, so Hebrew and Latin share one ramp instead of falling back mid-string. */
+  --font-ui: 'Heebo', 'Noto Sans Hebrew', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --fs-title: 26px;
+  --fs-section: 17px;
+  --fs-row: 14px;
+  --fs-body: 13px;
+  --fs-meta: 12px;
+  --fs-fine: 11px;
+
+  --shadow-sm: 0 1px 2px rgba(23, 23, 31, 0.08);
+  --shadow-md: 0 4px 14px rgba(23, 23, 31, 0.07);
+  --shadow-lg: 0 18px 44px rgba(23, 23, 31, 0.16);
+
+  font-family: var(--font-ui);
 }
 
 html,
@@ -30,4 +85,3 @@ body,
 #root {
   height: 100%;
 }
-

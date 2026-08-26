@@ -6,93 +6,91 @@
 }
 
 .file-missing {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
   font-style: italic;
 }
 
 /* Materials are inputs to the summary, not pipeline outputs, so they get their own labelled list. */
 .material-list-title {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-}
-
-/* The --* variants below land on the same element as .material-indicator (the class string is built by
-   materialIndicator()), so they must stay in this file, in this order. */
-.material-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
+  color: var(--text-3);
+  margin-bottom: var(--space-2);
 }
 
 .material-indicator-symbol {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   line-height: 1;
 }
 
-.material-indicator--will-use {
-  color: #2563eb;
+/* Five semantic states on one chip (the class string is built by materialIndicator()). Each
+   outspecifies `.chip`'s own colours, which live in another file — never source order. */
+.chip.material-indicator--will-use {
+  background: var(--accent-soft);
+  color: var(--accent);
 }
-.material-indicator--used {
-  color: #16a34a;
+.chip.material-indicator--used {
+  background: var(--ok-soft);
+  color: var(--ok);
 }
-.material-indicator--missing {
-  color: #d97706;
+.chip.material-indicator--missing {
+  background: var(--warn-soft);
+  color: var(--warn);
 }
 /* Some but not all materials predate the summary — milder than a full miss, so amber, not grey. */
-.material-indicator--partial {
-  color: #b45309;
+.chip.material-indicator--partial {
+  background: var(--warn-soft);
+  color: var(--warn);
 }
-.material-indicator--was-missing {
-  color: #6b7280;
+.chip.material-indicator--was-missing {
+  background: var(--line-soft);
+  color: var(--text-3);
 }
 
 .lecture-error {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--error, #d33);
-  border-radius: 8px;
-  background: rgba(211, 51, 51, 0.08);
-  color: var(--error, #d33);
-  font-size: 13px;
+  margin-top: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--danger-soft);
+  border-radius: var(--r-lg);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-meta);
+  line-height: 1.6;
   word-break: break-word;
 }
 
 .lecture-error strong {
-  margin-inline-end: 6px;
+  margin-inline-end: var(--space-2);
 }
 
 .rate-limit-panel {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #7f1d1d;
+  margin-top: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--warn-soft);
+  border-radius: var(--r-lg);
+  background: var(--warn-soft);
+  color: var(--text-2);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--space-2);
+  font-size: var(--fs-meta);
   line-height: 1.5;
 }
 
 .rate-limit-title {
-  margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 600;
-  color: #dc2626;
+  color: var(--warn);
 }
 
 .rate-limit-progress {
-  margin: 0;
   font-weight: 500;
 }
 
 .rate-limit-countdown {
-  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
   font-weight: 600;
-  color: #b91c1c;
+  color: var(--warn);
 }

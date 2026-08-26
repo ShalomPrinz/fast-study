@@ -6,6 +6,7 @@ import { useCourseSummaries } from './hooks/useCourseSummaries'
 import { buildHit, findMatches, groupMatches, type Hit, type MatchGroup } from './utils/search'
 import SearchResult from './components/SearchResult'
 import '@/styles/panel.css'
+import '@/styles/button.css'
 import './SearchView.css'
 
 const COURSE_STORAGE_KEY = 'fastStudySearchCourse'
@@ -181,7 +182,10 @@ export default function SearchView() {
         {/* Advances from what's rendered, not the old threshold: a group overshooting the threshold
             would otherwise be re-selected unchanged and the click would do nothing. */}
         {shownFindings < matches.length && (
-          <button className="search-more" onClick={() => setShown(shownFindings + PAGE_SIZE)}>
+          <button
+            className="btn btn--ghost search-more"
+            onClick={() => setShown(shownFindings + PAGE_SIZE)}
+          >
             <Trans>Show more</Trans>
           </button>
         )}

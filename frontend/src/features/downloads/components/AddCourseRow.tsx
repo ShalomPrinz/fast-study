@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { createCourse } from '@/services/database'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import '@/styles/source-row.css'
+import '@/styles/button.css'
 import './AddCourseRow.css'
 
 // Plain inputs, not InlineEditInput: moving between the name and URL fields must not blur-cancel.
@@ -66,10 +67,10 @@ export default function AddCourseRow() {
         dir="auto"
       />
       <div className="source-add-actions">
-        <button className="source-row-btn" onClick={commit} disabled={saving || !name.trim()}>
+        <button className="btn btn--primary" onClick={commit} disabled={saving || !name.trim()}>
           <Trans>Create</Trans>
         </button>
-        <button className="source-row-btn source-row-btn--ghost" onClick={reset}>
+        <button className="btn btn--ghost" onClick={reset}>
           <Trans>Cancel</Trans>
         </button>
       </div>

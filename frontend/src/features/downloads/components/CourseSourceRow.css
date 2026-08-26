@@ -4,10 +4,11 @@
   display: grid;
   grid-template-columns: 180px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
 }
 
 /* Fixed grid track caps the name; ellipsis-truncate so it can't push the URL. */
@@ -16,7 +17,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text);
 }
@@ -29,12 +30,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   vertical-align: middle;
-  font-size: 13px;
+  font-size: var(--fs-body);
   color: var(--accent);
   text-decoration: none;
 }
 
 .source-row-url-text:hover {
+  color: var(--accent-hover);
   text-decoration: underline;
 }
 
@@ -44,12 +46,12 @@
   text-align: start;
   background: none;
   border: none;
-  padding: 4px 0;
+  padding: var(--space-1) 0;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-style: italic;
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--text-3);
 }
 
 .source-row-url:hover {
@@ -60,7 +62,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-muted);
+  color: var(--text-3);
   padding: 0 2px;
   line-height: 1;
   display: inline-flex;
@@ -75,12 +77,12 @@
 /* Selected course (its recordings are loaded) — highlight the whole row, not
    the Load-recordings button. Accent-tinted to match the app's single palette. */
 .source-row--selected {
-  background: rgba(137, 180, 250, 0.14);
+  background: var(--accent-soft);
   border-color: var(--accent);
 }
 
 .source-row-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
 }

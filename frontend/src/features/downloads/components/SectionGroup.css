@@ -2,16 +2,16 @@
 .recordings-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
 }
 
 .recordings-section-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 2px 2px 4px;
-  border-bottom: 1px solid #e5e7eb;
+  gap: var(--space-4);
+  padding: 2px 2px var(--space-1);
+  border-bottom: 1px solid var(--line);
 }
 
 .recordings-section-title {
@@ -20,24 +20,24 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 600;
-  color: var(--text-muted);
+  color: var(--text-3);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .recordings-section-progress {
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
 }
 
 /* Not an error — the run simply can't account for these rows, and nothing here can resolve them. */
 .recordings-section-stalled {
-  padding: 7px 10px;
-  border: 1px solid #fcd34d;
-  border-radius: 8px;
-  background: #fffbeb;
-  font-size: 12px;
-  color: #92400e;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--warn-soft);
+  border-radius: var(--r-sm);
+  background: var(--warn-soft);
+  font-size: var(--fs-meta);
+  color: var(--warn);
 }

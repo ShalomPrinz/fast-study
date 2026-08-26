@@ -7,9 +7,9 @@
 .recording-progress-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
   padding-block: 0;
-  padding-inline: 12px 10px;
+  padding-inline: var(--space-4);
 }
 
 .recording-progress-job {
@@ -24,8 +24,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: var(--fs-fine);
+  color: var(--text-3);
 }
 
 /* The pipeline bar, re-laid out for the row's progress block: full width of the block below the
@@ -34,7 +34,7 @@
 .recording-progress {
   width: 100%;
   margin-top: 0;
-  gap: 3px;
+  gap: var(--space-1);
 }
 
 .recording-progress .progress-label,
@@ -49,11 +49,18 @@ p.recording-progress {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 /* Let the clip title take the row and ellipsis-truncate next to the button. */
 .recording-progress-job--action .recording-progress-title {
   flex: 1;
   min-width: 0;
+}
+
+/* Tighter than a stand-alone ghost button, since it sits inside a progress line. Outspecifies
+   `.btn`'s padding rather than relying on cross-file order. */
+.btn.recording-job-btn {
+  min-width: 96px;
+  padding: var(--space-1) var(--space-4);
 }

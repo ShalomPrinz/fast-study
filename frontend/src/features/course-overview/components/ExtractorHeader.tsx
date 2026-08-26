@@ -10,6 +10,7 @@ import BranchIndicator from './BranchIndicator'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { useExtractor } from '@/features/course-overview/contexts/ExtractorContext'
 import '@/styles/file-row.css'
+import '@/styles/button.css'
 import './ExtractorHeader.css'
 import Chevron from '@/shared/components/Chevron'
 
@@ -72,7 +73,7 @@ export default function ExtractorHeader() {
             ↺
           </button>
         ) : (
-          <button className="file-action-btn" onClick={handleGenerate} disabled={bs.running}>
+          <button className="btn btn--ghost" onClick={handleGenerate} disabled={bs.running}>
             <Trans>Generate</Trans>
           </button>
         )}

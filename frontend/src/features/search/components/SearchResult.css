@@ -1,15 +1,15 @@
 .search-result {
-  padding: 10px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fafafa;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
 }
 
 /* The whole header row is the open-PDF control — one tab stop, one click target. */
 .search-result-head {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-3);
   width: 100%;
   padding: 0;
   border: none;
@@ -34,11 +34,11 @@
 }
 
 .search-result-title {
-  font-size: 14px;
+  font-size: var(--fs-row);
   font-weight: 600;
 }
 
 .search-result-kind {
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: var(--fs-fine);
+  color: var(--text-3);
 }

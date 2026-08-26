@@ -2,42 +2,42 @@
 .auth-pill {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  font-size: 13px;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-body);
   font-weight: 500;
-  margin-bottom: 24px;
+  margin-bottom: var(--space-7);
 }
 
 .auth-pill--muted {
-  background: #f3f4f6;
-  color: var(--text-muted);
+  background: var(--line-soft);
+  color: var(--text-3);
 }
 
 .auth-pill--connected {
-  background: #e7f7e6;
-  color: #2f7a29;
+  background: var(--ok-soft);
+  color: var(--ok);
 }
 
 .auth-pill--disconnected {
-  background: #fdeaea;
-  color: #b3261e;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .auth-pill--pending {
-  background: #fff5e0;
-  color: #9a6a00;
+  background: var(--warn-soft);
+  color: var(--warn);
 }
 
 .auth-pill-btn {
-  padding: 3px 12px;
-  border-radius: 999px;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--r-pill);
   border: 1px solid currentColor;
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   cursor: pointer;
 }

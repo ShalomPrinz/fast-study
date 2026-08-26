@@ -19,11 +19,14 @@ import { lectureNotFound } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ProgressBar from '@/shared/components/ProgressBar'
+import StatusNode from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
 import '@/styles/file-row.css'
 import '@/styles/modal.css'
+import '@/styles/button.css'
+import '@/styles/chip.css'
 import '@/features/course-overview/components/GenerateAllButton.css'
 import './MainView.css'
 
@@ -45,7 +48,7 @@ function MaterialIndicator({
   const { symbol, text, cls } = materialIndicator(materials, summaryExists, summaryMtime)
 
   return (
-    <span className={`material-indicator ${cls}`}>
+    <span className={`chip material-indicator ${cls}`}>
       <span className="material-indicator-symbol">{symbol}</span>
       <span className="material-indicator-text">{text}</span>
     </span>
@@ -208,12 +211,12 @@ export default function MainView() {
                   <span className="file-row-right">
                     <span className="file-slot file-slot--status">
                       {exists ? (
-                        <span className="file-check">✓</span>
+                        <StatusNode state="done" />
                       ) : isRunning ? (
-                        <div className="spinner spinner--sm" />
+                        <StatusNode state="running" />
                       ) : step ? (
                         <button
-                          className="file-action-btn"
+                          className="btn btn--ghost"
                           onClick={() => handleStep(step)}
                           disabled={inflight || !prereqMet}
                         >
@@ -330,7 +333,11 @@ export default function MainView() {
         )}
 
         {hasActions && (
-          <button className="run-all-btn" onClick={handleRunRemaining} disabled={inflight}>
+          <button
+            className="btn btn--primary run-all-btn"
+            onClick={handleRunRemaining}
+            disabled={inflight}
+          >
             <Trans>Run Remaining</Trans>
           </button>
         )}
