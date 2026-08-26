@@ -111,15 +111,18 @@ following redirects — and weighs three pieces of evidence from that one respon
 All of it routes through the one extension table `classifyFilename` owns (`src/lib/fileMedia.js`),
 so a Drive link and a plain URL can never disagree about what a `.mp4` is. `probeUrl` never throws.
 
-A verdict about the file — usable, or definitely not — is **certain**: `/resolve` answers
-`422 {status:'unsupported'}` naming what the link turned out to be, and the row greys in place.
+A verdict about the link — usable, or definitely not — is **certain**: `/resolve` answers
+`422 {status:'unsupported'}` naming what the link turned out to be, and the row greys in place. A
+`404`/`410` counts as certain even behind a `…/lecture.mp4` path (`reason: 'missing'`, a 422 saying
+the link is dead): the host was asked, and its answer is that there is nothing there.
 
-A verdict is **uncertain** when the probe learned nothing rather than learning the file is unusable
-— the host never answered (offline, DNS, TLS, 404, or the 15s timeout each request carries, since
-Node's `fetch` has none and `server/` walks a section queue one row at a time), or it answered as
-generic binary (`application/octet-stream`) with nothing naming the file. That is a plain `500` "try
-again", never a 422, and it is **not cached**: a 422 disables the row's download button for the rest
-of the session, which must not be the price of one bad moment on the network.
+A verdict is **uncertain** when the probe learned nothing rather than learning the link is unusable
+— nothing answered at all (offline, DNS, TLS, or the 15s timeout each request carries, since Node's
+`fetch` has none and `server/` walks a section queue one row at a time), the host refused in a way
+that can pass later (a `403` login wall, a `429`, a `5xx`), or it answered as generic binary
+(`application/octet-stream`) with nothing naming the file. That is a plain `500` "try again", never
+a 422, and it is **not cached**: a 422 disables the row's download button for the rest of the
+session, which must not be the price of one bad moment on the network.
 
 Certain verdicts memoize under the normalized URL in the same `src/core/probeCache.js` the Drive
 probe uses — it is keyed by an opaque **probe key**, the Drive file id on one side and the URL on the

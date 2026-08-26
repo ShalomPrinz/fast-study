@@ -232,9 +232,13 @@ export async function resolveDirectUrl({
   forceCapture = false,
 }) {
   const url = recording.pageUrl;
-  const { media, filename, certain } = await probeUrl(url, { force: forceCapture });
+  const { media, filename, certain, reason } = await probeUrl(url, { force: forceCapture });
   if (!media) {
     if (!certain) throw new Error(`couldn't read what ${url} is — the host didn't answer usefully`);
+    if (reason === 'missing')
+      throw new UnsupportedError(
+        `${url} no longer exists — the host says the link is dead. Check the course page for a new one.`,
+      );
     // A CDN path can name the file without an extension ('…/asset'), so slice only on a real dot —
     // otherwise the message would invent one out of the last character.
     const dot = filename ? filename.lastIndexOf('.') : -1;

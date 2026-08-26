@@ -5,15 +5,17 @@ import assert from 'node:assert/strict';
 import { probeUrl, probeKeyForUrl } from '../src/lib/probeUrl.js';
 import { getProbedMedia } from '../src/core/probeCache.js';
 
-// Stand in for the host. `headers` is a plain object; a null response body means the request threw.
-function stubFetch(headers, { url, throws = false } = {}) {
+// Stand in for the host. `headers` is a plain object; `throws` makes every request fail, `status`
+// makes the host answer without serving the file.
+function stubFetch(headers, { url, throws = false, status = 200 } = {}) {
   const calls = { n: 0 };
   const real = globalThis.fetch;
   globalThis.fetch = async (target) => {
     calls.n += 1;
     if (throws) throw new Error('ECONNREFUSED');
     return {
-      ok: true,
+      ok: status < 300,
+      status,
       url: url ?? target,
       headers: { get: (k) => headers[k.toLowerCase()] ?? null },
       body: { cancel: async () => {} },
@@ -106,6 +108,33 @@ test('a network failure is uncertain, never a throw and never cached', async (t)
     { media: retry.media, certain: retry.certain },
     { media: 'video', certain: true },
   );
+});
+
+test('a dead link is a certain verdict, remembered so the row greys once', async (t) => {
+  const url = 'https://files.test/t6/gone.mp4';
+  const calls = stubFetch({}, { status: 404 });
+  t.after(calls.restore);
+
+  const probe = await probeUrl(url);
+  // Certain despite the .mp4 path: the host was asked, and it says there is nothing there.
+  assert.deepEqual(
+    { media: probe.media, certain: probe.certain, reason: probe.reason },
+    { media: null, certain: true, reason: 'missing' },
+  );
+  assert.equal(getProbedMedia(probeKeyForUrl(url)), null);
+
+  await probeUrl(url);
+  assert.equal(calls.n, 2); // HEAD + ranged GET, once — the second look reads the cache
+});
+
+test('a login wall stays uncertain rather than greying a working link', async (t) => {
+  const url = 'https://sso.test/t6/lecture.mp4';
+  const calls = stubFetch({}, { status: 403 });
+  t.after(calls.restore);
+
+  const probe = await probeUrl(url);
+  assert.deepEqual({ media: probe.media, certain: probe.certain }, { media: null, certain: false });
+  assert.equal(getProbedMedia(probeKeyForUrl(url)), undefined);
 });
 
 test('a nameless generic-binary response is uncertain, not a permanent no', async (t) => {

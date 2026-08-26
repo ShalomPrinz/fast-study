@@ -54,9 +54,16 @@ function classifyContentType(header) {
   return undefined;
 }
 
+// The host answering that there is nothing to fetch — a fact about the LINK, as final as reading
+// its name. Every other refusal it can voice (a 403 wall, a 429, a 5xx) may pass on the next
+// attempt, so those stay uncertain rather than greying a working link out for the session.
+const DEAD_STATUSES = new Set([404, 410]);
+
 // Headers for a URL without pulling the body: HEAD first, then a one-byte ranged GET for the
-// hosts that answer HEAD with 405/403. Null when neither works — offline, DNS, TLS, timeout, 404.
+// hosts that answer HEAD with 405/403. `'dead'` when the host says the link is gone; null when
+// nothing was learned at all — offline, DNS, TLS, timeout, a login wall.
 async function fetchHeaders(url) {
+  let dead = false;
   for (const init of [{ method: 'HEAD' }, { method: 'GET', headers: { Range: 'bytes=0-0' } }]) {
     try {
       const res = await fetch(url, {
@@ -66,11 +73,12 @@ async function fetchHeaders(url) {
       });
       await res.body?.cancel().catch(() => {});
       if (res.ok) return res;
+      if (DEAD_STATUSES.has(res.status)) dead = true;
     } catch {
-      // fall through to the next attempt, then to the uncertain verdict
+      // fall through to the next attempt, then to the verdict the statuses so far support
     }
   }
-  return null;
+  return dead ? 'dead' : null;
 }
 
 // Does this name carry an extension to route on? A bare CDN path segment ('asset') does not.
@@ -90,24 +98,36 @@ function isNamedFile(name) {
  *     `200 text/html` with the login page, and `server/`'s `curl --fail` would save that as the
  *     lecture's material. The type above vetoes the guess, which is why this is never read first.
  *
- * `certain` separates a verdict about the FILE from a failure to learn one: an unreachable host, or
+ * `certain` separates a verdict about the LINK from a failure to learn one: an unreachable host, or
  * a nameless response typed only as generic binary, is `{ media: null, certain: false }` — worth
- * retrying, never remembered. Only certain verdicts are memoized (per normalized URL, for the
- * session, the definite `null`s included), so a row can never be permanently greyed out by one bad
- * moment on the network.
+ * retrying, never remembered. A 404/410 is certain (`reason: 'missing'`): the host answered, and
+ * its answer is that there is nothing there. Only certain verdicts are memoized (per normalized
+ * URL, for the session, the definite `null`s included), so a row can never be permanently greyed
+ * out by one bad moment on the network.
  * @param {string} url
  * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
  * @returns {Promise<{ probeKey: string, media: 'video'|'material'|null, filename: string|null,
- *                     certain: boolean }>} media null = this service can't use the link.
+ *                     certain: boolean, reason?: string }>} media null = this service can't use
+ *   the link; reason names why when the link itself is the problem.
  */
 export async function probeUrl(url, { force = false } = {}) {
   const probeKey = probeKeyForUrl(url);
 
   const cached = force ? undefined : getProbe(probeKey);
   if (cached)
-    return { probeKey, media: cached.media, filename: cached.filename ?? null, certain: true };
+    return {
+      probeKey,
+      media: cached.media,
+      filename: cached.filename ?? null,
+      certain: true,
+      reason: cached.reason,
+    };
 
   const res = await fetchHeaders(url);
+  if (res === 'dead') {
+    cacheProbe(probeKey, null, null, 'missing');
+    return { probeKey, media: null, filename: null, certain: true, reason: 'missing' };
+  }
   if (!res) return { probeKey, media: null, filename: null, certain: false };
 
   const stated = filenameFromDisposition(res.headers.get('content-disposition'));
