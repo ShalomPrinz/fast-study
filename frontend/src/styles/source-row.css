@@ -1,30 +1,26 @@
-/* Row inputs shared across the downloads page: AddCourseRow, CourseSourceRow, RecordingRow,
-   PasscodePrompt. Their buttons are the shared `.btn` vocabulary in styles/button.css. */
-
-/* PasscodePrompt renders "source-row-input passcode-input" — both set font-size at equal
-   specificity, so .source-row-input must keep following .passcode-input in source order. */
-.passcode-input {
-  width: 100%;
-  margin-bottom: var(--space-4);
-  font-size: var(--fs-row);
-  letter-spacing: 2px;
-}
-
+/* The one text input the downloads page uses: a course's source URL, the new-course fields, a
+   recording's lecture name, the zoom passcode. Their buttons are the shared `.btn` vocabulary in
+   styles/button.css. */
 .source-row-input {
   min-width: 0;
-  padding: var(--space-1) var(--space-4);
-  border: 1px solid var(--accent);
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--control-line);
   border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
   font: inherit;
   font-size: var(--fs-body);
   outline: none;
 }
 
-/* RecordingRow renders "source-row-input recording-name-input" — collides on min-width at
-   equal specificity, so it lives here, after the class it overrides. */
-/* Shrinks before the title does — a name is still readable clipped, a missing title is not. */
-.recording-name-input {
-  width: 150px;
-  flex-shrink: 1;
-  min-width: 100px;
+.source-row-input:focus {
+  border-color: var(--accent);
+}
+
+/* The passcode is short and masked, so it takes the modal's whole width with spaced-out digits.
+   Sets nothing `.source-row-input` sets, so the pair carries no order dependency. */
+.passcode-input {
+  width: 100%;
+  margin-bottom: var(--space-4);
+  letter-spacing: 2px;
 }

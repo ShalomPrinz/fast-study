@@ -8,6 +8,8 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import Icon from '@/shared/components/Icon'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
+import '@/styles/chip.css'
+import '@/styles/pipeline-card.css'
 import './CourseSourceRow.css'
 
 interface Props {
@@ -17,8 +19,9 @@ interface Props {
   discovering?: boolean
 }
 
-// One course row: name + source URL (a real link once set, pencil to edit) + Load recordings.
-// With no URL there's nothing to link to, so "+ add source URL" opens edit mode directly.
+// One course row: name + source URL (a real link once set, pencil to edit) + Load recordings, which
+// becomes a Loaded chip on the open course. With no URL there's nothing to link to, so
+// "+ add source URL" opens edit mode directly.
 export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
@@ -49,7 +52,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
           onCommit={commit}
           onCancel={() => setEditing(false)}
           placeholder="https://…"
-          className="source-row-input"
+          className="source-row-input source-row-url-input"
         />
       ) : course.source_url ? (
         <a
@@ -68,16 +71,24 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
         </button>
       )}
       {!editing && course.source_url && (
-        <div className="source-row-actions">
-          {onDiscover && (
-            <button className="btn btn--ghost" onClick={onDiscover} disabled={discovering}>
-              {discovering ? t`Loading…` : t`Load recordings`}
-            </button>
-          )}
-          <button className="source-row-edit-btn" onClick={start} title={t`Edit source URL`}>
+        <>
+          <button className="pipeline-icon-btn" onClick={start} title={t`Edit source URL`}>
             <Icon icon="edit" />
           </button>
-        </div>
+          {/* The loaded course's recordings are already on the page, so it states that instead —
+              but not until the discovery that loads them has actually landed. */}
+          {selected && !discovering ? (
+            <span className="chip chip--accent">
+              <Trans>Loaded</Trans>
+            </span>
+          ) : (
+            onDiscover && (
+              <button className="btn btn--ghost" onClick={onDiscover} disabled={discovering}>
+                {discovering ? t`Loading…` : t`Load recordings`}
+              </button>
+            )
+          )}
+        </>
       )}
     </div>
   )

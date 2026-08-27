@@ -23,7 +23,7 @@ npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for 
 | `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding      |
 | `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar  |
 | `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                |
-| `docs/DOWNLOADS.md`       | auth, discovery, videos/materials toggle, row edits, reflected bulk run, passcode |
+| `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode  |
 | `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries   |
 | `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties |
 

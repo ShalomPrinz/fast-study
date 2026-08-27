@@ -36,6 +36,13 @@
   max-width: 660px;
 }
 
+/* Downloads reads at a wider measure: a recording card's second line carries a kind toggle, a name
+   input and an action side by side, and the input needs room for a full lecture name. */
+/* Outspecifies `.page-column`'s max-width rather than relying on source order. */
+.page-column.page-column--wide {
+  max-width: 880px;
+}
+
 /* Nothing-to-show card: icon tile over a one-line title, dashed so it reads as a slot, not a panel. */
 .empty-state {
   width: 330px;
@@ -72,13 +79,6 @@
 .lecture-panel {
   width: 100%;
   max-width: 520px;
-}
-
-/* Downloads: a recording row carries a title, a type column, a kind toggle, a name input and a
-   button on one line — several times a lecture panel's furniture, and none of it optional. */
-/* Overrides `.lecture-panel`'s max-width at equal specificity, so it must stay below it here. */
-.lecture-panel--wide {
-  max-width: 860px;
 }
 
 .lecture-panel-title {

@@ -6,13 +6,16 @@ import {
   connectAuth,
   completeAuth,
 } from '@/features/downloads/services/autoDownloader'
+import Icon from '@/shared/components/Icon'
 import { toast } from '@/services/toaster'
-import './AuthPill.css'
+import '@/styles/chip.css'
+import '@/styles/button.css'
 
 type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing'
 
-// Connect pops a headed browser on the host for MFA; Done persists the session.
-export default function AuthPill() {
+// The BIU account as a header fact: one chip saying where the session stands, and the one button
+// that can move it. Connect pops a headed browser on the host for MFA; Done persists the session.
+export default function AccountStatus() {
   const { t } = useLingui()
   const [status, setStatus] = useState<AuthStatus | null>(null)
   const [phase, setPhase] = useState<Phase>('loading')
@@ -54,43 +57,48 @@ export default function AuthPill() {
 
   if (phase === 'loading') {
     return (
-      <div className="auth-pill auth-pill--muted">
+      <span className="chip chip--neutral">
         <Trans>checking account…</Trans>
-      </div>
+      </span>
     )
   }
 
   if (phase === 'pending' || phase === 'connecting' || phase === 'completing') {
-    const busy = phase !== 'pending'
     return (
-      <div className="auth-pill auth-pill--pending">
-        <span>
+      <>
+        <span className="chip chip--warn">
           <Trans>finish login in the browser window</Trans>
         </span>
-        <button className="auth-pill-btn" onClick={handleComplete} disabled={busy}>
+        <button className="btn btn--ghost" onClick={handleComplete} disabled={phase !== 'pending'}>
           {phase === 'completing' ? t`finishing…` : t`Done`}
         </button>
-      </div>
+      </>
     )
   }
 
   const expired = status?.expired
   if (status?.connected && !expired) {
     return (
-      <div className="auth-pill auth-pill--connected">
-        <Trans>BIU account connected ✓</Trans>
-      </div>
+      <>
+        <span className="chip chip--ok">
+          <Icon icon="check" />
+          <Trans>BIU account connected</Trans>
+        </span>
+        <button className="btn btn--ghost" onClick={handleConnect}>
+          <Trans>Manage account</Trans>
+        </button>
+      </>
     )
   }
 
-  const label = expired ? t`session expired` : t`not connected`
-  const action = expired ? t`Reconnect` : t`Connect`
   return (
-    <div className="auth-pill auth-pill--disconnected">
-      <span>{label}</span>
-      <button className="auth-pill-btn" onClick={handleConnect}>
-        {action}
+    <>
+      <span className={expired ? 'chip chip--warn' : 'chip chip--danger'}>
+        {expired ? t`session expired` : t`not connected`}
+      </span>
+      <button className="btn btn--ghost" onClick={handleConnect}>
+        {expired ? t`Reconnect` : t`Connect`}
       </button>
-    </div>
+    </>
   )
 }

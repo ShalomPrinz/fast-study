@@ -1,5 +1,6 @@
 /* The run vocabulary shared by the lecture pipeline and the course overview: the caption above a
-   card, the card itself, and its rows. Stage-specific text lives with each view. */
+   card, the card itself, and its rows. Stage-specific text lives with each view. The caption and
+   the icon button are page furniture rather than run state, so downloads wears them too. */
 
 /* Caption above a card: an uppercase label on the left, a count on the right. */
 .section-head {

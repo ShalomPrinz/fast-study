@@ -1,5 +1,5 @@
-/* Zoom passcode prompt: masked input + scope toggle inside the shared .modal shell */
-/* .passcode-input lives in styles/source-row.css — it collides with .source-row-input. */
+/* Zoom passcode prompt: masked input + scope toggle inside the shared .modal shell.
+   `.passcode-input` lives in styles/source-row.css, beside the input class it dresses. */
 .passcode-scope {
   display: flex;
   align-items: center;

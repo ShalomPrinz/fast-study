@@ -1,4 +1,6 @@
-/* Compact segmented switch, shared by the sidebar mode toggle and the language switcher */
+/* Compact segmented switch. The base is the dark sidebar's — its mode toggle and the language
+   switcher; `--light` is the same control on a light surface, worn by the downloads media segments
+   and by each recording card's Lecture/Recitation toggle, so the two read as one family. */
 .mode-toggle {
   display: flex;
   gap: 2px;
@@ -7,15 +9,6 @@
   background: var(--sidebar-line);
   border-radius: var(--r-sm);
   flex-shrink: 0;
-}
-
-/* Same switch in the downloads panel, which spaces its own children — no sidebar margins. */
-/* Order-sensitive: this modifier overrides `.mode-toggle`'s margin at equal specificity, so the
-   two must stay in this file in this order. */
-.mode-toggle--downloads {
-  margin: 0;
-  align-self: flex-start;
-  min-width: 300px;
 }
 
 .mode-toggle-btn {
@@ -41,4 +34,38 @@
 .mode-toggle-btn.active {
   background: var(--sidebar-raise);
   color: var(--surface);
+}
+
+/* On a light surface the track sinks into the page and the active segment is a raised white pill.
+   Outspecifies the rules above rather than depending on source order, and drops the sidebar's
+   margins — every light-surface parent spaces its own children. */
+.mode-toggle.mode-toggle--light {
+  margin: 0;
+  background: var(--line-soft);
+  border-radius: var(--r);
+}
+
+.mode-toggle--light .mode-toggle-btn {
+  padding: var(--space-2) var(--space-5);
+  color: var(--text-2);
+  font-size: var(--fs-meta);
+}
+
+.mode-toggle--light .mode-toggle-btn:hover {
+  color: var(--text);
+}
+
+.mode-toggle--light .mode-toggle-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-sm);
+}
+
+/* How many rows a segment holds — a fact about its label, so it rides inside the button. */
+.mode-toggle-count {
+  margin-inline-start: var(--space-2);
+  font-size: var(--fs-fine);
+  font-weight: 500;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
 }

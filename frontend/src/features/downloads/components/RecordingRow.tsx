@@ -21,9 +21,12 @@ import {
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
+import '@/styles/chip.css'
+import '@/styles/segmented.css'
 import '@/features/downloads/DownloadsView.css'
 import './RecordingRow.css'
 import Chevron from '@/shared/components/Chevron'
+import Icon from '@/shared/components/Icon'
 
 interface Props {
   item: Item
@@ -34,15 +37,16 @@ interface Props {
   onToggle?: (item: Item) => void
 }
 
-// The resolved-type column's copy; an unresolved 'unknown' row shows '?'.
+// The resolved-type chip's copy; an unresolved 'unknown' row shows '?'.
 const RESOLVED_LABEL: Record<ResolvedMedia, MessageDescriptor> = {
   video: msg`Video`,
   material: msg`Material`,
   unsupported: msg`Unsupported`,
 }
 
-// One discovered recording; an expandable one renders each child as a recursive RecordingRow.
-// Memoized on its own `edit` slice, so typing in one row leaves its siblings untouched.
+// One discovered recording as a two-line card — what it is, then where it is going; an expandable
+// one renders each child as a recursive RecordingRow instead.
+// Memoized on its own `edit` slice, so typing in one card leaves its siblings untouched.
 const RecordingRow = memo(function RecordingRow({
   item,
   edit,
@@ -94,7 +98,7 @@ const RecordingRow = memo(function RecordingRow({
   const listId = useId()
   // Non-blocking state note: a material download appends, so the count is shown rather than confirmed.
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
-  // Live tree, so a completed download's SSE refresh flips the row green.
+  // Live tree, so a completed download's SSE refresh flips the card green.
   const alreadyDownloaded = hasResource(
     { media: item.media, resolvedMedia: resolved },
     effectiveName,
@@ -106,6 +110,7 @@ const RecordingRow = memo(function RecordingRow({
   const status = rowStatus(jobs)
   const split = jobs.length > 1
   const downloading = status === 'running'
+  const failed = queueFailed || status === 'error'
 
   // Pending overwrite confirm: `message` is what the modal shows, `run` is what a Yes replays
   // (the whole-row download or one clip's retry). Null means no modal.
@@ -149,8 +154,8 @@ const RecordingRow = memo(function RecordingRow({
 
   if (item.expandable && onToggle) {
     return (
-      <div className="recording-expandable">
-        <div className="recording-row recording-row--expandable">
+      <div className="recording-playlist">
+        <div className="recording-playlist-head">
           <button
             className="recording-caret"
             aria-label={expand.expanded ? t`Collapse` : t`Expand`}
@@ -181,39 +186,41 @@ const RecordingRow = memo(function RecordingRow({
   }
 
   return (
-    <div className="recording-entry">
-      <div
-        className={[
-          'recording-row',
-          alreadyDownloaded && 'recording-row--downloaded',
-          unsupported && 'recording-row--unsupported',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
+    <div
+      className={[
+        'recording-card',
+        downloading && 'recording-card--downloading',
+        alreadyDownloaded && 'recording-card--downloaded',
+        unsupported && 'recording-card--unsupported',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className="recording-card-line">
         <span className="recording-title" dir="auto" title={item.title}>
           {item.title}
         </span>
-
         {unknown && (
-          <span className="recording-media" title={t`File type`}>
+          <span className="chip chip--neutral" title={t`File type`}>
             {resolved ? t(RESOLVED_LABEL[resolved]) : '?'}
           </span>
         )}
+      </div>
 
-        <div className="kind-toggle">
+      <div className="recording-card-line">
+        <span className="recording-save-label">
+          <Trans>Save as</Trans>
+        </span>
+
+        <div className="mode-toggle mode-toggle--light">
           <button
-            className={
-              kind === 'lecture' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'
-            }
+            className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
             onClick={() => setKind('lecture')}
           >
             <Trans>Lecture</Trans>
           </button>
           <button
-            className={
-              kind === 'recitation' ? 'kind-toggle-btn kind-toggle-btn--active' : 'kind-toggle-btn'
-            }
+            className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
             onClick={() => setKind('recitation')}
           >
             <Trans>Recitation</Trans>
@@ -249,18 +256,28 @@ const RecordingRow = memo(function RecordingRow({
           <span className="btn recording-download-btn recording-download-btn--label">
             {downloading ? t`Downloading…` : status === 'error' ? t`Failed ✗` : t`Downloaded ✓`}
           </span>
+        ) : downloading ? (
+          // The bars below say how far along it is, so the action reduces to naming the state.
+          <span className="chip chip--accent">
+            <Trans>Downloading</Trans>
+          </span>
+        ) : alreadyDownloaded && !failed ? (
+          // Settled: the target exists, so there is nothing left to do here. Renaming the target, or
+          // a failure the retry button has to stay reachable for, brings the button back.
+          <span className="chip chip--ok">
+            <Icon icon="check" />
+            <Trans>In course</Trans>
+          </span>
         ) : (
           <button
             className="btn btn--ghost recording-download-btn"
             onClick={onDownloadClick}
-            disabled={pending || downloading || unsupported}
+            disabled={pending || unsupported}
             title={unsupported ? t`Not a file the downloader can fetch` : undefined}
           >
             {pending ? (
               <span className="recording-spinner" />
-            ) : downloading ? (
-              t`Downloading…`
-            ) : queueFailed || status === 'error' ? (
+            ) : failed ? (
               t`Retry ✗`
             ) : status === 'done' ? (
               t`Downloaded ✓`

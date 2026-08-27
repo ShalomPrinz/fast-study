@@ -25,6 +25,11 @@ msgstr "ל\"{course}\" אין הרצאה בשם \"{lecture}\"."
 msgid "\"{course}\" has no recitation named \"{lecture}\"."
 msgstr "ל\"{course}\" אין תרגול בשם \"{lecture}\"."
 
+#. placeholder {0}: items.length
+#: src/features/downloads/components/SectionGroup.tsx:226
+msgid "{0, plural, one {# item} other {# items}}"
+msgstr "{0, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
+
 #. placeholder {0}: lectures.length
 #: src/features/course-overview/CourseView.tsx:67
 msgid "{0, plural, one {# lecture} other {# lectures}}"
@@ -66,9 +71,14 @@ msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, one {אחת לא נתמכת} two {# לא נתמכות} other {# לא נתמכות}}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:145
+#: src/features/downloads/components/RecordingRow.tsx:149
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
+
+#. placeholder {0}: items.length
+#: src/features/downloads/DownloadsView.tsx:92
+msgid "{0} found"
+msgstr "נמצאו {0}"
 
 #. placeholder {0}: chunks.completed
 #. placeholder {1}: chunks.total
@@ -108,11 +118,11 @@ msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
-#: src/features/downloads/components/RecordingRow.tsx:125
+#: src/features/downloads/components/RecordingRow.tsx:129
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
-#: src/features/downloads/components/RecordingRow.tsx:134
+#: src/features/downloads/components/RecordingRow.tsx:138
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
@@ -125,7 +135,7 @@ msgstr "{generated} מתוך {0} יוצרו"
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} other {ב-# הרצאות}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:243
+#: src/features/downloads/components/RecordingRow.tsx:249
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -145,7 +155,7 @@ msgstr "{name} ישמש"
 msgid "{nextLoad, plural, one {Load # more} other {Load # more}}"
 msgstr "{nextLoad, plural, one {טען עוד אחד} two {טען עוד #} other {טען עוד #}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:252
+#: src/features/downloads/components/SectionGroup.tsx:259
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {שורה אחת לא התחילה — {stoppedBecause}} two {# שורות לא התחילו — {stoppedBecause}} other {# שורות לא התחילו — {stoppedBecause}}}"
 
@@ -161,29 +171,37 @@ msgstr "{processed} עובדו במלואן"
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stageCount}"
 
-#: src/features/downloads/components/SectionGroup.tsx:261
+#: src/features/downloads/components/SectionGroup.tsx:268
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.}}"
+
+#: src/features/downloads/DownloadsView.tsx:60
+msgid "{withSource} courses with a source"
+msgstr "{withSource} קורסים עם מקור"
 
 #: src/features/lectures/EditSummaryView.tsx:135
 #~ msgid "← Back"
 #~ msgstr "→ חזרה"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:67
+#: src/features/downloads/components/AddCourseRow.tsx:40
+msgid "+ Add a course source URL"
+msgstr "+ הוספת כתובת מקור לקורס"
+
+#: src/features/downloads/components/CourseSourceRow.tsx:70
 msgid "+ add source URL"
 msgstr "+ הוסף כתובת מקור"
 
 #: src/features/downloads/components/AddCourseRow.tsx:40
-msgid "+ New Course"
-msgstr "+ קורס חדש"
+#~ msgid "+ New Course"
+#~ msgstr "+ קורס חדש"
 
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:14
 #~ msgid "⟳ Run incomplete pipelines"
 #~ msgstr "⟳ הרץ צינורות לא שלמים"
 
 #: src/features/downloads/components/SectionGroup.tsx:245
-msgid "⭳ Download all"
-msgstr "⭳ הורד הכל"
+#~ msgid "⭳ Download all"
+#~ msgstr "⭳ הורד הכל"
 
 #: src/features/downloads/components/PausedRunsBanner.tsx:28
 msgid "A section is waiting for a passcode"
@@ -213,7 +231,7 @@ msgstr "ארכיון ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שברצונך לייצר מחדש?"
 
-#: src/features/downloads/components/RecordingRow.tsx:231
+#: src/features/downloads/components/RecordingRow.tsx:237
 msgid "Attach material to"
 msgstr "צרף חומר אל"
 
@@ -229,9 +247,13 @@ msgstr "חילוץ האודיו נכשל"
 msgid "Back"
 msgstr "חזרה"
 
+#: src/features/downloads/components/AccountStatus.tsx:85
+msgid "BIU account connected"
+msgstr "חשבון בר-אילן מחובר"
+
 #: src/features/downloads/components/AuthPill.tsx:81
-msgid "BIU account connected ✓"
-msgstr "חשבון בר-אילן מחובר ✓"
+#~ msgid "BIU account connected ✓"
+#~ msgstr "חשבון בר-אילן מחובר ✓"
 
 #: src/features/downloads/contexts/DownloadsSessionContext.tsx:74
 msgid "BIU session expired. Reconnect your account."
@@ -241,20 +263,24 @@ msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 msgid "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgstr "אין גישה ל{serviceName} בכתובת {baseUrl}. ודא שהשירות פועל."
 
-#: src/features/downloads/components/AddCourseRow.tsx:74
+#: src/features/downloads/components/AddCourseRow.tsx:73
 #: src/features/downloads/components/PasscodePrompt.tsx:66
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/downloads/components/AuthPill.tsx:58
+#: src/features/downloads/components/AccountStatus.tsx:61
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
 #: src/features/downloads/DownloadsView.tsx:74
-msgid "close"
+#~ msgid "close"
+#~ msgstr "סגור"
+
+#: src/features/downloads/DownloadsView.tsx:96
+msgid "Close"
 msgstr "סגור"
 
-#: src/features/downloads/components/RecordingRow.tsx:156
+#: src/features/downloads/components/RecordingRow.tsx:160
 msgid "Collapse"
 msgstr "כווץ"
 
@@ -270,7 +296,7 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/downloads/components/AuthPill.tsx:87
+#: src/features/downloads/components/AccountStatus.tsx:100
 msgid "Connect"
 msgstr "התחבר"
 
@@ -299,7 +325,7 @@ msgstr "לא ניתן להוריד את \"{name}\": {detail}"
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
-#: src/features/downloads/components/SectionGroup.tsx:107
+#: src/features/downloads/components/SectionGroup.tsx:108
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 
@@ -320,11 +346,15 @@ msgstr "שם הקורס…"
 msgid "Course overview"
 msgstr "סקירת קורס"
 
+#: src/features/downloads/DownloadsView.tsx:69
+msgid "Course sources"
+msgstr "מקורות קורסים"
+
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Courses"
 msgstr "קורסים"
 
-#: src/features/downloads/components/AddCourseRow.tsx:71
+#: src/features/downloads/components/AddCourseRow.tsx:70
 msgid "Create"
 msgstr "צור"
 
@@ -337,36 +367,44 @@ msgstr "ה-PDF הנוכחי"
 msgid "Delete {0}"
 msgstr "מחק את {0}"
 
-#: src/features/downloads/components/AuthPill.tsx:71
+#: src/features/downloads/components/AccountStatus.tsx:73
 msgid "Done"
 msgstr "סיום"
 
-#: src/features/downloads/components/RecordingRow.tsx:268
+#: src/features/downloads/components/RecordingRow.tsx:283
 msgid "Download"
 msgstr "הורד"
 
-#: src/features/downloads/components/RecordingRow.tsx:250
-#: src/features/downloads/components/RecordingRow.tsx:266
+#. placeholder {0}: items.length
+#: src/features/downloads/components/SectionGroup.tsx:252
+msgid "Download all {0}"
+msgstr "הורד הכל ({0})"
+
+#: src/features/downloads/components/RecordingRow.tsx:256
+#: src/features/downloads/components/RecordingRow.tsx:281
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
+#: src/features/downloads/components/RecordingRow.tsx:261
+msgid "Downloading"
+msgstr "מוריד"
+
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:223
+#: src/features/downloads/components/SectionGroup.tsx:230
 msgid "Downloading {0}/{1}…"
 msgstr "מוריד {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:230
+#: src/features/downloads/components/SectionGroup.tsx:237
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/downloads/components/RecordingRow.tsx:250
-#: src/features/downloads/components/RecordingRow.tsx:262
-#: src/features/downloads/components/SectionGroup.tsx:245
+#: src/features/downloads/components/RecordingRow.tsx:256
+#: src/features/downloads/components/SectionGroup.tsx:252
 msgid "Downloading…"
 msgstr "מוריד…"
 
-#: src/features/downloads/DownloadsView.tsx:49
+#: src/features/downloads/DownloadsView.tsx:53
 #: src/shared/sidebar/Sidebar.tsx:84
 msgid "Downloads"
 msgstr "הורדות"
@@ -379,7 +417,7 @@ msgstr "Drive"
 msgid "Drive upload failed"
 msgstr "ההעלאה ל-Drive נכשלה"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:77
+#: src/features/downloads/components/CourseSourceRow.tsx:75
 msgid "Edit source URL"
 msgstr "ערוך כתובת מקור"
 
@@ -395,11 +433,11 @@ msgstr "הזן את קוד הגישה של זום להקלטה זו"
 msgid "Estimating…"
 msgstr "מעריך…"
 
-#: src/features/downloads/components/RecordingRow.tsx:156
+#: src/features/downloads/components/RecordingRow.tsx:160
 msgid "Expand"
 msgstr "הרחב"
 
-#: src/features/downloads/components/SectionGroup.tsx:243
+#: src/features/downloads/components/SectionGroup.tsx:250
 msgid "Expand every playlist in this section first"
 msgstr "יש להרחיב תחילה כל רשימת השמעה בקטע זה"
 
@@ -429,11 +467,11 @@ msgstr "מחלץ אודיו"
 msgid "failed"
 msgstr "נכשל"
 
-#: src/features/downloads/components/RecordingRow.tsx:250
+#: src/features/downloads/components/RecordingRow.tsx:256
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/downloads/components/AuthPill.tsx:50
+#: src/features/downloads/components/AccountStatus.tsx:53
 msgid "Failed to complete login. Try reconnecting."
 msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
 
@@ -442,7 +480,7 @@ msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
 
-#: src/features/downloads/components/AuthPill.tsx:39
+#: src/features/downloads/components/AccountStatus.tsx:42
 msgid "Failed to launch the login browser."
 msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
@@ -450,15 +488,15 @@ msgstr "הפעלת דפדפן ההתחברות נכשלה."
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
-#: src/features/downloads/components/RecordingRow.tsx:199
+#: src/features/downloads/components/RecordingRow.tsx:203
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/downloads/components/AuthPill.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:70
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
-#: src/features/downloads/components/AuthPill.tsx:71
+#: src/features/downloads/components/AccountStatus.tsx:73
 msgid "finishing…"
 msgstr "מסיים…"
 
@@ -488,7 +526,7 @@ msgstr "ייצור משלב {stepLabel} יבנה מחדש:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:74
 #: src/features/course-overview/components/GenerateAllButton.tsx:34
-#: src/features/lectures/EditSummaryView.tsx:184
+#: src/features/lectures/EditSummaryView.tsx:186
 msgid "Generating…"
 msgstr "מייצר…"
 
@@ -500,6 +538,10 @@ msgstr "הגעת למגבלת הקצב של Groq"
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
 msgstr "דף הבית"
+
+#: src/features/downloads/components/RecordingRow.tsx:267
+msgid "In course"
+msgstr "נמצא בקורס"
 
 #: src/features/downloads/components/PasscodePrompt.tsx:62
 msgid "just this lecture"
@@ -517,7 +559,7 @@ msgstr "השגיאה האחרונה:"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/RecordingRow.tsx:211
+#: src/features/downloads/components/RecordingRow.tsx:219
 msgid "Lecture"
 msgstr "הרצאה"
 
@@ -535,7 +577,7 @@ msgstr "הרצאה {0}"
 #~ msgid "Lecture 1"
 #~ msgstr "הרצאה 1"
 
-#: src/features/downloads/components/RecordingRow.tsx:231
+#: src/features/downloads/components/RecordingRow.tsx:237
 msgid "Lecture name"
 msgstr "שם ההרצאה"
 
@@ -554,11 +596,15 @@ msgstr "הרצאות"
 msgid "Lectures {0}-{1}"
 msgstr "הרצאות {0}-{1}"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:74
+#: src/features/downloads/components/CourseSourceRow.tsx:87
 msgid "Load recordings"
 msgstr "טען הקלטות"
 
-#: src/features/downloads/DownloadsView.tsx:79
+#: src/features/downloads/components/CourseSourceRow.tsx:82
+msgid "Loaded"
+msgstr "נטען"
+
+#: src/features/downloads/DownloadsView.tsx:101
 msgid "Loading recordings…"
 msgstr "טוען הקלטות…"
 
@@ -566,19 +612,23 @@ msgstr "טוען הקלטות…"
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:74
+#: src/features/downloads/components/CourseSourceRow.tsx:87
 msgid "Loading…"
 msgstr "טוען…"
+
+#: src/features/downloads/components/AccountStatus.tsx:88
+msgid "Manage account"
+msgstr "ניהול חשבון"
 
 #: src/features/search/SearchView.tsx:129
 msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
-#: src/features/downloads/components/RecordingRow.tsx:40
+#: src/features/downloads/components/RecordingRow.tsx:43
 msgid "Material"
 msgstr "חומר"
 
-#: src/features/downloads/DownloadsView.tsx:34
+#: src/features/downloads/DownloadsView.tsx:39
 #: src/features/lectures/MainView.tsx:345
 msgid "Materials"
 msgstr "חומרים"
@@ -599,7 +649,7 @@ msgstr "לא"
 msgid "No archived courses"
 msgstr "אין קורסים בארכיון"
 
-#: src/features/downloads/DownloadsView.tsx:41
+#: src/features/downloads/DownloadsView.tsx:46
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
@@ -611,11 +661,11 @@ msgstr "אין הרצאות"
 msgid "no material found"
 msgstr "לא נמצא חומר"
 
-#: src/features/downloads/DownloadsView.tsx:40
+#: src/features/downloads/DownloadsView.tsx:45
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/EditSummaryView.tsx:175
+#: src/features/lectures/EditSummaryView.tsx:177
 msgid "No original to revert to"
 msgstr "אין מקור לשחזור"
 
@@ -635,15 +685,15 @@ msgstr "אין עדיין PDF — השתמש ב\"ייצוא PDF מחדש\" כד�
 msgid "No Recitations"
 msgstr "אין תרגולים"
 
-#: src/features/downloads/DownloadsView.tsx:39
+#: src/features/downloads/DownloadsView.tsx:44
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/features/downloads/components/RecordingRow.tsx:257
+#: src/features/downloads/components/RecordingRow.tsx:274
 msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
-#: src/features/downloads/components/AuthPill.tsx:86
+#: src/features/downloads/components/AccountStatus.tsx:97
 msgid "not connected"
 msgstr "לא מחובר"
 
@@ -690,7 +740,7 @@ msgstr "פתח את ה-PDF בלשונית חדשה"
 msgid "Other"
 msgstr "אחר"
 
-#: src/features/downloads/components/SectionGroup.tsx:76
+#: src/features/downloads/components/SectionGroup.tsx:77
 msgid "Other links"
 msgstr "קישורים אחרים"
 
@@ -724,11 +774,11 @@ msgstr "PDF"
 msgid "PDF export failed"
 msgstr "ייצוא ה-PDF נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:167
+#: src/features/lectures/EditSummaryView.tsx:168
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:167
+#: src/features/lectures/EditSummaryView.tsx:169
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -753,7 +803,7 @@ msgstr "מוגבל קצב עד {0}"
 msgid "Re-download ↻"
 msgstr "הורד מחדש ↻"
 
-#: src/features/lectures/EditSummaryView.tsx:184
+#: src/features/lectures/EditSummaryView.tsx:186
 msgid "Re-export PDF"
 msgstr "ייצוא PDF מחדש"
 
@@ -773,7 +823,7 @@ msgstr "מוכן לניסיון חוזר"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/RecordingRow.tsx:219
+#: src/features/downloads/components/RecordingRow.tsx:225
 msgid "Recitation"
 msgstr "תרגול"
 
@@ -807,11 +857,11 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AuthPill.tsx:87
+#: src/features/downloads/components/AccountStatus.tsx:100
 msgid "Reconnect"
 msgstr "התחבר מחדש"
 
-#: src/features/downloads/DownloadsView.tsx:71
+#: src/features/downloads/DownloadsView.tsx:90
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
@@ -836,12 +886,12 @@ msgstr "השם שונה ל-\"{name}\" — יש תווים שאי אפשר להש
 msgid "Replace existing video.mp4 in \"{0}\"?"
 msgstr "להחליף את video.mp4 הקיים ב\"{0}\"?"
 
-#: src/features/lectures/EditSummaryView.tsx:175
+#: src/features/lectures/EditSummaryView.tsx:177
 msgid "Restore the original summary"
 msgstr "שחזר את הסיכום המקורי"
 
 #: src/features/downloads/components/RecordingJobList.tsx:48
-#: src/features/downloads/components/RecordingRow.tsx:264
+#: src/features/downloads/components/RecordingRow.tsx:279
 msgid "Retry ✗"
 msgstr "נסה שוב ✗"
 
@@ -850,7 +900,7 @@ msgstr "נסה שוב ✗"
 msgid "Retry in {0}"
 msgstr "ניסיון חוזר בעוד {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:177
+#: src/features/lectures/EditSummaryView.tsx:179
 msgid "Revert to original"
 msgstr "שחזר למקור"
 
@@ -874,9 +924,13 @@ msgstr "הרץ את הנותר"
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/lectures/EditSummaryView.tsx:191
+#: src/features/lectures/EditSummaryView.tsx:193
 msgid "Save"
 msgstr "שמור"
+
+#: src/features/downloads/components/RecordingRow.tsx:211
+msgid "Save as"
+msgstr "שמור בשם"
 
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:34
 msgid "Saved to {lecture}"
@@ -903,7 +957,7 @@ msgstr "הקטע {0} ממתין לקוד גישה"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/features/downloads/components/AuthPill.tsx:86
+#: src/features/downloads/components/AccountStatus.tsx:97
 msgid "session expired"
 msgstr "החיבור פג"
 
@@ -974,7 +1028,7 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הארוך ביותר ש
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/features/downloads/components/SectionGroup.tsx:210
+#: src/features/downloads/components/SectionGroup.tsx:211
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "החיבור לבר-אילן פג. התחבר מחדש והרץ את הקטע שוב."
 
@@ -990,11 +1044,11 @@ msgstr "הקבצים הבאים ייוצרו מחדש:"
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
-#: src/features/downloads/components/SectionGroup.tsx:213
+#: src/features/downloads/components/SectionGroup.tsx:214
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "הריצה נעצרה מוקדם. הרץ את הקטע שוב כדי להשלים אותן."
 
-#: src/features/downloads/components/SectionGroup.tsx:212
+#: src/features/downloads/components/SectionGroup.tsx:213
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "הריצה בוטלה. הרץ את הקטע שוב כדי להשלים אותן."
 
@@ -1023,15 +1077,15 @@ msgstr "התמלול נכשל"
 msgid "Unarchive course"
 msgstr "הוצא קורס מהארכיון"
 
-#: src/features/downloads/DownloadsView.tsx:35
+#: src/features/downloads/DownloadsView.tsx:40
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:209
+#: src/features/lectures/EditSummaryView.tsx:211
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
-#: src/features/downloads/components/RecordingRow.tsx:41
+#: src/features/downloads/components/RecordingRow.tsx:44
 msgid "Unsupported"
 msgstr "לא נתמך"
 
@@ -1051,12 +1105,12 @@ msgstr "מעלה ל-Drive"
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/RecordingRow.tsx:39
+#: src/features/downloads/components/RecordingRow.tsx:42
 #: src/features/lectures/constants/pipeline.ts:18
 msgid "Video"
 msgstr "סרטון"
 
-#: src/features/downloads/DownloadsView.tsx:33
+#: src/features/downloads/DownloadsView.tsx:38
 msgid "Videos"
 msgstr "סרטונים"
 

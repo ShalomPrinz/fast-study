@@ -1,41 +1,50 @@
-/* One Moodle section: heading + bulk control above its recording rows. */
+/* One Moodle section: its heading and bulk control above the cards it holds. */
 .recordings-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+  gap: var(--space-3);
 }
 
 .recordings-section-header {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: 2px 2px var(--space-1);
-  border-bottom: 1px solid var(--line);
+  gap: var(--space-3);
+}
+
+/* Decorative: the section is always open, so the caret marks the heading rather than toggling it. */
+.recordings-section-caret {
+  flex-shrink: 0;
+  font-size: var(--fs-fine);
+  color: var(--text-4);
 }
 
 .recordings-section-title {
-  flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--fs-meta);
+  font-size: var(--fs-body);
   font-weight: 600;
-  color: var(--text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  color: var(--text);
 }
 
+/* How many cards the section holds, and — once it has been run — how that run ended. Both are quiet
+   facts about the heading, so they share its line. */
+.recordings-section-count,
 .recordings-section-progress {
-  font-size: var(--fs-meta);
-  color: var(--text-3);
+  flex-shrink: 0;
+  font-size: var(--fs-fine);
+  color: var(--text-4);
+}
+
+/* The bulk control sits at the far end, whichever of the facts before it are showing. */
+.recordings-section-run {
+  margin-inline-start: auto;
 }
 
 /* Not an error — the run simply can't account for these rows, and nothing here can resolve them. */
 .recordings-section-stalled {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--warn-soft);
+  padding: var(--space-3) var(--space-5);
   border-radius: var(--r-sm);
   background: var(--warn-soft);
   font-size: var(--fs-meta);

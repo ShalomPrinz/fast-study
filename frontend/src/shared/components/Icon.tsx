@@ -16,6 +16,7 @@ export type IconName =
   | 'file'
   | 'chevron-start'
   | 'warning'
+  | 'check'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -242,6 +243,19 @@ const WarningIcon = () => (
   </svg>
 )
 
+// The done tick, at chip scale — the same stroke `StatusNode` draws inside its 22px node.
+const CheckIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M2.5 6.2l2.4 2.4L9.5 4"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 const icons: Record<IconName, () => JSX.Element> = {
   'external-link': ExternalLinkIcon,
   edit: EditIcon,
@@ -260,6 +274,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   file: FileIcon,
   'chevron-start': ChevronStartIcon,
   warning: WarningIcon,
+  check: CheckIcon,
 }
 
 export default function Icon({ icon }: { icon: IconName }) {

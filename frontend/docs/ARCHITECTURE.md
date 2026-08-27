@@ -99,11 +99,14 @@ className?, children? })`. It owns the mode as component state persisted in `loc
 `storageKey`; insertion order of `modes` is both the segment order and the default, and an unknown
 stored key falls back to that default. A mode either names a zero-prop `Component` or the caller passes
 `children(mode, selectMode)` when it needs the selected value rather than a body — `selectMode` lets the body
-switch segments itself, which is how the downloads passcode banner jumps to a stuck section.
+switch segments itself, which is how the downloads passcode banner jumps to a stuck section. A mode may
+also carry a `count`, shown beside its label.
 
 `DownloadsView` uses the `children` form with `Record<Media, …>` and key `fastStudyDownloadsMedia`,
-since it filters items by the selected media. `.mode-toggle--downloads` is a margins-only modifier over
-the shared `.mode-toggle` CSS; `LanguageSwitcher` reuses the same CSS without the component.
+since it filters items by the selected media, and counts each segment's items. `.mode-toggle` is styled
+dark for the sidebar; `.mode-toggle--light` is the same control on a light surface — a sunken track under
+a raised white pill — worn by the downloads segments and by each recording card's Lecture/Recitation
+toggle, so the two read as one control family. `LanguageSwitcher` reuses the dark CSS without the component.
 
 `Sidebar` is the other `AppMode` holder, but not through `ModeToggle`: its Lectures and Courses nav
 rows own the mode themselves, still persisted under `fastStudyMode` so an existing choice survived the
@@ -137,8 +140,8 @@ scales are:
 | text      | `--text` → `--text-4`, darkest to faintest                                                                                 |
 | lines     | `--line`, `--line-soft`, `--control-line` (input and button borders)                                                       |
 | primary   | `--ink` — the one filled button per page                                                                                   |
-| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-ink`, `--accent-on-dark`                                          |
-| status    | `--ok`/`--ok-soft`/`--ok-dot`, `--warn`/`--warn-soft`, `--danger`/`--danger-soft`, `--highlight`                           |
+| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-line`, `--accent-ink`, `--accent-on-dark`                         |
+| status    | `--ok`/`--ok-soft`/`--ok-surface`/`--ok-line`/`--ok-dot`, `--warn`/`--warn-soft`, `--danger`/`--danger-soft`, `--highlight` |
 | sidebar   | `--sidebar-bg`, `--sidebar-raise`, `--sidebar-line`, `--sidebar-fg`, `--sidebar-muted`, `--sidebar-dim`, `--sidebar-width` |
 | space     | `--space-1` 4px → `--space-8` 40px                                                                                         |
 | radius    | `--r-sm` 8px, `--r` 9px, `--r-lg` 12px, `--r-xl` 14px, `--r-pill`                                                          |
@@ -168,7 +171,7 @@ file that imports the library.
 between dev (per-module `<style>` tags) and prod (one extracted, concatenated sheet), so two same-specificity
 rules that used to resolve by position now resolve unpredictably. Disambiguate by specificity. Where two
 rules genuinely collide on the same element at equal specificity — `.lecture-list` / `.course-list`,
-`.source-row-input` / `.passcode-input`, `.pipeline-row` / `.pipeline-row--running` — both live in one file in the
+`.pipeline-row` / `.pipeline-row--running` — both live in one file in the
 winning order, with a comment naming the dependency; that is why a few single-user classes sit in a shared
 stylesheet. Verify a suspected collision against the built bundle, not the dev server.
 

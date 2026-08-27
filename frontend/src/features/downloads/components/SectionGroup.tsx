@@ -11,6 +11,7 @@ import {
 } from '@/features/downloads/services/autoDownloader'
 import type { RunTarget } from '@/features/downloads/services/downloadServer'
 import { cancelRun, resumeRun, startSectionRun } from '@/features/downloads/services/downloadServer'
+import Chevron from '@/shared/components/Chevron'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
 import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
@@ -215,8 +216,14 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   return (
     <div className="recordings-section">
       <div className="recordings-section-header">
+        <span className="recordings-section-caret" aria-hidden="true">
+          <Chevron open />
+        </span>
         <span className="recordings-section-title" dir="auto">
           {label}
+        </span>
+        <span className="recordings-section-count">
+          <Plural value={items.length} one="# item" other="# items" />
         </span>
         {queueing && run && (
           <span className="recordings-section-progress">
@@ -237,12 +244,12 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         )}
         {id !== null && (
           <button
-            className="btn btn--ghost"
+            className="btn btn--ghost recordings-section-run"
             onClick={() => void startAll()}
             disabled={busy || !allExpanded}
             title={allExpanded ? undefined : t`Expand every playlist in this section first`}
           >
-            {busy ? t`Downloading…` : t`⭳ Download all`}
+            {busy ? t`Downloading…` : t`Download all ${items.length}`}
           </button>
         )}
       </div>

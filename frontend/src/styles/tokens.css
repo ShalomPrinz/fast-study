@@ -28,11 +28,16 @@
   --accent-hover: #4049b8;
   --accent-soft: #eef1fd;
   --accent-ink: #4453c4;
+  /* Border for a tinted card: the soft fill carries no edge of its own, so the outline steps darker. */
+  --accent-line: #d5daf7;
   /* Light enough to read on the dark sidebar, where the accent proper goes muddy. */
   --accent-on-dark: #98b0ff;
 
   --ok: #2f7d54;
   --ok-soft: #e7f4ec;
+  /* The pale card fill, quieter than --ok-soft, with its matching border. */
+  --ok-surface: #f5fbf7;
+  --ok-line: #cfe7d9;
   --ok-dot: #3f9f6a;
   --warn: #b45309;
   --warn-soft: #fdf4e7;

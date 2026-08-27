@@ -3,12 +3,11 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  margin-bottom: var(--space-2);
 }
 
 .recordings-paused-entry {
-  padding: var(--space-2) var(--space-4);
-  border: 1px solid var(--warn-soft);
+  padding: var(--space-3) var(--space-5);
+  border: none;
   border-radius: var(--r-sm);
   background: var(--warn-soft);
   font: inherit;

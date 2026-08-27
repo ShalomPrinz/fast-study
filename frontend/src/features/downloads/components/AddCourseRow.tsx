@@ -37,7 +37,7 @@ export default function AddCourseRow() {
   if (!adding) {
     return (
       <button className="source-add-btn" onClick={() => setAdding(true)}>
-        <Trans>+ New Course</Trans>
+        <Trans>+ Add a course source URL</Trans>
       </button>
     )
   }
@@ -45,7 +45,7 @@ export default function AddCourseRow() {
   return (
     <div className="source-add-row">
       <input
-        className="source-row-input"
+        className="source-row-input source-add-name"
         value={name}
         onChange={(e) => setName(e.target.value)}
         onKeyDown={(e) => {
@@ -56,7 +56,7 @@ export default function AddCourseRow() {
         autoFocus
       />
       <input
-        className="source-row-input"
+        className="source-row-input source-add-url"
         value={url}
         onChange={(e) => setUrl(e.target.value)}
         onKeyDown={(e) => {
@@ -66,14 +66,12 @@ export default function AddCourseRow() {
         placeholder={t`Source URL (optional)…`}
         dir="auto"
       />
-      <div className="source-add-actions">
-        <button className="btn btn--primary" onClick={commit} disabled={saving || !name.trim()}>
-          <Trans>Create</Trans>
-        </button>
-        <button className="btn btn--ghost" onClick={reset}>
-          <Trans>Cancel</Trans>
-        </button>
-      </div>
+      <button className="btn btn--primary" onClick={commit} disabled={saving || !name.trim()}>
+        <Trans>Create</Trans>
+      </button>
+      <button className="btn btn--ghost" onClick={reset}>
+        <Trans>Cancel</Trans>
+      </button>
     </div>
   )
 }
