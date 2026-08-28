@@ -131,15 +131,16 @@ export default function SearchView() {
             />
             <span className="search-field-divider" />
             <span className="search-course">
+              {/* The select keeps the page's direction so its reserved padding-inline-end and the
+                  chevron's inset-inline-end land on the same edge; `dir="auto"` per option instead. */}
               <select
                 className="search-course-select"
                 value={course ?? ''}
                 onChange={(e) => selectCourse(e.target.value)}
                 aria-label={t`Course`}
-                dir="auto"
               >
                 {active.map((c) => (
-                  <option key={c.name} value={c.name}>
+                  <option key={c.name} value={c.name} dir="auto">
                     {c.name}
                   </option>
                 ))}
