@@ -7,11 +7,6 @@
   overflow: auto;
 }
 
-.main-view--panel {
-  align-items: flex-start;
-  padding: var(--space-8) var(--space-7);
-}
-
 .main-view--empty {
   flex-direction: column;
   gap: var(--space-5);
@@ -74,19 +69,6 @@
   font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text);
-}
-
-.lecture-panel {
-  width: 100%;
-  max-width: 520px;
-}
-
-.lecture-panel-title {
-  font-size: var(--fs-title);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text);
-  margin-bottom: var(--space-7);
 }
 
 /* Lives here, not beside ErrorBoundary: `.main-view error-view` overrides .main-view at equal

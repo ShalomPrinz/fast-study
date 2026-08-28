@@ -1,9 +1,10 @@
-import { useLingui } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
 import { fileUrl } from '@/services/database'
 import type { CourseSummary } from '@/types'
 import type { Hit } from '../utils/search'
 import SearchSnippet from './SearchSnippet'
+import '@/styles/chip.css'
 import './SearchResult.css'
 
 interface Props {
@@ -13,7 +14,7 @@ interface Props {
   hasPdf: boolean
 }
 
-// One lecture's block: a single header row — the whole row is the open-PDF button, disabled when the
+// One lecture's card: a single header row — the whole row is the open-PDF button, disabled when the
 // lecture has no summary.pdf — above every snippet found in that lecture.
 export default function SearchResult({ summary, hits, course, hasPdf }: Props) {
   const { t } = useLingui()
@@ -24,15 +25,30 @@ export default function SearchResult({ summary, hits, course, hasPdf }: Props) {
   return (
     <div className="search-result">
       <button className="search-result-head" onClick={openPdf} disabled={!hasPdf} title={title}>
-        <span className="search-result-title">{name}</span>
-        <span className="search-result-kind">
+        <span className="search-result-icon">
+          <Icon icon="file" />
+        </span>
+        <span className="search-result-title" dir="auto">
+          {name}
+        </span>
+        <span className="chip chip--neutral">
           {kind === 'recitation' ? t`recitation` : t`lecture`}
         </span>
-        <Icon icon="external-link" />
+        <span className="search-result-open">
+          {hasPdf ? (
+            <Icon icon="external-link" />
+          ) : (
+            <span className="search-result-nopdf">
+              <Trans>no PDF</Trans>
+            </span>
+          )}
+        </span>
       </button>
-      {hits.map((hit, i) => (
-        <SearchSnippet key={i} hit={hit} />
-      ))}
+      <div className="search-result-snippets">
+        {hits.map((hit, i) => (
+          <SearchSnippet key={i} hit={hit} />
+        ))}
+      </div>
     </div>
   )
 }

@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:166
+#: src/features/search/SearchView.tsx:198
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -46,7 +46,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:164
+#: src/features/search/SearchView.tsx:196
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
@@ -71,7 +71,7 @@ msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, other {# unsupported}}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:149
+#: src/features/downloads/components/RecordingRow.tsx:150
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
@@ -118,11 +118,11 @@ msgstr "{count, plural, other {summary used only {used} of # materials}}"
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
-#: src/features/downloads/components/RecordingRow.tsx:129
+#: src/features/downloads/components/RecordingRow.tsx:130
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} already exists in {course}. Download again and overwrite?"
 
-#: src/features/downloads/components/RecordingRow.tsx:138
+#: src/features/downloads/components/RecordingRow.tsx:139
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 
@@ -131,11 +131,11 @@ msgstr "{effectiveName} may split into parts that overwrite existing {existing} 
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
-#: src/features/search/SearchView.tsx:165
+#: src/features/search/SearchView.tsx:197
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:249
+#: src/features/downloads/components/RecordingRow.tsx:250
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
@@ -231,7 +231,7 @@ msgstr "Archived ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
-#: src/features/downloads/components/RecordingRow.tsx:237
+#: src/features/downloads/components/RecordingRow.tsx:238
 msgid "Attach material to"
 msgstr "Attach material to"
 
@@ -280,7 +280,7 @@ msgstr "checking account…"
 msgid "Close"
 msgstr "Close"
 
-#: src/features/downloads/components/RecordingRow.tsx:160
+#: src/features/downloads/components/RecordingRow.tsx:161
 msgid "Collapse"
 msgstr "Collapse"
 
@@ -333,6 +333,10 @@ msgstr "Couldn't load entries. Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
+#: src/features/search/SearchView.tsx:138
+msgid "Course"
+msgstr "Course"
+
 #: src/shared/utils/notFound.ts:8
 msgid "Course \"{course}\" doesn't exist."
 msgstr "Course \"{course}\" doesn't exist."
@@ -371,7 +375,7 @@ msgstr "Delete {0}"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/RecordingRow.tsx:283
+#: src/features/downloads/components/RecordingRow.tsx:285
 msgid "Download"
 msgstr "Download"
 
@@ -380,12 +384,12 @@ msgstr "Download"
 msgid "Download all {0}"
 msgstr "Download all {0}"
 
-#: src/features/downloads/components/RecordingRow.tsx:256
-#: src/features/downloads/components/RecordingRow.tsx:281
+#: src/features/downloads/components/RecordingRow.tsx:257
+#: src/features/downloads/components/RecordingRow.tsx:283
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
-#: src/features/downloads/components/RecordingRow.tsx:261
+#: src/features/downloads/components/RecordingRow.tsx:262
 msgid "Downloading"
 msgstr "Downloading"
 
@@ -399,7 +403,7 @@ msgstr "Downloading {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
-#: src/features/downloads/components/RecordingRow.tsx:256
+#: src/features/downloads/components/RecordingRow.tsx:257
 #: src/features/downloads/components/SectionGroup.tsx:252
 msgid "Downloading…"
 msgstr "Downloading…"
@@ -433,7 +437,7 @@ msgstr "Enter the zoom passcode for this recording"
 msgid "Estimating…"
 msgstr "Estimating…"
 
-#: src/features/downloads/components/RecordingRow.tsx:160
+#: src/features/downloads/components/RecordingRow.tsx:161
 msgid "Expand"
 msgstr "Expand"
 
@@ -467,7 +471,7 @@ msgstr "Extracting audio"
 msgid "failed"
 msgstr "failed"
 
-#: src/features/downloads/components/RecordingRow.tsx:256
+#: src/features/downloads/components/RecordingRow.tsx:257
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
@@ -488,7 +492,7 @@ msgstr "Failed to launch the login browser."
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
-#: src/features/downloads/components/RecordingRow.tsx:203
+#: src/features/downloads/components/RecordingRow.tsx:204
 msgid "File type"
 msgstr "File type"
 
@@ -539,7 +543,7 @@ msgstr "Groq rate limit reached"
 msgid "Home"
 msgstr "Home"
 
-#: src/features/downloads/components/RecordingRow.tsx:267
+#: src/features/downloads/components/RecordingRow.tsx:269
 msgid "In course"
 msgstr "In course"
 
@@ -555,11 +559,11 @@ msgstr "Language"
 msgid "Last error:"
 msgstr "Last error:"
 
-#: src/features/search/components/SearchResult.tsx:29
+#: src/features/search/components/SearchResult.tsx:35
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/RecordingRow.tsx:219
+#: src/features/downloads/components/RecordingRow.tsx:220
 msgid "Lecture"
 msgstr "Lecture"
 
@@ -577,7 +581,7 @@ msgstr "Lecture {0}"
 #~ msgid "Lecture 1"
 #~ msgstr "Lecture 1"
 
-#: src/features/downloads/components/RecordingRow.tsx:237
+#: src/features/downloads/components/RecordingRow.tsx:238
 msgid "Lecture name"
 msgstr "Lecture name"
 
@@ -585,7 +589,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:142
+#: src/features/search/SearchView.tsx:160
 #: src/shared/sidebar/Sidebar.tsx:75
 msgid "Lectures"
 msgstr "Lectures"
@@ -608,7 +612,7 @@ msgstr "Loaded"
 msgid "Loading recordings…"
 msgstr "Loading recordings…"
 
-#: src/features/search/SearchView.tsx:156
+#: src/features/search/SearchView.tsx:183
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
@@ -620,7 +624,7 @@ msgstr "Loading…"
 msgid "Manage account"
 msgstr "Manage account"
 
-#: src/features/search/SearchView.tsx:129
+#: src/features/search/SearchView.tsx:175
 msgid "Match whole word"
 msgstr "Match whole word"
 
@@ -669,7 +673,11 @@ msgstr "No materials found."
 msgid "No original to revert to"
 msgstr "No original to revert to"
 
-#: src/features/search/components/SearchResult.tsx:22
+#: src/features/search/components/SearchResult.tsx:42
+msgid "no PDF"
+msgstr "no PDF"
+
+#: src/features/search/components/SearchResult.tsx:23
 msgid "No PDF for this lecture"
 msgstr "No PDF for this lecture"
 
@@ -689,7 +697,7 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/components/RecordingRow.tsx:274
+#: src/features/downloads/components/RecordingRow.tsx:276
 msgid "Not a file the downloader can fetch"
 msgstr "Not a file the downloader can fetch"
 
@@ -708,6 +716,10 @@ msgstr "not provided"
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:50
 msgid "Note: This will delete all files in this lecture."
 msgstr "Note: This will delete all files in this lecture."
+
+#: src/features/search/SearchView.tsx:210
+msgid "Nothing matched this search"
+msgstr "Nothing matched this search"
 
 #: src/shared/contexts/RunnerStatusContext.tsx:81
 msgid "Nothing to run - All pipelines complete"
@@ -732,7 +744,7 @@ msgstr "Open material in new tab"
 #: src/features/course-overview/components/ExtractorHeader.tsx:82
 #: src/features/lectures/components/PdfViewer.tsx:96
 #: src/features/lectures/MainView.tsx:216
-#: src/features/search/components/SearchResult.tsx:22
+#: src/features/search/components/SearchResult.tsx:23
 msgid "Open PDF in new tab"
 msgstr "Open PDF in new tab"
 
@@ -819,11 +831,11 @@ msgstr "Re-generate from {stepLabel}"
 msgid "Ready to retry"
 msgstr "Ready to retry"
 
-#: src/features/search/components/SearchResult.tsx:29
+#: src/features/search/components/SearchResult.tsx:35
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/RecordingRow.tsx:225
+#: src/features/downloads/components/RecordingRow.tsx:226
 msgid "Recitation"
 msgstr "Recitation"
 
@@ -847,7 +859,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:150
+#: src/features/search/SearchView.tsx:168
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -890,8 +902,12 @@ msgstr "Replace existing video.mp4 in \"{0}\"?"
 msgid "Restore the original summary"
 msgstr "Restore the original summary"
 
+#: src/features/search/SearchView.tsx:191
+msgid "Results"
+msgstr "Results"
+
 #: src/features/downloads/components/RecordingJobList.tsx:48
-#: src/features/downloads/components/RecordingRow.tsx:279
+#: src/features/downloads/components/RecordingRow.tsx:281
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
@@ -928,7 +944,7 @@ msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgid "Save"
 msgstr "Save"
 
-#: src/features/downloads/components/RecordingRow.tsx:211
+#: src/features/downloads/components/RecordingRow.tsx:212
 msgid "Save as"
 msgstr "Save as"
 
@@ -940,13 +956,17 @@ msgstr "Saved to {lecture}"
 msgid "Search"
 msgstr "Search"
 
-#: src/features/search/SearchView.tsx:102
+#: src/features/search/SearchView.tsx:106
 msgid "Search summaries"
 msgstr "Search summaries"
 
-#: src/features/search/SearchView.tsx:122
+#: src/features/search/SearchView.tsx:128
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
+
+#: src/features/search/SearchView.tsx:109
+msgid "Searches the generated summaries of one course — the one picked in the field"
+msgstr "Searches the generated summaries of one course — the one picked in the field"
 
 #. placeholder {0}: sectionTitle(parsed.title)
 #: src/features/downloads/components/PausedRunsBanner.tsx:27
@@ -961,7 +981,7 @@ msgstr "Select a lecture to get started"
 msgid "session expired"
 msgstr "session expired"
 
-#: src/features/search/SearchView.tsx:189
+#: src/features/search/SearchView.tsx:235
 msgid "Show more"
 msgstr "Show more"
 
@@ -1113,6 +1133,10 @@ msgstr "Video"
 #: src/features/downloads/DownloadsView.tsx:38
 msgid "Videos"
 msgstr "Videos"
+
+#: src/features/search/SearchView.tsx:177
+msgid "Whole word only"
+msgstr "Whole word only"
 
 #: src/shared/components/ConfirmModal.tsx:42
 msgid "Yes"
