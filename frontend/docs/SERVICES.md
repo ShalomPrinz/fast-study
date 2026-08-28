@@ -29,6 +29,30 @@ course `overview/` file listing + meta. `materialUrl`/`deleteMaterial` hit the s
 fixed `FileName` set. Also exports `databaseUrl`, the base the SSE `EventSource` is built
 from. `fetchCourseMeta` unwraps `{ meta }` and renames `generated_at` → `generatedAt`.
 
+## `settings.ts` — the settings store and the two config owners
+
+The boundary for the settings concern, which spans both services on purpose: a setting's owner is a
+property of the setting, not of the screen editing it. Exports `Settings` (the read view, `null` for
+anything unstored — the client owns every default), `SettingsPatch` (partial; omitted fields are left
+alone), `fetchSettings`, `saveSettings`, `fetchConfigOptions` and `probeKey`.
+
+**The two API keys are write-only.** `SettingsPatch` carries `geminiApiKey`/`groqApiKey`; `Settings`
+reports only `geminiApiKeySet`/`groqApiKeySet`, so a stored key never travels back to the renderer.
+
+`SettingsBacking` is the read/write seam over the store, and `pickBacking()` is the only place the two
+backings are chosen between — the Electron preload bridge on `window.faststudy.settings` when the app is
+packaged, the database service's `GET`/`PUT /settings` in browser dev. The bridge exposes the same
+interface, so there is no adapter. Both backings are permanent: browser-only dev stays a first-class loop
+after Electron lands.
+
+`saveSettings` is **two phases, in order**: the store is written first, since it is what a fresh boot reads
+back, then each changed field is pushed to its one owner's `POST /config` — `backend/` for the keys, model,
+Drive toggle and Drive folder, `database/` for `data_root`. Nothing restarts. The three frontend-owned
+settings (`uiLanguage`, `autoRunOnBoot`, `runnerControlsVisible`) have no service owner and stop at the store.
+
+`probeKey(provider, key)` answers `valid` / `rejected` / `unverified`; every failure short of a verdict
+folds to `unverified`, because an unreachable provider must never report a good key as bad.
+
 ## `events.ts` — the database notify stream
 
 Module-level singleton over `${databaseUrl}/events`, opened on the first `subscribeNotify` and closed when
