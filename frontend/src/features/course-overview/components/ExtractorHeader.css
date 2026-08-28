@@ -1,33 +1,8 @@
-.course-branch-header {
+/* Caret + title act as one expand/collapse toggle filling the row's text column. */
+.overview-branch-toggle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.course-branch-name {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-/* Title stacked over its optional subtitle, sitting beside the caret */
-.course-branch-heading {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.course-branch-subtitle {
-  font-size: 0.8em;
-  color: var(--text-muted);
-}
-
-/* Caret + title act as one clickable expand/collapse toggle, filling the row's left side */
-.course-branch-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: var(--space-5);
   flex: 1;
   min-width: 0;
   background: none;
@@ -39,15 +14,42 @@
   font: inherit;
 }
 
-.course-branch-caret {
-  font-size: 20px;
-  color: var(--text-muted);
+.overview-branch-caret {
+  font-size: var(--fs-fine);
+  color: var(--text-4);
   flex-shrink: 0;
 }
 
-.course-branch-actions {
+/* Title stacked over its optional range/date subtitle. */
+.overview-branch-heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.overview-branch-name {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.overview-branch-subtitle {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.overview-branch-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-2);
   flex-shrink: 0;
+}
+
+/* Sits where the actions would, mirroring the lecture pipeline's running row. */
+.overview-branch-running {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--accent);
 }

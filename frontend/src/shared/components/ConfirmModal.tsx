@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { Trans } from '@lingui/react/macro'
 import ReactDOM from 'react-dom'
 import '@/styles/modal.css'
+import '@/styles/button.css'
 import './ConfirmModal.css'
 
 interface Props {
@@ -35,12 +36,12 @@ export default function ConfirmModal({
         <p className="modal-message">{message}</p>
         {warning && <p className="modal-warning">{warning}</p>}
         {detail}
-        {postMessage && <p className="modal-message">{postMessage}</p>}
+        {postMessage && <p className="modal-message modal-note">{postMessage}</p>}
         <div className="modal-actions">
-          <button className="modal-btn modal-btn--yes" onClick={onConfirm}>
+          <button className="btn btn--primary" onClick={onConfirm}>
             <Trans>Yes</Trans>
           </button>
-          <button className="modal-btn modal-btn--no" autoFocus onClick={onCancel}>
+          <button className="btn btn--ghost" autoFocus onClick={onCancel}>
             <Trans>No</Trans>
           </button>
         </div>

@@ -1,34 +1,36 @@
-.source-add-row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px dashed #d1d5db;
-  border-radius: 8px;
-}
-
-.source-add-actions {
+/* Dashed so it reads as an empty slot in the list rather than another source. Both states —
+   the invitation and the two fields it opens — wear the same outline. */
+.source-add-row,
+.source-add-btn {
   display: flex;
-  gap: 6px;
+  align-items: center;
+  gap: var(--space-5);
+  width: 100%;
+  padding: var(--space-5) var(--space-6);
+  border: 1px dashed var(--control-line);
+  border-radius: var(--r-lg);
+  background: none;
+  color: var(--text-4);
+  font: inherit;
+  font-size: var(--fs-meta);
+  text-align: start;
 }
 
 .source-add-btn {
-  display: block;
-  width: 100%;
-  padding: 9px 12px;
-  background: none;
-  border: 1px dashed #d1d5db;
-  border-radius: 8px;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 13px;
-  text-align: start;
   cursor: pointer;
-  transition: all 0.1s;
 }
 
 .source-add-btn:hover {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+/* The new course's name is capped like an existing one's; its URL takes the rest of the row. */
+.source-add-name {
+  flex-shrink: 0;
+  width: 220px;
+}
+
+.source-add-url {
+  flex: 1;
 }

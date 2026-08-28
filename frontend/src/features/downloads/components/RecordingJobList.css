@@ -1,15 +1,9 @@
-/* .recording-progress lands on ProgressBar's own root, overriding .progress-wrap's gap and
-   margin-top at equal specificity — it only wins while ProgressBar.css is emitted first, which is
-   why RecordingJobList imports that sheet above this one. */
-
-/* Full-width block below the row (not an inline flex child): one bar per download job, indented to
-   sit under the row's content. A lone job renders a single bar; a zoom pair stacks two titled ones. */
+/* One bar per download job, stacked inside the card beneath its "save as" line. A lone job renders
+   a single bar; a zoom pair stacks two titled ones. */
 .recording-progress-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding-block: 0;
-  padding-inline: 12px 10px;
+  gap: var(--space-2);
 }
 
 .recording-progress-job {
@@ -18,23 +12,23 @@
   gap: 1px;
 }
 
-/* The `.1`/`.2` clip name above its bar, shown only when a row has more than one. */
+/* The `.1`/`.2` clip name above its bar, shown only when a card has more than one. */
 .recording-progress-title {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 11px;
-  color: var(--text-muted);
+  font-size: var(--fs-fine);
+  color: var(--text-3);
 }
 
-/* The pipeline bar, re-laid out for the row's progress block: full width of the block below the
-   main line rather than stacked under a card. The class lands on the <p> directly in the bar's
-   label-only states, hence both selectors. */
-.recording-progress {
+/* The pipeline bar re-laid out for a card: the card's own gap already parts it from the line above.
+   The class lands on the <p> directly in the bar's label-only states, hence both selectors — and
+   both outspecify ProgressBar.css rather than relying on cross-file order. */
+.progress-wrap.recording-progress {
   width: 100%;
   margin-top: 0;
-  gap: 3px;
+  gap: var(--space-1);
 }
 
 .recording-progress .progress-label,
@@ -44,16 +38,23 @@ p.recording-progress {
 }
 
 /* A terminal job's per-clip control (Retry / Re-download) sits inline beside its clip title,
-   right-aligned so a row of clips reads as title … button. */
-.recording-progress-job--action {
+   pushed to the end so a row of clips reads as title … button. Outspecifies the rule above. */
+.recording-progress-job.recording-progress-job--action {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: var(--space-3);
 }
 
 /* Let the clip title take the row and ellipsis-truncate next to the button. */
 .recording-progress-job--action .recording-progress-title {
   flex: 1;
   min-width: 0;
+}
+
+/* Tighter than a stand-alone ghost button, since it sits inside a progress line. Outspecifies
+   `.btn`'s padding rather than relying on cross-file order. */
+.btn.recording-job-btn {
+  min-width: 96px;
+  padding: var(--space-1) var(--space-4);
 }

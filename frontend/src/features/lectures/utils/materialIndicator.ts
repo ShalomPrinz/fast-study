@@ -1,7 +1,7 @@
 import { t, plural } from '@lingui/core/macro'
 import type { MaterialInfo } from '@/types'
 
-export type MaterialIndicatorState = { symbol: string; text: string; cls: string }
+export type MaterialIndicatorState = { text: string; cls: string }
 
 // How the lecture's materials relate to its summary: none on disk, pending, all used, none used, or
 // only some. Each material's mtime vs. the summary's is a heuristic for "was fed to the model" — see
@@ -19,18 +19,16 @@ export function materialIndicator(
   if (!summaryExists)
     return count
       ? {
-          symbol: '📎',
           text:
             count === 1
               ? t`${name} will be used`
               : plural(count, { other: '# materials will be used' }),
           cls: 'material-indicator--will-use',
         }
-      : { symbol: '⚠', text: t`no material found`, cls: 'material-indicator--missing' }
+      : { text: t`no material found`, cls: 'material-indicator--missing' }
 
   if (count === 0)
     return {
-      symbol: '⊘',
       text: t`summary did not use material`,
       cls: 'material-indicator--was-missing',
     }
@@ -39,7 +37,6 @@ export function materialIndicator(
 
   if (used === count)
     return {
-      symbol: '📎',
       text:
         count === 1 ? t`${name} was used` : plural(count, { other: '# materials were used' }),
       cls: 'material-indicator--used',
@@ -47,14 +44,12 @@ export function materialIndicator(
 
   if (used === 0)
     return {
-      symbol: '⊘',
       text: count === 1 ? t`summary did not use ${name}` : t`summary did not use any material`,
       cls: 'material-indicator--was-missing',
     }
 
-  // A partial miss is milder than a total one, so it keeps the 📎 rather than the ⊘.
+  // A partial miss gets its own state: milder than a total one, but not a clean success.
   return {
-    symbol: '📎',
     text: plural(count, { other: `summary used only ${used} of # materials` }),
     cls: 'material-indicator--partial',
   }

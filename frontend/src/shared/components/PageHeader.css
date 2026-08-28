@@ -1,0 +1,72 @@
+.page-header {
+  flex-shrink: 0;
+  padding: var(--space-7) var(--space-8) var(--space-6);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.page-header-eyebrow {
+  margin-bottom: var(--space-2);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.page-header-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-7);
+}
+
+.page-header-text {
+  min-width: 0;
+}
+
+.page-header-title {
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-title);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.page-header-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+/* Live state as a metadata fact: a coloured dot plus one line, handed in by the view. */
+.page-header-state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+}
+
+.page-header-state-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.page-header-state--running {
+  color: var(--accent);
+}
+
+.page-header-state--done {
+  color: var(--ok);
+}

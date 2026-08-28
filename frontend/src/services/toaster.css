@@ -1,0 +1,49 @@
+/* The app's skin for react-toastify. Its own variables are declared on :root, so redefining them
+   on the container it renders (`.Toastify`) is what lets them inherit down to every toast. */
+.Toastify {
+  --toastify-toast-width: 320px;
+  --toastify-toast-min-height: 0;
+  --toastify-toast-padding: var(--space-5);
+  --toastify-toast-bd-radius: var(--r-lg);
+  --toastify-toast-shadow: var(--shadow-md);
+  --toastify-font-family: var(--font-ui);
+  --toastify-color-light: var(--surface);
+  --toastify-text-color-light: var(--text);
+  --toastify-icon-color-info: var(--accent);
+  --toastify-icon-color-success: var(--ok);
+  --toastify-icon-color-warning: var(--warn);
+  --toastify-icon-color-error: var(--danger);
+  --toastify-color-progress-light: var(--accent);
+  --toastify-color-progress-success: var(--ok);
+  --toastify-color-progress-warning: var(--warn);
+  --toastify-color-progress-error: var(--danger);
+  --toastify-spinner-color: var(--accent);
+  --toastify-spinner-color-empty-area: var(--line);
+}
+
+.Toastify__toast {
+  border: 1px solid var(--line);
+  font-size: var(--fs-body);
+}
+
+/* The light theme paints every toast white, so a result reads only from its icon. These tint the
+   whole surface; two classes deep to beat `.Toastify__toast-theme--light`'s background. */
+.Toastify__toast--success.Toastify__toast {
+  border-color: var(--ok-soft);
+  background: var(--ok-soft);
+}
+
+.Toastify__toast--warning.Toastify__toast {
+  border-color: var(--warn-soft);
+  background: var(--warn-soft);
+}
+
+.Toastify__toast--error.Toastify__toast {
+  border-color: var(--danger-soft);
+  background: var(--danger-soft);
+}
+
+.Toastify__close-button--light {
+  color: var(--text-4);
+  opacity: 1;
+}

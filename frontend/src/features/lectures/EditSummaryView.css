@@ -3,38 +3,60 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--main-bg);
+  background: var(--surface);
 }
 
 .edit-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 20px;
-  border-bottom: 1px solid #e5e7eb;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-7);
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
   flex-shrink: 0;
 }
 
-.edit-back-btn {
+/* A navigation affordance rather than an action, so it carries no button chrome. */
+.edit-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  padding: var(--space-2) var(--space-4);
+  border: none;
+  border-radius: var(--r-sm);
   background: none;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  padding: 5px 12px;
-  cursor: pointer;
-  color: var(--text);
   font: inherit;
-  font-size: 13px;
-  flex-shrink: 0;
-  transition: background 0.12s;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--text-2);
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    color 0.12s;
 }
 
-.edit-back-btn:hover {
-  background: #f3f4f6;
+.edit-back:hover {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+
+/* The chevron points back along the reading direction, which reverses in Hebrew. */
+[dir='rtl'] .edit-back svg {
+  transform: scaleX(-1);
+}
+
+.edit-toolbar-divider {
+  width: 1px;
+  height: 20px;
+  flex-shrink: 0;
+  background: var(--line);
 }
 
 .edit-title {
   flex: 1;
-  font-size: 16px;
+  min-width: 0;
+  font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -42,49 +64,27 @@
   text-overflow: ellipsis;
 }
 
+/* Wide enough for a sentence, unlike the icon-only badge on a pipeline row. Outspecifies `.chip`'s
+   own padding, which lives in another file. */
+.chip.edit-pdf-chip {
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-4);
+  cursor: help;
+}
+
 .edit-toolbar-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: var(--space-3);
   flex-shrink: 0;
 }
 
-.edit-action-btn {
-  padding: 5px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-  transition: background 0.12s;
-}
-
-.edit-action-btn:hover:not(:disabled) {
-  background: #f3f4f6;
-}
-
-.edit-action-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.edit-action-btn--primary {
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.edit-action-btn--primary:hover:not(:disabled) {
-  background: var(--accent-dim);
-}
-
 .edit-error {
-  padding: 8px 20px;
-  color: #dc2626;
-  font-size: 13px;
-  background: #fef2f2;
-  border-bottom: 1px solid #fecaca;
+  padding: var(--space-3) var(--space-7);
+  color: var(--danger);
+  font-size: var(--fs-body);
+  background: var(--danger-soft);
+  border-bottom: 1px solid var(--danger-soft);
   flex-shrink: 0;
 }
 
@@ -96,6 +96,7 @@
 
 .edit-panel {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -103,7 +104,23 @@
 
 /* Kept after `.edit-panel`: both apply to `edit-panel edit-panel--pdf`. */
 .edit-panel--pdf {
-  border-inline-end: 1px solid #e5e7eb;
+  border-inline-end: 1px solid var(--line);
+}
+
+/* The counterpart of the PDF pane's page indicator: what the buffer owes the file on disk. */
+.edit-unsaved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-meta);
+  color: var(--warn);
+}
+
+.edit-unsaved-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .edit-loading {
@@ -113,16 +130,18 @@
   justify-content: center;
 }
 
+/* Hebrew markdown, so never monospace — it is prose with marks in it, read at the pipeline row's
+   size with the extra leading long RTL paragraphs need. */
 .summary-editor {
   flex: 1;
   width: 100%;
   border: none;
   outline: none;
   resize: none;
-  font-family: 'Noto Sans Hebrew', sans-serif;
-  font-size: 15px;
-  line-height: 1.65;
-  padding: 20px;
+  font-family: var(--font-ui);
+  font-size: var(--fs-row);
+  line-height: 1.85;
+  padding: var(--space-7);
   color: var(--text);
-  background: var(--main-bg);
+  background: var(--surface);
 }

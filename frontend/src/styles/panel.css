@@ -1,44 +1,74 @@
 .main-view {
   flex: 1;
-  background: var(--main-bg);
+  background: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: auto;
 }
 
-.main-view--panel {
-  align-items: flex-start;
-  padding: 48px 32px;
-}
-
 .main-view--empty {
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-5);
 }
 
+/* A `PageHeader` band pinned above a body that scrolls on its own, so the header stays put. */
+.main-view--page {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+/* The scrolling half of a `.main-view--page`, and the measure its content is read at. */
+.page-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-7) var(--space-8);
+}
+
+.page-column {
+  max-width: 660px;
+}
+
+/* Downloads reads at a wider measure: a recording card's second line carries a kind toggle, a name
+   input and an action side by side, and the input needs room for a full lecture name. */
+/* Outspecifies `.page-column`'s max-width rather than relying on source order. */
+.page-column.page-column--wide {
+  max-width: 880px;
+}
+
+/* Nothing-to-show card: icon tile over a one-line title, dashed so it reads as a slot, not a panel. */
 .empty-state {
-  color: var(--text-muted);
-  font-size: 15px;
+  width: 330px;
+  max-width: 100%;
+  padding: var(--space-8) var(--space-7);
+  border: 1px dashed var(--control-line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
 }
 
-.lecture-panel {
-  width: 100%;
-  max-width: 520px;
+.empty-state-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  margin-bottom: var(--space-2);
+  border-radius: var(--r-lg);
+  background: var(--line-soft);
+  color: var(--text-4);
 }
 
-/* Downloads: a recording row carries a title, a type column, a kind toggle, a name input and a
-   button on one line — several times a lecture panel's furniture, and none of it optional. */
-/* Overrides `.lecture-panel`'s max-width at equal specificity, so it must stay below it here. */
-.lecture-panel--wide {
-  max-width: 860px;
-}
-
-.lecture-panel-title {
-  font-size: 20px;
+.empty-state-title {
+  font-size: var(--fs-row);
   font-weight: 600;
   color: var(--text);
-  margin-bottom: 24px;
 }
 
 /* Lives here, not beside ErrorBoundary: `.main-view error-view` overrides .main-view at equal
@@ -48,9 +78,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 14px;
+  gap: var(--space-5);
   min-height: 100%;
-  padding: 96px 32px 48px;
-  background: #fbfbfd;
+  padding: var(--space-8) var(--space-7);
   text-align: center;
 }

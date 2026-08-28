@@ -1,19 +1,19 @@
 .search-result-snippet {
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-muted);
+  font-size: var(--fs-body);
+  line-height: 1.7;
+  color: var(--text-2);
 }
 
-/* Snippets from the same lecture share one block, so they need a separator of their own. */
+/* Snippets from the same lecture share one card, so they need a separator of their own. It is inset
+   with them, clearing the header's icon column. */
 .search-result-snippet + .search-result-snippet {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 2px solid #bbbbbb;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line-soft);
 }
 
 .search-mark {
-  background: #fde68a;
+  background: var(--highlight);
   color: var(--text);
   border-radius: 3px;
   padding: 0 1px;

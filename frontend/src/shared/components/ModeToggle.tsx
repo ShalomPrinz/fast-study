@@ -4,6 +4,8 @@ import '@/styles/segmented.css'
 
 export interface ModeConfig {
   label: string
+  // How many rows the segment holds, shown beside its label. Optional — most switches count nothing.
+  count?: number
   Component?: ComponentType
 }
 
@@ -40,13 +42,14 @@ export default function ModeToggle<M extends string>({
   return (
     <>
       <div className={className ? `mode-toggle ${className}` : 'mode-toggle'}>
-        {entries.map(([m, { label }]) => (
+        {entries.map(([m, { label, count }]) => (
           <button
             key={m}
             className={`mode-toggle-btn${mode === m ? ' active' : ''}`}
             onClick={() => selectMode(m)}
           >
             {label}
+            {count !== undefined && <span className="mode-toggle-count">{count}</span>}
           </button>
         ))}
       </div>

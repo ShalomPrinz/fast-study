@@ -1,108 +1,132 @@
-.search-panel {
-  width: 100%;
-  max-width: 760px;
-}
-
-.search-controls {
+/* The page's subject: one raised field carrying the query and, behind a divider, the course it is
+   scoped to. */
+.search-field {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
 }
 
-.search-course {
+.search-field:focus-within {
+  border-color: var(--accent);
+}
+
+.search-field-icon {
+  display: flex;
   flex-shrink: 0;
-  max-width: 220px;
-  padding: 7px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
+  color: var(--text-4);
 }
 
 .search-input {
   flex: 1;
   min-width: 0;
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border: none;
+  background: none;
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-section);
   outline: none;
 }
 
-.search-input:focus {
-  border-color: var(--accent);
-}
-
-/* VS Code-style sticky toggle: pressed state is the accent tint, not a separate control. */
-.search-toggle {
+.search-field-divider {
   flex-shrink: 0;
-  padding: 6px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
+  align-self: stretch;
+  width: 1px;
+  background: var(--line);
 }
 
-.search-toggle.active {
-  background: var(--accent-dim);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-.search-filters {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.search-filter {
+.search-course {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Native chrome off so the picker reads as a label inside the field; the chevron below replaces the
+   dropdown arrow it drops. */
+.search-course-select {
+  appearance: none;
+  max-width: 180px;
+  padding-inline: 0 var(--space-6);
+  border: none;
+  background: none;
+  color: var(--text-2);
+  font: inherit;
+  font-size: var(--fs-meta);
   cursor: pointer;
+}
+
+.search-course-chevron {
+  position: absolute;
+  inset-inline-end: 0;
+  color: var(--text-4);
+  font-size: var(--fs-fine);
+  pointer-events: none;
+}
+
+.search-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block: var(--space-5) var(--space-7);
+}
+
+/* A switch, not a button: pressed is the accent tint and the state lives in `aria-checked`. */
+.search-pill {
+  padding: var(--space-2) var(--space-5);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text-3);
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 0.12s,
+    border-color 0.12s,
+    color 0.12s;
+}
+
+.search-pill:hover {
+  color: var(--text-2);
+}
+
+/* Stays after the hover rule: equal specificity, and hovering an active pill must keep the tint. */
+.search-pill[aria-checked='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
 
 .search-status {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-bottom: 10px;
+  font-size: var(--fs-body);
+  color: var(--text-3);
+  margin-bottom: var(--space-5);
 }
 
 /* Stays after .search-status: same specificity, and both sit on the error element. */
 .search-status--error {
-  color: var(--text-warning);
+  color: var(--danger);
+}
+
+.search-empty {
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-7);
 }
 
 .search-results {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-4);
 }
 
 .search-more {
-  align-self: flex-start;
-  margin-top: 10px;
-  padding: 7px 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text-muted);
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.search-more:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  width: 100%;
+  margin-top: var(--space-5);
 }

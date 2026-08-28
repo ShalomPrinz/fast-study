@@ -1,12 +1,48 @@
+/* Sits in the sidebar footer beside the language switcher, so it takes the row only while its
+   input is open and otherwise reads as one more quiet control. */
+.new-course-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.new-course-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  color: var(--sidebar-muted);
+  font: inherit;
+  font-size: var(--fs-body);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 0.1s,
+    color 0.1s;
+}
+
+.new-course-btn:hover {
+  background: var(--sidebar-raise);
+  color: var(--sidebar-fg);
+}
+
+.new-course-plus {
+  font-size: var(--fs-section);
+  line-height: 1;
+}
+
 .new-course-input {
   display: block;
   width: 100%;
-  padding: 5px 12px;
-  background: var(--sidebar-hover);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
+  padding: var(--space-1) var(--space-4);
+  background: var(--sidebar-raise);
+  border: 1px solid var(--accent-on-dark);
+  border-radius: var(--r-sm);
   color: var(--sidebar-fg);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   outline: none;
 }

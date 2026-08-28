@@ -1,52 +1,69 @@
-/* Course source-URL list */
+/* Course source-URL list, parted from the recordings caption that follows it. */
 .source-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-7);
 }
 
-/* Discovered-recordings panel (in-page, one selected course at a time) */
+/* The discovered recordings of the one open course. `ModeToggle` emits its segments and its body as
+   siblings, so the panel places them itself: the segments share the first row with the close
+   control, and everything the body renders spans both columns beneath. */
 .recordings-panel {
-  margin-top: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--bg);
 }
 
-.recordings-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
+.recordings-panel > * {
+  grid-column: 1 / -1;
 }
 
-.recordings-title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
+.recordings-panel > .mode-toggle {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+}
+
+.recordings-panel > .recordings-close {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: center;
 }
 
 .recordings-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
   background: none;
   border: none;
-  cursor: pointer;
+  border-radius: var(--r-sm);
+  color: var(--text-4);
   font: inherit;
-  font-size: 12px;
-  color: var(--text-muted);
+  font-size: var(--fs-section);
+  line-height: 1;
+  cursor: pointer;
 }
 
 .recordings-close:hover {
-  color: var(--accent);
+  background: var(--line-soft);
+  color: var(--text);
 }
 
-/* Also rendered by RecordingRow, which imports this sheet; the --error variant overrides the base
-   on the same element at equal specificity, so the pair stays here in source order. */
+/* Also rendered by RecordingRow, which imports this sheet, for a playlist that failed to expand. */
 .recordings-status {
-  padding: 10px;
-  font-size: 13px;
-  color: var(--text-muted);
+  padding: var(--space-4);
+  font-size: var(--fs-body);
+  color: var(--text-3);
 }
 
-.recordings-status--error {
-  color: var(--text-warning);
+/* Outspecifies the base rather than relying on source order. */
+.recordings-status.recordings-status--error {
+  color: var(--danger);
 }

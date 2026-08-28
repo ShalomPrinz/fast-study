@@ -1,86 +1,66 @@
-/* Shared 3-column grid so the URL column starts at the same x on every row
-   (name | URL/link | edit-or-actions). Reused by .source-add-row for alignment. */
+/* One course's source URL: name, address, edit, action — all on one line. */
 .source-row {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  gap: var(--space-5);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
 }
 
-/* Fixed grid track caps the name; ellipsis-truncate so it can't push the URL. */
+/* Capped and ellipsized, so a long course name can't crowd the URL beside it off the row. */
 .source-row-name {
-  min-width: 0;
+  flex-shrink: 0;
+  max-width: 220px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 600;
   color: var(--text);
 }
 
-/* Real link — truncates with ellipsis while href/title carry the full URL. */
+/* The URL column, in each of its three shapes — a real link, the invitation to set one, and the
+   field that edits it. All three take whatever the name leaves. */
+.source-row-url-text,
+.source-row-url,
+.source-row-url-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* href and title carry the untruncated address. */
 .source-row-url-text {
-  display: inline-block;
-  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  vertical-align: middle;
-  font-size: 13px;
-  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
   text-decoration: none;
-}
-
-.source-row-url-text:hover {
-  text-decoration: underline;
 }
 
 /* "+ add source URL": the only click target when there's nothing to link to. */
 .source-row-url {
-  justify-self: start;
   text-align: start;
   background: none;
   border: none;
-  padding: 4px 0;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-style: italic;
+  color: var(--text-4);
   cursor: pointer;
-  color: var(--text-muted);
 }
 
+.source-row-url-text:hover,
 .source-row-url:hover {
   color: var(--accent);
 }
 
-.source-row-edit-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0 2px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  transition: color 0.12s;
-}
-
-.source-row-edit-btn:hover {
-  color: var(--accent);
-}
-
-/* Selected course (its recordings are loaded) — highlight the whole row, not
-   the Load-recordings button. Accent-tinted to match the app's single palette. */
-.source-row--selected {
-  background: rgba(137, 180, 250, 0.14);
+/* The loaded course: accent outline over a sunken fill, so the recordings below read as its. */
+/* Outspecifies `.source-row` rather than relying on source order. */
+.source-row.source-row--selected {
   border-color: var(--accent);
-}
-
-.source-row-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  background: var(--surface-sunken);
 }

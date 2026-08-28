@@ -1,7 +1,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(23, 23, 31, 0.45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,70 +9,53 @@
 }
 
 .modal {
-  background: #fff;
-  border-radius: 10px;
-  padding: 24px 28px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  padding: var(--space-7);
   min-width: 300px;
   max-width: 420px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  box-shadow: var(--shadow-lg);
 }
 
 .modal-message {
-  font-size: 15px;
+  font-size: var(--fs-row);
+  font-weight: 600;
   color: var(--text);
-  margin-top: 0;
-  margin-bottom: 15px;
+  margin-bottom: var(--space-5);
   line-height: 1.5;
+}
+
+/* Keep below .modal-message: the trailing line carries both classes and they collide on
+   font-weight and colour at equal specificity. */
+.modal-note {
+  font-size: var(--fs-body);
+  font-weight: 400;
+  color: var(--text-2);
+  margin-bottom: var(--space-6);
 }
 
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: var(--space-3);
 }
 
-.modal-btn {
-  padding: 7px 20px;
-  border-radius: 6px;
-  font: inherit;
-  font-size: 14px;
-  cursor: pointer;
-  border: 1px solid #d1d5db;
-  background: transparent;
-  color: var(--text);
-  transition: background 0.12s;
-}
-
-.modal-btn:hover {
-  background: #f3f4f6;
-}
-
-/* Must follow .modal-btn: equal specificity, and these are the overrides. */
-.modal-btn--no {
-  border-color: var(--accent);
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.modal-btn--no:hover {
-  background: var(--accent-dim);
-}
-
+/* The files a confirm is about: one quiet block, so the modal's weight stays on the question. */
 .modal-file-list {
   list-style: none;
-  margin-top: 0;
-  margin-bottom: 15px;
-  padding-inline-start: 0;
+  margin-bottom: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--r);
+  background: var(--bg);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--space-1);
 }
 
 .modal-file-list li {
-  font-size: 13px;
-  font-family: 'Courier New', monospace;
-  color: #dc2626;
-  padding: 3px 8px;
-  background: #fef2f2;
-  border-radius: 4px;
+  font-size: var(--fs-meta);
+  font-family: var(--font-mono);
+  color: var(--text-2);
 }

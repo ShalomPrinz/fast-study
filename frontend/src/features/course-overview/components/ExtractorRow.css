@@ -1,0 +1,15 @@
+/* One branch of the overview card: its row plus the phase run it expands into. The divider is drawn
+   on the branch rather than on the row so an open phase run keeps its branch and the next apart. */
+.overview-branch {
+  position: relative;
+}
+
+.overview-branch + .overview-branch::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: var(--pipeline-inset);
+  inset-inline-end: 0;
+  height: 1px;
+  background: var(--line-soft);
+}

@@ -1,0 +1,40 @@
+@keyframes status-node-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-node {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* The four state variants below recolour .status-node at equal specificity, so they must stay in
+   this file, after it. */
+.status-node--done {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.status-node--running {
+  border: 2px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  animation: status-node-spin 0.75s linear infinite;
+}
+
+.status-node--pending {
+  border: 1.5px dashed var(--control-line);
+}
+
+.status-node--failed {
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  cursor: help;
+}

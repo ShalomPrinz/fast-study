@@ -1,5 +1,5 @@
 .sidebar-nav {
-  padding: 8px 0;
+  padding: var(--space-3) 0;
   flex: 1;
   overflow-y: auto;
   min-height: 0; /* let the flex child shrink so overflow-y actually scrolls */
@@ -10,33 +10,7 @@
    .course-add-btn and its :hover rather than rely on source order. */
 .course-add-btn.course-archive-btn,
 .course-add-btn.course-archive-btn:hover {
-  color: var(--accent);
-}
-
-.new-course-row {
-  padding: 6px 8px 6px;
-  border-bottom: 1px solid var(--border);
-}
-
-.new-course-btn {
-  display: block;
-  width: 100%;
-  padding: 8px 12px;
-  background: none;
-  border: 1px dashed var(--border);
-  border-radius: 6px;
-  color: var(--sidebar-muted);
-  font: inherit;
-  font-size: 12px;
-  text-align: start;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.new-course-btn:hover {
-  background: var(--sidebar-hover);
-  color: var(--sidebar-fg);
-  border-color: var(--accent);
+  color: var(--accent-on-dark);
 }
 
 .course-add-btn {
@@ -48,100 +22,148 @@
   justify-content: center;
   background: none;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--r-sm);
   color: var(--sidebar-muted);
-  font-size: 16px;
+  font-size: var(--fs-section);
   cursor: pointer;
   transition: background 0.1s;
 }
 
 .course-add-btn:hover {
-  background: var(--sidebar-hover);
+  background: var(--sidebar-raise);
   color: var(--sidebar-fg);
 }
 
 .course-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-3);
   flex: 1;
   min-width: 0;
-  padding: 7px 14px;
+  padding: var(--space-2) var(--space-3);
   background: none;
   border: none;
   color: var(--sidebar-fg);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-body);
   font-weight: 600;
   text-align: start;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
 }
 
 .course-toggle:hover {
-  background: var(--sidebar-hover);
+  background: var(--sidebar-raise);
 }
 
 .chevron {
-  font-size: 10px;
+  font-size: var(--fs-fine);
   color: var(--sidebar-muted);
   flex-shrink: 0;
 }
 
 .lecture-list {
   list-style: none;
-  padding-inline-start: 8px;
+  padding-inline-start: var(--space-3);
+}
+
+.course-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Right-aligned `N/M` of fully-processed lectures, inside the course toggle. */
+.course-count {
+  margin-inline-start: auto;
+  flex-shrink: 0;
+  font-size: var(--fs-fine);
+  font-weight: 400;
+  color: var(--sidebar-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Where a lecture is up to, at a glance: filled green when its pipeline finished, accent while a
+   step of it is running, hollow otherwise. */
+.lecture-dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--sidebar-dim);
+}
+
+/* Keep below `.lecture-dot`, whose border they replace at equal specificity. */
+.lecture-dot--done {
+  border-color: var(--ok-dot);
+  background: var(--ok-dot);
+}
+
+.lecture-dot--running {
+  border-color: var(--accent-on-dark);
+  background: var(--accent-on-dark);
+}
+
+.lecture-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .lecture-btn {
-  display: block;
-  width: calc(100% - 8px);
-  margin: 1px 4px;
-  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: calc(100% - var(--space-3));
+  margin: 1px var(--space-1);
+  padding: var(--space-2) var(--space-4);
   background: none;
   border: none;
   color: var(--sidebar-fg);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-body);
   text-align: start;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: var(--r-sm);
   opacity: 0.85;
 }
 
 .lecture-btn:hover {
-  background: var(--sidebar-hover);
+  background: var(--sidebar-raise);
   opacity: 1;
 }
 
 .lecture-btn.selected {
-  background: var(--sidebar-selected);
-  color: #fff;
+  background: var(--sidebar-raise);
+  color: var(--surface);
   opacity: 1;
 }
 
 .lecture-btn.drag-over {
-  background: var(--sidebar-hover);
+  background: var(--sidebar-raise);
   opacity: 1;
-  outline: 1px solid var(--accent);
+  outline: 1px solid var(--accent-on-dark);
 }
 
 /* Keep below .course-toggle: RecitationsGroup puts both on one button and they
    collide on padding at equal specificity, so order decides. */
 .recitations-toggle {
   opacity: 0.9;
-  padding: 5px 12px;
+  padding: var(--space-1) var(--space-4);
 }
 
 /* Keep below .lecture-list: the recitations <ul> carries both and they collide
    on padding-inline-start at equal specificity. */
 .recitation-list {
-  padding-inline-start: 12px;
+  padding-inline-start: var(--space-4);
 }
 
 /* Flat course list — no tree indent */
 /* Keep below .lecture-list: `CoursesList` renders `lecture-list course-list` and this
    overrides `.lecture-list`'s padding-inline-start at equal specificity. */
 .course-list {
-  padding-inline: 4px;
+  padding-inline: var(--space-1);
 }

@@ -1,0 +1,40 @@
+/* Pill label for a state or a count, sitting inside a row rather than beside it. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--r-pill);
+  background: var(--line-soft);
+  color: var(--text-3);
+  font-size: var(--fs-fine);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* The variants below recolour .chip on the same element at equal specificity, so they must stay in
+   this file, after it. */
+.chip--neutral {
+  background: var(--line-soft);
+  color: var(--text-3);
+}
+
+.chip--accent {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.chip--ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.chip--warn {
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.chip--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}

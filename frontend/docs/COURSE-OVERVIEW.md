@@ -1,6 +1,6 @@
 # Course overview mode
 
-`/course/:course` — per-course cross-lecture summaries ("extractors"), one row each.
+`/course/:course` — per-course cross-lecture summaries ("extractors"), one branch each.
 
 ## Shape
 
@@ -17,6 +17,24 @@ fetches (each guarded by its own `useLatestRequest`), refreshes them on every SS
 `generate(names?, fromPhase?, skipExisting?)` which triggers and refreshes but does **not** toast — the
 calling component toasts the `RunInitResult`, keeping UI out of the context.
 
+## The view
+
+`CourseView` is a `PageHeader` band above one scrolling body, the same frame as the lecture view. The
+header carries the course name as title, a metadata row (the extractor currently generating, lecture and
+recitation counts from `CourseTreeContext`, and how many of them are fully processed), and
+`GenerateAllButton` as the page's single primary action.
+
+Below it the branches share **one** `.pipeline-card`, parted by rules inset to clear the status column.
+Each branch row is a `StatusNode` mapped from `branchStatus()`, the expand caret, the extractor title over
+its `formatRange · formatMonthDate` subtitle, and its actions — open-PDF and re-generate once done, a
+`Generate` button before that. A running branch replaces those actions with the phase it is on, in accent
+monospace, where a lecture row would show its ETA; there is no per-branch time estimate to show instead,
+since `/overview/status` reports no start time and `timing.db` records no overview operation.
+
+Expanding a branch opens its phase run underneath, inside the same card: every phase as a node — filled
+green with a check once its file is on disk — joined by hairline connectors, over the branch's filenames
+as monospace chips from `generatedFiles`.
+
 ## Generate vs. continue vs. re-generate
 
 The distinction is `skip_existing`, and it is the feature's core rule:
@@ -26,28 +44,30 @@ The distinction is `skip_existing`, and it is the feature's core rule:
   only fills in missing phase outputs, so it can never overwrite and needs no warning modal.
 - **Per-extractor ↺** — `generate([slug])` with no `skipExisting`, i.e. overwrite. Confirmed by a modal
   listing every `{slug}.*` that will be rebuilt.
-- **Per-step ↺** — `generate([slug], phase)`: rebuild that phase and every later one, keeping earlier
-  files. The modal lists exactly that suffix range.
+- **Per-phase** — `generate([slug], phase)`: rebuild that phase and every later one, keeping earlier files.
+  A completed phase in the expanded run is itself that control, so the run needs no buttons of its own; the
+  modal lists exactly that suffix range.
 
-Explicit overwriting is therefore always per-slug or per-step and always behind a confirm.
+Explicit overwriting is therefore always per-slug or per-phase and always behind a confirm.
 
 ## Per-slug gating
 
 `GET /overview/status` returns an aggregate `running` plus per-slug `{ status, phase }`, because multiple
 overview runs can execute in parallel on one course. Only the header button gates on the aggregate; each
-row's Generate/↺ gates on its own slug's `running`, and a step spinner lights only when that slug's current
-`phase` matches the row. So one slug can be re-generated while "Generate All" churns on another.
+row's Generate/↺ gates on its own slug's `running` — a running branch shows no action at all — and the
+phase named beside the spinner is that slug's own current `phase`. So one slug can be re-generated while
+"Generate All" churns on another.
 
 `branchStatus(status, files, slug, phases)` is the single derivation of a row's
 `{ running, done, error, warning }`: `done` means the _last_ file of that extractor's phase list exists,
 and `warning` is that file's `warning` — a `{slug}.pdf` that rendered despite XeLaTeX errors but is usable.
-A warning is not an error: the row still reads as done, and `ExtractorHeader` shows it as a ⚠
-`PdfWarningBadge` (message on hover) next to `BranchIndicator`, with no toast.
+A warning is not an error: the row still reads as done, its `StatusNode` stays green, and `ExtractorHeader`
+shows the warning as a ⚠ `PdfWarningBadge` (message on hover) beside it, with no toast.
 
-Only the `.pdf` row and the header carry an open-in-new-tab button; intermediate `.txt`/`.md` stay
-link-less. Extractor errors toast once per `(course, slug, message)` via `useReportOnce`, pruned with a
-scope predicate limited to the current course — otherwise switching away and back would re-toast errors
-already shown for other courses.
+Only the branch row carries an open-in-new-tab button, for the extractor's final PDF; the file chips are
+labels, and intermediate `.txt`/`.md` stay link-less. Extractor errors toast once per
+`(course, slug, message)` via `useReportOnce`, pruned with a scope predicate limited to the current course —
+otherwise switching away and back would re-toast errors already shown for other courses.
 
 ## Meta subtitle
 

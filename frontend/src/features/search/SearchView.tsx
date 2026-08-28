@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import Icon from '@/shared/components/Icon'
+import PageHeader from '@/shared/components/PageHeader'
 import type { CourseSummary } from '@/types'
 import { useCourseSummaries } from './hooks/useCourseSummaries'
 import { buildHit, findMatches, groupMatches, type Hit, type MatchGroup } from './utils/search'
 import SearchResult from './components/SearchResult'
 import '@/styles/panel.css'
+import '@/styles/button.css'
+import '@/styles/pipeline-card.css'
 import './SearchView.css'
 
 const COURSE_STORAGE_KEY = 'fastStudySearchCourse'
@@ -94,97 +98,145 @@ export default function SearchView() {
     return keys
   }, [courses, course])
 
+  const searched = !loading && !error && query.trim().length > 0
+
   return (
-    <main className="main-view main-view--panel">
-      <div className="search-panel">
-        <h2 className="lecture-panel-title">
-          <Trans>Search summaries</Trans>
-        </h2>
+    <main className="main-view main-view--page">
+      <PageHeader
+        title={t`Search summaries`}
+        meta={
+          <span>
+            <Trans>
+              Searches the generated summaries of one course — the one picked in the field
+            </Trans>
+          </span>
+        }
+      />
 
-        <div className="search-controls">
-          <select
-            className="search-course"
-            value={course ?? ''}
-            onChange={(e) => selectCourse(e.target.value)}
-            dir="auto"
-          >
-            {active.map((c) => (
-              <option key={c.name} value={c.name}>
-                {c.name}
-              </option>
+      <div className="page-body">
+        <div className="page-column">
+          {/* The course picker rides inside the field: switching course mid-search is rare, so the
+              course reads as scope on the query rather than a control standing beside it. */}
+          <div className="search-field">
+            <span className="search-field-icon">
+              <Icon icon="search" />
+            </span>
+            <input
+              className="search-input"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t`Search this course's summaries…`}
+              dir="auto"
+              autoFocus
+            />
+            <span className="search-field-divider" />
+            <span className="search-course">
+              {/* The select keeps the page's direction so its reserved padding-inline-end and the
+                  chevron's inset-inline-end land on the same edge; `dir="auto"` per option instead. */}
+              <select
+                className="search-course-select"
+                value={course ?? ''}
+                onChange={(e) => selectCourse(e.target.value)}
+                aria-label={t`Course`}
+              >
+                {active.map((c) => (
+                  <option key={c.name} value={c.name} dir="auto">
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <span className="search-course-chevron" aria-hidden="true">
+                ▾
+              </span>
+            </span>
+          </div>
+
+          <div className="search-pills">
+            <button
+              className="search-pill"
+              role="switch"
+              aria-checked={includeLectures}
+              onClick={() => setIncludeLectures((v) => !v)}
+            >
+              <Trans>Lectures</Trans>
+            </button>
+            <button
+              className="search-pill"
+              role="switch"
+              aria-checked={includeRecitations}
+              onClick={() => setIncludeRecitations((v) => !v)}
+            >
+              <Trans>Recitations</Trans>
+            </button>
+            <button
+              className="search-pill"
+              role="switch"
+              aria-checked={wholeWord}
+              onClick={() => setWholeWord((w) => !w)}
+              title={t`Match whole word`}
+            >
+              <Trans>Whole word only</Trans>
+            </button>
+          </div>
+
+          {loading && (
+            <div className="search-status">
+              <Trans>Loading summaries…</Trans>
+            </div>
+          )}
+          {error && <div className="search-status search-status--error">{error}</div>}
+
+          {searched && matches.length > 0 && (
+            <div className="section-head">
+              <h2 className="section-title">
+                <Trans>Results</Trans>
+              </h2>
+              {/* Two counts, so two messages: one message would need a plural nested in a plural,
+                  and each half already reads as a phrase on its own. */}
+              <span className="section-count">
+                <Plural value={matches.length} one="# result" other="# results" />{' '}
+                <Plural value={lectures} one="in # lecture" other="in # lectures" />
+                {shownFindings < matches.length && <Trans> — showing {shownFindings}</Trans>}
+              </span>
+            </div>
+          )}
+
+          {searched && matches.length === 0 && (
+            <div className="search-empty">
+              <div className="empty-state">
+                <span className="empty-state-icon">
+                  <Icon icon="search" />
+                </span>
+                <p className="empty-state-title">
+                  <Trans>Nothing matched this search</Trans>
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="search-results">
+            {blocks.map((block) => (
+              <SearchResult
+                key={`${block.summary.kind}:${block.summary.name}`}
+                summary={block.summary}
+                hits={block.hits}
+                course={course ?? ''}
+                hasPdf={withPdf.has(`${block.summary.kind}:${block.summary.name}`)}
+              />
             ))}
-          </select>
-          <input
-            className="search-input"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t`Search this course's summaries…`}
-            dir="auto"
-            autoFocus
-          />
-          <button
-            className={`search-toggle${wholeWord ? ' active' : ''}`}
-            onClick={() => setWholeWord((w) => !w)}
-            title={t`Match whole word`}
-          >
-            ab
-          </button>
-        </div>
-
-        <div className="search-filters">
-          <label className="search-filter">
-            <input
-              type="checkbox"
-              checked={includeLectures}
-              onChange={(e) => setIncludeLectures(e.target.checked)}
-            />
-            <Trans>Lectures</Trans>
-          </label>
-          <label className="search-filter">
-            <input
-              type="checkbox"
-              checked={includeRecitations}
-              onChange={(e) => setIncludeRecitations(e.target.checked)}
-            />
-            <Trans>Recitations</Trans>
-          </label>
-        </div>
-
-        {loading && (
-          <div className="search-status">
-            <Trans>Loading summaries…</Trans>
           </div>
-        )}
-        {error && <div className="search-status search-status--error">{error}</div>}
-        {!loading && !error && query.trim() && (
-          // Two counts, so two messages: one message would need a plural nested in a plural,
-          // and each half already reads as a phrase on its own.
-          <div className="search-status">
-            <Plural value={matches.length} one="# result" other="# results" />{' '}
-            <Plural value={lectures} one="in # lecture" other="in # lectures" />
-            {shownFindings < matches.length && <Trans> — showing {shownFindings}</Trans>}
-          </div>
-        )}
 
-        <div className="search-results">
-          {blocks.map((block) => (
-            <SearchResult
-              key={`${block.summary.kind}:${block.summary.name}`}
-              summary={block.summary}
-              hits={block.hits}
-              course={course ?? ''}
-              hasPdf={withPdf.has(`${block.summary.kind}:${block.summary.name}`)}
-            />
-          ))}
+          {/* Advances from what's rendered, not the old threshold: a group overshooting the threshold
+              would otherwise be re-selected unchanged and the click would do nothing. */}
+          {shownFindings < matches.length && (
+            <button
+              className="btn btn--ghost search-more"
+              onClick={() => setShown(shownFindings + PAGE_SIZE)}
+            >
+              <Trans>Show more</Trans>
+            </button>
+          )}
         </div>
-
-        {/* Advances from what's rendered, not the old threshold: a group overshooting the threshold
-            would otherwise be re-selected unchanged and the click would do nothing. */}
-        {shownFindings < matches.length && (
-          <button className="search-more" onClick={() => setShown(shownFindings + PAGE_SIZE)}>
-            <Trans>Show more</Trans>
-          </button>
-        )}
       </div>
     </main>
   )

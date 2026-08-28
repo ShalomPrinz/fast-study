@@ -1,12 +1,10 @@
-.pdf-badge {
-  color: #d97706;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Icon-only chip, so it drops the chip's horizontal padding — outspecified rather than ordered. */
+.chip.pdf-badge {
+  padding: var(--space-1) var(--space-2);
   cursor: help;
 }
 
 .pdf-badge-symbol {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   line-height: 1;
 }

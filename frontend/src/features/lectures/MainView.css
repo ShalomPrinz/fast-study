@@ -1,98 +1,207 @@
-.file-name-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+/* Outspecifies `.section-head`'s margin from the shared sheet rather than relying on order. */
+.section-head.section-head--materials {
+  margin-top: var(--space-7);
 }
 
-.file-missing {
-  font-size: 12px;
-  color: var(--text-muted);
+/* A running row lays its body out as a grid so `ProgressBar`'s own ETA label can sit at the end of
+   the stage line while its track spans the full width beneath. */
+.pipeline-row--running .pipeline-row-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: var(--space-4);
+}
+
+.pipeline-row--running .pipeline-file {
+  grid-column: 1 / -1;
+}
+
+.pipeline-stage-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.pipeline-stage {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.pipeline-stage--pending {
+  color: var(--text-2);
+}
+
+.pipeline-file {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.pipeline-missing {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
   font-style: italic;
 }
 
-/* Materials are inputs to the summary, not pipeline outputs, so they get their own labelled list. */
-.material-list-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  margin-bottom: 6px;
+/* `ProgressBar` carries the class on its wrapper when it has an estimate and on the bare label when
+   it has none; `display: contents` lifts the track and label into the row grid in the first case. */
+.progress-wrap.pipeline-progress {
+  display: contents;
 }
 
-/* The --* variants below land on the same element as .material-indicator (the class string is built by
-   materialIndicator()), so they must stay in this file, in this order. */
-.material-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11px;
+.pipeline-progress .progress-label,
+.progress-label.pipeline-progress {
+  grid-row: 1;
+  grid-column: 2;
+  margin-top: 0;
+  color: var(--accent);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
 }
 
-.material-indicator-symbol {
-  font-size: 12px;
-  line-height: 1;
+.pipeline-progress .progress-track {
+  grid-column: 1 / -1;
+  margin-top: var(--space-3);
 }
 
-.material-indicator--will-use {
-  color: #2563eb;
+/* Keep below the rule above, which it overrides at equal specificity: the overflow message is a
+   whole sentence, far too long for the stage line, so it takes a full-width row of its own. */
+.pipeline-progress .progress-label--overflow {
+  grid-row: auto;
+  grid-column: 1 / -1;
+  margin-top: var(--space-2);
+  color: var(--warn);
+  text-align: start;
 }
-.material-indicator--used {
-  color: #16a34a;
+
+/* Five semantic states on one chip (the class string is built by materialIndicator()). Each
+   outspecifies `.chip`'s own colours, which live in another file — never source order. */
+.chip.material-indicator--will-use {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
 }
-.material-indicator--missing {
-  color: #d97706;
+.chip.material-indicator--used {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+.chip.material-indicator--missing {
+  background: var(--warn-soft);
+  color: var(--warn);
 }
 /* Some but not all materials predate the summary — milder than a full miss, so amber, not grey. */
-.material-indicator--partial {
-  color: #b45309;
+.chip.material-indicator--partial {
+  background: var(--warn-soft);
+  color: var(--warn);
 }
-.material-indicator--was-missing {
-  color: #6b7280;
+.chip.material-indicator--was-missing {
+  background: var(--line-soft);
+  color: var(--text-3);
+}
+
+/* Materials are summarize inputs, not pipeline outputs, so they read as a row of removable chips
+   rather than as stages of their own. */
+.material-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* Outlined rather than filled, so a material never reads as a state chip. Outspecifies `.chip`'s
+   own background and padding, which live in another file. */
+.chip.material-chip {
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: var(--fs-meta);
+}
+
+/* Direct child only — the delete button holds an svg of its own. */
+.material-chip > svg {
+  color: var(--text-4);
+  flex-shrink: 0;
+}
+
+.material-chip-name {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.material-chip-name:hover {
+  color: var(--accent);
+}
+
+.material-chip-delete {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-4);
+  cursor: pointer;
+  transition: color 0.12s;
+}
+
+.material-chip-delete:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.material-chip-delete:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .lecture-error {
-  margin-top: 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--error, #d33);
-  border-radius: 8px;
-  background: rgba(211, 51, 51, 0.08);
-  color: var(--error, #d33);
-  font-size: 13px;
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-lg);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--fs-meta);
+  line-height: 1.6;
   word-break: break-word;
 }
 
 .lecture-error strong {
-  margin-inline-end: 6px;
+  margin-inline-end: var(--space-2);
 }
 
 .rate-limit-panel {
-  margin-top: 16px;
-  padding: 12px 14px;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  background: #fef2f2;
-  color: #7f1d1d;
+  margin-top: var(--space-6);
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--warn);
+  border-radius: var(--r-lg);
+  background: var(--warn-soft);
+  color: var(--text-2);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  font-size: 13px;
+  gap: var(--space-2);
+  font-size: var(--fs-meta);
   line-height: 1.5;
 }
 
 .rate-limit-title {
-  margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 600;
-  color: #dc2626;
+  color: var(--warn);
 }
 
 .rate-limit-progress {
-  margin: 0;
   font-weight: 500;
 }
 
 .rate-limit-countdown {
-  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-body);
   font-weight: 600;
-  color: #b91c1c;
+  color: var(--warn);
 }

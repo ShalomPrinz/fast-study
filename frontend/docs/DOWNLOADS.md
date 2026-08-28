@@ -5,14 +5,34 @@ recordings into the same `DATA_ROOT` courses the pipeline uses. Talks to two ser
 (:3053) for auth and discovery, and the downloader server (:3052) for queueing downloads, their job progress
 and each section's bulk run — see `SERVICES.md` for their clients and error signals.
 
+## Layout
+
+A `PageHeader` band over a `.page-column--wide` body: the account state and the count of courses with a
+source are header metadata, then a **Course sources** caption over one `CourseSourceRow` per active course
+plus the dashed `AddCourseRow`, then — once a course is loaded — a **Recordings · course** caption over the
+`.recordings-panel`. Downloads is the one page read at 880px rather than 660px, because a recording's second
+line carries a kind toggle, a name input and an action side by side.
+
+The panel holds the media segments and its close control on one row and the sections beneath. `ModeToggle`
+emits its segments and its body as siblings, so the panel is a two-column grid that places them: the
+segments and the close button share row 1, everything the body renders spans both columns.
+
+Each recording is a card on two lines — **what it is** (title, plus the resolved-type chip on an `unknown`
+row) over **where it is going** (a `Save as` label, the Lecture/Recitation toggle, the name input, and the
+action). The states are tints: accent while downloading, with the job's bars stacked inside the card;
+`--ok` once the target exists in the course, where an `In course` chip stands in for the button; and faded
+for an `unsupported` row, whose button stays disabled behind its tooltip.
+
 ## Auth
 
-`AuthPill` probes `/auth/status` on mount. Connect pops a headed browser on the host for MFA and returns
-immediately; the pill then waits for the user to click Done, which calls `/auth/complete` to persist the
-storage state and re-probes.
+`AccountStatus` probes `/auth/status` on mount and renders the answer as a header chip — `--ok` connected,
+`--warn` expired or mid-login, `--danger` not connected — beside the one button that can move it. Connect
+(and `Manage account`, which is the same call on an already-connected session) pops a headed browser on the
+host for MFA and returns immediately; the chip then waits for the user to click Done, which calls
+`/auth/complete` to persist the storage state and re-probes.
 
 A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectKey`, which is the `key` on
-`<AuthPill>` — remounting forces a fresh probe, since the pill's cached status predates the 401 and would
+`<AccountStatus>` — remounting forces a fresh probe, since the cached status predates the 401 and would
 otherwise still read "connected".
 
 ## The page session
@@ -48,9 +68,9 @@ the opaque `ref` — the frontend only branches its own affordances on `media`, 
 An `unknown` item may also carry `resolvedMedia` (`'video' | 'material' | 'unsupported'`), what auto's
 session probe cache found the file to be; it is absent until the file has been probed once, and
 `'unsupported'` means a real file the downloader can't fetch (a `.zip`). **A row never changes segment
-when it resolves** — the answer shows up as a column instead (below).
+when it resolves** — the answer shows up as a chip instead (below).
 
-A `ModeToggle` under the panel header splits the three — **Videos** (default), **Materials**, **Unknown** —
+A `ModeToggle` at the top of the panel, each segment carrying its own item count, splits the three — **Videos** (default), **Materials**, **Unknown** —
 and `groupSections(items, media)` filters by `media` _before_ grouping by `item.section` (the
 Moodle heading) in first-seen order, blank → "Other". So each side shows only its own sections, a section
 with nothing on the active side doesn't render, and an empty side shows its own "No recordings found." /
@@ -91,20 +111,19 @@ rows render their children as recursive `RecordingRow`s.
 The store outlives every component, so the session's `clear()` calls `clearExpansions()` — course switch and
 close must not leave another course's refs behind.
 
-## Unknown rows and the resolved-type column
+## Unknown rows and the resolved type
 
-An `unknown` row renders one extra narrow column (`.recording-media`): `?` while the type is unknown, then
-`Video` / `Material` / `Unsupported`. Video and material rows render nothing there — it would only restate
-their segment.
+An `unknown` row carries a chip beside its title: `?` while the type is unknown, then `Video` / `Material` /
+`Unsupported`. Video and material rows carry none — it would only restate their segment.
 
 `RecordingRow` reads `item.resolvedMedia` and nothing else. A download reports the verdict upward through
 `ResolvedMediaContext` — a dispatch-only context provided by `DownloadsView` from the session's
 `resolveMedia`, which stamps it onto the matching item in `items`. `POST /download-item` answers with a `media`, and a 422 `UnsupportedError` is
-just as much a verdict, so both update the column on the interaction that resolved it — no re-list. The
+just as much a verdict, so both update the chip on the interaction that resolved it — no re-list. The
 provider sits above the media segments deliberately: switching segment unmounts every row and every
 `SectionGroup`, so a verdict held in either would be lost on the way back. It still dies with a
 re-discover; auto's cache is what makes it survive a reload. A row resolved to `material` picks up the whole material
-affordance (attach-to dropdown, material count, no overwrite confirm). An `unsupported` row greys out and
+affordance (attach-to dropdown, material count, no overwrite confirm). An `unsupported` card fades and
 its Download button is disabled; the 422's message names the actual extension and is toasted by
 `toastDownloadError`, which already shows an `UnsupportedError` verbatim.
 
@@ -265,10 +284,10 @@ owns the overwrite confirm. `useRecordingDownload` is the download effect only �
 pending/retry/queue-failure/passcode state. `RecordingJobList` is the presentational per-job block.
 
 Each bar is literally `MainView`'s — same component, same `Estimating…` / `Not enough data to estimate` /
-`Nm Ns remaining` / `Taking longer than expected` states; the bars render as a full-width block stacked
-below the row line (`.recording-entry` wraps the two). While any job runs, the button reads "Downloading…"
-and is disabled; on all-done it reads
-"Downloaded ✓" (the SSE tree refresh lands at the same moment and tints the row green), on error "Retry ✗".
+`Nm Ns remaining` / `Taking longer than expected` states; the bars render inside the card, stacked beneath
+its "save as" line. While any job runs the action is a "Downloading" chip over an accent-tinted card; on
+all-done the SSE tree refresh lands at the same moment, so the card turns green and the action becomes the
+`In course` chip; on error the button comes back reading "Retry ✗".
 
 The provider — not the row — toasts a job failure via `toastJobError`, so one place covers single and bulk
 rows alike. It toasts each error id once (a failed job lingers until a retry supersedes it), guarded by a
@@ -392,10 +411,11 @@ anything else records `queue-failed` and continues.
 `unsupported` is counted apart from `failed` because it is not a run problem and, unlike a failure, it is
 permanent: a row already known unsupported is skipped before the request, so four `.zip`s cost one probe
 round-trip each per server lifetime rather than one per bulk run. Since the bulk run never toasts per item,
-recording the verdict is also the only thing that carries the 422's reason out of the run — as the greyed
-row and its column.
+recording the verdict is also the only thing that carries the 422's reason out of the run — as the faded
+card and its chip.
 
-The header renders three states in order: `Downloading {at}/{total}…` while the run is `running` or `paused`,
+A section header is a caret, the heading, how many cards it holds, and the bulk `Download all N` at the far
+end. It renders three progress states in order: `Downloading {at}/{total}…` while the run is `running` or `paused`,
 else `Downloading n more…` for the targets with a running job, else the derived summary (shown only once the
 section has a run at all). "Download all" stays disabled through the first two, and the two warning lines —
 never-reached rows, then unverified ones — render below the header independently of which of the three is
@@ -405,7 +425,7 @@ item itself — a job failure toasts once from the jobs provider.
 A run that ends at `reconnect` raises the page's "BIU session expired" hint, and the provider — not the
 section — owns that: a status is re-read on every ping, so it fires **once per run id**, held in a set beside
 a `primed` flag that seeds the first snapshot. A run already aborted before the page loaded is history, and
-the auth pill probes on mount anyway.
+the account chip probes on mount anyway.
 
 ## Zoom passcode
 

@@ -1,6 +1,7 @@
 import { i18n } from '@lingui/core'
 import { describe, it, expect } from 'vitest'
 import {
+  formatBytes,
   formatClockTime,
   formatDuration,
   formatFullTimestamp,
@@ -21,6 +22,15 @@ describe('formatDuration', () => {
   it('splits minutes and seconds above a minute', () => {
     expect(formatDuration(330)).toBe('5:30')
     expect(formatDuration(3600)).toBe('60:00')
+  })
+})
+
+describe('formatBytes', () => {
+  it('keeps raw bytes whole and rounds larger units to one decimal', () => {
+    expect(formatBytes(0)).toBe('0 B')
+    expect(formatBytes(900)).toBe('900 B')
+    expect(formatBytes(1536)).toBe('1.5 KB')
+    expect(formatBytes(1.2 * 1024 ** 3)).toBe('1.2 GB')
   })
 })
 

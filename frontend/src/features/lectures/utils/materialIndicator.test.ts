@@ -41,8 +41,7 @@ describe('materialIndicator', () => {
       material('material.2.pdf', 300),
       material('material.3.pdf', 400),
     ]
-    const { symbol, text, cls } = materialIndicator(materials, true, 200)
-    expect(symbol).toBe('📎')
+    const { text, cls } = materialIndicator(materials, true, 200)
     expect(text).toBe('summary used only 1 of 3 materials')
     expect(cls).toBe('material-indicator--partial')
   })

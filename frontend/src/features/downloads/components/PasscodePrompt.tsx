@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom'
 import type { PasscodeError } from '@/features/downloads/services/autoDownloader'
 import '@/styles/modal.css'
 import '@/styles/source-row.css'
+import '@/styles/button.css'
 import './PasscodePrompt.css'
 
 export interface PasscodePromptProps {
@@ -61,10 +62,10 @@ export default function PasscodePrompt({ reason, busy, onSubmit, onCancel }: Pas
             <Trans>just this lecture</Trans>
           </label>
           <div className="modal-actions">
-            <button type="button" className="modal-btn modal-btn--no" onClick={onCancel}>
+            <button type="button" className="btn btn--ghost" onClick={onCancel}>
               <Trans>Cancel</Trans>
             </button>
-            <button type="submit" className="modal-btn" disabled={busy || !value.trim()}>
+            <button type="submit" className="btn btn--primary" disabled={busy || !value.trim()}>
               <Trans>Submit</Trans>
             </button>
           </div>

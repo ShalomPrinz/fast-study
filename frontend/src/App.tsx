@@ -6,14 +6,20 @@ import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
 import DownloadsView from '@/features/downloads/DownloadsView'
 import SearchView from '@/features/search/SearchView'
+import Icon from '@/shared/components/Icon'
 import '@/styles/panel.css'
 
 function EmptyState() {
   return (
     <main className="main-view main-view--empty">
-      <p className="empty-state">
-        <Trans>Select a lecture to get started</Trans>
-      </p>
+      <div className="empty-state">
+        <span className="empty-state-icon">
+          <Icon icon="lecture" />
+        </span>
+        <p className="empty-state-title">
+          <Trans>Select a lecture to get started</Trans>
+        </p>
+      </div>
     </main>
   )
 }
