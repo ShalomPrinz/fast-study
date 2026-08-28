@@ -15,7 +15,7 @@ changes: keep them backward-compatible or flag the impact.
 | Doc                            | Covers                                                            |
 | ------------------------------ | ----------------------------------------------------------------- |
 | [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, path resolution, dotfiles, tree shape   |
-| [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, trust model |
+| [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, settings store, trust model |
 | [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity |
 | [docs/EVENTS.md](docs/EVENTS.md)     | SSE channel and clean shutdown                              |
 
@@ -29,6 +29,11 @@ Reads the repo-root `.env` via `python-dotenv`:
 
 - `DATA_ROOT` (required) — absolute path to the data directory.
 - `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload pipeline trigger.
+
+`settings.py` also *writes* that `.env`: it is the store behind the app's settings surface in
+browser dev (`GET`/`PUT /settings`), and `POST /config` applies `DATA_ROOT` to the running process
+with no restart. The write is a merge — only settings keys are rewritten, and the API keys are
+write-only. See [docs/API.md](docs/API.md#settings).
 
 ## Running and testing
 

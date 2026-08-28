@@ -38,6 +38,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /courses/{course}/overview/files/{name}`                   | stream a course-level file                                                 |
 | `GET    /courses/{course}/overview/meta`                           | `{meta}` (`{}` when absent)                                                |
 | `PATCH  /courses/{course}/overview/meta`                           | merge one slug's entry (`{slug, entry}`)                                   |
+| `GET    /settings`                                                 | the browser-dev settings store; API keys report set/unset only             |
+| `PUT    /settings`                                                 | merge a partial settings object into the repo-root `.env`                  |
+| `POST   /config`                                                   | apply `{data_root}` to the running process                                 |
 | `GET    /events`                                                   | SSE stream of `notify` events                                              |
 | `POST   /notify`                                                   | broadcast a `notify` event                                                 |
 
@@ -88,7 +91,46 @@ manually. The PUT responds as soon as the file is on disk.
 Consequence: every upload, including every downloader upload, spends Groq and Gemini quota
 unattended all the way to the finished summary.
 
-## Access logging
+## Settings
+
+`settings.py` backs the app's settings surface in browser dev: the store is the repo-root `.env`,
+resolved from the module's own location because each service runs with its own directory as cwd.
+Under Electron the same fields live in `%APPDATA%`, so the two backings must agree on shape.
+
+`GET /settings` answers with every field, `null` for any key absent from `.env` — the client applies
+its own defaults, and an absent value has to stay distinguishable from a stored one:
+
+| Field                                             | `.env` key                                        |
+| ------------------------------------------------- | ------------------------------------------------- |
+| `data_root`                                        | `DATA_ROOT`                                       |
+| `gemini_api_key_set` / `groq_api_key_set` (bool)   | `GEMINI_API_KEY` / `GROQ_API_KEY`                 |
+| `gemini_model`                                     | `GEMINI_MODEL`                                    |
+| `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
+| `ui_language` (`he`\|`en`)                         | `UI_LANGUAGE`                                     |
+| `auto_run_on_boot`, `runner_controls_visible`      | `AUTO_RUN_ON_BOOT`, `RUNNER_CONTROLS_VISIBLE`     |
+
+The two API keys are **write-only**: `PUT` accepts `gemini_api_key` / `groq_api_key`, and the read
+path reports only whether each is set, so a stored key never travels back to the client — the same
+rule `safeStorage` follows under Electron. The three UI entries are frontend-owned; the store holds
+them so a fresh browser profile and an Electron install agree on first-boot defaults.
+
+`PUT /settings` takes a partial object of the same fields and answers with the `GET` shape. **It
+merges, never rewrites**: only the named keys are touched, so ports, `DOWNLOADER_EXTENSION_ID`,
+`FRONTEND_URL`, comments, blank lines, ordering and every unknown key survive. New keys append at
+the end. An omitted field — and a `null`, so echoing a read back blanks nothing — is left alone; `""`
+clears. Values are written single-quoted, which `.env` parsers read literally, so Windows
+backslashes survive; a value containing a single quote or a line break is refused.
+
+`DATA_ROOT` is validated before it is stored, by `PUT` and `POST /config` alike: it must be
+absolute (a relative root would resolve against each service's own cwd), it is created if missing,
+and a probe file is written and deleted to prove the location is writable — otherwise an unwritable
+root surfaces as a pipeline failure minutes later.
+
+`POST /config` applies `{data_root}` to `os.environ` and returns `204`. No restart is needed because
+`fs/paths.py`'s `data_root()` re-reads the environment on every call; `main.py`'s module-level
+`DATA_ROOT` is a boot-time fail-fast that nothing reads. Changing the root **re-points only and
+never moves data**, so a change mid-run splits a lecture across two roots — the guard for that is
+advisory and lives in the frontend, which knows what is in flight; there is deliberately no 409 here.
 
 `logging_setup.py` (called once at `main.py` import, after uvicorn's own `dictConfig`, so it wins)
 reformats uvicorn's access log to `[api] POST /courses/X/… → 200` and suppresses the routine
