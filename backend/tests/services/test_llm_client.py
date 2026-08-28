@@ -4,11 +4,11 @@ from unittest.mock import MagicMock
 import pytest
 import services.llm_client as llm_mod
 from services.llm_client import (
-    DEFAULT_MODEL,
     GeminiRateLimitError,
     LLMClient,
     parse_gemini_rate_limit,
 )
+from services.settings import gemini_model
 
 
 def _quota_body(
@@ -69,7 +69,7 @@ def test_uses_explicit_api_key_and_default_model(monkeypatch):
 
     client = LLMClient(api_key="explicit-key")
     ctor.assert_called_once_with(api_key="explicit-key")
-    assert client.model == DEFAULT_MODEL
+    assert client.model == gemini_model()
 
 
 def test_generate_passes_model_and_strips(monkeypatch):

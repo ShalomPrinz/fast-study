@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
-from services import db_client
+from services import db_client, settings
 from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
@@ -383,28 +383,44 @@ def execute_step(course: str, lecture: str, kind: str, step: str) -> dict:
 # ---- Pipeline utilities ----
 
 
+def enabled_steps() -> list[str]:
+    """STEP_ORDER minus the steps their setting switches off. Read at call time, so
+    POST /config flips a step for the running process."""
+
+    if settings.drive_enabled():
+        return list(STEP_ORDER)
+    return [step for step in STEP_ORDER if step != "drive"]
+
+
+def final_output() -> str:
+    """The file that marks a lecture complete — drive_url.txt, or summary.pdf with Drive
+    off. Completion stays pure file existence, so there is no marker file to keep in sync."""
+
+    return STEP_OUTPUT[enabled_steps()[-1]]
+
+
 def next_step(files: dict) -> Optional[str]:
-    """The first step in STEP_ORDER whose output file is missing, or None once
-    drive_url.txt exists. Pure file-existence, so every trigger is resumable."""
+    """The first enabled step whose output file is missing, or None once the final output
+    exists. Pure file-existence, so every trigger is resumable."""
 
     def has(name: str) -> bool:
         entry = files.get(name)
         return bool(entry and entry.get("exists"))
 
-    if has("drive_url.txt"):
+    if has(final_output()):
         return None
-    for step in STEP_ORDER:
+    for step in enabled_steps():
         if not has(STEP_OUTPUT[step]):
             return step
     return None
 
 
 def _lecture_pending(files: dict) -> bool:
-    """A lecture is pending iff it has video.mp4 but no drive_url.txt."""
+    """A lecture is pending iff it has video.mp4 but not the final output."""
 
     video = files.get("video.mp4") or {}
-    drive = files.get("drive_url.txt") or {}
-    return bool(video.get("exists")) and not bool(drive.get("exists"))
+    final = files.get(final_output()) or {}
+    return bool(video.get("exists")) and not bool(final.get("exists"))
 
 
 async def scan_pending() -> list[tuple[str, str, str]]:

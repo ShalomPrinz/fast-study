@@ -5,8 +5,6 @@ from timing import timed_pipeline
 
 PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summarize.md"
 
-MODEL = "gemini-3.5-flash"
-
 # Appended to every request — keeps the page budget tunable without editing the prompt file.
 LENGTH_BUDGET_SUFFIX = (
     "\n\nLENGTH BUDGET: aim for 2-4 PDF pages."
@@ -27,7 +25,7 @@ def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -
 
     prompt = PROMPT_FILE.read_text(encoding="utf-8")
 
-    client = LLMClient(model=MODEL)
+    client = LLMClient()
     uploaded = []
     try:
         # Context first, instructions last.

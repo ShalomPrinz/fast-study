@@ -1,5 +1,5 @@
-"""Analyze logic tests — analyze() and its MODEL/PROMPT_DIR/LLMClient deps now live in
-course/analyze.py (moved out of overview.py, which is registry-only)."""
+"""Analyze logic tests — analyze() and its PROMPT_DIR/LLMClient deps live in
+course/analyze.py; overview.py is registry-only."""
 
 from unittest.mock import MagicMock, patch
 
@@ -32,7 +32,7 @@ class TestAnalyze:
         with patch.object(ca, "LLMClient", return_value=fake) as ctor:
             result = ca.analyze(ext, "REPORT TEXT", "מבני נתונים")
 
-        ctor.assert_called_once_with(model=ca.MODEL)
+        ctor.assert_called_once_with()
         contents = fake.generate.call_args.args[0]
         assert contents[0] == (ca.PROMPT_DIR / ext.prompt_file).read_text(
             encoding="utf-8"

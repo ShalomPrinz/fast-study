@@ -7,7 +7,7 @@ import re
 
 from google import genai
 
-DEFAULT_MODEL = "gemini-3.5-flash"
+from services.settings import gemini_model
 
 
 class GeminiRateLimitError(RuntimeError):
@@ -108,12 +108,12 @@ def _quota_message(info: dict, model: str) -> str:
 
 
 class LLMClient:
-    def __init__(self, *, model: str = DEFAULT_MODEL, api_key: str | None = None):
+    def __init__(self, *, model: str | None = None, api_key: str | None = None):
         # The Developer API path used here requires an API key; OAuth is Vertex-only.
         api_key = api_key or os.environ.get("GEMINI_API_KEY")
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY is not set in the environment")
-        self.model = model
+        self.model = model or gemini_model()
         self.client = genai.Client(api_key=api_key)
 
     def generate(self, contents: list) -> str:

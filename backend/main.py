@@ -11,7 +11,7 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pipeline import runner
 from pydantic import BaseModel
-from services import db_client
+from services import db_client, providers, settings
 from services.logging_setup import setup_logging
 from timing import get_stats, init_db, record
 
@@ -70,6 +70,8 @@ def _validate_kind(kind: str):
 async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
     if step not in _STEP_CONFIG:
         return {"status": "error", "message": f"Unknown step: {step}"}
+    if step not in runner.enabled_steps():
+        return {"status": "error", "message": f"{step} is disabled in settings"}
     if err := _validate_kind(kind):
         return err
 
@@ -193,3 +195,50 @@ def timing_record(sample: TimingSample):
     """Record one duration sample."""
 
     return record(sample.operation, sample.file_size_bytes, sample.duration_seconds)
+
+
+# ---- Config ----
+
+
+class ConfigUpdate(BaseModel):
+    gemini_api_key: str | None = None
+    groq_api_key: str | None = None
+    gemini_model: str | None = None
+    drive_enabled: bool | None = None
+    gdrive_root_folder: str | None = None
+
+
+class KeyProbe(BaseModel):
+    provider: str
+    key: str
+
+
+@app.post("/config")
+def config_update(update: ConfigUpdate):
+    """Apply a partial settings body to the running process; omitted fields are left alone.
+    The response names the applied fields only — a key value is never logged or echoed."""
+
+    applied = settings.apply_config(update.model_dump(exclude_unset=True))
+    return {"status": "ok", "applied": applied}
+
+
+@app.get("/config/options")
+def config_options():
+    """The choices the settings screens render: the provider table (minus its internal
+    probe URL) and the curated Gemini model list."""
+
+    return {
+        "providers": providers.public_providers(),
+        "gemini_models": settings.GEMINI_MODELS,
+    }
+
+
+@app.post("/config/probe-key")
+async def config_probe_key(probe: KeyProbe):
+    """Check one API key against its provider. → `{"result": "valid"|"rejected"|"unverified"}`;
+    `unverified` means we could not reach the provider, never that the key is bad."""
+
+    if probe.provider not in providers.PROVIDERS:
+        return {"status": "error", "message": f"unknown provider: {probe.provider}"}
+    result = await asyncio.to_thread(providers.probe_key, probe.provider, probe.key)
+    return {"result": result}

@@ -10,7 +10,7 @@
 | `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB).            |
 | `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ every material PDF) uploaded as file parts.  |
 | `pdf`        | `summary.pdf`    | pandoc → `.tex` → XeLaTeX (two passes). See `PDF.md`.                                     |
-| `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link.         |
+| `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link. Runs only while `DRIVE_ENABLED` is on. |
 
 Other files in a lecture dir: `video.mp4` (user/downloader), any number of material PDFs (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see `PDF.md`).
 
@@ -18,7 +18,7 @@ A XeLaTeX error that still yielded a usable PDF is **not** a step failure: `_exe
 
 A lecture may hold any number of material PDFs. `database/` owns their naming, so the backend never constructs one: `_exec_summarize` lists them via `db_client.list_materials`, downloads each into the workspace and passes them all to `summarize`. The step result's `usedMaterial` stays a bool — true iff at least one reached Gemini.
 
-The Hebrew summarize prompt lives at `assets/instructions/summarize.md` — edit the file to change output structure, no code change. Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode.
+The Hebrew summarize prompt lives at `assets/instructions/summarize.md` — edit the file to change output structure, no code change. Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` — `LLMClient`'s default, so summarize and the course overview cannot drift apart.
 
 ## Purity and the database round-trip
 
@@ -45,9 +45,11 @@ State in `pipeline/runner.py`:
 - `_errors[skey]` — last error, survives after `_in_flight` clears.
 - `_runner_status` — `{running, total, done, last_error}` for `run_all`.
 
-`next_step` is pure file-existence over `STEP_ORDER`: the first step whose output is missing. That makes every trigger resumable with no stored progress.
+`next_step` is pure file-existence over `enabled_steps()`: the first step whose output is missing. That makes every trigger resumable with no stored progress.
 
-`scan_pending` walks the tree for lectures with `video.mp4` but no `drive_url.txt`; `run_all` runs that queue sequentially. An APScheduler cron fires it daily at 03:00 (`main.py` lifespan). A lecture whose lock is already held is skipped rather than awaited.
+`enabled_steps()` is `STEP_ORDER` minus the steps their setting switches off — today only `drive`, on `DRIVE_ENABLED`. It is read per call, so `POST /config` flips the step without a restart. With Drive off a lecture is complete at `final_output()` = `summary.pdf`; completion stays pure file existence rather than gaining a marker file, and the cost is that turning Drive back on re-pends every lecture that finished while it was off.
+
+`scan_pending` walks the tree for lectures with `video.mp4` but no `final_output()`; `run_all` runs that queue sequentially. An APScheduler cron fires it daily at 03:00 (`main.py` lifespan). A lecture whose lock is already held is skipped rather than awaited.
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 
