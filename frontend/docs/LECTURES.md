@@ -52,8 +52,7 @@ Summary row. With no summary yet: `no material found`, or `will be used`. With a
 mtime is compared against it and the counts pick the state — all older → `was used` (green), none older →
 `did not use any material` (grey; a lone material is named instead of counted), and in between →
 `summary used only N of M materials` (amber, milder than a total miss). The copy names a single material
-and counts several throughout. The chip carries the text and the colour; the `symbol` the function also
-returns is unrendered — the redesign dropped every emoji from this view.
+and counts several throughout. The chip carries the text and the colour.
 
 **mtime is a proxy for "was fed to the model", not a record of it.** Re-downloading an unchanged PDF bumps
 its mtime and so reads as unused, and the partial count inherits that fuzziness. Being exact would need the
