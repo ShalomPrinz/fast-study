@@ -1,0 +1,5 @@
+# prettier and ruff both write LF, so pin LF in the working tree everywhere:
+# under core.autocrlf=true the format hook would rewrite what git just checked out.
+* text=auto eol=lf
+
+*.ttf binary
