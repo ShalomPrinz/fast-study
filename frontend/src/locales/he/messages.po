@@ -31,17 +31,17 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
 #. placeholder {0}: lectures.length
-#: src/features/course-overview/CourseView.tsx:67
+#: src/features/course-overview/CourseView.tsx:71
 msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:205
+#: src/features/lectures/MainView.tsx:213
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
 #. placeholder {0}: recitations.length
-#: src/features/course-overview/CourseView.tsx:70
+#: src/features/course-overview/CourseView.tsx:74
 msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {תרגול אחד} two {# תרגולים} other {# תרגולים}}"
 
@@ -87,7 +87,7 @@ msgstr "נמצאו {0}"
 
 #. placeholder {0}: chunks.completed
 #. placeholder {1}: chunks.total
-#: src/features/lectures/MainView.tsx:272
+#: src/features/lectures/MainView.tsx:280
 msgid "{0} of {1} chunks"
 msgstr "{0} מתוך {1} מקטעים"
 
@@ -102,13 +102,13 @@ msgid "{0} remaining"
 msgstr "נותרו {0}"
 
 #. placeholder {0}: formatBytes(videoSize)
-#: src/features/lectures/MainView.tsx:202
+#: src/features/lectures/MainView.tsx:210
 msgid "{0} video"
 msgstr "סרטון {0}"
 
 #. placeholder {0}: progress.completed
 #. placeholder {1}: progress.total
-#: src/features/lectures/MainView.tsx:81
+#: src/features/lectures/MainView.tsx:86
 msgid "{0}/{1} chunks transcribed so far"
 msgstr "{0}/{1} מקטעים תומללו עד כה"
 
@@ -124,7 +124,7 @@ msgstr "{count, plural, one {חומר אחד ישמש} two {# חומרים יש�
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
 
-#: src/features/lectures/MainView.tsx:254
+#: src/features/lectures/MainView.tsx:262
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -137,7 +137,7 @@ msgid "{effectiveName} may split into parts that overwrite existing {existing} i
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:95
+#: src/features/course-overview/CourseView.tsx:99
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} יוצרו"
 
@@ -149,7 +149,7 @@ msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} oth
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
-#: src/features/lectures/MainView.tsx:409
+#: src/features/lectures/MainView.tsx:417
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} יימחק."
 
@@ -173,11 +173,11 @@ msgstr "{notStarted, plural, one {שורה אחת לא התחילה — {stopped
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
-#: src/features/course-overview/CourseView.tsx:72
+#: src/features/course-overview/CourseView.tsx:76
 msgid "{processed} fully processed"
 msgstr "{processed} עובדו במלואן"
 
-#: src/features/lectures/MainView.tsx:182
+#: src/features/lectures/MainView.tsx:190
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stageCount}"
 
@@ -217,7 +217,7 @@ msgstr "+ הוסף כתובת מקור"
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:254
+#: src/features/settings/SettingsView.tsx:267
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -225,7 +225,7 @@ msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיק
 msgid "A section is waiting for a passcode"
 msgstr "קטע ממתין לקוד גישה"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:100
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:102
 msgid "Add lecture"
 msgstr "הוסף הרצאה"
 
@@ -237,15 +237,15 @@ msgstr "הוסף תרגול"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:146
+#: src/features/settings/SettingsView.tsx:159
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:210
+#: src/features/settings/SettingsView.tsx:223
 msgid "Appearance and behaviour"
 msgstr "מראה והתנהגות"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:95
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:97
 msgid "Archive course"
 msgstr "העבר קורס לארכיון"
 
@@ -265,7 +265,7 @@ msgstr "צרף חומר אל"
 msgid "Audio"
 msgstr "אודיו"
 
-#: src/features/lectures/constants/pipeline.ts:80
+#: src/features/lectures/constants/pipeline.ts:88
 msgid "Audio extraction failed"
 msgstr "חילוץ האודיו נכשל"
 
@@ -298,7 +298,7 @@ msgstr "אין גישה ל{serviceName} בכתובת {baseUrl}. ודא שהשי�
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/settings/SettingsView.tsx:253
+#: src/features/settings/SettingsView.tsx:266
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -334,7 +334,7 @@ msgstr "איסוף"
 msgid "Compile"
 msgstr "הרכבה"
 
-#: src/features/lectures/MainView.tsx:196
+#: src/features/lectures/MainView.tsx:204
 msgid "Complete"
 msgstr "הושלם"
 
@@ -346,7 +346,7 @@ msgstr "התחבר"
 msgid "Continue Generating"
 msgstr "המשך ייצור"
 
-#: src/features/lectures/MainView.tsx:265
+#: src/features/lectures/MainView.tsx:273
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -375,6 +375,10 @@ msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
+#: src/features/settings/SettingsView.tsx:122
+msgid "Couldn't save all settings — check the services are running and try again."
+msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
+
 #: src/features/search/SearchView.tsx:140
 msgid "Course"
 msgstr "קורס"
@@ -388,7 +392,7 @@ msgstr "הקורס \"{course}\" לא קיים."
 msgid "Course name…"
 msgstr "שם הקורס…"
 
-#: src/features/course-overview/CourseView.tsx:92
+#: src/features/course-overview/CourseView.tsx:96
 msgid "Course overview"
 msgstr "סקירת קורס"
 
@@ -413,7 +417,7 @@ msgid "Data folder"
 msgstr "תיקיית נתונים"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:364
+#: src/features/lectures/MainView.tsx:372
 msgid "Delete {0}"
 msgstr "מחק את {0}"
 
@@ -467,7 +471,7 @@ msgstr "Drive"
 msgid "Drive folder name"
 msgstr "שם התיקייה ב-Drive"
 
-#: src/features/lectures/constants/pipeline.ts:84
+#: src/features/lectures/constants/pipeline.ts:92
 msgid "Drive upload failed"
 msgstr "ההעלאה ל-Drive נכשלה"
 
@@ -475,7 +479,7 @@ msgstr "ההעלאה ל-Drive נכשלה"
 msgid "Edit source URL"
 msgstr "ערוך כתובת מקור"
 
-#: src/features/lectures/MainView.tsx:212
+#: src/features/lectures/MainView.tsx:220
 msgid "Edit summary"
 msgstr "ערוך סיכום"
 
@@ -491,7 +495,7 @@ msgstr "מעריך…"
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "כל קורס, הרצאה, סרטון וסיכום נשמרים כאן. בחרו תיקייה במחשב הזה שאינה מסונכרנת לענן."
 
-#: src/features/settings/SettingsView.tsx:224
+#: src/features/settings/SettingsView.tsx:237
 msgid "Every lecture that is not finished yet is picked up on the next start."
 msgstr "כל הרצאה שטרם הושלמה נאספת בהפעלה הבאה."
 
@@ -525,7 +529,7 @@ msgid "Extracting audio"
 msgstr "מחלץ אודיו"
 
 #: src/features/course-overview/constants/overview.ts:72
-#: src/features/course-overview/CourseView.tsx:39
+#: src/features/course-overview/CourseView.tsx:41
 msgid "failed"
 msgstr "נכשל"
 
@@ -574,7 +578,7 @@ msgstr "השלם את ההתחברות בחלון הדפדפן"
 msgid "finishing…"
 msgstr "מסיים…"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:84
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:86
 msgid "Fully processed lectures"
 msgstr "הרצאות שהושלמו במלואן"
 
@@ -590,7 +594,7 @@ msgstr "ייצר הכל"
 #~ msgid "Generate PDF"
 #~ msgstr "ייצר PDF"
 
-#: src/features/course-overview/CourseView.tsx:63
+#: src/features/course-overview/CourseView.tsx:67
 msgid "Generating · {runningTitle}"
 msgstr "מייצר · {runningTitle}"
 
@@ -608,7 +612,7 @@ msgstr "מייצר…"
 msgid "Get a key"
 msgstr "השגת מפתח"
 
-#: src/features/settings/SettingsView.tsx:197
+#: src/features/settings/SettingsView.tsx:210
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -616,11 +620,11 @@ msgstr "Google Drive"
 msgid "Google Drive (optional)"
 msgstr "Google Drive (רשות)"
 
-#: src/features/lectures/MainView.tsx:77
+#: src/features/lectures/MainView.tsx:82
 msgid "Groq rate limit reached"
 msgstr "הגעת למגבלת הקצב של Groq"
 
-#: src/app/ErrorBoundary.tsx:67
+#: src/app/ErrorBoundary.tsx:83
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
 msgstr "דף הבית"
@@ -642,7 +646,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:379
+#: src/features/lectures/MainView.tsx:387
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -724,7 +728,7 @@ msgid "Material"
 msgstr "חומר"
 
 #: src/features/downloads/DownloadsView.tsx:39
-#: src/features/lectures/MainView.tsx:345
+#: src/features/lectures/MainView.tsx:353
 msgid "Materials"
 msgstr "חומרים"
 
@@ -800,7 +804,7 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:333
+#: src/features/lectures/MainView.tsx:341
 msgid "not provided"
 msgstr "לא סופק"
 
@@ -820,30 +824,30 @@ msgstr "אין מה להריץ - כל הצינורות הושלמו"
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל הצינורות הנותרים כבר רצים"
 
-#: src/features/lectures/sidebar/tree/LectureItem.tsx:61
+#: src/features/lectures/sidebar/tree/LectureItem.tsx:63
 msgid "Only .mp4 files are allowed"
 msgstr "מותרים קבצי .mp4 בלבד"
 
-#: src/features/settings/InitWall.tsx:35
+#: src/features/settings/InitWall.tsx:36
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "פתחו את Google AI Studio דרך הקישור שלמטה, התחברו עם חשבון Google שלכם ולחצו על \"Create API key\". העתיקו את המפתח שמוצג והדביקו אותו בשדה."
 
-#: src/features/lectures/MainView.tsx:220
+#: src/features/lectures/MainView.tsx:228
 msgid "Open in Drive"
 msgstr "פתח ב-Drive"
 
-#: src/features/lectures/MainView.tsx:354
+#: src/features/lectures/MainView.tsx:362
 msgid "Open material in new tab"
 msgstr "פתח את החומר בלשונית חדשה"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:82
 #: src/features/lectures/components/PdfViewer.tsx:96
-#: src/features/lectures/MainView.tsx:216
+#: src/features/lectures/MainView.tsx:224
 #: src/features/search/components/SearchResult.tsx:23
 msgid "Open PDF in new tab"
 msgstr "פתח את ה-PDF בלשונית חדשה"
 
-#: src/features/settings/InitWall.tsx:45
+#: src/features/settings/InitWall.tsx:46
 msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 msgstr "פתחו את מסוף Groq דרך הקישור שלמטה, התחברו ולחצו על \"Create API Key\". העתיקו אותו מיד — Groq מציגה מפתח פעם אחת בלבד — והדביקו אותו בשדה."
 
@@ -881,7 +885,7 @@ msgstr "קוד גישה"
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/constants/pipeline.ts:83
+#: src/features/lectures/constants/pipeline.ts:91
 msgid "PDF export failed"
 msgstr "ייצוא ה-PDF נכשל"
 
@@ -893,15 +897,15 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
-#: src/features/lectures/MainView.tsx:252
+#: src/features/lectures/MainView.tsx:260
 msgid "Pipeline"
 msgstr "צינור"
 
-#: src/features/lectures/MainView.tsx:152
+#: src/features/lectures/MainView.tsx:159
 msgid "Pipeline already running"
 msgstr "הצינור כבר רץ"
 
-#: src/features/lectures/MainView.tsx:153
+#: src/features/lectures/MainView.tsx:160
 msgid "Pipeline failed to start"
 msgstr "הצינור נכשל בהפעלה"
 
@@ -926,7 +930,7 @@ msgstr "ייצר מחדש את {title}"
 msgid "Re-generate from {stepLabel}"
 msgstr "ייצר מחדש משלב {stepLabel}"
 
-#: src/features/lectures/MainView.tsx:87
+#: src/features/lectures/MainView.tsx:92
 msgid "Ready to retry"
 msgstr "מוכן לניסיון חוזר"
 
@@ -976,7 +980,7 @@ msgstr "התחבר מחדש"
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
-#: src/app/ErrorBoundary.tsx:71
+#: src/app/ErrorBoundary.tsx:87
 msgid "Reload"
 msgstr "רענן"
 
@@ -1015,7 +1019,7 @@ msgid "Retry ✗"
 msgstr "נסה שוב ✗"
 
 #. placeholder {0}: formatDuration(remaining)
-#: src/features/lectures/MainView.tsx:87
+#: src/features/lectures/MainView.tsx:92
 msgid "Retry in {0}"
 msgstr "ניסיון חוזר בעוד {0}"
 
@@ -1027,7 +1031,7 @@ msgstr "שחזר למקור"
 #~ msgid "Revert to Original"
 #~ msgstr "שחזר למקור"
 
-#: src/features/lectures/MainView.tsx:315
+#: src/features/lectures/MainView.tsx:323
 msgid "Rotate {file}"
 msgstr "החלף את {file}"
 
@@ -1035,11 +1039,11 @@ msgstr "החלף את {file}"
 msgid "Run incomplete pipelines"
 msgstr "הרץ צינורות לא שלמים"
 
-#: src/features/lectures/MainView.tsx:241
+#: src/features/lectures/MainView.tsx:249
 msgid "Run Remaining"
 msgstr "הרץ את הנותר"
 
-#: src/features/settings/SettingsView.tsx:221
+#: src/features/settings/SettingsView.tsx:234
 msgid "Run unfinished lectures when the app starts"
 msgstr "להריץ הרצאות שלא הושלמו כשהאפליקציה נפתחת"
 
@@ -1048,7 +1052,7 @@ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
-#: src/features/settings/SettingsView.tsx:138
+#: src/features/settings/SettingsView.tsx:151
 msgid "Save"
 msgstr "שמור"
 
@@ -1085,7 +1089,7 @@ msgstr "מחפש בסיכומים שנוצרו של קורס אחד — זה ש�
 msgid "Section {0} is waiting for a passcode"
 msgstr "הקטע {0} ממתין לקוד גישה"
 
-#: src/App.tsx:22
+#: src/App.tsx:23
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
@@ -1093,13 +1097,13 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "session expired"
 msgstr "החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:79
-#: src/features/settings/SettingsView.tsx:131
+#: src/features/settings/SettingsView.tsx:81
+#: src/features/settings/SettingsView.tsx:144
 #: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:109
+#: src/features/settings/SettingsView.tsx:115
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1107,15 +1111,15 @@ msgstr "ההגדרות נשמרו"
 msgid "Show more"
 msgstr "הצג עוד"
 
-#: src/features/settings/SettingsView.tsx:238
+#: src/features/settings/SettingsView.tsx:251
 msgid "Show the run controls in the sidebar"
 msgstr "להציג את פקדי ההרצה בסרגל הצד"
 
-#: src/app/ErrorBoundary.tsx:58
+#: src/app/ErrorBoundary.tsx:74
 msgid "Something went wrong"
 msgstr "משהו השתבש"
 
-#: src/app/ErrorBoundary.tsx:61
+#: src/app/ErrorBoundary.tsx:77
 msgid "Sorry about it. Go home to keep working, or copy the details below to report it."
 msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד, או העתק את הפרטים למטה כדי לדווח על כך."
 
@@ -1128,11 +1132,11 @@ msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
 #: src/features/lectures/EditSummaryView.tsx:129
-#: src/features/lectures/MainView.tsx:137
+#: src/features/lectures/MainView.tsx:144
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:187
+#: src/features/settings/SettingsView.tsx:200
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1140,7 +1144,7 @@ msgstr "אחסון"
 msgid "Submit"
 msgstr "שלח"
 
-#: src/features/lectures/constants/pipeline.ts:82
+#: src/features/lectures/constants/pipeline.ts:90
 msgid "Summarization failed"
 msgstr "הסיכום נכשל"
 
@@ -1168,7 +1172,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "summary did not use material"
 msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:167
+#: src/features/settings/SettingsView.tsx:180
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1186,7 +1190,7 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הארוך ביותר ש
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/features/settings/SettingsView.tsx:241
+#: src/features/settings/SettingsView.tsx:254
 msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 msgstr "הכפתור \"הרץ צינורות לא שלמים\" ורשימת ההרצאות שבעבודה."
 
@@ -1198,7 +1202,7 @@ msgstr "החיבור לבר-אילן פג. התחבר מחדש והרץ את ה�
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
-#: src/features/lectures/MainView.tsx:393
+#: src/features/lectures/MainView.tsx:401
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -1206,7 +1210,7 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייוצרו מחדש:"
 
-#: src/features/lectures/MainView.tsx:410
+#: src/features/lectures/MainView.tsx:418
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -1219,7 +1223,7 @@ msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "הריצה בוטלה. הרץ את הקטע שוב כדי להשלים אותן."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:394
+#: src/features/lectures/MainView.tsx:402
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
@@ -1245,11 +1249,11 @@ msgstr "מתמלל"
 msgid "Transcript"
 msgstr "תמלול"
 
-#: src/features/lectures/constants/pipeline.ts:81
+#: src/features/lectures/constants/pipeline.ts:89
 msgid "Transcription failed"
 msgstr "התמלול נכשל"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:95
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:97
 msgid "Unarchive course"
 msgstr "הוצא קורס מהארכיון"
 

@@ -102,17 +102,26 @@ export default function SettingsView() {
   async function commit(next: SettingsPatch) {
     setSaving(true)
     setPending(null)
+    // Unconditional and ahead of the network: these two are localStorage-only, so a downed service
+    // must not cost the user a toggle that never needed a request in the first place.
+    writePreference('autoRunOnBoot', current.autoRunOnBoot)
+    writePreference('runnerControlsVisible', current.runnerControlsVisible)
     try {
       const saved = await saveSettings(next)
       setStored(saved)
       setSettings(saved)
       // The key fields are write-only, so they go back to their "a key is saved" placeholder.
       setForm({ ...current, geminiApiKey: '', groqApiKey: '' })
-      writePreference('autoRunOnBoot', current.autoRunOnBoot)
-      writePreference('runnerControlsVisible', current.runnerControlsVisible)
       toast('info', t`Settings saved`)
     } catch (err) {
-      if (!isConnectionError(err)) toast('error', `${(err as Error).message}`)
+      // The http client already toasts a connection error, but that toast is deduped per service and
+      // reads as ambient noise — a save that went nowhere still owes its own verdict.
+      toast(
+        'error',
+        isConnectionError(err)
+          ? t`Couldn't save all settings — check the services are running and try again.`
+          : `${(err as Error).message}`,
+      )
     } finally {
       setSaving(false)
     }

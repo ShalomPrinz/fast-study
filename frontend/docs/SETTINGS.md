@@ -38,7 +38,13 @@ The list above is closed on purpose. Each of these looks like a field and delibe
 
 `features/settings/SettingsView.tsx`, reachable from the sidebar's fifth nav row. It loads the store
 and the backend's options once, edits a local form, and saves the changed fields in one
-`saveSettings` call. Saving also writes the two UI preferences to `localStorage`.
+`saveSettings` call. The two UI preferences are written to `localStorage` first and unconditionally:
+they need no request, so a downed service must not cost the user a toggle.
+
+**Every save answers.** Success toasts, and so does failure — including a connection error, whose
+own toast is deduped per service and reads as ambient noise. The store is written before the owning
+services, so a failure after that point leaves the `.env` current and the running process behind
+until a restart or a successful retry; the toast asks for the retry rather than naming the phase.
 
 **The key fields are write-only.** A stored key never comes back from the store, so a set field shows
 a "a key is saved" placeholder and typing replaces it; an untouched (blank) field is never sent,
