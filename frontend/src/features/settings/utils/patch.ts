@@ -9,8 +9,9 @@ export interface SettingsForm {
   gdriveRootFolder: string
   geminiModel: string
   uiLanguage: Locale
-  autoRunOnBoot: boolean
-  runnerControlsVisible: boolean
+  // Absent on the init wall, which does not ask about the two UI preferences at all.
+  autoRunOnBoot?: boolean
+  runnerControlsVisible?: boolean
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
@@ -26,8 +27,13 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
   }
   if (form.uiLanguage !== stored.uiLanguage) patch.uiLanguage = form.uiLanguage
-  if (form.autoRunOnBoot !== stored.autoRunOnBoot) patch.autoRunOnBoot = form.autoRunOnBoot
-  if (form.runnerControlsVisible !== stored.runnerControlsVisible) {
+  if (form.autoRunOnBoot !== undefined && form.autoRunOnBoot !== stored.autoRunOnBoot) {
+    patch.autoRunOnBoot = form.autoRunOnBoot
+  }
+  if (
+    form.runnerControlsVisible !== undefined &&
+    form.runnerControlsVisible !== stored.runnerControlsVisible
+  ) {
     patch.runnerControlsVisible = form.runnerControlsVisible
   }
   return patch

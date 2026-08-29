@@ -217,7 +217,7 @@ msgstr "+ add source URL"
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:245
+#: src/features/settings/SettingsView.tsx:254
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 
@@ -237,11 +237,11 @@ msgstr "Add recitation"
 msgid "Analyze"
 msgstr "Analyze"
 
-#: src/features/settings/SettingsView.tsx:139
+#: src/features/settings/SettingsView.tsx:146
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:203
+#: src/features/settings/SettingsView.tsx:210
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -298,7 +298,7 @@ msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/settings/SettingsView.tsx:244
+#: src/features/settings/SettingsView.tsx:253
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -491,7 +491,7 @@ msgstr "Estimating…"
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 
-#: src/features/settings/SettingsView.tsx:217
+#: src/features/settings/SettingsView.tsx:224
 msgid "Every lecture that is not finished yet is picked up on the next start."
 msgstr "Every lecture that is not finished yet is picked up on the next start."
 
@@ -554,9 +554,17 @@ msgstr "Failed to save summary"
 msgid "Fast Study"
 msgstr "Fast Study"
 
+#: src/features/settings/InitWall.tsx:160
+msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
+msgstr "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
+
 #: src/features/downloads/components/RecordingRow.tsx:204
 msgid "File type"
 msgstr "File type"
+
+#: src/features/settings/InitWall.tsx:206
+msgid "Fill in the fields above to continue."
+msgstr "Fill in the fields above to continue."
 
 #: src/features/downloads/components/AccountStatus.tsx:70
 msgid "finish login in the browser window"
@@ -600,9 +608,13 @@ msgstr "Generating…"
 msgid "Get a key"
 msgstr "Get a key"
 
-#: src/features/settings/SettingsView.tsx:190
+#: src/features/settings/SettingsView.tsx:197
 msgid "Google Drive"
 msgstr "Google Drive"
+
+#: src/features/settings/InitWall.tsx:189
+msgid "Google Drive (optional)"
+msgstr "Google Drive (optional)"
 
 #: src/features/lectures/MainView.tsx:77
 msgid "Groq rate limit reached"
@@ -674,6 +686,10 @@ msgstr "Lectures"
 #: src/features/course-overview/utils/overview.ts:9
 msgid "Lectures {0}-{1}"
 msgstr "Lectures {0}-{1}"
+
+#: src/features/settings/InitWall.tsx:135
+msgid "Let's set things up"
+msgstr "Let's set things up"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:87
 msgid "Load recordings"
@@ -808,6 +824,10 @@ msgstr "Nothing to run - All remaining pipelines already running"
 msgid "Only .mp4 files are allowed"
 msgstr "Only .mp4 files are allowed"
 
+#: src/features/settings/InitWall.tsx:35
+msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
+msgstr "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
+
 #: src/features/lectures/MainView.tsx:220
 msgid "Open in Drive"
 msgstr "Open in Drive"
@@ -822,6 +842,10 @@ msgstr "Open material in new tab"
 #: src/features/search/components/SearchResult.tsx:23
 msgid "Open PDF in new tab"
 msgstr "Open PDF in new tab"
+
+#: src/features/settings/InitWall.tsx:45
+msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
+msgstr "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 
 #: src/features/downloads/utils/sections.ts:22
 msgid "Other"
@@ -1015,7 +1039,7 @@ msgstr "Run incomplete pipelines"
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
-#: src/features/settings/SettingsView.tsx:214
+#: src/features/settings/SettingsView.tsx:221
 msgid "Run unfinished lectures when the app starts"
 msgstr "Run unfinished lectures when the app starts"
 
@@ -1024,7 +1048,7 @@ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
-#: src/features/settings/SettingsView.tsx:131
+#: src/features/settings/SettingsView.tsx:138
 msgid "Save"
 msgstr "Save"
 
@@ -1035,6 +1059,10 @@ msgstr "Save as"
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:34
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
+
+#: src/features/settings/InitWall.tsx:214
+msgid "Saving…"
+msgstr "Saving…"
 
 #: src/shared/sidebar/Sidebar.tsx:88
 msgid "Search"
@@ -1057,7 +1085,7 @@ msgstr "Searches the generated summaries of one course — the one picked in the
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
-#: src/App.tsx:21
+#: src/App.tsx:22
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
@@ -1065,13 +1093,13 @@ msgstr "Select a lecture to get started"
 msgid "session expired"
 msgstr "session expired"
 
-#: src/features/settings/SettingsView.tsx:76
-#: src/features/settings/SettingsView.tsx:128
+#: src/features/settings/SettingsView.tsx:79
+#: src/features/settings/SettingsView.tsx:131
 #: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/settings/SettingsView.tsx:106
+#: src/features/settings/SettingsView.tsx:109
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -1079,7 +1107,7 @@ msgstr "Settings saved"
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/settings/SettingsView.tsx:229
+#: src/features/settings/SettingsView.tsx:238
 msgid "Show the run controls in the sidebar"
 msgstr "Show the run controls in the sidebar"
 
@@ -1095,12 +1123,16 @@ msgstr "Sorry about it. Go home to keep working, or copy the details below to re
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
+#: src/features/settings/InitWall.tsx:214
+msgid "Start using Fast Study"
+msgstr "Start using Fast Study"
+
 #: src/features/lectures/EditSummaryView.tsx:129
 #: src/features/lectures/MainView.tsx:137
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:180
+#: src/features/settings/SettingsView.tsx:187
 msgid "Storage"
 msgstr "Storage"
 
@@ -1136,7 +1168,7 @@ msgstr "summary did not use any material"
 msgid "summary did not use material"
 msgstr "summary did not use material"
 
-#: src/features/settings/SettingsView.tsx:160
+#: src/features/settings/SettingsView.tsx:167
 msgid "Summary model"
 msgstr "Summary model"
 
@@ -1154,7 +1186,7 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
-#: src/features/settings/SettingsView.tsx:232
+#: src/features/settings/SettingsView.tsx:241
 msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 
@@ -1196,6 +1228,10 @@ msgstr "Then {0} will be regenerated."
 #: src/features/settings/components/ApiKeyField.tsx:62
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
+
+#: src/features/settings/InitWall.tsx:138
+msgid "Three things are needed before the first lecture can be turned into a summary. This only happens once."
+msgstr "Three things are needed before the first lecture can be turned into a summary. This only happens once."
 
 #: src/features/lectures/constants/pipeline.ts:32
 msgid "Transcribe"
@@ -1262,6 +1298,10 @@ msgstr "Videos"
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 
+#: src/features/settings/InitWall.tsx:177
+msgid "Where to keep everything"
+msgstr "Where to keep everything"
+
 #: src/features/search/SearchView.tsx:178
 msgid "Whole word only"
 msgstr "Whole word only"
@@ -1277,6 +1317,10 @@ msgstr "Yes"
 #: src/features/settings/components/DataRootField.tsx:51
 msgid "Yes, store my lectures in this folder"
 msgstr "Yes, store my lectures in this folder"
+
+#: src/features/settings/InitWall.tsx:157
+msgid "Your two API keys"
+msgstr "Your two API keys"
 
 #: src/features/lectures/components/PdfViewer.tsx:84
 msgid "Zoom in"

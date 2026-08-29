@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { RunnerStatus } from '@/types'
-import { missingEntries, type RequiredInput } from './required'
+import type { Settings } from '@/services/settings'
+import { isInitialized, missingEntries, type RequiredInput } from './required'
 import { runsAtRisk } from './dataRootGuard'
 
 const FILLED: RequiredInput = {
@@ -43,6 +44,34 @@ describe('missingEntries', () => {
       'groqApiKey',
       'dataRoot',
     ])
+  })
+})
+
+const STORE: Settings = {
+  dataRoot: '/data',
+  geminiApiKeySet: true,
+  groqApiKeySet: true,
+  geminiModel: null,
+  driveEnabled: null,
+  gdriveRootFolder: null,
+  uiLanguage: null,
+  autoRunOnBoot: null,
+  runnerControlsVisible: null,
+}
+
+describe('isInitialized', () => {
+  it('passes once both keys and a data root are stored', () => {
+    expect(isInitialized(STORE)).toBe(true)
+  })
+
+  it('holds the wall up for any one of the three', () => {
+    expect(isInitialized({ ...STORE, geminiApiKeySet: false })).toBe(false)
+    expect(isInitialized({ ...STORE, groqApiKeySet: false })).toBe(false)
+    expect(isInitialized({ ...STORE, dataRoot: null })).toBe(false)
+  })
+
+  it('is not blocked by anything else being unset', () => {
+    expect(isInitialized({ ...STORE, driveEnabled: null, uiLanguage: null })).toBe(true)
   })
 })
 

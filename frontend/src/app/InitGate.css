@@ -1,0 +1,8 @@
+/* The one frame between boot and knowing whether the app or the wall goes on screen. */
+.init-gate {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--bg);
+}

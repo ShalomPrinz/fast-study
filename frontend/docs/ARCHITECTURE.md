@@ -84,6 +84,10 @@ tree actually lands (or the fetch fails) — never on a response superseded by a
 briefly expose the still-empty tree as "not found". `CourseView` runs the check
 above `CourseOverviewProvider` so a nonexistent course issues no overview requests.
 
+`app/InitGate` wraps the whole route table: it reads the settings store once at boot and, until the
+required entries are filled, renders the first-run wall in place of the app — no sidebar, no route,
+no way past (see `SETTINGS.md`).
+
 `app/ErrorBoundary` wraps `<App/>` inside `BrowserRouter` — a render error anywhere below it (views,
 `Layout`, providers, sidebar) would otherwise unmount the tree into a blank page. The fallback shows
 timestamp, URL, user agent, stack and component stack with a copy button, so a crash can be reported

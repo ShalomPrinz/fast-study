@@ -1,0 +1,63 @@
+/* The wall stands in place of the whole app, so it owns the viewport and scrolls itself — there is
+   no `.layout` around it and nothing else on screen. */
+.init-wall {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+  padding: var(--space-8) var(--space-7);
+}
+
+.init-wall-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.init-wall-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.init-wall-brand {
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.init-wall-title {
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: var(--text);
+}
+
+.init-wall-lede {
+  font-size: var(--fs-row);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* Guide prose and its field read as one block, parted from the next provider. */
+.init-wall-key {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.init-wall-loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.init-wall-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding-block-end: var(--space-8);
+}

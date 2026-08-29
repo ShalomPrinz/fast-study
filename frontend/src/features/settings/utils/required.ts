@@ -1,3 +1,5 @@
+import type { Settings } from '@/services/settings'
+
 export type RequiredField = 'geminiApiKey' | 'groqApiKey' | 'dataRoot' | 'gdriveRootFolder'
 
 export interface RequiredInput {
@@ -23,4 +25,10 @@ export function missingEntries(input: RequiredInput): RequiredField[] {
   // Drive's folder has no default on purpose: turning Drive on reveals an empty required field.
   if (input.driveEnabled && !input.gdriveRootFolder.trim()) missing.push('gdriveRootFolder')
   return missing
+}
+
+/** What the init wall gates on, read straight from the store: both keys present and a data root
+ *  chosen. Nothing else blocks — language and Drive are answered on the wall but never required. */
+export function isInitialized(settings: Settings): boolean {
+  return settings.geminiApiKeySet && settings.groqApiKeySet && Boolean(settings.dataRoot)
 }

@@ -30,7 +30,10 @@ import './SettingsView.css'
 
 // The language applies the moment it is picked, so it is read off the active locale at save time
 // rather than mirrored into the form.
-type FormState = Omit<SettingsForm, 'uiLanguage'>
+type FormState = Omit<SettingsForm, 'uiLanguage'> & {
+  autoRunOnBoot: boolean
+  runnerControlsVisible: boolean
+}
 
 function initialForm(stored: Settings, options: ConfigOptions): FormState {
   return {
