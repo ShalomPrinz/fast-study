@@ -74,6 +74,12 @@ mount and on every SSE notify — never polled:
 `runner.lastError` is an unexpected exception that aborted a sweep, distinct from the expected per-step
 failures in `errors`.
 
+`app/AutoRunOnBoot` fires the context's `trigger` once when the app comes up, gated on the
+`autoRunOnBoot` preference — shipped **on**, so a fresh profile starts every pending pipeline at boot.
+`RunnerPipelineRow` — the "Run incomplete pipelines" button and the in-flight panel below it — renders
+nothing at all when `runnerControlsVisible` is off, which is the shipped default. Both preferences live
+in `shared/utils/uiPreferences.ts`; see `SETTINGS.md`.
+
 Error toasts fan out through `useReportOnce`, which dedupes `(key, message)` so a repeated refresh doesn't
 re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs later.
 

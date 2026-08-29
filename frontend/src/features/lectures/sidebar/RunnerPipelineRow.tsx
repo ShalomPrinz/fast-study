@@ -1,6 +1,7 @@
 import { Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { usePreference } from '@/shared/hooks/usePreference'
 import { formatClockTime } from '@/shared/utils/format'
 import { lectureRoute } from '@/shared/utils/url'
 import type { InFlightEntry } from '@/types'
@@ -37,8 +38,12 @@ function InFlightRow({ entry }: { entry: InFlightEntry }) {
 
 export default function RunnerPipelineRow() {
   const { status, trigger: handleRunClick } = useRunnerStatus()
+  const visible = usePreference('runnerControlsVisible')
   const running = status?.runner.running ?? false
   const inFlight = status?.inFlight ?? []
+
+  // Hidden means the whole control disappears — the run button and the in-flight panel alike.
+  if (!visible) return null
 
   const inFlightRows = inFlight.map((entry) => (
     <InFlightRow key={`${entry.course}||${entry.lecture}||${entry.kind}`} entry={entry} />

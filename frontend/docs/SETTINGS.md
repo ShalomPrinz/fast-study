@@ -93,8 +93,12 @@ is not a failure state.
 ## The two UI preferences — `shared/utils/uiPreferences.ts`
 
 Auto-run on boot and runner-control visibility are the user's own preferences, so they live in
-`localStorage`; their first-boot default comes from the settings store, so a fresh browser profile
-and a packaged install agree without a rebuild. `resolvePreference` is the whole rule: a stored
+`localStorage`; their first-boot default comes from the settings store, which `app/InitGate` seeds
+from on the read it already makes at boot — so a fresh browser profile and a packaged install agree
+without a rebuild, and a later store change never flips a profile that has already been seeded. `resolvePreference` is the whole rule: a stored
 choice wins, then the store's value, then the shipped default — auto-run **on**, runner controls
 **hidden**. `usePreference` re-renders on every write, so toggling one here reaches the sidebar
 without a reload.
+
+Their consumers: `app/AutoRunOnBoot` triggers one runner sweep at boot, and `RunnerPipelineRow`
+renders nothing — button and in-flight panel alike — while the controls are hidden.

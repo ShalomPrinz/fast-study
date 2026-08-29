@@ -906,7 +906,7 @@ msgid "Pipeline failed to start"
 msgstr "הצינור נכשל בהפעלה"
 
 #. placeholder {0}: formatClockTime(sleeping)
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:32
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:33
 msgid "rate-limited until {0}"
 msgstr "מוגבל קצב עד {0}"
 
@@ -1031,7 +1031,7 @@ msgstr "שחזר למקור"
 msgid "Rotate {file}"
 msgstr "החלף את {file}"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:15
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:16
 msgid "Run incomplete pipelines"
 msgstr "הרץ צינורות לא שלמים"
 
@@ -1043,7 +1043,7 @@ msgstr "הרץ את הנותר"
 msgid "Run unfinished lectures when the app starts"
 msgstr "להריץ הרצאות שלא הושלמו כשהאפליקציה נפתחת"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:63
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:68
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 

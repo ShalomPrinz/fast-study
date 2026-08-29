@@ -906,7 +906,7 @@ msgid "Pipeline failed to start"
 msgstr "Pipeline failed to start"
 
 #. placeholder {0}: formatClockTime(sleeping)
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:32
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:33
 msgid "rate-limited until {0}"
 msgstr "rate-limited until {0}"
 
@@ -1031,7 +1031,7 @@ msgstr "Revert to original"
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:15
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:16
 msgid "Run incomplete pipelines"
 msgstr "Run incomplete pipelines"
 
@@ -1043,7 +1043,7 @@ msgstr "Run Remaining"
 msgid "Run unfinished lectures when the app starts"
 msgstr "Run unfinished lectures when the app starts"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:63
+#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:68
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
