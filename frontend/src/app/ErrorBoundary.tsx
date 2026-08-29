@@ -7,7 +7,7 @@ import './ErrorBoundary.css'
 
 // Last-resort net for render errors: without it React unmounts the whole tree and leaves a blank
 // page with no way back. It sits outside <Routes>, so the fallback replaces everything including
-// the sidebar — hence the Home link, and the pathname key below that lets Home actually recover.
+// the sidebar — hence the Home link, and the pathname reset below that lets Home actually recover.
 
 function buildReport(error: Error, componentStack: string): string {
   return [
@@ -39,8 +39,24 @@ function CopyButton({ report }: { report: string }) {
   )
 }
 
-class Boundary extends Component<{ children: ReactNode }, { report: string | null }> {
-  state = { report: null as string | null }
+interface BoundaryProps {
+  children: ReactNode
+  pathname: string
+}
+
+interface BoundaryState {
+  report: string | null
+  pathname: string
+}
+
+class Boundary extends Component<BoundaryProps, BoundaryState> {
+  state = { report: null as string | null, pathname: this.props.pathname }
+
+  // Navigating clears the error. Doing it here rather than by re-keying the boundary is what keeps
+  // an ordinary route change from remounting everything below — providers, SSE stream and all.
+  static getDerivedStateFromProps(p: BoundaryProps, s: BoundaryState): BoundaryState | null {
+    return p.pathname === s.pathname ? null : { report: null, pathname: p.pathname }
+  }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     this.setState({ report: buildReport(error, info.componentStack ?? '') })
@@ -80,7 +96,7 @@ class Boundary extends Component<{ children: ReactNode }, { report: string | nul
 
 export default function ErrorBoundary({ children }: { children: ReactNode }) {
   const { pathname } = useLocation()
-  // Remounting on navigation is what clears the error — the class alone would show the fallback
-  // forever once Home changed the URL.
-  return <Boundary key={pathname}>{children}</Boundary>
+  // Passed, never used as a key: the boundary resets its own error on a pathname change, so the
+  // tree below survives navigation instead of being torn down and rebuilt.
+  return <Boundary pathname={pathname}>{children}</Boundary>
 }
