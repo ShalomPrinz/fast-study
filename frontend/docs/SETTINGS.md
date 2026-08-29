@@ -96,6 +96,11 @@ One write-only field, one status slot, three outcomes. It probes through `probeK
 paste, and only when the value actually changed and is non-empty (`utils/keyStatus.ts`), so cycling
 focus costs the provider nothing.
 
+**An edit resets the field's probe memory** — the sequence number, so a probe still in flight for the
+old text cannot land its verdict on the new one, and the last-probed value, so typing back to a key
+the provider already rejected asks again rather than showing an empty slot. Only an untouched field
+keeps its verdict for free.
+
 | Outcome      | Fills the slot with                                 |
 | ------------ | --------------------------------------------------- |
 | `valid`      | verified, nothing further to do                     |

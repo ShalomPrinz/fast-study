@@ -44,8 +44,11 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
 
   function handleChange(next: string) {
     onChange(next)
-    // Any edit invalidates the last verdict; the offline prefix hint is what is left to show.
+    // An edit invalidates everything the field remembers about the last probe: the verdict shown, the
+    // in-flight probe that would otherwise land on this new text, and the value that blocks a re-probe.
     setStatus(prefixStatus(next, provider.keyPrefix))
+    seq.current += 1
+    probed.current = null
   }
 
   const message = () => {
