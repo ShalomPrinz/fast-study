@@ -21,6 +21,19 @@ route that edits them all. The module behind it is
 The model list comes from `GET /config/options`, so a model id that the free tier does not serve can
 never be typed in — a wrong one surfaces minutes later as a pipeline failure.
 
+## What is not a setting
+
+The list above is closed on purpose. Each of these looks like a field and deliberately isn't one:
+
+| Not a setting                                                                                       | Why                                                                                                             |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| The Whisper model and the `he` transcript language (`backend/pipeline/transcribe.py`)                 | The corpus is Hebrew lectures; no user has a reason to change either                                              |
+| The summary length budget (`LENGTH_BUDGET_SUFFIX`, `backend/pipeline/summarize.py`)                   | A prompt-shaped tuning knob, not a preference                                                                     |
+| The Moodle site (`DEFAULT_SITE`, `downloader/auto/src/moodle/wsClient.js`)                            | One university, one site — and one field fewer on first run                                                       |
+| Service ports and the `VITE_API_URL` / `VITE_DATABASE_URL` and `BACKEND_URL` / `DATABASE_URL` overrides | Wiring, not preference: every default already matches, and a settings save leaves the keys in `.env` untouched     |
+| `DOWNLOADER_EXTENSION_ID`, `FRONTEND_URL`                                                             | CORS origins the download server defaults for itself; only a reloaded unpacked extension or a non-default dev origin ever sets them |
+| The sidebar's lectures/courses mode and the search view's chosen course                               | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it |
+
 ## `/settings`
 
 `features/settings/SettingsView.tsx`, reachable from the sidebar's fifth nav row. It loads the store
