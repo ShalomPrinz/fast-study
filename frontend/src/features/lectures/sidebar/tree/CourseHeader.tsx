@@ -6,6 +6,7 @@ import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
@@ -20,11 +21,12 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { course, add } = useCourseGroup()
   const { selected, onSelect } = useSelection()
   const { refreshCourses } = useCourseTreeContext()
+  const driveEnabled = useDriveEnabled()
   const shiftHeld = useShiftHeld()
 
   const [renaming, setRenaming] = useState(false)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
-  const progress = courseProgress(course)
+  const progress = courseProgress(course, driveEnabled)
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()

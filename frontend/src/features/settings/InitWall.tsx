@@ -21,7 +21,8 @@ import './InitWall.css'
 
 interface Props {
   stored: Settings
-  onDone: () => void
+  // Handed the saved settings, not just a signal: they are what the app behind the wall runs on.
+  onDone: (saved: Settings) => void
 }
 
 type FormState = Omit<SettingsForm, 'uiLanguage' | 'autoRunOnBoot' | 'runnerControlsVisible'>
@@ -100,8 +101,7 @@ export default function InitWall({ stored, onDone }: Props) {
     try {
       // The two UI preferences are deliberately absent: the wall never asks, so they keep their
       // first-boot defaults.
-      await saveSettings(buildPatch({ ...form, uiLanguage: i18n.locale as Locale }, stored))
-      onDone()
+      onDone(await saveSettings(buildPatch({ ...form, uiLanguage: i18n.locale as Locale }, stored)))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
       setFailure((err as Error).message)

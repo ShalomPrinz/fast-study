@@ -5,6 +5,7 @@ import type { Settings } from '@/services/settings'
 import InitWall from '@/features/settings/InitWall'
 import { isInitialized } from '@/features/settings/utils/required'
 import { seedPreferences } from '@/shared/utils/uiPreferences'
+import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import '@/styles/spinner.css'
 import './InitGate.css'
 
@@ -14,6 +15,7 @@ type Phase = 'loading' | 'wall' | 'app'
 // sidebar and no route, so an unconfigured install cannot reach a screen that would only fail.
 export default function InitGate({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
+  const { setSettings } = useSettingsContext()
   const [phase, setPhase] = useState<Phase>('loading')
   const [stored, setStored] = useState<Settings | null>(null)
 
@@ -22,6 +24,7 @@ export default function InitGate({ children }: { children: ReactNode }) {
       try {
         const settings = await fetchSettings()
         setStored(settings)
+        setSettings(settings)
         // The store is the source of a fresh profile's UI defaults, and this read is the only place
         // it is known before the sidebar renders.
         seedPreferences(settings)
@@ -47,7 +50,8 @@ export default function InitGate({ children }: { children: ReactNode }) {
     return (
       <InitWall
         stored={stored}
-        onDone={() => {
+        onDone={(saved) => {
+          setSettings(saved)
           setPhase('app')
           navigate('/')
         }}

@@ -9,7 +9,12 @@ import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInfli
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import { PIPELINE, STEP_FILE, STEP_ERROR_LABEL } from '@/features/lectures/constants/pipeline'
+import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
+import {
+  visiblePipeline,
+  STEP_FILE,
+  STEP_ERROR_LABEL,
+} from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
 import { formatBytes, formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
@@ -94,6 +99,7 @@ export default function MainView() {
   const { t } = useLingui()
   const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
   const { courses, loaded, refreshCourses } = useCourseTreeContext()
+  const driveEnabled = useDriveEnabled()
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null)
@@ -119,16 +125,17 @@ export default function MainView() {
   // The tree has this lecture, so files is set; the guard is for the type only.
   if (!files) return null
 
+  const stages = visiblePipeline(driveEnabled, files)
   const runningFile = remote ? STEP_FILE[remote.step] : null
-  const hasAnyStepFile = PIPELINE.some(({ file, step }) => step && files[file].exists)
+  const hasAnyStepFile = stages.some(({ file, step }) => step && files[file].exists)
   const pdfExists = files['summary.pdf'].exists
   const pdfUploaded = files['drive_url.txt'].exists
   const summaryExists = files['summary.md'].exists
-  const hasActions = PIPELINE.some(({ file, step }) => step && !files[file].exists)
+  const hasActions = stages.some(({ file, step }) => step && !files[file].exists)
 
   const summaryMtime = files['summary.md'].mtime
-  const stageCount = PIPELINE.length
-  const doneCount = PIPELINE.filter(({ file }) => files[file].exists).length
+  const stageCount = stages.length
+  const doneCount = stages.filter(({ file }) => files[file].exists).length
   const videoSize = files['video.mp4'].exists ? files['video.mp4'].size : null
 
   async function handleStep(step: Step) {
@@ -156,8 +163,9 @@ export default function MainView() {
   }
 
   function openRotateModal(file: FileName, step: Step) {
-    const idx = PIPELINE.findIndex((p) => p.file === file)
-    const toDelete = PIPELINE.slice(idx)
+    const idx = stages.findIndex((p) => p.file === file)
+    const toDelete = stages
+      .slice(idx)
       .map((p) => p.file)
       .filter((f) => files![f].exists)
     setRotateTarget({ file, step, toDelete })
@@ -176,15 +184,15 @@ export default function MainView() {
     handleRotate(step, toDelete)
   }
 
-  function runningStateText(entry: (typeof PIPELINE)[number]): string {
+  function runningStateText(entry: (typeof stages)[number]): string {
     const stage = t(entry.runningLabel ?? entry.stageLabel)
-    const stepNumber = PIPELINE.indexOf(entry) + 1
+    const stepNumber = stages.indexOf(entry) + 1
     return t`${stage} · step ${stepNumber} of ${stageCount}`
   }
 
   // The header's state line covers the two states worth calling out — running, and finished. An
   // idle half-done lecture says nothing here; the card's own caption already counts its stages.
-  const runningEntry = remote ? PIPELINE.find((p) => p.step === remote.step) : undefined
+  const runningEntry = remote ? stages.find((p) => p.step === remote.step) : undefined
   const stateItem = runningEntry ? (
     <span className="page-header-state page-header-state--running">
       <span className="page-header-state-dot" />
@@ -255,7 +263,7 @@ export default function MainView() {
           </div>
 
           <div className="pipeline-card">
-            {PIPELINE.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
+            {stages.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
               const exists = files[file].exists
               const isRunning = runningFile === file
               const prereqMet = !prereq || files[prereq].exists

@@ -12,6 +12,7 @@ import {
 import { isConnectionError } from '@/services/http'
 import { toast } from '@/services/toaster'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { writePreference, readPreference } from '@/shared/utils/uiPreferences'
@@ -52,6 +53,7 @@ function initialForm(stored: Settings, options: ConfigOptions): FormState {
 export default function SettingsView() {
   const { t, i18n } = useLingui()
   const { status } = useRunnerStatus()
+  const { setSettings } = useSettingsContext()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<FormState | null>(null)
@@ -101,7 +103,9 @@ export default function SettingsView() {
     setSaving(true)
     setPending(null)
     try {
-      setStored(await saveSettings(next))
+      const saved = await saveSettings(next)
+      setStored(saved)
+      setSettings(saved)
       // The key fields are write-only, so they go back to their "a key is saved" placeholder.
       setForm({ ...current, geminiApiKey: '', groqApiKey: '' })
       writePreference('autoRunOnBoot', current.autoRunOnBoot)

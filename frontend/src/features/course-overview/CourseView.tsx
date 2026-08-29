@@ -4,6 +4,7 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useParams } from 'react-router-dom'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { courseNotFound } from '@/shared/utils/notFound'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
@@ -24,6 +25,7 @@ function CourseOverviewBody() {
   const { t } = useLingui()
   const { course, extractors, files, status } = useCourseOverview()
   const { courses } = useCourseTreeContext()
+  const driveEnabled = useDriveEnabled()
   const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
 
   // Toast each extractor error once per (course, slug, message).
@@ -45,7 +47,9 @@ function CourseOverviewBody() {
   const treeEntry = courses.find((c) => c.name === course)
   const lectures = treeEntry?.lectures ?? []
   const recitations = treeEntry?.recitations ?? []
-  const processed = [...lectures, ...recitations].filter(isLectureComplete).length
+  const processed = [...lectures, ...recitations].filter((l) =>
+    isLectureComplete(l, driveEnabled),
+  ).length
 
   // Several slugs can run at once; the header names the first, the rows carry the rest.
   const runningSlug = Object.entries(status?.extractors ?? {}).find(

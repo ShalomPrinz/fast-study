@@ -25,14 +25,14 @@ never be typed in — a wrong one surfaces minutes later as a pipeline failure.
 
 The list above is closed on purpose. Each of these looks like a field and deliberately isn't one:
 
-| Not a setting                                                                                       | Why                                                                                                             |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| The Whisper model and the `he` transcript language (`backend/pipeline/transcribe.py`)                 | The corpus is Hebrew lectures; no user has a reason to change either                                              |
-| The summary length budget (`LENGTH_BUDGET_SUFFIX`, `backend/pipeline/summarize.py`)                   | A prompt-shaped tuning knob, not a preference                                                                     |
-| The Moodle site (`DEFAULT_SITE`, `downloader/auto/src/moodle/wsClient.js`)                            | One university, one site — and one field fewer on first run                                                       |
-| Service ports and the `VITE_API_URL` / `VITE_DATABASE_URL` and `BACKEND_URL` / `DATABASE_URL` overrides | Wiring, not preference: every default already matches, and a settings save leaves the keys in `.env` untouched     |
-| `DOWNLOADER_EXTENSION_ID`, `FRONTEND_URL`                                                             | CORS origins the download server defaults for itself; only a reloaded unpacked extension or a non-default dev origin ever sets them |
-| The sidebar's lectures/courses mode and the search view's chosen course                               | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it |
+| Not a setting                                                                                           | Why                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| The Whisper model and the `he` transcript language (`backend/pipeline/transcribe.py`)                   | The corpus is Hebrew lectures; no user has a reason to change either                                                                |
+| The summary length budget (`LENGTH_BUDGET_SUFFIX`, `backend/pipeline/summarize.py`)                     | A prompt-shaped tuning knob, not a preference                                                                                       |
+| The Moodle site (`DEFAULT_SITE`, `downloader/auto/src/moodle/wsClient.js`)                              | One university, one site — and one field fewer on first run                                                                         |
+| Service ports and the `VITE_API_URL` / `VITE_DATABASE_URL` and `BACKEND_URL` / `DATABASE_URL` overrides | Wiring, not preference: every default already matches, and a settings save leaves the keys in `.env` untouched                      |
+| `DOWNLOADER_EXTENSION_ID`, `FRONTEND_URL`                                                               | CORS origins the download server defaults for itself; only a reloaded unpacked extension or a non-default dev origin ever sets them |
+| The sidebar's lectures/courses mode and the search view's chosen course                                 | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                  |
 
 ## `/settings`
 
@@ -115,3 +115,15 @@ without a reload.
 
 Their consumers: `app/AutoRunOnBoot` triggers one runner sweep at boot, and `RunnerPipelineRow`
 renders nothing — button and in-flight panel alike — while the controls are hidden.
+
+## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
+
+Some settings decide what other screens render, so the store's answer is held in a context wrapping
+the whole app. It fetches nothing itself: `app/InitGate` pushes the read it already makes at boot,
+the wall pushes what it saved, and `/settings` pushes each save — so a change reaches every screen
+without a reload, and the settings screen stays the only place that talks to the store.
+
+`useDriveEnabled` is its one consumer so far. Nothing stored means off, the same default the
+backend's `settings.drive_enabled()` gives a missing `DRIVE_ENABLED`, so both ends agree on a fresh
+install; it drives the pipeline's Drive stage and the definition of a complete lecture (see
+[LECTURES.md](LECTURES.md)).
