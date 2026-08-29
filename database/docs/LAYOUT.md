@@ -15,6 +15,9 @@ one thing that breaks the arrangement.
 
 Every resolver runs course and lecture names through `safe_name()` first (below).
 
+One file this service writes sits outside `DATA_ROOT` entirely: the repo-root `.env` behind the
+settings store — see [SETTINGS.md](SETTINGS.md).
+
 ## Names
 
 Course and lecture names become directory names verbatim, and they arrive from two places: a
@@ -32,6 +35,14 @@ The rule, in order:
 | Cap     | 80 characters, leaving headroom under `MAX_PATH` for `DATA_ROOT` + `Recitations/` + the longest artifact name |
 | Reserve | `CON`, `PRN`, `AUX`, `NUL`, `COM1-9`, `LPT1-9` take a `_` suffix — reserved with an extension too, so `CON.txt` is refused |
 | Reject  | A name with nothing legal left raises, surfacing as a `400`                              |
+
+Illegal characters are dropped rather than substituted because a separator would have to be a legal
+character, so it becomes visible punctuation the user never typed — and the common case is a colon
+or slash already sitting beside a space, where a replacement stacks a separator against that space
+and reads worse than the gap dropping leaves. Dropping is also trivially idempotent, which the
+resolvers depend on; a replacement rule has to be written carefully not to collapse runs differently
+on a second pass. This is deliberately not exposed as a setting: reversing it is a migration once
+directories exist on disk, not a config change.
 
 The rule is idempotent, which is what the arrangement rests on: a name read back off disk
 resolves to itself, so renames and tree round-trips are stable. `read_course` takes its name
