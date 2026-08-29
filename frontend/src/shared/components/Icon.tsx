@@ -10,6 +10,7 @@ export type IconName =
   | 'nav-courses'
   | 'nav-downloads'
   | 'nav-search'
+  | 'nav-settings'
   | 'rotate'
   | 'trash'
   | 'overflow'
@@ -156,6 +157,20 @@ const NavDownloadsIcon = () => (
   </svg>
 )
 
+// A gear — the settings destination, at the same 16px box as its four nav siblings.
+const NavSettingsIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="8" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.3" />
+    <circle cx="8" cy="8" r="5" stroke="currentColor" strokeWidth="1.3" />
+    <path
+      d="M8 1.3v1.7M8 13v1.7M1.3 8h1.7M13 8h1.7M3.2 3.2l1.2 1.2M11.6 11.6l1.2 1.2M12.8 3.2l-1.2 1.2M4.4 11.6l-1.2 1.2"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+
 const NavSearchIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.3" />
@@ -268,6 +283,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   'nav-courses': NavCoursesIcon,
   'nav-downloads': NavDownloadsIcon,
   'nav-search': NavSearchIcon,
+  'nav-settings': NavSettingsIcon,
   rotate: RotateIcon,
   trash: TrashIcon,
   overflow: OverflowIcon,

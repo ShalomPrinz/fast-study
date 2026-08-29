@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:198
+#: src/features/search/SearchView.tsx:199
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -46,7 +46,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:196
+#: src/features/search/SearchView.tsx:197
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
@@ -75,6 +75,11 @@ msgstr "{0, plural, other {# unsupported}}"
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
+#. placeholder {0}: provider.displayName
+#: src/features/settings/components/ApiKeyField.tsx:73
+msgid "{0} API key"
+msgstr "{0} API key"
+
 #. placeholder {0}: items.length
 #: src/features/downloads/DownloadsView.tsx:92
 msgid "{0} found"
@@ -85,6 +90,11 @@ msgstr "{0} found"
 #: src/features/lectures/MainView.tsx:272
 msgid "{0} of {1} chunks"
 msgstr "{0} of {1} chunks"
+
+#. placeholder {0}: provider.displayName
+#: src/features/settings/components/ApiKeyField.tsx:58
+msgid "{0} rejected this key. Generate a new one in its console."
+msgstr "{0} rejected this key. Generate a new one in its console."
 
 #. placeholder {0}: formatDuration(remaining)
 #: src/shared/components/ProgressBar.tsx:54
@@ -102,15 +112,15 @@ msgstr "{0} video"
 msgid "{0}/{1} chunks transcribed so far"
 msgstr "{0}/{1} chunks transcribed so far"
 
-#: src/features/lectures/utils/materialIndicator.ts:44
+#: src/features/lectures/utils/materialIndicator.ts:41
 msgid "{count, plural, other {# materials were used}}"
 msgstr "{count, plural, other {# materials were used}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:26
+#: src/features/lectures/utils/materialIndicator.ts:25
 msgid "{count, plural, other {# materials will be used}}"
 msgstr "{count, plural, other {# materials will be used}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:58
+#: src/features/lectures/utils/materialIndicator.ts:53
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
 
@@ -131,7 +141,7 @@ msgstr "{effectiveName} may split into parts that overwrite existing {existing} 
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
-#: src/features/search/SearchView.tsx:197
+#: src/features/search/SearchView.tsx:198
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
@@ -143,11 +153,11 @@ msgstr "{materialCount, plural, one {# material} other {# materials}}"
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} will be deleted."
 
-#: src/features/lectures/utils/materialIndicator.ts:44
+#: src/features/lectures/utils/materialIndicator.ts:41
 msgid "{name} was used"
 msgstr "{name} was used"
 
-#: src/features/lectures/utils/materialIndicator.ts:25
+#: src/features/lectures/utils/materialIndicator.ts:24
 msgid "{name} will be used"
 msgstr "{name} will be used"
 
@@ -203,6 +213,14 @@ msgstr "+ add source URL"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ Download all"
 
+#: src/features/settings/components/ApiKeyField.tsx:92
+msgid "A key is saved — type to replace it"
+msgstr "A key is saved — type to replace it"
+
+#: src/features/settings/SettingsView.tsx:245
+msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
+msgstr "A lecture running now would have its earlier files in the old folder and the rest in the new one."
+
 #: src/features/downloads/components/PausedRunsBanner.tsx:28
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
@@ -218,6 +236,14 @@ msgstr "Add recitation"
 #: src/features/course-overview/constants/overview.ts:14
 msgid "Analyze"
 msgstr "Analyze"
+
+#: src/features/settings/SettingsView.tsx:139
+msgid "API keys"
+msgstr "API keys"
+
+#: src/features/settings/SettingsView.tsx:203
+msgid "Appearance and behaviour"
+msgstr "Appearance and behaviour"
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:95
 msgid "Archive course"
@@ -259,7 +285,11 @@ msgstr "BIU account connected"
 msgid "BIU session expired. Reconnect your account."
 msgstr "BIU session expired. Reconnect your account."
 
-#: src/services/http.ts:15
+#: src/features/settings/components/DataRootField.tsx:34
+msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
+msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
+
+#: src/services/http.ts:29
 msgid "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 
@@ -268,9 +298,21 @@ msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgid "Cancel"
 msgstr "Cancel"
 
+#: src/features/settings/SettingsView.tsx:244
+msgid "Change the data folder while lectures are being processed?"
+msgstr "Change the data folder while lectures are being processed?"
+
+#: src/features/settings/components/DataRootField.tsx:38
+msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
+msgstr "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
+
 #: src/features/downloads/components/AccountStatus.tsx:61
 msgid "checking account…"
 msgstr "checking account…"
+
+#: src/features/settings/components/ApiKeyField.tsx:54
+msgid "Checking…"
+msgstr "Checking…"
 
 #: src/features/downloads/DownloadsView.tsx:74
 #~ msgid "close"
@@ -333,7 +375,7 @@ msgstr "Couldn't load entries. Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/search/SearchView.tsx:138
+#: src/features/search/SearchView.tsx:140
 msgid "Course"
 msgstr "Course"
 
@@ -354,7 +396,7 @@ msgstr "Course overview"
 msgid "Course sources"
 msgstr "Course sources"
 
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:82
 msgid "Courses"
 msgstr "Courses"
 
@@ -365,6 +407,10 @@ msgstr "Create"
 #: src/features/lectures/components/PdfViewer.tsx:70
 msgid "Current PDF"
 msgstr "Current PDF"
+
+#: src/features/settings/components/DataRootField.tsx:20
+msgid "Data folder"
+msgstr "Data folder"
 
 #. placeholder {0}: m.name
 #: src/features/lectures/MainView.tsx:364
@@ -409,13 +455,17 @@ msgid "Downloading…"
 msgstr "Downloading…"
 
 #: src/features/downloads/DownloadsView.tsx:53
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:85
 msgid "Downloads"
 msgstr "Downloads"
 
 #: src/features/lectures/constants/pipeline.ts:53
 msgid "Drive"
 msgstr "Drive"
+
+#: src/features/settings/components/DriveFields.tsx:45
+msgid "Drive folder name"
+msgstr "Drive folder name"
 
 #: src/features/lectures/constants/pipeline.ts:84
 msgid "Drive upload failed"
@@ -436,6 +486,14 @@ msgstr "Enter the zoom passcode for this recording"
 #: src/shared/components/ProgressBar.tsx:28
 msgid "Estimating…"
 msgstr "Estimating…"
+
+#: src/features/settings/components/DataRootField.tsx:24
+msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
+msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
+
+#: src/features/settings/SettingsView.tsx:217
+msgid "Every lecture that is not finished yet is picked up on the next start."
+msgstr "Every lecture that is not finished yet is picked up on the next start."
 
 #: src/features/downloads/components/RecordingRow.tsx:161
 msgid "Expand"
@@ -492,6 +550,10 @@ msgstr "Failed to launch the login browser."
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
+#: src/features/settings/components/DriveFields.tsx:57
+msgid "Fast Study"
+msgstr "Fast Study"
+
 #: src/features/downloads/components/RecordingRow.tsx:204
 msgid "File type"
 msgstr "File type"
@@ -534,6 +596,14 @@ msgstr "Generating from {stepLabel} step will rebuild:"
 msgid "Generating…"
 msgstr "Generating…"
 
+#: src/features/settings/components/ApiKeyField.tsx:81
+msgid "Get a key"
+msgstr "Get a key"
+
+#: src/features/settings/SettingsView.tsx:190
+msgid "Google Drive"
+msgstr "Google Drive"
+
 #: src/features/lectures/MainView.tsx:77
 msgid "Groq rate limit reached"
 msgstr "Groq rate limit reached"
@@ -551,6 +621,11 @@ msgstr "In course"
 msgid "just this lecture"
 msgstr "just this lecture"
 
+#: src/features/settings/components/ApiKeyField.tsx:56
+msgid "Key verified"
+msgstr "Key verified"
+
+#: src/features/settings/components/LanguageField.tsx:17
 #: src/shared/sidebar/LanguageSwitcher.tsx:14
 msgid "Language"
 msgstr "Language"
@@ -589,8 +664,8 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:160
-#: src/shared/sidebar/Sidebar.tsx:75
+#: src/features/search/SearchView.tsx:161
+#: src/shared/sidebar/Sidebar.tsx:76
 msgid "Lectures"
 msgstr "Lectures"
 
@@ -612,7 +687,7 @@ msgstr "Loaded"
 msgid "Loading recordings…"
 msgstr "Loading recordings…"
 
-#: src/features/search/SearchView.tsx:183
+#: src/features/search/SearchView.tsx:184
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
@@ -624,7 +699,7 @@ msgstr "Loading…"
 msgid "Manage account"
 msgstr "Manage account"
 
-#: src/features/search/SearchView.tsx:175
+#: src/features/search/SearchView.tsx:176
 msgid "Match whole word"
 msgstr "Match whole word"
 
@@ -661,7 +736,7 @@ msgstr "No files of unknown type found."
 msgid "No Lectures"
 msgstr "No Lectures"
 
-#: src/features/lectures/utils/materialIndicator.ts:29
+#: src/features/lectures/utils/materialIndicator.ts:28
 msgid "no material found"
 msgstr "no material found"
 
@@ -717,7 +792,7 @@ msgstr "not provided"
 msgid "Note: This will delete all files in this lecture."
 msgstr "Note: This will delete all files in this lecture."
 
-#: src/features/search/SearchView.tsx:210
+#: src/features/search/SearchView.tsx:211
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
@@ -859,7 +934,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:168
+#: src/features/search/SearchView.tsx:169
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -898,11 +973,15 @@ msgstr "Renamed to \"{name}\" — some characters can't be used in a folder name
 msgid "Replace existing video.mp4 in \"{0}\"?"
 msgstr "Replace existing video.mp4 in \"{0}\"?"
 
+#: src/features/settings/components/DriveFields.tsx:49
+msgid "Required"
+msgstr "Required"
+
 #: src/features/lectures/EditSummaryView.tsx:177
 msgid "Restore the original summary"
 msgstr "Restore the original summary"
 
-#: src/features/search/SearchView.tsx:191
+#: src/features/search/SearchView.tsx:192
 msgid "Results"
 msgstr "Results"
 
@@ -936,11 +1015,16 @@ msgstr "Run incomplete pipelines"
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
+#: src/features/settings/SettingsView.tsx:214
+msgid "Run unfinished lectures when the app starts"
+msgstr "Run unfinished lectures when the app starts"
+
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:63
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
+#: src/features/settings/SettingsView.tsx:131
 msgid "Save"
 msgstr "Save"
 
@@ -952,7 +1036,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/shared/sidebar/Sidebar.tsx:87
+#: src/shared/sidebar/Sidebar.tsx:88
 msgid "Search"
 msgstr "Search"
 
@@ -973,7 +1057,7 @@ msgstr "Searches the generated summaries of one course — the one picked in the
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
-#: src/App.tsx:20
+#: src/App.tsx:21
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
@@ -981,9 +1065,23 @@ msgstr "Select a lecture to get started"
 msgid "session expired"
 msgstr "session expired"
 
-#: src/features/search/SearchView.tsx:235
+#: src/features/settings/SettingsView.tsx:76
+#: src/features/settings/SettingsView.tsx:128
+#: src/shared/sidebar/Sidebar.tsx:91
+msgid "Settings"
+msgstr "Settings"
+
+#: src/features/settings/SettingsView.tsx:106
+msgid "Settings saved"
+msgstr "Settings saved"
+
+#: src/features/search/SearchView.tsx:236
 msgid "Show more"
 msgstr "Show more"
+
+#: src/features/settings/SettingsView.tsx:229
+msgid "Show the run controls in the sidebar"
+msgstr "Show the run controls in the sidebar"
 
 #: src/app/ErrorBoundary.tsx:58
 msgid "Something went wrong"
@@ -1001,6 +1099,10 @@ msgstr "Source URL (optional)…"
 #: src/features/lectures/MainView.tsx:137
 msgid "Step already running"
 msgstr "Step already running"
+
+#: src/features/settings/SettingsView.tsx:180
+msgid "Storage"
+msgstr "Storage"
 
 #: src/features/downloads/components/PasscodePrompt.tsx:69
 msgid "Submit"
@@ -1022,17 +1124,21 @@ msgstr "Summarizing"
 msgid "Summary"
 msgstr "Summary"
 
-#: src/features/lectures/utils/materialIndicator.ts:51
+#: src/features/lectures/utils/materialIndicator.ts:47
 msgid "summary did not use {name}"
 msgstr "summary did not use {name}"
 
-#: src/features/lectures/utils/materialIndicator.ts:51
+#: src/features/lectures/utils/materialIndicator.ts:47
 msgid "summary did not use any material"
 msgstr "summary did not use any material"
 
-#: src/features/lectures/utils/materialIndicator.ts:34
+#: src/features/lectures/utils/materialIndicator.ts:32
 msgid "summary did not use material"
 msgstr "summary did not use material"
+
+#: src/features/settings/SettingsView.tsx:160
+msgid "Summary model"
+msgstr "Summary model"
 
 #: src/features/lectures/utils/pdfBadge.ts:6
 msgid "summary.pdf is older than summary.md. Re-generate it."
@@ -1048,9 +1154,17 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
+#: src/features/settings/SettingsView.tsx:232
+msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
+msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
+
 #: src/features/downloads/components/SectionGroup.tsx:211
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "the BIU session expired. Reconnect, then run the section again."
+
+#: src/features/settings/components/DriveFields.tsx:61
+msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
+msgstr "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 
 #: src/features/lectures/MainView.tsx:393
 msgid "The following files will be deleted:"
@@ -1076,6 +1190,12 @@ msgstr "the run was cancelled. Run the section again to pick them up."
 #: src/features/lectures/MainView.tsx:394
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
+
+#. placeholder {0}: provider.displayName
+#. placeholder {1}: provider.keyPrefix
+#: src/features/settings/components/ApiKeyField.tsx:62
+msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
+msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
 #: src/features/lectures/constants/pipeline.ts:32
 msgid "Transcribe"
@@ -1113,6 +1233,10 @@ msgstr "Unsupported"
 msgid "Upload failed"
 msgstr "Upload failed"
 
+#: src/features/settings/components/DriveFields.tsx:30
+msgid "Upload finished summaries to Google Drive"
+msgstr "Upload finished summaries to Google Drive"
+
 #: src/features/lectures/constants/pipeline.ts:56
 msgid "Upload to Drive"
 msgstr "Upload to Drive"
@@ -1134,13 +1258,25 @@ msgstr "Video"
 msgid "Videos"
 msgstr "Videos"
 
-#: src/features/search/SearchView.tsx:177
+#: src/features/settings/components/ApiKeyField.tsx:60
+msgid "We couldn't check this key right now. You can still save it."
+msgstr "We couldn't check this key right now. You can still save it."
+
+#: src/features/search/SearchView.tsx:178
 msgid "Whole word only"
 msgstr "Whole word only"
+
+#: src/features/settings/components/DriveFields.tsx:33
+msgid "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
+msgstr "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 
 #: src/shared/components/ConfirmModal.tsx:42
 msgid "Yes"
 msgstr "Yes"
+
+#: src/features/settings/components/DataRootField.tsx:51
+msgid "Yes, store my lectures in this folder"
+msgstr "Yes, store my lectures in this folder"
 
 #: src/features/lectures/components/PdfViewer.tsx:84
 msgid "Zoom in"

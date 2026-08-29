@@ -1,0 +1,16 @@
+/* The settings route's own layout: a stack of sections at the page's reading measure. */
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding-block-end: var(--space-8);
+}
+
+/* The runs the data-root confirm names, inside the modal. */
+.settings-run-list {
+  margin-block: var(--space-3);
+  padding-inline-start: var(--space-6);
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+  text-align: start;
+}

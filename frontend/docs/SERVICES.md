@@ -8,6 +8,10 @@ go through them — no call site touches `fetch`, `EventSource` or `react-toasti
 `createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON encoding and headers, and exposes
 `url(path)` for links the browser opens itself. URL string building lives in `shared/utils/url.ts`, not here.
 
+A failed response's message comes from its body — `{error}`, FastAPI's `{detail}`, or `{message}`, whichever is
+there — falling back to the status line. "400 Bad Request" says nothing about a data root that turned out not
+to be writable, and that prose is what the settings screens show.
+
 **Connection errors are handled once, here.** Per the Fetch spec only a network failure rejects as a
 `TypeError` (aborts are `DOMException` and propagate untouched), so that branch wraps the error in a typed
 `ConnectionError` carrying the friendly service name, toasts it, and rethrows. `toastConnectionError` keys

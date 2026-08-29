@@ -6,6 +6,7 @@ import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
 import DownloadsView from '@/features/downloads/DownloadsView'
 import SearchView from '@/features/search/SearchView'
+import SettingsView from '@/features/settings/SettingsView'
 import Icon from '@/shared/components/Icon'
 import '@/styles/panel.css'
 
@@ -32,6 +33,7 @@ export default function App() {
         <Route path="course/:course" element={<CourseView />} />
         <Route path="downloads" element={<DownloadsView />} />
         <Route path="search" element={<SearchView />} />
+        <Route path="settings" element={<SettingsView />} />
         <Route path=":course/:lecture" element={<MainView />} />
         <Route path=":course/:lecture/edit" element={<EditSummaryView />} />
       </Route>

@@ -52,11 +52,12 @@ export default function Sidebar() {
     localStorage.setItem(MODE_KEY, m)
   }
 
-  // A route row outranks the two tree rows: on /downloads or /search the tree is still there, but
+  // A route row outranks the two tree rows: on a route the tree is still there, but
   // it is not what the main pane is showing.
   const onDownloads = pathname.startsWith('/downloads')
   const onSearch = pathname.startsWith('/search')
-  const onRoute = onDownloads || onSearch
+  const onSettings = pathname.startsWith('/settings')
+  const onRoute = onDownloads || onSearch || onSettings
 
   const Body = mode === 'courses' ? CoursesList : LecturesSidebar
 
@@ -85,6 +86,9 @@ export default function Sidebar() {
         </Link>
         <Link className={rowClass(onSearch)} to="/search">
           <NavBody icon="nav-search" label={t`Search`} />
+        </Link>
+        <Link className={rowClass(onSettings)} to="/settings">
+          <NavBody icon="nav-settings" label={t`Settings`} />
         </Link>
       </nav>
 
