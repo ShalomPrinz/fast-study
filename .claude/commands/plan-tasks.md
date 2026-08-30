@@ -56,38 +56,15 @@ Off by default. It turns on only when the user says **"use worktree"** (or asks 
 - One prompt in the plan → that prompt gets the section.
 - More than one → ask in Step 2 which ones get it; only those do.
 
-Pick a short `snake_case` topic slug per prompt naming the change (`support_i18n`, `unknown_url_modules`) — not the full prompt file name. Each worktree-enabled prompt gets its own slug.
+The rules themselves live in the `worktree` skill, which also defines the slug naming convention. Each worktree-enabled prompt gets its own slug.
 
-Emit this section verbatim into the prompt file with `<slug>` replaced throughout, and the repo root path taken from the actual project root. Drop the `npm install` lines the prompt's service does not need.
+Emit this section into the prompt file, with `<slug>` replaced:
 
-````
+```
 ### Where the work lives — read before anything else
 
-All work happens in a git worktree dedicated to this task. **Create it first, before reading further or touching any file:**
-
+Invoke the `worktree` skill and follow it before reading further or touching any file. Your slug for this task is `<slug>`.
 ```
-git -C <repo-root> worktree add -b <slug> <repo-root>-<slug> main
-```
-
-Then run every command from **`<repo-root>-<slug>`**, on the local branch **`<slug>`**. Do not `cd` to `<repo-root>` — it stays on `main`, untouched.
-
-A fresh worktree has none of the git-ignored files the services need. **Run these next, before any other work** — every service reads `.env` from the repo root, and without `node_modules` the lint and test commands will not run:
-
-```
-cp <repo-root>/.env <repo-root>-<slug>/.env
-cd <repo-root>-<slug> && npm install
-cd <repo-root>-<slug>/frontend && npm install
-```
-
-- Commits are authorised **only** on this branch and **only** for this task.
-- Do not merge, rebase onto, fast-forward or otherwise touch `main`. Do not push, do not open a PR.
-- When the last step is done, **stop**. Leave the branch sitting locally for the user to review and merge.
-- If the work has to be abandoned mid-way, leave the branch as-is and report; do not reset or delete it.
-
-Commit message format: a one-line summary starting with `<service>: ` or `<feature>: `. No other body text.
-
-> **Worktree tooling note:** this session's Bash tool refuses heredocs and multi-part commands with redirects while worktree-isolated. Use the Write/Edit tools for file creation, and keep shell commands simple.
-````
 
 ---
 
