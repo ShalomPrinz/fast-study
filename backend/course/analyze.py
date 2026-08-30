@@ -10,14 +10,12 @@ from course.overview import Extractor
 
 PROMPT_DIR = Path(__file__).parent.parent / "assets" / "instructions" / "overview"
 
-MODEL = "gemini-3.5-flash"
-
 
 def analyze(extractor: Extractor, report: str, course: str) -> str:
     """Send one extractor's report to an LLM with its prompt. Raises RuntimeError on API failure."""
 
     prompt = (PROMPT_DIR / extractor.prompt_file).read_text(encoding="utf-8")
-    client = LLMClient(model=MODEL)
+    client = LLMClient()
     return client.generate([prompt, f"Course: {course}", report])
 
 

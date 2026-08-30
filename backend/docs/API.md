@@ -10,7 +10,7 @@ CORS is open to `http://localhost:5173` only.
 
 `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}`
 `step ∈ {audio, transcribe, summarize, pdf, drive}`, `kind` defaults to `lecture`.
-Validates that the step's prerequisite file exists (`_STEP_CONFIG`), returning `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise. On success → `{"status": "started"|"busy"}`.
+Validates that the step's prerequisite file exists (`_STEP_CONFIG`), returning `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise. A step a setting has switched off → `{"status": "error", "message": "<step> is disabled in settings"}`. On success → `{"status": "started"|"busy"}`.
 
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`.
@@ -45,3 +45,16 @@ There is deliberately no per-phase endpoint — the frontend never sequences pha
 
 `GET /overview/extractors`
 Static `{"extractors": [{"slug", "title", "phases"}]}` in declaration order. `phases` lets the UI tell immediate extractors apart from pattern ones.
+
+## Config
+
+The backend-owned settings: both API keys, the Gemini model, the Drive toggle and the Drive root folder. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
+
+`POST /config`
+body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
+
+`GET /config/options`
+`{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's probe URL stays server-side.
+
+`POST /config/probe-key`
+body `{"provider": "groq"|"gemini", "key": str}` → `{"result": "valid"|"rejected"|"unverified"}`, or an error envelope for an unknown provider. The key is authenticated against the provider's list-models endpoint (zero tokens, no per-model quota). Only an explicit 401/403 is `rejected`; every other status, a timeout or an unreachable host is `unverified` — an offline user must never be told a good key is bad. `key_prefix` from `/config/options` is an offline hint for the UI and is not enforced here.

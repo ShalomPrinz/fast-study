@@ -10,6 +10,10 @@ The default sidebar mode plus the two lecture views (`MainView`, `EditSummaryVie
 `STEP_INPUT_FILE`, `STEP_LABEL`, `STEP_ERROR_LABEL`, `STEP_SET` from it. Never hard-code a step name,
 its output file or its prerequisite anywhere else.
 
+`visiblePipeline(driveEnabled, files)` is what a lecture actually renders: with Drive off it drops the
+Drive stage, matching the backend, which rejects `run/drive` and ends the pipeline at `summary.pdf`. A
+lecture uploaded while Drive was on keeps the row, so its `drive_url.txt` stays reachable.
+
 Three label sets, all `msg` descriptors resolved at the render site: `stageLabel` names the stage
 (`Video`, `Audio`, `Transcript`, …) whether it is pending or done, `runningLabel` replaces it only while
 the step is in flight (`Extracting audio`, `Transcribing`, …), and `actionLabel` is the button that
@@ -73,6 +77,10 @@ mount and on every SSE notify — never polled:
 `course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror backend `runner.py::_skey`**.
 `runner.lastError` is an unexpected exception that aborted a sweep, distinct from the expected per-step
 failures in `errors`.
+
+`RunnerPipelineRow` — the "Run incomplete pipelines" button and the in-flight panel below it — renders
+nothing at all when `runnerControlsVisible` is off, which is the shipped default. That preference lives
+in `shared/utils/uiPreferences.ts`; see `SETTINGS.md`.
 
 Error toasts fan out through `useReportOnce`, which dedupes `(key, message)` so a repeated refresh doesn't
 re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs later.
@@ -145,8 +153,9 @@ so an existing choice carried over). A route row outranks the tree rows for the 
 Downloads carries a badge counting running jobs, read off `DownloadJobsContext`. The footer holds
 `New course` and `LanguageSwitcher`; every glyph in the sidebar is inline SVG from `Icon`.
 
-`utils/lectureProgress.ts` feeds the tree's two progress signals: `isLectureComplete` (defined as
-`drive_url.txt` existing — the last pipeline output) gives each lecture row its leading dot, green when
+`utils/lectureProgress.ts` feeds the tree's two progress signals: `isLectureComplete` (the last
+pipeline output existing — `drive_url.txt`, or `summary.pdf` with Drive off, mirroring the backend's
+`final_output()`) gives each lecture row its leading dot, green when
 complete, accent while a step of it is in flight, hollow otherwise; `courseProgress` gives each course
 header its right-aligned `N/M`, lectures and recitations together, and returns `0/0` for an archived
 course so the badge stays off there.

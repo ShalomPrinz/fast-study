@@ -6,6 +6,7 @@ import urllib.parse
 import urllib.request
 from contextlib import asynccontextmanager
 
+import settings
 from dotenv import load_dotenv
 from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
@@ -367,6 +368,41 @@ def get_overview_file(course: str, name: str):
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None
     return FileResponse(str(p), media_type=media_type)
+
+
+@app.get("/settings")
+def get_settings():
+    """Return the browser-dev settings store; the two API keys report set/unset, never a value."""
+
+    try:
+        return settings.read_settings()
+    except Exception as e:
+        return _error(str(e), 500)
+
+
+@app.put("/settings")
+async def put_settings(request: Request):
+    """Merge a partial settings object into the repo-root .env and return the stored view."""
+
+    try:
+        body = await request.json()
+        return settings.write_settings(body)
+    except Exception as e:
+        return _error(str(e), 400)
+
+
+@app.post("/config")
+async def post_config(request: Request):
+    """Apply {data_root} to the running process, so a settings change needs no restart."""
+
+    try:
+        body = await request.json()
+        if "data_root" in body:
+            # fs.paths.data_root() re-reads the environment per call, so this takes effect at once.
+            os.environ["DATA_ROOT"] = settings.prepare_data_root(body["data_root"])
+        return Response(status_code=204)
+    except Exception as e:
+        return _error(str(e), 400)
 
 
 @app.get("/events")

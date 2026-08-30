@@ -60,14 +60,15 @@ fresher one.
 | `/course/:course`        | `CourseView`      |
 | `/downloads`             | `DownloadsView`   |
 | `/search`                | `SearchView`      |
+| `/settings`              | `SettingsView`    |
 | `/:course/:lecture`      | `MainView`        |
 | `/:course/:lecture/edit` | `EditSummaryView` |
 
 `kind` (lecture vs recitation) is a query param `?kind=recitation`, propagated everywhere rather than
-being a route segment. The static `course`/`downloads`/`search` segments outrank the dynamic
+being a route segment. The static `course`/`downloads`/`search`/`settings` segments outrank the dynamic
 `/:course/:lecture` pattern in v7 ranking, so they never collide.
 
-`/downloads` and `/search` are two of the sidebar's four nav rows, and the only two that are routes —
+`/downloads`, `/search` and `/settings` are three of the sidebar's five nav rows, and the only ones that are routes —
 Lectures and Courses swap the tree below without navigating. Clicking anything in that tree navigates
 away from `/downloads`, which is the intended "exit on sidebar click". Because that unmounts
 the view, `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
@@ -82,6 +83,10 @@ without it a typo'd URL is indistinguishable from loading and spins forever. `lo
 tree actually lands (or the fetch fails) — never on a response superseded by a newer one, which would
 briefly expose the still-empty tree as "not found". `CourseView` runs the check
 above `CourseOverviewProvider` so a nonexistent course issues no overview requests.
+
+`app/InitGate` wraps the whole route table: it reads the settings store once at boot and, until the
+required entries are filled, renders the first-run wall in place of the app — no sidebar, no route,
+no way past (see `SETTINGS.md`).
 
 `app/ErrorBoundary` wraps `<App/>` inside `BrowserRouter` — a render error anywhere below it (views,
 `Layout`, providers, sidebar) would otherwise unmount the tree into a blank page. The fallback shows
@@ -134,19 +139,19 @@ properties. It holds no class selector, and `main.tsx` imports it and the font w
 Every colour, size and spacing step in `src/**/*.css` resolves to a `tokens.css` custom property. The
 scales are:
 
-| Group     | Tokens                                                                                                                     |
-| --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| surfaces  | `--bg` (app canvas), `--surface` (cards), `--surface-sunken` (a row mid-run)                                               |
-| text      | `--text` → `--text-4`, darkest to faintest                                                                                 |
-| lines     | `--line`, `--line-soft`, `--control-line` (input and button borders)                                                       |
-| primary   | `--ink` — the one filled button per page                                                                                   |
-| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-line`, `--accent-ink`, `--accent-on-dark`                         |
+| Group     | Tokens                                                                                                                      |
+| --------- | --------------------------------------------------------------------------------------------------------------------------- |
+| surfaces  | `--bg` (app canvas), `--surface` (cards), `--surface-sunken` (a row mid-run)                                                |
+| text      | `--text` → `--text-4`, darkest to faintest                                                                                  |
+| lines     | `--line`, `--line-soft`, `--control-line` (input and button borders)                                                        |
+| primary   | `--ink` — the one filled button per page                                                                                    |
+| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-line`, `--accent-ink`, `--accent-on-dark`                          |
 | status    | `--ok`/`--ok-soft`/`--ok-surface`/`--ok-line`/`--ok-dot`, `--warn`/`--warn-soft`, `--danger`/`--danger-soft`, `--highlight` |
-| sidebar   | `--sidebar-bg`, `--sidebar-raise`, `--sidebar-line`, `--sidebar-fg`, `--sidebar-muted`, `--sidebar-dim`, `--sidebar-width` |
-| space     | `--space-1` 4px → `--space-8` 40px                                                                                         |
-| radius    | `--r-sm` 8px, `--r` 9px, `--r-lg` 12px, `--r-xl` 14px, `--r-pill`                                                          |
-| type      | `--font-ui`, `--font-mono`, `--fs-title` 26 → `--fs-fine` 11                                                               |
-| elevation | `--shadow-sm`, `--shadow-md` (toasts), `--shadow-lg` (modals)                                                              |
+| sidebar   | `--sidebar-bg`, `--sidebar-raise`, `--sidebar-line`, `--sidebar-fg`, `--sidebar-muted`, `--sidebar-dim`, `--sidebar-width`  |
+| space     | `--space-1` 4px → `--space-8` 40px                                                                                          |
+| radius    | `--r-sm` 8px, `--r` 9px, `--r-lg` 12px, `--r-xl` 14px, `--r-pill`                                                           |
+| type      | `--font-ui`, `--font-mono`, `--fs-title` 26 → `--fs-fine` 11                                                                |
+| elevation | `--shadow-sm`, `--shadow-md` (toasts), `--shadow-lg` (modals)                                                               |
 
 The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
 and the accent appears as text, a border or a soft tint. `--accent-on-dark` is its counterpart on the

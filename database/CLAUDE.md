@@ -4,7 +4,8 @@
 
 FastAPI service that owns every read, write, and listing under `DATA_ROOT`, plus the
 cross-service SSE notify channel. The frontend, downloader, and backend all get filesystem state
-from here — no other service touches disk.
+from here — no other service touches disk. One exception to "under `DATA_ROOT`": it also owns the
+settings store, which is the repo-root `.env`.
 
 It is the single source of truth for the on-disk path layout and for the HTTP contract the other
 services depend on. Treat changes to endpoints, response shapes, or the layout as contract
@@ -15,7 +16,8 @@ changes: keep them backward-compatible or flag the impact.
 | Doc                            | Covers                                                            |
 | ------------------------------ | ----------------------------------------------------------------- |
 | [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, path resolution, dotfiles, tree shape   |
-| [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, trust model |
+| [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, access logging, trust model |
+| [docs/SETTINGS.md](docs/SETTINGS.md) | the settings store: fields, `.env` merge, `DATA_ROOT` validation |
 | [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity |
 | [docs/EVENTS.md](docs/EVENTS.md)     | SSE channel and clean shutdown                              |
 
@@ -29,6 +31,11 @@ Reads the repo-root `.env` via `python-dotenv`:
 
 - `DATA_ROOT` (required) — absolute path to the data directory.
 - `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload pipeline trigger.
+
+`settings.py` also *writes* that `.env`: it is the store behind the app's settings surface in
+browser dev (`GET`/`PUT /settings`), and `POST /config` applies `DATA_ROOT` to the running process
+with no restart. The write is a merge — only settings keys are rewritten, and the API keys are
+write-only. See [docs/SETTINGS.md](docs/SETTINGS.md).
 
 ## Running and testing
 

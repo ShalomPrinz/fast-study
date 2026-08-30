@@ -7,6 +7,7 @@ import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { findLecture } from '@/features/lectures/utils/courseTree'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
@@ -22,6 +23,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const { selected, onSelect } = useSelection()
   const { courses, refreshCourses } = useCourseTreeContext()
   const { isInFlight } = useRunnerStatus()
+  const driveEnabled = useDriveEnabled()
   const upload = usePendingUpload()
 
   const [renaming, setRenaming] = useState(false)
@@ -34,7 +36,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     selected?.kind === kind
 
   const running = isInFlight(course.name, lecture.name, kind)
-  const dotState = isLectureComplete(lecture) ? 'done' : running ? 'running' : null
+  const dotState = isLectureComplete(lecture, driveEnabled) ? 'done' : running ? 'running' : null
 
   function startRenaming(e: React.MouseEvent) {
     e.preventDefault()

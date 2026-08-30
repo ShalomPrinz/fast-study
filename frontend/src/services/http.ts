@@ -5,6 +5,20 @@ export function httpError(res: Response): Error {
   return new Error(`${res.status} ${res.statusText}`)
 }
 
+// Every service reports a failure as JSON prose — `{error}`, FastAPI's `{detail}`, or `{message}`.
+// Surfacing it beats "400 Bad Request", which says nothing about, say, a data root that turned out
+// not to be writable.
+async function failureError(res: Response): Promise<Error> {
+  try {
+    const body = JSON.parse(await res.text())
+    const message = body?.error ?? body?.detail ?? body?.message
+    if (typeof message === 'string' && message) return new Error(message)
+  } catch {
+    // Not JSON, or no body at all — the status line is all there is to report.
+  }
+  return httpError(res)
+}
+
 // A request that never reached the server (service down); toasted centrally on construction.
 export class ConnectionError extends Error {
   constructor(
@@ -65,7 +79,7 @@ export function createClient(baseUrl: string, serviceName: string): Client {
       }
       throw err
     }
-    if (!res.ok) throw httpError(res)
+    if (!res.ok) throw await failureError(res)
     // Mutations answer 204 with no body; res.json() would throw a SyntaxError on it.
     if (res.status === 204 || res.headers.get('Content-Length') === '0') return undefined as T
     return res.json() as Promise<T>

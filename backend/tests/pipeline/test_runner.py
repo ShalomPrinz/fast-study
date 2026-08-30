@@ -27,6 +27,43 @@ def _files(**existing) -> dict:
     }
 
 
+# Every case below describes the full five-step order; TestDriveDisabled owns the other one.
+@pytest.fixture(autouse=True)
+def _drive_on(monkeypatch):
+    monkeypatch.setenv("DRIVE_ENABLED", "true")
+
+
+class TestDriveDisabled:
+    """With DRIVE_ENABLED off a lecture is complete at summary.pdf — otherwise it stays
+    pending forever and the runner loops on it."""
+
+    @pytest.fixture(autouse=True)
+    def _drive_off(self, monkeypatch):
+        monkeypatch.setenv("DRIVE_ENABLED", "false")
+
+    def test_enabled_steps_drops_drive(self):
+        assert runner.enabled_steps() == ["audio", "transcribe", "summarize", "pdf"]
+        assert runner.final_output() == "summary.pdf"
+
+    def test_next_step_pdf_present_returns_none(self):
+        files = _files(video=True, audio=True, transcript=True, summary=True, pdf=True)
+        assert runner.next_step(files) is None
+
+    def test_next_step_still_advances_to_pdf(self):
+        files = _files(video=True, audio=True, transcript=True, summary=True)
+        assert runner.next_step(files) == "pdf"
+
+    def test_lecture_with_pdf_is_not_pending(self):
+        files = _files(video=True, audio=True, transcript=True, summary=True, pdf=True)
+        assert runner._lecture_pending(files) is False
+        assert runner._lecture_pending(_files(video=True, summary=True)) is True
+
+
+def test_enabled_steps_includes_drive_when_on():
+    assert runner.enabled_steps() == runner.STEP_ORDER
+    assert runner.final_output() == "drive_url.txt"
+
+
 # ---- next_step ----
 
 

@@ -1,6 +1,6 @@
 import { msg } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
-import type { Step, FileName } from '@/types'
+import type { Step, FileName, FileStatus } from '@/types'
 
 // Labels are message descriptors, not strings: this table is module-level, so it is built once,
 // before a locale exists. Rendering sites resolve them against the active catalog.
@@ -57,6 +57,14 @@ export const PIPELINE: Array<{
     prereq: 'summary.pdf',
   },
 ]
+
+// The stages a lecture actually shows. Drive is dropped when the setting is off — the backend
+// rejects `run/drive` and stops counting it towards completion — but a lecture uploaded while it was
+// on keeps the row, so its result stays reachable.
+export function visiblePipeline(driveEnabled: boolean, files: FileStatus): typeof PIPELINE {
+  if (driveEnabled || files['drive_url.txt'].exists) return PIPELINE
+  return PIPELINE.filter((p) => p.step !== 'drive')
+}
 
 const STEP_FILE_MUT: Partial<Record<Step, FileName>> = {}
 const STEP_INPUT_FILE_MUT: Partial<Record<Step, FileName>> = {}

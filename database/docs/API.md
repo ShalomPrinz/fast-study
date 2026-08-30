@@ -5,8 +5,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 
 ## Conventions
 
-- Mutations return a bare `204 No Content`, or `{error}` with a non-2xx status. The one exception
-  is `POST /…/materials`, which answers `200 {name}` with the filename it allocated.
+- Mutations return a bare `204 No Content`, or `{error}` with a non-2xx status. Two answer with a
+  body instead: `POST /…/materials` returns `200 {name}` with the filename it allocated, and
+  `PUT /settings` returns `200` with the stored view.
   Reads return their payload directly (`{summaries: [...]}`, `{files: [...]}`, the tree array).
 - `?kind=lecture|recitation` addresses the two lecture families; it defaults to `lecture`.
 - Bodies are raw bytes for file/video/summary writes, JSON for metadata routes.
@@ -38,6 +39,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /courses/{course}/overview/files/{name}`                   | stream a course-level file                                                 |
 | `GET    /courses/{course}/overview/meta`                           | `{meta}` (`{}` when absent)                                                |
 | `PATCH  /courses/{course}/overview/meta`                           | merge one slug's entry (`{slug, entry}`)                                   |
+| `GET    /settings`                                                 | the browser-dev settings store; API keys report set/unset only             |
+| `PUT    /settings`                                                 | merge a partial settings object into the repo-root `.env`                  |
+| `POST   /config`                                                   | apply `{data_root}` to the running process                                 |
 | `GET    /events`                                                   | SSE stream of `notify` events                                              |
 | `POST   /notify`                                                   | broadcast a `notify` event                                                 |
 
@@ -87,6 +91,20 @@ manually. The PUT responds as soon as the file is on disk.
 
 Consequence: every upload, including every downloader upload, spends Groq and Gemini quota
 unattended all the way to the finished summary.
+
+## Settings
+
+The settings store is the repo-root `.env` rather than anything under `DATA_ROOT`; its fields,
+merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
+
+| Route            | Answers                                                                       |
+| ---------------- | ----------------------------------------------------------------------------- |
+| `GET /settings`  | `200` with every field, `null` when unset; `500` `{error}` if the store is unreadable |
+| `PUT /settings`  | `200` with the same shape; `400` `{error}` on a rejected value                 |
+| `POST /config`   | `204`; `400` `{error}` on a data root that is relative or unwritable           |
+
+`PUT /settings` is the second exception to the 204-on-mutation convention: it answers with the
+`GET` shape so the client never needs a follow-up read.
 
 ## Access logging
 

@@ -21,7 +21,7 @@
   flex-shrink: 0;
 }
 
-/* The four destinations: two swap the tree below, two are routes. */
+/* The five destinations: two swap the tree below, three are routes. */
 .sidebar-nav-block {
   display: flex;
   flex-direction: column;

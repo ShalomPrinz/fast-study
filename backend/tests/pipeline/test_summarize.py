@@ -39,7 +39,7 @@ def test_summarize_without_material(tmp_path):
     with patch.object(summarize_mod, "LLMClient", return_value=fake) as ctor:
         result = summarize(transcript)
 
-    ctor.assert_called_once_with(model=summarize_mod.MODEL)
+    ctor.assert_called_once_with()
 
     uploads = _upload_calls(fake)
     assert len(uploads) == 1

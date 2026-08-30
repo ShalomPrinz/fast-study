@@ -24,6 +24,7 @@ npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for 
 | `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar  |
 | `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                |
 | `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode  |
+| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, key validation   |
 | `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries   |
 | `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties |
 

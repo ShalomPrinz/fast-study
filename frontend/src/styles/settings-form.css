@@ -1,0 +1,152 @@
+/* The form vocabulary the settings route, the init wall and `ApiKeyField` all share: a labelled
+   field, its hint, its single status slot, and the standing notes that sit beside a setting. */
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  padding: var(--space-7);
+  border: 1px solid var(--line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+
+.settings-section-title {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.settings-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-hint {
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.settings-input,
+.settings-select {
+  width: 100%;
+  min-width: 0;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--control-line);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-body);
+  outline: none;
+}
+
+.settings-input:focus,
+.settings-select:focus {
+  border-color: var(--accent);
+}
+
+/* A path and a key are LTR strings whatever the UI language is, and they must not be reordered. */
+.settings-input--code {
+  font-family: var(--font-mono);
+  direction: ltr;
+  text-align: start;
+}
+
+/* Keep below `.settings-input`: an invalid field recolours the same border at equal specificity. */
+.settings-input.settings-input--invalid {
+  border-color: var(--danger);
+}
+
+/* One slot per field, whatever fills it — the prefix hint or any of the three probe outcomes. */
+.settings-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 16px;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.settings-status--ok {
+  color: var(--ok);
+}
+
+.settings-status--danger {
+  color: var(--danger);
+}
+
+.settings-status--warn {
+  color: var(--warn);
+}
+
+.settings-note {
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface-sunken);
+  font-size: var(--fs-meta);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* Keep below `.settings-note`: the consequence variant recolours the same box. */
+.settings-note.settings-note--warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.settings-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  font-size: var(--fs-body);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.settings-check input {
+  margin-block-start: 2px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.settings-check-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.settings-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent-ink);
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.settings-link:hover {
+  text-decoration: underline;
+}
+
+.settings-required {
+  font-size: var(--fs-fine);
+  font-weight: 500;
+  color: var(--danger);
+}
