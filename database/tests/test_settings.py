@@ -187,7 +187,7 @@ def test_relative_data_root_is_rejected(env_file):
 def test_get_and_put_over_http(client, env_file, tmp_path):
     body = client.get("/settings").json()
     assert body["groq_api_key_set"] is True
-    assert body["auto_run_on_boot"] is None
+    assert body["runner_controls_visible"] is None
 
     target = tmp_path / "http-root"
     r = client.put(

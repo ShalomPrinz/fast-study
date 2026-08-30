@@ -55,7 +55,6 @@ const STORE: Settings = {
   driveEnabled: null,
   gdriveRootFolder: null,
   uiLanguage: null,
-  autoRunOnBoot: null,
   runnerControlsVisible: null,
 }
 

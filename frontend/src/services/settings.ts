@@ -23,7 +23,6 @@ export interface Settings {
   driveEnabled: boolean | null
   gdriveRootFolder: string | null
   uiLanguage: Locale | null
-  autoRunOnBoot: boolean | null
   runnerControlsVisible: boolean | null
 }
 
@@ -37,7 +36,6 @@ export interface SettingsPatch {
   driveEnabled?: boolean
   gdriveRootFolder?: string
   uiLanguage?: Locale
-  autoRunOnBoot?: boolean
   runnerControlsVisible?: boolean
 }
 
@@ -51,7 +49,6 @@ const WIRE: Record<SettingsField, string> = {
   driveEnabled: 'drive_enabled',
   gdriveRootFolder: 'gdrive_root_folder',
   uiLanguage: 'ui_language',
-  autoRunOnBoot: 'auto_run_on_boot',
   runnerControlsVisible: 'runner_controls_visible',
 }
 
@@ -74,7 +71,6 @@ interface RawSettings {
   drive_enabled: boolean | null
   gdrive_root_folder: string | null
   ui_language: string | null
-  auto_run_on_boot: boolean | null
   runner_controls_visible: boolean | null
 }
 
@@ -91,7 +87,6 @@ function normalize(raw: RawSettings): Settings {
     driveEnabled: raw.drive_enabled,
     gdriveRootFolder: raw.gdrive_root_folder,
     uiLanguage: asLocale(raw.ui_language),
-    autoRunOnBoot: raw.auto_run_on_boot,
     runnerControlsVisible: raw.runner_controls_visible,
   }
 }

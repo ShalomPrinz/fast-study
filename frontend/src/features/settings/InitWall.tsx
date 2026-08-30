@@ -25,7 +25,7 @@ interface Props {
   onDone: (saved: Settings) => void
 }
 
-type FormState = Omit<SettingsForm, 'uiLanguage' | 'autoRunOnBoot' | 'runnerControlsVisible'>
+type FormState = Omit<SettingsForm, 'uiLanguage' | 'runnerControlsVisible'>
 
 // How to get each key, in the words of someone who has never seen a developer console. Provider
 // prose, so it is keyed by provider id; a provider without an entry simply shows the link alone.

@@ -8,7 +8,6 @@ import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsCo
 import { ToastContainer, toast } from '@/services/toaster'
 import { isRtl } from '@/services/i18n'
 import Sidebar from '@/shared/sidebar'
-import AutoRunOnBoot from './AutoRunOnBoot'
 import './Layout.css'
 
 export default function Layout() {
@@ -16,7 +15,6 @@ export default function Layout() {
   return (
     <CourseTreeProvider>
       <RunnerStatusProvider sendUpdate={toast}>
-        <AutoRunOnBoot />
         <DownloadJobsProvider>
           <DownloadsSessionProvider sendUpdate={toast}>
             <SectionRunsProvider>

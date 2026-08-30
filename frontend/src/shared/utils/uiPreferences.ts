@@ -1,17 +1,13 @@
-// The two frontend-owned settings. They are the user's own UI preferences, so they live in
-// `localStorage` — but their first-boot default comes from the settings store, so a fresh browser
-// profile and a packaged install agree without a rebuild.
-export type UiPreference = 'autoRunOnBoot' | 'runnerControlsVisible'
+// The frontend-owned settings. They are the user's own UI preferences, so they live in
+// `localStorage` and never reach the settings store.
+export type UiPreference = 'runnerControlsVisible'
 
 const STORAGE_KEYS: Record<UiPreference, string> = {
-  autoRunOnBoot: 'fast-study:auto-run-on-boot',
   runnerControlsVisible: 'fast-study:runner-controls-visible',
 }
 
-// What a profile gets when neither it nor the store has an answer. Auto-run on means a fresh boot
-// starts every pending pipeline by itself; the runner controls stay out of the way until asked for.
+// What a profile gets before it answers: the runner controls stay out of the way until asked for.
 const SHIPPED: Record<UiPreference, boolean> = {
-  autoRunOnBoot: true,
   runnerControlsVisible: false,
 }
 

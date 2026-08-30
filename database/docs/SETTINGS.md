@@ -21,11 +21,11 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `ui_language` (`he`\|`en`)                         | `UI_LANGUAGE`                                     |
-| `auto_run_on_boot`, `runner_controls_visible`      | `AUTO_RUN_ON_BOOT`, `RUNNER_CONTROLS_VISIBLE`     |
+| `runner_controls_visible`                          | `RUNNER_CONTROLS_VISIBLE`                         |
 
 The two API keys are **write-only**: `PUT` accepts `gemini_api_key` / `groq_api_key`, and the read
 path reports only whether each is set, so a stored key never travels back to the client — the same
-rule `safeStorage` follows under Electron. The three UI entries are frontend-owned; the store holds
+rule `safeStorage` follows under Electron. The two UI entries are frontend-owned; the store holds
 them so a fresh browser profile and an Electron install agree on first-boot defaults.
 
 ## Merge, never rewrite

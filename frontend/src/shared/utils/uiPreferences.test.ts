@@ -33,28 +33,25 @@ describe('resolvePreference', () => {
 })
 
 describe('the shipped defaults', () => {
-  it('is auto-run on and runner controls hidden', () => {
-    expect(readPreference('autoRunOnBoot')).toBe(true)
+  it('is runner controls hidden', () => {
     expect(readPreference('runnerControlsVisible')).toBe(false)
   })
 })
 
 describe('seedPreferences', () => {
-  it("pins the store's answers on a profile that has none", () => {
-    seedPreferences({ autoRunOnBoot: false, runnerControlsVisible: true })
-    expect(readPreference('autoRunOnBoot')).toBe(false)
+  it("pins the store's answer on a profile that has none", () => {
+    seedPreferences({ runnerControlsVisible: true })
     expect(readPreference('runnerControlsVisible')).toBe(true)
   })
 
-  it('pins the shipped defaults when the store holds nothing', () => {
-    seedPreferences({ autoRunOnBoot: null, runnerControlsVisible: null })
-    expect(readPreference('autoRunOnBoot')).toBe(true)
+  it('pins the shipped default when the store holds nothing', () => {
+    seedPreferences({ runnerControlsVisible: null })
     expect(readPreference('runnerControlsVisible')).toBe(false)
   })
 
   it('never overwrites a choice the user already made', () => {
-    writePreference('autoRunOnBoot', false)
-    seedPreferences({ autoRunOnBoot: true, runnerControlsVisible: null })
-    expect(readPreference('autoRunOnBoot')).toBe(false)
+    writePreference('runnerControlsVisible', true)
+    seedPreferences({ runnerControlsVisible: false })
+    expect(readPreference('runnerControlsVisible')).toBe(true)
   })
 })

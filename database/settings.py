@@ -17,7 +17,6 @@ STRING_FIELDS = {
 }
 BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",
-    "auto_run_on_boot": "AUTO_RUN_ON_BOOT",
     "runner_controls_visible": "RUNNER_CONTROLS_VISIBLE",
 }
 

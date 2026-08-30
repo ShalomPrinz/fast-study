@@ -10,7 +10,6 @@ const STORED: Settings = {
   driveEnabled: false,
   gdriveRootFolder: null,
   uiLanguage: 'he',
-  autoRunOnBoot: true,
   runnerControlsVisible: false,
 }
 
@@ -22,7 +21,6 @@ const UNCHANGED: SettingsForm = {
   gdriveRootFolder: '',
   geminiModel: 'gemini-3.5-flash',
   uiLanguage: 'he',
-  autoRunOnBoot: true,
   runnerControlsVisible: false,
 }
 
@@ -48,11 +46,8 @@ describe('buildPatch', () => {
   })
 
   it('records the answer to a setting the store has never held', () => {
-    const blank: Settings = { ...STORED, autoRunOnBoot: null, runnerControlsVisible: null }
-    expect(buildPatch(UNCHANGED, blank)).toEqual({
-      autoRunOnBoot: true,
-      runnerControlsVisible: false,
-    })
+    const blank: Settings = { ...STORED, runnerControlsVisible: null }
+    expect(buildPatch(UNCHANGED, blank)).toEqual({ runnerControlsVisible: false })
   })
 
   it('records a language switch', () => {

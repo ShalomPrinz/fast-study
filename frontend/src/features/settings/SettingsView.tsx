@@ -31,10 +31,7 @@ import './SettingsView.css'
 
 // The language applies the moment it is picked, so it is read off the active locale at save time
 // rather than mirrored into the form.
-type FormState = Omit<SettingsForm, 'uiLanguage'> & {
-  autoRunOnBoot: boolean
-  runnerControlsVisible: boolean
-}
+type FormState = Omit<SettingsForm, 'uiLanguage'> & { runnerControlsVisible: boolean }
 
 function initialForm(stored: Settings, options: ConfigOptions): FormState {
   return {
@@ -44,7 +41,6 @@ function initialForm(stored: Settings, options: ConfigOptions): FormState {
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? options.geminiModels[0] ?? '',
-    autoRunOnBoot: readPreference('autoRunOnBoot'),
     runnerControlsVisible: readPreference('runnerControlsVisible'),
   }
 }
@@ -102,9 +98,8 @@ export default function SettingsView() {
   async function commit(next: SettingsPatch) {
     setSaving(true)
     setPending(null)
-    // Unconditional and ahead of the network: these two are localStorage-only, so a downed service
+    // Unconditional and ahead of the network: this one is localStorage-only, so a downed service
     // must not cost the user a toggle that never needed a request in the first place.
-    writePreference('autoRunOnBoot', current.autoRunOnBoot)
     writePreference('runnerControlsVisible', current.runnerControlsVisible)
     try {
       const saved = await saveSettings(next)
@@ -223,23 +218,6 @@ export default function SettingsView() {
               <Trans>Appearance and behaviour</Trans>
             </h2>
             <LanguageField />
-            <label className="settings-check">
-              <input
-                type="checkbox"
-                checked={form.autoRunOnBoot}
-                onChange={(e) => setForm({ ...form, autoRunOnBoot: e.target.checked })}
-              />
-              <span className="settings-check-text">
-                <span>
-                  <Trans>Run unfinished lectures when the app starts</Trans>
-                </span>
-                <span className="settings-hint">
-                  <Trans>
-                    Every lecture that is not finished yet is picked up on the next start.
-                  </Trans>
-                </span>
-              </span>
-            </label>
             <label className="settings-check">
               <input
                 type="checkbox"

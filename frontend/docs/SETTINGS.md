@@ -15,7 +15,6 @@ route that edits them all. The module behind it is
 | Drive upload      | off                                       | on                   | `backend/`  |
 | Drive root folder | none — required once Drive is on          | any folder name      | `backend/`  |
 | Summary model     | the first curated entry                   | the curated dropdown | `backend/`  |
-| Auto-run on boot  | on                                        | on, off              | frontend    |
 | Runner controls   | hidden                                    | shown, hidden        | frontend    |
 
 The model list comes from `GET /config/options`, so a model id that the free tier does not serve can
@@ -33,6 +32,7 @@ The list above is closed on purpose. Each of these looks like a field and delibe
 | Service ports and the `VITE_API_URL` / `VITE_DATABASE_URL` and `BACKEND_URL` / `DATABASE_URL` overrides | Wiring, not preference: every default already matches, and a settings save leaves the keys in `.env` untouched                      |
 | `DOWNLOADER_EXTENSION_ID`, `FRONTEND_URL`                                                               | CORS origins the download server defaults for itself; only a reloaded unpacked extension or a non-default dev origin ever sets them |
 | The sidebar's lectures/courses mode and the search view's chosen course                                 | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                  |
+| Running unfinished lectures at app start                                                                | A pipeline sweep is a deliberate act; the runner button and `backend/`'s 03:00 cron already cover both the manual and the unattended case |
 
 ## `/settings`
 
@@ -114,18 +114,17 @@ for one to survive. Prefixes are provider convention rather than contract, so a 
 **Save is always permitted.** An unreachable provider must never reject a valid key, so `unverified`
 is not a failure state.
 
-## The two UI preferences — `shared/utils/uiPreferences.ts`
+## The UI preference — `shared/utils/uiPreferences.ts`
 
-Auto-run on boot and runner-control visibility are the user's own preferences, so they live in
-`localStorage`; their first-boot default comes from the settings store, which `app/InitGate` seeds
-from on the read it already makes at boot — so a fresh browser profile and a packaged install agree
-without a rebuild, and a later store change never flips a profile that has already been seeded. `resolvePreference` is the whole rule: a stored
-choice wins, then the store's value, then the shipped default — auto-run **on**, runner controls
-**hidden**. `usePreference` re-renders on every write, so toggling one here reaches the sidebar
-without a reload.
+Runner-control visibility is the user's own preference, so it lives in `localStorage`; its first-boot
+default comes from the settings store, which `app/InitGate` seeds from on the read it already makes at
+boot — so a fresh browser profile and a packaged install agree without a rebuild, and a later store
+change never flips a profile that has already been seeded. `resolvePreference` is the whole rule: a
+stored choice wins, then the store's value, then the shipped default — controls **hidden**.
+`usePreference` re-renders on every write, so toggling it here reaches the sidebar without a reload.
 
-Their consumers: `app/AutoRunOnBoot` triggers one runner sweep at boot, and `RunnerPipelineRow`
-renders nothing — button and in-flight panel alike — while the controls are hidden.
+Its one consumer is `RunnerPipelineRow`, which renders nothing — button and in-flight panel alike —
+while the controls are hidden.
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 

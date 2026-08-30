@@ -9,7 +9,6 @@ const STORED = {
   drive_enabled: null,
   gdrive_root_folder: null,
   ui_language: 'he',
-  auto_run_on_boot: null,
   runner_controls_visible: null,
 }
 
@@ -29,10 +28,10 @@ afterEach(() => {
 
 describe('storeBody', () => {
   it('renames every named field to its wire key and omits the rest', () => {
-    expect(storeBody({ dataRoot: '/d', geminiApiKey: 'k', autoRunOnBoot: false })).toEqual({
+    expect(storeBody({ dataRoot: '/d', geminiApiKey: 'k', runnerControlsVisible: false })).toEqual({
       data_root: '/d',
       gemini_api_key: 'k',
-      auto_run_on_boot: false,
+      runner_controls_visible: false,
     })
   })
 
@@ -53,7 +52,7 @@ describe('ownerBodies', () => {
   })
 
   it('gives the frontend-owned settings no owner at all', () => {
-    expect(ownerBodies({ uiLanguage: 'en', autoRunOnBoot: true })).toEqual({
+    expect(ownerBodies({ uiLanguage: 'en', runnerControlsVisible: true })).toEqual({
       backend: null,
       database: null,
     })
@@ -92,7 +91,7 @@ describe('saveSettings', () => {
       }),
     )
 
-    await saveSettings({ autoRunOnBoot: true })
+    await saveSettings({ runnerControlsVisible: true })
 
     expect(calls).toEqual(['PUT http://localhost:8001/settings'])
   })

@@ -76,7 +76,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:73
+#: src/features/settings/components/ApiKeyField.tsx:76
 msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
@@ -92,7 +92,7 @@ msgid "{0} of {1} chunks"
 msgstr "{0} מתוך {1} מקטעים"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:58
+#: src/features/settings/components/ApiKeyField.tsx:61
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} דחתה את המפתח הזה. אפשר ליצור מפתח חדש במסוף שלה."
 
@@ -213,11 +213,11 @@ msgstr "+ הוסף כתובת מקור"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ הורד הכל"
 
-#: src/features/settings/components/ApiKeyField.tsx:92
+#: src/features/settings/components/ApiKeyField.tsx:95
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:267
+#: src/features/settings/SettingsView.tsx:245
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -237,11 +237,11 @@ msgstr "הוסף תרגול"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:159
+#: src/features/settings/SettingsView.tsx:154
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:223
+#: src/features/settings/SettingsView.tsx:218
 msgid "Appearance and behaviour"
 msgstr "מראה והתנהגות"
 
@@ -298,7 +298,7 @@ msgstr "אין גישה ל{serviceName} בכתובת {baseUrl}. ודא שהשי�
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/settings/SettingsView.tsx:266
+#: src/features/settings/SettingsView.tsx:244
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -310,7 +310,7 @@ msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחר
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
-#: src/features/settings/components/ApiKeyField.tsx:54
+#: src/features/settings/components/ApiKeyField.tsx:57
 msgid "Checking…"
 msgstr "בודקים…"
 
@@ -375,7 +375,7 @@ msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/settings/SettingsView.tsx:122
+#: src/features/settings/SettingsView.tsx:117
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
@@ -496,8 +496,8 @@ msgid "Every course, lecture, video and summary is stored here. Use a folder on 
 msgstr "כל קורס, הרצאה, סרטון וסיכום נשמרים כאן. בחרו תיקייה במחשב הזה שאינה מסונכרנת לענן."
 
 #: src/features/settings/SettingsView.tsx:237
-msgid "Every lecture that is not finished yet is picked up on the next start."
-msgstr "כל הרצאה שטרם הושלמה נאספת בהפעלה הבאה."
+#~ msgid "Every lecture that is not finished yet is picked up on the next start."
+#~ msgstr "כל הרצאה שטרם הושלמה נאספת בהפעלה הבאה."
 
 #: src/features/downloads/components/RecordingRow.tsx:161
 msgid "Expand"
@@ -608,11 +608,11 @@ msgstr "ייצור משלב {stepLabel} יבנה מחדש:"
 msgid "Generating…"
 msgstr "מייצר…"
 
-#: src/features/settings/components/ApiKeyField.tsx:81
+#: src/features/settings/components/ApiKeyField.tsx:84
 msgid "Get a key"
 msgstr "השגת מפתח"
 
-#: src/features/settings/SettingsView.tsx:210
+#: src/features/settings/SettingsView.tsx:205
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -637,7 +637,7 @@ msgstr "נמצא בקורס"
 msgid "just this lecture"
 msgstr "רק להרצאה זו"
 
-#: src/features/settings/components/ApiKeyField.tsx:56
+#: src/features/settings/components/ApiKeyField.tsx:59
 msgid "Key verified"
 msgstr "המפתח אומת"
 
@@ -1044,15 +1044,15 @@ msgid "Run Remaining"
 msgstr "הרץ את הנותר"
 
 #: src/features/settings/SettingsView.tsx:234
-msgid "Run unfinished lectures when the app starts"
-msgstr "להריץ הרצאות שלא הושלמו כשהאפליקציה נפתחת"
+#~ msgid "Run unfinished lectures when the app starts"
+#~ msgstr "להריץ הרצאות שלא הושלמו כשהאפליקציה נפתחת"
 
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:68
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
-#: src/features/settings/SettingsView.tsx:151
+#: src/features/settings/SettingsView.tsx:146
 msgid "Save"
 msgstr "שמור"
 
@@ -1097,13 +1097,13 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "session expired"
 msgstr "החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:81
-#: src/features/settings/SettingsView.tsx:144
+#: src/features/settings/SettingsView.tsx:77
+#: src/features/settings/SettingsView.tsx:139
 #: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:115
+#: src/features/settings/SettingsView.tsx:110
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1111,7 +1111,7 @@ msgstr "ההגדרות נשמרו"
 msgid "Show more"
 msgstr "הצג עוד"
 
-#: src/features/settings/SettingsView.tsx:251
+#: src/features/settings/SettingsView.tsx:229
 msgid "Show the run controls in the sidebar"
 msgstr "להציג את פקדי ההרצה בסרגל הצד"
 
@@ -1136,7 +1136,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:200
+#: src/features/settings/SettingsView.tsx:195
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1172,7 +1172,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "summary did not use material"
 msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:180
+#: src/features/settings/SettingsView.tsx:175
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1190,7 +1190,7 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הארוך ביותר ש
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/features/settings/SettingsView.tsx:254
+#: src/features/settings/SettingsView.tsx:232
 msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 msgstr "הכפתור \"הרץ צינורות לא שלמים\" ורשימת ההרצאות שבעבודה."
 
@@ -1229,7 +1229,7 @@ msgstr "לאחר מכן {0} ייווצר מחדש."
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:62
+#: src/features/settings/components/ApiKeyField.tsx:65
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
@@ -1298,7 +1298,7 @@ msgstr "סרטון"
 msgid "Videos"
 msgstr "סרטונים"
 
-#: src/features/settings/components/ApiKeyField.tsx:60
+#: src/features/settings/components/ApiKeyField.tsx:63
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 

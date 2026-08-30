@@ -76,7 +76,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:73
+#: src/features/settings/components/ApiKeyField.tsx:76
 msgid "{0} API key"
 msgstr "{0} API key"
 
@@ -92,7 +92,7 @@ msgid "{0} of {1} chunks"
 msgstr "{0} of {1} chunks"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:58
+#: src/features/settings/components/ApiKeyField.tsx:61
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} rejected this key. Generate a new one in its console."
 
@@ -213,11 +213,11 @@ msgstr "+ add source URL"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ Download all"
 
-#: src/features/settings/components/ApiKeyField.tsx:92
+#: src/features/settings/components/ApiKeyField.tsx:95
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:267
+#: src/features/settings/SettingsView.tsx:245
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 
@@ -237,11 +237,11 @@ msgstr "Add recitation"
 msgid "Analyze"
 msgstr "Analyze"
 
-#: src/features/settings/SettingsView.tsx:159
+#: src/features/settings/SettingsView.tsx:154
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:223
+#: src/features/settings/SettingsView.tsx:218
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -298,7 +298,7 @@ msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/settings/SettingsView.tsx:266
+#: src/features/settings/SettingsView.tsx:244
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -310,7 +310,7 @@ msgstr "Changing this re-points the app only — it never moves anything. The ol
 msgid "checking account…"
 msgstr "checking account…"
 
-#: src/features/settings/components/ApiKeyField.tsx:54
+#: src/features/settings/components/ApiKeyField.tsx:57
 msgid "Checking…"
 msgstr "Checking…"
 
@@ -375,7 +375,7 @@ msgstr "Couldn't load entries. Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/settings/SettingsView.tsx:122
+#: src/features/settings/SettingsView.tsx:117
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "Couldn't save all settings — check the services are running and try again."
 
@@ -496,8 +496,8 @@ msgid "Every course, lecture, video and summary is stored here. Use a folder on 
 msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 
 #: src/features/settings/SettingsView.tsx:237
-msgid "Every lecture that is not finished yet is picked up on the next start."
-msgstr "Every lecture that is not finished yet is picked up on the next start."
+#~ msgid "Every lecture that is not finished yet is picked up on the next start."
+#~ msgstr "Every lecture that is not finished yet is picked up on the next start."
 
 #: src/features/downloads/components/RecordingRow.tsx:161
 msgid "Expand"
@@ -608,11 +608,11 @@ msgstr "Generating from {stepLabel} step will rebuild:"
 msgid "Generating…"
 msgstr "Generating…"
 
-#: src/features/settings/components/ApiKeyField.tsx:81
+#: src/features/settings/components/ApiKeyField.tsx:84
 msgid "Get a key"
 msgstr "Get a key"
 
-#: src/features/settings/SettingsView.tsx:210
+#: src/features/settings/SettingsView.tsx:205
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -637,7 +637,7 @@ msgstr "In course"
 msgid "just this lecture"
 msgstr "just this lecture"
 
-#: src/features/settings/components/ApiKeyField.tsx:56
+#: src/features/settings/components/ApiKeyField.tsx:59
 msgid "Key verified"
 msgstr "Key verified"
 
@@ -1044,15 +1044,15 @@ msgid "Run Remaining"
 msgstr "Run Remaining"
 
 #: src/features/settings/SettingsView.tsx:234
-msgid "Run unfinished lectures when the app starts"
-msgstr "Run unfinished lectures when the app starts"
+#~ msgid "Run unfinished lectures when the app starts"
+#~ msgstr "Run unfinished lectures when the app starts"
 
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:68
 msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
-#: src/features/settings/SettingsView.tsx:151
+#: src/features/settings/SettingsView.tsx:146
 msgid "Save"
 msgstr "Save"
 
@@ -1097,13 +1097,13 @@ msgstr "Select a lecture to get started"
 msgid "session expired"
 msgstr "session expired"
 
-#: src/features/settings/SettingsView.tsx:81
-#: src/features/settings/SettingsView.tsx:144
+#: src/features/settings/SettingsView.tsx:77
+#: src/features/settings/SettingsView.tsx:139
 #: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/settings/SettingsView.tsx:115
+#: src/features/settings/SettingsView.tsx:110
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -1111,7 +1111,7 @@ msgstr "Settings saved"
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/settings/SettingsView.tsx:251
+#: src/features/settings/SettingsView.tsx:229
 msgid "Show the run controls in the sidebar"
 msgstr "Show the run controls in the sidebar"
 
@@ -1136,7 +1136,7 @@ msgstr "Start using Fast Study"
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:200
+#: src/features/settings/SettingsView.tsx:195
 msgid "Storage"
 msgstr "Storage"
 
@@ -1172,7 +1172,7 @@ msgstr "summary did not use any material"
 msgid "summary did not use material"
 msgstr "summary did not use material"
 
-#: src/features/settings/SettingsView.tsx:180
+#: src/features/settings/SettingsView.tsx:175
 msgid "Summary model"
 msgstr "Summary model"
 
@@ -1190,7 +1190,7 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
-#: src/features/settings/SettingsView.tsx:254
+#: src/features/settings/SettingsView.tsx:232
 msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 
@@ -1229,7 +1229,7 @@ msgstr "Then {0} will be regenerated."
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:62
+#: src/features/settings/components/ApiKeyField.tsx:65
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
@@ -1298,7 +1298,7 @@ msgstr "Video"
 msgid "Videos"
 msgstr "Videos"
 
-#: src/features/settings/components/ApiKeyField.tsx:60
+#: src/features/settings/components/ApiKeyField.tsx:63
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 

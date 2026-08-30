@@ -51,8 +51,8 @@ after Electron lands.
 
 `saveSettings` is **two phases, in order**: the store is written first, since it is what a fresh boot reads
 back, then each changed field is pushed to its one owner's `POST /config` — `backend/` for the keys, model,
-Drive toggle and Drive folder, `database/` for `data_root`. Nothing restarts. The three frontend-owned
-settings (`uiLanguage`, `autoRunOnBoot`, `runnerControlsVisible`) have no service owner and stop at the store.
+Drive toggle and Drive folder, `database/` for `data_root`. Nothing restarts. The two frontend-owned
+settings (`uiLanguage`, `runnerControlsVisible`) have no service owner and stop at the store.
 
 `probeKey(provider, key)` answers `valid` / `rejected` / `unverified`; every failure short of a verdict
 folds to `unverified`, because an unreachable provider must never report a good key as bad.

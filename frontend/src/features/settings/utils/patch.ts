@@ -10,7 +10,6 @@ export interface SettingsForm {
   geminiModel: string
   uiLanguage: Locale
   // Absent on the init wall, which does not ask about the two UI preferences at all.
-  autoRunOnBoot?: boolean
   runnerControlsVisible?: boolean
 }
 
@@ -27,9 +26,6 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
   }
   if (form.uiLanguage !== stored.uiLanguage) patch.uiLanguage = form.uiLanguage
-  if (form.autoRunOnBoot !== undefined && form.autoRunOnBoot !== stored.autoRunOnBoot) {
-    patch.autoRunOnBoot = form.autoRunOnBoot
-  }
   if (
     form.runnerControlsVisible !== undefined &&
     form.runnerControlsVisible !== stored.runnerControlsVisible
