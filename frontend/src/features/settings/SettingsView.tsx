@@ -104,8 +104,15 @@ export default function SettingsView() {
       const saved = await saveSettings(next)
       setStored(saved)
       setSettings(saved)
-      // The key fields are write-only, so they go back to their "a key is saved" placeholder.
-      setForm({ ...current, geminiApiKey: '', groqApiKey: '' })
+      // The key fields are write-only, so they go back to their "a key is saved" placeholder, and
+      // the data root takes the store's normalized spelling — else the next save diffs against the
+      // raw text and re-raises the guard.
+      setForm({
+        ...current,
+        dataRoot: saved.dataRoot ?? '',
+        geminiApiKey: '',
+        groqApiKey: '',
+      })
       toast('info', t`Settings saved`)
     } catch (err) {
       // The http client already toasts a connection error, but that toast is deduped per service and
