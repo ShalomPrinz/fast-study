@@ -31,7 +31,13 @@ UI_LANGUAGES = ("he", "en")
 
 PROBE_NAME = ".faststudy_write_test"
 
-_ASSIGN = re.compile(r"^\s*(?:export[^\S\r\n]+)?([A-Za-z_][A-Za-z0-9_]*)[^\S\r\n]*=")
+# The `export ` prefix and the value text are captured so a rewritten line keeps both.
+_ASSIGN = re.compile(
+    r"^([^\S\r\n]*(?:export[^\S\r\n]+)?)([A-Za-z_][A-Za-z0-9_]*)[^\S\r\n]*=(.*)$"
+)
+
+# Unquoted values end at whitespace before a `#`; a quoted value ends at its closing quote.
+_UNQUOTED_COMMENT = re.compile(r"[^\S\r\n]+#")
 
 _TRUTHY = {"1", "true", "yes", "on"}
 
@@ -49,6 +55,19 @@ def _flag(value) -> bool | None:
 
     text = _text(value)
     return None if text is None else text.lower() in _TRUTHY
+
+
+def _comment(rest: str) -> str:
+    """Return the trailing `# ...` of an assignment's value text, so a rewrite keeps the comment."""
+
+    text = rest.lstrip(" \t")
+    if text[:1] in ("'", '"'):
+        close = text.find(text[0], 1)
+        tail = text[close + 1 :] if close != -1 else ""
+    else:
+        match = _UNQUOTED_COMMENT.search(text)
+        tail = text[match.start() :] if match else ""
+    return tail if "#" in tail else ""
 
 
 def _quote(value: str) -> str:
@@ -69,6 +88,15 @@ def _incoming(field: str, value) -> str:
     if field == "ui_language" and text and text not in UI_LANGUAGES:
         raise ValueError(f"ui_language must be one of {', '.join(UI_LANGUAGES)}")
     return text
+
+
+def _incoming_flag(field: str, value) -> str:
+    """Validate an incoming boolean and return the text to store."""
+
+    # A bare truth test would let the string "false" store `true`, silently flipping the setting on.
+    if not isinstance(value, bool):
+        raise ValueError(f"{field} must be a boolean")
+    return "true" if value else "false"
 
 
 def prepare_data_root(value) -> str:
@@ -101,11 +129,13 @@ def merge_env_text(text: str, updates: dict[str, str]) -> str:
     written: set[str] = set()
     out: list[str] = []
     for line in text.splitlines(keepends=True):
-        match = _ASSIGN.match(line)
-        key = match.group(1) if match else None
+        body = line.rstrip("\r\n")
+        match = _ASSIGN.match(body)
+        key = match.group(2) if match else None
         if key in pending:
-            ending = line[len(line.rstrip("\r\n")) :] or "\n"
-            out.append(f"{key}={_quote(pending.pop(key))}{ending}")
+            ending = line[len(body) :] or "\n"
+            prefix, comment = match.group(1), _comment(match.group(3))
+            out.append(f"{prefix}{key}={_quote(pending.pop(key))}{comment}{ending}")
             written.add(key)
         elif key in written:
             # A later duplicate of a key we just rewrote would win at load time, so drop it.
@@ -147,7 +177,7 @@ def write_settings(patch: dict) -> dict:
         elif field in SECRET_FIELDS:
             updates[SECRET_FIELDS[field]] = _incoming(field, value)
         elif field in BOOL_FIELDS:
-            updates[BOOL_FIELDS[field]] = "true" if value else "false"
+            updates[BOOL_FIELDS[field]] = _incoming_flag(field, value)
         else:
             raise ValueError(f"unknown setting: {field}")
     if updates:

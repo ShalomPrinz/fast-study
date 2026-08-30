@@ -10,6 +10,7 @@ GEMINI_API_KEY="ai_old"
 
 DATA_ROOT=/old/root
 PORT=8001  # not a setting
+export GEMINI_MODEL=gemini-2.5-flash  # the cheap one
 DOWNLOADER_EXTENSION_ID=abcdef
 """
 
@@ -42,7 +43,7 @@ def test_merge_leaves_everything_unnamed_untouched(env_file, tmp_path):
     assert "PORT=8001  # not a setting" in text
     assert "DOWNLOADER_EXTENSION_ID=abcdef" in text
     assert "\n\nDATA_ROOT=/old/root" in text
-    assert text.endswith("GEMINI_MODEL='gemini-3.5-flash'\n")
+    assert text.endswith("DOWNLOADER_EXTENSION_ID=abcdef\n")
 
 
 def test_only_named_keys_change(env_file):
@@ -87,7 +88,7 @@ def test_read_reports_keys_as_set_never_as_values(env_file):
 def test_absent_keys_read_as_null(env_file):
     stored = settings.read_settings()
 
-    assert stored["gemini_model"] is None
+    assert stored["gdrive_root_folder"] is None
     assert stored["ui_language"] is None
     assert stored["drive_enabled"] is None
 
@@ -100,6 +101,45 @@ def test_booleans_round_trip(env_file):
     assert stored["drive_enabled"] is True
     assert stored["runner_controls_visible"] is False
     assert "DRIVE_ENABLED='true'" in env_file.read_text(encoding="utf-8")
+
+
+def test_export_prefix_and_trailing_comment_survive_a_rewrite(env_file):
+    settings.write_settings({"gemini_model": "gemini-3.5-flash"})
+
+    lines = env_file.read_text(encoding="utf-8").splitlines()
+    assert "export GEMINI_MODEL='gemini-3.5-flash'  # the cheap one" in lines
+
+
+def test_an_exported_key_reads_back_after_a_rewrite(env_file):
+    settings.write_settings({"gemini_model": "gemini-3.5-flash"})
+
+    assert settings.read_settings()["gemini_model"] == "gemini-3.5-flash"
+
+
+def test_a_comment_after_a_quoted_value_survives():
+    merged = settings.merge_env_text("A='one'  # why\n", {"A": "two"})
+
+    assert merged == "A='two'  # why\n"
+
+
+def test_a_hash_inside_an_unquoted_value_is_not_a_comment():
+    merged = settings.merge_env_text("A=one#two\n", {"A": "three"})
+
+    assert merged == "A='three'\n"
+
+
+def test_a_string_boolean_is_rejected_rather_than_read_as_truthy(env_file):
+    with pytest.raises(ValueError):
+        settings.write_settings({"drive_enabled": "false"})
+
+    assert "DRIVE_ENABLED" not in env_file.read_text(encoding="utf-8")
+
+
+def test_put_rejects_a_string_boolean(client, env_file):
+    r = client.put("/settings", json={"drive_enabled": "false"})
+
+    assert r.status_code == 400
+    assert settings.read_settings()["drive_enabled"] is None
 
 
 def test_null_leaves_a_stored_value_alone(env_file):
