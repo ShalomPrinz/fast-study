@@ -20,13 +20,15 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `gemini_api_key_set` / `groq_api_key_set` (bool)   | `GEMINI_API_KEY` / `GROQ_API_KEY`                 |
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
-| `ui_language` (`he`\|`en`)                         | `UI_LANGUAGE`                                     |
-| `runner_controls_visible`                          | `RUNNER_CONTROLS_VISIBLE`                         |
 
 The two API keys are **write-only**: `PUT` accepts `gemini_api_key` / `groq_api_key`, and the read
 path reports only whether each is set, so a stored key never travels back to the client — the same
-rule `safeStorage` follows under Electron. The two UI entries are frontend-owned; the store holds
-them so a fresh browser profile and an Electron install agree on first-boot defaults.
+rule `safeStorage` follows under Electron.
+
+The list is closed to **credentials, `DATA_ROOT`, and the backend's own pipeline config** — nothing
+else. A purely visual preference (the UI language, the runner-control toggle) is the browser
+profile's, kept in its `localStorage`, and `PUT` rejects it as an unknown setting: routing it through
+a file every service reads would make one machine's cosmetics everyone's configuration.
 
 ## Merge, never rewrite
 

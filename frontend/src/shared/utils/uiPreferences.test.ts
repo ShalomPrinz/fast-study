@@ -1,57 +1,38 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
-import {
-  readPreference,
-  resolvePreference,
-  seedPreferences,
-  writePreference,
-} from './uiPreferences'
+import { readPreference, resolvePreference, writePreference } from './uiPreferences'
 
 beforeEach(() => {
   localStorage.clear()
 })
 
 describe('resolvePreference', () => {
-  it('lets a stored choice outrank both the store and the shipped default', () => {
-    expect(resolvePreference('false', true, true)).toBe(false)
-    expect(resolvePreference('true', false, false)).toBe(true)
+  it('lets a stored choice outrank the shipped default', () => {
+    expect(resolvePreference('false', true)).toBe(false)
+    expect(resolvePreference('true', false)).toBe(true)
   })
 
-  it('falls back to the store when the profile has never answered', () => {
-    expect(resolvePreference(null, false, true)).toBe(false)
-    expect(resolvePreference(null, true, false)).toBe(true)
-  })
-
-  it('falls back to the shipped default when the store is null too', () => {
-    expect(resolvePreference(null, null, true)).toBe(true)
-    expect(resolvePreference(null, null, false)).toBe(false)
+  it('falls back to the shipped default when the profile has never answered', () => {
+    expect(resolvePreference(null, true)).toBe(true)
+    expect(resolvePreference(null, false)).toBe(false)
   })
 
   it('treats an unrecognised stored value as no answer', () => {
-    expect(resolvePreference('yes', null, false)).toBe(false)
+    expect(resolvePreference('yes', false)).toBe(false)
   })
 })
 
-describe('the shipped defaults', () => {
-  it('is runner controls hidden', () => {
+describe('the shipped default', () => {
+  it('hides the runner controls', () => {
     expect(readPreference('runnerControlsVisible')).toBe(false)
   })
 })
 
-describe('seedPreferences', () => {
-  it("pins the store's answer on a profile that has none", () => {
-    seedPreferences({ runnerControlsVisible: true })
-    expect(readPreference('runnerControlsVisible')).toBe(true)
-  })
-
-  it('pins the shipped default when the store holds nothing', () => {
-    seedPreferences({ runnerControlsVisible: null })
-    expect(readPreference('runnerControlsVisible')).toBe(false)
-  })
-
-  it('never overwrites a choice the user already made', () => {
+describe('writePreference', () => {
+  it('keeps the choice in localStorage, where nothing but this profile can reach it', () => {
     writePreference('runnerControlsVisible', true)
-    seedPreferences({ runnerControlsVisible: false })
+
+    expect(localStorage.getItem('fast-study:runner-controls-visible')).toBe('true')
     expect(readPreference('runnerControlsVisible')).toBe(true)
   })
 })

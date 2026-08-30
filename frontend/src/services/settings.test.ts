@@ -8,8 +8,6 @@ const STORED = {
   gemini_model: null,
   drive_enabled: null,
   gdrive_root_folder: null,
-  ui_language: 'he',
-  runner_controls_visible: null,
 }
 
 // Minimal stand-in for the parts of Response the http client touches.
@@ -28,10 +26,10 @@ afterEach(() => {
 
 describe('storeBody', () => {
   it('renames every named field to its wire key and omits the rest', () => {
-    expect(storeBody({ dataRoot: '/d', geminiApiKey: 'k', runnerControlsVisible: false })).toEqual({
+    expect(storeBody({ dataRoot: '/d', geminiApiKey: 'k', geminiModel: 'm' })).toEqual({
       data_root: '/d',
       gemini_api_key: 'k',
-      runner_controls_visible: false,
+      gemini_model: 'm',
     })
   })
 
@@ -51,11 +49,8 @@ describe('ownerBodies', () => {
     expect(database).toEqual({ data_root: '/d' })
   })
 
-  it('gives the frontend-owned settings no owner at all', () => {
-    expect(ownerBodies({ uiLanguage: 'en', runnerControlsVisible: true })).toEqual({
-      backend: null,
-      database: null,
-    })
+  it('gives an empty patch no owner at all', () => {
+    expect(ownerBodies({})).toEqual({ backend: null, database: null })
   })
 })
 
@@ -91,9 +86,12 @@ describe('saveSettings', () => {
       }),
     )
 
-    await saveSettings({ runnerControlsVisible: true })
+    await saveSettings({ dataRoot: '/d' })
 
-    expect(calls).toEqual(['PUT http://localhost:8001/settings'])
+    expect(calls).toEqual([
+      'PUT http://localhost:8001/settings',
+      'POST http://localhost:8001/config',
+    ])
   })
 })
 

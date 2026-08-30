@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { Locale } from '@/services/i18n'
 import {
   fetchConfigOptions,
   fetchSettings,
@@ -29,9 +28,9 @@ import '@/styles/modal.css'
 import '@/styles/settings-form.css'
 import './SettingsView.css'
 
-// The language applies the moment it is picked, so it is read off the active locale at save time
-// rather than mirrored into the form.
-type FormState = Omit<SettingsForm, 'uiLanguage'> & { runnerControlsVisible: boolean }
+// The language is not in here: it applies the moment it is picked and lives in `localStorage`, so
+// it never reaches a save.
+type FormState = SettingsForm & { runnerControlsVisible: boolean }
 
 function initialForm(stored: Settings, options: ConfigOptions): FormState {
   return {
@@ -47,7 +46,7 @@ function initialForm(stored: Settings, options: ConfigOptions): FormState {
 
 // Every setting the app has, in one place. See docs/SETTINGS.md.
 export default function SettingsView() {
-  const { t, i18n } = useLingui()
+  const { t } = useLingui()
   const { status } = useRunnerStatus()
   const { setSettings } = useSettingsContext()
   const [stored, setStored] = useState<Settings | null>(null)
@@ -81,7 +80,7 @@ export default function SettingsView() {
 
   // Aliased so the async save below keeps the non-null narrowing the early return established.
   const current = form
-  const patch = () => buildPatch({ ...current, uiLanguage: i18n.locale as Locale }, stored)
+  const patch = () => buildPatch(current, stored)
 
   const missing = missingEntries({
     geminiKey: form.geminiApiKey,
@@ -98,8 +97,8 @@ export default function SettingsView() {
   async function commit(next: SettingsPatch) {
     setSaving(true)
     setPending(null)
-    // Unconditional and ahead of the network: this one is localStorage-only, so a downed service
-    // must not cost the user a toggle that never needed a request in the first place.
+    // Unconditional and ahead of the network: the preference is localStorage-only, so a downed
+    // service must not cost the user a toggle that never needed a request in the first place.
     writePreference('runnerControlsVisible', current.runnerControlsVisible)
     try {
       const saved = await saveSettings(next)

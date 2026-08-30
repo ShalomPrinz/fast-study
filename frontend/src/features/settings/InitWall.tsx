@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { Locale } from '@/services/i18n'
 import {
   fetchConfigOptions,
   saveSettings,
@@ -25,7 +24,7 @@ interface Props {
   onDone: (saved: Settings) => void
 }
 
-type FormState = Omit<SettingsForm, 'uiLanguage' | 'runnerControlsVisible'>
+type FormState = SettingsForm
 
 // How to get each key, in the words of someone who has never seen a developer console. Provider
 // prose, so it is keyed by provider id; a provider without an entry simply shows the link alone.
@@ -56,7 +55,7 @@ function KeyGuide({ id }: { id: string }) {
 // The wall in front of the app: until the required entries are filled there is no sidebar, no route
 // and no way past. See docs/SETTINGS.md.
 export default function InitWall({ stored, onDone }: Props) {
-  const { t, i18n } = useLingui()
+  const { t } = useLingui()
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<FormState>({
     geminiApiKey: '',
@@ -99,9 +98,7 @@ export default function InitWall({ stored, onDone }: Props) {
     setSaving(true)
     setFailure('')
     try {
-      // The two UI preferences are deliberately absent: the wall never asks, so they keep their
-      // first-boot defaults.
-      onDone(await saveSettings(buildPatch({ ...form, uiLanguage: i18n.locale as Locale }, stored)))
+      onDone(await saveSettings(buildPatch(form, stored)))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
       setFailure((err as Error).message)

@@ -1,5 +1,3 @@
-import type { Locale } from '@/services/i18n'
-import { LOCALES } from '@/services/i18n'
 import { createClient } from './http'
 
 // This file is the boundary for the settings concern, which spans both services by design: a
@@ -22,8 +20,6 @@ export interface Settings {
   geminiModel: string | null
   driveEnabled: boolean | null
   gdriveRootFolder: string | null
-  uiLanguage: Locale | null
-  runnerControlsVisible: boolean | null
 }
 
 // A partial save; omitted fields are left alone. The two keys are write-only — they go out here
@@ -35,8 +31,6 @@ export interface SettingsPatch {
   geminiModel?: string
   driveEnabled?: boolean
   gdriveRootFolder?: string
-  uiLanguage?: Locale
-  runnerControlsVisible?: boolean
 }
 
 export type SettingsField = keyof SettingsPatch
@@ -48,12 +42,10 @@ const WIRE: Record<SettingsField, string> = {
   geminiModel: 'gemini_model',
   driveEnabled: 'drive_enabled',
   gdriveRootFolder: 'gdrive_root_folder',
-  uiLanguage: 'ui_language',
-  runnerControlsVisible: 'runner_controls_visible',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
-// never both. The three fields named in neither list are the frontend's own — store-only.
+// never both. Every field the store holds is named in one of them.
 const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
@@ -70,12 +62,6 @@ interface RawSettings {
   gemini_model: string | null
   drive_enabled: boolean | null
   gdrive_root_folder: string | null
-  ui_language: string | null
-  runner_controls_visible: boolean | null
-}
-
-function asLocale(value: string | null): Locale | null {
-  return (LOCALES as readonly string[]).includes(value ?? '') ? (value as Locale) : null
 }
 
 function normalize(raw: RawSettings): Settings {
@@ -86,8 +72,6 @@ function normalize(raw: RawSettings): Settings {
     geminiModel: raw.gemini_model,
     driveEnabled: raw.drive_enabled,
     gdriveRootFolder: raw.gdrive_root_folder,
-    uiLanguage: asLocale(raw.ui_language),
-    runnerControlsVisible: raw.runner_controls_visible,
   }
 }
 

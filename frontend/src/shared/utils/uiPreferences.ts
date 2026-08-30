@@ -11,15 +11,11 @@ const SHIPPED: Record<UiPreference, boolean> = {
   runnerControlsVisible: false,
 }
 
-/** A stored user choice always wins; below it the store's first-boot default, then the shipped one. */
-export function resolvePreference(
-  stored: string | null,
-  storeDefault: boolean | null,
-  shipped: boolean,
-): boolean {
+/** A stored user choice always wins; anything else is the shipped default. */
+export function resolvePreference(stored: string | null, shipped: boolean): boolean {
   if (stored === 'true') return true
   if (stored === 'false') return false
-  return storeDefault ?? shipped
+  return shipped
 }
 
 // Storage access throws with cookies blocked or in some private modes; a lost preference must never
@@ -51,20 +47,10 @@ export function subscribePreferences(onChange: () => void): () => void {
 }
 
 export function readPreference(pref: UiPreference): boolean {
-  return resolvePreference(readStored(pref), null, SHIPPED[pref])
+  return resolvePreference(readStored(pref), SHIPPED[pref])
 }
 
 export function writePreference(pref: UiPreference, value: boolean): void {
   writeStored(pref, value)
-  for (const listener of listeners) listener()
-}
-
-/** Pins the defaults a profile has never answered, from the settings store read at boot. Writing
- *  them once is what makes them *first-boot* defaults: a later store change never flips a profile. */
-export function seedPreferences(store: Record<UiPreference, boolean | null>): void {
-  for (const pref of Object.keys(SHIPPED) as UiPreference[]) {
-    if (readStored(pref) !== null) continue
-    writeStored(pref, resolvePreference(null, store[pref], SHIPPED[pref]))
-  }
   for (const listener of listeners) listener()
 }

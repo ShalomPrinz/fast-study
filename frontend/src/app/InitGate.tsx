@@ -4,7 +4,6 @@ import { fetchSettings } from '@/services/settings'
 import type { Settings } from '@/services/settings'
 import InitWall from '@/features/settings/InitWall'
 import { isInitialized } from '@/features/settings/utils/required'
-import { seedPreferences } from '@/shared/utils/uiPreferences'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import '@/styles/spinner.css'
 import './InitGate.css'
@@ -25,9 +24,6 @@ export default function InitGate({ children }: { children: ReactNode }) {
         const settings = await fetchSettings()
         setStored(settings)
         setSettings(settings)
-        // The store is the source of a fresh profile's UI defaults, and this read is the only place
-        // it is known before the sidebar renders.
-        seedPreferences(settings)
         setPhase(isInitialized(settings) ? 'app' : 'wall')
       } catch {
         // A downed store is not an unconfigured install. Dropping a working app into onboarding

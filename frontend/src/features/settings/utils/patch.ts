@@ -1,4 +1,3 @@
-import type { Locale } from '@/services/i18n'
 import type { Settings, SettingsPatch } from '@/services/settings'
 
 export interface SettingsForm {
@@ -8,9 +7,6 @@ export interface SettingsForm {
   driveEnabled: boolean
   gdriveRootFolder: string
   geminiModel: string
-  uiLanguage: Locale
-  // Absent on the init wall, which does not ask about the two UI preferences at all.
-  runnerControlsVisible?: boolean
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
@@ -24,13 +20,6 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   if (form.driveEnabled !== (stored.driveEnabled ?? false)) patch.driveEnabled = form.driveEnabled
   if (form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
-  }
-  if (form.uiLanguage !== stored.uiLanguage) patch.uiLanguage = form.uiLanguage
-  if (
-    form.runnerControlsVisible !== undefined &&
-    form.runnerControlsVisible !== stored.runnerControlsVisible
-  ) {
-    patch.runnerControlsVisible = form.runnerControlsVisible
   }
   return patch
 }

@@ -9,8 +9,6 @@ const STORED: Settings = {
   geminiModel: 'gemini-3.5-flash',
   driveEnabled: false,
   gdriveRootFolder: null,
-  uiLanguage: 'he',
-  runnerControlsVisible: false,
 }
 
 const UNCHANGED: SettingsForm = {
@@ -20,8 +18,6 @@ const UNCHANGED: SettingsForm = {
   driveEnabled: false,
   gdriveRootFolder: '',
   geminiModel: 'gemini-3.5-flash',
-  uiLanguage: 'he',
-  runnerControlsVisible: false,
 }
 
 describe('buildPatch', () => {
@@ -45,12 +41,4 @@ describe('buildPatch', () => {
     expect(patch).toEqual({ dataRoot: '/other', driveEnabled: true, gdriveRootFolder: 'Lectures' })
   })
 
-  it('records the answer to a setting the store has never held', () => {
-    const blank: Settings = { ...STORED, runnerControlsVisible: null }
-    expect(buildPatch(UNCHANGED, blank)).toEqual({ runnerControlsVisible: false })
-  })
-
-  it('records a language switch', () => {
-    expect(buildPatch({ ...UNCHANGED, uiLanguage: 'en' }, STORED).uiLanguage).toBe('en')
-  })
 })

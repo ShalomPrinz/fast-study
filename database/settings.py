@@ -13,11 +13,9 @@ STRING_FIELDS = {
     "data_root": "DATA_ROOT",
     "gemini_model": "GEMINI_MODEL",
     "gdrive_root_folder": "GDRIVE_ROOT_FOLDER",
-    "ui_language": "UI_LANGUAGE",
 }
 BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",
-    "runner_controls_visible": "RUNNER_CONTROLS_VISIBLE",
 }
 
 # Write-only: the read path reports set/unset only, so a stored key never travels to the client.
@@ -25,8 +23,6 @@ SECRET_FIELDS = {
     "gemini_api_key": "GEMINI_API_KEY",
     "groq_api_key": "GROQ_API_KEY",
 }
-
-UI_LANGUAGES = ("he", "en")
 
 PROBE_NAME = ".faststudy_write_test"
 
@@ -84,8 +80,6 @@ def _incoming(field: str, value) -> str:
     # Single quotes and newlines cannot be represented in the quoting above, and no real value has one.
     if "'" in text or "\n" in text or "\r" in text:
         raise ValueError(f"{field} may not contain quotes or line breaks")
-    if field == "ui_language" and text and text not in UI_LANGUAGES:
-        raise ValueError(f"ui_language must be one of {', '.join(UI_LANGUAGES)}")
     return text
 
 

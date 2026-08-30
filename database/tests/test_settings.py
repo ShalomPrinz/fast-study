@@ -89,18 +89,15 @@ def test_absent_keys_read_as_null(env_file):
     stored = settings.read_settings()
 
     assert stored["gdrive_root_folder"] is None
-    assert stored["ui_language"] is None
     assert stored["drive_enabled"] is None
 
 
 def test_booleans_round_trip(env_file):
-    stored = settings.write_settings(
-        {"drive_enabled": True, "runner_controls_visible": False}
-    )
-
-    assert stored["drive_enabled"] is True
-    assert stored["runner_controls_visible"] is False
+    assert settings.write_settings({"drive_enabled": True})["drive_enabled"] is True
     assert "DRIVE_ENABLED='true'" in env_file.read_text(encoding="utf-8")
+
+    assert settings.write_settings({"drive_enabled": False})["drive_enabled"] is False
+    assert "DRIVE_ENABLED='false'" in env_file.read_text(encoding="utf-8")
 
 
 def test_export_prefix_and_trailing_comment_survive_a_rewrite(env_file):
@@ -154,9 +151,11 @@ def test_unknown_setting_is_rejected(env_file):
         settings.write_settings({"whisper_model": "large"})
 
 
-def test_bad_ui_language_is_rejected(env_file):
-    with pytest.raises(ValueError):
-        settings.write_settings({"ui_language": "fr"})
+# The UI language and the runner-control toggle are the browser profile's own, never the store's.
+def test_a_frontend_only_preference_is_rejected(env_file):
+    for field in ("ui_language", "runner_controls_visible"):
+        with pytest.raises(ValueError):
+            settings.write_settings({field: "he"})
 
 
 def test_data_root_is_created_and_probed(env_file, tmp_path):
@@ -187,7 +186,7 @@ def test_relative_data_root_is_rejected(env_file):
 def test_get_and_put_over_http(client, env_file, tmp_path):
     body = client.get("/settings").json()
     assert body["groq_api_key_set"] is True
-    assert body["runner_controls_visible"] is None
+    assert body["drive_enabled"] is None
 
     target = tmp_path / "http-root"
     r = client.put(
@@ -195,12 +194,12 @@ def test_get_and_put_over_http(client, env_file, tmp_path):
         json={
             "groq_api_key": "gsk_http",
             "data_root": str(target),
-            "ui_language": "he",
+            "drive_enabled": True,
         },
     )
 
     assert r.status_code == 200
-    assert r.json()["ui_language"] == "he"
+    assert r.json()["drive_enabled"] is True
     assert r.json()["data_root"] == str(target)
     assert "gsk_http" not in r.text
     assert "GROQ_API_KEY='gsk_http'" in env_file.read_text(encoding="utf-8")

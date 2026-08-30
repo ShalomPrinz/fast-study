@@ -51,8 +51,8 @@ a "a key is saved" placeholder and typing replaces it; an untouched (blank) fiel
 because an empty value there would clear the stored key.
 
 **The language applies the moment it is picked**, so the rest of the screen reads in the chosen
-language while it is still being filled in. The save that follows only records the choice in the
-store; the effective locale stays `localStorage['fast-study:locale']`, which `services/i18n.ts` owns.
+language while it is still being filled in. It reaches no save at all: `localStorage['fast-study:locale']`
+is the only place it lives, and `services/i18n.ts` owns it.
 
 **Only the data folder is guarded.** On save, `utils/dataRootGuard.ts` reads `RunnerStatusContext` —
 already SSE-fed, so its view is current — and raises `ConfirmModal` naming the runs in flight, since
@@ -116,12 +116,13 @@ is not a failure state.
 
 ## The UI preference — `shared/utils/uiPreferences.ts`
 
-Runner-control visibility is the user's own preference, so it lives in `localStorage`; its first-boot
-default comes from the settings store, which `app/InitGate` seeds from on the read it already makes at
-boot — so a fresh browser profile and a packaged install agree without a rebuild, and a later store
-change never flips a profile that has already been seeded. `resolvePreference` is the whole rule: a
-stored choice wins, then the store's value, then the shipped default — controls **hidden**.
-`usePreference` re-renders on every write, so toggling it here reaches the sidebar without a reload.
+Runner-control visibility is the user's own preference, so it lives in that browser profile's
+`localStorage` and reaches no service — the same rule the language follows. `resolvePreference` is
+the whole rule: a stored choice wins, otherwise the shipped default, controls **hidden**. A fresh
+profile therefore starts at the shipped default rather than inheriting another machine's answer,
+which is the point: these two are cosmetics, and the settings store is for credentials, the data
+root and the backend's pipeline config. `usePreference` re-renders on every write, so toggling it
+here reaches the sidebar without a reload.
 
 Its one consumer is `RunnerPipelineRow`, which renders nothing — button and in-flight panel alike —
 while the controls are hidden.

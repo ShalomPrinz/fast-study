@@ -54,8 +54,6 @@ const STORE: Settings = {
   geminiModel: null,
   driveEnabled: null,
   gdriveRootFolder: null,
-  uiLanguage: null,
-  runnerControlsVisible: null,
 }
 
 describe('isInitialized', () => {
@@ -70,7 +68,7 @@ describe('isInitialized', () => {
   })
 
   it('is not blocked by anything else being unset', () => {
-    expect(isInitialized({ ...STORE, driveEnabled: null, uiLanguage: null })).toBe(true)
+    expect(isInitialized({ ...STORE, driveEnabled: null, geminiModel: null })).toBe(true)
   })
 })
 
