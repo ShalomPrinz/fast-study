@@ -1,6 +1,7 @@
 ---
 name: backend-dev
 description: Owns all work in backend/ — the FastAPI pipeline service (Python 3.12, uv). Use for any backend task: code changes, bug fixes, new pipeline features, refactors, tests, config, and docs. Expert in FastAPI, async background tasks + per-lecture locking, ffmpeg, Groq Whisper, Gemini (google-genai), pandoc + XeLaTeX, Google Drive.
+memory: project
 color: blue
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: downloader-dev
 description: Owns all work in downloader/ — the Chrome MV3 extension + the express helper server and the Playwright auto-downloader that capture lecture videos/PDFs and hand them to the database service. Use for any downloader task: extension code, server endpoints, capture/curl/yt-dlp logic, config, and docs. Expert in Chrome Manifest V3, express, and Node (ESM).
+memory: project
 color: magenta
 ---
 

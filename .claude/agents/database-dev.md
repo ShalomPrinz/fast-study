@@ -1,6 +1,7 @@
 ---
 name: database-dev
 description: Owns all work in database/ — the FastAPI service that owns every read/write/listing under DATA_ROOT plus the SSE notify bus (port 8001). Use for any database task: endpoints, path/layout conventions, tree/summary/files/crud logic, SSE, config, and docs. Expert in Python/FastAPI and the on-disk layout it is the single source of truth for.
+memory: project
 color: yellow
 ---
 

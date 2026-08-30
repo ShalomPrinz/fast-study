@@ -1,6 +1,7 @@
 ---
 name: frontend-dev
 description: Owns all work in frontend/ — the React + Vite + TypeScript SPA that drives the pipeline. Use for any frontend task: components, hooks, contexts, routing, services, styling, state, tests, config, and docs. Expert in React, Vite, TypeScript, react-router-dom v7, SSE-driven state, the `@/` alias.
+memory: project
 color: green
 ---
 
