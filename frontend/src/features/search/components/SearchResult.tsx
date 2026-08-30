@@ -12,11 +12,20 @@ interface Props {
   hits: Hit[]
   course: string
   hasPdf: boolean
+  hasMore: boolean
+  onShowMore: () => void
 }
 
 // One lecture's card: a single header row — the whole row is the open-PDF button, disabled when the
 // lecture has no summary.pdf — above every snippet found in that lecture.
-export default function SearchResult({ summary, hits, course, hasPdf }: Props) {
+export default function SearchResult({
+  summary,
+  hits,
+  course,
+  hasPdf,
+  hasMore,
+  onShowMore,
+}: Props) {
   const { t } = useLingui()
   const { name, kind } = summary
   const openPdf = () => window.open(fileUrl(course, name, 'summary.pdf', kind), '_blank')
@@ -49,6 +58,11 @@ export default function SearchResult({ summary, hits, course, hasPdf }: Props) {
           <SearchSnippet key={i} hit={hit} />
         ))}
       </div>
+      {hasMore && (
+        <button className="search-result-more" onClick={onShowMore}>
+          <Trans>Show more snippets</Trans>
+        </button>
+      )}
     </div>
   )
 }

@@ -58,6 +58,8 @@
   font: inherit;
   font-size: var(--fs-meta);
   cursor: pointer;
+  /* No focus ring of its own: `.search-field:focus-within` already accents the whole field's border. */
+  outline: none;
 }
 
 .search-course-chevron {

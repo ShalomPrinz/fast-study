@@ -5,7 +5,7 @@ import Icon from '@/shared/components/Icon'
 import PageHeader from '@/shared/components/PageHeader'
 import type { CourseSummary } from '@/types'
 import { useCourseSummaries } from './hooks/useCourseSummaries'
-import { buildHit, findMatches, groupMatches, type Hit, type MatchGroup } from './utils/search'
+import { buildHit, findMatches, groupMatches, type MatchGroup } from './utils/search'
 import SearchResult from './components/SearchResult'
 import '@/styles/panel.css'
 import '@/styles/button.css'
@@ -16,6 +16,32 @@ const COURSE_STORAGE_KEY = 'fastStudySearchCourse'
 
 // Findings per page. Snippets are built only for what's on screen, so "Show more" stays cheap.
 const PAGE_SIZE = 20
+
+// Findings per lecture card before its own "Show more", so one dense lecture can't fill the page.
+const PER_LECTURE = 5
+
+// A lecture's consecutive groups — the unit both the page and the per-card cap are measured in.
+interface Lecture {
+  summary: CourseSummary
+  groups: MatchGroup[]
+}
+
+const keyOf = (summary: CourseSummary) => `${summary.kind}:${summary.name}`
+
+const countFindings = (groups: MatchGroup[]) => groups.reduce((n, g) => n + g.matches.length, 0)
+
+// A group is never split: the group crossing `limit` is included whole, so every occurrence inside a
+// rendered snippet's text is highlighted. `limit` is a minimum, not an exact cut.
+function takeGroups(groups: MatchGroup[], limit: number): MatchGroup[] {
+  const out: MatchGroup[] = []
+  let n = 0
+  for (const group of groups) {
+    if (n >= limit) break
+    out.push(group)
+    n += group.matches.length
+  }
+  return out
+}
 
 // Client-side search over one course's summaries. See docs/search.md.
 export default function SearchView() {
@@ -29,6 +55,7 @@ export default function SearchView() {
   const [includeLectures, setIncludeLectures] = useState(true)
   const [includeRecitations, setIncludeRecitations] = useState(true)
   const [shown, setShown] = useState(PAGE_SIZE)
+  const [expanded, setExpanded] = useState<Record<string, number>>({})
 
   // Derived rather than stored, so a stale stored name (or a tree that hasn't loaded) falls back.
   const course = active.find((c) => c.name === chosen)?.name ?? active[0]?.name ?? null
@@ -48,43 +75,52 @@ export default function SearchView() {
 
   const groups = useMemo(() => groupMatches(matches), [matches])
 
-  // Paging counts findings, but a group is never split: the group crossing the threshold is included
-  // whole, so every occurrence inside a rendered snippet's text is highlighted. Pages are therefore
-  // 20-or-slightly-more findings.
-  const visible = useMemo(() => {
-    const out: MatchGroup[] = []
-    let n = 0
+  const lectureList = useMemo(() => {
+    const out: Lecture[] = []
     for (const group of groups) {
-      if (n >= shown) break
-      out.push(group)
-      n += group.matches.length
-    }
-    return out
-  }, [groups, shown])
-
-  // Rendering is per lecture: the visible groups are regrouped by summary every render so a lecture
-  // straddling a page boundary keeps one title block that simply grows.
-  const blocks = useMemo(() => {
-    const out: { summary: CourseSummary; hits: Hit[] }[] = []
-    for (const group of visible) {
       const last = out[out.length - 1]
-      if (last && last.summary === group.summary) last.hits.push(buildHit(group))
-      else out.push({ summary: group.summary, hits: [buildHit(group)] })
+      if (last && last.summary === group.summary) last.groups.push(group)
+      else out.push({ summary: group.summary, groups: [group] })
     }
     return out
-  }, [visible])
+  }, [groups])
 
-  const shownFindings = visible.reduce((n, g) => n + g.matches.length, 0)
-  const lectures = groups.reduce(
-    (n, g, i) => (i > 0 && groups[i - 1].summary === g.summary ? n : n + 1),
-    0,
+  // The page is a set of whole lectures, sized by their *base-capped* counts only: expanding a card
+  // must grow it in place and never push a later lecture off the page.
+  const { visibleLectures, pageCount } = useMemo(() => {
+    const out: Lecture[] = []
+    let n = 0
+    for (const lecture of lectureList) {
+      if (n >= shown) break
+      out.push(lecture)
+      n += countFindings(takeGroups(lecture.groups, PER_LECTURE))
+    }
+    return { visibleLectures: out, pageCount: n }
+  }, [lectureList, shown])
+
+  const blocks = useMemo(
+    () =>
+      visibleLectures.map((lecture) => {
+        const visible = takeGroups(lecture.groups, expanded[keyOf(lecture.summary)] ?? PER_LECTURE)
+        return {
+          summary: lecture.summary,
+          hits: visible.map(buildHit),
+          count: countFindings(visible),
+          hasMore: visible.length < lecture.groups.length,
+        }
+      }),
+    [visibleLectures, expanded],
   )
 
-  // A new search must not inherit the previous one's expanded page.
-  useEffect(
-    () => setShown(PAGE_SIZE),
-    [query, wholeWord, includeLectures, includeRecitations, course],
-  )
+  const shownFindings = blocks.reduce((n, b) => n + b.count, 0)
+  // Named for the message placeholder it fills: Lingui keys the plural on the identifier.
+  const lectures = lectureList.length
+
+  // A new search must not inherit the previous one's page or expanded cards.
+  useEffect(() => {
+    setShown(PAGE_SIZE)
+    setExpanded({})
+  }, [query, wholeWord, includeLectures, includeRecitations, course])
 
   // Which lectures have a summary.pdf to open, straight off the live tree.
   const withPdf = useMemo(() => {
@@ -179,7 +215,9 @@ export default function SearchView() {
             </button>
           </div>
 
-          {loading && (
+          {/* Only while a query is waiting on the corpus — switching course with an empty box is
+              nothing the user is waiting for. */}
+          {loading && query.trim().length > 0 && (
             <div className="search-status">
               <Trans>Loading summaries…</Trans>
             </div>
@@ -215,23 +253,32 @@ export default function SearchView() {
           )}
 
           <div className="search-results">
-            {blocks.map((block) => (
-              <SearchResult
-                key={`${block.summary.kind}:${block.summary.name}`}
-                summary={block.summary}
-                hits={block.hits}
-                course={course ?? ''}
-                hasPdf={withPdf.has(`${block.summary.kind}:${block.summary.name}`)}
-              />
-            ))}
+            {blocks.map((block) => {
+              const key = keyOf(block.summary)
+              return (
+                <SearchResult
+                  key={key}
+                  summary={block.summary}
+                  hits={block.hits}
+                  course={course ?? ''}
+                  hasPdf={withPdf.has(key)}
+                  hasMore={block.hasMore}
+                  // Advances from what's rendered, not the old threshold: a group overshooting the
+                  // threshold would otherwise be re-selected unchanged and the click do nothing.
+                  onShowMore={() =>
+                    setExpanded((m) => ({ ...m, [key]: block.count + PER_LECTURE }))
+                  }
+                />
+              )
+            })}
           </div>
 
-          {/* Advances from what's rendered, not the old threshold: a group overshooting the threshold
-              would otherwise be re-selected unchanged and the click would do nothing. */}
-          {shownFindings < matches.length && (
+          {/* Keyed on lectures, not findings: with every card collapsed there are still findings
+              left over, and a button that only re-renders the same page does nothing. */}
+          {visibleLectures.length < lectureList.length && (
             <button
               className="btn btn--ghost search-more"
-              onClick={() => setShown(shownFindings + PAGE_SIZE)}
+              onClick={() => setShown(pageCount + PAGE_SIZE)}
             >
               <Trans>Show more</Trans>
             </button>
