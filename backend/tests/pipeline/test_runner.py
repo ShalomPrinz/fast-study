@@ -772,6 +772,84 @@ class TestQueueDrain:
         assert steps == []
 
 
+class TestAutoRun:
+    """AUTO_RUN is a ceiling on automatic work: it caps a video's arrival and the nightly
+    cron alike, and never a run the user asked for."""
+
+    @pytest.fixture(autouse=True)
+    def _no_drain(self, clean_queue):
+        # Stub the drain so the queue stays inspectable; what is queued is the subject here.
+        with patch.object(runner, "run_all"):
+            yield
+
+    @pytest.mark.parametrize(
+        "mode,expected_status,expected_depth",
+        [
+            ("full", "queued", "full"),
+            ("audio", "queued", "audio"),
+            ("", "queued", "full"),  # unset → today's behaviour
+            ("nonsense", "queued", "full"),  # unrecognised → the same
+        ],
+    )
+    def test_arrival_queues_at_the_settings_depth(
+        self, monkeypatch, mode, expected_status, expected_depth
+    ):
+        monkeypatch.setenv("AUTO_RUN", mode)
+
+        async def go():
+            # enqueue schedules the drain, so it needs a running loop the way its caller has one.
+            with patch.object(runner.db_client, "notify"):
+                assert runner.enqueue_arrival("C1", "L1", "lecture") == expected_status
+            await asyncio.sleep(0)
+
+        asyncio.run(go())
+        assert runner._queue == [_entry("L1", expected_depth)]
+
+    def test_arrival_is_dropped_when_off(self, monkeypatch):
+        monkeypatch.setenv("AUTO_RUN", "off")
+
+        async def go():
+            assert runner.enqueue_arrival("C1", "L1", "lecture") == "off"
+
+        asyncio.run(go())
+        assert runner._queue == []
+
+    def test_cron_queues_nothing_when_off(self, monkeypatch):
+        monkeypatch.setenv("AUTO_RUN", "off")
+        scanned: list = []
+
+        async def go():
+            with patch.object(
+                runner, "scan_pending", side_effect=lambda: scanned.append(1)
+            ):
+                await runner._scheduled_run()
+
+        asyncio.run(go())
+        assert scanned == [], "off must not even scan — nothing runs unattended"
+        assert runner._queue == []
+
+    @pytest.mark.parametrize("mode,depth", [("audio", "audio"), ("full", "full")])
+    def test_cron_queues_at_the_settings_depth(self, monkeypatch, mode, depth):
+        monkeypatch.setenv("AUTO_RUN", mode)
+
+        async def fake_scan():
+            return [("C1", "L1", "lecture"), ("C1", "L2", "lecture")]
+
+        async def go():
+            with (
+                patch.object(runner, "scan_pending", fake_scan),
+                patch.object(runner.db_client, "notify"),
+            ):
+                await runner._scheduled_run()
+            await asyncio.sleep(0)
+
+        asyncio.run(go())
+        assert runner._queue == [_entry("L1", depth), _entry("L2", depth)]
+
+
+# ---- _exec_pdf: the .pdf_warning / .pdf_build.tex dotfiles ----
+
+
 class _PdfDb:
     """Records the db_client calls _exec_pdf makes around a render."""
 

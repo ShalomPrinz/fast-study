@@ -60,7 +60,19 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 `depth` is how far that entry may go: `full` is `run_pipeline_for(..., honor_block=True)`, `audio` is the single `audio` step and nothing after it (skipped outright when `audio.mp3` is already there). `scan_pending` still walks the tree for lectures with `video.mp4` but no `final_output()` and returns bare `(course, lecture, kind)`; the depth is attached at each call site.
 
-An APScheduler cron fires `_scheduled_run` daily at 03:00 (`main.py` lifespan): it scans and enqueues everything pending.
+## `AUTO_RUN` — the ceiling on automatic work
+
+`settings.auto_run()` returns `off`, `audio` or `full`; unset or unrecognised means `full`, which is the historical behaviour, so a typo can never silently stop every unattended run.
+
+| Value   | A video arriving (`/video-arrived`) | The 03:00 cron                                  |
+| ------- | ----------------------------------- | ----------------------------------------------- |
+| `off`   | logged and dropped                  | does nothing, not even a scan                   |
+| `audio` | queued at depth `audio`             | scans and queues at depth `audio`               |
+| `full`  | queued at depth `full`              | scans and queues at depth `full`                |
+
+It never caps a run the user asked for: `POST /run-all` always enqueues at depth `full`.
+
+The database service reports the arrival as a fact and holds no step names — see `database/docs/API.md`. An APScheduler cron fires `_scheduled_run` daily at 03:00 (`main.py` lifespan); the hour is not a setting.
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 

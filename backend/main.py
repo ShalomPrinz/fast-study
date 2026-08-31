@@ -94,6 +94,16 @@ async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture"))
     return {"status": runner.try_run_pipeline(course, lecture, kind)}
 
 
+@app.post("/courses/{course}/lectures/{lecture}/video-arrived")
+async def video_arrived(course: str, lecture: str, kind: Kind = Query("lecture")):
+    """A new video.mp4 landed on disk. The database reports the fact; AUTO_RUN decides how much
+    of the pipeline it starts, and the work is queued rather than run inline."""
+
+    if err := _validate_kind(kind):
+        return err
+    return {"status": runner.enqueue_arrival(course, lecture, kind)}
+
+
 # ---- Overview (course-level, not per-lecture — state lives in course/runner.py) ----
 
 

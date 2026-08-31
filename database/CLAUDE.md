@@ -30,7 +30,7 @@ changes: keep them backward-compatible or flag the impact.
 Reads the repo-root `.env` via `python-dotenv`:
 
 - `DATA_ROOT` (required) — absolute path to the data directory.
-- `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload pipeline trigger.
+- `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload `/video-arrived` report.
 
 `settings.py` also *writes* that `.env`: it is the store behind the app's settings surface in
 browser dev (`GET`/`PUT /settings`), and `POST /config` applies `DATA_ROOT` to the running process

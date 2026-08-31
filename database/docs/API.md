@@ -23,7 +23,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/archived`                                | archive/unarchive (`{archived}`)                                           |
 | `POST   /courses/{course}/lectures`                                | create lecture/recitation (`{name}`)                                       |
 | `PATCH  /courses/{course}/lectures/{lecture}`                      | rename lecture/recitation (`{name}`)                                       |
-| `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts, auto-triggers the pipeline    |
+| `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts, reports the arrival to the backend |
 | `GET    /courses/{course}/lectures/{lecture}/materials`            | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture   |
 | `POST   /courses/{course}/lectures/{lecture}/materials`            | add a material pdf; returns `{name}` with the allocated filename           |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}`         | write one file; neutral                                                    |
@@ -78,19 +78,20 @@ only, so the pipeline's untouched output stays recoverable however many times th
 
 Summary writes never go through the generic files route — that would skip the snapshot.
 
-## Video upload triggers the pipeline
+## Video upload reports the arrival
 
 After the bytes land, the video route fire-and-forgets a POST to
-`${BACKEND_URL}/courses/{c}/lectures/{l}/pipeline?kind=…` so a downloader upload starts the
-pipeline without a frontend click. It targets `/pipeline` rather than a single step so the run
-continues past audio on its own; since the backend serializes per lecture, a later manual "Run
-remaining" click reporting `busy` accurately describes a run already in flight rather than a lost
-trigger. It runs on a worker thread with no timeout (a full run takes many minutes), and failures
-are logged and swallowed — the upload already succeeded, and the user can always start the run
-manually. The PUT responds as soon as the file is on disk.
+`${BACKEND_URL}/courses/{c}/lectures/{l}/video-arrived?kind=…` so a downloader upload starts work
+without a frontend click.
 
-Consequence: every upload, including every downloader upload, spends Groq and Gemini quota
-unattended all the way to the finished summary.
+It reports a **fact, not a command**. This service holds no step names and no notion of how much of
+the pipeline should run: the backend reads its own `AUTO_RUN` setting and queues the lecture at the
+depth that allows — everything, audio only, or nothing at all. Adding a step or a mode here would
+put the same policy in two places.
+
+It runs on a worker thread with no timeout, and failures are logged and swallowed — the upload
+already succeeded, and the user can always start the run manually. The PUT responds as soon as the
+file is on disk.
 
 ## Settings
 

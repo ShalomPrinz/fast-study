@@ -474,6 +474,25 @@ def enqueue(entry: QueueEntry) -> bool:
     return True
 
 
+def enqueue_arrival(course: str, lecture: str, kind: str) -> str:
+    """Act on a video that just landed on disk. AUTO_RUN is the ceiling: `off` drops the arrival,
+    `audio` stops at audio.mp3, `full` runs the whole pipeline."""
+
+    depth = settings.auto_run()
+    if depth == "off":
+        log.info(
+            "video arrived for %s/%s (%s): AUTO_RUN=off, queuing nothing",
+            course,
+            lecture,
+            kind,
+        )
+        return "off"
+    if not enqueue(QueueEntry(course, lecture, kind, depth)):
+        return "busy"
+    db_client.notify()
+    return "queued"
+
+
 async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
     """Build a {filename: {exists}} mapping for one lecture via parallel HEAD calls."""
 
@@ -709,15 +728,20 @@ async def run_all() -> dict:
 
 
 async def _scheduled_run() -> None:
-    """Cron entry point: skip if already running, else scan and queue anything pending."""
+    """Cron entry point: queue everything pending, at the depth AUTO_RUN allows. `off` means no
+    automatic work at all, this nightly pass included."""
 
     if _runner_status["running"]:
         log.info("cron: runner already running, skipping")
+        return
+    depth = settings.auto_run()
+    if depth == "off":
+        log.info("cron: AUTO_RUN=off, nothing runs unattended")
         return
     pending = await scan_pending()
     if not pending:
         log.info("cron: nothing pending")
         return
     for course, lecture, kind in pending:
-        enqueue(QueueEntry(course, lecture, kind, "full"))
+        enqueue(QueueEntry(course, lecture, kind, depth))
     db_client.notify()
