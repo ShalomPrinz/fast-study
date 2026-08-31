@@ -44,12 +44,23 @@ State in `pipeline/runner.py`:
 - `_in_flight[skey]` — all in-flight entries regardless of trigger (runner / `/pipeline` / single `/run/{step}` all populate the same map, so the frontend doesn't care which path queued them). `skey` is the string `"course||lecture||kind"` and appears verbatim in `/status`.
 - `_errors[skey]` — last error, survives after `_in_flight` clears.
 - `_runner_status` — `{running, total, done, last_error}` for `run_all`.
+- `_queue` — the ordered `QueueEntry(course, lecture, kind, depth)` list `run_all` drains. In memory only: a restart empties it, and those lectures simply fall back to "has work left, nothing scheduled", which the frontend derives from the tree.
 
 `next_step` is pure file-existence over `enabled_steps()`: the first step whose output is missing. That makes every trigger resumable with no stored progress.
 
 `enabled_steps()` is `STEP_ORDER` minus the steps their setting switches off — today only `drive`, on `DRIVE_ENABLED`. It is read per call, so `POST /config` flips the step without a restart. With Drive off a lecture is complete at `final_output()` = `summary.pdf`; completion stays pure file existence rather than gaining a marker file, and the cost is that turning Drive back on re-pends every lecture that finished while it was off.
 
-`scan_pending` walks the tree for lectures with `video.mp4` but no `final_output()`; `run_all` runs that queue sequentially. An APScheduler cron fires it daily at 03:00 (`main.py` lifespan). A lecture whose lock is already held is skipped rather than awaited.
+## One queue
+
+Every automatic trigger feeds one sequential queue rather than a task per lecture — a section download of twelve lectures would otherwise start twelve concurrent pipelines, each with its own Groq/Gemini rate-limit sleeper.
+
+`enqueue(entry)` is the single point of entry. It refuses a lecture that is already queued, already in `_in_flight`, or whose lock a concurrent trigger holds, and starts `run_all` when the runner is idle — flipping `_runner_status["running"]` itself, because the task it creates only starts at the next await and a burst of arrivals would otherwise each start a drain.
+
+`run_all` takes no argument: it drains `_queue` until empty, so a video arriving mid-run joins that run instead of racing it, and `_runner_status["total"]` is recomputed each iteration from `done + len(_queue)` so a growing queue is reflected. A lecture whose lock is already held is skipped rather than awaited.
+
+`depth` is how far that entry may go: `full` is `run_pipeline_for(..., honor_block=True)`, `audio` is the single `audio` step and nothing after it (skipped outright when `audio.mp3` is already there). `scan_pending` still walks the tree for lectures with `video.mp4` but no `final_output()` and returns bare `(course, lecture, kind)`; the depth is attached at each call site.
+
+An APScheduler cron fires `_scheduled_run` daily at 03:00 (`main.py` lifespan): it scans and enqueues everything pending.
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 

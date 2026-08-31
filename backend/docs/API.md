@@ -15,12 +15,13 @@ Validates that the step's prerequisite file exists (`_STEP_CONFIG`), returning `
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`.
 
+
 `POST /run-all`
-Scans for pending lectures and runs the queue. → `{"status": "started"|"already_running"|"empty_queue"|"all_in_flight"}`.
-`all_in_flight` means every pending lecture is already owned by a concurrent trigger — run_all would have skipped them all, so the UI can say so instead of appearing to do nothing.
+Scans for pending lectures and queues them at depth `full`, whatever `AUTO_RUN` caps automatic work at — the user asked for this one explicitly. → `{"status": "started"|"already_running"|"empty_queue"|"all_in_flight"}`.
+`all_in_flight` means every pending lecture is already owned by a concurrent trigger — the run would have skipped them all, so the UI can say so instead of appearing to do nothing.
 
 `GET /status`
-`{runner: {running, total, done, last_error}, in_flight: [...], errors: {skey: message}}`. Cheap; the UI refetches it on each SSE notify.
+`{runner: {running, total, done, last_error}, in_flight: [...], queue: [...], errors: {skey: message}}`. `queue` lists what the runner has left to take, in the order it will take them, each `{course, lecture, kind, depth}` with `depth ∈ {full, audio}`. Cheap; the UI refetches it on each SSE notify.
 
 ## Timing
 

@@ -156,17 +156,21 @@ def overview_extractors():
 
 @app.post("/run-all")
 async def run_all_endpoint():
-    """Scan for pending lectures and run the queue, unless a run is already in progress."""
+    """Scan for pending lectures and queue them, unless a run is already in progress. Always the
+    full pipeline — AUTO_RUN caps automatic work, never a run the user asked for."""
 
     if runner._runner_status["running"]:
         return {"status": "already_running", **runner.get_status()}
-    queue = await runner.scan_pending()
-    if not queue:
+    pending = await runner.scan_pending()
+    if not pending:
         return {"status": "empty_queue"}
-    queue = runner.drop_in_flight(queue)
-    if not queue:
+    queued = [
+        runner.enqueue(runner.QueueEntry(course, lecture, kind, "full"))
+        for course, lecture, kind in pending
+    ]
+    if not any(queued):
         return {"status": "all_in_flight"}
-    asyncio.create_task(runner.run_all(queue))
+    runner.db_client.notify()
     return {"status": "started", **runner.get_status()}
 
 
