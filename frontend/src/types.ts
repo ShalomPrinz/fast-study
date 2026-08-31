@@ -106,10 +106,23 @@ export interface InFlightEntry {
   progress: { completed: number; total: number } | null
 }
 
+// How far an entry's trigger may take it: `full` is every remaining step, `audio` stops at audio.mp3.
+export type RunDepth = 'full' | 'audio'
+
+export interface QueueEntry {
+  course: string
+  lecture: string
+  kind: Kind
+  depth: RunDepth
+}
+
 export interface RunnerStatus {
   // lastError: an unexpected exception that aborted a sweep, not a step-level failure.
   runner: { running: boolean; total: number; done: number; lastError: string | null }
   inFlight: InFlightEntry[]
+  // What the runner has left to take, in the order it will take them. In-memory server-side, so a
+  // backend restart empties it and those lectures become "not queued".
+  queue: QueueEntry[]
   // Expected step-level failures per lecture, from any trigger; persists after the run ends.
   errors: Record<string, string>
 }

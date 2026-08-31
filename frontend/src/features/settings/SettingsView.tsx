@@ -16,7 +16,6 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import { writePreference, readPreference } from '@/shared/utils/uiPreferences'
 import ApiKeyField from './components/ApiKeyField'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
@@ -32,9 +31,7 @@ import './SettingsView.css'
 
 // The language is not in here: it applies the moment it is picked and lives in `localStorage`, so
 // it never reaches a save.
-type FormState = SettingsForm & { runnerControlsVisible: boolean }
-
-function initialForm(stored: Settings, options: ConfigOptions): FormState {
+function initialForm(stored: Settings, options: ConfigOptions): SettingsForm {
   return {
     geminiApiKey: '',
     groqApiKey: '',
@@ -43,7 +40,6 @@ function initialForm(stored: Settings, options: ConfigOptions): FormState {
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? options.geminiModels[0] ?? '',
     autoRun: toAutoRun(stored.autoRun),
-    runnerControlsVisible: readPreference('runnerControlsVisible'),
   }
 }
 
@@ -54,7 +50,7 @@ export default function SettingsView() {
   const { setSettings } = useSettingsContext()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
-  const [form, setForm] = useState<FormState | null>(null)
+  const [form, setForm] = useState<SettingsForm | null>(null)
   const [saving, setSaving] = useState(false)
   // A save held back by the advisory data-root guard, with the runs it would split.
   const [pending, setPending] = useState<{ patch: SettingsPatch; runs: string[] } | null>(null)
@@ -100,9 +96,6 @@ export default function SettingsView() {
   async function commit(next: SettingsPatch) {
     setSaving(true)
     setPending(null)
-    // Unconditional and ahead of the network: the preference is localStorage-only, so a downed
-    // service must not cost the user a toggle that never needed a request in the first place.
-    writePreference('runnerControlsVisible', current.runnerControlsVisible)
     try {
       const saved = await saveSettings(next)
       setStored(saved)
@@ -246,27 +239,10 @@ export default function SettingsView() {
               <span className="settings-hint">
                 <Trans>
                   The ceiling on unattended work: it caps a dropped or downloaded video and the
-                  nightly 03:00 pass alike, never a run you start from the sidebar's runner.
+                  nightly 03:00 pass alike, never a run you start from the running pipelines page.
                 </Trans>
               </span>
             </div>
-            <label className="settings-check">
-              <input
-                type="checkbox"
-                checked={form.runnerControlsVisible}
-                onChange={(e) => setForm({ ...form, runnerControlsVisible: e.target.checked })}
-              />
-              <span className="settings-check-text">
-                <span>
-                  <Trans>Show the run controls in the sidebar</Trans>
-                </span>
-                <span className="settings-hint">
-                  <Trans>
-                    The "Run incomplete pipelines" button and the list of lectures being worked on.
-                  </Trans>
-                </span>
-              </span>
-            </label>
           </section>
         </div>
       </div>

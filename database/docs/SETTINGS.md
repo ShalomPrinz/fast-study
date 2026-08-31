@@ -27,7 +27,7 @@ path reports only whether each is set, so a stored key never travels back to the
 rule `safeStorage` follows under Electron.
 
 The list is closed to **credentials, `DATA_ROOT`, and the backend's own pipeline config** — nothing
-else. A purely visual preference (the UI language, the runner-control toggle) is the browser
+else. A purely visual preference (the UI language, the sidebar's lectures/courses mode) is the browser
 profile's, kept in its `localStorage`, and `PUT` rejects it as an unknown setting: routing it through
 a file every service reads would make one machine's cosmetics everyone's configuration.
 

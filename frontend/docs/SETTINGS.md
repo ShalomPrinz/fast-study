@@ -15,7 +15,6 @@ route that edits them all. The module behind it is
 | Drive upload      | off                                       | on                   | `backend/`  |
 | Drive root folder | none — required once Drive is on          | any folder name      | `backend/`  |
 | Summary model     | the first curated entry                   | the curated dropdown | `backend/`  |
-| Runner controls   | hidden                                    | shown, hidden        | frontend    |
 | Auto-run          | the whole pipeline                        | audio only, off      | `backend/`  |
 
 The model list comes from `GET /config/options`, so a model id that the free tier does not serve can
@@ -23,7 +22,7 @@ never be typed in — a wrong one surfaces minutes later as a pipeline failure.
 
 **Auto-run is a ceiling on unattended work, not a schedule.** It caps a video dropped on a lecture or
 fetched by the downloader, and the backend's nightly 03:00 pass, at the whole pipeline / the audio
-step / nothing at all. It never caps a run the user starts: the runner's own button always runs
+step / nothing at all. It never caps a run the user starts: the `/running` page's button always runs
 everything. Unset means the whole pipeline, the same fallback `settings.auto_run()` applies, so both
 ends agree on a fresh install (`useAutoRun`, beside `useDriveEnabled`).
 
@@ -39,14 +38,14 @@ The list above is closed on purpose. Each of these looks like a field and delibe
 | Service ports and the `VITE_API_URL` / `VITE_DATABASE_URL` and `BACKEND_URL` / `DATABASE_URL` overrides | Wiring, not preference: every default already matches, and a settings save leaves the keys in `.env` untouched                      |
 | `DOWNLOADER_EXTENSION_ID`, `FRONTEND_URL`                                                               | CORS origins the download server defaults for itself; only a reloaded unpacked extension or a non-default dev origin ever sets them |
 | The sidebar's lectures/courses mode and the search view's chosen course                                 | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                  |
-| Running unfinished lectures at app start                                                                | A pipeline sweep is a deliberate act; the runner button and `backend/`'s 03:00 cron already cover both the manual and the unattended case |
+| Running unfinished lectures at app start                                                                | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s 03:00 cron already cover both the manual and the unattended case |
+| The 03:00 cron's hour, and a switch for it                                                              | `AUTO_RUN: off` already stops every unattended run, which is the only thing anyone asked for; an hour field would be a second knob for one behaviour |
 
 ## `/settings`
 
 `features/settings/SettingsView.tsx`, reachable from the sidebar's fifth nav row. It loads the store
 and the backend's options once, edits a local form, and saves the changed fields in one
-`saveSettings` call. The two UI preferences are written to `localStorage` first and unconditionally:
-they need no request, so a downed service must not cost the user a toggle.
+`saveSettings` call.
 
 **Every save answers.** Success toasts, and so does failure — including a connection error, whose
 own toast is deduped per service and reads as ambient noise. The store is written before the owning
@@ -82,7 +81,7 @@ than the connection toast the client already shows.
 The wall shows more than it requires. The language picker is there so the rest of the screen reads in
 the user's own language, and the Drive toggle so consent happens during onboarding rather than being
 discovered later; neither blocks, and Drive's folder field is required only while the toggle is on.
-The two UI preferences and auto-run are not asked about at all and keep their first-boot defaults.
+Auto-run is not asked about and keeps its default — a first install has nothing to run yet.
 
 The data folder is **prefilled but confirmed, never silently accepted** — a checkbox, not an
 implicit acceptance. In browser dev the prefill is whatever the store already holds, so an
@@ -120,19 +119,6 @@ for one to survive. Prefixes are provider convention rather than contract, so a 
 
 **Save is always permitted.** An unreachable provider must never reject a valid key, so `unverified`
 is not a failure state.
-
-## The UI preference — `shared/utils/uiPreferences.ts`
-
-Runner-control visibility is the user's own preference, so it lives in that browser profile's
-`localStorage` and reaches no service — the same rule the language follows. `resolvePreference` is
-the whole rule: a stored choice wins, otherwise the shipped default, controls **hidden**. A fresh
-profile therefore starts at the shipped default rather than inheriting another machine's answer,
-which is the point: these two are cosmetics, and the settings store is for credentials, the data
-root and the backend's pipeline config. `usePreference` re-renders on every write, so toggling it
-here reaches the sidebar without a reload.
-
-Its one consumer is `RunnerPipelineRow`, which renders nothing — button and in-flight panel alike —
-while the controls are hidden.
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 

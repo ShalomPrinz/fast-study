@@ -76,6 +76,7 @@ describe('isInitialized', () => {
 function status(running: boolean, lectures: string[]): RunnerStatus {
   return {
     runner: { running, total: lectures.length, done: 0, lastError: null },
+    queue: [],
     inFlight: lectures.map((lecture) => ({
       course: 'Algebra',
       lecture,

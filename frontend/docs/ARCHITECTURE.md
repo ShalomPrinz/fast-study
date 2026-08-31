@@ -60,16 +60,19 @@ fresher one.
 | `/course/:course`        | `CourseView`      |
 | `/downloads`             | `DownloadsView`   |
 | `/search`                | `SearchView`      |
+| `/running`               | `RunnerView`      |
 | `/settings`              | `SettingsView`    |
 | `/:course/:lecture`      | `MainView`        |
 | `/:course/:lecture/edit` | `EditSummaryView` |
 
 `kind` (lecture vs recitation) is a query param `?kind=recitation`, propagated everywhere rather than
-being a route segment. The static `course`/`downloads`/`search`/`settings` segments outrank the dynamic
+being a route segment. The static `course`/`downloads`/`search`/`settings`/`running` segments outrank the dynamic
 `/:course/:lecture` pattern in v7 ranking, so they never collide.
 
 `/downloads`, `/search` and `/settings` are three of the sidebar's five nav rows, and the only ones that are routes —
-Lectures and Courses swap the tree below without navigating. Clicking anything in that tree navigates
+Lectures and Courses swap the tree below without navigating. `/running` is the sixth destination and
+is reached only from the one-line row at the head of the lectures tree, which owns its own active
+state; the nav rows treat it as a route, so neither tree row reads as active while it is up. Clicking anything in that tree navigates
 away from `/downloads`, which is the intended "exit on sidebar click". Because that unmounts
 the view, `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
 and `RunnerStatusProvider`, so the page's discovery, edits, in-flight bulk runs and download jobs all outlive

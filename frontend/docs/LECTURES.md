@@ -78,9 +78,10 @@ mount and on every SSE notify — never polled:
 `runner.lastError` is an unexpected exception that aborted a sweep, distinct from the expected per-step
 failures in `errors`.
 
-`RunnerPipelineRow` — the "Run incomplete pipelines" button and the in-flight panel below it — renders
-nothing at all when `runnerControlsVisible` is off, which is the shipped default. That preference lives
-in `shared/utils/uiPreferences.ts`; see `SETTINGS.md`.
+`queue` is what the runner has left to take, in order. `RunnerPipelineRow` — one line at the head of
+the tree — spends it and `runner` on a `done/total` count and links to `/running`, which is the whole
+surface for the queue, the in-flight entries and the lectures nothing is scheduled to pick up. It is
+always rendered, because it is the only route to that page.
 
 Error toasts fan out through `useReportOnce`, which dedupes `(key, message)` so a repeated refresh doesn't
 re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs later.
