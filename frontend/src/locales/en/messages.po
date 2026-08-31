@@ -217,7 +217,7 @@ msgstr "+ add source URL"
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:244
+#: src/features/settings/SettingsView.tsx:251
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 
@@ -233,15 +233,19 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
+#: src/features/course-overview/components/GenerateAllButton.tsx:42
+msgid "All Generated"
+msgstr "All Generated"
+
 #: src/features/course-overview/constants/overview.ts:14
 msgid "Analyze"
 msgstr "Analyze"
 
-#: src/features/settings/SettingsView.tsx:153
+#: src/features/settings/SettingsView.tsx:160
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:217
+#: src/features/settings/SettingsView.tsx:224
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -298,7 +302,7 @@ msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/settings/SettingsView.tsx:243
+#: src/features/settings/SettingsView.tsx:250
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -342,7 +346,7 @@ msgstr "Complete"
 msgid "Connect"
 msgstr "Connect"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:44
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
@@ -375,7 +379,7 @@ msgstr "Couldn't load entries. Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/settings/SettingsView.tsx:116
+#: src/features/settings/SettingsView.tsx:123
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "Couldn't save all settings — check the services are running and try again."
 
@@ -586,7 +590,7 @@ msgstr "Fully processed lectures"
 msgid "Generate"
 msgstr "Generate"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:45
 msgid "Generate All"
 msgstr "Generate All"
 
@@ -603,7 +607,7 @@ msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "Generating from {stepLabel} step will rebuild:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:74
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:40
 #: src/features/lectures/EditSummaryView.tsx:186
 msgid "Generating…"
 msgstr "Generating…"
@@ -612,7 +616,7 @@ msgstr "Generating…"
 msgid "Get a key"
 msgstr "Get a key"
 
-#: src/features/settings/SettingsView.tsx:204
+#: src/features/settings/SettingsView.tsx:211
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -865,14 +869,14 @@ msgstr "Other links"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:49
 #: src/features/course-overview/components/ExtractorRow.tsx:29
-#: src/features/course-overview/components/GenerateAllButton.tsx:23
+#: src/features/course-overview/components/GenerateAllButton.tsx:28
 #: src/features/course-overview/components/StepRow.tsx:38
 msgid "Overview failed to start"
 msgstr "Overview failed to start"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:48
 #: src/features/course-overview/components/ExtractorRow.tsx:28
-#: src/features/course-overview/components/GenerateAllButton.tsx:22
+#: src/features/course-overview/components/GenerateAllButton.tsx:27
 #: src/features/course-overview/components/StepRow.tsx:37
 msgid "Overview is already running for this course"
 msgstr "Overview is already running for this course"
@@ -1052,7 +1056,7 @@ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
-#: src/features/settings/SettingsView.tsx:145
+#: src/features/settings/SettingsView.tsx:152
 msgid "Save"
 msgstr "Save"
 
@@ -1098,12 +1102,12 @@ msgid "session expired"
 msgstr "session expired"
 
 #: src/features/settings/SettingsView.tsx:76
-#: src/features/settings/SettingsView.tsx:138
+#: src/features/settings/SettingsView.tsx:145
 #: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/settings/SettingsView.tsx:109
+#: src/features/settings/SettingsView.tsx:116
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -1111,7 +1115,7 @@ msgstr "Settings saved"
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/settings/SettingsView.tsx:228
+#: src/features/settings/SettingsView.tsx:235
 msgid "Show the run controls in the sidebar"
 msgstr "Show the run controls in the sidebar"
 
@@ -1136,7 +1140,7 @@ msgstr "Start using Fast Study"
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:194
+#: src/features/settings/SettingsView.tsx:201
 msgid "Storage"
 msgstr "Storage"
 
@@ -1172,7 +1176,7 @@ msgstr "summary did not use any material"
 msgid "summary did not use material"
 msgstr "summary did not use material"
 
-#: src/features/settings/SettingsView.tsx:174
+#: src/features/settings/SettingsView.tsx:181
 msgid "Summary model"
 msgstr "Summary model"
 
@@ -1190,7 +1194,7 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
-#: src/features/settings/SettingsView.tsx:231
+#: src/features/settings/SettingsView.tsx:238
 msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 

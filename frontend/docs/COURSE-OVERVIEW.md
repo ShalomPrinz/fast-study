@@ -40,8 +40,10 @@ as monospace chips from `generatedFiles`.
 The distinction is `skip_existing`, and it is the feature's core rule:
 
 - **Header button** — one call with `skipExisting=true` and no slug/phase filter. It reads "Generate All"
-  when nothing exists and "Continue Generating" once `startedSlug` finds any output on disk. Either way it
-  only fills in missing phase outputs, so it can never overwrite and needs no warning modal.
+  when nothing exists and "Continue Generating" once `startedSlug` finds any output on disk. With every
+  branch done there is nothing left to fill in, so it rests as a disabled "All Generated" and re-running a
+  finished branch is the row's own ↺. Either way it only fills in missing phase outputs, so it can never
+  overwrite and needs no warning modal.
 - **Per-extractor ↺** — `generate([slug])` with no `skipExisting`, i.e. overwrite. Confirmed by a modal
   listing every `{slug}.*` that will be rebuilt.
 - **Per-phase** — `generate([slug], phase)`: rebuild that phase and every later one, keeping earlier files.

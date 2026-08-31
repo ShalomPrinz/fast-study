@@ -217,7 +217,7 @@ msgstr "+ הוסף כתובת מקור"
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:244
+#: src/features/settings/SettingsView.tsx:251
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -233,15 +233,19 @@ msgstr "הוסף הרצאה"
 msgid "Add recitation"
 msgstr "הוסף תרגול"
 
+#: src/features/course-overview/components/GenerateAllButton.tsx:42
+msgid "All Generated"
+msgstr "הכל יוצר"
+
 #: src/features/course-overview/constants/overview.ts:14
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:153
+#: src/features/settings/SettingsView.tsx:160
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:217
+#: src/features/settings/SettingsView.tsx:224
 msgid "Appearance and behaviour"
 msgstr "מראה והתנהגות"
 
@@ -298,7 +302,7 @@ msgstr "אין גישה ל{serviceName} בכתובת {baseUrl}. ודא שהשי�
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/settings/SettingsView.tsx:243
+#: src/features/settings/SettingsView.tsx:250
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -342,7 +346,7 @@ msgstr "הושלם"
 msgid "Connect"
 msgstr "התחבר"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:44
 msgid "Continue Generating"
 msgstr "המשך ייצור"
 
@@ -375,7 +379,7 @@ msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/settings/SettingsView.tsx:116
+#: src/features/settings/SettingsView.tsx:123
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
@@ -586,7 +590,7 @@ msgstr "הרצאות שהושלמו במלואן"
 msgid "Generate"
 msgstr "ייצר"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:45
 msgid "Generate All"
 msgstr "ייצר הכל"
 
@@ -603,7 +607,7 @@ msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "ייצור משלב {stepLabel} יבנה מחדש:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:74
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:40
 #: src/features/lectures/EditSummaryView.tsx:186
 msgid "Generating…"
 msgstr "מייצר…"
@@ -612,7 +616,7 @@ msgstr "מייצר…"
 msgid "Get a key"
 msgstr "השגת מפתח"
 
-#: src/features/settings/SettingsView.tsx:204
+#: src/features/settings/SettingsView.tsx:211
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -865,14 +869,14 @@ msgstr "קישורים אחרים"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:49
 #: src/features/course-overview/components/ExtractorRow.tsx:29
-#: src/features/course-overview/components/GenerateAllButton.tsx:23
+#: src/features/course-overview/components/GenerateAllButton.tsx:28
 #: src/features/course-overview/components/StepRow.tsx:38
 msgid "Overview failed to start"
 msgstr "הסקירה נכשלה בהפעלה"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:48
 #: src/features/course-overview/components/ExtractorRow.tsx:28
-#: src/features/course-overview/components/GenerateAllButton.tsx:22
+#: src/features/course-overview/components/GenerateAllButton.tsx:27
 #: src/features/course-overview/components/StepRow.tsx:37
 msgid "Overview is already running for this course"
 msgstr "סקירה כבר רצה עבור קורס זה"
@@ -1052,7 +1056,7 @@ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
-#: src/features/settings/SettingsView.tsx:145
+#: src/features/settings/SettingsView.tsx:152
 msgid "Save"
 msgstr "שמור"
 
@@ -1098,12 +1102,12 @@ msgid "session expired"
 msgstr "החיבור פג"
 
 #: src/features/settings/SettingsView.tsx:76
-#: src/features/settings/SettingsView.tsx:138
+#: src/features/settings/SettingsView.tsx:145
 #: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:109
+#: src/features/settings/SettingsView.tsx:116
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1111,7 +1115,7 @@ msgstr "ההגדרות נשמרו"
 msgid "Show more"
 msgstr "הצג עוד"
 
-#: src/features/settings/SettingsView.tsx:228
+#: src/features/settings/SettingsView.tsx:235
 msgid "Show the run controls in the sidebar"
 msgstr "להציג את פקדי ההרצה בסרגל הצד"
 
@@ -1136,7 +1140,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:194
+#: src/features/settings/SettingsView.tsx:201
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1172,7 +1176,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "summary did not use material"
 msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:174
+#: src/features/settings/SettingsView.tsx:181
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1190,7 +1194,7 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הארוך ביותר ש
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/features/settings/SettingsView.tsx:231
+#: src/features/settings/SettingsView.tsx:238
 msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 msgstr "הכפתור \"הרץ צינורות לא שלמים\" ורשימת ההרצאות שבעבודה."
 
