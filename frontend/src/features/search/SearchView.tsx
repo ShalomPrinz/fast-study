@@ -17,7 +17,7 @@ const COURSE_STORAGE_KEY = 'fastStudySearchCourse'
 // Findings per page. Snippets are built only for what's on screen, so "Show more" stays cheap.
 const PAGE_SIZE = 20
 
-// Findings per lecture card before its own "Show more", so one dense lecture can't fill the page.
+// Findings a lecture card shows collapsed, before its own "Show more" opens the lecture in full.
 const PER_LECTURE = 5
 
 // A lecture's consecutive groups — the unit both the page and the per-card cap are measured in.
@@ -55,7 +55,7 @@ export default function SearchView() {
   const [includeLectures, setIncludeLectures] = useState(true)
   const [includeRecitations, setIncludeRecitations] = useState(true)
   const [shown, setShown] = useState(PAGE_SIZE)
-  const [expanded, setExpanded] = useState<Record<string, number>>({})
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
 
   // Derived rather than stored, so a stale stored name (or a tree that hasn't loaded) falls back.
   const course = active.find((c) => c.name === chosen)?.name ?? active[0]?.name ?? null
@@ -101,7 +101,8 @@ export default function SearchView() {
   const blocks = useMemo(
     () =>
       visibleLectures.map((lecture) => {
-        const visible = takeGroups(lecture.groups, expanded[keyOf(lecture.summary)] ?? PER_LECTURE)
+        const key = keyOf(lecture.summary)
+        const visible = expanded.has(key) ? lecture.groups : takeGroups(lecture.groups, PER_LECTURE)
         return {
           summary: lecture.summary,
           hits: visible.map(buildHit),
@@ -119,7 +120,7 @@ export default function SearchView() {
   // A new search must not inherit the previous one's page or expanded cards.
   useEffect(() => {
     setShown(PAGE_SIZE)
-    setExpanded({})
+    setExpanded(new Set())
   }, [query, wholeWord, includeLectures, includeRecitations, course])
 
   // Which lectures have a summary.pdf to open, straight off the live tree.
@@ -263,11 +264,7 @@ export default function SearchView() {
                   course={course ?? ''}
                   hasPdf={withPdf.has(key)}
                   remaining={block.remaining}
-                  // Advances from what's rendered, not the old threshold: a group overshooting the
-                  // threshold would otherwise be re-selected unchanged and the click do nothing.
-                  onShowMore={() =>
-                    setExpanded((m) => ({ ...m, [key]: block.count + PER_LECTURE }))
-                  }
+                  onShowMore={() => setExpanded((s) => new Set(s).add(key))}
                 />
               )
             })}

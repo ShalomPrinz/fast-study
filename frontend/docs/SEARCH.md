@@ -94,14 +94,17 @@ cap — never at the expanded counts — is what keeps the two limits independen
 place and can never push a later lecture off the page. Bucketing up front also replaces the old regroup-on-
 render step, so a title still can never appear twice.
 
-A card's own **Show N more** raises that lecture's threshold by 5, keyed by `kind:name` in an
-`expanded` map. `N` is the findings left in that lecture, not the 5 about to appear, so the label says
-whether the click is worth making; the card is handed that `remaining` count rather than a boolean. Both buttons **advance from what is rendered, not from the previous threshold**
-(`count + 5` in a card, `pageCount + 20` at the foot). A group that overshoots the threshold would otherwise
-be re-selected unchanged by the next threshold and the click would do nothing — with uncapped merging a single
-group can hold hundreds of findings, so a one-letter query made most clicks dead. The page's button is keyed
-on **lectures** remaining, not findings remaining: with cards collapsed there are always findings left over,
-and a button that re-renders the same page of lectures does nothing.
+A card's own **Show N more** opens that lecture **in full** — the 5 is the collapsed state, not a page size,
+so `expanded` is a `Set` of `kind:name` rather than a map of thresholds. `N` is the findings left in that
+lecture and clicking reveals exactly those `N`; a per-click increment promised 20 and delivered 5, because the
+label counted what remained while the increment counted what was added. The card is handed that `remaining`
+count rather than a boolean.
+
+The page's button does still **advance from what is rendered, not from the previous threshold**
+(`pageCount + 20`). A lecture that overshoots the threshold would otherwise be re-selected unchanged by the
+next threshold and the click would do nothing. It is also keyed on **lectures** remaining, not findings
+remaining: with cards collapsed there are always findings left over, and a button that re-renders the same
+page of lectures does nothing.
 
 Grouping always runs over the *full* match list (it is cheap, ~15ms for 15k matches, and gives the count line
 its totals); only `buildHit` is restricted to the groups actually rendered — at most 5-or-slightly-more per
@@ -111,7 +114,7 @@ expansions included, and vanishes once everything is shown. They are **two `<Plu
 single message would need a plural nested in a plural, and each half already reads as a phrase on its own.
 The lecture count is bound to a local literally named `lectures` because Lingui keys the placeholder on the
 identifier — renaming it silently orphans the Hebrew translation. Both the page threshold and the `expanded`
-map reset on any change to the query, the filters, the whole-word toggle or the course, so a new search never
+set reset on any change to the query, the filters, the whole-word toggle or the course, so a new search never
 inherits the previous one's expanded cards.
 
 ## Controls

@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:237
+#: src/features/search/SearchView.tsx:238
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -46,7 +46,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:235
+#: src/features/search/SearchView.tsx:236
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
@@ -141,7 +141,7 @@ msgstr "{effectiveName} may split into parts that overwrite existing {existing} 
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
-#: src/features/search/SearchView.tsx:236
+#: src/features/search/SearchView.tsx:237
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
@@ -383,7 +383,7 @@ msgstr "Couldn't load summaries for {course}."
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "Couldn't save all settings — check the services are running and try again."
 
-#: src/features/search/SearchView.tsx:176
+#: src/features/search/SearchView.tsx:177
 msgid "Course"
 msgstr "Course"
 
@@ -684,7 +684,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:197
+#: src/features/search/SearchView.tsx:198
 #: src/shared/sidebar/Sidebar.tsx:76
 msgid "Lectures"
 msgstr "Lectures"
@@ -711,7 +711,7 @@ msgstr "Loaded"
 msgid "Loading recordings…"
 msgstr "Loading recordings…"
 
-#: src/features/search/SearchView.tsx:222
+#: src/features/search/SearchView.tsx:223
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
@@ -723,7 +723,7 @@ msgstr "Loading…"
 msgid "Manage account"
 msgstr "Manage account"
 
-#: src/features/search/SearchView.tsx:212
+#: src/features/search/SearchView.tsx:213
 msgid "Match whole word"
 msgstr "Match whole word"
 
@@ -816,7 +816,7 @@ msgstr "not provided"
 msgid "Note: This will delete all files in this lecture."
 msgstr "Note: This will delete all files in this lecture."
 
-#: src/features/search/SearchView.tsx:249
+#: src/features/search/SearchView.tsx:250
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
@@ -966,7 +966,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:205
+#: src/features/search/SearchView.tsx:206
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -1013,7 +1013,7 @@ msgstr "Required"
 msgid "Restore the original summary"
 msgstr "Restore the original summary"
 
-#: src/features/search/SearchView.tsx:230
+#: src/features/search/SearchView.tsx:231
 msgid "Results"
 msgstr "Results"
 
@@ -1076,15 +1076,15 @@ msgstr "Saving…"
 msgid "Search"
 msgstr "Search"
 
-#: src/features/search/SearchView.tsx:142
+#: src/features/search/SearchView.tsx:143
 msgid "Search summaries"
 msgstr "Search summaries"
 
-#: src/features/search/SearchView.tsx:164
+#: src/features/search/SearchView.tsx:165
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
 
-#: src/features/search/SearchView.tsx:145
+#: src/features/search/SearchView.tsx:146
 msgid "Searches the generated summaries of one course — the one picked in the field"
 msgstr "Searches the generated summaries of one course — the one picked in the field"
 
@@ -1111,7 +1111,7 @@ msgstr "Settings"
 msgid "Settings saved"
 msgstr "Settings saved"
 
-#: src/features/search/SearchView.tsx:283
+#: src/features/search/SearchView.tsx:280
 msgid "Show more"
 msgstr "Show more"
 
@@ -1310,7 +1310,7 @@ msgstr "We couldn't check this key right now. You can still save it."
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
-#: src/features/search/SearchView.tsx:214
+#: src/features/search/SearchView.tsx:215
 msgid "Whole word only"
 msgstr "Whole word only"
 
