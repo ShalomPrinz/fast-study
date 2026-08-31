@@ -73,7 +73,9 @@
   margin: var(--space-5) calc(var(--space-6) * -1) calc(var(--space-5) * -1);
   padding: var(--space-3) var(--space-6);
   border: none;
-  border-top: 1px solid var(--line-soft);
+  /* A step darker than the --line-soft rules between snippets: this one closes the list rather than
+     parting it, so it has to read as the stronger line of the two. */
+  border-top: 1px solid var(--line);
   /* Matches .search-result's radius: the hover fill reaches the card's edge and must not square it. */
   border-radius: 0 0 var(--r-lg) var(--r-lg);
   background: none;
