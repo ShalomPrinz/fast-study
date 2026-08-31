@@ -20,6 +20,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `gemini_api_key_set` / `groq_api_key_set` (bool)   | `GEMINI_API_KEY` / `GROQ_API_KEY`                 |
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
+| `auto_run`                                         | `AUTO_RUN`                                        |
 
 The two API keys are **write-only**: `PUT` accepts `gemini_api_key` / `groq_api_key`, and the read
 path reports only whether each is set, so a stored key never travels back to the client — the same

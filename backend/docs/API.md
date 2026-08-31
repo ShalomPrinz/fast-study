@@ -48,10 +48,10 @@ Static `{"extractors": [{"slug", "title", "phases"}]}` in declaration order. `ph
 
 ## Config
 
-The backend-owned settings: both API keys, the Gemini model, the Drive toggle and the Drive root folder. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
+The backend-owned settings: both API keys, the Gemini model, the Drive toggle, the Drive root folder and the `AUTO_RUN` ceiling. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
 
 `POST /config`
-body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
+body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder, auto_run}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
 
 `GET /config/options`
 `{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's probe URL stays server-side.

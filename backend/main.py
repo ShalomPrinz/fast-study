@@ -206,6 +206,7 @@ class ConfigUpdate(BaseModel):
     gemini_model: str | None = None
     drive_enabled: bool | None = None
     gdrive_root_folder: str | None = None
+    auto_run: str | None = None
 
 
 class KeyProbe(BaseModel):
