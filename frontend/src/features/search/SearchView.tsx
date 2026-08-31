@@ -179,7 +179,9 @@ export default function SearchView() {
             </button>
           </div>
 
-          {loading && (
+          {/* Only while a query is waiting on the corpus — switching course with an empty box is
+              nothing the user is waiting for. */}
+          {loading && query.trim().length > 0 && (
             <div className="search-status">
               <Trans>Loading summaries…</Trans>
             </div>

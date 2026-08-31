@@ -14,6 +14,13 @@ largest course is ~760 KB across 35 summaries, so the whole corpus is cheaper th
 `name` is the bare lecture/recitation directory name — the same identifier every lecture-scoped route
 takes — so a hit builds `fileUrl(course, name, 'summary.pdf', kind)` directly.
 
+`useCourseSummaries` holds `{summaries, loading, error}` in **one** state object, so a resolved fetch lands
+the results and clears the flag in the same render; as three separate `useState`s the `.then`/`.finally` pair
+left a frame in which the loading line sat above the new results and then vanished.
+
+The loading line shows only while the query box is non-empty. Switching course with an empty box is nothing
+the user is waiting on, and on a cached-corpus-sized fetch a flash was all the line ever communicated.
+
 **The corpus is never invalidated.** A summary edited elsewhere mid-session keeps matching its old text
 until the page is reloaded. Deliberate: the staleness window is one visit and re-fetching on every SSE
 notify would re-download the course for edits the searcher isn't looking at.
