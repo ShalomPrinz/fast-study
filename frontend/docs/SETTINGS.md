@@ -16,9 +16,16 @@ route that edits them all. The module behind it is
 | Drive root folder | none — required once Drive is on          | any folder name      | `backend/`  |
 | Summary model     | the first curated entry                   | the curated dropdown | `backend/`  |
 | Runner controls   | hidden                                    | shown, hidden        | frontend    |
+| Auto-run          | the whole pipeline                        | audio only, off      | `backend/`  |
 
 The model list comes from `GET /config/options`, so a model id that the free tier does not serve can
 never be typed in — a wrong one surfaces minutes later as a pipeline failure.
+
+**Auto-run is a ceiling on unattended work, not a schedule.** It caps a video dropped on a lecture or
+fetched by the downloader, and the backend's nightly 03:00 pass, at the whole pipeline / the audio
+step / nothing at all. It never caps a run the user starts: the runner's own button always runs
+everything. Unset means the whole pipeline, the same fallback `settings.auto_run()` applies, so both
+ends agree on a fresh install (`useAutoRun`, beside `useDriveEnabled`).
 
 ## What is not a setting
 
@@ -75,7 +82,7 @@ than the connection toast the client already shows.
 The wall shows more than it requires. The language picker is there so the rest of the screen reads in
 the user's own language, and the Drive toggle so consent happens during onboarding rather than being
 discovered later; neither blocks, and Drive's folder field is required only while the toggle is on.
-The two UI preferences are not asked about at all and keep their first-boot defaults.
+The two UI preferences and auto-run are not asked about at all and keep their first-boot defaults.
 
 The data folder is **prefilled but confirmed, never silently accepted** — a checkbox, not an
 implicit acceptance. In browser dev the prefill is whatever the store already holds, so an
@@ -134,7 +141,7 @@ the whole app. It fetches nothing itself: `app/InitGate` pushes the read it alre
 the wall pushes what it saved, and `/settings` pushes each save — so a change reaches every screen
 without a reload, and the settings screen stays the only place that talks to the store.
 
-`useDriveEnabled` is its one consumer so far. Nothing stored means off, the same default the
+`useDriveEnabled` and `useAutoRun` are its consumers. Nothing stored means Drive off, the same default the
 backend's `settings.drive_enabled()` gives a missing `DRIVE_ENABLED`, so both ends agree on a fresh
 install; it drives the pipeline's Drive stage and the definition of a complete lecture (see
 [LECTURES.md](LECTURES.md)).

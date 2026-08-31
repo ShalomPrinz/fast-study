@@ -51,9 +51,9 @@ after Electron lands.
 
 `saveSettings` is **two phases, in order**: the store is written first, since it is what a fresh boot reads
 back, then each changed field is pushed to its one owner's `POST /config` — `backend/` for the keys, model,
-Drive toggle and Drive folder, `database/` for `data_root`. Nothing restarts. Every field the store
-holds has an owner; the UI language and the runner-control toggle are not among them — they never
-leave the browser profile's `localStorage`.
+Drive toggle, Drive folder and auto-run, `database/` for `data_root`. Nothing restarts. Every field
+the store holds has an owner; the UI language and the runner-control toggle are not among them — they
+never leave the browser profile's `localStorage`.
 
 `probeKey(provider, key)` answers `valid` / `rejected` / `unverified`; every failure short of a verdict
 folds to `unverified`, because an unreachable provider must never report a good key as bad.

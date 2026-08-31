@@ -1,6 +1,6 @@
 import { createContext, useContext, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { Settings } from '@/services/settings'
+import { toAutoRun, type AutoRun, type Settings } from '@/services/settings'
 
 interface SettingsValue {
   settings: Settings | null
@@ -31,4 +31,10 @@ export function useSettingsContext(): SettingsValue {
  *  `settings.drive_enabled()` gives a missing DRIVE_ENABLED, so both ends agree on a fresh install. */
 export function useDriveEnabled(): boolean {
   return useSettingsContext().settings?.driveEnabled ?? false
+}
+
+/** How much of the pipeline an automatic trigger may run. Unset or unrecognised means `full`, the
+ *  same fallback `settings.auto_run()` applies on the backend. */
+export function useAutoRun(): AutoRun {
+  return toAutoRun(useSettingsContext().settings?.autoRun ?? null)
 }

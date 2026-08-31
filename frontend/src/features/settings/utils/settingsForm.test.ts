@@ -54,6 +54,7 @@ const STORE: Settings = {
   geminiModel: null,
   driveEnabled: null,
   gdriveRootFolder: null,
+  autoRun: null,
 }
 
 describe('isInitialized', () => {

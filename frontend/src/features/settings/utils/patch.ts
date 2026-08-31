@@ -1,4 +1,4 @@
-import type { Settings, SettingsPatch } from '@/services/settings'
+import { toAutoRun, type AutoRun, type Settings, type SettingsPatch } from '@/services/settings'
 
 export interface SettingsForm {
   geminiApiKey: string
@@ -7,6 +7,7 @@ export interface SettingsForm {
   driveEnabled: boolean
   gdriveRootFolder: string
   geminiModel: string
+  autoRun: AutoRun
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
@@ -21,5 +22,6 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   if (form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
   }
+  if (form.autoRun !== toAutoRun(stored.autoRun)) patch.autoRun = form.autoRun
   return patch
 }

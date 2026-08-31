@@ -4,6 +4,8 @@ import {
   fetchConfigOptions,
   fetchSettings,
   saveSettings,
+  toAutoRun,
+  type AutoRun,
   type ConfigOptions,
   type Settings,
   type SettingsPatch,
@@ -40,6 +42,7 @@ function initialForm(stored: Settings, options: ConfigOptions): FormState {
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? options.geminiModels[0] ?? '',
+    autoRun: toAutoRun(stored.autoRun),
     runnerControlsVisible: readPreference('runnerControlsVisible'),
   }
 }
@@ -224,6 +227,29 @@ export default function SettingsView() {
               <Trans>Appearance and behaviour</Trans>
             </h2>
             <LanguageField />
+            <div className="settings-field">
+              <div className="settings-label">
+                <label htmlFor="auto-run">
+                  <Trans>When a new video arrives</Trans>
+                </label>
+              </div>
+              <select
+                id="auto-run"
+                className="settings-select"
+                value={form.autoRun}
+                onChange={(e) => setForm({ ...form, autoRun: e.target.value as AutoRun })}
+              >
+                <option value="full">{t`Run the whole pipeline`}</option>
+                <option value="audio">{t`Extract the audio only`}</option>
+                <option value="off">{t`Do nothing — I'll start runs myself`}</option>
+              </select>
+              <span className="settings-hint">
+                <Trans>
+                  The ceiling on unattended work: it caps a dropped or downloaded video and the
+                  nightly 03:00 pass alike, never a run you start from the sidebar's runner.
+                </Trans>
+              </span>
+            </div>
             <label className="settings-check">
               <input
                 type="checkbox"

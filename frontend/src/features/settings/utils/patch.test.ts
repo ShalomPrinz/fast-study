@@ -9,6 +9,7 @@ const STORED: Settings = {
   geminiModel: 'gemini-3.5-flash',
   driveEnabled: false,
   gdriveRootFolder: null,
+  autoRun: null,
 }
 
 const UNCHANGED: SettingsForm = {
@@ -18,6 +19,7 @@ const UNCHANGED: SettingsForm = {
   driveEnabled: false,
   gdriveRootFolder: '',
   geminiModel: 'gemini-3.5-flash',
+  autoRun: 'full',
 }
 
 describe('buildPatch', () => {
@@ -40,5 +42,4 @@ describe('buildPatch', () => {
     )
     expect(patch).toEqual({ dataRoot: '/other', driveEnabled: true, gdriveRootFolder: 'Lectures' })
   })
-
 })
