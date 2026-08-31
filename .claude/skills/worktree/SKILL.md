@@ -17,7 +17,9 @@ git -C <repo-root> worktree add -b <slug> <repo-root>-<slug> main
 
 Then run every command from **`<repo-root>-<slug>`**, on the local branch **`<slug>`**. Do not `cd` to `<repo-root>` — it stays on `main`, untouched.
 
-A fresh worktree has none of the git-ignored files the services need. **Run these next, before any other work** — every service reads `.env` from the repo root, and without `node_modules` the lint and test commands will not run. Run only the installs the task's service needs:
+A fresh worktree has none of the git-ignored files the services need. **Run all of these next, before any
+other work** — every line, whether or not the task touches that service. Deciding which installs a change
+"needs" is not yours to make: a worktree the app cannot be run from is not set up.
 
 ```
 cp <repo-root>/.env <repo-root>-<slug>/.env
@@ -32,6 +34,13 @@ cd <repo-root>-<slug>/downloader/auto && npm install
 - When the last step is done, **stop**. Leave the branch sitting locally for the user to review and merge.
 - If the work has to be abandoned mid-way, leave the branch as-is and report; do not reset or delete it.
 
-Commit message format: a one-line summary starting with `<service>: ` or `<feature>: `. No other body text. A "Co-Authored by Claude" message is allowed.
+### One commit per concern
+
+A task with several independent items is several commits — one per item. A reviewer reads a branch commit by commit, and a fix has to be revertable on its own.
+
+- Split by **concern**, not by file. Two concerns touching the same file are still two commits; one concern touching six files is still one commit.
+- Refactors and renames a concern needs are part of that concern's commit, not a separate cleanup commit — unless the refactor stands alone without any of the concerns, in which case it goes first.
+
+Commit message format: a one-line summary starting with `<service>: ` or `<feature>: `, naming the one thing that commit does. No other body text. A "Co-Authored by Claude" message is allowed.
 
 > **Worktree tooling note:** this session's Bash tool refuses heredocs and multi-part commands with redirects while worktree-isolated. Use the Write/Edit tools for file creation, and keep shell commands simple.
