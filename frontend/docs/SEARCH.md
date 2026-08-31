@@ -77,31 +77,41 @@ range in a `<mark>` — never `dangerouslySetInnerHTML`.
 ## Rendering and paging
 
 **One card per lecture.** `SearchResult` renders a lecture's header row once — file icon, name, a neutral
-`.chip` reading `lecture`/`recitation`, and the open glyph — followed by every snippet found in it
+`.chip` reading `lecture`/`recitation`, and the open glyph — followed by that lecture's visible snippets
 (`SearchSnippet`), indented to clear the icon column and parted by `--line-soft` rules. Matches wear
 `--highlight`.
 
-Paging is over **findings** — individual occurrences — 20 at a time, and **Show more** adds 20 more.
-Visible groups are chosen by walking the full group list and accumulating `matches.length` until the
-threshold is reached. 20 is a **minimum, not an exact cut**: the group that crosses it is included whole.
-A merged snippet's text extends past a mid-group cut, so stopping there would leave an occurrence visible
-in the text but unhighlighted, which reads as a bug; completing the group guarantees every occurrence on
-screen is marked. Pages are therefore 20-or-slightly-more findings.
+Two independent limits bound what is on screen: **5 findings per lecture card** and **20 findings per page**.
+Both count findings — individual occurrences — and both obey the same rule: **a group is never split**, so the
+group crossing a limit is included whole and each limit is a minimum rather than an exact cut. A merged
+snippet's text extends past a mid-group cut, so stopping there would leave an occurrence visible in the text
+but unhighlighted, which reads as a bug; completing the group guarantees every occurrence on screen is marked.
+`takeGroups(groups, limit)` is that walk, shared by both limits.
 
-**Show more advances from what is rendered, not from the previous threshold** (`setShown(shownFindings + 20)`).
-A group that overshoots the threshold would otherwise be re-selected unchanged by the next threshold and
-the click would do nothing — with uncapped merging a single group can hold hundreds of findings, so a
-one-letter query made most clicks dead.
+**The page is a set of whole lectures.** Groups are bucketed into consecutive-summary lectures once, then
+lectures are taken in order until their *base-capped* counts reach 20. Sizing the page at the 5-per-lecture
+cap — never at the expanded counts — is what keeps the two limits independent: expanding a card grows it in
+place and can never push a later lecture off the page. Bucketing up front also replaces the old regroup-on-
+render step, so a title still can never appear twice.
 
-Grouping always runs over the *full* match list (it is cheap, ~15ms for 15k matches, and gives the count
-line its totals); only `buildHit` is restricted to the visible groups. Those are regrouped by summary on
-every render, so a lecture straddling a page boundary keeps one title block that simply grows — a title
-can never appear twice. The counts sit at the end of the `Results` caption and report findings
-(`71 results in 16 lectures — showing 21`), where the "showing" number is the true count rendered and
-vanishes once everything is shown. They are **two `<Plural>` messages, not one**: a single message would
-need a plural nested in a plural, and each half already reads as a phrase on its own. The shown count
-resets to 20 on any change to the query, the filters, the whole-word toggle or the course, so a new search
-never inherits the previous one's expanded page.
+A card's own **Show more snippets** raises that lecture's threshold by 5, keyed by `kind:name` in an
+`expanded` map. Both buttons **advance from what is rendered, not from the previous threshold**
+(`count + 5` in a card, `pageCount + 20` at the foot). A group that overshoots the threshold would otherwise
+be re-selected unchanged by the next threshold and the click would do nothing — with uncapped merging a single
+group can hold hundreds of findings, so a one-letter query made most clicks dead. The page's button is keyed
+on **lectures** remaining, not findings remaining: with cards collapsed there are always findings left over,
+and a button that re-renders the same page of lectures does nothing.
+
+Grouping always runs over the *full* match list (it is cheap, ~15ms for 15k matches, and gives the count line
+its totals); only `buildHit` is restricted to the groups actually rendered — at most 5-or-slightly-more per
+card. The counts sit at the end of the `Results` caption and report findings
+(`71 results in 16 lectures — showing 21`), where the "showing" number is the true count rendered, in-card
+expansions included, and vanishes once everything is shown. They are **two `<Plural>` messages, not one**: a
+single message would need a plural nested in a plural, and each half already reads as a phrase on its own.
+The lecture count is bound to a local literally named `lectures` because Lingui keys the placeholder on the
+identifier — renaming it silently orphans the Hebrew translation. Both the page threshold and the `expanded`
+map reset on any change to the query, the filters, the whole-word toggle or the course, so a new search never
+inherits the previous one's expanded cards.
 
 ## Controls
 
@@ -119,7 +129,9 @@ hasn't loaded yet) falls back to the first active course.
 Under the field sit three **toggle pills** — Lectures, Recitations, Whole word only — each a
 `<button role="switch" aria-checked>` rather than a styled `<div>`, so space and enter work. All three are
 view-local; the two kind filters default on. No match-case (Hebrew has none) and no regex. A query that
-matches nothing renders the shared `.empty-state` card, and **Show more** is the full-width ghost button.
+matches nothing renders the shared `.empty-state` card. The page's **Show more** is the full-width ghost
+button; a card's **Show more snippets** is a quiet accent-text button on the snippet inset, so the two never
+read as rival pagers.
 
 A result never navigates. The **whole header row is one button** that `window.open`s the lecture's
 `summary.pdf` — icon, title, kind chip and the (decorative) external-link glyph are all inside it, so
