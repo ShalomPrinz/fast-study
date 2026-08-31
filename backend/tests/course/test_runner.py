@@ -164,11 +164,18 @@ async def _wait_done(course=COURSE, timeout=5.0):
     pending = asyncio.all_tasks() - {asyncio.current_task()}
     if pending:
         await asyncio.wait_for(asyncio.gather(*pending), timeout)
-    return course_runner.get_status(course)
+    status = course_runner.get_status(course)
+    return {**status, "extractors": {s: _untimed(e) for s, e in status["extractors"].items()}}
+
+
+def _untimed(entry):
+    """An entry without its wall-clock `started_at`, so assertions can compare it by equality."""
+
+    return {k: v for k, v in entry.items() if k != "started_at"}
 
 
 def _entry(course, slug):
-    return course_runner.get_status(course)["extractors"].get(slug, {})
+    return _untimed(course_runner.get_status(course)["extractors"].get(slug, {}))
 
 
 def _phase(course, slug):
@@ -344,6 +351,37 @@ class TestPhaseTransitions:
             await _wait_done()
 
         asyncio.run(go())
+
+    def test_started_at_stamped_once_and_carried_across_phases(self, db, monkeypatch):
+        release = threading.Event()
+        seen = {}
+
+        def slow_analyze(ext, report, course):
+            release.wait(timeout=5)
+            return "ניתוח"
+
+        monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
+            try:
+                # The stamp belongs to the chain, so the one read mid-analyze must survive to_pdf.
+                for _ in range(500):
+                    ext = course_runner.get_status(COURSE)["extractors"].get(
+                        "exam-hints", {}
+                    )
+                    if ext.get("phase") == "analyze":
+                        seen["mid"] = ext.get("started_at")
+                        break
+                    await asyncio.sleep(0.01)
+            finally:
+                release.set()
+            await _wait_done()
+            return course_runner.get_status(COURSE)["extractors"]["exam-hints"]
+
+        final = asyncio.run(go())
+        assert seen["mid"]
+        assert final["phase"] == "to_pdf" and final["started_at"] == seen["mid"]
 
 
 class TestErrors:
@@ -735,7 +773,7 @@ class TestConcurrency:
                 # A busy trigger must not clobber the in-flight run's entry.
                 st = course_runner.get_status(COURSE)
                 assert st["running"] is True
-                assert st["extractors"]["exam-hints"] == {
+                assert _untimed(st["extractors"]["exam-hints"]) == {
                     "status": "running",
                     "phase": "extract",
                 }

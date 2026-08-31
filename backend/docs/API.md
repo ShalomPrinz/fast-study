@@ -41,7 +41,7 @@ Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": .
 There is deliberately no per-phase endpoint — the frontend never sequences phases itself, mirroring `/run-all`.
 
 `GET /courses/{course}/overview/status`
-`{"running": bool, "extractors": {slug: {"status": "pending"|"running"|"done"|"skipped"|"error", "phase"?, "message"?}}}` (snake_case on the wire). Never-run course → `{"running": false, "extractors": {}}`.
+`{"running": bool, "extractors": {slug: {"status": "pending"|"running"|"done"|"skipped"|"error", "phase"?, "message"?, "started_at"?}}}` (snake_case on the wire). `started_at` is an ISO UTC stamp of when that slug's phase chain began — one per chain, so the UI can clock a running branch. Never-run course → `{"running": false, "extractors": {}}`.
 
 `GET /overview/extractors`
 Static `{"extractors": [{"slug", "title", "phases"}]}` in declaration order. `phases` lets the UI tell immediate extractors apart from pattern ones.

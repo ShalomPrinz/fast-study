@@ -237,6 +237,10 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
+#: src/features/course-overview/components/GenerateAllButton.tsx:42
+msgid "All Generated"
+msgstr "All Generated"
+
 #: src/features/course-overview/constants/overview.ts:14
 msgid "Analyze"
 msgstr "Analyze"
@@ -346,7 +350,7 @@ msgstr "Complete"
 msgid "Connect"
 msgstr "Connect"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:44
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
@@ -590,7 +594,7 @@ msgstr "Fully processed lectures"
 msgid "Generate"
 msgstr "Generate"
 
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:45
 msgid "Generate All"
 msgstr "Generate All"
 
@@ -607,7 +611,7 @@ msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "Generating from {stepLabel} step will rebuild:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:74
-#: src/features/course-overview/components/GenerateAllButton.tsx:34
+#: src/features/course-overview/components/GenerateAllButton.tsx:40
 #: src/features/lectures/EditSummaryView.tsx:186
 msgid "Generating…"
 msgstr "Generating…"
@@ -869,14 +873,14 @@ msgstr "Other links"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:49
 #: src/features/course-overview/components/ExtractorRow.tsx:29
-#: src/features/course-overview/components/GenerateAllButton.tsx:23
+#: src/features/course-overview/components/GenerateAllButton.tsx:28
 #: src/features/course-overview/components/StepRow.tsx:38
 msgid "Overview failed to start"
 msgstr "Overview failed to start"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:48
 #: src/features/course-overview/components/ExtractorRow.tsx:28
-#: src/features/course-overview/components/GenerateAllButton.tsx:22
+#: src/features/course-overview/components/GenerateAllButton.tsx:27
 #: src/features/course-overview/components/StepRow.tsx:37
 msgid "Overview is already running for this course"
 msgstr "Overview is already running for this course"

@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { overviewFileUrl } from '@/services/database'
-import { formatMonthDate, formatFullTimestamp } from '@/shared/utils/format'
+import { formatDuration, formatMonthDate, formatFullTimestamp } from '@/shared/utils/format'
 import { formatRange } from '@/features/course-overview/utils/overview'
 import { toastInitResult } from '@/services/toaster'
 import {
@@ -19,6 +20,24 @@ import '@/styles/button.css'
 import './ExtractorHeader.css'
 import Chevron from '@/shared/components/Chevron'
 
+// Seconds since `startedAt`, ticking client-side; null stops the clock and clears it.
+function useElapsed(startedAt: number | null): number | null {
+  const [elapsed, setElapsed] = useState<number | null>(null)
+
+  useEffect(() => {
+    if (startedAt === null) {
+      setElapsed(null)
+      return
+    }
+    const tick = () => setElapsed((Date.now() - startedAt) / 1000)
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [startedAt])
+
+  return elapsed
+}
+
 export default function ExtractorHeader() {
   const { t } = useLingui()
   const { course, files, meta, status, generate } = useCourseOverview()
@@ -35,11 +54,13 @@ export default function ExtractorHeader() {
         ? 'done'
         : 'pending'
 
-  // A running branch replaces its actions with the phase it is on, the way a running pipeline row
-  // replaces its action with an ETA — there is no per-branch time estimate to show instead.
+  // A running branch replaces its actions with the phase it is on and a clock counting up from the
+  // chain's start — there is no per-branch time estimate to turn that into an ETA.
   const st = status?.extractors[slug]
   const runningPhase = stepsFor(phases).find((s) => s.phase === st?.phase)
   const phaseLabel = runningPhase ? t(runningPhase.label) : null
+  const startedAt = st?.startedAt ? Date.parse(st.startedAt) : null
+  const elapsed = useElapsed(bs.running ? startedAt : null)
 
   // The context never toasts; components do.
   async function handleGenerate() {
@@ -72,6 +93,7 @@ export default function ExtractorHeader() {
       {bs.running ? (
         <span className="overview-branch-running">
           {phaseLabel ? t`${phaseLabel}…` : t`Generating…`}
+          {elapsed !== null && ` · ${formatDuration(elapsed)}`}
         </span>
       ) : (
         <span className="overview-branch-actions">
