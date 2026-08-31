@@ -27,6 +27,10 @@ Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all w
 
 `python` is not aliased on this WSL setup — always invoke `python3` explicitly.
 
+## Reading `DATA_ROOT`
+
+The repo-root `.env` is permission-denied — it holds the Groq/Gemini keys, so it is blocked wholesale. Read the resolved value from `curl -s localhost:8001/settings` instead; the database service reports both keys as set/unset and never returns them.
+
 ## Always ask user for clarifications
 
 For every architecture decision, small or big, ask the user to clarify his intention.
