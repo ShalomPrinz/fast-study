@@ -5,6 +5,7 @@ import type {
   TimingOperation,
   Kind,
   RunnerStatus,
+  QueueEntry,
   OverviewExtractor,
   CoursePhase,
   CourseExtractorState,
@@ -62,6 +63,7 @@ interface RawInFlightEntry {
 interface RawRunnerStatus {
   runner: { running: boolean; total: number; done: number; last_error: string | null }
   in_flight?: RawInFlightEntry[]
+  queue?: QueueEntry[]
   errors?: Record<string, string>
 }
 
@@ -82,6 +84,7 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
       sleepingUntil: e.sleeping_until,
       progress: e.progress,
     })),
+    queue: raw.queue ?? [],
     errors: raw.errors ?? {},
   }
 }

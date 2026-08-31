@@ -15,12 +15,15 @@ Validates that the step's prerequisite file exists (`_STEP_CONFIG`), returning `
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`.
 
+`POST /courses/{course}/lectures/{lecture}/video-arrived?kind=...`
+A new `video.mp4` landed on disk, reported by `database/` after the bytes are written. A fact, not a command: `AUTO_RUN` decides the depth and the lecture is queued rather than run inline. → `{"status": "queued"|"busy"|"off"}` — `off` when `AUTO_RUN` forbids automatic work, `busy` when the lecture is already queued, in flight, or owned by another trigger.
+
 `POST /run-all`
-Scans for pending lectures and runs the queue. → `{"status": "started"|"already_running"|"empty_queue"|"all_in_flight"}`.
-`all_in_flight` means every pending lecture is already owned by a concurrent trigger — run_all would have skipped them all, so the UI can say so instead of appearing to do nothing.
+Scans for pending lectures and queues them at depth `full`, whatever `AUTO_RUN` caps automatic work at — the user asked for this one explicitly. → `{"status": "started"|"already_running"|"empty_queue"|"all_in_flight"}`.
+`all_in_flight` means every pending lecture is already owned by a concurrent trigger — the run would have skipped them all, so the UI can say so instead of appearing to do nothing.
 
 `GET /status`
-`{runner: {running, total, done, last_error}, in_flight: [...], errors: {skey: message}}`. Cheap; the UI refetches it on each SSE notify.
+`{runner: {running, total, done, last_error}, in_flight: [...], queue: [...], errors: {skey: message}}`. `queue` lists what the runner has left to take, in the order it will take them, each `{course, lecture, kind, depth}` with `depth ∈ {full, audio}`. Cheap; the UI refetches it on each SSE notify.
 
 ## Timing
 
@@ -48,10 +51,10 @@ Static `{"extractors": [{"slug", "title", "phases"}]}` in declaration order. `ph
 
 ## Config
 
-The backend-owned settings: both API keys, the Gemini model, the Drive toggle and the Drive root folder. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
+The backend-owned settings: both API keys, the Gemini model, the Drive toggle, the Drive root folder and the `AUTO_RUN` ceiling. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
 
 `POST /config`
-body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
+body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder, auto_run}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
 
 `GET /config/options`
 `{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's probe URL stays server-side.

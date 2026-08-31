@@ -1,4 +1,4 @@
-"""HTTP-level checks that a video upload fires exactly one background pipeline POST."""
+"""HTTP-level checks that a video upload fires exactly one background video-arrived POST."""
 
 import asyncio
 
@@ -19,7 +19,7 @@ def client_and_triggers(monkeypatch):
     real_create_task = asyncio.create_task
 
     def fake_create_task(coro, *args, **kwargs):
-        if coro.__qualname__.startswith("_trigger_pipeline"):
+        if coro.__qualname__.startswith("_notify_video_arrived"):
             captured.append(coro)
             return real_create_task(asyncio.sleep(0))
         return real_create_task(coro, *args, **kwargs)
@@ -54,7 +54,7 @@ def urlopen_calls(monkeypatch):
     return calls
 
 
-def test_video_upload_posts_pipeline_once(client_and_triggers, urlopen_calls):
+def test_video_upload_posts_arrival_once(client_and_triggers, urlopen_calls):
     import main
 
     client, captured = client_and_triggers
@@ -67,7 +67,7 @@ def test_video_upload_posts_pipeline_once(client_and_triggers, urlopen_calls):
     assert len(urlopen_calls) == 1
     url, method, timeout = urlopen_calls[0]
     assert url == (
-        f"{main.BACKEND_URL}/courses/Algo/lectures/Lecture%201/pipeline?kind=lecture"
+        f"{main.BACKEND_URL}/courses/Algo/lectures/Lecture%201/video-arrived?kind=lecture"
     )
     assert method == "POST"
     assert timeout is None
@@ -84,7 +84,7 @@ def test_video_upload_percent_encodes_kind(client_and_triggers, urlopen_calls):
     assert r.status_code == 204
 
     asyncio.run(captured[0])
-    assert urlopen_calls[0][0].endswith("/pipeline?kind=odd%20kind")
+    assert urlopen_calls[0][0].endswith("/video-arrived?kind=odd%20kind")
 
 
 def test_video_upload_survives_failing_trigger(client_and_triggers, monkeypatch):

@@ -1,80 +1,77 @@
-/* The idle trigger: a dashed slot at the head of the tree, so it reads as an action the sidebar
-   offers rather than as one more tree row. */
-.runner-run-row {
-  padding: var(--space-2) var(--space-3);
-  border-bottom: 1px solid var(--sidebar-line);
-}
-
-.runner-run-btn {
+/* One line at the head of the tree, linking to `/running`. Sized like a `.sidebar-nav-row` but
+   banded off from the tree below it, because it is a destination rather than a tree entry. */
+.runner-line {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   width: 100%;
-  padding: var(--space-3) var(--space-4);
-  background: none;
-  border: 1px dashed var(--sidebar-line);
-  border-radius: var(--r-sm);
-  color: var(--sidebar-muted);
-  font: inherit;
-  font-size: var(--fs-meta);
-  text-align: start;
-  cursor: pointer;
-  transition: all 0.1s;
-}
-
-.runner-run-btn:hover {
-  background: var(--sidebar-raise);
-  color: var(--sidebar-fg);
-  border-color: var(--accent-on-dark);
-}
-
-.runner-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-  border-top: 1px solid var(--sidebar-line);
+  padding: var(--space-3) var(--space-5);
   border-bottom: 1px solid var(--sidebar-line);
-  background: var(--sidebar-raise);
-}
-
-.runner-panel-header {
-  font-size: var(--fs-meta);
-  font-weight: 600;
-  color: var(--accent-on-dark);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.runner-inflight-row {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid transparent;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: inherit;
+  color: var(--sidebar-fg);
   font: inherit;
+  font-size: var(--fs-body);
   text-align: start;
+  text-decoration: none;
   cursor: pointer;
   transition:
-    background 0.12s,
-    border-color 0.12s;
+    background 0.1s,
+    color 0.1s;
 }
 
-.runner-inflight-row:hover {
-  background: var(--sidebar-bg);
-  border-color: var(--accent-on-dark);
+.runner-line:hover {
+  background: var(--sidebar-raise);
 }
 
-.runner-inflight-lecture {
-  font-size: var(--fs-body);
-  font-weight: 500;
+/* Keep below `.runner-line:hover`: the active row keeps its fill while the pointer is over it. */
+.runner-line.active,
+.runner-line.active:hover {
+  background: var(--sidebar-raise);
+  color: var(--surface);
 }
 
-.runner-inflight-step {
+.runner-line-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.runner-line-label--idle {
+  color: var(--sidebar-muted);
+}
+
+.runner-line-count {
   font-size: var(--fs-fine);
-  opacity: 0.7;
+  font-weight: 600;
+  color: var(--accent-on-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The spinner ring, at the 12px the sidebar's own glyphs read at rather than StatusNode's 22px. */
+.runner-line-ring {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(152, 176, 255, 0.28);
+  border-top-color: var(--accent-on-dark);
+  animation: runner-line-spin 0.75s linear infinite;
+}
+
+/* Idle stand-in, so the label sits at the same inline offset whether or not a run is on. */
+.runner-line-dot {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px dashed var(--sidebar-dim);
+}
+
+/* The chevron points onward along the reading direction, which reverses in Hebrew. */
+[dir='rtl'] .runner-line svg {
+  transform: scaleX(-1);
+}
+
+@keyframes runner-line-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

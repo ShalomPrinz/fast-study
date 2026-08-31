@@ -54,6 +54,7 @@ const STORE: Settings = {
   geminiModel: null,
   driveEnabled: null,
   gdriveRootFolder: null,
+  autoRun: null,
 }
 
 describe('isInitialized', () => {
@@ -75,6 +76,7 @@ describe('isInitialized', () => {
 function status(running: boolean, lectures: string[]): RunnerStatus {
   return {
     runner: { running, total: lectures.length, done: 0, lastError: null },
+    queue: [],
     inFlight: lectures.map((lecture) => ({
       course: 'Algebra',
       lecture,

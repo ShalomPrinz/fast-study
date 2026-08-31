@@ -8,6 +8,10 @@ import os
 # frontend picks from this list instead of accepting free text.
 GEMINI_MODELS = ["gemini-3.5-flash"]
 
+# How much of the pipeline an automatic trigger may run. A ceiling, not a schedule: it caps
+# both a new video's arrival and the 03:00 cron, and never the user's own run.
+AUTO_RUN_MODES = ["off", "audio", "full"]
+
 _TRUTHY = {"1", "true", "yes", "on"}
 
 # Settings field name → the environment variable its consumer reads.
@@ -17,6 +21,7 @@ _ENV_KEYS = {
     "gemini_model": "GEMINI_MODEL",
     "drive_enabled": "DRIVE_ENABLED",
     "gdrive_root_folder": "GDRIVE_ROOT_FOLDER",
+    "auto_run": "AUTO_RUN",
 }
 
 
@@ -24,6 +29,14 @@ def gemini_model() -> str:
     """The model every Gemini call uses: GEMINI_MODEL, else the first curated entry."""
 
     return os.environ.get("GEMINI_MODEL") or GEMINI_MODELS[0]
+
+
+def auto_run() -> str:
+    """The automatic-work ceiling: AUTO_RUN, else `full`. An unrecognised value means `full` too,
+    so a typo can never silently stop every unattended run."""
+
+    mode = os.environ.get("AUTO_RUN", "").strip().lower()
+    return mode if mode in AUTO_RUN_MODES else "full"
 
 
 def drive_enabled() -> bool:

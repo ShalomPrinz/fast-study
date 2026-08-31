@@ -1,75 +1,37 @@
-import { Trans, useLingui } from '@lingui/react/macro'
-import { useNavigate } from 'react-router-dom'
+import { useLingui } from '@lingui/react/macro'
+import { Link, useLocation } from 'react-router-dom'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
-import { usePreference } from '@/shared/hooks/usePreference'
-import { formatClockTime } from '@/shared/utils/format'
-import { lectureRoute } from '@/shared/utils/url'
-import type { InFlightEntry } from '@/types'
 import Icon from '@/shared/components/Icon'
 import './RunnerPipelineRow.css'
 
-function RunnerInactive({ onClick }: { onClick: () => void }) {
-  return (
-    <div className="runner-run-row">
-      <button className="runner-run-btn" onClick={onClick}>
-        <Icon icon="rotate" />
-        <Trans>Run incomplete pipelines</Trans>
-      </button>
-    </div>
-  )
-}
-
-function InFlightRow({ entry }: { entry: InFlightEntry }) {
-  const { t } = useLingui()
-  const navigate = useNavigate()
-  const sleeping = entry.sleepingUntil
-  const onClick = () => navigate(lectureRoute(entry.course, entry.lecture, entry.kind))
-  return (
-    <button className="runner-inflight-row" onClick={onClick} dir="auto">
-      <span className="runner-inflight-lecture">
-        {entry.course} / {entry.lecture}
-      </span>
-      <span className="runner-inflight-step">
-        {sleeping ? t`rate-limited until ${formatClockTime(sleeping)}` : entry.step}
-      </span>
-    </button>
-  )
-}
-
+// The head of the lectures tree, and the only route to `/running`, so it renders whether or not
+// anything is going: a live count while the runner is on, a muted idle label otherwise.
 export default function RunnerPipelineRow() {
-  const { status, trigger: handleRunClick } = useRunnerStatus()
-  const visible = usePreference('runnerControlsVisible')
+  const { t } = useLingui()
+  const { status } = useRunnerStatus()
+  const { pathname } = useLocation()
   const running = status?.runner.running ?? false
-  const inFlight = status?.inFlight ?? []
-
-  // Hidden means the whole control disappears — the run button and the in-flight panel alike.
-  if (!visible) return null
-
-  const inFlightRows = inFlight.map((entry) => (
-    <InFlightRow key={`${entry.course}||${entry.lecture}||${entry.kind}`} entry={entry} />
-  ))
-
-  if (!running) {
-    return (
-      <>
-        <RunnerInactive onClick={handleRunClick} />
-        {inFlight.length > 0 && <div className="runner-panel">{inFlightRows}</div>}
-      </>
-    )
-  }
+  const active = pathname.startsWith('/running')
 
   // `done` counts finished lectures; display the 1-indexed current one, capped at total.
-  const runnerCurrent = Math.min(status!.runner.done + 1, status!.runner.total)
-  const runnerTotal = status!.runner.total
+  const current = status ? Math.min(status.runner.done + 1, status.runner.total) : 0
 
   return (
-    <div className="runner-panel">
-      <div className="runner-panel-header">
-        <Trans>
-          Running pipelines… ({runnerCurrent}/{runnerTotal})
-        </Trans>
-      </div>
-      {inFlightRows}
-    </div>
+    <Link className={`runner-line${active ? ' active' : ''}`} to="/running">
+      {running ? (
+        <span className="runner-line-ring" aria-hidden="true" />
+      ) : (
+        <span className="runner-line-dot" aria-hidden="true" />
+      )}
+      <span className={`runner-line-label${running ? '' : ' runner-line-label--idle'}`}>
+        {running ? t`Running pipelines…` : t`Running pipelines`}
+      </span>
+      {running && (
+        <span className="runner-line-count">
+          {current}/{status!.runner.total}
+        </span>
+      )}
+      <Icon icon="chevron-end" />
+    </Link>
   )
 }

@@ -94,6 +94,16 @@ async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture"))
     return {"status": runner.try_run_pipeline(course, lecture, kind)}
 
 
+@app.post("/courses/{course}/lectures/{lecture}/video-arrived")
+async def video_arrived(course: str, lecture: str, kind: Kind = Query("lecture")):
+    """A new video.mp4 landed on disk. The database reports the fact; AUTO_RUN decides how much
+    of the pipeline it starts, and the work is queued rather than run inline."""
+
+    if err := _validate_kind(kind):
+        return err
+    return {"status": runner.enqueue_arrival(course, lecture, kind)}
+
+
 # ---- Overview (course-level, not per-lecture — state lives in course/runner.py) ----
 
 
@@ -156,17 +166,21 @@ def overview_extractors():
 
 @app.post("/run-all")
 async def run_all_endpoint():
-    """Scan for pending lectures and run the queue, unless a run is already in progress."""
+    """Scan for pending lectures and queue them, unless a run is already in progress. Always the
+    full pipeline — AUTO_RUN caps automatic work, never a run the user asked for."""
 
     if runner._runner_status["running"]:
         return {"status": "already_running", **runner.get_status()}
-    queue = await runner.scan_pending()
-    if not queue:
+    pending = await runner.scan_pending()
+    if not pending:
         return {"status": "empty_queue"}
-    queue = runner.drop_in_flight(queue)
-    if not queue:
+    queued = [
+        runner.enqueue(runner.QueueEntry(course, lecture, kind, "full"))
+        for course, lecture, kind in pending
+    ]
+    if not any(queued):
         return {"status": "all_in_flight"}
-    asyncio.create_task(runner.run_all(queue))
+    runner.db_client.notify()
     return {"status": "started", **runner.get_status()}
 
 
@@ -206,6 +220,7 @@ class ConfigUpdate(BaseModel):
     gemini_model: str | None = None
     drive_enabled: bool | None = None
     gdrive_root_folder: str | None = None
+    auto_run: str | None = None
 
 
 class KeyProbe(BaseModel):

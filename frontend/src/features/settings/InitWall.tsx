@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
+  toAutoRun,
   fetchConfigOptions,
   saveSettings,
   type ConfigOptions,
@@ -65,6 +66,8 @@ export default function InitWall({ stored, onDone }: Props) {
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? '',
+    // Not asked about here — carried through so the wall's save leaves the default alone.
+    autoRun: toAutoRun(stored.autoRun),
   })
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)

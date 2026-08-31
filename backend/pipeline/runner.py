@@ -9,7 +9,7 @@ import tempfile
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Optional
+from typing import NamedTuple, Optional
 
 from services import db_client, settings
 from services.llm_client import GeminiRateLimitError
@@ -54,6 +54,20 @@ _runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": N
 _summarize_blocked = False  # run-scoped; set on Gemini's DAILY quota, reset by run_all
 
 
+class QueueEntry(NamedTuple):
+    """One lecture waiting for the runner, and how far this trigger may take it."""
+
+    course: str
+    lecture: str
+    kind: str
+    depth: str  # "full" — every remaining step; "audio" — audio.mp3 and no further
+
+
+_queue: list[
+    QueueEntry
+] = []  # drained in order by run_all; in memory only, a restart empties it
+
+
 def _lkey(course: str, lecture: str, kind: str) -> tuple[str, str, str]:
     """Tuple key into _locks — the dict holds Lock objects, not serialisable data."""
 
@@ -77,6 +91,7 @@ def get_status() -> dict:
         "runner": dict(_runner_status),
         "in_flight": list(_in_flight.values()),
         "errors": dict(_errors),
+        "queue": [entry._asdict() for entry in _queue],
     }
 
 
@@ -439,16 +454,43 @@ async def scan_pending() -> list[tuple[str, str, str]]:
     return pending
 
 
-def drop_in_flight(
-    queue: list[tuple[str, str, str]],
-) -> list[tuple[str, str, str]]:
-    """Drop lectures a concurrent trigger already owns; run_all would skip them anyway."""
+def enqueue(entry: QueueEntry) -> bool:
+    """Add one lecture to the runner queue, starting the run when it is idle. False when the
+    lecture is already queued, in flight, or owned by a concurrent trigger — nothing to add."""
 
-    return [
-        entry
-        for entry in queue
-        if not (lock := _locks.get(_lkey(*entry))) or not lock.locked()
-    ]
+    if any(q[:3] == entry[:3] for q in _queue):
+        return False
+    if _skey(entry.course, entry.lecture, entry.kind) in _in_flight:
+        return False
+    lock = _locks.get(_lkey(entry.course, entry.lecture, entry.kind))
+    if lock is not None and lock.locked():
+        return False
+    _queue.append(entry)
+    if not _runner_status["running"]:
+        # Flipped here rather than in run_all: the task only starts at the next await, so a burst
+        # of arrivals in one callback would otherwise each start a drain of their own.
+        _runner_status["running"] = True
+        asyncio.create_task(run_all())
+    return True
+
+
+def enqueue_arrival(course: str, lecture: str, kind: str) -> str:
+    """Act on a video that just landed on disk. AUTO_RUN is the ceiling: `off` drops the arrival,
+    `audio` stops at audio.mp3, `full` runs the whole pipeline."""
+
+    depth = settings.auto_run()
+    if depth == "off":
+        log.info(
+            "video arrived for %s/%s (%s): AUTO_RUN=off, queuing nothing",
+            course,
+            lecture,
+            kind,
+        )
+        return "off"
+    if not enqueue(QueueEntry(course, lecture, kind, depth)):
+        return "busy"
+    db_client.notify()
+    return "queued"
 
 
 async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
@@ -594,33 +636,58 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
 # ---- Runner orchestration ----
 
 
-async def run_all(queue: list[tuple[str, str, str]]) -> dict:
-    """Run every lecture in queue to completion sequentially. The caller passes a
-    non-empty queue; this never re-scans."""
+async def _run_entry(entry: QueueEntry) -> bool:
+    """Run one queue entry as far as its depth allows; True iff a full run stopped early on the
+    run-scoped summarize block. An `audio` entry that already has audio.mp3 has nothing left."""
+
+    if entry.depth == "audio":
+        done = await asyncio.to_thread(
+            db_client.file_exists,
+            entry.course,
+            entry.lecture,
+            entry.kind,
+            STEP_OUTPUT["audio"],
+        )
+        if not done:
+            await run_step(entry.course, entry.lecture, entry.kind, "audio")
+        return False
+    return await run_pipeline_for(
+        entry.course, entry.lecture, entry.kind, honor_block=True
+    )
+
+
+async def run_all() -> dict:
+    """Drain the runner queue sequentially until it is empty, so a lecture enqueued mid-run joins
+    this run instead of racing it. The caller enqueues; this never re-scans."""
 
     global _summarize_blocked
     log.info(
-        "run_all starting with %d pending lecture(s): %s",
-        len(queue),
-        [f"\n{c}/{l} ({k})" for c, l, k in queue],
+        "run_all starting with %d queued lecture(s): %s",
+        len(_queue),
+        [f"\n{e.course}/{e.lecture} ({e.kind}, {e.depth})" for e in _queue],
     )
     _summarize_blocked = False
     blocked_count = 0
     _runner_status["running"] = True
     _runner_status["done"] = 0
-    _runner_status["total"] = len(queue)
+    _runner_status["total"] = len(_queue)
     _runner_status["last_error"] = None
     # No notify: with _in_flight still empty these burst, and their parallel refreshes
     # can reorder and overwrite the fresher snapshot. Same for the per-lecture done below.
     try:
-        for course, lecture, kind in queue:
+        while _queue:
+            # Recomputed before the pop, so a queue that grew mid-run reports its new size.
+            _runner_status["total"] = _runner_status["done"] + len(_queue)
+            entry = _queue.pop(0)
+            course, lecture, kind = entry.course, entry.lecture, entry.kind
             log.info(
-                "=== starting pipeline %d/%d: %s/%s (%s) ===",
+                "=== starting pipeline %d/%d: %s/%s (%s) at depth %s ===",
                 _runner_status["done"] + 1,
                 _runner_status["total"],
                 course,
                 lecture,
                 kind,
+                entry.depth,
             )
             lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
             if lock.locked():
@@ -635,7 +702,7 @@ async def run_all(queue: list[tuple[str, str, str]]) -> dict:
                 db_client.notify()
                 continue
             try:
-                if await run_pipeline_for(course, lecture, kind, honor_block=True):
+                if await _run_entry(entry):
                     blocked_count += 1
             except Exception as e:
                 log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
@@ -661,13 +728,20 @@ async def run_all(queue: list[tuple[str, str, str]]) -> dict:
 
 
 async def _scheduled_run() -> None:
-    """Cron entry point: skip if already running, else scan and run anything pending."""
+    """Cron entry point: queue everything pending, at the depth AUTO_RUN allows. `off` means no
+    automatic work at all, this nightly pass included."""
 
     if _runner_status["running"]:
         log.info("cron: runner already running, skipping")
         return
-    queue = await scan_pending()
-    if not queue:
+    depth = settings.auto_run()
+    if depth == "off":
+        log.info("cron: AUTO_RUN=off, nothing runs unattended")
+        return
+    pending = await scan_pending()
+    if not pending:
         log.info("cron: nothing pending")
         return
-    await run_all(queue)
+    for course, lecture, kind in pending:
+        enqueue(QueueEntry(course, lecture, kind, depth))
+    db_client.notify()

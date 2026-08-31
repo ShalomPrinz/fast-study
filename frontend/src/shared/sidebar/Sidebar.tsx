@@ -57,7 +57,8 @@ export default function Sidebar() {
   const onDownloads = pathname.startsWith('/downloads')
   const onSearch = pathname.startsWith('/search')
   const onSettings = pathname.startsWith('/settings')
-  const onRoute = onDownloads || onSearch || onSettings
+  // `/running` is reached from the tree's own head row, which owns its active state.
+  const onRoute = onDownloads || onSearch || onSettings || pathname.startsWith('/running')
 
   const Body = mode === 'courses' ? CoursesList : LecturesSidebar
 

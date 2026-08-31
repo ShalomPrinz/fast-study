@@ -1,0 +1,136 @@
+/* The runner page reads as one centred column: it is a status view with no side rail, unlike the
+   lecture, course and downloads pages, which start at the body's inline edge. */
+.page-column.page-column--centered {
+  margin-inline: auto;
+}
+
+/* The header band stays full-bleed, but its text lines up with the centred column below — a title
+   sitting at the inline edge above a centred stack reads as a bug. Scoped on the page rather than
+   a `PageHeader` modifier: this is the only view that centres, and `PageHeader` stays propless. */
+.runner-page .page-header-main {
+  max-width: 660px;
+  margin-inline: auto;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+/* A section whose caption carries the page's one action, beside its count. */
+.head-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+/* The one-line caption under a card, and the stand-in for an empty section. */
+.queue-note {
+  margin-top: var(--space-4);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+/* ---- rows ---- */
+
+/* Out-specifies `.pipeline-row`'s padding and resets the link, so every row here is one target. */
+.pipeline-card .pipeline-row.runner-row {
+  padding: var(--space-4) var(--space-6);
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.12s;
+}
+
+.pipeline-card .pipeline-row.runner-row:hover {
+  background: var(--surface-sunken);
+}
+
+.row-title {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.row-course {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+.row-sub {
+  margin-top: 2px;
+  font-size: var(--fs-meta);
+  color: var(--text-2);
+}
+
+.row-sub--warn {
+  color: var(--warn);
+}
+
+/* ---- the focus card ---- */
+
+/* The lecture the runner is on, raised out of the row vocabulary: it is the one thing on this page
+   that carries a stage rail and an ETA. */
+.focus-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.focus-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.focus-title {
+  margin-top: 2px;
+  font-size: var(--fs-section);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Other in-flight lectures, banded under the focus card rather than beside it. */
+.runner-also {
+  margin-top: var(--space-3);
+}
+
+/* ---- the stage rail ---- */
+
+.stage-rail {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.stage {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+.stage--current {
+  color: var(--text);
+  font-weight: 600;
+}
+
+/* Out-specifies `.status-node`'s fixed 22px so the rail reads as a secondary row. */
+.stage .status-node {
+  width: 16px;
+  height: 16px;
+}
+
+.stage-sep {
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}

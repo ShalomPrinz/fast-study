@@ -11,6 +11,15 @@ const database = createClient(
   'database service',
 )
 
+// How much of the pipeline an automatic trigger may run. The backend applies the same fallback to
+// an unset or unrecognised value, so both ends agree that a fresh install runs everything.
+export const AUTO_RUN_MODES = ['full', 'audio', 'off'] as const
+export type AutoRun = (typeof AUTO_RUN_MODES)[number]
+
+export function toAutoRun(stored: string | null): AutoRun {
+  return (AUTO_RUN_MODES as readonly string[]).includes(stored ?? '') ? (stored as AutoRun) : 'full'
+}
+
 // The store's read view. `null` is "nothing stored", which has to stay distinguishable from a
 // stored value: the client, not the store, owns every default.
 export interface Settings {
@@ -20,6 +29,7 @@ export interface Settings {
   geminiModel: string | null
   driveEnabled: boolean | null
   gdriveRootFolder: string | null
+  autoRun: string | null
 }
 
 // A partial save; omitted fields are left alone. The two keys are write-only — they go out here
@@ -31,6 +41,7 @@ export interface SettingsPatch {
   geminiModel?: string
   driveEnabled?: boolean
   gdriveRootFolder?: string
+  autoRun?: AutoRun
 }
 
 export type SettingsField = keyof SettingsPatch
@@ -42,6 +53,7 @@ const WIRE: Record<SettingsField, string> = {
   geminiModel: 'gemini_model',
   driveEnabled: 'drive_enabled',
   gdriveRootFolder: 'gdrive_root_folder',
+  autoRun: 'auto_run',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
@@ -52,6 +64,7 @@ const BACKEND_FIELDS: SettingsField[] = [
   'geminiModel',
   'driveEnabled',
   'gdriveRootFolder',
+  'autoRun',
 ]
 const DATABASE_FIELDS: SettingsField[] = ['dataRoot']
 
@@ -62,6 +75,7 @@ interface RawSettings {
   gemini_model: string | null
   drive_enabled: boolean | null
   gdrive_root_folder: string | null
+  auto_run: string | null
 }
 
 function normalize(raw: RawSettings): Settings {
@@ -72,6 +86,7 @@ function normalize(raw: RawSettings): Settings {
     geminiModel: raw.gemini_model,
     driveEnabled: raw.drive_enabled,
     gdriveRootFolder: raw.gdrive_root_folder,
+    autoRun: raw.auto_run,
   }
 }
 

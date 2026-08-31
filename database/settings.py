@@ -13,6 +13,7 @@ STRING_FIELDS = {
     "data_root": "DATA_ROOT",
     "gemini_model": "GEMINI_MODEL",
     "gdrive_root_folder": "GDRIVE_ROOT_FOLDER",
+    "auto_run": "AUTO_RUN",
 }
 BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",

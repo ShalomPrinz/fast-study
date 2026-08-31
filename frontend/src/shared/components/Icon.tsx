@@ -16,6 +16,7 @@ export type IconName =
   | 'overflow'
   | 'file'
   | 'chevron-start'
+  | 'chevron-end'
   | 'chevron-down'
   | 'warning'
   | 'check'
@@ -251,6 +252,19 @@ const ChevronStartIcon = () => (
   </svg>
 )
 
+// Points onward along the reading direction, so like `chevron-start` it mirrors in Hebrew.
+const ChevronEndIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M6.5 3.5L11 8l-4.5 4.5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 // Vertical, so unlike `chevron-start` it needs no mirroring in a right-to-left page.
 const ChevronDownIcon = () => (
   <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -303,6 +317,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   overflow: OverflowIcon,
   file: FileIcon,
   'chevron-start': ChevronStartIcon,
+  'chevron-end': ChevronEndIcon,
   'chevron-down': ChevronDownIcon,
   warning: WarningIcon,
   check: CheckIcon,

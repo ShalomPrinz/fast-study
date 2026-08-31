@@ -14,7 +14,7 @@
   border-radius: 50%;
 }
 
-/* The four state variants below recolour .status-node at equal specificity, so they must stay in
+/* The five state variants below recolour .status-node at equal specificity, so they must stay in
    this file, after it. */
 .status-node--done {
   background: var(--ok-soft);
@@ -29,6 +29,11 @@
 
 .status-node--pending {
   border: 1.5px dashed var(--control-line);
+}
+
+.status-node--paused {
+  background: var(--warn-soft);
+  color: var(--warn);
 }
 
 .status-node--failed {

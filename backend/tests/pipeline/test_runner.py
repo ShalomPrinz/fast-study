@@ -561,7 +561,10 @@ def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
     """First lecture records the real error and halts; every later lecture stops
     silently at transcript.txt — one error in the UI, not N identical ones."""
     steps_run: list[tuple[str, str]] = []
-    queue = [("C1", "L1", "lecture"), ("C1", "L2", "lecture"), ("C1", "L3", "lecture")]
+    queue = [
+        runner.QueueEntry("C1", lecture, "lecture", "full")
+        for lecture in ("L1", "L2", "L3")
+    ]
 
     async def fake_fetch(course, lecture, kind):
         # Everything is transcribed already, so next_step is always summarize
@@ -578,7 +581,8 @@ def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
             patch.object(runner, "_call_step", fake_call),
             patch.object(runner.db_client, "notify"),
         ):
-            return await runner.run_all(queue)
+            runner._queue[:] = queue
+            return await runner.run_all()
 
     try:
         asyncio.run(go())
@@ -591,6 +595,7 @@ def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
         )
     finally:
         runner._errors.clear()
+        runner._queue.clear()
         runner._summarize_blocked = False
 
 
@@ -612,7 +617,8 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
             patch.object(runner, "_call_step", fake_call),
             patch.object(runner.db_client, "notify"),
         ):
-            await runner.run_all([("C1", "L1", "lecture")])
+            runner._queue[:] = [runner.QueueEntry("C1", "L1", "lecture", "full")]
+            await runner.run_all()
             assert runner._summarize_blocked is False  # cleared by run_all's finally
             runner._summarize_blocked = True  # as if a run were still blocked
             await runner.run_pipeline_for("C1", "L2", "lecture")
@@ -622,50 +628,223 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
         assert calls == ["summarize", "summarize"]
     finally:
         runner._errors.clear()
+        runner._queue.clear()
         runner._summarize_blocked = False
 
 
-class TestDropInFlight:
-    """drop_in_flight filters the scanned queue by the per-lecture locks."""
+@pytest.fixture
+def clean_queue():
+    """The queue, the locks and the run flag are module state; every test here mutates them."""
 
-    def test_keeps_unlocked_and_drops_locked(self):
+    yield
+    runner._queue.clear()
+    runner._locks.clear()
+    runner._in_flight.clear()
+    runner._runner_status["running"] = False
+
+
+def _entry(lecture: str, depth: str = "full") -> runner.QueueEntry:
+    return runner.QueueEntry("C1", lecture, "lecture", depth)
+
+
+class TestEnqueue:
+    """enqueue is the single point of entry: it de-duplicates against everything the runner
+    already has in hand, so a repeat trigger can never double-run a lecture."""
+
+    def test_appends_once_and_refuses_a_duplicate(self, clean_queue):
         async def go():
-            queue = [("C1", "L1", "lecture"), ("C1", "L2", "lecture")]
+            # Already running, so nothing starts a drain that would empty the queue under us.
+            runner._runner_status["running"] = True
+            assert runner.enqueue(_entry("L1")) is True
+            assert runner.enqueue(_entry("L1")) is False
+            assert runner.enqueue(_entry("L2")) is True
+
+        asyncio.run(go())
+        assert runner._queue == [_entry("L1"), _entry("L2")]
+
+    def test_a_queued_lecture_is_matched_whatever_its_depth(self, clean_queue):
+        async def go():
+            runner._runner_status["running"] = True
+            assert runner.enqueue(_entry("L1", "audio")) is True
+            # Same lecture at a deeper setting: still one entry, still the one that got there first.
+            assert runner.enqueue(_entry("L1", "full")) is False
+
+        asyncio.run(go())
+        assert runner._queue == [_entry("L1", "audio")]
+
+    def test_refuses_a_lecture_in_flight(self, clean_queue):
+        async def go():
+            runner._runner_status["running"] = True
+            runner._in_flight[runner._skey("C1", "L1", "lecture")] = {"step": "audio"}
+            assert runner.enqueue(_entry("L1")) is False
+
+        asyncio.run(go())
+        assert runner._queue == []
+
+    def test_refuses_a_lecture_a_concurrent_trigger_owns(self, clean_queue):
+        async def go():
+            runner._runner_status["running"] = True
             held = runner._locks.setdefault(
                 runner._lkey("C1", "L1", "lecture"), asyncio.Lock()
             )
             async with held:
-                assert runner.drop_in_flight(queue) == [("C1", "L2", "lecture")]
-            # lock released → both come back
-            assert runner.drop_in_flight(queue) == queue
+                assert runner.enqueue(_entry("L1")) is False
+            assert runner.enqueue(_entry("L1")) is True  # released → it queues
 
-        try:
-            asyncio.run(go())
-        finally:
-            runner._locks.clear()
+        asyncio.run(go())
 
-    def test_all_locked_yields_empty_queue(self):
+    def test_starts_the_drain_once_for_a_burst(self, clean_queue):
+        """A batch of arrivals in one callback must produce one run_all, not one each."""
+
+        runs: list = []
+
         async def go():
-            queue = [("C1", "L1", "lecture"), ("C1", "R1", "recitation")]
-            locks = [
-                runner._locks.setdefault(runner._lkey(*entry), asyncio.Lock())
-                for entry in queue
-            ]
-            for lock in locks:
-                await lock.acquire()
-            try:
-                assert runner.drop_in_flight(queue) == []
-            finally:
-                for lock in locks:
-                    lock.release()
+            with patch.object(runner, "run_all", side_effect=lambda: runs.append(1)):
+                for name in ("L1", "L2", "L3"):
+                    runner.enqueue(_entry(name))
+                await asyncio.sleep(0)  # let any created task start
 
-        try:
-            asyncio.run(go())
-        finally:
-            runner._locks.clear()
+        asyncio.run(go())
+        assert len(runs) == 1
+        assert runner._runner_status["running"] is True
 
-    def test_empty_queue_stays_empty(self):
-        assert runner.drop_in_flight([]) == []
+
+class TestQueueDrain:
+    """run_all owns the queue rather than a caller's list, so the run absorbs whatever
+    arrives while it is going."""
+
+    def test_a_lecture_enqueued_mid_run_joins_the_same_run(self, clean_queue):
+        ran: list[str] = []
+
+        async def fake_entry(entry):
+            ran.append(entry.lecture)
+            if entry.lecture == "L1":
+                runner.enqueue(_entry("L3"))
+            return False
+
+        async def go():
+            runner._queue[:] = [_entry("L1"), _entry("L2")]
+            with (
+                patch.object(runner, "_run_entry", fake_entry),
+                patch.object(runner.db_client, "notify"),
+            ):
+                await runner.run_all()
+
+        asyncio.run(go())
+        assert ran == ["L1", "L2", "L3"]
+        # total is recomputed each iteration, so the late arrival is counted rather than ignored.
+        assert runner._runner_status["total"] == 3
+        assert runner._runner_status["done"] == 3
+
+    def test_audio_depth_stops_at_audio_mp3(self, clean_queue):
+        steps: list[str] = []
+
+        async def go():
+            with (
+                patch.object(runner.db_client, "file_exists", return_value=False),
+                patch.object(
+                    runner,
+                    "run_step",
+                    side_effect=lambda c, l, k, step: steps.append(step),
+                ),
+                patch.object(runner.db_client, "notify"),
+            ):
+                await runner._run_entry(_entry("L1", "audio"))
+
+        asyncio.run(go())
+        assert steps == ["audio"]
+
+    def test_audio_depth_does_nothing_once_audio_exists(self, clean_queue):
+        steps: list[str] = []
+
+        async def go():
+            with (
+                patch.object(runner.db_client, "file_exists", return_value=True),
+                patch.object(
+                    runner,
+                    "run_step",
+                    side_effect=lambda c, l, k, step: steps.append(step),
+                ),
+            ):
+                await runner._run_entry(_entry("L1", "audio"))
+
+        asyncio.run(go())
+        assert steps == []
+
+
+class TestAutoRun:
+    """AUTO_RUN is a ceiling on automatic work: it caps a video's arrival and the nightly
+    cron alike, and never a run the user asked for."""
+
+    @pytest.fixture(autouse=True)
+    def _no_drain(self, clean_queue):
+        # Stub the drain so the queue stays inspectable; what is queued is the subject here.
+        with patch.object(runner, "run_all"):
+            yield
+
+    @pytest.mark.parametrize(
+        "mode,expected_status,expected_depth",
+        [
+            ("full", "queued", "full"),
+            ("audio", "queued", "audio"),
+            ("", "queued", "full"),  # unset → today's behaviour
+            ("nonsense", "queued", "full"),  # unrecognised → the same
+        ],
+    )
+    def test_arrival_queues_at_the_settings_depth(
+        self, monkeypatch, mode, expected_status, expected_depth
+    ):
+        monkeypatch.setenv("AUTO_RUN", mode)
+
+        async def go():
+            # enqueue schedules the drain, so it needs a running loop the way its caller has one.
+            with patch.object(runner.db_client, "notify"):
+                assert runner.enqueue_arrival("C1", "L1", "lecture") == expected_status
+            await asyncio.sleep(0)
+
+        asyncio.run(go())
+        assert runner._queue == [_entry("L1", expected_depth)]
+
+    def test_arrival_is_dropped_when_off(self, monkeypatch):
+        monkeypatch.setenv("AUTO_RUN", "off")
+
+        async def go():
+            assert runner.enqueue_arrival("C1", "L1", "lecture") == "off"
+
+        asyncio.run(go())
+        assert runner._queue == []
+
+    def test_cron_queues_nothing_when_off(self, monkeypatch):
+        monkeypatch.setenv("AUTO_RUN", "off")
+        scanned: list = []
+
+        async def go():
+            with patch.object(
+                runner, "scan_pending", side_effect=lambda: scanned.append(1)
+            ):
+                await runner._scheduled_run()
+
+        asyncio.run(go())
+        assert scanned == [], "off must not even scan — nothing runs unattended"
+        assert runner._queue == []
+
+    @pytest.mark.parametrize("mode,depth", [("audio", "audio"), ("full", "full")])
+    def test_cron_queues_at_the_settings_depth(self, monkeypatch, mode, depth):
+        monkeypatch.setenv("AUTO_RUN", mode)
+
+        async def fake_scan():
+            return [("C1", "L1", "lecture"), ("C1", "L2", "lecture")]
+
+        async def go():
+            with (
+                patch.object(runner, "scan_pending", fake_scan),
+                patch.object(runner.db_client, "notify"),
+            ):
+                await runner._scheduled_run()
+            await asyncio.sleep(0)
+
+        asyncio.run(go())
+        assert runner._queue == [_entry("L1", depth), _entry("L2", depth)]
 
 
 # ---- _exec_pdf: the .pdf_warning / .pdf_build.tex dotfiles ----

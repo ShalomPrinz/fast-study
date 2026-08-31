@@ -4,6 +4,8 @@ import {
   fetchConfigOptions,
   fetchSettings,
   saveSettings,
+  toAutoRun,
+  type AutoRun,
   type ConfigOptions,
   type Settings,
   type SettingsPatch,
@@ -14,7 +16,6 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
-import { writePreference, readPreference } from '@/shared/utils/uiPreferences'
 import ApiKeyField from './components/ApiKeyField'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
@@ -30,9 +31,7 @@ import './SettingsView.css'
 
 // The language is not in here: it applies the moment it is picked and lives in `localStorage`, so
 // it never reaches a save.
-type FormState = SettingsForm & { runnerControlsVisible: boolean }
-
-function initialForm(stored: Settings, options: ConfigOptions): FormState {
+function initialForm(stored: Settings, options: ConfigOptions): SettingsForm {
   return {
     geminiApiKey: '',
     groqApiKey: '',
@@ -40,7 +39,7 @@ function initialForm(stored: Settings, options: ConfigOptions): FormState {
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? options.geminiModels[0] ?? '',
-    runnerControlsVisible: readPreference('runnerControlsVisible'),
+    autoRun: toAutoRun(stored.autoRun),
   }
 }
 
@@ -51,7 +50,7 @@ export default function SettingsView() {
   const { setSettings } = useSettingsContext()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
-  const [form, setForm] = useState<FormState | null>(null)
+  const [form, setForm] = useState<SettingsForm | null>(null)
   const [saving, setSaving] = useState(false)
   // A save held back by the advisory data-root guard, with the runs it would split.
   const [pending, setPending] = useState<{ patch: SettingsPatch; runs: string[] } | null>(null)
@@ -97,9 +96,6 @@ export default function SettingsView() {
   async function commit(next: SettingsPatch) {
     setSaving(true)
     setPending(null)
-    // Unconditional and ahead of the network: the preference is localStorage-only, so a downed
-    // service must not cost the user a toggle that never needed a request in the first place.
-    writePreference('runnerControlsVisible', current.runnerControlsVisible)
     try {
       const saved = await saveSettings(next)
       setStored(saved)
@@ -224,23 +220,29 @@ export default function SettingsView() {
               <Trans>Appearance and behaviour</Trans>
             </h2>
             <LanguageField />
-            <label className="settings-check">
-              <input
-                type="checkbox"
-                checked={form.runnerControlsVisible}
-                onChange={(e) => setForm({ ...form, runnerControlsVisible: e.target.checked })}
-              />
-              <span className="settings-check-text">
-                <span>
-                  <Trans>Show the run controls in the sidebar</Trans>
-                </span>
-                <span className="settings-hint">
-                  <Trans>
-                    The "Run incomplete pipelines" button and the list of lectures being worked on.
-                  </Trans>
-                </span>
+            <div className="settings-field">
+              <div className="settings-label">
+                <label htmlFor="auto-run">
+                  <Trans>When a new video arrives</Trans>
+                </label>
+              </div>
+              <select
+                id="auto-run"
+                className="settings-select"
+                value={form.autoRun}
+                onChange={(e) => setForm({ ...form, autoRun: e.target.value as AutoRun })}
+              >
+                <option value="full">{t`Run the whole pipeline`}</option>
+                <option value="audio">{t`Extract the audio only`}</option>
+                <option value="off">{t`Do nothing — I'll start runs myself`}</option>
+              </select>
+              <span className="settings-hint">
+                <Trans>
+                  The ceiling on unattended work: it caps a dropped or downloaded video and the
+                  nightly 03:00 pass alike, never a run you start from the running pipelines page.
+                </Trans>
               </span>
-            </label>
+            </div>
           </section>
         </div>
       </div>
