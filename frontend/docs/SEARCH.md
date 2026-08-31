@@ -108,7 +108,9 @@ never inherits the previous one's expanded page.
 The page leads with **one field** — search icon, the autofocused query input, a divider, and the course
 picker — so the course reads as scope on the query rather than a control of its own. Switching course
 mid-search is rare, which is what earns the picker its place inside. It stays a real `<select>`: it is
-keyboard-accessible and its option list is already the course list.
+keyboard-accessible and its option list is already the course list. Its own focus ring is suppressed — the
+black box it drew around the picker was redundant next to `.search-field:focus-within`, which already accents
+the whole field's border.
 
 Course options come from `CourseTreeContext`, archived excluded. The selection is derived, not stored:
 the last choice is persisted in `localStorage`, and a stored name that no longer exists (or a tree that
