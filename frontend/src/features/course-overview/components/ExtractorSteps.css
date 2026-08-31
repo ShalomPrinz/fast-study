@@ -1,7 +1,7 @@
 /* Recessed onto the app canvas so the open branch reads as a drawer under its row. Indented to the
    card's divider inset, so the phase run lines up with the branch title above it. */
 .overview-phases {
-  padding: 0 var(--space-6) var(--space-6);
+  padding: var(--space-5) var(--space-6) var(--space-6);
   padding-inline-start: var(--pipeline-inset);
   background: var(--bg);
 }
