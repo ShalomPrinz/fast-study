@@ -177,6 +177,10 @@ msgstr "{phaseLabel}…"
 msgid "{processed} fully processed"
 msgstr "{processed} fully processed"
 
+#: src/features/search/components/SearchResult.tsx:64
+msgid "{remaining, plural, one {Show # more} other {Show # more}}"
+msgstr "{remaining, plural, one {Show # more} other {Show # more}}"
+
 #: src/features/lectures/MainView.tsx:190
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · step {stepNumber} of {stageCount}"
@@ -650,7 +654,7 @@ msgstr "Language"
 msgid "Last error:"
 msgstr "Last error:"
 
-#: src/features/search/components/SearchResult.tsx:44
+#: src/features/search/components/SearchResult.tsx:45
 msgid "lecture"
 msgstr "lecture"
 
@@ -768,11 +772,11 @@ msgstr "No materials found."
 msgid "No original to revert to"
 msgstr "No original to revert to"
 
-#: src/features/search/components/SearchResult.tsx:51
+#: src/features/search/components/SearchResult.tsx:52
 msgid "no PDF"
 msgstr "no PDF"
 
-#: src/features/search/components/SearchResult.tsx:32
+#: src/features/search/components/SearchResult.tsx:33
 msgid "No PDF for this lecture"
 msgstr "No PDF for this lecture"
 
@@ -843,7 +847,7 @@ msgstr "Open material in new tab"
 #: src/features/course-overview/components/ExtractorHeader.tsx:82
 #: src/features/lectures/components/PdfViewer.tsx:96
 #: src/features/lectures/MainView.tsx:224
-#: src/features/search/components/SearchResult.tsx:32
+#: src/features/search/components/SearchResult.tsx:33
 msgid "Open PDF in new tab"
 msgstr "Open PDF in new tab"
 
@@ -934,7 +938,7 @@ msgstr "Re-generate from {stepLabel}"
 msgid "Ready to retry"
 msgstr "Ready to retry"
 
-#: src/features/search/components/SearchResult.tsx:44
+#: src/features/search/components/SearchResult.tsx:45
 msgid "recitation"
 msgstr "recitation"
 
@@ -1110,10 +1114,6 @@ msgstr "Settings saved"
 #: src/features/search/SearchView.tsx:283
 msgid "Show more"
 msgstr "Show more"
-
-#: src/features/search/components/SearchResult.tsx:63
-msgid "Show more snippets"
-msgstr "Show more snippets"
 
 #: src/features/settings/SettingsView.tsx:235
 msgid "Show the run controls in the sidebar"

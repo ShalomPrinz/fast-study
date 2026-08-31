@@ -106,7 +106,7 @@ export default function SearchView() {
           summary: lecture.summary,
           hits: visible.map(buildHit),
           count: countFindings(visible),
-          hasMore: visible.length < lecture.groups.length,
+          remaining: countFindings(lecture.groups) - countFindings(visible),
         }
       }),
     [visibleLectures, expanded],
@@ -262,7 +262,7 @@ export default function SearchView() {
                   hits={block.hits}
                   course={course ?? ''}
                   hasPdf={withPdf.has(key)}
-                  hasMore={block.hasMore}
+                  remaining={block.remaining}
                   // Advances from what's rendered, not the old threshold: a group overshooting the
                   // threshold would otherwise be re-selected unchanged and the click do nothing.
                   onShowMore={() =>

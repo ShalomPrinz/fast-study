@@ -16,6 +16,7 @@ export type IconName =
   | 'overflow'
   | 'file'
   | 'chevron-start'
+  | 'chevron-down'
   | 'warning'
   | 'check'
 
@@ -250,6 +251,19 @@ const ChevronStartIcon = () => (
   </svg>
 )
 
+// Vertical, so unlike `chevron-start` it needs no mirroring in a right-to-left page.
+const ChevronDownIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M3.5 6L8 10.5L12.5 6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 // Warning triangle — labels a non-fatal state, never a failure.
 const WarningIcon = () => (
   <svg width="11" height="11" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -289,6 +303,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   overflow: OverflowIcon,
   file: FileIcon,
   'chevron-start': ChevronStartIcon,
+  'chevron-down': ChevronDownIcon,
   warning: WarningIcon,
   check: CheckIcon,
 }

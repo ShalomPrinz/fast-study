@@ -94,8 +94,9 @@ cap — never at the expanded counts — is what keeps the two limits independen
 place and can never push a later lecture off the page. Bucketing up front also replaces the old regroup-on-
 render step, so a title still can never appear twice.
 
-A card's own **Show more snippets** raises that lecture's threshold by 5, keyed by `kind:name` in an
-`expanded` map. Both buttons **advance from what is rendered, not from the previous threshold**
+A card's own **Show N more** raises that lecture's threshold by 5, keyed by `kind:name` in an
+`expanded` map. `N` is the findings left in that lecture, not the 5 about to appear, so the label says
+whether the click is worth making; the card is handed that `remaining` count rather than a boolean. Both buttons **advance from what is rendered, not from the previous threshold**
 (`count + 5` in a card, `pageCount + 20` at the foot). A group that overshoots the threshold would otherwise
 be re-selected unchanged by the next threshold and the click would do nothing — with uncapped merging a single
 group can hold hundreds of findings, so a one-letter query made most clicks dead. The page's button is keyed
@@ -130,8 +131,10 @@ Under the field sit three **toggle pills** — Lectures, Recitations, Whole word
 `<button role="switch" aria-checked>` rather than a styled `<div>`, so space and enter work. All three are
 view-local; the two kind filters default on. No match-case (Hebrew has none) and no regex. A query that
 matches nothing renders the shared `.empty-state` card. The page's **Show more** is the full-width ghost
-button; a card's **Show more snippets** is a quiet accent-text button on the snippet inset, so the two never
-read as rival pagers.
+button; a card's is a seam across the card's foot — a hairline, a centred label and a chevron, tinting to
+`--surface-sunken` on hover — pulled back out through the card's padding by negative margins so it spans the
+full width and rounds off the card's bottom corners. It reads as the snippet list continuing rather than as a
+second button, so the two never look like rival pagers.
 
 A result never navigates. The **whole header row is one button** that `window.open`s the lecture's
 `summary.pdf` — icon, title, kind chip and the (decorative) external-link glyph are all inside it, so

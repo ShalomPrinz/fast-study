@@ -177,6 +177,10 @@ msgstr "{phaseLabel}…"
 msgid "{processed} fully processed"
 msgstr "{processed} עובדו במלואן"
 
+#: src/features/search/components/SearchResult.tsx:64
+msgid "{remaining, plural, one {Show # more} other {Show # more}}"
+msgstr "{remaining, plural, one {הצג עוד אחד} two {הצג עוד #} other {הצג עוד #}}"
+
 #: src/features/lectures/MainView.tsx:190
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stageCount}"
@@ -650,7 +654,7 @@ msgstr "שפה"
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
-#: src/features/search/components/SearchResult.tsx:44
+#: src/features/search/components/SearchResult.tsx:45
 msgid "lecture"
 msgstr "הרצאה"
 
@@ -768,11 +772,11 @@ msgstr "לא נמצאו חומרים."
 msgid "No original to revert to"
 msgstr "אין מקור לשחזור"
 
-#: src/features/search/components/SearchResult.tsx:51
+#: src/features/search/components/SearchResult.tsx:52
 msgid "no PDF"
 msgstr "אין PDF"
 
-#: src/features/search/components/SearchResult.tsx:32
+#: src/features/search/components/SearchResult.tsx:33
 msgid "No PDF for this lecture"
 msgstr "אין PDF להרצאה זו"
 
@@ -843,7 +847,7 @@ msgstr "פתח את החומר בלשונית חדשה"
 #: src/features/course-overview/components/ExtractorHeader.tsx:82
 #: src/features/lectures/components/PdfViewer.tsx:96
 #: src/features/lectures/MainView.tsx:224
-#: src/features/search/components/SearchResult.tsx:32
+#: src/features/search/components/SearchResult.tsx:33
 msgid "Open PDF in new tab"
 msgstr "פתח את ה-PDF בלשונית חדשה"
 
@@ -934,7 +938,7 @@ msgstr "ייצר מחדש משלב {stepLabel}"
 msgid "Ready to retry"
 msgstr "מוכן לניסיון חוזר"
 
-#: src/features/search/components/SearchResult.tsx:44
+#: src/features/search/components/SearchResult.tsx:45
 msgid "recitation"
 msgstr "תרגול"
 
@@ -1110,10 +1114,6 @@ msgstr "ההגדרות נשמרו"
 #: src/features/search/SearchView.tsx:283
 msgid "Show more"
 msgstr "הצג עוד"
-
-#: src/features/search/components/SearchResult.tsx:63
-msgid "Show more snippets"
-msgstr "הצג עוד קטעים"
 
 #: src/features/settings/SettingsView.tsx:235
 msgid "Show the run controls in the sidebar"

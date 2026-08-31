@@ -1,4 +1,4 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
 import { fileUrl } from '@/services/database'
 import type { CourseSummary } from '@/types'
@@ -12,7 +12,8 @@ interface Props {
   hits: Hit[]
   course: string
   hasPdf: boolean
-  hasMore: boolean
+  // Findings this lecture has beyond the ones rendered; 0 means the card is showing everything.
+  remaining: number
   onShowMore: () => void
 }
 
@@ -23,7 +24,7 @@ export default function SearchResult({
   hits,
   course,
   hasPdf,
-  hasMore,
+  remaining,
   onShowMore,
 }: Props) {
   const { t } = useLingui()
@@ -58,9 +59,12 @@ export default function SearchResult({
           <SearchSnippet key={i} hit={hit} />
         ))}
       </div>
-      {hasMore && (
+      {remaining > 0 && (
         <button className="search-result-more" onClick={onShowMore}>
-          <Trans>Show more snippets</Trans>
+          <Plural value={remaining} one="Show # more" other="Show # more" />
+          <span className="search-result-more-chevron">
+            <Icon icon="chevron-down" />
+          </span>
         </button>
       )}
     </div>
