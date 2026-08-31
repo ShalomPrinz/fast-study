@@ -27,9 +27,9 @@ recitation counts from `CourseTreeContext`, and how many of them are fully proce
 Below it the branches share **one** `.pipeline-card`, parted by rules inset to clear the status column.
 Each branch row is a `StatusNode` mapped from `branchStatus()`, the expand caret, the extractor title over
 its `formatRange · formatMonthDate` subtitle, and its actions — open-PDF and re-generate once done, a
-`Generate` button before that. A running branch replaces those actions with the phase it is on, in accent
-monospace, where a lecture row would show its ETA; there is no per-branch time estimate to show instead,
-since `/overview/status` reports no start time and `timing.db` records no overview operation.
+`Generate` button before that. A running branch replaces those actions with the phase it is on plus a
+clock counting up from `startedAt`, in accent monospace, where a lecture row would show its ETA — elapsed
+rather than remaining, since `timing.db` records no overview operation to estimate against.
 
 Expanding a branch opens its phase run underneath, inside the same card: every phase as a node — filled
 green with a check once its file is on disk — joined by hairline connectors, over the branch's filenames
@@ -54,11 +54,12 @@ Explicit overwriting is therefore always per-slug or per-phase and always behind
 
 ## Per-slug gating
 
-`GET /overview/status` returns an aggregate `running` plus per-slug `{ status, phase }`, because multiple
+`GET /overview/status` returns an aggregate `running` plus per-slug `{ status, phase, startedAt }`, because multiple
 overview runs can execute in parallel on one course. Only the header button gates on the aggregate; each
 row's Generate/↺ gates on its own slug's `running` — a running branch shows no action at all — and the
 phase named beside the spinner is that slug's own current `phase`. So one slug can be re-generated while
-"Generate All" churns on another.
+"Generate All" churns on another. `startedAt` is stamped once per chain, not per phase, so the elapsed
+clock counts the whole branch; `ExtractorHeader` ticks it client-side and drops it when the branch stops.
 
 `branchStatus(status, files, slug, phases)` is the single derivation of a row's
 `{ running, done, error, warning }`: `done` means the _last_ file of that extractor's phase list exists,

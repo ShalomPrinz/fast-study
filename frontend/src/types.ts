@@ -128,6 +128,8 @@ export interface CourseExtractorState {
   status: 'pending' | 'running' | 'done' | 'skipped' | 'error'
   message?: string
   phase?: CoursePhase | null
+  // ISO stamp of when this branch's phase chain began — one per chain, not per phase.
+  startedAt?: string | null
 }
 
 export interface CourseStatus {

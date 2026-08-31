@@ -6,6 +6,7 @@ is NOT run-scoped — runs write into the shared module-level store. See docs/OV
 lock/collision/failure-isolation model."""
 
 import asyncio
+from datetime import datetime, timezone
 
 from services import db_client
 
@@ -14,9 +15,13 @@ from course.overview import Phase
 
 # Per-(course, slug); created lazily via setdefault, persists across runs so same-slug triggers serialize.
 _locks: dict[tuple[str, str], asyncio.Lock] = {}
-# course → { slug → entry }; entry = {"status", "phase"?, "message"?}. The lock-holder is the only
-# writer of a given slug's entry; survives after the run finishes so `get_status` can read it.
+# course → { slug → entry }; entry = {"status", "phase"?, "message"?, "started_at"?}. The lock-holder
+# is the only writer of a given slug's entry; survives after the run finishes so `get_status` can read it.
 _status: dict[str, dict[str, dict]] = {}
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 def get_status(course: str) -> dict:
@@ -118,6 +123,8 @@ class OverviewRun:
             if lock.locked():
                 continue  # another run owns this slug right now — skip, don't touch its entry
             async with lock:
+                # Stamped once for the whole chain: the UI times the branch, not each phase.
+                self._entry(slug)["started_at"] = _now_iso()
                 for phase in extractor.phases_from(self.from_phase):
                     self._set_phase(slug, phase)
 
@@ -157,14 +164,19 @@ class OverviewRun:
         if it raised, so the caller stops that slug's chain."""
 
         entries = _status.setdefault(self.course, {})
-        # Fresh dict so a prior phase's message can't linger, but `phase` is carried across the
-        # running→result transition so the UI's per-step spinner stays correct.
-        entries[slug] = {"status": "running", "phase": phase.id}
+        # Fresh dict so a prior phase's message can't linger, but `phase` and `started_at` are
+        # carried across the running→result transition so the UI's per-step spinner and the
+        # branch's elapsed clock stay correct.
+        carried = {
+            "phase": phase.id,
+            "started_at": entries.get(slug, {}).get("started_at"),
+        }
+        entries[slug] = {"status": "running", **carried}
         try:
-            entries[slug] = {**self._phase_worker(slug, phase), "phase": phase.id}
+            entries[slug] = {**self._phase_worker(slug, phase), **carried}
             errored = False
         except Exception as e:
-            entries[slug] = {"status": "error", "message": str(e), "phase": phase.id}
+            entries[slug] = {"status": "error", "message": str(e), **carried}
             errored = True
         finally:
             db_client.notify()

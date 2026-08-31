@@ -45,7 +45,7 @@ One `generate` trigger is one `OverviewRun`. The run owns its selection (slugs, 
 Module-level state in `course/runner.py`:
 
 - `_locks[(course, slug)]` — persists across runs so same-slug triggers serialize.
-- `_status[course][slug]` — the shared store runs write into; entry is `{"status", "phase"?, "message"?}`. It survives after a run finishes so `get_status` can read it. `running` is DERIVED (any entry running); `phase` is per-entry and is always the **string** `phase.id` — a `Phase` object must never reach the JSON-serialized store.
+- `_status[course][slug]` — the shared store runs write into; entry is `{"status", "phase"?, "message"?, "started_at"?}`. It survives after a run finishes so `get_status` can read it. `running` is DERIVED (any entry running); `phase` is per-entry and is always the **string** `phase.id` — a `Phase` object must never reach the JSON-serialized store. `started_at` is stamped once when a slug enters its chain and carried across every phase's entry rebuild, so the UI clocks the branch rather than the phase.
 
 `execute` is slug-by-slug in declaration order. For each slug it does a non-blocking `lock.locked()` check then `async with lock`; an un-held `asyncio.Lock` acquires without yielding, so with no await in between the skip-on-collision is atomic.
 

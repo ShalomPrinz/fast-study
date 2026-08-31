@@ -121,15 +121,24 @@ export async function runOverview(
   )
 }
 
+type RawCourseExtractorState = Omit<CourseExtractorState, 'startedAt'> & {
+  started_at?: string | null
+}
+
 interface RawCourseStatus {
   running: boolean
-  extractors?: Record<string, CourseExtractorState>
+  extractors?: Record<string, RawCourseExtractorState>
 }
 
 export async function fetchCourseStatus(course: string): Promise<CourseStatus> {
   const raw = await backend.get<RawCourseStatus>(courseOverviewBase(course) + '/status')
   return {
     running: raw.running,
-    extractors: raw.extractors ?? {},
+    extractors: Object.fromEntries(
+      Object.entries(raw.extractors ?? {}).map(([slug, { started_at, ...rest }]) => [
+        slug,
+        { ...rest, startedAt: started_at ?? null },
+      ]),
+    ),
   }
 }
