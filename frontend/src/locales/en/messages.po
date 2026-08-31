@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:199
+#: src/features/search/SearchView.tsx:238
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -46,7 +46,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:197
+#: src/features/search/SearchView.tsx:236
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
@@ -141,7 +141,7 @@ msgstr "{effectiveName} may split into parts that overwrite existing {existing} 
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
-#: src/features/search/SearchView.tsx:198
+#: src/features/search/SearchView.tsx:237
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
@@ -176,6 +176,10 @@ msgstr "{phaseLabel}…"
 #: src/features/course-overview/CourseView.tsx:76
 msgid "{processed} fully processed"
 msgstr "{processed} fully processed"
+
+#: src/features/search/components/SearchResult.tsx:64
+msgid "{remaining, plural, one {Show # more} other {Show # more}}"
+msgstr "{remaining, plural, one {Show # more} other {Show # more}}"
 
 #: src/features/lectures/MainView.tsx:190
 msgid "{stage} · step {stepNumber} of {stageCount}"
@@ -217,7 +221,7 @@ msgstr "+ add source URL"
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:244
+#: src/features/settings/SettingsView.tsx:251
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 
@@ -237,11 +241,11 @@ msgstr "Add recitation"
 msgid "Analyze"
 msgstr "Analyze"
 
-#: src/features/settings/SettingsView.tsx:153
+#: src/features/settings/SettingsView.tsx:160
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:217
+#: src/features/settings/SettingsView.tsx:224
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -298,7 +302,7 @@ msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/settings/SettingsView.tsx:243
+#: src/features/settings/SettingsView.tsx:250
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -371,15 +375,15 @@ msgstr "Couldn't download \"{name}\". Try again."
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
 
-#: src/features/search/hooks/useCourseSummaries.ts:35
+#: src/features/search/hooks/useCourseSummaries.ts:44
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/settings/SettingsView.tsx:116
+#: src/features/settings/SettingsView.tsx:123
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "Couldn't save all settings — check the services are running and try again."
 
-#: src/features/search/SearchView.tsx:140
+#: src/features/search/SearchView.tsx:177
 msgid "Course"
 msgstr "Course"
 
@@ -612,7 +616,7 @@ msgstr "Generating…"
 msgid "Get a key"
 msgstr "Get a key"
 
-#: src/features/settings/SettingsView.tsx:204
+#: src/features/settings/SettingsView.tsx:211
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -650,7 +654,7 @@ msgstr "Language"
 msgid "Last error:"
 msgstr "Last error:"
 
-#: src/features/search/components/SearchResult.tsx:35
+#: src/features/search/components/SearchResult.tsx:45
 msgid "lecture"
 msgstr "lecture"
 
@@ -680,7 +684,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:161
+#: src/features/search/SearchView.tsx:198
 #: src/shared/sidebar/Sidebar.tsx:76
 msgid "Lectures"
 msgstr "Lectures"
@@ -707,7 +711,7 @@ msgstr "Loaded"
 msgid "Loading recordings…"
 msgstr "Loading recordings…"
 
-#: src/features/search/SearchView.tsx:184
+#: src/features/search/SearchView.tsx:223
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
@@ -719,7 +723,7 @@ msgstr "Loading…"
 msgid "Manage account"
 msgstr "Manage account"
 
-#: src/features/search/SearchView.tsx:176
+#: src/features/search/SearchView.tsx:213
 msgid "Match whole word"
 msgstr "Match whole word"
 
@@ -768,11 +772,11 @@ msgstr "No materials found."
 msgid "No original to revert to"
 msgstr "No original to revert to"
 
-#: src/features/search/components/SearchResult.tsx:42
+#: src/features/search/components/SearchResult.tsx:52
 msgid "no PDF"
 msgstr "no PDF"
 
-#: src/features/search/components/SearchResult.tsx:23
+#: src/features/search/components/SearchResult.tsx:33
 msgid "No PDF for this lecture"
 msgstr "No PDF for this lecture"
 
@@ -812,7 +816,7 @@ msgstr "not provided"
 msgid "Note: This will delete all files in this lecture."
 msgstr "Note: This will delete all files in this lecture."
 
-#: src/features/search/SearchView.tsx:211
+#: src/features/search/SearchView.tsx:250
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
@@ -843,7 +847,7 @@ msgstr "Open material in new tab"
 #: src/features/course-overview/components/ExtractorHeader.tsx:82
 #: src/features/lectures/components/PdfViewer.tsx:96
 #: src/features/lectures/MainView.tsx:224
-#: src/features/search/components/SearchResult.tsx:23
+#: src/features/search/components/SearchResult.tsx:33
 msgid "Open PDF in new tab"
 msgstr "Open PDF in new tab"
 
@@ -934,7 +938,7 @@ msgstr "Re-generate from {stepLabel}"
 msgid "Ready to retry"
 msgstr "Ready to retry"
 
-#: src/features/search/components/SearchResult.tsx:35
+#: src/features/search/components/SearchResult.tsx:45
 msgid "recitation"
 msgstr "recitation"
 
@@ -962,7 +966,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:169
+#: src/features/search/SearchView.tsx:206
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -1009,7 +1013,7 @@ msgstr "Required"
 msgid "Restore the original summary"
 msgstr "Restore the original summary"
 
-#: src/features/search/SearchView.tsx:192
+#: src/features/search/SearchView.tsx:231
 msgid "Results"
 msgstr "Results"
 
@@ -1052,7 +1056,7 @@ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
 #: src/features/lectures/EditSummaryView.tsx:193
-#: src/features/settings/SettingsView.tsx:145
+#: src/features/settings/SettingsView.tsx:152
 msgid "Save"
 msgstr "Save"
 
@@ -1072,15 +1076,15 @@ msgstr "Saving…"
 msgid "Search"
 msgstr "Search"
 
-#: src/features/search/SearchView.tsx:106
+#: src/features/search/SearchView.tsx:143
 msgid "Search summaries"
 msgstr "Search summaries"
 
-#: src/features/search/SearchView.tsx:128
+#: src/features/search/SearchView.tsx:165
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
 
-#: src/features/search/SearchView.tsx:109
+#: src/features/search/SearchView.tsx:146
 msgid "Searches the generated summaries of one course — the one picked in the field"
 msgstr "Searches the generated summaries of one course — the one picked in the field"
 
@@ -1098,20 +1102,20 @@ msgid "session expired"
 msgstr "session expired"
 
 #: src/features/settings/SettingsView.tsx:76
-#: src/features/settings/SettingsView.tsx:138
+#: src/features/settings/SettingsView.tsx:145
 #: src/shared/sidebar/Sidebar.tsx:91
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/settings/SettingsView.tsx:109
+#: src/features/settings/SettingsView.tsx:116
 msgid "Settings saved"
 msgstr "Settings saved"
 
-#: src/features/search/SearchView.tsx:236
+#: src/features/search/SearchView.tsx:280
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/settings/SettingsView.tsx:228
+#: src/features/settings/SettingsView.tsx:235
 msgid "Show the run controls in the sidebar"
 msgstr "Show the run controls in the sidebar"
 
@@ -1136,7 +1140,7 @@ msgstr "Start using Fast Study"
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:194
+#: src/features/settings/SettingsView.tsx:201
 msgid "Storage"
 msgstr "Storage"
 
@@ -1172,7 +1176,7 @@ msgstr "summary did not use any material"
 msgid "summary did not use material"
 msgstr "summary did not use material"
 
-#: src/features/settings/SettingsView.tsx:174
+#: src/features/settings/SettingsView.tsx:181
 msgid "Summary model"
 msgstr "Summary model"
 
@@ -1190,7 +1194,7 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
-#: src/features/settings/SettingsView.tsx:231
+#: src/features/settings/SettingsView.tsx:238
 msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 
@@ -1306,7 +1310,7 @@ msgstr "We couldn't check this key right now. You can still save it."
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
-#: src/features/search/SearchView.tsx:178
+#: src/features/search/SearchView.tsx:215
 msgid "Whole word only"
 msgstr "Whole word only"
 

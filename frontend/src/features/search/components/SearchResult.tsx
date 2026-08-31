@@ -1,4 +1,4 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
 import { fileUrl } from '@/services/database'
 import type { CourseSummary } from '@/types'
@@ -12,11 +12,21 @@ interface Props {
   hits: Hit[]
   course: string
   hasPdf: boolean
+  // Findings this lecture has beyond the ones rendered; 0 means the card is showing everything.
+  remaining: number
+  onShowMore: () => void
 }
 
 // One lecture's card: a single header row — the whole row is the open-PDF button, disabled when the
 // lecture has no summary.pdf — above every snippet found in that lecture.
-export default function SearchResult({ summary, hits, course, hasPdf }: Props) {
+export default function SearchResult({
+  summary,
+  hits,
+  course,
+  hasPdf,
+  remaining,
+  onShowMore,
+}: Props) {
   const { t } = useLingui()
   const { name, kind } = summary
   const openPdf = () => window.open(fileUrl(course, name, 'summary.pdf', kind), '_blank')
@@ -49,6 +59,14 @@ export default function SearchResult({ summary, hits, course, hasPdf }: Props) {
           <SearchSnippet key={i} hit={hit} />
         ))}
       </div>
+      {remaining > 0 && (
+        <button className="search-result-more" onClick={onShowMore}>
+          <Plural value={remaining} one="Show # more" other="Show # more" />
+          <span className="search-result-more-chevron">
+            <Icon icon="chevron-down" />
+          </span>
+        </button>
+      )}
     </div>
   )
 }

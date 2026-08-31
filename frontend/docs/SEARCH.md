@@ -14,6 +14,13 @@ largest course is ~760 KB across 35 summaries, so the whole corpus is cheaper th
 `name` is the bare lecture/recitation directory name — the same identifier every lecture-scoped route
 takes — so a hit builds `fileUrl(course, name, 'summary.pdf', kind)` directly.
 
+`useCourseSummaries` holds `{summaries, loading, error}` in **one** state object, so a resolved fetch lands
+the results and clears the flag in the same render; as three separate `useState`s the `.then`/`.finally` pair
+left a frame in which the loading line sat above the new results and then vanished.
+
+The loading line shows only while the query box is non-empty. Switching course with an empty box is nothing
+the user is waiting on, and on a cached-corpus-sized fetch a flash was all the line ever communicated.
+
 **The corpus is never invalidated.** A summary edited elsewhere mid-session keeps matching its old text
 until the page is reloaded. Deliberate: the staleness window is one visit and re-fetching on every SSE
 notify would re-download the course for edits the searcher isn't looking at.
@@ -70,38 +77,54 @@ range in a `<mark>` — never `dangerouslySetInnerHTML`.
 ## Rendering and paging
 
 **One card per lecture.** `SearchResult` renders a lecture's header row once — file icon, name, a neutral
-`.chip` reading `lecture`/`recitation`, and the open glyph — followed by every snippet found in it
+`.chip` reading `lecture`/`recitation`, and the open glyph — followed by that lecture's visible snippets
 (`SearchSnippet`), indented to clear the icon column and parted by `--line-soft` rules. Matches wear
 `--highlight`.
 
-Paging is over **findings** — individual occurrences — 20 at a time, and **Show more** adds 20 more.
-Visible groups are chosen by walking the full group list and accumulating `matches.length` until the
-threshold is reached. 20 is a **minimum, not an exact cut**: the group that crosses it is included whole.
-A merged snippet's text extends past a mid-group cut, so stopping there would leave an occurrence visible
-in the text but unhighlighted, which reads as a bug; completing the group guarantees every occurrence on
-screen is marked. Pages are therefore 20-or-slightly-more findings.
+Two independent limits bound what is on screen: **5 findings per lecture card** and **20 findings per page**.
+Both count findings — individual occurrences — and both obey the same rule: **a group is never split**, so the
+group crossing a limit is included whole and each limit is a minimum rather than an exact cut. A merged
+snippet's text extends past a mid-group cut, so stopping there would leave an occurrence visible in the text
+but unhighlighted, which reads as a bug; completing the group guarantees every occurrence on screen is marked.
+`takeGroups(groups, limit)` is that walk, shared by both limits.
 
-**Show more advances from what is rendered, not from the previous threshold** (`setShown(shownFindings + 20)`).
-A group that overshoots the threshold would otherwise be re-selected unchanged by the next threshold and
-the click would do nothing — with uncapped merging a single group can hold hundreds of findings, so a
-one-letter query made most clicks dead.
+**The page is a set of whole lectures.** Groups are bucketed into consecutive-summary lectures once, then
+lectures are taken in order until their *base-capped* counts reach 20. Sizing the page at the 5-per-lecture
+cap — never at the expanded counts — is what keeps the two limits independent: expanding a card grows it in
+place and can never push a later lecture off the page. Bucketing up front also replaces the old regroup-on-
+render step, so a title still can never appear twice.
 
-Grouping always runs over the *full* match list (it is cheap, ~15ms for 15k matches, and gives the count
-line its totals); only `buildHit` is restricted to the visible groups. Those are regrouped by summary on
-every render, so a lecture straddling a page boundary keeps one title block that simply grows — a title
-can never appear twice. The counts sit at the end of the `Results` caption and report findings
-(`71 results in 16 lectures — showing 21`), where the "showing" number is the true count rendered and
-vanishes once everything is shown. They are **two `<Plural>` messages, not one**: a single message would
-need a plural nested in a plural, and each half already reads as a phrase on its own. The shown count
-resets to 20 on any change to the query, the filters, the whole-word toggle or the course, so a new search
-never inherits the previous one's expanded page.
+A card's own **Show N more** opens that lecture **in full** — the 5 is the collapsed state, not a page size,
+so `expanded` is a `Set` of `kind:name` rather than a map of thresholds. `N` is the findings left in that
+lecture and clicking reveals exactly those `N`; a per-click increment promised 20 and delivered 5, because the
+label counted what remained while the increment counted what was added. The card is handed that `remaining`
+count rather than a boolean.
+
+The page's button does still **advance from what is rendered, not from the previous threshold**
+(`pageCount + 20`). A lecture that overshoots the threshold would otherwise be re-selected unchanged by the
+next threshold and the click would do nothing. It is also keyed on **lectures** remaining, not findings
+remaining: with cards collapsed there are always findings left over, and a button that re-renders the same
+page of lectures does nothing.
+
+Grouping always runs over the *full* match list (it is cheap, ~15ms for 15k matches, and gives the count line
+its totals); only `buildHit` is restricted to the groups actually rendered — at most 5-or-slightly-more per
+card. The counts sit at the end of the `Results` caption and report findings
+(`71 results in 16 lectures — showing 21`), where the "showing" number is the true count rendered, in-card
+expansions included, and vanishes once everything is shown. They are **two `<Plural>` messages, not one**: a
+single message would need a plural nested in a plural, and each half already reads as a phrase on its own.
+The lecture count is bound to a local literally named `lectures` because Lingui keys the placeholder on the
+identifier — renaming it silently orphans the Hebrew translation. Both the page threshold and the `expanded`
+set reset on any change to the query, the filters, the whole-word toggle or the course, so a new search never
+inherits the previous one's expanded cards.
 
 ## Controls
 
 The page leads with **one field** — search icon, the autofocused query input, a divider, and the course
 picker — so the course reads as scope on the query rather than a control of its own. Switching course
 mid-search is rare, which is what earns the picker its place inside. It stays a real `<select>`: it is
-keyboard-accessible and its option list is already the course list.
+keyboard-accessible and its option list is already the course list. Its own focus ring is suppressed — the
+black box it drew around the picker was redundant next to `.search-field:focus-within`, which already accents
+the whole field's border.
 
 Course options come from `CourseTreeContext`, archived excluded. The selection is derived, not stored:
 the last choice is persisted in `localStorage`, and a stored name that no longer exists (or a tree that
@@ -110,7 +133,11 @@ hasn't loaded yet) falls back to the first active course.
 Under the field sit three **toggle pills** — Lectures, Recitations, Whole word only — each a
 `<button role="switch" aria-checked>` rather than a styled `<div>`, so space and enter work. All three are
 view-local; the two kind filters default on. No match-case (Hebrew has none) and no regex. A query that
-matches nothing renders the shared `.empty-state` card, and **Show more** is the full-width ghost button.
+matches nothing renders the shared `.empty-state` card. The page's **Show more** is the full-width ghost
+button; a card's is a seam across the card's foot — a hairline, a centred label and a chevron, tinting to
+`--surface-sunken` on hover — pulled back out through the card's padding by negative margins so it spans the
+full width and rounds off the card's bottom corners. It reads as the snippet list continuing rather than as a
+second button, so the two never look like rival pagers.
 
 A result never navigates. The **whole header row is one button** that `window.open`s the lecture's
 `summary.pdf` — icon, title, kind chip and the (decorative) external-link glyph are all inside it, so
