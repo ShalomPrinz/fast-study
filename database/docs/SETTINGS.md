@@ -49,12 +49,20 @@ relative root would resolve against each service's own cwd), it is created if mi
 file is written and deleted to prove the location is writable — otherwise an unwritable root
 surfaces as a pipeline failure minutes later.
 
-## No restart
+## Where the root lives, and the unconfigured state
 
-`POST /config` applies `{data_root}` to `os.environ`. Nothing has to restart because `fs/paths.py`'s
-`data_root()` re-reads the environment on every call; `main.py`'s module-level `DATA_ROOT` is a
-boot-time fail-fast that nothing reads.
+`fs/paths.py` holds the root as module state (`_data_root`), written only by `set_data_root()`.
+`main.py` seeds it after `load_dotenv()` when `DATA_ROOT` is present and non-empty, and
+`POST /config` sets it again through the same writer — so a settings change needs no restart.
+
+An absent or blank `DATA_ROOT` leaves the root **unset** and the service still boots: that is the
+fresh-install state the first-run wall exists for. `GET /settings`, `PUT /settings` and
+`POST /config` read and write `.env` directly, so they answer normally while unset — `data_root` is
+simply `null`. Every filesystem endpoint instead answers `409` `{error}`, because `data_root()`
+raises `DataRootNotConfigured` rather than falling back to a relative path that would write courses
+into the service's own cwd.
 
 Changing the root **re-points only and never moves data**, so a change mid-run splits a lecture
-across two roots. The guard for that is advisory and lives in the frontend, which knows what is in
-flight; there is deliberately no 409 here.
+across two roots. That is a different condition from the unset root above, and its guard is
+advisory: it lives in the frontend, which knows what is in flight, and no status code is returned
+for it here.

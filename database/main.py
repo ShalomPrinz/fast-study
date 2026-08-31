@@ -12,18 +12,22 @@ from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response, StreamingResponse
-from fs import crud, materials, overview, tree
+from fs import crud, materials, overview, paths, tree
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
-from fs.paths import lecture_dir
+from fs.paths import DataRootNotConfigured, lecture_dir
 from logging_setup import setup_logging
 
 load_dotenv()
 setup_logging()
 log = logging.getLogger("db")
 
-DATA_ROOT = os.environ["DATA_ROOT"]
+# An absent or blank root leaves the service unconfigured rather than failing to boot: that is the
+# state the first-run wall exists for, and POST /config is how it gets filled in.
+if os.environ.get("DATA_ROOT"):
+    paths.set_data_root(os.environ["DATA_ROOT"])
+
 BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
 
@@ -66,6 +70,19 @@ def _error(message: str, status: int):
     return JSONResponse({"error": message}, status_code=status)
 
 
+def _failure(exc: Exception, status: int):
+    """Build the failure body for a caught exception, promoting an unconfigured root to 409."""
+
+    return _error(str(exc), 409 if isinstance(exc, DataRootNotConfigured) else status)
+
+
+@app.exception_handler(DataRootNotConfigured)
+def data_root_not_configured(request: Request, exc: DataRootNotConfigured):
+    """Answer 409 on the endpoints that have no blanket handler of their own, /tree above all."""
+
+    return _error(str(exc), 409)
+
+
 @app.get("/tree")
 def get_tree():
     """Return the full course tree."""
@@ -82,7 +99,7 @@ async def post_course(request: Request):
         crud.create_course(body["name"], body.get("source_url"))
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.patch("/courses/{course}")
@@ -94,7 +111,7 @@ async def patch_course(course: str, request: Request):
         crud.rename_course(course, body["name"])
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.patch("/courses/{course}/source_url")
@@ -106,7 +123,7 @@ async def patch_course_source_url(course: str, request: Request):
         crud.set_course_source_url(course, body.get("source_url"))
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.patch("/courses/{course}/archived")
@@ -118,7 +135,7 @@ async def patch_course_archived(course: str, request: Request):
         crud.set_course_archived(course, body["archived"])
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.post("/courses/{course}/lectures")
@@ -130,7 +147,7 @@ async def post_lecture(course: str, request: Request, kind: str = Query("lecture
         crud.create_lecture(course, body["name"], kind)
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.patch("/courses/{course}/lectures/{lecture}")
@@ -144,7 +161,7 @@ async def patch_lecture(
         crud.rename_lecture(course, lecture, body["name"], kind)
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 def _post_video_arrived(course: str, lecture: str, kind: str) -> None:
@@ -186,7 +203,7 @@ async def put_video(
         asyncio.create_task(_notify_video_arrived(course, lecture, kind))
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.get("/courses/{course}/lectures/{lecture}/materials")
@@ -198,7 +215,7 @@ def get_materials(course: str, lecture: str, kind: str = Query("lecture")):
             "materials": materials.list_materials(lecture_dir(course, lecture, kind))
         }
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.post("/courses/{course}/lectures/{lecture}/materials")
@@ -212,7 +229,7 @@ async def post_material(
         name = materials.write_material(course, lecture, kind, data)
         return JSONResponse({"name": name})
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -225,7 +242,7 @@ def delete_file_endpoint(
         crud.delete_file(course, lecture, name, kind)
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.put("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -239,7 +256,7 @@ async def put_file(
         crud.write_file(course, lecture, name, kind, data)
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.head("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -259,7 +276,7 @@ def get_summary(course: str, lecture: str, kind: str = Query("lecture")):
     try:
         return summary_fs.read_summary(course, lecture, kind)
     except Exception as e:
-        return _error(str(e), 500)
+        return _failure(e, 500)
 
 
 @app.put("/courses/{course}/lectures/{lecture}/summary")
@@ -273,7 +290,7 @@ async def put_summary(
         summary_fs.write_summary(course, lecture, kind, content)
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 500)
+        return _failure(e, 500)
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/summary")
@@ -284,7 +301,7 @@ def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
         summary_fs.revert_summary(course, lecture, kind)
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 500)
+        return _failure(e, 500)
 
 
 @app.get("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -307,7 +324,7 @@ def get_course_summaries(course: str):
     except FileNotFoundError as e:
         return _error(str(e), 404)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.put("/courses/{course}/overview/files/{name}")
@@ -321,7 +338,7 @@ async def put_overview_file(course: str, name: str, request: Request):
     except FileNotFoundError as e:
         return _error(str(e), 404)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.get("/courses/{course}/overview/files")
@@ -331,7 +348,7 @@ def list_overview_files(course: str):
     try:
         return {"files": overview.list_overview_files(course)}
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.get("/courses/{course}/overview/meta")
@@ -341,7 +358,7 @@ def get_overview_meta(course: str):
     try:
         return {"meta": overview.read_overview_meta(course)}
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.patch("/courses/{course}/overview/meta")
@@ -355,7 +372,7 @@ async def patch_overview_meta(course: str, request: Request):
     except FileNotFoundError as e:
         return _error(str(e), 404)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.get("/courses/{course}/overview/files/{name}")
@@ -365,7 +382,7 @@ def get_overview_file(course: str, name: str):
     try:
         p = overview.overview_file_path(course, name)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
     if not p.exists():
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None
@@ -379,7 +396,7 @@ def get_settings():
     try:
         return settings.read_settings()
     except Exception as e:
-        return _error(str(e), 500)
+        return _failure(e, 500)
 
 
 @app.put("/settings")
@@ -390,7 +407,7 @@ async def put_settings(request: Request):
         body = await request.json()
         return settings.write_settings(body)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.post("/config")
@@ -400,11 +417,11 @@ async def post_config(request: Request):
     try:
         body = await request.json()
         if "data_root" in body:
-            # fs.paths.data_root() re-reads the environment per call, so this takes effect at once.
-            os.environ["DATA_ROOT"] = settings.prepare_data_root(body["data_root"])
+            # The setter is the only writer of fs.paths' root state, so this takes effect at once.
+            paths.set_data_root(settings.prepare_data_root(body["data_root"]))
         return Response(status_code=204)
     except Exception as e:
-        return _error(str(e), 400)
+        return _failure(e, 400)
 
 
 @app.get("/events")

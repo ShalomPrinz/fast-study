@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 RECITATIONS_DIR = "Recitations"
@@ -42,6 +41,13 @@ PREDEFINED_FILES = (
 MATERIAL_PREFIX = "material"
 MATERIAL_EXT = ".pdf"
 
+# The data root as explicit module state: unset until main.py seeds it or POST /config sets it.
+_data_root: Path | None = None
+
+
+class DataRootNotConfigured(Exception):
+    """Raised when a path is resolved before a data root has been configured."""
+
 
 def material_name(index: int) -> str:
     """Build the material filename for a 1-based index; index 1 is the unnumbered material.pdf."""
@@ -63,10 +69,22 @@ def material_index(name: str) -> int | None:
     return int(middle) if middle.isdigit() and not middle.startswith("0") else None
 
 
-def data_root() -> Path:
-    """Return the root directory holding all course data."""
+def set_data_root(value: str | Path) -> None:
+    """Set the root directory holding all course data; the single writer of that state."""
 
-    return Path(os.environ["DATA_ROOT"])
+    global _data_root
+    _data_root = Path(value)
+
+
+def data_root() -> Path:
+    """Return the root directory holding all course data, or raise if none is configured."""
+
+    # Refusing beats defaulting: a relative or empty root would silently write into the service's cwd.
+    if _data_root is None:
+        raise DataRootNotConfigured(
+            "data root is not configured — set DATA_ROOT in the repo-root .env, or POST /config"
+        )
+    return _data_root
 
 
 def safe_name(name: str) -> str:

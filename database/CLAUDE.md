@@ -23,18 +23,18 @@ changes: keep them backward-compatible or flag the impact.
 
 ## Layout
 
-`fs/paths.py` is the single source of truth for path resolution and layout constants. `tests/` uses a conftest that points `DATA_ROOT` at a per-test tmp dir.
+`fs/paths.py` is the single source of truth for path resolution and layout constants, and holds the data root as module state written only by `set_data_root()`. `tests/` uses a conftest that points that state at a per-test tmp dir.
 
 ## Environment
 
 Reads the repo-root `.env` via `python-dotenv`:
 
-- `DATA_ROOT` (required) — absolute path to the data directory.
+- `DATA_ROOT` — absolute path to the data directory. Absent or blank still boots: the root stays unset and every filesystem endpoint answers `409` until `POST /config` sets one.
 - `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload `/video-arrived` report.
 
 `settings.py` also *writes* that `.env`: it is the store behind the app's settings surface in
-browser dev (`GET`/`PUT /settings`), and `POST /config` applies `DATA_ROOT` to the running process
-with no restart. The write is a merge — only settings keys are rewritten, and the API keys are
+browser dev (`GET`/`PUT /settings`), and `POST /config` sets the running process's data root with
+no restart. The write is a merge — only settings keys are rewritten, and the API keys are
 write-only. See [docs/SETTINGS.md](docs/SETTINGS.md).
 
 ## Running and testing

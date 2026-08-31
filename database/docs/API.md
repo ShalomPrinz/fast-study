@@ -11,6 +11,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   Reads return their payload directly (`{summaries: [...]}`, `{files: [...]}`, the tree array).
 - `?kind=lecture|recitation` addresses the two lecture families; it defaults to `lecture`.
 - Bodies are raw bytes for file/video/summary writes, JSON for metadata routes.
+- Every route that touches `DATA_ROOT` answers `409` `{error}` while no data root is configured;
+  the three settings routes are the exceptions, since the first-run wall depends on them. See
+  [SETTINGS.md](SETTINGS.md).
 
 ## Routes
 
@@ -102,7 +105,7 @@ merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 | ---------------- | ----------------------------------------------------------------------------- |
 | `GET /settings`  | `200` with every field, `null` when unset; `500` `{error}` if the store is unreadable |
 | `PUT /settings`  | `200` with the same shape; `400` `{error}` on a rejected value                 |
-| `POST /config`   | `204`; `400` `{error}` on a data root that is relative or unwritable           |
+| `POST /config`   | `204`, clearing the unconfigured state; `400` `{error}` on a data root that is relative or unwritable |
 
 `PUT /settings` is the second exception to the 204-on-mutation convention: it answers with the
 `GET` shape so the client never needs a follow-up read.
