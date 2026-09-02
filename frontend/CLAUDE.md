@@ -11,9 +11,8 @@ npm run build    # tsc -b && vite build → dist/
 npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for watch mode)
 ```
 
-`.env` (not committed): `VITE_API_URL` (default `http://localhost:8000`), `VITE_DATABASE_URL`
-(`http://localhost:8001`), `VITE_AUTODL_URL` (`http://localhost:3053`), `VITE_DOWNLOADER_URL`
-(`http://localhost:3052`).
+The frontend reads no env var. The four service base URLs come from the Electron preload bridge at
+runtime (`services/runtime.ts`), falling back to the dev ports `:8000`, `:8001`, `:3052` and `:3053`.
 
 ## Docs
 

@@ -1,16 +1,10 @@
 import { createClient } from './http'
-import { runtimeBridge } from './runtime'
+import { BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
 
 // This file is the boundary for the settings concern, which spans both services by design: a
 // setting's owner is a property of the setting, not of the screen editing it.
-const backend = createClient(
-  import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
-  'backend service',
-)
-const database = createClient(
-  import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001',
-  'database service',
-)
+const backend = createClient(BACKEND_URL, 'backend service')
+const database = createClient(DATABASE_URL, 'database service')
 
 // How much of the pipeline an automatic trigger may run. The backend applies the same fallback to
 // an unset or unrecognised value, so both ends agree that a fresh install runs everything.

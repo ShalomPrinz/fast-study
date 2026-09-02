@@ -19,13 +19,13 @@ the toast by base URL, so a downed service reuses one toast instead of stacking.
 their own connection-error handling; they either ignore the throw or check `isConnectionError` before
 showing a second message.
 
-## `backend.ts` → FastAPI (`VITE_API_URL`)
+## `backend.ts` → FastAPI (:8000)
 
 Pipeline triggers (`runStep`, `runPipeline`, `runAll`, `reportVideoArrived`), `fetchRunnerStatus`, `fetchTimingStats`, and the
 course-overview endpoints (`fetchOverviewExtractors`, `runOverview`, `fetchCourseStatus`). The wire format
 is `snake_case`; normalization to camelCase happens here and nowhere else, so `types.ts` shapes stay clean.
 
-## `database.ts` → database service (`VITE_DATABASE_URL`)
+## `database.ts` → database service (:8001)
 
 Everything filesystem-backed: tree, course/lecture CRUD, summary read/save/revert, video upload, file URLs,
 course `overview/` file listing + meta. `materialUrl`/`deleteMaterial` hit the same per-file routes as
@@ -44,6 +44,11 @@ The one file that declares `window.faststudy`, exposed through `runtimeBridge()`
 Electron, and under vitest's `node` environment). A second `declare global` for the same property would not
 compile, so anything the preload exposes is declared here; its import of `SettingsBacking` is type-only, so
 the mutual import with `settings.ts` is erased and there is no runtime cycle.
+
+It also resolves the four service base URLs — `BACKEND_URL`, `DATABASE_URL`, `DOWNLOAD_SERVER_URL`,
+`AUTO_DOWNLOADER_URL` — from `urls` on the bridge, falling back to the dev ports. Resolution is
+synchronous at import time because every service builds its client at module scope; the packaged app's
+ports are chosen at boot, so nothing here may be baked in at build time and the frontend reads no env var.
 
 ## `settings.ts` — the settings store and the two config owners
 
@@ -99,7 +104,7 @@ path is `/courses/{course}/lectures/{lecture}` (`lectureBase`). `kindQuery` appe
 both; lectures carry no suffix. `overviewGenerateQuery` composes the overview trigger's optional
 `extractors` CSV + `from_phase` + `skip_existing`.
 
-## `features/downloads/services/autoDownloader.ts` → auto-downloader (`VITE_AUTODL_URL`, :3053)
+## `features/downloads/services/autoDownloader.ts` → auto-downloader (:3053)
 
 Feature-local because only the downloads page speaks this protocol. Its discovery `Item` is
 mechanism-agnostic: `ref` is an opaque token to round-trip, never parse.
@@ -121,7 +126,7 @@ connection surfaces as a raw `TypeError` instead of the friendly toast. `Passcod
 downloader server's `/download-item` answers with the same three bodies (it forwards auth's verdict
 verbatim), so it reuses them rather than restating the vocabulary.
 
-## `features/downloads/services/downloadServer.ts` → downloader server (`VITE_DOWNLOADER_URL`, :3052)
+## `features/downloads/services/downloadServer.ts` → downloader server (:3052)
 
 The server that runs the downloads owns both the queueing and the job state, so the downloads page talks to
 two services: it discovers and authenticates through the auto-downloader and downloads here.

@@ -1,14 +1,12 @@
 import { createClient, httpError } from '@/services/http'
+import { DOWNLOAD_SERVER_URL } from '@/services/runtime'
 import type { DownloadOperation, Kind } from '@/types'
 import type { Media, PasscodeError, ProbedMedia } from './autoDownloader'
 import { postReconnectAware } from './autoDownloader'
 
 // Feature-local boundary for the downloader server, which queues every background download job and
 // owns its state — both the ones discovery rows trigger and the ones the Chrome extension starts.
-const downloadServer = createClient(
-  import.meta.env.VITE_DOWNLOADER_URL ?? 'http://localhost:3052',
-  'downloader server',
-)
+const downloadServer = createClient(DOWNLOAD_SERVER_URL, 'downloader server')
 
 // A name the server rewrote to be legal on disk, keyed by the submitted row's `ref`. Only the rows
 // it actually changed are listed, so an untouched submission answers with [].

@@ -2,8 +2,8 @@
 
 ## Two backends, no Vite backend
 
-The SPA talks to the FastAPI backend (`VITE_API_URL`, :8000) for pipeline runs and timing stats, and to
-the database service (`VITE_DATABASE_URL`, :8001) for everything filesystem-backed. The Vite dev server
+The SPA talks to the FastAPI backend (:8000) for pipeline runs and timing stats, and to
+the database service (:8001) for everything filesystem-backed. The Vite dev server
 only serves the SPA — it hosts no API. The browser never reads `DATA_ROOT`; after a step succeeds, the
 tree is re-fetched from the database service.
 
