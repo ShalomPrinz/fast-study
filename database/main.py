@@ -1,9 +1,6 @@
-import asyncio
 import logging
 import os
 import signal
-import urllib.parse
-import urllib.request
 from contextlib import asynccontextmanager
 
 import settings
@@ -27,8 +24,6 @@ log = logging.getLogger("db")
 # state the first-run wall exists for, and POST /config is how it gets filled in.
 if os.environ.get("DATA_ROOT"):
     paths.set_data_root(os.environ["DATA_ROOT"])
-
-BACKEND_URL = os.environ.get("BACKEND_URL", "http://localhost:8000")
 
 
 @asynccontextmanager
@@ -164,43 +159,15 @@ async def patch_lecture(
         return _failure(e, 400)
 
 
-def _post_video_arrived(course: str, lecture: str, kind: str) -> None:
-    """Blocking POST to backend's /video-arrived; runs in a worker thread via asyncio.to_thread."""
-
-    url = (
-        f"{BACKEND_URL}/courses/{urllib.parse.quote(course, safe='')}"
-        f"/lectures/{urllib.parse.quote(lecture, safe='')}"
-        f"/video-arrived?kind={urllib.parse.quote(kind, safe='')}"
-    )
-    try:
-        # No timeout: a full pipeline run takes many minutes, and a timeout would orphan it.
-        with urllib.request.urlopen(
-            urllib.request.Request(url, method="POST"), timeout=None
-        ) as resp:
-            resp.read()
-    except Exception as e:
-        log.error(
-            "video-arrived report failed for %s/%s (%s): %s", course, lecture, kind, e
-        )
-
-
-async def _notify_video_arrived(course: str, lecture: str, kind: str) -> None:
-    """Fire-and-forget bridge that hands the blocking POST off to a worker thread."""
-
-    await asyncio.to_thread(_post_video_arrived, course, lecture, kind)
-
-
 @app.put("/courses/{course}/lectures/{lecture}/video")
 async def put_video(
     course: str, lecture: str, request: Request, kind: str = Query("lecture")
 ):
-    """Upload video.mp4 from a raw body, wiping derived artifacts, then fire-and-forget a report
-    that it arrived; responds as soon as the bytes are on disk."""
+    """Upload video.mp4 from a raw body, wiping derived artifacts."""
 
     try:
         data = await request.body()
         crud.write_video(course, lecture, kind, data)
-        asyncio.create_task(_notify_video_arrived(course, lecture, kind))
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400)

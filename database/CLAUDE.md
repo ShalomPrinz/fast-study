@@ -30,7 +30,10 @@ changes: keep them backward-compatible or flag the impact.
 Reads the repo-root `.env` via `python-dotenv`:
 
 - `DATA_ROOT` — absolute path to the data directory. Absent or blank still boots: the root stays unset and every filesystem endpoint answers `409` until `POST /config` sets one.
-- `BACKEND_URL` (default `http://localhost:8000`) — target of the post-video-upload `/video-arrived` report.
+
+It holds no peer URLs, because it makes **no outbound HTTP calls** — it only answers requests and
+fans out SSE. Every peer address it would need belongs to a service that already calls it, so
+staying call-free keeps the service graph acyclic.
 
 `settings.py` also *writes* that `.env`: it is the store behind the app's settings surface in
 browser dev (`GET`/`PUT /settings`), and `POST /config` sets the running process's data root with

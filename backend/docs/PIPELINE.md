@@ -72,7 +72,7 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 It never caps a run the user asked for: `POST /run-all` always enqueues at depth `full`.
 
-The database service reports the arrival as a fact and holds no step names — see `database/docs/API.md`. An APScheduler cron fires `_scheduled_run` daily at 03:00 (`main.py` lifespan); the hour is not a setting.
+The uploading service reports the arrival as a fact and holds no step names — the depth is the backend's alone. An APScheduler cron fires `_scheduled_run` daily at 03:00 (`main.py` lifespan); the hour is not a setting.
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 

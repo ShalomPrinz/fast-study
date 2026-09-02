@@ -26,7 +26,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/archived`                                | archive/unarchive (`{archived}`)                                           |
 | `POST   /courses/{course}/lectures`                                | create lecture/recitation (`{name}`)                                       |
 | `PATCH  /courses/{course}/lectures/{lecture}`                      | rename lecture/recitation (`{name}`)                                       |
-| `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts, reports the arrival to the backend |
+| `PUT    /courses/{course}/lectures/{lecture}/video`                | upload `video.mp4`; wipes derived artifacts                                |
 | `GET    /courses/{course}/lectures/{lecture}/materials`            | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture   |
 | `POST   /courses/{course}/lectures/{lecture}/materials`            | add a material pdf; returns `{name}` with the allocated filename           |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}`         | write one file; neutral                                                    |
@@ -81,20 +81,12 @@ only, so the pipeline's untouched output stays recoverable however many times th
 
 Summary writes never go through the generic files route — that would skip the snapshot.
 
-## Video upload reports the arrival
+## No outbound calls
 
-After the bytes land, the video route fire-and-forgets a POST to
-`${BACKEND_URL}/courses/{c}/lectures/{l}/video-arrived?kind=…` so a downloader upload starts work
-without a frontend click.
-
-It reports a **fact, not a command**. This service holds no step names and no notion of how much of
-the pipeline should run: the backend reads its own `AUTO_RUN` setting and queues the lecture at the
-depth that allows — everything, audio only, or nothing at all. Adding a step or a mode here would
-put the same policy in two places.
-
-It runs on a worker thread with no timeout, and failures are logged and swallowed — the upload
-already succeeded, and the user can always start the run manually. The PUT responds as soon as the
-file is on disk.
+This service never calls another service; it only answers requests and fans out SSE on `/events`.
+Whoever uploads a video reports the arrival to the backend itself — "a video arrived, so run the
+pipeline" is backend policy (`AUTO_RUN`), and the store has no stake in it. Keeping the store
+call-free is also what stops a `backend ↔ database` dependency cycle.
 
 ## Settings
 
