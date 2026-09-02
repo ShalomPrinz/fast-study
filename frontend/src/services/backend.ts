@@ -43,6 +43,15 @@ export async function runPipeline(
   return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/pipeline${kindQuery(kind)}`)
 }
 
+// Tells the backend a video landed on disk; auto-run policy (AUTO_RUN) decides what happens next.
+export async function reportVideoArrived(
+  course: string,
+  lecture: string,
+  kind?: Kind,
+): Promise<void> {
+  await backend.post(`${lectureBase(course, lecture)}/video-arrived${kindQuery(kind)}`)
+}
+
 export async function fetchTimingStats(
   operation: TimingOperation,
   fileSizeBytes: number,

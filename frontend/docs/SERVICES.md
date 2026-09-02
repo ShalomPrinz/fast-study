@@ -21,7 +21,7 @@ showing a second message.
 
 ## `backend.ts` → FastAPI (`VITE_API_URL`)
 
-Pipeline triggers (`runStep`, `runPipeline`, `runAll`), `fetchRunnerStatus`, `fetchTimingStats`, and the
+Pipeline triggers (`runStep`, `runPipeline`, `runAll`, `reportVideoArrived`), `fetchRunnerStatus`, `fetchTimingStats`, and the
 course-overview endpoints (`fetchOverviewExtractors`, `runOverview`, `fetchCourseStatus`). The wire format
 is `snake_case`; normalization to camelCase happens here and nowhere else, so `types.ts` shapes stay clean.
 
@@ -32,6 +32,11 @@ course `overview/` file listing + meta. `materialUrl`/`deleteMaterial` hit the s
 `fileUrl`/`deleteFile` but take a runtime name, since a material's name comes from the tree rather than the
 fixed `FileName` set. Also exports `databaseUrl`, the base the SSE `EventSource` is built
 from. `fetchCourseMeta` unwraps `{ meta }` and renames `generated_at` → `generatedAt`.
+
+`uploadVideo` announces the arrival to the backend itself (`reportVideoArrived`) once the `PUT` resolves —
+auto-run is backend policy, and a caller that only stored the bytes would silently lose it. Like the settings
+boundary below, this concern spans both services by design. A failed report is logged, never rethrown: the
+bytes are stored, so failing the upload would be a lie.
 
 ## `settings.ts` — the settings store and the two config owners
 
