@@ -22,6 +22,9 @@ app.use(
 // JSON for probe/download; /upload-pdf parses its own raw body per-route.
 app.use(express.json({ limit: '5mb' }));
 
+// Liveness only: what the launcher waits on before opening the window.
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.use(coursesRouter);
 app.use(probeRouter);
 app.use(downloadRouter);

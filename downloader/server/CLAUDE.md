@@ -33,6 +33,7 @@ the popup.
 
 | Method + path                             | Purpose                                                                                                                |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `GET  /health`                            | liveness only — what the launcher waits on before opening the window                                                   |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                             |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET)                                                                       |
 | `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background                                        |

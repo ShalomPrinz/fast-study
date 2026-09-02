@@ -12,13 +12,14 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 - `?kind=lecture|recitation` addresses the two lecture families; it defaults to `lecture`.
 - Bodies are raw bytes for file/video/summary writes, JSON for metadata routes.
 - Every route that touches `DATA_ROOT` answers `409` `{error}` while no data root is configured;
-  the three settings routes are the exceptions, since the first-run wall depends on them. See
-  [SETTINGS.md](SETTINGS.md).
+  the exceptions are the three settings routes, since the first-run wall depends on them, and
+  `/health`, which the launcher polls before either exists. See [SETTINGS.md](SETTINGS.md).
 
 ## Routes
 
 | Method+Path                                                        | Purpose                                                                    |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `GET    /health`                                                   | launcher liveness; `200 {status: ok}` even with no data root configured    |
 | `GET    /tree`                                                     | full course tree                                                           |
 | `POST   /courses`                                                  | create course (`{name}`, optional `{source_url}`)                          |
 | `PATCH  /courses/{course}`                                         | rename course (`{name}`)                                                   |

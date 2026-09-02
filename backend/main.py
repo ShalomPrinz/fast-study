@@ -45,6 +45,14 @@ app.add_middleware(
 )
 
 
+@app.get("/health")
+def health():
+    """Liveness only — what the launcher waits on before opening the window. Reports nothing
+    else on purpose: paths, config and key-set flags stay on routes that can be refused."""
+
+    return {"status": "ok"}
+
+
 _STEP_CONFIG: dict[str, tuple[str, str]] = {
     "audio": ("video.mp4", "Download"),
     "transcribe": ("audio.mp3", "Extract Audio"),

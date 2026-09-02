@@ -30,6 +30,7 @@ changes: keep them backward-compatible or flag the impact.
 Reads the repo-root `.env` via `python-dotenv`:
 
 - `DATA_ROOT` — absolute path to the data directory. Absent or blank still boots: the root stays unset and every filesystem endpoint answers `409` until `POST /config` sets one.
+  `GET /health` is liveness only and answers `200` regardless, so the launcher can tell healthy-but-unconfigured from dead.
 
 It holds no peer URLs, because it makes **no outbound HTTP calls** — it only answers requests and
 fans out SSE. Every peer address it would need belongs to a service that already calls it, so

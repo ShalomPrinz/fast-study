@@ -20,6 +20,7 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, tit
 
 | Endpoint              | Body                                                | Returns                                                   |
 | --------------------- | --------------------------------------------------- | --------------------------------------------------------- |
+| `GET /health`         | —                                                   | `{ status:'ok' }` — liveness only, what the launcher waits on before opening the window |
 | `GET /auth/status`    | —                                                   | `{ connected, expired }`                                  |
 | `POST /auth/connect`  | `{}`                                                | `{ status:'pending' }` (headed token grab opens)          |
 | `POST /auth/complete` | —                                                   | `{ connected:true }` (persists the Moodle WS token)       |

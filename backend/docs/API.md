@@ -6,6 +6,11 @@ Every mutating endpoint is fire-and-forget: it schedules a background asyncio ta
 
 CORS is open to `http://localhost:5173` only.
 
+## Health
+
+`GET /health`
+`{"status": "ok"}` — liveness only, what the launcher waits on before opening the window. It reports nothing else on purpose: paths, config and key-set flags stay on routes that can be refused.
+
 ## Per-lecture
 
 `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}`

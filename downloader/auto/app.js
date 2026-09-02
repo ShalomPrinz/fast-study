@@ -26,6 +26,9 @@ app.use(
 );
 app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
 
+// Liveness only: what the launcher waits on before opening the window.
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 app.get('/auth/status', handleAuthStatus);
 app.post('/auth/connect', handleAuthConnect);
 app.post('/auth/complete', handleAuthComplete);

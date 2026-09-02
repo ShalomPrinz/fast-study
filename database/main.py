@@ -59,6 +59,14 @@ app.add_middleware(
 )
 
 
+@app.get("/health")
+def health():
+    """Liveness only — what the launcher waits on before opening the window. Reports nothing
+    else on purpose: DATA_ROOT and the key-set flags stay on routes that can be refused."""
+
+    return {"status": "ok"}
+
+
 def _error(message: str, status: int):
     """Build the service's failure body ({error})."""
 
