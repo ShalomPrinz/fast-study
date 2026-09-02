@@ -1,5 +1,5 @@
 import { createClient, httpError } from '@/services/http'
-import { DOWNLOAD_SERVER_URL } from '@/services/runtime'
+import { DOWNLOAD_SERVER_URL, secretHeaders, withSecretParam } from '@/services/runtime'
 import type { DownloadOperation, Kind } from '@/types'
 import type { Media, PasscodeError, ProbedMedia } from './autoDownloader'
 import { postReconnectAware } from './autoDownloader'
@@ -58,9 +58,10 @@ export interface DownloadJob {
 
 // Every non-evicted job, including ones the Chrome extension started. The single source of truth —
 // the stream only says "something changed", this says what. Bypasses the shared client because a
-// reconnect loop against a downed service would stack one ConnectionError toast per attempt.
+// reconnect loop against a downed service would stack one ConnectionError toast per attempt — so
+// the launch secret goes on by hand.
 export async function fetchJobs(): Promise<DownloadJob[]> {
-  const res = await fetch(downloadServer.url('/jobs'))
+  const res = await fetch(downloadServer.url('/jobs'), { headers: secretHeaders() })
   if (!res.ok) throw httpError(res)
   const data = (await res.json()) as { jobs?: DownloadJob[] }
   return data.jobs ?? []
@@ -81,7 +82,7 @@ export function subscribeRuns(onChange: () => void): () => void {
 }
 
 function subscribe(event: 'job:change' | 'run:change', onChange: () => void): () => void {
-  const es = new EventSource(downloadServer.url('/events'))
+  const es = new EventSource(withSecretParam(downloadServer.url('/events')))
   es.addEventListener('open', onChange)
   es.addEventListener(event, onChange)
   return () => {
@@ -147,7 +148,7 @@ export async function cancelRun(id: string): Promise<void> {
 // Every current run, one per section — the resync for `run:change`, exactly as `/jobs` is for jobs.
 // Bypasses the shared client for the same reason `fetchJobs` does.
 export async function fetchRuns(): Promise<SectionRun[]> {
-  const res = await fetch(downloadServer.url('/runs'))
+  const res = await fetch(downloadServer.url('/runs'), { headers: secretHeaders() })
   if (!res.ok) throw httpError(res)
   const data = (await res.json()) as { runs?: SectionRun[] }
   return data.runs ?? []

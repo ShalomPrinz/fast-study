@@ -52,6 +52,9 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Added first so CORS ends up outside it, and a 401 still carries the CORS headers the browser needs.
+runtime.install_secret_check(app)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],

@@ -38,6 +38,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 init_db()
 
+if _launch_secret := runtime.secret():
+    app.add_middleware(runtime.SecretMiddleware, secret=_launch_secret)
+
+# CORS stays the LAST add_middleware call: Starlette makes the last-added middleware the outermost,
+# and a 401 raised outside CORS carries no CORS headers, which the browser reports as a network error.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],

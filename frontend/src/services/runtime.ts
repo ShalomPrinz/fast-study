@@ -13,6 +13,7 @@ declare global {
         autoDownloader: string
       }
       settings?: SettingsBacking
+      secret?: string
     }
   }
 }
@@ -32,3 +33,18 @@ export const BACKEND_URL = urls?.backend ?? 'http://localhost:8000'
 export const DATABASE_URL = urls?.database ?? 'http://localhost:8001'
 export const DOWNLOAD_SERVER_URL = urls?.downloadServer ?? 'http://localhost:3052'
 export const AUTO_DOWNLOADER_URL = urls?.autoDownloader ?? 'http://localhost:3053'
+
+// The launch secret the services check on every request. Undefined in browser dev, where the
+// services see no `FASTSTUDY_SECRET` and install no check at all — the supported dev state.
+const SECRET = runtimeBridge()?.secret
+
+/** Spreadable into any `headers` object; empty when there is no secret to send. */
+export function secretHeaders(): Record<string, string> {
+  return SECRET ? { 'X-FastStudy-Secret': SECRET } : {}
+}
+
+/** Native `EventSource` cannot set a header, so the two SSE routes — and only they — take the
+ *  secret as a query parameter, which also survives EventSource's own reconnects. */
+export function withSecretParam(url: string): string {
+  return SECRET ? `${url}?secret=${encodeURIComponent(SECRET)}` : url
+}

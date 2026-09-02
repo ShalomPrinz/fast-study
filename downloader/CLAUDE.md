@@ -21,6 +21,8 @@ npm --prefix downloader/auto start     # starts auto/app.js on port 3053 (the HT
 
 Both services bind `127.0.0.1` only and print `FASTSTUDY_PORT=<n>` as their first stdout line; `FASTSTUDY_PORT` in the environment overrides the default port, and `0` asks for an ephemeral one the launcher reads back off that line.
 
+`FASTSTUDY_SECRET` in the environment makes both reject any request that carries it neither as an `X-FastStudy-Secret` header nor as a `?secret=` query parameter (the query route exists for `EventSource`, which cannot set headers) — `401 {"error":"unauthorized"}`, or an empty `401` typed `text/event-stream` when the request accepts SSE, since Chromium reports any other MIME on an `EventSource` as a bare `onerror`. `GET /health` is the sole exemption, so the launcher can tell a wrong secret from a dead child. Unset (every manual run) means no enforcement, and `server/` then also sends no secret on its calls to `auto/`, the database and the backend.
+
 The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). The server only accepts requests from one extension ID (`DOWNLOADER_EXTENSION_ID`, env-overridable); if you reload the extension and Chrome assigns a new ID, set that env var or CORS blocks the popup. Server config and internals live in **`server/CLAUDE.md`**.
 
 ## Architecture

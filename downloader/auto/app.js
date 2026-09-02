@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { ALLOWED_ORIGIN, AUTODL_PORT } from './src/lib/config.js';
 import { UnsupportedError } from './src/lib/errors.js';
-import { serve } from './src/lib/runtime.js';
+import { serve, requireSecret } from './src/lib/runtime.js';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import {
   sendUnsupported,
@@ -22,9 +22,13 @@ app.use(
   cors({
     origin: ALLOWED_ORIGIN,
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    // A pinned allowedHeaders list is exhaustive: without X-FastStudy-Secret named here the
+    // preflight strips it and every call fails as a CORS error rather than an auth one.
+    allowedHeaders: ['Content-Type', 'X-FastStudy-Secret'],
   }),
 );
+// After cors, which answers the preflight itself, so no OPTIONS ever reaches the guard.
+app.use(requireSecret);
 app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
 
 // Liveness only: what the launcher waits on before opening the window.

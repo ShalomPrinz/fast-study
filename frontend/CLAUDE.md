@@ -12,7 +12,9 @@ npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for 
 ```
 
 The frontend reads no env var. The four service base URLs come from the Electron preload bridge at
-runtime (`services/runtime.ts`), falling back to the dev ports `:8000`, `:8001`, `:3052` and `:3053`.
+runtime (`services/runtime.ts`), falling back to the dev ports `:8000`, `:8001`, `:3052` and `:3053`. The
+same bridge carries the launch secret every request sends as `X-FastStudy-Secret`; it is absent in browser
+dev, where the services enforce nothing.
 
 ## Docs
 

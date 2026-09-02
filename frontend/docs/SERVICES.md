@@ -5,7 +5,8 @@ go through them — no call site touches `fetch`, `EventSource` or `react-toasti
 
 ## `http.ts` — client factory
 
-`createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON encoding and headers, and exposes
+`createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON encoding and headers — including
+the `X-FastStudy-Secret` launch secret on every request — and exposes
 `url(path)` for links the browser opens itself. URL string building lives in `shared/utils/url.ts`, not here.
 
 A failed response's message comes from its body — `{error}`, FastAPI's `{detail}`, or `{message}`, whichever is
@@ -44,6 +45,12 @@ The one file that declares `window.faststudy`, exposed through `runtimeBridge()`
 Electron, and under vitest's `node` environment). A second `declare global` for the same property would not
 compile, so anything the preload exposes is declared here; its import of `SettingsBacking` is type-only, so
 the mutual import with `settings.ts` is erased and there is no runtime cycle.
+
+It also owns the launch secret. `secretHeaders()` returns the `X-FastStudy-Secret` header, spreadable into
+any request; `withSecretParam(url)` appends `?secret=…` and is used **only** by the two `EventSource` calls,
+which cannot set a header and reconnect on their own. Both return nothing extra when the bridge carries no
+secret — browser dev, where the services see no `FASTSTUDY_SECRET` and enforce nothing. The header keeps the
+secret out of access logs and the devtools URL column, so nothing else uses the query parameter.
 
 It also resolves the four service base URLs — `BACKEND_URL`, `DATABASE_URL`, `DOWNLOAD_SERVER_URL`,
 `AUTO_DOWNLOADER_URL` — from `urls` on the bridge, falling back to the dev ports. Resolution is
@@ -146,7 +153,8 @@ means two connections — the price of keeping the jobs reflection and the runs 
 tell you to refetch: every non-evicted job (each carrying the discovery-row `ref` it belongs to, including
 ones the Chrome extension started), and every current section run, one per `sectionId`. Both bypass the
 shared client for the opposite reason to the three endpoints above — the client toasts every
-`ConnectionError`, and a reconnect loop against a downed service would stack one toast per attempt.
+`ConnectionError`, and a reconnect loop against a downed service would stack one toast per attempt. Both
+apply the secret header by hand, as `postReconnectAware` does.
 
 `startSectionRun`, `resumeRun` and `cancelRun` POST `/download-section`, `/runs/:id/resume` and
 `/runs/:id/cancel`; they go through the shared client, since a user action against a downed server _should_

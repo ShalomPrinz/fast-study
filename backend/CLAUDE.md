@@ -50,6 +50,8 @@ uv run python main.py            # packaged: binds FASTSTUDY_PORT (0 = ephemeral
 uv run pytest tests/ -q          # CI runs exactly this on every push
 ```
 
+`FASTSTUDY_SECRET` (launch-time, set by the packaged launcher) makes `runtime.SecretMiddleware` reject every unauthenticated inbound request and makes `db_client` send the secret on its calls to `database/`; unset means no enforcement, which is what dev runs on. Rules and header names: `docs/API.md`.
+
 `runtime.serve` binds the loopback socket itself so it can print `FASTSTUDY_PORT=<port>` on stdout for the launcher to parse — `uvicorn.run(port=0)` never reports what it bound.
 
 ## Testing

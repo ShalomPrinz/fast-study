@@ -1,4 +1,5 @@
 import { AUTODL_URL } from '../config.js';
+import { peerHeaders } from '../runtime.js';
 
 // auto/ answered with targets. Anything else — its 4xx contract, a 5xx, or status 0
 // (unreachable) — is a failure to forward or report.
@@ -18,7 +19,7 @@ export async function resolve({ ref, course, name, kind, only = false, forceCapt
   try {
     const res = await fetch(`${AUTODL_URL}/resolve`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: peerHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ ref, course, name, kind, only, forceCapture }),
     });
     let body = null;

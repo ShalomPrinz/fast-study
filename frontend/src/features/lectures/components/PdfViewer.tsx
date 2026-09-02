@@ -1,7 +1,8 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
 import Icon from '@/shared/components/Icon'
+import { secretHeaders } from '@/services/runtime'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import '@/styles/spinner.css'
@@ -27,6 +28,10 @@ export default function PdfViewer({ url, show, generating }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const capturedScrollRef = useRef({ top: 0, left: 0 })
   const prevUrlRef = useRef(url)
+
+  // pdf.js fetches the document over XHR, so the secret rides its own headers. Memoized because
+  // react-pdf compares `file` by identity — a fresh literal would re-fetch the PDF every render.
+  const file = useMemo(() => ({ url, httpHeaders: secretHeaders() }), [url])
 
   // Capture in the render phase, before React commits the new url: the old pages are still
   // mounted here, so scrollTop is the real user position.
@@ -116,7 +121,7 @@ export default function PdfViewer({ url, show, generating }: Props) {
       ) : (
         <div className="pdf-scroll-container" ref={scrollContainerRef} onScroll={handleScroll}>
           <Document
-            file={url}
+            file={file}
             onLoadSuccess={({ numPages: n }) => setNumPages(n)}
             loading={
               <div className="pdf-doc-loading">

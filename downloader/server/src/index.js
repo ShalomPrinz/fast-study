@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
 import { emitError } from './progress.js';
-import { serve } from './runtime.js';
+import { serve, requireSecret } from './runtime.js';
 import coursesRouter from './routes/courses.js';
 import probeRouter from './routes/probe.js';
 import downloadRouter from './routes/download.js';
@@ -17,9 +17,13 @@ app.use(
   cors({
     origin: [`chrome-extension://${EXTENSION_ID}`, FRONTEND_URL],
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    // A pinned allowedHeaders list is exhaustive: without X-FastStudy-Secret named here the
+    // preflight strips it and every call fails as a CORS error rather than an auth one.
+    allowedHeaders: ['Content-Type', 'X-FastStudy-Secret'],
   }),
 );
+// After cors, which answers the preflight itself, so no OPTIONS ever reaches the guard.
+app.use(requireSecret);
 // JSON for probe/download; /upload-pdf parses its own raw body per-route.
 app.use(express.json({ limit: '5mb' }));
 

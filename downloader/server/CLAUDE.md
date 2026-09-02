@@ -17,36 +17,41 @@ npm --prefix downloader/server test    # node --test, pure logic only (no networ
 
 ## Config (repo-root `.env`, all optional)
 
-| Key                       | Default                            | Meaning                                                                     |
-| ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
-| `DOWNLOADER_PORT`         | `3052`                             | default listen port (`FASTSTUDY_PORT` in the environment wins)              |
-| `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                       |
-| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`)               |
-| `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                   |
-| `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples and the video-arrived report              |
+| Key                       | Default                            | Meaning                                                                      |
+| ------------------------- | ---------------------------------- | ---------------------------------------------------------------------------- |
+| `DOWNLOADER_PORT`         | `3052`                             | default listen port (`FASTSTUDY_PORT` in the environment wins)               |
+| `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                        |
+| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`)                |
+| `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                    |
+| `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples and the video-arrived report               |
 | `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve |
 
 If a reloaded extension gets a new ID, set `DOWNLOADER_EXTENSION_ID` or CORS blocks
 the popup.
 
+`FASTSTUDY_SECRET` (environment, not `.env` — the launcher sets it) gates every route but
+`/health`: `runtime.js::requireSecret` rejects a request lacking the `X-FastStudy-Secret` header or
+`?secret=`, and `runtime.js::peerHeaders` adds the header to every outbound call to a peer —
+never to `services/probe.js`, which fetches an external lecture host. Unset means no enforcement.
+
 ## Endpoints
 
-| Method + path                             | Purpose                                                                                                                |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `GET  /health`                            | liveness only — what the launcher waits on before opening the window                                                   |
-| `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                             |
-| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET)                                                                       |
-| `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background                                        |
-| `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`                  |
-| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId`                             |
-| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim) |
+| Method + path                             | Purpose                                                                                                                                           |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET  /health`                            | liveness only — what the launcher waits on before opening the window                                                                              |
+| `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                                                        |
+| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET)                                                                                                  |
+| `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background                                                                    |
+| `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`                                             |
+| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId`                                                         |
+| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim)                 |
 | `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives that section's bulk queue in the background, or joins its active run (`docs/RUNS.md`) |
-| `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                       |
-| `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                              |
-| `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition (`docs/JOBS.md`, `docs/RUNS.md`)                       |
-| `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                          |
-| `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                            |
-| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                         |
+| `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                                                 |
+| `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                                                         |
+| `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition (`docs/JOBS.md`, `docs/RUNS.md`)                                                 |
+| `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                                                     |
+| `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                                                      |
+| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                                                    |
 
 `kind` is `lecture` (default) or `recitation`.
 
