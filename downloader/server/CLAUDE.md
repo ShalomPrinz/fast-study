@@ -9,7 +9,7 @@ to re-resolve one whose cached token went stale (`docs/JOBS.md`).
 ## Run
 
 ```bash
-npm --prefix downloader/server start   # node src/index.js, port 3052
+npm --prefix downloader/server start   # node src/index.js, loopback-only on port 3052
 npm --prefix downloader/server test    # node --test, pure logic only (no network, no subprocess)
 ```
 
@@ -19,7 +19,7 @@ npm --prefix downloader/server test    # node --test, pure logic only (no networ
 
 | Key                       | Default                            | Meaning                                                                     |
 | ------------------------- | ---------------------------------- | --------------------------------------------------------------------------- |
-| `DOWNLOADER_PORT`         | `3052`                             | listen port                                                                 |
+| `DOWNLOADER_PORT`         | `3052`                             | default listen port (`FASTSTUDY_PORT` in the environment wins)              |
 | `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                       |
 | `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`)               |
 | `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                   |

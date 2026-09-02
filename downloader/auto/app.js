@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { ALLOWED_ORIGIN, AUTODL_PORT } from './src/lib/config.js';
 import { UnsupportedError } from './src/lib/errors.js';
+import { serve } from './src/lib/runtime.js';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import {
   sendUnsupported,
@@ -54,9 +55,9 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-app.listen(AUTODL_PORT, () => {
+serve(app, AUTODL_PORT, (port) => {
   console.log(`\n==========================================`);
-  console.log(`🤖 Auto-downloader listening on port ${AUTODL_PORT}`);
+  console.log(`🤖 Auto-downloader listening on port ${port}`);
   console.log(`🌐 CORS origin: ${ALLOWED_ORIGIN}`);
   console.log(`==========================================\n`);
 });

@@ -27,8 +27,9 @@ npm start   # HTTP service on port 3053 (src/http/server.js)
 The service holds one persistent browser per profile (the zoom profile runs headed
 under a virtual display — see `docs/SESSIONS.md`) and exposes
 auth / `/list` / `/list/expand` / `/close` for the frontend (CORS:
-`http://localhost:5173`) and `/resolve` for `server/`. Override the port with
-`AUTODL_PORT` in the repo-root `.env`.
+`http://localhost:5173`) and `/resolve` for `server/`. It listens on `127.0.0.1`
+only; override the port with `AUTODL_PORT` in the repo-root `.env`, or with
+`FASTSTUDY_PORT` in the environment, which wins.
 
 The HTTP surface is **mechanism-agnostic**: `/list` and `/list/expand` return
 uniform `Item = { ref, title, kind, expandable, section }` and `/resolve` takes

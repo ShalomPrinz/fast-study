@@ -12,7 +12,7 @@ npx playwright install chromium      # once, for the plain profile
 npm --prefix downloader/auto test    # node --test, pure logic only (no browser, no network)
 ```
 
-Port **3053** (`AUTODL_PORT`, from the repo-root `.env` via `src/lib/config.js`). CORS allows only the Vite origin `http://localhost:5173`. Zoom capture also needs `Xvfb` + system Google Chrome installed.
+Port **3053** (`AUTODL_PORT`, from the repo-root `.env` via `src/lib/config.js`; `FASTSTUDY_PORT` in the environment wins), bound to `127.0.0.1` only. CORS allows only the Vite origin `http://localhost:5173`. Zoom capture also needs `Xvfb` + system Google Chrome installed.
 
 ## HTTP surface
 

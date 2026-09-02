@@ -46,8 +46,11 @@ Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GD
 cd backend
 uv sync --extra test             # one-time / after dep changes
 uv run uvicorn main:app --reload # dev (port 8000)
+uv run python main.py            # packaged: binds FASTSTUDY_PORT (0 = ephemeral), no reload
 uv run pytest tests/ -q          # CI runs exactly this on every push
 ```
+
+`runtime.serve` binds the loopback socket itself so it can print `FASTSTUDY_PORT=<port>` on stdout for the launcher to parse — `uvicorn.run(port=0)` never reports what it bound.
 
 ## Testing
 

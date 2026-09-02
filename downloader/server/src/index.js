@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
 import { emitError } from './progress.js';
+import { serve } from './runtime.js';
 import coursesRouter from './routes/courses.js';
 import probeRouter from './routes/probe.js';
 import downloadRouter from './routes/download.js';
@@ -39,9 +40,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message ?? 'Server error' });
 });
 
-app.listen(PORT, () => {
+serve(app, PORT, (port) => {
   console.log(`\n==========================================`);
-  console.log(`🎧 Downloader listening on port ${PORT}`);
+  console.log(`🎧 Downloader listening on port ${port}`);
   console.log(`📁 DATABASE_URL: ${DATABASE_URL}`);
   console.log(`==========================================\n`);
 });

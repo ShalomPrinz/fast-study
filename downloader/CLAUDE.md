@@ -19,6 +19,8 @@ npm --prefix downloader/server start   # starts the express server on port 3052
 npm --prefix downloader/auto start     # starts auto/app.js on port 3053 (the HTTP service; needs Playwright)
 ```
 
+Both services bind `127.0.0.1` only and print `FASTSTUDY_PORT=<n>` as their first stdout line; `FASTSTUDY_PORT` in the environment overrides the default port, and `0` asks for an ephemeral one the launcher reads back off that line.
+
 The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). The server only accepts requests from one extension ID (`DOWNLOADER_EXTENSION_ID`, env-overridable); if you reload the extension and Chrome assigns a new ID, set that env var or CORS blocks the popup. Server config and internals live in **`server/CLAUDE.md`**.
 
 ## Architecture

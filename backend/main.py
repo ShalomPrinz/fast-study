@@ -2,6 +2,7 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Literal, get_args
 
+import runtime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from course import overview
@@ -265,3 +266,8 @@ async def config_probe_key(probe: KeyProbe):
         return {"status": "error", "message": f"unknown provider: {probe.provider}"}
     result = await asyncio.to_thread(providers.probe_key, probe.provider, probe.key)
     return {"result": result}
+
+
+# Packaged entry point only — dev runs `uvicorn main:app --reload`, which never reaches this.
+if __name__ == "__main__":
+    runtime.serve(app, default_port=8000)

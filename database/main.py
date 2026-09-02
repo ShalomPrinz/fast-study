@@ -3,6 +3,7 @@ import os
 import signal
 from contextlib import asynccontextmanager
 
+import runtime
 import settings
 from dotenv import load_dotenv
 from events.sse import broadcast_notify, close_all, subscribe
@@ -416,6 +417,4 @@ async def notify(request: Request):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
+    runtime.serve(app, default_port=8001)
