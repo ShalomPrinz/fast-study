@@ -33,7 +33,12 @@ Reads the repo-root `.env` via `python-dotenv`:
 
 It holds no peer URLs, because it makes **no outbound HTTP calls** — it only answers requests and
 fans out SSE. Every peer address it would need belongs to a service that already calls it, so
-staying call-free keeps the service graph acyclic.
+staying call-free keeps the service graph acyclic. That is a packaging constraint, not a
+preference: the packaged build binds every service to `127.0.0.1:0` and spawns them
+`database → backend → auto → server`, passing each peer's port on as a plain env var, so a
+`database → backend` call has no valid spawn order. When a peer needs to hear about something
+here, it either calls in or reads the SSE `/events` channel — announcing a stored video, for
+instance, is done by the uploader (downloader server, frontend), not by the store.
 
 `settings.py` also *writes* that `.env`: it is the store behind the app's settings surface in
 browser dev (`GET`/`PUT /settings`), and `POST /config` sets the running process's data root with

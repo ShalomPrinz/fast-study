@@ -30,6 +30,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_R
 - **`pipeline/` is per-lecture, `course/` is per-course.** Anything aggregating across a course's lectures belongs in `course/`, never `pipeline/`.
 - **Keep `main.py` thin** — validation and boundary parsing live in the runners.
 - Asset paths resolve relative to `__file__`.
+- **`database/` never calls back.** The backend calls it, so a return call would make the service graph cyclic and the packaged build unspawnable (see root `CLAUDE.md`). When a backend feature wants the store to notify or trigger it, invert it: the acting client reports in, or the backend subscribes to the database's SSE channel.
 
 ## Environment
 

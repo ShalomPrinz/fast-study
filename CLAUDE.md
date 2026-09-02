@@ -19,6 +19,12 @@ All services read the same `.env` at the repo root and share one on-disk layout 
 
 Beyond that, `downloader/` also calls `backend/` to record download durations into `timing.db`, so the frontend can show a calibrated ETA for a download the same way it does for a pipeline step.
 
+## Service call graph
+
+The graph must stay acyclic: `frontend/` and `downloader/` call `backend/` and `database/`, `backend/` calls `database/`, and `database/` calls nobody. The packaged build binds every service to `127.0.0.1:0` and spawns them in order `database → backend → auto → server`, handing each peer's port to the next as a plain env var — a cycle would have no valid spawn order and would force a post-boot port exchange.
+
+So never add an outbound call from `database/` to a peer, and treat a proposal to add one as a packaging blocker, not a style preference. If `database/` needs to tell a peer something, either the peer calls in or the fact rides the existing SSE `/events` channel peers already subscribe to.
+
 ## Service subagents
 
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
