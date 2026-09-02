@@ -2,9 +2,9 @@
 
 The local server for downloading videos and documents. It has no disk conventions of its
 own: it captures a video (curl header-replay or yt-dlp) or receives a PDF, then hands the bytes to the **database service** (8001), which writes them under
-`DATA_ROOT`. It also posts download duration samples to the **backend** (8000), and calls
-**auto/** (3053) to resolve a discovery row into download targets — and to re-resolve one whose
-cached token went stale (`docs/JOBS.md`).
+`DATA_ROOT`. It tells the **backend** (8000) that a video arrived and posts download duration
+samples to it, and calls **auto/** (3053) to resolve a discovery row into download targets — and
+to re-resolve one whose cached token went stale (`docs/JOBS.md`).
 
 ## Run
 
@@ -23,7 +23,7 @@ npm --prefix downloader/server test    # node --test, pure logic only (no networ
 | `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                       |
 | `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`)               |
 | `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                   |
-| `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples only                                      |
+| `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples and the video-arrived report              |
 | `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve |
 
 If a reloaded extension gets a new ID, set `DOWNLOADER_EXTENSION_ID` or CORS blocks
@@ -56,7 +56,8 @@ URL). Each names its own `upload` (required): `uploadVideo` for the two video so
 `jobs.js` is the state (job registry over the download entries) and `runs.js` the state one level up
 (section-run registry + the queue driver, which calls `downloadItem` directly rather than over HTTP);
 `events.js` is the notification for both (SSE fan-out of the contentless `job:change` / `run:change`
-pings). All `DATABASE_URL` I/O goes through `services/database.js`.
+pings). All `DATABASE_URL` I/O goes through `services/database.js`, which also announces a stored
+video to the backend (`services/backend.js`).
 
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
 DASH + JS-runtime, size probe), `PROGRESS.md` (silent children, TTY vs pipe, curl-file

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { DATABASE_URL, VIDEO_FILENAME, MATERIAL_TEMP_FILENAME } from '../config.js';
 import { emitLog, emitError } from '../progress.js';
+import { reportVideoArrived } from './backend.js';
 
 // All DATABASE_URL I/O lives here. Contract details (video PUT wipes derived
 // artifacts vs appending /materials, /tree reshape, notify) in docs/DATABASE.md.
@@ -49,6 +50,9 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     }
     emitLog(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
+    // Only a video PUT announces itself: it is what the backend's auto-run policy acts on, and a
+    // material POST deliberately starts nothing.
+    reportVideoArrived(course, lecture, kind);
     return null;
   } catch (err) {
     emitError(`❌ ${tool} upload to database failed: ${err.message}`);

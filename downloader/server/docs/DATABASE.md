@@ -19,7 +19,8 @@ Streams the temp `video.mp4` to
 `PUT /courses/{course}/lectures/{lecture}/video?kind=`. This endpoint **also wipes any
 derived `audio.mp3` / `transcript.txt` / `summary.*`** — correct for a fresh video.
 `duplex: 'half'` is required by undici when the fetch body is a stream. The temp dir
-is removed on success _or_ failure.
+is removed on success _or_ failure. On success it also calls `reportVideoArrived`
+(`services/backend.js`) — see below.
 
 ## `uploadPdf` / `uploadMaterial` — appending `/materials` POST does NOT wipe
 
@@ -42,3 +43,12 @@ The browser doesn't know when curl/yt-dlp finished, so after any successful uplo
 fire a non-blocking `POST /notify`; the database's SSE bus tells connected sidebars to
 refetch the tree. Failure is silent — a download still counts as done when the frontend
 is down. (Uses `fetch`, keeping raw `node:http` confined to the size probe.)
+
+## `reportVideoArrived` — the arrival announcement (`services/backend.js`)
+
+Whoever stores a video announces it, so after a successful video PUT we fire
+`POST {BACKEND_URL}/courses/{course}/lectures/{lecture}/video-arrived?kind=`; the backend alone
+decides from `AUTO_RUN` whether that starts a pipeline run. The database service is a store and
+makes no outbound calls of its own. Fire-and-forget and silent on failure for the same reason as
+`notifyFrontend`: the bytes are stored, so a dead backend must not fail a finished job. Only
+`uploadVideo` calls it — a material POST wipes no derived artifacts and starts no run.

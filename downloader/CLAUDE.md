@@ -46,7 +46,8 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 The graph is acyclic: `server/` → **auto/** (3053) to resolve a discovery row into download
 targets (and to re-resolve one whose cached token went stale), → **database** (8001) for every
-file it saves, and → **backend** (8000) for download duration samples (`POST /timing`, per-tool
+file it saves, and → **backend** (8000) both to announce a stored video (`POST /video-arrived`,
+which is where auto-run is decided) and for download duration samples (`POST /timing`, per-tool
 ETA buckets — `server/docs/JOBS.md`). `auto/` calls nothing of ours. From outside, the extension
 popup calls `server/`, and the frontend calls `server/` for every download (start, job and run events,
 resync) and `auto/` for listing, auth and passcodes.
