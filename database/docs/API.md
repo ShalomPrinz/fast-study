@@ -122,9 +122,11 @@ other MIME makes `EventSource` report a bare transport error instead of the auth
 loopback is not itself a defence: the secret is what keeps another local process or page off the API.
 An unset `FASTSTUDY_SECRET` installs no middleware at all, which is what dev runs on.
 
-CORS allows `http://localhost:5173`; the backend and downloader call server-to-server and need no
-entry. The secret check is installed _before_ `CORSMiddleware` so CORS stays outermost and a `401`
-carries CORS headers; Starlette short-circuits preflights, so `OPTIONS` never reaches the check.
+CORS allows `http://localhost:5173` (browser dev) and `app://bundle`, the packaged frontend's
+origin, matched verbatim because browsers send it with no trailing slash; the backend and
+downloader call server-to-server and need no entry. The secret check is installed _before_
+`CORSMiddleware` so CORS stays outermost and a `401` carries CORS headers; Starlette short-circuits
+preflights, so `OPTIONS` never reaches the check.
 
 Overview routes validate their path segments (`_check_safe` rejects separators and `..`); lecture
 routes rely on the localhost-only trust model instead.

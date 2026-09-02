@@ -10,5 +10,6 @@ dotenv.config({ path: path.resolve(__dirname, '../../../..', '.env'), quiet: tru
 // Port for this package's own HTTP service (src/server.js). Env-overridable.
 export const AUTODL_PORT = Number(process.env.AUTODL_PORT ?? 3053);
 
-// CORS origin: the Vite dev server; this service only serves that SPA.
-export const ALLOWED_ORIGIN = 'http://localhost:5173';
+// CORS origins: the Vite dev server and the packaged app's frozen 'app://bundle' origin,
+// which an app:// page sends host-only, with no trailing slash.
+export const ALLOWED_ORIGINS = ['http://localhost:5173', 'app://bundle'];

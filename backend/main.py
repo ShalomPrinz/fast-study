@@ -45,7 +45,9 @@ if _launch_secret := runtime.secret():
 # and a 401 raised outside CORS carries no CORS headers, which the browser reports as a network error.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # `app://bundle` is the packaged frontend's origin, exactly as Chromium sends it — no trailing
+    # slash, unlike the same origin reported by Electron's permission-handler API. Never derive it.
+    allow_origins=["http://localhost:5173", "app://bundle"],
     allow_methods=["*"],
     allow_headers=["*"],
 )

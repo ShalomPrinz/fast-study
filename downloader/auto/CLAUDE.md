@@ -12,7 +12,7 @@ npx playwright install chromium      # once, for the plain profile
 npm --prefix downloader/auto test    # node --test, pure logic only (no browser, no network)
 ```
 
-Port **3053** (`AUTODL_PORT`, from the repo-root `.env` via `src/lib/config.js`; `FASTSTUDY_PORT` in the environment wins), bound to `127.0.0.1` only. CORS allows only the Vite origin `http://localhost:5173`. Zoom capture also needs `Xvfb` + system Google Chrome installed.
+Port **3053** (`AUTODL_PORT`, from the repo-root `.env` via `src/lib/config.js`; `FASTSTUDY_PORT` in the environment wins), bound to `127.0.0.1` only. CORS allows the Vite origin `http://localhost:5173` and the packaged app's `app://bundle`. Zoom capture also needs `Xvfb` + system Google Chrome installed.
 
 When `FASTSTUDY_SECRET` is set (the launcher sets it; unset means no enforcement), `src/lib/runtime.js::requireSecret` rejects every request but `GET /health` that carries it neither as an `X-FastStudy-Secret` header nor as `?secret=`.
 

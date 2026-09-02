@@ -21,7 +21,7 @@ npm --prefix downloader/server test    # node --test, pure logic only (no networ
 | ------------------------- | ---------------------------------- | ---------------------------------------------------------------------------- |
 | `DOWNLOADER_PORT`         | `3052`                             | default listen port (`FASTSTUDY_PORT` in the environment wins)               |
 | `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                        |
-| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`)                |
+| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`); the packaged app's `app://bundle` is always allowed alongside it |
 | `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                    |
 | `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples and the video-arrived report               |
 | `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve |

@@ -15,7 +15,9 @@ const app = express();
 
 app.use(
   cors({
-    origin: [`chrome-extension://${EXTENSION_ID}`, FRONTEND_URL],
+    // 'app://bundle' is the packaged app's frozen origin: an app:// page sends it host-only,
+    // with no trailing slash (Electron's permission-handler API reports it differently).
+    origin: [`chrome-extension://${EXTENSION_ID}`, FRONTEND_URL, 'app://bundle'],
     methods: ['GET', 'POST', 'OPTIONS'],
     // A pinned allowedHeaders list is exhaustive: without X-FastStudy-Secret named here the
     // preflight strips it and every call fails as a CORS error rather than an auth one.

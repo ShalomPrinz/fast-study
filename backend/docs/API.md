@@ -4,7 +4,7 @@ All endpoints are defined in `main.py`, which stays thin route glue — validati
 
 Every mutating endpoint is fire-and-forget: it schedules a background asyncio task and returns immediately. Results never come back in the HTTP response; the frontend reads them from the status endpoints.
 
-CORS is open to `http://localhost:5173` only.
+CORS is open to the frontend's two origins only: `http://localhost:5173` in dev and `app://bundle` in the packaged app.
 
 ## The launch secret
 
@@ -43,7 +43,7 @@ Regression ETA from past runs, or `{"message": "not-enough-data"}`.
 
 `POST /timing`
 body `{"operation": str, "file_size_bytes": int, "duration_seconds": float}`
-Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from the browser, since CORS only allows the frontend origin.
+Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from an arbitrary browser page, since CORS only allows the frontend's own origins.
 
 ## Course overview
 
