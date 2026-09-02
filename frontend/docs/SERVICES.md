@@ -38,6 +38,13 @@ auto-run is backend policy, and a caller that only stored the bytes would silent
 boundary below, this concern spans both services by design. A failed report is logged, never rethrown: the
 bytes are stored, so failing the upload would be a lie.
 
+## `runtime.ts` — the Electron preload bridge
+
+The one file that declares `window.faststudy`, exposed through `runtimeBridge()` (`undefined` outside
+Electron, and under vitest's `node` environment). A second `declare global` for the same property would not
+compile, so anything the preload exposes is declared here; its import of `SettingsBacking` is type-only, so
+the mutual import with `settings.ts` is erased and there is no runtime cycle.
+
 ## `settings.ts` — the settings store and the two config owners
 
 The boundary for the settings concern, which spans both services on purpose: a setting's owner is a

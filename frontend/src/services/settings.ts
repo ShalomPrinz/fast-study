@@ -1,4 +1,5 @@
 import { createClient } from './http'
+import { runtimeBridge } from './runtime'
 
 // This file is the boundary for the settings concern, which spans both services by design: a
 // setting's owner is a property of the setting, not of the screen editing it.
@@ -128,17 +129,10 @@ const browserBacking: SettingsBacking = {
     normalize(await database.put<RawSettings>('/settings', { json: storeBody(patch) })),
 }
 
-declare global {
-  interface Window {
-    faststudy?: { settings?: SettingsBacking }
-  }
-}
-
 /** The single place the two backings are chosen between: the preload bridge exposes this exact
  *  interface, so a packaged app needs no adapter and browser dev keeps working unchanged. */
 export function pickBacking(): SettingsBacking {
-  const bridge = typeof window === 'undefined' ? undefined : window.faststudy?.settings
-  return bridge ?? browserBacking
+  return runtimeBridge()?.settings ?? browserBacking
 }
 
 export async function fetchSettings(): Promise<Settings> {
