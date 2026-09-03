@@ -9,3 +9,9 @@ backlog.md
 
 node_modules/
 .claude/.format-baseline
+
+# Per-user writable state: timing.db, the Moodle token, zoom passcodes, the yt-dlp cache.
+# FASTSTUDY_STATE_DIR overrides the location; the packaged launcher sets it.
+.state/
+# A pristine copy of the dev state as it stood before the move out of the source tree.
+.state-backup/

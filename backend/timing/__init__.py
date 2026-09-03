@@ -4,7 +4,9 @@ import sqlite3
 import time
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "timing.db"
+import runtime
+
+DB_PATH = runtime.state_path("timing.db")
 
 log = logging.getLogger("timing")
 
@@ -22,8 +24,11 @@ def _allowed_operations() -> frozenset:
 
 
 def init_db():
-    """Create the timing table if it doesn't exist."""
+    """Create the state directory and the timing table if they don't exist."""
 
+    # The only place the state dir is created — `state_path` is a pure join, and every other
+    # entry point runs after this one.
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as conn:
         # Initial table creation
         conn.execute("""

@@ -1,3 +1,6 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 // Binds the express app to loopback only and reports the port it actually got.
 // FASTSTUDY_PORT=0 asks the OS for an ephemeral port, so the bound port is read back off
 // server.address() and printed alone on its own line for the launcher to parse.
@@ -26,4 +29,14 @@ export function requireSecret(req, res, next) {
     return res.status(401).type('text/event-stream').end();
   }
   res.status(401).json({ error: 'unauthorized' });
+}
+
+// Joins a path under the per-user writable state root: FASTSTUDY_STATE_DIR when the launcher sets
+// one, else `.state/` at the repo root. A pure join — callers create the directories they write to.
+export function statePath(...parts) {
+  // src/lib/ -> src/ -> auto/ -> downloader/ -> repo root
+  const root =
+    process.env.FASTSTUDY_STATE_DIR ??
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..', '.state');
+  return path.join(root, ...parts);
 }

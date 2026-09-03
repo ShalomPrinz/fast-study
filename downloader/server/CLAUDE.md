@@ -34,6 +34,10 @@ the popup.
 `?secret=`, and `runtime.js::peerHeaders` adds the header to every outbound call to a peer —
 never to `services/probe.js`, which fetches an external lecture host. Unset means no enforcement.
 
+`runtime.js::statePath` returns the per-user writable state root — `FASTSTUDY_STATE_DIR` when set,
+else `.state/` at the repo root. It is where yt-dlp's `--cache-dir` points, and it only joins the
+path; each writer creates its own directory.
+
 ## Endpoints
 
 | Method + path                             | Purpose                                                                                                                                           |

@@ -3,8 +3,13 @@ import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
+import { statePath } from '../lib/runtime.js';
 
 const execFileAsync = promisify(execFile);
+
+// yt-dlp's cache must be writable — it writes youtube-sigfuncs/<id>.json there — so it points at
+// the per-user state root rather than the default under a possibly read-only installed home.
+const CACHE_DIR_FLAGS = ['--cache-dir', statePath('ytdlp-cache')];
 
 // Hosts we accept as a YouTube redirect target. Anything else is unsupported for now.
 const YOUTUBE_HOSTS = new Set(['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be']);
@@ -91,6 +96,7 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
     try {
       ({ stdout } = await execFileAsync('yt-dlp', [
         '--flat-playlist',
+        ...CACHE_DIR_FLAGS,
         '--print',
         '%(title)s\t%(url)s',
         finalUrl,

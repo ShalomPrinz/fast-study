@@ -50,7 +50,7 @@ md5(wwwroot + passport)  :::  wstoken  :::  privatetoken
        parts[0]                parts[1]        parts[2]   (privatetoken may be absent)
 ```
 
-We persist `{ wstoken, privatetoken, savedAt }` to `.auth/biu-token.json` (gitignored).
+We persist `{ wstoken, privatetoken, savedAt }` to `auth/biu-token.json` under the state root (gitignored).
 `wstoken` authenticates every REST call; `privatetoken` is only for autologin (see below).
 
 ## The REST API

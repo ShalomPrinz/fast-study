@@ -1,13 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { AuthProvider } from './AuthProvider.js';
 import { launchBrowser } from '../browser/browserLaunch.js';
 import { DEFAULT_SITE } from '../moodle/wsClient.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// src/auth/ -> src/ -> auto/  (tokenPath is relative to the package root)
-const PKG_ROOT = path.resolve(__dirname, '../..');
 
 const SERVICE = 'moodle_mobile_app';
 const URLSCHEME = 'moodlemobile';
@@ -40,10 +35,10 @@ function safeURIDecode(s) {
  * WS API with no browser and no re-MFA — the Google-Drive-refresh-token model, native to Moodle.
  */
 export class MoodleToken extends AuthProvider {
-  /** @param {{ tokenPath: string, site?: string }} opts  token file path, relative to package root. */
+  /** @param {{ tokenPath: string, site?: string }} opts  absolute token file path; the caller (core/registry.js) owns where it lives. */
   constructor({ tokenPath, site = DEFAULT_SITE }) {
     super();
-    this.tokenPath = path.isAbsolute(tokenPath) ? tokenPath : path.join(PKG_ROOT, tokenPath);
+    this.tokenPath = tokenPath;
     this.site = site;
     // Headed login in progress; held on the instance so connect() and complete() (two HTTP
     // calls) share the same live headed browser + its capture promise. Null when none pending.

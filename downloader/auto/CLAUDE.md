@@ -16,6 +16,8 @@ Port **3053** (`AUTODL_PORT`, from the repo-root `.env` via `src/lib/config.js`;
 
 When `FASTSTUDY_SECRET` is set (the launcher sets it; unset means no enforcement), `src/lib/runtime.js::requireSecret` rejects every request but `GET /health` that carries it neither as an `X-FastStudy-Secret` header nor as `?secret=`.
 
+Everything this service writes — the Moodle token, the zoom passcode store, the yt-dlp cache — goes under the state root `src/lib/runtime.js::statePath` returns: `FASTSTUDY_STATE_DIR` when set, else `.state/` at the repo root. It only joins the path; each writer creates its own directory.
+
 ## HTTP surface
 
 Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, resolvedMedia?, expandable, section }` (`section` = the Moodle section heading, display metadata for grouping, `''` when unnamed; `media` = `'video'`|`'material'`|`'unknown'`, which file lands on disk — `video.mp4` vs a lecture material PDF — not how it is fetched, `'unknown'` for every `google-drive` and `direct-url` row since only the download-time probe can tell; `resolvedMedia` = `'video'`|`'material'`|`'unsupported'`, what a probed row turned out to be this session, absent when never probed); `/resolve` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.

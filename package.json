@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "concurrently -k -t 'HH:mm:ss' -p '[{time}] {name}' -n Backend,Frontend,Downloader,AutoDL,Database -c blue,green,magenta,cyan,yellow \"cd backend && UVICORN_RELOAD_EXCLUDE='*.db timing/*' PYTHONUNBUFFERED=1 uv run uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader/server start\" \"npm --prefix downloader/auto start\" \"cd database && uvicorn main:app --reload --port 8001\"",
+    "dev": "concurrently -k -t 'HH:mm:ss' -p '[{time}] {name}' -n Backend,Frontend,Downloader,AutoDL,Database -c blue,green,magenta,cyan,yellow \"cd backend && PYTHONUNBUFFERED=1 uv run uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader/server start\" \"npm --prefix downloader/auto start\" \"cd database && uvicorn main:app --reload --port 8001\"",
     "lint": "eslint . && uvx ruff check backend database"
   },
   "devDependencies": {

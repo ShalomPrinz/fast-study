@@ -2,6 +2,8 @@
 
 SQLite database that records how long an operation takes, used to estimate future durations.
 
+It lives under the writable state root — `$FASTSTUDY_STATE_DIR` if set, else `.state/` at the repo root — so nothing writes into the source tree. `timing/__init__.py` (`runtime.state_path("timing.db")`) is the single owner of the location; the scripts below import `DB_PATH` from it rather than recomputing it.
+
 `operation` is validated against an allowlist on record: the pipeline steps sourced from `pipeline/runner.STEP_ORDER`, plus the downloader's `OPERATIONS` (downloader/server/src/services/timing.js). An unknown value (typo/rename) is logged and rejected rather than silently starting a dead bucket that nothing queries. Rows are per-bucket, so each valid operation has its own regression.
 
 ## Schema
@@ -22,13 +24,13 @@ CREATE INDEX idx_timing_operation ON timing(operation);
 ## Connecting
 
 ```bash
-sqlite3 backend/timing/timing.db
+sqlite3 .state/timing.db
 ```
 
 Or with the full path if you're not in the repo root:
 
 ```bash
-sqlite3 /path/to/fast_study/backend/timing/timing.db
+sqlite3 /path/to/fast_study/.state/timing.db
 ```
 
 ## Useful queries
@@ -80,13 +82,13 @@ SELECT * FROM timing ORDER BY recorded_at DESC;
 
 ```bash
 # Print all rows
-sqlite3 -column -header backend/timing/timing.db "SELECT * FROM timing;"
+sqlite3 -column -header .state/timing.db "SELECT * FROM timing;"
 
 # Delete by id
-sqlite3 backend/timing/timing.db "DELETE FROM timing WHERE id = 3;"
+sqlite3 .state/timing.db "DELETE FROM timing WHERE id = 3;"
 
 # Wipe all rows
-sqlite3 backend/timing/timing.db "DELETE FROM timing;"
+sqlite3 .state/timing.db "DELETE FROM timing;"
 ```
 
 ## Maintenance scripts (`scripts/`)

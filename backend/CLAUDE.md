@@ -54,6 +54,8 @@ uv run pytest tests/ -q          # CI runs exactly this on every push
 
 `runtime.serve` binds the loopback socket itself so it can print `FASTSTUDY_PORT=<port>` on stdout for the launcher to parse — `uvicorn.run(port=0)` never reports what it bound.
 
+`runtime.state_path(*parts)` resolves everything the backend writes outside `DATA_ROOT` (today just `timing.db`) under one root: `FASTSTUDY_STATE_DIR` if set, else `.state/` at the repo root. It is a pure join and creates nothing, so each caller mkdirs its own parent — otherwise an import would leave a directory behind, including in tests that redirect the path.
+
 ## Testing
 
 New tests go in the matching `tests/{pipeline,course,services}/test_<module>.py`. Never silently delete or skip a failing test — fix the code or update the test deliberately.

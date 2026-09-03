@@ -1,5 +1,6 @@
 import os
 import socket
+from pathlib import Path
 from secrets import compare_digest
 from urllib.parse import parse_qs
 
@@ -8,12 +9,25 @@ import uvicorn
 _SECRET_HEADER = b"x-faststudy-secret"
 _UNAUTHORIZED = b'{"error": "unauthorized"}'
 
+# This file is `<repo>/backend/runtime.py`, so the repo root is two levels up.
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+
 
 def secret() -> str | None:
     """The launch secret every caller must present. Unset means no enforcement at all,
     which is what dev runs on."""
 
     return os.environ.get("FASTSTUDY_SECRET") or None
+
+
+def state_path(*parts) -> Path:
+    """The writable state root with `parts` joined onto it: `FASTSTUDY_STATE_DIR` if set,
+    else `.state/` at the repo root."""
+
+    # A pure join that deliberately creates nothing: importing a module that merely names a
+    # state file must not leave a directory behind, least of all one redirected elsewhere.
+    root = os.environ.get("FASTSTUDY_STATE_DIR") or _REPO_ROOT / ".state"
+    return Path(root).joinpath(*parts)
 
 
 class SecretMiddleware:
