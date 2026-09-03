@@ -53,9 +53,12 @@ class SecretMiddleware:
         await self._reject(scope, send)
 
     def _authorized(self, scope) -> bool:
+        # latin-1 round-trips every byte; parsing the raw query string decodes it as ASCII and
+        # raises on a malformed secret, which has to read as a 401 rather than a 500.
+        query = parse_qs(scope["query_string"].decode("latin-1"), encoding="latin-1")
         given = (
             dict(scope["headers"]).get(_SECRET_HEADER)
-            or parse_qs(scope["query_string"]).get(b"secret", [b""])[0]
+            or query.get("secret", [""])[0].encode("latin-1")
         )
         return compare_digest(given, self.secret)
 

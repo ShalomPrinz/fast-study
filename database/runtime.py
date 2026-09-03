@@ -22,7 +22,9 @@ class SecretMiddleware:
         """Wrap app, checking each HTTP request against the launch secret."""
 
         self.app = app
-        self.secret = secret
+        # Kept as bytes: compare_digest refuses a str holding any non-ASCII character, so a
+        # malformed secret would raise instead of being rejected.
+        self.secret = secret.encode("latin-1")
 
     async def __call__(self, scope, receive, send):
         """Pass an authorized request through; answer everything else 401."""
@@ -43,9 +45,11 @@ class SecretMiddleware:
         # /health answers without the secret, or the launcher cannot tell a wrong secret from a dead child.
         if scope["method"] == "GET" and scope["path"] == "/health":
             return True
-        header = _header(scope, b"x-faststudy-secret").decode("latin-1")
-        # The query parameter exists because native EventSource is the one caller that cannot set a header.
-        param = parse_qs(scope["query_string"].decode("latin-1")).get("secret", [""])[0]
+        header = _header(scope, b"x-faststudy-secret")
+        # The query parameter exists because native EventSource is the one caller that cannot set a
+        # header. latin-1 both ways, so an arbitrary byte round-trips back to what was sent.
+        query = parse_qs(scope["query_string"].decode("latin-1"), encoding="latin-1")
+        param = query.get("secret", [""])[0].encode("latin-1")
         return secrets.compare_digest(header, self.secret) or secrets.compare_digest(
             param, self.secret
         )
