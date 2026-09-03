@@ -5,6 +5,11 @@ from secrets import compare_digest
 from urllib.parse import parse_qs
 
 import uvicorn
+from dotenv import load_dotenv
+
+# Loaded here, not in main.py: every module that reads env at import time imports `runtime` first,
+# so this is the only placement that survives an import re-sort.
+load_dotenv()
 
 _SECRET_HEADER = b"x-faststudy-secret"
 _UNAUTHORIZED = b'{"error": "unauthorized"}'

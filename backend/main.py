@@ -7,7 +7,6 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from course import overview
 from course import runner as course_runner
-from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pipeline import runner
@@ -16,7 +15,6 @@ from services import db_client, providers, settings
 from services.logging_setup import setup_logging
 from timing import get_stats, init_db, record
 
-load_dotenv()
 setup_logging()
 
 
