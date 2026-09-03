@@ -17,6 +17,8 @@ git -C <repo-root> worktree add -b <slug> <repo-root>-<slug> main
 
 Then run every command from **`<repo-root>-<slug>`**, on the local branch **`<slug>`**. Do not `cd` to `<repo-root>` — it stays on `main`, untouched.
 
+Next, add `<repo-root>-<slug>` to the `permissions.additionalDirectories` array in `<repo-root>/.claude/settings.local.json` (the session's project settings — the worktree has no copy of its own, that file is git-ignored). Without it every `cd` and search into the new directory reads as out-of-scope and prompts. Use Edit, not a shell heredoc — see the tooling note at the end.
+
 A fresh worktree has none of the git-ignored files the services need. **Run all of these next, before any
 other work** — every line, whether or not the task touches that service. Deciding which installs a change
 "needs" is not yours to make: a worktree the app cannot be run from is not set up.
