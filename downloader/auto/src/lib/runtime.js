@@ -1,5 +1,17 @@
+import { timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+// Constant-time secret comparison, matching the Python services' compare_digest: the threat model
+// is a hostile local process, which is exactly the attacker able to time loopback replies.
+// Length is checked first because timingSafeEqual throws on unequal buffers, and the secret's
+// length is fixed by the launcher and not itself a secret.
+function secretMatches(given, secret) {
+  if (typeof given !== 'string') return false;
+  const a = Buffer.from(given);
+  const b = Buffer.from(secret);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 // Binds the express app to loopback only and reports the port it actually got.
 // FASTSTUDY_PORT=0 asks the OS for an ephemeral port, so the bound port is read back off
@@ -24,7 +36,8 @@ export function requireSecret(req, res, next) {
   if (!secret || req.path === '/health') return next();
   // Tried independently rather than `header ?? query`: a wrong or blank header must not shadow the
   // query parameter, which is the only credential EventSource can send.
-  if (req.get('X-FastStudy-Secret') === secret || req.query.secret === secret) return next();
+  if (secretMatches(req.get('X-FastStudy-Secret'), secret)) return next();
+  if (secretMatches(req.query.secret, secret)) return next();
   // Chromium reports any other MIME on an EventSource as a bare onerror, so a JSON 401 would read
   // as a transport failure rather than an auth one.
   if ((req.get('Accept') ?? '').includes('text/event-stream')) {
