@@ -56,11 +56,11 @@ class SecretMiddleware:
         # latin-1 round-trips every byte; parsing the raw query string decodes it as ASCII and
         # raises on a malformed secret, which has to read as a 401 rather than a 500.
         query = parse_qs(scope["query_string"].decode("latin-1"), encoding="latin-1")
-        given = (
-            dict(scope["headers"]).get(_SECRET_HEADER)
-            or query.get("secret", [""])[0].encode("latin-1")
-        )
-        return compare_digest(given, self.secret)
+        header = dict(scope["headers"]).get(_SECRET_HEADER, b"")
+        param = query.get("secret", [""])[0].encode("latin-1")
+        # Tried independently rather than `header or param`: a wrong or blank header must not
+        # shadow the query parameter, which is the only credential EventSource can send.
+        return compare_digest(header, self.secret) or compare_digest(param, self.secret)
 
     async def _reject(self, scope, send) -> None:
         """An SSE request is refused as an empty `text/event-stream`: Chromium reports any other

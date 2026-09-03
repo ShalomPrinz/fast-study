@@ -22,7 +22,9 @@ export function requireSecret(req, res, next) {
   // /health is exempt by path, not merely by registration order: the launcher's boot screen needs
   // it to answer without the secret to tell a wrong secret from a dead child.
   if (!secret || req.path === '/health') return next();
-  if ((req.get('X-FastStudy-Secret') ?? req.query.secret) === secret) return next();
+  // Tried independently rather than `header ?? query`: a wrong or blank header must not shadow the
+  // query parameter, which is the only credential EventSource can send.
+  if (req.get('X-FastStudy-Secret') === secret || req.query.secret === secret) return next();
   // Chromium reports any other MIME on an EventSource as a bare onerror, so a JSON 401 would read
   // as a transport failure rather than an auth one.
   if ((req.get('Accept') ?? '').includes('text/event-stream')) {
