@@ -8,7 +8,7 @@ CORS is open to the frontend's two origins only: `http://localhost:5173` in dev 
 
 ## The launch secret
 
-When `FASTSTUDY_SECRET` is set, every request must carry it — as the `X-FastStudy-Secret` header, or as a `secret` query parameter for the one caller that cannot set a header (native `EventSource`). Missing or wrong → `401 {"error": "unauthorized"}`, except a request whose `Accept` contains `text/event-stream`, which is refused as an empty `text/event-stream` body (Chromium reports any other MIME on an `EventSource` as a bare transport error). `GET /health` is the sole exemption, so the launcher can tell a wrong secret from a dead child. Unset means no enforcement at all, which is what dev runs on. The check (`runtime.SecretMiddleware`) is installed before the CORS middleware so a 401 still carries CORS headers, and `services/db_client.py` sends the same header on every outbound call to `database/`.
+When `FASTSTUDY_SECRET` is set, every request must carry it — as the `X-FastStudy-Secret` header, or as a `secret` query parameter for the one caller that cannot set a header (native `EventSource`). Missing or wrong → `401 {"error": "unauthorized"}`, except a request whose `Accept` contains `text/event-stream`, which is refused as an empty `text/event-stream` body (Chromium reports any other MIME on an `EventSource` as a bare transport error). `GET /health` is the sole exemption, so the launcher can tell a wrong secret from a dead child. Unset means no enforcement at all, which is what dev runs on. The check (`runtime.install_secret_check`) is installed before the CORS middleware so a 401 still carries CORS headers, and `services/db_client.py` sends the same header on every outbound call to `database/`.
 
 ## Health
 

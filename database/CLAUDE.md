@@ -67,6 +67,12 @@ launcher has to read the real port back. Loopback only, no reload.
 header. Unset (dev) installs nothing. It is pure ASGI and sits inside CORS on purpose; see
 [docs/API.md](docs/API.md).
 
+Both come from the shared [`lib/runtime`](../lib/runtime/CLAUDE.md), imported as plain
+`import runtime` — the launch contract is a wire contract with the other services, so a second copy
+that drifted would leave this service unreachable by the launcher or less protected than its peers.
+`import runtime` also calls `load_dotenv()`, which is why it must stay above any module that reads
+the environment at import time.
+
 ## Documentation rules
 
 Root `CLAUDE.md` covers the general rules. Database-specific:

@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 
 import runtime
 import settings
-from dotenv import load_dotenv
 from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +16,6 @@ from fs.files import file_path
 from fs.paths import DataRootNotConfigured, lecture_dir
 from logging_setup import setup_logging
 
-load_dotenv()
 setup_logging()
 log = logging.getLogger("db")
 

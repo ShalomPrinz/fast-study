@@ -105,11 +105,12 @@ merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 
 ## Access logging
 
-`logging_setup.py` (called once at `main.py` import, after uvicorn's own `dictConfig`, so it wins)
-reformats uvicorn's access log to `[api] POST /courses/X/… → 200` and suppresses the routine
-classes of line: every `HEAD`, every `OPTIONS`, and every `GET` that returned 2xx. Those requests
-still run normally — they are the frontend's constant existence probes, CORS preflights, and
-tree/status reads, and only their log lines are dropped. Failing GETs and all writes are always logged.
+`setup_logging()` from the shared [`lib/logging`](../../lib/logging/CLAUDE.md), called once at
+`main.py` import — after uvicorn's own `dictConfig`, so it wins — reformats uvicorn's access log to
+`[api] POST /courses/X/… → 200` and suppresses the routine classes of line: every `HEAD`, every
+`OPTIONS`, and every `GET` that returned 2xx. Those requests still run normally — they are the
+frontend's constant existence probes, CORS preflights, and tree/status reads, and only their log
+lines are dropped. Failing GETs and all writes are always logged.
 
 ## Trust model
 

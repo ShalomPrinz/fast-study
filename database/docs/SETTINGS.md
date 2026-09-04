@@ -52,7 +52,7 @@ surfaces as a pipeline failure minutes later.
 ## Where the root lives, and the unconfigured state
 
 `fs/paths.py` holds the root as module state (`_data_root`), written only by `set_data_root()`.
-`main.py` seeds it after `load_dotenv()` when `DATA_ROOT` is present and non-empty, and
+`main.py` seeds it from the loaded `.env` when `DATA_ROOT` is present and non-empty, and
 `POST /config` sets it again through the same writer — so a settings change needs no restart.
 
 An absent or blank `DATA_ROOT` leaves the root **unset** and the service still boots: that is the

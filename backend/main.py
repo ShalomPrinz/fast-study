@@ -9,10 +9,10 @@ from course import overview
 from course import runner as course_runner
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from logging_setup import setup_logging
 from pipeline import runner
 from pydantic import BaseModel
 from services import db_client, providers, settings
-from services.logging_setup import setup_logging
 from timing import get_stats, init_db, record
 
 setup_logging()
@@ -36,8 +36,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 init_db()
 
-if _launch_secret := runtime.secret():
-    app.add_middleware(runtime.SecretMiddleware, secret=_launch_secret)
+# Added first so the CORS middleware below ends up outside it.
+runtime.install_secret_check(app)
 
 # CORS stays the LAST add_middleware call: Starlette makes the last-added middleware the outermost,
 # and a 401 raised outside CORS carries no CORS headers, which the browser reports as a network error.

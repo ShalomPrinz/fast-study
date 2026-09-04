@@ -6,7 +6,13 @@ dependencies = [
     "fastapi>=0.111",
     "uvicorn[standard]>=0.29",
     "python-dotenv>=1.0",
+    "faststudy-runtime",
+    "faststudy-logging",
 ]
+
+[tool.uv.sources]
+faststudy-runtime = { path = "../lib/runtime", editable = true }
+faststudy-logging = { path = "../lib/logging", editable = true }
 
 [project.optional-dependencies]
 test = [

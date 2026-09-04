@@ -97,6 +97,6 @@ The db sits at `runtime.state_path("timing.db")`, outside the `backend/` tree `-
 
 ## Logging
 
-`services/logging_setup.py` owns all logging config; `main.py` calls `setup_logging()` at import, which lands after uvicorn's own `dictConfig` and wins. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and rewrites `uvicorn.access` to `[api] POST /path → 200`.
+`logging_setup` (the shared `lib/logging` module, imported as `from logging_setup import setup_logging`) owns all logging config; `main.py` calls `setup_logging()` at import, which lands after uvicorn's own `dictConfig` and wins. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and rewrites `uvicorn.access` to `[api] POST /path → 200`.
 
 Access lines for `HEAD`, `OPTIONS` (CORS preflights) and for 2xx `GET` are deliberately dropped — the frontend fires those constantly and they carry no information. Those requests still run; only their log line is suppressed. Everything else (any non-2xx, any mutating method) is logged.

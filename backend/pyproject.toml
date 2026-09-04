@@ -12,7 +12,13 @@ dependencies = [
     "google-auth-oauthlib>=1.0",
     "google-genai>=0.3",
     "apscheduler>=3.10",
+    "faststudy-runtime",
+    "faststudy-logging",
 ]
+
+[tool.uv.sources]
+faststudy-runtime = { path = "../lib/runtime", editable = true }
+faststudy-logging = { path = "../lib/logging", editable = true }
 
 [project.optional-dependencies]
 test = [
