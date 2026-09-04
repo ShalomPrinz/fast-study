@@ -4,7 +4,10 @@
 # lint.sh (ruff E9, eslint parse errors) — this is the one thing no linter here does.
 set -uo pipefail
 
-ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}"
+# A session that entered a git worktree keeps CLAUDE_PROJECT_DIR pointing at it even
+# after the worktree is deleted, so fall back to the cwd repo instead of skipping.
+ROOT="${CLAUDE_PROJECT_DIR:-}"
+[ -d "$ROOT" ] || ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 [ -d "$ROOT" ] || exit 0
 cd "$ROOT" || exit 0
 

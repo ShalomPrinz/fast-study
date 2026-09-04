@@ -5,17 +5,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/format.sh\"",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/format.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/format.sh\" ]; then bash \"$d/.claude/format.sh\"; fi",
             "timeout": 300
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/lint.sh\"",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/lint.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/lint.sh\" ]; then bash \"$d/.claude/lint.sh\"; fi",
             "timeout": 120
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/typecheck.sh\"",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/typecheck.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/typecheck.sh\" ]; then bash \"$d/.claude/typecheck.sh\"; fi",
             "timeout": 120
           }
         ]
@@ -26,17 +26,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/format.sh\"",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/format.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/format.sh\" ]; then bash \"$d/.claude/format.sh\"; fi",
             "timeout": 300
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/lint.sh\"",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/lint.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/lint.sh\" ]; then bash \"$d/.claude/lint.sh\"; fi",
             "timeout": 120
           },
           {
             "type": "command",
-            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/typecheck.sh\"",
+            "command": "d=\"${CLAUDE_PROJECT_DIR:-}\"; [ -f \"$d/.claude/typecheck.sh\" ] || d=\"$(git rev-parse --show-toplevel 2>/dev/null)\"; if [ -f \"$d/.claude/typecheck.sh\" ]; then bash \"$d/.claude/typecheck.sh\"; fi",
             "timeout": 120
           }
         ]
