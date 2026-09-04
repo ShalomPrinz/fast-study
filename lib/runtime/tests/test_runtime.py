@@ -93,3 +93,108 @@ def test_unset_secret_installs_nothing(monkeypatch):
 
     runtime.install_secret_check(app)
     assert TestClient(app).get("/thing").status_code == 200
+
+
+def test_wrong_header_alone_is_rejected(client):
+    """Distinct from the shadowing case: with no query parameter behind it, a wrong header is all there is."""
+
+    assert (
+        client.get("/thing", headers={"X-FastStudy-Secret": "nope"}).status_code == 401
+    )
+
+
+def test_malformed_byte_in_the_query_string_is_a_401_not_a_500(client):
+    """A byte no utf-8 decoder accepts; decoding it as utf-8 would raise and Starlette would answer 500."""
+
+    assert client.get("/thing?secret=%FF").status_code == 401
+
+
+def test_malformed_byte_in_the_header_is_a_401_not_a_500(client):
+    """Same reason as the query string, other input: the header is compared as raw bytes."""
+
+    assert (
+        client.get("/thing", headers={"X-FastStudy-Secret": b"\xff"}).status_code == 401
+    )
+
+
+def test_first_of_two_headers_wins_wrong_then_right(client):
+    """The `_header()` generator lookup takes the first X-FastStudy-Secret, so a wrong one in front is fatal."""
+
+    response = client.get(
+        "/thing",
+        headers=[("X-FastStudy-Secret", "nope"), ("X-FastStudy-Secret", SECRET)],
+    )
+    assert response.status_code == 401
+
+
+def test_first_of_two_headers_wins_right_then_wrong(client):
+    """The mirror assertion: one direction alone passes under either resolution and would catch no regression."""
+
+    response = client.get(
+        "/thing",
+        headers=[("X-FastStudy-Secret", SECRET), ("X-FastStudy-Secret", "nope")],
+    )
+    assert response.status_code == 200
+
+
+def test_duplicate_query_parameter_is_rejected(client):
+    """One `secret` parameter or none — a repeated one is a 401 in both languages."""
+
+    assert client.get(f"/thing?secret={SECRET}&secret=junk").status_code == 401
+
+
+def test_duplicate_query_parameter_is_rejected_in_either_order(client):
+    """Asserted both ways, so relaxing the guard back to first-wins fails here."""
+
+    assert client.get(f"/thing?secret=junk&secret={SECRET}").status_code == 401
+
+
+def test_secret_coerces_an_empty_env_var_to_none(monkeypatch):
+    """An empty FASTSTUDY_SECRET reads as no enforcement, never as a secret nothing can match."""
+
+    monkeypatch.setenv("FASTSTUDY_SECRET", "")
+    assert runtime.secret() is None
+
+
+def test_non_http_scope_passes_straight_through(client):
+    """Entering the client runs the lifespan scope through the middleware; a regression there deadlocks startup."""
+
+    with client:
+        assert client.get("/health").status_code == 200
+
+
+def test_sse_401_writes_nothing_into_the_stream(client):
+    """EventSource surfaces a body it cannot parse as a bare error, so the 401 stream stays empty."""
+
+    response = client.get("/events", headers={"Accept": "text/event-stream"})
+    assert response.status_code == 401
+    assert response.content == b""
+
+
+def test_state_path_falls_back_to_dot_state_at_the_repo_root(monkeypatch):
+    """Unset FASTSTUDY_STATE_DIR is dev, and the root is found from this file's fixed position in lib/runtime/."""
+
+    monkeypatch.delenv("FASTSTUDY_STATE_DIR", raising=False)
+    root = runtime.state_path()
+    assert root.name == ".state"
+    # The repo root is identified by markers rather than an absolute path, so the assertion survives
+    # a checkout anywhere and still fails if the parent depth ever drifts.
+    assert (root.parent / "package.json").is_file()
+    assert (root.parent / "CLAUDE.md").is_file()
+
+
+def test_state_path_honors_an_explicit_state_dir(monkeypatch, tmp_path):
+    """The launcher passes FASTSTUDY_STATE_DIR explicitly in a packaged build, and it wins verbatim."""
+
+    monkeypatch.setenv("FASTSTUDY_STATE_DIR", str(tmp_path))
+    assert runtime.state_path("a", "b") == tmp_path / "a" / "b"
+
+
+def test_state_path_creates_nothing(monkeypatch, tmp_path):
+    """A pure join: naming a state file must never leave a directory behind, least of all a redirected one."""
+
+    monkeypatch.setenv("FASTSTUDY_STATE_DIR", str(tmp_path / "nowhere"))
+    path = runtime.state_path("a", "b")
+    assert not path.exists()
+    assert not path.parent.exists()
+    assert not (tmp_path / "nowhere").exists()

@@ -56,5 +56,15 @@ is fixed by the launcher and not itself a secret.
 
 ## Tests
 
-`tests/test_runtime.py` covers the auth table through Starlette's `TestClient`:
-`uv run --extra test pytest` from this folder.
+Two suites assert the same auth table in both languages, so a rule that holds in one and not the
+other fails here rather than in a service:
+
+- `tests/test_runtime.py` — Starlette's `TestClient`: `uv run --extra test pytest` from this folder.
+- `test/runtime.test.js` — a real express app on a real loopback port: `npm test` from this folder.
+  Driven over the wire rather than against a fake `req`, because the duplicate- and bracketed-query
+  cases are assertions about express's own parser.
+
+Both pin the repo root by markers (`package.json` + `CLAUDE.md` beside `.state`) rather than an
+absolute path, which is what catches a wrong `../..` depth after this folder moves. The directory
+names differ — `tests/` for pytest's `testpaths`, `test/` for the `node --test test/*.test.js` glob —
+following each language's convention elsewhere in the repo.
