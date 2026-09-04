@@ -1,5 +1,5 @@
 import { BACKEND_URL } from '../config.js';
-import { peerHeaders } from '../runtime.js';
+import { peerHeaders } from '@faststudy/runtime';
 
 // Per-tool buckets: a curl-replayed in-site .mp4 and a yt-dlp YouTube fetch have very
 // different throughput curves, and averaging them into one regression makes both ETAs worse.

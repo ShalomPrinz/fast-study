@@ -1,7 +1,7 @@
 // Two concerns, matched at different granularities.
 // Auth: per university (host). Extractor: per activity (modType). Discovery is the
 // stateless Moodle WS API (core_course_get_contents), not a per-LMS DOM parser.
-import { statePath } from '../lib/runtime.js';
+import { statePath } from '@faststudy/runtime';
 import { MoodleToken } from '../auth/moodleToken.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';

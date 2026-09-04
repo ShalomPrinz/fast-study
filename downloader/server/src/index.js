@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
 import { emitError } from './progress.js';
-import { serve, requireSecret } from './runtime.js';
+import { serve, requireSecret } from '@faststudy/runtime';
 import coursesRouter from './routes/courses.js';
 import probeRouter from './routes/probe.js';
 import downloadRouter from './routes/download.js';

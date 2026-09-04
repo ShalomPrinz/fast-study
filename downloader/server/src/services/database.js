@@ -3,7 +3,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { DATABASE_URL, VIDEO_FILENAME, MATERIAL_TEMP_FILENAME } from '../config.js';
 import { emitLog, emitError } from '../progress.js';
-import { peerHeaders } from '../runtime.js';
+import { peerHeaders } from '@faststudy/runtime';
 import { reportVideoArrived } from './backend.js';
 
 // All DATABASE_URL I/O lives here. Contract details (video PUT wipes derived

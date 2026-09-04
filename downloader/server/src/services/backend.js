@@ -1,5 +1,5 @@
 import { BACKEND_URL } from '../config.js';
-import { peerHeaders } from '../runtime.js';
+import { peerHeaders } from '@faststudy/runtime';
 
 // Announce a video landing on disk so the backend can apply its auto-run policy. Fire-and-forget
 // and silent on failure: the bytes are already stored, so a dead backend must never turn a

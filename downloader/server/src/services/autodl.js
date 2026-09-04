@@ -1,5 +1,5 @@
 import { AUTODL_URL } from '../config.js';
-import { peerHeaders } from '../runtime.js';
+import { peerHeaders } from '@faststudy/runtime';
 
 // auto/ answered with targets. Anything else — its 4xx contract, a 5xx, or status 0
 // (unreachable) — is a failure to forward or report.

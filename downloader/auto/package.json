@@ -9,6 +9,7 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
+    "@faststudy/runtime": "file:../../lib/runtime",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",

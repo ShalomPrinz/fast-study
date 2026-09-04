@@ -30,11 +30,12 @@ If a reloaded extension gets a new ID, set `DOWNLOADER_EXTENSION_ID` or CORS blo
 the popup.
 
 `FASTSTUDY_SECRET` (environment, not `.env` — the launcher sets it) gates every route but
-`/health`: `runtime.js::requireSecret` rejects a request lacking the `X-FastStudy-Secret` header or
-`?secret=`, and `runtime.js::peerHeaders` adds the header to every outbound call to a peer —
+`/health`: `requireSecret` from `@faststudy/runtime` (the shared launch-contract package at `lib/runtime/`
+in the repo root) rejects a request lacking the `X-FastStudy-Secret` header or
+`?secret=`, and its `peerHeaders` adds the header to every outbound call to a peer —
 never to `services/probe.js`, which fetches an external lecture host. Unset means no enforcement.
 
-`runtime.js::statePath` returns the per-user writable state root — `FASTSTUDY_STATE_DIR` when set,
+`@faststudy/runtime`'s `statePath` returns the per-user writable state root — `FASTSTUDY_STATE_DIR` when set,
 else `.state/` at the repo root. It is where yt-dlp's `--cache-dir` points, and it only joins the
 path; each writer creates its own directory.
 

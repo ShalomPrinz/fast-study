@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { statePath } from './runtime.js';
+import { statePath } from '@faststudy/runtime';
 
 // The store sits beside the Moodle token in the state root, plaintext.
 // No per-link scraping / no encryption.

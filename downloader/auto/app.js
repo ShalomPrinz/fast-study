@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { ALLOWED_ORIGINS, AUTODL_PORT } from './src/lib/config.js';
 import { UnsupportedError } from './src/lib/errors.js';
-import { serve, requireSecret } from './src/lib/runtime.js';
+import { serve, requireSecret } from '@faststudy/runtime';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import {
   sendUnsupported,

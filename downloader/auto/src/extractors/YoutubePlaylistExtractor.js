@@ -3,7 +3,7 @@ import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
-import { statePath } from '../lib/runtime.js';
+import { statePath } from '@faststudy/runtime';
 
 const execFileAsync = promisify(execFile);
 
