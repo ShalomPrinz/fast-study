@@ -1,6 +1,6 @@
 ---
 name: worktree
-description: Project rules for doing a task in a dedicated git worktree — creating it, restoring the git-ignored files and installs the services need, and the branch/commit boundaries. Use only when the user explicitly asks for worktree mode.
+description: Project rules for doing a task in a dedicated git worktree — creating it, restoring the git-ignored files and installs the services need, and the branch boundaries. Use only when the user explicitly asks for worktree mode.
 ---
 
 Substitute `<slug>` throughout and take `<repo-root>` from the actual project root.
@@ -35,14 +35,5 @@ cd <repo-root>-<slug>/downloader/auto && npm install
 - Do not merge, rebase onto, fast-forward or otherwise touch `main`. Do not push, do not open a PR.
 - When the last step is done, **stop**. Leave the branch sitting locally for the user to review and merge.
 - If the work has to be abandoned mid-way, leave the branch as-is and report; do not reset or delete it.
-
-### One commit per concern
-
-A task with several independent items is several commits — one per item. A reviewer reads a branch commit by commit, and a fix has to be revertable on its own.
-
-- Split by **concern**, not by file. Two concerns touching the same file are still two commits; one concern touching six files is still one commit.
-- Refactors and renames a concern needs are part of that concern's commit, not a separate cleanup commit — unless the refactor stands alone without any of the concerns, in which case it goes first.
-
-Commit message format: a one-line summary starting with `<service>: ` or `<feature>: `, naming the one thing that commit does. No other body text. A "Co-Authored by Claude" message is allowed.
 
 > **Worktree tooling note:** this session's Bash tool refuses heredocs and multi-part commands with redirects while worktree-isolated. Use the Write/Edit tools for file creation, and keep shell commands simple.
