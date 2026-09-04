@@ -1,4 +1,5 @@
 import { t } from '@lingui/core/macro'
+import { secretHeaders } from '@/services/runtime'
 import { toastConnectionError } from '@/services/toaster'
 
 export function httpError(res: Response): Error {
@@ -51,15 +52,17 @@ function buildInit(init: RequestOptions | undefined, method: string): RequestIni
   if (json !== undefined && body !== undefined) {
     throw new Error('http client: `json` and `body` are mutually exclusive')
   }
+  // Every request carries the launch secret; the caller's own headers still win over it.
+  const secured = { ...secretHeaders(), ...(headers ?? {}) }
   if (json !== undefined) {
     return {
       ...rest,
       method,
-      headers: { 'Content-Type': 'application/json', ...(headers ?? {}) },
+      headers: { 'Content-Type': 'application/json', ...secured },
       body: JSON.stringify(json),
     }
   }
-  return { ...rest, method, headers, body }
+  return { ...rest, method, headers: secured, body }
 }
 
 export function createClient(baseUrl: string, serviceName: string): Client {

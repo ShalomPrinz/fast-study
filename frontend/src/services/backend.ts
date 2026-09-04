@@ -18,11 +18,9 @@ import {
   overviewGenerateQuery,
 } from '@/shared/utils/url'
 import { createClient } from './http'
+import { BACKEND_URL } from './runtime'
 
-const backend = createClient(
-  import.meta.env.VITE_API_URL ?? 'http://localhost:8000',
-  'backend service',
-)
+const backend = createClient(BACKEND_URL, 'backend service')
 
 export async function runStep(
   course: string,

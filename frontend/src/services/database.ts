@@ -10,11 +10,9 @@ import type {
 import { path, kindQuery, lectureBase, courseOverviewBase } from '@/shared/utils/url'
 import { createClient } from './http'
 import { reportVideoArrived } from './backend'
+import { DATABASE_URL } from './runtime'
 
-const database = createClient(
-  import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001',
-  'database service',
-)
+const database = createClient(DATABASE_URL, 'database service')
 
 export const databaseUrl = database.url('')
 

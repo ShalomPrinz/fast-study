@@ -5,7 +5,10 @@ protocol itself (launch.php grab, the WS API, autologin) lives in `docs/MOODLE.m
 
 `MoodleToken` (`src/auth/moodleToken.js`) is the auth provider. One instance is cached **per
 university** in `authInstances` (`http/server.js`) and never evicted, so `connect()` and
-`complete()` — two separate HTTP calls — share the same in-memory headed browser.
+`complete()` — two separate HTTP calls — share the same in-memory headed browser. `MoodleToken`
+stores wherever its `tokenPath` points and resolves nothing: the per-university entry in
+`core/registry.js` hands it an absolute `statePath('auth', …)`, so one place decides the location
+for every university.
 
 ## connect / complete / status
 
@@ -14,7 +17,7 @@ university** in `authInstances` (`http/server.js`) and never evicted, so `connec
   closes itself the instant the `moodlemobile://token` redirect is captured, so the user
   never sees the dead tab or Chromium's xdg-open prompt for the custom scheme.
 - `complete()` — waits for the (already-captured) token string, decodes it, and persists
-  `{ wstoken, privatetoken }` to `.auth/biu-token.json`; it needs no live browser (its own
+  `{ wstoken, privatetoken }` to `auth/biu-token.json` under the state root; it needs no live browser (its own
   close is a no-op after the self-close). `/auth/complete` returns `{ connected: true }`.
 - `status()` — no browser, no API call: `{ connected: token file exists, expired: markExpired flag }`.
 

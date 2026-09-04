@@ -1,14 +1,12 @@
 import { createClient, httpError } from '@/services/http'
+import { DOWNLOAD_SERVER_URL, secretHeaders, withSecretParam } from '@/services/runtime'
 import type { DownloadOperation, Kind } from '@/types'
 import type { Media, PasscodeError, ProbedMedia } from './autoDownloader'
 import { postReconnectAware } from './autoDownloader'
 
 // Feature-local boundary for the downloader server, which queues every background download job and
 // owns its state — both the ones discovery rows trigger and the ones the Chrome extension starts.
-const downloadServer = createClient(
-  import.meta.env.VITE_DOWNLOADER_URL ?? 'http://localhost:3052',
-  'downloader server',
-)
+const downloadServer = createClient(DOWNLOAD_SERVER_URL, 'downloader server')
 
 // A name the server rewrote to be legal on disk, keyed by the submitted row's `ref`. Only the rows
 // it actually changed are listed, so an untouched submission answers with [].
@@ -60,9 +58,10 @@ export interface DownloadJob {
 
 // Every non-evicted job, including ones the Chrome extension started. The single source of truth —
 // the stream only says "something changed", this says what. Bypasses the shared client because a
-// reconnect loop against a downed service would stack one ConnectionError toast per attempt.
+// reconnect loop against a downed service would stack one ConnectionError toast per attempt — so
+// the launch secret goes on by hand.
 export async function fetchJobs(): Promise<DownloadJob[]> {
-  const res = await fetch(downloadServer.url('/jobs'))
+  const res = await fetch(downloadServer.url('/jobs'), { headers: secretHeaders() })
   if (!res.ok) throw httpError(res)
   const data = (await res.json()) as { jobs?: DownloadJob[] }
   return data.jobs ?? []
@@ -83,7 +82,7 @@ export function subscribeRuns(onChange: () => void): () => void {
 }
 
 function subscribe(event: 'job:change' | 'run:change', onChange: () => void): () => void {
-  const es = new EventSource(downloadServer.url('/events'))
+  const es = new EventSource(withSecretParam(downloadServer.url('/events')))
   es.addEventListener('open', onChange)
   es.addEventListener(event, onChange)
   return () => {
@@ -149,7 +148,7 @@ export async function cancelRun(id: string): Promise<void> {
 // Every current run, one per section — the resync for `run:change`, exactly as `/jobs` is for jobs.
 // Bypasses the shared client for the same reason `fetchJobs` does.
 export async function fetchRuns(): Promise<SectionRun[]> {
-  const res = await fetch(downloadServer.url('/runs'))
+  const res = await fetch(downloadServer.url('/runs'), { headers: secretHeaders() })
   if (!res.ok) throw httpError(res)
   const data = (await res.json()) as { runs?: SectionRun[] }
   return data.runs ?? []

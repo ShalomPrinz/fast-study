@@ -2,11 +2,11 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import Literal, get_args
 
+import runtime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from course import overview
 from course import runner as course_runner
-from dotenv import load_dotenv
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pipeline import runner
@@ -15,7 +15,6 @@ from services import db_client, providers, settings
 from services.logging_setup import setup_logging
 from timing import get_stats, init_db, record
 
-load_dotenv()
 setup_logging()
 
 
@@ -37,12 +36,27 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 init_db()
 
+if _launch_secret := runtime.secret():
+    app.add_middleware(runtime.SecretMiddleware, secret=_launch_secret)
+
+# CORS stays the LAST add_middleware call: Starlette makes the last-added middleware the outermost,
+# and a 401 raised outside CORS carries no CORS headers, which the browser reports as a network error.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # `app://bundle` is the packaged frontend's origin, exactly as Chromium sends it — no trailing
+    # slash, unlike the same origin reported by Electron's permission-handler API. Never derive it.
+    allow_origins=["http://localhost:5173", "app://bundle"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+def health():
+    """Liveness only — what the launcher waits on before opening the window. Reports nothing
+    else on purpose: paths, config and key-set flags stay on routes that can be refused."""
+
+    return {"status": "ok"}
 
 
 _STEP_CONFIG: dict[str, tuple[str, str]] = {
@@ -257,3 +271,8 @@ async def config_probe_key(probe: KeyProbe):
         return {"status": "error", "message": f"unknown provider: {probe.provider}"}
     result = await asyncio.to_thread(providers.probe_key, probe.provider, probe.key)
     return {"result": result}
+
+
+# Packaged entry point only — dev runs `uvicorn main:app --reload`, which never reaches this.
+if __name__ == "__main__":
+    runtime.serve(app, default_port=8000)

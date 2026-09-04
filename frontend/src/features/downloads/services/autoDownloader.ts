@@ -1,12 +1,10 @@
 import type { Client } from '@/services/http'
 import { createClient, httpError } from '@/services/http'
+import { AUTO_DOWNLOADER_URL, secretHeaders } from '@/services/runtime'
 import type { Kind } from '@/types'
 
 // Feature-local boundary for the auto-downloader service (persistent-browser BIU capture).
-const autoDownloader = createClient(
-  import.meta.env.VITE_AUTODL_URL ?? 'http://localhost:3053',
-  'auto-downloader service',
-)
+const autoDownloader = createClient(AUTO_DOWNLOADER_URL, 'auto-downloader service')
 
 export interface AuthStatus {
   connected: boolean
@@ -81,8 +79,8 @@ export function isPasscodeError(err: unknown): err is PasscodeError {
 }
 
 // These endpoints encode meaning in the response body, which the shared client discards — hence
-// a direct fetch. Trade-off: no central ConnectionError wrapping, so a refused connection throws
-// a raw TypeError instead of the friendly "service down" toast.
+// a direct fetch, with the launch secret applied by hand. Trade-off: no central ConnectionError
+// wrapping, so a refused connection throws a raw TypeError instead of the friendly "down" toast.
 // Client-parameterized because the same three error bodies come back from both services: the
 // downloader server forwards auth's verdict verbatim when it proxies a download.
 export async function postReconnectAware<T>(
@@ -92,7 +90,7 @@ export async function postReconnectAware<T>(
 ): Promise<T> {
   const res = await fetch(client.url(path), {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...secretHeaders() },
     body: JSON.stringify(body),
   })
   if (res.status === 401) {

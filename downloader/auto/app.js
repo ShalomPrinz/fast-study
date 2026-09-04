@@ -1,7 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import { ALLOWED_ORIGIN, AUTODL_PORT } from './src/lib/config.js';
+import { ALLOWED_ORIGINS, AUTODL_PORT } from './src/lib/config.js';
 import { UnsupportedError } from './src/lib/errors.js';
+import { serve, requireSecret } from './src/lib/runtime.js';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import {
   sendUnsupported,
@@ -16,15 +17,22 @@ import {
 } from './src/http/server.js';
 
 const app = express();
-// cors handles the OPTIONS preflight for the single Vite origin; no manual short-circuit.
+// cors handles the OPTIONS preflight for the allowed origins; no manual short-circuit.
 app.use(
   cors({
-    origin: ALLOWED_ORIGIN,
+    origin: ALLOWED_ORIGINS,
     methods: ['GET', 'POST', 'OPTIONS'],
-    allowedHeaders: ['Content-Type'],
+    // A pinned allowedHeaders list is exhaustive: without X-FastStudy-Secret named here the
+    // preflight strips it and every call fails as a CORS error rather than an auth one.
+    allowedHeaders: ['Content-Type', 'X-FastStudy-Secret'],
   }),
 );
+// After cors, which answers the preflight itself, so no OPTIONS ever reaches the guard.
+app.use(requireSecret);
 app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
+
+// Liveness only: what the launcher waits on before opening the window.
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 
 app.get('/auth/status', handleAuthStatus);
 app.post('/auth/connect', handleAuthConnect);
@@ -51,9 +59,9 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-app.listen(AUTODL_PORT, () => {
+serve(app, AUTODL_PORT, (port) => {
   console.log(`\n==========================================`);
-  console.log(`🤖 Auto-downloader listening on port ${AUTODL_PORT}`);
-  console.log(`🌐 CORS origin: ${ALLOWED_ORIGIN}`);
+  console.log(`🤖 Auto-downloader listening on port ${port}`);
+  console.log(`🌐 CORS origins: ${ALLOWED_ORIGINS.join(', ')}`);
   console.log(`==========================================\n`);
 });

@@ -52,7 +52,7 @@ DATABASE_URL=http://localhost:8001
 BACKEND_URL=http://localhost:8000
 ```
 
-The frontend has its own `frontend/.env` for `VITE_API_URL` / `VITE_DATABASE_URL` (both optional — defaults match the ports above).
+The frontend reads no env file. It resolves the four service URLs at runtime from the Electron preload bridge (`frontend/src/services/runtime.ts`), falling back to the dev ports above.
 
 ## Running
 

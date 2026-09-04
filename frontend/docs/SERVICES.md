@@ -5,7 +5,8 @@ go through them — no call site touches `fetch`, `EventSource` or `react-toasti
 
 ## `http.ts` — client factory
 
-`createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON encoding and headers, and exposes
+`createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON encoding and headers — including
+the `X-FastStudy-Secret` launch secret on every request — and exposes
 `url(path)` for links the browser opens itself. URL string building lives in `shared/utils/url.ts`, not here.
 
 A failed response's message comes from its body — `{error}`, FastAPI's `{detail}`, or `{message}`, whichever is
@@ -19,13 +20,13 @@ the toast by base URL, so a downed service reuses one toast instead of stacking.
 their own connection-error handling; they either ignore the throw or check `isConnectionError` before
 showing a second message.
 
-## `backend.ts` → FastAPI (`VITE_API_URL`)
+## `backend.ts` → FastAPI (:8000)
 
 Pipeline triggers (`runStep`, `runPipeline`, `runAll`, `reportVideoArrived`), `fetchRunnerStatus`, `fetchTimingStats`, and the
 course-overview endpoints (`fetchOverviewExtractors`, `runOverview`, `fetchCourseStatus`). The wire format
 is `snake_case`; normalization to camelCase happens here and nowhere else, so `types.ts` shapes stay clean.
 
-## `database.ts` → database service (`VITE_DATABASE_URL`)
+## `database.ts` → database service (:8001)
 
 Everything filesystem-backed: tree, course/lecture CRUD, summary read/save/revert, video upload, file URLs,
 course `overview/` file listing + meta. `materialUrl`/`deleteMaterial` hit the same per-file routes as
@@ -37,6 +38,24 @@ from. `fetchCourseMeta` unwraps `{ meta }` and renames `generated_at` → `gener
 auto-run is backend policy, and a caller that only stored the bytes would silently lose it. Like the settings
 boundary below, this concern spans both services by design. A failed report is logged, never rethrown: the
 bytes are stored, so failing the upload would be a lie.
+
+## `runtime.ts` — the Electron preload bridge
+
+The one file that declares `window.faststudy`, exposed through `runtimeBridge()` (`undefined` outside
+Electron, and under vitest's `node` environment). A second `declare global` for the same property would not
+compile, so anything the preload exposes is declared here; its import of `SettingsBacking` is type-only, so
+the mutual import with `settings.ts` is erased and there is no runtime cycle.
+
+It also owns the launch secret. `secretHeaders()` returns the `X-FastStudy-Secret` header, spreadable into
+any request; `withSecretParam(url)` appends `?secret=…` and is used **only** by the two `EventSource` calls,
+which cannot set a header and reconnect on their own. Both return nothing extra when the bridge carries no
+secret — browser dev, where the services see no `FASTSTUDY_SECRET` and enforce nothing. The header keeps the
+secret out of access logs and the devtools URL column, so nothing else uses the query parameter.
+
+It also resolves the four service base URLs — `BACKEND_URL`, `DATABASE_URL`, `DOWNLOAD_SERVER_URL`,
+`AUTO_DOWNLOADER_URL` — from `urls` on the bridge, falling back to the dev ports. Resolution is
+synchronous at import time because every service builds its client at module scope; the packaged app's
+ports are chosen at boot, so nothing here may be baked in at build time and the frontend reads no env var.
 
 ## `settings.ts` — the settings store and the two config owners
 
@@ -92,7 +111,7 @@ path is `/courses/{course}/lectures/{lecture}` (`lectureBase`). `kindQuery` appe
 both; lectures carry no suffix. `overviewGenerateQuery` composes the overview trigger's optional
 `extractors` CSV + `from_phase` + `skip_existing`.
 
-## `features/downloads/services/autoDownloader.ts` → auto-downloader (`VITE_AUTODL_URL`, :3053)
+## `features/downloads/services/autoDownloader.ts` → auto-downloader (:3053)
 
 Feature-local because only the downloads page speaks this protocol. Its discovery `Item` is
 mechanism-agnostic: `ref` is an opaque token to round-trip, never parse.
@@ -114,7 +133,7 @@ connection surfaces as a raw `TypeError` instead of the friendly toast. `Passcod
 downloader server's `/download-item` answers with the same three bodies (it forwards auth's verdict
 verbatim), so it reuses them rather than restating the vocabulary.
 
-## `features/downloads/services/downloadServer.ts` → downloader server (`VITE_DOWNLOADER_URL`, :3052)
+## `features/downloads/services/downloadServer.ts` → downloader server (:3052)
 
 The server that runs the downloads owns both the queueing and the job state, so the downloads page talks to
 two services: it discovers and authenticates through the auto-downloader and downloads here.
@@ -134,7 +153,8 @@ means two connections — the price of keeping the jobs reflection and the runs 
 tell you to refetch: every non-evicted job (each carrying the discovery-row `ref` it belongs to, including
 ones the Chrome extension started), and every current section run, one per `sectionId`. Both bypass the
 shared client for the opposite reason to the three endpoints above — the client toasts every
-`ConnectionError`, and a reconnect loop against a downed service would stack one toast per attempt.
+`ConnectionError`, and a reconnect loop against a downed service would stack one toast per attempt. Both
+apply the secret header by hand, as `postReconnectAware` does.
 
 `startSectionRun`, `resumeRun` and `cancelRun` POST `/download-section`, `/runs/:id/resume` and
 `/runs/:id/cancel`; they go through the shared client, since a user action against a downed server _should_

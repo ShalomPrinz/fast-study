@@ -46,8 +46,15 @@ Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GD
 cd backend
 uv sync --extra test             # one-time / after dep changes
 uv run uvicorn main:app --reload # dev (port 8000)
+uv run python main.py            # packaged: binds FASTSTUDY_PORT (0 = ephemeral), no reload
 uv run pytest tests/ -q          # CI runs exactly this on every push
 ```
+
+`FASTSTUDY_SECRET` (launch-time, set by the packaged launcher) makes `runtime.SecretMiddleware` reject every unauthenticated inbound request and makes `db_client` send the secret on its calls to `database/`; unset means no enforcement, which is what dev runs on. Rules and header names: `docs/API.md`.
+
+`runtime.serve` binds the loopback socket itself so it can print `FASTSTUDY_PORT=<port>` on stdout for the launcher to parse — `uvicorn.run(port=0)` never reports what it bound.
+
+`runtime.state_path(*parts)` resolves everything the backend writes outside `DATA_ROOT` — `timing.db` and the per-scope Google token — under one root: `FASTSTUDY_STATE_DIR` if set, else `.state/` at the repo root. It is a pure join and creates nothing, so each caller mkdirs its own parent — otherwise an import would leave a directory behind, including in tests that redirect the path.
 
 ## Testing
 

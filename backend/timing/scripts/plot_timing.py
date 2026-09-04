@@ -6,6 +6,7 @@ Outputs PNGs to backend/timing/plots/ and an index plots/_all.png.
 """
 
 import sqlite3
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -14,7 +15,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 TIMING_DIR = Path(__file__).resolve().parent.parent
-DB = TIMING_DIR / "timing.db"
+# Run as a plain script from the repo root, so `backend/` is not importable yet.
+sys.path.insert(0, str(TIMING_DIR.parent))
+
+from timing import DB_PATH as DB
+
 OUT = TIMING_DIR / "plots"
 OUT.mkdir(exist_ok=True)
 

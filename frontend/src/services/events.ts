@@ -1,5 +1,6 @@
 // One EventSource for all subscribers: opened on the first, closed on the last.
 import { databaseUrl } from './database'
+import { withSecretParam } from './runtime'
 
 type Callback = () => void
 
@@ -14,7 +15,7 @@ export function subscribeNotify(cb: Callback): () => void {
   subscribers.add(cb)
 
   if (!es) {
-    es = new EventSource(`${databaseUrl}/events`)
+    es = new EventSource(withSecretParam(`${databaseUrl}/events`))
     es.addEventListener('notify', dispatch)
   }
 

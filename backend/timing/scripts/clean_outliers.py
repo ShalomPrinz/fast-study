@@ -12,10 +12,13 @@ Usage:
 
 import argparse
 import sqlite3
+import sys
 from pathlib import Path
 
-TIMING_DIR = Path(__file__).resolve().parent.parent
-DB = TIMING_DIR / "timing.db"
+# Run as a plain script from the repo root, so `backend/` is not importable yet.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+from timing import DB_PATH as DB
 
 
 def fit(xs, ys):

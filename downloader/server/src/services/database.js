@@ -3,6 +3,7 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { DATABASE_URL, VIDEO_FILENAME, MATERIAL_TEMP_FILENAME } from '../config.js';
 import { emitLog, emitError } from '../progress.js';
+import { peerHeaders } from '../runtime.js';
 import { reportVideoArrived } from './backend.js';
 
 // All DATABASE_URL I/O lives here. Contract details (video PUT wipes derived
@@ -11,7 +12,7 @@ import { reportVideoArrived } from './backend.js';
 // /tree returns rich lecture/recitation objects; the popup only wants the names,
 // and archived courses are dropped so finished ones don't clutter suggestions.
 export async function listCourses() {
-  const res = await fetch(`${DATABASE_URL}/tree`);
+  const res = await fetch(`${DATABASE_URL}/tree`, { headers: peerHeaders() });
   if (!res.ok) throw new Error(`database /tree returned ${res.status}`);
   const tree = await res.json();
   return tree
@@ -35,7 +36,7 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     // duplex: 'half' is required when a fetch body is a stream (undici).
     const res = await fetch(url, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/octet-stream' },
+      headers: peerHeaders({ 'Content-Type': 'application/octet-stream' }),
       body: Readable.toWeb(fs.createReadStream(file)),
       duplex: 'half',
     });
@@ -76,7 +77,7 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
     // duplex: 'half' is required when a fetch body is a stream (undici).
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/pdf' },
+      headers: peerHeaders({ 'Content-Type': 'application/pdf' }),
       body: Readable.toWeb(fs.createReadStream(file)),
       duplex: 'half',
     });
@@ -110,7 +111,7 @@ export async function uploadPdf(buf, course, lecture, kind) {
   const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
   const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/pdf' },
+    headers: peerHeaders({ 'Content-Type': 'application/pdf' }),
     body: buf,
   });
   let body = null;
@@ -132,7 +133,7 @@ export async function uploadPdf(buf, course, lecture, kind) {
 export function notifyFrontend() {
   fetch(`${DATABASE_URL}/notify`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: peerHeaders({ 'Content-Type': 'application/json' }),
     body: '{}',
   }).catch(() => {});
 }

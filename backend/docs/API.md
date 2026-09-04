@@ -4,7 +4,16 @@ All endpoints are defined in `main.py`, which stays thin route glue — validati
 
 Every mutating endpoint is fire-and-forget: it schedules a background asyncio task and returns immediately. Results never come back in the HTTP response; the frontend reads them from the status endpoints.
 
-CORS is open to `http://localhost:5173` only.
+CORS is open to the frontend's two origins only: `http://localhost:5173` in dev and `app://bundle` in the packaged app.
+
+## The launch secret
+
+When `FASTSTUDY_SECRET` is set, every request must carry it — as the `X-FastStudy-Secret` header, or as a `secret` query parameter for the one caller that cannot set a header (native `EventSource`). Missing or wrong → `401 {"error": "unauthorized"}`, except a request whose `Accept` contains `text/event-stream`, which is refused as an empty `text/event-stream` body (Chromium reports any other MIME on an `EventSource` as a bare transport error). `GET /health` is the sole exemption, so the launcher can tell a wrong secret from a dead child. Unset means no enforcement at all, which is what dev runs on. The check (`runtime.SecretMiddleware`) is installed before the CORS middleware so a 401 still carries CORS headers, and `services/db_client.py` sends the same header on every outbound call to `database/`.
+
+## Health
+
+`GET /health`
+`{"status": "ok"}` — liveness only, what the launcher waits on before opening the window. It reports nothing else on purpose: paths, config and key-set flags stay on routes that can be refused.
 
 ## Per-lecture
 
@@ -34,7 +43,7 @@ Regression ETA from past runs, or `{"message": "not-enough-data"}`.
 
 `POST /timing`
 body `{"operation": str, "file_size_bytes": int, "duration_seconds": float}`
-Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from the browser, since CORS only allows the frontend origin.
+Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from an arbitrary browser page, since CORS only allows the frontend's own origins.
 
 ## Course overview
 

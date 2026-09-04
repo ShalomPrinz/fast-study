@@ -7,6 +7,9 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
+import runtime
+
+# Shipped alongside the code and only ever read, so it stays on the install side of the split.
 CREDENTIALS_PATH = str(Path(__file__).parent.parent / "credentials.json")
 
 SCOPES_MAP = {
@@ -28,12 +31,14 @@ def get_credentials(scope_key: ScopeKey) -> Credentials:
             "Download credentials.json from Google Cloud Console and place it there."
         )
 
-    # Per-scope token file, so different scope sets can't collide.
-    token_path = str(Path(__file__).parent.parent / f"token_{scope_key}.json")
+    # Per-scope token file, so different scope sets can't collide. It lives under the state
+    # root, not beside the code: an update replaces the install dir, and a wiped token costs
+    # the user a fresh consent flow.
+    token_path = runtime.state_path("auth", f"token_{scope_key}.json")
 
     creds: Credentials | None = None
-    if Path(token_path).exists():
-        creds = Credentials.from_authorized_user_file(token_path, scopes)
+    if token_path.exists():
+        creds = Credentials.from_authorized_user_file(str(token_path), scopes)
 
     # A token cached for a different scope set is silently unusable (opaque 403 later),
     # so detect the mismatch up front and force a fresh consent flow.
@@ -46,6 +51,7 @@ def get_credentials(scope_key: ScopeKey) -> Credentials:
         else:
             flow = InstalledAppFlow.from_client_secrets_file(CREDENTIALS_PATH, scopes)
             creds = flow.run_local_server(port=0, open_browser=False)
-        Path(token_path).write_text(creds.to_json())
+        token_path.parent.mkdir(parents=True, exist_ok=True)
+        token_path.write_text(creds.to_json())
 
     return creds

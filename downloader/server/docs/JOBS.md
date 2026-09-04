@@ -144,4 +144,5 @@ regression is built from. This is the downloader's only edge to the backend (800
 group under one row, so a zoom before/after-break pair (`<name>.1`/`<name>.2`) stays together.
 
 The frontend subscribes to `/events` and refetches `/jobs` here on every ping; CORS allows
-the extension origin and the frontend origin (`EXTENSION_ID` / `FRONTEND_URL`).
+the extension origin, the frontend origin (`EXTENSION_ID` / `FRONTEND_URL`) and the
+packaged app's `app://bundle`.

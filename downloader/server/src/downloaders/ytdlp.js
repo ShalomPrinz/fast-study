@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 import { uploadVideo } from '../services/database.js';
+import { statePath } from '../runtime.js';
 
 // Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
 // which yt-dlp resolves without a login.
@@ -9,6 +10,10 @@ export const YTDLP_HOST_RE =
 // Recent yt-dlp needs a JS runtime to run YouTube's player script and extract
 // formats; both the probe and the download must carry these or format extraction errors.
 const YT_PLAYER_JS_FLAGS = ['--js-runtimes', 'node', '--remote-components', 'ejs:github'];
+
+// yt-dlp's cache must be writable — it writes youtube-sigfuncs/<id>.json there — so it points at
+// the per-user state root rather than the default under a possibly read-only installed home.
+const CACHE_DIR_FLAGS = ['--cache-dir', statePath('ytdlp-cache')];
 
 // Sum yt-dlp's printed filesize fields for the same `bv*+ba/b` selection the real
 // download uses, without downloading — approximates the merged mp4's size.
@@ -24,6 +29,7 @@ function probeYoutubeSize(url) {
         '--quiet',
         '--skip-download',
         ...YT_PLAYER_JS_FLAGS,
+        ...CACHE_DIR_FLAGS,
         '-f',
         'bv*+ba/b',
         '--print',
@@ -52,6 +58,7 @@ function buildYtdlpArgs(url) {
     '--merge-output-format',
     'mp4',
     ...YT_PLAYER_JS_FLAGS,
+    ...CACHE_DIR_FLAGS,
     '--quiet',
     '--no-warnings',
     '--no-progress',

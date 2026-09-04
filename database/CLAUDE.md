@@ -13,13 +13,13 @@ changes: keep them backward-compatible or flag the impact.
 
 ## Docs
 
-| Doc                            | Covers                                                            |
-| ------------------------------ | ----------------------------------------------------------------- |
-| [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, path resolution, dotfiles, tree shape   |
+| Doc                                  | Covers                                                                       |
+| ------------------------------------ | ---------------------------------------------------------------------------- |
+| [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, path resolution, dotfiles, tree shape                    |
 | [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, access logging, trust model |
-| [docs/SETTINGS.md](docs/SETTINGS.md) | the settings store: fields, `.env` merge, `DATA_ROOT` validation |
-| [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity |
-| [docs/EVENTS.md](docs/EVENTS.md)     | SSE channel and clean shutdown                              |
+| [docs/SETTINGS.md](docs/SETTINGS.md) | the settings store: fields, `.env` merge, `DATA_ROOT` validation             |
+| [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity                  |
+| [docs/EVENTS.md](docs/EVENTS.md)     | SSE channel and clean shutdown                                               |
 
 ## Layout
 
@@ -30,6 +30,7 @@ changes: keep them backward-compatible or flag the impact.
 Reads the repo-root `.env` via `python-dotenv`:
 
 - `DATA_ROOT` — absolute path to the data directory. Absent or blank still boots: the root stays unset and every filesystem endpoint answers `409` until `POST /config` sets one.
+  `GET /health` is liveness only and answers `200` regardless, so the launcher can tell healthy-but-unconfigured from dead.
 
 It holds no peer URLs, because it makes **no outbound HTTP calls** — it only answers requests and
 fans out SSE. Every peer address it would need belongs to a service that already calls it, so
@@ -40,7 +41,7 @@ preference: the packaged build binds every service to `127.0.0.1:0` and spawns t
 here, it either calls in or reads the SSE `/events` channel — announcing a stored video, for
 instance, is done by the uploader (downloader server, frontend), not by the store.
 
-`settings.py` also *writes* that `.env`: it is the store behind the app's settings surface in
+`settings.py` also _writes_ that `.env`: it is the store behind the app's settings surface in
 browser dev (`GET`/`PUT /settings`), and `POST /config` sets the running process's data root with
 no restart. The write is a merge — only settings keys are rewritten, and the API keys are
 write-only. See [docs/SETTINGS.md](docs/SETTINGS.md).
@@ -49,12 +50,22 @@ write-only. See [docs/SETTINGS.md](docs/SETTINGS.md).
 
 ```bash
 cd database
-uvicorn main:app --reload --port 8001   # or: python3 main.py
+uvicorn main:app --reload --port 8001   # dev
 python3 -m pytest tests/ -q
 ```
 
 Port `8001` (backend 8000, frontend 5173, downloader 3052). `npm run dev` at the repo root brings
 all four up together.
+
+`python3 main.py` is the packaged entry point instead, never the dev one: `runtime.serve` binds
+`127.0.0.1:$FASTSTUDY_PORT` (`0` asks for an ephemeral port, unset means `8001`) and prints
+`FASTSTUDY_PORT=<n>` on stdout, because uvicorn never reports what `port=0` resolved to and the
+launcher has to read the real port back. Loopback only, no reload.
+
+`runtime.install_secret_check` then requires `$FASTSTUDY_SECRET` on every request but `GET /health`
+— as the `X-FastStudy-Secret` header or a `secret` query parameter, since `EventSource` cannot set a
+header. Unset (dev) installs nothing. It is pure ASGI and sits inside CORS on purpose; see
+[docs/API.md](docs/API.md).
 
 ## Documentation rules
 

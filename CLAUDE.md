@@ -25,6 +25,28 @@ The graph must stay acyclic: `frontend/` and `downloader/` call `backend/` and `
 
 So never add an outbound call from `database/` to a peer, and treat a proposal to add one as a packaging blocker, not a style preference. If `database/` needs to tell a peer something, either the peer calls in or the fact rides the existing SSE `/events` channel peers already subscribe to.
 
+## Packaged launch contract
+
+Every service carries its own module named `runtime` (`runtime.py` / `runtime.js` / `runtime.ts`, one per package — never shared across a `node_modules` boundary) implementing the same names verbatim. They are independent files that merely agree on a contract; write a new one from scratch rather than copying a sibling's.
+
+| Thing                    | Name                                                                             |
+| ------------------------ | -------------------------------------------------------------------------------- |
+| Listen port, in env      | `FASTSTUDY_PORT` — `0` asks for ephemeral, unset keeps the per-service default    |
+| Port report, on stdout   | `FASTSTUDY_PORT=<n>` alone on a line, matched `^FASTSTUDY_PORT=(\d+)$`            |
+| Launch secret, in env    | `FASTSTUDY_SECRET` — unset means no enforcement, which is dev                     |
+| Secret header            | `X-FastStudy-Secret`                                                             |
+| Secret query param       | `secret`, for `EventSource`, which cannot set a header                           |
+| Writable state root, env | `FASTSTUDY_STATE_DIR` — unset falls back to `.state/` at the repo root            |
+| State join               | `statePath(...parts)` / `state_path(*parts)` — a pure join that creates nothing   |
+| Preload bridge           | `window.faststudy`                                                               |
+| Packaged frontend origin | `app://bundle` — exactly, no trailing slash                                      |
+
+A service that spells any of these differently cannot be launched or called by its peers, so treat a change to a name or a rule as a cross-service change and surface it rather than editing one service's `runtime` alone. Per-service specifics (which routes, which files) live in each service's `CLAUDE.md` and `docs/`.
+
+`app://bundle` is frozen as a literal, never computed. A page at `app://bundle/index.html` sends `Origin: app://bundle` with no trailing slash on every CORS-mode request including the preflight, but Electron's *permission-handler* API reports the same origin **with** one — deriving the allowlist from that API silently rejects every request. Verified on Electron 44.1.1 / Chromium 152.
+
+The state root separates read-only installed resources from per-user writable state, and only the services that write outside `DATA_ROOT` have a state join (`backend/`, both `downloader/` services). Dev deliberately uses the same layout with no fallback to the old scattered locations, so a layout bug surfaces on a dev machine rather than only in an installer build. The packaged `%LOCALAPPDATA%\FastStudy` default is intentionally in no service — the Electron launcher passes `FASTSTUDY_STATE_DIR` explicitly.
+
 ## Service subagents
 
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
@@ -60,6 +82,8 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 
 - For non-trivial changes: ground yourself in the actual code first, present 2-3 options with tradeoffs, and wait for a decision before implementing. Don't start editing on an ambiguous request.
 - When a workaround fails twice, stop implementing and research the root cause — official docs, the API surface, community threads — instead of trying a third variant.
+- User owns every version-control write. Never run `add`/`commit`/`stash`/`checkout`.
+- Verify empirically — start the service, curl it, kill it, quote the exact output — rather than asserting it works.
 
 ## Linting
 

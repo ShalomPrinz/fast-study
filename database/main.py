@@ -3,6 +3,7 @@ import os
 import signal
 from contextlib import asynccontextmanager
 
+import runtime
 import settings
 from dotenv import load_dotenv
 from events.sse import broadcast_notify, close_all, subscribe
@@ -51,12 +52,24 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+# Added first so CORS ends up outside it, and a 401 still carries the CORS headers the browser needs.
+runtime.install_secret_check(app)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    # app://bundle is the packaged frontend's origin — browsers send it with no trailing slash, so match it verbatim.
+    allow_origins=["http://localhost:5173", "app://bundle"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+def health():
+    """Liveness only — what the launcher waits on before opening the window. Reports nothing
+    else on purpose: DATA_ROOT and the key-set flags stay on routes that can be refused."""
+
+    return {"status": "ok"}
 
 
 def _error(message: str, status: int):
@@ -408,6 +421,4 @@ async def notify(request: Request):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
+    runtime.serve(app, default_port=8001)

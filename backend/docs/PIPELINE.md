@@ -93,7 +93,7 @@ Manual `/run/summarize` and `/pipeline` triggers ignore the flag — the user ma
 
 `timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. See `timing/README.md` for queries and the outlier-cleaning scripts.
 
-`--reload` watches `backend/`, and the runner touches `timing.db` constantly, so `npm run dev` sets `UVICORN_RELOAD_EXCLUDE='*.db timing/*'` to mute the noise (uvicorn reads `UVICORN_`-prefixed env vars; it has no config file). Set the same var if launching uvicorn by hand.
+The db sits at `runtime.state_path("timing.db")`, outside the `backend/` tree `--reload` watches, so the runner's constant writes never restart the dev server. `timing/__init__.py` owns that path and `init_db()` creates the directory — `state_path` itself only joins.
 
 ## Logging
 

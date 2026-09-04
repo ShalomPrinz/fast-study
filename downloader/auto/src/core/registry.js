@@ -1,6 +1,7 @@
 // Two concerns, matched at different granularities.
 // Auth: per university (host). Extractor: per activity (modType). Discovery is the
 // stateless Moodle WS API (core_course_get_contents), not a per-LMS DOM parser.
+import { statePath } from '../lib/runtime.js';
 import { MoodleToken } from '../auth/moodleToken.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
@@ -15,7 +16,7 @@ const UNIVERSITIES = [
   {
     id: 'biu',
     matches: (u) => /(^|\.)biu\.ac\.il$/.test(new URL(u).hostname),
-    auth: () => new MoodleToken({ tokenPath: '.auth/biu-token.json' }),
+    auth: () => new MoodleToken({ tokenPath: statePath('auth', 'biu-token.json') }),
   },
 ];
 

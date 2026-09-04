@@ -1,11 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { statePath } from './runtime.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// src/lib/ -> src/ -> auto/ (package root); the store sits beside the Moodle token
-// in .auth/ (gitignored), plaintext. No per-link scraping / no encryption.
-const STORE_PATH = path.resolve(__dirname, '../..', '.auth/zoom-passcodes.json');
+// The store sits beside the Moodle token in the state root, plaintext.
+// No per-link scraping / no encryption.
+const STORE_PATH = statePath('auth', 'zoom-passcodes.json');
 
 // A missing or corrupt store is not an error — treat it as "nothing saved yet" so a
 // first-ever lookup returns null rather than throwing.
