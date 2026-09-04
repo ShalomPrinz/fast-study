@@ -30,6 +30,10 @@ is fixed by the launcher and not itself a secret.
 - **`GET /health` is the only exemption**, and it is exempt so the launcher's boot screen can tell a
   wrong secret from a dead child. GET only: nothing else bypasses the check.
 - **An unset `FASTSTUDY_SECRET` installs no enforcement at all.** That is dev.
+- **One `secret` query parameter, or none.** A repeated `?secret=` is a 401 in both languages, never
+  resolved to its first value. JS gets this for free — express parses a repeat to an array, which the
+  `typeof given !== 'string'` guard rejects — while Python has to check the list length explicitly,
+  because `parse_qs` would otherwise hand back a list whose first element passes.
 - **`install_secret_check(app)` must run before `CORSMiddleware` is added.** Starlette makes the
   last-added middleware the outermost, so adding the secret check first leaves it *inside* CORS —
   which is what makes a 401 carry CORS headers instead of reaching the browser as a network error.

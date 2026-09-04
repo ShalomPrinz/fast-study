@@ -77,7 +77,10 @@ class SecretMiddleware:
         # The query parameter exists because native EventSource is the one caller that cannot set a
         # header. latin-1 both ways, so an arbitrary byte round-trips back to what was sent.
         query = parse_qs(scope["query_string"].decode("latin-1"), encoding="latin-1")
-        param = query.get("secret", [""])[0].encode("latin-1")
+        values = query.get("secret", [])
+        # One value or none: a duplicated parameter is rejected outright rather than resolved to its
+        # first, so both halves of this contract answer a repeated `?secret=` the same way.
+        param = values[0].encode("latin-1") if len(values) == 1 else b""
         # Tried independently rather than `header or param`: a wrong or blank header must not
         # shadow the query parameter, which is the only credential EventSource can send.
         return secrets.compare_digest(header, self.secret) or secrets.compare_digest(
