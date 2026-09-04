@@ -35,7 +35,7 @@ run_prettier() {
 # One-time baseline: neither formatter has ever run here, so align the whole repo
 # once. Without this every later edit would arrive as a whole-file reformat diff.
 if [ ! -f "$marker" ]; then
-  run_ruff backend database
+  run_ruff backend database lib
   run_prettier .
   date -Iseconds > "$marker"
   report "format ✓"
@@ -51,9 +51,9 @@ py=() web=()
 for f in "${changed[@]}"; do
   [ -f "$f" ] || continue
   case "$f" in
-    backend/*.py|database/*.py)                    py+=("$f") ;;
+    backend/*.py|database/*.py|lib/*.py)           py+=("$f") ;;
     frontend/*.ts|frontend/*.tsx|frontend/*.css)   web+=("$f") ;;
-    downloader/*.js|downloader/*.css)              web+=("$f") ;;
+    downloader/*.js|downloader/*.css|lib/*.js)     web+=("$f") ;;
   esac
 done
 [ $((${#py[@]} + ${#web[@]})) -eq 0 ] && skip "format -"

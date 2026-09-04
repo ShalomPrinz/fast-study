@@ -25,6 +25,8 @@ The graph must stay acyclic: `frontend/` and `downloader/` call `backend/` and `
 
 So never add an outbound call from `database/` to a peer, and treat a proposal to add one as a packaging blocker, not a style preference. If `database/` needs to tell a peer something, either the peer calls in or the fact rides the existing SSE `/events` channel peers already subscribe to.
 
+The rule is about *outbound HTTP calls*, so `lib/` is outside it entirely: services depend on a shared module at build time, never over the wire, and a build-time dependency can no more create a cycle than an import can.
+
 ## Packaged launch contract
 
 Every service carries its own module named `runtime` (`runtime.py` / `runtime.js` / `runtime.ts`, one per package — never shared across a `node_modules` boundary) implementing the same names verbatim. They are independent files that merely agree on a contract; write a new one from scratch rather than copying a sibling's.
@@ -46,6 +48,21 @@ A service that spells any of these differently cannot be launched or called by i
 `app://bundle` is frozen as a literal, never computed. A page at `app://bundle/index.html` sends `Origin: app://bundle` with no trailing slash on every CORS-mode request including the preflight, but Electron's *permission-handler* API reports the same origin **with** one — deriving the allowlist from that API silently rejects every request. Verified on Electron 44.1.1 / Chromium 152.
 
 The state root separates read-only installed resources from per-user writable state, and only the services that write outside `DATA_ROOT` have a state join (`backend/`, both `downloader/` services). Dev deliberately uses the same layout with no fallback to the old scattered locations, so a layout bug surfaces on a dev machine rather than only in an installer build. The packaged `%LOCALAPPDATA%\FastStudy` default is intentionally in no service — the Electron launcher passes `FASTSTUDY_STATE_DIR` explicitly.
+
+## Shared modules — `lib/`
+
+`lib/<name>/` holds the modules more than one service needs, each subfolder a self-contained package
+with its JS and Python halves flat side by side: `lib/runtime/` (the launch contract — port
+handshake, launch-secret check, state root; Python + JS) and `lib/logging/` (`setup_logging()`;
+Python only, the Node services use plain `console`). Consumers declare a real dependency —
+`[tool.uv.sources]` editable path deps for `backend/` and `database/`, a `file:` dependency for both
+downloader packages — so `import runtime` and `@faststudy/runtime` resolve to one copy.
+
+A module earns a place there when a second service needs it *and* divergence between copies would be
+a defect, which is what both of these are: a wire contract and a security boundary, where two copies
+drifting apart is a bug by definition. A helper with one consumer stays in its service. Read
+[`lib/CLAUDE.md`](lib/CLAUDE.md) and the per-module ones before changing anything there — an edit
+under `lib/` is live in four services at once.
 
 ## Service subagents
 

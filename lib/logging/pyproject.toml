@@ -1,0 +1,22 @@
+[project]
+name = "faststudy-logging"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Single-module distribution claiming the top-level name `logging_setup` — never `logging`, which
+# would shadow the standard library in every venv this is installed into.
+[tool.setuptools]
+py-modules = ["logging_setup"]

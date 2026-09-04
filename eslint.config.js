@@ -23,7 +23,7 @@ export default [
 
   // Node packages: downloader server + auto-downloader, both ESM.
   {
-    files: ['downloader/server/**/*.js', 'downloader/auto/**/*.js', 'eslint.config.js'],
+    files: ['downloader/server/**/*.js', 'downloader/auto/**/*.js', 'lib/**/*.js', 'eslint.config.js'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',

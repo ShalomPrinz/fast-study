@@ -2,9 +2,10 @@
   "name": "fast-study",
   "private": true,
   "type": "module",
+  "workspaces": ["lib/*"],
   "scripts": {
     "dev": "concurrently -k -t 'HH:mm:ss' -p '[{time}] {name}' -n Backend,Frontend,Downloader,AutoDL,Database -c blue,green,magenta,cyan,yellow \"cd backend && PYTHONUNBUFFERED=1 uv run uvicorn main:app --reload\" \"npm --prefix frontend run dev\" \"npm --prefix downloader/server start\" \"npm --prefix downloader/auto start\" \"cd database && uvicorn main:app --reload --port 8001\"",
-    "lint": "eslint . && uvx ruff check backend database"
+    "lint": "eslint . && uvx ruff check backend database lib"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

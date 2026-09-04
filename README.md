@@ -59,7 +59,7 @@ The frontend reads no env file. It resolves the four service URLs at runtime fro
 All four services boot in one terminal:
 
 ```bash
-npm install        # one-time, installs concurrently
+npm install        # one-time: the root dev tools, and links lib/ for the services that share it
 npm run dev
 ```
 
@@ -74,6 +74,10 @@ The backend uses [uv](https://docs.astral.sh/uv/) (manages Python 3.12 + deps); 
 ```bash
 cd backend && uv run pytest tests/ -q
 ```
+
+The other suites, each in its own package: `cd database && uv run pytest -q`, `npm test` in
+`downloader/server` and `downloader/auto`, and `uv run --extra test pytest` in `lib/runtime` and
+`lib/logging` — the shared modules four services import.
 
 ## Customizing the summary format
 

@@ -1,4 +1,4 @@
-# Python lint for backend/ and database/. Pyflakes-level only (undefined names,
+# Python lint for backend/, database/ and lib/. Pyflakes-level only (undefined names,
 # unused imports, syntax errors) — style is deliberately not enforced, because
 # .claude/lint.sh runs this on every turn and it has to stay instant.
 [lint]

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Stop/SubagentStop hook: lints whichever changed files belong to a linted stack —
-# ruff for backend/ + database/, eslint for frontend/ + downloader/. Catches the
-# undefined-name and dead-symbol class that a syntax check and tsc both miss.
+# ruff for backend/ + database/ + lib/, eslint for frontend/ + downloader/ + lib/.
+# Catches the undefined-name and dead-symbol class that a syntax check and tsc both miss.
 set -uo pipefail
 
 ROOT="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}"
@@ -26,8 +26,8 @@ py=() jsts=()
 for f in "${changed[@]}"; do
   [ -f "$f" ] || continue
   case "$f" in
-    backend/*.py|database/*.py)                       py+=("$f") ;;
-    frontend/*.ts|frontend/*.tsx|downloader/*.js)     jsts+=("$f") ;;
+    backend/*.py|database/*.py|lib/*.py)                          py+=("$f") ;;
+    frontend/*.ts|frontend/*.tsx|downloader/*.js|lib/*.js)        jsts+=("$f") ;;
   esac
 done
 
