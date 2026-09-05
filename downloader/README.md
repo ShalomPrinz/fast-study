@@ -78,7 +78,7 @@ The Node server uses a few npm packages (express, cors, dotenv) — run `npm ins
    - Enable **Developer mode** (top-right)
    - **Load unpacked** → select the **`downloader\extension\regular`** folder (not `extension\simple`)
    - Pin the extension to the toolbar (optional but recommended)
-4. Note the **extension ID** Chrome assigned (looks like `abcdefghijklmnop...` on the extensions page). Set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to that value (or edit the default in `server\src\config.js`), or CORS will block the popup.
+4. Note the **extension ID** Chrome assigned (looks like `abcdefghijklmnop...` on the extensions page). Set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to that value — there is no default, and with it unset the server allowlists no extension origin at all, so CORS blocks the popup.
 
 ### Run
 
@@ -117,7 +117,7 @@ npm start
 ### Troubleshooting
 
 - **Popup says "Server offline - start `npm start` in downloader/"** — start the server with `npm start` in `downloader\server\` (or `npm run dev` at the repo root).
-- **CORS error in DevTools** — the extension ID changed. Set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` (or `server\src\config.js`) and restart.
+- **CORS error in DevTools** — `DOWNLOADER_EXTENSION_ID` is unset or no longer matches the ID Chrome assigned. Set it in the repo-root `.env` to the current ID and restart; unset means no extension origin is allowed.
 - **YouTube downloads fail** — confirm `yt-dlp --version` works in your terminal. Recent versions also need Node.js on PATH for YouTube's player script (which you already have).
 - **Headers replay fails with 403** — the captured request expired. Reload the lecture page, let the video play a few seconds, then try again.
 

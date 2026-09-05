@@ -9,10 +9,9 @@ dotenv.config({ path: path.resolve(__dirname, '../../..', '.env'), quiet: true }
 
 export const PORT = Number(process.env.DOWNLOADER_PORT) || 3052;
 
-// CORS is locked to this one extension ID; a reloaded extension with a new ID is
-// blocked until this (or DOWNLOADER_EXTENSION_ID) matches.
-export const EXTENSION_ID =
-  process.env.DOWNLOADER_EXTENSION_ID ?? 'lnhmnpikihooldojjihejacblbgjkdlg';
+// Unset allowlists no extension origin at all, which is what a packaged build always is.
+// A dev loading the unpacked extension sets this to the ID Chrome assigned it.
+export const EXTENSION_ID = process.env.DOWNLOADER_EXTENSION_ID;
 
 export const FRONTEND_URL = process.env.FRONTEND_URL ?? 'http://localhost:5173';
 export const DATABASE_URL = process.env.DATABASE_URL ?? 'http://localhost:8001';

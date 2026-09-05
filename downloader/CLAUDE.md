@@ -23,7 +23,9 @@ Both services bind `127.0.0.1` only and print `FASTSTUDY_PORT=<n>` as their firs
 
 `FASTSTUDY_SECRET` in the environment makes both reject any request that carries it neither as an `X-FastStudy-Secret` header nor as a `?secret=` query parameter (the query route exists for `EventSource`, which cannot set headers) — `401 {"error":"unauthorized"}`, or an empty `401` typed `text/event-stream` when the request accepts SSE, since Chromium reports any other MIME on an `EventSource` as a bare `onerror`. `GET /health` is the sole exemption, so the launcher can tell a wrong secret from a dead child. Unset (every manual run) means no enforcement, and `server/` then also sends no secret on its calls to `auto/`, the database and the backend.
 
-The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). The server only accepts requests from one extension ID (`DOWNLOADER_EXTENSION_ID`, env-overridable); if you reload the extension and Chrome assigns a new ID, set that env var or CORS blocks the popup. Server config and internals live in **`server/CLAUDE.md`**.
+The Chrome extension is loaded unpacked from `downloader/extension/regular` (the simple variant from `downloader/extension/simple`). It is **dev-only and not part of the packaged build**: `popup.js` hardcodes `http://localhost:3052`, which it cannot learn when the launcher binds an ephemeral port, and it has no bridge to receive `FASTSTUDY_SECRET`, so its calls carry no `X-FastStudy-Secret`. `auto/`'s extractors cover the same sources for a packaged user.
+
+Accordingly the server allowlists an extension origin only when `DOWNLOADER_EXTENSION_ID` is set: a dev must set it to the ID Chrome assigned (there is no default, and it changes when the extension is reloaded), and unset — every packaged run — means the popup is blocked by CORS. Server config and internals live in **`server/CLAUDE.md`**.
 
 ## Architecture
 

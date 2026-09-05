@@ -65,7 +65,7 @@ npm run dev
 
 Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-coded; Ctrl-C kills all four. Per-service commands live in each service's `CLAUDE.md`.
 
-The Chrome extension is loaded unpacked from `downloader/extension/regular`. After loading, set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to the ID Chrome assigned, or CORS will block the popup. See `downloader/README.md` for the full install guide.
+The Chrome extension is dev-only and not part of the packaged build. It is loaded unpacked from `downloader/extension/regular`; after loading, set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to the ID Chrome assigned — there is no default, and unset means the server allowlists no extension origin, so CORS blocks the popup. See `downloader/README.md` for the full install guide.
 
 ## Tests
 

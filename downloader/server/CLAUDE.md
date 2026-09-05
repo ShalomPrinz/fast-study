@@ -15,19 +15,21 @@ npm --prefix downloader/server test    # node --test, pure logic only (no networ
 
 `yt-dlp` and `curl` must be installed system-wide (the server shells out to them).
 
-## Config (repo-root `.env`, all optional)
+## Config (repo-root `.env`; all optional except as noted)
 
 | Key                       | Default                            | Meaning                                                                      |
 | ------------------------- | ---------------------------------- | ---------------------------------------------------------------------------- |
 | `DOWNLOADER_PORT`         | `3052`                             | default listen port (`FASTSTUDY_PORT` in the environment wins)               |
-| `DOWNLOADER_EXTENSION_ID` | `lnhmnpikihooldojjihejacblbgjkdlg` | extension CORS origin                                                        |
+| `DOWNLOADER_EXTENSION_ID` | none — no extension origin         | extension CORS origin; required to use the dev-only extension                |
 | `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`); the packaged app's `app://bundle` is always allowed alongside it |
 | `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                    |
 | `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples and the video-arrived report               |
 | `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve |
 
-If a reloaded extension gets a new ID, set `DOWNLOADER_EXTENSION_ID` or CORS blocks
-the popup.
+`DOWNLOADER_EXTENSION_ID` has no default: unset, no `chrome-extension://` origin is allowlisted
+at all, which is what a packaged build always is. The extension is dev-only — it hardcodes
+`http://localhost:3052` against an ephemeral port and has no bridge to receive `FASTSTUDY_SECRET` —
+so a dev must set this to the ID Chrome assigned (it changes on reload) or CORS blocks the popup.
 
 `FASTSTUDY_SECRET` (environment, not `.env` — the launcher sets it) gates every route but
 `/health`: `requireSecret` from `@faststudy/runtime` (the shared launch-contract package at `lib/runtime/`
