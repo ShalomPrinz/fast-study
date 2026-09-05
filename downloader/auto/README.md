@@ -15,8 +15,9 @@ npm install
 npx playwright install chromium
 ```
 
-Zoom recording capture additionally needs `Xvfb` and system Google Chrome
-installed.
+**System Google Chrome is required** — every browser here launches it, and bundled
+Chromium is only a fallback for the plain profile. On Linux, zoom recording capture
+additionally needs `Xvfb`; on Windows the window is hidden off-screen instead.
 
 ## Run
 
@@ -25,7 +26,7 @@ npm start   # HTTP service on port 3053 (src/http/server.js)
 ```
 
 The service holds one persistent browser per profile (the zoom profile runs headed
-under a virtual display — see `docs/SESSIONS.md`) and exposes
+but hidden — see `docs/SESSIONS.md`) and exposes
 auth / `/list` / `/list/expand` / `/close` for the frontend (CORS:
 `http://localhost:5173` and `app://bundle`) and `/resolve` for `server/`. It listens on `127.0.0.1`
 only; override the port with `AUTODL_PORT` in the repo-root `.env`, or with

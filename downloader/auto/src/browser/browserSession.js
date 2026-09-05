@@ -88,8 +88,8 @@ export class BrowserSession {
   }
 }
 
-// Per-extractor browser choice. 'plain' = headless bundled Chromium; 'zoom' =
-// chrome+stealth on a managed Xvfb display (docs/ZOOM.md).
+// Per-extractor browser choice. 'plain' = headless Chrome; 'zoom' = headed chrome+stealth,
+// hidden per platform (docs/ZOOM.md).
 const LAUNCHERS = {
   plain: () => launchBrowser({ headless: true }),
   zoom: () => launchZoomBrowser(),
@@ -105,7 +105,7 @@ export function getSession(profile = 'plain') {
   return sessions.get(key);
 }
 
-/** Close every session and stop the managed Xvfb (on /close, idle-shutdown, or signals). */
+/** Close every session and stop the managed Xvfb, if any (on /close, idle-shutdown, or signals). */
 export async function closeAllSessions() {
   await Promise.all([...sessions.values()].map((s) => s.close()));
   stopXvfb();

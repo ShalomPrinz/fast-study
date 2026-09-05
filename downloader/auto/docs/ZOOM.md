@@ -4,7 +4,7 @@ Zoom cloud recordings (`zoom.us/rec/share/…` links found in course-section sum
 
 ## Why the heavyweight browser (`browser/zoomBrowser.js`)
 
-Headless Chrome falls back to SwiftShader software rendering AND leaks a `HeadlessChrome` UA token — the recording player rejects both. The fix is headed **system Chrome (`channel:'chrome'`) under a managed Xvfb virtual display**: it keeps the hardware D3D12 GPU renderer (WSL's `/dev/dxg` is reached independent of the X display) AND a clean `Chrome` UA, with no visible window. puppeteer-extra **stealth** closes the deeper automation leaks Playwright's args miss.
+Headless Chrome falls back to SwiftShader software rendering AND leaks a `HeadlessChrome` UA token — the recording player rejects both. The fix is **headed system Chrome (`channel:'chrome'`), hidden rather than headless**: it keeps the hardware GPU renderer AND a clean `Chrome` UA. puppeteer-extra **stealth** closes the deeper automation leaks Playwright's args miss. How the window is hidden is the one platform-dependent part (below).
 
 Hard constraints (each is load-bearing):
 
@@ -12,9 +12,13 @@ Hard constraints (each is load-bearing):
 - **Do NOT add `--use-angle=vulkan`** — no HW Vulkan on this box, so it falls back to SwiftShader.
 - **Headless is rejected** for the two reasons above.
 
-## Xvfb lifecycle
+## Hiding the window
 
-Managed in-process via `node:child_process`, spawned lazily on the first zoom launch, reused across launches, killed by `stopXvfb()` on `closeAllSessions()` plus a `process.once('exit')` safety net.
+`launchZoomBrowser()` branches on `process.platform`; everything else about the launch is identical on both.
+
+**Windows** — no Xvfb exists, so the window is parked off-screen with `--window-position=-32000,-32000`. Without it a batch of N lectures steals focus N times. `FASTSTUDY_ZOOM_VISIBLE=1` drops the arg to watch a capture happen.
+
+**Linux** — a managed Xvfb virtual display, which also keeps the hardware D3D12 renderer under WSL (`/dev/dxg` is reached independent of the X display). Managed in-process via `node:child_process`, spawned lazily on the first zoom launch, reused across launches, killed by `stopXvfb()` on `closeAllSessions()` plus a `process.once('exit')` safety net (both no-ops on Windows).
 
 - Display number is chosen **explicitly** (`findFreeDisplay`, stepping up from `:99`), NOT via `-displayfd`. On WSLg `/tmp/.X11-unix` is a read-only tmpfs, so Xvfb can't create the filesystem socket an auto-picked display needs; an explicit `:N` makes it fall back to a Linux abstract Unix socket. `/tmp/.X{N}-lock` disambiguates a taken number.
 - Readiness is polled by connecting to the abstract socket (`\0/tmp/.X11-unix/X{N}`); the `failed to bind listener` lines Xvfb prints for the impossible filesystem socket are harmless.

@@ -8,11 +8,11 @@ A Playwright HTTP service that, given a **course URL**, authenticates to Moodle'
 
 ```bash
 npm --prefix downloader/auto start   # HTTP service, app.js
-npx playwright install chromium      # once, for the plain profile
+npx playwright install chromium      # once, as the plain profile's fallback browser
 npm --prefix downloader/auto test    # node --test, pure logic only (no browser, no network)
 ```
 
-Port **3053** (`AUTODL_PORT`, from the repo-root `.env` via `src/lib/config.js`; `FASTSTUDY_PORT` in the environment wins), bound to `127.0.0.1` only. CORS allows the Vite origin `http://localhost:5173` and the packaged app's `app://bundle`. Zoom capture also needs `Xvfb` + system Google Chrome installed.
+Port **3053** (`AUTODL_PORT`, from the repo-root `.env` via `src/lib/config.js`; `FASTSTUDY_PORT` in the environment wins), bound to `127.0.0.1` only. CORS allows the Vite origin `http://localhost:5173` and the packaged app's `app://bundle`. System Google Chrome is required for every profile; zoom capture also needs `Xvfb` on Linux.
 
 When `FASTSTUDY_SECRET` is set (the launcher sets it; unset means no enforcement), `requireSecret` from `@faststudy/runtime` (the shared launch-contract package at `lib/runtime/` in the repo root) rejects every request but `GET /health` that carries it neither as an `X-FastStudy-Secret` header nor as `?secret=`.
 
@@ -60,7 +60,7 @@ both clips), then returns only the cap whose split name matches the request.
 ## Deep logic → `docs/`
 
 - **`docs/SESSIONS.md`** — persistent per-profile browsers, `withLock` mutex, idle timeout, the launch matrix.
-- **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + managed Xvfb; the UA/GPU constraints; passcode gate; before/after-break split.
+- **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + a hidden headed window (Xvfb on Linux, off-screen on Windows); the UA/GPU constraints; passcode gate; before/after-break split.
 - **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, target-URL routing (every `url` module is listed; the recording keywords are only the `likelyRecording` hint), mimetype gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, listed as `unknown` media, probed by filename at download → yt-dlp or material), `zoom`, `moodle-file` (course-hosted PDF → lecture material), `direct-url` (the catch-all `url` module, listed as `unknown` media, probed by URL path then headers at download).
 - **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
 

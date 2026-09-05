@@ -348,7 +348,7 @@ async function resolveItem(req, res) {
   if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
 
   // The extractor picks its own browser profile (DI): videostream runs on the plain
-  // headless session; zoom runs on the chrome+stealth+Xvfb session.
+  // headless session; zoom runs on the headed chrome+stealth session.
   const profile = resolveExtractorForRecording(recording)?.browserProfile ?? 'plain';
   const session = getSession(profile);
 

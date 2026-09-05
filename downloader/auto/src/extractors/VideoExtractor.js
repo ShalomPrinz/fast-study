@@ -33,8 +33,8 @@
 export class VideoExtractor {
   /**
    * Which browser profile this extractor's captureVideo needs (dependency injection
-   * for the session registry). Default 'plain' = headless bundled Chromium; the zoom
-   * player needs 'zoom' (chrome+stealth+Xvfb). @returns {'plain'|'zoom'}
+   * for the session registry). Default 'plain' = headless Chrome; the zoom player needs
+   * 'zoom' (headed chrome+stealth, hidden per platform). @returns {'plain'|'zoom'}
    */
   get browserProfile() {
     return 'plain';
