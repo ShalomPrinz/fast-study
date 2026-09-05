@@ -68,6 +68,8 @@ under `lib/` is live in four services at once.
 
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
 
+`lib-dev` owns `lib/` the same way, with one difference: it never edits a consumer. Because its packages are live in four services at once, it runs the consumers' suites and reports the follow-up each needs, and that follow-up goes to that service's subagent.
+
 ## Always use `python3`
 
 `python` is not aliased on this WSL setup — always invoke `python3` explicitly.
