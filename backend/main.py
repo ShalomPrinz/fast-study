@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from contextlib import asynccontextmanager
 from typing import Literal, get_args
 
@@ -14,8 +15,19 @@ from pipeline import runner
 from pydantic import BaseModel
 from services import db_client, providers, settings
 from timing import get_stats, init_db, record
+from tools import check_tools
 
 setup_logging()
+log = logging.getLogger("api")
+
+# The external binaries this service spawns. Probed once at startup, never per request: the boot
+# screen polls /health, and re-spawning four binaries per poll would cost more than the answer is
+# worth. A tool installed afterwards is picked up on the next launch.
+TOOLS = ("ffmpeg", "ffprobe", "pandoc", "tectonic")
+tool_status = check_tools(TOOLS)
+for _name, _state in tool_status.items():
+    if _state != "ok":
+        log.error(f"{_name} is {_state} — the steps that need it will fail")
 
 
 @asynccontextmanager
@@ -53,10 +65,11 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
-    """Liveness only — what the launcher waits on before opening the window. Reports nothing
-    else on purpose: paths, config and key-set flags stay on routes that can be refused."""
+    """Liveness plus the boot-time tool probe — what the launcher waits on before opening the
+    window, and what its boot screen renders a missing binary from. Reports nothing else on
+    purpose: paths, config and key-set flags stay on routes that can be refused."""
 
-    return {"status": "ok"}
+    return {"status": "ok", "tools": tool_status}
 
 
 _STEP_CONFIG: dict[str, tuple[str, str]] = {

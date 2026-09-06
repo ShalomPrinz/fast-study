@@ -54,6 +54,8 @@ uv run pytest tests/ -q          # CI runs exactly this on every push
 
 `runtime` is the shared launch module from `lib/runtime`, installed as a top-level `import runtime`. `runtime.serve` binds the loopback socket itself so it can print `FASTSTUDY_PORT=<port>` on stdout for the launcher to parse — `uvicorn.run(port=0)` never reports what it bound.
 
+External tools — `ffmpeg`, `ffprobe`, `pandoc`, `tectonic` — are spawned through `tool_path(name)` from `lib/tools` (installed as a top-level `import tools`), never by bare name: `FASTSTUDY_BIN_DIR` set means an absolute path into the shipped binaries, unset means PATH, which is dev. `main.py` probes all four once at startup, logs each missing one, and reports the result on `/health` as `tools` — a missing binary fails only the steps that need it, so it never stops the service starting. All four must be installed for a dev machine to run the pipeline end to end.
+
 `runtime.state_path(*parts)` resolves everything the backend writes outside `DATA_ROOT` — `timing.db` and the per-scope Google token — under one root: `FASTSTUDY_STATE_DIR` if set, else `.state/` at the repo root. It is a pure join and creates nothing, so each caller mkdirs its own parent — otherwise an import would leave a directory behind, including in tests that redirect the path.
 
 ## Testing
