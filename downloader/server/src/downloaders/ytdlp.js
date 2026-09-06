@@ -8,9 +8,19 @@ import { toolPath } from '@faststudy/tools';
 export const YTDLP_HOST_RE =
   /(^|\.)youtube\.com$|^youtu\.be$|^drive\.google\.com$|^docs\.google\.com$/i;
 
-// Recent yt-dlp needs a JS runtime to run YouTube's player script and extract
-// formats; both the probe and the download must carry these or format extraction errors.
-const YT_PLAYER_JS_FLAGS = ['--js-runtimes', 'node', '--remote-components', 'ejs:github'];
+// Recent yt-dlp needs a JS runtime to run YouTube's player script and extract formats; both the
+// probe and the download must carry these or format extraction errors. The runtime is the process
+// running this server — Electron in a package, node in dev — so no separate binary ships.
+// --no-js-runtimes first is load-bearing: deno outranks node in yt-dlp's priority order, so a user
+// with deno installed would silently get theirs. Never add a bare `--js-runtimes node` after this
+// pair — the parser keys runtimes by name, so the later flag would overwrite the path with null.
+const YT_PLAYER_JS_FLAGS = ['--no-js-runtimes', '--js-runtimes', `node:${process.execPath}`];
+
+// Electron only behaves as node when told to, and it must be told explicitly rather than by
+// inheritance: yt-dlp's runtime probe sets nothing, and a bare Electron prefixes its version with
+// a CRLF that yt-dlp's start-anchored `^v(\S+)` misses — it then reports `node-unknown
+// (unsupported)` and falls back silently.
+const YT_PLAYER_JS_ENV = { ELECTRON_RUN_AS_NODE: '1' };
 
 // yt-dlp's cache must be writable — it writes youtube-sigfuncs/<id>.json there — so it points at
 // the per-user state root rather than the default under a possibly read-only installed home.
@@ -37,7 +47,7 @@ function probeYoutubeSize(url) {
         '%(filesize,filesize_approx)s',
         url,
       ],
-      { timeout: 30000 },
+      { timeout: 30000, env: { ...process.env, ...YT_PLAYER_JS_ENV } },
       (err, stdout) => {
         if (err) return resolve(null);
         let total = 0;
@@ -75,5 +85,9 @@ export const ytdlp = {
   measure: 'dir', // sum separate audio/video temp files pre-merge
   upload: uploadVideo,
   probeSize: ({ url }) => probeYoutubeSize(url),
-  buildCommand: ({ url }) => ({ command: toolPath('yt-dlp'), args: buildYtdlpArgs(url) }),
+  buildCommand: ({ url }) => ({
+    command: toolPath('yt-dlp'),
+    args: buildYtdlpArgs(url),
+    env: YT_PLAYER_JS_ENV,
+  }),
 };
