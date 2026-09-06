@@ -6,7 +6,7 @@ import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { markdown } from '@codemirror/lang-markdown'
 import { tags } from '@lezer/highlight'
-import { scanCallouts, scanMath } from '@/features/lectures/utils/mdDecorations'
+import { scanCallouts, scanCodeFences, scanMath } from '@/features/lectures/utils/mdDecorations'
 import type { CalloutClass } from '@/features/lectures/utils/mdDecorations'
 import './MarkdownEditor.css'
 
@@ -52,6 +52,9 @@ const calloutLine: Record<CalloutClass, Decoration> = {
   insight: Decoration.line({ class: 'cm-callout cm-callout--insight' }),
 }
 const mathMark = Decoration.mark({ class: 'cm-math' })
+// Per line, not per span: `.cm-content` is `dir="auto"` so a Hebrew summary gives every line an RTL
+// base direction, which no inline isolate on the code text can undo.
+const codeLine = Decoration.line({ class: 'cm-code-line' })
 
 // Scanned whole rather than over the viewport: a callout can straddle the viewport edge, and one
 // summary is a few pages of text.
@@ -62,6 +65,13 @@ function buildDecorations(doc: Text): DecorationSet {
     for (let pos = callout.from; pos <= callout.to;) {
       const line = doc.lineAt(pos)
       ranges.push(calloutLine[callout.cls].range(line.from))
+      pos = line.to + 1
+    }
+  }
+  for (const fence of scanCodeFences(text)) {
+    for (let pos = fence.from; pos <= fence.to;) {
+      const line = doc.lineAt(pos)
+      ranges.push(codeLine.range(line.from))
       pos = line.to + 1
     }
   }

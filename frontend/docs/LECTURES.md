@@ -135,11 +135,13 @@ search, lint or line numbers. It is rich-styled *source*: markers stay in the bu
 never re-serialized. `@codemirror/lang-markdown` supplies the tags, and a `HighlightStyle` sizes headings,
 bolds `**bold**`, sets `tags.monospace` in `--font-mono`, dims `tags.processingInstruction` (the markers
 themselves) to `--text-4` and draws `---` as a tinted chip, since exactly two of them carry the document's
-structure. `utils/mdDecorations.ts` scans the two things lang-markdown does not know — pandoc `::: <class>`
-callouts and `$…$` / `$$…$$` math — as pure functions over the text, and a `ViewPlugin` turns their ranges
+structure. `utils/mdDecorations.ts` scans the dialect as pure functions over the text — pandoc
+`::: <class>` callouts, `$…$` / `$$…$$` math and fenced code — and a `ViewPlugin` turns their ranges
 into line and mark decorations; the callout colours mirror `LATEX_HEADER` in `backend/pipeline/to_pdf.py`,
-and only `definition`/`warning`/`insight` get a box so a typo renders plain. Math and code carry
-`unicode-bidi: isolate`, without which an LTR run scrambles inside an RTL line. The editor holds Hebrew
+and only `definition`/`warning`/`insight` get a box so a typo renders plain. Math carries
+`unicode-bidi: isolate`, without which an LTR run scrambles inside an RTL line; a fenced block gets a
+line decoration instead, opening and closing fence included, because the RTL base direction `dir="auto"`
+gives every line of a Hebrew summary cannot be undone from an inline span. The editor holds Hebrew
 markdown, so it is set in the UI font with wide leading, never monospace, and takes `dir="auto"` through
 `EditorView.contentAttributes` rather than a hard-coded `rtl` — recitation and English content exists.
 CodeMirror owns its buffer, so the view is built once and an incoming `value` is pushed in only when it

@@ -34,3 +34,11 @@
   background: var(--accent-soft);
   color: var(--accent-ink);
 }
+
+/* The fence markers and the language word carry no `monospace` tag, so the font goes on the
+   line — which is also the only place an RTL base direction can be overridden. */
+.cm-code-line {
+  direction: ltr;
+  text-align: start;
+  font-family: var(--font-mono);
+}
