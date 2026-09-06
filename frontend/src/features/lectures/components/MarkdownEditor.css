@@ -1,0 +1,36 @@
+.markdown-editor {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Every line of a `::: <class>` block. Colours mirror the callout boxes in
+   backend/pipeline/to_pdf.py's LATEX_HEADER, so the editor previews the real PDF. */
+.cm-callout {
+  padding-inline: var(--space-3);
+  border-inline-start: 3px solid;
+}
+
+.cm-callout--definition {
+  background: #edf3f9;
+  border-inline-start-color: #1f4e79;
+}
+
+.cm-callout--warning {
+  background: #fbf2e3;
+  border-inline-start-color: #b8860b;
+}
+
+.cm-callout--insight {
+  background: #ebf4f0;
+  border-inline-start-color: #2e7d6b;
+}
+
+/* An LTR formula scrambles inside an RTL line without the isolate — the same problem
+   backend/pipeline/pdf/bidi.py solves for the PDF. */
+.cm-math {
+  direction: ltr;
+  unicode-bidi: isolate;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}

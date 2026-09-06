@@ -47,8 +47,9 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
   share the class; every component imports every stylesheet that affects it. There is no global stylesheet
   beyond `styles/tokens.css`, and cross-file rules disambiguate by specificity, never source order.
 - Every colour, size and space step comes from a `styles/tokens.css` custom property — no new hex, no
-  off-scale padding. Buttons are `.btn` + a variant, state labels are `.chip` + a variant, and run state is
-  `StatusNode`. See `docs/ARCHITECTURE.md` §Styling.
+  off-scale padding. The one exception is a colour mirroring another service's constant, which carries a
+  comment naming its source (`MarkdownEditor.css`'s callout tints). Buttons are `.btn` + a variant, state
+  labels are `.chip` + a variant, and run state is `StatusNode`. See `docs/ARCHITECTURE.md` §Styling.
 
 ## Documentation style
 

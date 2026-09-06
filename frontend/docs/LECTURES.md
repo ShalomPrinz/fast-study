@@ -127,9 +127,23 @@ with the chunk progress instead of a failure.
 A toolbar over two labelled panes. The toolbar runs: back, a rule, the lecture name (`dir="auto"`), the
 stale/warning PDF chip, then a demoted `Restore original` a gap away from the primary `Save & update PDF`.
 The left pane heads its PDF with `Current PDF`, the zoom controls, the page under the middle of the
-viewport and an open-in-new-tab button; the right pane heads the plain `<textarea>` with `summary.md` and,
-whenever the buffer differs from what was last read or written, an amber `Unsaved changes` dot. The editor
-holds Hebrew markdown, so it is set in the UI font with wide leading, never monospace.
+viewport and an open-in-new-tab button; the right pane heads `MarkdownEditor` with `summary.md` and,
+whenever the buffer differs from what was last read or written, an amber `Unsaved changes` dot.
+
+`MarkdownEditor` is CodeMirror 6 composed extension by extension — no `basicSetup`, so no autocomplete,
+search, lint or line numbers. It is rich-styled *source*: markers stay in the buffer and the document is
+never re-serialized. `@codemirror/lang-markdown` supplies the tags, and a `HighlightStyle` sizes headings,
+bolds `**bold**`, sets `tags.monospace` in `--font-mono`, dims `tags.processingInstruction` (the markers
+themselves) to `--text-4` and draws `---` as a tinted chip, since exactly two of them carry the document's
+structure. `utils/mdDecorations.ts` scans the two things lang-markdown does not know — pandoc `::: <class>`
+callouts and `$…$` / `$$…$$` math — as pure functions over the text, and a `ViewPlugin` turns their ranges
+into line and mark decorations; the callout colours mirror `LATEX_HEADER` in `backend/pipeline/to_pdf.py`,
+and only `definition`/`warning`/`insight` get a box so a typo renders plain. Math and code carry
+`unicode-bidi: isolate`, without which an LTR run scrambles inside an RTL line. The editor holds Hebrew
+markdown, so it is set in the UI font with wide leading, never monospace, and takes `dir="auto"` through
+`EditorView.contentAttributes` rather than a hard-coded `rtl` — recitation and English content exists.
+CodeMirror owns its buffer, so the view is built once and an incoming `value` is pushed in only when it
+differs from `view.state.doc`; that guard is what stops the editor's own edits echoing back.
 
 `Save & update PDF` is the only write path — a saved summary whose PDF still shows the old text is never
 what the editor wanted — and runs save → tree refresh (the chip comparing the two mtimes reads the tree) →

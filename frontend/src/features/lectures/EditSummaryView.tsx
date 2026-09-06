@@ -20,6 +20,7 @@ import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
+import MarkdownEditor from '@/features/lectures/components/MarkdownEditor'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
@@ -214,13 +215,7 @@ export default function EditSummaryView() {
               <div className="spinner" />
             </div>
           ) : (
-            <textarea
-              className="summary-editor"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              spellCheck={false}
-              dir="auto"
-            />
+            <MarkdownEditor value={content} onChange={setContent} />
           )}
         </div>
       </div>

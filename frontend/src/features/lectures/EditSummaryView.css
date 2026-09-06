@@ -143,19 +143,3 @@
   align-items: center;
   justify-content: center;
 }
-
-/* Hebrew markdown, so never monospace — it is prose with marks in it, read at the pipeline row's
-   size with the extra leading long RTL paragraphs need. */
-.summary-editor {
-  flex: 1;
-  width: 100%;
-  border: none;
-  outline: none;
-  resize: none;
-  font-family: var(--font-ui);
-  font-size: var(--fs-row);
-  line-height: 1.85;
-  padding: var(--space-7);
-  color: var(--text);
-  background: var(--surface);
-}

@@ -13,8 +13,13 @@
     "compile": "lingui compile"
   },
   "dependencies": {
+    "@codemirror/lang-markdown": "^6.5.2",
+    "@codemirror/language": "^6.12.4",
+    "@codemirror/state": "^6.7.4",
+    "@codemirror/view": "^6.43.11",
     "@fontsource/heebo": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
+    "@lezer/highlight": "^1.2.3",
     "@lingui/core": "^6.6.0",
     "@lingui/react": "^6.6.0",
     "react": "^18.3.1",
