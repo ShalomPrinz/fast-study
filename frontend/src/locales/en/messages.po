@@ -250,9 +250,17 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
+#: src/features/lectures/EditSummaryView.tsx:230
+msgid "All edits will be discarded and the original AI summary restored."
+msgstr "All edits will be discarded and the original AI summary restored."
+
 #: src/features/course-overview/components/GenerateAllButton.tsx:42
 msgid "All Generated"
 msgstr "All Generated"
+
+#: src/features/lectures/EditSummaryView.tsx:188
+msgid "Already up to date"
+msgstr "Already up to date"
 
 #: src/features/course-overview/constants/overview.ts:14
 msgid "Analyze"
@@ -306,7 +314,7 @@ msgstr "Auto-run: off"
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
-#: src/features/lectures/EditSummaryView.tsx:158
+#: src/features/lectures/EditSummaryView.tsx:161
 msgid "Back"
 msgstr "Back"
 
@@ -326,7 +334,7 @@ msgstr "BIU session expired. Reconnect your account."
 msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 
-#: src/services/http.ts:29
+#: src/services/http.ts:30
 msgid "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgstr "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 
@@ -445,7 +453,7 @@ msgstr "Courses"
 msgid "Create"
 msgstr "Create"
 
-#: src/features/lectures/components/PdfViewer.tsx:70
+#: src/features/lectures/components/PdfViewer.tsx:75
 msgid "Current PDF"
 msgstr "Current PDF"
 
@@ -457,6 +465,10 @@ msgstr "Data folder"
 #: src/features/lectures/MainView.tsx:372
 msgid "Delete {0}"
 msgstr "Delete {0}"
+
+#: src/features/lectures/EditSummaryView.tsx:180
+msgid "Discard all edits"
+msgstr "Discard all edits"
 
 #: src/features/settings/SettingsView.tsx:237
 msgid "Do nothing — I'll start runs myself"
@@ -590,8 +602,8 @@ msgstr "Failed ✗"
 msgid "Failed to complete login. Try reconnecting."
 msgstr "Failed to complete login. Try reconnecting."
 
-#: src/features/lectures/EditSummaryView.tsx:130
-#: src/features/lectures/EditSummaryView.tsx:132
+#: src/features/lectures/EditSummaryView.tsx:131
+#: src/features/lectures/EditSummaryView.tsx:133
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
@@ -599,7 +611,7 @@ msgstr "Failed to generate PDF"
 msgid "Failed to launch the login browser."
 msgstr "Failed to launch the login browser."
 
-#: src/features/lectures/EditSummaryView.tsx:93
+#: src/features/lectures/EditSummaryView.tsx:95
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
@@ -653,7 +665,6 @@ msgstr "Generating from {stepLabel} step will rebuild:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:95
 #: src/features/course-overview/components/GenerateAllButton.tsx:40
-#: src/features/lectures/EditSummaryView.tsx:186
 msgid "Generating…"
 msgstr "Generating…"
 
@@ -817,9 +828,13 @@ msgstr "no material found"
 msgid "No materials found."
 msgstr "No materials found."
 
+#: src/features/lectures/EditSummaryView.tsx:180
+msgid "No original saved"
+msgstr "No original saved"
+
 #: src/features/lectures/EditSummaryView.tsx:177
-msgid "No original to revert to"
-msgstr "No original to revert to"
+#~ msgid "No original to revert to"
+#~ msgstr "No original to revert to"
 
 #: src/features/search/components/SearchResult.tsx:52
 msgid "no PDF"
@@ -834,8 +849,12 @@ msgstr "No PDF for this lecture"
 #~ msgstr "No PDF yet — click \"Generate PDF\" to create one."
 
 #: src/features/lectures/components/PdfViewer.tsx:113
-msgid "No PDF yet — use \"Re-export PDF\" to create one."
-msgstr "No PDF yet — use \"Re-export PDF\" to create one."
+#~ msgid "No PDF yet — use \"Re-export PDF\" to create one."
+#~ msgstr "No PDF yet — use \"Re-export PDF\" to create one."
+
+#: src/features/lectures/components/PdfViewer.tsx:118
+msgid "No PDF yet — use \"Save & update PDF\" to create one."
+msgstr "No PDF yet — use \"Save & update PDF\" to create one."
 
 #: src/features/course-overview/utils/overview.ts:13
 msgid "No Recitations"
@@ -918,7 +937,7 @@ msgid "Open material in new tab"
 msgstr "Open material in new tab"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:104
-#: src/features/lectures/components/PdfViewer.tsx:96
+#: src/features/lectures/components/PdfViewer.tsx:101
 #: src/features/lectures/MainView.tsx:224
 #: src/features/search/components/SearchResult.tsx:33
 msgid "Open PDF in new tab"
@@ -966,11 +985,11 @@ msgstr "PDF"
 msgid "PDF export failed"
 msgstr "PDF export failed"
 
-#: src/features/lectures/EditSummaryView.tsx:168
+#: src/features/lectures/EditSummaryView.tsx:171
 msgid "PDF is older than this summary"
 msgstr "PDF is older than this summary"
 
-#: src/features/lectures/EditSummaryView.tsx:169
+#: src/features/lectures/EditSummaryView.tsx:172
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
@@ -1010,8 +1029,8 @@ msgid "Re-download ↻"
 msgstr "Re-download ↻"
 
 #: src/features/lectures/EditSummaryView.tsx:186
-msgid "Re-export PDF"
-msgstr "Re-export PDF"
+#~ msgid "Re-export PDF"
+#~ msgstr "Re-export PDF"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:115
 msgid "Re-generate {title}"
@@ -1097,9 +1116,13 @@ msgstr "Replace existing video.mp4 in \"{0}\"?"
 msgid "Required"
 msgstr "Required"
 
+#: src/features/lectures/EditSummaryView.tsx:182
+msgid "Restore original"
+msgstr "Restore original"
+
 #: src/features/lectures/EditSummaryView.tsx:177
-msgid "Restore the original summary"
-msgstr "Restore the original summary"
+#~ msgid "Restore the original summary"
+#~ msgstr "Restore the original summary"
 
 #: src/features/search/SearchView.tsx:231
 msgid "Results"
@@ -1116,8 +1139,8 @@ msgid "Retry in {0}"
 msgstr "Retry in {0}"
 
 #: src/features/lectures/EditSummaryView.tsx:179
-msgid "Revert to original"
-msgstr "Revert to original"
+#~ msgid "Revert to original"
+#~ msgstr "Revert to original"
 
 #: src/features/lectures/EditSummaryView.tsx:148
 #~ msgid "Revert to Original"
@@ -1165,10 +1188,13 @@ msgstr "Running pipelines…"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/lectures/EditSummaryView.tsx:193
 #: src/features/settings/SettingsView.tsx:148
 msgid "Save"
 msgstr "Save"
+
+#: src/features/lectures/EditSummaryView.tsx:190
+msgid "Save & update PDF"
+msgstr "Save & update PDF"
 
 #: src/features/downloads/components/RecordingRow.tsx:212
 msgid "Save as"
@@ -1251,7 +1277,7 @@ msgstr "Start using Fast Study"
 msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:129
+#: src/features/lectures/EditSummaryView.tsx:130
 #: src/features/lectures/MainView.tsx:144
 msgid "Step already running"
 msgstr "Step already running"
@@ -1355,6 +1381,10 @@ msgstr "the runner takes these in order"
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
+#: src/features/lectures/EditSummaryView.tsx:231
+msgid "This cannot be undone."
+msgstr "This cannot be undone."
+
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
 #: src/features/settings/components/ApiKeyField.tsx:65
@@ -1389,13 +1419,17 @@ msgstr "Unarchive course"
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/features/lectures/EditSummaryView.tsx:211
+#: src/features/lectures/EditSummaryView.tsx:208
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
 #: src/features/downloads/components/RecordingRow.tsx:44
 msgid "Unsupported"
 msgstr "Unsupported"
+
+#: src/features/lectures/EditSummaryView.tsx:190
+msgid "Updating PDF…"
+msgstr "Updating PDF…"
 
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:35
 msgid "Upload failed"
@@ -1458,10 +1492,10 @@ msgstr "Yes, store my lectures in this folder"
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/lectures/components/PdfViewer.tsx:84
+#: src/features/lectures/components/PdfViewer.tsx:89
 msgid "Zoom in"
 msgstr "Zoom in"
 
-#: src/features/lectures/components/PdfViewer.tsx:76
+#: src/features/lectures/components/PdfViewer.tsx:81
 msgid "Zoom out"
 msgstr "Zoom out"

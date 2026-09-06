@@ -115,7 +115,7 @@ export default function PdfViewer({ url, show, generating }: Props) {
       ) : !show ? (
         <div className="pdf-placeholder">
           <p>
-            <Trans>No PDF yet — use "Re-export PDF" to create one.</Trans>
+            <Trans>No PDF yet — use "Save & update PDF" to create one.</Trans>
           </p>
         </div>
       ) : (

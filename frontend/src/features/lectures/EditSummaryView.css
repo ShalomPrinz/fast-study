@@ -72,11 +72,24 @@
   cursor: help;
 }
 
+/* Reads as demoted restore, a clear gap, then the one primary action. */
 .edit-toolbar-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-6);
   flex-shrink: 0;
+}
+
+/* Destructive and rarely wanted, so it drops the ghost border and sits below the primary in weight.
+   Outspecifies `.btn--ghost`, which lives in another file. */
+.edit-restore.btn--ghost {
+  border-color: transparent;
+  color: var(--text-3);
+}
+
+.edit-restore.btn--ghost:hover:not(:disabled) {
+  background: var(--surface-sunken);
+  color: var(--text);
 }
 
 .edit-error {
@@ -107,12 +120,13 @@
   border-inline-end: 1px solid var(--line);
 }
 
-/* The counterpart of the PDF pane's page indicator: what the buffer owes the file on disk. */
+/* The only cue that the buffer differs from disk, so it carries the pane header's weight. */
 .edit-unsaved {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   font-size: var(--fs-meta);
+  font-weight: 500;
   color: var(--warn);
 }
 

@@ -125,15 +125,17 @@ with the chunk progress instead of a failure.
 ## Edit summary view
 
 A toolbar over two labelled panes. The toolbar runs: back, a rule, the lecture name (`dir="auto"`), the
-stale/warning PDF chip, then `Revert to original` and `Re-export PDF` as ghosts beside the primary `Save`.
+stale/warning PDF chip, then a demoted `Restore original` a gap away from the primary `Save & update PDF`.
 The left pane heads its PDF with `Current PDF`, the zoom controls, the page under the middle of the
 viewport and an open-in-new-tab button; the right pane heads the plain `<textarea>` with `summary.md` and,
 whenever the buffer differs from what was last read or written, an amber `Unsaved changes` dot. The editor
 holds Hebrew markdown, so it is set in the UI font with wide leading, never monospace.
 
-`Save` writes `summary.md` and asks for a tree refresh, because the write leaves `summary.pdf` behind and
-the chip that says so reads tree mtimes. `Re-export PDF` is the older, longer path and still saves first:
-save → delete `summary.pdf` → run the `pdf` step, then wait for SSE. The effect that watches
+`Save & update PDF` is the only write path — a saved summary whose PDF still shows the old text is never
+what the editor wanted — and runs save → tree refresh (the chip comparing the two mtimes reads the tree) →
+delete `summary.pdf` → run the `pdf` step, then wait for SSE. It is enabled whenever there is something to
+do: a dirty buffer, a stale PDF, or no PDF at all. `Restore original` discards every edit and deletes the
+snapshot, so it is confirm-gated by `ConfirmModal`. The effect that watches
 `files`/`lectureError` runs on every refresh, so a `pdfFiredRef` gate limits it to the run this view
 started — otherwise a sibling file change or another lecture's error would clear the generating state,
 and the self-inflicted missing PDF mid-run would flash the "no PDF yet" placeholder. `PdfViewer`'s

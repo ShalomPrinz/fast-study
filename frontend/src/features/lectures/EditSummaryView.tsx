@@ -17,6 +17,7 @@ import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
 import { lectureNotFound } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
+import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
@@ -43,6 +44,7 @@ export default function EditSummaryView() {
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState('')
   const [showPdf, setShowPdf] = useState(false)
+  const [confirmRestore, setConfirmRestore] = useState(false)
 
   // True only while waiting for the pdf step this view started.
   const pdfFiredRef = useRef(false)
@@ -100,28 +102,27 @@ export default function EditSummaryView() {
     return true
   }
 
-  async function handleRevert() {
+  async function handleRestore() {
+    setConfirmRestore(false)
     setError('')
     await revertSummary(course, lecture, kind)
     await loadContent()
-    // Revert rewrites summary.md with no SSE notify behind it, so the tree's mtimes — and the
+    // Restore rewrites summary.md with no SSE notify behind it, so the tree's mtimes — and the
     // stale-PDF badge that reads them — only update if we ask for them.
     refreshCourses()
   }
 
-  async function handleSave() {
-    setError('')
-    // A save without a re-export leaves the PDF behind, and the chip saying so reads tree mtimes.
-    if (await persist()) refreshCourses()
-  }
-
-  async function handleGeneratePdf() {
+  // One action rather than two: a saved summary whose PDF still shows the old text is never what
+  // the editor wanted, so the buffer and the PDF always move together.
+  async function handleSaveAndUpdatePdf() {
     setGenerating(true)
     setError('')
     if (!(await persist())) {
       setGenerating(false)
       return
     }
+    // The write lands before the PDF does, and the chip comparing their mtimes reads the tree.
+    refreshCourses()
     await deleteFile(course, lecture, 'summary.pdf', kind)
     const initResult = await runStep(course, lecture, 'pdf', kind)
     if (initResult.status !== 'started') {
@@ -149,6 +150,8 @@ export default function EditSummaryView() {
   )
   const badge = files && pdfBadge(files)
   const dirty = !loading && content !== savedContent
+  // A stale or absent PDF is work to do even on a clean buffer: the press rebuilds it from disk.
+  const canUpdate = dirty || badge?.kind === 'stale' || !files?.['summary.pdf'].exists
 
   return (
     <div className="edit-view">
@@ -171,26 +174,20 @@ export default function EditSummaryView() {
         )}
         <div className="edit-toolbar-actions">
           <button
-            className="btn btn--ghost"
-            onClick={handleRevert}
+            className="btn btn--ghost edit-restore"
+            onClick={() => setConfirmRestore(true)}
             disabled={!hasOriginal || generating || loading}
-            title={hasOriginal ? t`Restore the original summary` : t`No original to revert to`}
+            title={hasOriginal ? t`Discard all edits` : t`No original saved`}
           >
-            <Trans>Revert to original</Trans>
-          </button>
-          <button
-            className="btn btn--ghost"
-            onClick={handleGeneratePdf}
-            disabled={generating || loading}
-          >
-            {generating ? t`Generating…` : t`Re-export PDF`}
+            <Trans>Restore original</Trans>
           </button>
           <button
             className="btn btn--primary"
-            onClick={handleSave}
-            disabled={!dirty || generating || loading}
+            onClick={handleSaveAndUpdatePdf}
+            disabled={!canUpdate || generating || loading}
+            title={canUpdate ? undefined : t`Already up to date`}
           >
-            <Trans>Save</Trans>
+            {generating ? t`Updating PDF…` : t`Save & update PDF`}
           </button>
         </div>
       </div>
@@ -227,6 +224,15 @@ export default function EditSummaryView() {
           )}
         </div>
       </div>
+
+      {confirmRestore && (
+        <ConfirmModal
+          message={t`All edits will be discarded and the original AI summary restored.`}
+          warning={t`This cannot be undone.`}
+          onConfirm={handleRestore}
+          onCancel={() => setConfirmRestore(false)}
+        />
+      )}
     </div>
   )
 }

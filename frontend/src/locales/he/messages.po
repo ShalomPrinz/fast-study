@@ -250,9 +250,17 @@ msgstr "הוסף הרצאה"
 msgid "Add recitation"
 msgstr "הוסף תרגול"
 
+#: src/features/lectures/EditSummaryView.tsx:230
+msgid "All edits will be discarded and the original AI summary restored."
+msgstr "כל העריכות יימחקו והסיכום המקורי של ה-AI ישוחזר."
+
 #: src/features/course-overview/components/GenerateAllButton.tsx:42
 msgid "All Generated"
 msgstr "הכל יוצר"
+
+#: src/features/lectures/EditSummaryView.tsx:188
+msgid "Already up to date"
+msgstr "כבר מעודכן"
 
 #: src/features/course-overview/constants/overview.ts:14
 msgid "Analyze"
@@ -306,7 +314,7 @@ msgstr "הרצה אוטומטית: כבויה"
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל הצינור"
 
-#: src/features/lectures/EditSummaryView.tsx:158
+#: src/features/lectures/EditSummaryView.tsx:161
 msgid "Back"
 msgstr "חזרה"
 
@@ -326,7 +334,7 @@ msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 
-#: src/services/http.ts:29
+#: src/services/http.ts:30
 msgid "Can't reach {serviceName} at {baseUrl}. Make sure it's running."
 msgstr "אין גישה ל{serviceName} בכתובת {baseUrl}. ודא שהשירות פועל."
 
@@ -445,7 +453,7 @@ msgstr "קורסים"
 msgid "Create"
 msgstr "צור"
 
-#: src/features/lectures/components/PdfViewer.tsx:70
+#: src/features/lectures/components/PdfViewer.tsx:75
 msgid "Current PDF"
 msgstr "ה-PDF הנוכחי"
 
@@ -457,6 +465,10 @@ msgstr "תיקיית נתונים"
 #: src/features/lectures/MainView.tsx:372
 msgid "Delete {0}"
 msgstr "מחק את {0}"
+
+#: src/features/lectures/EditSummaryView.tsx:180
+msgid "Discard all edits"
+msgstr "מחק את כל העריכות"
 
 #: src/features/settings/SettingsView.tsx:237
 msgid "Do nothing — I'll start runs myself"
@@ -590,8 +602,8 @@ msgstr "נכשל ✗"
 msgid "Failed to complete login. Try reconnecting."
 msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
 
-#: src/features/lectures/EditSummaryView.tsx:130
-#: src/features/lectures/EditSummaryView.tsx:132
+#: src/features/lectures/EditSummaryView.tsx:131
+#: src/features/lectures/EditSummaryView.tsx:133
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
 
@@ -599,7 +611,7 @@ msgstr "ייצור ה-PDF נכשל"
 msgid "Failed to launch the login browser."
 msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
-#: src/features/lectures/EditSummaryView.tsx:93
+#: src/features/lectures/EditSummaryView.tsx:95
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
@@ -653,7 +665,6 @@ msgstr "ייצור משלב {stepLabel} יבנה מחדש:"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:95
 #: src/features/course-overview/components/GenerateAllButton.tsx:40
-#: src/features/lectures/EditSummaryView.tsx:186
 msgid "Generating…"
 msgstr "מייצר…"
 
@@ -817,9 +828,13 @@ msgstr "לא נמצא חומר"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
+#: src/features/lectures/EditSummaryView.tsx:180
+msgid "No original saved"
+msgstr "לא נשמר מקור"
+
 #: src/features/lectures/EditSummaryView.tsx:177
-msgid "No original to revert to"
-msgstr "אין מקור לשחזור"
+#~ msgid "No original to revert to"
+#~ msgstr "אין מקור לשחזור"
 
 #: src/features/search/components/SearchResult.tsx:52
 msgid "no PDF"
@@ -834,8 +849,12 @@ msgstr "אין PDF להרצאה זו"
 #~ msgstr "אין עדיין PDF — לחץ על \"ייצר PDF\" כדי ליצור אחד."
 
 #: src/features/lectures/components/PdfViewer.tsx:113
-msgid "No PDF yet — use \"Re-export PDF\" to create one."
-msgstr "אין עדיין PDF — השתמש ב\"ייצוא PDF מחדש\" כדי ליצור אחד."
+#~ msgid "No PDF yet — use \"Re-export PDF\" to create one."
+#~ msgstr "אין עדיין PDF — השתמש ב\"ייצוא PDF מחדש\" כדי ליצור אחד."
+
+#: src/features/lectures/components/PdfViewer.tsx:118
+msgid "No PDF yet — use \"Save & update PDF\" to create one."
+msgstr "אין עדיין PDF — השתמש ב\"שמור ועדכן PDF\" כדי ליצור אחד."
 
 #: src/features/course-overview/utils/overview.ts:13
 msgid "No Recitations"
@@ -918,7 +937,7 @@ msgid "Open material in new tab"
 msgstr "פתח את החומר בלשונית חדשה"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:104
-#: src/features/lectures/components/PdfViewer.tsx:96
+#: src/features/lectures/components/PdfViewer.tsx:101
 #: src/features/lectures/MainView.tsx:224
 #: src/features/search/components/SearchResult.tsx:33
 msgid "Open PDF in new tab"
@@ -966,11 +985,11 @@ msgstr "PDF"
 msgid "PDF export failed"
 msgstr "ייצוא ה-PDF נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:168
+#: src/features/lectures/EditSummaryView.tsx:171
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:169
+#: src/features/lectures/EditSummaryView.tsx:172
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -1010,8 +1029,8 @@ msgid "Re-download ↻"
 msgstr "הורד מחדש ↻"
 
 #: src/features/lectures/EditSummaryView.tsx:186
-msgid "Re-export PDF"
-msgstr "ייצוא PDF מחדש"
+#~ msgid "Re-export PDF"
+#~ msgstr "ייצוא PDF מחדש"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:115
 msgid "Re-generate {title}"
@@ -1097,9 +1116,13 @@ msgstr "להחליף את video.mp4 הקיים ב\"{0}\"?"
 msgid "Required"
 msgstr "חובה"
 
+#: src/features/lectures/EditSummaryView.tsx:182
+msgid "Restore original"
+msgstr "שחזר מקור"
+
 #: src/features/lectures/EditSummaryView.tsx:177
-msgid "Restore the original summary"
-msgstr "שחזר את הסיכום המקורי"
+#~ msgid "Restore the original summary"
+#~ msgstr "שחזר את הסיכום המקורי"
 
 #: src/features/search/SearchView.tsx:231
 msgid "Results"
@@ -1116,8 +1139,8 @@ msgid "Retry in {0}"
 msgstr "ניסיון חוזר בעוד {0}"
 
 #: src/features/lectures/EditSummaryView.tsx:179
-msgid "Revert to original"
-msgstr "שחזר למקור"
+#~ msgid "Revert to original"
+#~ msgstr "שחזר למקור"
 
 #: src/features/lectures/EditSummaryView.tsx:148
 #~ msgid "Revert to Original"
@@ -1165,10 +1188,13 @@ msgstr "מריץ צינורות…"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/lectures/EditSummaryView.tsx:193
 #: src/features/settings/SettingsView.tsx:148
 msgid "Save"
 msgstr "שמור"
+
+#: src/features/lectures/EditSummaryView.tsx:190
+msgid "Save & update PDF"
+msgstr "שמור ועדכן PDF"
 
 #: src/features/downloads/components/RecordingRow.tsx:212
 msgid "Save as"
@@ -1251,7 +1277,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:129
+#: src/features/lectures/EditSummaryView.tsx:130
 #: src/features/lectures/MainView.tsx:144
 msgid "Step already running"
 msgstr "השלב כבר רץ"
@@ -1355,6 +1381,10 @@ msgstr "המריץ לוקח אותן לפי הסדר"
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
+#: src/features/lectures/EditSummaryView.tsx:231
+msgid "This cannot be undone."
+msgstr "לא ניתן לבטל את הפעולה."
+
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
 #: src/features/settings/components/ApiKeyField.tsx:65
@@ -1389,13 +1419,17 @@ msgstr "הוצא קורס מהארכיון"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:211
+#: src/features/lectures/EditSummaryView.tsx:208
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
 #: src/features/downloads/components/RecordingRow.tsx:44
 msgid "Unsupported"
 msgstr "לא נתמך"
+
+#: src/features/lectures/EditSummaryView.tsx:190
+msgid "Updating PDF…"
+msgstr "מעדכן PDF…"
 
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:35
 msgid "Upload failed"
@@ -1458,10 +1492,10 @@ msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלכם"
 
-#: src/features/lectures/components/PdfViewer.tsx:84
+#: src/features/lectures/components/PdfViewer.tsx:89
 msgid "Zoom in"
 msgstr "הגדל"
 
-#: src/features/lectures/components/PdfViewer.tsx:76
+#: src/features/lectures/components/PdfViewer.tsx:81
 msgid "Zoom out"
 msgstr "הקטן"
