@@ -40,11 +40,10 @@ is fixed by the launcher and not itself a secret.
 - **`SecretMiddleware` is pure ASGI, never `BaseHTTPMiddleware`** — that one buffers a
   `StreamingResponse` and would stall `/events`.
 - **`py-modules = ["runtime"]`** claims exactly the top-level name `runtime`. An editable install
-  maps only that declared name, so `runtime.js`, `package.json` and `tests/` do not leak onto
-  `sys.path` despite sharing the directory.
-- **`state_path` / `statePath` resolve the repo root relative to this file's own location**, and that
-  depth is fixed by this folder's position (`<repo>/lib/runtime/`). Moving the folder breaks both and
-  the depths must be re-checked. Both are pure joins that create nothing: importing a module that
+  maps only that declared name, so `tests/` does not leak onto `sys.path` beside it.
+- **`state_path` / `statePath` resolve the repo root relative to each file's own location**, and that
+  depth is fixed by their position (`<repo>/lib/runtime/py/` and `<repo>/lib/runtime/js/`). Moving
+  either folder breaks it and the depths must be re-checked. Both are pure joins that create nothing: importing a module that
   merely names a state file must not leave a directory behind.
 - **`peerHeaders` (JS) is for our own services only.** The launch secret must never ride an outbound
   call to an external lecture host.
@@ -59,12 +58,10 @@ is fixed by the launcher and not itself a secret.
 Two suites assert the same auth table in both languages, so a rule that holds in one and not the
 other fails here rather than in a service:
 
-- `tests/test_runtime.py` — Starlette's `TestClient`: `uv run --extra test pytest` from this folder.
-- `test/runtime.test.js` — a real express app on a real loopback port: `npm test` from this folder.
+- `py/tests/test_runtime.py` — Starlette's `TestClient`: `uv run --extra test pytest` from `py/`.
+- `js/tests/runtime.test.js` — a real express app on a real loopback port: `npm test` from `js/`.
   Driven over the wire rather than against a fake `req`, because the duplicate- and bracketed-query
   cases are assertions about express's own parser.
 
 Both pin the repo root by markers (`package.json` + `CLAUDE.md` beside `.state`) rather than an
-absolute path, which is what catches a wrong `../..` depth after this folder moves. The directory
-names differ — `tests/` for pytest's `testpaths`, `test/` for the `node --test test/*.test.js` glob —
-following each language's convention elsewhere in the repo.
+absolute path, which is what catches a wrong parent depth after either half moves.

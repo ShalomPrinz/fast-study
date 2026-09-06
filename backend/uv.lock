@@ -301,9 +301,9 @@ test = [
 requires-dist = [
     { name = "apscheduler", specifier = ">=3.10" },
     { name = "fastapi", specifier = ">=0.111" },
-    { name = "faststudy-logging", editable = "../lib/logging" },
-    { name = "faststudy-runtime", editable = "../lib/runtime" },
-    { name = "faststudy-tools", editable = "../lib/tools" },
+    { name = "faststudy-logging", editable = "../lib/logging/py" },
+    { name = "faststudy-runtime", editable = "../lib/runtime/py" },
+    { name = "faststudy-tools", editable = "../lib/tools/py" },
     { name = "google-api-python-client", specifier = ">=2.0" },
     { name = "google-auth-oauthlib", specifier = ">=1.0" },
     { name = "google-genai", specifier = ">=0.3" },
@@ -336,7 +336,7 @@ wheels = [
 [[package]]
 name = "faststudy-logging"
 version = "0.1.0"
-source = { editable = "../lib/logging" }
+source = { editable = "../lib/logging/py" }
 
 [package.metadata]
 requires-dist = [{ name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" }]
@@ -345,7 +345,7 @@ provides-extras = ["test"]
 [[package]]
 name = "faststudy-runtime"
 version = "0.1.0"
-source = { editable = "../lib/runtime" }
+source = { editable = "../lib/runtime/py" }
 dependencies = [
     { name = "fastapi" },
     { name = "python-dotenv" },
@@ -365,7 +365,7 @@ provides-extras = ["test"]
 [[package]]
 name = "faststudy-tools"
 version = "0.1.0"
-source = { editable = "../lib/tools" }
+source = { editable = "../lib/tools/py" }
 
 [package.metadata]
 requires-dist = [{ name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" }]

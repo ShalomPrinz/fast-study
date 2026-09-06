@@ -56,11 +56,12 @@ The state root separates read-only installed resources from per-user writable st
 ## Shared modules — `lib/`
 
 `lib/<name>/` holds the modules more than one service needs, each subfolder a self-contained package
-with its JS and Python halves flat side by side: `lib/runtime/` (the launch contract — port
-handshake, launch-secret check, state root; Python + JS), `lib/tools/` (external-binary resolution
-and the boot-time version probe; Python + JS) and `lib/logging/` (`setup_logging()`;
-Python only, the Node services use plain `console`). Consumers declare a real dependency —
-`[tool.uv.sources]` editable path deps for `backend/` and `database/`, a `file:` dependency for both
+that splits its halves into a `py/` and a `js/` package with the shared `CLAUDE.md` at the parent:
+`lib/runtime/` (the launch contract — port handshake, launch-secret check, state root; Python + JS),
+`lib/tools/` (external-binary resolution and the boot-time version probe; Python + JS) and
+`lib/logging/` (`setup_logging()`; Python only, so its `js/` slot stays empty — the Node services use
+plain `console`). Consumers declare a real dependency — `[tool.uv.sources]` editable path deps on
+`../lib/<name>/py` for `backend/` and `database/`, a `file:../../lib/<name>/js` dependency for both
 downloader packages — so `import runtime` and `@faststudy/runtime` resolve to one copy.
 
 A module earns a place there when a second service needs it *and* divergence between copies would be

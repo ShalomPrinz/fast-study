@@ -1,7 +1,8 @@
 # lib/
 
 Modules that more than one service needs, each in its own subfolder as a self-contained package
-holding its JS and Python halves flat side by side.
+holding its Python half in `py/` and its JS half in `js/`, with the shared `CLAUDE.md` at the
+package root.
 
 | Folder                                  | What it is                                                          |
 | --------------------------------------- | ------------------------------------------------------------------- |
@@ -43,16 +44,16 @@ Python (`backend/`, `database/`), in `pyproject.toml`:
 dependencies = ["faststudy-runtime", "faststudy-logging", "faststudy-tools"]
 
 [tool.uv.sources]
-faststudy-runtime = { path = "../lib/runtime", editable = true }
-faststudy-logging = { path = "../lib/logging", editable = true }
-faststudy-tools = { path = "../lib/tools", editable = true }
+faststudy-runtime = { path = "../lib/runtime/py", editable = true }
+faststudy-logging = { path = "../lib/logging/py", editable = true }
+faststudy-tools = { path = "../lib/tools/py", editable = true }
 ```
 
 Node (`downloader/server`, `downloader/auto`), in `package.json`:
 
 ```json
-"@faststudy/runtime": "file:../../lib/runtime",
-"@faststudy/tools": "file:../../lib/tools"
+"@faststudy/runtime": "file:../../lib/runtime/js",
+"@faststudy/tools": "file:../../lib/tools/js"
 ```
 
 Both are editable/symlinked, so an edit under `lib/` is live in every consumer with no reinstall —

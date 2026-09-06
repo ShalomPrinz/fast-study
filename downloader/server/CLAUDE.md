@@ -37,7 +37,7 @@ at all, which is what a packaged build always is. The extension is dev-only — 
 so a dev must set this to the ID Chrome assigned (it changes on reload) or CORS blocks the popup.
 
 `FASTSTUDY_SECRET` (environment, not `.env` — the launcher sets it) gates every route but
-`/health`: `requireSecret` from `@faststudy/runtime` (the shared launch-contract package at `lib/runtime/`
+`/health`: `requireSecret` from `@faststudy/runtime` (the shared launch-contract package at `lib/runtime/js/`
 in the repo root) rejects a request lacking the `X-FastStudy-Secret` header or
 `?secret=`, and its `peerHeaders` adds the header to every outbound call to a peer —
 never to `services/probe.js`, which fetches an external lecture host. Unset means no enforcement.

@@ -16,8 +16,8 @@ testpaths = ["tests"]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
-# A single-module distribution, not a package: `py-modules` is what lets tools.js sit in this same
-# directory without setuptools' auto-discovery refusing the build, and it claims exactly the
-# top-level name `tools` so every consumer's `import tools` line resolves here.
+# A single-module distribution, not a package: `py-modules` claims exactly the top-level name
+# `tools`, so every consumer's `import tools` line resolves here and `tests/` never lands on
+# `sys.path` beside it.
 [tool.setuptools]
 py-modules = ["tools"]

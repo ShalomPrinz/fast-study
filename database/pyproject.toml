@@ -11,8 +11,8 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-faststudy-runtime = { path = "../lib/runtime", editable = true }
-faststudy-logging = { path = "../lib/logging", editable = true }
+faststudy-runtime = { path = "../lib/runtime/py", editable = true }
+faststudy-logging = { path = "../lib/logging/py", editable = true }
 
 [project.optional-dependencies]
 test = [

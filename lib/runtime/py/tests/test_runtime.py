@@ -172,7 +172,7 @@ def test_sse_401_writes_nothing_into_the_stream(client):
 
 
 def test_state_path_falls_back_to_dot_state_at_the_repo_root(monkeypatch):
-    """Unset FASTSTUDY_STATE_DIR is dev, and the root is found from this file's fixed position in lib/runtime/."""
+    """Unset FASTSTUDY_STATE_DIR is dev, and the root is found from this file's fixed position in lib/runtime/py/."""
 
     monkeypatch.delenv("FASTSTUDY_STATE_DIR", raising=False)
     root = runtime.state_path()

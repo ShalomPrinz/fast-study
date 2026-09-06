@@ -9,8 +9,8 @@
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
-    "@faststudy/runtime": "file:../../lib/runtime",
-    "@faststudy/tools": "file:../../lib/tools",
+    "@faststudy/runtime": "file:../../lib/runtime/js",
+    "@faststudy/tools": "file:../../lib/tools/js",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"

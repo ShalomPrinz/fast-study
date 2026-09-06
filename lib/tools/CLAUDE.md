@@ -38,7 +38,7 @@ consumer today.
   more. Asserting a particular pandoc or tectonic version is a separate job — see
   `PANDOC_VERSION.md` at the repo root for why that guard is wanted.
 - **`py-modules = ["tools"]`** claims exactly the top-level name `tools`, which is what keeps
-  `tools.js`, `package.json` and `tests/` off `sys.path` despite sharing this directory.
+  `tests/` off `sys.path` beside it.
 
 ## Who reports what
 
@@ -58,8 +58,8 @@ boot screen can render a missing binary instead of the user meeting it mid-pipel
 Two suites assert the same table in both languages, so a rule that holds in one and not the other
 fails here rather than in a service:
 
-- `tests/test_tools.py` — `uv run --extra test pytest` from this folder.
-- `test/tools.test.js` — `npm test` from this folder.
+- `py/tests/test_tools.py` — `uv run --extra test pytest` from `py/`.
+- `js/tests/tools.test.js` — `npm test` from `js/`.
 
 Both write their fake binaries to whatever path `tool_path` resolves, rather than composing a
 filename by hand, so the exe-suffix rule is exercised on whichever platform the suite runs on.

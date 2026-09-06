@@ -12,9 +12,9 @@ from starlette.responses import JSONResponse, Response
 # so this is the only placement that survives an import re-sort.
 load_dotenv()
 
-# This file is `<repo>/lib/runtime/runtime.py`, so the repo root is three levels up. An editable
+# This file is `<repo>/lib/runtime/py/runtime.py`, so the repo root is four levels up. An editable
 # install leaves `__file__` pointing at this source file, so the depth holds in every consumer.
-_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 
 
 def _header(scope, name: bytes) -> bytes:

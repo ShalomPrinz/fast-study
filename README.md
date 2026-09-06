@@ -78,8 +78,9 @@ cd backend && uv run pytest tests/ -q
 ```
 
 The other suites, each in its own package: `cd database && uv run pytest -q`, `npm test` in
-`downloader/server` and `downloader/auto`, and `uv run --extra test pytest` in `lib/runtime` and
-`lib/logging` — the shared modules four services import.
+`downloader/server` and `downloader/auto`, and — for the shared modules four services import —
+`uv run --extra test pytest` in `lib/runtime/py`, `lib/tools/py` and `lib/logging/py`, plus
+`npm test` in `lib/runtime/js` and `lib/tools/js`.
 
 ## Customizing the summary format
 
