@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { uploadVideo } from '../services/database.js';
 import { statePath } from '@faststudy/runtime';
+import { toolPath } from '@faststudy/tools';
 
 // Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
 // which yt-dlp resolves without a login.
@@ -22,7 +23,7 @@ const CACHE_DIR_FLAGS = ['--cache-dir', statePath('ytdlp-cache')];
 function probeYoutubeSize(url) {
   return new Promise((resolve) => {
     execFile(
-      'yt-dlp',
+      toolPath('yt-dlp'),
       [
         '--no-playlist',
         '--no-warnings',
@@ -74,5 +75,5 @@ export const ytdlp = {
   measure: 'dir', // sum separate audio/video temp files pre-merge
   upload: uploadVideo,
   probeSize: ({ url }) => probeYoutubeSize(url),
-  buildCommand: ({ url }) => ({ command: 'yt-dlp', args: buildYtdlpArgs(url) }),
+  buildCommand: ({ url }) => ({ command: toolPath('yt-dlp'), args: buildYtdlpArgs(url) }),
 };
