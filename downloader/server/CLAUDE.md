@@ -13,7 +13,12 @@ npm --prefix downloader/server start   # node src/index.js, loopback-only on por
 npm --prefix downloader/server test    # node --test, pure logic only (no network, no subprocess)
 ```
 
-`yt-dlp` and `curl` must be installed system-wide (the server shells out to them).
+`yt-dlp` and `curl` must be installed system-wide for a dev run (the server shells out to them).
+Both are spawned through `toolPath(name)` from `@faststudy/tools`: `FASTSTUDY_BIN_DIR` set means an
+absolute path into the shipped binaries, unset means PATH. `curl` is the exception that stays a PATH
+lookup either way — Windows 10+ ships `curl.exe`, so it is deliberately not bundled. Both are probed
+once at startup and reported on `/health` as `tools`; a missing one fails only the downloads that
+need it.
 
 ## Config (repo-root `.env`; all optional except as noted)
 
@@ -45,7 +50,7 @@ path; each writer creates its own directory.
 
 | Method + path                             | Purpose                                                                                                                                           |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET  /health`                            | liveness only — what the launcher waits on before opening the window                                                                              |
+| `GET  /health`                            | `{status:'ok', tools}` — liveness plus the boot-time binary probe, what the launcher waits on before opening the window                          |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                                                        |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET)                                                                                                  |
 | `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background                                                                    |
