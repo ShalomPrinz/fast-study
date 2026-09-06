@@ -1,9 +1,12 @@
+import os
+import re
 import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 
 from timing import timed_pipeline
+from tools import tool_path
 
 from pipeline.pdf.bidi import force_ltr_inline_code, wrap_english_phrases
 from pipeline.pdf.math_fixes import (
@@ -17,7 +20,7 @@ from pipeline.pdf.math_fixes import (
     unwrap_math_text_macros,
     wrap_math_text_dir,
 )
-from pipeline.pdf.tex_errors import classify
+from pipeline.pdf.tex_errors import classify, format_tex_errors, parse_tex_errors
 from pipeline.pdf.text import (
     apply_outside_fences,
     ensure_blank_before_lists,
@@ -30,6 +33,13 @@ HEBREW_FONT_BOLD = FONTS_DIR / "NotoSansHebrew-Bold.ttf"
 DIRECTION_FILTER = (
     Path(__file__).parent.parent / "assets" / "filters" / "text_direction.lua"
 )
+
+# The fonts are copied into the build directory and referenced relatively, never by absolute path.
+# fontspec folds `Path=` and the font name into one bracketed XeTeX spec — `[C:/…/Font.ttf]/OT` —
+# which tectonic hands to Win32 as a filename; with `C:` out of drive position Windows rejects it
+# (os error 123), and with the backslashes verbatim it dies earlier still, on `\Users` read as a
+# control sequence. `./` is the same string on both platforms and under either engine.
+BUILD_FONTS_PATH = "./"
 
 # Preamble pandoc injects via --include-in-header. Package order and the callout box
 # design are load-bearing — see docs/PDF.md.
@@ -71,11 +81,55 @@ class PdfRenderError(RuntimeError):
         self.tex_source = tex_source
 
 
-BUILD_STEM = "build"  # XeLaTeX names its outputs after the .tex stem
+BUILD_STEM = "build"  # the engine names its outputs after the .tex stem
 _LOG_TAIL_CHARS = 2000
-# A render is seconds, so a minute is already wedged. Bounded because the caller holds a
-# per-lecture lock across it — a hang would leave that lecture permanently `busy`.
+
+# Tectonic's own diagnostics, which go to stderr while `note:` goes to stdout. Extracted by
+# pattern rather than tailed: a failed run can emit a thousand `Missing character` warnings, so a
+# tail buries the one line that says what actually went wrong.
+_TECTONIC_ERROR_RE = re.compile(r"^error:.*$", re.MULTILINE)
+
+# Two concurrent first-ever renders each build the format into a temp file and rename it onto the
+# final name. On Windows the loser hits the winner's open handle. The rename is atomic, so the
+# surviving .fmt is never corrupt and a single retry runs warm.
+_FORMAT_RACE_MARKER = "failed to persist temporary file"
+
+# A font the engine cannot load is dropped glyph by glyph: the render exits 0 and writes a
+# plausible PDF with characters silently absent. TeX reports it as `! Font …`.
+_FONT_ERROR_PREFIX = "Font "
+
+# A render is seconds against a complete cache, so a minute is already wedged. Bounded because the
+# caller holds a per-lecture lock across it — a hang would leave that lecture permanently `busy`.
 _TOOL_TIMEOUT_SECONDS = 60
+# A dev cache starts empty and the first render fetches the LaTeX bundle over the network, which
+# is minutes and happens once per machine. The packaged app never reaches this: its cache ships
+# complete and `--only-cached` forbids the fetch outright.
+_COLD_CACHE_TIMEOUT_SECONDS = 900
+
+
+def _cache_is_frozen() -> bool:
+    """Whether the LaTeX cache is the shipped, complete one. `TECTONIC_CACHE_DIR` is set only by
+    the launcher, pointing at the read-only `bundles/` the build primed."""
+
+    return bool(os.environ.get("TECTONIC_CACHE_DIR"))
+
+
+def _tectonic_cmd() -> list[str]:
+    """The one render invocation. Tectonic runs to convergence itself, so there is no second pass."""
+
+    cmd = [tool_path("tectonic")]
+    # Without --keep-logs tectonic discards build.log as an intermediate, and the log is where
+    # every recoverable error and every missing font is reported.
+    cmd.append("--keep-logs")
+    if _cache_is_frozen():
+        # The shipped app must never fetch mid-render; a gap in the cache has to fail loudly here
+        # rather than hang on a network the user may not have.
+        cmd.append("--only-cached")
+    # Replaces xelatex's -interaction=nonstopmode. Without it a recoverable error yields no PDF at
+    # all; with it the run exits 0 having written a degraded one, which is why the warning below
+    # is read out of the log and never off the return code.
+    cmd += ["-Z", "continue-on-errors", f"{BUILD_STEM}.tex"]
+    return cmd
 
 
 def _run_tool(
@@ -98,12 +152,12 @@ def _run_tool(
         )
     except subprocess.TimeoutExpired:
         raise PdfRenderError(
-            f"{cmd[0]} timed out after {timeout}s", tex_source
+            f"{Path(cmd[0]).stem} timed out after {timeout}s", tex_source
         ) from None
 
 
 def _read_log(build: Path) -> str:
-    """The build log as it stands right now — each xelatex pass rewrites it from scratch."""
+    """The build log as it stands right now — every run rewrites it from scratch."""
 
     log_path = build / f"{BUILD_STEM}.log"
     return (
@@ -113,50 +167,25 @@ def _read_log(build: Path) -> str:
     )
 
 
-def _run_xelatex_passes(
-    build: Path, tex_source: str
-) -> tuple[list[int], str | None, str]:
-    """Run both xelatex passes over build.tex, leaving the PDF to render at build.pdf.
-    Returns (per-pass return codes, pass-2 timeout message or None, text to classify)."""
+def _tectonic_errors(stderr: str) -> str:
+    """Tectonic's `error:` lines, joined. Non-empty stderr is not failure on either platform —
+    Windows emits a Fontconfig complaint on every run and Linux several `warning:` lines even on
+    a clean one — so only `error:` is kept."""
 
-    # Twice: hyperref/bookmark need a second pass for stable references. nonstopmode keeps
-    # going past errors, so a damaged region degrades to a bad page, not a failed render.
-    built_pdf = build / f"{BUILD_STEM}.pdf"
-    pass1_pdf = build / f"{BUILD_STEM}.pass1.pdf"
-    pass1_log = ""
-    returncodes: list[int] = []
-    pass2_timeout = None
-    for attempt in range(2):
-        try:
-            run = _run_tool(
-                ["xelatex", "-interaction=nonstopmode", f"{BUILD_STEM}.tex"],
-                str(build),
-                tex_source,
-            )
-        except PdfRenderError as e:
-            # A pass-1 timeout leaves no PDF to salvage. Pass 2 only stabilizes
-            # references, so its timeout degrades like any other recoverable error.
-            if attempt == 0:
-                raise
-            pass2_timeout = str(e)
-            break
-        returncodes.append(run.returncode)
-        if attempt == 0:
-            # Pass 2 truncates build.pdf/.log and rewrites them from its first \shipout, so
-            # a killed one leaves a fragment. Keep pass 1's files — that is what's salvaged.
-            pass1_log = _read_log(build)
-            if built_pdf.exists():
-                shutil.copy2(built_pdf, pass1_pdf)
+    return "\n".join(m.group(0) for m in _TECTONIC_ERROR_RE.finditer(stderr))
 
-    if pass2_timeout:
-        built_pdf.unlink(missing_ok=True)
-        if pass1_pdf.exists():
-            pass1_pdf.replace(built_pdf)
 
-    # The .log is the full record and xelatex's stdout mirrors it — classifying both
-    # would count every error twice, so stdout is only the fallback when no log exists.
-    combined = (pass1_log if pass2_timeout else _read_log(build)) or run.stdout
-    return returncodes, pass2_timeout, combined
+def _render(build: Path, tex_source: str):
+    """Render build.tex to build.pdf, retrying once if this machine lost the format-build race."""
+
+    timeout = (
+        _TOOL_TIMEOUT_SECONDS if _cache_is_frozen() else _COLD_CACHE_TIMEOUT_SECONDS
+    )
+    run = _run_tool(_tectonic_cmd(), str(build), tex_source, timeout=timeout)
+    if _FORMAT_RACE_MARKER in run.stderr:
+        # Only a machine's first-ever render can lose it, and the winner's .fmt is in place now.
+        run = _run_tool(_tectonic_cmd(), str(build), tex_source, timeout=timeout)
+    return run
 
 
 def preprocess_markdown(text: str) -> str:
@@ -182,7 +211,7 @@ def preprocess_markdown(text: str) -> str:
 @timed_pipeline("pdf")
 def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
     """Preprocess a markdown file and render it to a PDF beside it in two passes:
-    pandoc → .tex, then xelatex. Returns (pdf path, non-fatal warning or None)."""
+    pandoc → .tex, then tectonic. Returns (pdf path, non-fatal warning or None)."""
 
     input_path = Path(md_path)
     if not input_path.exists():
@@ -195,8 +224,7 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
         raise FileNotFoundError(f"Lua filter not found: {DIRECTION_FILTER}")
 
     output_path = input_path.with_suffix(".pdf")
-    fonts_dir = str(FONTS_DIR) + "/"
-    header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", fonts_dir)
+    header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", BUILD_FONTS_PATH)
 
     raw_md = input_path.read_text(encoding="utf-8")
     fixed_md = apply_outside_fences(raw_md, preprocess_markdown)
@@ -205,17 +233,19 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
         Path(__file__).parent.parent / "assets" / "templates" / "pandoc_template.tex"
     )
 
-    # Everything the build touches lives in one tempdir: pandoc's inputs, the generated
-    # .tex, and XeLaTeX's aux files (it writes them beside the .tex, i.e. into the cwd).
+    # Everything the build touches lives in one tempdir: pandoc's inputs, the fonts, the generated
+    # .tex, and the engine's aux files (it writes them beside the .tex, i.e. into the cwd).
     with tempfile.TemporaryDirectory() as build_dir:
         build = Path(build_dir)
+        for font in FONTS_DIR.glob("*.ttf"):
+            shutil.copy2(font, build / font.name)
         header_path = build / "header.tex"
         header_path.write_text(header, encoding="utf-8")
         md_temp_path = build / "input.md"
         md_temp_path.write_text(fixed_md, encoding="utf-8")
 
         pandoc_cmd = [
-            "pandoc",
+            tool_path("pandoc"),
             str(md_temp_path),
             "-o",
             f"{BUILD_STEM}.tex",
@@ -243,26 +273,44 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
         tex_path = build / f"{BUILD_STEM}.tex"
         tex_source = tex_path.read_text(encoding="utf-8", errors="replace")
 
-        returncodes, pass2_timeout, combined = _run_xelatex_passes(build, tex_source)
+        run = _render(build, tex_source)
+        log = _read_log(build)
+        engine_errors = _tectonic_errors(run.stderr)
 
         built_pdf = build / f"{BUILD_STEM}.pdf"
         if not built_pdf.exists() or built_pdf.stat().st_size == 0:
+            # An unrecoverable font failure writes a log with zero `!` lines that ends "Output
+            # written on build.xdv" — it reads like success — and a cold-cache panic writes no log
+            # at all. Both name their cause only on stderr, so that is the fallback.
             raise PdfRenderError(
                 classify(
-                    combined,
-                    f"xelatex produced no usable PDF:\n{combined[-_LOG_TAIL_CHARS:]}",
+                    log,
+                    f"tectonic produced no usable PDF:\n"
+                    f"{engine_errors or log[-_LOG_TAIL_CHARS:]}",
                 ),
+                tex_source=tex_source,
+            )
+
+        errors = parse_tex_errors(log)
+        font_errors = [e for e in errors if e.message.startswith(_FONT_ERROR_PREFIX)]
+        if font_errors:
+            # The one damage a reader cannot see: the page is intact, the sentence reads, and only
+            # the symbol it was about is gone. Refused rather than shipped with a warning.
+            raise PdfRenderError(
+                f"missing font, characters would be dropped — "
+                f"{format_tex_errors(font_errors)}",
                 tex_source=tex_source,
             )
 
         shutil.move(str(built_pdf), str(output_path))
 
-        if pass2_timeout:
-            # Errors already in the log are the more actionable half of this warning.
-            return str(output_path), classify(combined, pass2_timeout)
-        if all(rc == 0 for rc in returncodes):
-            return str(output_path), None
-        # Non-zero but a usable PDF came out: accept it and report the errors as a warning.
-        return str(output_path), classify(
-            combined, f"xelatex exited {returncodes[-1]} with no reported error"
-        )
+        if errors:
+            # -Z continue-on-errors makes a run that errored still exit 0, so the log is what says
+            # a page came out damaged. The return code would drop the warning on every run it
+            # exists for.
+            return str(output_path), format_tex_errors(errors)
+        if run.returncode != 0:
+            return str(output_path), (
+                engine_errors or f"tectonic exited {run.returncode} with no reported error"
+            )
+        return str(output_path), None

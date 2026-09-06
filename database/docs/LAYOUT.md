@@ -97,7 +97,7 @@ since a rename moves the containing directory. None of them may ever become a tr
 | ------------------------ | ----------- | -------------------------------------------------------- |
 | `.archived`              | course dir  | empty marker; course is archived                          |
 | `.source_url`            | course dir  | the auto-downloader's lecture-site URL for the course     |
-| `.pdf_warning`           | lecture dir | one line of XeLaTeX warning text for `summary.pdf`        |
+| `.pdf_warning`           | lecture dir | one line of LaTeX warning text for `summary.pdf`        |
 | `.pdf_build.tex`         | lecture dir | generated LaTeX, kept by the backend only on a hard fail  |
 | `.{slug}.pdf_warning`    | overview/   | same, per overview pdf (see OVERVIEW.md)                  |
 

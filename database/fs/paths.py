@@ -20,7 +20,7 @@ OVERVIEW_DIR = "overview"
 ARCHIVED_MARKER = ".archived"
 SOURCE_URL_MARKER = ".source_url"
 
-# Lecture-dir dotfiles: one line of XeLaTeX warning text for summary.pdf, and the generated
+# Lecture-dir dotfiles: one line of LaTeX warning text for summary.pdf, and the generated
 # LaTeX the backend keeps only on a hard render failure. Dotfiles never become tree rows.
 PDF_WARNING_MARKER = ".pdf_warning"
 PDF_BUILD_TEX_MARKER = ".pdf_build.tex"
@@ -113,7 +113,7 @@ def overview_dir(course: str) -> Path:
 
 
 def overview_pdf_warning_marker(slug: str) -> str:
-    """Name of the overview dotfile holding one line of XeLaTeX warning text for {slug}.pdf (one per extractor)."""
+    """Name of the overview dotfile holding one line of LaTeX warning text for {slug}.pdf (one per extractor)."""
 
     return f".{slug}{PDF_WARNING_MARKER}"
 

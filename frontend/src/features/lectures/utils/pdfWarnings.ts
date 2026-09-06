@@ -2,7 +2,7 @@ import type { Course } from '@/types'
 import type { ReportOnce } from '@/shared/hooks/useReportOnce'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
 
-// A PDF that rendered despite XeLaTeX errors carries a one-line `warning` on its summary.pdf tree entry.
+// A PDF that rendered despite LaTeX errors carries a one-line `warning` on its summary.pdf tree entry.
 export function collectPdfWarnings(courses: Course[]): Map<string, string> {
   const out = new Map<string, string>()
   for (const course of courses) {

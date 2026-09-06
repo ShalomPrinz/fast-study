@@ -13,12 +13,12 @@ FastAPI app exposing two things over HTTP: the per-lecture video → audio → t
 - @docs/PIPELINE.md — per-lecture stages, execution/lock model, rate-limit handling, timing
 - @docs/OVERVIEW.md — course overview: extractors, phases, run/lock model, `from_phase` + `skip_existing`
 - @docs/API.md — endpoint reference
-- @docs/PDF.md — the two-pass render + warning recovery, pandoc/XeLaTeX bidi gotchas, the markdown preprocessing chain
+- @docs/PDF.md — the pandoc → tectonic render, the outcome rules and warning recovery, bidi gotchas, the markdown preprocessing chain
 - `timing/README.md` — timing.db schema, queries, maintenance scripts
 
 ## Layout
 
-Fonts in `assets/fonts/` are bundled — never assume a system install. Hebrew prompts live in `assets/instructions/` (`summarize.md`, `overview/{slug}.md`); edit the file, no code change. `tests/` subdirs mirror the source packages.
+Fonts in `assets/fonts/` are bundled — never assume a system install; the render copies them into its build dir rather than pointing at them (`docs/PDF.md`). Hebrew prompts live in `assets/instructions/` (`summarize.md`, `overview/{slug}.md`); edit the file, no code change. `tests/` subdirs mirror the source packages.
 
 ## Lecture files
 

@@ -32,7 +32,7 @@ def _read_transcribe_partial(lecture_path: Path) -> Optional[dict]:
 
 
 def _read_pdf_warning(lecture_path: Path) -> Optional[str]:
-    """Return the non-fatal XeLaTeX warning for summary.pdf, or None if absent, empty, or unreadable."""
+    """Return the non-fatal LaTeX warning for summary.pdf, or None if absent, empty, or unreadable."""
 
     p = lecture_path / PDF_WARNING_MARKER
     if not p.exists():

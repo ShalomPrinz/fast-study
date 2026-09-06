@@ -1,32 +1,58 @@
-# PDF rendering — pandoc + XeLaTeX
+# PDF rendering — pandoc + tectonic
 
-The summary is a Hebrew-primary RTL document with English fragments (code, terminology). `pipeline/to_pdf.py` preprocesses the markdown with the pure helpers in `pipeline/pdf/`, then runs pandoc → XeLaTeX with polyglossia and `\setmainlanguage{hebrew}`, the bundled fonts in `assets/fonts/`, the template in `assets/templates/`, and the Lua filter in `assets/filters/`.
+The summary is a Hebrew-primary RTL document with English fragments (code, terminology). `pipeline/to_pdf.py` preprocesses the markdown with the pure helpers in `pipeline/pdf/`, then runs pandoc → tectonic with polyglossia and `\setmainlanguage{hebrew}`, the bundled fonts in `assets/fonts/`, the template in `assets/templates/`, and the Lua filter in `assets/filters/`.
 
-## Two-pass render
+Tectonic is a self-contained XeTeX: same engine, same output — verified glyph-for-glyph against xelatex over 85,492 glyphs — but it resolves its own LaTeX packages from a cache instead of a system TeX Live, which is what makes the whole toolchain shippable.
+
+## The render
 
 `convert_to_pdf(md_path) -> (pdf_path, warning|None)` runs the two tools itself instead of letting pandoc drive the engine:
 
 1. **pandoc → `build.tex`** (no `--pdf-engine`), so the generated LaTeX is a file we own.
-2. **`xelatex -interaction=nonstopmode build.tex`, twice** — the second pass is what hyperref/bookmark need for stable references, exactly what pandoc's engine loop was doing.
+2. **`tectonic --keep-logs -Z continue-on-errors build.tex`, once** — tectonic reruns TeX to convergence itself, so there is no second pass to drive for hyperref/bookmark references.
 
-Both run with the cwd set to one tempdir, so every aux file (`.aux`, `.log`, `.out`) lands there and nothing leaks beside the markdown. XeLaTeX names its output after the `.tex` stem, so `build.pdf` is moved onto `output_path` at the end.
+Both run with the cwd set to one tempdir, so every aux file (`.aux`, `.log`, `.out`) lands there and nothing leaks beside the markdown. The engine names its output after the `.tex` stem, so `build.pdf` is moved onto `output_path` at the end.
 
-Every tool call goes through `_run_tool`, which bounds it at a flat 60s and turns a `TimeoutExpired` into an ordinary `PdfRenderError` (carrying the `.tex` when pandoc already produced one). `nonstopmode` stops TeX from _prompting_, not from spinning, and the caller holds a per-lecture lock across the whole render — an unbounded hang would leave that lecture permanently `busy`, invisible in `/status`. The slowest render on record (a 357 KB `all-lectures.md`) is under 4s, so anything near the bound is wedged rather than merely long. The one case it does not cover is a cold machine, where the first pass also builds the fontconfig/XeTeX cache for the four bundled families; that work repeats on every attempt, so warm the cache once outside the pipeline rather than widening the bound.
+Two flags are load-bearing. **`--keep-logs`** or tectonic discards `build.log` as an intermediate — and the log is where every recoverable error and every missing font is reported. **`-Z continue-on-errors`** replaces xelatex's `-interaction=nonstopmode`: without it a recoverable error yields no PDF at all, and the whole warning path below stops being reachable. It is unstable by tectonic's own labelling, which is why the version is pinned; if it ever goes away the fallback is hard-fail-only rendering with no `.pdf_warning`.
 
-`nonstopmode` is the recovery lever: TeX skips past an error and **still emits a PDF**, exiting non-zero. Hence the outcome rules:
+### The fonts travel with the build
 
-| XeLaTeX outcome                   | Result                                                             |
-| --------------------------------- | ------------------------------------------------------------------ |
-| exit 0                            | success, `warning is None`                                          |
-| non-zero, PDF exists and non-empty | accepted — the PDF is returned with the classified warning text     |
-| no PDF, or a 0-byte PDF           | `PdfRenderError`. Empty stays fatal; `_require_nonempty` agrees      |
-| pass 2 times out                  | same rules, over pass 1's saved PDF and log — only references are stale |
+The four `.ttf`s are copied into the build tempdir and the header's `Path=` is `./`, never an absolute path. fontspec folds `Path=` and the font name into one bracketed XeTeX spec — `[C:/…/Font.ttf]/OT` — which tectonic hands to Win32 as a filename; with `C:` out of drive position Windows rejects it as `os error 123`, and with the header's backslashes verbatim it dies earlier still, on `\Users` read as a control sequence. `./` is the same string on both platforms and works under either engine, so it is unbranched.
 
-A pass-**1** timeout stays a hard failure — there is no PDF to salvage.
+### Timeouts
 
-Salvaging pass 2 means salvaging **pass 1's own files**, not what is on disk: xelatex truncates `build.pdf` and `build.log` and rewrites them from its first `\shipout`, so a killed pass 2 leaves a headerless fragment (non-empty, hence past the 0-byte guard) and a log with pass 1's errors gone. Pass 1's PDF is therefore copied aside and restored on a pass-2 timeout, and its log classified instead of the truncated one. If pass 1 wrote no PDF at all, the fragment is deleted so the render fails properly.
+Every tool call goes through `_run_tool`, which turns a `TimeoutExpired` into an ordinary `PdfRenderError` (carrying the `.tex` when pandoc already produced one). The caller holds a per-lecture lock across the whole render, so an unbounded hang would leave that lecture permanently `busy` and invisible in `/status`.
+
+pandoc is bounded at 60s. The render is bounded at 60s **when the cache is frozen** — `TECTONIC_CACHE_DIR` set, which only the launcher does — and at 900s otherwise. A real Hebrew summary renders in ~3s against a warm cache, so 60s is already wedged; but a dev cache starts empty and the first render fetches the LaTeX bundle over the network, which is minutes and happens once per machine. The packaged app never reaches the long bound: its cache ships complete and `--only-cached` forbids the fetch outright.
+
+### Outcomes
+
+`-Z continue-on-errors` is the recovery lever: TeX skips past an error and **still emits a PDF** — and, unlike xelatex's `nonstopmode`, still exits **0**. So the outcome is read out of `build.log`, never off the return code; judging by the exit code would drop the warning on exactly the runs it exists for.
+
+| Outcome                                       | Result                                                          |
+| --------------------------------------------- | ---------------------------------------------------------------- |
+| no `! …` in the log, exit 0                   | success, `warning is None`                                       |
+| a `! Font …` in the log                       | `PdfRenderError` — see below, this one is never a warning        |
+| any other `! …`, PDF exists and non-empty     | accepted — the PDF is returned with the classified warning text  |
+| no `! …` but non-zero exit                    | accepted, warned with tectonic's own `error:` lines              |
+| no PDF, or a 0-byte PDF                       | `PdfRenderError`. Empty stays fatal; `_require_nonempty` agrees  |
+| either tool times out                         | `PdfRenderError`, carrying the `.tex` if pandoc produced one     |
 
 A damaged region renders wrong or blank while the rest of the document is fine, which is far more robust than guessing which source line to excise.
+
+### A missing font is a hard failure, not a warning
+
+A font the engine cannot load is dropped **glyph by glyph**: the render exits 0 and writes a plausible PDF with characters silently absent — an `$N$` vanishing out of a heading with the rest of the page intact. So `build.log`'s `! Font …` lines are pulled out of the parsed errors and raised as a `PdfRenderError` rather than attached as a warning.
+
+The warning model works for every other recoverable error because the damage is visible: a bad page announces itself and the reader knows to look. A dropped glyph is the one failure that is invisible by construction — the page is intact, the sentence reads, and the only missing thing is the symbol the sentence was about. A warning attached to a plausible-looking document is a corruption channel; failing costs a rerun, warning costs a wrong summary studied from. `.pdf_build.tex` is persisted either way, so the diagnosis path is unchanged.
+
+This is also the only check that covers content nobody has written yet, which is why it — and not any build-time cache check — is the last line of defence for the shipped LaTeX cache.
+
+### Reading tectonic's streams
+
+Tectonic sends `note:` to stdout but `error:`, `warning:` and panics to **stderr**, so the log alone is not enough. Two failures name their cause nowhere else: a cold-cache panic exits 101 with no `build.log` at all, and an unrecoverable font failure writes a `build.log` containing **zero `!` lines** that ends `Output written on build.xdv (12 pages, …)` — a log that reads like success for a render that produced nothing.
+
+`_tectonic_errors` extracts `^error:` lines rather than tailing the stream. A failed run can emit ~1000 `Missing character` lines over 100KB, so a tail would bury the one line that says what went wrong. **Non-empty stderr is not failure on either platform**: every Windows msvc run emits `Fontconfig error: Cannot load default config file`, and every Linux run — a clean one included — emits `warning:` lines. Success is judged by the exit code and `built_pdf.exists()`; `^error:` is what filters the noise out of anything user-facing.
 
 The warning rides two dotfiles in the lecture dir, written by `_exec_pdf` (the pipeline function stays pure and carries nothing but paths):
 
@@ -43,7 +69,7 @@ Both cleanups are best-effort (`_drop_marker`): they run after the render's real
 
 ## Engine constraints
 
-This TeX Live build (`xelatex 3.141592653-2.6-0.999993`) uses the **e-TeX TeXXeT** bidi model.
+Tectonic bundles XeTeX, which uses the **e-TeX TeXXeT** bidi model.
 
 - Defined: `\beginL`, `\endL`, `\beginR`, `\endR`, `\LR{}`, `\RL{}`, `\LRE{}`, `\TeXXeTstate`, `\XeTeXcharclass`.
 - **Undefined**: `\pardir`, `\textdir`, `\bodydir` (LuaTeX-XeTeX primitives). In `\AtBeginEnvironment` hooks they fail with "Undefined control sequence"; inside `formatcom={...}` they may partially parse and leak their argument as literal text (`TLT` in the PDF).
@@ -67,7 +93,7 @@ Already tried and each failed differently: `\begin{LTR}`, `\LTRverbatim`, `\AtBe
 
 #### The mono font must cover Hebrew
 
-`Verbatim` uses the **global `\ttfamily`**, not polyglossia's `\englishfonttt` — even inside `\begin{english}`. A Latin-only mono leaves Hebrew comments as notdef boxes, and XeLaTeX has no per-glyph font fallback (that's LuaTeX/luaotfload). So one dual-script monospace is set globally via `\setmonofont`: **Miriam Mono CLM** (Culmus, dual-script, true monospace). Setting only `\englishfonttt` does nothing.
+`Verbatim` uses the **global `\ttfamily`**, not polyglossia's `\englishfonttt` — even inside `\begin{english}`. A Latin-only mono leaves Hebrew comments as notdef boxes, and XeTeX has no per-glyph font fallback (that's LuaTeX/luaotfload). So one dual-script monospace is set globally via `\setmonofont`: **Miriam Mono CLM** (Culmus, dual-script, true monospace). Setting only `\englishfonttt` does nothing.
 
 #### Long lines wrap instead of running off the page
 
@@ -105,7 +131,7 @@ The marker line must reach pandoc byte-for-byte. `wrap_english_phrases` would ot
 
 Both the raised error and the non-fatal warning are classified by `pipeline/pdf/tex_errors.py`'s `parse_tex_errors` / `format_tex_errors` (pure, wrapped by `classify`) into one short line — first `! …` error, its line, the error point, plus a count of the rest — because they reach the user as a toast. The `l.<N>` number is a line of the **generated** `.tex`, never of `summary.md`; on a hard failure that file is kept as `.pdf_build.tex`, so the number is actually lookup-able.
 
-Sources: pandoc's own failure is classified over both its streams; the XeLaTeX passes are classified over `build.log`, falling back to stdout only when no log was written — stdout mirrors the log, so reading both would count every error twice. A failure with no `! …` lines (unparseable markdown, missing template) keeps the log **tail** — both fallbacks are capped at 2000 chars, because the message lands in a toast. A missing binary never reaches this path at all: `subprocess.run` raises `FileNotFoundError` before there is anything to classify.
+Sources: pandoc's own failure is classified over both its streams; the render is classified over `build.log`, falling back to tectonic's own `^error:` lines when the log carries no `! …` — the two streams describe different failures, so neither substitutes for the other. A failure with no `! …` and no `error:` (unparseable markdown, missing template) keeps the log **tail** — every fallback is capped at 2000 chars, because the message lands in a toast. A missing binary never reaches this path at all: `subprocess.run` raises `FileNotFoundError` before there is anything to classify, and the boot preflight has already reported it on `/health`.
 
 ## Markdown preprocessing
 
@@ -124,7 +150,7 @@ A **doubled** delimiter (markdown's way of putting a literal backtick in a span)
 | `unwrap_math_code`              | The LLM backticks whole math expressions; unwrapped they'd render as literal `$…$` source. Only fires when the span's entire body is one math expression, so `` `RSI` `` stays code.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `demote_math_identifier`        | `$_exit$` makes the leading `_` a subscript operator. Syscall/identifier names are code, not math → rewritten to a backtick span. Narrow trigger (`_` + letter + 2+ ident chars) leaves `$x_i$`, `$_2F_1$`, `$a_{ij}$` alone.                                                                                                                                                                                                                                                                                                                                                                                           |
 | `unwrap_math_text_macros`       | `\text{\Pi}` switches to text mode where `\Pi` is undefined → "Missing $ inserted". Only fires when the body is a single macro.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `normalize_math_text_spaces`    | XeLaTeX trims edge spaces inside `\text{}` at the bidi boundary, fusing words together. Moves them out as math control spaces (`\ `).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `normalize_math_text_spaces`    | XeTeX trims edge spaces inside `\text{}` at the bidi boundary, fusing words together. Moves them out as math control spaces (`\ `).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `wrap_math_text_dir`            | `\text{}` inherits the surrounding base direction, so English inside math renders word-reversed and Hebrew lands on the wrong side. Gives the body an explicit direction by its FIRST strong character (UAX#9): Latin → `\LR{}`, Hebrew → `\RL{}`. A body with no strong character (`\text{ }`, `\text{123}`) is left bare — nothing to reorder, and an island would only give its neutrals a new boundary to attach to. `\RL{}` is explicit rather than relying on the inherited RTL, which is wrong once `merge_ltr_math` nests the math inside an `\LR{}`.                                                           |
 | `normalize_math_spans`          | Pandoc requires no space adjacent to the `$` delimiters.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `ensure_blank_before_lists`     | Pandoc needs a blank line before a list that follows a paragraph. Lines inside a `$$…$$` block are math, not a list, so they never get one.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |

@@ -29,8 +29,8 @@ Per-service docs live next to each service in `CLAUDE.md`.
 - Python 3.12+
 - Node.js 18+
 - `ffmpeg` — `sudo apt install ffmpeg`
-- `pandoc` — `sudo apt install pandoc`
-- XeLaTeX — `sudo apt install texlive-xetex texlive-lang-arabic`
+- `pandoc` **2.9.2.1** — `sudo apt install pandoc`. The version is pinned; see `PANDOC_VERSION.md`
+- `tectonic` — download the release binary from [tectonic-typesetting/tectonic](https://github.com/tectonic-typesetting/tectonic/releases) onto your PATH. It is a self-contained XeTeX and needs no TeX Live install; the first render fetches its LaTeX packages over the network (minutes, once per machine) and every render after that is offline
 - `yt-dlp` (only if you'll download from YouTube) — `pipx install yt-dlp` or `sudo apt install yt-dlp`
 - [Groq API key](https://console.groq.com) — Whisper transcription
 - [Gemini API key](https://aistudio.google.com/apikey) — summary generation

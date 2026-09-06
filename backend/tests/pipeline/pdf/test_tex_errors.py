@@ -1,7 +1,7 @@
 from pipeline.pdf.tex_errors import classify, format_tex_errors, parse_tex_errors
 
 # ---------------------------------------------------------------------------
-# XeLaTeX log classification
+# TeX log classification
 #
 # pandoc relays hundreds of lines of font/package chatter around a handful of
 # real `! …` errors. These cover the parse + the one-line message built from it.
@@ -93,7 +93,7 @@ class TestFormatTexErrors:
 
 class TestClassify:
     def test_parsed_error_wins_over_the_fallback(self):
-        fallback = "xelatex produced no usable PDF:\n" + MULTI_ERROR_LOG
+        fallback = "tectonic produced no usable PDF:\n" + MULTI_ERROR_LOG
         msg = classify(MULTI_ERROR_LOG, fallback)
         assert msg == format_tex_errors(parse_tex_errors(MULTI_ERROR_LOG))
         assert msg != fallback
@@ -105,6 +105,6 @@ class TestClassify:
         assert classify("pandoc: unrecognized option `--nope'\n", fallback) == fallback
 
     def test_empty_log_returns_the_fallback(self):
-        assert classify("", "xelatex exited 1 with no reported error") == (
-            "xelatex exited 1 with no reported error"
+        assert classify("", "tectonic exited 1 with no reported error") == (
+            "tectonic exited 1 with no reported error"
         )

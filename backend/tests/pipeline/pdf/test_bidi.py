@@ -529,7 +529,7 @@ class TestWrapEnglishPhrasesExtended:
 
     def test_underscore_identifier_wrapped(self):
         # The _ must be escaped — a bare _ inside \LR{} enters math mode and
-        # XeLaTeX fails with "! Missing $ inserted".
+        # XeTeX fails with "! Missing $ inserted".
         result = wrap_english_phrases("משתנה my_variable")
         assert r"\LR{my\_variable}" in result
 

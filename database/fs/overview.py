@@ -39,7 +39,7 @@ def write_overview_file(course: str, name: str, data: bytes) -> None:
 
 
 def _read_pdf_warning(overview_path: Path, slug: str) -> str | None:
-    """Return the XeLaTeX warning for an overview {slug}.pdf, or None if absent, empty, or unreadable."""
+    """Return the LaTeX warning for an overview {slug}.pdf, or None if absent, empty, or unreadable."""
 
     p = overview_path / overview_pdf_warning_marker(slug)
     if not p.exists():
