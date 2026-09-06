@@ -40,6 +40,8 @@ Every service carries its own module named `runtime` (`runtime.py` / `runtime.js
 | Secret query param       | `secret`, for `EventSource`, which cannot set a header                           |
 | Writable state root, env | `FASTSTUDY_STATE_DIR` — unset falls back to `.state/` at the repo root            |
 | State join               | `statePath(...parts)` / `state_path(*parts)` — a pure join that creates nothing   |
+| Bundled binary dir, env  | `FASTSTUDY_BIN_DIR` — unset means resolve off PATH, which is dev                  |
+| Binary join              | `toolPath(name)` / `tool_path(name)` — adds `.exe` on Windows only               |
 | Preload bridge           | `window.faststudy`                                                               |
 | Packaged frontend origin | `app://bundle` — exactly, no trailing slash                                      |
 
@@ -49,18 +51,22 @@ A service that spells any of these differently cannot be launched or called by i
 
 The state root separates read-only installed resources from per-user writable state, and only the services that write outside `DATA_ROOT` have a state join (`backend/`, both `downloader/` services). Dev deliberately uses the same layout with no fallback to the old scattered locations, so a layout bug surfaces on a dev machine rather than only in an installer build. The packaged `%LOCALAPPDATA%\FastStudy` default is intentionally in no service — the Electron launcher passes `FASTSTUDY_STATE_DIR` explicitly.
 
+`FASTSTUDY_BIN_DIR` is the same shape one level down: set, every external tool (`ffmpeg`, `ffprobe`, `pandoc`, `tectonic`, `yt-dlp`) is spawned by absolute path out of it and never off `$PATH`, so a stray binary earlier in a user's PATH cannot be picked up instead of the one that shipped. `curl` is the sole exception — Windows 10+ ships `curl.exe`, so it stays a PATH lookup — and that exception lives in `lib/tools/`, not in each caller. Each service probes its own tools once at startup, logs a missing one loudly, and reports the result on `/health` beside `status`; a missing binary disables one feature, never the service.
+
 ## Shared modules — `lib/`
 
 `lib/<name>/` holds the modules more than one service needs, each subfolder a self-contained package
 with its JS and Python halves flat side by side: `lib/runtime/` (the launch contract — port
-handshake, launch-secret check, state root; Python + JS) and `lib/logging/` (`setup_logging()`;
+handshake, launch-secret check, state root; Python + JS), `lib/tools/` (external-binary resolution
+and the boot-time version probe; Python + JS) and `lib/logging/` (`setup_logging()`;
 Python only, the Node services use plain `console`). Consumers declare a real dependency —
 `[tool.uv.sources]` editable path deps for `backend/` and `database/`, a `file:` dependency for both
 downloader packages — so `import runtime` and `@faststudy/runtime` resolve to one copy.
 
 A module earns a place there when a second service needs it *and* divergence between copies would be
-a defect, which is what both of these are: a wire contract and a security boundary, where two copies
-drifting apart is a bug by definition. A helper with one consumer stays in its service. Read
+a defect, which is what all three are: contracts the launcher writes and the services read, one of
+them a security boundary, where two copies drifting apart is a bug by definition. A helper with one
+consumer stays in its service. Read
 [`lib/CLAUDE.md`](lib/CLAUDE.md) and the per-module ones before changing anything there — an edit
 under `lib/` is live in four services at once.
 

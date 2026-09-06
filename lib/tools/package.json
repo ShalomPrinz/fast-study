@@ -1,0 +1,10 @@
+{
+  "name": "@faststudy/tools",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./tools.js",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  }
+}

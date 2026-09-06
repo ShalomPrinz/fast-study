@@ -38,6 +38,8 @@ Per-service docs live next to each service in `CLAUDE.md`.
 
 The Hebrew fonts (Noto Sans Hebrew for body text, Miriam Mono CLM for code) are bundled in `backend/assets/fonts/` — no system font install needed.
 
+Every service resolves these binaries off `$PATH` and probes them at startup, reporting what is missing on its `/health`. `FASTSTUDY_BIN_DIR` in the environment overrides that with a directory of bundled binaries, which is what the packaged build sets.
+
 ## Environment
 
 Single `.env` at the repo root, shared by all services:
