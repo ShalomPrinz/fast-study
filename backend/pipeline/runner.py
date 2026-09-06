@@ -300,7 +300,7 @@ def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
 
 
 def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
-    """Render summary.md → summary.pdf via pandoc/XeLaTeX. A render that errored but still
+    """Render summary.md → summary.pdf via pandoc/tectonic. A render that errored but still
     produced a usable PDF is `done` with the warning persisted to .pdf_warning."""
 
     try:

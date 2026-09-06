@@ -145,7 +145,7 @@ def db(monkeypatch):
         course_analyze, "analyze", lambda ext, report, course: f"ניתוח:{ext.slug}"
     )
 
-    # to_pdf reuses pipeline.convert_to_pdf; stub it (no pandoc/XeLaTeX) — it drops a .pdf
+    # to_pdf reuses pipeline.convert_to_pdf; stub it (no pandoc/tectonic) — it drops a .pdf
     # beside the input md and returns (path, warning), the path being read back and uploaded.
     def fake_convert(md_path):
         out = Path(md_path).with_suffix(".pdf")

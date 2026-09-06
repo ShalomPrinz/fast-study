@@ -10,6 +10,7 @@ from pathlib import Path
 import groq
 from groq import Groq
 from timing import timed_pipeline
+from tools import tool_path
 
 log = logging.getLogger("transcribe")
 
@@ -29,7 +30,7 @@ def get_duration(audio_path: str) -> float:
 
     result = subprocess.run(
         [
-            "ffprobe",
+            tool_path("ffprobe"),
             "-v",
             "error",
             "-show_entries",
@@ -55,7 +56,7 @@ def split_one_chunk(
     chunk_path = os.path.join(tmpdir, f"chunk_{index:04d}.mp3")
     subprocess.run(
         [
-            "ffmpeg",
+            tool_path("ffmpeg"),
             "-y",
             "-i",
             audio_path,

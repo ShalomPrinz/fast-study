@@ -103,7 +103,7 @@ not written one yet. Equal mtimes don't warn, so a same-second render can't flic
 
 ### Render warnings
 
-A `summary.pdf` that rendered despite XeLaTeX errors carries a one-line `warning` on its `FileInfo` (the
+A `summary.pdf` that rendered despite LaTeX errors carries a one-line `warning` on its `FileInfo` (the
 database service inlines the `.pdf_warning` dotfile onto the tree entry; the key is absent when clean).
 It is non-fatal, message on hover, and `CourseTreeContext` announces it once through `useReportOnce` +
 `announcePdfWarnings`: the first applied tree only seeds, so warnings predating page load don't toast,

@@ -10,6 +10,7 @@ from unittest.mock import patch
 import pytest
 from pipeline.pdf.math_fixes import merge_ltr_math, merge_rtl_math_number
 from to_pdf import (
+    BUILD_FONTS_PATH,
     DIRECTION_FILTER,
     FONTS_DIR,
     LATEX_HEADER,
@@ -203,13 +204,13 @@ class TestMonoFontWiring:
 
 # ---------------------------------------------------------------------------
 # Full PDF render — the canonical bidi/font verification (see docs/PDF.md).
-# Glyph fallback happens at XeLaTeX render time; string-level tests cannot catch
-# a missing-Hebrew mono. Gated on the real toolchain (xelatex + pandoc + fitz).
+# Glyph fallback happens at render time; string-level tests cannot catch
+# a missing-Hebrew mono. Gated on the real toolchain (tectonic + pandoc + fitz).
 # ---------------------------------------------------------------------------
 
 
-def _xelatex_available():
-    return shutil.which("xelatex") is not None
+def _tectonic_available():
+    return shutil.which("tectonic") is not None
 
 
 def _pymupdf_available():
@@ -222,8 +223,8 @@ def _pymupdf_available():
 
 
 @pytest.mark.skipif(
-    not (_xelatex_available() and _pandoc_available() and _pymupdf_available()),
-    reason="needs xelatex + pandoc + pymupdf to render and inspect a real PDF",
+    not (_tectonic_available() and _pandoc_available() and _pymupdf_available()),
+    reason="needs tectonic + pandoc + pymupdf to render and inspect a real PDF",
 )
 class TestHebrewInCodeBlockRenders:
     # Hebrew comment inside an assembly block — the exact regression report.
@@ -263,8 +264,8 @@ class TestHebrewInCodeBlockRenders:
 
 
 @pytest.mark.skipif(
-    not (_xelatex_available() and _pandoc_available() and _pymupdf_available()),
-    reason="needs xelatex + pandoc + pymupdf to render and inspect a real PDF",
+    not (_tectonic_available() and _pandoc_available() and _pymupdf_available()),
+    reason="needs tectonic + pandoc + pymupdf to render and inspect a real PDF",
 )
 class TestBidiOrderingRenders:
     # The canonical bidi verification for the five overview→PDF ordering bugs.
@@ -379,12 +380,29 @@ class TestBidiOrderingRenders:
 
 
 # ---------------------------------------------------------------------------
-# Two-pass render: pandoc → build.tex, then xelatex twice with nonstopmode.
-# Every subprocess is mocked — no real pandoc/XeLaTeX here (the real-toolchain
-# renders above cover that).
+# ---------------------------------------------------------------------------
+# The render: pandoc → build.tex, then one tectonic run. Every subprocess is
+# mocked — no real pandoc/tectonic here (the real-toolchain renders above cover
+# that).
 # ---------------------------------------------------------------------------
 
 ERROR_LOG = "! Undefined control sequence.\nl.417 \\Pi\n"
+# A font the engine cannot load. The render still exits 0 and writes a plausible PDF, with the
+# characters that font carried silently absent — which is why this is a hard failure.
+FONT_LOG = (
+    "! Font TU/MiriamMonoCLM-Book(1)/m/n/10=[./MiriamMonoCLM-Book.ttf]/OT at 10.0pt "
+    "not loadable: canonical font not found.\nl.81 \\texttt\n"
+)
+TECTONIC = "tectonic"
+
+
+@pytest.fixture(autouse=True)
+def _no_bin_dir(monkeypatch):
+    """Pin tool resolution to bare names, so an exported FASTSTUDY_BIN_DIR cannot make argv[0]
+    an absolute path the assertions below do not expect."""
+
+    monkeypatch.delenv("FASTSTUDY_BIN_DIR", raising=False)
+    monkeypatch.delenv("TECTONIC_CACHE_DIR", raising=False)
 
 
 class FakeRun:
@@ -394,7 +412,8 @@ class FakeRun:
         self,
         *,
         pandoc_rc=0,
-        xelatex_rcs=(0, 0),
+        tectonic_rc=0,
+        tectonic_stderrs=("",),
         pdf_bytes=b"%PDF-1.4 stub",
         log_text="",
         pandoc_stderr="",
@@ -402,15 +421,18 @@ class FakeRun:
         hangs=(),
     ):
         self.pandoc_rc = pandoc_rc
-        self.xelatex_rcs = list(xelatex_rcs)
+        self.tectonic_rc = tectonic_rc
+        self.tectonic_stderrs = list(tectonic_stderrs)
         self.pdf_bytes = pdf_bytes
         self.log_text = log_text
         self.pandoc_stderr = pandoc_stderr
         self.tex_text = tex_text
-        # Tools that time out instead of returning: "xelatex" on every call, "xelatex:2"
+        # Tools that time out instead of returning: "tectonic" on every call, "tectonic:2"
         # only on its second.
         self.hangs = set(hangs)
         self.calls = []
+        # What sat beside build.tex when the engine ran — the fonts have to be among it.
+        self.build_files = []
 
     def __call__(
         self,
@@ -426,11 +448,6 @@ class FakeRun:
         nth = sum(1 for c, _ in self.calls if c[0] == cmd[0])
         d = Path(cwd)
         if cmd[0] in self.hangs or f"{cmd[0]}:{nth}" in self.hangs:
-            # A killed xelatex has already truncated and partly rewritten its outputs —
-            # what is left is a headerless fragment, never the previous pass's file.
-            if cmd[0] == "xelatex":
-                (d / "build.pdf").write_bytes(b"%PDF-trunc")
-                (d / "build.log").write_text("truncated", encoding="utf-8")
             raise subprocess.TimeoutExpired(cmd, timeout)
         if cmd[0] == "pandoc":
             if self.pandoc_rc == 0:
@@ -438,19 +455,20 @@ class FakeRun:
             return SimpleNamespace(
                 returncode=self.pandoc_rc, stdout="", stderr=self.pandoc_stderr
             )
+        self.build_files = sorted(p.name for p in d.iterdir())
         (d / "build.log").write_text(self.log_text, encoding="utf-8")
         if self.pdf_bytes is not None:
             (d / "build.pdf").write_bytes(self.pdf_bytes)
-        rc = self.xelatex_rcs[min(len(self.calls) - 2, len(self.xelatex_rcs) - 1)]
-        return SimpleNamespace(returncode=rc, stdout=self.log_text, stderr="")
+        stderr = self.tectonic_stderrs[min(nth - 1, len(self.tectonic_stderrs) - 1)]
+        return SimpleNamespace(returncode=self.tectonic_rc, stdout="", stderr=stderr)
 
     @property
     def pandoc_cmd(self):
         return self.calls[0][0]
 
     @property
-    def xelatex_cmds(self):
-        return [cmd for cmd, _ in self.calls if cmd[0] == "xelatex"]
+    def tectonic_cmds(self):
+        return [cmd for cmd, _ in self.calls if cmd[0] == TECTONIC]
 
 
 @contextmanager
@@ -464,14 +482,14 @@ def _render(fake: FakeRun, md: str = "שלום world\n"):
             yield str(md_path)
 
 
-class TestTwoPassInvocation:
+class TestInvocation:
     def test_pandoc_writes_tex_not_pdf_and_drops_pdf_engine(self):
         fake = FakeRun()
         with _render(fake) as md_path:
             convert_to_pdf(md_path)
         cmd = fake.pandoc_cmd
         assert cmd[cmd.index("-o") + 1] == "build.tex"
-        # pandoc no longer runs the engine — that is pass 2's job.
+        # pandoc no longer runs the engine — that is the render pass's job.
         assert not any(a.startswith("--pdf-engine") for a in cmd)
 
     def test_pandoc_keeps_every_existing_flag(self):
@@ -488,15 +506,55 @@ class TestTwoPassInvocation:
         assert "geometry:margin=2.5cm" in cmd
         assert "linestretch=1.3" in cmd
 
-    def test_xelatex_runs_twice_in_nonstopmode(self):
-        # Twice for hyperref/bookmark reference stability; nonstopmode is the recovery lever.
+    def test_the_engine_runs_once(self):
+        # Tectonic reruns TeX to convergence itself, so there is no second pass to drive.
         fake = FakeRun()
         with _render(fake) as md_path:
             convert_to_pdf(md_path)
-        cmds = fake.xelatex_cmds
-        assert len(cmds) == 2
-        for cmd in cmds:
-            assert cmd == ["xelatex", "-interaction=nonstopmode", "build.tex"]
+        assert len(fake.tectonic_cmds) == 1
+
+    def test_the_engine_carries_the_recovery_and_log_flags(self):
+        # --keep-logs or build.log is discarded as an intermediate, and the log is where every
+        # recoverable error and every missing font is reported.
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        cmd = fake.tectonic_cmds[0]
+        assert cmd[0] == TECTONIC
+        assert "--keep-logs" in cmd
+        assert cmd[cmd.index("-Z") + 1] == "continue-on-errors"
+        assert cmd[-1] == "build.tex"
+
+    def test_a_dev_cache_may_still_fetch(self):
+        # Unset TECTONIC_CACHE_DIR is dev, where the cache starts empty and has to fill itself.
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        assert "--only-cached" not in fake.tectonic_cmds[0]
+
+    def test_a_frozen_cache_forbids_fetching(self, monkeypatch, tmp_path):
+        # The launcher sets TECTONIC_CACHE_DIR at the shipped, complete cache; a gap in it must
+        # fail loudly rather than hang on a network the user may not have.
+        monkeypatch.setenv("TECTONIC_CACHE_DIR", str(tmp_path))
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        assert "--only-cached" in fake.tectonic_cmds[0]
+
+    def test_fonts_are_copied_beside_the_generated_tex(self):
+        # fontspec folds Path= and the name into one bracketed XeTeX spec, which Windows rejects
+        # as a filename when it holds a drive letter — so the fonts travel with the build.
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        expected = sorted(p.name for p in FONTS_DIR.glob("*.ttf"))
+        assert expected, "no fonts bundled to copy"
+        assert set(expected) <= set(fake.build_files)
+
+    def test_the_header_points_at_the_build_dir_not_an_absolute_path(self):
+        header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", BUILD_FONTS_PATH)
+        assert "Path=./" in header
+        assert str(FONTS_DIR) not in header
 
     def test_aux_files_stay_in_a_tempdir_and_pdf_lands_on_output_path(self):
         fake = FakeRun()
@@ -515,47 +573,75 @@ class TestTwoPassInvocation:
 
 
 class TestRenderRecovery:
-    def test_nonzero_exit_with_usable_pdf_returns_warning(self):
-        fake = FakeRun(xelatex_rcs=(1, 1), log_text=ERROR_LOG)
+    def test_an_error_in_the_log_warns_even_though_the_engine_exited_zero(self):
+        # -Z continue-on-errors makes a run that errored still exit 0, so judging by the return
+        # code would drop the warning on exactly the runs it exists for.
+        fake = FakeRun(tectonic_rc=0, log_text=ERROR_LOG)
         with _render(fake) as md_path:
             pdf_path, warning = convert_to_pdf(md_path)
             assert Path(pdf_path).exists()
         assert warning == r"LaTeX error: Undefined control sequence (line 417: \Pi)"
 
     def test_nonzero_exit_without_reported_error_still_warns(self):
-        fake = FakeRun(xelatex_rcs=(1, 1), log_text="no bang lines here\n")
+        fake = FakeRun(tectonic_rc=1, log_text="no bang lines here\n")
         with _render(fake) as md_path:
             _, warning = convert_to_pdf(md_path)
-        assert warning and "\n" not in warning.splitlines()[0]
-        assert "exited 1" in warning
+        assert warning and "exited 1" in warning
+
+    def test_nonzero_exit_prefers_the_engines_own_error_line(self):
+        fake = FakeRun(tectonic_rc=1, tectonic_stderrs=("error: something broke\n",))
+        with _render(fake) as md_path:
+            _, warning = convert_to_pdf(md_path)
+        assert warning == "error: something broke"
 
     def test_no_pdf_raises_with_classified_message(self):
-        fake = FakeRun(xelatex_rcs=(1, 1), pdf_bytes=None, log_text=ERROR_LOG)
+        fake = FakeRun(tectonic_rc=1, pdf_bytes=None, log_text=ERROR_LOG)
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError, match="Undefined control sequence"):
                 convert_to_pdf(md_path)
 
     def test_empty_pdf_is_fatal(self):
-        # A 0-byte PDF is never usable, and _require_nonempty would reject it anyway.
-        fake = FakeRun(xelatex_rcs=(1, 1), pdf_bytes=b"", log_text=ERROR_LOG)
+        fake = FakeRun(tectonic_rc=1, pdf_bytes=b"", log_text=ERROR_LOG)
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError):
                 convert_to_pdf(md_path)
 
+    def test_a_log_that_reads_like_success_still_fails_on_the_stderr_cause(self):
+        # An unrecoverable font failure writes a log with zero `!` lines that ends "Output
+        # written on build.xdv", for a render that produced no PDF at all.
+        log = "Output written on build.xdv (12 pages, 41231 bytes).\n"
+        stderr = 'error: Cannot proceed without .vf or "physical" font for PDF output\n'
+        fake = FakeRun(tectonic_rc=1, pdf_bytes=None, log_text=log, tectonic_stderrs=(stderr,))
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError, match="Cannot proceed without"):
+                convert_to_pdf(md_path)
+
+    def test_the_cause_is_extracted_from_stderr_not_tailed(self):
+        # A failed run emits ~1000 `Missing character` lines; a tail would bury the one line
+        # that says what went wrong behind kilobytes of them.
+        noise = "warning: Missing character: no glyph for U+05D0\n" * 1000
+        stderr = "error: the real cause\n" + noise
+        fake = FakeRun(tectonic_rc=1, pdf_bytes=None, log_text="", tectonic_stderrs=(stderr,))
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError) as exc:
+                convert_to_pdf(md_path)
+        assert "error: the real cause" in str(exc.value)
+        assert "Missing character" not in str(exc.value)
+
     def test_hard_failure_carries_the_generated_tex(self):
-        fake = FakeRun(xelatex_rcs=(1, 1), pdf_bytes=None, log_text=ERROR_LOG)
+        fake = FakeRun(tectonic_rc=1, pdf_bytes=None, log_text=ERROR_LOG)
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError) as exc:
                 convert_to_pdf(md_path)
         # The .tex dies with the build dir, so the exception is what carries it out.
         assert exc.value.tex_source == fake.tex_text
 
-    def test_pandoc_failure_raises_before_any_xelatex_run(self):
+    def test_pandoc_failure_raises_before_any_render(self):
         fake = FakeRun(pandoc_rc=1, pandoc_stderr="template not found")
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError, match="template not found"):
                 convert_to_pdf(md_path)
-        assert fake.xelatex_cmds == []
+        assert fake.tectonic_cmds == []
 
     def test_pandoc_failure_with_tex_error_is_classified(self):
         fake = FakeRun(pandoc_rc=1, pandoc_stderr=ERROR_LOG)
@@ -573,54 +659,103 @@ class TestRenderRecovery:
         assert str(exc.value).count("x") == 2000
 
 
-class TestToolTimeout:
-    """A wedged tool would hold the caller's per-lecture lock forever, so it is bounded
-    and surfaces as an ordinary render failure."""
+class TestMissingFontIsFatal:
+    """A font the engine cannot load is dropped glyph by glyph: the run exits 0 and writes a
+    plausible PDF with characters silently absent. It is the one damage a reader cannot see —
+    the page is intact, the sentence reads, and only the symbol it was about is gone — so the
+    PDF is refused rather than shipped with a warning."""
 
-    def test_pandoc_hang_raises_before_any_xelatex_run(self):
+    def test_a_font_error_is_a_hard_failure(self):
+        fake = FakeRun(tectonic_rc=0, log_text=FONT_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError, match="characters would be dropped"):
+                convert_to_pdf(md_path)
+
+    def test_no_pdf_is_left_beside_the_markdown(self):
+        fake = FakeRun(tectonic_rc=0, log_text=FONT_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError):
+                convert_to_pdf(md_path)
+            assert not Path(md_path).with_suffix(".pdf").exists()
+
+    def test_the_message_names_the_font(self):
+        fake = FakeRun(tectonic_rc=0, log_text=FONT_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError) as exc:
+                convert_to_pdf(md_path)
+        assert "MiriamMonoCLM-Book" in str(exc.value)
+
+    def test_it_carries_the_generated_tex(self):
+        fake = FakeRun(tectonic_rc=0, log_text=FONT_LOG)
+        with _render(fake) as md_path:
+            with pytest.raises(PdfRenderError) as exc:
+                convert_to_pdf(md_path)
+        assert exc.value.tex_source == fake.tex_text
+
+    def test_an_ordinary_tex_error_is_still_only_a_warning(self):
+        # The distinction is the point: a bad page announces itself, a dropped glyph does not.
+        fake = FakeRun(tectonic_rc=0, log_text=ERROR_LOG)
+        with _render(fake) as md_path:
+            _, warning = convert_to_pdf(md_path)
+        assert warning is not None
+
+
+class TestFormatBuildRace:
+    """Two concurrent first-ever renders each build the format into a temp file and rename it
+    onto the final name; on Windows the loser hits the winner's open handle. The rename is
+    atomic, so the surviving .fmt is never corrupt and one retry runs warm."""
+
+    RACE = "error: failed to persist temporary file: Access is denied. (os error 5)\n"
+
+    def test_the_race_is_retried_once(self):
+        fake = FakeRun(tectonic_stderrs=(self.RACE, ""))
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        assert len(fake.tectonic_cmds) == 2
+
+    def test_the_retry_result_is_what_is_reported(self):
+        fake = FakeRun(tectonic_stderrs=(self.RACE, ""))
+        with _render(fake) as md_path:
+            _, warning = convert_to_pdf(md_path)
+        assert warning is None
+
+    def test_a_clean_run_is_not_retried(self):
+        fake = FakeRun()
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        assert len(fake.tectonic_cmds) == 1
+
+    def test_a_persistent_race_is_not_retried_forever(self):
+        # The window is the first-ever build only, so a second failure is a real one.
+        fake = FakeRun(tectonic_stderrs=(self.RACE,))
+        with _render(fake) as md_path:
+            convert_to_pdf(md_path)
+        assert len(fake.tectonic_cmds) == 2
+
+
+class TestToolTimeout:
+    """A wedged tool would hold the caller's per-lecture lock forever, so it is bounded and
+    surfaces as an ordinary render failure."""
+
+    def test_pandoc_hang_raises_before_any_render(self):
         fake = FakeRun(hangs=("pandoc",))
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError, match="pandoc timed out after 60s"):
                 convert_to_pdf(md_path)
-        assert fake.xelatex_cmds == []
+        assert fake.tectonic_cmds == []
 
-    def test_first_pass_hang_raises_and_carries_the_generated_tex(self):
-        fake = FakeRun(hangs=("xelatex",))
+    def test_a_render_hang_raises_and_carries_the_generated_tex(self):
+        fake = FakeRun(hangs=(TECTONIC,))
         with _render(fake) as md_path:
-            with pytest.raises(
-                PdfRenderError, match="xelatex timed out after 60s"
-            ) as e:
+            with pytest.raises(PdfRenderError, match="tectonic timed out") as e:
                 convert_to_pdf(md_path)
-        # pandoc already produced the .tex, so a timeout keeps it debuggable like any
-        # other hard failure.
+        # pandoc already produced the .tex, so a timeout keeps it debuggable like any other
+        # hard failure.
         assert e.value.tex_source == fake.tex_text
 
-    def test_second_pass_hang_keeps_pass_1s_pdf_and_warns(self):
-        """Pass 1's PDF is usable and only its references are stale — but pass 2 has
-        already overwritten it on disk, so the salvage must return the saved copy."""
-
-        fake = FakeRun(hangs=("xelatex:2",))
-        with _render(fake) as md_path:
-            pdf_path, warning = convert_to_pdf(md_path)
-            assert Path(pdf_path).read_bytes() == b"%PDF-1.4 stub"
-        assert warning == "xelatex timed out after 60s"
-
-    def test_second_pass_hang_still_reports_a_tex_error_from_pass_1s_log(self):
-        # Pass 2 truncated the log too, so the errors have to come from pass 1's copy.
-        fake = FakeRun(hangs=("xelatex:2",), log_text=ERROR_LOG)
-        with _render(fake) as md_path:
-            _, warning = convert_to_pdf(md_path)
-        assert warning == r"LaTeX error: Undefined control sequence (line 417: \Pi)"
-
-    def test_second_pass_hang_with_no_pass_1_pdf_is_fatal(self):
-        # Nothing to salvage: pass 2's truncated fragment must not be promoted as the PDF.
-        fake = FakeRun(hangs=("xelatex:2",), pdf_bytes=None)
-        with _render(fake) as md_path:
-            with pytest.raises(PdfRenderError, match="no usable PDF"):
-                convert_to_pdf(md_path)
-
-    def test_every_tool_call_is_bounded(self):
-        # pandoc + both xelatex passes — no unbounded call may slip back in.
+    def test_a_frozen_cache_bounds_the_render_tightly(self, monkeypatch, tmp_path):
+        # It renders against a complete cache and can never fetch, so a minute is already wedged.
+        monkeypatch.setenv("TECTONIC_CACHE_DIR", str(tmp_path))
         fake = FakeRun()
         timeouts = []
 
@@ -633,4 +768,38 @@ class TestToolTimeout:
             md_path.write_text("שלום world\n", encoding="utf-8")
             with patch("subprocess.run", spy):
                 convert_to_pdf(str(md_path))
-        assert timeouts == [60, 60, 60]
+        assert timeouts == [60, 60]
+
+    def test_a_cold_dev_cache_is_given_room_to_fill_itself(self):
+        # The first render on a dev machine fetches the LaTeX bundle over the network — minutes,
+        # once per machine. The packaged app never reaches this path.
+        fake = FakeRun()
+        timeouts = []
+
+        def spy(cmd, **kwargs):
+            timeouts.append(kwargs.get("timeout"))
+            return fake(cmd, **kwargs)
+
+        with tempfile.TemporaryDirectory() as d:
+            md_path = Path(d) / "summary.md"
+            md_path.write_text("שלום world\n", encoding="utf-8")
+            with patch("subprocess.run", spy):
+                convert_to_pdf(str(md_path))
+        assert timeouts == [60, 900]
+
+    def test_every_tool_call_is_bounded(self):
+        # pandoc + the render — no unbounded call may slip back in.
+        fake = FakeRun()
+        timeouts = []
+
+        def spy(cmd, **kwargs):
+            timeouts.append(kwargs.get("timeout"))
+            return fake(cmd, **kwargs)
+
+        with tempfile.TemporaryDirectory() as d:
+            md_path = Path(d) / "summary.md"
+            md_path.write_text("שלום world\n", encoding="utf-8")
+            with patch("subprocess.run", spy):
+                convert_to_pdf(str(md_path))
+        assert all(t is not None for t in timeouts)
+        assert len(timeouts) == 2

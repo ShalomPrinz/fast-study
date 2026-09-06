@@ -3,6 +3,7 @@ import cors from 'cors';
 import { ALLOWED_ORIGINS, AUTODL_PORT } from './src/lib/config.js';
 import { UnsupportedError } from './src/lib/errors.js';
 import { serve, requireSecret } from '@faststudy/runtime';
+import { checkTools } from '@faststudy/tools';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import {
   sendUnsupported,
@@ -31,8 +32,15 @@ app.use(
 app.use(requireSecret);
 app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
 
-// Liveness only: what the launcher waits on before opening the window.
-app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// The external binaries this service spawns. Probed once at startup, never per request: the boot
+// screen polls /health, and re-spawning them per poll would cost more than the answer is worth.
+// A tool installed afterwards is picked up on the next launch.
+const TOOLS = ['yt-dlp'];
+let toolStatus = {};
+
+// Liveness plus the boot-time tool probe: what the launcher waits on before opening the window,
+// and what its boot screen renders a missing binary from.
+app.get('/health', (req, res) => res.json({ status: 'ok', tools: toolStatus }));
 
 app.get('/auth/status', handleAuthStatus);
 app.post('/auth/connect', handleAuthConnect);
@@ -58,6 +66,13 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
     closeAllSessions().finally(() => process.exit(0));
   });
 }
+
+checkTools(TOOLS).then((status) => {
+  toolStatus = status;
+  for (const [name, state] of Object.entries(status)) {
+    if (state !== 'ok') console.error(`❌ ${name} is ${state} — playlist expansion will fail`);
+  }
+});
 
 serve(app, AUTODL_PORT, (port) => {
   console.log(`\n==========================================`);

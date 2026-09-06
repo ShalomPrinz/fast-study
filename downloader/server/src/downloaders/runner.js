@@ -57,10 +57,16 @@ export async function runDownloadJob(
     emitLog(`📦 Expected size: ${bytes ? formatBytes(bytes) : 'unknown'}`);
     setExpectedBytes(jobId, bytes);
 
-    const { command, args } = downloader.buildCommand(input, tempDir);
+    // `env` is a downloader's own additions to this process's environment, never a replacement:
+    // yt-dlp needs ELECTRON_RUN_AS_NODE set on its spawn to accept the launcher as a JS runtime.
+    const { command, args, env } = downloader.buildCommand(input, tempDir);
     // stdio ignore/ignore/pipe: child stays silent; stderr captured for error detail.
     const spawnedAt = Date.now();
-    const child = spawn(command, args, { cwd: tempDir, stdio: ['ignore', 'ignore', 'pipe'] });
+    const child = spawn(command, args, {
+      cwd: tempDir,
+      stdio: ['ignore', 'ignore', 'pipe'],
+      env: { ...process.env, ...env },
+    });
     const tail = makeStderrTail(child);
     const entry = {
       label,

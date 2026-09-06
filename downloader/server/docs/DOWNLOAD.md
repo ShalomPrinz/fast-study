@@ -31,14 +31,33 @@ YouTube serves DASH-segmented streams (separate audio/video behind signed URLs),
 so the `.mp4`-capture flow gets nothing usable; yt-dlp resolves the manifest,
 downloads both tracks, and muxes them.
 
-Args: `--no-playlist --merge-output-format mp4 --js-runtimes node --remote-components
-ejs:github --quiet --no-warnings --no-progress -o video.%(ext)s`. `-o video.%(ext)s`
+Args: `--no-playlist --merge-output-format mp4 --no-js-runtimes --js-runtimes
+node:<execPath> --cache-dir <state>/ytdlp-cache --quiet --no-warnings --no-progress -o
+video.%(ext)s`. `-o video.%(ext)s` + merge → final `video.mp4`.
 
-- merge → final `video.mp4`. **Prerequisite:** recent yt-dlp needs a JS runtime to
-  evaluate YouTube's player script; only `deno` is auto-enabled, so we point it at the
-  `node` already present. yt-dlp must be installed system-wide (`pipx install yt-dlp`);
-  the server does not install it — same external-CLI dependency as ffmpeg is for the
-  backend.
+### The JS runtime
+
+Recent yt-dlp needs a JS runtime to evaluate YouTube's player script and extract formats.
+Both spawn sites — the size probe and the download — must carry the flags, or format
+extraction errors.
+
+- **The runtime is this process.** `node:${process.execPath}` points yt-dlp at whatever is
+  running the server: node in dev, the Electron binary in a package (the server is forked
+  from Electron main). Nothing extra ships — 0 bytes against 83MB for a vendored `node.exe`.
+- **`ELECTRON_RUN_AS_NODE=1` is set explicitly on the spawn**, never by inheritance. yt-dlp's
+  runtime probe sets nothing itself, and a bare Electron prefixes its version with a CRLF that
+  yt-dlp's start-anchored `^v(\S+)` misses — it reports `node-unknown (unsupported)` and falls
+  back silently. `buildCommand` returns an `env` the runner merges over `process.env`.
+- **`--no-js-runtimes` comes first**, and no bare `--js-runtimes node` may follow. deno
+  outranks node in yt-dlp's priority order, so without the reset a user with deno installed
+  would silently get theirs; and the parser keys runtimes by name, so a later bare flag would
+  overwrite the resolved path with `null`.
+- **No `--remote-components`.** The official yt-dlp binary already bundles `yt_dlp_ejs`, so
+  fetching challenge components from GitHub on every probe and every download bought nothing
+  and made an offline render impossible. Freshness comes from yt-dlp's own self-update.
+
+`auto/` runs yt-dlp too, but only `--flat-playlist`, which never touches the player script —
+so it carries the cache flag and not these.
 
 ## Size probe (`services/probe.js`)
 

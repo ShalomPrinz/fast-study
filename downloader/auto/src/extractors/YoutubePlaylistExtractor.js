@@ -4,6 +4,7 @@ import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
 import { statePath } from '@faststudy/runtime';
+import { toolPath } from '@faststudy/tools';
 
 const execFileAsync = promisify(execFile);
 
@@ -94,7 +95,7 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
     // string — so titles with metacharacters can't inject.
     let stdout;
     try {
-      ({ stdout } = await execFileAsync('yt-dlp', [
+      ({ stdout } = await execFileAsync(toolPath('yt-dlp'), [
         '--flat-playlist',
         ...CACHE_DIR_FLAGS,
         '--print',
@@ -102,7 +103,7 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
         finalUrl,
       ]));
     } catch (err) {
-      const detail = err.code === 'ENOENT' ? 'yt-dlp not found on PATH' : err.stderr || err.message;
+      const detail = err.code === 'ENOENT' ? `yt-dlp not found at ${toolPath('yt-dlp')}` : err.stderr || err.message;
       throw new Error(`yt-dlp failed to list playlist: ${detail}`);
     }
 

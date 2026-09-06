@@ -10,7 +10,7 @@ Writes are neutral — no artifact wipe, no side effects — and create `overvie
 
 ## Per-slug pdf warnings
 
-`{slug}.pdf` carries its non-fatal XeLaTeX warning in `.{slug}.pdf_warning`, inlined onto the
+`{slug}.pdf` carries its non-fatal LaTeX warning in `.{slug}.pdf_warning`, inlined onto the
 listing entry as `warning`. This mirrors `summary.pdf` in the lecture tree (see LAYOUT.md),
 including the absent/empty/unreadable ⇒ *no key* rule. One marker per slug: a failed render of
 one extractor must not taint another's pdf.

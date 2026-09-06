@@ -43,12 +43,12 @@ def _convert(warning, pdf_bytes=b"%PDF-1.4 stub"):
 class TestWarningMarker:
     def test_recovered_render_persists_marker_after_pdf(self, monkeypatch, db):
         monkeypatch.setattr(
-            course_to_pdf, "convert_to_pdf", _convert("XeLaTeX: ! Undefined")
+            course_to_pdf, "convert_to_pdf", _convert("LaTeX: ! Undefined")
         )
         assert course_to_pdf.run_to_pdf(COURSE, SLUG) == {"status": "done"}
         # Order matters: a warning must never exist without the PDF it describes.
         assert db.calls == [("put", f"{SLUG}.pdf"), ("put", MARKER)]
-        assert db.stored[MARKER] == "XeLaTeX: ! Undefined".encode("utf-8")
+        assert db.stored[MARKER] == "LaTeX: ! Undefined".encode("utf-8")
 
     def test_clean_render_clears_marker(self, monkeypatch, db):
         # Cleared by an EMPTY write, not a delete — the database has no overview delete route.
@@ -60,7 +60,7 @@ class TestWarningMarker:
 
     def test_hard_failure_raises_and_writes_nothing(self, monkeypatch, db):
         def boom(md_path):
-            raise RuntimeError("xelatex produced no PDF")
+            raise RuntimeError("tectonic produced no PDF")
 
         monkeypatch.setattr(course_to_pdf, "convert_to_pdf", boom)
         with pytest.raises(RuntimeError, match="no PDF"):

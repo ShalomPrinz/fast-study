@@ -4,7 +4,7 @@ import { branchStatus } from './overview'
 
 const PHASES: CoursePhase[] = ['extract', 'analyze', 'to_pdf']
 const SLUG = 'exams'
-const WARNING = 'Rendered with XeLaTeX errors: Undefined control sequence at line 42'
+const WARNING = 'Rendered with LaTeX errors: Undefined control sequence at line 42'
 
 const file = (name: string, over: Partial<CourseFile> = {}): CourseFile => ({
   name,

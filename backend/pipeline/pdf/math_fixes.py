@@ -54,7 +54,7 @@ _TEXT_BODY_RE = re.compile(r"\\text\s*\{([^{}]*)\}")
 
 
 def normalize_math_text_spaces(text: str) -> str:
-    """Move \\text{}'s edge spaces out as math control spaces — XeLaTeX trims them
+    """Move \\text{}'s edge spaces out as math control spaces — XeTeX trims them
     at the bidi boundary, fusing the adjacent math token onto the word."""
 
     def repl(m: re.Match) -> str:

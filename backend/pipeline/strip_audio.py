@@ -2,6 +2,7 @@ import logging
 import subprocess
 
 from timing import timed_pipeline
+from tools import tool_path
 
 log = logging.getLogger("audio")
 
@@ -13,7 +14,7 @@ def strip_audio(video_path: str, audio_path: str):
     log.info(f"Extracting audio from {video_path}...")
     subprocess.run(
         [
-            "ffmpeg",
+            tool_path("ffmpeg"),
             "-y",
             "-i",
             video_path,

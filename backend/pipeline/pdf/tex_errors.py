@@ -20,7 +20,7 @@ _AT_MAX_CHARS = 40
 
 
 def parse_tex_errors(log: str) -> list[TexError]:
-    """Extract the `! message` / `l.<N>` error-point pairs from a XeLaTeX log.
+    """Extract the `! message` / `l.<N>` error-point pairs from a TeX log.
     Tolerant: an error with no `l.<N>` marker is still returned, with no line number."""
 
     lines = log.splitlines()

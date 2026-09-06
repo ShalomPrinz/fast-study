@@ -280,6 +280,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "faststudy-logging" },
     { name = "faststudy-runtime" },
+    { name = "faststudy-tools" },
     { name = "google-api-python-client" },
     { name = "google-auth-oauthlib" },
     { name = "google-genai" },
@@ -302,6 +303,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.111" },
     { name = "faststudy-logging", editable = "../lib/logging" },
     { name = "faststudy-runtime", editable = "../lib/runtime" },
+    { name = "faststudy-tools", editable = "../lib/tools" },
     { name = "google-api-python-client", specifier = ">=2.0" },
     { name = "google-auth-oauthlib", specifier = ">=1.0" },
     { name = "google-genai", specifier = ">=0.3" },
@@ -358,6 +360,15 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },
 ]
+provides-extras = ["test"]
+
+[[package]]
+name = "faststudy-tools"
+version = "0.1.0"
+source = { editable = "../lib/tools" }
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" }]
 provides-extras = ["test"]
 
 [[package]]

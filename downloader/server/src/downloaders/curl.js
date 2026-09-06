@@ -1,5 +1,6 @@
 import { VIDEO_FILENAME } from '../config.js';
 import { SKIP_HEADERS, probeContentLength } from '../services/probe.js';
+import { toolPath } from '@faststudy/tools';
 import { uploadVideo } from '../services/database.js';
 
 // Replay the browser's captured headers so short-lived tokens + Referer/Origin
@@ -35,5 +36,8 @@ export const curl = {
   measure: 'file', // stat the lone video.mp4
   upload: uploadVideo,
   probeSize: ({ url, headers }) => probeContentLength(url, headers),
-  buildCommand: ({ url, headers }) => ({ command: 'curl', args: buildCurlArgs(url, headers) }),
+  buildCommand: ({ url, headers }) => ({
+    command: toolPath('curl'),
+    args: buildCurlArgs(url, headers),
+  }),
 };

@@ -63,7 +63,7 @@ clock counts the whole branch; `ExtractorHeader` ticks it client-side and drops 
 
 `branchStatus(status, files, slug, phases)` is the single derivation of a row's
 `{ running, done, error, warning }`: `done` means the _last_ file of that extractor's phase list exists,
-and `warning` is that file's `warning` — a `{slug}.pdf` that rendered despite XeLaTeX errors but is usable.
+and `warning` is that file's `warning` — a `{slug}.pdf` that rendered despite LaTeX errors but is usable.
 A warning is not an error: the row still reads as done, its `StatusNode` stays green, and `ExtractorHeader`
 shows the warning as a ⚠ `PdfWarningBadge` (message on hover) beside it, with no toast.
 

@@ -154,7 +154,7 @@ export interface CourseFile {
   name: string
   size: number
   mtime: number
-  // Set on {slug}.pdf when it rendered despite XeLaTeX errors but is still usable.
+  // Set on {slug}.pdf when it rendered despite LaTeX errors but is still usable.
   warning?: string
 }
 
