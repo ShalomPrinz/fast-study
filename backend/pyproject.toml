@@ -14,11 +14,13 @@ dependencies = [
     "apscheduler>=3.10",
     "faststudy-runtime",
     "faststudy-logging",
+    "faststudy-tools",
 ]
 
 [tool.uv.sources]
 faststudy-runtime = { path = "../lib/runtime", editable = true }
 faststudy-logging = { path = "../lib/logging", editable = true }
+faststudy-tools = { path = "../lib/tools", editable = true }
 
 [project.optional-dependencies]
 test = [
