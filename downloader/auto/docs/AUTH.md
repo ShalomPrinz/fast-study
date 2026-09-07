@@ -10,7 +10,7 @@ stores wherever its `tokenPath` points and resolves nothing: the per-university 
 `core/registry.js` hands it an absolute `statePath('auth', …)`, so one place decides the location
 for every university.
 
-## connect / complete / status
+## connect / complete / status / disconnect
 
 - `connect()` — takes no args; builds its own `launch.php` URL and opens the **headed**
   browser (MFA by hand, once). Returns immediately, login still pending. The headed window
@@ -20,6 +20,10 @@ for every university.
   `{ wstoken, privatetoken }` to `auth/biu-token.json` under the state root; it needs no live browser (its own
   close is a no-op after the self-close). `/auth/complete` returns `{ connected: true }`.
 - `status()` — no browser, no API call: `{ connected: token file exists, expired: markExpired flag }`.
+- `disconnect()` — deletes the token file, clears the `markExpired` flag, and closes a headed login
+  still in flight; missing token = success, so `/auth/disconnect` always returns `{ connected: false }`.
+  It never calls Moodle's token-revoke service: a server-side revoke can fail _after_ the local
+  delete succeeded, leaving the two out of sync with no way to reconcile them.
 
 ## Expiry is only knowable at call time
 

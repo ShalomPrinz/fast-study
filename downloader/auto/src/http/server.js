@@ -148,6 +148,12 @@ export async function handleAuthComplete(req, res) {
   send(res, 200, { connected: true });
 }
 
+export async function handleAuthDisconnect(req, res) {
+  logReq('POST', '/auth/disconnect');
+  await authFor(defaultUniversity()).disconnect();
+  send(res, 200, { connected: false });
+}
+
 // ── Browsing endpoints ──────────────────────────────────────────────────────
 
 export async function handleList(req, res) {

@@ -24,17 +24,18 @@ Everything this service writes — the Moodle token, the zoom passcode store, th
 
 Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item = { ref, title, kind, media, resolvedMedia?, expandable, section }` (`section` = the Moodle section heading, display metadata for grouping, `''` when unnamed; `media` = `'video'`|`'material'`|`'unknown'`, which file lands on disk — `video.mp4` vs a lecture material PDF — not how it is fetched, `'unknown'` for every `google-drive` and `direct-url` row since only the download-time probe can tell; `resolvedMedia` = `'video'`|`'material'`|`'unsupported'`, what a probed row turned out to be this session, absent when never probed); `/resolve` takes `{ ref, … }`. The download mechanism is hidden inside the opaque `ref` (base64url `Recording`). See `docs/BROWSING.md`.
 
-| Endpoint              | Body                                                | Returns                                                                                 |
-| --------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `GET /health`         | —                                                   | `{ status:'ok', tools }` — liveness plus the boot-time binary probe, what the launcher waits on before opening the window |
-| `GET /auth/status`    | —                                                   | `{ connected, expired }`                                                                |
-| `POST /auth/connect`  | `{}`                                                | `{ status:'pending' }` (headed token grab opens)                                        |
-| `POST /auth/complete` | —                                                   | `{ connected:true }` (persists the Moodle WS token)                                     |
-| `POST /list`          | `{ courseUrl }`                                     | `{ items }`                                                                             |
-| `POST /list/expand`   | `{ ref }`                                           | `{ items }` (resolve one expandable item → children)                                    |
-| `POST /resolve`       | `{ ref, course, name, kind, only?, forceCapture? }` | `{ media, targets }`                                                                    |
-| `POST /zoom/passcode` | `{ course, name?, passcode, scope }`                | `{}` (store a zoom passcode; `scope:'course'\|'lecture'`)                               |
-| `POST /close`         | —                                                   | `{}` (close the persistent browser)                                                     |
+| Endpoint                | Body                                                | Returns                                                                                                                   |
+| ----------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `GET /health`           | —                                                   | `{ status:'ok', tools }` — liveness plus the boot-time binary probe, what the launcher waits on before opening the window |
+| `GET /auth/status`      | —                                                   | `{ connected, expired }`                                                                                                  |
+| `POST /auth/connect`    | `{}`                                                | `{ status:'pending' }` (headed token grab opens)                                                                          |
+| `POST /auth/complete`   | —                                                   | `{ connected:true }` (persists the Moodle WS token)                                                                       |
+| `POST /auth/disconnect` | —                                                   | `{ connected:false }` (deletes the local token; no server-side revoke)                                                    |
+| `POST /list`            | `{ courseUrl }`                                     | `{ items }`                                                                                                               |
+| `POST /list/expand`     | `{ ref }`                                           | `{ items }` (resolve one expandable item → children)                                                                      |
+| `POST /resolve`         | `{ ref, course, name, kind, only?, forceCapture? }` | `{ media, targets }`                                                                                                      |
+| `POST /zoom/passcode`   | `{ course, name?, passcode, scope }`                | `{}` (store a zoom passcode; `scope:'course'\|'lecture'`)                                                                 |
+| `POST /close`           | —                                                   | `{}` (close the persistent browser)                                                                                       |
 
 `/resolve` returns the download targets, never a download: `targets` is
 `[{ name, tool, url, headers?, fromCache }]`, one per file that will land (a zoom before/after-break
@@ -64,6 +65,6 @@ both clips), then returns only the cap whose split name matches the request.
 - **`docs/SESSIONS.md`** — persistent per-profile browsers, `withLock` mutex, idle timeout, the launch matrix.
 - **`docs/ZOOM.md`** — why zoom capture needs system Chrome + stealth + a hidden headed window (Xvfb on Linux, off-screen on Windows); the UA/GPU constraints; passcode gate; before/after-break split.
 - **`docs/BROWSING.md`** — the merged WS-contents + zoom-summary parsers, target-URL routing (every `url` module is listed; the recording keywords are only the `likelyRecording` hint), mimetype gating, the `Item`/`ref` contract, lazy playlist expansion. Strategies: `videostream` (in-site .mp4), `youtube-playlist`, `google-drive` (single Drive file, listed as `unknown` media, probed by filename at download → yt-dlp or material), `zoom`, `moodle-file` (course-hosted PDF → lecture material), `direct-url` (the catch-all `url` module, listed as `unknown` media, probed by URL path then headers at download).
-- **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
+- **`docs/AUTH.md`** — the Moodle WS token provider (`connect`/`complete`/`status`/`disconnect`), `markExpired` → reconnect, on-demand autologin for videostream. Protocol details in **`docs/MOODLE.md`**.
 
 Dev-stack wiring: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

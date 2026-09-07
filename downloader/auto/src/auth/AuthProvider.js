@@ -27,4 +27,13 @@ export class AuthProvider {
   status() {
     throw new Error('not implemented');
   }
+
+  /**
+   * Forget the stored credential locally and drop any pending login. Succeeds when there
+   * is nothing stored, so disconnecting twice is not an error.
+   * @returns {Promise<void>}
+   */
+  async disconnect() {
+    throw new Error('not implemented');
+  }
 }
