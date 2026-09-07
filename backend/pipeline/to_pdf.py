@@ -207,6 +207,57 @@ def preprocess_markdown(text: str) -> str:
     return text
 
 
+def build_tex(markdown: str, build: Path) -> str:
+    """Populate `build` with the fonts, header and input, run pandoc, and return build.tex's
+    source. The markdown must already be pandoc-ready — the caller owns preprocessing."""
+
+    if not HEBREW_FONT.exists():
+        raise FileNotFoundError(f"Font not found: {HEBREW_FONT}")
+    if not HEBREW_FONT_BOLD.exists():
+        raise FileNotFoundError(f"Font not found: {HEBREW_FONT_BOLD}")
+    if not DIRECTION_FILTER.exists():
+        raise FileNotFoundError(f"Lua filter not found: {DIRECTION_FILTER}")
+
+    template_path = resource_path("assets", "templates", "pandoc_template.tex")
+    header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", BUILD_FONTS_PATH)
+
+    for font in FONTS_DIR.glob("*.ttf"):
+        shutil.copy2(font, build / font.name)
+    header_path = build / "header.tex"
+    header_path.write_text(header, encoding="utf-8")
+    md_temp_path = build / "input.md"
+    md_temp_path.write_text(markdown, encoding="utf-8")
+
+    pandoc_cmd = [
+        tool_path("pandoc"),
+        str(md_temp_path),
+        "-o",
+        f"{BUILD_STEM}.tex",
+        "--from=markdown-smart",
+        f"--template={template_path}",
+        "-V",
+        "geometry:margin=2.5cm",
+        "-V",
+        "linestretch=1.3",
+        f"--include-in-header={header_path}",
+        f"--lua-filter={DIRECTION_FILTER}",
+        "--standalone",
+    ]
+    result = _run_tool(pandoc_cmd, str(build))
+    if result.returncode != 0:
+        # pandoc relays errors on either stream; with no `! …` at all the failure is
+        # pandoc's own and falls back to the stream TAIL, since this reaches a toast.
+        raise PdfRenderError(
+            classify(
+                f"{result.stdout}\n{result.stderr}",
+                f"pandoc failed:\n{result.stderr[-_LOG_TAIL_CHARS:]}",
+            )
+        )
+
+    tex_path = build / f"{BUILD_STEM}.tex"
+    return tex_path.read_text(encoding="utf-8", errors="replace")
+
+
 @timed_pipeline("pdf")
 def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
     """Preprocess a markdown file and render it to a PDF beside it in two passes:
@@ -215,60 +266,17 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
     input_path = Path(md_path)
     if not input_path.exists():
         raise FileNotFoundError(f"File not found: {md_path}")
-    if not HEBREW_FONT.exists():
-        raise FileNotFoundError(f"Font not found: {HEBREW_FONT}")
-    if not HEBREW_FONT_BOLD.exists():
-        raise FileNotFoundError(f"Font not found: {HEBREW_FONT_BOLD}")
-    if not DIRECTION_FILTER.exists():
-        raise FileNotFoundError(f"Lua filter not found: {DIRECTION_FILTER}")
 
     output_path = input_path.with_suffix(".pdf")
-    header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", BUILD_FONTS_PATH)
 
     raw_md = input_path.read_text(encoding="utf-8")
     fixed_md = apply_outside_fences(raw_md, preprocess_markdown)
-
-    template_path = resource_path("assets", "templates", "pandoc_template.tex")
 
     # Everything the build touches lives in one tempdir: pandoc's inputs, the fonts, the generated
     # .tex, and the engine's aux files (it writes them beside the .tex, i.e. into the cwd).
     with tempfile.TemporaryDirectory() as build_dir:
         build = Path(build_dir)
-        for font in FONTS_DIR.glob("*.ttf"):
-            shutil.copy2(font, build / font.name)
-        header_path = build / "header.tex"
-        header_path.write_text(header, encoding="utf-8")
-        md_temp_path = build / "input.md"
-        md_temp_path.write_text(fixed_md, encoding="utf-8")
-
-        pandoc_cmd = [
-            tool_path("pandoc"),
-            str(md_temp_path),
-            "-o",
-            f"{BUILD_STEM}.tex",
-            "--from=markdown-smart",
-            f"--template={template_path}",
-            "-V",
-            "geometry:margin=2.5cm",
-            "-V",
-            "linestretch=1.3",
-            f"--include-in-header={header_path}",
-            f"--lua-filter={DIRECTION_FILTER}",
-            "--standalone",
-        ]
-        result = _run_tool(pandoc_cmd, build_dir)
-        if result.returncode != 0:
-            # pandoc relays errors on either stream; with no `! …` at all the failure is
-            # pandoc's own and falls back to the stream TAIL, since this reaches a toast.
-            raise PdfRenderError(
-                classify(
-                    f"{result.stdout}\n{result.stderr}",
-                    f"pandoc failed:\n{result.stderr[-_LOG_TAIL_CHARS:]}",
-                )
-            )
-
-        tex_path = build / f"{BUILD_STEM}.tex"
-        tex_source = tex_path.read_text(encoding="utf-8", errors="replace")
+        tex_source = build_tex(fixed_md, build)
 
         run = _render(build, tex_source)
         log = _read_log(build)

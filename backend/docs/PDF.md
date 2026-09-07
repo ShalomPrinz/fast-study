@@ -11,6 +11,9 @@ Tectonic is a self-contained XeTeX: same engine, same output — verified glyph-
 1. **pandoc → `build.tex`** (no `--pdf-engine`), so the generated LaTeX is a file we own.
 2. **`tectonic --keep-logs -Z continue-on-errors build.tex`, once** — tectonic reruns TeX to convergence itself, so there is no second pass to drive for hyperref/bookmark references.
 
+Step 1 is `build_tex(markdown, build)`, a module-level seam so a second caller can generate the
+same `build.tex`. It takes **pandoc-ready** markdown — preprocessing belongs to the caller.
+
 Both run with the cwd set to one tempdir, so every aux file (`.aux`, `.log`, `.out`) lands there and nothing leaks beside the markdown. The engine names its output after the `.tex` stem, so `build.pdf` is moved onto `output_path` at the end.
 
 Two flags are load-bearing. **`--keep-logs`** or tectonic discards `build.log` as an intermediate — and the log is where every recoverable error and every missing font is reported. **`-Z continue-on-errors`** replaces xelatex's `-interaction=nonstopmode`: without it a recoverable error yields no PDF at all, and the whole warning path below stops being reachable. It is unstable by tectonic's own labelling, which is why the version is pinned; if it ever goes away the fallback is hard-fail-only rendering with no `.pdf_warning`.

@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+import to_pdf
 from pipeline.pdf.math_fixes import merge_ltr_math, merge_rtl_math_number
 from to_pdf import (
     BUILD_FONTS_PATH,
@@ -15,6 +16,7 @@ from to_pdf import (
     FONTS_DIR,
     LATEX_HEADER,
     PdfRenderError,
+    build_tex,
     convert_to_pdf,
 )
 
@@ -572,6 +574,51 @@ class TestInvocation:
         assert not Path(build_dir).exists()
 
 
+class TestBuildTexSeam:
+    """build_tex is the shared pandoc pass — convert_to_pdf and the build-time cache primer
+    both go through it, so it must take its markdown verbatim."""
+
+    def test_the_markdown_reaches_pandoc_unpreprocessed(self):
+        # The primer feeds it raw markdown on purpose: wrap_english_phrases would mangle an
+        # image link into \LR{} fragments, and the run would never load graphicx.
+        fake = FakeRun()
+        raw = "![alt](img.png) and English words\n"
+        with tempfile.TemporaryDirectory() as d:
+            with patch("subprocess.run", fake):
+                build_tex(raw, Path(d))
+            assert (Path(d) / "input.md").read_text(encoding="utf-8") == raw
+
+    def test_it_returns_the_generated_tex_and_stages_the_build(self):
+        fake = FakeRun(tex_text="\\documentclass{article}")
+        with tempfile.TemporaryDirectory() as d:
+            with patch("subprocess.run", fake):
+                assert build_tex("x\n", Path(d)) == "\\documentclass{article}"
+            staged = sorted(p.name for p in Path(d).iterdir())
+        assert {"header.tex", "input.md", "build.tex"} <= set(staged)
+        assert set(p.name for p in FONTS_DIR.glob("*.ttf")) <= set(staged)
+
+    def test_a_missing_font_or_filter_fails_before_pandoc_runs(self):
+        fake = FakeRun()
+        for attr, message in (
+            ("HEBREW_FONT", "Font not found"),
+            ("HEBREW_FONT_BOLD", "Font not found"),
+            ("DIRECTION_FILTER", "Lua filter not found"),
+        ):
+            with tempfile.TemporaryDirectory() as d:
+                with patch("subprocess.run", fake):
+                    with patch.object(to_pdf, attr, Path(d) / "gone"):
+                        with pytest.raises(FileNotFoundError, match=message):
+                            build_tex("x\n", Path(d))
+        assert fake.calls == []
+
+    def test_a_pandoc_failure_is_a_render_error(self):
+        fake = FakeRun(pandoc_rc=1, pandoc_stderr="pandoc: boom")
+        with tempfile.TemporaryDirectory() as d:
+            with patch("subprocess.run", fake):
+                with pytest.raises(PdfRenderError, match="pandoc failed"):
+                    build_tex("x\n", Path(d))
+
+
 class TestRenderRecovery:
     def test_an_error_in_the_log_warns_even_though_the_engine_exited_zero(self):
         # -Z continue-on-errors makes a run that errored still exit 0, so judging by the return
@@ -611,7 +658,9 @@ class TestRenderRecovery:
         # written on build.xdv", for a render that produced no PDF at all.
         log = "Output written on build.xdv (12 pages, 41231 bytes).\n"
         stderr = 'error: Cannot proceed without .vf or "physical" font for PDF output\n'
-        fake = FakeRun(tectonic_rc=1, pdf_bytes=None, log_text=log, tectonic_stderrs=(stderr,))
+        fake = FakeRun(
+            tectonic_rc=1, pdf_bytes=None, log_text=log, tectonic_stderrs=(stderr,)
+        )
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError, match="Cannot proceed without"):
                 convert_to_pdf(md_path)
@@ -621,7 +670,9 @@ class TestRenderRecovery:
         # that says what went wrong behind kilobytes of them.
         noise = "warning: Missing character: no glyph for U+05D0\n" * 1000
         stderr = "error: the real cause\n" + noise
-        fake = FakeRun(tectonic_rc=1, pdf_bytes=None, log_text="", tectonic_stderrs=(stderr,))
+        fake = FakeRun(
+            tectonic_rc=1, pdf_bytes=None, log_text="", tectonic_stderrs=(stderr,)
+        )
         with _render(fake) as md_path:
             with pytest.raises(PdfRenderError) as exc:
                 convert_to_pdf(md_path)
