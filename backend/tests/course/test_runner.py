@@ -5,7 +5,7 @@ The overview run is fire-and-forget: `try_run_generate` schedules the work via
 executed with `asyncio.run(go())` — same pattern as `tests/test_runner.py`.
 db_client and Gemini (`analyze.analyze`) are fully mocked — no network, no
 database service. The two route-only concerns (CSV parsing, course-not-found
-wiring) are covered via the pure `resolve_slugs` / `main._find_course`.
+wiring) are covered via the pure `resolve_slugs` / `backend_main._find_course`.
 
 Locks are per-(course, slug): a run holds ONLY the current slug's lock, so a
 SEPARATE trigger can run a DIFFERENT slug of the same course in parallel, and a
@@ -23,7 +23,7 @@ import threading
 from pathlib import Path
 from types import SimpleNamespace
 
-import main
+import backend_main
 import pytest
 from course import analyze as course_analyze
 from course import collect as course_collect
@@ -165,7 +165,10 @@ async def _wait_done(course=COURSE, timeout=5.0):
     if pending:
         await asyncio.wait_for(asyncio.gather(*pending), timeout)
     status = course_runner.get_status(course)
-    return {**status, "extractors": {s: _untimed(e) for s, e in status["extractors"].items()}}
+    return {
+        **status,
+        "extractors": {s: _untimed(e) for s, e in status["extractors"].items()},
+    }
 
 
 def _untimed(entry):
@@ -285,7 +288,7 @@ class TestGenerateSubset:
 
     def test_unknown_course_is_error(self, db):
         async def go():
-            return await main._find_course("אין-כזה")
+            return await backend_main._find_course("אין-כזה")
 
         node, err = asyncio.run(go())
         assert node is None
@@ -1187,7 +1190,7 @@ class TestStatusAndListing:
         }
 
     def test_extractors_listing_in_declaration_order(self):
-        listing = main.overview_extractors()["extractors"]
+        listing = backend_main.overview_extractors()["extractors"]
         assert [x["slug"] for x in listing] == [
             "exam-hints",
             "student-qa",
@@ -1204,7 +1207,9 @@ class TestStatusAndListing:
         ]
 
     def test_extractors_listing_includes_phases(self):
-        by_slug = {x["slug"]: x for x in main.overview_extractors()["extractors"]}
+        by_slug = {
+            x["slug"]: x for x in backend_main.overview_extractors()["extractors"]
+        }
         # Pattern extractor → the three-phase pipeline; topics (immediate) → collect then render.
         assert by_slug["exam-hints"]["phases"] == ("extract", "analyze", "to_pdf")
         assert by_slug["topics"]["phases"] == ("topics", "to_pdf")

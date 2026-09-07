@@ -28,8 +28,8 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_R
 
 - **Pipeline functions stay pure** — paths/strings in, no global state, no `DATA_ROOT` knowledge. Endpoints download inputs into a tempdir workspace, run the function, upload outputs back.
 - **`pipeline/` is per-lecture, `course/` is per-course.** Anything aggregating across a course's lectures belongs in `course/`, never `pipeline/`.
-- **Keep `main.py` thin** — validation and boundary parsing live in the runners.
-- Asset paths resolve relative to `__file__`.
+- **Keep `backend_main.py` thin** — validation and boundary parsing live in the runners.
+- Shipped read-only files (`assets/`, `credentials.json`) resolve through `resource_path()` in `services/resources.py`, never off `__file__`.
 - **`database/` never calls back.** The backend calls it, so a return call would make the service graph cyclic and the packaged build unspawnable (see root `CLAUDE.md`). When a backend feature wants the store to notify or trigger it, invert it: the acting client reports in, or the backend subscribes to the database's SSE channel.
 
 ## Environment
@@ -44,17 +44,17 @@ Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GD
 
 ```bash
 cd backend
-uv sync --extra test             # one-time / after dep changes
-uv run uvicorn main:app --reload # dev (port 8000)
-uv run python main.py            # packaged: binds FASTSTUDY_PORT (0 = ephemeral), no reload
-uv run pytest tests/ -q          # CI runs exactly this on every push
+uv sync --extra test                     # one-time / after dep changes
+uv run uvicorn backend_main:app --reload # dev (port 8000)
+uv run python backend_main.py            # packaged: binds FASTSTUDY_PORT (0 = ephemeral), no reload
+uv run pytest tests/ -q                  # CI runs exactly this on every push
 ```
 
 `FASTSTUDY_SECRET` (launch-time, set by the packaged launcher) makes the secret check installed by `runtime.install_secret_check` reject every unauthenticated inbound request and makes `db_client` send the secret on its calls to `database/`; unset means no enforcement, which is what dev runs on. Rules and header names: `docs/API.md`.
 
 `runtime` is the shared launch module from `lib/runtime/py`, installed as a top-level `import runtime`. `runtime.serve` binds the loopback socket itself so it can print `FASTSTUDY_PORT=<port>` on stdout for the launcher to parse — `uvicorn.run(port=0)` never reports what it bound.
 
-External tools — `ffmpeg`, `ffprobe`, `pandoc`, `tectonic` — are spawned through `tool_path(name)` from `lib/tools/py` (installed as a top-level `import tools`), never by bare name: `FASTSTUDY_BIN_DIR` set means an absolute path into the shipped binaries, unset means PATH, which is dev. `main.py` probes all four once at startup, logs each missing one, and reports the result on `/health` as `tools` — a missing binary fails only the steps that need it, so it never stops the service starting. All four must be installed for a dev machine to run the pipeline end to end.
+External tools — `ffmpeg`, `ffprobe`, `pandoc`, `tectonic` — are spawned through `tool_path(name)` from `lib/tools/py` (installed as a top-level `import tools`), never by bare name: `FASTSTUDY_BIN_DIR` set means an absolute path into the shipped binaries, unset means PATH, which is dev. `backend_main.py` probes all four once at startup, logs each missing one, and reports the result on `/health` as `tools` — a missing binary fails only the steps that need it, so it never stops the service starting. All four must be installed for a dev machine to run the pipeline end to end.
 
 `runtime.state_path(*parts)` resolves everything the backend writes outside `DATA_ROOT` — `timing.db` and the per-scope Google token — under one root: `FASTSTUDY_STATE_DIR` if set, else `.state/` at the repo root. It is a pure join and creates nothing, so each caller mkdirs its own parent — otherwise an import would leave a directory behind, including in tests that redirect the path.
 

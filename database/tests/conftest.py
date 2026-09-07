@@ -11,8 +11,8 @@ sys.path.insert(0, str(_DATABASE))
 def data_root(tmp_path, monkeypatch):
     """Point the data root at a per-test temp dir so fs helpers never touch the real data directory."""
 
-    # main seeds the root from the environment at import, so import it first or that seed wins.
-    import main  # noqa: F401
+    # database_main seeds the root from the environment at import, so import it first or that seed wins.
+    import database_main  # noqa: F401
 
     root = tmp_path / "data"
     root.mkdir()

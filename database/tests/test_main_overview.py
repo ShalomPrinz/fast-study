@@ -8,10 +8,10 @@ from fastapi.testclient import TestClient
 def client(data_root):
     """TestClient over the app, with a course dir already present."""
 
-    import main
+    import database_main
 
     (data_root / "Algo").mkdir()
-    return TestClient(main.app)
+    return TestClient(database_main.app)
 
 
 def test_put_and_list_marker_via_http(client, data_root):

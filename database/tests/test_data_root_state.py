@@ -16,9 +16,9 @@ _DATABASE = Path(__file__).parent.parent
 def client():
     """TestClient over the app."""
 
-    import main
+    import database_main
 
-    return TestClient(main.app)
+    return TestClient(database_main.app)
 
 
 @pytest.fixture
@@ -68,7 +68,7 @@ def test_importing_main_without_data_root_does_not_raise(tmp_path):
         [
             sys.executable,
             "-c",
-            "import main, fs.paths; assert fs.paths._data_root is None",
+            "import database_main, fs.paths; assert fs.paths._data_root is None",
         ],
         cwd=tmp_path,
         env=env,

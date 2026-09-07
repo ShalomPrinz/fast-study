@@ -20,9 +20,9 @@ def lecture(data_root):
 def client(data_root):
     """TestClient over the app."""
 
-    import main
+    import database_main
 
-    return TestClient(main.app)
+    return TestClient(database_main.app)
 
 
 def test_first_upload_is_unnumbered(lecture):
