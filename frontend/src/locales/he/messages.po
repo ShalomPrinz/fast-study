@@ -81,7 +81,7 @@ msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, one {אחת לא נתמכת} two {# לא נתמכות} other {# לא נתמכות}}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:150
+#: src/features/downloads/components/RecordingRow.tsx:151
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -141,11 +141,11 @@ msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
-#: src/features/downloads/components/RecordingRow.tsx:130
+#: src/features/downloads/components/RecordingRow.tsx:131
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
-#: src/features/downloads/components/RecordingRow.tsx:139
+#: src/features/downloads/components/RecordingRow.tsx:140
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
@@ -158,7 +158,7 @@ msgstr "{generated} מתוך {0} יוצרו"
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} other {ב-# הרצאות}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:250
+#: src/features/downloads/components/RecordingRow.tsx:251
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -286,7 +286,7 @@ msgstr "ארכיון ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שברצונך לייצר מחדש?"
 
-#: src/features/downloads/components/RecordingRow.tsx:238
+#: src/features/downloads/components/RecordingRow.tsx:239
 msgid "Attach material to"
 msgstr "צרף חומר אל"
 
@@ -367,7 +367,7 @@ msgstr "בודקים…"
 msgid "Close"
 msgstr "סגור"
 
-#: src/features/downloads/components/RecordingRow.tsx:161
+#: src/features/downloads/components/RecordingRow.tsx:162
 msgid "Collapse"
 msgstr "כווץ"
 
@@ -498,21 +498,26 @@ msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 msgid "Done"
 msgstr "סיום"
 
-#: src/features/downloads/components/RecordingRow.tsx:285
+#: src/features/downloads/components/RecordingRow.tsx:298
 msgid "Download"
 msgstr "הורד"
+
+#: src/features/downloads/components/RecordingRow.tsx:278
+#: src/features/downloads/components/RecordingRow.tsx:279
+msgid "Download again"
+msgstr "הורד מחדש"
 
 #. placeholder {0}: items.length
 #: src/features/downloads/components/SectionGroup.tsx:252
 msgid "Download all {0}"
 msgstr "הורד הכל ({0})"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
-#: src/features/downloads/components/RecordingRow.tsx:283
+#: src/features/downloads/components/RecordingRow.tsx:258
+#: src/features/downloads/components/RecordingRow.tsx:296
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
-#: src/features/downloads/components/RecordingRow.tsx:262
+#: src/features/downloads/components/RecordingRow.tsx:263
 msgid "Downloading"
 msgstr "מוריד"
 
@@ -526,7 +531,7 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
+#: src/features/downloads/components/RecordingRow.tsx:258
 #: src/features/downloads/components/SectionGroup.tsx:252
 msgid "Downloading…"
 msgstr "מוריד…"
@@ -576,7 +581,7 @@ msgstr "כל קורס, הרצאה, סרטון וסיכום נשמרים כאן. 
 msgid "Every lecture with a video is finished or already spoken for."
 msgstr "כל הרצאה שיש לה וידאו הושלמה או שכבר מטופלת."
 
-#: src/features/downloads/components/RecordingRow.tsx:161
+#: src/features/downloads/components/RecordingRow.tsx:162
 msgid "Expand"
 msgstr "הרחב"
 
@@ -614,7 +619,7 @@ msgstr "מחלץ אודיו"
 msgid "failed"
 msgstr "נכשל"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
+#: src/features/downloads/components/RecordingRow.tsx:258
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
@@ -647,7 +652,7 @@ msgstr "Fast Study"
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם דרוש מפתח משלכם, ויצירת שניהם חינמית."
 
-#: src/features/downloads/components/RecordingRow.tsx:204
+#: src/features/downloads/components/RecordingRow.tsx:205
 msgid "File type"
 msgstr "סוג קובץ"
 
@@ -713,7 +718,7 @@ msgstr "הגעת למגבלת הקצב של Groq"
 msgid "Home"
 msgstr "דף הבית"
 
-#: src/features/downloads/components/RecordingRow.tsx:269
+#: src/features/downloads/components/RecordingRow.tsx:272
 msgid "In course"
 msgstr "נמצא בקורס"
 
@@ -738,7 +743,7 @@ msgstr "השגיאה האחרונה:"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/RecordingRow.tsx:220
+#: src/features/downloads/components/RecordingRow.tsx:221
 msgid "Lecture"
 msgstr "הרצאה"
 
@@ -756,7 +761,7 @@ msgstr "הרצאה {0}"
 #~ msgid "Lecture 1"
 #~ msgstr "הרצאה 1"
 
-#: src/features/downloads/components/RecordingRow.tsx:238
+#: src/features/downloads/components/RecordingRow.tsx:239
 msgid "Lecture name"
 msgstr "שם ההרצאה"
 
@@ -803,7 +808,7 @@ msgstr "טוען…"
 msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
-#: src/features/downloads/components/RecordingRow.tsx:43
+#: src/features/downloads/components/RecordingRow.tsx:44
 msgid "Material"
 msgstr "חומר"
 
@@ -888,7 +893,7 @@ msgstr "לא נמצאו הקלטות."
 msgid "No step is running right now."
 msgstr "אף שלב אינו רץ כרגע."
 
-#: src/features/downloads/components/RecordingRow.tsx:276
+#: src/features/downloads/components/RecordingRow.tsx:289
 msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
@@ -1069,7 +1074,7 @@ msgstr "מוכן לניסיון חוזר"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/RecordingRow.tsx:226
+#: src/features/downloads/components/RecordingRow.tsx:227
 msgid "Recitation"
 msgstr "תרגול"
 
@@ -1149,7 +1154,7 @@ msgid "Results"
 msgstr "תוצאות"
 
 #: src/features/downloads/components/RecordingJobList.tsx:48
-#: src/features/downloads/components/RecordingRow.tsx:281
+#: src/features/downloads/components/RecordingRow.tsx:294
 msgid "Retry ✗"
 msgstr "נסה שוב ✗"
 
@@ -1216,7 +1221,7 @@ msgstr "שמור"
 msgid "Save & update PDF"
 msgstr "שמור ועדכן PDF"
 
-#: src/features/downloads/components/RecordingRow.tsx:212
+#: src/features/downloads/components/RecordingRow.tsx:213
 msgid "Save as"
 msgstr "שמור בשם"
 
@@ -1443,7 +1448,7 @@ msgstr "לא ידוע"
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
-#: src/features/downloads/components/RecordingRow.tsx:44
+#: src/features/downloads/components/RecordingRow.tsx:45
 msgid "Unsupported"
 msgstr "לא נתמך"
 
@@ -1471,7 +1476,7 @@ msgstr "מעלה ל-Drive"
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/RecordingRow.tsx:42
+#: src/features/downloads/components/RecordingRow.tsx:43
 #: src/features/lectures/constants/pipeline.ts:18
 msgid "Video"
 msgstr "סרטון"

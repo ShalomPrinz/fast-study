@@ -20,8 +20,10 @@ segments and the close button share row 1, everything the body renders spans bot
 Each recording is a card on two lines — **what it is** (title, plus the resolved-type chip on an `unknown`
 row) over **where it is going** (a `Save as` label, the Lecture/Recitation toggle, the name input, and the
 action). The states are tints: accent while downloading, with the job's bars stacked inside the card;
-`--ok` once the target exists in the course, where an `In course` chip stands in for the button; and faded
-for an `unsupported` row, whose button stays disabled behind its tooltip.
+`--ok` once the target exists in the course, where an `In course` chip and an icon-only `Download again`
+button take the place of the button; and faded for an `unsupported` row, whose button stays disabled behind
+its tooltip. That re-download stays visible rather than hover-revealed, so it is keyboard- and
+touch-reachable, and it routes through the row's own handler straight into the overwrite confirm.
 
 ## Auth
 
@@ -313,7 +315,7 @@ Each bar is literally `MainView`'s — same component, same `Estimating…` / `N
 `Nm Ns remaining` / `Taking longer than expected` states; the bars render inside the card, stacked beneath
 its "save as" line. While any job runs the action is a "Downloading" chip over an accent-tinted card; on
 all-done the SSE tree refresh lands at the same moment, so the card turns green and the action becomes the
-`In course` chip; on error the button comes back reading "Retry ✗".
+`In course` chip beside its re-download icon; on error the button comes back reading "Retry ✗".
 
 The provider — not the row — toasts a job failure via `toastJobError`, so one place covers single and bulk
 rows alike. It toasts each error id once (a failed job lingers until a retry supersedes it), guarded by a
