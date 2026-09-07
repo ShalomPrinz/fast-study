@@ -1,9 +1,10 @@
 from pathlib import Path
 
 from services.llm_client import LLMClient
+from services.resources import resource_path
 from timing import timed_pipeline
 
-PROMPT_FILE = Path(__file__).parent.parent / "assets" / "instructions" / "summarize.md"
+PROMPT_FILE = resource_path("assets", "instructions", "summarize.md")
 
 # Appended to every request — keeps the page budget tunable without editing the prompt file.
 LENGTH_BUDGET_SUFFIX = (

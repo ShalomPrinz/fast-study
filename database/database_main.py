@@ -19,6 +19,9 @@ from logging_setup import setup_logging
 setup_logging()
 log = logging.getLogger("db")
 
+# The dev __main__ path and the frozen dispatcher both read the port from here, so there is one default.
+DEFAULT_PORT = 8001
+
 # An absent or blank root leaves the service unconfigured rather than failing to boot: that is the
 # state the first-run wall exists for, and POST /config is how it gets filled in.
 if os.environ.get("DATA_ROOT"):
@@ -419,4 +422,4 @@ async def notify(request: Request):
 
 
 if __name__ == "__main__":
-    runtime.serve(app, default_port=8001)
+    runtime.serve(app, default_port=DEFAULT_PORT)

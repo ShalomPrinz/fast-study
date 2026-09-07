@@ -8,9 +8,10 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 import runtime
+from services.resources import resource_path
 
 # Shipped alongside the code and only ever read, so it stays on the install side of the split.
-CREDENTIALS_PATH = str(Path(__file__).parent.parent / "credentials.json")
+CREDENTIALS_PATH = str(resource_path("credentials.json"))
 
 SCOPES_MAP = {
     "drive": ["https://www.googleapis.com/auth/drive.file"],

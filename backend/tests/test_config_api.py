@@ -1,12 +1,12 @@
 import os
 from unittest.mock import patch
 
-import main
+import backend_main
 import pytest
 from fastapi.testclient import TestClient
 from services import providers, settings
 
-client = TestClient(main.app)
+client = TestClient(backend_main.app)
 
 
 class TestConfigOptions:
@@ -43,9 +43,9 @@ class TestPostConfig:
 
     def test_drive_toggle_reaches_the_runner_with_no_restart(self):
         client.post("/config", json={"drive_enabled": False})
-        assert main.runner.enabled_steps()[-1] == "pdf"
+        assert backend_main.runner.enabled_steps()[-1] == "pdf"
         client.post("/config", json={"drive_enabled": True})
-        assert main.runner.enabled_steps()[-1] == "drive"
+        assert backend_main.runner.enabled_steps()[-1] == "drive"
 
 
 class TestProbeKey:
@@ -68,7 +68,7 @@ class TestProbeKey:
 class TestDisabledStep:
     def test_run_drive_is_refused_while_drive_is_off(self, monkeypatch):
         monkeypatch.setenv("DRIVE_ENABLED", "false")
-        with patch.object(main.runner, "try_run_step") as run:
+        with patch.object(backend_main.runner, "try_run_step") as run:
             body = client.post("/courses/C/lectures/L/run/drive").json()
         assert body == {"status": "error", "message": "drive is disabled in settings"}
         run.assert_not_called()
@@ -76,8 +76,12 @@ class TestDisabledStep:
     def test_run_pdf_is_unaffected(self, monkeypatch):
         monkeypatch.setenv("DRIVE_ENABLED", "false")
         with (
-            patch.object(main.runner.db_client, "file_exists", return_value=True),
-            patch.object(main.runner, "try_run_step", return_value="started") as run,
+            patch.object(
+                backend_main.runner.db_client, "file_exists", return_value=True
+            ),
+            patch.object(
+                backend_main.runner, "try_run_step", return_value="started"
+            ) as run,
         ):
             body = client.post("/courses/C/lectures/L/run/pdf").json()
         assert body == {"status": "started"}

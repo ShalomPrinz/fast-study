@@ -61,7 +61,7 @@ Because a slug holds its lock across its whole phase chain, the UI shows one spi
 
 ## from_phase and skip_existing
 
-`from_phase` makes the run START at that phase and continue through `to_pdf`. Earlier phases are skipped, so their `.txt`/`.md` files are kept (never deleted); a missing input just yields the phase's usual `skipped`. A `from_phase` an extractor doesn't declare falls back to that extractor's full chain. It is parsed at the HTTP boundary by `resolve_from_phase` so `main.py` stays thin route glue.
+`from_phase` makes the run START at that phase and continue through `to_pdf`. Earlier phases are skipped, so their `.txt`/`.md` files are kept (never deleted); a missing input just yields the phase's usual `skipped`. A `from_phase` an extractor doesn't declare falls back to that extractor's full chain. It is parsed at the HTTP boundary by `resolve_from_phase` so `backend_main.py` stays thin route glue.
 
 `skip_existing` (default `false`) is a **continue** mode:
 

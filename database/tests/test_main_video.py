@@ -8,9 +8,9 @@ from fastapi.testclient import TestClient
 def client():
     """TestClient over the app."""
 
-    import main
+    import database_main
 
-    return TestClient(main.app)
+    return TestClient(database_main.app)
 
 
 def test_put_video_writes_bytes(client, data_root):

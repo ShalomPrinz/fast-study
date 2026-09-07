@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from services.resources import resource_path
 from timing import timed_pipeline
 from tools import tool_path
 
@@ -27,12 +28,10 @@ from pipeline.pdf.text import (
     normalize_dashes,
 )
 
-FONTS_DIR = Path(__file__).parent.parent / "assets" / "fonts"
+FONTS_DIR = resource_path("assets", "fonts")
 HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 HEBREW_FONT_BOLD = FONTS_DIR / "NotoSansHebrew-Bold.ttf"
-DIRECTION_FILTER = (
-    Path(__file__).parent.parent / "assets" / "filters" / "text_direction.lua"
-)
+DIRECTION_FILTER = resource_path("assets", "filters", "text_direction.lua")
 
 # The fonts are copied into the build directory and referenced relatively, never by absolute path.
 # fontspec folds `Path=` and the font name into one bracketed XeTeX spec — `[C:/…/Font.ttf]/OT` —
@@ -229,9 +228,7 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
     raw_md = input_path.read_text(encoding="utf-8")
     fixed_md = apply_outside_fences(raw_md, preprocess_markdown)
 
-    template_path = (
-        Path(__file__).parent.parent / "assets" / "templates" / "pandoc_template.tex"
-    )
+    template_path = resource_path("assets", "templates", "pandoc_template.tex")
 
     # Everything the build touches lives in one tempdir: pandoc's inputs, the fonts, the generated
     # .tex, and the engine's aux files (it writes them beside the .tex, i.e. into the cwd).
@@ -311,6 +308,7 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
             return str(output_path), format_tex_errors(errors)
         if run.returncode != 0:
             return str(output_path), (
-                engine_errors or f"tectonic exited {run.returncode} with no reported error"
+                engine_errors
+                or f"tectonic exited {run.returncode} with no reported error"
             )
         return str(output_path), None

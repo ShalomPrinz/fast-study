@@ -29,9 +29,9 @@ def env_file(tmp_path, monkeypatch):
 def client(env_file):
     """TestClient over the app, with the settings store pointed at the throwaway .env."""
 
-    import main
+    import database_main
 
-    return TestClient(main.app)
+    return TestClient(database_main.app)
 
 
 def test_merge_leaves_everything_unnamed_untouched(env_file, tmp_path):

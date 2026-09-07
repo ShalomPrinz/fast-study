@@ -15,3 +15,7 @@ node_modules/
 .state/
 # A pristine copy of the dev state as it stood before the move out of the source tree.
 .state-backup/
+
+# PyInstaller output from delivery/services.spec, built inside backend/.
+build/
+dist/

@@ -26,7 +26,7 @@ Pipeline functions are pure — paths/strings in, no global state, no knowledge 
 
 `runner._db_workspace` is the bridge: a `tempfile.TemporaryDirectory` per step that pre-downloads named inputs and uploads named outputs on clean exit. ffmpeg/pandoc/Gemini need real filesystem paths, so the bytes have to land somewhere.
 
-Asset paths (`assets/fonts`, `assets/instructions`, `assets/templates`) resolve relative to `__file__`.
+Asset paths (`assets/fonts`, `assets/instructions`, `assets/templates`) resolve through `resource_path()` in `services/resources.py`, which reads them from the backend root in dev and from `sys._MEIPASS` when frozen.
 
 ## Empty-file guard
 
@@ -72,7 +72,7 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 It never caps a run the user asked for: `POST /run-all` always enqueues at depth `full`.
 
-The uploading service reports the arrival as a fact and holds no step names — the depth is the backend's alone. An APScheduler cron fires `_scheduled_run` daily at 03:00 (`main.py` lifespan); the hour is not a setting.
+The uploading service reports the arrival as a fact and holds no step names — the depth is the backend's alone. An APScheduler cron fires `_scheduled_run` daily at 03:00 (`backend_main.py` lifespan); the hour is not a setting.
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 
@@ -97,6 +97,6 @@ The db sits at `runtime.state_path("timing.db")`, outside the `backend/` tree `-
 
 ## Logging
 
-`logging_setup` (the shared `lib/logging/py` module, imported as `from logging_setup import setup_logging`) owns all logging config; `main.py` calls `setup_logging()` at import, which lands after uvicorn's own `dictConfig` and wins. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and rewrites `uvicorn.access` to `[api] POST /path → 200`.
+`logging_setup` (the shared `lib/logging/py` module, imported as `from logging_setup import setup_logging`) owns all logging config; `backend_main.py` calls `setup_logging()` at import, which lands after uvicorn's own `dictConfig` and wins. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and rewrites `uvicorn.access` to `[api] POST /path → 200`.
 
 Access lines for `HEAD`, `OPTIONS` (CORS preflights) and for 2xx `GET` are deliberately dropped — the frontend fires those constantly and they carry no information. Those requests still run; only their log line is suppressed. Everything else (any non-2xx, any mutating method) is logged.

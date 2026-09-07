@@ -1,6 +1,6 @@
 # HTTP API
 
-All endpoints are defined in `main.py`, which stays thin route glue — validation helpers and boundary parsing live in the runners.
+All endpoints are defined in `backend_main.py`, which stays thin route glue — validation helpers and boundary parsing live in the runners.
 
 Every mutating endpoint is fire-and-forget: it schedules a background asyncio task and returns immediately. Results never come back in the HTTP response; the frontend reads them from the status endpoints.
 

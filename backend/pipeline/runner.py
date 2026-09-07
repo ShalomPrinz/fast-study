@@ -390,7 +390,7 @@ _EXECUTORS = {
 
 
 def execute_step(course: str, lecture: str, kind: str, step: str) -> dict:
-    """Public dispatch: called by main.py route handlers."""
+    """Public dispatch: called by backend_main.py route handlers."""
 
     return _EXECUTORS[step](course, lecture, kind)
 

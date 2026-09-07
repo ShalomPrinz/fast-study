@@ -1,7 +1,7 @@
 # lib/logging
 
 `setup_logging()` plus the `AccessFilter` / `AccessFormatter` behind it, shared by `backend/` and
-`database/`. Called once at each service's `main.py` import — after uvicorn's own `dictConfig`, so it
+`database/`. Called once at each service's entry-module import — after uvicorn's own `dictConfig`, so it
 wins.
 
 It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO
@@ -11,7 +11,7 @@ fires constantly (HEAD/OPTIONS probes and successful GETs), and rewrites what su
 
 ## The module is `logging_setup.py`, never `logging.py`
 
-The folder is `lib/logging`; the module inside `py/` is `logging_setup`. `py-modules` installs a *top-level*
+The folder is `lib/logging`; the module inside `py/` is `logging_setup`. `py-modules` installs a _top-level_
 name into each consumer's venv, so a module named `logging` here would shadow the standard library's
 `logging` for that entire service — including for every dependency that imports it. The folder name
 is safe because nothing installs the folder; the file name is not.

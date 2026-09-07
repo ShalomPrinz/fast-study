@@ -1,7 +1,7 @@
-import main
+import backend_main
 from fastapi.testclient import TestClient
 
-client = TestClient(main.app)
+client = TestClient(backend_main.app)
 
 
 class TestPostTiming:

@@ -41,7 +41,7 @@ PREDEFINED_FILES = (
 MATERIAL_PREFIX = "material"
 MATERIAL_EXT = ".pdf"
 
-# The data root as explicit module state: unset until main.py seeds it or POST /config sets it.
+# The data root as explicit module state: unset until database_main.py seeds it or POST /config sets it.
 _data_root: Path | None = None
 
 

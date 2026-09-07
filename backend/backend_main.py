@@ -24,6 +24,10 @@ log = logging.getLogger("api")
 # screen polls /health, and re-spawning four binaries per poll would cost more than the answer is
 # worth. A tool installed afterwards is picked up on the next launch.
 TOOLS = ("ffmpeg", "ffprobe", "pandoc", "tectonic")
+
+# The dev port, and the fallback the packaged launcher gets when FASTSTUDY_PORT is unset. Read by
+# `delivery/entry.py` too, so the frozen dispatcher and the `__main__` path below cannot diverge.
+DEFAULT_PORT = 8000
 tool_status = check_tools(TOOLS)
 for _name, _state in tool_status.items():
     if _state != "ok":
@@ -286,6 +290,6 @@ async def config_probe_key(probe: KeyProbe):
     return {"result": result}
 
 
-# Packaged entry point only — dev runs `uvicorn main:app --reload`, which never reaches this.
+# Packaged entry point only — dev runs `uvicorn backend_main:app --reload`, which never reaches this.
 if __name__ == "__main__":
-    runtime.serve(app, default_port=8000)
+    runtime.serve(app, default_port=DEFAULT_PORT)
