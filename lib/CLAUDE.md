@@ -29,6 +29,12 @@ A module belongs here when **a second service needs it** *and* **divergence betw
 a defect**. Both halves, not one. A helper with a single consumer stays in its service, and so does
 one where two services legitimately want different behavior — put it here only when they must agree.
 
+## Documenting it
+
+A behavioral claim in a `lib/` doc has to hold on **both** run paths — packaged (`runtime.serve()`
+under the launcher) and dev (`uv run uvicorn --reload`, plain `node`). Where they differ, state the
+invariant that covers both and keep the difference: it is usually why the wiring exists.
+
 ## Relation to the service call graph
 
 `lib/` calls nothing and is called by everything, so it sits outside the acyclic call graph in the
