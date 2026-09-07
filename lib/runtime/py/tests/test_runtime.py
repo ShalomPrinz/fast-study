@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import socket
@@ -11,6 +12,8 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 SECRET = "s3cr3t"
+# Same length as SECRET on purpose: a length mismatch never reaches compare_digest at all.
+WRONG = "wrong!"
 
 
 @pytest.fixture
@@ -110,10 +113,50 @@ def test_wrong_header_alone_is_rejected(client):
     )
 
 
-def test_malformed_byte_in_the_query_string_is_a_401_not_a_500(client):
-    """A byte no utf-8 decoder accepts; decoding it as utf-8 would raise and Starlette would answer 500."""
+def test_same_length_wrong_header_is_rejected(client):
+    """The only case that reaches compare_digest with equal-length input; every other rejection stops at the length."""
+
+    assert (
+        client.get("/thing", headers={"X-FastStudy-Secret": WRONG}).status_code == 401
+    )
+
+
+def test_same_length_wrong_query_parameter_is_rejected(client):
+    """The same boundary on the query parameter, which is compared independently of the header."""
+
+    assert client.get("/thing", params={"secret": WRONG}).status_code == 401
+
+
+def test_percent_encoded_non_ascii_in_the_query_string_is_a_401_not_a_500(client):
+    """`%FF` percent-decodes to a byte outside ASCII; the latin-1 decode carries it through to a mismatch."""
 
     assert client.get("/thing?secret=%FF").status_code == 401
+
+
+def test_raw_non_ascii_byte_in_the_query_string_is_a_401_not_a_500():
+    """Driven straight at the middleware: httpx percent-encodes a raw `\\xff` away before TestClient sees it."""
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/thing",
+        "query_string": b"secret=\xff",
+        "headers": [],
+    }
+    sent = []
+
+    async def send(message):
+        sent.append(message)
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def unreachable(scope, receive, send):
+        raise AssertionError("the middleware must not pass this through")
+
+    middleware = runtime.SecretMiddleware(unreachable, SECRET)
+    asyncio.run(middleware(scope, receive, send))
+    assert sent[0]["status"] == 401
 
 
 def test_malformed_byte_in_the_header_is_a_401_not_a_500(client):
