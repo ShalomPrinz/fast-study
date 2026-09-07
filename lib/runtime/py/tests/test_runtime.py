@@ -156,6 +156,30 @@ def test_duplicate_query_parameter_is_rejected_in_either_order(client):
     assert client.get(f"/thing?secret=junk&secret={SECRET}").status_code == 401
 
 
+def test_blank_duplicate_query_parameter_is_rejected_after_the_secret(client):
+    """A blank duplicate is still a duplicate; without keep_blank_values it would collapse to one value."""
+
+    assert client.get(f"/thing?secret={SECRET}&secret=").status_code == 401
+
+
+def test_blank_duplicate_query_parameter_is_rejected_before_the_secret(client):
+    """The mirror form, which express also refuses — it parses both to a two-element array."""
+
+    assert client.get(f"/thing?secret=&secret={SECRET}").status_code == 401
+
+
+def test_valueless_duplicate_query_parameter_is_rejected(client):
+    """A bare `&secret` with no `=` is the third blank form, and counts as a second value too."""
+
+    assert client.get(f"/thing?secret={SECRET}&secret").status_code == 401
+
+
+def test_single_blank_query_parameter_is_rejected(client):
+    """One blank value is a credential that matches nothing, not an absent parameter."""
+
+    assert client.get("/thing?secret=").status_code == 401
+
+
 def test_secret_coerces_an_empty_env_var_to_none(monkeypatch):
     """An empty FASTSTUDY_SECRET reads as no enforcement, never as a secret nothing can match."""
 
