@@ -24,6 +24,7 @@ import {
   getSiteInfo,
   getAutologinKey,
   invalidToken,
+  blocked,
 } from '../moodle/wsClient.js';
 
 // Strategies whose row type is only knowable from a download-time probe — the WS payload names
@@ -110,6 +111,13 @@ export function sendUnsupported(res, message) {
   send(res, 422, { status: 'unsupported', message });
 }
 
+// Distinct "the site served a bot-protection challenge instead of a web-service answer" signal
+// so the page can say to wait rather than showing a generic failure. 503: the site is refusing
+// us for now, nothing about the request is wrong.
+function sendBlocked(res, message) {
+  send(res, 503, { status: 'blocked', message });
+}
+
 // Distinct "the zoom passcode gate couldn't be cleared" signal so the page can prompt
 // for a passcode (reason 'missing') or flag a wrong one (reason 'incorrect') and retry.
 function sendPasscode(res, { reason, course, name }) {
@@ -193,6 +201,10 @@ export async function handleList(req, res) {
       auth.markExpired();
       logResult('/list', 'reconnect (401)');
       return sendReconnect(res);
+    }
+    if (blocked(e)) {
+      logResult('/list', `blocked (503): ${e.message}`);
+      return sendBlocked(res, e.message);
     }
     throw e;
   }
@@ -301,6 +313,10 @@ async function resolveItem(req, res) {
         logResult('/resolve', 'reconnect (401)');
         return sendReconnect(res);
       }
+      if (blocked(e)) {
+        logResult('/resolve', `blocked (503): ${e.message}`);
+        return sendBlocked(res, e.message);
+      }
       throw e;
     }
     logResult('/resolve', `ok (${targets.length} target, material)`);
@@ -408,11 +424,16 @@ async function resolveItem(req, res) {
     });
   } catch (e) {
     // A dead token surfaces from getSiteInfo/getAutologinKey as an invalidToken WS
-    // exception → Reconnect. Other faults (rate-limit lockout, no .mp4) fall to 500.
+    // exception → Reconnect; the same two calls surface a bot-protection challenge as
+    // WsBlockedError. Other faults (rate-limit lockout, no .mp4) fall to 500.
     if (invalidToken(e)) {
       auth.markExpired();
       logResult('/resolve', 'reconnect (401)');
       return sendReconnect(res);
+    }
+    if (blocked(e)) {
+      logResult('/resolve', `blocked (503): ${e.message}`);
+      return sendBlocked(res, e.message);
     }
     throw e;
   }

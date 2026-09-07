@@ -31,7 +31,9 @@ There is no cookie/expiry heuristic — a token's validity is only observable by
 API. So `expired` is purely the runtime `markExpired()` flag. Moodle answers a dead token with
 HTTP 200 + an `invalidtoken` exception body (see `docs/MOODLE.md`); `/list` and the videostream
 download map that (`invalidToken(err)`) to `markExpired()` + `401 {status:'reconnect'}`, steering
-the UI to reconnect. `complete()` clears the flag.
+the UI to reconnect. `complete()` clears the flag. A bot-protection challenge (`blocked(err)`, see
+`docs/MOODLE.md`) is deliberately _not_ that signal: it says nothing about the token, so it leaves
+the flag alone and answers `503 {status:'blocked'}`.
 
 ## Videostream download authenticates on demand
 
