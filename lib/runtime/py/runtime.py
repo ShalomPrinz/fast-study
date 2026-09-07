@@ -1,6 +1,8 @@
+import errno
 import os
 import secrets
 import socket
+import sys
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -98,14 +100,33 @@ def install_secret_check(app) -> None:
         app.add_middleware(SecretMiddleware, secret=launch_secret)
 
 
+def _error_code(error: OSError) -> str:
+    """The errno's name, as node reports it: Windows names the socket errnos WSAEADDRINUSE where
+    every other platform (and libuv) says EADDRINUSE."""
+
+    return errno.errorcode.get(error.errno, str(error.errno)).removeprefix("WSA")
+
+
 def serve(app, default_port: int) -> None:
     """Serve app on loopback at FASTSTUDY_PORT (0 asks for an ephemeral one), reporting the bound port on stdout."""
 
     # Bound by hand because uvicorn never reports what `port=0` resolved to, and the launcher has
     # to read the real port back to reach this service.
+    host = "127.0.0.1"
+    port = int(os.environ.get("FASTSTUDY_PORT", default_port))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("127.0.0.1", int(os.environ.get("FASTSTUDY_PORT", default_port))))
+    try:
+        sock.bind((host, port))
+    except OSError as error:
+        # stderr, never stdout: stdout is the port-handshake channel the launcher parses. One line
+        # in the shape runtime.js prints, so a bind failure reads the same from either half.
+        print(
+            f"faststudy: cannot bind {host}:{port} — {_error_code(error)} ({os.strerror(error.errno).lower()})",
+            file=sys.stderr,
+            flush=True,
+        )
+        raise SystemExit(1)
     # Listen before announcing, so a launcher connecting the instant it reads the line is not refused.
     sock.listen()
     print(f"FASTSTUDY_PORT={sock.getsockname()[1]}", flush=True)

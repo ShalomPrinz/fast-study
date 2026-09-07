@@ -1,3 +1,10 @@
+import os
+import re
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 import runtime
 from fastapi import FastAPI
@@ -198,3 +205,55 @@ def test_state_path_creates_nothing(monkeypatch, tmp_path):
     assert not path.exists()
     assert not path.parent.exists()
     assert not (tmp_path / "nowhere").exists()
+
+
+# serve() is driven in a child process because both of its outcomes end the process: a bind failure
+# exits 1, and a success hands the socket to uvicorn and never returns.
+_PACKAGE_DIR = Path(runtime.__file__).resolve().parent
+_CHILD = "import runtime; from starlette.applications import Starlette; runtime.serve(Starlette(), 0)"
+
+
+@pytest.fixture
+def taken_port():
+    """A port held open for the whole test, so a child binding it must fail."""
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        sock.listen()
+        yield sock.getsockname()[1]
+
+
+def _child(port: int, **kwargs) -> subprocess.Popen:
+    return subprocess.Popen(
+        [sys.executable, "-c", _CHILD],
+        cwd=_PACKAGE_DIR,
+        env={**os.environ, "FASTSTUDY_PORT": str(port)},
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        **kwargs,
+    )
+
+
+def test_successful_bind_announces_the_port_on_stdout():
+    """The launcher matches `^FASTSTUDY_PORT=(\\d+)$`, so the line stands alone and carries the real port."""
+
+    process = _child(0)
+    try:
+        line = process.stdout.readline()
+        assert re.fullmatch(r"FASTSTUDY_PORT=\d+", line.strip())
+    finally:
+        process.kill()
+        process.wait(timeout=10)
+
+
+def test_failed_bind_names_the_address_and_errno_on_stderr(taken_port):
+    """One stderr line and exit 1, in the shape runtime.js prints — never a traceback."""
+
+    process = _child(taken_port)
+    stdout, stderr = process.communicate(timeout=30)
+    assert process.returncode == 1
+    assert f"cannot bind 127.0.0.1:{taken_port}" in stderr
+    assert "EADDRINUSE" in stderr
+    # stdout is the launcher's handshake channel and must carry nothing when the bind failed.
+    assert "FASTSTUDY_PORT=" not in stdout

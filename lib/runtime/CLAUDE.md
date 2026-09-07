@@ -15,6 +15,12 @@ The socket is bound by hand on the Python side because `uvicorn.run(port=0)` nev
 resolved to. The announcement comes *after* `listen()` so a launcher connecting on the instant it
 reads the line is not refused.
 
+A bind that fails is one line on **stderr** — `faststudy: cannot bind 127.0.0.1:8002 — EADDRINUSE
+(address already in use)` — and exit 1, identical in both halves, with nothing on stdout: stdout is
+the handshake channel the launcher parses, and a traceback there would read as a garbled port line.
+The JS half therefore binds with no listen callback and attaches `'listening'` and `'error'` itself,
+because express registers a listen callback on `'error'` as well and would hand it a null address.
+
 **The launch-secret check.** Every request must carry `$FASTSTUDY_SECRET` as an `X-FastStudy-Secret`
 header **or** a `secret` query parameter. The query parameter exists solely because native
 `EventSource` cannot set a header; the two are tried independently, never `header or param`, so a
@@ -62,6 +68,9 @@ other fails here rather than in a service:
 - `js/tests/runtime.test.js` — a real express app on a real loopback port: `npm test` from `js/`.
   Driven over the wire rather than against a fake `req`, because the duplicate- and bracketed-query
   cases are assertions about express's own parser.
+
+Both also drive `serve()` in a child process, on a free port and on an occupied one, since either
+outcome ends the process.
 
 Both pin the repo root by markers (`package.json` + `CLAUDE.md` beside `.state`) rather than an
 absolute path, which is what catches a wrong parent depth after either half moves.
