@@ -4,14 +4,12 @@ from contextlib import asynccontextmanager
 from typing import Literal, get_args
 
 import runtime
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.triggers.cron import CronTrigger
 from course import overview
 from course import runner as course_runner
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 from logging_setup import setup_logging
-from pipeline import runner
+from pipeline import runner, schedule
 from pydantic import BaseModel
 from services import db_client, providers, settings
 from timing import get_stats, init_db, record
@@ -36,17 +34,14 @@ for _name, _state in tool_status.items():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Start the APScheduler cron that auto-runs pending lectures at 03:00 daily."""
+    """Run the nightly catch-up cron for the lifetime of the app; NIGHTLY_RUN and
+    NIGHTLY_HOUR decide whether it is scheduled and when."""
 
-    scheduler = AsyncIOScheduler()
-    scheduler.add_job(
-        runner._scheduled_run, CronTrigger(hour=3, minute=0), id="run_all_daily"
-    )
-    scheduler.start()
+    schedule.start()
     try:
         yield
     finally:
-        scheduler.shutdown(wait=False)
+        schedule.shutdown()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -252,6 +247,8 @@ class ConfigUpdate(BaseModel):
     drive_enabled: bool | None = None
     gdrive_root_folder: str | None = None
     auto_run: str | None = None
+    nightly_run: bool | None = None
+    nightly_hour: int | None = None
 
 
 class KeyProbe(BaseModel):
@@ -265,6 +262,8 @@ def config_update(update: ConfigUpdate):
     The response names the applied fields only — a key value is never logged or echoed."""
 
     applied = settings.apply_config(update.model_dump(exclude_unset=True))
+    # Unconditional: apply() is idempotent, so it costs less than tracking which fields moved.
+    schedule.apply()
     return {"status": "ok", "applied": applied}
 
 

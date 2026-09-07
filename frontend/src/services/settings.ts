@@ -15,6 +15,15 @@ export function toAutoRun(stored: string | null): AutoRun {
   return (AUTO_RUN_MODES as readonly string[]).includes(stored ?? '') ? (stored as AutoRun) : 'full'
 }
 
+// The hour the nightly catch-up pass fires. The backend clamps an unset or out-of-range value to
+// the same 3, so a store holding anything else still shows the hour that will actually run.
+export const DEFAULT_NIGHTLY_HOUR = 3
+
+export function toNightlyHour(stored: number | null): number {
+  if (stored === null || !Number.isInteger(stored)) return DEFAULT_NIGHTLY_HOUR
+  return stored >= 0 && stored <= 23 ? stored : DEFAULT_NIGHTLY_HOUR
+}
+
 // The store's read view. `null` is "nothing stored", which has to stay distinguishable from a
 // stored value: the client, not the store, owns every default.
 export interface Settings {
@@ -25,6 +34,8 @@ export interface Settings {
   driveEnabled: boolean | null
   gdriveRootFolder: string | null
   autoRun: string | null
+  nightlyRun: boolean | null
+  nightlyHour: number | null
 }
 
 // A partial save; omitted fields are left alone. The two keys are write-only — they go out here
@@ -37,6 +48,9 @@ export interface SettingsPatch {
   driveEnabled?: boolean
   gdriveRootFolder?: string
   autoRun?: AutoRun
+  nightlyRun?: boolean
+  // A number, never the raw string a `<select>` hands back: the store rejects a JSON string.
+  nightlyHour?: number
 }
 
 export type SettingsField = keyof SettingsPatch
@@ -49,6 +63,8 @@ const WIRE: Record<SettingsField, string> = {
   driveEnabled: 'drive_enabled',
   gdriveRootFolder: 'gdrive_root_folder',
   autoRun: 'auto_run',
+  nightlyRun: 'nightly_run',
+  nightlyHour: 'nightly_hour',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
@@ -60,6 +76,8 @@ const BACKEND_FIELDS: SettingsField[] = [
   'driveEnabled',
   'gdriveRootFolder',
   'autoRun',
+  'nightlyRun',
+  'nightlyHour',
 ]
 const DATABASE_FIELDS: SettingsField[] = ['dataRoot']
 
@@ -71,6 +89,8 @@ interface RawSettings {
   drive_enabled: boolean | null
   gdrive_root_folder: string | null
   auto_run: string | null
+  nightly_run: boolean | null
+  nightly_hour: number | null
 }
 
 function normalize(raw: RawSettings): Settings {
@@ -82,6 +102,8 @@ function normalize(raw: RawSettings): Settings {
     driveEnabled: raw.drive_enabled,
     gdriveRootFolder: raw.gdrive_root_folder,
     autoRun: raw.auto_run,
+    nightlyRun: raw.nightly_run,
+    nightlyHour: raw.nightly_hour,
   }
 }
 

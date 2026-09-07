@@ -59,6 +59,12 @@
   border-color: var(--accent);
 }
 
+/* A field switched off by the checkbox above it stays readable but visibly inert. */
+.settings-select:disabled {
+  color: var(--text-4);
+  cursor: not-allowed;
+}
+
 /* A path and a key are LTR strings whatever the UI language is, and they must not be reordered. */
 .settings-input--code {
   font-family: var(--font-mono);

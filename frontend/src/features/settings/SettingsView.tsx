@@ -5,6 +5,7 @@ import {
   fetchSettings,
   saveSettings,
   toAutoRun,
+  toNightlyHour,
   type AutoRun,
   type ConfigOptions,
   type Settings,
@@ -29,6 +30,10 @@ import '@/styles/modal.css'
 import '@/styles/settings-form.css'
 import './SettingsView.css'
 
+// The hours the nightly pass can be set to. The value stays a number all the way to the wire — the
+// store rejects a JSON string — while the label is a clock time, which reads the same in every locale.
+const NIGHTLY_HOURS = Array.from({ length: 24 }, (_, hour) => hour)
+
 // The language is not in here: it applies the moment it is picked and lives in `localStorage`, so
 // it never reaches a save.
 function initialForm(stored: Settings, options: ConfigOptions): SettingsForm {
@@ -40,6 +45,9 @@ function initialForm(stored: Settings, options: ConfigOptions): SettingsForm {
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? options.geminiModels[0] ?? '',
     autoRun: toAutoRun(stored.autoRun),
+    // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
+    nightlyRun: stored.nightlyRun ?? true,
+    nightlyHour: toNightlyHour(stored.nightlyHour),
   }
 }
 
@@ -239,7 +247,46 @@ export default function SettingsView() {
               <span className="settings-hint">
                 <Trans>
                   The ceiling on unattended work: it caps a dropped or downloaded video and the
-                  nightly 03:00 pass alike, never a run you start from the running pipelines page.
+                  nightly catch-up pass alike, never a run you start from the running pipelines
+                  page.
+                </Trans>
+              </span>
+            </div>
+            <div className="settings-field">
+              <label className="settings-check">
+                <input
+                  type="checkbox"
+                  checked={form.nightlyRun}
+                  onChange={(e) => setForm({ ...form, nightlyRun: e.target.checked })}
+                />
+                <span className="settings-check-text">
+                  <span>
+                    <Trans>Catch up on unfinished lectures overnight</Trans>
+                  </span>
+                </span>
+              </label>
+              <div className="settings-label">
+                <label htmlFor="nightly-hour">
+                  <Trans>Nightly pass hour</Trans>
+                </label>
+              </div>
+              <select
+                id="nightly-hour"
+                className="settings-select"
+                value={form.nightlyHour}
+                disabled={!form.nightlyRun}
+                onChange={(e) => setForm({ ...form, nightlyHour: Number(e.target.value) })}
+              >
+                {NIGHTLY_HOURS.map((hour) => (
+                  <option key={hour} value={hour}>
+                    {`${String(hour).padStart(2, '0')}:00`}
+                  </option>
+                ))}
+              </select>
+              <span className="settings-hint">
+                <Trans>
+                  The two gates are independent: the nightly pass is capped by the setting above as
+                  well, so with that set to do nothing, nothing runs unattended whatever the hour.
                 </Trans>
               </span>
             </div>

@@ -64,7 +64,7 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 `settings.auto_run()` returns `off`, `audio` or `full`; unset or unrecognised means `full`, which is the historical behaviour, so a typo can never silently stop every unattended run.
 
-| Value   | A video arriving (`/video-arrived`) | The 03:00 cron                                  |
+| Value   | A video arriving (`/video-arrived`) | The nightly cron                                |
 | ------- | ----------------------------------- | ----------------------------------------------- |
 | `off`   | logged and dropped                  | does nothing, not even a scan                   |
 | `audio` | queued at depth `audio`             | scans and queues at depth `audio`               |
@@ -72,9 +72,18 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 It never caps a run the user asked for: `POST /run-all` always enqueues at depth `full`.
 
-The uploading service reports the arrival as a fact and holds no step names — the depth is the backend's alone. An APScheduler cron fires `_scheduled_run` daily at 03:00 (`backend_main.py` lifespan); the hour is not a setting.
+The uploading service reports the arrival as a fact and holds no step names — the depth is the backend's alone.
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
+
+## The nightly catch-up pass
+
+`pipeline/schedule.py` owns the APScheduler instance that fires `_scheduled_run` once a day. It lives there, not in `backend_main.py`'s lifespan, so `POST /config` can re-apply the settings on the running process: `apply()` adds, reschedules or removes the single `run_all_daily` job and is idempotent, so the endpoint calls it unconditionally.
+
+`settings.nightly_run()` is the switch and `settings.nightly_hour()` the hour. Unset means on at 03:00 — the pass predates both settings, so no value has to preserve the old behaviour — and an hour that is non-numeric or outside 0-23 falls back to 03:00 rather than leaving the install with no nightly pass. The store validates an integer, not an hour; the range is enforced here.
+
+`NIGHTLY_RUN` and `AUTO_RUN` are independent gates and are deliberately not merged: `AUTO_RUN` is the depth ceiling on _all_ unattended work, `NIGHTLY_RUN` switches off only this pass. `AUTO_RUN=off` still stops the scheduled run from inside `_scheduled_run`.
+
 
 ## Rate limits
 

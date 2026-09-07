@@ -21,6 +21,14 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `auto_run`                                         | `AUTO_RUN`                                        |
+| `nightly_run` (bool), `nightly_hour` (int)         | `NIGHTLY_RUN`, `NIGHTLY_HOUR`                     |
+
+Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` — which is all the store
+knows about a value. It validates the _type_ and nothing else: `nightly_hour` is stored as any
+integer, and clamping it to a real hour is the backend's job, exactly as `AUTO_RUN`'s allowed modes
+are. Meaning belongs to the owning service; the store stays generic. An int that is unparsable in
+`.env` reads back as `null`, the same as an absent one, so a hand-edited typo falls back to the
+client's default instead of erroring.
 
 The two API keys are **write-only**: `PUT` accepts `gemini_api_key` / `groq_api_key`, and the read
 path reports only whether each is set, so a stored key never travels back to the client — the same
