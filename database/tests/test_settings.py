@@ -90,6 +90,7 @@ def test_absent_keys_read_as_null(env_file):
 
     assert stored["gdrive_root_folder"] is None
     assert stored["drive_enabled"] is None
+    assert stored["nightly_run"] is None
 
 
 def test_booleans_round_trip(env_file):
@@ -98,6 +99,47 @@ def test_booleans_round_trip(env_file):
 
     assert settings.write_settings({"drive_enabled": False})["drive_enabled"] is False
     assert "DRIVE_ENABLED='false'" in env_file.read_text(encoding="utf-8")
+
+
+def test_an_unset_int_reads_as_null(env_file):
+    assert settings.read_settings()["nightly_hour"] is None
+
+
+def test_a_non_numeric_stored_int_reads_as_null(env_file):
+    env_file.write_text("NIGHTLY_HOUR=midnight\n", encoding="utf-8")
+
+    assert settings.read_settings()["nightly_hour"] is None
+
+
+def test_integers_round_trip(env_file):
+    assert settings.write_settings({"nightly_hour": 3})["nightly_hour"] == 3
+    assert "NIGHTLY_HOUR='3'" in env_file.read_text(encoding="utf-8")
+
+
+# `isinstance(True, int)` is True, so a bool must be refused rather than stored as 1.
+def test_a_boolean_is_rejected_for_an_int_field(env_file):
+    with pytest.raises(ValueError):
+        settings.write_settings({"nightly_hour": True})
+
+    assert "NIGHTLY_HOUR" not in env_file.read_text(encoding="utf-8")
+
+
+def test_a_non_int_is_rejected_for_an_int_field(env_file):
+    with pytest.raises(ValueError):
+        settings.write_settings({"nightly_hour": "3"})
+
+    assert "NIGHTLY_HOUR" not in env_file.read_text(encoding="utf-8")
+
+
+# The store validates an integer, not an hour — clamping to 0..23 is the owning service's job.
+def test_an_out_of_range_hour_is_stored_unchanged(env_file):
+    assert settings.write_settings({"nightly_hour": 99})["nightly_hour"] == 99
+
+
+def test_an_int_is_merged_into_env_quoted_like_every_other_value():
+    merged = settings.merge_env_text("A=1\n", {"NIGHTLY_HOUR": "3"})
+
+    assert merged == "A=1\nNIGHTLY_HOUR='3'\n"
 
 
 def test_export_prefix_and_trailing_comment_survive_a_rewrite(env_file):

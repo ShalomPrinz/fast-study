@@ -103,6 +103,11 @@ merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 `PUT /settings` is the second exception to the 204-on-mutation convention: it answers with the
 `GET` shape so the client never needs a follow-up read.
 
+Values are typed three ways — string, bool (`drive_enabled`, `nightly_run`) and int
+(`nightly_hour`) — and the type is the whole of the validation: a wrong type is `400`, but a value's
+meaning, like whether an hour is in `0..23`, is the owning service's to enforce. `PUT` rejects a
+boolean for an int field on purpose, since Python would otherwise store `true` as `1`.
+
 ## Access logging
 
 `setup_logging()` from the shared [`lib/logging`](../../lib/logging/CLAUDE.md), called once at

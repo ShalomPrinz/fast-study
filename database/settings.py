@@ -17,6 +17,10 @@ STRING_FIELDS = {
 }
 BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",
+    "nightly_run": "NIGHTLY_RUN",
+}
+INT_FIELDS = {
+    "nightly_hour": "NIGHTLY_HOUR",
 }
 
 # Write-only: the read path reports set/unset only, so a stored key never travels to the client.
@@ -51,6 +55,18 @@ def _flag(value) -> bool | None:
 
     text = _text(value)
     return None if text is None else text.lower() in _TRUTHY
+
+
+def _int(value) -> int | None:
+    """Read a stored integer, or None when the key is absent or unparsable — the client defaults."""
+
+    text = _text(value)
+    if text is None:
+        return None
+    try:
+        return int(text)
+    except ValueError:
+        return None
 
 
 def _comment(rest: str) -> str:
@@ -91,6 +107,15 @@ def _incoming_flag(field: str, value) -> str:
     if not isinstance(value, bool):
         raise ValueError(f"{field} must be a boolean")
     return "true" if value else "false"
+
+
+def _incoming_int(field: str, value) -> str:
+    """Validate an incoming integer and return the text to store; range is the owning service's job."""
+
+    # `isinstance(True, int)` is True, so without this guard a boolean would silently store 1 or 0.
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{field} must be an integer")
+    return str(value)
 
 
 def prepare_data_root(value) -> str:
@@ -149,6 +174,7 @@ def read_settings() -> dict:
     values = dotenv_values(ENV_PATH)
     stored = {field: _text(values.get(env)) for field, env in STRING_FIELDS.items()}
     stored |= {field: _flag(values.get(env)) for field, env in BOOL_FIELDS.items()}
+    stored |= {field: _int(values.get(env)) for field, env in INT_FIELDS.items()}
     stored |= {
         f"{field}_set": _text(values.get(env)) is not None
         for field, env in SECRET_FIELDS.items()
@@ -172,6 +198,8 @@ def write_settings(patch: dict) -> dict:
             updates[SECRET_FIELDS[field]] = _incoming(field, value)
         elif field in BOOL_FIELDS:
             updates[BOOL_FIELDS[field]] = _incoming_flag(field, value)
+        elif field in INT_FIELDS:
+            updates[INT_FIELDS[field]] = _incoming_int(field, value)
         else:
             raise ValueError(f"unknown setting: {field}")
     if updates:
