@@ -138,4 +138,6 @@ def serve(app, default_port: int) -> None:
     # Listen before announcing, so a launcher connecting the instant it reads the line is not refused.
     sock.listen()
     print(f"FASTSTUDY_PORT={sock.getsockname()[1]}", flush=True)
-    uvicorn.Server(uvicorn.Config(app)).run(sockets=[sock])
+    # log_config=None: uvicorn's own dictConfig runs at Config() construction and would replace
+    # the uvicorn.access handler setup_logging() already installed, losing the [api] format.
+    uvicorn.Server(uvicorn.Config(app, log_config=None)).run(sockets=[sock])

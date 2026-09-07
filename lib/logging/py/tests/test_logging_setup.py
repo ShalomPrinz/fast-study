@@ -1,6 +1,6 @@
 import logging
 
-from logging_setup import AccessFilter, AccessFormatter
+from logging_setup import AccessFilter, AccessFormatter, setup_logging
 
 
 def access_record(method, path, status):
@@ -74,3 +74,23 @@ def test_wrong_arity_args_pass_through():
     )
     assert AccessFilter().filter(record) is True
     assert AccessFormatter().format(record) == "a b c"
+
+
+def test_setup_wires_the_access_logger():
+    """setup_logging() leaves uvicorn.access carrying both the filter and the formatter: the wiring
+    is what a competing dictConfig silently undoes, and the classes alone cannot catch that."""
+
+    setup_logging()
+    access = logging.getLogger("uvicorn.access")
+    assert any(isinstance(f, AccessFilter) for f in access.filters)
+    assert [type(h.formatter) for h in access.handlers] == [AccessFormatter]
+    # Without this the root handler prints uvicorn's raw line beside the reformatted one.
+    assert access.propagate is False
+
+
+def test_setup_is_idempotent():
+    """Both services import their entry module once, but a re-run must not stack a second handler."""
+
+    setup_logging()
+    setup_logging()
+    assert len(logging.getLogger("uvicorn.access").handlers) == 1

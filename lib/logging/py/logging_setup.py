@@ -33,5 +33,9 @@ def setup_logging():
     logging.getLogger("httpx").setLevel(logging.WARNING)
     access = logging.getLogger("uvicorn.access")
     access.addFilter(AccessFilter())
-    for handler in access.handlers:
-        handler.setFormatter(AccessFormatter())
+    # The handler is installed here, not adopted from uvicorn: serve() starts uvicorn with
+    # log_config=None, so this logger has none of its own and propagation would print the raw line.
+    handler = logging.StreamHandler()
+    handler.setFormatter(AccessFormatter())
+    access.handlers = [handler]
+    access.propagate = False

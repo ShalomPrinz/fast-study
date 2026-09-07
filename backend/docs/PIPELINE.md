@@ -97,6 +97,8 @@ The db sits at `runtime.state_path("timing.db")`, outside the `backend/` tree `-
 
 ## Logging
 
-`logging_setup` (the shared `lib/logging/py` module, imported as `from logging_setup import setup_logging`) owns all logging config; `backend_main.py` calls `setup_logging()` at import, which lands after uvicorn's own `dictConfig` and wins. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and rewrites `uvicorn.access` to `[api] POST /path → 200`.
+`logging_setup` (the shared `lib/logging/py` module, imported as `from logging_setup import setup_logging`) owns all logging config; `backend_main.py` calls `setup_logging()` at entry-module import, so it is the last thing to configure `uvicorn.access` on either path — packaged, uvicorn never configures that logger at all; under `--reload`, uvicorn's CLI configures it first and `setup_logging()` then replaces its handler list outright, leaving both paths identical. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and installs its own `uvicorn.access` handler — `[api] POST /path → 200`, `propagate` off — owning that logger outright rather than re-formatting one uvicorn placed.
+
+`runtime.serve()` starts uvicorn with `log_config=None` so uvicorn's own `dictConfig` never runs and never replaces that handler; the two go together. `uvicorn`/`uvicorn.error` propagate to root instead, so startup lines read `[uvicorn.error] Started server process`.
 
 Access lines for `HEAD`, `OPTIONS` (CORS preflights) and for 2xx `GET` are deliberately dropped — the frontend fires those constantly and they carry no information. Those requests still run; only their log line is suppressed. Everything else (any non-2xx, any mutating method) is logged.

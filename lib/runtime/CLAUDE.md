@@ -58,6 +58,13 @@ is fixed by the launcher and not itself a secret.
   depth is fixed by their position (`<repo>/lib/runtime/py/` and `<repo>/lib/runtime/js/`). Moving
   either folder breaks it and the depths must be re-checked. Both are pure joins that create nothing: importing a module that
   merely names a state file must not leave a directory behind.
+- **`serve()` starts uvicorn with `log_config=None` (Python).** `uvicorn.Config()` runs its own
+  `dictConfig` at construction, which would replace the `uvicorn.access` handler
+  [`lib/logging`](../logging/CLAUDE.md)'s `setup_logging()` installed at entry-module import and lose
+  the `[api] POST /path → 404` format. It also keeps uvicorn's access log off *stdout*, where its
+  default sends it and where the port handshake lives. `uvicorn`/`uvicorn.error` then propagate to
+  root and print as `[uvicorn.error] Started server process` — startup, shutdown and ASGI tracebacks
+  all intact.
 - **`peerHeaders` (JS) is for our own services only.** The launch secret must never ride an outbound
   call to an external lecture host.
 - **Runtime `dependencies` in `package.json` stay empty.** The module uses `node:crypto`, `node:path`

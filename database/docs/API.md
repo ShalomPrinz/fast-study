@@ -106,8 +106,13 @@ merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 ## Access logging
 
 `setup_logging()` from the shared [`lib/logging`](../../lib/logging/CLAUDE.md), called once at
-`database_main.py` import — after uvicorn's own `dictConfig`, so it wins — reformats uvicorn's access log to
-`[api] POST /courses/X/… → 200` and suppresses the routine classes of line: every `HEAD`, every
+`database_main.py` import, owns the `uvicorn.access` logger outright: at that point uvicorn has
+configured nothing, so it installs its own `StreamHandler` and sets `propagate = False` rather than
+re-formatting a handler uvicorn placed. `runtime.serve()` then starts uvicorn with `log_config=None`
+so uvicorn's own `dictConfig` never runs and never replaces it — the two go together. The access log
+therefore goes to stderr, off stdout, which is the `FASTSTUDY_PORT=<n>` port-handshake channel
+uvicorn's default access handler would otherwise share. Lines come out as
+`[api] POST /courses/X/… → 200`, and the routine classes are suppressed: every `HEAD`, every
 `OPTIONS`, and every `GET` that returned 2xx. Those requests still run normally — they are the
 frontend's constant existence probes, CORS preflights, and tree/status reads, and only their log
 lines are dropped. Failing GETs and all writes are always logged.
