@@ -225,6 +225,15 @@ def test_state_path_falls_back_to_dot_state_at_the_repo_root(monkeypatch):
     assert (root.parent / "CLAUDE.md").is_file()
 
 
+def test_state_path_treats_an_empty_state_dir_as_unset(monkeypatch):
+    """An empty launch variable reads as unset in both halves, never as a relative join under the cwd."""
+
+    monkeypatch.delenv("FASTSTUDY_STATE_DIR", raising=False)
+    unset = runtime.state_path("a")
+    monkeypatch.setenv("FASTSTUDY_STATE_DIR", "")
+    assert runtime.state_path("a") == unset
+
+
 def test_state_path_honors_an_explicit_state_dir(monkeypatch, tmp_path):
     """The launcher passes FASTSTUDY_STATE_DIR explicitly in a packaged build, and it wins verbatim."""
 
