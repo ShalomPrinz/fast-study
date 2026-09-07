@@ -80,6 +80,11 @@ instead of a recordings view that paints and unpaints. A plain failure does prom
 that error is shown. The row's `Loading…` state follows `pending`, while `.source-row--selected` and the
 recordings sections follow `selected`.
 
+Each discovery takes a ticket, and a superseded one writes nothing: closing the panel or loading another
+course bumps the ticket, so an answer the user has walked away from cannot reopen the panel or replace what
+is on it. The reconnect hint is the exception — an expired session is true whichever discovery found it, and
+it moves only the account chip.
+
 Each item carries `media`, one of three values: `'material'` for a Moodle PDF resource (appended as the
 lecture's next `material.N.pdf`), `'unknown'` for a Google Drive row — a Drive `url` module carries no
 filename, so auto genuinely cannot tell a video from a PDF from a `.zip` without a download-time probe —

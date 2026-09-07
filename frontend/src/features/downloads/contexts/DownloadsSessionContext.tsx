@@ -54,6 +54,11 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const sendUpdateRef = useRef(sendUpdate)
   sendUpdateRef.current = sendUpdate
 
+  // Every discovery takes a ticket and only the newest one may write to the page. `close` bumps it
+  // without starting anything, which is what keeps a closed panel closed when a discovery the user
+  // walked away from lands — and it drops course B's answer when the user has moved on to C.
+  const discoveryId = useRef(0)
+
   // Structural sharing is load-bearing: replacing only the edited ref's slice leaves every other
   // slice identical, which is what lets the memoized sibling rows bail out of a keystroke render.
   const setName = useCallback((ref: string, name: string) => {
@@ -92,29 +97,36 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const discover = useCallback(
     async (course: Course) => {
       if (!course.source_url) return
+      const id = ++discoveryId.current
       setPending(course.name)
       try {
         const found = await listRecordings(course.source_url)
+        if (id !== discoveryId.current) return
         clear()
         setItems(found)
         setSelected(course.name)
       } catch (err) {
+        // The expired session is true whichever discovery learned it, so the hint fires even for a
+        // superseded one: it moves the account chip, never the page.
         if (isReconnectError(err)) {
           reconnectHint()
-        } else {
-          clear()
-          setSelected(course.name)
-          setError('Failed to load recordings. Is the auto-downloader running?')
+          return
         }
+        if (id !== discoveryId.current) return
+        clear()
+        setSelected(course.name)
+        setError('Failed to load recordings. Is the auto-downloader running?')
       } finally {
-        setPending(null)
+        if (id === discoveryId.current) setPending(null)
       }
     },
     [clear, reconnectHint],
   )
 
   const close = useCallback(() => {
+    discoveryId.current++
     setSelected(null)
+    setPending(null)
     clear()
   }, [clear])
 

@@ -326,7 +326,7 @@ msgstr "BIU account connected"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "BIU account connected ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:76
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:81
 msgid "BIU session expired. Reconnect your account."
 msgstr "BIU session expired. Reconnect your account."
 

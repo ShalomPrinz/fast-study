@@ -326,7 +326,7 @@ msgstr "חשבון בר-אילן מחובר"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "חשבון בר-אילן מחובר ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:76
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:81
 msgid "BIU session expired. Reconnect your account."
 msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
