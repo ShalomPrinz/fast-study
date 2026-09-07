@@ -10,10 +10,10 @@ FastAPI app exposing two things over HTTP: the per-lecture video → audio → t
 
 `docs/` holds the durable architecture and hard-won knowledge. Read the relevant one before changing that area, and update it in the same pass when a change makes it stale.
 
-- @docs/PIPELINE.md — per-lecture stages, execution/lock model, rate-limit handling, timing
-- @docs/OVERVIEW.md — course overview: extractors, phases, run/lock model, `from_phase` + `skip_existing`
-- @docs/API.md — endpoint reference
-- @docs/PDF.md — the pandoc → tectonic render, the outcome rules and warning recovery, bidi gotchas, the markdown preprocessing chain
+- [docs/PIPELINE.md](docs/PIPELINE.md) — per-lecture stages, execution/lock model, rate-limit handling, timing
+- [docs/OVERVIEW.md](docs/OVERVIEW.md) — course overview: extractors, phases, run/lock model, `from_phase` + `skip_existing`
+- [docs/API.md](docs/API.md) — endpoint reference
+- [docs/PDF.md](docs/PDF.md) — the pandoc → tectonic render, the outcome rules and warning recovery, bidi gotchas, the markdown preprocessing chain
 - `timing/README.md` — timing.db schema, queries, maintenance scripts
 
 ## Layout
