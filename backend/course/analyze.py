@@ -1,14 +1,13 @@
 """Overview analyze phase: send one extractor's snippet report to Gemini with its prompt and
 write the result. Pure work — the runner owns the loop, status and failure isolation."""
 
-from pathlib import Path
-
 from services import db_client
 from services.llm_client import LLMClient
+from services.resources import resource_path
 
 from course.overview import Extractor
 
-PROMPT_DIR = Path(__file__).parent.parent / "assets" / "instructions" / "overview"
+PROMPT_DIR = resource_path("assets", "instructions", "overview")
 
 
 def analyze(extractor: Extractor, report: str, course: str) -> str:
