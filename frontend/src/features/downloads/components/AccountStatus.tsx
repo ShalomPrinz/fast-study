@@ -1,37 +1,32 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { AuthStatus } from '@/features/downloads/services/autoDownloader'
 import {
-  fetchAuthStatus,
   connectAuth,
   completeAuth,
+  disconnectAuth,
 } from '@/features/downloads/services/autoDownloader'
+import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
+import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import { toast } from '@/services/toaster'
 import '@/styles/chip.css'
 import '@/styles/button.css'
 
-type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing'
+type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing' | 'disconnecting'
 
-// The BIU account as a header fact: one chip saying where the session stands, and the one button
-// that can move it. Connect pops a headed browser on the host for MFA; Done persists the session.
+// The BIU account as a header fact: one chip saying where the session stands, and the one button that
+// can move it — Connect pops a headed browser for MFA, Done persists the session, Disconnect drops it.
 export default function AccountStatus() {
   const { t } = useLingui()
-  const [status, setStatus] = useState<AuthStatus | null>(null)
+  const { status, refresh } = useAuthStatus()
   const [phase, setPhase] = useState<Phase>('loading')
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false)
 
-  async function refresh() {
-    try {
-      setStatus(await fetchAuthStatus())
-    } catch {
-      // Connection errors are toasted centrally.
-      setStatus(null)
-    }
-  }
-
+  // Probing from here rather than from the provider is what keeps the `reconnectKey` remount
+  // meaningful: it re-runs this effect, and the shared status is replaced by a fresh answer.
   useEffect(() => {
     refresh().then(() => setPhase('idle'))
-  }, [])
+  }, [refresh])
 
   async function handleConnect() {
     setPhase('connecting')
@@ -51,6 +46,18 @@ export default function AccountStatus() {
       await refresh()
     } catch {
       toast('error', t`Failed to complete login. Try reconnecting.`)
+    }
+    setPhase('idle')
+  }
+
+  async function handleDisconnect() {
+    setConfirmDisconnect(false)
+    setPhase('disconnecting')
+    try {
+      await disconnectAuth()
+      await refresh()
+    } catch {
+      toast('error', t`Failed to disconnect the account.`)
     }
     setPhase('idle')
   }
@@ -84,9 +91,21 @@ export default function AccountStatus() {
           <Icon icon="check" />
           <Trans>BIU account connected</Trans>
         </span>
-        <button className="btn btn--ghost" onClick={handleConnect}>
-          <Trans>Manage account</Trans>
+        <button
+          className="btn btn--ghost"
+          onClick={() => setConfirmDisconnect(true)}
+          disabled={phase === 'disconnecting'}
+        >
+          {phase === 'disconnecting' ? t`disconnecting…` : t`Disconnect`}
         </button>
+        {confirmDisconnect && (
+          <ConfirmModal
+            message={t`Disconnect the BIU account?`}
+            warning={t`Connecting again needs a full login in a browser window, including MFA.`}
+            onConfirm={handleDisconnect}
+            onCancel={() => setConfirmDisconnect(false)}
+          />
+        )}
       </>
     )
   }

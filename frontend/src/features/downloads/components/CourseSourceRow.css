@@ -1,6 +1,9 @@
-/* One course's source URL: name, address, edit, action — all on one line. */
+/* One course's source URL: name, address, actions — all on one line. Three tracks rather than a
+   flex line, with the side ones equal, so the URL sits at the row's midpoint and every row's URL
+   lines up down the list however long the name beside it is. */
 .source-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(min-content, 1fr);
   align-items: center;
   gap: var(--space-5);
   padding: var(--space-5) var(--space-6);
@@ -9,10 +12,12 @@
   background: var(--surface);
 }
 
-/* Capped and ellipsized, so a long course name can't crowd the URL beside it off the row. */
+/* Ellipsized at its track, so a long course name can't crowd the URL beside it off the row.
+   Hugs the row's start rather than filling the cell, or `dir="auto"` would park a Hebrew name at
+   the far end of the track in an LTR UI. */
 .source-row-name {
-  flex-shrink: 0;
-  max-width: 220px;
+  justify-self: start;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -22,12 +27,12 @@
 }
 
 /* The URL column, in each of its three shapes — a real link, the invitation to set one, and the
-   field that edits it. All three take whatever the name leaves. */
+   field that edits it. All three own the middle track, centred in it. */
 .source-row-url-text,
 .source-row-url,
 .source-row-url-input {
-  flex: 1;
   min-width: 0;
+  text-align: center;
 }
 
 /* href and title carry the untruncated address. */
@@ -43,7 +48,6 @@
 
 /* "+ add source URL": the only click target when there's nothing to link to. */
 .source-row-url {
-  text-align: start;
   background: none;
   border: none;
   font: inherit;
@@ -56,6 +60,17 @@
 .source-row-url-text:hover,
 .source-row-url:hover {
   color: var(--accent);
+}
+
+/* Pencil and Load recordings ride one cell, at the row's far edge — the URL's centring depends on
+   the side tracks staying equal, which a second grid item on this side would break. Its track is
+   floored at the pair's own width (the name's is not — a long name ellipsizes), so a narrow window
+   costs the URL its exact centring rather than sliding the buttons over it. */
+.source-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: end;
+  gap: var(--space-5);
 }
 
 /* The loaded course: accent outline over a sunken fill, so the recordings below read as its. */

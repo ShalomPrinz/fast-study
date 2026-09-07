@@ -9,7 +9,8 @@ model, native to Moodle: MFA collapses from "every few hours" to ~once per token
 Two modules implement the client side:
 
 - **`src/moodle/wsClient.js`** — the stateless REST client (`getSiteInfo`, `getCourseContents`,
-  `getAutologinKey`, `pluginfileUrl`, `courseIdFrom`, `invalidToken`, `WsError`, `DEFAULT_SITE`).
+  `getAutologinKey`, `pluginfileUrl`, `courseIdFrom`, `invalidToken`, `blocked`, `WsError`,
+  `WsBlockedError`, `DEFAULT_SITE`).
 - **`src/auth/moodleToken.js`** — the one-time headed token grab + persistence (`MoodleToken`).
 
 ## Token acquisition (the one headed step)
@@ -72,6 +73,24 @@ with **HTTP 200** and a JSON body `{ exception, errorcode, message }`, not an HT
 keys on `errorcode ∈ { invalidtoken, accessexception }` — that's the "session died → Reconnect"
 signal (one MFA to re-grab a token). Any other errorcode is a real fault.
 
+**Bot protection (the other failure).** `lemida.biu.ac.il` sits behind Radware Bot Manager. When
+it decides a client is automated — a burst of calls is enough — `webservice/rest/server.php` stops
+answering the WS protocol at all: it serves a captcha page (**HTTP 200, `text/html`**, ~15 KB,
+setting `__uzma`/`__uzmb`/`__uzmc`/`__uzmd` cookies) or a **302** to one, for any client and any
+User-Agent, and keeps doing so for minutes. So a non-JSON answer is a category of its own, not a WS
+fault: `callWs` checks the status and content-type _before_ parsing and throws `WsBlockedError`,
+recognized by `blocked(err)`. Parsing first would report only `SyntaxError: Unexpected token '<'`,
+which names the symptom and hides the cause. `/list` and `/resolve` map it to
+`503 {status:'blocked', message}` — no retry and no client-side throttling: the wait is minutes
+long, and retrying is what deepens the block.
+
+The challenge reaches `pluginfile.php` too, where it is a corruption risk rather than a crash:
+it is HTTP 200, so `server/`'s `curl --fail` would save the captcha page as `material.pdf` with
+no error at all. `assertPluginfileReadable` therefore rejects an HTML (or redirected) answer as
+`WsBlockedError` before the download is handed over. Keying on HTML is safe because only
+resource files the WS declared `application/pdf` are routed down this path
+(`MoodleFileExtractor.claims`), so an HTML body is never the requested file.
+
 ### `core_webservice_get_site_info`
 
 Identity + capability probe. Fields we rely on: `userid` (needed for autologin), `functions[]`
@@ -127,6 +146,10 @@ await fetch(u); // 200, application/pdf, bytes
 
 `pluginfileUrl` uses `searchParams.set` (not string concat) because `fileurl` may already carry
 a query (e.g. `?forcedownload=1`) — a naïve `?token=` would produce a broken double-query.
+`assertPluginfileReadable` probes one byte first (`Range: bytes=0-0`) and refuses to hand over a
+URL that answers with Moodle's JSON exception body (dead token → `WsError`) or with a
+bot-protection challenge (→ `WsBlockedError`); `server/`'s download is fire-and-forget, so this
+is the last point where either can still be reported instead of written to disk.
 Verified against BIU: a 10.6 MB `resource` PDF → HTTP 200, `application/pdf`. (Wiring this into
 the pipeline is deferred — see `PDF_RES_FUTURE.md`.)
 
@@ -151,6 +174,8 @@ requesting IP**; fine for on-demand sniffing, needs graceful backoff. `userid` c
 
 ## Constraints / gotchas
 
+- **Bot protection** — a challenge is transient and not the token's fault; `blocked` never marks
+  the token expired, so the UI must not steer to Reconnect on it.
 - **Token lifetime** — Moodle default 12 weeks, admin-configurable; also revoked on password
   change. On `invalidToken` the UI shows Reconnect (one MFA to re-grab). Expected, not an error.
 - **`downloadfiles`** — pluginfile downloads require this capability; `1` on BIU today, but it

@@ -10,6 +10,7 @@ import {
   handleAuthStatus,
   handleAuthConnect,
   handleAuthComplete,
+  handleAuthDisconnect,
   handleList,
   handleListExpand,
   handleResolve,
@@ -45,6 +46,7 @@ app.get('/health', (req, res) => res.json({ status: 'ok', tools: toolStatus }));
 app.get('/auth/status', handleAuthStatus);
 app.post('/auth/connect', handleAuthConnect);
 app.post('/auth/complete', handleAuthComplete);
+app.post('/auth/disconnect', handleAuthDisconnect);
 app.post('/list', handleList);
 app.post('/list/expand', handleListExpand);
 app.post('/resolve', handleResolve);
