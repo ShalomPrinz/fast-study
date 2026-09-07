@@ -45,6 +45,10 @@ A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectK
 otherwise still read "connected". That is why the probe is fired from the component rather than from the
 provider, which never remounts.
 
+A course row's `Load recordings` is disabled, with a hint in its `title`, only when the probe came back
+`connected: false`. An unknown status leaves it enabled: guessing "disconnected" from a probe still in
+flight or one the service never answered would lock a working session out of discovery.
+
 ## The page session
 
 Everything the page discovers or accumulates — `selected`/`pending`, `items`, `error`, the row edits and

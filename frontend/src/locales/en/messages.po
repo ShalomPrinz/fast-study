@@ -214,7 +214,7 @@ msgstr "{withSource} courses with a source"
 msgid "+ Add a course source URL"
 msgstr "+ Add a course source URL"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:70
+#: src/features/downloads/components/CourseSourceRow.tsx:75
 msgid "+ add source URL"
 msgstr "+ add source URL"
 
@@ -318,7 +318,7 @@ msgstr "Auto-run: the whole pipeline"
 msgid "Back"
 msgstr "Back"
 
-#: src/features/downloads/components/AccountStatus.tsx:100
+#: src/features/downloads/components/AccountStatus.tsx:92
 msgid "BIU account connected"
 msgstr "BIU account connected"
 
@@ -326,7 +326,7 @@ msgstr "BIU account connected"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "BIU account connected ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:74
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:76
 msgid "BIU session expired. Reconnect your account."
 msgstr "BIU session expired. Reconnect your account."
 
@@ -351,7 +351,7 @@ msgstr "Change the data folder while lectures are being processed?"
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 
-#: src/features/downloads/components/AccountStatus.tsx:76
+#: src/features/downloads/components/AccountStatus.tsx:68
 msgid "checking account…"
 msgstr "checking account…"
 
@@ -383,11 +383,15 @@ msgstr "Compile"
 msgid "Complete"
 msgstr "Complete"
 
-#: src/features/downloads/components/AccountStatus.tsx:127
+#: src/features/downloads/components/AccountStatus.tsx:119
 msgid "Connect"
 msgstr "Connect"
 
-#: src/features/downloads/components/AccountStatus.tsx:112
+#: src/features/downloads/components/CourseSourceRow.tsx:95
+msgid "Connect your BIU account first"
+msgstr "Connect your BIU account first"
+
+#: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "Connecting again needs a full login in a browser window, including MFA."
 
@@ -474,15 +478,15 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:107
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:111
+#: src/features/downloads/components/AccountStatus.tsx:103
 msgid "Disconnect the BIU account?"
 msgstr "Disconnect the BIU account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:107
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "disconnecting…"
 msgstr "disconnecting…"
 
@@ -490,7 +494,7 @@ msgstr "disconnecting…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
-#: src/features/downloads/components/AccountStatus.tsx:88
+#: src/features/downloads/components/AccountStatus.tsx:80
 msgid "Done"
 msgstr "Done"
 
@@ -544,7 +548,7 @@ msgstr "Drive folder name"
 msgid "Drive upload failed"
 msgstr "Drive upload failed"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:75
+#: src/features/downloads/components/CourseSourceRow.tsx:80
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
@@ -614,11 +618,11 @@ msgstr "failed"
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
-#: src/features/downloads/components/AccountStatus.tsx:56
+#: src/features/downloads/components/AccountStatus.tsx:48
 msgid "Failed to complete login. Try reconnecting."
 msgstr "Failed to complete login. Try reconnecting."
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:60
 msgid "Failed to disconnect the account."
 msgstr "Failed to disconnect the account."
 
@@ -627,7 +631,7 @@ msgstr "Failed to disconnect the account."
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
-#: src/features/downloads/components/AccountStatus.tsx:45
+#: src/features/downloads/components/AccountStatus.tsx:37
 msgid "Failed to launch the login browser."
 msgstr "Failed to launch the login browser."
 
@@ -651,11 +655,11 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:85
+#: src/features/downloads/components/AccountStatus.tsx:77
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
-#: src/features/downloads/components/AccountStatus.tsx:88
+#: src/features/downloads/components/AccountStatus.tsx:80
 msgid "finishing…"
 msgstr "finishing…"
 
@@ -775,11 +779,11 @@ msgstr "Lectures {0}-{1}"
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:87
+#: src/features/downloads/components/CourseSourceRow.tsx:97
 msgid "Load recordings"
 msgstr "Load recordings"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:82
+#: src/features/downloads/components/CourseSourceRow.tsx:87
 msgid "Loaded"
 msgstr "Loaded"
 
@@ -791,7 +795,7 @@ msgstr "Loading recordings…"
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:87
+#: src/features/downloads/components/CourseSourceRow.tsx:97
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -888,7 +892,7 @@ msgstr "No step is running right now."
 msgid "Not a file the downloader can fetch"
 msgstr "Not a file the downloader can fetch"
 
-#: src/features/downloads/components/AccountStatus.tsx:124
+#: src/features/downloads/components/AccountStatus.tsx:116
 msgid "not connected"
 msgstr "not connected"
 
@@ -1099,7 +1103,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:127
+#: src/features/downloads/components/AccountStatus.tsx:119
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1249,7 +1253,7 @@ msgstr "Section {0} is waiting for a passcode"
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
-#: src/features/downloads/components/AccountStatus.tsx:124
+#: src/features/downloads/components/AccountStatus.tsx:116
 msgid "session expired"
 msgstr "session expired"
 

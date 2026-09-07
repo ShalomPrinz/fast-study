@@ -214,7 +214,7 @@ msgstr "{withSource} קורסים עם מקור"
 msgid "+ Add a course source URL"
 msgstr "+ הוספת כתובת מקור לקורס"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:70
+#: src/features/downloads/components/CourseSourceRow.tsx:75
 msgid "+ add source URL"
 msgstr "+ הוסף כתובת מקור"
 
@@ -318,7 +318,7 @@ msgstr "הרצה אוטומטית: כל הצינור"
 msgid "Back"
 msgstr "חזרה"
 
-#: src/features/downloads/components/AccountStatus.tsx:100
+#: src/features/downloads/components/AccountStatus.tsx:92
 msgid "BIU account connected"
 msgstr "חשבון בר-אילן מחובר"
 
@@ -326,7 +326,7 @@ msgstr "חשבון בר-אילן מחובר"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "חשבון בר-אילן מחובר ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:74
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:76
 msgid "BIU session expired. Reconnect your account."
 msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
@@ -351,7 +351,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחרת — שום דבר לא זז. התיקייה הישנה נשארת בדיוק כפי שהיא, וחזרה אליה כאן מחזירה את הכול."
 
-#: src/features/downloads/components/AccountStatus.tsx:76
+#: src/features/downloads/components/AccountStatus.tsx:68
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -383,11 +383,15 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/downloads/components/AccountStatus.tsx:127
+#: src/features/downloads/components/AccountStatus.tsx:119
 msgid "Connect"
 msgstr "התחבר"
 
-#: src/features/downloads/components/AccountStatus.tsx:112
+#: src/features/downloads/components/CourseSourceRow.tsx:95
+msgid "Connect your BIU account first"
+msgstr "יש לחבר תחילה את חשבון בר-אילן"
+
+#: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -474,15 +478,15 @@ msgstr "מחק את {0}"
 msgid "Discard all edits"
 msgstr "מחק את כל העריכות"
 
-#: src/features/downloads/components/AccountStatus.tsx:107
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "Disconnect"
 msgstr "התנתק"
 
-#: src/features/downloads/components/AccountStatus.tsx:111
+#: src/features/downloads/components/AccountStatus.tsx:103
 msgid "Disconnect the BIU account?"
 msgstr "לנתק את חשבון בר-אילן?"
 
-#: src/features/downloads/components/AccountStatus.tsx:107
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
@@ -490,7 +494,7 @@ msgstr "מתנתק…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
-#: src/features/downloads/components/AccountStatus.tsx:88
+#: src/features/downloads/components/AccountStatus.tsx:80
 msgid "Done"
 msgstr "סיום"
 
@@ -544,7 +548,7 @@ msgstr "שם התיקייה ב-Drive"
 msgid "Drive upload failed"
 msgstr "ההעלאה ל-Drive נכשלה"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:75
+#: src/features/downloads/components/CourseSourceRow.tsx:80
 msgid "Edit source URL"
 msgstr "ערוך כתובת מקור"
 
@@ -614,11 +618,11 @@ msgstr "נכשל"
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/downloads/components/AccountStatus.tsx:56
+#: src/features/downloads/components/AccountStatus.tsx:48
 msgid "Failed to complete login. Try reconnecting."
 msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:60
 msgid "Failed to disconnect the account."
 msgstr "ניתוק החשבון נכשל."
 
@@ -627,7 +631,7 @@ msgstr "ניתוק החשבון נכשל."
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
 
-#: src/features/downloads/components/AccountStatus.tsx:45
+#: src/features/downloads/components/AccountStatus.tsx:37
 msgid "Failed to launch the login browser."
 msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
@@ -651,11 +655,11 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:85
+#: src/features/downloads/components/AccountStatus.tsx:77
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
-#: src/features/downloads/components/AccountStatus.tsx:88
+#: src/features/downloads/components/AccountStatus.tsx:80
 msgid "finishing…"
 msgstr "מסיים…"
 
@@ -775,11 +779,11 @@ msgstr "הרצאות {0}-{1}"
 msgid "Let's set things up"
 msgstr "בואו נגדיר את הכול"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:87
+#: src/features/downloads/components/CourseSourceRow.tsx:97
 msgid "Load recordings"
 msgstr "טען הקלטות"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:82
+#: src/features/downloads/components/CourseSourceRow.tsx:87
 msgid "Loaded"
 msgstr "נטען"
 
@@ -791,7 +795,7 @@ msgstr "טוען הקלטות…"
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:87
+#: src/features/downloads/components/CourseSourceRow.tsx:97
 msgid "Loading…"
 msgstr "טוען…"
 
@@ -888,7 +892,7 @@ msgstr "אף שלב אינו רץ כרגע."
 msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
-#: src/features/downloads/components/AccountStatus.tsx:124
+#: src/features/downloads/components/AccountStatus.tsx:116
 msgid "not connected"
 msgstr "לא מחובר"
 
@@ -1099,7 +1103,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:127
+#: src/features/downloads/components/AccountStatus.tsx:119
 msgid "Reconnect"
 msgstr "התחבר מחדש"
 
@@ -1249,7 +1253,7 @@ msgstr "הקטע {0} ממתין לקוד גישה"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/features/downloads/components/AccountStatus.tsx:124
+#: src/features/downloads/components/AccountStatus.tsx:116
 msgid "session expired"
 msgstr "החיבור פג"
 
