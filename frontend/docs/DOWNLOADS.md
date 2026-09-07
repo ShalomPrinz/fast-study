@@ -27,9 +27,12 @@ for an `unsupported` row, whose button stays disabled behind its tooltip.
 
 `AccountStatus` probes `/auth/status` on mount and renders the answer as a header chip — `--ok` connected,
 `--warn` expired or mid-login, `--danger` not connected — beside the one button that can move it. Connect
-(and `Manage account`, which is the same call on an already-connected session) pops a headed browser on the
-host for MFA and returns immediately; the chip then waits for the user to click Done, which calls
-`/auth/complete` to persist the storage state and re-probes.
+pops a headed browser on the host for MFA and returns immediately; the chip then waits for the user to click
+Done, which calls `/auth/complete` to persist the storage state and re-probes.
+
+A connected session's button is `Disconnect`, behind a `ConfirmModal`: `/auth/disconnect` deletes the stored
+token, and getting it back is another headed MFA round-trip, so it must not fire on a stray click. It
+re-probes on success, and the button disables in flight the way Connect and Done do.
 
 A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectKey`, which is the `key` on
 `<AccountStatus>` — remounting forces a fresh probe, since the cached status predates the 401 and would

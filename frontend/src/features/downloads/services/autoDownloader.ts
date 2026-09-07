@@ -157,3 +157,8 @@ export async function connectAuth(): Promise<{ status: string }> {
 export async function completeAuth(): Promise<{ connected: boolean }> {
   return autoDownloader.post<{ connected: boolean }>('/auth/complete')
 }
+
+// Deletes the stored session locally; reconnecting costs a full headed MFA round-trip. Idempotent.
+export async function disconnectAuth(): Promise<{ connected: boolean }> {
+  return autoDownloader.post<{ connected: boolean }>('/auth/disconnect')
+}

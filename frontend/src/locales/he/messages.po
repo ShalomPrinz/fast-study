@@ -250,7 +250,7 @@ msgstr "הוסף הרצאה"
 msgid "Add recitation"
 msgstr "הוסף תרגול"
 
-#: src/features/lectures/EditSummaryView.tsx:230
+#: src/features/lectures/EditSummaryView.tsx:225
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל העריכות יימחקו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -258,7 +258,7 @@ msgstr "כל העריכות יימחקו והסיכום המקורי של ה-AI 
 msgid "All Generated"
 msgstr "הכל יוצר"
 
-#: src/features/lectures/EditSummaryView.tsx:188
+#: src/features/lectures/EditSummaryView.tsx:189
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -314,11 +314,11 @@ msgstr "הרצה אוטומטית: כבויה"
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל הצינור"
 
-#: src/features/lectures/EditSummaryView.tsx:161
+#: src/features/lectures/EditSummaryView.tsx:162
 msgid "Back"
 msgstr "חזרה"
 
-#: src/features/downloads/components/AccountStatus.tsx:85
+#: src/features/downloads/components/AccountStatus.tsx:100
 msgid "BIU account connected"
 msgstr "חשבון בר-אילן מחובר"
 
@@ -351,7 +351,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחרת — שום דבר לא זז. התיקייה הישנה נשארת בדיוק כפי שהיא, וחזרה אליה כאן מחזירה את הכול."
 
-#: src/features/downloads/components/AccountStatus.tsx:61
+#: src/features/downloads/components/AccountStatus.tsx:76
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -383,9 +383,13 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/downloads/components/AccountStatus.tsx:100
+#: src/features/downloads/components/AccountStatus.tsx:127
 msgid "Connect"
 msgstr "התחבר"
+
+#: src/features/downloads/components/AccountStatus.tsx:112
+msgid "Connecting again needs a full login in a browser window, including MFA."
+msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
 #: src/features/course-overview/components/GenerateAllButton.tsx:44
 msgid "Continue Generating"
@@ -466,15 +470,27 @@ msgstr "תיקיית נתונים"
 msgid "Delete {0}"
 msgstr "מחק את {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:180
+#: src/features/lectures/EditSummaryView.tsx:181
 msgid "Discard all edits"
 msgstr "מחק את כל העריכות"
+
+#: src/features/downloads/components/AccountStatus.tsx:107
+msgid "Disconnect"
+msgstr "התנתק"
+
+#: src/features/downloads/components/AccountStatus.tsx:111
+msgid "Disconnect the BIU account?"
+msgstr "לנתק את חשבון בר-אילן?"
+
+#: src/features/downloads/components/AccountStatus.tsx:107
+msgid "disconnecting…"
+msgstr "מתנתק…"
 
 #: src/features/settings/SettingsView.tsx:237
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
-#: src/features/downloads/components/AccountStatus.tsx:73
+#: src/features/downloads/components/AccountStatus.tsx:88
 msgid "Done"
 msgstr "סיום"
 
@@ -598,20 +614,24 @@ msgstr "נכשל"
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/downloads/components/AccountStatus.tsx:53
+#: src/features/downloads/components/AccountStatus.tsx:56
 msgid "Failed to complete login. Try reconnecting."
 msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
 
-#: src/features/lectures/EditSummaryView.tsx:131
-#: src/features/lectures/EditSummaryView.tsx:133
+#: src/features/downloads/components/AccountStatus.tsx:68
+msgid "Failed to disconnect the account."
+msgstr "ניתוק החשבון נכשל."
+
+#: src/features/lectures/EditSummaryView.tsx:132
+#: src/features/lectures/EditSummaryView.tsx:134
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
 
-#: src/features/downloads/components/AccountStatus.tsx:42
+#: src/features/downloads/components/AccountStatus.tsx:45
 msgid "Failed to launch the login browser."
 msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
-#: src/features/lectures/EditSummaryView.tsx:95
+#: src/features/lectures/EditSummaryView.tsx:96
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
@@ -631,11 +651,11 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:70
+#: src/features/downloads/components/AccountStatus.tsx:85
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
-#: src/features/downloads/components/AccountStatus.tsx:73
+#: src/features/downloads/components/AccountStatus.tsx:88
 msgid "finishing…"
 msgstr "מסיים…"
 
@@ -775,10 +795,6 @@ msgstr "טוען סיכומים…"
 msgid "Loading…"
 msgstr "טוען…"
 
-#: src/features/downloads/components/AccountStatus.tsx:88
-msgid "Manage account"
-msgstr "ניהול חשבון"
-
 #: src/features/search/SearchView.tsx:213
 msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
@@ -828,7 +844,7 @@ msgstr "לא נמצא חומר"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/EditSummaryView.tsx:180
+#: src/features/lectures/EditSummaryView.tsx:181
 msgid "No original saved"
 msgstr "לא נשמר מקור"
 
@@ -872,7 +888,7 @@ msgstr "אף שלב אינו רץ כרגע."
 msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
-#: src/features/downloads/components/AccountStatus.tsx:97
+#: src/features/downloads/components/AccountStatus.tsx:124
 msgid "not connected"
 msgstr "לא מחובר"
 
@@ -985,11 +1001,11 @@ msgstr "PDF"
 msgid "PDF export failed"
 msgstr "ייצוא ה-PDF נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:171
+#: src/features/lectures/EditSummaryView.tsx:172
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:172
+#: src/features/lectures/EditSummaryView.tsx:173
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -1083,7 +1099,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:100
+#: src/features/downloads/components/AccountStatus.tsx:127
 msgid "Reconnect"
 msgstr "התחבר מחדש"
 
@@ -1116,7 +1132,7 @@ msgstr "להחליף את video.mp4 הקיים ב\"{0}\"?"
 msgid "Required"
 msgstr "חובה"
 
-#: src/features/lectures/EditSummaryView.tsx:182
+#: src/features/lectures/EditSummaryView.tsx:183
 msgid "Restore original"
 msgstr "שחזר מקור"
 
@@ -1192,7 +1208,7 @@ msgstr "מריץ צינורות…"
 msgid "Save"
 msgstr "שמור"
 
-#: src/features/lectures/EditSummaryView.tsx:190
+#: src/features/lectures/EditSummaryView.tsx:191
 msgid "Save & update PDF"
 msgstr "שמור ועדכן PDF"
 
@@ -1233,7 +1249,7 @@ msgstr "הקטע {0} ממתין לקוד גישה"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/features/downloads/components/AccountStatus.tsx:97
+#: src/features/downloads/components/AccountStatus.tsx:124
 msgid "session expired"
 msgstr "החיבור פג"
 
@@ -1277,7 +1293,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:130
+#: src/features/lectures/EditSummaryView.tsx:131
 #: src/features/lectures/MainView.tsx:144
 msgid "Step already running"
 msgstr "השלב כבר רץ"
@@ -1381,7 +1397,7 @@ msgstr "המריץ לוקח אותן לפי הסדר"
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
-#: src/features/lectures/EditSummaryView.tsx:231
+#: src/features/lectures/EditSummaryView.tsx:226
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
 
@@ -1419,7 +1435,7 @@ msgstr "הוצא קורס מהארכיון"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:208
+#: src/features/lectures/EditSummaryView.tsx:209
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -1427,7 +1443,7 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
-#: src/features/lectures/EditSummaryView.tsx:190
+#: src/features/lectures/EditSummaryView.tsx:191
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 
