@@ -23,13 +23,30 @@ export default [
 
   // Node packages: downloader server + auto-downloader, both ESM.
   {
-    files: ['downloader/server/**/*.js', 'downloader/auto/**/*.js', 'lib/**/*.js', 'eslint.config.js'],
+    files: [
+      'downloader/server/**/*.js',
+      'downloader/auto/**/*.js',
+      'lib/**/*.js',
+      'eslint.config.js',
+    ],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',
       // Extractors ship `page.evaluate(() => document…)` callbacks that run in
       // the browser context, so both global sets are legitimately in scope.
       globals: { ...globals.node, ...globals.browser },
+    },
+    rules: baseline,
+  },
+
+  // Electron launcher: CommonJS, because a sandboxed preload script cannot be ESM and
+  // splitting one small package across both module systems buys nothing.
+  {
+    files: ['electron/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'commonjs',
+      globals: { ...globals.node },
     },
     rules: baseline,
   },
