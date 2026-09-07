@@ -67,6 +67,16 @@ npm run dev
 
 Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-coded; Ctrl-C kills all four. Per-service commands live in each service's `CLAUDE.md`.
 
+The desktop shell runs the same services the way the packaged app does — every service on an
+ephemeral port behind a launch secret, the frontend served over `app://bundle` instead of Vite:
+
+```bash
+npm run app        # builds frontend/dist, then launches the Electron window
+```
+
+It needs a built frontend, so a UI change means rebuilding; `npm run dev` stays the loop with hot
+reload. See `electron/CLAUDE.md`.
+
 The Chrome extension is dev-only and not part of the packaged build. It is loaded unpacked from `downloader/extension/regular`; after loading, set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to the ID Chrome assigned — there is no default, and unset means the server allowlists no extension origin, so CORS blocks the popup. See `downloader/README.md` for the full install guide.
 
 ## Tests
