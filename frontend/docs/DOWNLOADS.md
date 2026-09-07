@@ -47,7 +47,7 @@ provider, which never remounts.
 
 ## The page session
 
-Everything the page discovers or accumulates — `selected`, `items`, `loading`/`error`, the row edits and
+Everything the page discovers or accumulates — `selected`/`pending`, `items`, `error`, the row edits and
 `reconnectKey` — lives in `DownloadsSessionProvider`
 (`contexts/DownloadsSessionContext.tsx`), mounted in `Layout` above the outlet. `/downloads` is a route, so
 its view unmounts on any navigation; holding the session above the router is what lets the user open a
@@ -68,6 +68,13 @@ there and then, instead of being reseeded away as history by `primed` on a later
 ## Discovery
 
 One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order.
+
+The course being discovered and the course on the page are separate values. `discover` sets `pending`, and
+only once `listRecordings` resolves does it clear the old items and promote the name to `selected` — so a
+discovery that dies on an expired session leaves the page exactly as it was, a toast and nothing else,
+instead of a recordings view that paints and unpaints. A plain failure does promote it: the panel is where
+that error is shown. The row's `Loading…` state follows `pending`, while `.source-row--selected` and the
+recordings sections follow `selected`.
 
 Each item carries `media`, one of three values: `'material'` for a Moodle PDF resource (appended as the
 lecture's next `material.N.pdf`), `'unknown'` for a Google Drive row — a Drive `url` module carries no
