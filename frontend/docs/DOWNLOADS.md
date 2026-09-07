@@ -13,6 +13,11 @@ plus the dashed `AddCourseRow`, then — once a course is loaded — a **Recordi
 `.recordings-panel`. Downloads is the one page read at 880px rather than 660px, because a recording's second
 line carries a kind toggle, a name input and an action side by side.
 
+A source row is three grid tracks — name, URL, the pencil and Load recordings as one cell — with the side
+ones equal, so the URL sits at the row's midpoint and every row's URL lines up down the list however long
+the name beside it is. Only the action track is floored at its own content: a window too narrow for the
+even split costs the URL its exact centring rather than sliding the buttons over it.
+
 The panel holds the media segments and its close control on one row and the sections beneath. `ModeToggle`
 emits its segments and its body as siblings, so the panel is a two-column grid that places them: the
 segments and the close button share row 1, everything the body renders spans both columns.

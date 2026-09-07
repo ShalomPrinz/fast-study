@@ -76,7 +76,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
         </button>
       )}
       {!editing && course.source_url && (
-        <>
+        <div className="source-row-actions">
           <button className="pipeline-icon-btn" onClick={start} title={t`Edit source URL`}>
             <Icon icon="edit" />
           </button>
@@ -98,7 +98,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
               </button>
             )
           )}
-        </>
+        </div>
       )}
     </div>
   )
