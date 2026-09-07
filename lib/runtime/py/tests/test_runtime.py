@@ -124,8 +124,8 @@ def test_malformed_byte_in_the_header_is_a_401_not_a_500(client):
     )
 
 
-def test_first_of_two_headers_wins_wrong_then_right(client):
-    """The `_header()` generator lookup takes the first X-FastStudy-Secret, so a wrong one in front is fatal."""
+def test_duplicate_header_is_rejected_wrong_then_right(client):
+    """`_header()` folds repeats into one comma-joined value, so a duplicated credential matches nothing."""
 
     response = client.get(
         "/thing",
@@ -134,14 +134,25 @@ def test_first_of_two_headers_wins_wrong_then_right(client):
     assert response.status_code == 401
 
 
-def test_first_of_two_headers_wins_right_then_wrong(client):
-    """The mirror assertion: one direction alone passes under either resolution and would catch no regression."""
+def test_duplicate_header_is_rejected_right_then_wrong(client):
+    """Asserted both ways: the correct value in front must not authenticate an ambiguous request either."""
 
     response = client.get(
         "/thing",
         headers=[("X-FastStudy-Secret", SECRET), ("X-FastStudy-Secret", "nope")],
     )
-    assert response.status_code == 200
+    assert response.status_code == 401
+
+
+def test_duplicate_accept_still_selects_the_event_stream_401(client):
+    """`_header` folds every header, so the SSE substring check has to survive a comma-joined Accept."""
+
+    response = client.get(
+        "/events",
+        headers=[("Accept", "text/event-stream"), ("Accept", "application/json")],
+    )
+    assert response.status_code == 401
+    assert response.headers["content-type"].startswith("text/event-stream")
 
 
 def test_duplicate_query_parameter_is_rejected(client):

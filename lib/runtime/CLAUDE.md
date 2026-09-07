@@ -37,9 +37,16 @@ is fixed by the launcher and not itself a secret.
   wrong secret from a dead child. GET only: nothing else bypasses the check.
 - **An unset `FASTSTUDY_SECRET` installs no enforcement at all.** That is dev.
 - **One `secret` query parameter, or none.** A repeated `?secret=` is a 401 in both languages, never
-  resolved to its first value. JS gets this for free — express parses a repeat to an array, which the
-  `typeof given !== 'string'` guard rejects — while Python has to check the list length explicitly,
-  because `parse_qs` would otherwise hand back a list whose first element passes.
+  resolved to its first value, and a blank repeat (`?secret=<right>&secret=`, either order, or a
+  valueless `&secret`) counts as a repeat too. JS gets this for free — express parses any of them to
+  an array, which the `typeof given !== 'string'` guard rejects — while Python has to check the list
+  length explicitly *and* pass `keep_blank_values=True`, or `parse_qs` drops the blank half and hands
+  back a single value that passes.
+- **A repeated `X-FastStudy-Secret` is a 401 in both languages too**, in either order. Node's HTTP
+  parser folds repeats of a header into one comma-joined value, so `req.get()` returns
+  `"<right>, junk"` and matches nothing; `_header()` joins the ASGI scope's repeats with `b", "` for
+  the same result rather than taking the first. It folds *every* header, Node's rule, so the `accept`
+  lookup converges as well — a duplicated `Accept` still selects the `text/event-stream` 401 body.
 - **`install_secret_check(app)` must run before `CORSMiddleware` is added.** Starlette makes the
   last-added middleware the outermost, so adding the secret check first leaves it *inside* CORS —
   which is what makes a 401 carry CORS headers instead of reaching the browser as a network error.

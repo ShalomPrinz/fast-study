@@ -22,7 +22,9 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 def _header(scope, name: bytes) -> bytes:
     """Read one header out of an ASGI scope, whose headers are a list of lowercase byte pairs."""
 
-    return next((value for key, value in scope["headers"] if key == name), b"")
+    # Repeats are folded with ", " rather than resolved to the first, which is what Node's HTTP
+    # parser hands express: a duplicated credential is then refused instead of authenticating.
+    return b", ".join(value for key, value in scope["headers"] if key == name)
 
 
 def secret() -> str | None:
