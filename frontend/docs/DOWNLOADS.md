@@ -25,7 +25,13 @@ for an `unsupported` row, whose button stays disabled behind its tooltip.
 
 ## Auth
 
-`AccountStatus` probes `/auth/status` on mount and renders the answer as a header chip — `--ok` connected,
+The probe lives in `AuthStatusProvider` (`contexts/AuthStatusContext.tsx`), mounted in `Layout` beside the
+session provider, so the header chip and every course row read one `/auth/status` answer. It probes nothing
+on mount — `AccountStatus` asks when the page appears, which leaves the auto-downloader alone on every other
+route, where a boot-time probe would toast it as down. `status` is `null` for "unknown": no answer yet, or a
+probe that failed.
+
+`AccountStatus` renders the answer as a header chip — `--ok` connected,
 `--warn` expired or mid-login, `--danger` not connected — beside the one button that can move it. Connect
 pops a headed browser on the host for MFA and returns immediately; the chip then waits for the user to click
 Done, which calls `/auth/complete` to persist the storage state and re-probes.
@@ -35,8 +41,9 @@ token, and getting it back is another headed MFA round-trip, so it must not fire
 re-probes on success, and the button disables in flight the way Connect and Done do.
 
 A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectKey`, which is the `key` on
-`<AccountStatus>` — remounting forces a fresh probe, since the cached status predates the 401 and would
-otherwise still read "connected".
+`<AccountStatus>` — remounting re-runs its probe effect, since the cached status predates the 401 and would
+otherwise still read "connected". That is why the probe is fired from the component rather than from the
+provider, which never remounts.
 
 ## The page session
 

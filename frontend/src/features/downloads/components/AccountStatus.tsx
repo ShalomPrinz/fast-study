@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { AuthStatus } from '@/features/downloads/services/autoDownloader'
 import {
-  fetchAuthStatus,
   connectAuth,
   completeAuth,
   disconnectAuth,
 } from '@/features/downloads/services/autoDownloader'
+import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import { toast } from '@/services/toaster'
@@ -19,22 +18,15 @@ type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing' | 'dis
 // can move it — Connect pops a headed browser for MFA, Done persists the session, Disconnect drops it.
 export default function AccountStatus() {
   const { t } = useLingui()
-  const [status, setStatus] = useState<AuthStatus | null>(null)
+  const { status, refresh } = useAuthStatus()
   const [phase, setPhase] = useState<Phase>('loading')
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
 
-  async function refresh() {
-    try {
-      setStatus(await fetchAuthStatus())
-    } catch {
-      // Connection errors are toasted centrally.
-      setStatus(null)
-    }
-  }
-
+  // Probing from here rather than from the provider is what keeps the `reconnectKey` remount
+  // meaningful: it re-runs this effect, and the shared status is replaced by a fresh answer.
   useEffect(() => {
     refresh().then(() => setPhase('idle'))
-  }, [])
+  }, [refresh])
 
   async function handleConnect() {
     setPhase('connecting')
