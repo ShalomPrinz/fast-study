@@ -9,7 +9,7 @@ import os
 GEMINI_MODELS = ["gemini-3.5-flash"]
 
 # How much of the pipeline an automatic trigger may run. A ceiling, not a schedule: it caps
-# both a new video's arrival and the 03:00 cron, and never the user's own run.
+# both a new video's arrival and the nightly cron, and never the user's own run.
 AUTO_RUN_MODES = ["off", "audio", "full"]
 
 _TRUTHY = {"1", "true", "yes", "on"}
@@ -22,7 +22,12 @@ _ENV_KEYS = {
     "drive_enabled": "DRIVE_ENABLED",
     "gdrive_root_folder": "GDRIVE_ROOT_FOLDER",
     "auto_run": "AUTO_RUN",
+    "nightly_run": "NIGHTLY_RUN",
+    "nightly_hour": "NIGHTLY_HOUR",
 }
+
+# The hour the nightly catch-up pass runs when NIGHTLY_HOUR says nothing usable.
+DEFAULT_NIGHTLY_HOUR = 3
 
 
 def gemini_model() -> str:
@@ -44,6 +49,25 @@ def drive_enabled() -> bool:
     never configured Drive completes each lecture at its PDF."""
 
     return os.environ.get("DRIVE_ENABLED", "").strip().lower() in _TRUTHY
+
+
+def nightly_run() -> bool:
+    """Whether the nightly catch-up cron is scheduled. Unset means on, unlike the opt-in
+    drive_enabled(): the cron ran before it was a setting, so no value must keep that."""
+
+    value = os.environ.get("NIGHTLY_RUN")
+    return True if value is None else value.strip().lower() in _TRUTHY
+
+
+def nightly_hour() -> int:
+    """The hour (0-23) the nightly pass fires. Unset, non-numeric or out of range all mean
+    the default, so a bad value can never leave the app with no nightly pass."""
+
+    try:
+        hour = int(os.environ.get("NIGHTLY_HOUR", ""))
+    except ValueError:
+        return DEFAULT_NIGHTLY_HOUR
+    return hour if 0 <= hour <= 23 else DEFAULT_NIGHTLY_HOUR
 
 
 def apply_config(values: dict) -> list[str]:
