@@ -1,4 +1,10 @@
-import { toAutoRun, type AutoRun, type Settings, type SettingsPatch } from '@/services/settings'
+import {
+  toAutoRun,
+  toNightlyHour,
+  type AutoRun,
+  type Settings,
+  type SettingsPatch,
+} from '@/services/settings'
 
 export interface SettingsForm {
   geminiApiKey: string
@@ -8,6 +14,8 @@ export interface SettingsForm {
   gdriveRootFolder: string
   geminiModel: string
   autoRun: AutoRun
+  nightlyRun: boolean
+  nightlyHour: number
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
@@ -23,5 +31,8 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
   }
   if (form.autoRun !== toAutoRun(stored.autoRun)) patch.autoRun = form.autoRun
+  // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
+  if (form.nightlyRun !== (stored.nightlyRun ?? true)) patch.nightlyRun = form.nightlyRun
+  if (form.nightlyHour !== toNightlyHour(stored.nightlyHour)) patch.nightlyHour = form.nightlyHour
   return patch
 }
