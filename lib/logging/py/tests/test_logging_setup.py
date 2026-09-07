@@ -62,3 +62,15 @@ def test_unexpected_args_pass_through():
     )
     assert AccessFilter().filter(record) is True
     assert AccessFormatter().format(record) == "something else"
+
+
+def test_wrong_arity_args_pass_through():
+    """A tuple of the wrong length is as unrecognizable as no tuple at all, and takes the same path."""
+
+    # msg carries exactly three placeholders because the formatter's fallback is super().format(),
+    # which interpolates `msg % args` — a mismatch there would raise instead of formatting.
+    record = logging.LogRecord(
+        "uvicorn.access", logging.INFO, __file__, 0, "%s %s %s", ("a", "b", "c"), None
+    )
+    assert AccessFilter().filter(record) is True
+    assert AccessFormatter().format(record) == "a b c"

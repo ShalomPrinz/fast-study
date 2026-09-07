@@ -1,9 +1,19 @@
+import asyncio
+import os
+import re
+import socket
+import subprocess
+import sys
+from pathlib import Path
+
 import pytest
 import runtime
 from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 SECRET = "s3cr3t"
+# Same length as SECRET on purpose: a length mismatch never reaches compare_digest at all.
+WRONG = "wrong!"
 
 
 @pytest.fixture
@@ -103,10 +113,50 @@ def test_wrong_header_alone_is_rejected(client):
     )
 
 
-def test_malformed_byte_in_the_query_string_is_a_401_not_a_500(client):
-    """A byte no utf-8 decoder accepts; decoding it as utf-8 would raise and Starlette would answer 500."""
+def test_same_length_wrong_header_is_rejected(client):
+    """The only case that reaches compare_digest with equal-length input; every other rejection stops at the length."""
+
+    assert (
+        client.get("/thing", headers={"X-FastStudy-Secret": WRONG}).status_code == 401
+    )
+
+
+def test_same_length_wrong_query_parameter_is_rejected(client):
+    """The same boundary on the query parameter, which is compared independently of the header."""
+
+    assert client.get("/thing", params={"secret": WRONG}).status_code == 401
+
+
+def test_percent_encoded_non_ascii_in_the_query_string_is_a_401_not_a_500(client):
+    """`%FF` percent-decodes to a byte outside ASCII; the latin-1 decode carries it through to a mismatch."""
 
     assert client.get("/thing?secret=%FF").status_code == 401
+
+
+def test_raw_non_ascii_byte_in_the_query_string_is_a_401_not_a_500():
+    """Driven straight at the middleware: httpx percent-encodes a raw `\\xff` away before TestClient sees it."""
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/thing",
+        "query_string": b"secret=\xff",
+        "headers": [],
+    }
+    sent = []
+
+    async def send(message):
+        sent.append(message)
+
+    async def receive():
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    async def unreachable(scope, receive, send):
+        raise AssertionError("the middleware must not pass this through")
+
+    middleware = runtime.SecretMiddleware(unreachable, SECRET)
+    asyncio.run(middleware(scope, receive, send))
+    assert sent[0]["status"] == 401
 
 
 def test_malformed_byte_in_the_header_is_a_401_not_a_500(client):
@@ -117,8 +167,8 @@ def test_malformed_byte_in_the_header_is_a_401_not_a_500(client):
     )
 
 
-def test_first_of_two_headers_wins_wrong_then_right(client):
-    """The `_header()` generator lookup takes the first X-FastStudy-Secret, so a wrong one in front is fatal."""
+def test_duplicate_header_is_rejected_wrong_then_right(client):
+    """`_header()` folds repeats into one comma-joined value, so a duplicated credential matches nothing."""
 
     response = client.get(
         "/thing",
@@ -127,14 +177,25 @@ def test_first_of_two_headers_wins_wrong_then_right(client):
     assert response.status_code == 401
 
 
-def test_first_of_two_headers_wins_right_then_wrong(client):
-    """The mirror assertion: one direction alone passes under either resolution and would catch no regression."""
+def test_duplicate_header_is_rejected_right_then_wrong(client):
+    """Asserted both ways: the correct value in front must not authenticate an ambiguous request either."""
 
     response = client.get(
         "/thing",
         headers=[("X-FastStudy-Secret", SECRET), ("X-FastStudy-Secret", "nope")],
     )
-    assert response.status_code == 200
+    assert response.status_code == 401
+
+
+def test_duplicate_accept_still_selects_the_event_stream_401(client):
+    """`_header` folds every header, so the SSE substring check has to survive a comma-joined Accept."""
+
+    response = client.get(
+        "/events",
+        headers=[("Accept", "text/event-stream"), ("Accept", "application/json")],
+    )
+    assert response.status_code == 401
+    assert response.headers["content-type"].startswith("text/event-stream")
 
 
 def test_duplicate_query_parameter_is_rejected(client):
@@ -147,6 +208,30 @@ def test_duplicate_query_parameter_is_rejected_in_either_order(client):
     """Asserted both ways, so relaxing the guard back to first-wins fails here."""
 
     assert client.get(f"/thing?secret=junk&secret={SECRET}").status_code == 401
+
+
+def test_blank_duplicate_query_parameter_is_rejected_after_the_secret(client):
+    """A blank duplicate is still a duplicate; without keep_blank_values it would collapse to one value."""
+
+    assert client.get(f"/thing?secret={SECRET}&secret=").status_code == 401
+
+
+def test_blank_duplicate_query_parameter_is_rejected_before_the_secret(client):
+    """The mirror form, which express also refuses — it parses both to a two-element array."""
+
+    assert client.get(f"/thing?secret=&secret={SECRET}").status_code == 401
+
+
+def test_valueless_duplicate_query_parameter_is_rejected(client):
+    """A bare `&secret` with no `=` is the third blank form, and counts as a second value too."""
+
+    assert client.get(f"/thing?secret={SECRET}&secret").status_code == 401
+
+
+def test_single_blank_query_parameter_is_rejected(client):
+    """One blank value is a credential that matches nothing, not an absent parameter."""
+
+    assert client.get("/thing?secret=").status_code == 401
 
 
 def test_secret_coerces_an_empty_env_var_to_none(monkeypatch):
@@ -183,6 +268,15 @@ def test_state_path_falls_back_to_dot_state_at_the_repo_root(monkeypatch):
     assert (root.parent / "CLAUDE.md").is_file()
 
 
+def test_state_path_treats_an_empty_state_dir_as_unset(monkeypatch):
+    """An empty launch variable reads as unset in both halves, never as a relative join under the cwd."""
+
+    monkeypatch.delenv("FASTSTUDY_STATE_DIR", raising=False)
+    unset = runtime.state_path("a")
+    monkeypatch.setenv("FASTSTUDY_STATE_DIR", "")
+    assert runtime.state_path("a") == unset
+
+
 def test_state_path_honors_an_explicit_state_dir(monkeypatch, tmp_path):
     """The launcher passes FASTSTUDY_STATE_DIR explicitly in a packaged build, and it wins verbatim."""
 
@@ -198,3 +292,55 @@ def test_state_path_creates_nothing(monkeypatch, tmp_path):
     assert not path.exists()
     assert not path.parent.exists()
     assert not (tmp_path / "nowhere").exists()
+
+
+# serve() is driven in a child process because both of its outcomes end the process: a bind failure
+# exits 1, and a success hands the socket to uvicorn and never returns.
+_PACKAGE_DIR = Path(runtime.__file__).resolve().parent
+_CHILD = "import runtime; from starlette.applications import Starlette; runtime.serve(Starlette(), 0)"
+
+
+@pytest.fixture
+def taken_port():
+    """A port held open for the whole test, so a child binding it must fail."""
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        sock.listen()
+        yield sock.getsockname()[1]
+
+
+def _child(port: int, **kwargs) -> subprocess.Popen:
+    return subprocess.Popen(
+        [sys.executable, "-c", _CHILD],
+        cwd=_PACKAGE_DIR,
+        env={**os.environ, "FASTSTUDY_PORT": str(port)},
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        **kwargs,
+    )
+
+
+def test_successful_bind_announces_the_port_on_stdout():
+    """The launcher matches `^FASTSTUDY_PORT=(\\d+)$`, so the line stands alone and carries the real port."""
+
+    process = _child(0)
+    try:
+        line = process.stdout.readline()
+        assert re.fullmatch(r"FASTSTUDY_PORT=\d+", line.strip())
+    finally:
+        process.kill()
+        process.wait(timeout=10)
+
+
+def test_failed_bind_names_the_address_and_errno_on_stderr(taken_port):
+    """One stderr line and exit 1, in the shape runtime.js prints — never a traceback."""
+
+    process = _child(taken_port)
+    stdout, stderr = process.communicate(timeout=30)
+    assert process.returncode == 1
+    assert f"cannot bind 127.0.0.1:{taken_port}" in stderr
+    assert "EADDRINUSE" in stderr
+    # stdout is the launcher's handshake channel and must carry nothing when the bind failed.
+    assert "FASTSTUDY_PORT=" not in stdout

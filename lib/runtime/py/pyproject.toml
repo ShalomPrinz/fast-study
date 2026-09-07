@@ -2,8 +2,10 @@
 name = "faststudy-runtime"
 version = "0.1.0"
 requires-python = ">=3.11"
+# starlette, not fastapi: the module imports starlette.responses and nothing from fastapi, so
+# declaring fastapi here would leave starlette arriving only transitively, one pin shift from broken.
 dependencies = [
-    "fastapi>=0.111",
+    "starlette>=0.37",
     "uvicorn[standard]>=0.29",
     "python-dotenv>=1.0",
 ]
@@ -12,6 +14,8 @@ dependencies = [
 test = [
     "pytest>=8.0",
     "httpx>=0.27",
+    # Only the tests build a FastAPI app — the middleware itself is plain ASGI.
+    "fastapi>=0.111",
 ]
 
 [tool.pytest.ini_options]

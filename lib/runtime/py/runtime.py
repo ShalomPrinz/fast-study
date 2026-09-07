@@ -1,6 +1,8 @@
+import errno
 import os
 import secrets
 import socket
+import sys
 from pathlib import Path
 from urllib.parse import parse_qs
 
@@ -20,7 +22,9 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 def _header(scope, name: bytes) -> bytes:
     """Read one header out of an ASGI scope, whose headers are a list of lowercase byte pairs."""
 
-    return next((value for key, value in scope["headers"] if key == name), b"")
+    # Repeats are folded with ", " rather than resolved to the first, which is what Node's HTTP
+    # parser hands express: a duplicated credential is then refused instead of authenticating.
+    return b", ".join(value for key, value in scope["headers"] if key == name)
 
 
 def secret() -> str | None:
@@ -76,10 +80,16 @@ class SecretMiddleware:
         header = _header(scope, b"x-faststudy-secret")
         # The query parameter exists because native EventSource is the one caller that cannot set a
         # header. latin-1 both ways, so an arbitrary byte round-trips back to what was sent.
-        query = parse_qs(scope["query_string"].decode("latin-1"), encoding="latin-1")
+        query = parse_qs(
+            scope["query_string"].decode("latin-1"),
+            keep_blank_values=True,
+            encoding="latin-1",
+        )
         values = query.get("secret", [])
         # One value or none: a duplicated parameter is rejected outright rather than resolved to its
-        # first, so both halves of this contract answer a repeated `?secret=` the same way.
+        # first, so both halves of this contract answer a repeated `?secret=` the same way. Blank
+        # values are kept because a blank duplicate is still a duplicate — dropping it would let
+        # `?secret=<right>&secret=` collapse back to one value and pass.
         param = values[0].encode("latin-1") if len(values) == 1 else b""
         # Tried independently rather than `header or param`: a wrong or blank header must not
         # shadow the query parameter, which is the only credential EventSource can send.
@@ -98,14 +108,33 @@ def install_secret_check(app) -> None:
         app.add_middleware(SecretMiddleware, secret=launch_secret)
 
 
+def _error_code(error: OSError) -> str:
+    """The errno's name, as node reports it: Windows names the socket errnos WSAEADDRINUSE where
+    every other platform (and libuv) says EADDRINUSE."""
+
+    return errno.errorcode.get(error.errno, str(error.errno)).removeprefix("WSA")
+
+
 def serve(app, default_port: int) -> None:
     """Serve app on loopback at FASTSTUDY_PORT (0 asks for an ephemeral one), reporting the bound port on stdout."""
 
     # Bound by hand because uvicorn never reports what `port=0` resolved to, and the launcher has
     # to read the real port back to reach this service.
+    host = "127.0.0.1"
+    port = int(os.environ.get("FASTSTUDY_PORT", default_port))
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("127.0.0.1", int(os.environ.get("FASTSTUDY_PORT", default_port))))
+    try:
+        sock.bind((host, port))
+    except OSError as error:
+        # stderr, never stdout: stdout is the port-handshake channel the launcher parses. One line
+        # in the shape runtime.js prints, so a bind failure reads the same from either half.
+        print(
+            f"faststudy: cannot bind {host}:{port} — {_error_code(error)} ({os.strerror(error.errno).lower()})",
+            file=sys.stderr,
+            flush=True,
+        )
+        raise SystemExit(1)
     # Listen before announcing, so a launcher connecting the instant it reads the line is not refused.
     sock.listen()
     print(f"FASTSTUDY_PORT={sock.getsockname()[1]}", flush=True)
