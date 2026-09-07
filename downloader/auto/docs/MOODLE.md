@@ -84,6 +84,13 @@ which names the symptom and hides the cause. `/list` and `/resolve` map it to
 `503 {status:'blocked', message}` — no retry and no client-side throttling: the wait is minutes
 long, and retrying is what deepens the block.
 
+The challenge reaches `pluginfile.php` too, where it is a corruption risk rather than a crash:
+it is HTTP 200, so `server/`'s `curl --fail` would save the captcha page as `material.pdf` with
+no error at all. `assertPluginfileReadable` therefore rejects an HTML (or redirected) answer as
+`WsBlockedError` before the download is handed over. Keying on HTML is safe because only
+resource files the WS declared `application/pdf` are routed down this path
+(`MoodleFileExtractor.claims`), so an HTML body is never the requested file.
+
 ### `core_webservice_get_site_info`
 
 Identity + capability probe. Fields we rely on: `userid` (needed for autologin), `functions[]`
@@ -139,6 +146,10 @@ await fetch(u); // 200, application/pdf, bytes
 
 `pluginfileUrl` uses `searchParams.set` (not string concat) because `fileurl` may already carry
 a query (e.g. `?forcedownload=1`) — a naïve `?token=` would produce a broken double-query.
+`assertPluginfileReadable` probes one byte first (`Range: bytes=0-0`) and refuses to hand over a
+URL that answers with Moodle's JSON exception body (dead token → `WsError`) or with a
+bot-protection challenge (→ `WsBlockedError`); `server/`'s download is fire-and-forget, so this
+is the last point where either can still be reported instead of written to disk.
 Verified against BIU: a 10.6 MB `resource` PDF → HTTP 200, `application/pdf`. (Wiring this into
 the pipeline is deferred — see `PDF_RES_FUTURE.md`.)
 

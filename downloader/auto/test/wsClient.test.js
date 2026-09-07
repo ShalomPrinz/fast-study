@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  assertPluginfileReadable,
   getCourseContents,
   blocked,
   invalidToken,
@@ -73,6 +74,50 @@ test('a WS exception body still throws WsError, unaffected by the JSON gate', as
     }),
   });
   const err = await getCourseContents('dead', '108980').then(
+    () => null,
+    (e) => e,
+  );
+  assert.ok(err instanceof WsError);
+  assert.equal(invalidToken(err), true);
+  assert.equal(blocked(err), false);
+});
+
+// The pluginfile preflight is not a WS call — success is file bytes, not JSON — so its
+// challenge check keys on an HTML answer where only application/pdf resources are ever routed.
+const PDF_URL = 'https://lemida.biu.ac.il/webservice/pluginfile.php/1/mod_resource/1/x.pdf?token=t';
+
+test('a challenge page on the pluginfile preflight raises instead of passing HTML through', async (t) => {
+  stubFetch(t, { status: 200, contentType: 'text/html; charset=utf-8', body: CAPTCHA_HTML });
+  const err = await assertPluginfileReadable(PDF_URL).then(
+    () => null,
+    (e) => e,
+  );
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(blocked(err), true);
+  assert.match(err.message, /pluginfile/);
+});
+
+test('a redirect on the pluginfile preflight raises', async (t) => {
+  stubFetch(t, { status: 302, contentType: 'text/html' });
+  const err = await assertPluginfileReadable(PDF_URL).then(
+    () => null,
+    (e) => e,
+  );
+  assert.ok(err instanceof WsBlockedError);
+  assert.match(err.message, /HTTP 302 redirect/);
+});
+
+test('a real file answer on the pluginfile preflight passes', async (t) => {
+  stubFetch(t, { status: 206, contentType: 'application/pdf' });
+  await assertPluginfileReadable(PDF_URL); // resolves; no throw
+});
+
+test('a dead token on the pluginfile preflight still raises WsError, not blocked', async (t) => {
+  stubFetch(t, {
+    contentType: 'application/json',
+    body: JSON.stringify({ errorcode: 'invalidtoken', message: 'Invalid token' }),
+  });
+  const err = await assertPluginfileReadable(PDF_URL).then(
     () => null,
     (e) => e,
   );

@@ -15,16 +15,16 @@ export class WsError extends Error {
 }
 
 /**
- * The site answered with something that isn't a WS response at all — a redirect, or a
- * non-JSON content type. `lemida.biu.ac.il` sits behind Radware Bot Manager, which answers
- * automated bursts with an HTML captcha page (HTTP 200, text/html) or a 302 to one instead of
- * a WS body, so this is a distinct failure from a WS fault and never a JSON parse bug.
+ * The site answered with a bot-protection challenge instead of what was asked for — an HTML
+ * page or a redirect where a WS body or a file was due. `lemida.biu.ac.il` sits behind Radware
+ * Bot Manager, which serves one (HTTP 200, text/html) to a client it reads as automated, so this
+ * is a distinct failure from a WS fault and never a JSON parse bug.
  */
 export class WsBlockedError extends Error {
   constructor(detail) {
     super(
       `the site is refusing automated requests — it served a bot-protection challenge ` +
-        `instead of a web-service response (${detail}); wait a few minutes and retry`,
+        `instead of a valid response (${detail}); wait a few minutes and retry`,
     );
     this.name = 'WsBlockedError';
   }
@@ -117,11 +117,20 @@ export function pluginfileUrl(fileurl, token) {
 // HTTP 200 (never a 403), so an unchecked download would silently save that blob as the PDF —
 // probe one byte and surface it as a WsError, which invalidToken() recognizes. `server/`'s
 // download job is fire-and-forget, so this is the only place the caller can still answer 401.
+// The same is true of a bot-protection challenge, and worse: it is HTTP 200, so `server/`'s
+// `curl --fail` writes the captcha page to material.pdf without erroring. Only resource files
+// the WS declared `application/pdf` are routed here (MoodleFileExtractor.claims), so an HTML
+// answer is never the requested file.
 export async function assertPluginfileReadable(url) {
   const res = await fetch(url, {
     headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT },
   });
-  if (!res.headers.get('content-type')?.includes('application/json')) return;
+  if (res.status >= 300 && res.status < 400)
+    throw new WsBlockedError(`pluginfile: HTTP ${res.status} redirect`);
+  const type = res.headers.get('content-type') ?? '';
+  if (type.includes('text/html'))
+    throw new WsBlockedError(`pluginfile: HTTP ${res.status}, ${type}`);
+  if (!type.includes('application/json')) return;
   const body = await res.json().catch(() => null);
   if (body?.errorcode) throw new WsError(body.errorcode, body.message);
   throw new Error(`pluginfile served JSON, not a file: ${url}`);
