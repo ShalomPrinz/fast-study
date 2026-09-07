@@ -25,33 +25,59 @@ The graph must stay acyclic: `frontend/` and `downloader/` call `backend/` and `
 
 So never add an outbound call from `database/` to a peer, and treat a proposal to add one as a packaging blocker, not a style preference. If `database/` needs to tell a peer something, either the peer calls in or the fact rides the existing SSE `/events` channel peers already subscribe to.
 
-The rule is about *outbound HTTP calls*, so `lib/` is outside it entirely: services depend on a shared module at build time, never over the wire, and a build-time dependency can no more create a cycle than an import can.
+The rule is about _outbound HTTP calls_, so `lib/` is outside it entirely: services depend on a shared module at build time, never over the wire, and a build-time dependency can no more create a cycle than an import can.
 
 ## Packaged launch contract
 
 Every service carries its own module named `runtime` (`runtime.py` / `runtime.js` / `runtime.ts`, one per package — never shared across a `node_modules` boundary) implementing the same names verbatim. They are independent files that merely agree on a contract; write a new one from scratch rather than copying a sibling's.
 
-| Thing                    | Name                                                                             |
-| ------------------------ | -------------------------------------------------------------------------------- |
-| Listen port, in env      | `FASTSTUDY_PORT` — `0` asks for ephemeral, unset keeps the per-service default    |
-| Port report, on stdout   | `FASTSTUDY_PORT=<n>` alone on a line, matched `^FASTSTUDY_PORT=(\d+)$`            |
-| Launch secret, in env    | `FASTSTUDY_SECRET` — unset means no enforcement, which is dev                     |
-| Secret header            | `X-FastStudy-Secret`                                                             |
-| Secret query param       | `secret`, for `EventSource`, which cannot set a header                           |
-| Writable state root, env | `FASTSTUDY_STATE_DIR` — unset falls back to `.state/` at the repo root            |
-| State join               | `statePath(...parts)` / `state_path(*parts)` — a pure join that creates nothing   |
-| Bundled binary dir, env  | `FASTSTUDY_BIN_DIR` — unset means resolve off PATH, which is dev                  |
-| Binary join              | `toolPath(name)` / `tool_path(name)` — adds `.exe` on Windows only               |
-| Preload bridge           | `window.faststudy`                                                               |
-| Packaged frontend origin | `app://bundle` — exactly, no trailing slash                                      |
+| Thing                    | Name                                                                            |
+| ------------------------ | ------------------------------------------------------------------------------- |
+| Listen port, in env      | `FASTSTUDY_PORT` — `0` asks for ephemeral, unset keeps the per-service default  |
+| Port report, on stdout   | `FASTSTUDY_PORT=<n>` alone on a line, matched `^FASTSTUDY_PORT=(\d+)$`          |
+| Launch secret, in env    | `FASTSTUDY_SECRET` — unset means no enforcement, which is dev                   |
+| Secret header            | `X-FastStudy-Secret`                                                            |
+| Secret query param       | `secret`, for `EventSource`, which cannot set a header                          |
+| Writable state root, env | `FASTSTUDY_STATE_DIR` — unset falls back to `.state/` at the repo root          |
+| State join               | `statePath(...parts)` / `state_path(*parts)` — a pure join that creates nothing |
+| Bundled binary dir, env  | `FASTSTUDY_BIN_DIR` — unset means resolve off PATH, which is dev                |
+| Binary join              | `toolPath(name)` / `tool_path(name)` — adds `.exe` on Windows only              |
+| Preload bridge           | `window.faststudy`                                                              |
+| Packaged frontend origin | `app://bundle` — exactly, no trailing slash                                     |
 
 A service that spells any of these differently cannot be launched or called by its peers, so treat a change to a name or a rule as a cross-service change and surface it rather than editing one service's `runtime` alone. Per-service specifics (which routes, which files) live in each service's `CLAUDE.md` and `docs/`.
 
-`app://bundle` is frozen as a literal, never computed. A page at `app://bundle/index.html` sends `Origin: app://bundle` with no trailing slash on every CORS-mode request including the preflight, but Electron's *permission-handler* API reports the same origin **with** one — deriving the allowlist from that API silently rejects every request. Verified on Electron 44.1.1 / Chromium 152.
+`app://bundle` is frozen as a literal, never computed. A page at `app://bundle/index.html` sends `Origin: app://bundle` with no trailing slash on every CORS-mode request including the preflight, but Electron's _permission-handler_ API reports the same origin **with** one — deriving the allowlist from that API silently rejects every request. Verified on Electron 44.1.1 / Chromium 152.
 
 The state root separates read-only installed resources from per-user writable state, and only the services that write outside `DATA_ROOT` have a state join (`backend/`, both `downloader/` services). Dev deliberately uses the same layout with no fallback to the old scattered locations, so a layout bug surfaces on a dev machine rather than only in an installer build. The packaged `%LOCALAPPDATA%\FastStudy` default is intentionally in no service — the Electron launcher passes `FASTSTUDY_STATE_DIR` explicitly.
 
 `FASTSTUDY_BIN_DIR` is the same shape one level down: set, every external tool (`ffmpeg`, `ffprobe`, `pandoc`, `tectonic`, `yt-dlp`) is spawned by absolute path out of it and never off `$PATH`, so a stray binary earlier in a user's PATH cannot be picked up instead of the one that shipped. `curl` is the sole exception — Windows 10+ ships `curl.exe`, so it stays a PATH lookup — and that exception lives in `lib/tools/`, not in each caller. Each service probes its own tools once at startup, logs a missing one loudly, and reports the result on `/health` beside `status`; a missing binary disables one feature, never the service.
+
+## The frozen Python bundle — `delivery/`
+
+`backend/` and `database/` ship as **one** PyInstaller one-dir bundle, `services`, with the service
+picked by `argv[1]`. `delivery/services.spec` is the build and `delivery/entry.py` is its entry
+point; both are build-only inputs that no dev command touches.
+
+```
+cd backend && uv run --with pyinstaller pyinstaller ../delivery/services.spec
+```
+
+The build runs out of `backend/`'s environment, which works only because **`database/`'s
+dependencies are a strict subset of `backend/`'s**. That is an invariant nothing checks: a
+dependency added to `database/` alone would be absent from the bundle and fail at runtime on a
+clean machine, so it has to be added to `backend/pyproject.toml` too.
+
+PyInstaller's module graph is flat, so no top-level module name may appear in both services. That is
+why the entry points are `backend_main.py` and `database_main.py` rather than two `main.py`, and it
+is a live constraint on every new top-level module: `backend/` owns `course`, `pipeline`,
+`services`, `timing`; `database/` owns `events`, `fs`, `settings`. The generic names on the
+`database/` side are the ones a future dependency could collide with — `fs` is a real PyPI package.
+
+Freezing moves `__file__` inside the bundle, so **every read-only file that ships with the code
+resolves through `resource_path()`** (`backend/services/resources.py`), never a `__file__` walk —
+`assets/` and `credentials.json`. Binaries are not among them: they resolve through `lib/tools/` off
+`FASTSTUDY_BIN_DIR`, which freezing does not affect.
 
 ## Shared modules — `lib/`
 
@@ -64,7 +90,7 @@ plain `console`). Consumers declare a real dependency — `[tool.uv.sources]` ed
 `../lib/<name>/py` for `backend/` and `database/`, a `file:../../lib/<name>/js` dependency for both
 downloader packages — so `import runtime` and `@faststudy/runtime` resolve to one copy.
 
-A module earns a place there when a second service needs it *and* divergence between copies would be
+A module earns a place there when a second service needs it _and_ divergence between copies would be
 a defect, which is what all three are: contracts the launcher writes and the services read, one of
 them a security boundary, where two copies drifting apart is a bug by definition. A helper with one
 consumer stays in its service. Read
