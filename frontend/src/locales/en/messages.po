@@ -326,7 +326,7 @@ msgstr "BIU account connected"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "BIU account connected ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:81
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:82
 msgid "BIU session expired. Reconnect your account."
 msgstr "BIU session expired. Reconnect your account."
 
@@ -411,12 +411,12 @@ msgstr "Copied!"
 msgid "Copy details"
 msgstr "Copy details"
 
-#: src/features/downloads/utils/downloadErrors.ts:21
+#: src/features/downloads/utils/downloadErrors.ts:31
 msgid "Couldn't download \"{name}\": {detail}"
 msgstr "Couldn't download \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:10
-#: src/features/downloads/utils/downloadErrors.ts:22
+#: src/features/downloads/utils/downloadErrors.ts:20
+#: src/features/downloads/utils/downloadErrors.ts:32
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "Couldn't download \"{name}\". Try again."
 
@@ -1400,6 +1400,10 @@ msgstr "the run was cancelled. Run the section again to pick them up."
 #: src/features/runner/RunnerView.tsx:260
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
+
+#: src/features/downloads/utils/downloadErrors.ts:9
+msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
+msgstr "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 
 #. placeholder {0}: rotateTarget.file
 #: src/features/lectures/MainView.tsx:402

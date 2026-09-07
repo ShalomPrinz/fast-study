@@ -62,6 +62,20 @@ export function isUnsupportedError(err: unknown): err is UnsupportedError {
   return err instanceof UnsupportedError
 }
 
+// HTTP 503 { status: 'blocked' }: the site served a bot-protection challenge instead of a
+// web-service answer. Transient and unrelated to the token — never a reconnect — and the body's
+// `message` is an untranslated log line, so the UI writes its own copy (`utils/downloadErrors`).
+export class BlockedError extends Error {
+  constructor() {
+    super('The site is refusing automated requests — bot-protection challenge.')
+    this.name = 'BlockedError'
+  }
+}
+
+export function isBlockedError(err: unknown): err is BlockedError {
+  return err instanceof BlockedError
+}
+
 // HTTP 409 { status: 'passcode' }: recording gated behind a passcode the server lacks.
 // The body's `name` is carried as `lecture` because it collides with Error.name.
 export class PasscodeError extends Error {
@@ -81,7 +95,7 @@ export function isPasscodeError(err: unknown): err is PasscodeError {
 // These endpoints encode meaning in the response body, which the shared client discards — hence
 // a direct fetch, with the launch secret applied by hand. Trade-off: no central ConnectionError
 // wrapping, so a refused connection throws a raw TypeError instead of the friendly "down" toast.
-// Client-parameterized because the same three error bodies come back from both services: the
+// Client-parameterized because the same four error bodies come back from both services: the
 // downloader server forwards auth's verdict verbatim when it proxies a download.
 export async function postReconnectAware<T>(
   client: Client,
@@ -102,6 +116,10 @@ export async function postReconnectAware<T>(
     if (data?.status === 'unsupported') {
       throw new UnsupportedError(data.message ?? 'Unsupported recording source.')
     }
+  }
+  if (res.status === 503) {
+    const data = await res.json().catch(() => null)
+    if (data?.status === 'blocked') throw new BlockedError()
   }
   if (res.status === 409) {
     const data = await res.json().catch(() => null)

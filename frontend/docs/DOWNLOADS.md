@@ -52,6 +52,12 @@ A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectK
 otherwise still read "connected". That is why the probe is fired from the component rather than from the
 provider, which never remounts.
 
+A `BlockedError` is deliberately not that path. `lemida.biu.ac.il` sits behind bot protection that answers
+a burst of calls with a captcha page instead of a web-service response; the challenge is transient and says
+nothing about the token, so it toasts `blockedMessage()` — the site is temporarily refusing automated
+requests, wait a few minutes — and leaves the account chip alone. Its copy is written here rather than taken
+from the server's `message`, which is an English log line.
+
 A course row's `Load recordings` is disabled, with a hint in its `title`, only when the probe came back
 `connected: false`. An unknown status leaves it enabled: guessing "disconnected" from a probe still in
 flight or one the service never answered would lock a working session out of discovery.
@@ -83,8 +89,9 @@ One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `It
 The course being discovered and the course on the page are separate values. `discover` sets `pending`, and
 only once `listRecordings` resolves does it clear the old items and promote the name to `selected` — so a
 discovery that dies on an expired session leaves the page exactly as it was, a toast and nothing else,
-instead of a recordings view that paints and unpaints. A plain failure does promote it: the panel is where
-that error is shown. The row's `Loading…` state follows `pending`, while `.source-row--selected` and the
+instead of a recordings view that paints and unpaints. A `BlockedError` — the site's bot-protection
+challenge — behaves the same way, and is the one other error that paints nothing. A plain failure does
+promote it: the panel is where that error is shown. The row's `Loading…` state follows `pending`, while `.source-row--selected` and the
 recordings sections follow `selected`.
 
 Each discovery takes a ticket, and a superseded one writes nothing: closing the panel or loading another
@@ -234,8 +241,8 @@ present. Ambiguity voids the marker rather than guessing (whitespace, a second l
 title with no number at all falls back to the tree's next-number suggestion.
 
 A row's failure to _start_ flips the button to "Retry ✗" and toasts via `toastDownloadError` (generic copy,
-except an `UnsupportedError` whose message is display-ready). Reconnect, passcode and a cancelled passcode
-prompt don't toast — they steer the UI elsewhere. A failure _after_ the start is a job failure, below.
+except an `UnsupportedError` whose message is display-ready and a `BlockedError`, which gets the wait-and-retry
+copy). Reconnect, passcode and a cancelled passcode prompt don't toast — they steer the UI elsewhere. A failure _after_ the start is a job failure, below.
 
 ## Download progress
 

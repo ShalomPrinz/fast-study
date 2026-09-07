@@ -124,13 +124,17 @@ client, because the client discards the response body and these endpoints encode
 | 401  | `status: reconnect`   | `ReconnectError` — steer the user to the Reconnect pill                   |
 | 422  | `status: unsupported` | `UnsupportedError` — permanent; `message` is display-ready, show verbatim |
 | 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`               |
+| 503  | `status: blocked`     | `BlockedError` — the site's bot-protection challenge; transient, no reconnect |
 
 Trade-off: `postReconnectAware` forgoes the client's central `ConnectionError` wrapping, so a refused
 connection surfaces as a raw `TypeError` instead of the friendly toast. `PasscodeError` maps the body's
 `name` to `lecture` because `name` collides with `Error.name`.
 
-`postReconnectAware` and the three error classes are exported and take the `Client` to POST through: the
-downloader server's `/download-item` answers with the same three bodies (it forwards auth's verdict
+A `blocked` body carries a `message`, and it is the one message never shown: it is an English log line
+naming the HTTP shape of the challenge, so `BlockedError` carries none and the page writes its own copy.
+
+`postReconnectAware` and the four error classes are exported and take the `Client` to POST through: the
+downloader server's `/download-item` answers with the same four bodies (it forwards auth's verdict
 verbatim), so it reuses them rather than restating the vocabulary.
 
 ## `features/downloads/services/downloadServer.ts` → downloader server (:3052)

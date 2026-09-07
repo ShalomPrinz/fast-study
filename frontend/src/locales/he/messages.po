@@ -326,7 +326,7 @@ msgstr "חשבון בר-אילן מחובר"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "חשבון בר-אילן מחובר ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:81
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:82
 msgid "BIU session expired. Reconnect your account."
 msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
@@ -411,12 +411,12 @@ msgstr "הועתק!"
 msgid "Copy details"
 msgstr "העתק פרטים"
 
-#: src/features/downloads/utils/downloadErrors.ts:21
+#: src/features/downloads/utils/downloadErrors.ts:31
 msgid "Couldn't download \"{name}\": {detail}"
 msgstr "לא ניתן להוריד את \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:10
-#: src/features/downloads/utils/downloadErrors.ts:22
+#: src/features/downloads/utils/downloadErrors.ts:20
+#: src/features/downloads/utils/downloadErrors.ts:32
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
@@ -1400,6 +1400,10 @@ msgstr "הריצה בוטלה. הרץ את הקטע שוב כדי להשלים �
 #: src/features/runner/RunnerView.tsx:260
 msgid "the runner takes these in order"
 msgstr "המריץ לוקח אותן לפי הסדר"
+
+#: src/features/downloads/utils/downloadErrors.ts:9
+msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
+msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב."
 
 #. placeholder {0}: rotateTarget.file
 #: src/features/lectures/MainView.tsx:402

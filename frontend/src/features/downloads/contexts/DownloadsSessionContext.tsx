@@ -3,7 +3,8 @@ import { t } from '@lingui/core/macro'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
-import { isReconnectError, listRecordings } from '../services/autoDownloader'
+import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
+import { blockedMessage } from '../utils/downloadErrors'
 import { clearExpansions } from './RowExpansionsContext'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
@@ -113,6 +114,13 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
           return
         }
         if (id !== discoveryId.current) return
+        // A bot-protection challenge is the site's, not the account's: it paints nothing and moves
+        // no chip, just says to wait. Unlike the reconnect hint it stays behind the ticket guard —
+        // there is no chip to correct, so a discovery the user walked away from toasts nothing.
+        if (isBlockedError(err)) {
+          sendUpdateRef.current?.('error', blockedMessage())
+          return
+        }
         clear()
         setSelected(course.name)
         setError('Failed to load recordings. Is the auto-downloader running?')
