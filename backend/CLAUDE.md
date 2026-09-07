@@ -30,6 +30,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_R
 - **`pipeline/` is per-lecture, `course/` is per-course.** Anything aggregating across a course's lectures belongs in `course/`, never `pipeline/`.
 - **Keep `backend_main.py` thin** — validation and boundary parsing live in the runners.
 - Shipped read-only files (`assets/`, `credentials.json`) resolve through `resource_path()` in `services/resources.py`, never off `__file__`.
+- **A new top-level module needs a name `database/` could never want too.** Both services freeze into one PyInstaller bundle whose module graph is flat, so `backend_main`, `course`, `pipeline`, `services` and `timing` are global names — prefix a generic one or nest it under an existing package (root `CLAUDE.md`). Code that never freezes (`timing/scripts/`, `tests/`) is exempt.
 - **`database/` never calls back.** The backend calls it, so a return call would make the service graph cyclic and the packaged build unspawnable (see root `CLAUDE.md`). When a backend feature wants the store to notify or trigger it, invert it: the acting client reports in, or the backend subscribes to the database's SSE channel.
 
 ## Environment
@@ -49,6 +50,8 @@ uv run uvicorn backend_main:app --reload # dev (port 8000)
 uv run python backend_main.py            # packaged: binds FASTSTUDY_PORT (0 = ephemeral), no reload
 uv run pytest tests/ -q                  # CI runs exactly this on every push
 ```
+
+This environment is also what the frozen bundle is built from, for both Python services, so `pyproject.toml` here has to carry every runtime dependency `database/` declares as well (root `CLAUDE.md`).
 
 `FASTSTUDY_SECRET` (launch-time, set by the packaged launcher) makes the secret check installed by `runtime.install_secret_check` reject every unauthenticated inbound request and makes `db_client` send the secret on its calls to `database/`; unset means no enforcement, which is what dev runs on. Rules and header names: `docs/API.md`.
 

@@ -46,6 +46,23 @@ browser dev (`GET`/`PUT /settings`), and `POST /config` sets the running process
 no restart. The write is a merge — only settings keys are rewritten, and the API keys are
 write-only. See [docs/SETTINGS.md](docs/SETTINGS.md).
 
+## Packaged bundle
+
+This service and `backend/` freeze into one PyInstaller bundle, built out of `backend/`'s
+environment, and a PyInstaller module graph is flat. Two consequences bind every change here:
+
+- **Top-level module names are global across both services.** This side owns `database_main`,
+  `events`, `fs` and `settings`; backend owns `backend_main`, `course`, `pipeline`, `services` and
+  `timing`. A duplicate silently shadows one of them, and the generic names here are the ones a
+  future dependency could collide with — `fs` is a real PyPI package.
+- **Runtime dependencies here must already be in `backend/pyproject.toml`.** One declared only in
+  this service's `pyproject.toml` is simply absent from the bundle and fails on a clean machine.
+  Flag the backend addition rather than adding it here alone. Test-only extras are exempt — tests
+  are not bundled.
+
+`database_main.DEFAULT_PORT` is the single source of the `8001` default, read both by the dev
+`__main__` path and by the bundle's `delivery/entry.py` dispatcher.
+
 ## Running and testing
 
 ```bash
