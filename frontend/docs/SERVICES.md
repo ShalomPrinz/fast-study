@@ -13,6 +13,13 @@ A failed response's message comes from its body — `{error}`, FastAPI's `{detai
 there — falling back to the status line. "400 Bad Request" says nothing about a data root that turned out not
 to be writable, and that prose is what the settings screens show.
 
+`423` is the one status whose body is replaced rather than shown: the database service answers it when
+another program holds the file open — a native pdf viewer left on `summary.pdf`, since the app opens pdfs
+in the user's own app — and its English prose is written for the pipeline's run errors, where nothing
+localizes it. A delete the user made themselves gets a localized message here instead, so every call site
+that already surfaces a rejection surfaces this one. It deliberately does not name the file: the name would
+have to come from the request URL, and the toast lands on the click that caused it.
+
 **Connection errors are handled once, here.** Per the Fetch spec only a network failure rejects as a
 `TypeError` (aborts are `DOMException` and propagate untouched), so that branch wraps the error in a typed
 `ConnectionError` carrying the friendly service name, toasts it, and rethrows. `toastConnectionError` keys

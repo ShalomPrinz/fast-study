@@ -10,6 +10,11 @@ export function httpError(res: Response): Error {
 // Surfacing it beats "400 Bad Request", which says nothing about, say, a data root that turned out
 // not to be writable.
 async function failureError(res: Response): Promise<Error> {
+  // 423 is the one body we replace: the database service's prose is the fallback for the
+  // backend-mediated case, but here it reaches the user as a toast, so it has to be localized.
+  if (res.status === 423) {
+    return new Error(t`The file is open in another program. Close it and try again.`)
+  }
   try {
     const body = JSON.parse(await res.text())
     const message = body?.error ?? body?.detail ?? body?.message

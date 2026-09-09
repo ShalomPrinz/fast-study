@@ -18,7 +18,8 @@ import {
 } from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
 import { formatBytes, formatDuration } from '@/shared/utils/format'
-import { toastInitResult } from '@/services/toaster'
+import { toast, toastInitResult } from '@/services/toaster'
+import { isConnectionError } from '@/services/http'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
@@ -139,6 +140,12 @@ export default function MainView() {
   const doneCount = stages.filter(({ file }) => files[file].exists).length
   const videoSize = files['video.mp4'].exists ? files['video.mp4'].size : null
 
+  // A delete can be refused because the file is open in the user's pdf viewer, so it needs saying.
+  function reportDeleteFailure(e: unknown) {
+    if (isConnectionError(e)) return // connection errors are toasted centrally
+    toast('error', e instanceof Error ? e.message : t`Failed to delete file`)
+  }
+
   async function handleStep(step: Step) {
     const initResult = await runStep(course, lecture, step, kind)
     toastInitResult(initResult, {
@@ -149,7 +156,15 @@ export default function MainView() {
   }
 
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
-    await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file, kind)))
+    try {
+      await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file, kind)))
+    } catch (e) {
+      // Re-running over a file we failed to delete would fail the same way; the refresh shows
+      // which of the others did go.
+      reportDeleteFailure(e)
+      refreshCourses()
+      return
+    }
     refreshCourses()
     handleStep(step)
   }
@@ -174,7 +189,11 @@ export default function MainView() {
 
   async function confirmDeleteMaterial(name: string) {
     setMaterialToDelete(null)
-    await deleteMaterial(course, lecture, name, kind)
+    try {
+      await deleteMaterial(course, lecture, name, kind)
+    } catch (e) {
+      reportDeleteFailure(e)
+    }
     refreshCourses()
   }
 

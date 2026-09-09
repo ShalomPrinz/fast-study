@@ -40,7 +40,9 @@ a grid so `ProgressBar`'s own ETA label lands at the end of the stage line with 
 
 Rotating a file deletes it _and every later file in `PIPELINE`_ that exists, then re-runs its step — the
 confirm modal lists exactly those. This is why rotate must derive from the `PIPELINE` order rather than a
-per-step list.
+per-step list. A refused delete — the file open in the user's own pdf app, `423` from the database service —
+toasts and stops before the step, which would only fail on the same lock; the same guard covers the edit
+view's re-export and a material delete.
 
 ## Materials
 

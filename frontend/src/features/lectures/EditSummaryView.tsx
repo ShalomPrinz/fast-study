@@ -89,14 +89,19 @@ export default function EditSummaryView() {
     setLoading(false)
   }
 
+  // Shows a failed write in the toolbar and as a toast; connection errors are toasted centrally.
+  function reportFailure(e: unknown, fallback: string): void {
+    const message = e instanceof Error ? e.message : fallback
+    if (!isConnectionError(e)) toast('error', message)
+    setError(message)
+  }
+
   // Writes the editor buffer to summary.md; false means it failed and was already reported.
   async function persist(): Promise<boolean> {
     try {
       await saveSummaryContent(course, lecture, content, kind)
     } catch (e) {
-      const message = e instanceof Error ? e.message : t`Failed to save summary`
-      if (!isConnectionError(e)) toast('error', message) // connection errors are toasted centrally
-      setError(message)
+      reportFailure(e, t`Failed to save summary`)
       return false
     }
     setSavedContent(content)
@@ -125,7 +130,15 @@ export default function EditSummaryView() {
     }
     // The write lands before the PDF does, and the chip comparing their mtimes reads the tree.
     refreshCourses()
-    await deleteFile(course, lecture, 'summary.pdf', kind)
+    // A pdf we cannot delete — a viewer still holding it open — is one the step could not write
+    // either, so the failure is reported here rather than pushed into a doomed run.
+    try {
+      await deleteFile(course, lecture, 'summary.pdf', kind)
+    } catch (e) {
+      reportFailure(e, t`Failed to generate PDF`)
+      setGenerating(false)
+      return
+    }
     const initResult = await runStep(course, lecture, 'pdf', kind)
     if (initResult.status !== 'started') {
       toastInitResult(initResult, {
