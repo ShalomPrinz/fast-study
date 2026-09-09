@@ -129,7 +129,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 ## Architecture Preferences
 
 - Prefer push-based (SSE/WebSocket/event emitter) designs over polling for progress and status updates. Do not propose polling as the default; if polling seems necessary, state explicitly why push is not viable.
-- Implement the simplest version of this that fully satisfies the requirement. No caching layers, no factory splits, no abstraction with a single caller. After implementing, list the complexity you deliberately left out and what signal would justify adding each one later.
+- Implement the simplest version of this that fully satisfies the requirement. No caching layers, no factory splits, no abstraction with a single caller. After implementing, list the complexity you deliberately left out and what signal would justify adding each one later. That list is for _optional additions_ only — user-visible behavior your own change broke is a regression, not a trade-off, and it gets fixed in the same pass rather than listed.
 
 ## Workflow
 

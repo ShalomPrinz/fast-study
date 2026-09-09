@@ -16,6 +16,19 @@ runtime (`services/runtime.ts`), falling back to the dev ports `:8000`, `:8001`,
 same bridge carries the launch secret every request sends as `X-FastStudy-Secret`; it is absent in browser
 dev, where the services enforce nothing.
 
+## Verifying layout changes
+
+Check layout/CSS work against the **real page**, not a hand-built HTML harness: start `npm run dev` on a
+spare port, drive it with Playwright, and fulfil the service calls from the test script — `/settings` (the
+InitGate wall gates everything behind it), `/tree`, `/auth/status`, `/list`. Stubbing at the browser poses
+any data shape, including ones no local course has, without booting four services or writing to `DATA_ROOT`.
+Measure with `getBoundingClientRect` whenever the claim is "aligned" or "centred", and screenshot every
+row/card shape — a grid that fixes the wide window can overlap at a narrow one.
+
+Use **one** `page.route("**/*")` handler that lets the dev-server origin `continue_()` and answers
+everything else by URL suffix. A narrower glob like `**/list` or `**/events*` also matches Vite's own module
+URLs (`/src/services/events.ts`), and aborting one blanks the app with no console error.
+
 ## Docs
 
 | Doc                       | Covers                                                                            |
