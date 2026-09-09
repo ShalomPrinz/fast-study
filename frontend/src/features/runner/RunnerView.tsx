@@ -329,7 +329,7 @@ export default function RunnerView() {
                   </div>
                   <p className="queue-note">
                     <Trans>
-                      Nothing is coming for these until you run them, or the nightly 03:00 pass
+                      Nothing is coming for these until you run them, or the nightly catch-up pass
                       does.
                     </Trans>
                   </p>

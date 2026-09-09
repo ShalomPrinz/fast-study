@@ -82,10 +82,7 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
         return
       }
       if (s === 'all_in_flight') {
-        sendUpdateRef.current?.(
-          'info',
-          t`Nothing to run - All remaining pipelines already running`,
-        )
+        sendUpdateRef.current?.('info', t`Nothing to run - All remaining pipelines already running`)
         return
       }
       setStatus(s)

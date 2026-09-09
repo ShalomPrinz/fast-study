@@ -13,6 +13,11 @@ plus the dashed `AddCourseRow`, then — once a course is loaded — a **Recordi
 `.recordings-panel`. Downloads is the one page read at 880px rather than 660px, because a recording's second
 line carries a kind toggle, a name input and an action side by side.
 
+A source row is three grid tracks — name, URL, the pencil and Load recordings as one cell — with the side
+ones equal, so the URL sits at the row's midpoint and every row's URL lines up down the list however long
+the name beside it is. Only the action track is floored at its own content: a window too narrow for the
+even split costs the URL its exact centring rather than sliding the buttons over it.
+
 The panel holds the media segments and its close control on one row and the sections beneath. `ModeToggle`
 emits its segments and its body as siblings, so the panel is a two-column grid that places them: the
 segments and the close button share row 1, everything the body renders spans both columns.
@@ -20,24 +25,46 @@ segments and the close button share row 1, everything the body renders spans bot
 Each recording is a card on two lines — **what it is** (title, plus the resolved-type chip on an `unknown`
 row) over **where it is going** (a `Save as` label, the Lecture/Recitation toggle, the name input, and the
 action). The states are tints: accent while downloading, with the job's bars stacked inside the card;
-`--ok` once the target exists in the course, where an `In course` chip stands in for the button; and faded
-for an `unsupported` row, whose button stays disabled behind its tooltip.
+`--ok` once the target exists in the course, where an `In course` chip and an icon-only `Download again`
+button take the place of the button; and faded for an `unsupported` row, whose button stays disabled behind
+its tooltip. That re-download stays visible rather than hover-revealed, so it is keyboard- and
+touch-reachable, and it routes through the row's own handler straight into the overwrite confirm.
 
 ## Auth
 
-`AccountStatus` probes `/auth/status` on mount and renders the answer as a header chip — `--ok` connected,
+The probe lives in `AuthStatusProvider` (`contexts/AuthStatusContext.tsx`), mounted in `Layout` beside the
+session provider, so the header chip and every course row read one `/auth/status` answer. It probes nothing
+on mount — `AccountStatus` asks when the page appears, which leaves the auto-downloader alone on every other
+route, where a boot-time probe would toast it as down. `status` is `null` for "unknown": no answer yet, or a
+probe that failed.
+
+`AccountStatus` renders the answer as a header chip — `--ok` connected,
 `--warn` expired or mid-login, `--danger` not connected — beside the one button that can move it. Connect
-(and `Manage account`, which is the same call on an already-connected session) pops a headed browser on the
-host for MFA and returns immediately; the chip then waits for the user to click Done, which calls
-`/auth/complete` to persist the storage state and re-probes.
+pops a headed browser on the host for MFA and returns immediately; the chip then waits for the user to click
+Done, which calls `/auth/complete` to persist the storage state and re-probes.
+
+A connected session's button is `Disconnect`, behind a `ConfirmModal`: `/auth/disconnect` deletes the stored
+token, and getting it back is another headed MFA round-trip, so it must not fire on a stray click. It
+re-probes on success, and the button disables in flight the way Connect and Done do.
 
 A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectKey`, which is the `key` on
-`<AccountStatus>` — remounting forces a fresh probe, since the cached status predates the 401 and would
-otherwise still read "connected".
+`<AccountStatus>` — remounting re-runs its probe effect, since the cached status predates the 401 and would
+otherwise still read "connected". That is why the probe is fired from the component rather than from the
+provider, which never remounts.
+
+A `BlockedError` is deliberately not that path. `lemida.biu.ac.il` sits behind bot protection that answers
+a burst of calls with a captcha page instead of a web-service response; the challenge is transient and says
+nothing about the token, so it toasts `blockedMessage()` — the site is temporarily refusing automated
+requests, wait a few minutes — and leaves the account chip alone. Its copy is written here rather than taken
+from the server's `message`, which is an English log line.
+
+A course row's `Load recordings` is disabled, with a hint in its `title`, only when the probe came back
+`connected: false`. An unknown status leaves it enabled: guessing "disconnected" from a probe still in
+flight or one the service never answered would lock a working session out of discovery.
 
 ## The page session
 
-Everything the page discovers or accumulates — `selected`, `items`, `loading`/`error`, the row edits and
+Everything the page discovers or accumulates — `selected`/`pending`, `items`, `error`, the row edits and
 `reconnectKey` — lives in `DownloadsSessionProvider`
 (`contexts/DownloadsSessionContext.tsx`), mounted in `Layout` above the outlet. `/downloads` is a route, so
 its view unmounts on any navigation; holding the session above the router is what lets the user open a
@@ -58,6 +85,19 @@ there and then, instead of being reseeded away as history by `primed` on a later
 ## Discovery
 
 One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order.
+
+The course being discovered and the course on the page are separate values. `discover` sets `pending`, and
+only once `listRecordings` resolves does it clear the old items and promote the name to `selected` — so a
+discovery that dies on an expired session leaves the page exactly as it was, a toast and nothing else,
+instead of a recordings view that paints and unpaints. A `BlockedError` — the site's bot-protection
+challenge — behaves the same way, and is the one other error that paints nothing. A plain failure does
+promote it: the panel is where that error is shown. The row's `Loading…` state follows `pending`, while `.source-row--selected` and the
+recordings sections follow `selected`.
+
+Each discovery takes a ticket, and a superseded one writes nothing: closing the panel or loading another
+course bumps the ticket, so an answer the user has walked away from cannot reopen the panel or replace what
+is on it. The reconnect hint is the exception — an expired session is true whichever discovery found it, and
+it moves only the account chip.
 
 Each item carries `media`, one of three values: `'material'` for a Moodle PDF resource (appended as the
 lecture's next `material.N.pdf`), `'unknown'` for a Google Drive row — a Drive `url` module carries no
@@ -201,8 +241,8 @@ present. Ambiguity voids the marker rather than guessing (whitespace, a second l
 title with no number at all falls back to the tree's next-number suggestion.
 
 A row's failure to _start_ flips the button to "Retry ✗" and toasts via `toastDownloadError` (generic copy,
-except an `UnsupportedError` whose message is display-ready). Reconnect, passcode and a cancelled passcode
-prompt don't toast — they steer the UI elsewhere. A failure _after_ the start is a job failure, below.
+except an `UnsupportedError` whose message is display-ready and a `BlockedError`, which gets the wait-and-retry
+copy). Reconnect, passcode and a cancelled passcode prompt don't toast — they steer the UI elsewhere. A failure _after_ the start is a job failure, below.
 
 ## Download progress
 
@@ -287,7 +327,7 @@ Each bar is literally `MainView`'s — same component, same `Estimating…` / `N
 `Nm Ns remaining` / `Taking longer than expected` states; the bars render inside the card, stacked beneath
 its "save as" line. While any job runs the action is a "Downloading" chip over an accent-tinted card; on
 all-done the SSE tree refresh lands at the same moment, so the card turns green and the action becomes the
-`In course` chip; on error the button comes back reading "Retry ✗".
+`In course` chip beside its re-download icon; on error the button comes back reading "Retry ✗".
 
 The provider — not the row — toasts a job failure via `toastJobError`, so one place covers single and bulk
 rows alike. It toasts each error id once (a failed job lingers until a retry supersedes it), guarded by a

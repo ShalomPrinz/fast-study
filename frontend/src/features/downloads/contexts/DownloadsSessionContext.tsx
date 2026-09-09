@@ -3,15 +3,18 @@ import { t } from '@lingui/core/macro'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
-import { isReconnectError, listRecordings } from '../services/autoDownloader'
+import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
+import { blockedMessage } from '../utils/downloadErrors'
 import { clearExpansions } from './RowExpansionsContext'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
 
 interface DownloadsSessionState {
+  // The course whose items are on the page, and the one a discovery is currently fetching. They are
+  // separate so a failed discovery changes nothing: nothing paints until the items are in hand.
   selected: string | null
+  pending: string | null
   items: Item[]
-  loading: boolean
   error: string | null
   edits: Record<string, RowEdit>
   reconnectKey: number
@@ -41,8 +44,8 @@ interface ProviderProps {
 
 export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps) {
   const [selected, setSelected] = useState<string | null>(null)
+  const [pending, setPending] = useState<string | null>(null)
   const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [reconnectKey, setReconnectKey] = useState(0)
   // Keyed by item ref and living above the media toggle, so a typed name, a kind toggle and a
@@ -51,6 +54,11 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
 
   const sendUpdateRef = useRef(sendUpdate)
   sendUpdateRef.current = sendUpdate
+
+  // Every discovery takes a ticket and only the newest one may write to the page. `close` bumps it
+  // without starting anything, which is what keeps a closed panel closed when a discovery the user
+  // walked away from lands — and it drops course B's answer when the user has moved on to C.
+  const discoveryId = useRef(0)
 
   // Structural sharing is load-bearing: replacing only the edited ref's slice leaves every other
   // slice identical, which is what lets the memoized sibling rows bail out of a keystroke render.
@@ -84,30 +92,49 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     setError(null)
   }, [])
 
+  // The course is promoted to `selected` only once its items are in hand, so an expired session
+  // leaves the page exactly as it was — a toast and nothing else, instead of a recordings view that
+  // paints and unpaints. A plain failure still promotes it: the panel is where that error is shown.
   const discover = useCallback(
     async (course: Course) => {
       if (!course.source_url) return
-      setSelected(course.name)
-      clear()
-      setLoading(true)
+      const id = ++discoveryId.current
+      setPending(course.name)
       try {
-        setItems(await listRecordings(course.source_url))
+        const found = await listRecordings(course.source_url)
+        if (id !== discoveryId.current) return
+        clear()
+        setItems(found)
+        setSelected(course.name)
       } catch (err) {
+        // The expired session is true whichever discovery learned it, so the hint fires even for a
+        // superseded one: it moves the account chip, never the page.
         if (isReconnectError(err)) {
           reconnectHint()
-          setSelected(null)
-        } else {
-          setError('Failed to load recordings. Is the auto-downloader running?')
+          return
         }
+        if (id !== discoveryId.current) return
+        // A bot-protection challenge is the site's, not the account's: it paints nothing and moves
+        // no chip, just says to wait. Unlike the reconnect hint it stays behind the ticket guard —
+        // there is no chip to correct, so a discovery the user walked away from toasts nothing.
+        if (isBlockedError(err)) {
+          sendUpdateRef.current?.('error', blockedMessage())
+          return
+        }
+        clear()
+        setSelected(course.name)
+        setError('Failed to load recordings. Is the auto-downloader running?')
       } finally {
-        setLoading(false)
+        if (id === discoveryId.current) setPending(null)
       }
     },
     [clear, reconnectHint],
   )
 
   const close = useCallback(() => {
+    discoveryId.current++
     setSelected(null)
+    setPending(null)
     clear()
   }, [clear])
 
@@ -116,8 +143,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     [discover, close, reconnectHint, resolveMedia, rowEdits],
   )
   const state = useMemo(
-    () => ({ selected, items, loading, error, edits, reconnectKey }),
-    [selected, items, loading, error, edits, reconnectKey],
+    () => ({ selected, pending, items, error, edits, reconnectKey }),
+    [selected, pending, items, error, edits, reconnectKey],
   )
 
   // Rendering `{children}` and nothing else is what keeps the sidebar and the outlet out of this:

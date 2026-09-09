@@ -23,6 +23,7 @@ import '@/styles/source-row.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
 import '@/styles/segmented.css'
+import '@/styles/pipeline-card.css'
 import '@/features/downloads/DownloadsView.css'
 import './RecordingRow.css'
 import Chevron from '@/shared/components/Chevron'
@@ -262,11 +263,23 @@ const RecordingRow = memo(function RecordingRow({
             <Trans>Downloading</Trans>
           </span>
         ) : alreadyDownloaded && !failed ? (
-          // Settled: the target exists, so there is nothing left to do here. Renaming the target, or
-          // a failure the retry button has to stay reachable for, brings the button back.
-          <span className="chip chip--ok">
-            <Icon icon="check" />
-            <Trans>In course</Trans>
+          // Settled: the target exists, so the chip carries the state and the action shrinks to an
+          // icon — always visible rather than hover-revealed, so it stays keyboard- and touch-reachable.
+          // It routes through the same handler, which turns a settled row into the overwrite confirm.
+          <span className="recording-settled">
+            <span className="chip chip--ok">
+              <Icon icon="check" />
+              <Trans>In course</Trans>
+            </span>
+            <button
+              className="pipeline-icon-btn"
+              onClick={onDownloadClick}
+              disabled={pending}
+              aria-label={t`Download again`}
+              title={t`Download again`}
+            >
+              <Icon icon="rotate" />
+            </button>
           </span>
         ) : (
           <button

@@ -28,7 +28,7 @@ export default function DownloadsView() {
   const active = courses.filter((c) => !c.archived)
   const withSource = active.filter((c) => c.source_url).length
 
-  const { selected, items, loading, error, edits, reconnectKey } = useDownloadsSession()
+  const { selected, pending, items, error, edits, reconnectKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
 
   const countOf = (media: Media) => items.filter((i) => i.media === media).length
@@ -77,7 +77,7 @@ export default function DownloadsView() {
                   course={course}
                   onDiscover={course.source_url ? () => discover(course) : undefined}
                   selected={selected === course.name}
-                  discovering={selected === course.name && loading}
+                  discovering={pending === course.name}
                 />
               ))}
               <AddCourseRow />
@@ -96,7 +96,7 @@ export default function DownloadsView() {
                   <button className="recordings-close" onClick={close} aria-label={t`Close`}>
                     ×
                   </button>
-                  {loading && (
+                  {pending && (
                     <div className="recordings-status">
                       <Trans>Loading recordings…</Trans>
                     </div>
@@ -121,7 +121,7 @@ export default function DownloadsView() {
                                 onSelectMedia={selectMedia}
                               />
                               {!sections.length
-                                ? !loading &&
+                                ? !pending &&
                                   !error && (
                                     <div className="recordings-status">{emptyState[media]}</div>
                                   )

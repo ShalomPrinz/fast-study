@@ -4,6 +4,7 @@ import type { Course } from '@/types'
 import { setCourseSourceUrl } from '@/services/database'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import Icon from '@/shared/components/Icon'
 import '@/styles/source-row.css'
@@ -25,6 +26,10 @@ interface Props {
 export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
+  const { status } = useAuthStatus()
+  // Only a probe that came back "not connected" bars discovery. A probe still in flight or one that
+  // failed says nothing, and guessing "disconnected" there would lock a working session out.
+  const disconnected = status?.connected === false
   const [editing, setEditing] = useState(false)
   const edit = useInlineEdit(editing ? (course.source_url ?? '') : null)
 
@@ -71,7 +76,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
         </button>
       )}
       {!editing && course.source_url && (
-        <>
+        <div className="source-row-actions">
           <button className="pipeline-icon-btn" onClick={start} title={t`Edit source URL`}>
             <Icon icon="edit" />
           </button>
@@ -83,12 +88,17 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
             </span>
           ) : (
             onDiscover && (
-              <button className="btn btn--ghost" onClick={onDiscover} disabled={discovering}>
+              <button
+                className="btn btn--ghost"
+                onClick={onDiscover}
+                disabled={discovering || disconnected}
+                title={disconnected ? t`Connect your BIU account first` : undefined}
+              >
                 {discovering ? t`Loading…` : t`Load recordings`}
               </button>
             )
           )}
-        </>
+        </div>
       )}
     </div>
   )

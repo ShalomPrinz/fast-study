@@ -16,15 +16,24 @@ route that edits them all. The module behind it is
 | Drive root folder | none — required once Drive is on          | any folder name      | `backend/`  |
 | Summary model     | the first curated entry                   | the curated dropdown | `backend/`  |
 | Auto-run          | the whole pipeline                        | audio only, off      | `backend/`  |
+| Nightly catch-up  | on                                        | off                  | `backend/`  |
+| Nightly hour      | 03:00                                     | any hour, 00:00-23:00 | `backend/` |
 
 The model list comes from `GET /config/options`, so a model id that the free tier does not serve can
 never be typed in — a wrong one surfaces minutes later as a pipeline failure.
 
 **Auto-run is a ceiling on unattended work, not a schedule.** It caps a video dropped on a lecture or
-fetched by the downloader, and the backend's nightly 03:00 pass, at the whole pipeline / the audio
+fetched by the downloader, and the backend's nightly catch-up pass, at the whole pipeline / the audio
 step / nothing at all. It never caps a run the user starts: the `/running` page's button always runs
 everything. Unset means the whole pipeline, the same fallback `settings.auto_run()` applies, so both
 ends agree on a fresh install (`useAutoRun`, beside `useDriveEnabled`).
+
+**The nightly pass has two independent gates.** Its own switch decides whether the cron is scheduled
+at all and at which hour; auto-run still caps what that pass may do, so `off` there means nothing
+runs unattended whatever the switch says. Unset means on — the cron ran before it was a setting, and
+`settings.nightly_run()` keeps that — and the hour is a number on the wire, never the `<select>`'s
+string, since the store rejects a string. An unset or out-of-range hour reads as 3 on both ends
+(`toNightlyHour`), so the screen always shows the hour that will actually fire.
 
 ## What is not a setting
 
@@ -39,8 +48,7 @@ The list above is closed on purpose. Each of these looks like a field and delibe
 | `FRONTEND_URL`                                                                                          | A CORS origin the download server defaults for itself; only a non-default dev origin ever sets it                                   |
 | `DOWNLOADER_EXTENSION_ID`                                                                               | No default: unset unless a dev loading the unpacked extension sets it, and the packaged app never talks to that dev-only surface    |
 | The sidebar's lectures/courses mode and the search view's chosen course                                 | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                  |
-| Running unfinished lectures at app start                                                                | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s 03:00 cron already cover both the manual and the unattended case |
-| The 03:00 cron's hour, and a switch for it                                                              | `AUTO_RUN: off` already stops every unattended run, which is the only thing anyone asked for; an hour field would be a second knob for one behaviour |
+| Running unfinished lectures at app start                                                                | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s nightly cron already cover both the manual and the unattended case |
 
 ## `/settings`
 
@@ -82,7 +90,8 @@ than the connection toast the client already shows.
 The wall shows more than it requires. The language picker is there so the rest of the screen reads in
 the user's own language, and the Drive toggle so consent happens during onboarding rather than being
 discovered later; neither blocks, and Drive's folder field is required only while the toggle is on.
-Auto-run is not asked about and keeps its default — a first install has nothing to run yet.
+Auto-run and the nightly pass are not asked about and keep their defaults — a first install has
+nothing to run yet, and cron hours are not a first-run question.
 
 The data folder is **prefilled but confirmed, never silently accepted** — a checkbox, not an
 implicit acceptance. In browser dev the prefill is whatever the store already holds, so an

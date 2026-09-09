@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { RunnerStatus } from '@/types'
-import type { Settings } from '@/services/settings'
+import { toNightlyHour, type Settings } from '@/services/settings'
 import { isInitialized, missingEntries, type RequiredInput } from './required'
 import { runsAtRisk } from './dataRootGuard'
 
@@ -63,7 +63,23 @@ const STORE: Settings = {
   driveEnabled: null,
   gdriveRootFolder: null,
   autoRun: null,
+  nightlyRun: null,
+  nightlyHour: null,
 }
+
+describe('toNightlyHour', () => {
+  it('falls back to 03:00 for an unset, fractional or out-of-range hour', () => {
+    expect(toNightlyHour(null)).toBe(3)
+    expect(toNightlyHour(24)).toBe(3)
+    expect(toNightlyHour(-1)).toBe(3)
+    expect(toNightlyHour(2.5)).toBe(3)
+  })
+
+  it('keeps an hour the backend would also honour', () => {
+    expect(toNightlyHour(0)).toBe(0)
+    expect(toNightlyHour(23)).toBe(23)
+  })
+})
 
 describe('isInitialized', () => {
   it('passes once both keys and a data root are stored', () => {

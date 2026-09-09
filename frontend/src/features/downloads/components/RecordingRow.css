@@ -52,6 +52,15 @@
   min-width: 110px;
 }
 
+/* The settled action: the `In course` chip and its re-download icon, paired tight enough to read as
+   one control rather than two things that happen to be adjacent. */
+.recording-settled {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 /* Mid-download: accent-tinted, with the job's own bars stacked inside the card beneath line 2. */
 .recording-card.recording-card--downloading {
   border-color: var(--accent-line);

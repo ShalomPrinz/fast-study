@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { canStoreApiKeys } from '@/services/runtime'
 import {
   toAutoRun,
+  toNightlyHour,
   fetchConfigOptions,
   saveSettings,
   type ConfigOptions,
@@ -68,8 +69,11 @@ export default function InitWall({ stored, onDone }: Props) {
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? '',
-    // Not asked about here — carried through so the wall's save leaves the default alone.
+    // Not asked about here — carried through so the wall's save leaves the defaults alone. A first
+    // install has nothing to catch up on, so the cron's switch and hour belong on `/settings` only.
     autoRun: toAutoRun(stored.autoRun),
+    nightlyRun: stored.nightlyRun ?? true,
+    nightlyHour: toNightlyHour(stored.nightlyHour),
   })
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)

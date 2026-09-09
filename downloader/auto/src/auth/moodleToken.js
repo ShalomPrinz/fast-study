@@ -76,6 +76,21 @@ export class MoodleToken extends AuthProvider {
   }
 
   /**
+   * Forget the token locally: delete the file (ENOENT is success — already disconnected), clear the
+   * runtime invalidated flag so a reconnect starts clean, and close any headed login left in flight.
+   * Deliberately no server-side revoke: it could fail after the local delete and desync the two.
+   */
+  async disconnect() {
+    fs.rmSync(this.tokenPath, { force: true });
+    this._invalidated = false;
+    const pending = this._pending;
+    // Null before closing: the browser's 'disconnected' handler treats a live _pending as an
+    // abandoned login and would fire onCancel, which this is not.
+    this._pending = null;
+    if (pending) await pending.browser.close().catch(() => {});
+  }
+
+  /**
    * UI-triggered login, step 1: open the headed launch.php and start capturing the token
    * redirect. Returns immediately (user finishes MFA by hand). Idempotent while pending.
    * @param {{ onCancel?: () => void }} [opts]  onCancel fires if the headed browser closes
