@@ -11,6 +11,7 @@ import {
   handleAuthConnect,
   handleAuthComplete,
   handleAuthDisconnect,
+  handleBrowserPrereq,
   handleList,
   handleListExpand,
   handleResolve,
@@ -43,6 +44,7 @@ let toolStatus = {};
 // and what its boot screen renders a missing binary from.
 app.get('/health', (req, res) => res.json({ status: 'ok', tools: toolStatus }));
 
+app.get('/prereqs/browser', handleBrowserPrereq);
 app.get('/auth/status', handleAuthStatus);
 app.post('/auth/connect', handleAuthConnect);
 app.post('/auth/complete', handleAuthComplete);

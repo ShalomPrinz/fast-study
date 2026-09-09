@@ -4,6 +4,7 @@ import {
   resolveExtractorForRecording,
 } from '../core/registry.js';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
+import { resolveBrowserChannel } from '../browser/browserChannel.js';
 import {
   listRecordings,
   resolveRecording,
@@ -160,6 +161,30 @@ export async function handleAuthDisconnect(req, res) {
   logReq('POST', '/auth/disconnect');
   await authFor(defaultUniversity()).disconnect();
   send(res, 200, { connected: false });
+}
+
+// ── Prerequisite endpoints ──────────────────────────────────────────────────
+
+// Is one of the Chromium-family browsers this service drives installed? It gates the whole
+// download surface and none of the pipeline, so the settings screen lists it as a prerequisite
+// beside the API keys and names the browser it found. Always 200 — "no browser" is an answer,
+// not a failure — and safe to re-run: a negative is never cached, so re-checking after the user
+// installs one is the intended flow.
+export async function handleBrowserPrereq(req, res) {
+  logReq('GET', '/prereqs/browser');
+  try {
+    const { channel, browser } = await resolveBrowserChannel();
+    logResult('/prereqs/browser', `available (${channel})`);
+    return send(res, 200, {
+      available: true,
+      channel,
+      browser,
+      detail: `${browser} is installed.`,
+    });
+  } catch (e) {
+    logResult('/prereqs/browser', `unavailable: ${e.message}`);
+    return send(res, 200, { available: false, channel: null, browser: null, detail: e.message });
+  }
 }
 
 // ── Browsing endpoints ──────────────────────────────────────────────────────
