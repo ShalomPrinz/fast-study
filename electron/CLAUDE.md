@@ -10,11 +10,11 @@ everything on quit.
 
 | File          | Owns                                                                            |
 | ------------- | ------------------------------------------------------------------------------- |
-| `main.js`     | The launch: secret, child specs, port parse, health wait, window, teardown, log |
+| `main.js`     | The launch: secret, child specs, ports, health, window, teardown, log, shell   |
 | `protocol.js` | The `app://bundle` scheme and serving `frontend/dist` over it                   |
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
-| `preload.js`  | `window.faststudy` — the URLs, the secret, the settings backing, the checks     |
+| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, the open bridge    |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 

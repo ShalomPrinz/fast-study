@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, boot }` through
+The preload script exposes exactly `{ urls, secret, settings, checks, open, boot }` through
 `contextBridge`, in a sandboxed, context-isolated renderer. `frontend/src/services/runtime.ts` is the
 consumer and fixes the shape; `urls` is `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -41,6 +41,27 @@ preload. The frontend ignores it, and the launch screen ignores everything else 
 them at module scope and the bridge has to be complete before the bundle evaluates. They travel over
 IPC rather than through `additionalArguments` so the launch secret never appears on a command line,
 where every other process on the machine could read it.
+
+## Opening files and links
+
+A service URL handed to a fresh browser navigation cannot carry the `X-FastStudy-Secret` header, so
+in the packaged app every such navigation is a `401` and a blank window. `open` is the way out, and
+it is two calls:
+
+- **`open.file({ course, lecture, name, kind })`** resolves the file through `database/`'s
+  `/files/{name}/path` routes and hands the absolute path to `shell.openPath` — the user's own PDF
+  app, not a Chromium tab. `lecture` absent addresses a course-level `overview/` file instead.
+- **`open.external(url)`** opens an http(s) link in the user's browser. Any other scheme is refused:
+  `shell.openExternal` launches whatever handler a scheme is registered to, so an unchecked one is a
+  way to start a program from a renderer.
+
+**The renderer sends identifiers, never a path.** `database/` stays the single owner of the
+`{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
+bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
+
+**Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
+child window itself, and its documented merge order gives that child the parent's security-related
+`webPreferences` — this window's preload, and so the launch secret, running on a third-party origin.
 
 ## Startup checks
 
