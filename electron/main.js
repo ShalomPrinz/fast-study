@@ -4,6 +4,7 @@ const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
 const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const store = require('./store');
 
@@ -207,7 +208,7 @@ function killChildren() {
   }
 }
 
-function openWindow(urls) {
+function openWindow(urls, checks) {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -220,7 +221,7 @@ function openWindow(urls) {
     },
   });
   ipcMain.on('faststudy:config', (event) => {
-    event.returnValue = { urls, secret: SECRET };
+    event.returnValue = { urls, secret: SECRET, checks };
   });
   ipcMain.handle('faststudy:settings-read', () => store.read());
   ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
@@ -264,10 +265,16 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     openLog();
     serveBundle();
+    // Timed in the log because these run inline in the boot path: a check that stops being cheap
+    // shows up here rather than as a launch that quietly got slower.
+    const started = process.hrtime.bigint();
+    const checks = runStartupChecks();
+    const took = Number(process.hrtime.bigint() - started) / 1e6;
+    log('main', `startup checks in ${took.toFixed(2)}ms — ${JSON.stringify(checks)}`);
     try {
       // No window until all four are healthy: a renderer that loaded first would build its service
       // clients against URLs that do not exist yet.
-      openWindow(await boot());
+      openWindow(await boot(), checks);
     } catch (error) {
       fail(error);
     }

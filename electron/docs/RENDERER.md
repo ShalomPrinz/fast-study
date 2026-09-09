@@ -23,14 +23,32 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings }` through `contextBridge`, in a
-sandboxed, context-isolated renderer. `frontend/src/services/runtime.ts` is the consumer and fixes
+The preload script exposes exactly `{ urls, secret, settings, checks }` through `contextBridge`, in
+a sandboxed, context-isolated renderer. `frontend/src/services/runtime.ts` is the consumer and fixes
 the shape; `urls` is `{ backend, database, downloadServer, autoDownloader }`.
 
 `urls` and `secret` are fetched over a **synchronous** IPC message, because the frontend resolves
 them at module scope and the bridge has to be complete before the bundle evaluates. They travel over
 IPC rather than through `additionalArguments` so the launch secret never appears on a command line,
 where every other process on the machine could read it.
+
+## Startup checks
+
+`checks` carries the machine-level facts the app degrades on, probed once at boot by `checks.js` and
+delivered on the same synchronous IPC as `urls` and `secret`. Today it is one field,
+`secureStorage: boolean`.
+
+A check is a fact, not a verdict: nothing here fails a launch. `secureStorage: false` means the two
+API-key fields on the settings screens are disabled and say why, while every other setting saves
+normally — and the two keys stop counting as required entries, or the init wall would be a wall
+nobody on that machine could ever pass.
+
+**The renderer's default when there is no bridge is `true`, deliberately.** No bridge is browser
+dev, which has no Electron store at all and saves keys through `database/`'s `.env` store, so a
+missing bridge must never render as an unsupported machine.
+
+Checks run inline in the boot path, before the children start, so each one must be cheap — no
+network, no spawn, no real disk work — and the boot log carries how long they took.
 
 ## The settings store
 

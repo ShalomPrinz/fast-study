@@ -9,6 +9,9 @@ const config = ipcRenderer.sendSync('faststudy:config');
 contextBridge.exposeInMainWorld('faststudy', {
   urls: config.urls,
   secret: config.secret,
+  // What this machine can and cannot do, probed once at boot. The settings screens degrade on it —
+  // an unavailable key store disables the API-key fields instead of failing the save.
+  checks: config.checks,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
   // `read()` reports the two keys as set/unset flags only.
   settings: {

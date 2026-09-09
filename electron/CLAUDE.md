@@ -13,7 +13,8 @@ everything on quit.
 | `main.js`     | The launch: secret, child specs, port parse, health wait, window, teardown, log |
 | `protocol.js` | The `app://bundle` scheme and serving `frontend/dist` over it                   |
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
-| `preload.js`  | `window.faststudy` — the four URLs, the launch secret, the settings backing     |
+| `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
+| `preload.js`  | `window.faststudy` — the URLs, the secret, the settings backing, the checks     |
 
 Read [`docs/BOOT.md`](docs/BOOT.md) for the launch sequence and [`docs/RENDERER.md`](docs/RENDERER.md)
 for the scheme, the bridge and the store.

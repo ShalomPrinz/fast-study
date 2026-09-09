@@ -8,10 +8,14 @@
    ignored and the scheme silently loses its origin. See [`RENDERER.md`](RENDERER.md).
 3. One secret is generated for the launch: 32 random bytes, hex. It goes into every child's
    environment as `FASTSTUDY_SECRET` and reaches the renderer through the preload bridge.
-4. The four children start **in dependency order** — `database → backend → auto → server` — one at a
+4. The startup checks run, once, and are carried for the launch — see
+   [`RENDERER.md`](RENDERER.md). They sit inline in the boot path, so each has to be cheap: no
+   network, no spawn, no real disk work. Their duration is logged for exactly that reason, and a
+   check reports a fact rather than deciding whether to launch.
+5. The four children start **in dependency order** — `database → backend → auto → server` — one at a
    time. Each is spawned, its port read off stdout, and its `/health` waited on before the next
    starts.
-5. All four healthy, the `BrowserWindow` is created and loads `app://bundle/index.html`. There is no
+6. All four healthy, the `BrowserWindow` is created and loads `app://bundle/index.html`. There is no
    window before that: a renderer that loaded first would build its service clients at module scope
    against URLs that do not exist yet.
 
