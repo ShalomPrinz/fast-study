@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { canStoreApiKeys } from '@/services/runtime'
 import {
   toAutoRun,
   fetchConfigOptions,
@@ -12,6 +13,7 @@ import ApiKeyField from './components/ApiKeyField'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
+import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
 import '@/styles/button.css'
@@ -95,6 +97,7 @@ export default function InitWall({ stored, onDone }: Props) {
     dataRootConfirmed: confirmed,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
+    canStoreApiKeys,
   })
 
   async function finish() {
@@ -135,10 +138,17 @@ export default function InitWall({ stored, onDone }: Props) {
             <Trans>Let's set things up</Trans>
           </h1>
           <p className="init-wall-lede">
-            <Trans>
-              Three things are needed before the first lecture can be turned into a summary. This
-              only happens once.
-            </Trans>
+            {canStoreApiKeys ? (
+              <Trans>
+                Three things are needed before the first lecture can be turned into a summary. This
+                only happens once.
+              </Trans>
+            ) : (
+              <Trans>
+                Just one thing is needed to get started: a folder to keep everything in. This only
+                happens once.
+              </Trans>
+            )}
           </p>
         </header>
 
@@ -156,19 +166,27 @@ export default function InitWall({ stored, onDone }: Props) {
               <h2 className="settings-section-title">
                 <Trans>Your two API keys</Trans>
               </h2>
-              <p className="settings-hint">
-                <Trans>
-                  Fast Study uses two free services: one turns the recording into text, the other
-                  writes the summary. Both need a key of your own, and both are free to create.
-                </Trans>
-              </p>
-              {keyField(
-                options.providers.find((p) => p.id === 'gemini'),
-                'geminiApiKey',
-              )}
-              {keyField(
-                options.providers.find((p) => p.id === 'groq'),
-                'groqApiKey',
+              {/* The note stands in for the whole section body: on a first-run gate a field that
+                  cannot be filled is noise, so only the heading survives beside it. */}
+              <SecureStorageNotice />
+              {canStoreApiKeys && (
+                <>
+                  <p className="settings-hint">
+                    <Trans>
+                      Fast Study uses two free services: one turns the recording into text, the
+                      other writes the summary. Both need a key of your own, and both are free to
+                      create.
+                    </Trans>
+                  </p>
+                  {keyField(
+                    options.providers.find((p) => p.id === 'gemini'),
+                    'geminiApiKey',
+                  )}
+                  {keyField(
+                    options.providers.find((p) => p.id === 'groq'),
+                    'groqApiKey',
+                  )}
+                </>
               )}
             </section>
 

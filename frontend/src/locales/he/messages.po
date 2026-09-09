@@ -234,7 +234,7 @@ msgstr "+ הוסף כתובת מקור"
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:253
+#: src/features/settings/SettingsView.tsx:263
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -250,7 +250,7 @@ msgstr "הוסף הרצאה"
 msgid "Add recitation"
 msgstr "הוסף תרגול"
 
-#: src/features/lectures/EditSummaryView.tsx:230
+#: src/features/lectures/EditSummaryView.tsx:225
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל העריכות יימחקו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -258,7 +258,7 @@ msgstr "כל העריכות יימחקו והסיכום המקורי של ה-AI 
 msgid "All Generated"
 msgstr "הכל יוצר"
 
-#: src/features/lectures/EditSummaryView.tsx:188
+#: src/features/lectures/EditSummaryView.tsx:189
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -266,11 +266,11 @@ msgstr "כבר מעודכן"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:156
+#: src/features/settings/SettingsView.tsx:159
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:220
+#: src/features/settings/SettingsView.tsx:230
 msgid "Appearance and behaviour"
 msgstr "מראה והתנהגות"
 
@@ -314,7 +314,7 @@ msgstr "הרצה אוטומטית: כבויה"
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל הצינור"
 
-#: src/features/lectures/EditSummaryView.tsx:161
+#: src/features/lectures/EditSummaryView.tsx:162
 msgid "Back"
 msgstr "חזרה"
 
@@ -343,7 +343,7 @@ msgstr "אין גישה ל{serviceName} בכתובת {baseUrl}. ודא שהשי�
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/settings/SettingsView.tsx:252
+#: src/features/settings/SettingsView.tsx:262
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -420,7 +420,7 @@ msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/settings/SettingsView.tsx:119
+#: src/features/settings/SettingsView.tsx:122
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
@@ -466,11 +466,11 @@ msgstr "תיקיית נתונים"
 msgid "Delete {0}"
 msgstr "מחק את {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:180
+#: src/features/lectures/EditSummaryView.tsx:181
 msgid "Discard all edits"
 msgstr "מחק את כל העריכות"
 
-#: src/features/settings/SettingsView.tsx:237
+#: src/features/settings/SettingsView.tsx:247
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
@@ -581,7 +581,7 @@ msgstr "חילוץ"
 msgid "Extract Audio"
 msgstr "חלץ אודיו"
 
-#: src/features/settings/SettingsView.tsx:236
+#: src/features/settings/SettingsView.tsx:246
 msgid "Extract the audio only"
 msgstr "לחלץ רק את האודיו"
 
@@ -602,8 +602,8 @@ msgstr "נכשל ✗"
 msgid "Failed to complete login. Try reconnecting."
 msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
 
-#: src/features/lectures/EditSummaryView.tsx:131
-#: src/features/lectures/EditSummaryView.tsx:133
+#: src/features/lectures/EditSummaryView.tsx:132
+#: src/features/lectures/EditSummaryView.tsx:134
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
 
@@ -611,7 +611,7 @@ msgstr "ייצור ה-PDF נכשל"
 msgid "Failed to launch the login browser."
 msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
-#: src/features/lectures/EditSummaryView.tsx:95
+#: src/features/lectures/EditSummaryView.tsx:96
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
@@ -619,7 +619,7 @@ msgstr "שמירת הסיכום נכשלה"
 msgid "Fast Study"
 msgstr "Fast Study"
 
-#: src/features/settings/InitWall.tsx:160
+#: src/features/settings/InitWall.tsx:175
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם דרוש מפתח משלכם, ויצירת שניהם חינמית."
 
@@ -627,7 +627,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:206
+#: src/features/settings/InitWall.tsx:224
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
@@ -672,11 +672,11 @@ msgstr "מייצר…"
 msgid "Get a key"
 msgstr "השגת מפתח"
 
-#: src/features/settings/SettingsView.tsx:207
+#: src/features/settings/SettingsView.tsx:217
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:189
+#: src/features/settings/InitWall.tsx:207
 msgid "Google Drive (optional)"
 msgstr "Google Drive (רשות)"
 
@@ -692,6 +692,10 @@ msgstr "דף הבית"
 #: src/features/downloads/components/RecordingRow.tsx:269
 msgid "In course"
 msgstr "נמצא בקורס"
+
+#: src/features/settings/InitWall.tsx:147
+msgid "Just one thing is needed to get started: a folder to keep everything in. This only happens once."
+msgstr "רק דבר אחד נדרש כדי להתחיל: תיקייה שבה יישמר הכול. זה קורה רק פעם אחת."
 
 #: src/features/downloads/components/PasscodePrompt.tsx:62
 msgid "just this lecture"
@@ -751,7 +755,7 @@ msgstr "הרצאות"
 msgid "Lectures {0}-{1}"
 msgstr "הרצאות {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:135
+#: src/features/settings/InitWall.tsx:138
 msgid "Let's set things up"
 msgstr "בואו נגדיר את הכול"
 
@@ -828,7 +832,7 @@ msgstr "לא נמצא חומר"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/EditSummaryView.tsx:180
+#: src/features/lectures/EditSummaryView.tsx:181
 msgid "No original saved"
 msgstr "לא נשמר מקור"
 
@@ -924,7 +928,7 @@ msgstr "רץ עכשיו"
 msgid "Only .mp4 files are allowed"
 msgstr "מותרים קבצי .mp4 בלבד"
 
-#: src/features/settings/InitWall.tsx:36
+#: src/features/settings/InitWall.tsx:38
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "פתחו את Google AI Studio דרך הקישור שלמטה, התחברו עם חשבון Google שלכם ולחצו על \"Create API key\". העתיקו את המפתח שמוצג והדביקו אותו בשדה."
 
@@ -943,7 +947,7 @@ msgstr "פתח את החומר בלשונית חדשה"
 msgid "Open PDF in new tab"
 msgstr "פתח את ה-PDF בלשונית חדשה"
 
-#: src/features/settings/InitWall.tsx:46
+#: src/features/settings/InitWall.tsx:48
 msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 msgstr "פתחו את מסוף Groq דרך הקישור שלמטה, התחברו ולחצו על \"Create API Key\". העתיקו אותו מיד — Groq מציגה מפתח פעם אחת בלבד — והדביקו אותו בשדה."
 
@@ -985,11 +989,11 @@ msgstr "PDF"
 msgid "PDF export failed"
 msgstr "ייצוא ה-PDF נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:171
+#: src/features/lectures/EditSummaryView.tsx:172
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:172
+#: src/features/lectures/EditSummaryView.tsx:173
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -1116,7 +1120,7 @@ msgstr "להחליף את video.mp4 הקיים ב\"{0}\"?"
 msgid "Required"
 msgstr "חובה"
 
-#: src/features/lectures/EditSummaryView.tsx:182
+#: src/features/lectures/EditSummaryView.tsx:183
 msgid "Restore original"
 msgstr "שחזר מקור"
 
@@ -1158,7 +1162,7 @@ msgstr "החלף את {file}"
 msgid "Run Remaining"
 msgstr "הרץ את הנותר"
 
-#: src/features/settings/SettingsView.tsx:235
+#: src/features/settings/SettingsView.tsx:245
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל הצינור"
 
@@ -1188,11 +1192,11 @@ msgstr "מריץ צינורות…"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/settings/SettingsView.tsx:148
+#: src/features/settings/SettingsView.tsx:151
 msgid "Save"
 msgstr "שמור"
 
-#: src/features/lectures/EditSummaryView.tsx:190
+#: src/features/lectures/EditSummaryView.tsx:191
 msgid "Save & update PDF"
 msgstr "שמור ועדכן PDF"
 
@@ -1204,7 +1208,7 @@ msgstr "שמור בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:214
+#: src/features/settings/InitWall.tsx:232
 msgid "Saving…"
 msgstr "שומרים…"
 
@@ -1237,13 +1241,13 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "session expired"
 msgstr "החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:75
-#: src/features/settings/SettingsView.tsx:141
+#: src/features/settings/SettingsView.tsx:77
+#: src/features/settings/SettingsView.tsx:144
 #: src/shared/sidebar/Sidebar.tsx:92
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:112
+#: src/features/settings/SettingsView.tsx:115
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1267,7 +1271,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (אופציונלי)…"
 
-#: src/features/settings/InitWall.tsx:214
+#: src/features/settings/InitWall.tsx:232
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -1277,12 +1281,12 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:130
+#: src/features/lectures/EditSummaryView.tsx:131
 #: src/features/lectures/MainView.tsx:144
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:197
+#: src/features/settings/SettingsView.tsx:207
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1318,7 +1322,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "summary did not use material"
 msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:177
+#: src/features/settings/SettingsView.tsx:187
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1344,7 +1348,7 @@ msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "החיבור לבר-אילן פג. התחבר מחדש והרץ את הקטע שוב."
 
-#: src/features/settings/SettingsView.tsx:240
+#: src/features/settings/SettingsView.tsx:250
 msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly 03:00 pass alike, never a run you start from the running pipelines page."
 msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם על וידאו שנגרר או הורד וגם על המעבר הלילי ב-03:00, ולעולם לא על הרצה שהתחלת מדף הצינורות בהרצה."
 
@@ -1381,9 +1385,13 @@ msgstr "המריץ לוקח אותן לפי הסדר"
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
-#: src/features/lectures/EditSummaryView.tsx:231
+#: src/features/lectures/EditSummaryView.tsx:226
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
+
+#: src/features/settings/components/SecureStorageNotice.tsx:11
+msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
+msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, ולכן אי אפשר לשמור אותם כאן. כל שאר ההגדרות במסך הזה פועלות כרגיל."
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
@@ -1391,7 +1399,7 @@ msgstr "לא ניתן לבטל את הפעולה."
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
-#: src/features/settings/InitWall.tsx:138
+#: src/features/settings/InitWall.tsx:142
 msgid "Three things are needed before the first lecture can be turned into a summary. This only happens once."
 msgstr "שלושה דברים דרושים לפני שאפשר להפוך את ההרצאה הראשונה לסיכום. זה קורה פעם אחת בלבד."
 
@@ -1419,7 +1427,7 @@ msgstr "הוצא קורס מהארכיון"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:208
+#: src/features/lectures/EditSummaryView.tsx:209
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -1427,7 +1435,7 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
-#: src/features/lectures/EditSummaryView.tsx:190
+#: src/features/lectures/EditSummaryView.tsx:191
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 
@@ -1464,11 +1472,11 @@ msgstr "סרטונים"
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/SettingsView.tsx:226
+#: src/features/settings/SettingsView.tsx:236
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:177
+#: src/features/settings/InitWall.tsx:195
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -1488,7 +1496,7 @@ msgstr "כן"
 msgid "Yes, store my lectures in this folder"
 msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 
-#: src/features/settings/InitWall.tsx:157
+#: src/features/settings/InitWall.tsx:167
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלכם"
 

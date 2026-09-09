@@ -4,6 +4,7 @@ import { fetchSettings } from '@/services/settings'
 import type { Settings } from '@/services/settings'
 import InitWall from '@/features/settings/InitWall'
 import { isInitialized } from '@/features/settings/utils/required'
+import { canStoreApiKeys } from '@/services/runtime'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import '@/styles/spinner.css'
 import './InitGate.css'
@@ -24,7 +25,7 @@ export default function InitGate({ children }: { children: ReactNode }) {
         const settings = await fetchSettings()
         setStored(settings)
         setSettings(settings)
-        setPhase(isInitialized(settings) ? 'app' : 'wall')
+        setPhase(isInitialized(settings, canStoreApiKeys) ? 'app' : 'wall')
       } catch {
         // A downed store is not an unconfigured install. Dropping a working app into onboarding
         // over a transient outage is worse than the connection toast the client already shows.

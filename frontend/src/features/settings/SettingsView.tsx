@@ -11,6 +11,7 @@ import {
   type SettingsPatch,
 } from '@/services/settings'
 import { isConnectionError } from '@/services/http'
+import { canStoreApiKeys } from '@/services/runtime'
 import { toast } from '@/services/toaster'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
@@ -20,6 +21,7 @@ import ApiKeyField from './components/ApiKeyField'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
+import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
@@ -91,6 +93,7 @@ export default function SettingsView() {
     dataRootConfirmed: true,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
+    canStoreApiKeys,
   })
 
   async function commit(next: SettingsPatch) {
@@ -155,21 +158,28 @@ export default function SettingsView() {
             <h2 className="settings-section-title">
               <Trans>API keys</Trans>
             </h2>
-            {gemini && (
-              <ApiKeyField
-                provider={gemini}
-                value={form.geminiApiKey}
-                onChange={(v) => setForm({ ...form, geminiApiKey: v })}
-                storedKeyExists={stored.geminiApiKeySet}
-              />
-            )}
-            {groq && (
-              <ApiKeyField
-                provider={groq}
-                value={form.groqApiKey}
-                onChange={(v) => setForm({ ...form, groqApiKey: v })}
-                storedKeyExists={stored.groqApiKeySet}
-              />
+            {/* The note stands in for the key fields themselves: a field that cannot be filled
+                is noise. The model below is not a key and keeps saving as usual. */}
+            <SecureStorageNotice />
+            {canStoreApiKeys && (
+              <>
+                {gemini && (
+                  <ApiKeyField
+                    provider={gemini}
+                    value={form.geminiApiKey}
+                    onChange={(v) => setForm({ ...form, geminiApiKey: v })}
+                    storedKeyExists={stored.geminiApiKeySet}
+                  />
+                )}
+                {groq && (
+                  <ApiKeyField
+                    provider={groq}
+                    value={form.groqApiKey}
+                    onChange={(v) => setForm({ ...form, groqApiKey: v })}
+                    storedKeyExists={stored.groqApiKeySet}
+                  />
+                )}
+              </>
             )}
             <div className="settings-field">
               <div className="settings-label">

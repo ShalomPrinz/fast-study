@@ -31,6 +31,14 @@ describe('buildPatch', () => {
     expect(buildPatch({ ...UNCHANGED, geminiApiKey: '   ' }, STORED).geminiApiKey).toBeUndefined()
   })
 
+  // The same rule is what lets the init wall save at all where no key can be stored: its key fields
+  // are never rendered, so both stay blank and neither reaches the store.
+  it('omits both key fields entirely when neither was typed into', () => {
+    const patch = buildPatch({ ...UNCHANGED, dataRoot: '/other' }, STORED)
+    expect('geminiApiKey' in patch).toBe(false)
+    expect('groqApiKey' in patch).toBe(false)
+  })
+
   it('sends a typed key, trimmed', () => {
     expect(buildPatch({ ...UNCHANGED, groqApiKey: ' gsk_abc ' }, STORED).groqApiKey).toBe('gsk_abc')
   })
