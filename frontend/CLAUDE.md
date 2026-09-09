@@ -30,6 +30,17 @@ Use **one** `page.route("**/*")` handler that lets the dev-server origin `contin
 everything else by URL suffix. A narrower glob like `**/list` or `**/events*` also matches Vite's own module
 URLs (`/src/services/events.ts`), and aborting one blanks the app with no console error.
 
+The spare port holds only while every call is stubbed. A run that lets a request reach a **real** peer
+service needs `npm run dev -- --port 5173 --strictPort`: the peers pin their CORS origins as literals
+rather than reading a port from the environment (`downloader/auto/src/lib/config.js` is
+`['http://localhost:5173', 'app://bundle']`), so any other port gets `No 'Access-Control-Allow-Origin'
+header` — visible only as a console error under an unexplained empty or loading UI. Never widen a peer's
+allowlist to suit the harness; that is another service's file.
+
+Two dev-only artefacts that read as bugs and are not: StrictMode double-invokes mount effects, so a probe
+that fires on mount shows **two** requests, and `.init-wall` scrolls itself rather than the document, so a
+`full_page` screenshot crops it — screenshot the element.
+
 A new UI state — a notice, a disabled control, an empty state — needs a stable selector, and the report
 naming a change has to name it: the user checks frontend work by querying the live DOM over CDP in the real
 Electron app, so a state with no stable hook cannot be asserted on. Prefer an element's existing `id`
@@ -38,16 +49,16 @@ stable exists, add a modifier class — `.settings-note--no-key-storage` on the 
 
 ## Docs
 
-| Doc                       | Covers                                                                            |
-| ------------------------- | --------------------------------------------------------------------------------- |
-| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling           |
-| `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding      |
-| `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar  |
-| `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                |
-| `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode  |
-| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, key validation   |
-| `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries   |
-| `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties |
+| Doc                       | Covers                                                                                 |
+| ------------------------- | -------------------------------------------------------------------------------------- |
+| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling                |
+| `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding           |
+| `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar       |
+| `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                     |
+| `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode       |
+| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, the two prerequisites |
+| `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries        |
+| `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties      |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 

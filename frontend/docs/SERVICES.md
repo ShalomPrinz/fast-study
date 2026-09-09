@@ -57,12 +57,13 @@ It also resolves the four service base URLs — `BACKEND_URL`, `DATABASE_URL`, `
 synchronous at import time because every service builds its client at module scope; the packaged app's
 ports are chosen at boot, so nothing here may be baked in at build time and the frontend reads no env var.
 
-## `settings.ts` — the settings store and the two config owners
+## `settings.ts` — the settings store, the two config owners and the prerequisite probes
 
-The boundary for the settings concern, which spans both services on purpose: a setting's owner is a
-property of the setting, not of the screen editing it. Exports `Settings` (the read view, `null` for
-anything unstored — the client owns every default), `SettingsPatch` (partial; omitted fields are left
-alone), `fetchSettings`, `saveSettings`, `fetchConfigOptions` and `probeKey`.
+The boundary for the settings concern, which spans three services on purpose: a setting's owner is a
+property of the setting, not of the screen editing it, and the two prerequisites the settings screens
+check are owned the same way. Exports `Settings` (the read view, `null` for anything unstored — the
+client owns every default), `SettingsPatch` (partial; omitted fields are left alone), `fetchSettings`,
+`saveSettings`, `fetchConfigOptions`, `probeKey` and `fetchBrowserPrereq`.
 
 **The two API keys are write-only.** `SettingsPatch` carries `geminiApiKey`/`groqApiKey`; `Settings`
 reports only `geminiApiKeySet`/`groqApiKeySet`, so a stored key never travels back to the renderer.
@@ -81,6 +82,11 @@ profile's `localStorage`.
 
 `probeKey(provider, key)` answers `valid` / `rejected` / `unverified`; every failure short of a verdict
 folds to `unverified`, because an unreachable provider must never report a good key as bad.
+
+`fetchBrowserPrereq()` is the other prerequisite, `GET /prereqs/browser` on the auto-downloader:
+`{ available, channel, browser, detail }`, always `200`, since "no browser" is an answer and not a
+failure. It lives here rather than in the downloads feature because the settings screens are its only
+caller and no feature imports another's service. See [SETTINGS.md](SETTINGS.md).
 
 ## `events.ts` — the database notify stream
 
@@ -113,17 +119,18 @@ both; lectures carry no suffix. `overviewGenerateQuery` composes the overview tr
 
 ## `features/downloads/services/autoDownloader.ts` → auto-downloader (:3053)
 
-Feature-local because only the downloads page speaks this protocol. Its discovery `Item` is
+Feature-local because only the downloads page speaks this protocol — the settings screens' browser
+prerequisite is the one other route on this service, and it reaches it through `settings.ts`. Its discovery `Item` is
 mechanism-agnostic: `ref` is an opaque token to round-trip, never parse.
 
 `/list` and `/list/expand` go through `postReconnectAware` — a bespoke `fetch` rather than the shared
 client, because the client discards the response body and these endpoints encode meaning in it:
 
-| HTTP | body                  | thrown                                                                    |
-| ---- | --------------------- | ------------------------------------------------------------------------- |
-| 401  | `status: reconnect`   | `ReconnectError` — steer the user to the Reconnect pill                   |
-| 422  | `status: unsupported` | `UnsupportedError` — permanent; `message` is display-ready, show verbatim |
-| 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`               |
+| HTTP | body                  | thrown                                                                        |
+| ---- | --------------------- | ----------------------------------------------------------------------------- |
+| 401  | `status: reconnect`   | `ReconnectError` — steer the user to the Reconnect pill                       |
+| 422  | `status: unsupported` | `UnsupportedError` — permanent; `message` is display-ready, show verbatim     |
+| 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`                   |
 | 503  | `status: blocked`     | `BlockedError` — the site's bot-protection challenge; transient, no reconnect |
 
 Trade-off: `postReconnectAware` forgoes the client's central `ConnectionError` wrapping, so a refused

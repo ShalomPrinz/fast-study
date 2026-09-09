@@ -6,18 +6,18 @@ route that edits them all. The module behind it is
 
 ## The entries
 
-| Setting           | Default                                   | Alternatives         | Owner       |
-| ----------------- | ----------------------------------------- | -------------------- | ----------- |
-| Gemini API key    | none                                      | user-supplied        | `backend/`  |
-| Groq API key      | none                                      | user-supplied        | `backend/`  |
-| Data folder       | prefilled, confirmed on first run         | any directory        | `database/` |
-| UI language       | OS locale — Hebrew unless it says English | Hebrew, English      | frontend    |
-| Drive upload      | off                                       | on                   | `backend/`  |
-| Drive root folder | none — required once Drive is on          | any folder name      | `backend/`  |
-| Summary model     | the first curated entry                   | the curated dropdown | `backend/`  |
-| Auto-run          | the whole pipeline                        | audio only, off      | `backend/`  |
-| Nightly catch-up  | on                                        | off                  | `backend/`  |
-| Nightly hour      | 03:00                                     | any hour, 00:00-23:00 | `backend/` |
+| Setting           | Default                                   | Alternatives          | Owner       |
+| ----------------- | ----------------------------------------- | --------------------- | ----------- |
+| Gemini API key    | none                                      | user-supplied         | `backend/`  |
+| Groq API key      | none                                      | user-supplied         | `backend/`  |
+| Data folder       | prefilled, confirmed on first run         | any directory         | `database/` |
+| UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend    |
+| Drive upload      | off                                       | on                    | `backend/`  |
+| Drive root folder | none — required once Drive is on          | any folder name       | `backend/`  |
+| Summary model     | the first curated entry                   | the curated dropdown  | `backend/`  |
+| Auto-run          | the whole pipeline                        | audio only, off       | `backend/`  |
+| Nightly catch-up  | on                                        | off                   | `backend/`  |
+| Nightly hour      | 03:00                                     | any hour, 00:00-23:00 | `backend/`  |
 
 The model list comes from `GET /config/options`, so a model id that the free tier does not serve can
 never be typed in — a wrong one surfaces minutes later as a pipeline failure.
@@ -39,16 +39,16 @@ string, since the store rejects a string. An unset or out-of-range hour reads as
 
 The list above is closed on purpose. Each of these looks like a field and deliberately isn't one:
 
-| Not a setting                                                                                           | Why                                                                                                                                 |
-| ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| The Whisper model and the `he` transcript language (`backend/pipeline/transcribe.py`)                   | The corpus is Hebrew lectures; no user has a reason to change either                                                                |
-| The summary length budget (`LENGTH_BUDGET_SUFFIX`, `backend/pipeline/summarize.py`)                     | A prompt-shaped tuning knob, not a preference                                                                                       |
-| The Moodle site (`DEFAULT_SITE`, `downloader/auto/src/moodle/wsClient.js`)                              | One university, one site — and one field fewer on first run                                                                         |
-| Service ports and the `BACKEND_URL` / `DATABASE_URL` overrides                                          | Wiring, not preference: the frontend takes its URLs from the runtime bridge, and a settings save leaves the keys in `.env` untouched |
-| `FRONTEND_URL`                                                                                          | A CORS origin the download server defaults for itself; only a non-default dev origin ever sets it                                   |
-| `DOWNLOADER_EXTENSION_ID`                                                                               | No default: unset unless a dev loading the unpacked extension sets it, and the packaged app never talks to that dev-only surface    |
-| The sidebar's lectures/courses mode and the search view's chosen course                                 | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                  |
-| Running unfinished lectures at app start                                                                | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s nightly cron already cover both the manual and the unattended case |
+| Not a setting                                                                         | Why                                                                                                                                                    |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The Whisper model and the `he` transcript language (`backend/pipeline/transcribe.py`) | The corpus is Hebrew lectures; no user has a reason to change either                                                                                   |
+| The summary length budget (`LENGTH_BUDGET_SUFFIX`, `backend/pipeline/summarize.py`)   | A prompt-shaped tuning knob, not a preference                                                                                                          |
+| The Moodle site (`DEFAULT_SITE`, `downloader/auto/src/moodle/wsClient.js`)            | One university, one site — and one field fewer on first run                                                                                            |
+| Service ports and the `BACKEND_URL` / `DATABASE_URL` overrides                        | Wiring, not preference: the frontend takes its URLs from the runtime bridge, and a settings save leaves the keys in `.env` untouched                   |
+| `FRONTEND_URL`                                                                        | A CORS origin the download server defaults for itself; only a non-default dev origin ever sets it                                                      |
+| `DOWNLOADER_EXTENSION_ID`                                                             | No default: unset unless a dev loading the unpacked extension sets it, and the packaged app never talks to that dev-only surface                       |
+| The sidebar's lectures/courses mode and the search view's chosen course               | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                                     |
+| Running unfinished lectures at app start                                              | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s nightly cron already cover both the manual and the unattended case |
 
 ## `/settings`
 
@@ -104,7 +104,8 @@ Lingui catalogs, keyed by provider id; a provider with no entry simply shows the
 failure is shown in place rather than toasted — a rejected data folder is the one thing standing in
 the way.
 
-Key validation is the same component as the route's, below.
+Key validation is the same component as the route's, below, and so is the browser prerequisite —
+the one thing on the wall that reports a problem without standing in the way.
 
 ## When the computer can't store a key
 
@@ -157,6 +158,34 @@ for one to survive. Prefixes are provider convention rather than contract, so a 
 
 **Save is always permitted.** An unreachable provider must never reject a valid key, so `unverified`
 is not a failure state.
+
+## The browser prerequisite — `components/BrowserPrereqField.tsx`
+
+The second prerequisite both screens carry, in the same field vocabulary as an API key: a status
+slot, a console-style link, and a way to re-run the check. `GET /prereqs/browser` on the
+auto-downloader answers `{ available, channel, browser, detail }` and always `200` — "no browser" is
+an answer, not a failure — so the field renders `browser`, the display name, and can say _Microsoft
+Edge_ rather than _a browser_.
+
+**It never blocks.** A missing Chromium browser costs auto-download and Zoom capture and nothing
+else, so it reaches neither `missingEntries` nor `isInitialized`, and the copy says plainly what is
+lost and that a video added by hand still becomes a summary. That is the whole difference from the
+two keys.
+
+| State       | Shows                                                                            |
+| ----------- | -------------------------------------------------------------------------------- |
+| `available` | the browser that was found, by name                                              |
+| `missing`   | the consequence, Chrome's download page, the service's diagnostic line, re-check |
+| `unknown`   | the service was unreachable — **not** that no browser exists — and re-check      |
+
+Only a success is cached server-side, so **Check again** after installing a browser genuinely
+re-probes. Edge has no install link on purpose: it ships with Windows, so the only machine that ever
+sees the link is one missing both, where Chrome is the fix. `detail` is one English diagnostic line
+naming every channel tried and the path it looked at; it renders as fine print under the note,
+`dir="ltr"`, and is never the primary message.
+
+The state is on the field as `browser-prereq--{available,missing,unknown,checking}` beside
+`#browser-prereq`, and the status line is `#browser-prereq-status`.
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 

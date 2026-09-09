@@ -19,6 +19,7 @@ import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ApiKeyField from './components/ApiKeyField'
+import BrowserPrereqField from './components/BrowserPrereqField'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
@@ -231,6 +232,13 @@ export default function SettingsView() {
               }
               folderMissing={missing.includes('gdriveRootFolder')}
             />
+          </section>
+
+          <section className="settings-section">
+            <h2 className="settings-section-title">
+              <Trans>Downloading recordings</Trans>
+            </h2>
+            <BrowserPrereqField />
           </section>
 
           <section className="settings-section">

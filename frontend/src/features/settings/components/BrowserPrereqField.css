@@ -1,0 +1,18 @@
+/* The field is a stretch-aligned column, so the re-check button has to claim its own width. */
+.browser-prereq-recheck {
+  align-self: flex-start;
+}
+
+/* Keep the compound selector: the service's diagnostic line is fine print rather than hint-sized,
+   and `.settings-hint` sets the same property at equal specificity. */
+.settings-hint.browser-prereq-detail {
+  color: var(--text-3);
+  font-size: var(--fs-fine);
+  word-break: break-word;
+}
+
+/* Two words and a glyph: keep them one unit so a narrow window wraps the label beside it rather
+   than orphaning the icon on its own line. */
+.settings-link.browser-prereq-link {
+  white-space: nowrap;
+}

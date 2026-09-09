@@ -1,10 +1,12 @@
 import { createClient } from './http'
-import { BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
+import { AUTO_DOWNLOADER_URL, BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
 
-// This file is the boundary for the settings concern, which spans both services by design: a
-// setting's owner is a property of the setting, not of the screen editing it.
+// This file is the boundary for the settings concern, which spans three services by design: a
+// setting's owner is a property of the setting, not of the screen editing it, and the two
+// prerequisites the settings screens check — an API key, a browser — are owned the same way.
 const backend = createClient(BACKEND_URL, 'backend service')
 const database = createClient(DATABASE_URL, 'database service')
+const autoDownloader = createClient(AUTO_DOWNLOADER_URL, 'auto-downloader service')
 
 // How much of the pipeline an automatic trigger may run. The backend applies the same fallback to
 // an unset or unrecognised value, so both ends agree that a fresh install runs everything.
@@ -208,4 +210,22 @@ export async function probeKey(provider: string, key: string): Promise<ProbeResu
   } catch {
     return 'unverified'
   }
+}
+
+// The other prerequisite the settings screens check. It gates the whole download surface and none
+// of the pipeline, so a missing browser is a degraded install, never a blocked one — which is why
+// `missingEntries` does not count it.
+export interface BrowserPrereq {
+  available: boolean
+  // The resolved Playwright channel and its display name; both null when the chain came up empty.
+  channel: string | null
+  browser: string | null
+  // One English diagnostic line, present either way — on a failure it names every channel tried.
+  detail: string
+}
+
+/** Answers 200 both ways: "no browser" is an answer, not a failure. Only a success is cached
+ *  server-side, so re-checking after the user installs one genuinely re-probes. */
+export async function fetchBrowserPrereq(): Promise<BrowserPrereq> {
+  return autoDownloader.get<BrowserPrereq>('/prereqs/browser')
 }
