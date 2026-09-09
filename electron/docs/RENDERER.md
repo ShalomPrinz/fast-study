@@ -2,8 +2,9 @@
 
 ## `app://bundle`
 
-The window loads `app://bundle/`, served out of `frontend/dist` in dev and `resources/frontend/`
-packaged.
+The window loads `app://bundle/` once all four services are healthy — the launch screen is what it
+shows until then ([`BOOT.md`](BOOT.md)) — served out of `frontend/dist` in dev and
+`resources/frontend/` packaged.
 
 **The window opens on the site root, never on `/index.html`.** The frontend routes on the URL path,
 and `/index.html` is not one of its routes: the bundle would load, mount, and render an empty page
@@ -28,9 +29,13 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks }` through `contextBridge`, in
-a sandboxed, context-isolated renderer. `frontend/src/services/runtime.ts` is the consumer and fixes
-the shape; `urls` is `{ backend, database, downloadServer, autoDownloader }`.
+The preload script exposes exactly `{ urls, secret, settings, checks, boot }` through
+`contextBridge`, in a sandboxed, context-isolated renderer. `frontend/src/services/runtime.ts` is the
+consumer and fixes the shape; `urls` is `{ backend, database, downloadServer, autoDownloader }`.
+
+`boot` belongs to the launch screen alone, which loads in the same window and so through the same
+preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
+`urls` is still empty, since no service has a port yet.
 
 `urls` and `secret` are fetched over a **synchronous** IPC message, because the frontend resolves
 them at module scope and the bridge has to be complete before the bundle evaluates. They travel over

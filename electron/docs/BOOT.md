@@ -12,14 +12,31 @@
    [`RENDERER.md`](RENDERER.md). They sit inline in the boot path, so each has to be cheap: no
    network, no spawn, no real disk work. Their duration is logged for exactly that reason, and a
    check reports a fact rather than deciding whether to launch.
-5. The four children start **in dependency order** — `database → backend → auto → server` — one at a
+5. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below.
+6. The four children start **in dependency order** — `database → backend → auto → server` — one at a
    time. Each is spawned, its port read off stdout, and its `/health` waited on before the next
    starts.
-6. All four healthy, the `BrowserWindow` is created and loads `app://bundle/`. There is no
-   window before that: a renderer that loaded first would build its service clients at module scope
-   against URLs that do not exist yet.
+7. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
+   that: a renderer that loaded first would build its service clients at module scope against URLs
+   that do not exist yet.
 
-A boot that fails anywhere shows the reason in an error box and quits.
+## The launch screen
+
+`boot.html` and `boot.js`: one row per child, its state, and — once a child is up — anything its
+`/health` tool probe could not run. It is a plain `file://` page rather than part of the frontend
+bundle, for the same reason the window cannot open on the frontend: the bundle resolves the service
+URLs at module scope and none of them exist while it renders. It is English only; the app's own
+locale wiring does not reach it.
+
+Main pushes the whole state on `faststudy:boot` at every change, and the page reads one snapshot
+over `faststudy:boot-state` when it loads — the snapshot is what closes the race between the page's
+first script and main's first push, which would otherwise reach a page with no listener.
+
+A boot that fails anywhere **stays on the launch screen**, with the failure on the child that did not
+come up, the message, and the path to the log. Everything that did start is killed first, so no row
+still reads ready and a retry cannot leave a second copy of a service holding a port. **Try again**
+re-runs the whole boot from a clean slate — a probed-once startup check aside, nothing from the
+failed attempt is carried — and **Quit** ends the app.
 
 ## Why each peer is a plain env var
 
@@ -93,8 +110,8 @@ Children are spawned in their own process group (POSIX), so the kill reaches the
 — ffmpeg, chrome, yt-dlp — and not just the service. Quit kills the group with `SIGTERM`; Windows
 has no process groups, so it is `taskkill /T /F` there.
 
-The kill runs from `will-quit`, from `process.on('exit')`, from `SIGINT`/`SIGTERM`, and from an
-uncaught exception, because an orphaned service keeps a port and keeps writing `DATA_ROOT` after the
+The kill runs from `will-quit`, from `process.on('exit')`, from `SIGINT`/`SIGTERM`, from a failed
+boot before its retry, and from an uncaught exception, because an orphaned service keeps a port and keeps writing `DATA_ROOT` after the
 app is gone, and the next launch would then run a second backend against the same `timing.db`. The
 one case none of that covers is main being `SIGKILL`ed, where the OS gives the process no chance to
 run anything.

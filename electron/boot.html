@@ -1,0 +1,170 @@
+<!doctype html>
+<!-- The launch screen: the only thing on screen while the four services start. It is a plain
+     file:// page rather than part of the frontend bundle, because the bundle resolves its service
+     URLs at module scope and none of them exist yet. English only for now — the app's own locale
+     wiring is a separate piece of work. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'"
+    />
+    <title>Fast Study</title>
+    <style>
+      /* The frontend's tokens, by value: a file:// page cannot import the bundle's stylesheet, and
+         a splash that outlived a token rename would be worse than one that never tracked it. */
+      :root {
+        --bg: #fbfbfd;
+        --surface: #ffffff;
+        --text: #17171f;
+        --text-2: #55596b;
+        --text-3: #8b8f9f;
+        --line: #e8e9ef;
+        --accent: #4f5bd5;
+        --ok-dot: #3f9f6a;
+        --warn: #b45309;
+        --danger: #c0392f;
+        --danger-soft: #fdf1ef;
+        --ink: #17171f;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          'Segoe UI',
+          system-ui,
+          -apple-system,
+          sans-serif;
+        font-size: 14px;
+      }
+      .card {
+        width: 420px;
+        padding: 32px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+      h1 {
+        font-size: 20px;
+        font-weight: 600;
+      }
+      .sub {
+        margin-top: 6px;
+        color: var(--text-2);
+      }
+      ul {
+        margin-top: 24px;
+        list-style: none;
+      }
+      li {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        padding: 7px 0;
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--line);
+        flex-shrink: 0;
+        align-self: center;
+      }
+      /* The one moving part on the screen: without it a slow child reads as a hang. */
+      .starting .dot {
+        background: var(--accent);
+        animation: pulse 1s ease-in-out infinite;
+      }
+      .ready .dot {
+        background: var(--ok-dot);
+      }
+      .failed .dot {
+        background: var(--danger);
+      }
+      @keyframes pulse {
+        50% {
+          opacity: 0.25;
+        }
+      }
+      .label {
+        flex: 1;
+      }
+      .pending .label {
+        color: var(--text-3);
+      }
+      .detail {
+        color: var(--text-3);
+        font-size: 12px;
+        text-align: right;
+      }
+      .failed .detail {
+        color: var(--danger);
+      }
+      /* A service that came up with a tool it cannot run: one feature is gone, the launch is not. */
+      .detail.warn {
+        color: var(--warn);
+      }
+      .error {
+        margin-top: 22px;
+        padding: 12px 14px;
+        background: var(--danger-soft);
+        border-radius: 10px;
+        color: var(--danger);
+        line-height: 1.5;
+        white-space: pre-wrap;
+      }
+      .log {
+        margin-top: 10px;
+        color: var(--text-3);
+        font-size: 12px;
+        word-break: break-all;
+      }
+      .actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+      button {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Fast Study</h1>
+      <p class="sub" id="sub">Starting services…</p>
+      <ul id="services"></ul>
+      <p class="error" id="error" hidden></p>
+      <p class="log" id="log" hidden></p>
+      <div class="actions" id="actions" hidden>
+        <button class="primary" id="retry">Try again</button>
+        <button id="quit">Quit</button>
+      </div>
+    </main>
+    <script src="boot.js"></script>
+  </body>
+</html>

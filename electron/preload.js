@@ -1,7 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 // Synchronous on purpose: the frontend resolves the service URLs and the launch secret at module
-// scope, so the bridge has to be complete before the bundle evaluates. Sent over IPC rather than
+// scope, so the bridge has to be complete before the bundle evaluates. The launch screen loads
+// through this same preload and reads none of it — its `urls` are empty, nothing has a port yet. Sent over IPC rather than
 // through `additionalArguments`, which would put the launch secret on a command line every other
 // process on the machine can read.
 const config = ipcRenderer.sendSync('faststudy:config');
@@ -17,5 +18,13 @@ contextBridge.exposeInMainWorld('faststudy', {
   settings: {
     read: () => ipcRenderer.invoke('faststudy:settings-read'),
     write: (patch) => ipcRenderer.invoke('faststudy:settings-write', patch),
+  },
+  // The launch screen only. It loads before any service exists, so it takes a snapshot first and
+  // then follows the pushes — main's first event can land before this page has a listener.
+  boot: {
+    snapshot: () => ipcRenderer.invoke('faststudy:boot-state'),
+    subscribe: (callback) => ipcRenderer.on('faststudy:boot', (_event, state) => callback(state)),
+    retry: () => ipcRenderer.send('faststudy:boot-retry'),
+    quit: () => ipcRenderer.send('faststudy:boot-quit'),
   },
 });

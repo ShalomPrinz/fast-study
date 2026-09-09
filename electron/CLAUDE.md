@@ -2,8 +2,8 @@
 
 ## What this is
 
-The desktop shell: one Electron main process that starts the four services, waits for them to be
-healthy, and opens a window on the built frontend. It holds no product logic — no pipeline, no
+The desktop shell: one Electron main process that opens a window on its launch screen, starts the
+four services, waits for them to be healthy, and navigates that window to the built frontend. It holds no product logic — no pipeline, no
 paths, no HTTP surface of its own. What it owns is the launch: the per-launch secret, the spawn
 order, the port handshake, the settings store the children's environment comes from, and killing
 everything on quit.
@@ -15,6 +15,8 @@ everything on quit.
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
 | `preload.js`  | `window.faststudy` — the URLs, the secret, the settings backing, the checks     |
+| `boot.html`   | The launch screen — what is on screen while the four children start             |
+| `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
 Read [`docs/BOOT.md`](docs/BOOT.md) for the launch sequence and [`docs/RENDERER.md`](docs/RENDERER.md)
 for the scheme, the bridge and the store.

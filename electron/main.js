@@ -3,7 +3,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const store = require('./store');
@@ -24,9 +24,15 @@ const STATE_DIR = app.isPackaged
   ? path.join(process.env.LOCALAPPDATA || app.getPath('userData'), 'FastStudy')
   : path.join(REPO_ROOT, '.state');
 
+const LOG_FILE = path.join(STATE_DIR, 'logs', 'launch.log');
+
 const children = [];
 let logStream = null;
 let mainWindow = null;
+// The launch screen's whole model: one row per child plus the failure, if the boot hit one.
+let bootState = null;
+let booting = false;
+let serviceUrls = {};
 
 function log(source, line) {
   logStream?.write(`[${source}] ${line}\n`);
@@ -36,9 +42,8 @@ function log(source, line) {
 // Truncated per launch: the log is what a bug report carries, and one launch's four children are
 // the whole story — appending would grow without bound across a machine's lifetime.
 function openLog() {
-  const file = path.join(STATE_DIR, 'logs', 'launch.log');
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  logStream = fs.createWriteStream(file, { flags: 'w' });
+  fs.mkdirSync(path.dirname(LOG_FILE), { recursive: true });
+  logStream = fs.createWriteStream(LOG_FILE, { flags: 'w' });
   log('main', `FastStudy ${app.getVersion()} — electron ${process.versions.electron}`);
 }
 
@@ -116,6 +121,20 @@ function sharedEnv() {
   };
 }
 
+/** Push the launch screen's state to it. A no-op once the window has navigated to the app, which
+ *  is the only other thing that ever loads in this window. */
+function publishBoot() {
+  mainWindow?.webContents.send('faststudy:boot', bootState);
+}
+
+function setService(name, patch) {
+  Object.assign(
+    bootState.services.find((service) => service.name === name),
+    patch,
+  );
+  publishBoot();
+}
+
 /** Spawn one child and resolve the port it reports on stdout. */
 function startChild(spec, env) {
   const child = spawn(spec.command, spec.args, {
@@ -173,27 +192,64 @@ async function waitForHealth(spec, url) {
  *  Every peer is knowable before the service that calls it starts, which is what lets the whole
  *  handshake be plain env vars — see the service call graph in the root CLAUDE.md. */
 async function boot() {
+  const specs = childSpecs();
+  bootState = {
+    services: specs.map((spec) => ({ name: spec.name, state: 'pending' })),
+    error: null,
+    logFile: LOG_FILE,
+  };
+  publishBoot();
   const shared = sharedEnv();
   const peers = {};
   const urls = {};
-  for (const spec of childSpecs()) {
+  for (const spec of specs) {
+    setService(spec.name, { state: 'starting' });
     const port = await startChild(spec, { ...shared, ...peers });
     const url = `http://127.0.0.1:${port}`;
     const health = await waitForHealth(spec, url);
     log('main', `${spec.name} ready on ${url} — ${JSON.stringify(health)}`);
+    // The boot-time tool probe, which the launch screen renders: a service is ready with a missing
+    // binary, and that costs one feature rather than the launch.
+    setService(spec.name, { state: 'ready', tools: health.tools ?? null });
     urls[spec.bridgeKey] = url;
     if (spec.peerVar) peers[spec.peerVar] = url;
   }
   return urls;
 }
 
-let killed = false;
+/** Boot, then swap the launch screen for the app. A failure stays on the launch screen with the
+ *  reason on the child that did not come up, and Try again re-runs this from a clean slate. */
+async function runBoot() {
+  if (booting) return;
+  booting = true;
+  try {
+    serviceUrls = await boot();
+    // The site root, never `/index.html`: the router matches on the path, and `/index.html` is not
+    // one of its routes, so the app would mount and render nothing once the wall is behind it.
+    mainWindow.loadURL(`${APP_ORIGIN}/`);
+  } catch (error) {
+    log('main', `boot failed: ${error.stack ?? error.message}`);
+    // Whatever came up before the failure is torn down: a retry re-spawns all four, and a surviving
+    // child would hold a port and a second writer on DATA_ROOT.
+    killChildren();
+    const failing = bootState.services.find((service) => service.state === 'starting');
+    // Nothing is running any more, so no row may still read ready — only the one that broke keeps a
+    // state of its own.
+    for (const service of bootState.services) {
+      service.state = service === failing ? 'failed' : 'pending';
+      service.tools = null;
+    }
+    bootState.error = error.message;
+    publishBoot();
+  } finally {
+    booting = false;
+  }
+}
 
-/** Stop every child. Idempotent, and safe to call from a synchronous exit handler. */
+/** Stop every child. Idempotent — the list is emptied as it goes, so a retry and the exit handlers
+ *  can all call it — and safe to call from a synchronous exit handler. */
 function killChildren() {
-  if (killed) return;
-  killed = true;
-  for (const child of children) {
+  for (const child of children.splice(0)) {
     if (child.exitCode !== null || child.signalCode !== null || !child.pid) continue;
     try {
       if (process.platform === 'win32') {
@@ -208,7 +264,9 @@ function killChildren() {
   }
 }
 
-function openWindow(urls, checks) {
+/** The one window of the app: it opens on the launch screen and later navigates to the frontend.
+ *  Created before anything is spawned, so the four process starts have something on screen. */
+function createWindow(checks) {
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
@@ -220,21 +278,18 @@ function openWindow(urls, checks) {
       nodeIntegration: false,
     },
   });
+  // The launch screen reads none of this; it is the app's bridge, and the URLs are filled in by the
+  // time the window navigates there.
   ipcMain.on('faststudy:config', (event) => {
-    event.returnValue = { urls, secret: SECRET, checks };
+    event.returnValue = { urls: serviceUrls, secret: SECRET, checks };
   });
   ipcMain.handle('faststudy:settings-read', () => store.read());
   ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
+  ipcMain.handle('faststudy:boot-state', () => bootState);
+  ipcMain.on('faststudy:boot-retry', () => runBoot());
+  ipcMain.on('faststudy:boot-quit', () => app.quit());
   mainWindow.once('ready-to-show', () => mainWindow.show());
-  // The site root, never `/index.html`: the router matches on the path, and `/index.html` is not one
-  // of its routes, so the app would mount and render nothing once the first-run wall is behind it.
-  mainWindow.loadURL(`${APP_ORIGIN}/`);
-}
-
-function fail(error) {
-  log('main', `boot failed: ${error.stack ?? error.message}`);
-  dialog.showErrorBox('FastStudy could not start', error.message);
-  app.quit();
+  mainWindow.loadFile(path.join(__dirname, 'boot.html'));
 }
 
 // A second launch would put two backends on one timing.db and two writers on one DATA_ROOT, so it
@@ -273,12 +328,10 @@ if (!app.requestSingleInstanceLock()) {
     const checks = runStartupChecks();
     const took = Number(process.hrtime.bigint() - started) / 1e6;
     log('main', `startup checks in ${took.toFixed(2)}ms — ${JSON.stringify(checks)}`);
-    try {
-      // No window until all four are healthy: a renderer that loaded first would build its service
-      // clients against URLs that do not exist yet.
-      openWindow(await boot(), checks);
-    } catch (error) {
-      fail(error);
-    }
+    createWindow(checks);
+    // The window shows the launch screen while this runs, and navigates to the frontend only once
+    // all four are healthy: a renderer that loaded first would build its service clients at module
+    // scope against URLs that do not exist yet.
+    runBoot();
   });
 }

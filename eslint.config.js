@@ -51,6 +51,18 @@ export default [
     rules: baseline,
   },
 
+  // The launch screen's script: the one file in electron/ that runs in a renderer, as a classic
+  // script on a file:// page, with only the preload bridge to reach main.
+  {
+    files: ['electron/boot.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'script',
+      globals: { ...globals.browser },
+    },
+    rules: baseline,
+  },
+
   // Chrome extension: classic scripts (MV3 service worker + popup), no bundler.
   {
     files: ['downloader/extension/**/*.js'],
