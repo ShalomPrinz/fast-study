@@ -30,3 +30,120 @@ jobs:
 
       - name: Run tests
         run: uv run pytest tests/ -q
+
+  database-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: database
+    env:
+      # database/ carries no .python-version of its own, so pin the interpreter here — otherwise a
+      # runner image bump silently moves the version the suite runs on.
+      UV_PYTHON: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      # Needs the whole repo checked out, not just database/: two of its dependencies are editable
+      # path deps on ../lib/*/py.
+      - name: Sync dependencies
+        run: uv sync --extra test
+
+      - name: Run tests
+        run: uv run pytest tests/ -q
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+  downloader-tests:
+    runs-on: ubuntu-latest
+    env:
+      # Both suites are unit tests over the extractors and the express routes; neither launches a
+      # browser, so skip playwright's browser download rather than pay for it on every run.
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            downloader/server/package-lock.json
+            downloader/auto/package-lock.json
+
+      # The two packages install separately — each has its own lock and its own file: deps on
+      # ../../lib/*/js, which the full checkout provides.
+      - name: Install server dependencies
+        run: npm ci
+        working-directory: downloader/server
+
+      - name: Run server tests
+        run: npm test
+        working-directory: downloader/server
+
+      - name: Install auto dependencies
+        run: npm ci
+        working-directory: downloader/auto
+
+      - name: Run auto tests
+        run: npm test
+        working-directory: downloader/auto
+
+  # One job for all five lib packages: they are small, and a break in any of them is live in four
+  # services at once, so they fail as a unit.
+  lib-tests:
+    runs-on: ubuntu-latest
+    env:
+      # No .python-version under lib/ either — see database-tests.
+      UV_PYTHON: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      # Each Python half is its own uv project with its own lock, so it syncs and runs in place.
+      - name: Run runtime (py) tests
+        run: uv sync --extra test && uv run pytest tests/ -q
+        working-directory: lib/runtime/py
+
+      - name: Run tools (py) tests
+        run: uv sync --extra test && uv run pytest tests/ -q
+        working-directory: lib/tools/py
+
+      - name: Run logging (py) tests
+        run: uv sync --extra test && uv run pytest tests/ -q
+        working-directory: lib/logging/py
+
+      # Both JS halves are npm workspaces of the repo root ("lib/*/js"), so one root install covers
+      # them. --workspaces without --if-present on purpose: a new lib/*/js with no test script
+      # should fail here rather than pass by being skipped.
+      - name: Install JS workspace dependencies
+        run: npm ci
+
+      - name: Run runtime and tools (js) tests
+        run: npm test --workspaces
