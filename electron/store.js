@@ -83,9 +83,11 @@ function read() {
   };
 }
 
-/** Merge a partial settings object into the store and return the read view. */
+/** Merge a partial settings object into the store and return the read view. A patch that cannot be
+ *  applied in full is not applied at all: every field is converted before anything is stored, so a
+ *  rejected key leaves the file untouched rather than half of the save landing. */
 function write(patch) {
-  const stored = load();
+  const updates = {};
   for (const [key, value] of Object.entries(patch ?? {})) {
     const field = FIELDS[key];
     if (!field) throw new Error(`unknown setting: ${key}`);
@@ -94,13 +96,13 @@ function write(patch) {
     if (field in BOOL_FIELDS) {
       // A bare truth test would let the string "false" store `true`, silently flipping the setting on.
       if (typeof value !== 'boolean') throw new Error(`${key} must be a boolean`);
-      stored[field] = value;
+      updates[field] = value;
     } else {
       if (typeof value !== 'string') throw new Error(`${key} must be a string`);
-      stored[field] = field in SECRET_FIELDS ? encrypt(value) : value.trim();
+      updates[field] = field in SECRET_FIELDS ? encrypt(value) : value.trim();
     }
   }
-  save(stored);
+  save({ ...load(), ...updates });
   return read();
 }
 

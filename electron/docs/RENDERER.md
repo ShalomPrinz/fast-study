@@ -54,6 +54,12 @@ written from both processes would put two writers on one file.
   on a Linux box without a keyring — WSL, for instance — where the only alternative Electron offers
   is its explicit plaintext mode. Refusing is the honest answer: saving a key through the app is a
   dev-only loss there, since dev services still read the repo-root `.env`, and the platform that
-  ships always has DPAPI.
+  ships always has DPAPI. The throw is the backstop, not the user-facing message — the `secureStorage`
+  check is what the screens read, so a key never reaches a save that would be refused.
+- **A patch that cannot be applied in full is not applied at all.** Every field is converted before
+  anything is written, so a refused key does not leave the data root beside it half-saved. The
+  renderer adopts `write()`'s return value as its state and sends its `POST /config` calls only
+  after it resolves, so a partial write would leave the file, the running services and the screen
+  each holding a different answer. `database/settings.py` builds its updates the same way.
 - **In a packaged app `database/settings.py`'s `.env` store goes unused.** The services read the env
   vars main sets; nothing migrates between the two stores, and Electron never reads `.env`.
