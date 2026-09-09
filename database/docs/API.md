@@ -33,6 +33,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral                                                   |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}` | stream one file                                                           |
+| `GET    /courses/{course}/lectures/{lecture}/files/{name}/path` | `{path}`, the absolute on-disk path; 404 if absent                   |
 | `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file                                                           |
 | `GET    /courses/{course}/lectures/{lecture}/summary`      | `{content, hasOriginal}`                                                  |
 | `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8)                                            |
@@ -41,6 +42,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PUT    /courses/{course}/overview/files/{name}`           | write a course-level file; 404 if the course is missing                   |
 | `GET    /courses/{course}/overview/files`                  | list overview files                                                       |
 | `GET    /courses/{course}/overview/files/{name}`           | stream a course-level file                                                |
+| `GET    /courses/{course}/overview/files/{name}/path`      | `{path}`, the absolute on-disk path; 404 if absent                        |
 | `GET    /courses/{course}/overview/meta`                   | `{meta}` (`{}` when absent)                                               |
 | `PATCH  /courses/{course}/overview/meta`                   | merge one slug's entry (`{slug, entry}`)                                  |
 | `GET    /settings`                                         | the browser-dev settings store; API keys report set/unset only            |
@@ -73,6 +75,10 @@ teardown, frontend deletes, and re-render resets all get it without repeating th
 
 There is deliberately **no delete route for overview files**. Adding one must drop the pdf's
 `.{slug}.pdf_warning` the same way.
+
+The two `GET /…/files/{name}/path` routes hand back the absolute on-disk path instead of bytes, so
+the Electron launcher can `shell.openPath` a file in the user's own registered app without
+re-deriving the layout this service owns.
 
 ## Summary editing
 

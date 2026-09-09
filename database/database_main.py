@@ -296,6 +296,16 @@ def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture"))
     return FileResponse(str(p), media_type=media_type)
 
 
+@app.get("/courses/{course}/lectures/{lecture}/files/{name}/path")
+def get_file_path(course: str, lecture: str, name: str, kind: str = Query("lecture")):
+    """Return a lecture file's absolute on-disk path, so the launcher can open it in the user's own app."""
+
+    p = file_path(course, lecture, name, kind)
+    if not p.exists():
+        return Response("Not found", status_code=404)
+    return {"path": str(p)}
+
+
 @app.get("/courses/{course}/summaries")
 def get_course_summaries(course: str):
     """Return every non-empty summary.md in a course so the client can full-text search the whole corpus."""
@@ -368,6 +378,19 @@ def get_overview_file(course: str, name: str):
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None
     return FileResponse(str(p), media_type=media_type)
+
+
+@app.get("/courses/{course}/overview/files/{name}/path")
+def get_overview_file_path(course: str, name: str):
+    """Return an overview file's absolute on-disk path, so the launcher can open it in the user's own app."""
+
+    try:
+        p = overview.overview_file_path(course, name)
+    except Exception as e:
+        return _failure(e, 400)
+    if not p.exists():
+        return Response("Not found", status_code=404)
+    return {"path": str(p)}
 
 
 @app.get("/settings")
