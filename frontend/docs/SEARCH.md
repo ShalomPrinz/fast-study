@@ -139,7 +139,7 @@ button; a card's is a seam across the card's foot — a hairline, a centred labe
 full width and rounds off the card's bottom corners. It reads as the snippet list continuing rather than as a
 second button, so the two never look like rival pagers.
 
-A result never navigates. The **whole header row is one button** that `window.open`s the lecture's
-`summary.pdf` — icon, title, kind chip and the (decorative) external-link glyph are all inside it, so
+A result never navigates. The **whole header row is one button** that opens the lecture's `summary.pdf`
+through `services/open.ts` — icon, title, kind chip and the (decorative) external-link glyph are all inside it, so
 there is one tab stop and one click target per lecture. It is **disabled, not hidden**, when
 `CourseTreeContext` says that lecture has no PDF, and the glyph is then replaced by a muted `no PDF`.

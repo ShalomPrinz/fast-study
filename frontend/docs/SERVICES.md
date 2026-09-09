@@ -7,7 +7,7 @@ go through them — no call site touches `fetch`, `EventSource` or `react-toasti
 
 `createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON encoding and headers — including
 the `X-FastStudy-Secret` launch secret on every request — and exposes
-`url(path)` for links the browser opens itself. URL string building lives in `shared/utils/url.ts`, not here.
+`url(path)` for the URLs the page loads itself — pdf.js's own fetch, and `open.ts`'s browser-dev fallback. URL string building lives in `shared/utils/url.ts`, not here.
 
 A failed response's message comes from its body — `{error}`, FastAPI's `{detail}`, or `{message}`, whichever is
 there — falling back to the status line. "400 Bad Request" says nothing about a data root that turned out not
@@ -52,10 +52,27 @@ which cannot set a header and reconnect on their own. Both return nothing extra 
 secret — browser dev, where the services see no `FASTSTUDY_SECRET` and enforce nothing. The header keeps the
 secret out of access logs and the devtools URL column, so nothing else uses the query parameter.
 
+`open` is the bridge's file/link opener, consumed only by `open.ts` below. It is the one member declared
+non-optional: the whole bridge's absence is the browser-dev test, so a present bridge always carries it.
+
 It also resolves the four service base URLs — `BACKEND_URL`, `DATABASE_URL`, `DOWNLOAD_SERVER_URL`,
 `AUTO_DOWNLOADER_URL` — from `urls` on the bridge, falling back to the dev ports. Resolution is
 synchronous at import time because every service builds its client at module scope; the packaged app's
 ports are chosen at boot, so nothing here may be baked in at build time and the frontend reads no env var.
+
+## `open.ts` — opening a file or a link outside the app
+
+`openLectureFile(course, lecture, name, kind?)` (summary.pdf and materials alike), `openOverviewFile(course,
+name)` and `openExternalUrl(url)`. In the packaged app a fresh browser navigation cannot set
+`X-FastStudy-Secret`, so a service URL opened that way is a `401` and a blank window: these hand
+**identifiers** to `window.faststudy.open`, which resolves the path through `database/` and opens the file in
+the user's own PDF app. A path never reaches the renderer, so a compromised one gets no open-any-file
+primitive. A failed `{ ok: false, error }` toasts through `toaster.ts`; `error` is English prose from the OS
+or the database service, shown inside a translated wrapper.
+
+**The absence of the bridge is the browser-dev test**, and that branch is a plain `window.open(url, '_blank')`
+against the URL builders in `database.ts` — dev has no secret to be missing. It needs both `runtime.ts` and
+`database.ts`, which is why it is its own boundary: `runtime.ts` cannot import `database.ts`.
 
 ## `settings.ts` — the settings store, the two config owners and the prerequisite probes
 

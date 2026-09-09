@@ -159,6 +159,8 @@ and the self-inflicted missing PDF mid-run would flash the "no PDF yet" placehol
 The file URL carries `t=<summary.pdf mtime>` (`utils/pdfUrl.ts`), so the browser cache is reused only
 while the file on disk is unchanged. `PdfViewer` hands react-pdf a `{ url, httpHeaders }` object so
 pdf.js's own XHR carries the launch secret, memoized on `url` because react-pdf compares `file` by identity.
+Its pop-out button is an `onPopOut` prop, not four more identifiers: `EditSummaryView` already holds the
+lecture's identity, and hands down a callback that opens `summary.pdf` through `services/open.ts`.
 
 `PdfViewer` captures scroll during the render phase before React commits the new URL (the old pages are
 still mounted, so `scrollTop` is the real position) and restores it from each page's `onRenderSuccess`;

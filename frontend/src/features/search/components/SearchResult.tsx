@@ -1,6 +1,6 @@
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import Icon from '@/shared/components/Icon'
-import { fileUrl } from '@/services/database'
+import { openLectureFile } from '@/services/open'
 import type { CourseSummary } from '@/types'
 import type { Hit } from '../utils/search'
 import SearchSnippet from './SearchSnippet'
@@ -29,8 +29,8 @@ export default function SearchResult({
 }: Props) {
   const { t } = useLingui()
   const { name, kind } = summary
-  const openPdf = () => window.open(fileUrl(course, name, 'summary.pdf', kind), '_blank')
-  const title = hasPdf ? t`Open PDF in new tab` : t`No PDF for this lecture`
+  const openPdf = () => openLectureFile(course, name, 'summary.pdf', kind)
+  const title = hasPdf ? t`Open PDF` : t`No PDF for this lecture`
 
   return (
     <div className="search-result">

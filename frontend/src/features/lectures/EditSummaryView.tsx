@@ -9,6 +9,7 @@ import {
   fileUrl,
 } from '@/services/database'
 import { runStep } from '@/services/backend'
+import { openLectureFile } from '@/services/open'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
@@ -197,7 +198,12 @@ export default function EditSummaryView() {
 
       <div className="edit-panels">
         <div className="edit-panel edit-panel--pdf">
-          <PdfViewer url={pdfUrl} show={showPdf} generating={generating} />
+          <PdfViewer
+            url={pdfUrl}
+            show={showPdf}
+            generating={generating}
+            onPopOut={() => openLectureFile(course, lecture, 'summary.pdf', kind)}
+          />
         </div>
 
         <div className="edit-panel edit-panel--text">

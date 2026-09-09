@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { overviewFileUrl } from '@/services/database'
+import { openOverviewFile } from '@/services/open'
 import { formatDuration, formatMonthDate, formatFullTimestamp } from '@/shared/utils/format'
 import { formatRange } from '@/features/course-overview/utils/overview'
 import { toastInitResult } from '@/services/toaster'
@@ -101,10 +101,8 @@ export default function ExtractorHeader() {
           {bs.done && (
             <button
               className="pipeline-icon-btn"
-              title={t`Open PDF in new tab`}
-              onClick={() =>
-                window.open(overviewFileUrl(course, lastGeneratedFile(slug, phases)), '_blank')
-              }
+              title={t`Open PDF`}
+              onClick={() => openOverviewFile(course, lastGeneratedFile(slug, phases))}
             >
               <Icon icon="external-link" />
             </button>

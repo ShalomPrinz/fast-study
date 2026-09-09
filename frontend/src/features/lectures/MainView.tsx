@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { Step, FileName, MaterialInfo } from '@/types'
-import { deleteFile, deleteMaterial, fileUrl, materialUrl } from '@/services/database'
+import { deleteFile, deleteMaterial } from '@/services/database'
+import { openLectureFile, openExternalUrl } from '@/services/open'
 import { runStep, runPipeline } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
@@ -221,12 +222,12 @@ export default function MainView() {
       onClick: () => navigate({ pathname: 'edit', search: kindQuery(kind) }),
     },
     pdfExists && {
-      label: t`Open PDF in new tab`,
-      onClick: () => window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank'),
+      label: t`Open PDF`,
+      onClick: () => openLectureFile(course, lecture, 'summary.pdf', kind),
     },
     pdfUploaded && {
       label: t`Open in Drive`,
-      onClick: () => window.open(files!['drive_url.txt'].url, '_blank'),
+      onClick: () => openExternalUrl(files!['drive_url.txt'].url),
     },
   ].filter(Boolean) as LectureAction[]
 
@@ -359,10 +360,8 @@ export default function MainView() {
                     <Icon icon="file" />
                     <button
                       className="material-chip-name"
-                      title={t`Open material in new tab`}
-                      onClick={() =>
-                        window.open(materialUrl(course, lecture, m.name, kind), '_blank')
-                      }
+                      title={t`Open material`}
+                      onClick={() => openLectureFile(course, lecture, m.name, kind)}
                       dir="auto"
                     >
                       {m.name}

@@ -46,7 +46,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {# lecture} other {# lectures}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:213
+#: src/features/lectures/MainView.tsx:214
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
@@ -104,7 +104,7 @@ msgstr "{0} is installed — downloading is ready to use."
 #. placeholder {0}: remote.progress.completed
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
-#: src/features/lectures/MainView.tsx:280
+#: src/features/lectures/MainView.tsx:281
 #: src/features/runner/RunnerView.tsx:130
 msgid "{0} of {1} chunks"
 msgstr "{0} of {1} chunks"
@@ -120,13 +120,13 @@ msgid "{0} remaining"
 msgstr "{0} remaining"
 
 #. placeholder {0}: formatBytes(videoSize)
-#: src/features/lectures/MainView.tsx:210
+#: src/features/lectures/MainView.tsx:211
 msgid "{0} video"
 msgstr "{0} video"
 
 #. placeholder {0}: progress.completed
 #. placeholder {1}: progress.total
-#: src/features/lectures/MainView.tsx:86
+#: src/features/lectures/MainView.tsx:87
 msgid "{0}/{1} chunks transcribed so far"
 msgstr "{0}/{1} chunks transcribed so far"
 
@@ -142,7 +142,7 @@ msgstr "{count, plural, other {# materials will be used}}"
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
 
-#: src/features/lectures/MainView.tsx:262
+#: src/features/lectures/MainView.tsx:263
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
@@ -167,7 +167,7 @@ msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
-#: src/features/lectures/MainView.tsx:417
+#: src/features/lectures/MainView.tsx:416
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} will be deleted."
 
@@ -199,7 +199,7 @@ msgstr "{processed} fully processed"
 msgid "{remaining, plural, one {Show # more} other {Show # more}}"
 msgstr "{remaining, plural, one {Show # more} other {Show # more}}"
 
-#: src/features/lectures/MainView.tsx:190
+#: src/features/lectures/MainView.tsx:191
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · step {stepNumber} of {stageCount}"
 
@@ -255,7 +255,7 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
-#: src/features/lectures/EditSummaryView.tsx:225
+#: src/features/lectures/EditSummaryView.tsx:231
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "All edits will be discarded and the original AI summary restored."
 
@@ -263,7 +263,7 @@ msgstr "All edits will be discarded and the original AI summary restored."
 msgid "All Generated"
 msgstr "All Generated"
 
-#: src/features/lectures/EditSummaryView.tsx:189
+#: src/features/lectures/EditSummaryView.tsx:190
 msgid "Already up to date"
 msgstr "Already up to date"
 
@@ -319,7 +319,7 @@ msgstr "Auto-run: off"
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
-#: src/features/lectures/EditSummaryView.tsx:162
+#: src/features/lectures/EditSummaryView.tsx:163
 msgid "Back"
 msgstr "Back"
 
@@ -397,7 +397,7 @@ msgstr "Collect"
 msgid "Compile"
 msgstr "Compile"
 
-#: src/features/lectures/MainView.tsx:204
+#: src/features/lectures/MainView.tsx:205
 msgid "Complete"
 msgstr "Complete"
 
@@ -417,7 +417,7 @@ msgstr "Connecting again needs a full login in a browser window, including MFA."
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:273
+#: src/features/lectures/MainView.tsx:274
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -428,6 +428,16 @@ msgstr "Copied!"
 #: src/app/ErrorBoundary.tsx:37
 msgid "Copy details"
 msgstr "Copy details"
+
+#. placeholder {0}: result.error ?? 'unknown error'
+#: src/services/open.ts:14
+msgid "Could not open the file: {0}"
+msgstr "Could not open the file: {0}"
+
+#. placeholder {0}: result.error ?? 'unknown error'
+#: src/services/open.ts:18
+msgid "Could not open the link: {0}"
+msgstr "Could not open the link: {0}"
 
 #: src/features/downloads/utils/downloadErrors.ts:30
 msgid "Couldn't download \"{name}\": {detail}"
@@ -479,7 +489,7 @@ msgstr "Courses"
 msgid "Create"
 msgstr "Create"
 
-#: src/features/lectures/components/PdfViewer.tsx:75
+#: src/features/lectures/components/PdfViewer.tsx:76
 msgid "Current PDF"
 msgstr "Current PDF"
 
@@ -488,11 +498,11 @@ msgid "Data folder"
 msgstr "Data folder"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:372
+#: src/features/lectures/MainView.tsx:371
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:181
+#: src/features/lectures/EditSummaryView.tsx:182
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
@@ -583,7 +593,7 @@ msgstr "Drive upload failed"
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
-#: src/features/lectures/MainView.tsx:220
+#: src/features/lectures/MainView.tsx:221
 msgid "Edit summary"
 msgstr "Edit summary"
 
@@ -657,8 +667,8 @@ msgstr "Failed to complete login. Try reconnecting."
 msgid "Failed to disconnect the account."
 msgstr "Failed to disconnect the account."
 
-#: src/features/lectures/EditSummaryView.tsx:132
-#: src/features/lectures/EditSummaryView.tsx:134
+#: src/features/lectures/EditSummaryView.tsx:133
+#: src/features/lectures/EditSummaryView.tsx:135
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
@@ -666,7 +676,7 @@ msgstr "Failed to generate PDF"
 msgid "Failed to launch the login browser."
 msgstr "Failed to launch the login browser."
 
-#: src/features/lectures/EditSummaryView.tsx:96
+#: src/features/lectures/EditSummaryView.tsx:97
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
@@ -702,7 +712,7 @@ msgstr "finishing…"
 msgid "Fully processed lectures"
 msgstr "Fully processed lectures"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:122
+#: src/features/course-overview/components/ExtractorHeader.tsx:120
 msgid "Generate"
 msgstr "Generate"
 
@@ -739,7 +749,7 @@ msgstr "Google Drive"
 msgid "Google Drive (optional)"
 msgstr "Google Drive (optional)"
 
-#: src/features/lectures/MainView.tsx:82
+#: src/features/lectures/MainView.tsx:83
 msgid "Groq rate limit reached"
 msgstr "Groq rate limit reached"
 
@@ -773,7 +783,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:387
+#: src/features/lectures/MainView.tsx:386
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -851,7 +861,7 @@ msgid "Material"
 msgstr "Material"
 
 #: src/features/downloads/DownloadsView.tsx:39
-#: src/features/lectures/MainView.tsx:353
+#: src/features/lectures/MainView.tsx:354
 msgid "Materials"
 msgstr "Materials"
 
@@ -899,7 +909,7 @@ msgstr "no material found"
 msgid "No materials found."
 msgstr "No materials found."
 
-#: src/features/lectures/EditSummaryView.tsx:181
+#: src/features/lectures/EditSummaryView.tsx:182
 msgid "No original saved"
 msgstr "No original saved"
 
@@ -923,7 +933,7 @@ msgstr "No PDF for this lecture"
 #~ msgid "No PDF yet — use \"Re-export PDF\" to create one."
 #~ msgstr "No PDF yet — use \"Re-export PDF\" to create one."
 
-#: src/features/lectures/components/PdfViewer.tsx:118
+#: src/features/lectures/components/PdfViewer.tsx:115
 msgid "No PDF yet — use \"Save & update PDF\" to create one."
 msgstr "No PDF yet — use \"Save & update PDF\" to create one."
 
@@ -951,7 +961,7 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/MainView.tsx:341
+#: src/features/lectures/MainView.tsx:342
 msgid "not provided"
 msgstr "not provided"
 
@@ -1003,20 +1013,20 @@ msgstr "Only .mp4 files are allowed"
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 
-#: src/features/lectures/MainView.tsx:228
+#: src/features/lectures/MainView.tsx:229
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
-#: src/features/lectures/MainView.tsx:362
-msgid "Open material in new tab"
-msgstr "Open material in new tab"
+#: src/features/lectures/MainView.tsx:363
+msgid "Open material"
+msgstr "Open material"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:104
-#: src/features/lectures/components/PdfViewer.tsx:101
-#: src/features/lectures/MainView.tsx:224
+#: src/features/lectures/components/PdfViewer.tsx:100
+#: src/features/lectures/MainView.tsx:225
 #: src/features/search/components/SearchResult.tsx:33
-msgid "Open PDF in new tab"
-msgstr "Open PDF in new tab"
+msgid "Open PDF"
+msgstr "Open PDF"
 
 #: src/features/settings/InitWall.tsx:50
 msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
@@ -1060,23 +1070,23 @@ msgstr "PDF"
 msgid "PDF export failed"
 msgstr "PDF export failed"
 
-#: src/features/lectures/EditSummaryView.tsx:172
+#: src/features/lectures/EditSummaryView.tsx:173
 msgid "PDF is older than this summary"
 msgstr "PDF is older than this summary"
 
-#: src/features/lectures/EditSummaryView.tsx:173
+#: src/features/lectures/EditSummaryView.tsx:174
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
-#: src/features/lectures/MainView.tsx:260
+#: src/features/lectures/MainView.tsx:261
 msgid "Pipeline"
 msgstr "Pipeline"
 
-#: src/features/lectures/MainView.tsx:159
+#: src/features/lectures/MainView.tsx:160
 msgid "Pipeline already running"
 msgstr "Pipeline already running"
 
-#: src/features/lectures/MainView.tsx:160
+#: src/features/lectures/MainView.tsx:161
 msgid "Pipeline failed to start"
 msgstr "Pipeline failed to start"
 
@@ -1107,7 +1117,7 @@ msgstr "Re-download ↻"
 #~ msgid "Re-export PDF"
 #~ msgstr "Re-export PDF"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:115
+#: src/features/course-overview/components/ExtractorHeader.tsx:113
 msgid "Re-generate {title}"
 msgstr "Re-generate {title}"
 
@@ -1115,7 +1125,7 @@ msgstr "Re-generate {title}"
 msgid "Re-generate from {stepLabel}"
 msgstr "Re-generate from {stepLabel}"
 
-#: src/features/lectures/MainView.tsx:92
+#: src/features/lectures/MainView.tsx:93
 msgid "Ready to retry"
 msgstr "Ready to retry"
 
@@ -1191,7 +1201,7 @@ msgstr "Replace existing video.mp4 in \"{0}\"?"
 msgid "Required"
 msgstr "Required"
 
-#: src/features/lectures/EditSummaryView.tsx:183
+#: src/features/lectures/EditSummaryView.tsx:184
 msgid "Restore original"
 msgstr "Restore original"
 
@@ -1209,7 +1219,7 @@ msgid "Retry ✗"
 msgstr "Retry ✗"
 
 #. placeholder {0}: formatDuration(remaining)
-#: src/features/lectures/MainView.tsx:92
+#: src/features/lectures/MainView.tsx:93
 msgid "Retry in {0}"
 msgstr "Retry in {0}"
 
@@ -1221,7 +1231,7 @@ msgstr "Retry in {0}"
 #~ msgid "Revert to Original"
 #~ msgstr "Revert to Original"
 
-#: src/features/lectures/MainView.tsx:323
+#: src/features/lectures/MainView.tsx:324
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
@@ -1229,7 +1239,7 @@ msgstr "Rotate {file}"
 #~ msgid "Run incomplete pipelines"
 #~ msgstr "Run incomplete pipelines"
 
-#: src/features/lectures/MainView.tsx:249
+#: src/features/lectures/MainView.tsx:250
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
@@ -1267,7 +1277,7 @@ msgstr "Running pipelines…"
 msgid "Save"
 msgstr "Save"
 
-#: src/features/lectures/EditSummaryView.tsx:191
+#: src/features/lectures/EditSummaryView.tsx:192
 msgid "Save & update PDF"
 msgstr "Save & update PDF"
 
@@ -1352,8 +1362,8 @@ msgstr "Start using Fast Study"
 msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:131
-#: src/features/lectures/MainView.tsx:144
+#: src/features/lectures/EditSummaryView.tsx:132
+#: src/features/lectures/MainView.tsx:145
 msgid "Step already running"
 msgstr "Step already running"
 
@@ -1431,7 +1441,7 @@ msgstr "The ceiling on unattended work: it caps a dropped or downloaded video an
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 
-#: src/features/lectures/MainView.tsx:401
+#: src/features/lectures/MainView.tsx:400
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -1439,7 +1449,7 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
-#: src/features/lectures/MainView.tsx:418
+#: src/features/lectures/MainView.tsx:417
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -1464,11 +1474,11 @@ msgid "The university site is temporarily refusing automated requests. Wait a fe
 msgstr "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:402
+#: src/features/lectures/MainView.tsx:401
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
-#: src/features/lectures/EditSummaryView.tsx:226
+#: src/features/lectures/EditSummaryView.tsx:232
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
@@ -1510,7 +1520,7 @@ msgstr "Unarchive course"
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/features/lectures/EditSummaryView.tsx:209
+#: src/features/lectures/EditSummaryView.tsx:215
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -1518,7 +1528,7 @@ msgstr "Unsaved changes"
 msgid "Unsupported"
 msgstr "Unsupported"
 
-#: src/features/lectures/EditSummaryView.tsx:191
+#: src/features/lectures/EditSummaryView.tsx:192
 msgid "Updating PDF…"
 msgstr "Updating PDF…"
 
@@ -1591,10 +1601,10 @@ msgstr "Yes, store my lectures in this folder"
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/lectures/components/PdfViewer.tsx:89
+#: src/features/lectures/components/PdfViewer.tsx:90
 msgid "Zoom in"
 msgstr "Zoom in"
 
-#: src/features/lectures/components/PdfViewer.tsx:81
+#: src/features/lectures/components/PdfViewer.tsx:82
 msgid "Zoom out"
 msgstr "Zoom out"
