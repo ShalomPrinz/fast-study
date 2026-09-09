@@ -2,8 +2,13 @@
 
 ## `app://bundle`
 
-The window loads `app://bundle/index.html`, served out of `frontend/dist` in dev and
-`resources/frontend/` packaged.
+The window loads `app://bundle/`, served out of `frontend/dist` in dev and `resources/frontend/`
+packaged.
+
+**The window opens on the site root, never on `/index.html`.** The frontend routes on the URL path,
+and `/index.html` is not one of its routes: the bundle would load, mount, and render an empty page
+for anyone past the first-run wall — which renders whatever the route is, and so hides the mistake
+until the app is actually configured.
 
 - **Registered before `app.whenReady()`**, as `standard: true, secure: true`. Registration after
   ready is ignored, and `secure` without `standard` leaves every request from the page carrying

@@ -15,7 +15,7 @@
 5. The four children start **in dependency order** — `database → backend → auto → server` — one at a
    time. Each is spawned, its port read off stdout, and its `/health` waited on before the next
    starts.
-6. All four healthy, the `BrowserWindow` is created and loads `app://bundle/index.html`. There is no
+6. All four healthy, the `BrowserWindow` is created and loads `app://bundle/`. There is no
    window before that: a renderer that loaded first would build its service clients at module scope
    against URLs that do not exist yet.
 

@@ -226,7 +226,9 @@ function openWindow(urls, checks) {
   ipcMain.handle('faststudy:settings-read', () => store.read());
   ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
   mainWindow.once('ready-to-show', () => mainWindow.show());
-  mainWindow.loadURL(`${APP_ORIGIN}/index.html`);
+  // The site root, never `/index.html`: the router matches on the path, and `/index.html` is not one
+  // of its routes, so the app would mount and render nothing once the first-run wall is behind it.
+  mainWindow.loadURL(`${APP_ORIGIN}/`);
 }
 
 function fail(error) {
