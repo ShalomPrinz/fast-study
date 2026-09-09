@@ -1322,7 +1322,7 @@ msgstr "summary did not use any material"
 msgid "summary did not use material"
 msgstr "summary did not use material"
 
-#: src/features/settings/SettingsView.tsx:187
+#: src/features/settings/SettingsView.tsx:185
 msgid "Summary model"
 msgstr "Summary model"
 

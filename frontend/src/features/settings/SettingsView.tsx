@@ -158,8 +158,8 @@ export default function SettingsView() {
             <h2 className="settings-section-title">
               <Trans>API keys</Trans>
             </h2>
-            {/* The note stands in for the key fields themselves: a field that cannot be filled
-                is noise. The model below is not a key and keeps saving as usual. */}
+            {/* The note stands in for the whole section: with no key to store, neither a key
+                field nor the model that would consume one has anything to offer. */}
             <SecureStorageNotice />
             {canStoreApiKeys && (
               <>
@@ -179,27 +179,27 @@ export default function SettingsView() {
                     storedKeyExists={stored.groqApiKeySet}
                   />
                 )}
+                <div className="settings-field">
+                  <div className="settings-label">
+                    <label htmlFor="gemini-model">
+                      <Trans>Summary model</Trans>
+                    </label>
+                  </div>
+                  <select
+                    id="gemini-model"
+                    className="settings-select"
+                    value={form.geminiModel}
+                    onChange={(e) => setForm({ ...form, geminiModel: e.target.value })}
+                  >
+                    {options.geminiModels.map((model) => (
+                      <option key={model} value={model}>
+                        {model}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </>
             )}
-            <div className="settings-field">
-              <div className="settings-label">
-                <label htmlFor="gemini-model">
-                  <Trans>Summary model</Trans>
-                </label>
-              </div>
-              <select
-                id="gemini-model"
-                className="settings-select"
-                value={form.geminiModel}
-                onChange={(e) => setForm({ ...form, geminiModel: e.target.value })}
-              >
-                {options.geminiModels.map((model) => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
-              </select>
-            </div>
           </section>
 
           <section className="settings-section">

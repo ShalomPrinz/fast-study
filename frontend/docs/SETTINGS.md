@@ -109,12 +109,16 @@ machine that is fine.
 Both screens treat it the same way: the key fields are not rendered at all, and the note
 (`components/SecureStorageNotice.tsx`, the single source of that copy) stands where they would have
 been, under the section's own heading. A field that can never be filled is noise, and a disabled one
-invites a user to try. The settings route keeps the summary model in that section, since a model id
-is not a key and saves as usual.
+invites a user to try. The summary model goes with them on `/settings`, since a model no key can
+reach is one more pointless pick, so on both screens that section is its heading and the note alone.
 
 A save therefore carries no key field at all: nothing can type into one, and `buildPatch` omits a
-blank key anyway — the same rule that stops an untouched write-only field clearing a stored key.
-Every other setting saves as usual, which is the whole of what "degraded" means here.
+blank key anyway — the same rule that stops an untouched write-only field clearing a stored key. The
+model cannot be blanked either, though for a narrower reason: an unrendered select still holds what
+the form loaded, which is the stored model where there is one and otherwise the first curated id, so
+a save either omits the model or writes the default the backend would have applied anyway. Every
+other setting — data folder, Drive, auto-run, language — saves as usual, which is the whole of what
+"degraded" means.
 
 The keys also stop counting as required, in `missingEntries` and `isInitialized` alike: an entry
 that can never be filled would leave the wall with no way past it and the app unreachable, while the

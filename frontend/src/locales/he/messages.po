@@ -1322,7 +1322,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "summary did not use material"
 msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:187
+#: src/features/settings/SettingsView.tsx:185
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
