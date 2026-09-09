@@ -14,6 +14,8 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 - Every route that touches `DATA_ROOT` answers `409` `{error}` while no data root is configured;
   the exceptions are the three settings routes, since the first-run wall depends on them, and
   `/health`, which the launcher polls before either exists. See [SETTINGS.md](SETTINGS.md).
+- `423` `{error}` means another program holds the file open — a write or delete refused by a
+  Windows sharing violation. Only the two `/…/files/{name}` routes raise it; see Write semantics.
 
 ## Routes
 
@@ -30,11 +32,11 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts                               |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf; returns `{name}` with the allocated filename          |
-| `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral                                                   |
+| `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `423` if it is open in another program           |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}` | stream one file                                                           |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}/path` | `{path}`, the absolute on-disk path; 404 if absent                   |
-| `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file                                                           |
+| `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file; `423` if it is open in another program                   |
 | `GET    /courses/{course}/lectures/{lecture}/summary`      | `{content, hasOriginal}`                                                  |
 | `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8)                                            |
 | `DELETE /courses/{course}/lectures/{lecture}/summary`      | revert to `original_summary.md`                                           |
@@ -68,6 +70,14 @@ The two file-write paths differ on purpose, and confusing them destroys data:
 - **`PUT /…/files/{name}`** is the backend pipeline's path (`audio.mp3`, `transcript.txt`,
   `summary.pdf`, `drive_url.txt`, …). It is strictly neutral; wiping here would erase earlier
   outputs of the run in progress.
+
+Both `PUT` and `DELETE /…/files/{name}` answer `423 Locked` when Windows refuses the operation
+because another process holds the file open (`ERROR_SHARING_VIOLATION` 32 / `ERROR_LOCK_VIOLATION`
+33) — a native PDF viewer left open on `summary.pdf` is the everyday cause, since the app opens
+PDFs in the user's own registered app. The `{error}` text names the file and the fix, and the
+backend passes it straight through into the pipeline step error. A `PermissionError` without one of
+those two codes stays a `400`: POSIX has no mandatory locking, so there it is a genuine permissions
+problem and mislabelling it would send the user chasing the wrong thing.
 
 `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend

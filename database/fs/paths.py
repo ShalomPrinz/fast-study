@@ -49,6 +49,10 @@ class DataRootNotConfigured(Exception):
     """Raised when a path is resolved before a data root has been configured."""
 
 
+class FileLocked(Exception):
+    """Raised when a write or delete is refused because another program holds the file open."""
+
+
 def material_name(index: int) -> str:
     """Build the material filename for a 1-based index; index 1 is the unnumbered material.pdf."""
 

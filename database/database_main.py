@@ -13,7 +13,7 @@ from fs import crud, materials, overview, paths, tree
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
-from fs.paths import DataRootNotConfigured, lecture_dir
+from fs.paths import DataRootNotConfigured, FileLocked, lecture_dir
 from logging_setup import setup_logging
 
 setup_logging()
@@ -80,9 +80,14 @@ def _error(message: str, status: int):
 
 
 def _failure(exc: Exception, status: int):
-    """Build the failure body for a caught exception, promoting an unconfigured root to 409."""
+    """Build the failure body for a caught exception, promoting the two errors that have an exact
+    status of their own — the routes catch Exception, so a handler would never see them."""
 
-    return _error(str(exc), 409 if isinstance(exc, DataRootNotConfigured) else status)
+    if isinstance(exc, DataRootNotConfigured):
+        return _error(str(exc), 409)
+    if isinstance(exc, FileLocked):
+        return _error(str(exc), 423)
+    return _error(str(exc), status)
 
 
 @app.exception_handler(DataRootNotConfigured)

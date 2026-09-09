@@ -6,9 +6,25 @@ from .paths import (
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
+    FileLocked,
     course_dir,
     lecture_dir,
 )
+
+# Windows refuses to replace or delete a file another process holds open: ERROR_SHARING_VIOLATION
+# (32) and ERROR_LOCK_VIOLATION (33). A native PDF viewer on summary.pdf is the everyday cause.
+_SHARING_VIOLATIONS = (32, 33)
+
+
+def _reject_if_locked(exc: PermissionError, file: str) -> None:
+    """Turn a Windows sharing violation into FileLocked; let every other PermissionError through."""
+
+    # POSIX has no mandatory locking, so a bare PermissionError there is a real permissions
+    # problem — relabelling it would send the user chasing a viewer that isn't the cause.
+    if getattr(exc, "winerror", None) in _SHARING_VIOLATIONS:
+        raise FileLocked(
+            f"{file} is open in another program. Close it and try again."
+        ) from exc
 
 
 def create_course(name: str, source_url: str | None = None) -> None:
@@ -87,7 +103,11 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
     d = lecture_dir(course, lecture, kind)
     p = d / file
     if p.exists():
-        p.unlink()
+        try:
+            p.unlink()
+        except PermissionError as e:
+            _reject_if_locked(e, file)
+            raise
     if file == "summary.pdf":
         (d / PDF_WARNING_MARKER).unlink(missing_ok=True)
         (d / PDF_BUILD_TEX_MARKER).unlink(missing_ok=True)
@@ -98,4 +118,8 @@ def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> 
 
     d = lecture_dir(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)
-    (d / file).write_bytes(data)
+    try:
+        (d / file).write_bytes(data)
+    except PermissionError as e:
+        _reject_if_locked(e, file)
+        raise
