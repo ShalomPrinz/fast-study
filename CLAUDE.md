@@ -156,6 +156,6 @@ Every service is linted, and new code must land lint-clean — `npm run lint` fr
 
 Both stay at pyflakes/recommended level — undefined names and unused symbols, no style enforcement — so they run in about a second. Reach for an inline `eslint-disable` / `noqa` only with a reason on the same line; if a rule is wrong repo-wide, change the config instead.
 
-Style is separate and automatic: `ruff format` + import sort for Python, prettier for JS/TS/CSS (`.prettierrc` keeps `frontend/` semicolon-free and `downloader/` semicolon'd, matching what each already was). Never hand-format — `.claude/format.sh` rewrites changed files at the end of every turn.
+Style is separate and automatic: `ruff format` + import sort for Python, prettier for JS/TS/CSS (`.prettierrc` keeps `frontend/` semicolon-free and `downloader/` semicolon'd, matching what each already was). Never hand-format — `.claude/hooks/format.sh` rewrites changed files at the end of every turn.
 
-`.claude/lint.sh` runs both linters on changed files at the end of every turn and every subagent, and `.claude/typecheck.sh` typechecks `frontend/` the same way. A green hook means the code parses and typechecks — never that it works.
+`.claude/hooks/lint.sh` runs both linters on changed files at the end of every turn and every subagent, and `.claude/hooks/typecheck.sh` typechecks `frontend/` the same way. A green hook means the code parses and typechecks — never that it works. How the three hooks work is in [`.claude/hooks/README.md`](.claude/hooks/README.md).

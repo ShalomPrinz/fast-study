@@ -135,7 +135,7 @@ can regenerate by grepping `className` across `src/`.
 
 `src/styles/tokens.css` is the only global stylesheet: the reset, `html/body/#root`, and the `:root` custom
 properties. It holds no class selector, and `main.tsx` imports it and the font weights and nothing else.
-`.claude/lint.sh` enforces both, plus the absence of a root `index.css`.
+`.claude/hooks/lint.sh` enforces both, plus the absence of a root `index.css`.
 
 ### The token layer
 

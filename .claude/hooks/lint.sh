@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# Stop/SubagentStop hook: lints whichever changed files belong to a linted stack —
-# ruff for backend/ + database/ + lib/, eslint for frontend/ + downloader/ + lib/.
-# Catches the undefined-name and dead-symbol class that a syntax check and tsc both miss.
+# Stop/SubagentStop hook: lints changed files — ruff for backend/ + database/ + lib/,
+# eslint for frontend/ + downloader/ + lib/. Blocks the turn on failure. See README.md.
 set -uo pipefail
 
-# A session that entered a git worktree keeps CLAUDE_PROJECT_DIR pointing at it even
-# after the worktree is deleted, so fall back to the cwd repo instead of skipping.
+# CLAUDE_PROJECT_DIR can outlive a deleted worktree — see README.md.
 ROOT="${CLAUDE_PROJECT_DIR:-}"
 [ -d "$ROOT" ] || ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 [ -d "$ROOT" ] || exit 0
@@ -19,8 +17,7 @@ mapfile -d '' -t changed < <(
   git diff --name-only -z HEAD 2>/dev/null
   git ls-files --others --exclude-standard -z 2>/dev/null
 )
-# A passing Stop hook's stdout goes to the debug log only, so the one channel
-# that reaches the user is systemMessage — always report, even when idle.
+# systemMessage is the only channel that reaches the user — always report, even when idle.
 report() { jq -n --arg m "$1" '{systemMessage: $m, suppressOutput: true}'; }
 
 [ ${#changed[@]} -eq 0 ] && { report "lint -"; exit 0; }
@@ -50,8 +47,7 @@ if [ ${#jsts[@]} -gt 0 ]; then
   fi
 fi
 
-# CSS lives beside the component that uses it — see frontend/docs/ARCHITECTURE.md. These three
-# greps are the whole enforcement: a global stylesheet can only come back through main.tsx.
+# Enforcement only; the CSS layout rule lives in frontend/docs/ARCHITECTURE.md.
 main_tsx="frontend/src/main.tsx"
 css_bad=""
 if [ -f "$main_tsx" ]; then
@@ -77,8 +73,7 @@ if [ -z "$failures" ]; then
   exit 0
 fi
 
-# Re-blocking on an identical failure would loop forever when the breakage is
-# pre-existing or unfixable — report it once more as a warning and let the turn end.
+# An identical failure twice downgrades to a warning instead of looping — see README.md.
 sig="$(printf '%s' "$failures" | md5sum | cut -d' ' -f1)"
 if [ "$(cat "$state" 2>/dev/null)" = "$sig" ]; then
   rm -f "$state"

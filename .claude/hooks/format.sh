@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# Stop/SubagentStop hook: formats changed files in place — ruff format + import
-# sort for Python, prettier for JS/TS/CSS. Style never blocks the turn (it can't
-# change behavior), so this always exits 0 and just reports what it rewrote.
+# Stop/SubagentStop hook: formats changed files in place — ruff format + import sort
+# for Python, prettier for JS/TS/CSS. Never blocks; always exits 0. See README.md.
 set -uo pipefail
 
-# A session that entered a git worktree keeps CLAUDE_PROJECT_DIR pointing at it even
-# after the worktree is deleted, so fall back to the cwd repo instead of skipping.
+# CLAUDE_PROJECT_DIR can outlive a deleted worktree — see README.md.
 ROOT="${CLAUDE_PROJECT_DIR:-}"
 [ -d "$ROOT" ] || ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 [ -d "$ROOT" ] || exit 0
@@ -21,7 +19,7 @@ report() {
   exit 0
 }
 
-# Skips report without a duration — there is no formatting time worth showing.
+# Skip report, without a duration — there is no formatting time worth showing.
 skip() {
   jq -n --arg m "$1" '{systemMessage: $m, suppressOutput: true}'
   exit 0
@@ -35,8 +33,7 @@ run_prettier() {
   npx prettier --write --no-error-on-unmatched-pattern "$@" >/dev/null 2>&1
 }
 
-# One-time baseline: neither formatter has ever run here, so align the whole repo
-# once. Without this every later edit would arrive as a whole-file reformat diff.
+# One-time whole-repo sweep the first time this runs in a tree — see README.md.
 if [ ! -f "$marker" ]; then
   run_ruff backend database lib
   run_prettier .
