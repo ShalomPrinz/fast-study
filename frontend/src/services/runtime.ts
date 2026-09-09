@@ -14,6 +14,7 @@ declare global {
       }
       settings?: SettingsBacking
       secret?: string
+      checks?: { secureStorage: boolean }
     }
   }
 }
@@ -33,6 +34,11 @@ export const BACKEND_URL = urls?.backend ?? 'http://localhost:8000'
 export const DATABASE_URL = urls?.database ?? 'http://localhost:8001'
 export const DOWNLOAD_SERVER_URL = urls?.downloadServer ?? 'http://localhost:3052'
 export const AUTO_DOWNLOADER_URL = urls?.autoDownloader ?? 'http://localhost:3053'
+
+// Whether this machine can keep the API keys safely. Missing bridge means browser dev, which has no
+// Electron store at all — keys go to `database/`'s `.env` and secure storage never enters into it —
+// so the absence of an answer is a working machine, never an unsupported one.
+export const canStoreApiKeys = runtimeBridge()?.checks?.secureStorage ?? true
 
 // The launch secret the services check on every request. Undefined in browser dev, where the
 // services see no `FASTSTUDY_SECRET` and install no check at all — the supported dev state.

@@ -79,6 +79,18 @@ resolves through `resource_path()`** (`backend/services/resources.py`), never a 
 `assets/` and `credentials.json`. Binaries are not among them: they resolve through `lib/tools/` off
 `FASTSTUDY_BIN_DIR`, which freezing does not affect.
 
+## The launcher — `electron/`
+
+The desktop shell that turns the four services into one app: it generates the launch secret, spawns
+`database → backend → auto → server` on ephemeral ports, waits for each `/health`, and opens a
+window on the built frontend served over `app://bundle`. It also owns the settings store the
+children's environment comes from — JSON under `%APPDATA%`, the two API keys through `safeStorage`,
+decrypted into each child's environment at spawn — and killing every child on quit.
+
+It holds no product logic and never touches `DATA_ROOT`. Read [`electron/CLAUDE.md`](electron/CLAUDE.md)
+before changing anything there; the names it spells are the launch contract above, so a change to
+one of them is a cross-service change.
+
 ## Shared modules — `lib/`
 
 `lib/<name>/` holds the modules more than one service needs, each subfolder a self-contained package

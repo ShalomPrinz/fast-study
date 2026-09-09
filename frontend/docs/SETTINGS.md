@@ -83,7 +83,7 @@ and the app. The wall is **not a page inside the app**: while it is up there is 
 and no way past it, and finishing it routes to the app's home.
 
 `isInitialized` (`utils/required.ts`) is the whole gate: both API keys stored and a data folder
-chosen. If the store cannot be reached at all the app is shown anyway — a downed service is not an
+chosen — the keys only on a machine that can store one, see below. If the store cannot be reached at all the app is shown anyway — a downed service is not an
 unconfigured install, and dropping a working app into onboarding over a transient outage is worse
 than the connection toast the client already shows.
 
@@ -105,6 +105,34 @@ failure is shown in place rather than toasted — a rejected data folder is the 
 the way.
 
 Key validation is the same component as the route's, below.
+
+## When the computer can't store a key
+
+The packaged app keeps the two API keys encrypted by the operating system, and a machine with no
+keystore to encrypt against — a Linux box with no keyring — cannot store them at all. The launcher
+reports that on the runtime bridge, `services/runtime.ts` resolves it once as `canStoreApiKeys`, and
+the frontend treats it as degraded rather than fatal: no bridge at all means browser dev, where keys
+go into `database/`'s `.env` and secure storage never enters into it, so a missing answer means a
+machine that is fine.
+
+Both screens treat it the same way: the key fields are not rendered at all, and the note
+(`components/SecureStorageNotice.tsx`, the single source of that copy) stands where they would have
+been, under the section's own heading. A field that can never be filled is noise, and a disabled one
+invites a user to try. The summary model goes with them on `/settings`, since a model no key can
+reach is one more pointless pick, so on both screens that section is its heading and the note alone.
+
+A save therefore carries no key field at all: nothing can type into one, and `buildPatch` omits a
+blank key anyway — the same rule that stops an untouched write-only field clearing a stored key. The
+model cannot be blanked either, though for a narrower reason: an unrendered select still holds what
+the form loaded, which is the stored model where there is one and otherwise the first curated id, so
+a save either omits the model or writes the default the backend would have applied anyway. Every
+other setting — data folder, Drive, auto-run, language — saves as usual, which is the whole of what
+"degraded" means.
+
+The keys also stop counting as required, in `missingEntries` and `isInitialized` alike: an entry
+that can never be filled would leave the wall with no way past it and the app unreachable, while the
+data folder (and Drive's folder when Drive is on) still blocks as always. Both functions take the
+flag as an argument rather than reading the module, which keeps them pure and unit-tested.
 
 ## Key validation — `components/ApiKeyField.tsx`
 

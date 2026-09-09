@@ -14,7 +14,8 @@ npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for 
 The frontend reads no env var. The four service base URLs come from the Electron preload bridge at
 runtime (`services/runtime.ts`), falling back to the dev ports `:8000`, `:8001`, `:3052` and `:3053`. The
 same bridge carries the launch secret every request sends as `X-FastStudy-Secret`; it is absent in browser
-dev, where the services enforce nothing.
+dev, where the services enforce nothing. It also reports whether this machine can store the API keys at all
+(`canStoreApiKeys`) — see `docs/SETTINGS.md`.
 
 ## Verifying layout changes
 
@@ -28,6 +29,12 @@ row/card shape — a grid that fixes the wide window can overlap at a narrow one
 Use **one** `page.route("**/*")` handler that lets the dev-server origin `continue_()` and answers
 everything else by URL suffix. A narrower glob like `**/list` or `**/events*` also matches Vite's own module
 URLs (`/src/services/events.ts`), and aborting one blanks the app with no console error.
+
+A new UI state — a notice, a disabled control, an empty state — needs a stable selector, and the report
+naming a change has to name it: the user checks frontend work by querying the live DOM over CDP in the real
+Electron app, so a state with no stable hook cannot be asserted on. Prefer an element's existing `id`
+(`#key-gemini`, `#key-groq` on the API key inputs); there is no `data-testid` convention here. Where nothing
+stable exists, add a modifier class — `.settings-note--no-key-storage` on the secure-storage warning.
 
 ## Docs
 

@@ -13,6 +13,7 @@ const FILLED: RequiredInput = {
   dataRootConfirmed: true,
   driveEnabled: false,
   gdriveRootFolder: '',
+  canStoreApiKeys: true,
 }
 
 describe('missingEntries', () => {
@@ -36,6 +37,13 @@ describe('missingEntries', () => {
     expect(missingEntries({ ...FILLED, driveEnabled: true, gdriveRootFolder: 'Lectures' })).toEqual(
       [],
     )
+  })
+
+  it('drops both keys where the machine cannot store one, keeping the rest required', () => {
+    const blank = { ...FILLED, geminiKey: '', groqKey: '', canStoreApiKeys: false }
+    expect(missingEntries(blank)).toEqual([])
+    expect(missingEntries({ ...blank, dataRoot: '' })).toEqual(['dataRoot'])
+    expect(missingEntries({ ...blank, driveEnabled: true })).toEqual(['gdriveRootFolder'])
   })
 
   it('names every missing entry at once', () => {
@@ -75,17 +83,23 @@ describe('toNightlyHour', () => {
 
 describe('isInitialized', () => {
   it('passes once both keys and a data root are stored', () => {
-    expect(isInitialized(STORE)).toBe(true)
+    expect(isInitialized(STORE, true)).toBe(true)
   })
 
   it('holds the wall up for any one of the three', () => {
-    expect(isInitialized({ ...STORE, geminiApiKeySet: false })).toBe(false)
-    expect(isInitialized({ ...STORE, groqApiKeySet: false })).toBe(false)
-    expect(isInitialized({ ...STORE, dataRoot: null })).toBe(false)
+    expect(isInitialized({ ...STORE, geminiApiKeySet: false }, true)).toBe(false)
+    expect(isInitialized({ ...STORE, groqApiKeySet: false }, true)).toBe(false)
+    expect(isInitialized({ ...STORE, dataRoot: null }, true)).toBe(false)
+  })
+
+  it('gates on the data root alone where the machine cannot store a key', () => {
+    const noKeys = { ...STORE, geminiApiKeySet: false, groqApiKeySet: false }
+    expect(isInitialized(noKeys, false)).toBe(true)
+    expect(isInitialized({ ...noKeys, dataRoot: null }, false)).toBe(false)
   })
 
   it('is not blocked by anything else being unset', () => {
-    expect(isInitialized({ ...STORE, driveEnabled: null, geminiModel: null })).toBe(true)
+    expect(isInitialized({ ...STORE, driveEnabled: null, geminiModel: null }, true)).toBe(true)
   })
 })
 

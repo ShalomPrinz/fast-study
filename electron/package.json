@@ -1,0 +1,14 @@
+{
+  "name": "faststudy",
+  "productName": "FastStudy",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Launcher and window for the four FastStudy services",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^44.1.1"
+  }
+}

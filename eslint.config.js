@@ -39,6 +39,18 @@ export default [
     rules: baseline,
   },
 
+  // Electron launcher: CommonJS, because a sandboxed preload script cannot be ESM and
+  // splitting one small package across both module systems buys nothing.
+  {
+    files: ['electron/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'commonjs',
+      globals: { ...globals.node },
+    },
+    rules: baseline,
+  },
+
   // Chrome extension: classic scripts (MV3 service worker + popup), no bundler.
   {
     files: ['downloader/extension/**/*.js'],
