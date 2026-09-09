@@ -4,13 +4,16 @@ Zoom cloud recordings (`zoom.us/rec/share/…` links found in course-section sum
 
 ## Why the heavyweight browser (`browser/zoomBrowser.js`)
 
-Headless Chrome falls back to SwiftShader software rendering AND leaks a `HeadlessChrome` UA token — the recording player rejects both. The fix is **headed system Chrome (`channel:'chrome'`), hidden rather than headless**: it keeps the hardware GPU renderer AND a clean `Chrome` UA. puppeteer-extra **stealth** closes the deeper automation leaks Playwright's args miss. How the window is hidden is the one platform-dependent part (below).
+Headless Chromium falls back to SwiftShader software rendering AND leaks a `HeadlessChrome` UA token — the recording player rejects both. The fix is **a headed browser the user actually has installed, hidden rather than headless**: it keeps the hardware GPU renderer AND the browser's own clean UA. Which one it is comes from `browser/browserChannel.js` — Chrome first, Edge second. puppeteer-extra **stealth** closes the deeper automation leaks Playwright's args miss. How the window is hidden is the one platform-dependent part (below).
+
+**Chrome and Edge are both proven** against a real share: passcode gate cleared, both `.mp4` streams sniffed, the `.vjs-multiple-clip-control` advance yielding a distinct second clip, byte-identical stream paths between the two, and `navigator.webdriver: false` with a hardware renderer on each. Edge's own `Edg/…` token is not a problem — the constraint below is about a _rewritten_ UA, and Edge's identity is internally consistent. Edge launches in ~1.2s against Chrome's ~0.7s.
 
 Hard constraints (each is load-bearing):
 
-- **Do NOT override the UA** — including stealth's `user-agent-override` evasion, which we delete at module load. A rewritten UA desyncs from Chrome's Sec-CH-UA Client-Hints and zoom flags the mismatch. Stealth is registered ONLY on playwright-extra's `chromium`, so plain launches stay stealth-free.
+- **Do NOT override the UA** — including stealth's `user-agent-override` evasion, which we delete at module load. A rewritten UA desyncs from the browser's own Sec-CH-UA Client-Hints and zoom flags the mismatch. Stealth is registered ONLY on playwright-extra's `chromium`, so plain launches stay stealth-free.
 - **Do NOT add `--use-angle=vulkan`** — no HW Vulkan on this box, so it falls back to SwiftShader.
 - **Headless is rejected** for the two reasons above.
+- **No bundled-Chromium fallback here**, unlike the plain launcher: Playwright's Chromium is untested against the player (a `Chromium` UA and no proprietary codecs), and a packaged install ships none at all. A resolved channel or nothing.
 
 ## Hiding the window
 
@@ -22,7 +25,7 @@ Hard constraints (each is load-bearing):
 
 - Display number is chosen **explicitly** (`findFreeDisplay`, stepping up from `:99`), NOT via `-displayfd`. On WSLg `/tmp/.X11-unix` is a read-only tmpfs, so Xvfb can't create the filesystem socket an auto-picked display needs; an explicit `:N` makes it fall back to a Linux abstract Unix socket. `/tmp/.X{N}-lock` disambiguates a taken number.
 - Readiness is polled by connecting to the abstract socket (`\0/tmp/.X11-unix/X{N}`); the `failed to bind listener` lines Xvfb prints for the impossible filesystem socket are harmless.
-- A per-run XAUTHORITY (MIT-MAGIC-COOKIE) is handed to both Xvfb (`-auth`) and Chrome (env `XAUTHORITY`).
+- A per-run XAUTHORITY (MIT-MAGIC-COOKIE) is handed to both Xvfb (`-auth`) and the browser (env `XAUTHORITY`).
 - The **node process is NOT wrapped in `xvfb-run`** — the headed token-grab browser must stay on the real WSLg display.
 
 ## Passcode gate

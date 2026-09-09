@@ -7,9 +7,10 @@ import path from 'node:path';
 import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
+import { resolveBrowserChannel } from './browserChannel.js';
 
 // Stealth to close automation leaks, but DELETE its 'user-agent-override' evasion — a
-// rewritten UA desyncs from Chrome's Client-Hints and zoom flags it. Registered ONLY on
+// rewritten UA desyncs from the browser's own Client-Hints and zoom flags it. Registered ONLY on
 // playwright-extra's chromium (plain launches stay stealth-free). See docs/ZOOM.md.
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
@@ -34,8 +35,8 @@ function findFreeDisplay() {
   throw new Error('no free X display number found (:99-:999 all taken)');
 }
 
-// Per-run XAUTHORITY (MIT-MAGIC-COOKIE for :N), handed to both Xvfb (-auth) and Chrome
-// (env XAUTHORITY) so the browser can authenticate to the virtual display.
+// Per-run XAUTHORITY (MIT-MAGIC-COOKIE for :N), handed to both Xvfb (-auth) and the browser
+// (env XAUTHORITY) so it can authenticate to the virtual display.
 function writeXauthority(display) {
   const authFile = path.join(os.tmpdir(), `autodl-xvfb-${process.pid}-${display}.Xauthority`);
   fs.writeFileSync(authFile, ''); // xauth appends to an existing file
@@ -127,10 +128,12 @@ export function stopXvfb() {
 }
 
 /**
- * Launch the browser the ZOOM recording player needs: system Chrome (channel:'chrome'),
- * stealth-cloaked, HEADED — keeps the real GPU renderer + clean UA that headless lacks. Hidden
- * per platform: an Xvfb virtual display on Linux, an off-screen window on Windows. Do NOT override
- * the UA or add `--use-angle=vulkan` (both drop it to SwiftShader / flag it). See docs/ZOOM.md.
+ * Launch the browser the ZOOM recording player needs: the user's installed Chrome or Edge
+ * (browserChannel.js), stealth-cloaked, HEADED — keeps the real GPU renderer + a browser's own
+ * clean UA, both of which headless lacks. There is NO bundled-Chromium fallback here: headless
+ * SwiftShader is exactly what the player rejects. Hidden per platform: an Xvfb virtual display on
+ * Linux, an off-screen window on Windows. Do NOT override the UA or add `--use-angle=vulkan`
+ * (both drop it to SwiftShader / flag it). See docs/ZOOM.md.
  * @returns {Promise<import('playwright').Browser>}
  */
 export async function launchZoomBrowser() {
@@ -142,16 +145,17 @@ export async function launchZoomBrowser() {
     args.push('--window-position=-32000,-32000');
   }
 
+  const { channel } = await resolveBrowserChannel();
   const opts = {
     headless: false,
-    channel: 'chrome',
+    channel,
     ignoreDefaultArgs: ['--enable-automation'],
     args,
   };
   if (windows) return chromium.launch(opts);
 
   const { display, authFile } = await ensureXvfb();
-  // Point Chrome at the virtual display AND its auth cookie so it can connect.
+  // Point the browser at the virtual display AND its auth cookie so it can connect.
   return chromium.launch({
     ...opts,
     env: { ...process.env, DISPLAY: display, XAUTHORITY: authFile },

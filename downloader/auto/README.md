@@ -15,8 +15,9 @@ npm install
 npx playwright install chromium
 ```
 
-**System Google Chrome is required** — every browser here launches it, and bundled
-Chromium is only a fallback for the plain profile. On Linux, zoom recording capture
+**Google Chrome or Microsoft Edge is required** — every browser here launches whichever
+one you have (Chrome first), and bundled Chromium is only a fallback for the plain
+profile. `GET /prereqs/browser` reports which was found. On Linux, zoom recording capture
 additionally needs `Xvfb`; on Windows the window is hidden off-screen instead.
 
 ## Run
