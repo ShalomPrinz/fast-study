@@ -30,7 +30,9 @@ export default function ProgressBar({ stats, startedAt, completedFraction = 0, c
 
   if ('message' in stats) {
     return (
-      <p className={`progress-label progress-label--muted${extra}`}>{t`Not enough data to estimate`}</p>
+      <p
+        className={`progress-label progress-label--muted${extra}`}
+      >{t`Not enough data to estimate`}</p>
     )
   }
 

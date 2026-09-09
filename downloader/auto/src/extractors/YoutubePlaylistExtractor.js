@@ -103,7 +103,10 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
         finalUrl,
       ]));
     } catch (err) {
-      const detail = err.code === 'ENOENT' ? `yt-dlp not found at ${toolPath('yt-dlp')}` : err.stderr || err.message;
+      const detail =
+        err.code === 'ENOENT'
+          ? `yt-dlp not found at ${toolPath('yt-dlp')}`
+          : err.stderr || err.message;
       throw new Error(`yt-dlp failed to list playlist: ${detail}`);
     }
 

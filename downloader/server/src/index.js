@@ -62,7 +62,8 @@ app.use((err, req, res, next) => {
 checkTools(TOOLS).then((status) => {
   toolStatus = status;
   for (const [name, state] of Object.entries(status)) {
-    if (state !== 'ok') console.error(`❌ ${name} is ${state} — the downloads that need it will fail`);
+    if (state !== 'ok')
+      console.error(`❌ ${name} is ${state} — the downloads that need it will fail`);
   }
 });
 

@@ -3,11 +3,11 @@
 from pathlib import Path
 from typing import Literal
 
+import runtime
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
-import runtime
 from services.resources import resource_path
 
 # Shipped alongside the code and only ever read, so it stays on the install side of the split.

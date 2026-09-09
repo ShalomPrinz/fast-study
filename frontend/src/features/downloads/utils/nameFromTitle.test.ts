@@ -23,7 +23,9 @@ describe('suggestItemName', () => {
   })
 
   it('keeps the sub-marker as a decimal on the inferred prefix', () => {
-    expect(suggestItemName('הרצאה 11a', 'lecture', course(['הרצאה 3']), 'Algebra')).toBe('הרצאה 11.1')
+    expect(suggestItemName('הרצאה 11a', 'lecture', course(['הרצאה 3']), 'Algebra')).toBe(
+      'הרצאה 11.1',
+    )
   })
 
   it('falls back to the UI locale when the course has nothing to copy', () => {
@@ -33,6 +35,8 @@ describe('suggestItemName', () => {
   })
 
   it('falls back to the tree suggestion when the title has no number', () => {
-    expect(suggestItemName('רועי', 'recitation', course([], ['תרגול 3']), 'Algebra')).toBe('תרגול 4')
+    expect(suggestItemName('רועי', 'recitation', course([], ['תרגול 3']), 'Algebra')).toBe(
+      'תרגול 4',
+    )
   })
 })

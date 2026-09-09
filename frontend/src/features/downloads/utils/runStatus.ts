@@ -89,8 +89,7 @@ export function summarize(
   const count = (s: TargetStatus) => status.filter((x) => x === s).length
   const parts = [plural(count('downloaded'), { other: '# downloaded' })]
   if (count('failed')) parts.push(plural(count('failed'), { other: '# failed' }))
-  if (count('unsupported'))
-    parts.push(plural(count('unsupported'), { other: '# unsupported' }))
+  if (count('unsupported')) parts.push(plural(count('unsupported'), { other: '# unsupported' }))
   if (count('skipped')) parts.push(plural(count('skipped'), { other: '# already there' }))
   return parts.join(', ')
 }

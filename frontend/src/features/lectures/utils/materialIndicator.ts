@@ -37,8 +37,7 @@ export function materialIndicator(
 
   if (used === count)
     return {
-      text:
-        count === 1 ? t`${name} was used` : plural(count, { other: '# materials were used' }),
+      text: count === 1 ? t`${name} was used` : plural(count, { other: '# materials were used' }),
       cls: 'material-indicator--used',
     }
 

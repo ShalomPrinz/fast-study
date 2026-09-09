@@ -25,6 +25,11 @@ cp "$root/.env" "$wt/.env"
 cp "$root/backend/credentials.json" "$wt/backend/credentials.json"
 # Copied, not symlinked: a branch under test must not write to the live timing.db or Moodle token.
 cp -r "$root/.state" "$wt/.state"
+# The format hook baselines a tree that has none, sweeping the whole repo on its first run.
+# Absent in main (a fresh clone) means neither tree is baselined yet, so let the hook do it.
+if [[ -f "$root/.claude/.format-baseline" ]]; then
+    cp "$root/.claude/.format-baseline" "$wt/.claude/.format-baseline"
+fi
 
 echo "==> claude additionalDirectories"
 settings="$root/.claude/settings.local.json"
