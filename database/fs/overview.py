@@ -2,29 +2,22 @@ import json
 import os
 from pathlib import Path
 
-from .paths import course_dir, overview_dir, overview_pdf_warning_marker
+from .paths import (
+    check_safe_segment,
+    course_dir,
+    overview_dir,
+    overview_pdf_warning_marker,
+    reject_if_locked,
+)
 
 OVERVIEW_META = "meta.json"
-
-
-def _check_safe(segment: str) -> None:
-    """Reject a course/file name that could escape its directory (path separators or '..')."""
-
-    if (
-        not segment
-        or segment in (".", "..")
-        or "/" in segment
-        or "\\" in segment
-        or "\x00" in segment
-    ):
-        raise ValueError(f"unsafe path segment: {segment!r}")
 
 
 def overview_file_path(course: str, name: str) -> Path:
     """Resolve the on-disk path for a single file inside a course's overview directory."""
 
-    _check_safe(course)
-    _check_safe(name)
+    check_safe_segment(course)
+    check_safe_segment(name)
     return overview_dir(course) / name
 
 
@@ -54,7 +47,7 @@ def list_overview_files(course: str) -> list[dict]:
     """List {name, size, mtime(, warning)} entries in a course's overview dir, skipping dotfiles;
     empty if the dir doesn't exist yet."""
 
-    _check_safe(course)
+    check_safe_segment(course)
     d = overview_dir(course)
     if not d.is_dir():
         return []
@@ -75,7 +68,7 @@ def list_overview_files(course: str) -> list[dict]:
 def read_overview_meta(course: str) -> dict:
     """Return the per-extractor course overview meta map, or {} when absent or unparseable."""
 
-    _check_safe(course)
+    check_safe_segment(course)
     meta_path = overview_dir(course) / OVERVIEW_META
     if not meta_path.exists():
         return {}
@@ -92,8 +85,8 @@ def merge_overview_meta(course: str, slug: str, entry) -> None:
 
     # Never add an `await` below: the await-free body is what makes this read-modify-write
     # atomic against concurrent PATCHes without a lock. See docs/OVERVIEW.md.
-    _check_safe(course)
-    _check_safe(slug)
+    check_safe_segment(course)
+    check_safe_segment(slug)
     if not course_dir(course).is_dir():
         raise FileNotFoundError(f"course not found: {course}")
     d = overview_dir(course)
