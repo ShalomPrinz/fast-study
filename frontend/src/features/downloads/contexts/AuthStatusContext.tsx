@@ -12,8 +12,8 @@ interface AuthStatusValue {
 const AuthStatusContext = createContext<AuthStatusValue | null>(null)
 
 // The BIU account probe, held above the page so the header chip and every course row read one answer.
-// Nothing probes on mount: `AccountStatus` asks when the Downloads page appears, which leaves the
-// auto-downloader alone on every other route — a boot-time probe would toast it as down.
+// Nothing probes on mount: `AccountStatus` asks wherever it renders, so a route carrying no account
+// control leaves the auto-downloader alone rather than toasting it as down.
 export function AuthStatusProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<AuthStatus | null>(null)
 

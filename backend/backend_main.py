@@ -11,7 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from logging_setup import setup_logging
 from pipeline import runner, schedule
 from pydantic import BaseModel
-from services import db_client, providers, settings
+from services import db_client, google_auth, providers, settings
 from timing import get_stats, init_db, record
 from tools import check_tools
 
@@ -287,6 +287,34 @@ async def config_probe_key(probe: KeyProbe):
         return {"status": "error", "message": f"unknown provider: {probe.provider}"}
     result = await asyncio.to_thread(providers.probe_key, probe.provider, probe.key)
     return {"result": result}
+
+
+@app.get("/config/drive/status")
+def drive_status():
+    """Whether a Drive token is stored, a consent flow is waiting on the user, and whether a
+    pipeline step gave up for want of a token."""
+
+    return google_auth.drive_status()
+
+
+@app.post("/config/drive/connect")
+async def drive_connect():
+    """Start the Google consent flow and answer with its URL, without waiting for the user.
+    The backend opens the browser itself, so the URL is the UI's 'didn't open?' fallback."""
+
+    try:
+        auth_url = await asyncio.to_thread(google_auth.start_consent)
+    except RuntimeError as e:
+        return {"status": "error", "message": str(e)}
+    return {"auth_url": auth_url}
+
+
+@app.post("/config/drive/disconnect")
+def drive_disconnect():
+    """Delete the stored Drive token; already disconnected is success."""
+
+    google_auth.disconnect()
+    return {"status": "ok"}
 
 
 # Packaged entry point only — dev runs `uvicorn backend_main:app --reload`, which never reaches this.

@@ -48,6 +48,7 @@ The list above is closed on purpose. Each of these looks like a field and delibe
 | `FRONTEND_URL`                                                                        | A CORS origin the download server defaults for itself; only a non-default dev origin ever sets it                                                      |
 | `DOWNLOADER_EXTENSION_ID`                                                             | No default: unset unless a dev loading the unpacked extension sets it, and the packaged app never talks to that dev-only surface                       |
 | The sidebar's lectures/courses mode and the search view's chosen course               | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                                     |
+| The Google Drive account (`components/DriveConnection.tsx`)                           | A consent flow and a token, not a preference: nothing types it in, the backend holds it, and it is connected or it is not                              |
 | Running unfinished lectures at app start                                              | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s nightly cron already cover both the manual and the unattended case |
 
 ## `/settings`
@@ -88,8 +89,8 @@ unconfigured install, and dropping a working app into onboarding over a transien
 than the connection toast the client already shows.
 
 The wall shows more than it requires. The language picker is there so the rest of the screen reads in
-the user's own language, and the Drive toggle so consent happens during onboarding rather than being
-discovered later; neither blocks, and Drive's folder field is required only while the toggle is on.
+the user's own language, and the Drive toggle so the account is connected during onboarding rather
+than being asked for mid-run; neither blocks, and Drive's folder field is required only while the toggle is on.
 Auto-run and the nightly pass are not asked about and keep their defaults — a first install has
 nothing to run yet, and cron hours are not a first-run question.
 
@@ -104,8 +105,8 @@ Lingui catalogs, keyed by provider id; a provider with no entry simply shows the
 failure is shown in place rather than toasted — a rejected data folder is the one thing standing in
 the way.
 
-Key validation is the same component as the route's, below, and so is the browser prerequisite —
-the one thing on the wall that reports a problem without standing in the way.
+Key validation is the same component as the route's, below, and so are the browser prerequisite and
+the BIU account — the two things on the wall that report a state without standing in the way.
 
 ## When the computer can't store a key
 
@@ -186,6 +187,76 @@ naming every channel tried and the path it looked at; it renders as fine print u
 
 The state is on the field as `browser-prereq--{available,missing,unknown,checking}` beside
 `#browser-prereq`, and the status line is `#browser-prereq-status`.
+
+## The BIU account — `components/MoodleAccountField.tsx`
+
+The downloads page's own `AccountStatus` — one chip and the single button that can move it — wrapped
+in the field vocabulary above and sitting beside the browser check on both screens. It is never a
+requirement in any sense: it reaches neither `missingEntries` nor `isInitialized`, and an
+unconnected account costs only `/downloads`, which already disables itself. So the `chip--danger`
+tone the downloads header uses is retoned to neutral here — red belongs on the page the missing
+session actually blocks, not on a screen offering an optional connection.
+
+`AuthStatusContext` probes nothing on mount and `AccountStatus` asks wherever it renders, so this
+field is what makes a settings screen call `/auth/status` at all. `/settings` takes the provider
+`Layout` already wraps every route in; the wall renders outside `Layout` and brings its own
+instance. Neither adds a toast when the auto-downloader is down: the browser check beside it calls
+the same service and the connection toast is deduped per base URL, and the wall renders outside the
+`ToastContainer` entirely, so it cannot toast at all.
+
+The field is `#moodle-account`; its state is `AccountStatus`'s own chip variant.
+
+## The Google account — `components/DriveConnection.tsx`
+
+Drive uploads need a Google token, and it is not a setting: it is a consent flow, so it lives beside
+the Drive toggle rather than in the store. The control renders only while the toggle is on — the
+account for a feature that is off is one more pointless pick — and shows one chip and the single
+button that moves it, in the same field vocabulary as the browser check and the BIU account.
+
+| State          | Shows                                                            |
+| -------------- | ---------------------------------------------------------------- |
+| `unknown`      | the backend was unreachable — **not** that nothing is connected  |
+| `disconnected` | a neutral chip and **Connect**                                   |
+| `pending`      | a flow is waiting on the browser, and a way to reopen its page   |
+| `connected`    | the token is stored, and **Disconnect**                          |
+
+**It never blocks**, exactly like the two prerequisites above: it reaches neither `missingEntries`
+nor `isInitialized`, Drive is off by default, and a lecture with no token still finishes as a PDF on
+this computer.
+
+`POST /config/drive/connect` opens the browser on the backend's own side and answers the URL, so
+**Connect** never opens anything itself; the pending state's **Open the sign-in page** connects again
+— a second call answers the same URL rather than starting a rival flow — and hands that URL to
+`openExternalUrl`. Everything else pushes: a landed token, a failed or timed-out flow and a
+disconnect each fire a notify, so the chip follows over SSE and nothing polls. `pending` is the one
+transition the backend does not push, and its own caller records it.
+
+A failure fills the field's status slot rather than toasting, because the init wall renders outside
+the toast container and could not show one. The state is on the field as
+`drive-connection--{unknown,disconnected,pending,connected}` beside `#drive-connection`.
+
+## Asking for consent mid-run — `app/DriveConsentPrompt.tsx`
+
+Drive can be switched on long before an account is connected, so the pipeline's Drive step fails for
+want of a token and the backend records `consent_needed`. That flag is what raises a single
+`ConfirmModal` asking whether to connect now; **consent is never started without it being confirmed**.
+
+It mounts in `Layout` rather than on a screen, because the run that wants the token is not the screen
+the user is on — from there it survives every route change and reaches the user wherever they are.
+The first-run wall is deliberately out of its reach: it renders outside `Layout`, and an install with
+nothing processed yet has no failed step to consent for.
+
+**One flag, one ask.** `consent_needed` is a single backend flag set by the first step that gives up,
+so a queue of lectures raises one modal by construction and the frontend adds no dedupe of its own.
+It is answered once in either direction — a decline that left the flag standing would otherwise
+re-raise the modal on the very next notify — and the ask re-arms when the flag clears, which is what
+a landed token does. Confirming posts to `/config/drive/connect` and toasts that a sign-in page
+opened; the "didn't open?" link lives on the settings control, which is where a stalled flow is
+recovered.
+
+The prompt asks nothing while the Drive toggle is off: the flag can outlive the switch, and offering
+to connect an account for a feature the user has since turned off is noise. The modal's own detail
+line carries `.drive-consent-detail`, the selector for "the ask is up".
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 

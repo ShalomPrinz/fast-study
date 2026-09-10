@@ -9,6 +9,7 @@ import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsCo
 import { ToastContainer, toast } from '@/services/toaster'
 import { isRtl } from '@/services/i18n'
 import Sidebar from '@/shared/sidebar'
+import DriveConsentPrompt from './DriveConsentPrompt'
 import './Layout.css'
 
 export default function Layout() {
@@ -29,6 +30,9 @@ export default function Layout() {
                     autoClose={3000}
                     closeOnClick
                   />
+                  {/* Route-independent by design: the run that needs consent is not the screen the
+                      user is on. */}
+                  <DriveConsentPrompt />
                 </div>
               </SectionRunsProvider>
             </DownloadsSessionProvider>

@@ -23,6 +23,7 @@ import BrowserPrereqField from './components/BrowserPrereqField'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
+import MoodleAccountField from './components/MoodleAccountField'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
@@ -239,6 +240,7 @@ export default function SettingsView() {
               <Trans>Downloading recordings</Trans>
             </h2>
             <BrowserPrereqField />
+            <MoodleAccountField />
           </section>
 
           <section className="settings-section">

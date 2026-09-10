@@ -39,6 +39,8 @@ Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GD
 
 **Never read a setting at import.** `POST /config` rewrites `os.environ` on the running process, so every consumer reads its variable at call time — `services/settings.py` for the model and the Drive toggle, `llm_client`/`transcribe`/`upload_to_drive` for the keys and the Drive folder.
 
+Google Drive consent is a settings action, never a pipeline one: `services/google_auth.py` loads and refreshes `auth/token_drive.json` and raises `DriveNotConnected` when there is none, and `/config/drive/connect` runs the browser flow on a daemon thread so no run ever blocks on a human (`docs/API.md`).
+
 `services/providers.py` is the API-key provider table behind `/config/probe-key` and `/config/options`: adding a provider is one row, and its probe URL never leaves the backend.
 
 ## Running

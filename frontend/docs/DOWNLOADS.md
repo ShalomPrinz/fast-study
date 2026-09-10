@@ -34,12 +34,14 @@ touch-reachable, and it routes through the row's own handler straight into the o
 
 The probe lives in `AuthStatusProvider` (`contexts/AuthStatusContext.tsx`), mounted in `Layout` beside the
 session provider, so the header chip and every course row read one `/auth/status` answer. It probes nothing
-on mount — `AccountStatus` asks when the page appears, which leaves the auto-downloader alone on every other
-route, where a boot-time probe would toast it as down. `status` is `null` for "unknown": no answer yet, or a
-probe that failed.
+on mount — `AccountStatus` asks wherever it renders, which leaves the auto-downloader alone on a route
+carrying no account control, where a boot-time probe would toast it as down. `status` is `null` for
+"unknown": no answer yet, or a probe that failed.
 
 `AccountStatus` renders the answer as a header chip — `--ok` connected,
-`--warn` expired or mid-login, `--danger` not connected — beside the one button that can move it. Connect
+`--warn` expired or mid-login, `--danger` not connected — beside the one button that can move it. Both
+settings screens reuse it as an optional field (see [SETTINGS.md](SETTINGS.md)), where the `--danger` tone is
+retoned: only this page is actually blocked by a missing session. Connect
 pops a headed browser on the host for MFA and returns immediately; the chip then waits for the user to click
 Done, which calls `/auth/complete` to persist the storage state and re-probes.
 

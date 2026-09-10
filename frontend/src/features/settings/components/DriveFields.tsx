@@ -1,4 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro'
+import DriveConnection from './DriveConnection'
 import '@/styles/settings-form.css'
 
 export interface DriveValue {
@@ -12,8 +13,8 @@ interface Props {
   folderMissing: boolean
 }
 
-// The Drive toggle and the folder it needs. The consequence of turning Drive back on is stated
-// here, where it is flipped, rather than discovered when the backlog starts uploading.
+// The Drive toggle, the Google account it uploads to and the folder it lands in. The consequence of
+// turning Drive back on is stated where it is flipped, not discovered when the backlog uploads.
 export default function DriveFields({ value, onChange, folderMissing }: Props) {
   const { t } = useLingui()
 
@@ -40,6 +41,7 @@ export default function DriveFields({ value, onChange, folderMissing }: Props) {
 
       {value.enabled && (
         <>
+          <DriveConnection />
           <div className="settings-label">
             <label htmlFor="gdrive-folder">
               <Trans>Drive folder name</Trans>

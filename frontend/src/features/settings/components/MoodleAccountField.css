@@ -1,0 +1,15 @@
+/* `AccountStatus` is a bare chip and button; the field is a stretch-aligned column, so they need a
+   row of their own to sit side by side and claim only their own width. */
+.moodle-account-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  align-self: flex-start;
+}
+
+/* Staying disconnected is a choice here, never a fault — the danger tone belongs to the downloads
+   page, where the same chip does report a blocked screen. */
+.moodle-account-control .chip--danger {
+  background: var(--line-soft);
+  color: var(--text-3);
+}

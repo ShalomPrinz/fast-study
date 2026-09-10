@@ -1,3 +1,4 @@
+import json
 import os
 from unittest.mock import patch
 
@@ -6,7 +7,7 @@ import pytest
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi.testclient import TestClient
 from pipeline import schedule
-from services import providers, settings
+from services import google_auth, providers, settings
 
 client = TestClient(backend_main.app)
 
@@ -101,3 +102,62 @@ class TestDisabledStep:
             body = client.post("/courses/C/lectures/L/run/pdf").json()
         assert body == {"status": "started"}
         run.assert_called_once()
+
+
+class TestDriveRoutes:
+    @pytest.fixture(autouse=True)
+    def _isolate(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("FASTSTUDY_STATE_DIR", str(tmp_path / "state"))
+        monkeypatch.setattr(google_auth, "_consent_needed", False)
+        monkeypatch.setattr(google_auth, "_pending_url", None)
+        monkeypatch.setattr(google_auth.db_client, "notify", lambda: None)
+
+    def test_status_of_a_fresh_install(self):
+        body = client.get("/config/drive/status").json()
+        assert body == {"connected": False, "pending": False, "consent_needed": False}
+
+    def test_status_reports_a_stored_token(self):
+        token = google_auth._token_path("drive")
+        token.parent.mkdir(parents=True, exist_ok=True)
+        token.write_text(
+            json.dumps(
+                {
+                    "client_id": "cid",
+                    "client_secret": "secret",
+                    "refresh_token": "refresh",
+                    "token": "access",
+                    "scopes": google_auth.SCOPES_MAP["drive"],
+                }
+            )
+        )
+        assert client.get("/config/drive/status").json()["connected"] is True
+
+        assert client.post("/config/drive/disconnect").json() == {"status": "ok"}
+        assert not token.exists()
+        assert client.get("/config/drive/status").json()["connected"] is False
+
+    def test_disconnect_with_no_token_is_success(self):
+        assert client.post("/config/drive/disconnect").json() == {"status": "ok"}
+
+    def test_connect_answers_with_the_consent_url(self, monkeypatch):
+        monkeypatch.setattr(google_auth, "start_consent", lambda: "https://consent/url")
+        assert client.post("/config/drive/connect").json() == {
+            "auth_url": "https://consent/url"
+        }
+
+    def test_connect_without_client_secrets_is_an_error_envelope(self, monkeypatch):
+        def boom():
+            raise RuntimeError("Google credentials file not found")
+
+        monkeypatch.setattr(google_auth, "start_consent", boom)
+        body = client.post("/config/drive/connect").json()
+        assert body["status"] == "error"
+        assert "credentials file not found" in body["message"]
+
+    def test_a_drive_step_with_no_token_leaves_one_state_for_the_ui(self, monkeypatch):
+        monkeypatch.setattr(google_auth.db_client, "file_exists", lambda *a: True)
+        # The step gives up before the workspace download, so nothing else has to be faked.
+        result = backend_main.runner._exec_drive("Course", "Lec", "lecture")
+        assert result["status"] == "error"
+        assert result["message"] == google_auth.NOT_CONNECTED_MESSAGE
+        assert client.get("/config/drive/status").json()["consent_needed"] is True
