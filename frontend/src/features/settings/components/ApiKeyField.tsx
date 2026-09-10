@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { openExternalUrl } from '@/services/open'
 import { probeKey, type Provider } from '@/services/settings'
 import Icon from '@/shared/components/Icon'
 import { prefixStatus, shouldProbe, type KeyStatus } from '../utils/keyStatus'
@@ -78,8 +79,10 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
         <a
           className="settings-link"
           href={provider.consoleUrl}
-          target="_blank"
-          rel="noreferrer noopener"
+          onClick={(e) => {
+            e.preventDefault()
+            void openExternalUrl(provider.consoleUrl)
+          }}
         >
           <Trans>Get a key</Trans>
           <Icon icon="external-link" />

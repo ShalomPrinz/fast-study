@@ -44,8 +44,10 @@ export async function openOverviewFile(course: string, name: string): Promise<vo
   reportFile(await bridge.open.file({ course, name }))
 }
 
-/** An http(s) link — the Drive URL today. `url` is optional because the tree types it so; the
- *  bridge refuses anything that is not a URL, and reports it. */
+/** An http(s) link. `url` is optional because the tree types it so; the bridge refuses anything that
+ *  is not a URL, and reports it. A link in the UI keeps its `href` for hover and copy but must call
+ *  this from `onClick` with `preventDefault()`: the packaged shell denies every `window.open`, which
+ *  is what Chromium uses for `target="_blank"`, so such an anchor silently does nothing. */
 export async function openExternalUrl(url: string | undefined): Promise<void> {
   const bridge = runtimeBridge()
   if (!bridge) {
