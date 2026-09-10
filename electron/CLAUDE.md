@@ -33,6 +33,21 @@ frontend change needs `npm --prefix frontend run build` before it shows up. `npm
 root is the other way to work — five processes, the Vite origin, no launcher, no secret — and both
 stay supported.
 
+## Verifying a change
+
+This package has no test suite, and it could not have a useful one: what it does is spawn four real
+processes and wait on them. A launch plus its log is the whole empirical check, and the WSL dev box
+runs WSLg (`DISPLAY=:0`, `/mnt/wslg`), so a real window opens here.
+
+```bash
+timeout 90 npm --prefix electron start   # SIGTERM at 90s exercises the teardown path
+pgrep -af 'services|database_main|backend_main|app.js|src/index.js'   # must find nothing after
+```
+
+Then read `<state root>/logs/launch.log`. A healthy dev run ends with all four `ready on
+http://127.0.0.1:<port>`; `{"secureStorage":false}` in the startup-checks line is the expected WSL
+result and not a failure, since `safeStorage` has no keyring to bind to there.
+
 ## CommonJS, deliberately
 
 Every other JS package in the repo is ESM; this one is not. A sandboxed preload script cannot be an
