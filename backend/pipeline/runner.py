@@ -11,7 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import NamedTuple, Optional
 
-from services import db_client, settings
+from services import db_client, google_auth, settings
 from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
@@ -363,6 +363,9 @@ def _exec_drive(course: str, lecture: str, kind: str) -> dict:
                 "status": "error",
                 "message": "summary.pdf is required — run PDF first",
             }
+        # Checked before the workspace download: an unconnected Drive fails every queued
+        # lecture, and each one would otherwise fetch its PDF first.
+        google_auth.get_credentials("drive")
         # Recitations live under a Recitations/ subfolder of the course folder in Drive.
         subfolder = RECITATIONS_DIR if kind == "recitation" else None
         with _db_workspace(
