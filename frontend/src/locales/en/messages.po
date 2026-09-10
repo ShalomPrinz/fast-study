@@ -235,6 +235,10 @@ msgstr "+ add source URL"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ Download all"
 
+#: src/app/DriveConsentPrompt.tsx:54
+msgid "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
+msgstr "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
+
 #: src/features/settings/components/ApiKeyField.tsx:98
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
@@ -413,6 +417,10 @@ msgstr "Complete"
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
+
+#: src/app/DriveConsentPrompt.tsx:51
+msgid "Connect Google Drive now?"
+msgstr "Connect Google Drive now?"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:100
 msgid "Connect your BIU account first"
@@ -739,6 +747,10 @@ msgstr "finish login in the browser window"
 #: src/features/settings/components/DriveConnection.tsx:104
 msgid "finish signing in to Google"
 msgstr "finish signing in to Google"
+
+#: src/app/DriveConsentPrompt.tsx:41
+msgid "Finish signing in to Google in the browser tab that opened."
+msgstr "Finish signing in to Google in the browser tab that opened."
 
 #: src/features/downloads/components/AccountStatus.tsx:80
 msgid "finishing…"

@@ -15,7 +15,7 @@ Corollary: never add a backend endpoint to answer "does file X exist" — that i
 | ------------------------ | ------------------------------------------------------------------------------------------------ |
 | root (`App`, `types.ts`) | flat, no subdirs                                                                                 |
 | `styles/`                | `tokens.css` plus the shared-vocabulary stylesheets — see Styling                                |
-| `app/`                   | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container                        |
+| `app/`                   | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container, Drive consent prompt  |
 | `services/`              | one file per external concern, shared by all features, never split per feature                   |
 | `shared/`                | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
 | `features/<x>/`          | one slice per mode/page: views, sidebar body, components, hooks, contexts, constants, utils      |

@@ -48,6 +48,7 @@ The list above is closed on purpose. Each of these looks like a field and delibe
 | `FRONTEND_URL`                                                                        | A CORS origin the download server defaults for itself; only a non-default dev origin ever sets it                                                      |
 | `DOWNLOADER_EXTENSION_ID`                                                             | No default: unset unless a dev loading the unpacked extension sets it, and the packaged app never talks to that dev-only surface                       |
 | The sidebar's lectures/courses mode and the search view's chosen course               | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                                     |
+| The Google Drive account (`components/DriveConnection.tsx`)                           | A consent flow and a token, not a preference: nothing types it in, the backend holds it, and it is connected or it is not                              |
 | Running unfinished lectures at app start                                              | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s nightly cron already cover both the manual and the unattended case |
 
 ## `/settings`
@@ -233,6 +234,29 @@ transition the backend does not push, and its own caller records it.
 A failure fills the field's status slot rather than toasting, because the init wall renders outside
 the toast container and could not show one. The state is on the field as
 `drive-connection--{unknown,disconnected,pending,connected}` beside `#drive-connection`.
+
+## Asking for consent mid-run — `app/DriveConsentPrompt.tsx`
+
+Drive can be switched on long before an account is connected, so the pipeline's Drive step fails for
+want of a token and the backend records `consent_needed`. That flag is what raises a single
+`ConfirmModal` asking whether to connect now; **consent is never started without it being confirmed**.
+
+It mounts in `Layout` rather than on a screen, because the run that wants the token is not the screen
+the user is on — from there it survives every route change and reaches the user wherever they are.
+The first-run wall is deliberately out of its reach: it renders outside `Layout`, and an install with
+nothing processed yet has no failed step to consent for.
+
+**One flag, one ask.** `consent_needed` is a single backend flag set by the first step that gives up,
+so a queue of lectures raises one modal by construction and the frontend adds no dedupe of its own.
+It is answered once in either direction — a decline that left the flag standing would otherwise
+re-raise the modal on the very next notify — and the ask re-arms when the flag clears, which is what
+a landed token does. Confirming posts to `/config/drive/connect` and toasts that a sign-in page
+opened; the "didn't open?" link lives on the settings control, which is where a stalled flow is
+recovered.
+
+The prompt asks nothing while the Drive toggle is off: the flag can outlive the switch, and offering
+to connect an account for a feature the user has since turned off is noise. The modal's own detail
+line carries `.drive-consent-detail`, the selector for "the ask is up".
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 

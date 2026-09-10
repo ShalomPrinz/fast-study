@@ -235,6 +235,10 @@ msgstr "+ הוסף כתובת מקור"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ הורד הכל"
 
+#: src/app/DriveConsentPrompt.tsx:54
+msgid "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
+msgstr "סיכום מוכן ממתין להעלאה, ול-Fast Study עדיין אין הרשאה ל-Drive שלך. בחירה בכן תפתח דף התחברות של Google בדפדפן; כך או כך כל סיכום נשמר במחשב הזה."
+
 #: src/features/settings/components/ApiKeyField.tsx:98
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
@@ -413,6 +417,10 @@ msgstr "הושלם"
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחבר"
+
+#: src/app/DriveConsentPrompt.tsx:51
+msgid "Connect Google Drive now?"
+msgstr "לחבר את Google Drive עכשיו?"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:100
 msgid "Connect your BIU account first"
@@ -739,6 +747,10 @@ msgstr "השלם את ההתחברות בחלון הדפדפן"
 #: src/features/settings/components/DriveConnection.tsx:104
 msgid "finish signing in to Google"
 msgstr "יש להשלים את ההתחברות ל-Google"
+
+#: src/app/DriveConsentPrompt.tsx:41
+msgid "Finish signing in to Google in the browser tab that opened."
+msgstr "יש להשלים את ההתחברות ל-Google בלשונית שנפתחה בדפדפן."
 
 #: src/features/downloads/components/AccountStatus.tsx:80
 msgid "finishing…"
