@@ -19,3 +19,6 @@ node_modules/
 # PyInstaller output from delivery/services.spec, built inside backend/.
 build/
 dist/
+
+# The resources tree the release workflow assembles for electron-builder.
+delivery/stage/

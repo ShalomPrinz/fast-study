@@ -52,50 +52,54 @@ function exe(name) {
 }
 
 /** The four children in dependency order. `peerVar` is the env var this service is published to
- *  later children under; `bridgeKey` is its name in the renderer's `window.faststudy.urls`. */
+ *  later children under; `bridgeKey` is its name in the renderer's `window.faststudy.urls`. The
+ *  cwd goes through the same `isPackaged` branch as the command: the repo directories do not exist
+ *  in a package — `__dirname` is inside the asar — and spawn fails ENOENT on a missing cwd. */
 function childSpecs() {
   const dev = !app.isPackaged;
   const services = path.join(process.resourcesPath, 'services', exe('services'));
   // Packaged, the Node services run on Electron's own binary as node — nothing else ships one, and
   // yt-dlp is pointed at that same execPath as its JS runtime.
-  const node = (entry) =>
-    dev
-      ? { command: 'node', args: [entry] }
+  const node = (dir, entry) => {
+    const staged = path.join(process.resourcesPath, dir);
+    return dev
+      ? { cwd: path.join(REPO_ROOT, 'downloader', dir), command: 'node', args: [entry] }
       : {
+          cwd: staged,
           command: process.execPath,
-          args: [path.join(process.resourcesPath, entry)],
+          args: [path.join(staged, entry)],
           env: { ELECTRON_RUN_AS_NODE: '1' },
         };
-  const python = (module, mode) =>
-    dev ? { command: 'uv', args: ['run', 'python', module] } : { command: services, args: [mode] };
+  };
+  // Both Python services are the one frozen bundle, picked by argv[1], so both run out of its dir.
+  const python = (dir, module, mode) =>
+    dev
+      ? { cwd: path.join(REPO_ROOT, dir), command: 'uv', args: ['run', 'python', module] }
+      : { cwd: path.dirname(services), command: services, args: [mode] };
   return [
     {
       name: 'database',
-      cwd: path.join(REPO_ROOT, 'database'),
       peerVar: 'DATABASE_URL',
       bridgeKey: 'database',
-      ...python('database_main.py', 'database'),
+      ...python('database', 'database_main.py', 'database'),
     },
     {
       name: 'backend',
-      cwd: path.join(REPO_ROOT, 'backend'),
       peerVar: 'BACKEND_URL',
       bridgeKey: 'backend',
-      ...python('backend_main.py', 'backend'),
+      ...python('backend', 'backend_main.py', 'backend'),
     },
     {
       name: 'auto',
-      cwd: path.join(REPO_ROOT, 'downloader', 'auto'),
       peerVar: 'AUTODL_URL',
       bridgeKey: 'autoDownloader',
-      ...node('app.js'),
+      ...node('auto', 'app.js'),
     },
     {
       name: 'server',
-      cwd: path.join(REPO_ROOT, 'downloader', 'server'),
       peerVar: null,
       bridgeKey: 'downloadServer',
-      ...node(path.join('src', 'index.js')),
+      ...node('server', path.join('src', 'index.js')),
     },
   ];
 }
