@@ -86,7 +86,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:76
+#: src/features/settings/components/ApiKeyField.tsx:77
 msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
@@ -96,7 +96,7 @@ msgid "{0} found"
 msgstr "נמצאו {0}"
 
 #. placeholder {0}: state.browser
-#: src/features/settings/components/BrowserPrereqField.tsx:59
+#: src/features/settings/components/BrowserPrereqField.tsx:60
 msgid "{0} is installed — downloading is ready to use."
 msgstr "{0} מותקן — ההורדות מוכנות לשימוש."
 
@@ -110,7 +110,7 @@ msgid "{0} of {1} chunks"
 msgstr "{0} מתוך {1} מקטעים"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:61
+#: src/features/settings/components/ApiKeyField.tsx:62
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} דחתה את המפתח הזה. אפשר ליצור מפתח חדש במסוף שלה."
 
@@ -219,7 +219,7 @@ msgstr "{withSource} קורסים עם מקור"
 msgid "+ Add a course source URL"
 msgstr "+ הוספת כתובת מקור לקורס"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:75
+#: src/features/downloads/components/CourseSourceRow.tsx:80
 msgid "+ add source URL"
 msgstr "+ הוסף כתובת מקור"
 
@@ -235,11 +235,11 @@ msgstr "+ הוסף כתובת מקור"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ הורד הכל"
 
-#: src/features/settings/components/ApiKeyField.tsx:95
+#: src/features/settings/components/ApiKeyField.tsx:98
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:318
+#: src/features/settings/SettingsView.tsx:320
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -271,11 +271,11 @@ msgstr "כבר מעודכן"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:168
+#: src/features/settings/SettingsView.tsx:169
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:246
+#: src/features/settings/SettingsView.tsx:248
 msgid "Appearance and behaviour"
 msgstr "מראה והתנהגות"
 
@@ -323,6 +323,10 @@ msgstr "הרצה אוטומטית: כל הצינור"
 msgid "Back"
 msgstr "חזרה"
 
+#: src/features/settings/components/MoodleAccountField.tsx:15
+msgid "BIU account"
+msgstr "חשבון בר-אילן"
+
 #: src/features/downloads/components/AccountStatus.tsx:92
 msgid "BIU account connected"
 msgstr "חשבון בר-אילן מחובר"
@@ -335,7 +339,7 @@ msgstr "חשבון בר-אילן מחובר"
 msgid "BIU session expired. Reconnect your account."
 msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:72
+#: src/features/settings/components/BrowserPrereqField.tsx:73
 msgid "Browser for downloading recordings"
 msgstr "דפדפן להורדת הקלטות"
 
@@ -352,11 +356,11 @@ msgstr "אין גישה ל{serviceName} בכתובת {baseUrl}. ודא שהשי�
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/settings/SettingsView.tsx:282
+#: src/features/settings/SettingsView.tsx:284
 msgid "Catch up on unfinished lectures overnight"
 msgstr "להשלים הרצאות שלא הסתיימו במהלך הלילה"
 
-#: src/features/settings/SettingsView.tsx:317
+#: src/features/settings/SettingsView.tsx:319
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -364,7 +368,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחרת — שום דבר לא זז. התיקייה הישנה נשארת בדיוק כפי שהיא, וחזרה אליה כאן מחזירה את הכול."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:113
+#: src/features/settings/components/BrowserPrereqField.tsx:116
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
@@ -372,8 +376,8 @@ msgstr "בדיקה חוזרת"
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
-#: src/features/settings/components/ApiKeyField.tsx:57
-#: src/features/settings/components/BrowserPrereqField.tsx:57
+#: src/features/settings/components/ApiKeyField.tsx:58
+#: src/features/settings/components/BrowserPrereqField.tsx:58
 msgid "Checking…"
 msgstr "בודקים…"
 
@@ -405,7 +409,7 @@ msgstr "הושלם"
 msgid "Connect"
 msgstr "התחבר"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:95
+#: src/features/downloads/components/CourseSourceRow.tsx:100
 msgid "Connect your BIU account first"
 msgstr "יש לחבר תחילה את חשבון בר-אילן"
 
@@ -456,7 +460,7 @@ msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/settings/SettingsView.tsx:131
+#: src/features/settings/SettingsView.tsx:132
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
@@ -518,7 +522,7 @@ msgstr "לנתק את חשבון בר-אילן?"
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
-#: src/features/settings/SettingsView.tsx:263
+#: src/features/settings/SettingsView.tsx:265
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
@@ -559,11 +563,11 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/settings/SettingsView.tsx:239
+#: src/features/settings/SettingsView.tsx:240
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
-#: src/features/settings/InitWall.tsx:225
+#: src/features/settings/InitWall.tsx:227
 msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (רשות)"
 
@@ -589,7 +593,7 @@ msgstr "שם התיקייה ב-Drive"
 msgid "Drive upload failed"
 msgstr "ההעלאה ל-Drive נכשלה"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:80
+#: src/features/downloads/components/CourseSourceRow.tsx:85
 msgid "Edit source URL"
 msgstr "ערוך כתובת מקור"
 
@@ -642,7 +646,7 @@ msgstr "חילוץ"
 msgid "Extract Audio"
 msgstr "חלץ אודיו"
 
-#: src/features/settings/SettingsView.tsx:262
+#: src/features/settings/SettingsView.tsx:264
 msgid "Extract the audio only"
 msgstr "לחלץ רק את האודיו"
 
@@ -689,11 +693,15 @@ msgstr "שמירת הסיכום נכשלה"
 msgid "Fast Study"
 msgstr "Fast Study"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:87
+#: src/features/settings/components/BrowserPrereqField.tsx:90
 msgid "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 msgstr "Fast Study מפעיל את Google Chrome או את Microsoft Edge כדי להביא הקלטות מאתר הקורס. הפיכת סרטון לסיכום לא משתמשת בו כלל."
 
-#: src/features/settings/InitWall.tsx:180
+#: src/features/settings/components/MoodleAccountField.tsx:19
+msgid "Fast Study signs in to your course site with this account to find and fetch recordings. Nothing else needs it, and you can connect it later."
+msgstr "Fast Study מתחבר לאתר הקורס עם החשבון הזה כדי למצוא ולהביא הקלטות. שום דבר אחר לא זקוק לו, ואפשר לחבר אותו גם מאוחר יותר."
+
+#: src/features/settings/InitWall.tsx:182
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם דרוש מפתח משלכם, ויצירת שניהם חינמית."
 
@@ -701,7 +709,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:236
+#: src/features/settings/InitWall.tsx:243
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
@@ -742,15 +750,15 @@ msgstr "ייצור משלב {stepLabel} יבנה מחדש:"
 msgid "Generating…"
 msgstr "מייצר…"
 
-#: src/features/settings/components/ApiKeyField.tsx:84
+#: src/features/settings/components/ApiKeyField.tsx:87
 msgid "Get a key"
 msgstr "השגת מפתח"
 
-#: src/features/settings/SettingsView.tsx:226
+#: src/features/settings/SettingsView.tsx:227
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:212
+#: src/features/settings/InitWall.tsx:214
 msgid "Google Drive (optional)"
 msgstr "Google Drive (רשות)"
 
@@ -767,11 +775,11 @@ msgstr "דף הבית"
 msgid "In course"
 msgstr "נמצא בקורס"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:81
+#: src/features/settings/components/BrowserPrereqField.tsx:84
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
 
-#: src/features/settings/InitWall.tsx:152
+#: src/features/settings/InitWall.tsx:154
 msgid "Just one thing is needed to get started: a folder to keep everything in. This only happens once."
 msgstr "רק דבר אחד נדרש כדי להתחיל: תיקייה שבה יישמר הכול. זה קורה רק פעם אחת."
 
@@ -779,7 +787,7 @@ msgstr "רק דבר אחד נדרש כדי להתחיל: תיקייה שבה י�
 msgid "just this lecture"
 msgstr "רק להרצאה זו"
 
-#: src/features/settings/components/ApiKeyField.tsx:59
+#: src/features/settings/components/ApiKeyField.tsx:60
 msgid "Key verified"
 msgstr "המפתח אומת"
 
@@ -833,15 +841,15 @@ msgstr "הרצאות"
 msgid "Lectures {0}-{1}"
 msgstr "הרצאות {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:143
+#: src/features/settings/InitWall.tsx:145
 msgid "Let's set things up"
 msgstr "בואו נגדיר את הכול"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:97
+#: src/features/downloads/components/CourseSourceRow.tsx:102
 msgid "Load recordings"
 msgstr "טען הקלטות"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:87
+#: src/features/downloads/components/CourseSourceRow.tsx:92
 msgid "Loaded"
 msgstr "נטען"
 
@@ -853,7 +861,7 @@ msgstr "טוען הקלטות…"
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:97
+#: src/features/downloads/components/CourseSourceRow.tsx:102
 msgid "Loading…"
 msgstr "טוען…"
 
@@ -882,7 +890,7 @@ msgstr "קורס חדש"
 msgid "Next"
 msgstr "הבאה"
 
-#: src/features/settings/SettingsView.tsx:288
+#: src/features/settings/SettingsView.tsx:290
 msgid "Nightly pass hour"
 msgstr "שעת המעבר הלילי"
 
@@ -894,7 +902,7 @@ msgstr "לא"
 msgid "No archived courses"
 msgstr "אין קורסים בארכיון"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:61
+#: src/features/settings/components/BrowserPrereqField.tsx:62
 msgid "No Chrome or Edge found on this computer."
 msgstr "לא נמצא Chrome או Edge במחשב הזה."
 
@@ -1014,7 +1022,7 @@ msgstr "רץ עכשיו"
 msgid "Only .mp4 files are allowed"
 msgstr "מותרים קבצי .mp4 בלבד"
 
-#: src/features/settings/InitWall.tsx:40
+#: src/features/settings/InitWall.tsx:42
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "פתחו את Google AI Studio דרך הקישור שלמטה, התחברו עם חשבון Google שלכם ולחצו על \"Create API key\". העתיקו את המפתח שמוצג והדביקו אותו בשדה."
 
@@ -1033,7 +1041,7 @@ msgstr "פתח את החומר"
 msgid "Open PDF"
 msgstr "פתח את ה-PDF"
 
-#: src/features/settings/InitWall.tsx:50
+#: src/features/settings/InitWall.tsx:52
 msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 msgstr "פתחו את מסוף Groq דרך הקישור שלמטה, התחברו ולחצו על \"Create API Key\". העתיקו אותו מיד — Groq מציגה מפתח פעם אחת בלבד — והדביקו אותו בשדה."
 
@@ -1248,7 +1256,7 @@ msgstr "החלף את {file}"
 msgid "Run Remaining"
 msgstr "הרץ את הנותר"
 
-#: src/features/settings/SettingsView.tsx:261
+#: src/features/settings/SettingsView.tsx:263
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל הצינור"
 
@@ -1278,7 +1286,7 @@ msgstr "מריץ צינורות…"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/settings/SettingsView.tsx:160
+#: src/features/settings/SettingsView.tsx:161
 msgid "Save"
 msgstr "שמור"
 
@@ -1294,7 +1302,7 @@ msgstr "שמור בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:244
+#: src/features/settings/InitWall.tsx:251
 msgid "Saving…"
 msgstr "שומרים…"
 
@@ -1327,13 +1335,13 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "session expired"
 msgstr "החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:86
-#: src/features/settings/SettingsView.tsx:153
+#: src/features/settings/SettingsView.tsx:87
+#: src/features/settings/SettingsView.tsx:154
 #: src/shared/sidebar/Sidebar.tsx:92
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:124
+#: src/features/settings/SettingsView.tsx:125
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1357,7 +1365,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (אופציונלי)…"
 
-#: src/features/settings/InitWall.tsx:244
+#: src/features/settings/InitWall.tsx:251
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -1372,7 +1380,7 @@ msgstr "שלב {0} מתוך {1}"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:216
+#: src/features/settings/SettingsView.tsx:217
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1408,7 +1416,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 msgid "summary did not use material"
 msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:194
+#: src/features/settings/SettingsView.tsx:195
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1438,7 +1446,7 @@ msgstr "החיבור לבר-אילן פג. התחבר מחדש והרץ את ה�
 #~ msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly 03:00 pass alike, never a run you start from the running pipelines page."
 #~ msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם על וידאו שנגרר או הורד וגם על המעבר הלילי ב-03:00, ולעולם לא על הרצה שהתחלת מדף הצינורות בהרצה."
 
-#: src/features/settings/SettingsView.tsx:266
+#: src/features/settings/SettingsView.tsx:268
 msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly catch-up pass alike, never a run you start from the running pipelines page."
 msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם על וידאו שנגרר או הורד וגם על מעבר ההשלמה הלילי, ולעולם לא על הרצה שהתחלת מדף הצינורות בהרצה."
 
@@ -1474,7 +1482,7 @@ msgstr "הריצה בוטלה. הרץ את הקטע שוב כדי להשלים �
 msgid "the runner takes these in order"
 msgstr "המריץ לוקח אותן לפי הסדר"
 
-#: src/features/settings/SettingsView.tsx:305
+#: src/features/settings/SettingsView.tsx:307
 msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 msgstr "שני השערים בלתי תלויים: ההגדרה שלמעלה חלה גם על המעבר הלילי, ולכן כשהיא מוגדרת לא לעשות דבר, שום דבר לא ירוץ ללא השגחה בכל שעה שתיבחר."
 
@@ -1497,11 +1505,11 @@ msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, 
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:65
+#: src/features/settings/components/ApiKeyField.tsx:66
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
-#: src/features/settings/InitWall.tsx:147
+#: src/features/settings/InitWall.tsx:149
 msgid "Three things are needed before the first lecture can be turned into a summary. This only happens once."
 msgstr "שלושה דברים דרושים לפני שאפשר להפוך את ההרצאה הראשונה לסיכום. זה קורה פעם אחת בלבד."
 
@@ -1570,19 +1578,19 @@ msgstr "סרטון"
 msgid "Videos"
 msgstr "סרטונים"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:63
+#: src/features/settings/components/BrowserPrereqField.tsx:64
 msgid "We couldn't check right now."
 msgstr "לא הצלחנו לבדוק כרגע."
 
-#: src/features/settings/components/ApiKeyField.tsx:63
+#: src/features/settings/components/ApiKeyField.tsx:64
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/SettingsView.tsx:252
+#: src/features/settings/SettingsView.tsx:254
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:200
+#: src/features/settings/InitWall.tsx:202
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -1594,7 +1602,7 @@ msgstr "מילה שלמה בלבד"
 msgid "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע שה-PDF שלה מוכן. הפעלה מחדש מסמנת כל הרצאה שהסתיימה בינתיים כלא מוכנה, וכולן יועלו."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:98
+#: src/features/settings/components/BrowserPrereqField.tsx:101
 msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "בלי אחד מהם, Fast Study לא יוכל להביא הקלטות מאתר הקורס ולא יוכל להקליט הקלטת Zoom. כל השאר פועל כרגיל — הוסיפו סרטון בעצמכם והוא עדיין יהפוך לסיכום. התקינו את Chrome דרך הקישור שלמעלה ואז בדקו שוב."
 
@@ -1606,7 +1614,7 @@ msgstr "כן"
 msgid "Yes, store my lectures in this folder"
 msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 
-#: src/features/settings/InitWall.tsx:172
+#: src/features/settings/InitWall.tsx:174
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלכם"
 

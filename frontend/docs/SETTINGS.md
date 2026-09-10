@@ -104,8 +104,8 @@ Lingui catalogs, keyed by provider id; a provider with no entry simply shows the
 failure is shown in place rather than toasted — a rejected data folder is the one thing standing in
 the way.
 
-Key validation is the same component as the route's, below, and so is the browser prerequisite —
-the one thing on the wall that reports a problem without standing in the way.
+Key validation is the same component as the route's, below, and so are the browser prerequisite and
+the BIU account — the two things on the wall that report a state without standing in the way.
 
 ## When the computer can't store a key
 
@@ -186,6 +186,24 @@ naming every channel tried and the path it looked at; it renders as fine print u
 
 The state is on the field as `browser-prereq--{available,missing,unknown,checking}` beside
 `#browser-prereq`, and the status line is `#browser-prereq-status`.
+
+## The BIU account — `components/MoodleAccountField.tsx`
+
+The downloads page's own `AccountStatus` — one chip and the single button that can move it — wrapped
+in the field vocabulary above and sitting beside the browser check on both screens. It is never a
+requirement in any sense: it reaches neither `missingEntries` nor `isInitialized`, and an
+unconnected account costs only `/downloads`, which already disables itself. So the `chip--danger`
+tone the downloads header uses is retoned to neutral here — red belongs on the page the missing
+session actually blocks, not on a screen offering an optional connection.
+
+`AuthStatusContext` probes nothing on mount and `AccountStatus` asks wherever it renders, so this
+field is what makes a settings screen call `/auth/status` at all. `/settings` takes the provider
+`Layout` already wraps every route in; the wall renders outside `Layout` and brings its own
+instance. Neither adds a toast when the auto-downloader is down: the browser check beside it calls
+the same service and the connection toast is deduped per base URL, and the wall renders outside the
+`ToastContainer` entirely, so it cannot toast at all.
+
+The field is `#moodle-account`; its state is `AccountStatus`'s own chip variant.
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 

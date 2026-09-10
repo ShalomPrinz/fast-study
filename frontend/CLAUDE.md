@@ -57,7 +57,7 @@ stable exists, add a modifier class — `.settings-note--no-key-storage` on the 
 | `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar       |
 | `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                     |
 | `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode       |
-| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, the two prerequisites |
+| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, the two prerequisites, the optional account |
 | `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries        |
 | `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties      |
 
