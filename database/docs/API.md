@@ -16,6 +16,8 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   `/health`, which the launcher polls before either exists. See [SETTINGS.md](SETTINGS.md).
 - `423` `{error}` means another program holds the file open — a write or delete refused by a
   Windows sharing violation. Every route that writes or deletes a file raises it; see Write semantics.
+- `400` `{error}` covers a `{name}` that could escape its directory, on every file route; see the
+  trust model.
 
 ## Routes
 
@@ -157,8 +159,9 @@ downloader call server-to-server and need no entry. The secret check is installe
 `CORSMiddleware` so CORS stays outermost and a `401` carries CORS headers; Starlette short-circuits
 preflights, so `OPTIONS` never reaches the check.
 
-Both file-path resolvers — `fs/files.file_path` and `fs/overview.overview_file_path` — validate the
-caller's file name through `check_safe_segment` (`fs/paths.py`: no separator, `..`, or NUL),
-answering `400`; that is the path the `/path` routes hand to `shell.openPath`. Course and lecture
-names need no separate guard, since the resolvers run them through `safe_name()`. The write and
-delete routes rely on the localhost-only trust model instead.
+Every caller-supplied file name goes through `check_safe_segment` (`fs/paths.py`: no separator,
+`..`, or NUL) before it is joined onto a resolved directory — both resolvers (`fs/files.file_path`,
+`fs/overview.overview_file_path`) and both mutators (`fs/crud.write_file`, `crud.delete_file`) —
+answering `400`. It matters most on the `/path` routes, whose answer the launcher hands to
+`shell.openPath`, but a write or delete is the same primitive. Course and lecture names need no
+separate guard, since the resolvers run them through `safe_name()`, which drops separators.

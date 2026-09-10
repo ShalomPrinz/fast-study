@@ -6,6 +6,7 @@ from .paths import (
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
+    check_safe_segment,
     course_dir,
     lecture_dir,
     reject_if_locked,
@@ -110,6 +111,7 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
     """Delete a single file in a lecture dir if present."""
 
+    check_safe_segment(file)
     d = lecture_dir(course, lecture, kind)
     p = d / file
     if p.exists():
@@ -126,6 +128,7 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
 def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> None:
     """Write raw bytes to one file in a lecture dir; neutral — does NOT wipe derived artifacts."""
 
+    check_safe_segment(file)
     d = lecture_dir(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)
     try:

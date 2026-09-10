@@ -40,7 +40,7 @@ class TestFilePathResolver:
         )
 
 
-class TestRoutes:
+class TestReadRoutes:
     @pytest.mark.parametrize("name", ESCAPES)
     def test_path_route_refuses_with_4xx(self, client, lecture, name):
         r = client.get(f"/courses/Algo/lectures/L1/files/{name}/path")
@@ -62,3 +62,32 @@ class TestRoutes:
             <= client.head(f"/courses/Algo/lectures/L1/files/{name}").status_code
             < 500
         )
+
+
+class TestWriteRoutes:
+    @pytest.mark.parametrize("name", ESCAPES)
+    def test_put_refuses_with_4xx(self, client, lecture, name):
+        r = client.put(f"/courses/Algo/lectures/L1/files/{name}", content=b"x")
+        assert 400 <= r.status_code < 500
+
+    @pytest.mark.parametrize("name", ESCAPES)
+    def test_delete_refuses_with_4xx(self, client, lecture, name):
+        assert (
+            400
+            <= client.delete(f"/courses/Algo/lectures/L1/files/{name}").status_code
+            < 500
+        )
+
+    def test_a_refused_put_writes_nothing(self, client, lecture):
+        before = sorted(p.name for p in lecture.iterdir())
+        for name in ESCAPES:
+            client.put(f"/courses/Algo/lectures/L1/files/{name}", content=b"x")
+
+        # POSIX would happily create a file literally named "..\\..\\x.exe" here.
+        assert sorted(p.name for p in lecture.iterdir()) == before
+
+    def test_a_refused_delete_removes_nothing(self, client, lecture):
+        for name in ESCAPES:
+            client.delete(f"/courses/Algo/lectures/L1/files/{name}")
+
+        assert (lecture / "summary.pdf").exists()
