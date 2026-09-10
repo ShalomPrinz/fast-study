@@ -61,6 +61,21 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
     lecture_dir(course, old, kind).rename(lecture_dir(course, new, kind))
 
 
+def _check_none_locked(paths) -> None:
+    """Raise FileLocked if any of the given files is held open by another program."""
+
+    # Opening for update is how a Windows sharing violation surfaces without touching the file;
+    # every other error is left to the operation itself, which is the one that has to succeed.
+    for p in paths:
+        try:
+            with p.open("r+b"):
+                pass
+        except PermissionError as e:
+            reject_if_locked(e, p.name)
+        except OSError:
+            continue
+
+
 def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source."""
 
@@ -69,16 +84,26 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     d.mkdir(parents=True, exist_ok=True)
     # Materials go too: a fresh video means the folder is re-sourced from scratch, so a
     # re-upload is a reset, not an append.
-    for f in (
-        *PREDEFINED_FILES,
-        *material_names(d),
-        "transcript.partial.meta.json",
-        PDF_WARNING_MARKER,
-        PDF_BUILD_TEX_MARKER,
-    ):
-        p = d / f
+    wipe = [
+        d / f
+        for f in (
+            *PREDEFINED_FILES,
+            *material_names(d),
+            "transcript.partial.meta.json",
+            PDF_WARNING_MARKER,
+            PDF_BUILD_TEX_MARKER,
+        )
+    ]
+    # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
+    # half-wiped with the new video never written.
+    _check_none_locked(wipe)
+    for p in wipe:
         if p.exists():
-            p.unlink()
+            try:
+                p.unlink()
+            except PermissionError as e:
+                reject_if_locked(e, p.name)
+                raise
     (d / "video.mp4").write_bytes(data)
 
 

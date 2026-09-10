@@ -15,7 +15,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   the exceptions are the three settings routes, since the first-run wall depends on them, and
   `/health`, which the launcher polls before either exists. See [SETTINGS.md](SETTINGS.md).
 - `423` `{error}` means another program holds the file open — a write or delete refused by a
-  Windows sharing violation. Only the two `/…/files/{name}` routes raise it; see Write semantics.
+  Windows sharing violation. Every route that writes or deletes a file raises it; see Write semantics.
 
 ## Routes
 
@@ -29,7 +29,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`)                                          |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`)                                      |
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`)                                      |
-| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts                               |
+| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf; returns `{name}` with the allocated filename          |
 | `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `423` if it is open in another program           |
@@ -59,7 +59,8 @@ The two file-write paths differ on purpose, and confusing them destroys data:
 
 - **`PUT /…/video`** is the downloader's fresh-source path. It erases every predefined file plus
   every material pdf, the partial-transcript meta, and both pdf dotfiles — they all belong to
-  the _old_ video.
+  the _old_ video. The wipe is all-or-nothing: the whole set is probed for locks first, so one
+  file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand — the downloader uploads to brand-new lectures.
 - **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
   LAYOUT.md) and returning it. Also creates the lecture dir on demand. Callers that already know
@@ -71,7 +72,7 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   `summary.pdf`, `drive_url.txt`, …). It is strictly neutral; wiping here would erase earlier
   outputs of the run in progress.
 
-Both `PUT` and `DELETE /…/files/{name}` answer `423 Locked` when Windows refuses the operation
+Every route that writes or deletes a file answers `423 Locked` when Windows refuses the operation
 because another process holds the file open (`ERROR_SHARING_VIOLATION` 32 / `ERROR_LOCK_VIOLATION`
 33) — a native PDF viewer left open on `summary.pdf` is the everyday cause, since the app opens
 PDFs in the user's own registered app. The `{error}` text names the file and the fix, and the

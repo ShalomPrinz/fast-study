@@ -61,7 +61,8 @@ second only matters if the app ships beyond Windows.
 ## Predefined files
 
 `PREDEFINED_FILES` is the lecture-dir contract: exactly these files get a tree entry, and
-exactly these get wiped on a fresh video upload. Anything else on disk is invisible to the
+exactly these get wiped on a fresh video upload — all of them or none, since a file held open by
+a viewer aborts the wipe before the first unlink. Anything else on disk is invisible to the
 frontend. Adding a pipeline artifact means adding it here.
 
 `original_summary.md` and `transcript.partial.meta.json` are deliberately outside the tuple —
