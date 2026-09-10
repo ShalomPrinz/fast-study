@@ -68,5 +68,14 @@ body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled,
 `GET /config/options`
 `{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's probe URL stays server-side.
 
+`GET /config/drive/status`
+`{"connected": bool, "pending": bool, "consent_needed": bool}` — a stored Drive token, a consent flow waiting on the user, and whether a pipeline step gave up for want of a token. The last one is process state, not an event, so a queue of lectures with no token leaves the UI one thing to render; it clears when a token lands. A landed token, a flow that failed or timed out, and a disconnect each push on the database SSE channel, so no screen polls this; the caller of `connect` learns `pending` from its own response.
+
+`POST /config/drive/connect`
+Starts the Google consent flow and returns `{"auth_url": str}` at once, without waiting for the user; the backend opens the browser itself, so the URL is only the "didn't open?" fallback. A second call while one flow is pending returns the same URL rather than starting a rival flow. Missing `credentials.json` → an error envelope. The URL is never printed to stdout — the launcher parses this process's stdout for its port.
+
+`POST /config/drive/disconnect`
+Deletes the stored token → `{"status": "ok"}`. Already disconnected is success.
+
 `POST /config/probe-key`
 body `{"provider": "groq"|"gemini", "key": str}` → `{"result": "valid"|"rejected"|"unverified"}`, or an error envelope for an unknown provider. The key is authenticated against the provider's list-models endpoint (zero tokens, no per-model quota). Only an explicit 401/403 is `rejected`; every other status, a timeout or an unreachable host is `unverified` — an offline user must never be told a good key is bad. `key_prefix` from `/config/options` is an offline hint for the UI and is not enforced here.
