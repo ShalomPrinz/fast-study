@@ -249,7 +249,10 @@ async def put_file(
 def head_file(course: str, lecture: str, name: str, kind: str = Query("lecture")):
     """Return 200 if the file exists, 404 otherwise — cheap precondition check for the backend."""
 
-    p = file_path(course, lecture, name, kind)
+    try:
+        p = file_path(course, lecture, name, kind)
+    except Exception as e:
+        return _failure(e, 400)
     if not p.exists():
         return Response(status_code=404)
     return Response(status_code=200)
@@ -294,7 +297,10 @@ def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
 def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture")):
     """Stream a single lecture file (PDFs get the right media type for inline viewing)."""
 
-    p = file_path(course, lecture, name, kind)
+    try:
+        p = file_path(course, lecture, name, kind)
+    except Exception as e:
+        return _failure(e, 400)
     if not p.exists():
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None
@@ -305,7 +311,10 @@ def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture"))
 def get_file_path(course: str, lecture: str, name: str, kind: str = Query("lecture")):
     """Return a lecture file's absolute on-disk path, so the launcher can open it in the user's own app."""
 
-    p = file_path(course, lecture, name, kind)
+    try:
+        p = file_path(course, lecture, name, kind)
+    except Exception as e:
+        return _failure(e, 400)
     if not p.exists():
         return Response("Not found", status_code=404)
     return {"path": str(p)}

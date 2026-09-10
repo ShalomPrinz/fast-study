@@ -88,7 +88,8 @@ There is deliberately **no delete route for overview files**. Adding one must dr
 
 The two `GET /…/files/{name}/path` routes hand back the absolute on-disk path instead of bytes, so
 the Electron launcher can `shell.openPath` a file in the user's own registered app without
-re-deriving the layout this service owns.
+re-deriving the layout this service owns. The name is validated first — `shell.openPath` _launches_
+what it is given, so an unchecked `..\` or `C:\…` would be an open-any-file primitive.
 
 ## Summary editing
 
@@ -155,5 +156,8 @@ downloader call server-to-server and need no entry. The secret check is installe
 `CORSMiddleware` so CORS stays outermost and a `401` carries CORS headers; Starlette short-circuits
 preflights, so `OPTIONS` never reaches the check.
 
-Overview routes validate their path segments (`_check_safe` rejects separators and `..`); lecture
-routes rely on the localhost-only trust model instead.
+Both file-path resolvers — `fs/files.file_path` and `fs/overview.overview_file_path` — validate the
+caller's file name through `check_safe_segment` (`fs/paths.py`: no separator, `..`, or NUL),
+answering `400`; that is the path the `/path` routes hand to `shell.openPath`. Course and lecture
+names need no separate guard, since the resolvers run them through `safe_name()`. The write and
+delete routes rely on the localhost-only trust model instead.

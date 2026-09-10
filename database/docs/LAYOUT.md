@@ -13,7 +13,9 @@ build paths; they pass `(course, lecture, kind)` and let `fs/paths.py` resolve t
 `Recitations` level. Re-encoding this layout anywhere else (here or in another service) is the
 one thing that breaks the arrangement.
 
-Every resolver runs course and lecture names through `safe_name()` first (below).
+Every resolver runs course and lecture names through `safe_name()` first (below). A file name
+inside a resolved dir is a caller's string instead, so the two file-path resolvers put it through
+`check_safe_segment()` — separators, `..` and NUL are refused rather than laundered.
 
 One file this service writes sits outside `DATA_ROOT` entirely: the repo-root `.env` behind the
 settings store — see [SETTINGS.md](SETTINGS.md).
