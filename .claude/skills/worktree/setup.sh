@@ -43,7 +43,7 @@ mv "$tmp" "$settings"
 echo "==> npm install"
 # Subshell cd, not `npm --prefix`: the root package.json declares `lib/*` workspaces,
 # which --prefix resolves inconsistently.
-for dir in "" /frontend /downloader/server /downloader/auto; do
+for dir in "" /frontend /downloader/server /downloader/auto /electron; do
     echo "--- $wt$dir"
     (cd "$wt$dir" && npm install)
 done
