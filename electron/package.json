@@ -2,13 +2,50 @@
   "name": "faststudy",
   "productName": "FastStudy",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Launcher and window for the four FastStudy services",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never"
   },
   "devDependencies": {
-    "electron": "^44.1.1"
+    "electron": "^44.1.1",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.faststudy.app",
+    "productName": "FastStudy",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "protocol.js",
+      "store.js",
+      "checks.js",
+      "boot.html",
+      "boot.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../delivery/stage",
+        "to": "."
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "FastStudy",
+      "artifactName": "FastStudy-Setup-${version}.${ext}"
+    }
   }
 }
