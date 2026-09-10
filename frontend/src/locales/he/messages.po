@@ -376,6 +376,10 @@ msgstr "בדיקה חוזרת"
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
+#: src/features/settings/components/DriveConnection.tsx:98
+msgid "checking Drive…"
+msgstr "בודק את Drive…"
+
 #: src/features/settings/components/ApiKeyField.tsx:58
 #: src/features/settings/components/BrowserPrereqField.tsx:58
 msgid "Checking…"
@@ -406,6 +410,7 @@ msgid "Complete"
 msgstr "הושלם"
 
 #: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחבר"
 
@@ -416,6 +421,10 @@ msgstr "יש לחבר תחילה את חשבון בר-אילן"
 #: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
+
+#: src/features/settings/components/DriveConnection.tsx:129
+msgid "connecting…"
+msgstr "מתחבר…"
 
 #: src/features/course-overview/components/GenerateAllButton.tsx:44
 msgid "Continue Generating"
@@ -464,6 +473,10 @@ msgstr "לא ניתן לטעון את הסיכומים של {course}."
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
+#: src/services/drive.ts:35
+msgid "Couldn't start the Google sign-in."
+msgstr "לא הצלחנו להתחיל את ההתחברות ל-Google."
+
 #: src/features/search/SearchView.tsx:177
 msgid "Course"
 msgstr "קורס"
@@ -511,6 +524,7 @@ msgid "Discard all edits"
 msgstr "מחק את כל העריכות"
 
 #: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתק"
 
@@ -519,6 +533,7 @@ msgid "Disconnect the BIU account?"
 msgstr "לנתק את חשבון בר-אילן?"
 
 #: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
@@ -585,7 +600,11 @@ msgstr "הורדות"
 msgid "Drive"
 msgstr "Drive"
 
-#: src/features/settings/components/DriveFields.tsx:45
+#: src/features/settings/components/DriveConnection.tsx:116
+msgid "Drive connected"
+msgstr "Drive מחובר"
+
+#: src/features/settings/components/DriveFields.tsx:47
 msgid "Drive folder name"
 msgstr "שם התיקייה ב-Drive"
 
@@ -689,7 +708,7 @@ msgstr "הפעלת דפדפן ההתחברות נכשלה."
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
-#: src/features/settings/components/DriveFields.tsx:57
+#: src/features/settings/components/DriveFields.tsx:59
 msgid "Fast Study"
 msgstr "Fast Study"
 
@@ -716,6 +735,10 @@ msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 #: src/features/downloads/components/AccountStatus.tsx:77
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
+
+#: src/features/settings/components/DriveConnection.tsx:104
+msgid "finish signing in to Google"
+msgstr "יש להשלים את ההתחברות ל-Google"
 
 #: src/features/downloads/components/AccountStatus.tsx:80
 msgid "finishing…"
@@ -753,6 +776,10 @@ msgstr "מייצר…"
 #: src/features/settings/components/ApiKeyField.tsx:87
 msgid "Get a key"
 msgstr "השגת מפתח"
+
+#: src/features/settings/components/DriveConnection.tsx:86
+msgid "Google account"
+msgstr "חשבון Google"
 
 #: src/features/settings/SettingsView.tsx:227
 msgid "Google Drive"
@@ -967,6 +994,7 @@ msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
 #: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
 
@@ -1044,6 +1072,10 @@ msgstr "פתח את ה-PDF"
 #: src/features/settings/InitWall.tsx:52
 msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 msgstr "פתחו את מסוף Groq דרך הקישור שלמטה, התחברו ולחצו על \"Create API Key\". העתיקו אותו מיד — Groq מציגה מפתח פעם אחת בלבד — והדביקו אותו בשדה."
+
+#: src/features/settings/components/DriveConnection.tsx:107
+msgid "Open the sign-in page"
+msgstr "פתיחת דף ההתחברות"
 
 #: src/features/downloads/utils/sections.ts:22
 msgid "Other"
@@ -1210,7 +1242,7 @@ msgstr "השם שונה ל-\"{name}\" — יש תווים שאי אפשר להש
 msgid "Replace existing video.mp4 in \"{0}\"?"
 msgstr "להחליף את video.mp4 הקיים ב\"{0}\"?"
 
-#: src/features/settings/components/DriveFields.tsx:49
+#: src/features/settings/components/DriveFields.tsx:51
 msgid "Required"
 msgstr "חובה"
 
@@ -1388,6 +1420,10 @@ msgstr "אחסון"
 msgid "Submit"
 msgstr "שלח"
 
+#: src/features/settings/components/DriveConnection.tsx:90
+msgid "Summaries upload to this account's Drive. Connecting opens a Google sign-in page in your browser, and you can do it later — nothing else needs it."
+msgstr "הסיכומים מועלים ל-Drive של החשבון הזה. חיבור פותח דף התחברות של Google בדפדפן, ואפשר לחבר גם מאוחר יותר — שום דבר אחר לא זקוק לו."
+
 #: src/features/lectures/constants/pipeline.ts:90
 msgid "Summarization failed"
 msgstr "הסיכום נכשל"
@@ -1454,7 +1490,7 @@ msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם �
 msgid "The file is open in another program. Close it and try again."
 msgstr "הקובץ פתוח בתוכנה אחרת. סגור אותו ונסה שוב."
 
-#: src/features/settings/components/DriveFields.tsx:61
+#: src/features/settings/components/DriveFields.tsx:63
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
@@ -1553,7 +1589,7 @@ msgstr "מעדכן PDF…"
 msgid "Upload failed"
 msgstr "ההעלאה נכשלה"
 
-#: src/features/settings/components/DriveFields.tsx:30
+#: src/features/settings/components/DriveFields.tsx:31
 msgid "Upload finished summaries to Google Drive"
 msgstr "העלאת סיכומים מוכנים ל-Google Drive"
 
@@ -1598,7 +1634,7 @@ msgstr "איפה לשמור הכול"
 msgid "Whole word only"
 msgstr "מילה שלמה בלבד"
 
-#: src/features/settings/components/DriveFields.tsx:33
+#: src/features/settings/components/DriveFields.tsx:34
 msgid "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע שה-PDF שלה מוכן. הפעלה מחדש מסמנת כל הרצאה שהסתיימה בינתיים כלא מוכנה, וכולן יועלו."
 

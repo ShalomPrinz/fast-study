@@ -112,6 +112,16 @@ folds to `unverified`, because an unreachable provider must never report a good 
 failure. It lives here rather than in the downloads feature because the settings screens are its only
 caller and no feature imports another's service. See [SETTINGS.md](SETTINGS.md).
 
+## `drive.ts` — linking a Google account to Drive
+
+`fetchDriveStatus()`, `connectDrive()` and `disconnectDrive()` over the backend's `/config/drive/*`.
+It is a boundary of its own rather than part of `settings.ts` because it has a caller outside the
+settings screens: `app/DriveConsentPrompt` asks for consent wherever the user is. `DriveStatus` is
+`{ connected, pending, consentNeeded }`, always answered — none of the three is a failure.
+`connectDrive` returns the URL the backend has **already** opened a browser on, so the URL is only a
+"didn't open?" fallback, and it throws the error envelope's prose when `credentials.json` is missing.
+See [SETTINGS.md](SETTINGS.md).
+
 ## `events.ts` — the database notify stream
 
 Module-level singleton over `${databaseUrl}/events`, opened on the first `subscribeNotify` and closed when

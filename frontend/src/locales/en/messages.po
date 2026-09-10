@@ -376,6 +376,10 @@ msgstr "Check again"
 msgid "checking account…"
 msgstr "checking account…"
 
+#: src/features/settings/components/DriveConnection.tsx:98
+msgid "checking Drive…"
+msgstr "checking Drive…"
+
 #: src/features/settings/components/ApiKeyField.tsx:58
 #: src/features/settings/components/BrowserPrereqField.tsx:58
 msgid "Checking…"
@@ -406,6 +410,7 @@ msgid "Complete"
 msgstr "Complete"
 
 #: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
 
@@ -416,6 +421,10 @@ msgstr "Connect your BIU account first"
 #: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "Connecting again needs a full login in a browser window, including MFA."
+
+#: src/features/settings/components/DriveConnection.tsx:129
+msgid "connecting…"
+msgstr "connecting…"
 
 #: src/features/course-overview/components/GenerateAllButton.tsx:44
 msgid "Continue Generating"
@@ -464,6 +473,10 @@ msgstr "Couldn't load summaries for {course}."
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "Couldn't save all settings — check the services are running and try again."
 
+#: src/services/drive.ts:35
+msgid "Couldn't start the Google sign-in."
+msgstr "Couldn't start the Google sign-in."
+
 #: src/features/search/SearchView.tsx:177
 msgid "Course"
 msgstr "Course"
@@ -511,6 +524,7 @@ msgid "Discard all edits"
 msgstr "Discard all edits"
 
 #: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
@@ -519,6 +533,7 @@ msgid "Disconnect the BIU account?"
 msgstr "Disconnect the BIU account?"
 
 #: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
 
@@ -585,7 +600,11 @@ msgstr "Downloads"
 msgid "Drive"
 msgstr "Drive"
 
-#: src/features/settings/components/DriveFields.tsx:45
+#: src/features/settings/components/DriveConnection.tsx:116
+msgid "Drive connected"
+msgstr "Drive connected"
+
+#: src/features/settings/components/DriveFields.tsx:47
 msgid "Drive folder name"
 msgstr "Drive folder name"
 
@@ -689,7 +708,7 @@ msgstr "Failed to launch the login browser."
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
-#: src/features/settings/components/DriveFields.tsx:57
+#: src/features/settings/components/DriveFields.tsx:59
 msgid "Fast Study"
 msgstr "Fast Study"
 
@@ -716,6 +735,10 @@ msgstr "Fill in the fields above to continue."
 #: src/features/downloads/components/AccountStatus.tsx:77
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
+
+#: src/features/settings/components/DriveConnection.tsx:104
+msgid "finish signing in to Google"
+msgstr "finish signing in to Google"
 
 #: src/features/downloads/components/AccountStatus.tsx:80
 msgid "finishing…"
@@ -753,6 +776,10 @@ msgstr "Generating…"
 #: src/features/settings/components/ApiKeyField.tsx:87
 msgid "Get a key"
 msgstr "Get a key"
+
+#: src/features/settings/components/DriveConnection.tsx:86
+msgid "Google account"
+msgstr "Google account"
 
 #: src/features/settings/SettingsView.tsx:227
 msgid "Google Drive"
@@ -967,6 +994,7 @@ msgid "Not a file the downloader can fetch"
 msgstr "Not a file the downloader can fetch"
 
 #: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
 
@@ -1044,6 +1072,10 @@ msgstr "Open PDF"
 #: src/features/settings/InitWall.tsx:52
 msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 msgstr "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
+
+#: src/features/settings/components/DriveConnection.tsx:107
+msgid "Open the sign-in page"
+msgstr "Open the sign-in page"
 
 #: src/features/downloads/utils/sections.ts:22
 msgid "Other"
@@ -1210,7 +1242,7 @@ msgstr "Renamed to \"{name}\" — some characters can't be used in a folder name
 msgid "Replace existing video.mp4 in \"{0}\"?"
 msgstr "Replace existing video.mp4 in \"{0}\"?"
 
-#: src/features/settings/components/DriveFields.tsx:49
+#: src/features/settings/components/DriveFields.tsx:51
 msgid "Required"
 msgstr "Required"
 
@@ -1388,6 +1420,10 @@ msgstr "Storage"
 msgid "Submit"
 msgstr "Submit"
 
+#: src/features/settings/components/DriveConnection.tsx:90
+msgid "Summaries upload to this account's Drive. Connecting opens a Google sign-in page in your browser, and you can do it later — nothing else needs it."
+msgstr "Summaries upload to this account's Drive. Connecting opens a Google sign-in page in your browser, and you can do it later — nothing else needs it."
+
 #: src/features/lectures/constants/pipeline.ts:90
 msgid "Summarization failed"
 msgstr "Summarization failed"
@@ -1454,7 +1490,7 @@ msgstr "The ceiling on unattended work: it caps a dropped or downloaded video an
 msgid "The file is open in another program. Close it and try again."
 msgstr "The file is open in another program. Close it and try again."
 
-#: src/features/settings/components/DriveFields.tsx:61
+#: src/features/settings/components/DriveFields.tsx:63
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 
@@ -1553,7 +1589,7 @@ msgstr "Updating PDF…"
 msgid "Upload failed"
 msgstr "Upload failed"
 
-#: src/features/settings/components/DriveFields.tsx:30
+#: src/features/settings/components/DriveFields.tsx:31
 msgid "Upload finished summaries to Google Drive"
 msgstr "Upload finished summaries to Google Drive"
 
@@ -1598,7 +1634,7 @@ msgstr "Where to keep everything"
 msgid "Whole word only"
 msgstr "Whole word only"
 
-#: src/features/settings/components/DriveFields.tsx:33
+#: src/features/settings/components/DriveFields.tsx:34
 msgid "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 msgstr "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 

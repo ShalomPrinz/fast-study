@@ -1,0 +1,8 @@
+/* The chip and its button are inline-sized, so they need a row of their own inside a field that
+   stretches its children. */
+.drive-connection-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  align-self: flex-start;
+}

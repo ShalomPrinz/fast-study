@@ -88,8 +88,8 @@ unconfigured install, and dropping a working app into onboarding over a transien
 than the connection toast the client already shows.
 
 The wall shows more than it requires. The language picker is there so the rest of the screen reads in
-the user's own language, and the Drive toggle so consent happens during onboarding rather than being
-discovered later; neither blocks, and Drive's folder field is required only while the toggle is on.
+the user's own language, and the Drive toggle so the account is connected during onboarding rather
+than being asked for mid-run; neither blocks, and Drive's folder field is required only while the toggle is on.
 Auto-run and the nightly pass are not asked about and keep their defaults — a first install has
 nothing to run yet, and cron hours are not a first-run question.
 
@@ -204,6 +204,35 @@ the same service and the connection toast is deduped per base URL, and the wall 
 `ToastContainer` entirely, so it cannot toast at all.
 
 The field is `#moodle-account`; its state is `AccountStatus`'s own chip variant.
+
+## The Google account — `components/DriveConnection.tsx`
+
+Drive uploads need a Google token, and it is not a setting: it is a consent flow, so it lives beside
+the Drive toggle rather than in the store. The control renders only while the toggle is on — the
+account for a feature that is off is one more pointless pick — and shows one chip and the single
+button that moves it, in the same field vocabulary as the browser check and the BIU account.
+
+| State          | Shows                                                            |
+| -------------- | ---------------------------------------------------------------- |
+| `unknown`      | the backend was unreachable — **not** that nothing is connected  |
+| `disconnected` | a neutral chip and **Connect**                                   |
+| `pending`      | a flow is waiting on the browser, and a way to reopen its page   |
+| `connected`    | the token is stored, and **Disconnect**                          |
+
+**It never blocks**, exactly like the two prerequisites above: it reaches neither `missingEntries`
+nor `isInitialized`, Drive is off by default, and a lecture with no token still finishes as a PDF on
+this computer.
+
+`POST /config/drive/connect` opens the browser on the backend's own side and answers the URL, so
+**Connect** never opens anything itself; the pending state's **Open the sign-in page** connects again
+— a second call answers the same URL rather than starting a rival flow — and hands that URL to
+`openExternalUrl`. Everything else pushes: a landed token, a failed or timed-out flow and a
+disconnect each fire a notify, so the chip follows over SSE and nothing polls. `pending` is the one
+transition the backend does not push, and its own caller records it.
+
+A failure fills the field's status slot rather than toasting, because the init wall renders outside
+the toast container and could not show one. The state is on the field as
+`drive-connection--{unknown,disconnected,pending,connected}` beside `#drive-connection`.
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 
