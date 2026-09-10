@@ -6,10 +6,26 @@ runtime, and no dev command touches any of it.
 | File                                | What it is                                                              |
 | ----------------------------------- | ----------------------------------------------------------------------- |
 | `services.spec` + `entry.py`        | The PyInstaller one-dir bundle holding `backend/` and `database/`       |
+| `stage.mjs`                         | Assembles `stage/`, the tree electron-builder ships as `resources/`     |
 | `prime_cache.py`                    | Fills tectonic's LaTeX package cache with everything the app can render |
 | `kitchen-sink.md` + `probe.png`     | The document the prime renders                                          |
 | `cache-supplement.txt`              | Files the sink does not pull, added to the cache by name                |
 | `tectonic-cache-filelist-linux.txt` | A primed cache's contents, kept as a diff baseline                      |
+
+## Staging the resources tree
+
+```bash
+node delivery/stage.mjs delivery/stage
+```
+
+Copies the four built services into the shape `electron/docs/BOOT.md` calls the packaged tree, which
+`electron/package.json`'s single `extraResources` entry then ships as `resources/`. It refuses to
+finish if either Node service's `@faststudy/*` dependency is still a symlink: `file:` deps install as
+links by default, and a link into `lib/` dangles the moment the tree leaves the repo — so both
+services are installed with `npm ci --install-links`.
+
+`bin/` and `latex/` are not its business. The workflow downloads the binaries and primes the tectonic
+cache straight into `stage/`, so neither is copied twice.
 
 ## Priming the LaTeX cache
 
