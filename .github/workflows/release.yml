@@ -1,0 +1,110 @@
+name: Windows installer
+
+# Manual only. A run is ~20 minutes and produces one unsigned per-user NSIS installer as a build
+# artifact; publishing it to a GitHub Release is a separate concern from building it.
+on: workflow_dispatch
+
+env:
+  # Pinned, because each one is a claim the repo has measured. tectonic is the version the shipped
+  # LaTeX cache was primed against; pandoc 3.x crashes text_direction.lua, so the binary and
+  # backend/assets/templates/pandoc_template.tex only ever move together.
+  TECTONIC_VERSION: "0.17.0"
+  PANDOC_VERSION: "2.9.2.1"
+  FFMPEG_VERSION: "8.0"
+  STAGE: delivery/stage
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
+      # curl is the one exception and ships with Windows, so it is not here. The msvc tectonic
+      # build, never gnu: the gnu binary imports six MinGW DLLs its own zip does not contain.
+      - name: Download the bundled binaries
+        run: |
+          mkdir -p "$STAGE/bin" downloads
+          base=https://github.com
+          curl -fsSL -o downloads/tectonic.zip "$base/tectonic-typesetting/tectonic/releases/download/tectonic%40$TECTONIC_VERSION/tectonic-$TECTONIC_VERSION-x86_64-pc-windows-msvc.zip"
+          curl -fsSL -o downloads/pandoc.zip "$base/jgm/pandoc/releases/download/$PANDOC_VERSION/pandoc-$PANDOC_VERSION-windows-x86_64.zip"
+          curl -fsSL -o downloads/ffmpeg.zip "$base/GyanD/codexffmpeg/releases/download/$FFMPEG_VERSION/ffmpeg-$FFMPEG_VERSION-essentials_build.zip"
+          # Unpinned on purpose: yt-dlp rots as YouTube changes signatures, so a build ships the
+          # newest one and the app self-updates from there.
+          curl -fsSL -o "$STAGE/bin/yt-dlp.exe" "$base/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+          for zip in tectonic pandoc ffmpeg; do 7z x -y -o"downloads/$zip" "downloads/$zip.zip" > /dev/null; done
+          cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
+          cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
+          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
+          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffprobe.exe" "$STAGE/bin/"
+          ls -l "$STAGE/bin"
+
+      # The one build input that is not committed: it is gitignored so the client secret never
+      # faces GitHub's secret scanning. A build without the secret still has to produce a bundle —
+      # services.spec ships it conditionally — it just ships without Drive consent.
+      - name: Write credentials.json
+        env:
+          CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          if [ -n "$CREDENTIALS" ]; then
+            printf '%s' "$CREDENTIALS" > backend/credentials.json
+            echo "credentials.json written"
+          else
+            echo "no GOOGLE_CREDENTIALS_JSON secret — building without Drive consent"
+          fi
+
+      # One one-dir bundle holding both Python services, selected by argv[1]. Built out of
+      # backend/'s environment, which works only because database/'s dependencies are a strict
+      # subset of backend/'s.
+      - name: Freeze backend and database
+        working-directory: backend
+        run: uv run --with pyinstaller pyinstaller ../delivery/services.spec
+
+      - name: Build the frontend
+        working-directory: frontend
+        run: npm ci && npm run build
+
+      # --install-links, not the default symlink: the file:../../lib/*/js deps have to be real
+      # directories or they dangle the moment the tree is copied into the installer.
+      # PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD keeps a 364MB Chromium the app never launches — every
+      # launch resolves channel:'chrome' or 'msedge' — out of the installer.
+      - name: Install the Node services
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+        run: |
+          # Each in a subshell rather than `npm --prefix`: run from the repo root, npm would pick up
+          # the root package.json's `lib/*/js` workspaces instead of the service's own tree.
+          (cd downloader/auto && npm ci --install-links --omit=dev --no-audit --no-fund)
+          (cd downloader/server && npm ci --install-links --omit=dev --no-audit --no-fund)
+
+      # Network-bound, ~7.5 minutes. tectonic fetches each LaTeX package on first use and the
+      # shipped app renders --only-cached, so anything missing here is an unfixable failed render
+      # on a user's machine.
+      - name: Prime the LaTeX cache
+        working-directory: backend
+        env:
+          FASTSTUDY_BIN_DIR: ${{ github.workspace }}/delivery/stage/bin
+        run: uv run python ../delivery/prime_cache.py "../$STAGE/latex"
+
+      - name: Assemble the resources tree
+        run: node delivery/stage.mjs "$STAGE"
+
+      - name: Build the installer
+        working-directory: electron
+        run: npm ci && npm run dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: faststudy-windows-installer
+          path: electron/dist/*.exe
+          if-no-files-found: error

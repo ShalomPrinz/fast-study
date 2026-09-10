@@ -12,6 +12,29 @@ runtime, and no dev command touches any of it.
 | `cache-supplement.txt`              | Files the sink does not pull, added to the cache by name                |
 | `tectonic-cache-filelist-linux.txt` | A primed cache's contents, kept as a diff baseline                      |
 
+## The installer
+
+`.github/workflows/release.yml`, run by hand from the Actions tab, is the only thing that produces
+one. It runs on `windows-latest` because neither PyInstaller nor electron-builder's NSIS target can
+cross-compile from WSL, so nothing here is buildable on a dev machine — which is also why everything
+the build reads has to be committed, `backend/credentials.json` alone excepted: it arrives as the
+`GOOGLE_CREDENTIALS_JSON` Actions secret, and a build without it still produces a bundle, just one
+that cannot do Drive consent.
+
+Roughly 20 minutes end to end, most of it the LaTeX prime and ~450MB of binary downloads. The
+artifact is one unsigned per-user NSIS `.exe`.
+
+Unsigned means **SmartScreen blocks the first run** on every machine: the dialog reads "Windows
+protected your PC" with only a Don't run button, and the installer starts from **More info → Run
+anyway**. There is no way around it short of an OV/EV certificate. Installing is per-user into
+`%LOCALAPPDATA%\Programs\FastStudy`, so no UAC prompt stacks on top of that — and it is what leaves
+the install directory writable, which is where tectonic builds its `formats/` on the first render.
+
+The three tool versions the workflow pins are claims the repo has measured, not conveniences:
+tectonic is the engine the shipped cache was primed against, pandoc 2.9.2.1 is the last version
+`text_direction.lua` survives, and ffmpeg is pinned only so a build is reproducible. yt-dlp is
+deliberately unpinned — it rots as YouTube changes signatures, so a build ships the newest one.
+
 ## Staging the resources tree
 
 ```bash
