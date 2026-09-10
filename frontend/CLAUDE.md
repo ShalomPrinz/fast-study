@@ -38,6 +38,11 @@ rather than reading a port from the environment (`downloader/auto/src/lib/config
 header` — visible only as a console error under an unexplained empty or loading UI. Never widen a peer's
 allowlist to suit the harness; that is another service's file.
 
+State that arrives over SSE is drivable from the same script: fulfil `/events` with one
+`event: notify\ndata: {}\n\n` body and `text/event-stream`. That closes the stream, `EventSource`
+reconnects, and every reconnect delivers another notify — so flipping a stubbed value and waiting is
+enough to prove the UI follows the push rather than polling.
+
 Two dev-only artefacts that read as bugs and are not: StrictMode double-invokes mount effects, so a probe
 that fires on mount shows **two** requests, and `.init-wall` scrolls itself rather than the document, so a
 `full_page` screenshot crops it — screenshot the element.
@@ -50,16 +55,16 @@ stable exists, add a modifier class — `.settings-note--no-key-storage` on the 
 
 ## Docs
 
-| Doc                       | Covers                                                                                 |
-| ------------------------- | -------------------------------------------------------------------------------------- |
-| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling                |
-| `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding           |
-| `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar       |
-| `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                     |
-| `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode       |
-| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, the two prerequisites, the optional account |
-| `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries        |
-| `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties      |
+| Doc                       | Covers                                                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling                                                  |
+| `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding                                             |
+| `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar                                         |
+| `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                                                       |
+| `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode                                         |
+| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, the prerequisites, the optional accounts, Drive consent |
+| `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries                                          |
+| `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties                                        |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 
