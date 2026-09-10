@@ -79,3 +79,23 @@ class TestDeleteFile:
         r = client.delete("/courses/Algo/lectures/L1/files/summary.pdf")
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+
+
+class TestWriteOverviewFile:
+    def test_sharing_violation_is_423(self, client, data_root, monkeypatch):
+        (data_root / "Algo").mkdir()
+        monkeypatch.setattr("pathlib.Path.write_bytes", _sharing_violation)
+
+        r = client.put("/courses/Algo/overview/files/exam.pdf", content=b"%PDF-new")
+        assert r.status_code == 423
+        assert r.json() == {
+            "error": "exam.pdf is open in another program. Close it and try again."
+        }
+
+    def test_plain_permission_error_stays_400(self, client, data_root, monkeypatch):
+        (data_root / "Algo").mkdir()
+        monkeypatch.setattr("pathlib.Path.write_bytes", _plain_permission_error)
+
+        r = client.put("/courses/Algo/overview/files/exam.pdf", content=b"%PDF-new")
+        assert r.status_code == 400
+        assert "Permission denied" in r.json()["error"]

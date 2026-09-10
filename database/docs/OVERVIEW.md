@@ -6,7 +6,8 @@ lectures but is **not** one: `fs/tree.py` skips it exactly like `Recitations`, s
 appears as a lecture row.
 
 Writes are neutral — no artifact wipe, no side effects — and create `overview/` on demand, but
-404 when the course itself doesn't exist, so a typo'd course name can't silently mint a tree.
+404 when the course itself doesn't exist, so a typo'd course name can't silently mint a tree. A
+file the user has open in a viewer answers `423`, the same as a lecture file.
 
 ## Per-slug pdf warnings
 

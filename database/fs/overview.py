@@ -28,7 +28,11 @@ def write_overview_file(course: str, name: str, data: bytes) -> None:
     if not course_dir(course).is_dir():
         raise FileNotFoundError(f"course not found: {course}")
     p.parent.mkdir(exist_ok=True)
-    p.write_bytes(data)
+    try:
+        p.write_bytes(data)
+    except PermissionError as e:
+        reject_if_locked(e, name)
+        raise
 
 
 def _read_pdf_warning(overview_path: Path, slug: str) -> str | None:

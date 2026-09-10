@@ -41,7 +41,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8)                                            |
 | `DELETE /courses/{course}/lectures/{lecture}/summary`      | revert to `original_summary.md`                                           |
 | `GET    /courses/{course}/summaries`                       | every non-empty summary in a course; 404 if the course is missing         |
-| `PUT    /courses/{course}/overview/files/{name}`           | write a course-level file; 404 if the course is missing                   |
+| `PUT    /courses/{course}/overview/files/{name}`           | write a course-level file; 404 if the course is missing; `423` if it is open in another program |
 | `GET    /courses/{course}/overview/files`                  | list overview files                                                       |
 | `GET    /courses/{course}/overview/files/{name}`           | stream a course-level file                                                |
 | `GET    /courses/{course}/overview/files/{name}/path`      | `{path}`, the absolute on-disk path; 404 if absent                        |
