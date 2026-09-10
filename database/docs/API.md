@@ -14,6 +14,10 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 - Every route that touches `DATA_ROOT` answers `409` `{error}` while no data root is configured;
   the exceptions are the three settings routes, since the first-run wall depends on them, and
   `/health`, which the launcher polls before either exists. See [SETTINGS.md](SETTINGS.md).
+- `423` `{error}` means another program holds the file open — a write or delete refused by a
+  Windows sharing violation. Every route that writes or deletes a file raises it; see Write semantics.
+- `400` `{error}` covers a `{name}` that could escape its directory, on every file route; see the
+  trust model.
 
 ## Routes
 
@@ -27,20 +31,22 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`)                                          |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`)                                      |
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`)                                      |
-| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts                               |
+| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf; returns `{name}` with the allocated filename          |
-| `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral                                                   |
+| `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `423` if it is open in another program           |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}` | stream one file                                                           |
-| `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file                                                           |
+| `GET    /courses/{course}/lectures/{lecture}/files/{name}/path` | `{path}`, the absolute on-disk path; 404 if absent                   |
+| `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file; `423` if it is open in another program                   |
 | `GET    /courses/{course}/lectures/{lecture}/summary`      | `{content, hasOriginal}`                                                  |
 | `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8)                                            |
 | `DELETE /courses/{course}/lectures/{lecture}/summary`      | revert to `original_summary.md`                                           |
 | `GET    /courses/{course}/summaries`                       | every non-empty summary in a course; 404 if the course is missing         |
-| `PUT    /courses/{course}/overview/files/{name}`           | write a course-level file; 404 if the course is missing                   |
+| `PUT    /courses/{course}/overview/files/{name}`           | write a course-level file; 404 if the course is missing; `423` if it is open in another program |
 | `GET    /courses/{course}/overview/files`                  | list overview files                                                       |
 | `GET    /courses/{course}/overview/files/{name}`           | stream a course-level file                                                |
+| `GET    /courses/{course}/overview/files/{name}/path`      | `{path}`, the absolute on-disk path; 404 if absent                        |
 | `GET    /courses/{course}/overview/meta`                   | `{meta}` (`{}` when absent)                                               |
 | `PATCH  /courses/{course}/overview/meta`                   | merge one slug's entry (`{slug, entry}`)                                  |
 | `GET    /settings`                                         | the browser-dev settings store; API keys report set/unset only            |
@@ -55,7 +61,8 @@ The two file-write paths differ on purpose, and confusing them destroys data:
 
 - **`PUT /…/video`** is the downloader's fresh-source path. It erases every predefined file plus
   every material pdf, the partial-transcript meta, and both pdf dotfiles — they all belong to
-  the _old_ video.
+  the _old_ video. The wipe is all-or-nothing: the whole set is probed for locks first, so one
+  file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand — the downloader uploads to brand-new lectures.
 - **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
   LAYOUT.md) and returning it. Also creates the lecture dir on demand. Callers that already know
@@ -67,12 +74,25 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   `summary.pdf`, `drive_url.txt`, …). It is strictly neutral; wiping here would erase earlier
   outputs of the run in progress.
 
+Every route that writes or deletes a file answers `423 Locked` when Windows refuses the operation
+because another process holds the file open (`ERROR_SHARING_VIOLATION` 32 / `ERROR_LOCK_VIOLATION`
+33) — a native PDF viewer left open on `summary.pdf` is the everyday cause, since the app opens
+PDFs in the user's own registered app. The `{error}` text names the file and the fix, and the
+backend passes it straight through into the pipeline step error. A `PermissionError` without one of
+those two codes stays a `400`: POSIX has no mandatory locking, so there it is a genuine permissions
+problem and mislabelling it would send the user chasing the wrong thing.
+
 `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend
 teardown, frontend deletes, and re-render resets all get it without repeating the logic.
 
 There is deliberately **no delete route for overview files**. Adding one must drop the pdf's
 `.{slug}.pdf_warning` the same way.
+
+The two `GET /…/files/{name}/path` routes hand back the absolute on-disk path instead of bytes, so
+the Electron launcher can `shell.openPath` a file in the user's own registered app without
+re-deriving the layout this service owns. The name is validated first — `shell.openPath` _launches_
+what it is given, so an unchecked `..\` or `C:\…` would be an open-any-file primitive.
 
 ## Summary editing
 
@@ -139,5 +159,9 @@ downloader call server-to-server and need no entry. The secret check is installe
 `CORSMiddleware` so CORS stays outermost and a `401` carries CORS headers; Starlette short-circuits
 preflights, so `OPTIONS` never reaches the check.
 
-Overview routes validate their path segments (`_check_safe` rejects separators and `..`); lecture
-routes rely on the localhost-only trust model instead.
+Every caller-supplied file name goes through `check_safe_segment` (`fs/paths.py`: no separator,
+`..`, or NUL) before it is joined onto a resolved directory — both resolvers (`fs/files.file_path`,
+`fs/overview.overview_file_path`) and both mutators (`fs/crud.write_file`, `crud.delete_file`) —
+answering `400`. It matters most on the `/path` routes, whose answer the launcher hands to
+`shell.openPath`, but a write or delete is the same primitive. Course and lecture names need no
+separate guard, since the resolvers run them through `safe_name()`, which drops separators.

@@ -49,6 +49,39 @@ class DataRootNotConfigured(Exception):
     """Raised when a path is resolved before a data root has been configured."""
 
 
+class FileLocked(Exception):
+    """Raised when a write or delete is refused because another program holds the file open."""
+
+
+# Windows refuses to replace or delete a file another process holds open: ERROR_SHARING_VIOLATION
+# (32) and ERROR_LOCK_VIOLATION (33). A native PDF viewer on summary.pdf is the everyday cause.
+_SHARING_VIOLATIONS = (32, 33)
+
+
+def check_safe_segment(segment: str) -> None:
+    """Reject a course/file name that could escape its directory (path separators or '..')."""
+
+    if (
+        not segment
+        or segment in (".", "..")
+        or "/" in segment
+        or "\\" in segment
+        or "\x00" in segment
+    ):
+        raise ValueError(f"unsafe path segment: {segment!r}")
+
+
+def reject_if_locked(exc: PermissionError, file: str) -> None:
+    """Turn a Windows sharing violation into FileLocked; let every other PermissionError through."""
+
+    # POSIX has no mandatory locking, so a bare PermissionError there is a real permissions
+    # problem — relabelling it would send the user chasing a viewer that isn't the cause.
+    if getattr(exc, "winerror", None) in _SHARING_VIOLATIONS:
+        raise FileLocked(
+            f"{file} is open in another program. Close it and try again."
+        ) from exc
+
+
 def material_name(index: int) -> str:
     """Build the material filename for a 1-based index; index 1 is the unnumbered material.pdf."""
 

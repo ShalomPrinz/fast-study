@@ -23,7 +23,7 @@ changes: keep them backward-compatible or flag the impact.
 
 ## Layout
 
-`fs/paths.py` is the single source of truth for path resolution and layout constants, and holds the data root as module state written only by `set_data_root()`. `tests/` uses a conftest that points that state at a per-test tmp dir.
+`fs/paths.py` is the single source of truth for path resolution and layout constants, and holds the data root as module state written only by `set_data_root()`. It also owns the two guards every caller shares: `check_safe_segment()` (refuse a caller-supplied file name that could escape its dir) and `reject_if_locked()` (turn a Windows sharing violation into `FileLocked`, which the routes answer `423`). `tests/` uses a conftest that points that state at a per-test tmp dir.
 
 ## Environment
 

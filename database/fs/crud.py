@@ -6,8 +6,10 @@ from .paths import (
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
+    check_safe_segment,
     course_dir,
     lecture_dir,
+    reject_if_locked,
 )
 
 
@@ -60,6 +62,21 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
     lecture_dir(course, old, kind).rename(lecture_dir(course, new, kind))
 
 
+def _check_none_locked(paths) -> None:
+    """Raise FileLocked if any of the given files is held open by another program."""
+
+    # Opening for update is how a Windows sharing violation surfaces without touching the file;
+    # every other error is left to the operation itself, which is the one that has to succeed.
+    for p in paths:
+        try:
+            with p.open("r+b"):
+                pass
+        except PermissionError as e:
+            reject_if_locked(e, p.name)
+        except OSError:
+            continue
+
+
 def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source."""
 
@@ -68,26 +85,41 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     d.mkdir(parents=True, exist_ok=True)
     # Materials go too: a fresh video means the folder is re-sourced from scratch, so a
     # re-upload is a reset, not an append.
-    for f in (
-        *PREDEFINED_FILES,
-        *material_names(d),
-        "transcript.partial.meta.json",
-        PDF_WARNING_MARKER,
-        PDF_BUILD_TEX_MARKER,
-    ):
-        p = d / f
+    wipe = [
+        d / f
+        for f in (
+            *PREDEFINED_FILES,
+            *material_names(d),
+            "transcript.partial.meta.json",
+            PDF_WARNING_MARKER,
+            PDF_BUILD_TEX_MARKER,
+        )
+    ]
+    # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
+    # half-wiped with the new video never written.
+    _check_none_locked(wipe)
+    for p in wipe:
         if p.exists():
-            p.unlink()
+            try:
+                p.unlink()
+            except PermissionError as e:
+                reject_if_locked(e, p.name)
+                raise
     (d / "video.mp4").write_bytes(data)
 
 
 def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
     """Delete a single file in a lecture dir if present."""
 
+    check_safe_segment(file)
     d = lecture_dir(course, lecture, kind)
     p = d / file
     if p.exists():
-        p.unlink()
+        try:
+            p.unlink()
+        except PermissionError as e:
+            reject_if_locked(e, file)
+            raise
     if file == "summary.pdf":
         (d / PDF_WARNING_MARKER).unlink(missing_ok=True)
         (d / PDF_BUILD_TEX_MARKER).unlink(missing_ok=True)
@@ -96,6 +128,11 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
 def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> None:
     """Write raw bytes to one file in a lecture dir; neutral — does NOT wipe derived artifacts."""
 
+    check_safe_segment(file)
     d = lecture_dir(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)
-    (d / file).write_bytes(data)
+    try:
+        (d / file).write_bytes(data)
+    except PermissionError as e:
+        reject_if_locked(e, file)
+        raise

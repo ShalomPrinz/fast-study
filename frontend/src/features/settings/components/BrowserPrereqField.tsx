@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
+import { openExternalUrl } from '@/services/open'
 import { fetchBrowserPrereq } from '@/services/settings'
 import Icon from '@/shared/components/Icon'
 import '@/styles/button.css'
@@ -75,8 +76,10 @@ export default function BrowserPrereqField() {
           <a
             className="settings-link browser-prereq-link"
             href={CHROME_DOWNLOAD_URL}
-            target="_blank"
-            rel="noreferrer noopener"
+            onClick={(e) => {
+              e.preventDefault()
+              void openExternalUrl(CHROME_DOWNLOAD_URL)
+            }}
           >
             <Trans>Install Chrome</Trans>
             <Icon icon="external-link" />

@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { Step, FileName, MaterialInfo } from '@/types'
-import { deleteFile, deleteMaterial, fileUrl, materialUrl } from '@/services/database'
+import { deleteFile, deleteMaterial } from '@/services/database'
+import { openLectureFile, openExternalUrl } from '@/services/open'
 import { runStep, runPipeline } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
@@ -17,7 +18,8 @@ import {
 } from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
 import { formatBytes, formatDuration } from '@/shared/utils/format'
-import { toastInitResult } from '@/services/toaster'
+import { toast, toastInitResult } from '@/services/toaster'
+import { isConnectionError } from '@/services/http'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
@@ -138,6 +140,12 @@ export default function MainView() {
   const doneCount = stages.filter(({ file }) => files[file].exists).length
   const videoSize = files['video.mp4'].exists ? files['video.mp4'].size : null
 
+  // A delete can be refused because the file is open in the user's pdf viewer, so it needs saying.
+  function reportDeleteFailure(e: unknown) {
+    if (isConnectionError(e)) return // connection errors are toasted centrally
+    toast('error', e instanceof Error ? e.message : t`Failed to delete file`)
+  }
+
   async function handleStep(step: Step) {
     const initResult = await runStep(course, lecture, step, kind)
     toastInitResult(initResult, {
@@ -148,7 +156,15 @@ export default function MainView() {
   }
 
   async function handleRotate(step: Step, filesToDelete: FileName[]) {
-    await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file, kind)))
+    try {
+      await Promise.all(filesToDelete.map((file) => deleteFile(course, lecture, file, kind)))
+    } catch (e) {
+      // Re-running over a file we failed to delete would fail the same way; the refresh shows
+      // which of the others did go.
+      reportDeleteFailure(e)
+      refreshCourses()
+      return
+    }
     refreshCourses()
     handleStep(step)
   }
@@ -173,7 +189,11 @@ export default function MainView() {
 
   async function confirmDeleteMaterial(name: string) {
     setMaterialToDelete(null)
-    await deleteMaterial(course, lecture, name, kind)
+    try {
+      await deleteMaterial(course, lecture, name, kind)
+    } catch (e) {
+      reportDeleteFailure(e)
+    }
     refreshCourses()
   }
 
@@ -221,12 +241,12 @@ export default function MainView() {
       onClick: () => navigate({ pathname: 'edit', search: kindQuery(kind) }),
     },
     pdfExists && {
-      label: t`Open PDF in new tab`,
-      onClick: () => window.open(fileUrl(course, lecture, 'summary.pdf', kind), '_blank'),
+      label: t`Open PDF`,
+      onClick: () => openLectureFile(course, lecture, 'summary.pdf', kind),
     },
     pdfUploaded && {
       label: t`Open in Drive`,
-      onClick: () => window.open(files!['drive_url.txt'].url, '_blank'),
+      onClick: () => openExternalUrl(files!['drive_url.txt'].url),
     },
   ].filter(Boolean) as LectureAction[]
 
@@ -359,10 +379,8 @@ export default function MainView() {
                     <Icon icon="file" />
                     <button
                       className="material-chip-name"
-                      title={t`Open material in new tab`}
-                      onClick={() =>
-                        window.open(materialUrl(course, lecture, m.name, kind), '_blank')
-                      }
+                      title={t`Open material`}
+                      onClick={() => openLectureFile(course, lecture, m.name, kind)}
                       dir="auto"
                     >
                       {m.name}

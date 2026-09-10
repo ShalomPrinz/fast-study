@@ -13,7 +13,7 @@ from fs import crud, materials, overview, paths, tree
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
-from fs.paths import DataRootNotConfigured, lecture_dir
+from fs.paths import DataRootNotConfigured, FileLocked, lecture_dir
 from logging_setup import setup_logging
 
 setup_logging()
@@ -80,9 +80,14 @@ def _error(message: str, status: int):
 
 
 def _failure(exc: Exception, status: int):
-    """Build the failure body for a caught exception, promoting an unconfigured root to 409."""
+    """Build the failure body for a caught exception, promoting the two errors that have an exact
+    status of their own — the routes catch Exception, so a handler would never see them."""
 
-    return _error(str(exc), 409 if isinstance(exc, DataRootNotConfigured) else status)
+    if isinstance(exc, DataRootNotConfigured):
+        return _error(str(exc), 409)
+    if isinstance(exc, FileLocked):
+        return _error(str(exc), 423)
+    return _error(str(exc), status)
 
 
 @app.exception_handler(DataRootNotConfigured)
@@ -244,7 +249,10 @@ async def put_file(
 def head_file(course: str, lecture: str, name: str, kind: str = Query("lecture")):
     """Return 200 if the file exists, 404 otherwise — cheap precondition check for the backend."""
 
-    p = file_path(course, lecture, name, kind)
+    try:
+        p = file_path(course, lecture, name, kind)
+    except Exception as e:
+        return _failure(e, 400)
     if not p.exists():
         return Response(status_code=404)
     return Response(status_code=200)
@@ -289,11 +297,27 @@ def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
 def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture")):
     """Stream a single lecture file (PDFs get the right media type for inline viewing)."""
 
-    p = file_path(course, lecture, name, kind)
+    try:
+        p = file_path(course, lecture, name, kind)
+    except Exception as e:
+        return _failure(e, 400)
     if not p.exists():
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None
     return FileResponse(str(p), media_type=media_type)
+
+
+@app.get("/courses/{course}/lectures/{lecture}/files/{name}/path")
+def get_file_path(course: str, lecture: str, name: str, kind: str = Query("lecture")):
+    """Return a lecture file's absolute on-disk path, so the launcher can open it in the user's own app."""
+
+    try:
+        p = file_path(course, lecture, name, kind)
+    except Exception as e:
+        return _failure(e, 400)
+    if not p.exists():
+        return Response("Not found", status_code=404)
+    return {"path": str(p)}
 
 
 @app.get("/courses/{course}/summaries")
@@ -368,6 +392,19 @@ def get_overview_file(course: str, name: str):
         return Response("Not found", status_code=404)
     media_type = "application/pdf" if name.endswith(".pdf") else None
     return FileResponse(str(p), media_type=media_type)
+
+
+@app.get("/courses/{course}/overview/files/{name}/path")
+def get_overview_file_path(course: str, name: str):
+    """Return an overview file's absolute on-disk path, so the launcher can open it in the user's own app."""
+
+    try:
+        p = overview.overview_file_path(course, name)
+    except Exception as e:
+        return _failure(e, 400)
+    if not p.exists():
+        return Response("Not found", status_code=404)
+    return {"path": str(p)}
 
 
 @app.get("/settings")

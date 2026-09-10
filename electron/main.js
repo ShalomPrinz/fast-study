@@ -3,7 +3,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const store = require('./store');
@@ -264,6 +264,49 @@ function killChildren() {
   }
 }
 
+/** Open one DATA_ROOT file in whatever app the user registered for it. The renderer sends
+ *  identifiers and `database/` resolves them, so the layout stays owned by one service and a
+ *  compromised renderer never gets an open-any-file primitive. `lecture` absent means an overview file. */
+async function openDataFile({ course, lecture, name, kind }) {
+  if (!serviceUrls.database) return { ok: false, error: 'the database service is not running' };
+  const q = encodeURIComponent;
+  const route = lecture
+    ? `/courses/${q(course)}/lectures/${q(lecture)}/files/${q(name)}/path?kind=${q(kind ?? 'lecture')}`
+    : `/courses/${q(course)}/overview/files/${q(name)}/path`;
+  try {
+    const response = await fetch(`${serviceUrls.database}${route}`, {
+      headers: { 'X-FastStudy-Secret': SECRET },
+    });
+    if (!response.ok) return { ok: false, error: `database answered ${response.status}` };
+    const { path: filePath } = await response.json();
+    // openPath answers the empty string on success and the OS's reason otherwise — it never throws.
+    const failure = await shell.openPath(filePath);
+    return failure ? { ok: false, error: failure } : { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+/** Open a link in the user's browser. http(s) only: `openExternal` launches whatever handler a
+ *  scheme is registered to, so an unchecked scheme is a way to start a program from a renderer. */
+async function openExternalUrl(target) {
+  let parsed;
+  try {
+    parsed = new URL(target);
+  } catch {
+    return { ok: false, error: `not a URL: ${target}` };
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return { ok: false, error: `refused scheme: ${parsed.protocol}` };
+  }
+  try {
+    await shell.openExternal(parsed.href);
+    return { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
 /** The one window of the app: it opens on the launch screen and later navigates to the frontend.
  *  Created before anything is spawned, so the four process starts have something on screen. */
 function createWindow(checks) {
@@ -283,11 +326,16 @@ function createWindow(checks) {
   ipcMain.on('faststudy:config', (event) => {
     event.returnValue = { urls: serviceUrls, secret: SECRET, checks };
   });
+  ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
+  ipcMain.handle('faststudy:open-external', (event, url) => openExternalUrl(url));
   ipcMain.handle('faststudy:settings-read', () => store.read());
   ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
   ipcMain.handle('faststudy:boot-state', () => bootState);
   ipcMain.on('faststudy:boot-retry', () => runBoot());
   ipcMain.on('faststudy:boot-quit', () => app.quit());
+  // Every window.open is denied. A child window Electron opened itself would inherit this one's
+  // security webPreferences — the preload, and so the launch secret, on a third-party origin.
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.loadFile(path.join(__dirname, 'boot.html'));
 }

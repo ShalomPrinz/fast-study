@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import type { Course } from '@/types'
 import { setCourseSourceUrl } from '@/services/database'
+import { openExternalUrl } from '@/services/open'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
@@ -31,6 +32,8 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
   // failed says nothing, and guessing "disconnected" there would lock a working session out.
   const disconnected = status?.connected === false
   const [editing, setEditing] = useState(false)
+  // A const, not the prop: the click handler below closes over it, and TS narrows only a const.
+  const sourceUrl = course.source_url
   const edit = useInlineEdit(editing ? (course.source_url ?? '') : null)
 
   function start() {
@@ -59,23 +62,25 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
           placeholder="https://…"
           className="source-row-input source-row-url-input"
         />
-      ) : course.source_url ? (
+      ) : sourceUrl ? (
         <a
           className="source-row-url-text"
-          href={course.source_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={course.source_url}
+          href={sourceUrl}
+          onClick={(e) => {
+            e.preventDefault()
+            void openExternalUrl(sourceUrl)
+          }}
+          title={sourceUrl}
           dir="auto"
         >
-          {course.source_url}
+          {sourceUrl}
         </a>
       ) : (
         <button className="source-row-url" onClick={start} dir="auto">
           <Trans>+ add source URL</Trans>
         </button>
       )}
-      {!editing && course.source_url && (
+      {!editing && sourceUrl && (
         <div className="source-row-actions">
           <button className="pipeline-icon-btn" onClick={start} title={t`Edit source URL`}>
             <Icon icon="edit" />

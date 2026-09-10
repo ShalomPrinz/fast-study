@@ -13,7 +13,9 @@ build paths; they pass `(course, lecture, kind)` and let `fs/paths.py` resolve t
 `Recitations` level. Re-encoding this layout anywhere else (here or in another service) is the
 one thing that breaks the arrangement.
 
-Every resolver runs course and lecture names through `safe_name()` first (below).
+Every resolver runs course and lecture names through `safe_name()` first (below). A file name
+inside a resolved dir is a caller's string instead, so every helper that joins one puts it through
+`check_safe_segment()` — separators, `..` and NUL are refused rather than laundered.
 
 One file this service writes sits outside `DATA_ROOT` entirely: the repo-root `.env` behind the
 settings store — see [SETTINGS.md](SETTINGS.md).
@@ -59,7 +61,8 @@ second only matters if the app ships beyond Windows.
 ## Predefined files
 
 `PREDEFINED_FILES` is the lecture-dir contract: exactly these files get a tree entry, and
-exactly these get wiped on a fresh video upload. Anything else on disk is invisible to the
+exactly these get wiped on a fresh video upload — all of them or none, since a file held open by
+a viewer aborts the wipe before the first unlink. Anything else on disk is invisible to the
 frontend. Adding a pipeline artifact means adding it here.
 
 `original_summary.md` and `transcript.partial.meta.json` are deliberately outside the tuple —

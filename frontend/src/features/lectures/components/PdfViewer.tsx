@@ -18,9 +18,10 @@ interface Props {
   url: string
   show: boolean
   generating: boolean
+  onPopOut: () => void
 }
 
-export default function PdfViewer({ url, show, generating }: Props) {
+export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
   const { t } = useLingui()
   const [numPages, setNumPages] = useState(0)
   const [page, setPage] = useState(1)
@@ -96,11 +97,7 @@ export default function PdfViewer({ url, show, generating }: Props) {
                 {page} / {numPages}
               </span>
             )}
-            <button
-              className="pdf-zoom-btn"
-              title={t`Open PDF in new tab`}
-              onClick={() => window.open(url, '_blank')}
-            >
+            <button className="pdf-zoom-btn" title={t`Open PDF`} onClick={onPopOut}>
               <Icon icon="external-link" />
             </button>
           </div>

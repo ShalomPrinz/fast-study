@@ -19,6 +19,12 @@ contextBridge.exposeInMainWorld('faststudy', {
     read: () => ipcRenderer.invoke('faststudy:settings-read'),
     write: (patch) => ipcRenderer.invoke('faststudy:settings-write', patch),
   },
+  // Opening a DATA_ROOT file sends identifiers, never a path: `database/` resolves the layout and
+  // the OS opens the file in the user's own app. `openExternal` is http(s) links only.
+  open: {
+    file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
+    external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
+  },
   // The launch screen only. It loads before any service exists, so it takes a snapshot first and
   // then follows the pushes — main's first event can land before this page has a listener.
   boot: {
