@@ -87,13 +87,17 @@ One `isPackaged` branch in the child spec table, and nothing else in the file kn
 | `auto`     | `node app.js`                    | Electron's own exe, `ELECTRON_RUN_AS_NODE=1` |
 | `server`   | `node src/index.js`              | Electron's own exe, `ELECTRON_RUN_AS_NODE=1` |
 
+Each child's cwd branches with its command — its package in the repo tree in dev, its own staged
+directory under `resources/` packaged. A cwd that does not exist fails the spawn outright, and in a
+package the repo tree is not there: `__dirname` is inside `app.asar`.
+
 Dev spawns the repo sources, which is what makes the whole launch path runnable and testable without
 an installer. The Node services run on **Electron's own binary as node** when packaged, because no
 other JS runtime ships — and that is the same `process.execPath` yt-dlp is pointed at as its player
 JS runtime (`downloader/server/docs/DOWNLOAD.md`). Main owes yt-dlp nothing beyond running the server
 on that binary; the flags and `ELECTRON_RUN_AS_NODE` on its own spawn live in `server/`.
 
-The packaged tree main assumes, and the one thing a build has to match:
+The packaged tree main assumes, staged by the build as `electron`'s `extraResources`:
 
 ```
 resources/services/services(.exe)   the PyInstaller one-dir bundle, service picked by argv[1]
