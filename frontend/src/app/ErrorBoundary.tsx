@@ -70,7 +70,7 @@ function SendButton({ report, error, route }: { report: string; error: string; r
   const { t } = useLingui()
   const [result, setResult] = useState<ReportResult | null>(null)
   const [busy, setBusy] = useState(false)
-  // Every outcome renders here, rejected bridge call included: the fallback has replaced <Layout/>,
+  // Every outcome renders here, rejected bridge call included: the fallback has replaced <App/>,
   // so there is no ToastContainer to report into and no reset short of a full reload.
   async function send() {
     setBusy(true)

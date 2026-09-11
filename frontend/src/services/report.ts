@@ -4,7 +4,7 @@ import type { ReportResult } from './runtime'
 // The single boundary for mailing a crash report. Everything risky about it is main's — writing the
 // file, composing and truncating the `mailto:` — so this hands over fields and returns the outcome.
 // It deliberately does not toast: its only caller renders inside the error boundary's fallback,
-// which has replaced the <Layout/> that mounts the ToastContainer.
+// which has replaced the <App/> that mounts the ToastContainer.
 
 /** Whether a report can be sent at all. Browser dev has no bridge, and so no version and no launch
  *  log: there is nothing worth mailing, which is why the button is hidden rather than disabled. */

@@ -200,9 +200,8 @@ session actually blocks, not on a screen offering an optional connection.
 `AuthStatusContext` probes nothing on mount and `AccountStatus` asks wherever it renders, so this
 field is what makes a settings screen call `/auth/status` at all. `/settings` takes the provider
 `Layout` already wraps every route in; the wall renders outside `Layout` and brings its own
-instance. Neither adds a toast when the auto-downloader is down: the browser check beside it calls
-the same service and the connection toast is deduped per base URL, and the wall renders outside the
-`ToastContainer` entirely, so it cannot toast at all.
+instance. Neither adds a toast when the auto-downloader is down: the browser check beside it calls the
+same service and the connection toast is deduped per base URL, so the wall shows one toast, not two.
 
 The field is `#moodle-account`; its state is `AccountStatus`'s own chip variant.
 

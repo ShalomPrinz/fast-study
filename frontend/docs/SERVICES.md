@@ -131,11 +131,13 @@ unrelated stream against the downloader server; that one lives in its own servic
 ## `toaster.ts` — the one `react-toastify` import
 
 Exports `toast(kind, message)`, `toastConnectionError`, `toastPromise` (lifecycle toasts for fire-and-track
-work like video upload), `toastInitResult`, and re-exports `ToastContainer` (mounted once in `Layout`; the
+work like video upload), `toastInitResult`, and re-exports `ToastContainer` (mounted once in `App`, above the init gate, so the
+first-run wall and the boot settings fetch can toast at all — a toast with no mounted container is queued
+until one appears, not shown; the
 toastify CSS is imported here too). `toastInitResult` folds a `RunInitResult` into a toast and deliberately
 does nothing on `'started'` — completion arrives over SSE. New toast shapes get a helper here.
 
-Every toast dismisses on a click anywhere in its body: `Layout` sets `closeOnClick` on the container, and
+Every toast dismisses on a click anywhere in its body: `App` sets `closeOnClick` on the container, and
 `toastPromise` re-states it because a `loading` (pending) toast opts out by default.
 
 ## URL building — `shared/utils/url.ts`
