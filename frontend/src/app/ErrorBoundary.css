@@ -32,13 +32,14 @@
   margin-top: var(--space-2);
 }
 
-/* A full-width flex item, so the written report's path sits under the buttons rather than beside. */
+/* `flex: 0 0 100%` and no max-width: anything shrinkable or narrower fits beside the buttons, and
+   the path belongs on its own row under them. */
 .error-sent {
-  flex-basis: 100%;
-  max-width: 70ch;
+  flex: 0 0 100%;
   color: var(--text-3);
   font-size: var(--fs-meta);
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 /* A Windows path must read left to right even in the Hebrew UI, and isolated so it cannot
