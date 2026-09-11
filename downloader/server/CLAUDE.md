@@ -20,6 +20,10 @@ lookup either way — Windows 10+ ships `curl.exe`, so it is deliberately not bu
 once at startup and reported on `/health` as `tools`; a missing one fails only the downloads that
 need it.
 
+Packaged, `yt-dlp` runs from a writable per-user copy that this service seeds from the shipped
+binary and then lets update itself, because an app update replaces the install directory wholesale
+(`services/ytdlpUpdate.js`, `docs/DOWNLOAD.md`). A dev run never seeds it.
+
 ## Config (repo-root `.env`; all optional except as noted)
 
 | Key                       | Default                            | Meaning                                                                      |
@@ -78,7 +82,7 @@ pings). All `DATABASE_URL` I/O goes through `services/database.js`, which also a
 video to the backend (`services/backend.js`).
 
 Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
-DASH + JS-runtime, size probe), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
+DASH + JS-runtime, size probe, the writable yt-dlp copy and its self-update), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
 vs yt-dlp-dir measure), `JOBS.md` (job lifecycle, event stream vs resync,
 `done` = uploaded, per-tool timing samples), `RUNS.md` (one run per section, dispositions, the
 indefinite passcode pause, the caller-owned skip rule, the `RunTarget` cross-wire contract),
