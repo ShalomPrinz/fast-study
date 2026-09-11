@@ -27,8 +27,26 @@
 
 .error-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
   margin-top: var(--space-2);
+}
+
+/* A full-width flex item, so the written report's path sits under the buttons rather than beside. */
+.error-sent {
+  flex-basis: 100%;
+  max-width: 70ch;
+  color: var(--text-3);
+  font-size: var(--fs-meta);
+  line-height: 1.6;
+}
+
+/* A Windows path must read left to right even in the Hebrew UI, and isolated so it cannot
+   reorder the sentence around it. */
+.error-sent code {
+  font-family: var(--font-mono);
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 .error-btn {
