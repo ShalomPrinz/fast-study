@@ -91,9 +91,11 @@ jobs:
             downloader/auto/package-lock.json
 
       # The two packages install separately — each has its own lock and its own file: deps on
-      # ../../lib/*/js, which the full checkout provides.
+      # ../../lib/*/js, which the full checkout provides. --install-links copies those as real
+      # directories, the shape delivery/stage.mjs ships: a symlinked lib package resolves its own
+      # dependencies from its real path, so @faststudy/tools would not find @faststudy/runtime.
       - name: Install server dependencies
-        run: npm ci
+        run: npm ci --install-links
         working-directory: downloader/server
 
       - name: Run server tests
@@ -101,7 +103,7 @@ jobs:
         working-directory: downloader/server
 
       - name: Install auto dependencies
-        run: npm ci
+        run: npm ci --install-links
         working-directory: downloader/auto
 
       - name: Run auto tests
