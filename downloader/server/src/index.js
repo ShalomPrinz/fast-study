@@ -4,6 +4,7 @@ import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
 import { emitError } from './progress.js';
 import { serve, requireSecret } from '@faststudy/runtime';
 import { checkTools } from '@faststudy/tools';
+import { updateYtdlp } from './services/ytdlpUpdate.js';
 import coursesRouter from './routes/courses.js';
 import probeRouter from './routes/probe.js';
 import downloadRouter from './routes/download.js';
@@ -58,6 +59,10 @@ app.use((err, req, res, next) => {
   emitError(err?.stack ?? String(err));
   res.status(500).json({ error: err.message ?? 'Server error' });
 });
+
+// Fire-and-forget, ordered against nothing: boot must not wait on GitHub, and until the updated
+// copy exists every caller resolves yt-dlp to the shipped binary.
+updateYtdlp();
 
 checkTools(TOOLS).then((status) => {
   toolStatus = status;
