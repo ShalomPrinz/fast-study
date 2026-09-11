@@ -75,12 +75,18 @@ PATH yt-dlp.
 - **Seed** when the copy is missing or older than the shipped binary, so a release carrying a newer
   yt-dlp also refreshes a copy on a machine that can never reach GitHub. The bytes go to a temp name
   beside the target and are renamed over it — a rename is atomic, so a crash mid-copy cannot leave a
-  truncated exe — and the executable bit is set on non-Windows.
-- **Then `<copy> -U`**, unawaited, `stdio: 'ignore'`. Boot waits on nothing and nothing is sequenced
-  against it: until the copy exists every caller resolves to the shipped binary, and a few minutes
-  on that costs nothing. The child stays in the process group (never `detached`) so the launcher's
-  kill on quit reaches it; yt-dlp writes the new binary and renames over itself, so a kill before
-  that rename leaves the working copy intact.
+  truncated exe — and the executable bit is set on non-Windows. The temp name is removed whether or
+  not the rename lands: Windows refuses to replace a copy `auto/` is running, and the next boot
+  would find the copy still stale and strand another ~17MB.
+  Seeding is synchronous and precedes the boot tool probe, which therefore spawns the same binary
+  this run's downloads will. A shipped binary that is gone — quarantined, half-installed — seeds
+  nothing and says so in one line; an existing copy is still good and still updates itself.
+- **Then `<copy> -U`**, unawaited, `stdio: 'ignore'`, `windowsHide` (a console-subsystem exe
+  otherwise pops up a console window on every packaged launch). Boot waits on nothing, and the one
+  thing it is sequenced after is the tool probe: `-U` swaps the exe in place, and a probe landing in
+  that window would pin `/health` at `yt-dlp: missing` for the whole session. The child stays in the
+  process group (never `detached`) so the launcher's kill on quit reaches it; yt-dlp writes the new
+  binary and renames over itself, so a kill before that rename leaves the working copy intact.
 - **Every failure is at most one line on stderr** — offline, rate-limited and transient GitHub
   failures are the normal case. Never stdout (that is the port-handshake channel), and never a
   toast, a download error or a non-zero exit; `launch.log` is this feature's whole user-visible

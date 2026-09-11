@@ -19,36 +19,58 @@ function mtimeMs(file) {
   }
 }
 
+// The writable copy, or null for a dev run — which must not seed a copy that would shadow the
+// developer's own PATH yt-dlp.
+function copyPath() {
+  return process.env.FASTSTUDY_BIN_DIR ? statePath('bin', `yt-dlp${EXE_SUFFIX}`) : null;
+}
+
 // Copy to a temp name beside the target and rename over it: the rename is atomic, so a crash
 // mid-copy cannot leave a truncated exe where the downloaders expect a working one.
 function seed(bundled, copy) {
   fs.mkdirSync(path.dirname(copy), { recursive: true });
   const temp = `${copy}.${process.pid}.tmp`;
-  fs.copyFileSync(bundled, temp);
-  if (process.platform !== 'win32') fs.chmodSync(temp, 0o755);
-  fs.renameSync(temp, copy);
+  try {
+    fs.copyFileSync(bundled, temp);
+    if (process.platform !== 'win32') fs.chmodSync(temp, 0o755);
+    fs.renameSync(temp, copy);
+  } finally {
+    // Windows refuses to replace a copy another service is still running, and every later boot
+    // retries the seed — so without this the ~17MB temp accumulates one per launch.
+    fs.rmSync(temp, { force: true });
+  }
 }
 
-// Seeds the writable yt-dlp copy from the shipped binary and lets it update itself, in the
-// background. Every failure is one stderr line and nothing else: offline and rate-limited GitHub
-// are the normal case, and a few minutes on the shipped yt-dlp costs nothing.
-export function updateYtdlp() {
-  const binDir = process.env.FASTSTUDY_BIN_DIR;
-  // Packaged only — a dev run must not seed a copy that would shadow the developer's PATH yt-dlp.
-  if (!binDir) return;
-  const copy = statePath('bin', `yt-dlp${EXE_SUFFIX}`);
+// Refreshes the writable yt-dlp copy from the shipped binary, packaged only. Synchronous and called
+// before the boot tool probe, so the probe spawns the binary this run's downloads will.
+export function seedYtdlp() {
+  const copy = copyPath();
+  if (!copy) return;
   try {
-    const bundled = path.join(binDir, `yt-dlp${EXE_SUFFIX}`);
+    const bundled = path.join(process.env.FASTSTUDY_BIN_DIR, `yt-dlp${EXE_SUFFIX}`);
     const bundledMtime = mtimeMs(bundled);
-    if (bundledMtime === null) return;
+    // Quarantined or half-installed bin dir: nothing to seed from, but an existing copy is still
+    // good and still updates itself below, so this is a diagnostic and not a failure.
+    if (bundledMtime === null) {
+      console.error(`yt-dlp self-update: no shipped binary at ${bundled} — keeping the state copy`);
+      return;
+    }
     if (needsSeed(bundledMtime, mtimeMs(copy))) seed(bundled, copy);
   } catch (err) {
     // stderr, never stdout: stdout is the port-handshake channel the launcher parses.
     console.error(`yt-dlp self-update: cannot seed ${copy} — ${err.message}`);
-    return;
   }
+}
+
+// Lets the writable copy update itself, in the background. Every failure is one stderr line and
+// nothing else: offline and rate-limited GitHub are the normal case, and a few minutes on the
+// shipped yt-dlp costs nothing.
+export function updateYtdlp() {
+  const copy = copyPath();
+  if (!copy || !fs.existsSync(copy)) return;
   // In the process group (never detached) so the launcher's kill on quit reaches it; yt-dlp writes
   // the new binary beside the old one and renames, so a kill before that leaves the copy working.
-  const child = spawn(copy, ['-U'], { stdio: 'ignore' });
+  // windowsHide, because a console-subsystem exe otherwise pops a console window on every launch.
+  const child = spawn(copy, ['-U'], { stdio: 'ignore', windowsHide: true });
   child.on('error', (err) => console.error(`yt-dlp self-update: ${err.message}`));
 }
