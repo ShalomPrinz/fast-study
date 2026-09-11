@@ -50,8 +50,10 @@ export function isRtl(locale: string): boolean {
 
 // The packaged app follows the OS, which is `app.getLocale()` off the bridge; `navigator.language`
 // is Chromium's own guess and stays the browser-dev fallback. A stored pick outranks both.
+// `||`, not `??`: Chromium answers `''` when it cannot determine the OS locale, and an empty string
+// resolves to Hebrew — which would flip an English machine to an RTL UI rather than ask the browser.
 export function initialLocale(): Locale {
-  return resolveLocale(readStored(), runtimeBridge()?.locale ?? navigator.language)
+  return resolveLocale(readStored(), runtimeBridge()?.locale || navigator.language)
 }
 
 // Loads the catalog, activates it, and points the document at the new language — `dir` here is what

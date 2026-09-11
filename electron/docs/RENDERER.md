@@ -74,17 +74,22 @@ bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
 **Two carriers, because one cannot hold it.** The whole report — the boundary's details, the
 component stack, and the tail of this launch's `launch.log` — is written to
 `<state root>/logs/report-<timestamp>.txt`, and a hard-truncated `mailto:` carries version,
-platform, route, the top stack frames and that file's path. Neither depends on the other: a failed
-file write degrades the body to saying so rather than cancelling the mail, and the file is on disk
-whether or not a mail client exists. The log tail is main's to read because `launch.log` sits
-outside `DATA_ROOT` and the renderer has no path to it.
+platform, route, that file's path and then the top stack frames. Neither depends on the other: a
+failed file write degrades the body to saying so rather than cancelling the mail, and the file is on
+disk whether or not a mail client exists — which is why the path comes back in `path` even when
+`ok` is false, and why a throw while composing the URL is caught rather than allowed to reject the
+IPC and lose it. The log tail is main's to read because `launch.log` sits outside `DATA_ROOT` and
+the renderer has no path to it.
 
 **The renderer sends fields, never a URL.** Main composes and encodes the `mailto:` itself, so
 `open.external` stays http(s)-only and no renderer-supplied scheme can reach `shell.openExternal`.
 Truncation is measured on the *encoded* URL against ~1800 characters — the Windows shell caps a
 `mailto:` near 2KB, and escaping costs 1–6 characters per source character, so a Hebrew body and an
-ASCII one have no common ratio to budget by. The timestamp in the file name uses `-` rather than
-`:`, which Windows forbids in a path.
+ASCII one have no common ratio to budget by. It keeps a prefix, which is why the path line sits
+above the stack frames: the frames are the part that may be eaten, and the line naming the file to
+attach is the one that must survive. Unpaired surrogates are replaced before encoding, since
+`encodeURIComponent` throws `URIError` on one and a crash message can carry half an emoji. The
+timestamp in the file name uses `-` rather than `:`, which Windows forbids in a path.
 
 The recipient is one named constant in `main.js`. The Google Group it points at does not exist yet;
 creating it and swapping that literal is the whole remaining task.

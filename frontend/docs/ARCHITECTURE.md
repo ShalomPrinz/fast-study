@@ -99,7 +99,11 @@ without devtools.
 Beside Copy details sits Send report, which goes through `services/report.ts` to the Electron
 bridge: main writes the full report plus the launch-log tail to a file under the state root and
 opens a truncated `mailto:` to the project's address, and the button then names the file for the
-user to attach (`electron/docs/RENDERER.md`). **It renders only when the bridge exists** — browser
+user to attach (`electron/docs/RENDERER.md`). The file and the mail fail independently, so the
+button reports all four combinations, a mail that could not open included — and it reports them
+**in place, never as a toast**: the fallback has replaced the `Layout` that mounts the
+`ToastContainer`, so a toast from here renders nowhere and resurfaces on a later screen.
+**It renders only when the bridge exists** — browser
 dev has no version and no launch log, so there is nothing worth mailing, and hiding it beats a
 button that cannot work.
 

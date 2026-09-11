@@ -299,8 +299,8 @@ msgstr "בטוח שברצונך לייצר מחדש?"
 msgid "Attach material to"
 msgstr "צרף חומר אל"
 
-#. placeholder {0}: sent.path
-#: src/app/ErrorBoundary.tsx:67
+#. placeholder {0}: result.path
+#: src/app/ErrorBoundary.tsx:54
 msgid "Attach this file to the email: <0>{0}</0>"
 msgstr "צרף את הקובץ הזה למייל: <0>{0}</0>"
 
@@ -466,9 +466,14 @@ msgid "Could not open the link: {0}"
 msgstr "לא ניתן לפתוח את הקישור: {0}"
 
 #. placeholder {0}: result.error ?? 'unknown error'
-#: src/services/report.ts:26
+#: src/app/ErrorBoundary.tsx:65
 msgid "Could not open your mail app: {0}"
 msgstr "לא ניתן לפתוח את תוכנת הדואר: {0}"
+
+#. placeholder {0}: result.path
+#: src/app/ErrorBoundary.tsx:61
+msgid "Could not open your mail app. The report was saved to <0>{0}</0>"
+msgstr "לא ניתן לפתוח את תוכנת הדואר. הדיווח נשמר אל <0>{0}</0>"
 
 #: src/features/downloads/utils/downloadErrors.ts:30
 msgid "Couldn't download \"{name}\": {detail}"
@@ -815,7 +820,7 @@ msgstr "Google Drive (רשות)"
 msgid "Groq rate limit reached"
 msgstr "הגעת למגבלת הקצב של Groq"
 
-#: src/app/ErrorBoundary.tsx:124
+#: src/app/ErrorBoundary.tsx:148
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
 msgstr "דף הבית"
@@ -1243,7 +1248,7 @@ msgstr "התחבר מחדש"
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
-#: src/app/ErrorBoundary.tsx:128
+#: src/app/ErrorBoundary.tsx:152
 msgid "Reload"
 msgstr "רענן"
 
@@ -1385,7 +1390,7 @@ msgstr "הקטע {0} ממתין לקוד גישה"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/app/ErrorBoundary.tsx:62
+#: src/app/ErrorBoundary.tsx:92
 msgid "Send report"
 msgstr "שלח דיווח"
 
@@ -1411,11 +1416,11 @@ msgstr "הצג עוד"
 #~ msgid "Show the run controls in the sidebar"
 #~ msgstr "להציג את פקדי ההרצה בסרגל הצד"
 
-#: src/app/ErrorBoundary.tsx:115
+#: src/app/ErrorBoundary.tsx:139
 msgid "Something went wrong"
 msgstr "משהו השתבש"
 
-#: src/app/ErrorBoundary.tsx:118
+#: src/app/ErrorBoundary.tsx:142
 msgid "Sorry about it. Go home to keep working, or copy the details below to report it."
 msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד, או העתק את הפרטים למטה כדי לדווח על כך."
 
@@ -1676,7 +1681,7 @@ msgstr "כן"
 msgid "Yes, store my lectures in this folder"
 msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 
-#: src/app/ErrorBoundary.tsx:71
+#: src/app/ErrorBoundary.tsx:58
 msgid "Your mail app is open. No report file could be saved."
 msgstr "תוכנת הדואר נפתחה. לא ניתן היה לשמור קובץ דיווח."
 
