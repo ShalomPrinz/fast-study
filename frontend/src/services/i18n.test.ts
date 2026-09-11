@@ -56,6 +56,13 @@ describe('the OS locale off the bridge', () => {
     expect(initialLocale()).toBe('en')
   })
 
+  // Chromium's `app.getLocale()` answers `''` when it cannot determine one, and `resolveLocale`
+  // reads an empty language as Hebrew — so an unanswered bridge has to fall through to the browser.
+  it('falls through to the browser when the OS reports no locale', () => {
+    setBridgeLocale('')
+    expect(initialLocale()).toBe('en')
+  })
+
   it('still loses to a stored pick', async () => {
     setBridgeLocale('he-IL')
     await chooseLocale('en')

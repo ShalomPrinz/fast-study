@@ -42,6 +42,11 @@
   overflow-wrap: anywhere;
 }
 
+/* A failed send must not read like the success it replaces. */
+.error-sent--failed {
+  color: var(--danger);
+}
+
 /* A Windows path must read left to right even in the Hebrew UI, and isolated so it cannot
    reorder the sentence around it. */
 .error-sent code {

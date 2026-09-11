@@ -344,12 +344,21 @@ function logTail() {
   }
 }
 
+/** Unpaired surrogates replaced: `encodeURIComponent` throws `URIError: URI malformed` on one, and a
+ *  crash message that carries half an emoji must still be mailable. */
+function pairedOnly(text) {
+  return text.replace(
+    /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,
+    '�',
+  );
+}
+
 function mailtoUrl(subject, body) {
-  const q = encodeURIComponent;
+  const q = (text) => encodeURIComponent(pairedOnly(text));
   return `mailto:${REPORT_RECIPIENT}?subject=${q(subject)}&body=${q(body)}`;
 }
 
-/** A prefix of `body`, never ending mid-surrogate-pair — `encodeURIComponent` throws on a lone one. */
+/** A prefix of `body`, never ending mid-surrogate-pair — so a cut lands between emoji, not inside one. */
 function cut(body, length) {
   const text = body.slice(0, length);
   return /[\uD800-\uDBFF]$/.test(text) ? text.slice(0, -1) : text;
@@ -397,20 +406,32 @@ async function mailReport({ details, error, route }) {
   }
 
   const subject = `FastStudy ${version} error report`;
-  const frames = (error ?? details ?? '').split('\n').slice(0, REPORT_STACK_FRAMES).join('\n');
+  // `||` and `String`: an empty `error` is as absent as a missing one, and a renderer field that is
+  // not a string must not reach `.split`.
+  const frames = String(error || details || '')
+    .split('\n')
+    .slice(0, REPORT_STACK_FRAMES)
+    .join('\n');
   const body = [
     `Version: ${version}`,
     `Platform: ${process.platform} ${os.release()}`,
     `Route: ${route || '(unknown)'}`,
-    '',
-    frames,
-    '',
+    // Above the frames because truncation keeps a prefix: the frames are what it is allowed to eat.
     written
       ? `Full report and log: ${written}\nPlease attach that file.`
       : 'No report file could be written, so this mail is the whole report.',
+    '',
+    frames,
   ].join('\n');
 
-  const result = await openExternalMailto(mailtoUrl(subject, fitBody(subject, body)));
+  // The file is already on disk, so a throw while composing the URL must still hand its path back.
+  let result;
+  try {
+    result = await openExternalMailto(mailtoUrl(subject, fitBody(subject, body)));
+  } catch (composeError) {
+    log('main', `report mail failed: ${composeError.message}`);
+    result = { ok: false, error: composeError.message };
+  }
   return { ok: result.ok, path: written, error: result.error };
 }
 

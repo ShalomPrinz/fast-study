@@ -46,30 +46,54 @@ function CopyButton({ report }: { report: string }) {
   )
 }
 
+// Four outcomes, because the file and the mail fail independently: whichever of the two worked is
+// what the user is pointed at.
+function SendOutcome({ result }: { result: ReportResult }) {
+  if (result.ok)
+    return result.path ? (
+      <Trans>
+        Attach this file to the email: <code>{result.path}</code>
+      </Trans>
+    ) : (
+      <Trans>Your mail app is open. No report file could be saved.</Trans>
+    )
+  return result.path ? (
+    <Trans>
+      Could not open your mail app. The report was saved to <code>{result.path}</code>
+    </Trans>
+  ) : (
+    <Trans>Could not open your mail app: {result.error ?? 'unknown error'}</Trans>
+  )
+}
+
 function SendButton({ report, error, route }: { report: string; error: string; route: string }) {
   const { t } = useLingui()
-  const [sent, setSent] = useState<ReportResult | null>(null)
+  const [result, setResult] = useState<ReportResult | null>(null)
   const [busy, setBusy] = useState(false)
+  // Every outcome renders here, rejected bridge call included: the fallback has replaced <Layout/>,
+  // so there is no ToastContainer to report into and no reset short of a full reload.
   async function send() {
     setBusy(true)
-    const result = await mailErrorReport({ details: report, error, route })
-    setBusy(false)
-    if (result.ok) setSent(result)
+    try {
+      setResult(await mailErrorReport({ details: report, error, route }))
+    } catch (sendError) {
+      setResult({
+        ok: false,
+        path: null,
+        error: sendError instanceof Error ? sendError.message : String(sendError),
+      })
+    } finally {
+      setBusy(false)
+    }
   }
   return (
     <>
       <button className="btn btn--ghost error-btn" onClick={send} disabled={busy}>
         {t`Send report`}
       </button>
-      {sent && (
-        <p className="error-sent">
-          {sent.path ? (
-            <Trans>
-              Attach this file to the email: <code>{sent.path}</code>
-            </Trans>
-          ) : (
-            <Trans>Your mail app is open. No report file could be saved.</Trans>
-          )}
+      {result && (
+        <p className={`error-sent${result.ok ? '' : ' error-sent--failed'}`}>
+          <SendOutcome result={result} />
         </p>
       )}
     </>
