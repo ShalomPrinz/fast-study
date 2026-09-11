@@ -5,6 +5,10 @@ import type { Kind } from '@/types'
 /** What the two `open` calls answer; `error` is English prose from the OS or the database service. */
 export type OpenResult = { ok: boolean; error: string | null }
 
+/** What `report.mail` answers: `path` is the report file main wrote, for the user to attach. It is
+ *  null when the write failed, which never stops the mail from opening. */
+export type ReportResult = OpenResult & { path: string | null }
+
 // The one place `window.faststudy` is declared: two `declare global` blocks for the same property
 // do not compile, so every consumer of the Electron preload bridge reads it from here.
 declare global {
@@ -19,6 +23,9 @@ declare global {
       settings?: SettingsBacking
       secret?: string
       checks?: { secureStorage: boolean }
+      // The installed app version and the OS language, straight from `app.getVersion()`/`getLocale()`.
+      version?: string
+      locale?: string
       // Not optional: `services/open.ts` treats the whole bridge's absence as the browser-dev test,
       // so a present bridge always carries these. Identifiers only — `database/` resolves the path,
       // and a `target` without `lecture` addresses a course-level `overview/` file.
@@ -30,6 +37,14 @@ declare global {
           kind?: Kind
         }) => Promise<OpenResult>
         external: (url: string | undefined) => Promise<OpenResult>
+      }
+      // Fields, never a URL: main writes the report file and composes the `mailto:` itself.
+      report: {
+        mail: (fields: {
+          details: string
+          error: string
+          route: string
+        }) => Promise<ReportResult>
       }
     }
   }

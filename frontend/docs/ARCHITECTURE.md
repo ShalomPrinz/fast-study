@@ -94,7 +94,16 @@ no way past (see `SETTINGS.md`).
 `app/ErrorBoundary` wraps `<App/>` inside `BrowserRouter` — a render error anywhere below it (views,
 `Layout`, providers, sidebar) would otherwise unmount the tree into a blank page. The fallback shows
 timestamp, URL, user agent, stack and component stack with a copy button, so a crash can be reported
-without devtools. It is keyed on `location.pathname`: the fallback replaces the sidebar too, so its
+without devtools.
+
+Beside Copy details sits Send report, which goes through `services/report.ts` to the Electron
+bridge: main writes the full report plus the launch-log tail to a file under the state root and
+opens a truncated `mailto:` to the project's address, and the button then names the file for the
+user to attach (`electron/docs/RENDERER.md`). **It renders only when the bridge exists** — browser
+dev has no version and no launch log, so there is nothing worth mailing, and hiding it beats a
+button that cannot work.
+
+It is keyed on `location.pathname`: the fallback replaces the sidebar too, so its
 Home link is the only way out, and only a remount clears the error state. Reload stays as the hard
 reset for a crash that reproduces at `/`. Malformed URLs like `/a%/b` never reach it — the dev server
 and any static host reject the bad escape before React loads, and react-router's own `decodePath`

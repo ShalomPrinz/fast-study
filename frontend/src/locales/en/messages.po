@@ -299,6 +299,11 @@ msgstr "Are you sure you want to re-generate?"
 msgid "Attach material to"
 msgstr "Attach material to"
 
+#. placeholder {0}: sent.path
+#: src/app/ErrorBoundary.tsx:67
+msgid "Attach this file to the email: <0>{0}</0>"
+msgstr "Attach this file to the email: <0>{0}</0>"
+
 #: src/features/lectures/constants/pipeline.ts:21
 msgid "Audio"
 msgstr "Audio"
@@ -442,11 +447,11 @@ msgstr "Continue Generating"
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
-#: src/app/ErrorBoundary.tsx:37
+#: src/app/ErrorBoundary.tsx:44
 msgid "Copied!"
 msgstr "Copied!"
 
-#: src/app/ErrorBoundary.tsx:37
+#: src/app/ErrorBoundary.tsx:44
 msgid "Copy details"
 msgstr "Copy details"
 
@@ -459,6 +464,11 @@ msgstr "Could not open the file: {0}"
 #: src/services/open.ts:18
 msgid "Could not open the link: {0}"
 msgstr "Could not open the link: {0}"
+
+#. placeholder {0}: result.error ?? 'unknown error'
+#: src/services/report.ts:26
+msgid "Could not open your mail app: {0}"
+msgstr "Could not open your mail app: {0}"
 
 #: src/features/downloads/utils/downloadErrors.ts:30
 msgid "Couldn't download \"{name}\": {detail}"
@@ -805,7 +815,7 @@ msgstr "Google Drive (optional)"
 msgid "Groq rate limit reached"
 msgstr "Groq rate limit reached"
 
-#: src/app/ErrorBoundary.tsx:83
+#: src/app/ErrorBoundary.tsx:124
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
 msgstr "Home"
@@ -1233,7 +1243,7 @@ msgstr "Reconnect"
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
-#: src/app/ErrorBoundary.tsx:87
+#: src/app/ErrorBoundary.tsx:128
 msgid "Reload"
 msgstr "Reload"
 
@@ -1375,6 +1385,10 @@ msgstr "Section {0} is waiting for a passcode"
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
+#: src/app/ErrorBoundary.tsx:62
+msgid "Send report"
+msgstr "Send report"
+
 #: src/features/downloads/components/AccountStatus.tsx:116
 msgid "session expired"
 msgstr "session expired"
@@ -1397,11 +1411,11 @@ msgstr "Show more"
 #~ msgid "Show the run controls in the sidebar"
 #~ msgstr "Show the run controls in the sidebar"
 
-#: src/app/ErrorBoundary.tsx:74
+#: src/app/ErrorBoundary.tsx:115
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: src/app/ErrorBoundary.tsx:77
+#: src/app/ErrorBoundary.tsx:118
 msgid "Sorry about it. Go home to keep working, or copy the details below to report it."
 msgstr "Sorry about it. Go home to keep working, or copy the details below to report it."
 
@@ -1661,6 +1675,10 @@ msgstr "Yes"
 #: src/features/settings/components/DataRootField.tsx:51
 msgid "Yes, store my lectures in this folder"
 msgstr "Yes, store my lectures in this folder"
+
+#: src/app/ErrorBoundary.tsx:71
+msgid "Your mail app is open. No report file could be saved."
+msgstr "Your mail app is open. No report file could be saved."
 
 #: src/features/settings/InitWall.tsx:174
 msgid "Your two API keys"

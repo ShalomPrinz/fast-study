@@ -1,6 +1,8 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { Link, useLocation } from 'react-router-dom'
+import { canSendReport, mailErrorReport } from '@/services/report'
+import type { ReportResult } from '@/services/runtime'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import './ErrorBoundary.css'
@@ -9,13 +11,18 @@ import './ErrorBoundary.css'
 // page with no way back. It sits outside <Routes>, so the fallback replaces everything including
 // the sidebar — hence the Home link, and the pathname reset below that lets Home actually recover.
 
+// The error alone, which is what a mailed report's body can afford; the full report carries it too.
+function errorLine(error: Error): string {
+  return error.stack ?? `${error.name}: ${error.message}`
+}
+
 function buildReport(error: Error, componentStack: string): string {
   return [
     new Date().toISOString(),
     window.location.href,
     navigator.userAgent,
     '',
-    error.stack ?? `${error.name}: ${error.message}`,
+    errorLine(error),
     '',
     'Component stack:' + componentStack,
   ].join('\n')
@@ -39,6 +46,36 @@ function CopyButton({ report }: { report: string }) {
   )
 }
 
+function SendButton({ report, error, route }: { report: string; error: string; route: string }) {
+  const { t } = useLingui()
+  const [sent, setSent] = useState<ReportResult | null>(null)
+  const [busy, setBusy] = useState(false)
+  async function send() {
+    setBusy(true)
+    const result = await mailErrorReport({ details: report, error, route })
+    setBusy(false)
+    if (result.ok) setSent(result)
+  }
+  return (
+    <>
+      <button className="btn btn--ghost error-btn" onClick={send} disabled={busy}>
+        {t`Send report`}
+      </button>
+      {sent && (
+        <p className="error-sent">
+          {sent.path ? (
+            <Trans>
+              Attach this file to the email: <code>{sent.path}</code>
+            </Trans>
+          ) : (
+            <Trans>Your mail app is open. No report file could be saved.</Trans>
+          )}
+        </p>
+      )}
+    </>
+  )
+}
+
 interface BoundaryProps {
   children: ReactNode
   pathname: string
@@ -46,24 +83,28 @@ interface BoundaryProps {
 
 interface BoundaryState {
   report: string | null
+  error: string
   pathname: string
 }
 
 class Boundary extends Component<BoundaryProps, BoundaryState> {
-  state = { report: null as string | null, pathname: this.props.pathname }
+  state = { report: null as string | null, error: '', pathname: this.props.pathname }
 
   // Navigating clears the error. Doing it here rather than by re-keying the boundary is what keeps
   // an ordinary route change from remounting everything below — providers, SSE stream and all.
   static getDerivedStateFromProps(p: BoundaryProps, s: BoundaryState): BoundaryState | null {
-    return p.pathname === s.pathname ? null : { report: null, pathname: p.pathname }
+    return p.pathname === s.pathname ? null : { report: null, error: '', pathname: p.pathname }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    this.setState({ report: buildReport(error, info.componentStack ?? '') })
+    this.setState({
+      report: buildReport(error, info.componentStack ?? ''),
+      error: errorLine(error),
+    })
   }
 
   render() {
-    const { report } = this.state
+    const { report, error } = this.state
     if (!report) return this.props.children
     return (
       <main className="main-view error-view">
@@ -87,6 +128,9 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
             <Trans>Reload</Trans>
           </button>
           <CopyButton report={report} />
+          {canSendReport() && (
+            <SendButton report={report} error={error} route={this.props.pathname} />
+          )}
         </div>
         <pre className="error-report">{report}</pre>
       </main>
