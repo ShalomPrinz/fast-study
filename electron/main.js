@@ -344,7 +344,12 @@ function createWindow(checks) {
   ipcMain.on('faststudy:boot-quit', () => app.quit());
   // Every window.open is denied. A child window Electron opened itself would inherit this one's
   // security webPreferences — the preload, and so the launch secret, on a third-party origin.
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  // Chromium routes target="_blank" here too, so a link that skipped `open.ts` dies silently in a
+  // packaged build and nowhere else; the log line is what makes that diagnosable from launch.log.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    log('main', `denied window.open: ${url} — UI links must go through open.external`);
+    return { action: 'deny' };
+  });
   mainWindow.once('ready-to-show', () => mainWindow.show());
   mainWindow.loadFile(path.join(__dirname, 'boot.html'));
 }
