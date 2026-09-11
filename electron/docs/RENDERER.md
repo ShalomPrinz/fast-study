@@ -29,9 +29,16 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, open, boot }` through
-`contextBridge`, in a sandboxed, context-isolated renderer. `frontend/src/services/runtime.ts` is the
-consumer and fixes the shape; `urls` is `{ backend, database, downloadServer, autoDownloader }`.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, open, report,
+boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+`frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
+`{ backend, database, downloadServer, autoDownloader }`.
+
+`version` is `app.getVersion()` and `locale` is `app.getLocale()`. The version comes down this way
+rather than through a Vite `define` so it is the version the installer actually put on disk, with no
+build-time coupling to `electron/package.json`; the locale is the frontend's initial language when
+the profile holds no pick of its own (`frontend/docs/I18N.md`). Browser dev has neither, which is
+why a report can only come from a packaged build.
 
 `boot` belongs to the launch screen alone, which loads in the same window and so through the same
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
@@ -58,6 +65,29 @@ it is two calls:
 **The renderer sends identifiers, never a path.** `database/` stays the single owner of the
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
 bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
+
+## Mailing an error report
+
+`report.mail({ details, error, route })` is what the frontend's error boundary calls. It answers
+`{ ok, path, error }` — `path` being the report file the user is asked to attach.
+
+**Two carriers, because one cannot hold it.** The whole report — the boundary's details, the
+component stack, and the tail of this launch's `launch.log` — is written to
+`<state root>/logs/report-<timestamp>.txt`, and a hard-truncated `mailto:` carries version,
+platform, route, the top stack frames and that file's path. Neither depends on the other: a failed
+file write degrades the body to saying so rather than cancelling the mail, and the file is on disk
+whether or not a mail client exists. The log tail is main's to read because `launch.log` sits
+outside `DATA_ROOT` and the renderer has no path to it.
+
+**The renderer sends fields, never a URL.** Main composes and encodes the `mailto:` itself, so
+`open.external` stays http(s)-only and no renderer-supplied scheme can reach `shell.openExternal`.
+Truncation is measured on the *encoded* URL against ~1800 characters — the Windows shell caps a
+`mailto:` near 2KB, and escaping costs 1–6 characters per source character, so a Hebrew body and an
+ASCII one have no common ratio to budget by. The timestamp in the file name uses `-` rather than
+`:`, which Windows forbids in a path.
+
+The recipient is one named constant in `main.js`. The Google Group it points at does not exist yet;
+creating it and swapping that literal is the whole remaining task.
 
 **Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
 child window itself, and its documented merge order gives that child the parent's security-related

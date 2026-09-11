@@ -13,6 +13,10 @@ contextBridge.exposeInMainWorld('faststudy', {
   // What this machine can and cannot do, probed once at boot. The settings screens degrade on it —
   // an unavailable key store disables the API-key fields instead of failing the save.
   checks: config.checks,
+  // The installed version and the OS language: what an error report is stamped with, and the
+  // frontend's initial locale when nothing is stored.
+  version: config.version,
+  locale: config.locale,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
   // `read()` reports the two keys as set/unset flags only.
   settings: {
@@ -24,6 +28,11 @@ contextBridge.exposeInMainWorld('faststudy', {
   open: {
     file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
     external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
+  },
+  // Structured fields, never a URL: main writes the report file, composes the `mailto:` and opens
+  // it, so no renderer-supplied scheme ever reaches `shell.openExternal`.
+  report: {
+    mail: (fields) => ipcRenderer.invoke('faststudy:report-mail', fields),
   },
   // The launch screen only. It loads before any service exists, so it takes a snapshot first and
   // then follows the pushes — main's first event can land before this page has a listener.
