@@ -1,5 +1,6 @@
 import { i18n } from '@lingui/core'
 import type { Messages } from '@lingui/core'
+import { runtimeBridge } from './runtime'
 
 export const LOCALES = ['he', 'en'] as const
 export type Locale = (typeof LOCALES)[number]
@@ -34,11 +35,11 @@ function writeStored(locale: Locale): void {
   }
 }
 
-// A stored choice wins; otherwise anything the browser reports that isn't English means Hebrew,
-// since every non-English reader of this app is a Hebrew speaker.
-export function resolveLocale(stored: string | null, browserLanguage?: string): Locale {
+// A stored choice wins; otherwise anything the reported language says that isn't English means
+// Hebrew, since every non-English reader of this app is a Hebrew speaker.
+export function resolveLocale(stored: string | null, language?: string): Locale {
   if (isLocale(stored)) return stored
-  if (browserLanguage?.toLowerCase().startsWith('en')) return 'en'
+  if (language?.toLowerCase().startsWith('en')) return 'en'
   return 'he'
 }
 
@@ -47,8 +48,10 @@ export function isRtl(locale: string): boolean {
   return locale === 'he'
 }
 
+// The packaged app follows the OS, which is `app.getLocale()` off the bridge; `navigator.language`
+// is Chromium's own guess and stays the browser-dev fallback. A stored pick outranks both.
 export function initialLocale(): Locale {
-  return resolveLocale(readStored(), navigator.language)
+  return resolveLocale(readStored(), runtimeBridge()?.locale ?? navigator.language)
 }
 
 // Loads the catalog, activates it, and points the document at the new language — `dir` here is what
