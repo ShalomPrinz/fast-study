@@ -7,7 +7,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win --publish never"
+    "dist": "electron-builder --win --publish never",
+    "release": "electron-builder --win --publish always"
   },
   "devDependencies": {
     "electron": "^44.1.1",
@@ -30,6 +31,12 @@
         "to": "."
       }
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "ShalomPrinz",
+      "repo": "fast-study",
+      "releaseType": "release"
+    },
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico"
@@ -42,5 +49,8 @@
       "shortcutName": "FastStudy",
       "artifactName": "FastStudy-Setup-${version}.${ext}"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

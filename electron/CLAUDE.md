@@ -13,13 +13,15 @@ everything on quit.
 | `main.js`     | The launch: secret, child specs, ports, health, window, teardown, log, shell   |
 | `protocol.js` | The `app://bundle` scheme and serving `frontend/dist` over it                   |
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
+| `updater.js`  | The update check — electron-updater against GitHub Releases, silent            |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
 | `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, the open bridge    |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
-Read [`docs/BOOT.md`](docs/BOOT.md) for the launch sequence and [`docs/RENDERER.md`](docs/RENDERER.md)
-for the scheme, the bridge and the store.
+Read [`docs/BOOT.md`](docs/BOOT.md) for the launch sequence, [`docs/RENDERER.md`](docs/RENDERER.md)
+for the scheme, the bridge and the store, and [`docs/UPDATES.md`](docs/UPDATES.md) for how a
+packaged app updates itself.
 
 ## Run
 
@@ -86,6 +88,10 @@ UAC prompt on top of SmartScreen. The whole configuration is the `build` block i
   a top-level `.js` added here that is _not_ meant to ship would ship.
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
+- **Updates are silent and packaged-only.** `updater.js` checks GitHub Releases once per launch,
+  downloads in the background and lets NSIS install on quit — nothing on screen, `launch.log` the
+  whole surface. The installer replaces `resources/` wholesale, which is why nothing that must
+  survive an update lives there. See [`docs/UPDATES.md`](docs/UPDATES.md).
 - **The icon is `assets/icon.ico`, named explicitly** rather than left to electron-builder's default
   `buildResources` directory: that default is `build/`, and the repo's root `.gitignore` ignores
   `build/` wholesale as PyInstaller's output. The output directory stays the default `dist/`, which

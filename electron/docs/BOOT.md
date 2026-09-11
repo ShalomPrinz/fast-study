@@ -120,6 +120,9 @@ app is gone, and the next launch would then run a second backend against the sam
 one case none of that covers is main being `SIGKILL`ed, where the OS gives the process no chance to
 run anything.
 
+The `will-quit` kill also has to stay where it is for a packaged update to install — see
+[`UPDATES.md`](UPDATES.md).
+
 ## The log
 
 Everything both streams of every child print, plus main's own boot lines, is written to

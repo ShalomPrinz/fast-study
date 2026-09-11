@@ -7,6 +7,7 @@ const { app, BrowserWindow, ipcMain, shell } = require('electron');
 const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const store = require('./store');
+const { startUpdater } = require('./updater');
 
 // Must run before the app is ready, or the scheme is registered too late to be privileged.
 registerScheme();
@@ -231,6 +232,10 @@ async function runBoot() {
     // The site root, never `/index.html`: the router matches on the path, and `/index.html` is not
     // one of its routes, so the app would mount and render nothing once the wall is behind it.
     mainWindow.loadURL(`${APP_ORIGIN}/`);
+    // After the window navigates, never before: an update check must not compete with four service
+    // starts, and must never sit on the path that decides whether the app comes up. It is silent —
+    // `launch.log` is its whole surface. See `docs/UPDATES.md`.
+    startUpdater(log);
   } catch (error) {
     log('main', `boot failed: ${error.stack ?? error.message}`);
     // Whatever came up before the failure is torn down: a retry re-spawns all four, and a surviving
