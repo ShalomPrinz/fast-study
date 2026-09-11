@@ -24,6 +24,25 @@ that cannot do Drive consent.
 Roughly 20 minutes end to end, most of it the LaTeX prime and ~450MB of binary downloads. The
 artifact is one unsigned per-user NSIS `.exe`.
 
+### Publishing one
+
+The dispatch takes a `publish` boolean, and it defaults to **false**: an ordinary run builds the
+installer and uploads it as a workflow artifact, publishing nothing. That default is the whole
+review gate — the workflow runs no tests, and the failures packaging actually produces only appear
+on a clean Windows machine, so the artifact from a `publish=false` run is what the release
+smoke-test checklist is run against.
+
+`publish=true` runs `npm run release` instead of `npm run dist`, and electron-builder's GitHub
+publisher creates a **live** release on the public `ShalomPrinz/fast-study` tagged `v<version>`,
+carrying the `.exe`, its `.blockmap` and `latest.yml`. That `latest.yml` is what every installed
+copy's updater reads; without it the release is invisible to them. There is no draft step — a
+release is published the moment the run goes green, and pulling one back means deleting it.
+
+Bump `version` in `electron/package.json` in a commit **before** dispatching. It is the tag, the
+installer's file name and what `app.getVersion()` reports, and publishing twice from one version
+fails on the existing tag. The launcher's side of this — the silent check, the download and the
+install on quit — is [`electron/docs/UPDATES.md`](../electron/docs/UPDATES.md).
+
 Unsigned means **SmartScreen blocks the first run** on every machine: the dialog reads "Windows
 protected your PC" with only a Don't run button, and the installer starts from **More info → Run
 anyway**. There is no way around it short of an OV/EV certificate. Installing is per-user into

@@ -1,8 +1,15 @@
 name: Windows installer
 
-# Manual only. A run is ~20 minutes and produces one unsigned per-user NSIS installer as a build
-# artifact; publishing it to a GitHub Release is a separate concern from building it.
-on: workflow_dispatch
+# Manual only, ~20 minutes, ending in one unsigned per-user NSIS installer. `publish` defaults to
+# false so a dispatch is a plain build: the artifact is what a smoke test runs against, and only a
+# second dispatch with publish=true puts a Release in front of everyone's auto-updater.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish to a GitHub Release (users auto-update to it)"
+        type: boolean
+        default: false
 
 env:
   # Pinned, because each one is a claim the repo has measured. tectonic is the version the shipped
@@ -16,6 +23,9 @@ env:
 jobs:
   installer:
     runs-on: windows-latest
+    # Only so electron-builder's GitHub publisher can create the release; nothing else here writes.
+    permissions:
+      contents: write
     defaults:
       run:
         shell: bash
@@ -99,10 +109,17 @@ jobs:
       - name: Assemble the resources tree
         run: node delivery/stage.mjs "$STAGE"
 
+      # Both scripts live in electron/package.json, so the electron-builder invocation and its
+      # publish config stay in one file. `release` tags v<version> off electron/package.json's
+      # version, which is bumped in a commit before the dispatch.
       - name: Build the installer
         working-directory: electron
-        run: npm ci && npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm ci && npm run ${{ inputs.publish && 'release' || 'dist' }}
 
+      # Uploaded either way: on a publish=false dispatch it is the only output, and on a publish
+      # run it is the copy that does not depend on the Release surviving.
       - uses: actions/upload-artifact@v4
         with:
           name: faststudy-windows-installer
