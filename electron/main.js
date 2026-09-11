@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
@@ -26,6 +27,14 @@ const STATE_DIR = app.isPackaged
   : path.join(REPO_ROOT, '.state');
 
 const LOG_FILE = path.join(STATE_DIR, 'logs', 'launch.log');
+
+// The group is not created yet — creating it and swapping this literal is the whole remaining task.
+const REPORT_RECIPIENT = 'faststudy-reports@googlegroups.com';
+// The Windows shell caps a mailto near 2KB, so the body is trimmed to fit the *encoded* URL under
+// this; the rest of the report rides in the file whose path the body names.
+const MAILTO_LIMIT = 1800;
+const LOG_TAIL_BYTES = 200_000;
+const REPORT_STACK_FRAMES = 8;
 
 const children = [];
 let logStream = null;
@@ -316,6 +325,106 @@ async function openExternalUrl(target) {
   }
 }
 
+/** The tail of this launch's log, for the report file. `launch.log` is main's to read: it sits
+ *  outside `DATA_ROOT` and the renderer has no path to it. */
+function logTail() {
+  try {
+    const { size } = fs.statSync(LOG_FILE);
+    const start = Math.max(0, size - LOG_TAIL_BYTES);
+    const fd = fs.openSync(LOG_FILE, 'r');
+    try {
+      const buffer = Buffer.alloc(size - start);
+      fs.readSync(fd, buffer, 0, buffer.length, start);
+      return (start ? '…\n' : '') + buffer.toString('utf8');
+    } finally {
+      fs.closeSync(fd);
+    }
+  } catch (error) {
+    return `(could not read ${LOG_FILE}: ${error.message})`;
+  }
+}
+
+function mailtoUrl(subject, body) {
+  const q = encodeURIComponent;
+  return `mailto:${REPORT_RECIPIENT}?subject=${q(subject)}&body=${q(body)}`;
+}
+
+/** A prefix of `body`, never ending mid-surrogate-pair — `encodeURIComponent` throws on a lone one. */
+function cut(body, length) {
+  const text = body.slice(0, length);
+  return /[\uD800-\uDBFF]$/.test(text) ? text.slice(0, -1) : text;
+}
+
+/** Trim the body until the *encoded* URL fits the limit. Binary search rather than a character
+ *  budget: escaping is 1–6 characters each, so Hebrew and ASCII bodies have no common ratio. */
+function fitBody(subject, body) {
+  const marker = '\n[truncated — see the attached report]';
+  if (mailtoUrl(subject, body).length <= MAILTO_LIMIT) return body;
+  let low = 0;
+  let high = body.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (mailtoUrl(subject, cut(body, mid) + marker).length <= MAILTO_LIMIT) low = mid;
+    else high = mid - 1;
+  }
+  return cut(body, low) + marker;
+}
+
+/** Mail an error report: the whole thing to a file beside the log, a triageable summary in the
+ *  `mailto:` body. The renderer never composes the URL — that is what keeps `openExternalUrl`
+ *  http(s)-only and leaves no reachable second scheme. A file that cannot be written must not stop
+ *  the mail: the two carriers are deliberately independent. */
+async function mailReport({ details, error, route }) {
+  const version = app.getVersion();
+  const stamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  const file = path.join(STATE_DIR, 'logs', `report-${stamp}.txt`);
+  let written = null;
+  try {
+    const full = [
+      `FastStudy ${version} — ${process.platform} ${os.release()} — electron ${process.versions.electron}`,
+      `Route: ${route || '(unknown)'}`,
+      '',
+      details ?? '',
+      '',
+      '--- launch.log ---',
+      logTail(),
+    ].join('\n');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, full, 'utf8');
+    written = file;
+  } catch (writeError) {
+    log('main', `report file failed: ${writeError.message}`);
+  }
+
+  const subject = `FastStudy ${version} error report`;
+  const frames = (error ?? details ?? '').split('\n').slice(0, REPORT_STACK_FRAMES).join('\n');
+  const body = [
+    `Version: ${version}`,
+    `Platform: ${process.platform} ${os.release()}`,
+    `Route: ${route || '(unknown)'}`,
+    '',
+    frames,
+    '',
+    written
+      ? `Full report and log: ${written}\nPlease attach that file.`
+      : 'No report file could be written, so this mail is the whole report.',
+  ].join('\n');
+
+  const result = await openExternalMailto(mailtoUrl(subject, fitBody(subject, body)));
+  return { ok: result.ok, path: written, error: result.error };
+}
+
+/** The one `mailto:` in the app. Separate from `openExternalUrl`, which stays http(s)-only so no
+ *  renderer-supplied scheme can reach `shell.openExternal`. */
+async function openExternalMailto(url) {
+  try {
+    await shell.openExternal(url);
+    return { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
 /** The one window of the app: it opens on the launch screen and later navigates to the frontend.
  *  Created before anything is spawned, so the four process starts have something on screen. */
 function createWindow(checks) {
@@ -333,10 +442,19 @@ function createWindow(checks) {
   // The launch screen reads none of this; it is the app's bridge, and the URLs are filled in by the
   // time the window navigates there.
   ipcMain.on('faststudy:config', (event) => {
-    event.returnValue = { urls: serviceUrls, secret: SECRET, checks };
+    // `version` is what the installer put on disk, not a build-time constant, and `locale` is the
+    // OS's — the frontend's initial language when the profile carries no pick of its own.
+    event.returnValue = {
+      urls: serviceUrls,
+      secret: SECRET,
+      checks,
+      version: app.getVersion(),
+      locale: app.getLocale(),
+    };
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
   ipcMain.handle('faststudy:open-external', (event, url) => openExternalUrl(url));
+  ipcMain.handle('faststudy:report-mail', (event, fields) => mailReport(fields ?? {}));
   ipcMain.handle('faststudy:settings-read', () => store.read());
   ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
   ipcMain.handle('faststudy:boot-state', () => bootState);

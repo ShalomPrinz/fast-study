@@ -129,3 +129,8 @@ Everything both streams of every child print, plus main's own boot lines, is wri
 `<state root>/logs/launch.log`, each line tagged with the child that wrote it. It is truncated at
 each launch: one launch's four children are the whole story a bug report needs, and appending would
 grow without bound over a machine's lifetime.
+
+`<state root>/logs/` also holds the error reports the frontend's boundary mails —
+`report-<timestamp>.txt`, one per send, each carrying the crash details and the log tail at that
+moment ([`RENDERER.md`](RENDERER.md)). They are never truncated or cleaned up: a report is only
+written when a user asks for one, and its whole purpose is to still be there to attach.
