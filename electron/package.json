@@ -20,13 +20,8 @@
       "output": "dist"
     },
     "files": [
-      "main.js",
-      "preload.js",
-      "protocol.js",
-      "store.js",
-      "checks.js",
-      "boot.html",
-      "boot.js",
+      "*.js",
+      "*.html",
       "package.json"
     ],
     "extraResources": [

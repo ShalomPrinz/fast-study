@@ -73,10 +73,17 @@ matching Electron's own default. `eslint.config.js` gives `electron/**/*.js` its
 installer (`perMachine: false`), so it installs into `%LOCALAPPDATA%\Programs\FastStudy` and adds no
 UAC prompt on top of SmartScreen. The whole configuration is the `build` block in `package.json`.
 
-- **The asar holds this package's own files only** — the ones listed under `files`. The four
-  services, the built frontend, the binaries and the LaTeX cache ship as `extraResources` from
-  `delivery/stage/`, which the release workflow stages in exactly the tree
-  [`docs/BOOT.md`](docs/BOOT.md) lists, and land under `process.resourcesPath` where main looks.
+- **The asar holds this package's own files only.** The four services, the built frontend, the
+  binaries and the LaTeX cache ship as `extraResources` from `delivery/stage/`, which the release
+  workflow stages in exactly the tree [`docs/BOOT.md`](docs/BOOT.md) lists, and land under
+  `process.resourcesPath` where main looks.
+- **`files` is globbed — `*.js`, `*.html`, `package.json` — never a hand-listed set.** A source file
+  missing from that list is simply absent from the asar, and the only symptom is `Cannot find
+  module` on the first launch of a packaged build: dev and lint both stay green, and WSL cannot
+  produce the failure. The globs match every top-level source file and nothing else — `node_modules`
+  electron-builder force-excludes and collects separately from `dependencies`, `dist/` is the
+  output directory, and `assets/`, `docs/` and `package-lock.json` match neither. The trade is that
+  a top-level `.js` added here that is _not_ meant to ship would ship.
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
 - **The icon is `assets/icon.ico`, named explicitly** rather than left to electron-builder's default
