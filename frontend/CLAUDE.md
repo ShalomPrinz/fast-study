@@ -16,7 +16,9 @@ runtime (`services/runtime.ts`), falling back to the dev ports `:8000`, `:8001`,
 same bridge carries the launch secret every request sends as `X-FastStudy-Secret`; it is absent in browser
 dev, where the services enforce nothing. It also reports whether this machine can store the API keys at all
 (`canStoreApiKeys`) — see `docs/SETTINGS.md` — and opens `DATA_ROOT` files and external links through the
-OS, since a new browser tab cannot carry the secret (`services/open.ts`).
+OS, since a new browser tab cannot carry the secret (`services/open.ts`). It also carries the installed
+version and the OS language, which is the initial locale when nothing is stored (`services/i18n.ts`), and
+mails a crash report from the error boundary (`services/report.ts`).
 
 ## Verifying layout changes
 

@@ -1,4 +1,5 @@
 import { Trans } from '@lingui/react/macro'
+import { useLingui } from '@lingui/react'
 import { Routes, Route } from 'react-router-dom'
 import Layout from '@/app/Layout'
 import InitGate from '@/app/InitGate'
@@ -11,6 +12,8 @@ import SearchView from '@/features/search/SearchView'
 import RunnerView from '@/features/runner/RunnerView'
 import SettingsView from '@/features/settings/SettingsView'
 import Icon from '@/shared/components/Icon'
+import { ToastContainer } from '@/services/toaster'
+import { isRtl } from '@/services/i18n'
 import '@/styles/panel.css'
 
 function EmptyState() {
@@ -29,8 +32,17 @@ function EmptyState() {
 }
 
 export default function App() {
+  const rtl = isRtl(useLingui().i18n.locale)
   return (
     <SettingsProvider>
+      {/* Above the gate, not inside `Layout`: the first-run wall and the boot settings fetch both
+          render before any route does, and a toast with no mounted container is queued, not shown. */}
+      <ToastContainer
+        position={rtl ? 'top-left' : 'top-right'}
+        rtl={rtl}
+        autoClose={3000}
+        closeOnClick
+      />
       <InitGate>
         <Routes>
           <Route element={<Layout />}>
