@@ -28,6 +28,13 @@ consumer today.
 - **`curl` is deliberately not bundled.** Windows 10+ ships `curl.exe`, so `toolPath('curl')` returns
   the bare name even when a bin dir is set. It is the one exception to "never PATH" and it is
   encoded in `SYSTEM_TOOLS` / `_SYSTEM_TOOLS` rather than left to each caller to remember.
+- **`yt-dlp` resolves to the per-user copy when there is one.** In a packaged run `toolPath('yt-dlp')`
+  returns `statePath('bin', 'yt-dlp')` if that file exists, because yt-dlp updates itself and the
+  install directory is read-only and replaced wholesale by an app update. The branch sits *inside*
+  the `FASTSTUDY_BIN_DIR` path, so with no bin dir (dev) the state root is never consulted and a
+  developer's own PATH copy is never shadowed. Membership is `SELF_UPDATING_TOOLS`, so a stray file
+  in the state bin dir cannot shadow `ffmpeg` or `pandoc`. JS only — Python spawns no yt-dlp — and it
+  is why `js/` depends on `@faststudy/runtime` for `statePath` rather than re-deriving the state root.
 - **`ffmpeg` and `ffprobe` need `-version`, not `--version`.** They print the banner for either, but
   `--version` exits 1 — there is no input file to work on — which a preflight would read as a broken
   binary. `VERSION_FLAG` carries the two exceptions; everything else takes the GNU spelling.

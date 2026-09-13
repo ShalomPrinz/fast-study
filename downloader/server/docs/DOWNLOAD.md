@@ -59,6 +59,47 @@ extraction errors.
 `auto/` runs yt-dlp too, but only `--flat-playlist`, which never touches the player script —
 so it carries the cache flag and not these.
 
+### The writable copy and its self-update
+
+Packaged, yt-dlp runs from `<state>/bin/yt-dlp` rather than from the shipped binary under
+`FASTSTUDY_BIN_DIR`: `toolPath('yt-dlp')` (`@faststudy/tools`) answers with the state copy when it
+exists and the shipped one otherwise, so both spawn sites and the `/health` probe follow it without
+knowing it is there. The reason it cannot live beside the other binaries is that an update replaces
+the whole install directory — a yt-dlp that updated itself there would reset to the shipped version
+on every release, while the state root survives.
+
+`services/ytdlpUpdate.js` owns that copy, at startup and only when `FASTSTUDY_BIN_DIR` is set. A dev
+run does nothing at all: no seed, no `-U`, so a state copy can never shadow the developer's own
+PATH yt-dlp.
+
+- **Seed** when the copy is missing or older than the shipped binary, so a release carrying a newer
+  yt-dlp also refreshes a copy on a machine that can never reach GitHub. The bytes go to a temp name
+  beside the target and are renamed over it — a rename is atomic, so a crash mid-copy cannot leave a
+  truncated exe — and the executable bit is set on non-Windows. The temp name is removed whether or
+  not the rename lands: Windows refuses to replace a copy `auto/` is running, and the next boot
+  would find the copy still stale and strand another ~17MB.
+  Seeding is synchronous and precedes the boot tool probe, which therefore spawns the same binary
+  this run's downloads will. A shipped binary that is gone — quarantined, half-installed — seeds
+  nothing and says so in one line; an existing copy is still good and still updates itself.
+- **Then `<copy> -U`**, unawaited, `stdio: 'ignore'`, `windowsHide` (a console-subsystem exe
+  otherwise pops up a console window on every packaged launch). Boot waits on nothing, and the one
+  thing it is sequenced after is the tool probe: `-U` swaps the exe in place, and a probe landing in
+  that window would pin `/health` at `yt-dlp: missing` for the whole session. The child stays in the
+  process group (never `detached`) so the launcher's kill on quit reaches it; yt-dlp writes the new
+  binary and renames over itself, so a kill before that rename leaves the working copy intact.
+- **Every failure is at most one line on stderr** — offline, rate-limited and transient GitHub
+  failures are the normal case. Never stdout (that is the port-handshake channel), and never a
+  toast, a download error or a non-zero exit; `launch.log` is this feature's whole user-visible
+  surface.
+
+`server/` is the sole owner of both the seed and the `-U`. `yt-dlp -U` rewrites its own executable
+in place, so two services doing it seconds apart can leave a `.old` stub or a zero-byte binary;
+`auto/` needs no update logic of its own because it reads the same resolver.
+
+The knowingly-taken risk: `-U` swaps the executable while the app is already usable, so a download
+started inside the ~2s swap window can fail to spawn. It surfaces as an ordinary download error that
+a retry fixes.
+
 ## Size probe (`services/probe.js`)
 
 curl path: `probeContentLength` tries HEAD (works on signed URLs, token in the query

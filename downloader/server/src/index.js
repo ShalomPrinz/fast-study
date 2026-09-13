@@ -4,6 +4,7 @@ import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
 import { emitError } from './progress.js';
 import { serve, requireSecret } from '@faststudy/runtime';
 import { checkTools } from '@faststudy/tools';
+import { seedYtdlp, updateYtdlp } from './services/ytdlpUpdate.js';
 import coursesRouter from './routes/courses.js';
 import probeRouter from './routes/probe.js';
 import downloadRouter from './routes/download.js';
@@ -59,12 +60,19 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message ?? 'Server error' });
 });
 
+// Synchronous and before the probe: the copy it seeds is what toolPath resolves to from here on,
+// so /health reports on the same binary this run's downloads spawn.
+seedYtdlp();
+
 checkTools(TOOLS).then((status) => {
   toolStatus = status;
   for (const [name, state] of Object.entries(status)) {
     if (state !== 'ok')
       console.error(`❌ ${name} is ${state} — the downloads that need it will fail`);
   }
+  // Fire-and-forget, but only after the probe: `-U` swaps the exe in place, and a probe landing in
+  // that window would pin /health at `yt-dlp: missing` for the whole session.
+  updateYtdlp();
 });
 
 serve(app, PORT, (port) => {
