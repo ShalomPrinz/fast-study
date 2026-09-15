@@ -76,7 +76,7 @@ installer (`perMachine: false`), so it installs into `%LOCALAPPDATA%\Programs\Fa
 UAC prompt on top of SmartScreen. The whole configuration is the `build` block in `package.json`.
 
 - **The asar holds this package's own files only.** The four services, the built frontend, the
-  binaries and the LaTeX cache ship as `extraResources` from `delivery/stage/`, which the release
+  binaries and the LaTeX cache ship as `extraResources` from `delivery/stage/`, which the build
   workflow stages in exactly the tree [`docs/BOOT.md`](docs/BOOT.md) lists, and land under
   `process.resourcesPath` where main looks.
 - **`files` is globbed — `*.js`, `*.html`, `package.json` — never a hand-listed set.** A source file
