@@ -373,7 +373,7 @@ msgstr "Catch up on unfinished lectures overnight"
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
-#: src/features/settings/components/DataRootField.tsx:38
+#: src/features/settings/components/DataRootField.tsx:47
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 
@@ -605,7 +605,7 @@ msgstr "Downloading {active} more…"
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
-#: src/features/settings/InitWall.tsx:227
+#: src/features/settings/InitWall.tsx:233
 msgid "Downloading recordings (optional)"
 msgstr "Downloading recordings (optional)"
 
@@ -662,6 +662,10 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 #: src/features/runner/RunnerView.tsx:339
 msgid "Every lecture with a video is finished or already spoken for."
 msgstr "Every lecture with a video is finished or already spoken for."
+
+#: src/features/settings/components/DataRootField.tsx:40
+msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
+msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 
 #: src/features/downloads/components/RecordingRow.tsx:162
 msgid "Expand"
@@ -751,7 +755,7 @@ msgstr "Fast Study uses two free services: one turns the recording into text, th
 msgid "File type"
 msgstr "File type"
 
-#: src/features/settings/InitWall.tsx:243
+#: src/features/settings/InitWall.tsx:249
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
@@ -812,7 +816,7 @@ msgstr "Google account"
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:214
+#: src/features/settings/InitWall.tsx:220
 msgid "Google Drive (optional)"
 msgstr "Google Drive (optional)"
 
@@ -1361,7 +1365,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:251
+#: src/features/settings/InitWall.tsx:257
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -1386,7 +1390,7 @@ msgstr "Searches the generated summaries of one course — the one picked in the
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
-#: src/App.tsx:24
+#: src/App.tsx:27
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
@@ -1428,7 +1432,7 @@ msgstr "Sorry about it. Go home to keep working, or copy the details below to re
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:251
+#: src/features/settings/InitWall.tsx:257
 msgid "Start using Fast Study"
 msgstr "Start using Fast Study"
 
@@ -1657,7 +1661,7 @@ msgstr "We couldn't check this key right now. You can still save it."
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
-#: src/features/settings/InitWall.tsx:202
+#: src/features/settings/InitWall.tsx:208
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
@@ -1677,9 +1681,13 @@ msgstr "Without one, Fast Study can't fetch recordings from your course site and
 msgid "Yes"
 msgstr "Yes"
 
-#: src/features/settings/components/DataRootField.tsx:51
+#: src/features/settings/components/DataRootField.tsx:61
 msgid "Yes, store my lectures in this folder"
 msgstr "Yes, store my lectures in this folder"
+
+#: src/features/settings/InitWall.tsx:189
+msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
+msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 
 #: src/app/ErrorBoundary.tsx:58
 msgid "Your mail app is open. No report file could be saved."

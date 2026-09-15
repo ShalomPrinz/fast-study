@@ -185,6 +185,12 @@ export default function InitWall({ stored, onDone }: Props) {
                       create.
                     </Trans>
                   </p>
+                  <p className="settings-note">
+                    <Trans>
+                      Your keys are kept only on this computer, encrypted by Windows. Fast Study has
+                      no servers of its own — each key is sent only to the service it belongs to.
+                    </Trans>
+                  </p>
                   {keyField(
                     options.providers.find((p) => p.id === 'gemini'),
                     'geminiApiKey',

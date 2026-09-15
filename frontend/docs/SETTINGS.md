@@ -73,8 +73,8 @@ is the only place it lives, and `services/i18n.ts` owns it.
 **Only the data folder is guarded.** On save, `utils/dataRootGuard.ts` reads `RunnerStatusContext` —
 already SSE-fed, so its view is current — and raises `ConfirmModal` naming the runs in flight, since
 changing the root mid-run leaves one lecture split across two roots. The check is advisory: the user
-is never blocked, and the route carries a standing note that a change re-points only and never moves
-data. Every other setting applies immediately with no check, because a key or a model id cannot
+is never blocked, and the route alone carries a standing warning that a change re-points only and
+never moves data. Every other setting applies immediately with no check, because a key or a model id cannot
 corrupt anything.
 
 ## The first-run wall
@@ -93,6 +93,8 @@ the user's own language, and the Drive toggle so the account is connected during
 than being asked for mid-run; neither blocks, and Drive's folder field is required only while the toggle is on.
 Auto-run and the nightly pass are not asked about and keep their defaults — a first install has
 nothing to run yet, and cron hours are not a first-run question.
+
+The keys and the data folder each carry a where-your-data-lives note in place of the route's re-point warning.
 
 The data folder is **prefilled but confirmed, never silently accepted** — a checkbox, not an
 implicit acceptance. In browser dev the prefill is whatever the store already holds, so an

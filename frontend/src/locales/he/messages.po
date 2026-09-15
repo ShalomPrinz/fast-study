@@ -373,7 +373,7 @@ msgstr "להשלים הרצאות שלא הסתיימו במהלך הלילה"
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
-#: src/features/settings/components/DataRootField.tsx:38
+#: src/features/settings/components/DataRootField.tsx:47
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחרת — שום דבר לא זז. התיקייה הישנה נשארת בדיוק כפי שהיא, וחזרה אליה כאן מחזירה את הכול."
 
@@ -605,7 +605,7 @@ msgstr "מוריד עוד {active}…"
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
-#: src/features/settings/InitWall.tsx:227
+#: src/features/settings/InitWall.tsx:233
 msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (רשות)"
 
@@ -662,6 +662,10 @@ msgstr "כל קורס, הרצאה, סרטון וסיכום נשמרים כאן. 
 #: src/features/runner/RunnerView.tsx:339
 msgid "Every lecture with a video is finished or already spoken for."
 msgstr "כל הרצאה שיש לה וידאו הושלמה או שכבר מטופלת."
+
+#: src/features/settings/components/DataRootField.tsx:40
+msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
+msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלכם."
 
 #: src/features/downloads/components/RecordingRow.tsx:162
 msgid "Expand"
@@ -751,7 +755,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:243
+#: src/features/settings/InitWall.tsx:249
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
@@ -812,7 +816,7 @@ msgstr "חשבון Google"
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:214
+#: src/features/settings/InitWall.tsx:220
 msgid "Google Drive (optional)"
 msgstr "Google Drive (רשות)"
 
@@ -1361,7 +1365,7 @@ msgstr "שמור בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:251
+#: src/features/settings/InitWall.tsx:257
 msgid "Saving…"
 msgstr "שומרים…"
 
@@ -1386,7 +1390,7 @@ msgstr "מחפש בסיכומים שנוצרו של קורס אחד — זה ש�
 msgid "Section {0} is waiting for a passcode"
 msgstr "הקטע {0} ממתין לקוד גישה"
 
-#: src/App.tsx:24
+#: src/App.tsx:27
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
@@ -1428,7 +1432,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (אופציונלי)…"
 
-#: src/features/settings/InitWall.tsx:251
+#: src/features/settings/InitWall.tsx:257
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -1657,7 +1661,7 @@ msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמו
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:202
+#: src/features/settings/InitWall.tsx:208
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -1677,9 +1681,13 @@ msgstr "בלי אחד מהם, Fast Study לא יוכל להביא הקלטות �
 msgid "Yes"
 msgstr "כן"
 
-#: src/features/settings/components/DataRootField.tsx:51
+#: src/features/settings/components/DataRootField.tsx:61
 msgid "Yes, store my lectures in this folder"
 msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
+
+#: src/features/settings/InitWall.tsx:189
+msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
+msgstr "המפתחות שלכם נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
 
 #: src/app/ErrorBoundary.tsx:58
 msgid "Your mail app is open. No report file could be saved."

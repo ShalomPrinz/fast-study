@@ -34,12 +34,22 @@ export default function DataRootField({ value, onChange, confirmed, onConfirmedC
         placeholder={t`C:\\Users\\you\\AppData\\Local\\FastStudy\\data`}
         onChange={(e) => onChange(e.target.value)}
       />
-      <p className="settings-note">
-        <Trans>
-          Changing this re-points the app only — it never moves anything. The old folder stays
-          exactly as it is, and pointing back here brings it all back.
-        </Trans>
-      </p>
+      {/* A first run has no old folder to re-point from, so the wall says where the data lives instead. */}
+      {onConfirmedChange ? (
+        <p className="settings-note">
+          <Trans>
+            Everything stays on this computer. Fast Study has no servers of its own and keeps no
+            copy of your lectures or summaries.
+          </Trans>
+        </p>
+      ) : (
+        <p className="settings-note settings-note--warn">
+          <Trans>
+            Changing this re-points the app only — it never moves anything. The old folder stays
+            exactly as it is, and pointing back here brings it all back.
+          </Trans>
+        </p>
+      )}
       {onConfirmedChange && (
         <label className="settings-check">
           <input
