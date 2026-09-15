@@ -463,11 +463,14 @@ test('11. an in-place update', async () => {
 
   await test.step('uninstall, and wipe the state root and userData', async () => {
     await runToExit(paths.uninstallerExe(), ['/S'], { timeoutMs: INSTALL_TIMEOUT_MS });
-    // The NSIS uninstaller re-launches itself from a temp copy, so its own exit is not the end.
-    await waitFor(() => !fs.existsSync(paths.appExe()), {
-      timeoutMs: INSTALL_TIMEOUT_MS,
-      message: `${paths.appExe()} was still installed 5 minutes after the silent uninstall`,
-    });
+    // The NSIS uninstaller re-launches itself from a temp copy that deletes FastStudy.exe first and the registry keys last.
+    await waitFor(
+      async () => !fs.existsSync(paths.installDir()) && (await processesNamed(['Au_*', 'Un_*'])).length === 0,
+      {
+        timeoutMs: INSTALL_TIMEOUT_MS,
+        message: `${paths.installDir()} or its uninstaller was still there 5 minutes after the silent uninstall`,
+      },
+    );
     for (const dir of [paths.stateRoot(), paths.userData()]) {
       fs.rmSync(dir, { recursive: true, force: true });
     }
