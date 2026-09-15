@@ -1,6 +1,6 @@
 ---
 name: worktree
-description: Project rules for doing a task in a dedicated git worktree — creating it, restoring the git-ignored files and installs the services need, the branch boundaries, and committing each concern as it lands. Use only when the user explicitly asks for worktree mode.
+description: Project rules for doing a task in a dedicated git worktree — creating it, restoring the git-ignored files and installs the services need, the branch boundaries, and committing each concern as it lands, and tearing it down. Use only when the user explicitly asks for worktree mode, or asks to create, remove, or clean up a worktree. Never run `git worktree` without reading this skill first.
 ---
 
 Substitute `<slug>` throughout and take `<repo-root>` from the actual project root.
