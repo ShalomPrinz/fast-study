@@ -6,11 +6,17 @@ from services import providers
 
 
 class TestPublicProviders:
-    def test_carries_the_id_and_hides_the_probe_url(self):
+    def test_carries_the_id_and_hides_the_base_url_and_probe(self):
         rows = providers.public_providers()
         assert {row["id"] for row in rows} == set(providers.PROVIDERS)
         for row in rows:
             assert set(row) == {"id", "display_name", "key_prefix", "console_url"}
+
+    def test_base_url_is_each_sdks_own_default(self):
+        assert providers.base_url("groq") == "https://api.groq.com"
+        assert (
+            providers.base_url("gemini") == "https://generativelanguage.googleapis.com/"
+        )
 
     def test_every_row_is_complete(self):
         for row in providers.PROVIDERS.values():
@@ -48,7 +54,7 @@ class TestProbeKey:
 
     def test_sends_each_provider_its_own_auth_header(self):
         _, groq_get = _probe("groq")
-        assert groq_get.call_args.args[0] == providers.PROVIDERS["groq"]["probe_url"]
+        assert groq_get.call_args.args[0] == "https://api.groq.com/openai/v1/models"
         assert groq_get.call_args.kwargs["headers"] == {
             "Authorization": "Bearer secret-key"
         }

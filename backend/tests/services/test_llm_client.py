@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 import services.llm_client as llm_mod
+from google.genai import types
 from services.llm_client import (
     GeminiRateLimitError,
     LLMClient,
@@ -68,7 +69,13 @@ def test_uses_explicit_api_key_and_default_model(monkeypatch):
     monkeypatch.setattr(llm_mod.genai, "Client", ctor)
 
     client = LLMClient(api_key="explicit-key")
-    ctor.assert_called_once_with(api_key="explicit-key")
+    ctor.assert_called_once_with(
+        api_key="explicit-key",
+        vertexai=False,
+        http_options=types.HttpOptions(
+            base_url="https://generativelanguage.googleapis.com/"
+        ),
+    )
     assert client.model == gemini_model()
 
 

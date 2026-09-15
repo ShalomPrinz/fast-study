@@ -6,7 +6,9 @@ import os
 import re
 
 from google import genai
+from google.genai import types
 
+from services import providers
 from services.settings import gemini_model
 
 
@@ -114,7 +116,12 @@ class LLMClient:
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY is not set in the environment")
         self.model = model or gemini_model()
-        self.client = genai.Client(api_key=api_key)
+        # vertexai=False, or GOOGLE_GENAI_USE_VERTEXAI reroutes an api-key client onto Vertex.
+        self.client = genai.Client(
+            api_key=api_key,
+            vertexai=False,
+            http_options=types.HttpOptions(base_url=providers.base_url("gemini")),
+        )
 
     def generate(self, contents: list) -> str:
         """Send contents to the model and return its stripped text."""

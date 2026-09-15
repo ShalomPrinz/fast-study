@@ -66,7 +66,7 @@ The backend-owned settings: both API keys, the Gemini model, the Drive toggle, t
 body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder, auto_run, nightly_run, nightly_hour}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. The nightly cron is then re-applied unconditionally — an out-of-range `nightly_hour` is clamped to 03:00 there, never rejected here (docs/PIPELINE.md). → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
 
 `GET /config/options`
-`{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's probe URL stays server-side.
+`{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's base URL stays server-side.
 
 `GET /config/drive/status`
 `{"connected": bool, "pending": bool, "consent_needed": bool}` — a stored Drive token, a consent flow waiting on the user, and whether a pipeline step gave up for want of a token. The last one is process state, not an event, so a queue of lectures with no token leaves the UI one thing to render; it clears when a token lands. A landed token, a flow that failed or timed out, and a disconnect each push on the database SSE channel, so no screen polls this; the caller of `connect` learns `pending` from its own response.

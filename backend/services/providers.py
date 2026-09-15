@@ -10,13 +10,14 @@ log = logging.getLogger("providers")
 
 PROBE_TIMEOUT_SECONDS = 8  # a dead network must not hang the settings field
 
-# Probing lists models rather than running inference: it authenticates the key at zero
-# token cost and cannot touch the per-model quota the pipeline depends on.
+# Both SDK clients get base_url explicitly, so no ambient variable can redirect a call. The
+# probe (base_url + probe_path) lists models: zero tokens, and no per-model quota touched.
 PROVIDERS = {
     "groq": {
         "display_name": "Groq",
         "key_prefix": "gsk_",
-        "probe_url": "https://api.groq.com/openai/v1/models",
+        "base_url": "https://api.groq.com",
+        "probe_path": "/openai/v1/models",
         "auth_header": "Authorization",
         "auth_value": "Bearer {key}",
         "console_url": "https://console.groq.com/keys",
@@ -24,14 +25,15 @@ PROVIDERS = {
     "gemini": {
         "display_name": "Gemini",
         "key_prefix": "AIza",
-        "probe_url": "https://generativelanguage.googleapis.com/v1beta/models",
+        "base_url": "https://generativelanguage.googleapis.com/",
+        "probe_path": "v1beta/models",
         "auth_header": "x-goog-api-key",
         "auth_value": "{key}",
         "console_url": "https://aistudio.google.com/apikey",
     },
 }
 
-# The probe URL and its auth shape stay server-side; the rest is what a field renders.
+# The base URL, probe path and auth shape stay server-side; the rest is what a field renders.
 PUBLIC_FIELDS = ("display_name", "key_prefix", "console_url")
 
 
@@ -44,6 +46,12 @@ def public_providers() -> list[dict]:
     ]
 
 
+def base_url(provider: str) -> str:
+    """The one base URL every request to this provider is built on."""
+
+    return PROVIDERS[provider]["base_url"]
+
+
 def probe_key(provider: str, key: str) -> str:
     """Authenticate one key against its provider's list-models endpoint.
     Returns "valid" | "rejected" | "unverified" — only an explicit 401/403 is a rejection,
@@ -52,7 +60,7 @@ def probe_key(provider: str, key: str) -> str:
     row = PROVIDERS[provider]
     try:
         response = requests.get(
-            row["probe_url"],
+            row["base_url"] + row["probe_path"],
             headers={row["auth_header"]: row["auth_value"].format(key=key)},
             timeout=PROBE_TIMEOUT_SECONDS,
         )

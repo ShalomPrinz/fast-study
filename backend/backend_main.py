@@ -270,7 +270,7 @@ def config_update(update: ConfigUpdate):
 @app.get("/config/options")
 def config_options():
     """The choices the settings screens render: the provider table (minus its internal
-    probe URL) and the curated Gemini model list."""
+    base URL and probe) and the curated Gemini model list."""
 
     return {
         "providers": providers.public_providers(),

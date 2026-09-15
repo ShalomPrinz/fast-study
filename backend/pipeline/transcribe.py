@@ -9,6 +9,7 @@ from pathlib import Path
 
 import groq
 from groq import Groq
+from services import providers
 from timing import timed_pipeline
 from tools import tool_path
 
@@ -179,7 +180,7 @@ def transcribe_audio(audio_path: str) -> str:
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
         raise RuntimeError("GROQ_API_KEY is not set in the environment")
-    client = Groq(api_key=api_key)
+    client = Groq(api_key=api_key, base_url=providers.base_url("groq"))
     lecture_dir = Path(audio_path).parent
     partial_path = lecture_dir / PARTIAL_TXT
     stat = os.stat(audio_path)

@@ -41,7 +41,7 @@ Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GD
 
 Google Drive consent is a settings action, never a pipeline one: `services/google_auth.py` loads and refreshes `auth/token_drive.json` and raises `DriveNotConnected` when there is none, and `/config/drive/connect` runs the browser flow on a daemon thread so no run ever blocks on a human (`docs/API.md`).
 
-`services/providers.py` is the API-key provider table behind `/config/probe-key` and `/config/options`: adding a provider is one row, and its probe URL never leaves the backend.
+`services/providers.py` is the API-key provider table behind `/config/probe-key` and `/config/options`: adding a provider is one row. Each row owns the provider's base URL, which the probe and both SDK clients read — so no ambient variable redirects a call (`docs/PIPELINE.md`) — and it never leaves the backend.
 
 ## Running
 

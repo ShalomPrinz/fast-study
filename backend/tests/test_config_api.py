@@ -13,11 +13,12 @@ client = TestClient(backend_main.app)
 
 
 class TestConfigOptions:
-    def test_lists_providers_without_their_probe_url(self):
+    def test_lists_providers_without_their_base_url_or_probe(self):
         body = client.get("/config/options").json()
         assert body["gemini_models"] == settings.GEMINI_MODELS
         assert {p["id"] for p in body["providers"]} == set(providers.PROVIDERS)
-        assert all("probe_url" not in p for p in body["providers"])
+        for p in body["providers"]:
+            assert not {"base_url", "probe_path"} & set(p)
 
     def test_console_url_comes_from_the_provider_table(self):
         body = client.get("/config/options").json()

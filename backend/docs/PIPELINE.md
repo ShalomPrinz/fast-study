@@ -22,6 +22,8 @@ A lecture may hold any number of material PDFs. `database/` owns their naming, s
 
 The Hebrew summarize prompt lives at `assets/instructions/summarize.md` — edit the file to change output structure, no code change. Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` — `LLMClient`'s default, so summarize and the course overview cannot drift apart.
 
+No environment variable redirects a provider call: both SDK clients get `providers.base_url()` explicitly and Gemini gets `vertexai=False`, because the launcher passes its whole environment to every child, so a stray `GROQ_BASE_URL` / `GOOGLE_GEMINI_BASE_URL` / `GOOGLE_GENAI_USE_VERTEXAI` on a user's machine would otherwise reroute calls the key probe never checked. Proxy and CA variables stay honored.
+
 ## Purity and the database round-trip
 
 Pipeline functions are pure — paths/strings in, no global state, no knowledge of `DATA_ROOT`. Every filesystem access goes through `services/db_client.py` (HTTP to `database/`, port 8001). The only identity the backend carries is `(course, lecture, kind)`; `kind="recitation"` is forwarded as a query string so the database service injects the `Recitations/` segment.
