@@ -77,6 +77,10 @@ the user's own PDF app. A path never reaches the renderer, so a compromised one 
 primitive. A failed `{ ok: false, error }` toasts through `toaster.ts`; `error` is English prose from the OS
 or the database service, shown inside a translated wrapper.
 
+A link in the UI keeps its `href` for hover and copy but calls `openExternalUrl` from `onClick` with
+`preventDefault()`: packaged, `target="_blank"` does nothing because the shell denies every `window.open`, and a
+bare `href` navigates the app window itself to the site, where the preload still exposes `window.faststudy`.
+
 **The absence of the bridge is the browser-dev test**, and that branch is a plain `window.open(url, '_blank')`
 against the URL builders in `database.ts` — dev has no secret to be missing. It needs both `runtime.ts` and
 `database.ts`, which is why it is its own boundary: `runtime.ts` cannot import `database.ts`.

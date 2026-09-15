@@ -97,6 +97,8 @@ creating it and swapping that literal is the whole remaining task.
 **Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
 child window itself, and its documented merge order gives that child the parent's security-related
 `webPreferences` — this window's preload, and so the launch secret, running on a third-party origin.
+The preload runs on every page this window loads and nothing guards navigation or checks an IPC sender,
+so the window must never leave `boot.html` and `app://bundle` — outside links go through `open.external`.
 
 ## Startup checks
 
