@@ -124,7 +124,8 @@ export async function productVersion(exe) {
 /** Hold `file` open with no sharing at all, as a PDF viewer on Windows can. Answers `release()`. */
 export async function holdExclusive(file, { timeoutMs = 30_000 } = {}) {
   const child = spawnPowershell(
-    `$h = [System.IO.File]::Open(${psq(file)}, 'Open', 'ReadWrite', 'None')
+    `$ErrorActionPreference = 'Stop'
+$h = [System.IO.File]::Open(${psq(file)}, 'Open', 'ReadWrite', 'None')
 [Console]::Out.WriteLine('LOCKED'); [Console]::Out.Flush()
 [void][Console]::In.ReadLine()
 $h.Close()`,
