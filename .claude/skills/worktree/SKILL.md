@@ -50,4 +50,16 @@ remainder by concern and commit it before you report.
 Report the branch's commits (`git log --oneline main..<slug>`) and **stop**. Leave the branch sitting
 locally for the user to review and merge.
 
+### Teardown
+
+Only when the user asks, and only after the branch's PR is merged:
+
+```
+cd <repo-root> && bash <repo-root>/.claude/skills/worktree/teardown.sh <slug>
+```
+
+It removes the worktree, both branches, and the `additionalDirectories` entry, and refuses if the
+worktree has uncommitted changes or the local tip differs from the merged PR's. `cd` first — the
+worktree directory is deleted, so a shell left inside it breaks every later command.
+
 > **Worktree tooling note:** this session's Bash tool refuses heredocs and multi-part commands with redirects while worktree-isolated. Use the Write/Edit tools for file creation, and keep shell commands simple.
