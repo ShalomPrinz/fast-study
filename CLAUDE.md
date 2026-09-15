@@ -113,7 +113,7 @@ under `lib/` is live in four services at once.
 
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
 
-`lib-dev` owns `lib/` and `electron-dev` owns `electron/` under the same one difference: neither edits a consumer. Both hold names the four services read — `lib/`'s packages are live in all of them at once, and the launcher spells the same launch contract from the other side — so each reports the follow-up a service needs and that follow-up goes to that service's subagent. `delivery/` has no subagent: it is build-only, and every change to it is driven by one in `backend/` or `database/`.
+`lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
 
 ## Always use `python3`
 
