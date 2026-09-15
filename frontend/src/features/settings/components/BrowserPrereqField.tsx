@@ -13,7 +13,7 @@ const CHROME_DOWNLOAD_URL = 'https://www.google.com/chrome/'
 
 type State =
   | { kind: 'checking' }
-  | { kind: 'available'; browser: string }
+  | { kind: 'available'; browser: string; channel: string | null }
   | { kind: 'missing'; detail: string }
   // The service was unreachable, which is an unknown answer and never "no browser" — the same rule
   // the API key probe follows for an unreachable provider.
@@ -38,7 +38,7 @@ export default function BrowserPrereqField() {
       const prereq = await fetchBrowserPrereq()
       setState(
         prereq.available && prereq.browser
-          ? { kind: 'available', browser: prereq.browser }
+          ? { kind: 'available', browser: prereq.browser, channel: prereq.channel }
           : { kind: 'missing', detail: prereq.detail },
       )
     } catch {
@@ -66,7 +66,13 @@ export default function BrowserPrereqField() {
   }
 
   return (
-    <div className={`settings-field browser-prereq--${state.kind}`} id="browser-prereq">
+    <div
+      className={`settings-field browser-prereq--${state.kind}`}
+      id="browser-prereq"
+      data-testid="browser-prereq"
+      data-status={state.kind}
+      data-channel={state.kind === 'available' ? (state.channel ?? undefined) : undefined}
+    >
       {/* No `<label>`: there is nothing to focus here, only a status and a way to re-run it. */}
       <div className="settings-label">
         <span>
@@ -75,6 +81,7 @@ export default function BrowserPrereqField() {
         {state.kind === 'missing' && (
           <a
             className="settings-link browser-prereq-link"
+            data-testid="browser-prereq-install-link"
             href={CHROME_DOWNLOAD_URL}
             onClick={(e) => {
               e.preventDefault()

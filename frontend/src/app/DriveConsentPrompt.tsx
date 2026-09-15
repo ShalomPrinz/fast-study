@@ -50,7 +50,10 @@ export default function DriveConsentPrompt() {
     <ConfirmModal
       message={t`Connect Google Drive now?`}
       detail={
-        <p className="modal-message modal-note drive-consent-detail">
+        <p
+          className="modal-message modal-note drive-consent-detail"
+          data-testid="drive-consent-modal"
+        >
           <Trans>
             A finished summary is waiting to upload, and Fast Study has no permission to use your
             Drive yet. Saying yes opens a Google sign-in page in your browser; either way every

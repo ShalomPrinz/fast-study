@@ -52,14 +52,15 @@ that fires on mount shows **two** requests, and `.init-wall` scrolls itself rath
 A new UI state — a notice, a disabled control, an empty state — needs a stable selector, and the report
 naming a change has to name it: the user checks frontend work by querying the live DOM over CDP in the real
 Electron app, so a state with no stable hook cannot be asserted on. Prefer an element's existing `id`
-(`#key-gemini`, `#key-groq` on the API key inputs); there is no `data-testid` convention here. Where nothing
-stable exists, add a modifier class — `.settings-note--no-key-storage` on the secure-storage warning.
+(`#key-gemini`, `#key-groq` on the API key inputs). Where nothing stable exists, add a modifier class —
+`.settings-note--no-key-storage` on the secure-storage warning. `data-testid` is reserved for the release
+smoke suite's contract (`docs/ARCHITECTURE.md` §Smoke-suite test ids); never add one for anything else.
 
 ## Docs
 
 | Doc                       | Covers                                                                                                                   |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling                                                  |
+| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling, smoke-suite test ids                            |
 | `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding                                             |
 | `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar                                         |
 | `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                                                       |

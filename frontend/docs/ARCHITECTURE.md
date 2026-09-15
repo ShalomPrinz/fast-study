@@ -198,3 +198,29 @@ stylesheet. Verify a suspected collision against the built bundle, not the dev s
 
 Any user-supplied text (course, lecture, section, recording titles) renders with `dir="auto"` so Hebrew
 resolves RTL per element.
+
+## Smoke-suite test ids
+
+`data-testid`s exist only as a contract held for `delivery/smoke/`, which drives the packaged app and
+never reads visible text. Renaming, removing or re-scoping one is a smoke-suite change; add none for
+anything else. A value the suite asserts on rides a `data-*` attribute beside the id, spelled as the
+code's own enum, never a translated string.
+
+| id                            | extra attributes                                                                                                         | component                                                   | marks                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ----------------------------------------------- |
+| `init-wall`                   | —                                                                                                                        | `features/settings/InitWall.tsx`                            | the first-run wall's root                       |
+| `init-wall-submit`            | —                                                                                                                        | `features/settings/InitWall.tsx`                            | its save button (`disabled` until complete)     |
+| `api-key-input`               | `data-provider`: `gemini` \| `groq`                                                                                      | `features/settings/components/ApiKeyField`                  | a key input, wall and `/settings`               |
+| `api-key-status`              | `data-provider`; `data-status`: `prefix` \| `checking` \| `valid` \| `rejected` \| `unverified`, absent when blank       | `features/settings/components/ApiKeyField`                  | that key's probe line                           |
+| `data-root-input`             | —                                                                                                                        | `features/settings/components/DataRootField`                | the data folder input, wall and `/settings`     |
+| `data-root-confirm`           | —                                                                                                                        | `features/settings/components/DataRootField`                | the wall-only confirm checkbox                  |
+| `browser-prereq`              | `data-status`: `checking` \| `available` \| `missing` \| `unknown`; `data-channel`: `chrome` \| `msedge` when available  | `features/settings/components/BrowserPrereqField`           | the browser prerequisite, wall and `/settings`  |
+| `browser-prereq-install-link` | —                                                                                                                        | `features/settings/components/BrowserPrereqField`           | the install link, rendered only when missing    |
+| `lecture`                     | `data-course`, `data-lecture`; `data-kind`: `lecture` \| `recitation`                                                    | `features/lectures/sidebar/tree/LectureItem`                | a sidebar lecture row                           |
+| `lecture-view`                | `data-course`, `data-lecture`, `data-kind`                                                                               | `features/lectures/MainView.tsx`                            | the lecture page's root                         |
+| `step-status`                 | `data-step`: `audio` \| `transcribe` \| `summarize` \| `pdf` \| `drive`; `data-status`: `done` \| `running` \| `pending` | `features/lectures/MainView.tsx`                            | one pipeline row that has a step                |
+| `lecture-error`               | —                                                                                                                        | `features/lectures/MainView.tsx`                            | the lecture's last run error                    |
+| `lecture-error-message`       | —                                                                                                                        | `features/lectures/MainView.tsx`                            | that error's service prose, untranslated        |
+| `lecture-actions-menu`        | —                                                                                                                        | `features/lectures/components/LectureActionsMenu`           | the overflow trigger that reveals `open-pdf`    |
+| `open-pdf`                    | —                                                                                                                        | `features/lectures/MainView.tsx` (via `LectureActionsMenu`) | "Open PDF", through `services/open.ts`'s bridge |
+| `drive-consent-modal`         | —                                                                                                                        | `app/DriveConsentPrompt.tsx`                                | the Drive consent modal's body                  |
