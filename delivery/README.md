@@ -16,34 +16,40 @@ runtime, and no dev command touches any of it.
 
 ## The installer
 
-`.github/workflows/release.yml`, run by hand from the Actions tab, is the only thing that produces
+`.github/workflows/build.yml`, run by hand from the Actions tab, is the only thing that produces
 one. It runs on `windows-latest` because neither PyInstaller nor electron-builder's NSIS target can
 cross-compile from WSL, so nothing here is buildable on a dev machine — which is also why everything
 the build reads has to be committed, `backend/credentials.json` alone excepted: it arrives as the
 `GOOGLE_CREDENTIALS_JSON` Actions secret, and a build without it still produces a bundle, just one
 that cannot do Drive consent.
 
-Roughly 20 minutes end to end, most of it the LaTeX prime and ~450MB of binary downloads. The
-artifact is one unsigned per-user NSIS `.exe`.
+Roughly 20 minutes to build, most of it the LaTeX prime and ~450MB of binary downloads, then the
+smoke job. The artifact is one unsigned per-user NSIS `.exe`.
 
-### Publishing one
+### Build, test, publish
 
-The dispatch takes a `publish` boolean, and it defaults to **false**: an ordinary run builds the
-installer and uploads it as a workflow artifact, publishing nothing. That default is the whole
-review gate — the workflow runs no tests, and the failures packaging actually produces only appear
-on a clean Windows machine, so the artifact from a `publish=false` run is what the release
-smoke-test checklist is run against.
+Two workflows, both dispatched by hand, and neither takes an input. The bytes users update to are
+exactly the bytes the smoke job tested.
 
-`publish=true` runs `npm run release` instead of `npm run dist`, and electron-builder's GitHub
-publisher creates a **live** release on the public `ShalomPrinz/fast-study` tagged `v<version>`,
-carrying the `.exe`, its `.blockmap` and `latest.yml`. That `latest.yml` is what every installed
-copy's updater reads; without it the release is invisible to them. There is no draft step — a
-release is published the moment the run goes green, and pulling one back means deleting it.
+- **`build.yml`** builds with `--publish never` — the installer, its `.blockmap` and `latest.yml`,
+  plus a second installer of the same staged tree at a lower version that exists only for the
+  update check and never leaves Actions. Its smoke job installs the uploaded artifact on a fresh
+  runner and runs `smoke/`; on failure it uploads screenshots, the Playwright traces and every
+  `launch.log`. Only a green smoke job attaches the three files to a **draft** Release `v<version>`
+  targeted at the built commit. Rebuilding the same version replaces the draft's files; a version
+  that is already published is refused.
+- **`publish.yml`** builds nothing. It reads the version at the dispatched commit, refuses unless a
+  draft `v<version>` targets that commit and carries all three files, and flips it live, which is
+  when the tag is created.
+
+electron-updater never sees a draft, so a tested build sits invisible to every installed copy until
+`publish.yml` runs. `latest.yml` is what those copies read. Run [`SMOKE_TEST.md`](SMOKE_TEST.md) on
+a real machine against the draft's installer before publishing.
 
 Bump `version` in `electron/package.json` in a commit **before** dispatching. It is the tag, the
-installer's file name and what `app.getVersion()` reports, and publishing twice from one version
-fails on the existing tag. The launcher's side of this — the silent check, the download and the
-install on quit — is [`electron/docs/UPDATES.md`](../electron/docs/UPDATES.md).
+installer's file name and what `app.getVersion()` reports. The launcher's side of this — the silent
+check, the download and the install on quit — is
+[`electron/docs/UPDATES.md`](../electron/docs/UPDATES.md).
 
 Unsigned means **SmartScreen blocks the first run** on every machine: the dialog reads "Windows
 protected your PC" with only a Don't run button, and the installer starts from **More info → Run
