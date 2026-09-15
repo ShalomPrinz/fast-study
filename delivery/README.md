@@ -11,6 +11,7 @@ runtime, and no dev command touches any of it.
 | `kitchen-sink.md` + `probe.png`     | The document the prime renders                                          |
 | `cache-supplement.txt`              | Files the sink does not pull, added to the cache by name                |
 | `tectonic-cache-filelist-linux.txt` | A primed cache's contents, kept as a diff baseline                      |
+| `smoke/`                            | The release smoke suite and its fixtures, with its own lock             |
 
 ## The installer
 
@@ -53,6 +54,30 @@ The three tool versions the workflow pins are claims the repo has measured, not 
 tectonic is the engine the shipped cache was primed against, pandoc 2.9.2.1 is the last version
 `text_direction.lua` survives, and ffmpeg is pinned only so a build is reproducible. yt-dlp is
 deliberately unpinned — it rots as YouTube changes signatures, so a build ships the newest one.
+
+## The release smoke suite
+
+`smoke/` is `@playwright/test` driving the installed exe through `_electron`, one ordered file,
+since each check builds on the machine state the last one left: install, boot, first run, the
+pipeline, quit, the browser chain, and an in-place update. It needs an installed Windows build, so
+off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` works.
+
+- **Offline, enforced.** Per-program outbound firewall rules block `FastStudy.exe`, `services.exe`,
+  every exe under `resources/bin/` and the state root's yt-dlp copy. The suite first proves a
+  blocked program still reaches loopback and reaches nothing else, so a wrong firewall assumption
+  fails under its own name rather than as a boot timeout.
+- **No provider is faked or reached.** The provider steps run one at a time and must fail on the
+  network, which proves the frozen SDKs import and build a request. A fixed transcript and summary
+  go in through `database/`'s routes, so the PDF step runs for real.
+- **Disk only through `database/`**, with the URLs and launch secret read off `window.faststudy`.
+  The suite never spells the `DATA_ROOT` layout.
+- **`data-testid`s only**, never visible text — the contract in `frontend/docs/ARCHITECTURE.md` and
+  `electron/docs/BOOT.md`. The one text read is the backend's untranslated step error.
+- Launched with `--lang=en-US`, so a failure screenshot is readable.
+
+Each assumption only a Windows run can prove — the silent per-user install, Playwright attaching to
+the packaged exe, the loopback exemption, a renamed browser dir reading as uninstalled, an unsigned
+update from a generic feed replacing `resources/` wholesale — fails with a message naming it.
 
 ## Staging the resources tree
 

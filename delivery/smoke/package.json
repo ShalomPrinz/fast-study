@@ -1,0 +1,13 @@
+{
+  "name": "faststudy-release-smoke",
+  "private": true,
+  "type": "module",
+  "description": "Release smoke suite: drives the installed Windows build of FastStudy",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "pdfjs-dist": "6.3.289"
+  }
+}
