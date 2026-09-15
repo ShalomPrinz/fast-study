@@ -24,6 +24,8 @@ Verification — nothing here is buildable end to end off Windows, so verify wha
 - `cd backend && uv run --with pyinstaller pyinstaller ../delivery/services.spec` builds a Linux bundle; `build/services/services database` / `backend` with `FASTSTUDY_PORT=0` must print `FASTSTUDY_PORT=<n>` and answer `/health`.
 - `cd delivery/smoke && npx playwright test --list` to prove the suite parses; it cannot run here, since it needs an installed Windows build.
 - `npm run lint` from the repo root, and `uvx ruff check delivery`.
+- WSL interop is off (`powershell.exe` fails with "Exec format error"), so a `lib/windows.js` helper can only be exercised under a Linux `pwsh` standing in for it on PATH.
+- The dev services, pandoc and tectonic do run locally; start the backend with `GROQ_API_KEY=` and `GEMINI_API_KEY=` exported empty, since `load_dotenv` never overrides a set variable and the worktree `.env` holds real keys.
 - A smoke check, workflow step or packaged-path assumption that only a Windows runner can prove is reported as unproven until the first dispatch — never as working.
 
 When your changes make `delivery/README.md`, `delivery/SMOKE_TEST.md`, `electron/docs/BOOT.md`'s tree, or the root `CLAUDE.md`'s frozen-bundle section outdated, update the `delivery/` docs in the same pass and report the rest as follow-ups. Keep docs concise; one short line is the default.

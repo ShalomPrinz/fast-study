@@ -243,6 +243,7 @@ export default function MainView() {
     pdfExists && {
       label: t`Open PDF`,
       onClick: () => openLectureFile(course, lecture, 'summary.pdf', kind),
+      testId: 'open-pdf',
     },
     pdfUploaded && {
       label: t`Open in Drive`,
@@ -251,7 +252,13 @@ export default function MainView() {
   ].filter(Boolean) as LectureAction[]
 
   return (
-    <main className="main-view main-view--page">
+    <main
+      className="main-view main-view--page"
+      data-testid="lecture-view"
+      data-course={course}
+      data-lecture={lecture}
+      data-kind={kind}
+    >
       <PageHeader
         eyebrow={course}
         title={lecture}
@@ -286,6 +293,7 @@ export default function MainView() {
             {stages.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
               const exists = files[file].exists
               const isRunning = runningFile === file
+              const state = exists ? 'done' : isRunning ? 'running' : 'pending'
               const prereqMet = !prereq || files[prereq].exists
               const isResumeTranscribe =
                 file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
@@ -306,8 +314,11 @@ export default function MainView() {
                 <div
                   key={file}
                   className={`pipeline-row${isRunning ? ' pipeline-row--running' : ''}`}
+                  data-testid={step ? 'step-status' : undefined}
+                  data-step={step}
+                  data-status={step ? state : undefined}
                 >
-                  <StatusNode state={exists ? 'done' : isRunning ? 'running' : 'pending'} />
+                  <StatusNode state={state} />
                   <div className="pipeline-row-body">
                     <div className="pipeline-stage-line">
                       <span
@@ -400,11 +411,11 @@ export default function MainView() {
           )}
 
           {lectureError && (
-            <div className="lecture-error" role="alert">
+            <div className="lecture-error" role="alert" data-testid="lecture-error">
               <strong>
                 <Trans>Last error:</Trans>
               </strong>{' '}
-              {lectureError}
+              <span data-testid="lecture-error-message">{lectureError}</span>
             </div>
           )}
 

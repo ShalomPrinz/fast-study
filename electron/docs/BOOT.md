@@ -38,6 +38,9 @@ still reads ready and a retry cannot leave a second copy of a service holding a 
 re-runs the whole boot from a clean slate — a probed-once startup check aside, nothing from the
 failed attempt is carried — and **Quit** ends the app.
 
+The page's test ids are a contract held for `delivery/smoke/`: each row's `data-testid="boot-row"` with
+`data-service` and `data-state` (main's raw values), and `boot-error`, `boot-log`, `boot-retry`.
+
 ## Why each peer is a plain env var
 
 `database/` calls nobody, `auto/` calls nobody, `backend/` calls `database/`, `server/` calls all

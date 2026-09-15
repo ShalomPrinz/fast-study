@@ -28,6 +28,7 @@ export default function DataRootField({ value, onChange, confirmed, onConfirmedC
       </p>
       <input
         id="data-root"
+        data-testid="data-root-input"
         className="settings-input settings-input--code"
         value={value}
         spellCheck={false}
@@ -54,6 +55,7 @@ export default function DataRootField({ value, onChange, confirmed, onConfirmedC
         <label className="settings-check">
           <input
             type="checkbox"
+            data-testid="data-root-confirm"
             checked={confirmed ?? false}
             onChange={(e) => onConfirmedChange(e.target.checked)}
           />

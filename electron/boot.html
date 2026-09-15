@@ -158,10 +158,10 @@
       <h1>Fast Study</h1>
       <p class="sub" id="sub">Starting services…</p>
       <ul id="services"></ul>
-      <p class="error" id="error" hidden></p>
-      <p class="log" id="log" hidden></p>
+      <p class="error" id="error" data-testid="boot-error" hidden></p>
+      <p class="log" id="log" data-testid="boot-log" hidden></p>
       <div class="actions" id="actions" hidden>
-        <button class="primary" id="retry">Try again</button>
+        <button class="primary" id="retry" data-testid="boot-retry">Try again</button>
         <button id="quit">Quit</button>
       </div>
     </main>

@@ -39,6 +39,17 @@ export default [
     rules: baseline,
   },
 
+  // Release smoke suite: ESM on Node, with `page.evaluate` callbacks that run in the app's renderer.
+  {
+    files: ['delivery/smoke/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node, ...globals.browser },
+    },
+    rules: baseline,
+  },
+
   // Electron launcher: CommonJS, because a sandboxed preload script cannot be ESM and
   // splitting one small package across both module systems buys nothing.
   {

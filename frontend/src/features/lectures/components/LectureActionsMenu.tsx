@@ -6,6 +6,8 @@ import './LectureActionsMenu.css'
 export interface LectureAction {
   label: string
   onClick: () => void
+  // A smoke-suite selector for the one item it drives (see docs/ARCHITECTURE.md).
+  testId?: string
 }
 
 // The overflow beside the page's one primary button: the per-file actions that no longer sit inline
@@ -38,6 +40,7 @@ export default function LectureActionsMenu({ actions }: { actions: LectureAction
     <div className="actions-menu" ref={ref}>
       <button
         className="btn btn--ghost actions-menu-btn"
+        data-testid="lecture-actions-menu"
         onClick={() => setOpen((v) => !v)}
         title={t`More actions`}
         aria-haspopup="menu"
@@ -47,10 +50,11 @@ export default function LectureActionsMenu({ actions }: { actions: LectureAction
       </button>
       {open && (
         <div className="actions-menu-list" role="menu">
-          {actions.map(({ label, onClick }) => (
+          {actions.map(({ label, onClick, testId }) => (
             <button
               key={label}
               className="actions-menu-item"
+              data-testid={testId}
               role="menuitem"
               onClick={() => {
                 setOpen(false)

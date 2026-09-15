@@ -1,0 +1,54 @@
+name: Publish
+
+# Manual only, no input, and it builds nothing: it flips the draft Release that build.yml attached
+# the smoke-tested files to, which is the moment every installed copy's updater can see it. Run it
+# on the same commit the build ran on, since that is the draft it looks for.
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    # Shared with build.yml's draft job, so the files cannot be replaced mid-flip.
+    concurrency:
+      group: release
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Flip the tested draft live
+        run: |
+          version=$(node -p "require('./electron/package.json').version")
+          tag="v$version"
+          if ! view=$(gh release view "$tag" --json isDraft,targetCommitish,assets); then
+            echo "::error::no draft $tag; run build.yml on $GITHUB_SHA first"
+            exit 1
+          fi
+          if [ "$(jq -r .isDraft <<< "$view")" != "true" ]; then
+            echo "::error::$tag is already published"
+            exit 1
+          fi
+          target=$(jq -r .targetCommitish <<< "$view")
+          if [ "$target" != "$GITHUB_SHA" ]; then
+            echo "::error::draft $tag was built from $target, not the dispatched $GITHUB_SHA"
+            exit 1
+          fi
+          # A draft whose upload died halfway would go live without what the updater reads.
+          for asset in "FastStudy-Setup-$version.exe" "FastStudy-Setup-$version.exe.blockmap" latest.yml; do
+            if ! jq -e --arg name "$asset" '.assets | any(.name == $name)' <<< "$view" > /dev/null; then
+              echo "::error::draft $tag has no $asset"
+              exit 1
+            fi
+          done
+          # Publishing creates the tag at the target; one that already exists would be reused as-is.
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "::error::tag $tag already exists"
+            exit 1
+          fi
+          gh release edit "$tag" --draft=false --latest
+          echo "published $tag at $GITHUB_SHA"

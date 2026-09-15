@@ -11,37 +11,45 @@ runtime, and no dev command touches any of it.
 | `kitchen-sink.md` + `probe.png`     | The document the prime renders                                          |
 | `cache-supplement.txt`              | Files the sink does not pull, added to the cache by name                |
 | `tectonic-cache-filelist-linux.txt` | A primed cache's contents, kept as a diff baseline                      |
+| `smoke/`                            | The release smoke suite and its fixtures, with its own lock             |
+| `SMOKE_TEST.md`                     | The manual half of the release check                                    |
 
 ## The installer
 
-`.github/workflows/release.yml`, run by hand from the Actions tab, is the only thing that produces
+`.github/workflows/build.yml`, run by hand from the Actions tab, is the only thing that produces
 one. It runs on `windows-latest` because neither PyInstaller nor electron-builder's NSIS target can
 cross-compile from WSL, so nothing here is buildable on a dev machine — which is also why everything
 the build reads has to be committed, `backend/credentials.json` alone excepted: it arrives as the
 `GOOGLE_CREDENTIALS_JSON` Actions secret, and a build without it still produces a bundle, just one
 that cannot do Drive consent.
 
-Roughly 20 minutes end to end, most of it the LaTeX prime and ~450MB of binary downloads. The
-artifact is one unsigned per-user NSIS `.exe`.
+Roughly 20 minutes to build, most of it the LaTeX prime and ~450MB of binary downloads, then the
+smoke job. The artifact is one unsigned per-user NSIS `.exe`.
 
-### Publishing one
+### Build, test, publish
 
-The dispatch takes a `publish` boolean, and it defaults to **false**: an ordinary run builds the
-installer and uploads it as a workflow artifact, publishing nothing. That default is the whole
-review gate — the workflow runs no tests, and the failures packaging actually produces only appear
-on a clean Windows machine, so the artifact from a `publish=false` run is what the release
-smoke-test checklist is run against.
+Two workflows, both dispatched by hand, and neither takes an input. The bytes users update to are
+exactly the bytes the smoke job tested.
 
-`publish=true` runs `npm run release` instead of `npm run dist`, and electron-builder's GitHub
-publisher creates a **live** release on the public `ShalomPrinz/fast-study` tagged `v<version>`,
-carrying the `.exe`, its `.blockmap` and `latest.yml`. That `latest.yml` is what every installed
-copy's updater reads; without it the release is invisible to them. There is no draft step — a
-release is published the moment the run goes green, and pulling one back means deleting it.
+- **`build.yml`** builds with `--publish never` — the installer, its `.blockmap` and `latest.yml`,
+  plus a second installer of the same staged tree at a lower version that exists only for the
+  update check and never leaves Actions. Its smoke job installs the uploaded artifact on a fresh
+  runner and runs `smoke/`; on failure it uploads screenshots, the Playwright traces and every
+  `launch.log`. Only a green smoke job attaches the three files to a **draft** Release `v<version>`
+  targeted at the built commit. Rebuilding the same version replaces the draft's files; a version
+  that is already published is refused.
+- **`publish.yml`** builds nothing. It reads the version at the dispatched commit, refuses unless a
+  draft `v<version>` targets that commit and carries all three files, and flips it live, which is
+  when the tag is created.
+
+electron-updater never sees a draft, so a tested build sits invisible to every installed copy until
+`publish.yml` runs. `latest.yml` is what those copies read. Run [`SMOKE_TEST.md`](SMOKE_TEST.md) on
+a real machine against the draft's installer before publishing.
 
 Bump `version` in `electron/package.json` in a commit **before** dispatching. It is the tag, the
-installer's file name and what `app.getVersion()` reports, and publishing twice from one version
-fails on the existing tag. The launcher's side of this — the silent check, the download and the
-install on quit — is [`electron/docs/UPDATES.md`](../electron/docs/UPDATES.md).
+installer's file name and what `app.getVersion()` reports. The launcher's side of this — the silent
+check, the download and the install on quit — is
+[`electron/docs/UPDATES.md`](../electron/docs/UPDATES.md).
 
 Unsigned means **SmartScreen blocks the first run** on every machine: the dialog reads "Windows
 protected your PC" with only a Don't run button, and the installer starts from **More info → Run
@@ -53,6 +61,37 @@ The three tool versions the workflow pins are claims the repo has measured, not 
 tectonic is the engine the shipped cache was primed against, pandoc 2.9.2.1 is the last version
 `text_direction.lua` survives, and ffmpeg is pinned only so a build is reproducible. yt-dlp is
 deliberately unpinned — it rots as YouTube changes signatures, so a build ships the newest one.
+
+## The release smoke suite
+
+`smoke/` is `@playwright/test` driving the installed exe through `_electron`, one ordered file,
+since each check builds on the machine state the last one left: install, boot, first run, the
+pipeline, quit, the browser chain, and an in-place update. It needs an installed Windows build, so
+off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` works.
+
+- **Offline, enforced.** Per-program outbound firewall rules block `FastStudy.exe`, `services.exe`,
+  every exe under `resources/bin/` and the state root's yt-dlp copy. The suite first proves a
+  blocked program still reaches loopback and reaches nothing else, so a wrong firewall assumption
+  fails under its own name rather than as a boot timeout.
+- **No provider is faked or reached.** The provider steps run one at a time and must fail on the
+  network, which proves the frozen SDKs import and build a request. A fixed transcript and summary
+  go in through `database/`'s routes, so the PDF step runs for real.
+- **Disk only through `database/`**, with the URLs and launch secret read off `window.faststudy`.
+  The suite never spells the `DATA_ROOT` layout.
+- **`data-testid`s only**, never visible text — the contract in `frontend/docs/ARCHITECTURE.md` and
+  `electron/docs/BOOT.md`.
+- **No UI state, so through the backend.** A provider failure and a locked `summary.pdf` have no
+  per-step failed state in the UI, so the suite runs the step via backend `run/{step}` and asserts
+  the returned error equals `lecture-error-message` — the one text read, the backend's untranslated
+  prose; the translated toast is not asserted. The lock is PowerShell holding the file with no
+  sharing, and the error carries `database/`'s "is open in another program" wording.
+- **Live SSE is the audio step flipping pending → done** without a reload, never `running`, which
+  a fast failure can skip.
+- Launched with `--lang=en-US`, so a failure screenshot is readable.
+
+Each assumption only a Windows run can prove — the silent per-user install, Playwright attaching to
+the packaged exe, the loopback exemption, a renamed browser dir reading as uninstalled, an unsigned
+update from a generic feed replacing `resources/` wholesale — fails with a message naming it.
 
 ## Staging the resources tree
 

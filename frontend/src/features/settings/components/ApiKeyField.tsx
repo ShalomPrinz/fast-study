@@ -90,6 +90,8 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
       </div>
       <input
         id={`key-${provider.id}`}
+        data-testid="api-key-input"
+        data-provider={provider.id}
         className="settings-input settings-input--code"
         type="password"
         autoComplete="off"
@@ -101,7 +103,14 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
         // The change event carrying the pasted text fires after `paste`, so probe on the next tick.
         onPaste={() => setTimeout(() => void probe(), 0)}
       />
-      <p className={`settings-status ${status ? (TONE[status.kind] ?? '') : ''}`}>{message()}</p>
+      <p
+        className={`settings-status ${status ? (TONE[status.kind] ?? '') : ''}`}
+        data-testid="api-key-status"
+        data-provider={provider.id}
+        data-status={status?.kind}
+      >
+        {message()}
+      </p>
     </div>
   )
 }

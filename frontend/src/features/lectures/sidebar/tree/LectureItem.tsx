@@ -90,6 +90,10 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     <li>
       <button
         className={`lecture-btn${isSelected ? ' selected' : ''}${dragOver ? ' drag-over' : ''}`}
+        data-testid="lecture"
+        data-course={course.name}
+        data-lecture={lecture.name}
+        data-kind={kind}
         onClick={(e) => {
           if (e.shiftKey) startRenaming(e)
           else onSelect(course.name, lecture.name, kind)

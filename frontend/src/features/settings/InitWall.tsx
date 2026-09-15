@@ -136,7 +136,7 @@ export default function InitWall({ stored, onDone }: Props) {
   }
 
   return (
-    <div className="init-wall">
+    <div className="init-wall" data-testid="init-wall">
       <div className="init-wall-card">
         <header className="init-wall-header">
           {/* The product name is a brand, not copy — it reads the same in every locale. */}
@@ -251,6 +251,7 @@ export default function InitWall({ stored, onDone }: Props) {
           )}
           <button
             className="btn btn--primary"
+            data-testid="init-wall-submit"
             disabled={saving || !options || missing.length > 0}
             onClick={() => void finish()}
           >
