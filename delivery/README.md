@@ -12,6 +12,7 @@ runtime, and no dev command touches any of it.
 | `cache-supplement.txt`              | Files the sink does not pull, added to the cache by name                |
 | `tectonic-cache-filelist-linux.txt` | A primed cache's contents, kept as a diff baseline                      |
 | `smoke/`                            | The release smoke suite and its fixtures, with its own lock             |
+| `SMOKE_TEST.md`                     | The manual half of the release check                                    |
 
 ## The installer
 
