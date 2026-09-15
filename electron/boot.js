@@ -38,6 +38,10 @@ function render(snapshot) {
     ...snapshot.services.map((service) => {
       const row = document.createElement('li');
       row.className = service.state;
+      // Test ids are a contract with delivery/smoke/: raw service name and state, never display text.
+      row.dataset.testid = 'boot-row';
+      row.dataset.service = service.name;
+      row.dataset.state = service.state;
       const dot = document.createElement('span');
       dot.className = 'dot';
       const label = document.createElement('span');
