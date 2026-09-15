@@ -38,6 +38,13 @@ consumer today.
 - **`ffmpeg` and `ffprobe` need `-version`, not `--version`.** They print the banner for either, but
   `--version` exits 1 — there is no input file to work on — which a preflight would read as a broken
   binary. `VERSION_FLAG` carries the two exceptions; everything else takes the GNU spelling.
+- **Every Node tool spawn spreads `NO_WINDOW` (`{ windowsHide: true }`, i.e. `CREATE_NO_WINDOW`).**
+  The launcher's own `windowsHide` on the service spawn silences a console-subsystem service's
+  children, which share its hidden console, but Windows ignores it for a GUI-subsystem one. Packaged,
+  the Node services run as `FastStudy.exe` (GUI) with no console, so each console tool they spawn
+  opens its own window unless the tool's spawn carries the flag. JS only: `services.exe` is built
+  `console=True`, so the Python side needs no counterpart until `delivery/services.spec` switches to
+  a windowed exe. Dev runs under `node.exe` (console) and never shows the difference.
 - **`check_tools` / `checkTools` never raise.** A missing tool disables one feature (no PDF, no
   YouTube), not the service, so the result is a map of reasons for the caller to log and publish. A
   service that refused to start would take down everything it can still do.
@@ -70,3 +77,6 @@ fails here rather than in a service:
 
 Both write their fake binaries to whatever path `tool_path` resolves, rather than composing a
 filename by hand, so the exe-suffix rule is exercised on whichever platform the suite runs on.
+
+`NO_WINDOW` and the yt-dlp state-copy branch are JS-only, so only the JS suite covers them. It pins
+the option's value, not its effect: Node ignores `windowsHide` off Windows, where CI runs.
