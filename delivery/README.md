@@ -79,7 +79,14 @@ off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` 
 - **Disk only through `database/`**, with the URLs and launch secret read off `window.faststudy`.
   The suite never spells the `DATA_ROOT` layout.
 - **`data-testid`s only**, never visible text — the contract in `frontend/docs/ARCHITECTURE.md` and
-  `electron/docs/BOOT.md`. The one text read is the backend's untranslated step error.
+  `electron/docs/BOOT.md`.
+- **No UI state, so through the backend.** A provider failure and a locked `summary.pdf` have no
+  per-step failed state in the UI, so the suite runs the step via backend `run/{step}` and asserts
+  the returned error equals `lecture-error-message` — the one text read, the backend's untranslated
+  prose; the translated toast is not asserted. The lock is PowerShell holding the file with no
+  sharing, and the error carries `database/`'s "is open in another program" wording.
+- **Live SSE is the audio step flipping pending → done** without a reload, never `running`, which
+  a fast failure can skip.
 - Launched with `--lang=en-US`, so a failure screenshot is readable.
 
 Each assumption only a Windows run can prove — the silent per-user install, Playwright attaching to
