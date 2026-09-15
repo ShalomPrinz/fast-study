@@ -69,7 +69,8 @@ exe = EXE(  # noqa: F821
     a.scripts,
     exclude_binaries=True,
     name="services",
-    # Console, not windowed: the launcher reads the FASTSTUDY_PORT line off this process's stdout.
+    # Console, not windowed: the launcher reads the FASTSTUDY_PORT line off stdout, and tool spawns (no
+    # CREATE_NO_WINDOW) stay hidden only by sharing this console, which windowsHide hides for console exes.
     console=True,
 )
 
