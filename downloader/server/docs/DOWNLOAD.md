@@ -8,6 +8,10 @@ that dir, and on a clean exit call the source's `upload` (upload + cleanup + not
 `uploadVideo` for curl/yt-dlp, `uploadMaterial` for `fetch`. Adding a source is a new
 module + one registry line — no runner/route edits.
 
+Every tool spawn — the runner's child, the yt-dlp size probe, the yt-dlp self-update — spreads
+`NO_WINDOW` from `@faststudy/tools`, or a packaged build flashes a console window per spawn
+([why](../../../lib/tools/CLAUDE.md)).
+
 ## curl (generic `.mp4`)
 
 Streaming sites gate `.mp4` URLs behind short-lived tokens and Referer/Origin
@@ -81,8 +85,7 @@ PATH yt-dlp.
   Seeding is synchronous and precedes the boot tool probe, which therefore spawns the same binary
   this run's downloads will. A shipped binary that is gone — quarantined, half-installed — seeds
   nothing and says so in one line; an existing copy is still good and still updates itself.
-- **Then `<copy> -U`**, unawaited, `stdio: 'ignore'`, `windowsHide` (a console-subsystem exe
-  otherwise pops up a console window on every packaged launch). Boot waits on nothing, and the one
+- **Then `<copy> -U`**, unawaited, `stdio: 'ignore'`, `NO_WINDOW` like every tool spawn. Boot waits on nothing, and the one
   thing it is sequenced after is the tool probe: `-U` swaps the exe in place, and a probe landing in
   that window would pin `/health` at `yt-dlp: missing` for the whole session. The child stays in the
   process group (never `detached`) so the launcher's kill on quit reaches it; yt-dlp writes the new

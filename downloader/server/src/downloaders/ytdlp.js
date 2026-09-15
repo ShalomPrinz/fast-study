@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
 import { uploadVideo } from '../services/database.js';
 import { statePath } from '@faststudy/runtime';
-import { toolPath } from '@faststudy/tools';
+import { NO_WINDOW, toolPath } from '@faststudy/tools';
 
 // Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
 // which yt-dlp resolves without a login.
@@ -47,7 +47,7 @@ function probeYoutubeSize(url) {
         '%(filesize,filesize_approx)s',
         url,
       ],
-      { timeout: 30000, env: { ...process.env, ...YT_PLAYER_JS_ENV } },
+      { timeout: 30000, env: { ...process.env, ...YT_PLAYER_JS_ENV }, ...NO_WINDOW },
       (err, stdout) => {
         if (err) return resolve(null);
         let total = 0;

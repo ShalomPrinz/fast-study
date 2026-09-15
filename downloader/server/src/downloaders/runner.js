@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { NO_WINDOW } from '@faststudy/tools';
 import {
   registerDownload,
   deregisterDownload,
@@ -66,6 +67,7 @@ export async function runDownloadJob(
       cwd: tempDir,
       stdio: ['ignore', 'ignore', 'pipe'],
       env: { ...process.env, ...env },
+      ...NO_WINDOW,
     });
     const tail = makeStderrTail(child);
     const entry = {

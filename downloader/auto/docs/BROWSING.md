@@ -70,7 +70,8 @@ The frontend never sees the download mechanism. `/list` and `/list/expand` retur
 
 An unexpanded playlist (`url` module) lists as ONE `expandable` item. Its `pageUrl` is the
 module's **direct external target** (`contents[0].fileurl`) — no redirect hop. `/list/expand`
-runs `yt-dlp --flat-playlist` straight on that URL. Non-YouTube targets are already filtered at
+runs `yt-dlp --flat-playlist` straight on that URL, spreading `NO_WINDOW` from `@faststudy/tools`
+([why](../../../lib/tools/CLAUDE.md)). Non-YouTube targets are already filtered at
 list time by `canHandle` (see above), so the YouTube-host check in `listEntries` is now
 a fallback: an echoed ref can still reach expand/download, and a non-YouTube (or unparseable)
 host there is a `422 {status:'unsupported'}` (a genuinely-unsupported source, distinct from a 500

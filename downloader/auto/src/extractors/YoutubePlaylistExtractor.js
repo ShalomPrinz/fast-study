@@ -4,7 +4,7 @@ import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
 import { UnsupportedError } from '../lib/errors.js';
 import { statePath } from '@faststudy/runtime';
-import { toolPath } from '@faststudy/tools';
+import { NO_WINDOW, toolPath } from '@faststudy/tools';
 
 const execFileAsync = promisify(execFile);
 
@@ -95,13 +95,11 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
     // string — so titles with metacharacters can't inject.
     let stdout;
     try {
-      ({ stdout } = await execFileAsync(toolPath('yt-dlp'), [
-        '--flat-playlist',
-        ...CACHE_DIR_FLAGS,
-        '--print',
-        '%(title)s\t%(url)s',
-        finalUrl,
-      ]));
+      ({ stdout } = await execFileAsync(
+        toolPath('yt-dlp'),
+        ['--flat-playlist', ...CACHE_DIR_FLAGS, '--print', '%(title)s\t%(url)s', finalUrl],
+        { ...NO_WINDOW },
+      ));
     } catch (err) {
       const detail =
         err.code === 'ENOENT'

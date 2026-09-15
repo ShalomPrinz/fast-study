@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { statePath } from '@faststudy/runtime';
+import { NO_WINDOW } from '@faststudy/tools';
 
 const EXE_SUFFIX = process.platform === 'win32' ? '.exe' : '';
 
@@ -70,7 +71,6 @@ export function updateYtdlp() {
   if (!copy || !fs.existsSync(copy)) return;
   // In the process group (never detached) so the launcher's kill on quit reaches it; yt-dlp writes
   // the new binary beside the old one and renames, so a kill before that leaves the copy working.
-  // windowsHide, because a console-subsystem exe otherwise pops a console window on every launch.
-  const child = spawn(copy, ['-U'], { stdio: 'ignore', windowsHide: true });
+  const child = spawn(copy, ['-U'], { stdio: 'ignore', ...NO_WINDOW });
   child.on('error', (err) => console.error(`yt-dlp self-update: ${err.message}`));
 }
