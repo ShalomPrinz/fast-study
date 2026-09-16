@@ -7,7 +7,7 @@ export type IconName =
   | 'search'
   | 'lecture'
   | 'nav-lectures'
-  | 'nav-courses'
+  | 'nav-running'
   | 'nav-downloads'
   | 'nav-search'
   | 'nav-settings'
@@ -125,7 +125,7 @@ const LectureIcon = () => (
   </svg>
 )
 
-// The four sidebar nav glyphs share a 16px box so they line up down the rail, one size above the
+// The five sidebar nav glyphs share a 16px box so they line up down the rail, one size above the
 // 13px row icons that sit inside text.
 const NavLecturesIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -134,13 +134,14 @@ const NavLecturesIcon = () => (
   </svg>
 )
 
-// Four panes — a course is a grid of parts, against the lecture's single frame.
-const NavCoursesIcon = () => (
+// A pulse line — pipelines at work, against the lecture's still frame.
+const NavRunningIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
-      d="M3 3h4.5v4.5H3zM8.5 3H13v4.5H8.5zM3 8.5h4.5V13H3zM8.5 8.5H13V13H8.5z"
+      d="M1.5 8.5h3l2-5 3 9 2-4h3"
       stroke="currentColor"
       strokeWidth="1.3"
+      strokeLinecap="round"
       strokeLinejoin="round"
     />
   </svg>
@@ -160,7 +161,7 @@ const NavDownloadsIcon = () => (
   </svg>
 )
 
-// A gear — the settings destination, at the same 16px box as its four nav siblings.
+// A gear — the settings destination, at the same 16px box as its nav siblings.
 const NavSettingsIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="8" cy="8" r="2.4" stroke="currentColor" strokeWidth="1.3" />
@@ -321,7 +322,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   search: SearchIcon,
   lecture: LectureIcon,
   'nav-lectures': NavLecturesIcon,
-  'nav-courses': NavCoursesIcon,
+  'nav-running': NavRunningIcon,
   'nav-downloads': NavDownloadsIcon,
   'nav-search': NavSearchIcon,
   'nav-settings': NavSettingsIcon,

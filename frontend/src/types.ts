@@ -127,8 +127,6 @@ export interface RunnerStatus {
   errors: Record<string, string>
 }
 
-export type AppMode = 'lectures' | 'courses'
-
 export type CoursePhase = 'extract' | 'analyze' | 'topics' | 'compile' | 'to_pdf'
 
 export interface OverviewExtractor {

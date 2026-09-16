@@ -1,19 +1,13 @@
-import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
-import { Link, useLocation } from 'react-router-dom'
-import type { AppMode } from '@/types'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Icon from '@/shared/components/Icon'
 import type { IconName } from '@/shared/components/Icon'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
+import { lastLectureRoute, readLastLecture } from '@/features/lectures/utils/lastLecture'
 import LanguageSwitcher from './LanguageSwitcher'
 import './Sidebar.css'
-
-// Kept from the segmented switch this nav replaced, so an existing choice survives the redesign.
-const MODE_KEY = 'fastStudyMode'
-
-function storedMode(): AppMode {
-  return localStorage.getItem(MODE_KEY) === 'courses' ? 'courses' : 'lectures'
-}
 
 // How many downloads are running right now, for the Downloads badge.
 function useRunningDownloads(): number {
@@ -23,11 +17,28 @@ function useRunningDownloads(): number {
   return running
 }
 
+// `current/total` while the runner is on, for the Running pipelines badge; undefined when idle.
+function useRunnerProgress(): string | undefined {
+  const { status } = useRunnerStatus()
+  if (!status?.runner.running) return undefined
+  // `done` counts finished lectures; display the 1-indexed current one, capped at total.
+  const current = Math.min(status.runner.done + 1, status.runner.total)
+  return `${current}/${status.runner.total}`
+}
+
 function rowClass(active: boolean): string {
   return `sidebar-nav-row${active ? ' active' : ''}`
 }
 
-function NavBody({ icon, label, badge }: { icon: IconName; label: string; badge?: number }) {
+function NavBody({
+  icon,
+  label,
+  badge,
+}: {
+  icon: IconName
+  label: string
+  badge?: string | number
+}) {
   return (
     <>
       <Icon icon={icon} />
@@ -40,22 +51,17 @@ function NavBody({ icon, label, badge }: { icon: IconName; label: string; badge?
 export default function Sidebar() {
   const { t } = useLingui()
   const { pathname } = useLocation()
-  // Which tree the body shows; persisted so a reload reopens the one that was in use.
-  const [mode, setMode] = useState<AppMode>(storedMode)
-  const running = useRunningDownloads()
+  const navigate = useNavigate()
+  const { courses } = useCourseTreeContext()
+  const runningDownloads = useRunningDownloads()
+  const runnerProgress = useRunnerProgress()
 
-  function selectMode(m: AppMode) {
-    setMode(m)
-    localStorage.setItem(MODE_KEY, m)
-  }
-
-  // A route row outranks the two tree rows: on a route the tree is still there, but
-  // it is not what the main pane is showing.
+  const onRunning = pathname.startsWith('/running')
   const onDownloads = pathname.startsWith('/downloads')
   const onSearch = pathname.startsWith('/search')
   const onSettings = pathname.startsWith('/settings')
-  // `/running` is reached from the tree's own head row, which owns its active state.
-  const onRoute = onDownloads || onSearch || onSettings || pathname.startsWith('/running')
+  // Every path the other rows don't claim is `/`, `/course/:c` or `/:c/:l[/edit]` — a lectures page.
+  const onLectures = !(onRunning || onDownloads || onSearch || onSettings)
 
   return (
     <aside className="sidebar">
@@ -66,19 +72,16 @@ export default function Sidebar() {
 
       <nav className="sidebar-nav-block">
         <button
-          className={rowClass(!onRoute && mode === 'lectures')}
-          onClick={() => selectMode('lectures')}
+          className={rowClass(onLectures)}
+          onClick={() => navigate(lastLectureRoute(courses, readLastLecture()))}
         >
           <NavBody icon="nav-lectures" label={t`Lectures`} />
         </button>
-        <button
-          className={rowClass(!onRoute && mode === 'courses')}
-          onClick={() => selectMode('courses')}
-        >
-          <NavBody icon="nav-courses" label={t`Courses`} />
-        </button>
+        <Link className={rowClass(onRunning)} to="/running">
+          <NavBody icon="nav-running" label={t`Running pipelines`} badge={runnerProgress} />
+        </Link>
         <Link className={rowClass(onDownloads)} to="/downloads">
-          <NavBody icon="nav-downloads" label={t`Downloads`} badge={running} />
+          <NavBody icon="nav-downloads" label={t`Downloads`} badge={runningDownloads} />
         </Link>
         <Link className={rowClass(onSearch)} to="/search">
           <NavBody icon="nav-search" label={t`Search`} />

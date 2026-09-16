@@ -160,10 +160,3 @@
 .recitation-list {
   padding-inline-start: var(--space-4);
 }
-
-/* Flat course list — no tree indent */
-/* Keep below .lecture-list: `CoursesList` renders `lecture-list course-list` and this
-   overrides `.lecture-list`'s padding-inline-start at equal specificity. */
-.course-list {
-  padding-inline: var(--space-1);
-}
