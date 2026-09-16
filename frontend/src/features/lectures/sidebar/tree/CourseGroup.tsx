@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useMatch } from 'react-router-dom'
 import type { Course } from '@/types'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useAddLecture } from '@/features/lectures/hooks/useAddLecture'
@@ -6,6 +7,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { CourseGroupContext } from './CourseGroupContext'
 import { LectureListProvider } from './LectureListContext'
 import CourseHeader from './CourseHeader'
+import CourseOverviewRow from './CourseOverviewRow'
 import LectureList from './LectureList'
 import AddLectureInput from './AddLectureInput'
 import RecitationsGroup from './RecitationsGroup'
@@ -14,6 +16,7 @@ import './CourseGroup.css'
 
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()
+  const overviewCourse = useMatch('/course/:course')?.params.course
   const { refreshCourses } = useCourseTreeContext()
   const add = useAddLecture(course)
 
@@ -21,14 +24,15 @@ export default function CourseGroup({ course }: { course: Course }) {
   const [recExpanded, setRecExpanded] = useState(false)
   const didAutoExpandRef = useRef(false)
 
-  // Expand once when this first becomes the selected course (deep link).
+  // Expand once when this course's lecture or overview first becomes the open page (deep link).
   useEffect(() => {
     if (didAutoExpandRef.current) return
-    if (selected?.course !== course.name) return
+    const onLecture = selected?.course === course.name
+    if (!onLecture && overviewCourse !== course.name) return
     didAutoExpandRef.current = true
     setExpanded(true)
-    if (selected.kind === 'recitation') setRecExpanded(true)
-  }, [selected, course.name])
+    if (onLecture && selected.kind === 'recitation') setRecExpanded(true)
+  }, [selected, overviewCourse, course.name])
 
   function toggleCourse() {
     setExpanded((v) => !v)
@@ -44,6 +48,7 @@ export default function CourseGroup({ course }: { course: Course }) {
 
         {expanded && (
           <ul className="lecture-list">
+            <CourseOverviewRow />
             <LectureListProvider kind="lecture">
               <LectureList />
               <AddLectureInput />

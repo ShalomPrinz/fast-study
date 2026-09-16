@@ -11,6 +11,7 @@ export type IconName =
   | 'nav-downloads'
   | 'nav-search'
   | 'nav-settings'
+  | 'overview'
   | 'rotate'
   | 'trash'
   | 'overflow'
@@ -180,6 +181,18 @@ const NavSearchIcon = () => (
   </svg>
 )
 
+// A two-by-two grid — a course's overview page, in the slot a tree row's dot takes.
+const OverviewIcon = () => (
+  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M1.5 1.5h3.5v3.5H1.5zM7 1.5h3.5v3.5H7zM1.5 7h3.5v3.5H1.5zM7 7h3.5v3.5H7z"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 // Counter-clockwise arrow — re-run a step that already produced its file.
 const RotateIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -312,6 +325,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   'nav-downloads': NavDownloadsIcon,
   'nav-search': NavSearchIcon,
   'nav-settings': NavSettingsIcon,
+  overview: OverviewIcon,
   rotate: RotateIcon,
   trash: TrashIcon,
   overflow: OverflowIcon,
