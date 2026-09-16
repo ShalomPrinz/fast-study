@@ -196,11 +196,24 @@ jobs:
         shell: pwsh
         run: Copy-Item "$env:LOCALAPPDATA\FastStudy\logs" delivery/smoke/test-results/state-logs -Recurse -ErrorAction SilentlyContinue
 
+      # Two artifacts, because the traces are ~11MB of the ~11MB and the text is what gets read.
+      # Everything but the traces, so a new diagnostic file rides along without a pattern change.
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: smoke-failure
-          path: delivery/smoke/test-results/
+          name: smoke-logs
+          path: |
+            delivery/smoke/test-results/
+            !delivery/smoke/test-results/traces/**
+
+      # Screenshots and DOM snapshots for a failed UI assertion; absent when the failure preceded
+      # the first launch, which is a normal outcome and not worth an annotation.
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-traces
+          path: delivery/smoke/test-results/traces/
+          if-no-files-found: ignore
 
   # Attaches the tested files, never rebuilt ones, and never publishes. A rebuild of the same version
   # replaces the draft's files and re-targets it at this commit.

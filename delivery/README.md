@@ -34,13 +34,19 @@ exactly the bytes the smoke job tested.
 - **`build.yml`** builds with `--publish never` — the installer, its `.blockmap` and `latest.yml`,
   plus a second installer of the same staged tree at a lower version that exists only for the
   update check and never leaves Actions. Its smoke job installs the uploaded artifact on a fresh
-  runner and runs `smoke/`; on failure it uploads screenshots, the Playwright traces and every
-  `launch.log`. Only a green smoke job attaches the three files to a **draft** Release `v<version>`
-  targeted at the built commit. Rebuilding the same version replaces the draft's files; a version
-  that is already published is refused.
+  runner and runs `smoke/`; on failure it uploads two artifacts — `smoke-logs`, the per-launch
+  `launch.log`s, the state root's own and the failing test's DOM snapshot, ~60KB, and
+  `smoke-traces`, the Playwright traces, ~11MB, which almost nothing needs. Only a green smoke job
+  attaches the three files to a **draft** Release `v<version>` targeted at the built commit.
+  Rebuilding the same version replaces the draft's files; a version that is already published is
+  refused.
 - **`publish.yml`** builds nothing. It reads the version at the dispatched commit, refuses unless a
   draft `v<version>` targets that commit and carries all three files, and flips it live, which is
   when the tag is created.
+
+`.claude/skills/debug-ci/` reads both smoke artifacts by name and by their inner layout, from
+outside `delivery/` — nothing here fails when a rename breaks it, so it is a consumer to change in
+the same pass.
 
 electron-updater never sees a draft, so a tested build sits invisible to every installed copy until
 `publish.yml` runs. `latest.yml` is what those copies read. Run [`SMOKE_TEST.md`](SMOKE_TEST.md) on

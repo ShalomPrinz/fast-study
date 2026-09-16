@@ -44,7 +44,8 @@ export const settingsFile = () => path.join(userData(), 'settings.json');
 export const workDir = () => path.join(process.env.RUNNER_TEMP || os.tmpdir(), 'faststudy-smoke');
 export const dataRoot = (name) => path.join(workDir(), name);
 
-/** Where launch logs and traces land; the workflow uploads the whole directory on failure. */
+/** Where launch logs and traces land; on failure the workflow uploads `traces/` as `smoke-traces`
+ *  and everything else as `smoke-logs`, so fetching the text does not drag the traces along. */
 export const resultsDir = () => path.resolve('test-results');
 
 /** The installer the build job produced, and the version its `latest.yml` names. */
