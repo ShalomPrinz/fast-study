@@ -93,6 +93,12 @@ off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` 
   sharing, and the error carries `database/`'s "is open in another program" wording.
 - **Live SSE is the audio step flipping pending → done** without a reload, never `running`, which
   a fast failure can skip.
+- **An outcome, never a live process.** What Windows does asynchronously — a quit-time NSIS install,
+  an update — is asserted by the durable state it leaves, never by "a process of this name is
+  running", since the action routinely finishes before the first poll. A failure's forensics print
+  the raw observed value unnormalized even where the comparison normalizes it: rcedit stamps a
+  four-component ProductVersion, and the `0.1.0.0` a tidied log line would have hidden is what names
+  the defect.
 - Launched with `--lang=en-US`, so a failure screenshot is readable.
 
 Each assumption only a Windows run can prove — the silent per-user install, Playwright attaching to
