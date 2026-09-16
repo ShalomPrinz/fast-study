@@ -1,8 +1,21 @@
-import type { Course, Selected } from '@/types'
+import { matchPath } from 'react-router-dom'
+import type { Course, Kind, Selected } from '@/types'
 import { lectureRoute } from '@/shared/utils/url'
 import { findLecture } from './courseTree'
 
 const STORAGE_KEY = 'fastStudyLastLecture'
+
+// The lecture a path opens, or null; `/course/:course` also matches `/:course/:lecture` but the router ranks it as the overview.
+export function lectureToRemember(pathname: string, kind: Kind): Selected | null {
+  if (matchPath('/course/:course', pathname)) return null
+  const params = matchPath('/:course/:lecture/*', pathname)?.params
+  if (!params?.course || !params.lecture) return null
+  return {
+    course: decodeURIComponent(params.course),
+    lecture: decodeURIComponent(params.lecture),
+    kind,
+  }
+}
 
 // Remembers the open lecture so the Lectures nav row can reopen it; storage failures are ignored.
 export function writeLastLecture(sel: Selected): void {

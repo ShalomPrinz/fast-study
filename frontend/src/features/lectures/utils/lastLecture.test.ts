@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Course, Lecture } from '@/types'
-import { lastLectureRoute, readLastLecture, writeLastLecture } from './lastLecture'
+import {
+  lastLectureRoute,
+  lectureToRemember,
+  readLastLecture,
+  writeLastLecture,
+} from './lastLecture'
+import { lectureRoute } from '@/shared/utils/url'
 
 // A Map-backed stand-in: the helpers only need `getItem`/`setItem`, not a DOM.
 beforeEach(() => {
@@ -47,5 +53,38 @@ describe('readLastLecture', () => {
     expect(readLastLecture()).toBeNull()
     localStorage.setItem('fastStudyLastLecture', '{"course":"a","lecture":"b","kind":"x"}')
     expect(readLastLecture()).toBeNull()
+  })
+})
+
+describe('lectureToRemember', () => {
+  it('ignores the course overview, which also fits /:course/:lecture', () => {
+    expect(lectureToRemember('/course/Algebra', 'lecture')).toBeNull()
+  })
+
+  it('remembers a lecture page with the given kind', () => {
+    expect(lectureToRemember('/Algebra/Lecture 1', 'recitation')).toEqual({
+      course: 'Algebra',
+      lecture: 'Lecture 1',
+      kind: 'recitation',
+    })
+  })
+
+  it('ignores the lectures home', () => {
+    expect(lectureToRemember('/', 'lecture')).toBeNull()
+  })
+
+  it('decodes names the way lectureRoute encodes them', () => {
+    const route = lectureRoute('אלגברה', 'Lecture 1', 'lecture')
+    expect(lectureToRemember(route, 'lecture')).toEqual({
+      course: 'אלגברה',
+      lecture: 'Lecture 1',
+      kind: 'lecture',
+    })
+  })
+
+  it('round-trips a lecture page through storage back to its route', () => {
+    const route = lectureRoute('אלגברה', 'Lecture 1', 'lecture')
+    writeLastLecture(lectureToRemember(route, 'lecture')!)
+    expect(lastLectureRoute(courses, readLastLecture())).toBe(route)
   })
 })

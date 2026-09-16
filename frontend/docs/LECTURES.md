@@ -175,8 +175,8 @@ Settings — each active on its own pages (`docs/ARCHITECTURE.md` §Routes). Run
 idle; Downloads carries a count of running jobs, read off `DownloadJobsContext`. The footer holds only
 `LanguageSwitcher`; every glyph in the sidebar is inline SVG from `Icon`.
 
-Lectures reopens the last lecture opened: `LecturesLayout` writes each change of the open lecture to
-`localStorage['fastStudyLastLecture']` (`utils/lastLecture.ts`), and the row navigates to it while the
+Lectures reopens the last lecture opened: `LecturesLayout` writes each lecture page it shows (never the
+`/course/:course` overview) to `localStorage['fastStudyLastLecture']` (`utils/lastLecture.ts`), and the row navigates to it while the
 tree still has it, falling back to `/` when it was renamed, deleted or never stored.
 
 ## Tree pane
