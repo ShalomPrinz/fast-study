@@ -1,17 +1,3 @@
-/* The runner page reads as one centred column: it is a status view with no side rail, unlike the
-   lecture, course and downloads pages, which start at the body's inline edge. */
-.page-column.page-column--centered {
-  margin-inline: auto;
-}
-
-/* The header band stays full-bleed, but its text lines up with the centred column below — a title
-   sitting at the inline edge above a centred stack reads as a bug. Scoped on the page rather than
-   a `PageHeader` modifier: this is the only view that centres, and `PageHeader` stays propless. */
-.runner-page .page-header-main {
-  max-width: 660px;
-  margin-inline: auto;
-}
-
 .stack {
   display: flex;
   flex-direction: column;

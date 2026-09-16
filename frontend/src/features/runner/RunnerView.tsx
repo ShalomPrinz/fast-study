@@ -187,7 +187,7 @@ export default function RunnerView() {
   ]
 
   return (
-    <main className="main-view main-view--page runner-page">
+    <main className="main-view main-view--page">
       <PageHeader
         title={t`Running pipelines`}
         meta={meta.map((item, i) => (
@@ -199,7 +199,7 @@ export default function RunnerView() {
       />
 
       <div className="page-body">
-        <div className="page-column page-column--centered">
+        <div className="page-column">
           <div className="stack">
             <section>
               <div className="section-head">

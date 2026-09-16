@@ -63,7 +63,7 @@ export default function DownloadsView() {
         />
 
         <div className="page-body">
-          <div className="page-column page-column--wide">
+          <div className="page-column">
             <div className="section-head">
               <h2 className="section-title">
                 <Trans>Course sources</Trans>

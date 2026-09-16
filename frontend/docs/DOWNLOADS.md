@@ -7,11 +7,11 @@ and each section's bulk run — see `SERVICES.md` for their clients and error si
 
 ## Layout
 
-A `PageHeader` band over a `.page-column--wide` body: the account state and the count of courses with a
+A `PageHeader` band over a `.page-column` body: the account state and the count of courses with a
 source are header metadata, then a **Course sources** caption over one `CourseSourceRow` per active course
 plus the dashed `AddCourseRow`, then — once a course is loaded — a **Recordings · course** caption over the
-`.recordings-panel`. Downloads is the one page read at 880px rather than 660px, because a recording's second
-line carries a kind toggle, a name input and an action side by side.
+`.recordings-panel`. The 880px page measure is sized for this page: a recording's second line carries a
+kind toggle, a name input and an action side by side.
 
 A source row is three grid tracks — name, URL, the pencil and Load recordings as one cell — with the side
 ones equal, so the URL sits at the row's midpoint and every row's URL lines up down the list however long

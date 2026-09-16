@@ -27,14 +27,9 @@
   padding: var(--space-7) var(--space-8);
 }
 
+/* The routed pages' measure: wide enough for a Downloads recording card's second line — kind toggle,
+   name input and action side by side. The lectures-tree pages narrow it in `LecturesLayout.css`. */
 .page-column {
-  max-width: 660px;
-}
-
-/* Downloads reads at a wider measure: a recording card's second line carries a kind toggle, a name
-   input and an action side by side, and the input needs room for a full lecture name. */
-/* Outspecifies `.page-column`'s max-width rather than relying on source order. */
-.page-column.page-column--wide {
   max-width: 880px;
 }
 

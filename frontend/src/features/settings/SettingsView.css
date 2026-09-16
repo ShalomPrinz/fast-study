@@ -6,6 +6,14 @@
   padding-block-end: var(--space-8);
 }
 
+/* The page reads at the wide 880px measure, but a key, path or model is short: cap each control, and the
+   label row above it, so a trailing "Get a key" or "Required" stays over the control's end edge. */
+.settings-page .settings-label,
+.settings-page .settings-input,
+.settings-page .settings-select {
+  max-width: 520px;
+}
+
 /* The runs the data-root confirm names, inside the modal. */
 .settings-run-list {
   margin-block: var(--space-3);

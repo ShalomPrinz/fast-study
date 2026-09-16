@@ -4,3 +4,8 @@
   min-width: 0;
   overflow: hidden;
 }
+
+/* Course and lecture pages share the row with the tree pane, so they keep the narrower 660px measure. */
+.lectures-layout .page-column {
+  max-width: 660px;
+}
