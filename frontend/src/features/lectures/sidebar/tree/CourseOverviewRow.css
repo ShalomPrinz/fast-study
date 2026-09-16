@@ -7,3 +7,8 @@
   flex-shrink: 0;
   color: var(--sidebar-muted);
 }
+
+/* Keep the glyph at its own size; as a flex item it would otherwise shrink to the 6px box. */
+.course-overview-icon svg {
+  flex-shrink: 0;
+}
