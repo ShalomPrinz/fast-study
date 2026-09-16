@@ -14,15 +14,23 @@ import RecitationsGroup from './RecitationsGroup'
 import '@/styles/sidebar-tree.css'
 import './CourseGroup.css'
 
+// Module scope outlives the tree pane's unmount, so active courses reopen as the user left them.
+const savedExpansion = new Map<string, { expanded: boolean; recExpanded: boolean }>()
+
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()
   const overviewCourse = useMatch('/course/:course')?.params.course
   const { refreshCourses } = useCourseTreeContext()
   const add = useAddLecture(course)
 
-  const [expanded, setExpanded] = useState(false)
-  const [recExpanded, setRecExpanded] = useState(false)
+  const saved = course.archived ? undefined : savedExpansion.get(course.name)
+  const [expanded, setExpanded] = useState(saved?.expanded ?? false)
+  const [recExpanded, setRecExpanded] = useState(saved?.recExpanded ?? false)
   const didAutoExpandRef = useRef(false)
+
+  useEffect(() => {
+    if (!course.archived) savedExpansion.set(course.name, { expanded, recExpanded })
+  }, [course.name, course.archived, expanded, recExpanded])
 
   // Expand once when this course's lecture or overview first becomes the open page (deep link).
   useEffect(() => {

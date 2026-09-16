@@ -207,6 +207,11 @@ State ownership is deliberate:
   recitations sub-group's open state survives collapsing and re-expanding the course. It auto-expands once
   the first time one of its lectures or its overview page is the open route (deep links), opening
   recitations too only for a recitation.
+- The pane unmounts on every route that doesn't show it, and only two things survive that, in module scope
+  for the session: each active course's `expanded`/`recExpanded` (a map in `CourseGroup.tsx`, keyed by
+  course name, still overridden by the auto-expand) and the course nav's scroll position, saved on each
+  scroll because a detached nav reads 0. Everything else — inline inputs, renames, the Archived section and
+  archived courses' expansion, upload prompts — resets.
 - `CourseGroupContext` carries `{ course, add }` and `LectureListContext` carries just `kind`, so the
   recursive rows reach them without prop-drilling. `AddLectureInput` renders only in the list whose kind is
   being added, so the two lists never show an input at once.
