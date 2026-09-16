@@ -75,12 +75,18 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   outputs of the run in progress.
 
 Every route that writes or deletes a file answers `423 Locked` when Windows refuses the operation
-because another process holds the file open (`ERROR_SHARING_VIOLATION` 32 / `ERROR_LOCK_VIOLATION`
-33) — a native PDF viewer left open on `summary.pdf` is the everyday cause, since the app opens
-PDFs in the user's own registered app. The `{error}` text names the file and the fix, and the
-backend passes it straight through into the pipeline step error. A `PermissionError` without one of
-those two codes stays a `400`: POSIX has no mandatory locking, so there it is a genuine permissions
-problem and mislabelling it would send the user chasing the wrong thing.
+because another process holds the file open — a native PDF viewer left open on `summary.pdf` is the
+everyday cause, since the app opens PDFs in the user's own registered app. The `{error}` text names
+the file and the fix, and the backend passes it straight through into the pipeline step error.
+
+Detecting it takes two checks, because the two ways to reach the filesystem report a lock
+differently. `os.unlink`/`os.replace` go through Win32 and carry `winerror`
+(`ERROR_SHARING_VIOLATION` 32 / `ERROR_LOCK_VIOLATION` 33). `open()`/`write_bytes()` go through the
+CRT, which sets `errno=EACCES` and leaves `winerror` unset — indistinguishable from a real denial
+until the alternatives are excluded, so on Windows an `EACCES` naming an existing, writable regular
+file counts as a lock too. Everything else stays a `400`: POSIX has no mandatory locking, and a
+read-only file or a directory is a genuine permissions problem that mislabelling would send the
+user chasing the wrong thing.
 
 `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend

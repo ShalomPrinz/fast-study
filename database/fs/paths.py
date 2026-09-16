@@ -1,3 +1,7 @@
+import errno
+import os
+import stat
+import sys
 from pathlib import Path
 
 RECITATIONS_DIR = "Recitations"
@@ -54,7 +58,8 @@ class FileLocked(Exception):
 
 
 # Windows refuses to replace or delete a file another process holds open: ERROR_SHARING_VIOLATION
-# (32) and ERROR_LOCK_VIOLATION (33). A native PDF viewer on summary.pdf is the everyday cause.
+# (32) and ERROR_LOCK_VIOLATION (33), which os.unlink/os.replace surface as winerror. A native PDF
+# viewer on summary.pdf is the everyday cause.
 _SHARING_VIOLATIONS = (32, 33)
 
 
@@ -71,12 +76,27 @@ def check_safe_segment(segment: str) -> None:
         raise ValueError(f"unsafe path segment: {segment!r}")
 
 
+def _denied_by_share(exc: PermissionError) -> bool:
+    """Tell whether a winerror-less Windows EACCES can only be a sharing violation."""
+
+    # open()/write_bytes() reach the CRT, which sets errno and leaves winerror unset, so a sharing
+    # violation is indistinguishable from EACCES until the other causes — a directory, a read-only
+    # file — are ruled out. POSIX is excluded outright: there a bare EACCES is a real ACL problem.
+    if sys.platform != "win32" or exc.errno != errno.EACCES or not exc.filename:
+        return False
+    try:
+        st = os.stat(exc.filename)
+    except OSError:
+        return False
+    return stat.S_ISREG(st.st_mode) and bool(st.st_mode & stat.S_IWRITE)
+
+
 def reject_if_locked(exc: PermissionError, file: str) -> None:
     """Turn a Windows sharing violation into FileLocked; let every other PermissionError through."""
 
     # POSIX has no mandatory locking, so a bare PermissionError there is a real permissions
     # problem — relabelling it would send the user chasing a viewer that isn't the cause.
-    if getattr(exc, "winerror", None) in _SHARING_VIOLATIONS:
+    if getattr(exc, "winerror", None) in _SHARING_VIOLATIONS or _denied_by_share(exc):
         raise FileLocked(
             f"{file} is open in another program. Close it and try again."
         ) from exc
