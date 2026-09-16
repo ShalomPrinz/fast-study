@@ -5,6 +5,7 @@ import Layout from '@/app/Layout'
 import InitGate from '@/app/InitGate'
 import { SettingsProvider } from '@/shared/contexts/SettingsContext'
 import MainView from '@/features/lectures/MainView'
+import LecturesLayout from '@/features/lectures/LecturesLayout'
 import EditSummaryView from '@/features/lectures/EditSummaryView'
 import CourseView from '@/features/course-overview/CourseView'
 import DownloadsView from '@/features/downloads/DownloadsView'
@@ -46,13 +47,16 @@ export default function App() {
       <InitGate>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<EmptyState />} />
-            <Route path="course/:course" element={<CourseView />} />
+            {/* The tree pane's pages; the editor sits outside so it gets the full width. */}
+            <Route element={<LecturesLayout />}>
+              <Route index element={<EmptyState />} />
+              <Route path="course/:course" element={<CourseView />} />
+              <Route path=":course/:lecture" element={<MainView />} />
+            </Route>
             <Route path="downloads" element={<DownloadsView />} />
             <Route path="search" element={<SearchView />} />
             <Route path="running" element={<RunnerView />} />
             <Route path="settings" element={<SettingsView />} />
-            <Route path=":course/:lecture" element={<MainView />} />
             <Route path=":course/:lecture/edit" element={<EditSummaryView />} />
           </Route>
         </Routes>

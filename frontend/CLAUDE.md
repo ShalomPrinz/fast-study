@@ -62,7 +62,7 @@ smoke suite's contract (`docs/ARCHITECTURE.md` §Smoke-suite test ids); never ad
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling, smoke-suite test ids                            |
 | `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding                                             |
-| `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar                                         |
+| `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar, tree pane                              |
 | `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                                                       |
 | `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode                                         |
 | `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, the prerequisites, the optional accounts, Drive consent |

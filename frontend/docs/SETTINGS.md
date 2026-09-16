@@ -47,7 +47,7 @@ The list above is closed on purpose. Each of these looks like a field and delibe
 | Service ports and the `BACKEND_URL` / `DATABASE_URL` overrides                        | Wiring, not preference: the frontend takes its URLs from the runtime bridge, and a settings save leaves the keys in `.env` untouched                   |
 | `FRONTEND_URL`                                                                        | A CORS origin the download server defaults for itself; only a non-default dev origin ever sets it                                                      |
 | `DOWNLOADER_EXTENSION_ID`                                                             | No default: unset unless a dev loading the unpacked extension sets it, and the packaged app never talks to that dev-only surface                       |
-| The sidebar's lectures/courses mode and the search view's chosen course               | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                                     |
+| The last opened lecture and the search view's chosen course                           | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                                     |
 | The Google Drive account (`components/DriveConnection.tsx`)                           | A consent flow and a token, not a preference: nothing types it in, the backend holds it, and it is connected or it is not                              |
 | Running unfinished lectures at app start                                              | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s nightly cron already cover both the manual and the unattended case |
 
@@ -214,12 +214,12 @@ the Drive toggle rather than in the store. The control renders only while the to
 account for a feature that is off is one more pointless pick — and shows one chip and the single
 button that moves it, in the same field vocabulary as the browser check and the BIU account.
 
-| State          | Shows                                                            |
-| -------------- | ---------------------------------------------------------------- |
-| `unknown`      | the backend was unreachable — **not** that nothing is connected  |
-| `disconnected` | a neutral chip and **Connect**                                   |
-| `pending`      | a flow is waiting on the browser, and a way to reopen its page   |
-| `connected`    | the token is stored, and **Disconnect**                          |
+| State          | Shows                                                           |
+| -------------- | --------------------------------------------------------------- |
+| `unknown`      | the backend was unreachable — **not** that nothing is connected |
+| `disconnected` | a neutral chip and **Connect**                                  |
+| `pending`      | a flow is waiting on the browser, and a way to reopen its page  |
+| `connected`    | the token is stored, and **Disconnect**                         |
 
 **It never blocks**, exactly like the two prerequisites above: it reaches neither `missingEntries`
 nor `isInitialized`, Drive is off by default, and a lecture with no token still finishes as a PDF on

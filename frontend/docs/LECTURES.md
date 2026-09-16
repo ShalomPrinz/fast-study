@@ -1,6 +1,6 @@
 # Lectures mode
 
-The default sidebar mode plus the two lecture views (`MainView`, `EditSummaryView`).
+The sidebar, the lectures tree pane and the two lecture views (`MainView`, `EditSummaryView`).
 
 ## Pipeline steps are declared once
 
@@ -80,10 +80,9 @@ mount and on every SSE notify — never polled:
 `runner.lastError` is an unexpected exception that aborted a sweep, distinct from the expected per-step
 failures in `errors`.
 
-`queue` is what the runner has left to take, in order. `RunnerPipelineRow` — one line at the head of
-the tree — spends it and `runner` on a `done/total` count and links to `/running`, which is the whole
-surface for the queue, the in-flight entries and the lectures nothing is scheduled to pick up. It is
-always rendered, because it is the only route to that page.
+`queue` is what the runner has left to take, in order. `/running`, reached from the sidebar's Running
+pipelines row, is the whole surface for the queue, the in-flight entries and the lectures nothing is
+scheduled to pick up; the row itself only reads `runner` for its badge.
 
 Error toasts fan out through `useReportOnce`, which dedupes `(key, message)` so a repeated refresh doesn't
 re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs later.
@@ -133,7 +132,7 @@ viewport and an open-in-new-tab button; the right pane heads `MarkdownEditor` wi
 whenever the buffer differs from what was last read or written, an amber `Unsaved changes` dot.
 
 `MarkdownEditor` is CodeMirror 6 composed extension by extension — no `basicSetup`, so no autocomplete,
-search, lint or line numbers. It is rich-styled *source*: markers stay in the buffer and the document is
+search, lint or line numbers. It is rich-styled _source_: markers stay in the buffer and the document is
 never re-serialized. `@codemirror/lang-markdown` supplies the tags, and a `HighlightStyle` sizes headings,
 bolds `**bold**`, sets `tags.monospace` in `--font-mono`, dims `tags.processingInstruction` (the markers
 themselves) to `--text-4` and draws `---` as a tinted chip, since exactly two of them carry the document's
@@ -170,12 +169,24 @@ with no captured position it snaps to the right edge for RTL.
 
 ## Sidebar
 
-`Sidebar` opens with the brand, then four nav rows — Lectures, Courses, Downloads, Search. Downloads
-and Search are routes; Lectures and Courses swap the tree body below and own that choice themselves,
-persisted under `localStorage['fastStudyMode']` (the key the segmented `ModeToggle` they replaced used,
-so an existing choice carried over). A route row outranks the tree rows for the active highlight.
-Downloads carries a badge counting running jobs, read off `DownloadJobsContext`. The footer holds
-`New course` and `LanguageSwitcher`; every glyph in the sidebar is inline SVG from `Icon`.
+`Sidebar` opens with the brand, then five route rows — Lectures, Running pipelines, Downloads, Search,
+Settings — each active on its own pages (`docs/ARCHITECTURE.md` §Routes). Running pipelines carries a
+`current/total` badge while the runner is on (`current` is `done + 1` capped at `total`) and none when
+idle; Downloads carries a count of running jobs, read off `DownloadJobsContext`. The footer holds only
+`LanguageSwitcher`; every glyph in the sidebar is inline SVG from `Icon`.
+
+Lectures reopens the last lecture opened: `LecturesLayout` writes each lecture page it shows (never the
+`/course/:course` overview) to `localStorage['fastStudyLastLecture']` (`utils/lastLecture.ts`), and the row navigates to it while the
+tree still has it, falling back to `/` when it was renamed, deleted or never stored.
+
+## Tree pane
+
+`LecturesTreePane` (`.tree-pane`) is rendered by `LecturesLayout` beside `/`, `/course/:course` and
+`/:course/:lecture` only; the editor and the other routes get the full width. It holds the active
+courses' `CourseGroup`s, then `ArchivedSection`, then `New course`, inside `PendingUploadProvider` so an
+mp4 dropped on a lecture row can prompt. Each expanded course opens with an Overview row
+(`.course-overview-row`) that opens `/course/:course` and is selected while that page is open; the
+course header itself only expands and collapses.
 
 `utils/lectureProgress.ts` feeds the tree's two progress signals: `isLectureComplete` (the last
 pipeline output existing — `drive_url.txt`, or `summary.pdf` with Drive off, mirroring the backend's
@@ -184,7 +195,7 @@ complete, accent while a step of it is in flight, hollow otherwise; `courseProgr
 header its right-aligned `N/M`, lectures and recitations together, and returns `0/0` for an archived
 course so the badge stays off there.
 
-## Sidebar tree
+## Tree state
 
 State ownership is deliberate:
 
@@ -194,7 +205,15 @@ State ownership is deliberate:
   params.
 - `CourseGroup` owns both `expanded` and `recExpanded` and passes 1-prop `ExpandHandle`s down, so the
   recitations sub-group's open state survives collapsing and re-expanding the course. It auto-expands once
-  the first time it becomes the selected course (deep links).
+  the first time one of its lectures or its overview page is the open route (deep links), opening
+  recitations too only for a recitation.
+- The pane unmounts on every route that doesn't show it, and only two things survive that, in module scope
+  for the session: each active course's `expanded`/`recExpanded` (a map in `CourseGroup.tsx`, keyed by
+  course name) and the course nav's scroll position, saved on each scroll because a detached nav reads 0.
+  Everything else — inline inputs, renames, the Archived section and archived courses' expansion, upload
+  prompts — resets. The auto-expand runs again on remount, so returning to an open lecture or overview
+  re-expands its course (and Recitations, for a recitation) even if the user collapsed it: the open page's
+  course staying visible deliberately wins over restoring an explicit collapse.
 - `CourseGroupContext` carries `{ course, add }` and `LectureListContext` carries just `kind`, so the
   recursive rows reach them without prop-drilling. `AddLectureInput` renders only in the list whose kind is
   being added, so the two lists never show an input at once.
@@ -202,9 +221,6 @@ State ownership is deliberate:
 Interaction conventions: shift-click a course or lecture row renames it inline; holding shift swaps the
 course "+" button for archive/unarchive. `useShiftHeld` resets on window blur because an alt-tab mid-hold
 never delivers `keyup`.
-
-`PaginatedList` slices from the _tail_ so newly added items stay visible, with a "Load more" row above that
-reveals older items in doubling chunks.
 
 ## Name suggestion and sorting
 

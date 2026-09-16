@@ -104,7 +104,7 @@ msgstr "{0} מותקן — ההורדות מוכנות לשימוש."
 #. placeholder {0}: remote.progress.completed
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
-#: src/features/lectures/MainView.tsx:300
+#: src/features/lectures/MainView.tsx:308
 #: src/features/runner/RunnerView.tsx:130
 msgid "{0} of {1} chunks"
 msgstr "{0} מתוך {1} מקטעים"
@@ -142,7 +142,7 @@ msgstr "{count, plural, one {חומר אחד ישמש} two {# חומרים יש�
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
 
-#: src/features/lectures/MainView.tsx:282
+#: src/features/lectures/MainView.tsx:289
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -167,7 +167,7 @@ msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} oth
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
-#: src/features/lectures/MainView.tsx:435
+#: src/features/lectures/MainView.tsx:446
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} יימחק."
 
@@ -178,10 +178,6 @@ msgstr "{name} שימש"
 #: src/features/lectures/utils/materialIndicator.ts:24
 msgid "{name} will be used"
 msgstr "{name} ישמש"
-
-#: src/features/lectures/components/PaginatedList.tsx:38
-msgid "{nextLoad, plural, one {Load # more} other {Load # more}}"
-msgstr "{nextLoad, plural, one {טען עוד אחד} two {טען עוד #} other {טען עוד #}}"
 
 #: src/features/downloads/components/SectionGroup.tsx:259
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
@@ -235,11 +231,11 @@ msgstr "+ הוסף כתובת מקור"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ הורד הכל"
 
-#: src/app/DriveConsentPrompt.tsx:54
+#: src/app/DriveConsentPrompt.tsx:57
 msgid "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 msgstr "סיכום מוכן ממתין להעלאה, ול-Fast Study עדיין אין הרשאה ל-Drive שלך. בחירה בכן תפתח דף התחברות של Google בדפדפן; כך או כך כל סיכום נשמר במחשב הזה."
 
-#: src/features/settings/components/ApiKeyField.tsx:98
+#: src/features/settings/components/ApiKeyField.tsx:100
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
 
@@ -348,11 +344,11 @@ msgstr "חשבון בר-אילן מחובר"
 msgid "BIU session expired. Reconnect your account."
 msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:73
+#: src/features/settings/components/BrowserPrereqField.tsx:79
 msgid "Browser for downloading recordings"
 msgstr "דפדפן להורדת הקלטות"
 
-#: src/features/settings/components/DataRootField.tsx:34
+#: src/features/settings/components/DataRootField.tsx:35
 msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 
@@ -373,11 +369,11 @@ msgstr "להשלים הרצאות שלא הסתיימו במהלך הלילה"
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
-#: src/features/settings/components/DataRootField.tsx:47
+#: src/features/settings/components/DataRootField.tsx:48
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחרת — שום דבר לא זז. התיקייה הישנה נשארת בדיוק כפי שהיא, וחזרה אליה כאן מחזירה את הכול."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:116
+#: src/features/settings/components/BrowserPrereqField.tsx:123
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
@@ -443,7 +439,7 @@ msgstr "מתחבר…"
 msgid "Continue Generating"
 msgstr "המשך ייצור"
 
-#: src/features/lectures/MainView.tsx:293
+#: src/features/lectures/MainView.tsx:301
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -521,10 +517,6 @@ msgstr "סקירת קורס"
 msgid "Course sources"
 msgstr "מקורות קורסים"
 
-#: src/shared/sidebar/Sidebar.tsx:83
-msgid "Courses"
-msgstr "קורסים"
-
 #: src/features/downloads/components/AddCourseRow.tsx:70
 msgid "Create"
 msgstr "צור"
@@ -538,7 +530,7 @@ msgid "Data folder"
 msgstr "תיקיית נתונים"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:390
+#: src/features/lectures/MainView.tsx:401
 msgid "Delete {0}"
 msgstr "מחק את {0}"
 
@@ -615,7 +607,7 @@ msgid "Downloading…"
 msgstr "מוריד…"
 
 #: src/features/downloads/DownloadsView.tsx:53
-#: src/shared/sidebar/Sidebar.tsx:86
+#: src/shared/sidebar/Sidebar.tsx:84
 msgid "Downloads"
 msgstr "הורדות"
 
@@ -663,7 +655,7 @@ msgstr "כל קורס, הרצאה, סרטון וסיכום נשמרים כאן. 
 msgid "Every lecture with a video is finished or already spoken for."
 msgstr "כל הרצאה שיש לה וידאו הושלמה או שכבר מטופלת."
 
-#: src/features/settings/components/DataRootField.tsx:40
+#: src/features/settings/components/DataRootField.tsx:41
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלכם."
 
@@ -739,7 +731,7 @@ msgstr "שמירת הסיכום נכשלה"
 msgid "Fast Study"
 msgstr "Fast Study"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:90
+#: src/features/settings/components/BrowserPrereqField.tsx:97
 msgid "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 msgstr "Fast Study מפעיל את Google Chrome או את Microsoft Edge כדי להביא הקלטות מאתר הקורס. הפיכת סרטון לסיכום לא משתמשת בו כלל."
 
@@ -833,7 +825,7 @@ msgstr "דף הבית"
 msgid "In course"
 msgstr "נמצא בקורס"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:84
+#: src/features/settings/components/BrowserPrereqField.tsx:91
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
 
@@ -854,7 +846,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:405
+#: src/features/lectures/MainView.tsx:416
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -889,7 +881,7 @@ msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
 #: src/features/search/SearchView.tsx:198
-#: src/shared/sidebar/Sidebar.tsx:77
+#: src/shared/sidebar/Sidebar.tsx:78
 msgid "Lectures"
 msgstr "הרצאות"
 
@@ -932,11 +924,11 @@ msgid "Material"
 msgstr "חומר"
 
 #: src/features/downloads/DownloadsView.tsx:39
-#: src/features/lectures/MainView.tsx:373
+#: src/features/lectures/MainView.tsx:384
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/features/lectures/components/LectureActionsMenu.tsx:42
+#: src/features/lectures/components/LectureActionsMenu.tsx:45
 msgid "More actions"
 msgstr "פעולות נוספות"
 
@@ -1033,7 +1025,7 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:361
+#: src/features/lectures/MainView.tsx:372
 msgid "not provided"
 msgstr "לא סופק"
 
@@ -1085,11 +1077,11 @@ msgstr "מותרים קבצי .mp4 בלבד"
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "פתחו את Google AI Studio דרך הקישור שלמטה, התחברו עם חשבון Google שלכם ולחצו על \"Create API key\". העתיקו את המפתח שמוצג והדביקו אותו בשדה."
 
-#: src/features/lectures/MainView.tsx:248
+#: src/features/lectures/MainView.tsx:249
 msgid "Open in Drive"
 msgstr "פתח ב-Drive"
 
-#: src/features/lectures/MainView.tsx:382
+#: src/features/lectures/MainView.tsx:393
 msgid "Open material"
 msgstr "פתח את החומר"
 
@@ -1119,6 +1111,10 @@ msgstr "קישורים אחרים"
 #: src/features/downloads/components/SectionGroup.tsx:72
 #~ msgid "Other Videos"
 #~ msgstr "סרטונים אחרים"
+
+#: src/features/lectures/sidebar/tree/CourseOverviewRow.tsx:25
+msgid "Overview"
+msgstr "סקירה"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:70
 #: src/features/course-overview/components/ExtractorRow.tsx:29
@@ -1154,7 +1150,7 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
-#: src/features/lectures/MainView.tsx:280
+#: src/features/lectures/MainView.tsx:287
 msgid "Pipeline"
 msgstr "צינור"
 
@@ -1307,7 +1303,7 @@ msgstr "ניסיון חוזר בעוד {0}"
 #~ msgid "Revert to Original"
 #~ msgstr "שחזר למקור"
 
-#: src/features/lectures/MainView.tsx:343
+#: src/features/lectures/MainView.tsx:354
 msgid "Rotate {file}"
 msgstr "החלף את {file}"
 
@@ -1315,7 +1311,7 @@ msgstr "החלף את {file}"
 #~ msgid "Run incomplete pipelines"
 #~ msgstr "הרץ צינורות לא שלמים"
 
-#: src/features/lectures/MainView.tsx:269
+#: src/features/lectures/MainView.tsx:276
 msgid "Run Remaining"
 msgstr "הרץ את הנותר"
 
@@ -1336,14 +1332,10 @@ msgstr "הרץ אותן עכשיו"
 msgid "Running · lecture {current} of {0}"
 msgstr "רץ · הרצאה {current} מתוך {0}"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:27
 #: src/features/runner/RunnerView.tsx:192
+#: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "צינורות בהרצה"
-
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:27
-msgid "Running pipelines…"
-msgstr "מריץ צינורות…"
 
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:68
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
@@ -1365,11 +1357,11 @@ msgstr "שמור בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:257
+#: src/features/settings/InitWall.tsx:258
 msgid "Saving…"
 msgstr "שומרים…"
 
-#: src/shared/sidebar/Sidebar.tsx:89
+#: src/shared/sidebar/Sidebar.tsx:87
 msgid "Search"
 msgstr "חיפוש"
 
@@ -1390,7 +1382,7 @@ msgstr "מחפש בסיכומים שנוצרו של קורס אחד — זה ש�
 msgid "Section {0} is waiting for a passcode"
 msgstr "הקטע {0} ממתין לקוד גישה"
 
-#: src/App.tsx:27
+#: src/App.tsx:28
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
@@ -1404,7 +1396,7 @@ msgstr "החיבור פג"
 
 #: src/features/settings/SettingsView.tsx:87
 #: src/features/settings/SettingsView.tsx:154
-#: src/shared/sidebar/Sidebar.tsx:92
+#: src/shared/sidebar/Sidebar.tsx:90
 msgid "Settings"
 msgstr "הגדרות"
 
@@ -1432,7 +1424,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (אופציונלי)…"
 
-#: src/features/settings/InitWall.tsx:257
+#: src/features/settings/InitWall.tsx:258
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -1529,7 +1521,7 @@ msgstr "הקובץ פתוח בתוכנה אחרת. סגור אותו ונסה ש
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
-#: src/features/lectures/MainView.tsx:419
+#: src/features/lectures/MainView.tsx:430
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -1537,7 +1529,7 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייוצרו מחדש:"
 
-#: src/features/lectures/MainView.tsx:436
+#: src/features/lectures/MainView.tsx:447
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -1562,7 +1554,7 @@ msgid "The university site is temporarily refusing automated requests. Wait a fe
 msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:420
+#: src/features/lectures/MainView.tsx:431
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
@@ -1673,7 +1665,7 @@ msgstr "מילה שלמה בלבד"
 msgid "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע שה-PDF שלה מוכן. הפעלה מחדש מסמנת כל הרצאה שהסתיימה בינתיים כלא מוכנה, וכולן יועלו."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:101
+#: src/features/settings/components/BrowserPrereqField.tsx:108
 msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "בלי אחד מהם, Fast Study לא יוכל להביא הקלטות מאתר הקורס ולא יוכל להקליט הקלטת Zoom. כל השאר פועל כרגיל — הוסיפו סרטון בעצמכם והוא עדיין יהפוך לסיכום. התקינו את Chrome דרך הקישור שלמעלה ואז בדקו שוב."
 
@@ -1681,7 +1673,7 @@ msgstr "בלי אחד מהם, Fast Study לא יוכל להביא הקלטות �
 msgid "Yes"
 msgstr "כן"
 
-#: src/features/settings/components/DataRootField.tsx:61
+#: src/features/settings/components/DataRootField.tsx:63
 msgid "Yes, store my lectures in this folder"
 msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 

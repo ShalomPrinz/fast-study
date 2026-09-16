@@ -1,48 +1,57 @@
-/* Sits in the sidebar footer beside the language switcher, so it takes the row only while its
-   input is open and otherwise reads as one more quiet control. */
+/* Fills the tree pane's footer, so its button and input span the row. */
 .new-course-row {
   flex: 1;
   min-width: 0;
 }
 
-.new-course-btn {
+/* The button and the input share one box — padding, border width, font size and line height — so
+   toggling between them doesn't move the row. */
+.new-course-btn,
+.new-course-input {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
-  background: none;
-  border: none;
+  box-sizing: border-box;
+  inline-size: 100%;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
   border-radius: var(--r-sm);
-  color: var(--sidebar-muted);
   font: inherit;
   font-size: var(--fs-body);
-  text-align: start;
+  line-height: 1.5;
+}
+
+.new-course-btn {
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  background: none;
+  border: 1px dashed var(--sidebar-dim);
+  color: var(--sidebar-muted);
   white-space: nowrap;
   cursor: pointer;
   transition:
     background 0.1s,
+    border-color 0.1s,
     color 0.1s;
 }
 
-.new-course-btn:hover {
+.new-course-btn:hover,
+.new-course-btn:focus-visible {
   background: var(--sidebar-raise);
+  border-style: solid;
+  border-color: var(--sidebar-muted);
   color: var(--sidebar-fg);
+  outline: none;
 }
 
+/* line-height 1 keeps the larger glyph from growing the button past the input's height. */
 .new-course-plus {
   font-size: var(--fs-section);
   line-height: 1;
 }
 
 .new-course-input {
-  display: block;
-  width: 100%;
-  padding: var(--space-1) var(--space-4);
   background: var(--sidebar-raise);
   border: 1px solid var(--accent-on-dark);
-  border-radius: var(--r-sm);
   color: var(--sidebar-fg);
-  font: inherit;
-  font-size: var(--fs-meta);
   outline: none;
 }
