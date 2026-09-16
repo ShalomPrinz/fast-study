@@ -60,7 +60,7 @@ check, the download and the install on quit — is
 Unsigned means **SmartScreen blocks the first run** on every machine: the dialog reads "Windows
 protected your PC" with only a Don't run button, and the installer starts from **More info → Run
 anyway**. There is no way around it short of an OV/EV certificate. Installing is per-user into
-`%LOCALAPPDATA%\Programs\FastStudy`, so no UAC prompt stacks on top of that — and it is what leaves
+`%LOCALAPPDATA%\Programs\faststudy`, so no UAC prompt stacks on top of that — and it is what leaves
 the install directory writable, which is where tectonic builds its `formats/` on the first render.
 
 The three tool versions the workflow pins are claims the repo has measured, not conveniences:

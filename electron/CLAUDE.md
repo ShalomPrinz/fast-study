@@ -71,9 +71,18 @@ matching Electron's own default. `eslint.config.js` gives `electron/**/*.js` its
 
 ## Packaging
 
-`npm run dist` runs electron-builder for Windows and produces an unsigned **per-user** NSIS
-installer (`perMachine: false`), so it installs into `%LOCALAPPDATA%\Programs\FastStudy` and adds no
-UAC prompt on top of SmartScreen. The whole configuration is the `build` block in `package.json`.
+`npm run dist` runs electron-builder for Windows and produces an unsigned **one-click per-user** NSIS
+installer (`oneClick: true`, `perMachine: false`): it installs into `%LOCALAPPDATA%\Programs\faststudy`
+with no wizard, no directory choice and no UAC prompt on top of SmartScreen. The directory is fixed
+because a folder chosen under `C:\` inherits an ACL other local accounts can write to, so another
+account could swap a shipped binary such as `resources/bin/ffmpeg.exe`. The whole configuration is
+the `build` block in `package.json`.
+
+- **The install-directory leaf is `name` (`faststudy`), not `productName`.** For a one-click
+  per-user build `NsisTarget.js` calls `getWindowsInstallationDirName(appInfo, !oneClick ||
+  isPerMachine)`, which returns `sanitizedName` when false. `userData` and the state root are named
+  from `productName` and do not move; the exe and uninstaller inside stay `FastStudy.exe` /
+  `Uninstall FastStudy.exe` (`common.nsh` uses `PRODUCT_FILENAME`).
 
 - **The asar holds this package's own files only.** The four services, the built frontend, the
   binaries and the LaTeX cache ship as `extraResources` from `delivery/stage/`, which the build

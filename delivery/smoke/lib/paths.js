@@ -15,7 +15,8 @@ function env(name) {
 
 export const PRODUCT = 'FastStudy';
 
-export const installDir = () => path.join(env('LOCALAPPDATA'), 'Programs', PRODUCT);
+// A one-click NSIS install names its directory after package.json's `name`; the files inside keep `productName`.
+export const installDir = () => path.join(env('LOCALAPPDATA'), 'Programs', PRODUCT.toLowerCase());
 export const appExe = () => path.join(installDir(), `${PRODUCT}.exe`);
 export const uninstallerExe = () => path.join(installDir(), `Uninstall ${PRODUCT}.exe`);
 export const resourcesDir = () => path.join(installDir(), 'resources');
