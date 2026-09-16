@@ -104,7 +104,7 @@ msgstr "{0} is installed — downloading is ready to use."
 #. placeholder {0}: remote.progress.completed
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
-#: src/features/lectures/MainView.tsx:300
+#: src/features/lectures/MainView.tsx:308
 #: src/features/runner/RunnerView.tsx:130
 msgid "{0} of {1} chunks"
 msgstr "{0} of {1} chunks"
@@ -142,7 +142,7 @@ msgstr "{count, plural, other {# materials will be used}}"
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, other {summary used only {used} of # materials}}"
 
-#: src/features/lectures/MainView.tsx:282
+#: src/features/lectures/MainView.tsx:289
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
@@ -167,7 +167,7 @@ msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
-#: src/features/lectures/MainView.tsx:435
+#: src/features/lectures/MainView.tsx:446
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} will be deleted."
 
@@ -235,11 +235,11 @@ msgstr "+ add source URL"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ Download all"
 
-#: src/app/DriveConsentPrompt.tsx:54
+#: src/app/DriveConsentPrompt.tsx:57
 msgid "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 msgstr "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 
-#: src/features/settings/components/ApiKeyField.tsx:98
+#: src/features/settings/components/ApiKeyField.tsx:100
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
@@ -348,11 +348,11 @@ msgstr "BIU account connected"
 msgid "BIU session expired. Reconnect your account."
 msgstr "BIU session expired. Reconnect your account."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:73
+#: src/features/settings/components/BrowserPrereqField.tsx:79
 msgid "Browser for downloading recordings"
 msgstr "Browser for downloading recordings"
 
-#: src/features/settings/components/DataRootField.tsx:34
+#: src/features/settings/components/DataRootField.tsx:35
 msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 
@@ -373,11 +373,11 @@ msgstr "Catch up on unfinished lectures overnight"
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
-#: src/features/settings/components/DataRootField.tsx:47
+#: src/features/settings/components/DataRootField.tsx:48
 msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 msgstr "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:116
+#: src/features/settings/components/BrowserPrereqField.tsx:123
 msgid "Check again"
 msgstr "Check again"
 
@@ -443,7 +443,7 @@ msgstr "connecting…"
 msgid "Continue Generating"
 msgstr "Continue Generating"
 
-#: src/features/lectures/MainView.tsx:293
+#: src/features/lectures/MainView.tsx:301
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
@@ -521,10 +521,6 @@ msgstr "Course overview"
 msgid "Course sources"
 msgstr "Course sources"
 
-#: src/shared/sidebar/Sidebar.tsx:83
-msgid "Courses"
-msgstr "Courses"
-
 #: src/features/downloads/components/AddCourseRow.tsx:70
 msgid "Create"
 msgstr "Create"
@@ -538,7 +534,7 @@ msgid "Data folder"
 msgstr "Data folder"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:390
+#: src/features/lectures/MainView.tsx:401
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
@@ -615,7 +611,7 @@ msgid "Downloading…"
 msgstr "Downloading…"
 
 #: src/features/downloads/DownloadsView.tsx:53
-#: src/shared/sidebar/Sidebar.tsx:86
+#: src/shared/sidebar/Sidebar.tsx:84
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -663,7 +659,7 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 msgid "Every lecture with a video is finished or already spoken for."
 msgstr "Every lecture with a video is finished or already spoken for."
 
-#: src/features/settings/components/DataRootField.tsx:40
+#: src/features/settings/components/DataRootField.tsx:41
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 
@@ -739,7 +735,7 @@ msgstr "Failed to save summary"
 msgid "Fast Study"
 msgstr "Fast Study"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:90
+#: src/features/settings/components/BrowserPrereqField.tsx:97
 msgid "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 msgstr "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 
@@ -833,7 +829,7 @@ msgstr "Home"
 msgid "In course"
 msgstr "In course"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:84
+#: src/features/settings/components/BrowserPrereqField.tsx:91
 msgid "Install Chrome"
 msgstr "Install Chrome"
 
@@ -854,7 +850,7 @@ msgstr "Key verified"
 msgid "Language"
 msgstr "Language"
 
-#: src/features/lectures/MainView.tsx:405
+#: src/features/lectures/MainView.tsx:416
 msgid "Last error:"
 msgstr "Last error:"
 
@@ -889,7 +885,7 @@ msgid "Lecture name…"
 msgstr "Lecture name…"
 
 #: src/features/search/SearchView.tsx:198
-#: src/shared/sidebar/Sidebar.tsx:77
+#: src/shared/sidebar/Sidebar.tsx:78
 msgid "Lectures"
 msgstr "Lectures"
 
@@ -932,11 +928,11 @@ msgid "Material"
 msgstr "Material"
 
 #: src/features/downloads/DownloadsView.tsx:39
-#: src/features/lectures/MainView.tsx:373
+#: src/features/lectures/MainView.tsx:384
 msgid "Materials"
 msgstr "Materials"
 
-#: src/features/lectures/components/LectureActionsMenu.tsx:42
+#: src/features/lectures/components/LectureActionsMenu.tsx:45
 msgid "More actions"
 msgstr "More actions"
 
@@ -1033,7 +1029,7 @@ msgstr "not connected"
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
-#: src/features/lectures/MainView.tsx:361
+#: src/features/lectures/MainView.tsx:372
 msgid "not provided"
 msgstr "not provided"
 
@@ -1085,11 +1081,11 @@ msgstr "Only .mp4 files are allowed"
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 
-#: src/features/lectures/MainView.tsx:248
+#: src/features/lectures/MainView.tsx:249
 msgid "Open in Drive"
 msgstr "Open in Drive"
 
-#: src/features/lectures/MainView.tsx:382
+#: src/features/lectures/MainView.tsx:393
 msgid "Open material"
 msgstr "Open material"
 
@@ -1119,6 +1115,10 @@ msgstr "Other links"
 #: src/features/downloads/components/SectionGroup.tsx:72
 #~ msgid "Other Videos"
 #~ msgstr "Other Videos"
+
+#: src/features/lectures/sidebar/tree/CourseOverviewRow.tsx:25
+msgid "Overview"
+msgstr "Overview"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:70
 #: src/features/course-overview/components/ExtractorRow.tsx:29
@@ -1154,7 +1154,7 @@ msgstr "PDF is older than this summary"
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
-#: src/features/lectures/MainView.tsx:280
+#: src/features/lectures/MainView.tsx:287
 msgid "Pipeline"
 msgstr "Pipeline"
 
@@ -1307,7 +1307,7 @@ msgstr "Retry in {0}"
 #~ msgid "Revert to Original"
 #~ msgstr "Revert to Original"
 
-#: src/features/lectures/MainView.tsx:343
+#: src/features/lectures/MainView.tsx:354
 msgid "Rotate {file}"
 msgstr "Rotate {file}"
 
@@ -1315,7 +1315,7 @@ msgstr "Rotate {file}"
 #~ msgid "Run incomplete pipelines"
 #~ msgstr "Run incomplete pipelines"
 
-#: src/features/lectures/MainView.tsx:269
+#: src/features/lectures/MainView.tsx:276
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
@@ -1336,14 +1336,10 @@ msgstr "Run these now"
 msgid "Running · lecture {current} of {0}"
 msgstr "Running · lecture {current} of {0}"
 
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:27
 #: src/features/runner/RunnerView.tsx:192
+#: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "Running pipelines"
-
-#: src/features/lectures/sidebar/RunnerPipelineRow.tsx:27
-msgid "Running pipelines…"
-msgstr "Running pipelines…"
 
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:68
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
@@ -1365,11 +1361,11 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:257
+#: src/features/settings/InitWall.tsx:258
 msgid "Saving…"
 msgstr "Saving…"
 
-#: src/shared/sidebar/Sidebar.tsx:89
+#: src/shared/sidebar/Sidebar.tsx:87
 msgid "Search"
 msgstr "Search"
 
@@ -1390,7 +1386,7 @@ msgstr "Searches the generated summaries of one course — the one picked in the
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
-#: src/App.tsx:27
+#: src/App.tsx:28
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
@@ -1404,7 +1400,7 @@ msgstr "session expired"
 
 #: src/features/settings/SettingsView.tsx:87
 #: src/features/settings/SettingsView.tsx:154
-#: src/shared/sidebar/Sidebar.tsx:92
+#: src/shared/sidebar/Sidebar.tsx:90
 msgid "Settings"
 msgstr "Settings"
 
@@ -1432,7 +1428,7 @@ msgstr "Sorry about it. Go home to keep working, or copy the details below to re
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:257
+#: src/features/settings/InitWall.tsx:258
 msgid "Start using Fast Study"
 msgstr "Start using Fast Study"
 
@@ -1529,7 +1525,7 @@ msgstr "The file is open in another program. Close it and try again."
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 
-#: src/features/lectures/MainView.tsx:419
+#: src/features/lectures/MainView.tsx:430
 msgid "The following files will be deleted:"
 msgstr "The following files will be deleted:"
 
@@ -1537,7 +1533,7 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
-#: src/features/lectures/MainView.tsx:436
+#: src/features/lectures/MainView.tsx:447
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
@@ -1562,7 +1558,7 @@ msgid "The university site is temporarily refusing automated requests. Wait a fe
 msgstr "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:420
+#: src/features/lectures/MainView.tsx:431
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
@@ -1673,7 +1669,7 @@ msgstr "Whole word only"
 msgid "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 msgstr "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:101
+#: src/features/settings/components/BrowserPrereqField.tsx:108
 msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 
@@ -1681,7 +1677,7 @@ msgstr "Without one, Fast Study can't fetch recordings from your course site and
 msgid "Yes"
 msgstr "Yes"
 
-#: src/features/settings/components/DataRootField.tsx:61
+#: src/features/settings/components/DataRootField.tsx:63
 msgid "Yes, store my lectures in this folder"
 msgstr "Yes, store my lectures in this folder"
 
