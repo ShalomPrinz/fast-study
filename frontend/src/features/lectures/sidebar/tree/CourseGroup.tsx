@@ -33,6 +33,7 @@ export default function CourseGroup({ course }: { course: Course }) {
   }, [course.name, course.archived, expanded, recExpanded])
 
   // Expand once when this course's lecture or overview first becomes the open page (deep link).
+  // Runs again on remount, deliberately overriding a remembered collapse so the open page's course shows.
   useEffect(() => {
     if (didAutoExpandRef.current) return
     const onLecture = selected?.course === course.name
