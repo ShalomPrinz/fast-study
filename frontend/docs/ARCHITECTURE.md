@@ -18,7 +18,7 @@ Corollary: never add a backend endpoint to answer "does file X exist" — that i
 | `app/`                   | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container, Drive consent prompt  |
 | `services/`              | one file per external concern, shared by all features, never split per feature                   |
 | `shared/`                | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
-| `features/<x>/`          | one slice per mode/page: views, sidebar body, components, hooks, contexts, constants, utils      |
+| `features/<x>/`          | one slice per mode/page: views, layout routes, components, hooks, contexts, constants, utils     |
 
 A primitive lives in `features/<x>/components` until a second feature needs it; then it moves to `shared/`.
 A feature may own a service (`features/downloads/services/autoDownloader.ts`, `downloadServer.ts`) when the concern is its alone.
@@ -52,7 +52,9 @@ fresher one.
 
 ## Routes
 
-`react-router-dom` v7, declared in `App.tsx`; every route renders inside `Layout`.
+`react-router-dom` v7, declared in `App.tsx`; every route renders inside `Layout`. `/`, `/course/:course` and
+`/:course/:lecture` also sit under the pathless `LecturesLayout`, which renders the lectures tree pane
+beside them; `/:course/:lecture/edit` stays a direct child of `Layout` so the editor gets the full width.
 
 | Path                     | View              |
 | ------------------------ | ----------------- |
@@ -67,14 +69,13 @@ fresher one.
 
 `kind` (lecture vs recitation) is a query param `?kind=recitation`, propagated everywhere rather than
 being a route segment. The static `course`/`downloads`/`search`/`settings`/`running` segments outrank the dynamic
-`/:course/:lecture` pattern in v7 ranking, so they never collide.
+`/:course/:lecture` pattern in v7 ranking, so they never collide — a pathless layout route adds no segment,
+so nesting under `LecturesLayout` leaves that ranking unchanged.
 
-`/downloads`, `/search` and `/settings` are three of the sidebar's five nav rows, and the only ones that are routes —
-Lectures and Courses swap the tree below without navigating. `/running` is the sixth destination and
-is reached only from the one-line row at the head of the lectures tree, which owns its own active
-state; the nav rows treat it as a route, so neither tree row reads as active while it is up. Clicking anything in that tree navigates
-away from `/downloads`, which is the intended "exit on sidebar click". Because that unmounts
-the view, `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
+The sidebar's five nav rows — Lectures, Running pipelines, Downloads, Search, Settings — are all routes, and
+exactly one is active on every page: `/running`, `/downloads`, `/search` and `/settings` claim their own
+rows and Lectures claims everything else, which is exactly `/`, `/course/:course` and
+`/:course/:lecture[/edit]` (see `LECTURES.md` §Sidebar). Leaving `/downloads` unmounts its view, so `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
 and `RunnerStatusProvider`, so the page's discovery, edits, in-flight bulk runs and download jobs all outlive
 the route (see `DOWNLOADS.md`).
 
@@ -129,10 +130,6 @@ dark for the sidebar; `.mode-toggle--light` is the same control on a light surfa
 a raised white pill — worn by the downloads segments and by each recording card's Lecture/Recitation
 toggle, so the two read as one control family. `LanguageSwitcher` reuses the dark CSS without the component.
 
-`Sidebar` is the other `AppMode` holder, but not through `ModeToggle`: its Lectures and Courses nav
-rows own the mode themselves, still persisted under `fastStudyMode` so an existing choice survived the
-switch away from the segmented control.
-
 ## Styling
 
 Plain CSS, no modules and no styled-components — class names are global and byte-identical to the
@@ -155,23 +152,23 @@ properties. It holds no class selector, and `main.tsx` imports it and the font w
 Every colour, size and spacing step in `src/**/*.css` resolves to a `tokens.css` custom property. The
 scales are:
 
-| Group     | Tokens                                                                                                                      |
-| --------- | --------------------------------------------------------------------------------------------------------------------------- |
-| surfaces  | `--bg` (app canvas), `--surface` (cards), `--surface-sunken` (a row mid-run)                                                |
-| text      | `--text` → `--text-4`, darkest to faintest                                                                                  |
-| lines     | `--line`, `--line-soft`, `--control-line` (input and button borders)                                                        |
-| primary   | `--ink` — the one filled button per page                                                                                    |
-| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-line`, `--accent-ink`, `--accent-on-dark`                          |
-| status    | `--ok`/`--ok-soft`/`--ok-surface`/`--ok-line`/`--ok-dot`, `--warn`/`--warn-soft`, `--danger`/`--danger-soft`, `--highlight` |
-| sidebar   | `--sidebar-bg`, `--sidebar-raise`, `--sidebar-line`, `--sidebar-fg`, `--sidebar-muted`, `--sidebar-dim`, `--sidebar-width`  |
-| space     | `--space-1` 4px → `--space-8` 40px                                                                                          |
-| radius    | `--r-sm` 8px, `--r` 9px, `--r-lg` 12px, `--r-xl` 14px, `--r-pill`                                                           |
-| type      | `--font-ui`, `--font-mono`, `--fs-title` 26 → `--fs-fine` 11                                                                |
-| elevation | `--shadow-sm`, `--shadow-md` (toasts), `--shadow-lg` (modals)                                                               |
+| Group     | Tokens                                                                                                                                                                                                      |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| surfaces  | `--bg` (app canvas), `--surface` (cards), `--surface-sunken` (a row mid-run)                                                                                                                                |
+| text      | `--text` → `--text-4`, darkest to faintest                                                                                                                                                                  |
+| lines     | `--line`, `--line-soft`, `--control-line` (input and button borders)                                                                                                                                        |
+| primary   | `--ink` — the one filled button per page                                                                                                                                                                    |
+| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-line`, `--accent-ink`, `--accent-on-dark`                                                                                                          |
+| status    | `--ok`/`--ok-soft`/`--ok-surface`/`--ok-line`/`--ok-dot`, `--warn`/`--warn-soft`, `--danger`/`--danger-soft`, `--highlight`                                                                                 |
+| sidebar   | `--sidebar-bg`, `--sidebar-raise`, `--sidebar-line`, `--sidebar-fg`, `--sidebar-muted`, `--sidebar-dim`, `--sidebar-width`; `--tree-pane-bg` (a step lighter, so the pane reads apart), `--tree-pane-width` |
+| space     | `--space-1` 4px → `--space-8` 40px                                                                                                                                                                          |
+| radius    | `--r-sm` 8px, `--r` 9px, `--r-lg` 12px, `--r-xl` 14px, `--r-pill`                                                                                                                                           |
+| type      | `--font-ui`, `--font-mono`, `--fs-title` 26 → `--fs-fine` 11                                                                                                                                                |
+| elevation | `--shadow-sm`, `--shadow-md` (toasts), `--shadow-lg` (modals)                                                                                                                                               |
 
 The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
 and the accent appears as text, a border or a soft tint. `--accent-on-dark` is its counterpart on the
-sidebar, which is the only dark surface. No hardcoded colour is left in `src/**/*.css`.
+sidebar and the tree pane, the only dark surfaces. No hardcoded colour is left in `src/**/*.css`.
 
 Fonts are self-hosted through `@fontsource`, imported per weight from `main.tsx`, so the app renders
 correctly with no network. Heebo is Hebrew-first, so Hebrew and Latin share one ramp instead of falling
@@ -191,7 +188,7 @@ file that imports the library.
 **No cross-file rule may depend on source order.** Import order follows Vite's module graph and differs
 between dev (per-module `<style>` tags) and prod (one extracted, concatenated sheet), so two same-specificity
 rules that used to resolve by position now resolve unpredictably. Disambiguate by specificity. Where two
-rules genuinely collide on the same element at equal specificity — `.lecture-list` / `.course-list`,
+rules genuinely collide on the same element at equal specificity — `.lecture-list` / `.recitation-list`,
 `.pipeline-row` / `.pipeline-row--running` — both live in one file in the
 winning order, with a comment naming the dependency; that is why a few single-user classes sit in a shared
 stylesheet. Verify a suspected collision against the built bundle, not the dev server.
@@ -216,7 +213,7 @@ code's own enum, never a translated string.
 | `data-root-confirm`           | —                                                                                                                        | `features/settings/components/DataRootField`                | the wall-only confirm checkbox                  |
 | `browser-prereq`              | `data-status`: `checking` \| `available` \| `missing` \| `unknown`; `data-channel`: `chrome` \| `msedge` when available  | `features/settings/components/BrowserPrereqField`           | the browser prerequisite, wall and `/settings`  |
 | `browser-prereq-install-link` | —                                                                                                                        | `features/settings/components/BrowserPrereqField`           | the install link, rendered only when missing    |
-| `lecture`                     | `data-course`, `data-lecture`; `data-kind`: `lecture` \| `recitation`                                                    | `features/lectures/sidebar/tree/LectureItem`                | a sidebar lecture row                           |
+| `lecture`                     | `data-course`, `data-lecture`; `data-kind`: `lecture` \| `recitation`                                                    | `features/lectures/sidebar/tree/LectureItem`                | a tree pane lecture row                         |
 | `lecture-view`                | `data-course`, `data-lecture`, `data-kind`                                                                               | `features/lectures/MainView.tsx`                            | the lecture page's root                         |
 | `step-status`                 | `data-step`: `audio` \| `transcribe` \| `summarize` \| `pdf` \| `drive`; `data-status`: `done` \| `running` \| `pending` | `features/lectures/MainView.tsx`                            | one pipeline row that has a step                |
 | `lecture-error`               | —                                                                                                                        | `features/lectures/MainView.tsx`                            | the lecture's last run error                    |
