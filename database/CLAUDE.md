@@ -67,14 +67,14 @@ environment, and a PyInstaller module graph is flat. Two consequences bind every
 
 ```bash
 cd database
-uvicorn database_main:app --reload --port 8001   # dev
-python3 -m pytest tests/ -q
+uv run uvicorn database_main:app --reload --port 8001   # dev
+uv run pytest tests/ -q
 ```
 
 Port `8001` (backend 8000, frontend 5173, downloader 3052). `npm run dev` at the repo root brings
 all four up together.
 
-`python3 database_main.py` is the packaged entry point instead, never the dev one: `runtime.serve` binds
+`uv run python database_main.py` is the packaged entry point instead, never the dev one: `runtime.serve` binds
 `127.0.0.1:$FASTSTUDY_PORT` (`0` asks for an ephemeral port, unset means `8001`) and prints
 `FASTSTUDY_PORT=<n>` on stdout, because uvicorn never reports what `port=0` resolved to and the
 launcher has to read the real port back. Loopback only, no reload.

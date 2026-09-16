@@ -115,9 +115,11 @@ Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all w
 
 `lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
 
-## Always use `python3`
+## Running Python
 
-`python` is not aliased on this WSL setup — always invoke `python3` explicitly.
+Anything that imports a service's code runs through `uv` from that service's directory — `cd database && uv run pytest tests/ -q`. Bare `python3` is the system 3.10 with none of the service's dependencies, so it dies at the first import.
+
+Everything else — a throwaway one-liner, a standalone script that imports no service code — is plain `python3`; `python` is not aliased on this WSL setup.
 
 ## Reading `DATA_ROOT`
 
