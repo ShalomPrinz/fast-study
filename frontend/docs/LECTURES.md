@@ -215,9 +215,6 @@ Interaction conventions: shift-click a course or lecture row renames it inline; 
 course "+" button for archive/unarchive. `useShiftHeld` resets on window blur because an alt-tab mid-hold
 never delivers `keyup`.
 
-`PaginatedList` slices from the _tail_ so newly added items stay visible, with a "Load more" row above that
-reveals older items in doubling chunks.
-
 ## Name suggestion and sorting
 
 `nextName.ts` suggests the next name from what the course already has: `Lecture N+1`, except that a

@@ -179,10 +179,6 @@ msgstr "{name} שימש"
 msgid "{name} will be used"
 msgstr "{name} ישמש"
 
-#: src/features/lectures/components/PaginatedList.tsx:38
-msgid "{nextLoad, plural, one {Load # more} other {Load # more}}"
-msgstr "{nextLoad, plural, one {טען עוד אחד} two {טען עוד #} other {טען עוד #}}"
-
 #: src/features/downloads/components/SectionGroup.tsx:259
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {שורה אחת לא התחילה — {stoppedBecause}} two {# שורות לא התחילו — {stoppedBecause}} other {# שורות לא התחילו — {stoppedBecause}}}"
