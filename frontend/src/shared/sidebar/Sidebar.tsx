@@ -5,9 +5,6 @@ import type { AppMode } from '@/types'
 import Icon from '@/shared/components/Icon'
 import type { IconName } from '@/shared/components/Icon'
 import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
-import CoursesList from '@/features/course-overview/CoursesList'
-import LecturesSidebar from '@/features/lectures/sidebar/LecturesSidebar'
-import NewCourseRow from '@/features/lectures/sidebar/NewCourseRow'
 import LanguageSwitcher from './LanguageSwitcher'
 import './Sidebar.css'
 
@@ -60,8 +57,6 @@ export default function Sidebar() {
   // `/running` is reached from the tree's own head row, which owns its active state.
   const onRoute = onDownloads || onSearch || onSettings || pathname.startsWith('/running')
 
-  const Body = mode === 'courses' ? CoursesList : LecturesSidebar
-
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
@@ -93,10 +88,7 @@ export default function Sidebar() {
         </Link>
       </nav>
 
-      <Body />
-
       <div className="sidebar-footer">
-        <NewCourseRow />
         <LanguageSwitcher />
       </div>
     </aside>

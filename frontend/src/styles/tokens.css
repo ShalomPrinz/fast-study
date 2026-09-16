@@ -52,6 +52,9 @@
   --sidebar-muted: #8a8fa3;
   --sidebar-dim: #6f7488;
   --sidebar-width: 268px;
+  /* A step lighter than --sidebar-bg, so the tree pane reads apart from the sidebar yet --sidebar-raise still shows on it. */
+  --tree-pane-bg: #222230;
+  --tree-pane-width: 268px;
 
   --space-1: 4px;
   --space-2: 6px;

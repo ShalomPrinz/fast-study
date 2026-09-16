@@ -1,31 +1,34 @@
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { PendingUploadProvider } from './PendingUploadModal'
-import RunnerPipelineRow from './RunnerPipelineRow'
+import NewCourseRow from './NewCourseRow'
 import CourseGroup from './tree/CourseGroup'
 import ArchivedSection from './tree/ArchivedSection'
 import '@/styles/sidebar-tree.css'
+import './LecturesTreePane.css'
 
-export default function LecturesSidebar() {
+export default function LecturesTreePane() {
   return (
     <PendingUploadProvider>
-      <LecturesSidebarBody />
+      <LecturesTreePaneBody />
     </PendingUploadProvider>
   )
 }
 
-function LecturesSidebarBody() {
+function LecturesTreePaneBody() {
   const { courses } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
 
   return (
-    <>
-      <RunnerPipelineRow />
+    <aside className="tree-pane">
       <nav className="sidebar-nav">
         {active.map((c) => (
           <CourseGroup key={c.name} course={c} />
         ))}
       </nav>
       <ArchivedSection />
-    </>
+      <div className="tree-pane-footer">
+        <NewCourseRow />
+      </div>
+    </aside>
   )
 }

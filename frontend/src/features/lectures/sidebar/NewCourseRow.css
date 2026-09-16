@@ -1,5 +1,4 @@
-/* Sits in the sidebar footer beside the language switcher, so it takes the row only while its
-   input is open and otherwise reads as one more quiet control. */
+/* Fills the tree pane's footer, so its input spans the row while open. */
 .new-course-row {
   flex: 1;
   min-width: 0;

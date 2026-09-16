@@ -1,0 +1,20 @@
+/* The pane doesn't scroll — each nav region scrolls on its own, so the archived bar and the
+   footer stay put while the course list scrolls. */
+.tree-pane {
+  width: var(--tree-pane-width);
+  min-width: var(--tree-pane-width);
+  background: var(--tree-pane-bg);
+  color: var(--sidebar-fg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-inline-end: 1px solid var(--sidebar-line);
+}
+
+.tree-pane-footer {
+  display: flex;
+  align-items: center;
+  padding: var(--space-4);
+  border-top: 1px solid var(--sidebar-line);
+  flex-shrink: 0;
+}
