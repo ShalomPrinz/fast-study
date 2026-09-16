@@ -149,6 +149,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 
 - For non-trivial changes: ground yourself in the actual code first, present 2-3 options with tradeoffs, and wait for a decision before implementing. Don't start editing on an ambiguous request.
 - When a workaround fails twice, stop implementing and research the root cause — official docs, the API surface, community threads — instead of trying a third variant.
+- Before surfacing an incidental finding — git history, branch state, earlier attempts, side effects — ask whether the user would decide or act differently knowing it. If yes, say it in one line with what it changes; if not, drop it, from replies and prompt files alike.
 - User owns every version-control write. Never run `add`/`commit`/`stash`/`checkout`.
 - Verify empirically — start the service, curl it, kill it, quote the exact output — rather than asserting it works.
 
