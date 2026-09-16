@@ -24,6 +24,16 @@ export const servicesExe = () => path.join(resourcesDir(), 'services', 'services
 export const formatsDir = () => path.join(resourcesDir(), 'latex', 'formats');
 export const appUpdateYml = () => path.join(resourcesDir(), 'app-update.yml');
 
+/** Where electron-updater parks a downloaded installer until the app quits; the cache is named
+ *  after electron/package.json's `name`, not its `productName`. */
+export const pendingInstaller = (version) =>
+  path.join(
+    env('LOCALAPPDATA'),
+    `${PRODUCT.toLowerCase()}-updater`,
+    'pending',
+    `${PRODUCT}-Setup-${version}.exe`,
+  );
+
 export const stateRoot = () => path.join(env('LOCALAPPDATA'), PRODUCT);
 export const launchLog = () => path.join(stateRoot(), 'logs', 'launch.log');
 export const ytdlpCopy = () => path.join(stateRoot(), 'bin', 'yt-dlp.exe');

@@ -24,6 +24,7 @@ import {
   enableFirewall,
   holdExclusive,
   processesNamed,
+  productVersion,
   renameAside,
   runToExit,
   stopProcesses,
@@ -178,6 +179,36 @@ function fingerprint(file) {
     sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
     mtimeMs: fs.statSync(file).mtimeMs,
   };
+}
+
+/** The first three components: rcedit stamps a four-component ProductVersion, so the exe an 0.1.0
+ *  installer wrote reports 0.1.0.0. */
+function semverOf(version) {
+  return version.trim().split('.').slice(0, 3).join('.');
+}
+
+/** What an update that never installed leaves behind, ending with the decisive probe: running the
+ *  pending installer here separates a failing installer from a quit-time spawn that never ran. */
+async function installForensics(installerSeen, version) {
+  const exe = paths.appExe();
+  const pending = paths.pendingInstaller(version);
+  const lines = [
+    `a process snapshot ${installerSeen ? 'caught an installer while waiting' : 'never caught an installer, which is the usual case'}`,
+    `${exe} reports ProductVersion ${await productVersion(exe).catch((error) => `unreadable: ${error.message}`)}`,
+    `${pending} ${fs.existsSync(pending) ? 'is still there' : 'is gone'}`,
+  ];
+  const log = path.join(paths.installDir(), 'install.log');
+  if (fs.existsSync(log)) {
+    lines.push(`tail of ${log}:`, fs.readFileSync(log, 'utf8').split('\n').slice(-40).join('\n'));
+  }
+  if (fs.existsSync(pending)) {
+    const run = await runToExit(pending, ['--updated', '/S'], {
+      timeoutMs: INSTALL_TIMEOUT_MS,
+      onTimeout: `${pending} --updated /S was still running after 5 minutes`,
+    }).catch((error) => ({ code: 'no exit', output: error.message }));
+    lines.push(`running it here exited ${run.code}: ${run.output.trim() || '(no output)'}`);
+  }
+  return lines.join('\n');
 }
 
 // eslint-disable-next-line no-empty-pattern -- Playwright requires the fixtures argument to be a destructuring pattern
@@ -526,22 +557,27 @@ test('11. an in-place update', async () => {
 
     await test.step('the silent NSIS install runs on quit and exits', async () => {
       const installers = ['FastStudy-Setup*', 'Un_*', 'Au_*'];
-      await waitFor(async () => (await processesNamed(installers)).length > 0, {
-        timeoutMs: 60_000,
-        message: `${failed(ASSUMPTION.updater)}: no installer started when the app quit`,
-      });
-      let quiet = 0;
-      await waitFor(
-        async () => {
-          quiet = (await processesNamed(installers)).length ? 0 : quiet + 1;
-          return quiet >= 3 && fs.existsSync(paths.appExe());
-        },
-        {
-          timeoutMs: 10 * 60_000,
-          intervalMs: 2000,
-          message: `${failed(ASSUMPTION.updater)}: the silent install did not finish in 10 minutes`,
-        },
-      );
+      // The outcome, not a live installer: the install overlaps the app's own shutdown and is
+      // normally gone before the first poll, so a snapshot is evidence a failure carries, not the check.
+      let installerSeen = false;
+      try {
+        await waitFor(
+          async () => {
+            if ((await processesNamed(installers)).length) installerSeen = true;
+            const reported = await productVersion(paths.appExe()).catch(() => null);
+            return reported !== null && semverOf(reported) === semverOf(candidate.version);
+          },
+          {
+            timeoutMs: 10 * 60_000,
+            intervalMs: 2000,
+            message: `${failed(ASSUMPTION.updater)}: ${paths.appExe()} is still not ${candidate.version} 10 minutes after the app quit`,
+          },
+        );
+      } catch (error) {
+        throw new Error(
+          `${error.message}\n${await installForensics(installerSeen, candidate.version)}`,
+        );
+      }
       // A quit-time install must not start the app; one that did would hold the single-instance lock.
       const running = await strayAfter([paths.installDir()], 30_000);
       expect(running, 'something runs out of the install dir after the silent install').toEqual([]);
