@@ -91,8 +91,10 @@ attach is the one that must survive. Unpaired surrogates are replaced before enc
 `encodeURIComponent` throws `URIError` on one and a crash message can carry half an emoji. The
 timestamp in the file name uses `-` rather than `:`, which Windows forbids in a path.
 
-The recipient is one named constant in `main.js`. The Google Group it points at does not exist yet;
-creating it and swapping that literal is the whole remaining task.
+`report.js` holds the composition — recipient, encoding and the trim — because it is pure string work
+and so unit-testable, while `mailReport` stays in `main.js` with the log tail and the state root it
+needs. The Google Group the recipient points at does not exist yet; creating it and swapping that
+literal is the whole remaining task.
 
 **Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
 child window itself, and its documented merge order gives that child the parent's security-related

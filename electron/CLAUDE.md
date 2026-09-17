@@ -12,6 +12,7 @@ everything on quit.
 | ------------- | ------------------------------------------------------------------------------- |
 | `main.js`     | The launch: secret, child specs, ports, health, window, teardown, log, shell   |
 | `protocol.js` | The `app://bundle` scheme and serving `frontend/dist` over it                   |
+| `report.js`   | The error report's `mailto:` — recipient, encoding, the trim to the size cap    |
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
 | `updater.js`  | The update check — electron-updater against GitHub Releases, silent            |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
