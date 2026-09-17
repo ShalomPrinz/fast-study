@@ -64,9 +64,14 @@ a = Analysis(  # noqa: F821
 
 pyz = PYZ(a.pure)  # noqa: F821
 
+# UTF-8 mode: piped stdio on Windows otherwise takes the ANSI codepage, so a Hebrew log line reaches
+# launch.log as backslash escapes (stderr) or not at all (stdout).
+options = [("X utf8=1", None, "OPTION")]
+
 exe = EXE(  # noqa: F821
     pyz,
     a.scripts,
+    options,
     exclude_binaries=True,
     name="services",
     # Console, not windowed: the launcher reads the FASTSTUDY_PORT line off stdout, and tool spawns (no
