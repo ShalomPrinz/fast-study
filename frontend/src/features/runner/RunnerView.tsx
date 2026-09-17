@@ -199,147 +199,151 @@ export default function RunnerView() {
       />
 
       <div className="page-body">
-        <div className="page-column">
-          <div className="stack">
-            <section>
-              <div className="section-head">
-                <h2 className="section-title">
-                  <Trans>Now running</Trans>
-                </h2>
-                <span className="section-count">
-                  <Plural
-                    value={inFlight.length}
-                    one="# lecture in flight"
-                    other="# lectures in flight"
-                  />
-                </span>
-              </div>
-
-              {focus ? (
-                <>
-                  <FocusCard
-                    key={`${focus.course}||${focus.lecture}||${focus.kind}`}
-                    entry={focus}
-                  />
-                  {alsoRunning.length > 0 && (
-                    <div className="pipeline-card runner-also">
-                      {alsoRunning.map((entry) => (
-                        <LectureRow
-                          key={`${entry.course}||${entry.lecture}||${entry.kind}`}
-                          course={entry.course}
-                          lecture={entry.lecture}
-                          kind={entry.kind}
-                          state={entry.sleepingUntil ? 'paused' : 'running'}
-                          chip={
-                            entry.sleepingUntil ? (
-                              <span className="chip chip--warn">
-                                {t`Quota · resumes ${formatClockTime(entry.sleepingUntil)}`}
-                              </span>
-                            ) : (
-                              <span className="chip chip--accent">{entry.step}</span>
-                            )
-                          }
-                        />
-                      ))}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <p className="queue-note">
-                  <Trans>No step is running right now.</Trans>
-                </p>
-              )}
-            </section>
-
-            <section>
-              <div className="section-head">
-                <h2 className="section-title">
-                  <Trans>Queued</Trans>
-                </h2>
-                <span className="section-count">
-                  {queue.length} · <Trans>the runner takes these in order</Trans>
-                </span>
-              </div>
-
-              {queue.length > 0 ? (
-                <div className="pipeline-card">
-                  {queue.map((entry, i) => (
-                    <LectureRow
-                      key={`${entry.course}||${entry.lecture}||${entry.kind}`}
-                      course={entry.course}
-                      lecture={entry.lecture}
-                      kind={entry.kind}
-                      state="pending"
-                      chip={
-                        i === 0 ? (
-                          <span className="chip">
-                            <Trans>Next</Trans>
-                          </span>
-                        ) : entry.depth === 'audio' ? (
-                          <span className="chip">
-                            <Trans>Audio only</Trans>
-                          </span>
-                        ) : undefined
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p className="queue-note">
-                  <Trans>Nothing is waiting for the runner.</Trans>
-                </p>
-              )}
-            </section>
-
-            <section>
-              <div className="section-head">
-                <h2 className="section-title">
-                  <Trans>Not queued</Trans>
-                </h2>
-                <span className="head-actions">
+        <div className="page-column runner-page">
+          <div className="runner-grid">
+            <div className="stack">
+              <section>
+                <div className="section-head">
+                  <h2 className="section-title">
+                    <Trans>Now running</Trans>
+                  </h2>
                   <span className="section-count">
                     <Plural
-                      value={pending.length}
-                      one="# lecture has work left"
-                      other="# lectures have work left"
+                      value={inFlight.length}
+                      one="# lecture in flight"
+                      other="# lectures in flight"
                     />
                   </span>
-                  <button
-                    className="btn btn--primary"
-                    onClick={() => void trigger()}
-                    disabled={pending.length === 0}
-                  >
-                    <Trans>Run these now</Trans>
-                  </button>
-                </span>
-              </div>
+                </div>
 
-              {pending.length > 0 ? (
-                <>
+                {focus ? (
+                  <>
+                    <FocusCard
+                      key={`${focus.course}||${focus.lecture}||${focus.kind}`}
+                      entry={focus}
+                    />
+                    {alsoRunning.length > 0 && (
+                      <div className="pipeline-card runner-also">
+                        {alsoRunning.map((entry) => (
+                          <LectureRow
+                            key={`${entry.course}||${entry.lecture}||${entry.kind}`}
+                            course={entry.course}
+                            lecture={entry.lecture}
+                            kind={entry.kind}
+                            state={entry.sleepingUntil ? 'paused' : 'running'}
+                            chip={
+                              entry.sleepingUntil ? (
+                                <span className="chip chip--warn">
+                                  {t`Quota · resumes ${formatClockTime(entry.sleepingUntil)}`}
+                                </span>
+                              ) : (
+                                <span className="chip chip--accent">{entry.step}</span>
+                              )
+                            }
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="queue-note">
+                    <Trans>No step is running right now.</Trans>
+                  </p>
+                )}
+              </section>
+
+              <section>
+                <div className="section-head">
+                  <h2 className="section-title">
+                    <Trans>Queued</Trans>
+                  </h2>
+                  <span className="section-count">
+                    {queue.length} · <Trans>the runner takes these in order</Trans>
+                  </span>
+                </div>
+
+                {queue.length > 0 ? (
                   <div className="pipeline-card">
-                    {pending.map((item) => (
+                    {queue.map((entry, i) => (
                       <LectureRow
-                        key={`${item.course}||${item.lecture}||${item.kind}`}
-                        course={item.course}
-                        lecture={item.lecture}
-                        kind={item.kind}
+                        key={`${entry.course}||${entry.lecture}||${entry.kind}`}
+                        course={entry.course}
+                        lecture={entry.lecture}
+                        kind={entry.kind}
                         state="pending"
+                        chip={
+                          i === 0 ? (
+                            <span className="chip">
+                              <Trans>Next</Trans>
+                            </span>
+                          ) : entry.depth === 'audio' ? (
+                            <span className="chip">
+                              <Trans>Audio only</Trans>
+                            </span>
+                          ) : undefined
+                        }
                       />
                     ))}
                   </div>
+                ) : (
                   <p className="queue-note">
-                    <Trans>
-                      Nothing is coming for these until you run them, or the nightly catch-up pass
-                      does.
-                    </Trans>
+                    <Trans>Nothing is waiting for the runner.</Trans>
                   </p>
-                </>
-              ) : (
-                <p className="queue-note">
-                  <Trans>Every lecture with a video is finished or already spoken for.</Trans>
-                </p>
-              )}
-            </section>
+                )}
+              </section>
+            </div>
+
+            <div className="stack">
+              <section>
+                <div className="section-head">
+                  <h2 className="section-title">
+                    <Trans>Not queued</Trans>
+                  </h2>
+                  <span className="head-actions">
+                    <span className="section-count">
+                      <Plural
+                        value={pending.length}
+                        one="# lecture has work left"
+                        other="# lectures have work left"
+                      />
+                    </span>
+                    <button
+                      className="btn btn--primary"
+                      onClick={() => void trigger()}
+                      disabled={pending.length === 0}
+                    >
+                      <Trans>Run these now</Trans>
+                    </button>
+                  </span>
+                </div>
+
+                {pending.length > 0 ? (
+                  <>
+                    <div className="pipeline-card">
+                      {pending.map((item) => (
+                        <LectureRow
+                          key={`${item.course}||${item.lecture}||${item.kind}`}
+                          course={item.course}
+                          lecture={item.lecture}
+                          kind={item.kind}
+                          state="pending"
+                        />
+                      ))}
+                    </div>
+                    <p className="queue-note">
+                      <Trans>
+                        Nothing is coming for these until you run them, or the nightly catch-up pass
+                        does.
+                      </Trans>
+                    </p>
+                  </>
+                ) : (
+                  <p className="queue-note">
+                    <Trans>Every lecture with a video is finished or already spoken for.</Trans>
+                  </p>
+                )}
+              </section>
+            </div>
           </div>
         </div>
       </div>

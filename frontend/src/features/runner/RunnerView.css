@@ -1,14 +1,40 @@
+/* The runner's own work on the wider side, the lectures nothing is scheduled for beside it. */
+.runner-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-7) var(--space-8);
+  align-items: start;
+}
+
+/* Queries the column, not the viewport: the page width is the window minus the sidebar. */
+.runner-page {
+  container-type: inline-size;
+}
+
+/* Below 800px the side column drops under ~300px and the focus rail runs out of room. */
+@container (width < 800px) {
+  .runner-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .stack {
   display: flex;
   flex-direction: column;
   gap: var(--space-7);
 }
 
-/* A section whose caption carries the page's one action, beside its count. */
+/* A section whose caption carries the page's one action, beside its count; in a narrow column
+   both wrap under the title rather than overflow. */
+.runner-page .section-head {
+  flex-wrap: wrap;
+}
+
 .head-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-3) var(--space-5);
 }
 
 /* The one-line caption under a card, and the stand-in for an empty section. */
@@ -82,15 +108,17 @@
   color: var(--text);
 }
 
-/* Other in-flight lectures, banded under the focus card rather than beside it. */
+/* Other in-flight lectures, banded under the focus card in the wide column. */
 .runner-also {
   margin-top: var(--space-3);
 }
 
 /* ---- the stage rail ---- */
 
+/* Wraps rather than overflows in a narrow card, keeping every stage visible. */
 .stage-rail {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-3);
 }
@@ -117,6 +145,7 @@
 
 .stage-sep {
   flex: 1;
+  min-width: var(--space-3);
   height: 1px;
   background: var(--line);
 }
