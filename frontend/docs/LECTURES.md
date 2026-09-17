@@ -26,8 +26,8 @@ A step's button is enabled only when its prereq file exists and nothing is in fl
 
 `MainView` is a `PageHeader` band above one scrolling body. The header carries the course as eyebrow,
 the lecture name as title, a metadata row (running step or `Complete`, video size, material count),
-and the page's single primary button, `Run Remaining`, beside a `LectureActionsMenu` overflow holding
-the per-file actions — edit summary, open PDF, open in Drive — that no longer sit on their rows.
+and the page's single primary button, `Run Remaining`, after the per-file actions — edit summary, open
+PDF, open in Drive — as smaller icon-and-label ghost buttons, each shown once its file exists.
 
 Below it, `.pipeline-card` (shared with the course overview, in `styles/pipeline-card.css`) is **one**
 bordered card holding all six stages, parted by rules inset to

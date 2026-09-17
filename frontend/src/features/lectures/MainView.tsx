@@ -30,8 +30,6 @@ import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
-import LectureActionsMenu from './components/LectureActionsMenu'
-import type { LectureAction } from './components/LectureActionsMenu'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
 import '@/styles/modal.css'
@@ -235,22 +233,6 @@ export default function MainView() {
     ) : null,
   ].filter((item) => item !== null)
 
-  const overflowActions: LectureAction[] = [
-    summaryExists && {
-      label: t`Edit summary`,
-      onClick: () => navigate({ pathname: 'edit', search: kindQuery(kind) }),
-    },
-    pdfExists && {
-      label: t`Open PDF`,
-      onClick: () => openLectureFile(course, lecture, 'summary.pdf', kind),
-      testId: 'open-pdf',
-    },
-    pdfUploaded && {
-      label: t`Open in Drive`,
-      onClick: () => openExternalUrl(files!['drive_url.txt'].url),
-    },
-  ].filter(Boolean) as LectureAction[]
-
   return (
     <main
       className="main-view main-view--page"
@@ -270,7 +252,34 @@ export default function MainView() {
         ))}
         actions={
           <>
-            <LectureActionsMenu actions={overflowActions} />
+            {summaryExists && (
+              <button
+                className="btn btn--ghost header-action"
+                onClick={() => navigate({ pathname: 'edit', search: kindQuery(kind) })}
+              >
+                <Icon icon="edit" />
+                <Trans>Edit summary</Trans>
+              </button>
+            )}
+            {pdfExists && (
+              <button
+                className="btn btn--ghost header-action"
+                onClick={() => openLectureFile(course, lecture, 'summary.pdf', kind)}
+                data-testid="open-pdf"
+              >
+                <Icon icon="document" />
+                <Trans>Open PDF</Trans>
+              </button>
+            )}
+            {pdfUploaded && (
+              <button
+                className="btn btn--ghost header-action"
+                onClick={() => openExternalUrl(files['drive_url.txt'].url)}
+              >
+                <Icon icon="cloud" />
+                <Trans>Open in Drive</Trans>
+              </button>
+            )}
             {hasActions && (
               <button className="btn btn--primary" onClick={handleRunRemaining} disabled={inflight}>
                 <Trans>Run Remaining</Trans>
