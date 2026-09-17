@@ -137,7 +137,7 @@ export default function MainView() {
   const summaryMtime = files['summary.md'].mtime
   const stageCount = stages.length
   const doneCount = stages.filter(({ file }) => files[file].exists).length
-  const videoDuration = files['video.mp4'].duration ?? null
+  const videoDuration = files['video.mp4'].duration
 
   // A delete can be refused because the file is open in the user's pdf viewer, so it needs saying.
   function reportDeleteFailure(e: unknown) {
@@ -226,7 +226,7 @@ export default function MainView() {
 
   const metaItems: ReactNode[] = [
     stateItem,
-    videoDuration !== null ? <span>{t`${formatDuration(videoDuration)} video`}</span> : null,
+    videoDuration !== undefined ? <span>{t`${formatDuration(videoDuration)} video`}</span> : null,
     materials.length > 0 ? (
       <span>
         <Plural value={materials.length} one="# material" other="# materials" />

@@ -61,9 +61,10 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         entry = {"exists": exists, "size": size, "mtime": mtime}
         if url is not None:
             entry["url"] = url
-        if f == "video.mp4":
-            # Always present so the entry shape is stable; None while absent, mid-download, or unreadable.
-            entry["duration"] = read_duration(p) if exists else None
+        if f == "video.mp4" and exists:
+            duration = read_duration(p)
+            if duration is not None:
+                entry["duration"] = duration
         if f == "summary.pdf":
             warning = _read_pdf_warning(lecture_path)
             if warning is not None:

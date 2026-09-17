@@ -24,7 +24,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | Method+Path                                                | Purpose                                                                   |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
 | `GET    /health`                                           | launcher liveness; `200 {status: ok}` even with no data root configured   |
-| `GET    /tree`                                             | full course tree; `video.mp4` entries carry `duration` (seconds or `null`) |
+| `GET    /tree`                                             | full course tree; `video.mp4` entries carry `duration` (seconds; omitted when unknown) |
 | `POST   /courses`                                          | create course (`{name}`, optional `{source_url}`)                         |
 | `PATCH  /courses/{course}`                                 | rename course (`{name}`)                                                  |
 | `PATCH  /courses/{course}/source_url`                      | set/clear source_url; empty or null clears                                |

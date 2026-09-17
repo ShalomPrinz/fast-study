@@ -93,5 +93,5 @@ def test_tree_entry_carries_duration(data_root):
     (data_root / "Algo" / "Lecture 2").mkdir()
     lectures = {entry["name"]: entry for entry in read_course("Algo")["lectures"]}
     assert lectures["Lecture 1"]["files"]["video.mp4"]["duration"] == 125.0
-    assert lectures["Lecture 2"]["files"]["video.mp4"]["duration"] is None
+    assert "duration" not in lectures["Lecture 2"]["files"]["video.mp4"]
     assert "duration" not in lectures["Lecture 1"]["files"]["summary.pdf"]
