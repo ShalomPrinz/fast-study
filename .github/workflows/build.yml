@@ -128,6 +128,16 @@ jobs:
         working-directory: electron
         run: npm ci && npm run dist
 
+      # The smoke job rewrites app-update.yml to a loopback feed, so this is the only check that the
+      # shipped copy points installed apps at this repo's Releases.
+      - name: Check the update feed config
+        run: |
+          yml=electron/dist/win-unpacked/resources/app-update.yml
+          [ -f "$yml" ] || { echo "::error::electron-builder wrote no $yml"; exit 1; }
+          for line in "provider: github" "owner: ShalomPrinz" "repo: fast-study"; do
+            grep -qx "$line" <(tr -d '\r' < "$yml") || { echo "::error::$yml has no '$line'"; cat "$yml"; exit 1; }
+          done
+
       # The same staged tree at a lower version, so the smoke job can update from it to the build
       # above. Its own output dir keeps its latest.yml off the candidate's; it never leaves Actions.
       - name: Build the previous-version installer

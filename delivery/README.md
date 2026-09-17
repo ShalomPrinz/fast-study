@@ -33,7 +33,8 @@ exactly the bytes the smoke job tested.
 
 - **`build.yml`** builds with `--publish never` — the installer, its `.blockmap` and `latest.yml`,
   plus a second installer of the same staged tree at a lower version that exists only for the
-  update check and never leaves Actions. Its smoke job installs the uploaded artifact on a fresh
+  update check and never leaves Actions. The build fails if the shipped `app-update.yml` does not
+  name this repo's GitHub Releases, which the smoke job rewrites and so cannot check. Its smoke job installs the uploaded artifact on a fresh
   runner and runs `smoke/`; on failure it uploads two artifacts — `smoke-logs`, the per-launch
   `launch.log`s, the state root's own and the failing test's DOM snapshot, ~60KB, and
   `smoke-traces`, the Playwright traces, ~11MB, which almost nothing needs. Only a green smoke job
