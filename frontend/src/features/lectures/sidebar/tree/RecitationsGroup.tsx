@@ -24,11 +24,11 @@ export default function RecitationsGroup({ expand }: { expand: ExpandHandle }) {
   return (
     <li className="recitations-group">
       <div className="recitations-header">
-        <button className="course-toggle recitations-toggle" onClick={expand.toggle} dir="auto">
+        <button className="course-toggle recitations-toggle" onClick={expand.toggle}>
           <span className="chevron">
             <Chevron open={expand.isOpen} />
           </span>
-          <span>
+          <span dir="auto">
             <Trans>Recitations</Trans>
           </span>
         </button>
