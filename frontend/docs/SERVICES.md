@@ -9,8 +9,8 @@ go through them — no call site touches `fetch`, `EventSource` or `react-toasti
 the `X-FastStudy-Secret` launch secret on every request — and exposes
 `url(path)` for the URLs the page loads itself — pdf.js's own fetch, and `open.ts`'s browser-dev fallback. URL string building lives in `shared/utils/url.ts`, not here.
 
-A failed response's message comes from its body — `{error}`, FastAPI's `{detail}`, or `{message}`, whichever is
-there — falling back to the status line. "400 Bad Request" says nothing about a data root that turned out not
+A failed response's message comes from its body's `{error}` — the one failure shape every service sends —
+falling back to the status line. "400 Bad Request" says nothing about a data root that turned out not
 to be writable, and that prose is what the settings screens show.
 
 `423` is the one status whose body is replaced rather than shown: the database service answers it when

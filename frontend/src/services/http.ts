@@ -6,7 +6,7 @@ export function httpError(res: Response): Error {
   return new Error(`${res.status} ${res.statusText}`)
 }
 
-// Every service reports a failure as JSON prose — `{error}`, FastAPI's `{detail}`, or `{message}`.
+// Every service reports a failure as JSON prose in `{error}`.
 // Surfacing it beats "400 Bad Request", which says nothing about, say, a data root that turned out
 // not to be writable.
 async function failureError(res: Response): Promise<Error> {
@@ -17,7 +17,7 @@ async function failureError(res: Response): Promise<Error> {
   }
   try {
     const body = JSON.parse(await res.text())
-    const message = body?.error ?? body?.detail ?? body?.message
+    const message = body?.error
     if (typeof message === 'string' && message) return new Error(message)
   } catch {
     // Not JSON, or no body at all — the status line is all there is to report.

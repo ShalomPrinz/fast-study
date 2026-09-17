@@ -42,15 +42,14 @@ describe('http client failure prose', () => {
     return (await rejection(client.get('/x'))).message
   }
 
-  it('prefers error over detail over message', async () => {
-    expect(await messageFor(JSON.stringify({ error: 'e', detail: 'd', message: 'm' }))).toBe('e')
-    expect(await messageFor(JSON.stringify({ detail: 'd', message: 'm' }))).toBe('d')
-    expect(await messageFor(JSON.stringify({ message: 'm' }))).toBe('m')
+  it("shows the body's error prose and ignores detail or message", async () => {
+    expect(await messageFor(JSON.stringify({ error: 'e' }))).toBe('e')
+    expect(await messageFor(JSON.stringify({ detail: 'd' }))).toBe('500 Internal Server Error')
+    expect(await messageFor(JSON.stringify({ message: 'm' }))).toBe('500 Internal Server Error')
   })
 
   it('falls back to the status line for non-string or empty prose', async () => {
-    // FastAPI's validation `detail` is a list, which says nothing a toast can show.
-    expect(await messageFor(JSON.stringify({ detail: [{ loc: ['body'] }] }))).toBe(
+    expect(await messageFor(JSON.stringify({ error: [{ loc: ['body'] }] }))).toBe(
       '500 Internal Server Error',
     )
     expect(await messageFor(JSON.stringify({ error: '' }))).toBe('500 Internal Server Error')
@@ -62,7 +61,7 @@ describe('http client failure prose', () => {
   })
 
   it('replaces a 423 body with its own message', async () => {
-    const message = await messageFor(JSON.stringify({ detail: 'locked by pid 42' }), 423, 'Locked')
+    const message = await messageFor(JSON.stringify({ error: 'locked by pid 42' }), 423, 'Locked')
     expect(message).not.toBe('locked by pid 42')
     expect(message).not.toBe('423 Locked')
   })
