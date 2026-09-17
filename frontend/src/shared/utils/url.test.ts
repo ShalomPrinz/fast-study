@@ -9,6 +9,7 @@ import {
   extractorsQuery,
   overviewGenerateQuery,
 } from './url'
+import { ROUTES } from './routes'
 
 describe('path', () => {
   it('encodes interpolated values and leaves the literals alone', () => {
@@ -38,16 +39,10 @@ describe('lecture addresses', () => {
 })
 
 describe('browser routes', () => {
-  // The route paths App.tsx declares, flattened (pathless layouts add no segment).
+  // App.tsx's index route is `/`; the rest come from ROUTES (pathless layouts add no segment).
   const routes = [
-    { path: '/', id: 'home' },
-    { path: 'course/:course/overview', id: 'overview' },
-    { path: 'downloads', id: 'downloads' },
-    { path: 'search', id: 'search' },
-    { path: 'running', id: 'running' },
-    { path: 'settings', id: 'settings' },
-    { path: ':course/:lecture', id: 'lecture' },
-    { path: ':course/:lecture/edit', id: 'editor' },
+    { id: 'home', path: '/' },
+    ...Object.entries(ROUTES).map(([id, path]) => ({ id, path })),
   ]
   const resolve = (url: string) => {
     const m = matchRoutes(routes, url.split('?')[0])?.at(-1)

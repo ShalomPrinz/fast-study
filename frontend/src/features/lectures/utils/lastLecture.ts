@@ -1,14 +1,15 @@
 import { matchPath } from 'react-router-dom'
 import type { Course, Kind, Selected } from '@/types'
 import { lectureRoute } from '@/shared/utils/url'
+import { ROUTES } from '@/shared/utils/routes'
 import { findLecture } from './courseTree'
 
 const STORAGE_KEY = 'fastStudyLastLecture'
 
-// The lecture a path opens, or null; an overview path also fits `/:course/:lecture/*` with course "course".
+// The lecture a path opens, or null; an overview path also fits the lecture prefix with course "course".
 export function lectureToRemember(pathname: string, kind: Kind): Selected | null {
-  if (matchPath('/course/:course/overview', pathname)) return null
-  const params = matchPath('/:course/:lecture/*', pathname)?.params
+  if (matchPath(ROUTES.overview, pathname)) return null
+  const params = matchPath(`${ROUTES.lecture}/*`, pathname)?.params
   if (!params?.course || !params.lecture) return null
   return {
     course: decodeURIComponent(params.course),

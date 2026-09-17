@@ -52,7 +52,7 @@ fresher one.
 
 ## Routes
 
-`react-router-dom` v7, declared in `App.tsx`; every route renders inside `Layout`. `/`, `/course/:course/overview` and
+`react-router-dom` v7, declared in `App.tsx` from the absolute patterns in `shared/utils/routes.ts` (also what `useMatch`/`matchPath` take); every route renders inside `Layout`. `/`, `/course/:course/overview` and
 `/:course/:lecture` also sit under the pathless `LecturesLayout`, which renders the lectures tree pane
 beside them; `/:course/:lecture/edit` stays a direct child of `Layout` so the editor gets the full width.
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useMatch } from 'react-router-dom'
+import { ROUTES } from '@/shared/utils/routes'
 import type { Course } from '@/types'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useAddLecture } from '@/features/lectures/hooks/useAddLecture'
@@ -19,7 +20,7 @@ const savedExpansion = new Map<string, { expanded: boolean; recExpanded: boolean
 
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()
-  const overviewCourse = useMatch('/course/:course/overview')?.params.course
+  const overviewCourse = useMatch(ROUTES.overview)?.params.course
   const { refreshCourses } = useCourseTreeContext()
   const add = useAddLecture(course)
 

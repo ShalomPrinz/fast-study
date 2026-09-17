@@ -15,6 +15,7 @@ import SettingsView from '@/features/settings/SettingsView'
 import Icon from '@/shared/components/Icon'
 import { ToastContainer } from '@/services/toaster'
 import { isRtl } from '@/services/i18n'
+import { ROUTES } from '@/shared/utils/routes'
 import '@/styles/panel.css'
 
 function EmptyState() {
@@ -50,14 +51,14 @@ export default function App() {
             {/* The tree pane's pages; the editor sits outside so it gets the full width. */}
             <Route element={<LecturesLayout />}>
               <Route index element={<EmptyState />} />
-              <Route path="course/:course/overview" element={<CourseView />} />
-              <Route path=":course/:lecture" element={<MainView />} />
+              <Route path={ROUTES.overview} element={<CourseView />} />
+              <Route path={ROUTES.lecture} element={<MainView />} />
             </Route>
-            <Route path="downloads" element={<DownloadsView />} />
-            <Route path="search" element={<SearchView />} />
-            <Route path="running" element={<RunnerView />} />
-            <Route path="settings" element={<SettingsView />} />
-            <Route path=":course/:lecture/edit" element={<EditSummaryView />} />
+            <Route path={ROUTES.downloads} element={<DownloadsView />} />
+            <Route path={ROUTES.search} element={<SearchView />} />
+            <Route path={ROUTES.running} element={<RunnerView />} />
+            <Route path={ROUTES.settings} element={<SettingsView />} />
+            <Route path={ROUTES.editor} element={<EditSummaryView />} />
           </Route>
         </Routes>
       </InitGate>

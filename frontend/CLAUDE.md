@@ -77,7 +77,7 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
   `EventSource` or `react-toastify` at call sites.
 - Open every file and outside link through `services/open.ts` — never `window.open`, `target="_blank"` or an outside
   `href` without `preventDefault()`. Packaged, the first two do nothing; the last loads the site in the app window, secret included.
-- Derive steps from `features/lectures/constants/pipeline.ts`; build URLs with `shared/utils/url.ts`.
+- Derive steps from `features/lectures/constants/pipeline.ts`; build URLs with `shared/utils/url.ts`; route patterns come from `shared/utils/routes.ts`.
 - Every user-facing string goes through a Lingui macro, and every direction-sensitive CSS declaration
   is a logical property. See `docs/I18N.md` — including what deliberately stays untranslated.
 - UI lives in components, not contexts or hooks — those expose state and callbacks only.

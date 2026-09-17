@@ -1,5 +1,6 @@
 import { Trans } from '@lingui/react/macro'
 import { useMatch, useNavigate } from 'react-router-dom'
+import { ROUTES } from '@/shared/utils/routes'
 import Icon from '@/shared/components/Icon'
 import { courseRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
@@ -10,7 +11,7 @@ import './CourseOverviewRow.css'
 export default function CourseOverviewRow() {
   const { course } = useCourseGroup()
   const navigate = useNavigate()
-  const isSelected = useMatch('/course/:course/overview')?.params.course === course.name
+  const isSelected = useMatch(ROUTES.overview)?.params.course === course.name
 
   return (
     <li>
