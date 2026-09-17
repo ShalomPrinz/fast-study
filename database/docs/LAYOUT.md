@@ -125,6 +125,10 @@ Clients test key presence, so emitting `null` would read as "there is a warning"
 `source_url` is the exception: it is always present, `null` when unset, so courses predating the
 field stay backwards-compatible.
 
+`video.mp4` also always carries `duration` — seconds as a float, or `null` when the video is absent,
+still downloading (no `moov` yet), fragmented, or unreadable. It is read from the `moov/mvhd` box
+headers on every tree read (`fs/mp4.py`, sub-millisecond), with no cache or marker file.
+
 ## Degrade, don't fail
 
 Every metadata read (`transcript.partial.meta.json`, both `.pdf_warning` readers,

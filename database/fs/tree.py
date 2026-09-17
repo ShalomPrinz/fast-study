@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from .materials import list_materials
+from .mp4 import read_duration
 from .paths import (
     ARCHIVED_MARKER,
     OVERVIEW_DIR,
@@ -44,8 +45,8 @@ def _read_pdf_warning(lecture_path: Path) -> Optional[str]:
 
 
 def _read_lecture(lecture_path: Path, name: str) -> dict:
-    """Build the tree entry for one lecture: existence/size per predefined file, the material list,
-    and partial-transcript progress."""
+    """Build the tree entry for one lecture: existence/size per predefined file (plus video duration),
+    the material list, and partial-transcript progress."""
 
     files = {}
     for f in PREDEFINED_FILES:
@@ -60,6 +61,9 @@ def _read_lecture(lecture_path: Path, name: str) -> dict:
         entry = {"exists": exists, "size": size, "mtime": mtime}
         if url is not None:
             entry["url"] = url
+        if f == "video.mp4":
+            # Always present so the entry shape is stable; None while absent, mid-download, or unreadable.
+            entry["duration"] = read_duration(p) if exists else None
         if f == "summary.pdf":
             warning = _read_pdf_warning(lecture_path)
             if warning is not None:
