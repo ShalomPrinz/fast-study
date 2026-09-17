@@ -1,9 +1,11 @@
 import { i18n } from '@lingui/core'
 
-// Colon-numeric elapsed time, e.g. "5:30" / "0:45" — locale-neutral, so it reads the same in any language.
+// Colon-numeric elapsed time, e.g. "0:45" / "5:30" / "1:05:30" — locale-neutral, so it reads the same in any language.
 export function formatDuration(seconds: number): string {
   const s = Math.round(seconds)
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+  const ss = String(s % 60).padStart(2, '0')
+  if (s < 3600) return `${Math.floor(s / 60)}:${ss}`
+  return `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${ss}`
 }
 
 // Binary file size, one decimal above a kilobyte, e.g. "1.2 GB". Like `formatDuration` the unit

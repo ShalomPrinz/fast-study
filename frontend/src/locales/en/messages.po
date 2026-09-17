@@ -119,7 +119,7 @@ msgstr "{0} rejected this key. Generate a new one in its console."
 msgid "{0} remaining"
 msgstr "{0} remaining"
 
-#. placeholder {0}: formatBytes(videoSize)
+#. placeholder {0}: formatDuration(videoDuration)
 #: src/features/lectures/MainView.tsx:229
 msgid "{0} video"
 msgstr "{0} video"

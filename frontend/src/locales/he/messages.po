@@ -119,7 +119,7 @@ msgstr "{0} דחתה את המפתח הזה. אפשר ליצור מפתח חדש
 msgid "{0} remaining"
 msgstr "נותרו {0}"
 
-#. placeholder {0}: formatBytes(videoSize)
+#. placeholder {0}: formatDuration(videoDuration)
 #: src/features/lectures/MainView.tsx:229
 msgid "{0} video"
 msgstr "סרטון {0}"

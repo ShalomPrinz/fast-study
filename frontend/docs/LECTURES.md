@@ -25,7 +25,7 @@ A step's button is enabled only when its prereq file exists and nothing is in fl
 ## The lecture view
 
 `MainView` is a `PageHeader` band above one scrolling body. The header carries the course as eyebrow,
-the lecture name as title, a metadata row (running step or `Complete`, video size, material count),
+the lecture name as title, a metadata row (running step or `Complete`, video duration when the MP4 header yields one, material count),
 and the page's single primary button, `Run Remaining`, after the per-file actions — edit summary, open
 PDF, open in Drive — as smaller icon-and-label ghost buttons, each shown once its file exists.
 
