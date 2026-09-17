@@ -23,8 +23,8 @@ function bundleDir() {
     : path.join(__dirname, '..', 'frontend', 'dist');
 }
 
-// Joins a URL path under the bundle, or null if it escapes — `%2e%2e` survives the URL parser's
-// own normalization, so the containment check is on the resolved path, not the request.
+// Joins a URL path under the bundle, or null if it escapes — an encoded slash (`..%2f`) survives the
+// URL parser's own normalization, so the containment check is on the resolved path, not the request.
 function resolveWithin(root, pathname) {
   let file;
   try {
@@ -51,4 +51,4 @@ function serveBundle() {
   });
 }
 
-module.exports = { APP_ORIGIN, bundleDir, registerScheme, serveBundle };
+module.exports = { APP_ORIGIN, bundleDir, registerScheme, resolveWithin, serveBundle };

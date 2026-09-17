@@ -110,6 +110,30 @@ jobs:
         run: npm test
         working-directory: downloader/auto
 
+  electron-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: electron
+    env:
+      # The suite is pure logic over a fake `electron` module, so it only needs the package
+      # resolvable — never the ~100MB platform binary electron's postinstall would fetch.
+      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: electron/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
   # One job for all five lib packages: they are small, and a break in any of them is live in four
   # services at once, so they fail as a unit.
   lib-tests:

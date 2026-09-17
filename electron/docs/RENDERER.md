@@ -21,8 +21,8 @@ until the app is actually configured.
   the origin from an API.
 - **Anything that is not a built file gets `index.html`.** The frontend routes with `BrowserRouter`,
   so `app://bundle/courses/X/lectures/Y` has to resolve to the SPA rather than 404. The join is
-  containment-checked against the bundle root first: `%2e%2e` survives the URL parser's own
-  normalization, so the check is on the resolved path, not on the request.
+  containment-checked against the bundle root first: an encoded slash (`..%2f`) survives the URL
+  parser's own normalization, so the check is on the resolved path, not on the request.
 
 `frontend/vite.config.ts` sets no `base`, so built asset URLs are absolute `/assets/...` and resolve
 to `app://bundle/assets/...` from any route depth.
@@ -91,8 +91,10 @@ attach is the one that must survive. Unpaired surrogates are replaced before enc
 `encodeURIComponent` throws `URIError` on one and a crash message can carry half an emoji. The
 timestamp in the file name uses `-` rather than `:`, which Windows forbids in a path.
 
-The recipient is one named constant in `main.js`. The Google Group it points at does not exist yet;
-creating it and swapping that literal is the whole remaining task.
+`report.js` holds the composition — recipient, encoding and the trim — because it is pure string work
+and so unit-testable, while `mailReport` stays in `main.js` with the log tail and the state root it
+needs. The Google Group the recipient points at does not exist yet; creating it and swapping that
+literal is the whole remaining task.
 
 **Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
 child window itself, and its documented merge order gives that child the parent's security-related
