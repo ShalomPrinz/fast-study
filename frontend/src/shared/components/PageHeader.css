@@ -41,11 +41,15 @@
   color: var(--text-3);
 }
 
+/* Wraps rather than clips: `.main-view--page` is `overflow: hidden`, and a four-button lecture
+   header outgrows the space beside the tree pane on a narrow window. `flex-shrink` stays at its
+   default — pinned to 0 the group keeps its max-content width and never reaches a wrap. */
 .page-header-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: var(--space-3);
-  flex-shrink: 0;
 }
 
 /* Live state as a metadata fact: a coloured dot plus one line, handed in by the view. */
