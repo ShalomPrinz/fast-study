@@ -38,9 +38,11 @@ stay supported.
 
 ## Verifying a change
 
-This package has no test suite, and it could not have a useful one: what it does is spawn four real
-processes and wait on them. A launch plus its log is the whole empirical check, and the WSL dev box
-runs WSLg (`DISPLAY=:0`, `/mnt/wslg`), so a real window opens here.
+Two checks, because the package is two kinds of code.
+
+**The boot path is verified by a real launch and its log** — what it does is spawn four real
+processes and wait on them, so nothing short of that proves it. The WSL dev box runs WSLg
+(`DISPLAY=:0`, `/mnt/wslg`), so a real window opens here.
 
 ```bash
 timeout 90 npm --prefix electron start   # SIGTERM at 90s exercises the teardown path
@@ -50,6 +52,13 @@ pgrep -af 'services|database_main|backend_main|app.js|src/index.js'   # must fin
 Then read `<state root>/logs/launch.log`. A healthy dev run ends with all four `ready on
 http://127.0.0.1:<port>`; `{"secureStorage":false}` in the startup-checks line is the expected WSL
 result and not a failure, since `safeStorage` has no keyring to bind to there.
+
+**The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
+covering `resolveWithin`'s path containment, the store's tables and refusal rules, and `report.js`'s
+`mailto:` trimming. It runs under plain `node`: no display, no Electron binary, no spawned service.
+`tests/stubElectron.js` is how — it puts a fake `electron` in the module cache before the module
+under test is required, which is also the switch the unavailable-keystore and failed-decrypt paths
+are reached through. Nothing that spawns or waits on a process is in it.
 
 ## CommonJS, deliberately
 
@@ -94,8 +103,8 @@ the `build` block in `package.json`.
   module` on the first launch of a packaged build: dev and lint both stay green, and WSL cannot
   produce the failure. The globs match every top-level source file and nothing else — `node_modules`
   electron-builder force-excludes and collects separately from `dependencies`, `dist/` is the
-  output directory, and `assets/`, `docs/` and `package-lock.json` match neither. The trade is that
-  a top-level `.js` added here that is _not_ meant to ship would ship.
+  output directory, and `assets/`, `docs/`, `tests/` and `package-lock.json` match neither. The trade
+  is that a top-level `.js` added here that is _not_ meant to ship would ship.
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
 - **Updates are silent and packaged-only.** `updater.js` checks GitHub Releases once per launch,
