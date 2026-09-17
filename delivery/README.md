@@ -100,6 +100,7 @@ off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` 
   the raw observed value unnormalized even where the comparison normalizes it: rcedit stamps a
   four-component ProductVersion, and the `0.1.0.0` a tidied log line would have hidden is what names
   the defect.
+- **The launch secret is enforced**: every service answers 401 to a request without it.
 - Launched with `--lang=en-US`, so a failure screenshot is readable.
 
 Each assumption only a Windows run can prove — the silent per-user install, Playwright attaching to

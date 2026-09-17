@@ -298,6 +298,16 @@ test('2. boot', async () => {
     const unusable = Object.entries(answer.tools ?? {}).filter(([, state]) => state !== 'ok');
     expect(unusable, `${name} reports tools it cannot run`).toEqual([]);
   }
+
+  await test.step('every service refuses a request without the launch secret', async () => {
+    // A path no service routes: the secret check runs before routing, so 401 rather than 404.
+    for (const [name, url] of Object.entries(services.urls)) {
+      const { status } = await fetch(`${url}/__smoke`);
+      expect(status, `${name} answered ${status}, so the launcher did not hand it the launch secret`).toBe(
+        401,
+      );
+    }
+  });
 });
 
 test('3. first run', async () => {
