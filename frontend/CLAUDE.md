@@ -82,9 +82,12 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
   is a logical property. See `docs/I18N.md` — including what deliberately stays untranslated.
 - UI lives in components, not contexts or hooks — those expose state and callbacks only.
 - Import via `@/` for anything outside the current directory; siblings may be relative.
-- Tests are vitest `*.test.ts` colocated with the pure logic they cover. The only shared setup is
-  `src/test-setup.ts`, which activates the English catalog; a test needing a DOM opts in per file with
-  a `// @vitest-environment jsdom` docblock.
+- Tests are vitest `*.test.ts` colocated with the logic they cover, and assert decisions — never markup,
+  CSS or translated copy. A hook whose logic is its async ordering or its providers is tested with
+  `renderHook` under a `// @vitest-environment jsdom` docblock, providers built with `createElement` so the
+  file stays `.ts`. The only shared setup is `src/test-setup.ts`, which activates the English catalog.
+- A fix for a UI-state bug — a flash, flicker, stale value or wrong count — moves the deciding logic into a
+  pure function and tests it in the same change.
 - A component's styles live in `X.css` beside `X.tsx`, or in a named `src/styles/*.css` when 2+ components
   share the class; every component imports every stylesheet that affects it. There is no global stylesheet
   beyond `styles/tokens.css`, and cross-file rules disambiguate by specificity, never source order.
