@@ -10,14 +10,16 @@ const ASSUMPTION_ELECTRON =
   "assumption unproven: Playwright's _electron drives the packaged exe on a windows-latest runner, window and all";
 
 /** Launch the installed app the way a user's shortcut does, plus `--lang=en-US` so a failure
- *  screenshot is readable. Answers `{ app, page, n }`; the trace records until `quit`. */
-export async function launch() {
+ *  screenshot is readable, with `env` over the runner's. Answers `{ app, page, n }`; the trace records until `quit`. */
+export async function launch(env = {}) {
   const n = ++launches;
   let app;
   try {
     app = await electron.launch({
       executablePath: appExe(),
       args: ['--lang=en-US'],
+      // Playwright's `env` replaces the environment rather than extending it.
+      env: { ...process.env, ...env },
       timeout: 120_000,
     });
   } catch (error) {

@@ -38,6 +38,7 @@ const COURSE = 'Smoke Course';
 const LECTURE = 'Tone Lecture';
 const LIVE_LECTURE = 'Live Update Lecture';
 const SECOND_LECTURE = 'No Browser Lecture';
+const TEMP_LECTURE = 'Hebrew Temp Lecture';
 const UPDATE_COURSE = 'Update Course';
 // A line of fixtures/summary.md: Hebrew only, so a missing Hebrew font cannot drop it unnoticed.
 const PDF_PHRASE = 'רדיוס ההתכנסות נתון על ידי נוסחת קושי הדמר';
@@ -71,8 +72,8 @@ const byTestId = (page, id, attributes = {}) =>
   );
 
 /** Launch, wait for the four services, and bind the service clients to this launch's bridge. */
-async function start() {
-  session = await launch();
+async function start(env) {
+  session = await launch(env);
   await waitForApp(session);
   const reached = await bridge(session.page);
   services = { urls: reached.urls, db: database(reached), api: backend(reached) };
@@ -463,7 +464,52 @@ test('9. quit, no orphans', async () => {
   });
 });
 
-test('10. the browser chain, both ends', async () => {
+test('10. the tools run under a Hebrew temp path', async () => {
+  await stop();
+  // Hebrew and a space in the dir every service spawns its tools in, as a Windows username can put in %TEMP%.
+  const folder = 'טמפ עברי';
+  const temp = path.join(paths.workDir(), folder);
+  fs.mkdirSync(temp, { recursive: true });
+  // TMPDIR too: Python's tempfile reads it ahead of TEMP, and a runner shell may set it.
+  await start({ TEMP: temp, TMP: temp, TMPDIR: temp });
+  const { db, api } = services;
+  const broke = `a tool breaks on the non-ASCII temp path ${temp}`;
+
+  /** Run one step while watching the temp folder: each step's workspace is a tempdir made directly in it. */
+  async function runInTemp(step) {
+    const entries = new Set();
+    const watcher = fs.watch(temp, (_, name) => name && entries.add(name));
+    try {
+      expect(await api.runStep(COURSE, TEMP_LECTURE, step), `the ${step} step failed: ${broke}`).toBeNull();
+    } finally {
+      watcher.close();
+    }
+    expect(
+      entries.size,
+      `the ${step} step made nothing in ${temp}: the service ignored TEMP, so this check proved nothing`,
+    ).toBeGreaterThan(0);
+  }
+
+  await db.putVideo(COURSE, TEMP_LECTURE, await tone());
+  await runInTemp('audio');
+  await db.putSummary(COURSE, TEMP_LECTURE, fixture('summary.md').toString('utf8'));
+  await runInTemp('pdf');
+
+  const pdf = (await db.entry(COURSE, TEMP_LECTURE)).files['summary.pdf'];
+  expect(pdf.exists, `no summary.pdf: ${broke}`).toBe(true);
+  expect(pdf.warning, `the render left a .pdf_warning: ${broke}`).toBeUndefined();
+  const text = await pdfText(await db.bytes(COURSE, TEMP_LECTURE, 'summary.pdf'));
+  expect(carriesPhrase(text, PDF_PHRASE), `summary.pdf dropped glyphs: ${broke}`).toBe(true);
+
+  // The audio step logs its temp path, so the folder name is Hebrew the backend wrote to launch.log.
+  const log = readLaunchLog();
+  const notUtf8 = "the frozen services did not write UTF-8 (services.spec's `X utf8=1`)";
+  expect(log.includes(folder), `${notUtf8}, so Hebrew is lost from launch.log`).toBe(true);
+  expect(log.includes('\\u05'), `${notUtf8}, so Hebrew is escaped in launch.log`).toBe(false);
+  await stop();
+});
+
+test('11. the browser chain, both ends', async () => {
   await stop();
   try {
     await test.step('with Chrome gone the prerequisite resolves Edge', async () => {
@@ -497,7 +543,7 @@ test('10. the browser chain, both ends', async () => {
   }
 });
 
-test('11. an in-place update', async () => {
+test('12. an in-place update', async () => {
   const candidate = paths.candidate();
   const previous = paths.previous();
   await stop();

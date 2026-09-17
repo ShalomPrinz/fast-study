@@ -73,7 +73,7 @@ deliberately unpinned — it rots as YouTube changes signatures, so a build ship
 
 `smoke/` is `@playwright/test` driving the installed exe through `_electron`, one ordered file,
 since each check builds on the machine state the last one left: install, boot, first run, the
-pipeline, quit, the browser chain, and an in-place update. It needs an installed Windows build, so
+pipeline, quit, the tools under a Hebrew temp path, the browser chain, and an in-place update. It needs an installed Windows build, so
 off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` works.
 
 - **Offline, enforced.** Per-program outbound firewall rules block `FastStudy.exe`, `services.exe`,
@@ -101,6 +101,9 @@ off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` 
   four-component ProductVersion, and the `0.1.0.0` a tidied log line would have hidden is what names
   the defect.
 - **The launch secret is enforced**: every service answers 401 to a request without it.
+- **A Hebrew temp path is proven used.** The audio and PDF steps run with `TEMP` on a Hebrew folder,
+  watched to prove each step's workspace landed there; the backend's line naming it must reach
+  `launch.log` as UTF-8, not lost or `\u05..`-escaped.
 - Launched with `--lang=en-US`, so a failure screenshot is readable.
 
 Each assumption only a Windows run can prove — the silent per-user install, Playwright attaching to
