@@ -31,12 +31,12 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:301
+#: src/features/runner/RunnerView.tsx:314
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 
 #. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:210
+#: src/features/runner/RunnerView.tsx:221
 msgid "{0, plural, one {# lecture in flight} other {# lectures in flight}}"
 msgstr "{0, plural, one {# lecture in flight} other {# lectures in flight}}"
 
@@ -255,6 +255,10 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
+#: src/features/runner/RunnerView.tsx:209
+msgid "All caught up — every lecture is finished."
+msgstr "All caught up — every lecture is finished."
+
 #: src/features/lectures/EditSummaryView.tsx:244
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "All edits will be discarded and the original AI summary restored."
@@ -308,19 +312,19 @@ msgstr "Audio"
 msgid "Audio extraction failed"
 msgstr "Audio extraction failed"
 
-#: src/features/runner/RunnerView.tsx:280
+#: src/features/runner/RunnerView.tsx:292
 msgid "Audio only"
 msgstr "Audio only"
 
-#: src/features/runner/RunnerView.tsx:171
+#: src/features/runner/RunnerView.tsx:174
 msgid "Auto-run: audio only"
 msgstr "Auto-run: audio only"
 
-#: src/features/runner/RunnerView.tsx:172
+#: src/features/runner/RunnerView.tsx:175
 msgid "Auto-run: off"
 msgstr "Auto-run: off"
 
-#: src/features/runner/RunnerView.tsx:170
+#: src/features/runner/RunnerView.tsx:173
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
@@ -651,10 +655,6 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "Every lecture that is not finished yet is picked up on the next start."
 
-#: src/features/runner/RunnerView.tsx:339
-msgid "Every lecture with a video is finished or already spoken for."
-msgstr "Every lecture with a video is finished or already spoken for."
-
 #: src/features/settings/components/DataRootField.tsx:41
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
@@ -936,7 +936,7 @@ msgstr "More actions"
 msgid "New course"
 msgstr "New course"
 
-#: src/features/runner/RunnerView.tsx:276
+#: src/features/runner/RunnerView.tsx:288
 msgid "Next"
 msgstr "Next"
 
@@ -1008,9 +1008,9 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/runner/RunnerView.tsx:249
-msgid "No step is running right now."
-msgstr "No step is running right now."
+#: src/features/runner/RunnerView.tsx:168
+msgid "None"
+msgstr "None"
 
 #: src/features/downloads/components/RecordingRow.tsx:289
 msgid "Not a file the downloader can fetch"
@@ -1029,7 +1029,7 @@ msgstr "Not enough data to estimate"
 msgid "not provided"
 msgstr "not provided"
 
-#: src/features/runner/RunnerView.tsx:297
+#: src/features/runner/RunnerView.tsx:309
 msgid "Not queued"
 msgstr "Not queued"
 
@@ -1041,19 +1041,15 @@ msgstr "Note: This will delete all files in this lecture."
 #~ msgid "Nothing is coming for these until you run them, or the nightly 03:00 pass does."
 #~ msgstr "Nothing is coming for these until you run them, or the nightly 03:00 pass does."
 
-#: src/features/runner/RunnerView.tsx:331
+#: src/features/runner/RunnerView.tsx:341
 msgid "Nothing is coming for these until you run them, or the nightly catch-up pass does."
 msgstr "Nothing is coming for these until you run them, or the nightly catch-up pass does."
-
-#: src/features/runner/RunnerView.tsx:289
-msgid "Nothing is waiting for the runner."
-msgstr "Nothing is waiting for the runner."
 
 #: src/features/search/SearchView.tsx:250
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
-#: src/features/runner/RunnerView.tsx:183
+#: src/features/runner/RunnerView.tsx:186
 msgid "Nothing running"
 msgstr "Nothing running"
 
@@ -1065,7 +1061,7 @@ msgstr "Nothing to run - All pipelines complete"
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "Nothing to run - All remaining pipelines already running"
 
-#: src/features/runner/RunnerView.tsx:207
+#: src/features/runner/RunnerView.tsx:217
 msgid "Now running"
 msgstr "Now running"
 
@@ -1162,12 +1158,12 @@ msgstr "Pipeline already running"
 msgid "Pipeline failed to start"
 msgstr "Pipeline failed to start"
 
-#: src/features/runner/RunnerView.tsx:257
+#: src/features/runner/RunnerView.tsx:267
 msgid "Queued"
 msgstr "Queued"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:236
+#: src/features/runner/RunnerView.tsx:248
 msgid "Quota · resumes {0}"
 msgstr "Quota · resumes {0}"
 
@@ -1319,7 +1315,7 @@ msgstr "Run Remaining"
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
-#: src/features/runner/RunnerView.tsx:312
+#: src/features/runner/RunnerView.tsx:321
 msgid "Run these now"
 msgstr "Run these now"
 
@@ -1328,11 +1324,11 @@ msgstr "Run these now"
 #~ msgstr "Run unfinished lectures when the app starts"
 
 #. placeholder {0}: status!.runner.total
-#: src/features/runner/RunnerView.tsx:179
+#: src/features/runner/RunnerView.tsx:182
 msgid "Running · lecture {current} of {0}"
 msgstr "Running · lecture {current} of {0}"
 
-#: src/features/runner/RunnerView.tsx:192
+#: src/features/runner/RunnerView.tsx:195
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "Running pipelines"
@@ -1541,7 +1537,7 @@ msgstr "the run stopped early. Run the section again to pick them up."
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
-#: src/features/runner/RunnerView.tsx:260
+#: src/features/runner/RunnerView.tsx:271
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
 

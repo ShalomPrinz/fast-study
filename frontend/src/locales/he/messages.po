@@ -31,12 +31,12 @@ msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:301
+#: src/features/runner/RunnerView.tsx:314
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {להרצאה אחת נותרה עבודה} two {ל-# הרצאות נותרה עבודה} other {ל-# הרצאות נותרה עבודה}}"
 
 #. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:210
+#: src/features/runner/RunnerView.tsx:221
 msgid "{0, plural, one {# lecture in flight} other {# lectures in flight}}"
 msgstr "{0, plural, one {הרצאה אחת בעבודה} two {# הרצאות בעבודה} other {# הרצאות בעבודה}}"
 
@@ -255,6 +255,10 @@ msgstr "הוסף הרצאה"
 msgid "Add recitation"
 msgstr "הוסף תרגול"
 
+#: src/features/runner/RunnerView.tsx:209
+msgid "All caught up — every lecture is finished."
+msgstr "הכול מעודכן — כל ההרצאות הושלמו."
+
 #: src/features/lectures/EditSummaryView.tsx:244
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל העריכות יימחקו והסיכום המקורי של ה-AI ישוחזר."
@@ -308,19 +312,19 @@ msgstr "אודיו"
 msgid "Audio extraction failed"
 msgstr "חילוץ האודיו נכשל"
 
-#: src/features/runner/RunnerView.tsx:280
+#: src/features/runner/RunnerView.tsx:292
 msgid "Audio only"
 msgstr "אודיו בלבד"
 
-#: src/features/runner/RunnerView.tsx:171
+#: src/features/runner/RunnerView.tsx:174
 msgid "Auto-run: audio only"
 msgstr "הרצה אוטומטית: אודיו בלבד"
 
-#: src/features/runner/RunnerView.tsx:172
+#: src/features/runner/RunnerView.tsx:175
 msgid "Auto-run: off"
 msgstr "הרצה אוטומטית: כבויה"
 
-#: src/features/runner/RunnerView.tsx:170
+#: src/features/runner/RunnerView.tsx:173
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל הצינור"
 
@@ -651,10 +655,6 @@ msgstr "כל קורס, הרצאה, סרטון וסיכום נשמרים כאן. 
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "כל הרצאה שטרם הושלמה נאספת בהפעלה הבאה."
 
-#: src/features/runner/RunnerView.tsx:339
-msgid "Every lecture with a video is finished or already spoken for."
-msgstr "כל הרצאה שיש לה וידאו הושלמה או שכבר מטופלת."
-
 #: src/features/settings/components/DataRootField.tsx:41
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלכם."
@@ -936,7 +936,7 @@ msgstr "פעולות נוספות"
 msgid "New course"
 msgstr "קורס חדש"
 
-#: src/features/runner/RunnerView.tsx:276
+#: src/features/runner/RunnerView.tsx:288
 msgid "Next"
 msgstr "הבאה"
 
@@ -1008,9 +1008,9 @@ msgstr "אין תרגולים"
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/features/runner/RunnerView.tsx:249
-msgid "No step is running right now."
-msgstr "אף שלב אינו רץ כרגע."
+#: src/features/runner/RunnerView.tsx:168
+msgid "None"
+msgstr "אין"
 
 #: src/features/downloads/components/RecordingRow.tsx:289
 msgid "Not a file the downloader can fetch"
@@ -1029,7 +1029,7 @@ msgstr "אין מספיק נתונים להערכה"
 msgid "not provided"
 msgstr "לא סופק"
 
-#: src/features/runner/RunnerView.tsx:297
+#: src/features/runner/RunnerView.tsx:309
 msgid "Not queued"
 msgstr "לא בתור"
 
@@ -1041,19 +1041,15 @@ msgstr "שים לב: פעולה זו תמחק את כל הקבצים בהרצא�
 #~ msgid "Nothing is coming for these until you run them, or the nightly 03:00 pass does."
 #~ msgstr "שום דבר לא יקרה להן עד שתריץ אותן, או עד המעבר הלילי ב-03:00."
 
-#: src/features/runner/RunnerView.tsx:331
+#: src/features/runner/RunnerView.tsx:341
 msgid "Nothing is coming for these until you run them, or the nightly catch-up pass does."
 msgstr "שום דבר לא יקרה להן עד שתריץ אותן, או עד מעבר ההשלמה הלילי."
-
-#: src/features/runner/RunnerView.tsx:289
-msgid "Nothing is waiting for the runner."
-msgstr "שום דבר לא ממתין למריץ."
 
 #: src/features/search/SearchView.tsx:250
 msgid "Nothing matched this search"
 msgstr "לא נמצאו תוצאות לחיפוש זה"
 
-#: src/features/runner/RunnerView.tsx:183
+#: src/features/runner/RunnerView.tsx:186
 msgid "Nothing running"
 msgstr "שום דבר לא רץ"
 
@@ -1065,7 +1061,7 @@ msgstr "אין מה להריץ - כל הצינורות הושלמו"
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל הצינורות הנותרים כבר רצים"
 
-#: src/features/runner/RunnerView.tsx:207
+#: src/features/runner/RunnerView.tsx:217
 msgid "Now running"
 msgstr "רץ עכשיו"
 
@@ -1162,12 +1158,12 @@ msgstr "הצינור כבר רץ"
 msgid "Pipeline failed to start"
 msgstr "הצינור נכשל בהפעלה"
 
-#: src/features/runner/RunnerView.tsx:257
+#: src/features/runner/RunnerView.tsx:267
 msgid "Queued"
 msgstr "בתור"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:236
+#: src/features/runner/RunnerView.tsx:248
 msgid "Quota · resumes {0}"
 msgstr "מכסה · מתחדשת ב-{0}"
 
@@ -1319,7 +1315,7 @@ msgstr "הרץ את הנותר"
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל הצינור"
 
-#: src/features/runner/RunnerView.tsx:312
+#: src/features/runner/RunnerView.tsx:321
 msgid "Run these now"
 msgstr "הרץ אותן עכשיו"
 
@@ -1328,11 +1324,11 @@ msgstr "הרץ אותן עכשיו"
 #~ msgstr "להריץ הרצאות שלא הושלמו כשהאפליקציה נפתחת"
 
 #. placeholder {0}: status!.runner.total
-#: src/features/runner/RunnerView.tsx:179
+#: src/features/runner/RunnerView.tsx:182
 msgid "Running · lecture {current} of {0}"
 msgstr "רץ · הרצאה {current} מתוך {0}"
 
-#: src/features/runner/RunnerView.tsx:192
+#: src/features/runner/RunnerView.tsx:195
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "צינורות בהרצה"
@@ -1541,7 +1537,7 @@ msgstr "הריצה נעצרה מוקדם. הרץ את הקטע שוב כדי ל�
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "הריצה בוטלה. הרץ את הקטע שוב כדי להשלים אותן."
 
-#: src/features/runner/RunnerView.tsx:260
+#: src/features/runner/RunnerView.tsx:271
 msgid "the runner takes these in order"
 msgstr "המריץ לוקח אותן לפי הסדר"
 

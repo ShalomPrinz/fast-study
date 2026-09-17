@@ -37,6 +37,15 @@
   gap: var(--space-3) var(--space-5);
 }
 
+/* The page's one line when every section is empty, in place of the grid. */
+.runner-empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  font-size: var(--fs-body);
+  color: var(--text-2);
+}
+
 /* The one-line caption under a card, and the stand-in for an empty section. */
 .queue-note {
   margin-top: var(--space-4);
