@@ -14,6 +14,7 @@ export type IconName =
   | 'overview'
   | 'rotate'
   | 'trash'
+  | 'overflow'
   | 'file'
   | 'document'
   | 'cloud'
@@ -232,6 +233,15 @@ const TrashIcon = () => (
   </svg>
 )
 
+// Vertical ellipsis: the menu the header's secondary actions collapse into on a narrow window.
+const OverflowIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="8" cy="3" r="1.2" fill="currentColor" />
+    <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+    <circle cx="8" cy="13" r="1.2" fill="currentColor" />
+  </svg>
+)
+
 // A dog-eared page — labels a material chip.
 const FileIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -347,6 +357,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   overview: OverviewIcon,
   rotate: RotateIcon,
   trash: TrashIcon,
+  overflow: OverflowIcon,
   file: FileIcon,
   document: DocumentIcon,
   cloud: CloudIcon,

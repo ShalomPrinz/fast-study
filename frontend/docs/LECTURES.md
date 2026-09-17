@@ -25,9 +25,17 @@ A step's button is enabled only when its prereq file exists and nothing is in fl
 ## The lecture view
 
 `MainView` is a `PageHeader` band above one scrolling body. The header carries the course as eyebrow,
-the lecture name as title, a metadata row (running step or `Complete`, video duration when the MP4 header yields one, material count),
-and the page's single primary button, `Run Remaining`, after the per-file actions — edit summary, open
-PDF, open in Drive — as smaller icon-and-label ghost buttons, each shown once its file exists.
+the lecture name as title, a metadata row (running step or `Complete`, video duration when the MP4 header
+yields one, material count), and the page's single primary button, `Run Remaining`, at the inline-end of
+the title line.
+
+The per-file actions — edit summary, open PDF, open in Drive, each shown once its file exists — sit on a
+**second row** below, at the inline-end, as smaller icon-and-label ghost buttons. A row of their own is
+what keeps them off the title, whose column has `min-width: 0` and no floor. Below 960px they no longer
+fit it and collapse into `LectureActionsMenu`, the ⋮ trigger that sits between the title and
+`Run Remaining` so the primary button never moves. `useCompactHeaderActions` is the switch — one
+`matchMedia` query on window width, since the sidebar and tree pane are fixed and the content pane is
+always the window less 536 — and it renders one shape or the other, never both.
 
 Below it, `.pipeline-card` (shared with the course overview, in `styles/pipeline-card.css`) is **one**
 bordered card holding all six stages, parted by rules inset to

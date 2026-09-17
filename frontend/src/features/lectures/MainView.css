@@ -1,5 +1,5 @@
-/* The header's secondary actions sit on one row beside `Run Remaining`, a step below `.btn`'s type
-   and padding. Outspecifies `.btn--ghost` rather than relying on sheet order. */
+/* The header's secondary actions on their own row, a step below `.btn`'s type and padding.
+   Outspecifies `.btn--ghost` rather than relying on sheet order. */
 .btn.header-action {
   padding: var(--space-2) var(--space-4);
   font-size: var(--fs-fine);

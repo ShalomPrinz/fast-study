@@ -52,6 +52,16 @@
   gap: var(--space-3);
 }
 
+/* A full-width row of its own under the title line: the actions that do not fit beside a title with
+   no width floor sit below it rather than beside it, at the inline-end. */
+.page-header-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+
 /* Live state as a metadata fact: a coloured dot plus one line, handed in by the view. */
 .page-header-state {
   display: inline-flex;

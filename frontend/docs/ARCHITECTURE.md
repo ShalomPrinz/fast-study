@@ -181,7 +181,8 @@ back mid-string; JetBrains Mono carries filenames, counts and durations.
 colour variants is the whole state-label vocabulary. `StatusNode` renders the four run states (`done`,
 `running`, `pending`, `failed`) at one size, and is what the lecture pipeline, the course branches and
 their steps all read from. `PageHeader` opens every full-page view — title, metadata row, one primary
-action — and `.pipeline-card` is the card its rows sit in, on the lecture pipeline and the course
+action, and an optional second action row under it, clear of a title column that has no width floor —
+and `.pipeline-card` is the card its rows sit in, on the lecture pipeline and the course
 overview alike. `ConfirmModal`, `ProgressBar` and the `.empty-state` card are the other cross-feature
 pieces. The react-toastify surface is skinned once in `services/toaster.css`, beside the only
 file that imports the library.
@@ -204,6 +205,12 @@ never reads visible text. Renaming, removing or re-scoping one is a smoke-suite 
 anything else. A value the suite asserts on rides a `data-*` attribute beside the id, spelled as the
 code's own enum, never a translated string.
 
+Two of them describe the same lecture header in its two shapes. At 960px and wider the three
+secondary actions are inline on a row of their own, so `open-pdf` is one of those buttons and
+`lecture-actions-menu` is absent; below it they fold into the ⋮ menu, so the trigger carries
+`lecture-actions-menu` and `open-pdf` appears on its item once it is open. Only one shape renders, so
+`open-pdf` is never in the DOM twice — see `features/lectures/hooks/useCompactHeaderActions.ts`.
+
 | id                            | extra attributes                                                                                                         | component                                         | marks                                           |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------- |
 | `init-wall`                   | —                                                                                                                        | `features/settings/InitWall.tsx`                  | the first-run wall's root                       |
@@ -219,5 +226,6 @@ code's own enum, never a translated string.
 | `step-status`                 | `data-step`: `audio` \| `transcribe` \| `summarize` \| `pdf` \| `drive`; `data-status`: `done` \| `running` \| `pending` | `features/lectures/MainView.tsx`                  | one pipeline row that has a step                |
 | `lecture-error`               | —                                                                                                                        | `features/lectures/MainView.tsx`                  | the lecture's last run error                    |
 | `lecture-error-message`       | —                                                                                                                        | `features/lectures/MainView.tsx`                  | that error's service prose, untranslated        |
+| `lecture-actions-menu`        | —                                                                                                                        | `features/lectures/components/LectureActionsMenu` | the ⋮ trigger, only below 960px                 |
 | `open-pdf`                    | —                                                                                                                        | `features/lectures/MainView.tsx`                  | "Open PDF", through `services/open.ts`'s bridge |
 | `drive-consent-modal`         | —                                                                                                                        | `app/DriveConsentPrompt.tsx`                      | the Drive consent modal's body                  |

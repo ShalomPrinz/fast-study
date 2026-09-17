@@ -7,6 +7,7 @@ import { deleteFile, deleteMaterial } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
 import { runStep, runPipeline } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
+import { useCompactHeaderActions } from '@/features/lectures/hooks/useCompactHeaderActions'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -30,6 +31,9 @@ import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
+import type { IconName } from '@/shared/components/Icon'
+import LectureActionsMenu from './components/LectureActionsMenu'
+import type { LectureAction } from './components/LectureActionsMenu'
 import '@/styles/spinner.css'
 import '@/styles/panel.css'
 import '@/styles/modal.css'
@@ -42,6 +46,12 @@ interface RotateTarget {
   file: FileName
   step: Step
   toDelete: FileName[]
+}
+
+// A header action in both of its shapes: an icon-and-label button on the wide layout's own row, and
+// a label-only item in the ⋮ menu, which ignores the icon.
+interface HeaderAction extends LectureAction {
+  icon: IconName
 }
 
 // The chip on the Summary row: how the lecture's materials relate to the summary it will produce.
@@ -101,6 +111,7 @@ export default function MainView() {
   const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
   const { courses, loaded, refreshCourses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
+  const compactActions = useCompactHeaderActions()
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null)
@@ -234,6 +245,27 @@ export default function MainView() {
     ) : null,
   ].filter((item) => item !== null)
 
+  // One list, two shapes: the wide layout spreads it across a row of its own under the title, the
+  // narrow one folds it into the ⋮ menu. Each entry appears only once its file exists.
+  const headerActions: HeaderAction[] = [
+    summaryExists && {
+      icon: 'edit' as const,
+      label: t`Edit summary`,
+      onClick: () => navigate({ pathname: 'edit', search: kindQuery(kind) }),
+    },
+    pdfExists && {
+      icon: 'document' as const,
+      label: t`Open PDF`,
+      onClick: () => openLectureFile(course, lecture, 'summary.pdf', kind),
+      testId: 'open-pdf',
+    },
+    pdfUploaded && {
+      icon: 'cloud' as const,
+      label: t`Open in Drive`,
+      onClick: () => openExternalUrl(files!['drive_url.txt'].url),
+    },
+  ].filter(Boolean) as HeaderAction[]
+
   return (
     <main
       className="main-view main-view--page"
@@ -253,40 +285,28 @@ export default function MainView() {
         ))}
         actions={
           <>
-            {summaryExists && (
-              <button
-                className="btn btn--ghost header-action"
-                onClick={() => navigate({ pathname: 'edit', search: kindQuery(kind) })}
-              >
-                <Icon icon="edit" />
-                <Trans>Edit summary</Trans>
-              </button>
-            )}
-            {pdfExists && (
-              <button
-                className="btn btn--ghost header-action"
-                onClick={() => openLectureFile(course, lecture, 'summary.pdf', kind)}
-                data-testid="open-pdf"
-              >
-                <Icon icon="document" />
-                <Trans>Open PDF</Trans>
-              </button>
-            )}
-            {pdfUploaded && (
-              <button
-                className="btn btn--ghost header-action"
-                onClick={() => openExternalUrl(files['drive_url.txt'].url)}
-              >
-                <Icon icon="cloud" />
-                <Trans>Open in Drive</Trans>
-              </button>
-            )}
+            {compactActions && <LectureActionsMenu actions={headerActions} />}
             {hasActions && (
               <button className="btn btn--primary" onClick={handleRunRemaining} disabled={inflight}>
                 <Trans>Run Remaining</Trans>
               </button>
             )}
           </>
+        }
+        secondaryActions={
+          !compactActions && headerActions.length > 0
+            ? headerActions.map(({ label, icon, onClick, testId }) => (
+                <button
+                  key={label}
+                  className="btn btn--ghost header-action"
+                  onClick={onClick}
+                  data-testid={testId}
+                >
+                  <Icon icon={icon} />
+                  {label}
+                </button>
+              ))
+            : null
         }
       />
 
