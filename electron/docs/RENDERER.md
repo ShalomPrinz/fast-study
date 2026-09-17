@@ -21,8 +21,8 @@ until the app is actually configured.
   the origin from an API.
 - **Anything that is not a built file gets `index.html`.** The frontend routes with `BrowserRouter`,
   so `app://bundle/courses/X/lectures/Y` has to resolve to the SPA rather than 404. The join is
-  containment-checked against the bundle root first: `%2e%2e` survives the URL parser's own
-  normalization, so the check is on the resolved path, not on the request.
+  containment-checked against the bundle root first: an encoded slash (`..%2f`) survives the URL
+  parser's own normalization, so the check is on the resolved path, not on the request.
 
 `frontend/vite.config.ts` sets no `base`, so built asset URLs are absolute `/assets/...` and resolve
 to `app://bundle/assets/...` from any route depth.
