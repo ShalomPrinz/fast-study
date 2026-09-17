@@ -6,7 +6,7 @@ import {
   readLastLecture,
   writeLastLecture,
 } from './lastLecture'
-import { lectureRoute } from '@/shared/utils/url'
+import { courseRoute, lectureRoute } from '@/shared/utils/url'
 
 // A Map-backed stand-in: the helpers only need `getItem`/`setItem`, not a DOM.
 beforeEach(() => {
@@ -57,8 +57,18 @@ describe('readLastLecture', () => {
 })
 
 describe('lectureToRemember', () => {
-  it('ignores the course overview, which also fits /:course/:lecture', () => {
-    expect(lectureToRemember('/course/Algebra', 'lecture')).toBeNull()
+  it('ignores the course overview, which also fits /:course/:lecture/*', () => {
+    expect(lectureToRemember(courseRoute('Algebra'), 'lecture')).toBeNull()
+  })
+
+  it('remembers a lecture of a course literally named course', () => {
+    expect(lectureToRemember('/course/Lecture 1', 'lecture')).toEqual({
+      course: 'course',
+      lecture: 'Lecture 1',
+      kind: 'lecture',
+    })
+    expect(lectureToRemember('/course/Lecture 1/edit', 'lecture')?.lecture).toBe('Lecture 1')
+    expect(lectureToRemember(courseRoute('course'), 'lecture')).toBeNull()
   })
 
   it('remembers a lecture page with the given kind', () => {

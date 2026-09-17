@@ -19,7 +19,7 @@ const savedExpansion = new Map<string, { expanded: boolean; recExpanded: boolean
 
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()
-  const overviewCourse = useMatch('/course/:course')?.params.course
+  const overviewCourse = useMatch('/course/:course/overview')?.params.course
   const { refreshCourses } = useCourseTreeContext()
   const add = useAddLecture(course)
 

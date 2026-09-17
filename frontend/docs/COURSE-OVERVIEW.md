@@ -1,6 +1,6 @@
 # Course overview mode
 
-`/course/:course` — per-course cross-lecture summaries ("extractors"), one branch each.
+`/course/:course/overview` — per-course cross-lecture summaries ("extractors"), one branch each.
 
 ## Shape
 

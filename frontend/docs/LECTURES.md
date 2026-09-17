@@ -176,16 +176,16 @@ idle; Downloads carries a count of running jobs, read off `DownloadJobsContext`.
 `LanguageSwitcher`; every glyph in the sidebar is inline SVG from `Icon`.
 
 Lectures reopens the last lecture opened: `LecturesLayout` writes each lecture page it shows (never the
-`/course/:course` overview) to `localStorage['fastStudyLastLecture']` (`utils/lastLecture.ts`), and the row navigates to it while the
+`/course/:course/overview` page) to `localStorage['fastStudyLastLecture']` (`utils/lastLecture.ts`), and the row navigates to it while the
 tree still has it, falling back to `/` when it was renamed, deleted or never stored.
 
 ## Tree pane
 
-`LecturesTreePane` (`.tree-pane`) is rendered by `LecturesLayout` beside `/`, `/course/:course` and
+`LecturesTreePane` (`.tree-pane`) is rendered by `LecturesLayout` beside `/`, `/course/:course/overview` and
 `/:course/:lecture` only; the editor and the other routes get the full width. It holds the active
 courses' `CourseGroup`s, then `ArchivedSection`, then `New course`, inside `PendingUploadProvider` so an
 mp4 dropped on a lecture row can prompt. Each expanded course opens with an Overview row
-(`.course-overview-row`) that opens `/course/:course` and is selected while that page is open; the
+(`.course-overview-row`) that opens `/course/:course/overview` and is selected while that page is open; the
 course header itself only expands and collapses.
 
 `utils/lectureProgress.ts` feeds the tree's two progress signals: `isLectureComplete` (the last

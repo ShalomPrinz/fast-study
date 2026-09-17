@@ -25,8 +25,9 @@ export function lectureBase(course: string, lecture: string): string {
   return path`/courses/${course}/lectures/${lecture}`
 }
 
+// Browser route for a course overview; three segments so no `/:course/:lecture` URL can reach it.
 export function courseRoute(course: string): string {
-  return path`/course/${course}`
+  return path`/course/${course}/overview`
 }
 
 // Overview prefix, shared by the backend and database services.

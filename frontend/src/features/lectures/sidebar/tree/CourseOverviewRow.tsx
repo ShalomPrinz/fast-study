@@ -10,7 +10,7 @@ import './CourseOverviewRow.css'
 export default function CourseOverviewRow() {
   const { course } = useCourseGroup()
   const navigate = useNavigate()
-  const isSelected = useMatch('/course/:course')?.params.course === course.name
+  const isSelected = useMatch('/course/:course/overview')?.params.course === course.name
 
   return (
     <li>

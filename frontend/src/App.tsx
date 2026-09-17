@@ -50,7 +50,7 @@ export default function App() {
             {/* The tree pane's pages; the editor sits outside so it gets the full width. */}
             <Route element={<LecturesLayout />}>
               <Route index element={<EmptyState />} />
-              <Route path="course/:course" element={<CourseView />} />
+              <Route path="course/:course/overview" element={<CourseView />} />
               <Route path=":course/:lecture" element={<MainView />} />
             </Route>
             <Route path="downloads" element={<DownloadsView />} />

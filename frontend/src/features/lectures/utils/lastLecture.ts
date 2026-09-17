@@ -5,9 +5,9 @@ import { findLecture } from './courseTree'
 
 const STORAGE_KEY = 'fastStudyLastLecture'
 
-// The lecture a path opens, or null; `/course/:course` also matches `/:course/:lecture` but the router ranks it as the overview.
+// The lecture a path opens, or null; an overview path also fits `/:course/:lecture/*` with course "course".
 export function lectureToRemember(pathname: string, kind: Kind): Selected | null {
-  if (matchPath('/course/:course', pathname)) return null
+  if (matchPath('/course/:course/overview', pathname)) return null
   const params = matchPath('/:course/:lecture/*', pathname)?.params
   if (!params?.course || !params.lecture) return null
   return {

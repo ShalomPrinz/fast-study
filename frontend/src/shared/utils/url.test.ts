@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
+import { matchRoutes } from 'react-router-dom'
 import {
   path,
   kindQuery,
+  courseRoute,
   lectureRoute,
   lectureBase,
   extractorsQuery,
@@ -32,6 +34,44 @@ describe('lecture addresses', () => {
 
   it('addresses the API under /courses/…/lectures/… with no kind', () => {
     expect(lectureBase('C', 'L 1')).toBe('/courses/C/lectures/L%201')
+  })
+})
+
+describe('browser routes', () => {
+  // The route paths App.tsx declares, flattened (pathless layouts add no segment).
+  const routes = [
+    { path: '/', id: 'home' },
+    { path: 'course/:course/overview', id: 'overview' },
+    { path: 'downloads', id: 'downloads' },
+    { path: 'search', id: 'search' },
+    { path: 'running', id: 'running' },
+    { path: 'settings', id: 'settings' },
+    { path: ':course/:lecture', id: 'lecture' },
+    { path: ':course/:lecture/edit', id: 'editor' },
+  ]
+  const resolve = (url: string) => {
+    const m = matchRoutes(routes, url.split('?')[0])?.at(-1)
+    return m && { id: m.route.id, params: m.params }
+  }
+
+  it('addresses a course overview in three segments', () => {
+    expect(courseRoute('C 1')).toBe('/course/C%201/overview')
+  })
+
+  it('keeps every page of a course literally named course reachable', () => {
+    expect(resolve(lectureRoute('course', 'Lecture 1', 'lecture'))).toEqual({
+      id: 'lecture',
+      params: { course: 'course', lecture: 'Lecture 1' },
+    })
+    expect(resolve(lectureRoute('course', 'Lecture 1', 'lecture') + '/edit')).toEqual({
+      id: 'editor',
+      params: { course: 'course', lecture: 'Lecture 1' },
+    })
+    expect(resolve(courseRoute('course'))).toEqual({ id: 'overview', params: { course: 'course' } })
+  })
+
+  it('keeps a lecture named overview a lecture', () => {
+    expect(resolve(lectureRoute('course', 'overview', 'lecture'))?.id).toBe('lecture')
   })
 })
 

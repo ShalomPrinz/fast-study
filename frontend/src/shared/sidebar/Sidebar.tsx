@@ -60,7 +60,7 @@ export default function Sidebar() {
   const onDownloads = pathname.startsWith('/downloads')
   const onSearch = pathname.startsWith('/search')
   const onSettings = pathname.startsWith('/settings')
-  // Every path the other rows don't claim is `/`, `/course/:c` or `/:c/:l[/edit]` — a lectures page.
+  // Every path the other rows don't claim is `/`, `/course/:c/overview` or `/:c/:l[/edit]` — a lectures page.
   const onLectures = !(onRunning || onDownloads || onSearch || onSettings)
 
   return (

@@ -52,14 +52,14 @@ fresher one.
 
 ## Routes
 
-`react-router-dom` v7, declared in `App.tsx`; every route renders inside `Layout`. `/`, `/course/:course` and
+`react-router-dom` v7, declared in `App.tsx`; every route renders inside `Layout`. `/`, `/course/:course/overview` and
 `/:course/:lecture` also sit under the pathless `LecturesLayout`, which renders the lectures tree pane
 beside them; `/:course/:lecture/edit` stays a direct child of `Layout` so the editor gets the full width.
 
 | Path                     | View              |
 | ------------------------ | ----------------- |
 | `/`                      | empty state       |
-| `/course/:course`        | `CourseView`      |
+| `/course/:course/overview` | `CourseView`   |
 | `/downloads`             | `DownloadsView`   |
 | `/search`                | `SearchView`      |
 | `/running`               | `RunnerView`      |
@@ -68,13 +68,14 @@ beside them; `/:course/:lecture/edit` stays a direct child of `Layout` so the ed
 | `/:course/:lecture/edit` | `EditSummaryView` |
 
 `kind` (lecture vs recitation) is a query param `?kind=recitation`, propagated everywhere rather than
-being a route segment. The static `course`/`downloads`/`search`/`settings`/`running` segments outrank the dynamic
+being a route segment. The static `downloads`/`search`/`settings`/`running` segments outrank the dynamic
 `/:course/:lecture` pattern in v7 ranking, so they never collide — a pathless layout route adds no segment,
-so nesting under `LecturesLayout` leaves that ranking unchanged.
+so nesting under `LecturesLayout` leaves that ranking unchanged. The overview is three segments, not `/course/:course`,
+because that would outrank `/:course/:lecture` and make every lecture of a course named `course` unreachable.
 
 The sidebar's five nav rows — Lectures, Running pipelines, Downloads, Search, Settings — are all routes, and
 exactly one is active on every page: `/running`, `/downloads`, `/search` and `/settings` claim their own
-rows and Lectures claims everything else, which is exactly `/`, `/course/:course` and
+rows and Lectures claims everything else, which is exactly `/`, `/course/:course/overview` and
 `/:course/:lecture[/edit]` (see `LECTURES.md` §Sidebar). Leaving `/downloads` unmounts its view, so `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
 and `RunnerStatusProvider`, so the page's discovery, edits, in-flight bulk runs and download jobs all outlive
 the route (see `DOWNLOADS.md`).
