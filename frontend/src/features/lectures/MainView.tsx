@@ -54,9 +54,10 @@ function MaterialIndicator({
   summaryExists: boolean
   summaryMtime: number | null
 }) {
-  const { text, cls } = materialIndicator(materials, summaryExists, summaryMtime)
+  const indicator = materialIndicator(materials, summaryExists, summaryMtime)
+  if (!indicator) return null
 
-  return <span className={`chip material-indicator ${cls}`}>{text}</span>
+  return <span className={`chip material-indicator ${indicator.cls}`}>{indicator.text}</span>
 }
 
 function RateLimitPanel({

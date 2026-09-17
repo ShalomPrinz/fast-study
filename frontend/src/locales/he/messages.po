@@ -46,7 +46,7 @@ msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
 #. placeholder {0}: materials.length
-#: src/features/lectures/MainView.tsx:231
+#: src/features/lectures/MainView.tsx:232
 msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -104,7 +104,7 @@ msgstr "{0} מותקן — ההורדות מוכנות לשימוש."
 #. placeholder {0}: remote.progress.completed
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
-#: src/features/lectures/MainView.tsx:317
+#: src/features/lectures/MainView.tsx:318
 #: src/features/runner/RunnerView.tsx:130
 msgid "{0} of {1} chunks"
 msgstr "{0} מתוך {1} מקטעים"
@@ -120,17 +120,17 @@ msgid "{0} remaining"
 msgstr "נותרו {0}"
 
 #. placeholder {0}: formatBytes(videoSize)
-#: src/features/lectures/MainView.tsx:228
+#: src/features/lectures/MainView.tsx:229
 msgid "{0} video"
 msgstr "סרטון {0}"
 
 #. placeholder {0}: progress.completed
 #. placeholder {1}: progress.total
-#: src/features/lectures/MainView.tsx:86
+#: src/features/lectures/MainView.tsx:87
 msgid "{0}/{1} chunks transcribed so far"
 msgstr "{0}/{1} מקטעים תומללו עד כה"
 
-#: src/features/lectures/utils/materialIndicator.ts:40
+#: src/features/lectures/utils/materialIndicator.ts:36
 msgid "{count, plural, other {# materials were used}}"
 msgstr "{count, plural, one {חומר אחד שימש} two {# חומרים שימשו} other {# חומרים שימשו}}"
 
@@ -138,11 +138,11 @@ msgstr "{count, plural, one {חומר אחד שימש} two {# חומרים שי�
 msgid "{count, plural, other {# materials will be used}}"
 msgstr "{count, plural, one {חומר אחד ישמש} two {# חומרים ישמשו} other {# חומרים ישמשו}}"
 
-#: src/features/lectures/utils/materialIndicator.ts:52
+#: src/features/lectures/utils/materialIndicator.ts:48
 msgid "{count, plural, other {summary used only {used} of # materials}}"
 msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר אחד בלבד} two {הסיכום השתמש ב-{used} מתוך # חומרים בלבד} other {הסיכום השתמש ב-{used} מתוך # חומרים בלבד}}"
 
-#: src/features/lectures/MainView.tsx:298
+#: src/features/lectures/MainView.tsx:299
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
@@ -167,11 +167,11 @@ msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} oth
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
-#: src/features/lectures/MainView.tsx:455
+#: src/features/lectures/MainView.tsx:456
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} יימחק."
 
-#: src/features/lectures/utils/materialIndicator.ts:40
+#: src/features/lectures/utils/materialIndicator.ts:36
 msgid "{name} was used"
 msgstr "{name} שימש"
 
@@ -195,7 +195,7 @@ msgstr "{processed} עובדו במלואן"
 msgid "{remaining, plural, one {Show # more} other {Show # more}}"
 msgstr "{remaining, plural, one {הצג עוד אחד} two {הצג עוד #} other {הצג עוד #}}"
 
-#: src/features/lectures/MainView.tsx:208
+#: src/features/lectures/MainView.tsx:209
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stageCount}"
 
@@ -414,7 +414,7 @@ msgstr "איסוף"
 msgid "Compile"
 msgstr "הרכבה"
 
-#: src/features/lectures/MainView.tsx:222
+#: src/features/lectures/MainView.tsx:223
 msgid "Complete"
 msgstr "הושלם"
 
@@ -443,7 +443,7 @@ msgstr "מתחבר…"
 msgid "Continue Generating"
 msgstr "המשך ייצור"
 
-#: src/features/lectures/MainView.tsx:310
+#: src/features/lectures/MainView.tsx:311
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
@@ -534,7 +534,7 @@ msgid "Data folder"
 msgstr "תיקיית נתונים"
 
 #. placeholder {0}: m.name
-#: src/features/lectures/MainView.tsx:410
+#: src/features/lectures/MainView.tsx:411
 msgid "Delete {0}"
 msgstr "מחק את {0}"
 
@@ -635,7 +635,7 @@ msgstr "ההעלאה ל-Drive נכשלה"
 msgid "Edit source URL"
 msgstr "ערוך כתובת מקור"
 
-#: src/features/lectures/MainView.tsx:261
+#: src/features/lectures/MainView.tsx:262
 msgid "Edit summary"
 msgstr "ערוך סיכום"
 
@@ -705,7 +705,7 @@ msgstr "נכשל ✗"
 msgid "Failed to complete login. Try reconnecting."
 msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
 
-#: src/features/lectures/MainView.tsx:144
+#: src/features/lectures/MainView.tsx:145
 msgid "Failed to delete file"
 msgstr "מחיקת הקובץ נכשלה"
 
@@ -812,7 +812,7 @@ msgstr "Google Drive"
 msgid "Google Drive (optional)"
 msgstr "Google Drive (רשות)"
 
-#: src/features/lectures/MainView.tsx:82
+#: src/features/lectures/MainView.tsx:83
 msgid "Groq rate limit reached"
 msgstr "הגעת למגבלת הקצב של Groq"
 
@@ -846,7 +846,7 @@ msgstr "המפתח אומת"
 msgid "Language"
 msgstr "שפה"
 
-#: src/features/lectures/MainView.tsx:425
+#: src/features/lectures/MainView.tsx:426
 msgid "Last error:"
 msgstr "השגיאה האחרונה:"
 
@@ -924,7 +924,7 @@ msgid "Material"
 msgstr "חומר"
 
 #: src/features/downloads/DownloadsView.tsx:39
-#: src/features/lectures/MainView.tsx:393
+#: src/features/lectures/MainView.tsx:394
 msgid "Materials"
 msgstr "חומרים"
 
@@ -1021,7 +1021,7 @@ msgstr "לא מחובר"
 msgid "Not enough data to estimate"
 msgstr "אין מספיק נתונים להערכה"
 
-#: src/features/lectures/MainView.tsx:381
+#: src/features/lectures/MainView.tsx:382
 msgid "not provided"
 msgstr "לא סופק"
 
@@ -1069,17 +1069,17 @@ msgstr "מותרים קבצי .mp4 בלבד"
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "פתחו את Google AI Studio דרך הקישור שלמטה, התחברו עם חשבון Google שלכם ולחצו על \"Create API key\". העתיקו את המפתח שמוצג והדביקו אותו בשדה."
 
-#: src/features/lectures/MainView.tsx:280
+#: src/features/lectures/MainView.tsx:281
 msgid "Open in Drive"
 msgstr "פתח ב-Drive"
 
-#: src/features/lectures/MainView.tsx:402
+#: src/features/lectures/MainView.tsx:403
 msgid "Open material"
 msgstr "פתח את החומר"
 
 #: src/features/course-overview/components/ExtractorHeader.tsx:104
 #: src/features/lectures/components/PdfViewer.tsx:100
-#: src/features/lectures/MainView.tsx:271
+#: src/features/lectures/MainView.tsx:272
 #: src/features/search/components/SearchResult.tsx:33
 msgid "Open PDF"
 msgstr "פתח את ה-PDF"
@@ -1142,15 +1142,15 @@ msgstr "ה-PDF ישן יותר מהסיכום הזה"
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
-#: src/features/lectures/MainView.tsx:296
+#: src/features/lectures/MainView.tsx:297
 msgid "Pipeline"
 msgstr "צינור"
 
-#: src/features/lectures/MainView.tsx:173
+#: src/features/lectures/MainView.tsx:174
 msgid "Pipeline already running"
 msgstr "הצינור כבר רץ"
 
-#: src/features/lectures/MainView.tsx:174
+#: src/features/lectures/MainView.tsx:175
 msgid "Pipeline failed to start"
 msgstr "הצינור נכשל בהפעלה"
 
@@ -1189,7 +1189,7 @@ msgstr "ייצר מחדש את {title}"
 msgid "Re-generate from {stepLabel}"
 msgstr "ייצר מחדש משלב {stepLabel}"
 
-#: src/features/lectures/MainView.tsx:92
+#: src/features/lectures/MainView.tsx:93
 msgid "Ready to retry"
 msgstr "מוכן לניסיון חוזר"
 
@@ -1283,7 +1283,7 @@ msgid "Retry ✗"
 msgstr "נסה שוב ✗"
 
 #. placeholder {0}: formatDuration(remaining)
-#: src/features/lectures/MainView.tsx:92
+#: src/features/lectures/MainView.tsx:93
 msgid "Retry in {0}"
 msgstr "ניסיון חוזר בעוד {0}"
 
@@ -1295,7 +1295,7 @@ msgstr "ניסיון חוזר בעוד {0}"
 #~ msgid "Revert to Original"
 #~ msgstr "שחזר למקור"
 
-#: src/features/lectures/MainView.tsx:363
+#: src/features/lectures/MainView.tsx:364
 msgid "Rotate {file}"
 msgstr "החלף את {file}"
 
@@ -1303,7 +1303,7 @@ msgstr "החלף את {file}"
 #~ msgid "Run incomplete pipelines"
 #~ msgstr "הרץ צינורות לא שלמים"
 
-#: src/features/lectures/MainView.tsx:285
+#: src/features/lectures/MainView.tsx:286
 msgid "Run Remaining"
 msgstr "הרץ את הנותר"
 
@@ -1427,7 +1427,7 @@ msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
 #: src/features/lectures/EditSummaryView.tsx:145
-#: src/features/lectures/MainView.tsx:150
+#: src/features/lectures/MainView.tsx:151
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
@@ -1459,17 +1459,13 @@ msgstr "מסכם"
 msgid "Summary"
 msgstr "סיכום"
 
-#: src/features/lectures/utils/materialIndicator.ts:46
+#: src/features/lectures/utils/materialIndicator.ts:42
 msgid "summary did not use {name}"
 msgstr "הסיכום לא השתמש ב-{name}"
 
-#: src/features/lectures/utils/materialIndicator.ts:46
+#: src/features/lectures/utils/materialIndicator.ts:42
 msgid "summary did not use any material"
 msgstr "הסיכום לא השתמש באף חומר"
-
-#: src/features/lectures/utils/materialIndicator.ts:32
-msgid "summary did not use material"
-msgstr "הסיכום לא השתמש בחומר"
 
 #: src/features/settings/SettingsView.tsx:195
 msgid "Summary model"
@@ -1513,7 +1509,7 @@ msgstr "הקובץ פתוח בתוכנה אחרת. סגור אותו ונסה ש
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
-#: src/features/lectures/MainView.tsx:439
+#: src/features/lectures/MainView.tsx:440
 msgid "The following files will be deleted:"
 msgstr "הקבצים הבאים יימחקו:"
 
@@ -1521,7 +1517,7 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייוצרו מחדש:"
 
-#: src/features/lectures/MainView.tsx:456
+#: src/features/lectures/MainView.tsx:457
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
@@ -1546,7 +1542,7 @@ msgid "The university site is temporarily refusing automated requests. Wait a fe
 msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב."
 
 #. placeholder {0}: rotateTarget.file
-#: src/features/lectures/MainView.tsx:440
+#: src/features/lectures/MainView.tsx:441
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
