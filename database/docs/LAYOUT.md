@@ -119,7 +119,7 @@ endpoints, because the frontend needs them on every render of the tree:
 - `drive_url.txt` → `url` on its own entry.
 - `.pdf_warning` → `warning` on the `summary.pdf` entry.
 - `video.mp4`'s `moov/mvhd` box → `duration` (seconds, float) on its own entry, read on every tree
-  read by `fs/mp4.py` with no cache; omitted while absent, still downloading (no `moov`), fragmented, or unreadable.
+  read by `fs/mp4.py` with no cache; omitted while absent, still downloading (no `moov`), fragmented, duration-unknown, or unreadable.
 
 **Absent, empty, or unreadable metadata means the key is omitted entirely — never `null`.**
 Clients test key presence, so emitting `null` would read as "there is a warning".

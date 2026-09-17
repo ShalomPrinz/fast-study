@@ -3,7 +3,9 @@ from pathlib import Path
 from typing import BinaryIO, Optional
 
 
-def _find_box(f: BinaryIO, start: int, end: int, box_type: bytes) -> Optional[tuple[int, int]]:
+def _find_box(
+    f: BinaryIO, start: int, end: int, box_type: bytes
+) -> Optional[tuple[int, int]]:
     """Scan sibling box headers in [start, end) and return (payload_start, box_end) of the first `box_type`."""
 
     pos = start
@@ -54,12 +56,15 @@ def read_duration(path: Path) -> Optional[float]:
                 if len(body) < 32:
                     return None
                 timescale, duration = struct.unpack(">IQ", body[20:32])
+                unknown = 0xFFFFFFFFFFFFFFFF
             else:
                 if len(body) < 20:
                     return None
                 timescale, duration = struct.unpack(">II", body[12:20])
+                unknown = 0xFFFFFFFF
             # Fragmented MP4 leaves mvhd duration at 0 — the real length lives in the fragments.
-            if timescale == 0 or duration == 0:
+            # All-ones is ISO 14496-12's "duration unknown" sentinel, common in live HLS/DASH muxes.
+            if timescale == 0 or duration in (0, unknown):
                 return None
             return duration / timescale
     except Exception:

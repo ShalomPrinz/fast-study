@@ -15,13 +15,23 @@ def box(kind: bytes, payload: bytes) -> bytes:
 def mvhd_v0(timescale: int, duration: int) -> bytes:
     """A version-0 mvhd box with the given timescale and duration."""
 
-    return box(b"mvhd", bytes(4) + bytes(8) + struct.pack(">II", timescale, duration) + bytes(80))
+    return box(
+        b"mvhd",
+        bytes(4) + bytes(8) + struct.pack(">II", timescale, duration) + bytes(80),
+    )
 
 
 def mvhd_v1(timescale: int, duration: int) -> bytes:
     """A version-1 mvhd box with the given timescale and 64-bit duration."""
 
-    return box(b"mvhd", b"\x01" + bytes(3) + bytes(16) + struct.pack(">IQ", timescale, duration) + bytes(80))
+    return box(
+        b"mvhd",
+        b"\x01"
+        + bytes(3)
+        + bytes(16)
+        + struct.pack(">IQ", timescale, duration)
+        + bytes(80),
+    )
 
 
 FTYP = box(b"ftyp", b"isom" + bytes(4))
@@ -41,12 +51,16 @@ def test_v0_mvhd(tmp_path):
 
 
 def test_v1_mvhd(tmp_path):
-    p = write(tmp_path, FTYP + box(b"moov", box(b"iods", bytes(8)) + mvhd_v1(600, 600 * 4000)))
+    p = write(
+        tmp_path, FTYP + box(b"moov", box(b"iods", bytes(8)) + mvhd_v1(600, 600 * 4000))
+    )
     assert read_duration(p) == 4000.0
 
 
 def test_moov_after_large_mdat(tmp_path):
-    p = write(tmp_path, FTYP + box(b"mdat", bytes(1_000_000)) + box(b"moov", mvhd_v0(30, 300)))
+    p = write(
+        tmp_path, FTYP + box(b"mdat", bytes(1_000_000)) + box(b"moov", mvhd_v0(30, 300))
+    )
     assert read_duration(p) == 10.0
 
 
@@ -84,6 +98,19 @@ def test_missing_file(tmp_path):
 def test_zero_duration_and_zero_timescale(tmp_path):
     assert read_duration(write(tmp_path, FTYP + box(b"moov", mvhd_v0(1000, 0)))) is None
     assert read_duration(write(tmp_path, FTYP + box(b"moov", mvhd_v0(0, 100)))) is None
+
+
+def test_unknown_duration_sentinel(tmp_path):
+    assert (
+        read_duration(write(tmp_path, FTYP + box(b"moov", mvhd_v0(1000, 0xFFFFFFFF))))
+        is None
+    )
+    assert (
+        read_duration(
+            write(tmp_path, FTYP + box(b"moov", mvhd_v1(600, 0xFFFFFFFFFFFFFFFF)))
+        )
+        is None
+    )
 
 
 def test_tree_entry_carries_duration(data_root):
