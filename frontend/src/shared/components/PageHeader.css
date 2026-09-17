@@ -41,15 +41,13 @@
   color: var(--text-3);
 }
 
-/* Wraps rather than clips: `.main-view--page` is `overflow: hidden`, and a four-button lecture
-   header outgrows the space beside the tree pane on a narrow window. `flex-shrink` stays at its
-   default — pinned to 0 the group keeps its max-content width and never reaches a wrap. */
+/* Never shrinks, so a long title wraps inside `.page-header-text` instead of pushing the group
+   narrower — the text column has `min-width: 0` and would otherwise share the squeeze. */
 .page-header-actions {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  justify-content: flex-end;
   gap: var(--space-3);
+  flex-shrink: 0;
 }
 
 /* A full-width row of its own under the title line: the actions that do not fit beside a title with
