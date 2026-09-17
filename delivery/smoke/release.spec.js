@@ -414,7 +414,6 @@ test('8. opening a PDF', async () => {
   await openLecture(page, COURSE, LECTURE);
 
   await test.step('the open control resolves through the IPC path without an error toast', async () => {
-    await page.getByTestId('lecture-actions-menu').click();
     await page.getByTestId('open-pdf').click();
     // `shell.openPath` answers asynchronously and a failure's only surface is the toast.
     await delay(5_000);
