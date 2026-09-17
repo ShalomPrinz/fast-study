@@ -47,8 +47,8 @@ transitions). It is push-only too; the fetches beside it, `GET /jobs` and `GET /
 to give the memoryless stream a starting state (see `DOWNLOADS.md`).
 
 Any fetcher that can be re-triggered by a notify burst wraps its promise in `useLatestRequest()`, which
-resolves only the newest call (superseded ones resolve `undefined`) so a late response can't overwrite a
-fresher one.
+resolves or rejects only the newest call (superseded ones resolve `undefined`, even when they fail) so a late
+response or stale failure can't overwrite a fresher one.
 
 ## Routes
 

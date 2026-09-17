@@ -52,13 +52,25 @@ describe('createLatestGate', () => {
     await expect(rb).resolves.toBe('b')
   })
 
-  it('still propagates a superseded call that rejects', async () => {
+  it('resolves a superseded call that rejects to undefined', async () => {
     const gate = createLatestGate()
     const a = deferred<string>()
     const ra = gate(a.promise)
     const rb = gate(Promise.resolve('b'))
     await expect(rb).resolves.toBe('b')
     a.reject(new Error('stale failure'))
-    await expect(ra).rejects.toThrow('stale failure')
+    await expect(ra).resolves.toBeUndefined()
+  })
+
+  it('still rejects the newest call when it fails', async () => {
+    const gate = createLatestGate()
+    const a = deferred<string>()
+    const b = deferred<string>()
+    const ra = gate(a.promise)
+    const rb = gate(b.promise)
+    b.reject(new Error('fresh failure'))
+    await expect(rb).rejects.toThrow('fresh failure')
+    a.resolve('a')
+    await expect(ra).resolves.toBeUndefined()
   })
 })
