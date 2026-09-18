@@ -295,8 +295,7 @@ export default function MainView() {
             {stages.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
               const exists = files[file].exists
               const isRunning = runningFile === file
-              const state = exists ? 'done' : isRunning ? 'running' : 'pending'
-              const node = stepState(exists, isRunning, step, lectureError)
+              const state = stepState(exists, isRunning, step, lectureError)
               const prereqMet = !prereq || files[prereq].exists
               const isResumeTranscribe =
                 file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
@@ -322,9 +321,9 @@ export default function MainView() {
                   data-status={step ? state : undefined}
                 >
                   <StatusNode
-                    state={node}
+                    state={state}
                     title={
-                      node === 'failed' || node === 'quota' ? lectureError?.message : undefined
+                      state === 'failed' || state === 'quota' ? lectureError?.message : undefined
                     }
                   />
                   <div className="pipeline-row-body">

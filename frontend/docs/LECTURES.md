@@ -25,7 +25,7 @@ open PDF and open in Drive) over one `.pipeline-card` holding all stages as rows
 Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
 A missing file whose step is the lecture's `error.step` shows `failed`, or `quota` for a Gemini quota
-error (`utils/stepState.ts`); the row's `data-status` stays file-derived `pending` for the smoke suite.
+error (`utils/stepState.ts`); the row's `data-status` carries the same state.
 
 **Rotate** deletes a file _and every later file in `PIPELINE`_ that exists, then re-runs its step — why
 it derives from `PIPELINE` order rather than a per-step list. A refused delete (`423`, the file open in the
