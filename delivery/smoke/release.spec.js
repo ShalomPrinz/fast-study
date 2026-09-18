@@ -9,6 +9,7 @@ import { completeInitWall, PLACEHOLDER_KEYS } from './lib/firstRun.js';
 import { toneVideo } from './lib/media.js';
 import { proveOfflineEnforcement } from './lib/offline.js';
 import * as paths from './lib/paths.js';
+import { unresolvedImports } from './lib/pe.js';
 import { carriesPhrase, pdfText } from './lib/pdf.js';
 import {
   backend,
@@ -285,7 +286,19 @@ test('1. fresh install', async () => {
   );
 });
 
-test('2. boot', async () => {
+test('2. every shipped binary imports only what ships or what Windows has', () => {
+  // The runner image carries VC++ runtimes a user's PC may not, so read the imports rather than
+  // trusting that everything loads here. DLLs loaded at runtime (LoadLibrary, ctypes) are not covered.
+  const system32 = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32');
+  const { scanned, failures } = unresolvedImports(paths.installDir(), system32);
+  expect(scanned, 'no PE file under the install dir parsed; the import reader is broken').toBeGreaterThan(0);
+  expect(
+    failures.map(({ file, missing }) => `${file}: ${missing.join(', ')}`),
+    'imports neither shipped nor a non-redistributable System32 DLL',
+  ).toEqual([]);
+});
+
+test('3. boot', async () => {
   await start();
   const { page } = session;
 
@@ -331,7 +344,7 @@ test('2. boot', async () => {
   });
 });
 
-test('3. first run', async () => {
+test('4. first run', async () => {
   const root = paths.dataRoot('data');
   await completeInitWall(session.page, root);
 
@@ -350,7 +363,7 @@ test('3. first run', async () => {
   await services.db.configured();
 });
 
-test('4. the provider steps fail on the network, and only there', async () => {
+test('5. the provider steps fail on the network, and only there', async () => {
   const { page } = session;
   const { db, api } = services;
   await db.createCourse(COURSE);
@@ -370,7 +383,7 @@ test('4. the provider steps fail on the network, and only there', async () => {
   );
 });
 
-test('5. the PDF, for real', async () => {
+test('6. the PDF, for real', async () => {
   const { page } = session;
   const { db, api } = services;
   expect(fs.existsSync(paths.formatsDir()), 'latex/formats/ existed before any render').toBe(false);
@@ -390,7 +403,7 @@ test('5. the PDF, for real', async () => {
   await expect(byTestId(page, 'step-status', { step: 'pdf' })).toHaveAttribute('data-status', 'done');
 });
 
-test('6. a live SSE update', async () => {
+test('7. a live SSE update', async () => {
   const { page } = session;
   const { db, api } = services;
   await db.putVideo(COURSE, LIVE_LECTURE, await tone());
@@ -407,7 +420,7 @@ test('6. a live SSE update', async () => {
   expect(await page.evaluate(() => window.__smokeSameDocument), 'the page reloaded').toBe(true);
 });
 
-test('7. drive off', async () => {
+test('8. drive off', async () => {
   const { page } = session;
   const { db, api } = services;
   await openLecture(page, COURSE, LECTURE);
@@ -428,7 +441,7 @@ test('7. drive off', async () => {
   expect(await db.exists(COURSE, LECTURE, 'drive_url.txt'), 'a Drive upload happened').toBe(false);
 });
 
-test('8. opening a PDF', async () => {
+test('9. opening a PDF', async () => {
   const { page } = session;
   const { db, api } = services;
   await openLecture(page, COURSE, LECTURE);
@@ -465,7 +478,7 @@ test('8. opening a PDF', async () => {
   });
 });
 
-test('9. quit, no orphans', async () => {
+test('10. quit, no orphans', async () => {
   const ports = readyPorts(readLaunchLog());
   expect(ports).toHaveLength(4);
   await stop();
@@ -484,7 +497,7 @@ test('9. quit, no orphans', async () => {
   });
 });
 
-test('10. the tools run under a Hebrew temp path', async () => {
+test('11. the tools run under a Hebrew temp path', async () => {
   await stop();
   // Hebrew and a space in the dir every service spawns its tools in, as a Windows username can put in %TEMP%.
   const folder = 'טמפ עברי';
@@ -529,7 +542,7 @@ test('10. the tools run under a Hebrew temp path', async () => {
   await stop();
 });
 
-test('11. the browser chain, both ends', async () => {
+test('12. the browser chain, both ends', async () => {
   await stop();
   try {
     await test.step('with Chrome gone the prerequisite resolves Edge', async () => {
@@ -563,7 +576,7 @@ test('11. the browser chain, both ends', async () => {
   }
 });
 
-test('12. an in-place update', async () => {
+test('13. an in-place update', async () => {
   const candidate = paths.candidate();
   const previous = paths.previous();
   await stop();

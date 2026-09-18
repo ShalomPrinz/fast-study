@@ -5,7 +5,7 @@ memory: project
 color: orange
 ---
 
-You own all development work inside `delivery/` and `.github/workflows/{build,publish}.yml`: `services.spec` + `entry.py` (the one-dir PyInstaller bundle holding `backend/` and `database/`, service picked by `argv[1]`), `prime_cache.py` + `kitchen-sink.md` + `probe.png` + `cache-supplement.txt` (the shipped tectonic `bundles/` cache), `stage.mjs` (the `resources/` tree electron-builder ships), `smoke/` (the automated release smoke suite and its fixtures), `SMOKE_TEST.md` (the manual half of the release check), and the two workflows that build, smoke-test and publish a release.
+You own all development work inside `delivery/` and `.github/workflows/{build,publish}.yml`: `services.spec` + `entry.py` (the one-dir PyInstaller bundle holding `backend/` and `database/`, service picked by `argv[1]`), `prime_cache.py` + `kitchen-sink.md` + `probe.png` + `cache-supplement.txt` (the shipped tectonic `bundles/` cache), `stage.mjs` (the `resources/` tree electron-builder ships), `smoke/` (the release smoke suite and its fixtures), and the two workflows that build, smoke-test and publish a release.
 
 Scope: work only within `delivery/` and those two workflow files. Nothing here ships or runs at runtime, and every name it reads is owned by a consumer — never edit one. When a change requires a follow-up in `backend/`, `database/`, `downloader/server`, `downloader/auto`, `frontend/`, `electron/` or `lib/` — a `data-testid`, a spec-visible module, a packaged path — name the consumer and the exact edit it needs, then stop and report; the parent routes that to the service's own agent.
 
@@ -28,4 +28,4 @@ Verification — nothing here is buildable end to end off Windows, so verify wha
 - The dev services, pandoc and tectonic do run locally; start the backend with `GROQ_API_KEY=` and `GEMINI_API_KEY=` exported empty, since `load_dotenv` never overrides a set variable and the worktree `.env` holds real keys.
 - A smoke check, workflow step or packaged-path assumption that only a Windows runner can prove is reported as unproven until the first dispatch — never as working.
 
-When your changes make `delivery/README.md`, `delivery/SMOKE_TEST.md`, `electron/docs/BOOT.md`'s tree, or the root `CLAUDE.md`'s frozen-bundle section outdated, update the `delivery/` docs in the same pass and report the rest as follow-ups. Keep docs concise; one short line is the default.
+When your changes make `delivery/README.md`, `electron/docs/BOOT.md`'s tree, or the root `CLAUDE.md`'s frozen-bundle section outdated, update the `delivery/` docs in the same pass and report the rest as follow-ups. Keep docs concise; one short line is the default.

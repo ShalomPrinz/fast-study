@@ -12,7 +12,6 @@ runtime, and no dev command touches any of it.
 | `cache-supplement.txt`              | Files the sink does not pull, added to the cache by name                |
 | `tectonic-cache-filelist-linux.txt` | A primed cache's contents, kept as a diff baseline                      |
 | `smoke/`                            | The release smoke suite and its fixtures, with its own lock             |
-| `SMOKE_TEST.md`                     | The manual half of the release check                                    |
 
 ## The installer
 
@@ -57,9 +56,7 @@ dispatching `build.yml` on it builds and smoke-tests a fresh one.
 outside `delivery/` — nothing here fails when a rename breaks it, so it is a consumer to change in
 the same pass.
 
-Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what they read. Run
-[`SMOKE_TEST.md`](SMOKE_TEST.md) on a real machine against the commit's `installer` artifact before
-publishing.
+Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what they read.
 
 `build.yml` computes the version: major and minor from `electron/package.json`, whose patch is
 ignored, and the patch one past the highest non-draft Release `v<major>.<minor>.<n>`, else 0 — so
@@ -83,13 +80,18 @@ deliberately unpinned — it rots as YouTube changes signatures, so a build ship
 ## The release smoke suite
 
 `smoke/` is `@playwright/test` driving the installed exe through `_electron`, one ordered file,
-since each check builds on the machine state the last one left: install, boot, first run, the
+since each check builds on the machine state the last one left: install, the installed tree's DLL
+imports, boot, first run, the
 pipeline, quit, the tools under a Hebrew temp path, the browser chain, and an in-place update. It needs an installed Windows build, so
 off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` works.
 
 - **`resources/bin/` is one set with what the services probe.** Its contents are compared exactly,
   not entry by entry, and against the tool names `/health` reports minus `curl` — a binary nothing
   spawns any more installs cleanly and shows up only as installer size.
+- **A clean machine, read statically.** Every `.exe`/`.dll`/`.pyd`/`.node` installed must import,
+  normally or delay-loaded, only DLLs the install ships, API sets, or System32 DLLs that are not a
+  VC++ redistributable — the runner has those, a user's PC may not. Runtime `LoadLibrary`/ctypes
+  loads are not covered.
 - **Offline, enforced.** Per-program outbound firewall rules block `FastStudy.exe`, `services.exe`,
   every exe under `resources/bin/` and the state root's yt-dlp copy. The suite first proves a
   blocked program still reaches loopback and reaches nothing else, so a wrong firewall assumption
