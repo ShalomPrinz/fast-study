@@ -437,6 +437,7 @@ def test_run_step_logs_error(caplog):
         "message": "boom",
         "code": None,
         "provider": None,
+        "blocked": False,
     }
     assert any("step transcribe failed" in r.getMessage() for r in caplog.records)
 
@@ -583,6 +584,7 @@ def test_daily_quota_error_record():
                 "message": "quota msg",
                 "code": "quota",
                 "provider": "gemini",
+                "blocked": False,
             }
         }
         assert runner._summarize_block == "quota msg"
@@ -632,7 +634,10 @@ def test_daily_quota_blocks_summarize_for_later_lectures(caplog):
             "provider": "gemini",
         }
         assert runner._errors == {
-            runner._skey("C1", lecture, "lecture"): record
+            runner._skey("C1", lecture, "lecture"): {
+                **record,
+                "blocked": lecture != "L1",  # L1 hit the quota; the rest were stopped
+            }
             for lecture in ("L1", "L2", "L3")
         }
         assert any(

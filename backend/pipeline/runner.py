@@ -81,14 +81,18 @@ def _skey(course: str, lecture: str, kind: str) -> str:
     return f"{course}||{lecture}||{kind}"
 
 
-def _error_record(step: str, message: str, *, quota: bool = False) -> dict:
-    """One /status error: the failed step and message, plus `code`/`provider` for Gemini's daily quota."""
+def _error_record(
+    step: str, message: str, *, quota: bool = False, blocked: bool = False
+) -> dict:
+    """One /status error: the failed step and message, `code`/`provider` for Gemini's daily quota,
+    and `blocked` when run_all stopped this lecture on another's quota rather than it hitting one."""
 
     return {
         "step": step,
         "message": message,
         "code": "quota" if quota else None,
         "provider": "gemini" if quota else None,
+        "blocked": blocked,
     }
 
 
@@ -600,7 +604,7 @@ async def _run_pipeline_unlocked(
         if step == "summarize" and honor_block and _summarize_block is not None:
             # Same record as the lecture that hit the quota, so this one doesn't look pending.
             _errors[_skey(course, lecture, kind)] = _error_record(
-                "summarize", _summarize_block, quota=True
+                "summarize", _summarize_block, quota=True, blocked=True
             )
             db_client.notify()
             log.info(
