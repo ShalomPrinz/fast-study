@@ -10,10 +10,9 @@ from pathlib import Path
 import groq
 from groq import Groq
 from services import providers
+from services.mp3 import read_duration
 from timing import timed_pipeline
 from tools import tool_path
-
-from pipeline.mp3 import read_duration
 
 log = logging.getLogger("transcribe")
 

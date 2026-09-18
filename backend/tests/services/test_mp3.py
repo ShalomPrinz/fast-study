@@ -6,7 +6,7 @@ import struct
 import subprocess
 
 import pytest
-from pipeline.mp3 import read_duration
+from services.mp3 import read_duration
 from transcribe import get_duration
 
 # MPEG-2 Layer III, 16 kHz, 32 kbps, mono — what strip_audio's ffmpeg flags produce.
