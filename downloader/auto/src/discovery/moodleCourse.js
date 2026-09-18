@@ -19,8 +19,7 @@ const RECORDING_KEYWORDS = [
 ];
 
 /**
- * Section name / title text ⇒ activity kind. Defaults to 'lecture' when no
- * recitation hint is present (per the course-example guidance).
+ * Section name / title text ⇒ activity kind: 'lecture' unless a recitation hint is present.
  * @param {string} sectionName
  * @param {string} title
  * @returns {'lecture'|'recitation'}

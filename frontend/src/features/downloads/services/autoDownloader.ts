@@ -19,12 +19,8 @@ export type Media = 'video' | 'material' | 'unknown'
 export type ProbedMedia = 'video' | 'material'
 export type ResolvedMedia = ProbedMedia | 'unsupported'
 
-// Mechanism-agnostic discovery item. `ref` is opaque — round-trip it, never parse it.
-// `expandable` → resolve via /list/expand into children; `section` is the Moodle heading ('' if blank).
-// `resolvedMedia` is auto's session probe cache for an 'unknown' row; absent until probed. A row
-// never changes segment once resolved — the resolved type shows as a column instead.
-// `likelyRecording` is auto's keyword hint, never a gate: false groups a row out of the lecture
-// sections and into the synthetic `Other links` bucket, which starts no bulk run.
+// A discovery item; `ref` is opaque — round-trip it, never parse it. `resolvedMedia` and
+// `likelyRecording` are covered in docs/DOWNLOADS.md §Discovery.
 export interface Item {
   ref: string
   title: string
@@ -62,9 +58,8 @@ export function isUnsupportedError(err: unknown): err is UnsupportedError {
   return err instanceof UnsupportedError
 }
 
-// HTTP 503 { status: 'blocked' }: the site served a bot-protection challenge instead of a
-// web-service answer. Transient and unrelated to the token — never a reconnect — and the body's
-// `message` is an untranslated log line, so the UI writes its own copy (`utils/downloadErrors`).
+// 503 `blocked`: a transient bot-protection challenge, never a reconnect. The body's `message` is a
+// log line, so the UI writes its own copy (`utils/downloadErrors`).
 export class BlockedError extends Error {
   constructor() {
     super('The site is refusing automated requests — bot-protection challenge.')
@@ -92,11 +87,8 @@ export function isPasscodeError(err: unknown): err is PasscodeError {
   return err instanceof PasscodeError
 }
 
-// These endpoints encode meaning in the response body, which the shared client discards — hence
-// a direct fetch, with the launch secret applied by hand. Trade-off: no central ConnectionError
-// wrapping, so a refused connection throws a raw TypeError instead of the friendly "down" toast.
-// Client-parameterized because the same four error bodies come back from both services: the
-// downloader server forwards auth's verdict verbatim when it proxies a download.
+// A direct fetch, secret added by hand, because the shared client discards the body these endpoints
+// encode meaning in — see docs/SERVICES.md for the trade-off and why it takes a `Client`.
 export async function postReconnectAware<T>(
   client: Client,
   path: string,

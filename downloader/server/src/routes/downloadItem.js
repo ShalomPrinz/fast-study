@@ -18,9 +18,8 @@ function toRun(target) {
   };
 }
 
-// Map a failed re-resolve to the job's terminal message: recovery couldn't proceed, so the
-// reason has to be user-actionable rather than the raw stderr of the stale attempt. Lives here
-// because what auto's statuses MEAN is the resolver edge's knowledge, not the runner's.
+// A failed re-resolve → the job's user-actionable terminal message. Here, not in the runner,
+// because what auto's statuses MEAN is the resolver edge's knowledge.
 function reresolveMessage(status, body) {
   if (status === 401) return 'reconnect Moodle';
   if (status === 409) return 'passcode needed';
@@ -28,10 +27,8 @@ function reresolveMessage(status, body) {
   return `re-capture failed: ${body?.error ?? `HTTP ${status || 'network'}`}`;
 }
 
-// Re-resolve ONE target fresh after its cached cap auth-failed mid-download, so the runner can
-// re-run the same job: `{downloader, input}` to re-run, or `{error}` with the terminal message.
-// `only`+`forceCapture` is what makes the answer a fresh (non-cached) cap, which is what stops a
-// second retry — see docs/JOBS.md.
+// Re-resolve ONE target fresh → `{downloader, input}` or `{error}`. `only`+`forceCapture` makes
+// the cap fresh (non-cached), which is what stops a second retry — see docs/JOBS.md.
 function makeReresolve({ ref, course, name, kind }) {
   return async () => {
     const { status, body } = await resolve({
@@ -53,14 +50,9 @@ function makeReresolve({ ref, course, name, kind }) {
 }
 
 /**
- * Download one discovery row: auto/ resolves the ref into targets, this server runs each as a
- * job. The answer is `{status, body}` rather than a thrown error because auto's 401/409/422
- * bodies are forwarded verbatim — they are the caller's contract, and both callers (the route
- * below and the section-run driver in `runs.js`) branch on that status.
- * `only`/`forceCapture` are auto's, passed through untouched: a per-clip retry sends
- * `only:true` with a zoom split name, which only auto's `only` branch resolves correctly.
- * Names are canonicalized here, so `renames` reports the row whose spelling the server rewrote
- * (empty for the section-run driver, whose targets are already canonical).
+ * Download one discovery row: auto/ resolves the ref, this server runs a job per target. Returns
+ * `{status, body}`, never throws: auto's 401/409/422 bodies are both callers' contract, verbatim.
+ * `only`/`forceCapture` pass through to auto untouched (a per-clip zoom retry needs `only`).
  * @returns {Promise<{status: number, body: object}>} 200 → `{media, jobIds, renames}`
  */
 export async function downloadItem({

@@ -2,12 +2,9 @@
 
 ## Two backends, no Vite backend
 
-The SPA talks to the FastAPI backend (:8000) for pipeline runs and timing stats, and to
-the database service (:8001) for everything filesystem-backed. The Vite dev server
-only serves the SPA — it hosts no API. The browser never reads `DATA_ROOT`; after a step succeeds, the
-tree is re-fetched from the database service.
-
-Corollary: never add a backend endpoint to answer "does file X exist" — that is the database service's job.
+The SPA calls the FastAPI backend (:8000) for runs and timing stats and the database service (:8001) for
+everything filesystem-backed; the Vite dev server hosts no API. The browser never reads `DATA_ROOT`, so
+never add a backend endpoint answering "does file X exist" — that is the database service's job.
 
 ## Layering
 
@@ -15,46 +12,38 @@ Corollary: never add a backend endpoint to answer "does file X exist" — that i
 | ------------------------ | ------------------------------------------------------------------------------------------------ |
 | root (`App`, `types.ts`) | flat, no subdirs                                                                                 |
 | `styles/`                | `tokens.css` plus the shared-vocabulary stylesheets — see Styling                                |
-| `app/`                   | the shell (`Layout`) — mounts providers, sidebar, outlet, toast container, Drive consent prompt  |
+| `app/`                   | the shell: `Layout` (providers, sidebar, outlet, Drive consent prompt), `InitGate`, error boundary |
 | `services/`              | one file per external concern, shared by all features, never split per feature                   |
 | `shared/`                | building blocks with cross-feature consumers (components, contexts, hooks, utils, sidebar shell) |
-| `features/<x>/`          | one slice per mode/page: views, layout routes, components, hooks, contexts, constants, utils     |
+| `features/<x>/`          | one slice per page: views, layout routes, components, hooks, contexts, constants, utils          |
 
-A primitive lives in `features/<x>/components` until a second feature needs it; then it moves to `shared/`.
-A feature may own a service (`features/downloads/services/autoDownloader.ts`, `downloadServer.ts`) when the concern is its alone.
+A primitive lives in `features/<x>/components` until a second feature needs it, then moves to `shared/`.
 
-Imports across directories use the `@/` alias (`@/*` → `src/*`, set in both `tsconfig.json` and
-`vite.config.ts`). Only same-directory siblings may be relative.
-
-## UI belongs in components
-
-Contexts and hooks hold state and expose callbacks; they never render toasts or modals and never import
-`react-toastify`. A context that needs to surface a message takes a `sendUpdate(kind, message)` callback
-(`Layout` passes `toast`), or returns a result the calling component toasts itself. Providers that own a
-modal (`PendingUploadProvider`) render it themselves so consumers never juggle a returned node.
+**UI belongs in components.** Contexts and hooks hold state and expose callbacks; they never render toasts
+and never import `react-toastify`. A context that must surface a message takes a `sendUpdate(kind,
+message)` callback (`Layout` passes `toast`) or returns a result its caller toasts. A provider that owns a
+modal (`PendingUploadProvider`) renders it itself.
 
 ## SSE-driven refresh
 
-The database service owns one notify channel. `services/events.ts` opens a single `EventSource` lazily on
-the first subscriber and ref-counts it closed on the last; `useNotify(cb)` is the only interface.
-`CourseTreeContext`, `RunnerStatusContext` and `CourseOverviewContext` all refresh on notify — nothing
-polls. The backend fires a notify on every meaningful state change, and the downloader POSTs
-`${database}/notify` after a download, so a completed download updates the UI live.
+The database service owns one notify channel. `services/events.ts` opens a single `EventSource` on the
+first subscriber and closes it on the last; `useNotify(cb)` is the only interface. `CourseTreeContext`,
+`RunnerStatusContext` and `CourseOverviewContext` refresh on notify — nothing polls. The backend notifies
+on every meaningful state change, and the downloader after a download.
 
-The downloader server has its own, separate stream (`GET /events`, opened through `downloadServer.ts` by
-`DownloadJobsProvider` for a download's start and end, and by `SectionRunsProvider` for a section run's
-transitions). It is push-only too; the fetches beside it, `GET /jobs` and `GET /runs`, run once per connect
-to give the memoryless stream a starting state (see `DOWNLOADS.md`).
+The downloader server has its own stream, reflected by `DownloadJobsProvider` and `SectionRunsProvider`
+([JOBS.md](JOBS.md), [BULK.md](BULK.md)): a contentless ping plus one snapshot fetch per ping and per
+connect, since the stream itself is memoryless.
 
-Any fetcher that can be re-triggered by a notify burst wraps its promise in `useLatestRequest()`, which
-resolves or rejects only the newest call (superseded ones resolve `undefined`, even when they fail) so a late
-response or stale failure can't overwrite a fresher one.
+A fetcher that a notify burst can re-trigger wraps its promise in `useLatestRequest()`, which settles only
+the newest call (superseded ones resolve `undefined`, even on failure) so a late answer cannot overwrite a
+fresher one.
 
 ## Routes
 
-`react-router-dom` v7, declared in `App.tsx` from the absolute patterns in `shared/utils/routes.ts` (also what `useMatch`/`matchPath` take); every route renders inside `Layout`. `/`, `/course/:course/overview` and
-`/:course/:lecture` also sit under the pathless `LecturesLayout`, which renders the lectures tree pane
-beside them; `/:course/:lecture/edit` stays a direct child of `Layout` so the editor gets the full width.
+`react-router-dom` v7, declared in `App.tsx` from the patterns in `shared/utils/routes.ts` (also what
+`useMatch`/`matchPath` take). Every route renders inside `Layout`; `/`, the overview and
+`/:course/:lecture` also sit under the pathless `LecturesLayout`, which adds the tree pane.
 
 | Path                       | View              |
 | -------------------------- | ----------------- |
@@ -67,149 +56,89 @@ beside them; `/:course/:lecture/edit` stays a direct child of `Layout` so the ed
 | `/:course/:lecture`        | `MainView`        |
 | `/:course/:lecture/edit`   | `EditSummaryView` |
 
-`kind` (lecture vs recitation) is a query param `?kind=recitation`, propagated everywhere rather than
-being a route segment. The static `downloads`/`search`/`settings`/`running` segments outrank the dynamic
-`/:course/:lecture` pattern in v7 ranking, so they never collide — a pathless layout route adds no segment,
-so nesting under `LecturesLayout` leaves that ranking unchanged. The overview is three segments, not `/course/:course`,
-because that would outrank `/:course/:lecture` and make every lecture of a course named `course` unreachable.
+`kind` is the query param `?kind=recitation`, propagated everywhere, never a segment. The static segments
+outrank `/:course/:lecture` in v7 ranking, and a pathless layout adds no segment. The overview is three
+segments rather than `/course/:course`, which would outrank `/:course/:lecture` and hide every lecture of a
+course named `course`.
 
-The sidebar's five nav rows — Lectures, Running pipelines, Downloads, Search, Settings — are all routes, and
-exactly one is active on every page: `/running`, `/downloads`, `/search` and `/settings` claim their own
-rows and Lectures claims everything else, which is exactly `/`, `/course/:course/overview` and
-`/:course/:lecture[/edit]` (see `LECTURES.md` §Sidebar). Leaving `/downloads` unmounts its view, so `Layout` mounts `DownloadJobsProvider` and `DownloadsSessionProvider` alongside `CourseTreeProvider`
-and `RunnerStatusProvider`, so the page's discovery, edits, in-flight bulk runs and download jobs all outlive
-the route (see `DOWNLOADS.md`).
+The sidebar's five rows are all routes and exactly one is active per page: the four static routes claim
+their own, Lectures claims the rest. Leaving `/downloads` unmounts its view, so `Layout` also mounts the
+downloads providers, and discovery, edits, jobs and runs outlive the route ([DOWNLOADS.md](DOWNLOADS.md)).
 
-Route params are user-editable and may name nothing on disk, so the three tree-backed views
-(`MainView`, `EditSummaryView`, `CourseView`) resolve their params against `CourseTreeContext` before
-rendering: spinner until `loaded`, then `NotFoundPanel` with a message from `shared/utils/notFound.ts`.
-That flag exists because an unresolved param and an unfetched tree both look like an empty tree —
-without it a typo'd URL is indistinguishable from loading and spins forever. `loaded` flips only when a
-tree actually lands (or the fetch fails) — never on a response superseded by a newer one, which would
-briefly expose the still-empty tree as "not found". `CourseView` runs the check
-above `CourseOverviewProvider` so a nonexistent course issues no overview requests.
+Route params are user-editable, so `MainView`, `EditSummaryView` and `CourseView` resolve them against
+`CourseTreeContext` first: spinner until `loaded`, then `NotFoundPanel` (`shared/utils/notFound.ts`).
+`loaded` exists because an unresolved param and an unfetched tree both look empty, so a typo would spin
+forever; it flips only when a tree actually lands or the fetch fails, never on a superseded response.
+`CourseView` checks above `CourseOverviewProvider`, so a nonexistent course issues no overview requests.
 
-`app/InitGate` wraps the whole route table: it reads the settings store once at boot and, until the
-required entries are filled, renders the first-run wall in place of the app — no sidebar, no route,
-no way past (see `SETTINGS.md`).
+`app/InitGate` wraps the route table and shows the first-run wall until the required settings exist
+([SETTINGS.md](SETTINGS.md)).
 
-`app/ErrorBoundary` wraps `<App/>` inside `BrowserRouter` — a render error anywhere below it (views,
-`Layout`, providers, sidebar) would otherwise unmount the tree into a blank page. The fallback shows
-timestamp, URL, user agent, stack and component stack with a copy button, so a crash can be reported
-without devtools.
+## Error boundary
 
-Beside Copy details sits Send report, which goes through `services/report.ts` to the Electron
-bridge: main writes the full report plus the launch-log tail to a file under the state root and
-opens a truncated `mailto:` to the project's address, and the button then names the file for the
-user to attach (`electron/docs/RENDERER.md`). The file and the mail fail independently, so the
-button reports all four combinations, a mail that could not open included — and it reports them
-**in place, never as a toast**: the fallback has replaced the `App` that mounts the
-`ToastContainer`, so a toast from here renders nowhere and resurfaces on a later screen.
-**It renders only when the bridge exists** — browser
-dev has no version and no launch log, so there is nothing worth mailing, and hiding it beats a
-button that cannot work.
+`app/ErrorBoundary` wraps `<App/>` inside `BrowserRouter`, so a render error anywhere below becomes a
+fallback (timestamp, URL, user agent, both stacks, a copy button) instead of a blank page. It is keyed on
+`location.pathname`: the fallback replaces the sidebar too, so its Home link is the only way out and only a
+remount clears the error. Malformed escapes like `/a%/b` never reach it — the host rejects them first.
 
-It is keyed on `location.pathname`: the fallback replaces the sidebar too, so its
-Home link is the only way out, and only a remount clears the error state. Reload stays as the hard
-reset for a crash that reproduces at `/`. Malformed URLs like `/a%/b` never reach it — the dev server
-and any static host reject the bad escape before React loads, and react-router's own `decodePath`
-warns and passes undecoded segments through to the not-found path above.
+**Send report** goes through `services/report.ts` to the bridge, which writes the report and launch-log
+tail under the state root and opens a truncated `mailto:` (`electron/docs/RENDERER.md`). File and mail fail
+independently, so all four outcomes are reported **in place, never as a toast** — the fallback has
+replaced the `App` that mounts the `ToastContainer`. It renders only when the bridge exists: browser dev
+has no version or launch log worth mailing.
 
 ## Mode toggles
 
-`shared/components/ModeToggle` is the generic segmented switch: `ModeToggle<M>({ modes, storageKey,
-className?, children? })`. It owns the mode as component state persisted in `localStorage` under
-`storageKey`; insertion order of `modes` is both the segment order and the default, and an unknown
-stored key falls back to that default. A mode either names a zero-prop `Component` or the caller passes
-`children(mode, selectMode)` when it needs the selected value rather than a body — `selectMode` lets the body
-switch segments itself, which is how the downloads passcode banner jumps to a stuck section. A mode may
-also carry a `count`, shown beside its label.
+`shared/components/ModeToggle<M>({ modes, storageKey, className?, children? })` is the segmented switch,
+its mode persisted in `localStorage`. The insertion order of `modes` is both segment order and default,
+and an unknown stored key falls back to it. A mode names a zero-prop `Component`, or the caller passes
+`children(mode, selectMode)` — `selectMode` lets the body switch segments itself (the paused-runs banner).
+A mode may carry a `count`.
 
-`DownloadsView` uses the `children` form with `Record<Media, …>` and key `fastStudyDownloadsMedia`,
-since it filters items by the selected media, and counts each segment's items. `.mode-toggle` is styled
-dark for the sidebar; `.mode-toggle--light` is the same control on a light surface — a sunken track under
-a raised white pill — worn by the downloads segments and by each recording card's Lecture/Recitation
-toggle, so the two read as one control family. `LanguageSwitcher` reuses the dark CSS without the component.
+`.mode-toggle` is styled for the dark sidebar; `.mode-toggle--light` is the same control on a light
+surface, shared by the downloads segments and each recording's kind toggle so they read as one family.
+`LanguageSwitcher` reuses the dark CSS without the component.
 
 ## Styling
 
-Plain CSS, no modules and no styled-components — class names are global and byte-identical to the
-`className` strings, so one grep for a class hits both its markup and its rule.
+Plain global CSS whose class names are byte-identical to the `className` strings, so one grep hits markup
+and rule. A component's CSS is `X.css` beside `X.tsx`. A class two or more components render lives in a
+named `src/styles/` stylesheet, and **every component using it imports it** rather than relying on a
+parent — Vite dedupes, and a component's imports stay the exhaustive list of what can style it.
+`styles/tokens.css` is the only global sheet (reset, `html/body/#root`, custom properties, no class
+selector), and `main.tsx` imports only it and the fonts; `.claude/hooks/lint.sh` enforces both, plus the
+absence of a root `index.css`.
 
-A component's CSS lives in `X.css` beside `X.tsx` and is imported by it. A class rendered by two or more
-components instead lives in a named shared-vocabulary stylesheet under `src/styles/` — `button`, `chip`,
-`modal`, `pane-header`, `panel`, `pipeline-card`, `segmented`, `source-row`, `sidebar-tree`, `spinner` — and **every component
-using that class imports the stylesheet**, never relying on a parent to import on its behalf. Vite dedupes
-repeated imports, so this costs nothing and keeps a component's import list an exhaustive list of what can
-style it. A file earns a place in `src/styles/` only by having multiple component users; that is a fact you
-can regenerate by grepping `className` across `src/`.
-
-`src/styles/tokens.css` is the only global stylesheet: the reset, `html/body/#root`, and the `:root` custom
-properties. It holds no class selector, and `main.tsx` imports it and the font weights and nothing else.
-`.claude/hooks/lint.sh` enforces both, plus the absence of a root `index.css`.
-
-### The token layer
-
-Every colour, size and spacing step in `src/**/*.css` resolves to a `tokens.css` custom property. The
-scales are:
-
-| Group     | Tokens                                                                                                                                                                                                      |
-| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| surfaces  | `--bg` (app canvas), `--surface` (cards), `--surface-sunken` (a row mid-run)                                                                                                                                |
-| text      | `--text` → `--text-4`, darkest to faintest                                                                                                                                                                  |
-| lines     | `--line`, `--line-soft`, `--control-line` (input and button borders)                                                                                                                                        |
-| primary   | `--ink` — the one filled button per page                                                                                                                                                                    |
-| accent    | `--accent`, `--accent-hover`, `--accent-soft`, `--accent-line`, `--accent-ink`, `--accent-on-dark`                                                                                                          |
-| status    | `--ok`/`--ok-soft`/`--ok-surface`/`--ok-line`/`--ok-dot`, `--warn`/`--warn-soft`, `--danger`/`--danger-soft`, `--highlight`                                                                                 |
-| sidebar   | `--sidebar-bg`, `--sidebar-raise`, `--sidebar-line`, `--sidebar-fg`, `--sidebar-muted`, `--sidebar-dim`, `--sidebar-width`; `--tree-pane-bg` (a step lighter, so the pane reads apart), `--tree-pane-width` |
-| space     | `--space-1` 4px → `--space-8` 40px                                                                                                                                                                          |
-| radius    | `--r-sm` 8px, `--r` 9px, `--r-lg` 12px, `--r-xl` 14px, `--r-pill`                                                                                                                                           |
-| type      | `--font-ui`, `--font-mono`, `--fs-title` 26 → `--fs-fine` 11                                                                                                                                                |
-| elevation | `--shadow-sm`, `--shadow-md` (toasts), `--shadow-lg` (modals)                                                                                                                                               |
-
+Every colour, size and space step resolves to a `tokens.css` property, whose comments give each its role.
 The accent never fills a control on a light surface, where it fails contrast: a filled button is `--ink`,
-and the accent appears as text, a border or a soft tint. `--accent-on-dark` is its counterpart on the
-sidebar and the tree pane, the only dark surfaces. No hardcoded colour is left in `src/**/*.css`.
+the accent is text, border or tint, and `--accent-on-dark` serves the two dark surfaces. Fonts are
+self-hosted through `@fontsource` so the app renders offline; Heebo is Hebrew-first, JetBrains Mono carries
+filenames, counts and durations.
 
-Fonts are self-hosted through `@fontsource`, imported per weight from `main.tsx`, so the app renders
-correctly with no network. Heebo is Hebrew-first, so Hebrew and Latin share one ramp instead of falling
-back mid-string; JetBrains Mono carries filenames, counts and durations.
+`.btn` + `--primary`/`--ghost`/`--danger` is the whole button vocabulary, `.chip` + five colour variants
+the whole state-label vocabulary, and `StatusNode` the five run states (`done`, `running`, `pending`,
+`paused`, `failed`) at one size. `PageHeader` opens every full-page view with one primary action and an
+optional second action row, and `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
+`services/toaster.css`.
 
-### Shared primitives
+**No cross-file rule may depend on source order.** Vite's import order differs between dev (per-module
+`<style>` tags) and prod (one concatenated sheet), so equal-specificity rules resolve unpredictably;
+disambiguate by specificity. Where two rules genuinely collide at equal specificity (`.pipeline-row` /
+`.pipeline-row--running`), both live in one file in winning order with a comment — why a few single-user
+classes sit in a shared sheet. Verify a suspected collision against the built bundle.
 
-`.btn` plus `--primary` / `--ghost` / `--danger` is the whole button vocabulary; `.chip` plus its five
-colour variants is the whole state-label vocabulary. `StatusNode` renders the four run states (`done`,
-`running`, `pending`, `failed`) at one size, and is what the lecture pipeline, the course branches and
-their steps all read from. `PageHeader` opens every full-page view — title, metadata row, one primary
-action, and an optional second action row under it, clear of a title column that has no width floor —
-and `.pipeline-card` is the card its rows sit in, on the lecture pipeline and the course
-overview alike. `ConfirmModal`, `ProgressBar` and the `.empty-state` card are the other cross-feature
-pieces. The react-toastify surface is skinned once in `services/toaster.css`, beside the only
-file that imports the library.
-
-**No cross-file rule may depend on source order.** Import order follows Vite's module graph and differs
-between dev (per-module `<style>` tags) and prod (one extracted, concatenated sheet), so two same-specificity
-rules that used to resolve by position now resolve unpredictably. Disambiguate by specificity. Where two
-rules genuinely collide on the same element at equal specificity — `.lecture-list` / `.recitation-list`,
-`.pipeline-row` / `.pipeline-row--running` — both live in one file in the
-winning order, with a comment naming the dependency; that is why a few single-user classes sit in a shared
-stylesheet. Verify a suspected collision against the built bundle, not the dev server.
-
-Any user-supplied text (course, lecture, section, recording titles) renders with `dir="auto"` so Hebrew
-resolves RTL per element.
+User-supplied text renders with `dir="auto"` ([I18N.md](I18N.md)).
 
 ## Smoke-suite test ids
 
-`data-testid`s exist only as a contract held for `delivery/smoke/`, which drives the packaged app and
-never reads visible text. Renaming, removing or re-scoping one is a smoke-suite change; add none for
-anything else. A value the suite asserts on rides a `data-*` attribute beside the id, spelled as the
-code's own enum, never a translated string.
+`data-testid`s exist only as a contract for `delivery/smoke/`, which drives the packaged app and never
+reads visible text. Renaming, removing or re-scoping one is a smoke-suite change; add none for anything
+else. A value the suite asserts on rides a `data-*` attribute spelled as the code's enum, never a
+translated string.
 
-Two of them describe the same lecture header in its two shapes. At 960px and wider the three
-secondary actions are inline on a row of their own, so `open-pdf` is one of those buttons and
-`lecture-actions-menu` is absent; below it they fold into the ⋮ menu, so the trigger carries
-`lecture-actions-menu` and `open-pdf` appears on its item once it is open. Only one shape renders, so
-`open-pdf` is never in the DOM twice — see `features/lectures/hooks/useCompactHeaderActions.ts`.
+`lecture-actions-menu` and `open-pdf` follow the lecture header's two shapes: from 960px the actions sit
+inline and the menu is absent; below, `open-pdf` appears only once the ⋮ menu is open
+(`features/lectures/hooks/useCompactHeaderActions.ts`).
 
 | id                            | extra attributes                                                                                                         | component                                         | marks                                           |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------- |

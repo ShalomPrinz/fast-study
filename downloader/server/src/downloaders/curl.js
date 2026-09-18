@@ -3,10 +3,8 @@ import { SKIP_HEADERS, probeContentLength } from '../services/probe.js';
 import { toolPath } from '@faststudy/tools';
 import { uploadVideo } from '../services/database.js';
 
-// Replay the browser's captured headers so short-lived tokens + Referer/Origin
-// checks pass. Range/conditional headers stripped (SKIP_HEADERS) so the body isn't
-// a partial, offset-0-less MP4. --retry-all-errors covers CDNs that close TLS
-// without close_notify mid-stream. See docs/DOWNLOAD.md.
+// Replay the captured headers (minus SKIP_HEADERS) so short-lived tokens + Referer/Origin checks
+// pass. See docs/DOWNLOAD.md for SKIP_HEADERS and --retry-all-errors.
 function buildCurlArgs(url, headers) {
   const args = [
     '-L',

@@ -13,13 +13,11 @@ _INLINE_CODE_RE = re.compile(
     r"``(" + _DOUBLE_CODE_BODY + r")``|`(" + _INLINE_CODE_BODY + r")`"
 )
 
-# A possessive apostrophe after a sibilant ("Bayes' Rule") glues across the space
-# too, so the run isn't split into two islands. Restricting the lookbehind to s/x/z
-# is what keeps a closing quote between Latin words ("’word’ here") outside the run.
+# A possessive after a sibilant ("Bayes' Rule") glues across the space; the s/x/z lookbehind
+# keeps a closing quote between Latin words ("’word’ here") outside the run.
 _POSSESSIVE = r"(?<=[sxzSXZ])['’](?=[ \t]+[" + _LATIN + r"])"
-# One Latin token: an optional numeric prefix and/or leading slash glued to a letter,
-# then letters/digits/underscore with separators that are FOLLOWED by more of the same.
-# See docs/PDF.md for why each piece is shaped this way.
+# One Latin token: optional numeric prefix / leading slash glued to a letter, then word chars
+# with separators only when more follow. Why each piece is shaped so: docs/BIDI.md.
 _WORD = (
     r"(?:[0-9]+-?)?(?:(?<![" + _HEBREW + r"])/)?[" + _LATIN + r"]"
     r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r"0-9])|" + _POSSESSIVE + r")*"
@@ -93,9 +91,8 @@ def force_ltr_inline_code(text: str) -> str:
             raw = raw[1:-1]
         return r"\LR{\textenglish{\texttt{" + _latex_escape(raw) + "}}}"
 
-    # The shared splitter, but rewriting the protected halves rather than skipping them —
-    # code spans are the subject. Math must still split, else a `$…$` inside a code span
-    # cuts it in two and its orphaned backticks pair with the next span's.
+    # The shared splitter, rewriting the protected halves rather than skipping them. Math must
+    # still split, else a `$…$` inside a code span cuts it in two.
     parts = _PROTECTED_RE.split(text)
     for i in range(1, len(parts), 2):
         m = _INLINE_CODE_RE.fullmatch(parts[i])

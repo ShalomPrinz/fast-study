@@ -5,27 +5,20 @@ import { jobsForRef } from '../contexts/DownloadJobsContext'
 import type { RunTarget } from '../services/downloadServer'
 import { targetLanded } from './existingItems'
 
-// `unsupported` is kept apart from `failed`: nothing went wrong with the run, the file just isn't one
-// auto can fetch — and unlike a failure it is a permanent verdict the next run skips outright.
-// `pending` is a row the queue has not reached: no evidence about it means "not started", not
-// "in flight" — the run holds its whole queue from the start, so absence of a job proves nothing.
+// `unsupported` is a permanent verdict, not a run failure; `pending` is a row the queue has not
+// reached, where no job means "not started". See docs/BULK.md.
 export type TargetStatus =
   'downloaded' | 'failed' | 'unsupported' | 'skipped' | 'in-flight' | 'pending'
 
-// This target's jobs. A job is keyed by lecture name and the target by ref, so a row renamed between
-// runs leaves the old name's jobs under the same ref — they are not this target's outcome.
-// A zoom share queued as `name` runs as `name.1`/`.2`, so both split names belong to it.
+// This target's jobs: ref- and name-scoped (`name`, `name.1`, `name.2`), since a row renamed between
+// runs leaves the old name's jobs under the same ref.
 function jobsForTarget(jobsByRef: JobsByRef, target: RunTarget): readonly JobProgress[] {
   const names = new Set([target.name, `${target.name}.1`, `${target.name}.2`])
   return jobsForRef(jobsByRef, target.ref).filter((j) => names.has(j.title))
 }
 
-// One target's outcome, derived on every render rather than accumulated: a running job wins outright
-// (a zoom pair's second clip is still going even once the first landed), then the course tree owns the
-// durable "downloaded" state and outranks an `error` job left by an earlier attempt. An `error` job is
-// never time-evicted and a retry supersedes it, so it is evidence of the latest attempt failing.
-// Nothing at all means the download is still going — which also covers the window right after the
-// POST, before `/jobs` catches up.
+// One target's outcome, derived on every render: running job, then tree, then `error` job, else
+// still going. The order's reasoning is in docs/BULK.md §Deriving the outcome.
 export function targetStatus(
   target: RunTarget,
   courses: Course[],
@@ -43,20 +36,15 @@ export function targetStatus(
   return 'in-flight'
 }
 
-// Targets actually downloading right now. Positive evidence only — a job of theirs is running —
-// which is the same rule a single row's own button uses, and the reason the section can never be
-// held busy by a row nothing is working on. `targetStatus`'s "no evidence yet" fallback deliberately
-// has no part in this: it is an honest answer for the summary, but as a busy signal it never expires.
+// Targets with a running job. Positive evidence only: `targetStatus`'s "still going" fallback never
+// expires, so as a busy signal it could hold the section forever.
 export function runningCount(targets: readonly RunTarget[], jobsByRef: JobsByRef): number {
   return targets.filter((t) => jobsForTarget(jobsByRef, t).some((j) => j.status === 'running'))
     .length
 }
 
-// Targets the run can no longer say anything about: it triggered them, no job is left to speak for
-// them, and nothing under their name is in the tree. The causes are all outside the run — the
-// lecture was deleted or renamed, the name desynced from disk, or the tree is unreachable — so the
-// section says so rather than counting them as downloaded or failed. Only meaningful once the run
-// has stopped; while it runs this is just the window before the evidence arrives.
+// Triggered targets with no job and nothing in the tree — causes outside the run. Meaningful only
+// once the run has stopped. See docs/BULK.md.
 export function unverifiedCount(
   targets: readonly RunTarget[],
   courses: Course[],

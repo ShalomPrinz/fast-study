@@ -10,9 +10,8 @@ export function formatBytes(bytes) {
   return `${mb.toFixed(1)} MB`;
 }
 
-// Children run silent; the server is the SOLE terminal writer, polling temp size
-// against the probed total. Full rationale (why not inherit child bars, TTY vs
-// pipe-under-concurrently, curl-file vs yt-dlp-dir measure) in docs/PROGRESS.md.
+// Children run silent; the server is the SOLE terminal writer, polling temp size against the
+// probed total. Rationale in CLAUDE.md ("Terminal progress").
 const activeDownloads = new Map();
 let renderTimer = null;
 let paintedLines = 0; // TTY only: lines in the last repainted block
@@ -111,8 +110,8 @@ function renderProgress() {
   }
 }
 
-// Keep the last few KB of a child's stderr so a non-zero exit can log the real
-// error — we no longer inherit stderr, so this tail is our only error surface.
+// Keep the last ~64 KB of a child's stderr: stderr isn't inherited, so this tail is the only
+// error surface a non-zero exit has.
 export function makeStderrTail(child, maxLines = 15) {
   let buf = '';
   child.stderr?.on('data', (c) => {

@@ -81,7 +81,7 @@ export function CourseOverviewProvider({
   useNotify(refresh)
 
   // One trigger; omitting names = all slugs. skipExisting = continue (missing phases only),
-  // default = overwrite. See docs/course-overview.md.
+  // default = overwrite. See docs/OVERVIEW.md.
   async function generate(
     names?: string[],
     fromPhase?: CoursePhase,

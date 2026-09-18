@@ -1,11 +1,5 @@
-"""Prime tectonic's LaTeX package cache for the packaged build, out of backend/'s environment:
-
-    cd backend && uv run python ../delivery/prime_cache.py <out-dir>
-
-Renders kitchen-sink.md through the pipeline's own pandoc invocation, adds cache-supplement.txt by
-name, and leaves `bundles/` under <out-dir> — the read-only cache the app ships and renders against
-with `--only-cached`. Build-only: no dev command touches it.
-"""
+"""Prime tectonic's LaTeX package cache for the packaged build: render kitchen-sink.md, add
+cache-supplement.txt by name, keep only `bundles/` under <out-dir> — see docs/LATEX.md."""
 
 import argparse
 import os
@@ -54,9 +48,8 @@ def _tectonic(args: list[str], **kwargs) -> subprocess.CompletedProcess:
 
 
 def _render(build: Path) -> None:
-    """Render the sink strictly — no `-Z continue-on-errors`, unlike the app. Under the app's own
-    flags a package missing from the cache exits 0 with a plausible PDF, so this is the only run
-    that can prove the sink rendered whole."""
+    """Render the sink strictly — no `-Z continue-on-errors`, unlike the app, under whose flags a
+    package missing from the cache exits 0 with a plausible PDF."""
 
     run = _tectonic(
         ["--keep-logs", f"{BUILD_STEM}.tex"],
@@ -69,8 +62,7 @@ def _render(build: Path) -> None:
 
 
 def _fetch(name: str) -> None:
-    """Pull one named file into the cache. `bundle cat` resolves the same default bundle a render
-    does, so the two land under one bundle hash; its stdout is the file itself, so it is dropped."""
+    """Pull one named file into the cache under the render's bundle hash; stdout is the file itself."""
 
     run = _tectonic(
         ["-X", "bundle", "cat", name],
@@ -97,9 +89,8 @@ def main() -> None:
 
     out = args.out_dir.resolve()
     out.mkdir(parents=True, exist_ok=True)
-    # to_pdf reads this same variable to mean "the cache is frozen" and adds `--only-cached`, which
-    # is why this script drives tectonic itself: going through convert_to_pdf would forbid the very
-    # fetches priming consists of.
+    # to_pdf reads this as "the cache is frozen" and adds `--only-cached`, which is why this script
+    # drives tectonic itself rather than convert_to_pdf.
     os.environ["TECTONIC_CACHE_DIR"] = str(out)
 
     with tempfile.TemporaryDirectory() as build_dir:

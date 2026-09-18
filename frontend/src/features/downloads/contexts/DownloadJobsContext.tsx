@@ -81,9 +81,8 @@ export function jobsForRef(byRef: JobsByRef, ref: string): readonly JobProgress[
   return byRef.get(ref) ?? EMPTY_JOBS
 }
 
-// Module-level store: one grouped snapshot for the page, with per-ref subscriptions on top of it,
-// so a `job:change` ping re-renders a row only when that row has jobs at all. Because it outlives the
-// provider, the provider must clear it on unmount — a stale snapshot would show phantom running jobs.
+// Module store of the grouped snapshot with per-ref subscriptions; it outlives the provider, which
+// clears it on unmount so no phantom jobs survive.
 let jobsByRef: JobsByRef = new Map()
 const listeners = new Set<() => void>()
 
@@ -105,9 +104,8 @@ function useProviderGuard() {
   if (!mounted) throw new Error('download job hooks must be used inside <DownloadJobsProvider>')
 }
 
-// One row's jobs, by its discovery `ref`. Subscribed per ref, so a row with no jobs never re-renders
-// on a ping at all — it reads the shared `EMPTY_JOBS`. A row that has jobs gets a freshly grouped
-// bucket every snapshot, so it re-renders on every ping.
+// One row's jobs by `ref`. A row with none reads the shared `EMPTY_JOBS` and never re-renders on a
+// ping; a row with jobs gets a fresh bucket every snapshot.
 export function useRowJobs(ref: string): readonly JobProgress[] {
   useProviderGuard()
   return useSyncExternalStore(
@@ -123,10 +121,8 @@ export function useJobsByRef(): JobsByRef {
   return useSyncExternalStore(subscribe, () => jobsByRef)
 }
 
-// One EventSource for the page, against the downloader server (:3052) which owns the jobs.
-// The stream is a contentless `job:change` ping; every ping refetches `GET /jobs`.
-// The server guarantees at most one job per target in a snapshot, so we trust `/jobs` as-is.
-// A `ref` groups the row, while its jobs are the display atoms. See docs/DOWNLOADS.md.
+// Reflects the downloader server's jobs: each contentless `job:change` ping refetches `GET /jobs`,
+// trusted as-is. See docs/JOBS.md.
 export function DownloadJobsProvider({ children }: { children: ReactNode }) {
   // Ids already toasted, so a failed job toasts once.
   // `primed` guards the first snapshot: its errors are history from before load and must not toast.
@@ -149,9 +145,8 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
       primed.current = true
       publish(snap)
     }
-    // Sequenced because the last job's `done` is the final ping: an older `/jobs` reply landing after
-    // it would republish that job as `running`, leaving a live ETA bar and a section wedged with
-    // "Download all" disabled until some unrelated job transitions.
+    // Sequenced: an older reply landing after the final `done` ping would republish the job as
+    // `running` with nothing left to correct it.
     const onJobsChanged = sequencedRefresh(fetchJobs, handleSnapshot)
     const close = subscribeJobs(onJobsChanged)
     // Clearing on unmount keeps the store's lifetime equal to the provider's: without it, a remount

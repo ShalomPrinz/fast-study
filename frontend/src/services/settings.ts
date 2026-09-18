@@ -1,9 +1,8 @@
 import { createClient } from './http'
 import { AUTO_DOWNLOADER_URL, BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
 
-// This file is the boundary for the settings concern, which spans three services by design: a
-// setting's owner is a property of the setting, not of the screen editing it, and the two
-// prerequisites the settings screens check — an API key, a browser — are owned the same way.
+// The settings concern, spanning three services by design: a setting's owner is a property of the
+// setting, not of the screen editing it — see docs/SETTINGS.md.
 const backend = createClient(BACKEND_URL, 'backend service')
 const database = createClient(DATABASE_URL, 'database service')
 const autoDownloader = createClient(AUTO_DOWNLOADER_URL, 'auto-downloader service')
@@ -212,9 +211,8 @@ export async function probeKey(provider: string, key: string): Promise<ProbeResu
   }
 }
 
-// The other prerequisite the settings screens check. It gates the whole download surface and none
-// of the pipeline, so a missing browser is a degraded install, never a blocked one — which is why
-// `missingEntries` does not count it.
+// The browser prerequisite: it gates downloads and none of the pipeline, so a missing browser is a
+// degraded install, never a blocked one — `missingEntries` does not count it.
 export interface BrowserPrereq {
   available: boolean
   // The resolved Playwright channel and its display name; both null when the chain came up empty.

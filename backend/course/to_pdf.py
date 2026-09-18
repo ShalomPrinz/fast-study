@@ -1,7 +1,5 @@
-"""Overview to_pdf phase worker: render one extractor's {slug}.md to {slug}.pdf.
-
-Distinct from pipeline/to_pdf.py — this is the per-course phase worker, that is the
-per-lecture markdown→PDF primitive it reuses."""
+"""Overview to_pdf phase worker: render one extractor's {slug}.md to {slug}.pdf through the
+per-lecture primitive in pipeline/to_pdf.py."""
 
 import tempfile
 from pathlib import Path
@@ -36,9 +34,8 @@ def run_to_pdf(course: str, slug: str) -> dict:
         pdf_path, warning = convert_to_pdf(str(md_path))
         pdf_bytes = Path(pdf_path).read_bytes()
     db_client.put_overview_file(course, f"{slug}.pdf", pdf_bytes)
-    # Written only after the PDF upload, so a warning never exists without its PDF. A clean
-    # render clears the marker by writing it EMPTY — the database has no overview delete
-    # route, and it reads an empty marker as no warning at all.
+    # After the upload, so a warning never exists without its PDF; a clean render writes it EMPTY
+    # since there is no overview delete route — see docs/PDF.md.
     marker = b"" if warning is None else warning.encode("utf-8")
     db_client.put_overview_file(course, warning_file(slug), marker)
     return {"status": "done"}

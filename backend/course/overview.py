@@ -1,7 +1,5 @@
-"""Course-level overview registry: declares the extractors and their phase chains.
-
-Imports NO worker module — extract/analyze/collect/to_pdf import this back, so a worker
-import here would cycle. See docs/OVERVIEW.md."""
+"""Course-level overview registry: the extractors and their phase chains. Imports NO worker
+module — every worker imports this back. See docs/OVERVIEW.md."""
 
 from dataclasses import dataclass
 from enum import Enum

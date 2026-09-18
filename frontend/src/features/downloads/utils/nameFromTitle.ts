@@ -3,10 +3,8 @@ import { fallbackPrefix, sessionPrefix, suggestName } from '@/features/lectures/
 
 const HEBREW_SUB = 'אבגדהוזחטי' // ordered, א -> 1 … י -> 10; later letters and final forms don't count
 
-// A split session's part marker: one char glued to the number (optionally after `.`/`-`/`_`).
-// Ambiguity is ignored rather than guessed, so the plain number wins.
-//   '11a' / '11.A' / '11-א' / '11_3'  -> 1 / 1 / 1 / 3
-//   '11 A' / '11ab' / '11.3.2024'     -> null  (whitespace, second letter, date tail)
+// A split session's part marker, one char glued to the number; ambiguity yields null.
+//   '11a' / '11-א' / '11_3' -> 1 / 1 / 3    '11 A' / '11ab' / '11.3.2024' -> null
 function subNumber(rest: string): number | null {
   const m = rest.match(/^[.\-_]?([A-Za-zא-ת\d])'?(.{0,2})/)
   if (!m) return null
@@ -19,10 +17,8 @@ function subNumber(rest: string): number | null {
   return index < 0 ? null : index + 1
 }
 
-// First integer in the title → "<prefix> N", plus any sub-marker as a decimal. The prefix is the
-// course's own, so a Hebrew course keeps naming in Hebrew; the UI locale's word is the fallback.
-// No number at all falls back to the tree's next-number suggestion.
-//   'הרצאה 3' -> 'הרצאה 3'   'הרצאה 11a' -> 'הרצאה 11.1'   'רועי' -> 'תרגול 4'
+// First integer → "<prefix> N" plus any sub-marker as a decimal, the prefix the course's own; no
+// number falls back to the tree's next name.  'הרצאה 11a' -> 'הרצאה 11.1'
 export function suggestItemName(
   title: string,
   kind: Kind,

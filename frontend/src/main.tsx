@@ -16,9 +16,8 @@ import App from './App'
 import ErrorBoundary from '@/app/ErrorBoundary'
 import { activateLocale, initialLocale } from '@/services/i18n'
 
-// Activation is awaited before the first render so no frame paints untranslated. A failure here
-// would leave `render` unreached and the page blank, so English is the last resort — the crash
-// panel is only reachable once something is mounted.
+// Awaited so no frame paints untranslated; English is the fallback, since a rejection here skips
+// `render` and the error boundary cannot catch it — see docs/I18N.md.
 try {
   await activateLocale(initialLocale())
 } catch {

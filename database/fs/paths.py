@@ -29,8 +29,7 @@ SOURCE_URL_MARKER = ".source_url"
 PDF_WARNING_MARKER = ".pdf_warning"
 PDF_BUILD_TEX_MARKER = ".pdf_build.tex"
 
-# Every file the frontend cares about in a lecture dir: the tree surfaces exactly these,
-# and re-uploading video.mp4 wipes exactly these. See docs/LAYOUT.md.
+# The tree surfaces exactly these and a fresh video.mp4 wipes exactly these — see docs/LAYOUT.md.
 PREDEFINED_FILES = (
     "video.mp4",
     "audio.mp3",
@@ -57,9 +56,7 @@ class FileLocked(Exception):
     """Raised when a write or delete is refused because another program holds the file open."""
 
 
-# Windows refuses to replace or delete a file another process holds open: ERROR_SHARING_VIOLATION
-# (32) and ERROR_LOCK_VIOLATION (33), which os.unlink/os.replace surface as winerror. A native PDF
-# viewer on summary.pdf is the everyday cause.
+# ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION, as os.unlink/os.replace report them — see docs/API.md.
 _SHARING_VIOLATIONS = (32, 33)
 
 
@@ -79,9 +76,8 @@ def check_safe_segment(segment: str) -> None:
 def _denied_by_share(exc: PermissionError) -> bool:
     """Tell whether a winerror-less Windows EACCES can only be a sharing violation."""
 
-    # open()/write_bytes() reach the CRT, which sets errno and leaves winerror unset, so a sharing
-    # violation is indistinguishable from EACCES until the other causes — a directory, a read-only
-    # file — are ruled out. POSIX is excluded outright: there a bare EACCES is a real ACL problem.
+    # The CRT path sets errno but no winerror, so only an EACCES on a writable regular file counts —
+    # see docs/API.md.
     if sys.platform != "win32" or exc.errno != errno.EACCES or not exc.filename:
         return False
     try:

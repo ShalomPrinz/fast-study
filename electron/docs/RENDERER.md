@@ -34,11 +34,10 @@ boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
-`version` is `app.getVersion()` and `locale` is `app.getLocale()`. The version comes down this way
-rather than through a Vite `define` so it is the version the installer actually put on disk, with no
-build-time coupling to `electron/package.json`; the locale is the frontend's initial language when
-the profile holds no pick of its own (`frontend/docs/I18N.md`). Browser dev has neither, which is
-why a report can only come from a packaged build.
+`version` is `app.getVersion()` rather than a Vite `define`, so it is what the installer put on
+disk with no build-time coupling to `electron/package.json`. `locale` is `app.getLocale()`, the
+frontend's initial language when the profile holds no pick ([`I18N.md`](../../frontend/docs/I18N.md)).
+Browser dev has neither, which is why a report can only come from a packaged build.
 
 `boot` belongs to the launch screen alone, which loads in the same window and so through the same
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
@@ -66,41 +65,35 @@ it is two calls:
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
 bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
 
+**Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
+child window itself with this window's security `webPreferences` — the preload, and so the launch
+secret, on a third-party origin. Chromium routes `target="_blank"` here too, and each denial is
+logged. Nothing guards navigation or checks an IPC sender, so the window must never leave
+`boot.html` and `app://bundle`.
+
 ## Mailing an error report
 
 `report.mail({ details, error, route })` is what the frontend's error boundary calls. It answers
 `{ ok, path, error }` — `path` being the report file the user is asked to attach.
 
 **Two carriers, because one cannot hold it.** The whole report — the boundary's details, the
-component stack, and the tail of this launch's `launch.log` — is written to
-`<state root>/logs/report-<timestamp>.txt`, and a hard-truncated `mailto:` carries version,
-platform, route, that file's path and then the top stack frames. Neither depends on the other: a
-failed file write degrades the body to saying so rather than cancelling the mail, and the file is on
-disk whether or not a mail client exists — which is why the path comes back in `path` even when
-`ok` is false, and why a throw while composing the URL is caught rather than allowed to reject the
-IPC and lose it. The log tail is main's to read because `launch.log` sits outside `DATA_ROOT` and
-the renderer has no path to it.
+component stack and the tail of `launch.log`, which only main can read — is written to
+`<state root>/logs/report-<timestamp>.txt`; a truncated `mailto:` carries version, platform, route,
+that file's path and the top stack frames. Neither depends on the other: a failed file write
+degrades the body to saying so, and `path` comes back even when `ok` is false — which is why a throw
+while composing the URL is caught rather than allowed to reject the IPC.
 
 **The renderer sends fields, never a URL.** Main composes and encodes the `mailto:` itself, so
 `open.external` stays http(s)-only and no renderer-supplied scheme can reach `shell.openExternal`.
 Truncation is measured on the *encoded* URL against ~1800 characters — the Windows shell caps a
-`mailto:` near 2KB, and escaping costs 1–6 characters per source character, so a Hebrew body and an
-ASCII one have no common ratio to budget by. It keeps a prefix, which is why the path line sits
-above the stack frames: the frames are the part that may be eaten, and the line naming the file to
-attach is the one that must survive. Unpaired surrogates are replaced before encoding, since
-`encodeURIComponent` throws `URIError` on one and a crash message can carry half an emoji. The
-timestamp in the file name uses `-` rather than `:`, which Windows forbids in a path.
+`mailto:` near 2KB, and escaping costs 1–6 characters per source character, so Hebrew and ASCII
+bodies have no common ratio. It keeps a prefix, which is why the path line sits above the stack
+frames. Unpaired surrogates are replaced first, since `encodeURIComponent` throws on one. The file
+name's timestamp uses `-` for `:`, which Windows forbids in a path.
 
-`report.js` holds the composition — recipient, encoding and the trim — because it is pure string work
-and so unit-testable, while `mailReport` stays in `main.js` with the log tail and the state root it
-needs. The Google Group the recipient points at does not exist yet; creating it and swapping that
-literal is the whole remaining task.
-
-**Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
-child window itself, and its documented merge order gives that child the parent's security-related
-`webPreferences` — this window's preload, and so the launch secret, running on a third-party origin.
-The preload runs on every page this window loads and nothing guards navigation or checks an IPC sender,
-so the window must never leave `boot.html` and `app://bundle` — outside links go through `open.external`.
+`report.js` holds the composition because it is pure string work and so unit-testable; `mailReport`
+stays in `main.js` beside the log tail and state root it needs. The recipient Google Group does not
+exist yet.
 
 ## Startup checks
 
@@ -115,10 +108,8 @@ nobody on that machine could ever pass.
 
 **The renderer's default when there is no bridge is `true`, deliberately.** No bridge is browser
 dev, which has no Electron store at all and saves keys through `database/`'s `.env` store, so a
-missing bridge must never render as an unsupported machine.
-
-Checks run inline in the boot path, before the children start, so each one must be cheap — no
-network, no spawn, no real disk work — and the boot log carries how long they took.
+missing bridge must never render as an unsupported machine. Why each check must be cheap is in
+[`BOOT.md`](BOOT.md).
 
 ## The settings store
 

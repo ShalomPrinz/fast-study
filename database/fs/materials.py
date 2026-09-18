@@ -51,8 +51,7 @@ def write_material(course: str, lecture: str, kind: str, data: bytes) -> str:
     d = lecture_dir(course, lecture, kind)
     # The downloader uploads to brand-new lectures, so create the dir if missing.
     d.mkdir(parents=True, exist_ok=True)
-    # Scan-then-write needs no lock only because the caller never awaits between the two. An
-    # `await` here, a plain-`def` (threadpool) route, or a second uvicorn worker breaks that.
+    # No await between scan and write is what makes allocation lock-free — see docs/LAYOUT.md.
     name = material_name(_next_index(d))
     (d / name).write_bytes(data)
     return name

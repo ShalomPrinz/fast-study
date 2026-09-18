@@ -7,9 +7,8 @@ import '@/styles/panel.css'
 import '@/styles/button.css'
 import './ErrorBoundary.css'
 
-// Last-resort net for render errors: without it React unmounts the whole tree and leaves a blank
-// page with no way back. It sits outside <Routes>, so the fallback replaces everything including
-// the sidebar — hence the Home link, and the pathname reset below that lets Home actually recover.
+// Last-resort net for render errors. The fallback replaces the sidebar too, hence the Home link and
+// the pathname reset that lets it recover — see docs/ARCHITECTURE.md §Error boundary.
 
 // The error alone, which is what a mailed report's body can afford; the full report carries it too.
 function errorLine(error: Error): string {

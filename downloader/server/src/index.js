@@ -17,9 +17,8 @@ const app = express();
 
 app.use(
   cors({
-    // 'app://bundle' is the packaged app's frozen origin: an app:// page sends it host-only,
-    // with no trailing slash (Electron's permission-handler API reports it differently).
-    // The extension origin appears only for a dev who set DOWNLOADER_EXTENSION_ID.
+    // 'app://bundle' is frozen with no trailing slash (see the root CLAUDE.md). The extension
+    // origin appears only for a dev who set DOWNLOADER_EXTENSION_ID.
     origin: [
       ...(EXTENSION_ID ? [`chrome-extension://${EXTENSION_ID}`] : []),
       FRONTEND_URL,
@@ -36,9 +35,8 @@ app.use(requireSecret);
 // JSON for probe/download; /upload-pdf parses its own raw body per-route.
 app.use(express.json({ limit: '5mb' }));
 
-// The external binaries this service spawns. Probed once at startup, never per request: the boot
-// screen polls /health, and re-spawning them per poll would cost more than the answer is worth.
-// A tool installed afterwards is picked up on the next launch.
+// Probed once at startup, never per request: the boot screen polls /health, and re-spawning per
+// poll costs more than the answer is worth. A tool installed later is seen on the next launch.
 const TOOLS = ['yt-dlp', 'curl'];
 let toolStatus = {};
 

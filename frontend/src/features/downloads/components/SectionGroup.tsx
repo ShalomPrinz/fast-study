@@ -44,9 +44,8 @@ import '@/styles/button.css'
 import './SectionGroup.css'
 
 interface Props {
-  // `id` is the section's page-wide identity (`${course}:${media}:${title}`), which keys its run —
-  // null for the synthetic `Other links` pile, which has no run and no bulk button.
-  // `synthetic` marks that pile, whose title is ours rather than Moodle's.
+  // `id` keys the section's run (`${course}:${media}:${title}`), null for the synthetic pile, whose
+  // title is ours rather than Moodle's.
   section: { id: string | null; title: string; synthetic: boolean }
   items: Item[]
   course: string
@@ -55,9 +54,8 @@ interface Props {
 
 const NO_TARGETS: readonly RunTarget[] = Object.freeze([])
 
-// One Moodle section. It starts the bulk run with one POST and then only reflects it, so a segment
-// switch or a reload lands mid-run and shows it. Drives the expand/children cache (rows only render
-// it) because the queue it submits needs the resolved children. See docs/DOWNLOADS.md.
+// One Moodle section: starts its bulk run and reflects it, and drives the expansions the queue needs.
+// See docs/BULK.md.
 export default function SectionGroup({ section, items, course, onReconnect }: Props) {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
@@ -71,9 +69,8 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   // they are all expanded. The rows themselves subscribe per ref.
   const expansions = useAllExpansions()
   const id = section.id
-  // The synthetic bucket's title is a label we mint, so it is translated here; a Moodle heading
-  // spelled the same is a real section and passes through untouched. Media-neutral wording: the
-  // bucket holds stray videos on one segment and stray unknown links on another.
+  // Our own label, so translated here, media-neutral since it spans segments; a Moodle heading spelled
+  // the same passes through untouched.
   const label = section.synthetic ? t`Other links` : sectionTitle(section.title)
   const run = useSectionRun(id)
   // The passcode save's own in-flight state — the only thing about a run this component still owns.
@@ -89,9 +86,8 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     return expansions[ref] ?? IDLE_EXPAND
   }
 
-  // Cached on first expand, so collapse/re-expand never refetches. Stable across renders — it reads
-  // the current state through the store rather than closing over `expansions`, because a changing
-  // identity here would re-render every memoized playlist row on every keystroke and every job ping.
+  // Cached on first expand. Reads the store rather than closing over `expansions`, so its identity
+  // stays stable and memoized playlist rows don't re-render on every keystroke and ping.
   const toggleExpand = useCallback(
     async (item: Item) => {
       const current = expansionOf(item.ref)
@@ -123,9 +119,8 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     return items.flatMap((item) => (item.expandable ? (stateOf(item.ref).children ?? []) : [item]))
   }
 
-  // The whole queue, resolved once at submit: the name and kind the row shows, and the two verdicts
-  // this page owns because they read the live course tree — already on disk, and already known
-  // unsupported (a permanent verdict, and each retry would burn another Drive probe).
+  // The queue, resolved once at submit, with the two verdicts only the page can give because they
+  // read the live tree: already on disk, and already known unsupported.
   function buildTargets(): RunTarget[] {
     return buildQueue().map((item) => {
       const { name, kind } = resolveRow(item, edits[item.ref], courses, course)
@@ -150,9 +145,8 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     }
   }
 
-  // The run's verdict on a row it triggered is what an 'unknown' row learns its type from, exactly as
-  // a single-row download's answer is — reported up here so the answer outlives the run. Reported
-  // once per ref: every ping re-reads the same targets, and each report re-renders the whole list.
+  // The run's verdicts resolve 'unknown' rows as a single download's answer does — reported once
+  // per ref, since every ping re-reads the same targets.
   useEffect(() => {
     for (const t of targets) {
       if (t.media === 'unknown' || reported.current.has(t.ref)) continue
@@ -192,9 +186,8 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
     }
   }
 
-  // Queueing ends long before the downloads do, so the header keeps ticking on the rows whose jobs
-  // are still running. A running job is the whole signal, exactly as it is for a single row's own
-  // button: it cannot outlive the work, so the section always frees itself.
+  // Downloads outlast the queue, so the header keeps counting rows with a running job — a signal that
+  // cannot outlive the work, so the section always frees itself.
   const active = runningCount(targets, jobsByRef)
   // The queue is the server's, so `busy` is its status — still OR'd with the live jobs, which
   // outlive the queue itself.

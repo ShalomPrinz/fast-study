@@ -22,10 +22,8 @@ export function materialsOf(
   return existingNodes(kind, courses, course).find((l) => l.name === name)?.materials ?? []
 }
 
-// The single "already on disk" rule: the node named `name` exists and holds the media — a video.mp4
-// for a video row, any material for a material row — so the green row and the bulk skip can't disagree.
-// The probe's answer wins over the listed media; an unprobed 'unknown' row (and an 'unsupported' one)
-// has no reliable on-disk target, so it falls to false rather than ever claiming a false "downloaded".
+// The single "already on disk" rule, shared by the green row and the bulk skip. An unprobed 'unknown'
+// or an 'unsupported' row has no reliable target, so it is always false.
 export function hasResource(
   item: { media: Media; resolvedMedia?: ResolvedMedia },
   name: string,

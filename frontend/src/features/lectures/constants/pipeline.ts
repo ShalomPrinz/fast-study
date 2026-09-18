@@ -58,9 +58,8 @@ export const PIPELINE: Array<{
   },
 ]
 
-// The stages a lecture actually shows. Drive is dropped when the setting is off — the backend
-// rejects `run/drive` and stops counting it towards completion — but a lecture uploaded while it was
-// on keeps the row, so its result stays reachable.
+// The stages a lecture shows: Drive is dropped while off, as the backend does, unless the lecture was
+// already uploaded — its link stays reachable.
 export function visiblePipeline(driveEnabled: boolean, files: FileStatus): typeof PIPELINE {
   if (driveEnabled || files['drive_url.txt'].exists) return PIPELINE
   return PIPELINE.filter((p) => p.step !== 'drive')

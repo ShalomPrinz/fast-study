@@ -28,9 +28,8 @@ interface DownloadsSessionActions {
   rowEdits: RowEditsDispatch
 }
 
-// The whole Downloads page session, mounted in `Layout` so it outlives the route: discovery, row
-// edits and playlist expansions survive a trip to a lecture and back. The bulk runs themselves are
-// the server's (`SectionRunsContext`), so they outlive the tab too.
+// The Downloads page session, mounted in `Layout` so discovery, edits and expansions outlive the
+// route. See docs/DOWNLOADS.md.
 const DownloadsSessionStateContext = createContext<DownloadsSessionState | null>(null)
 // Split out and identity-stable: the memoized rows' bail-out depends on these setters never changing.
 const DownloadsSessionActionsContext = createContext<DownloadsSessionActions | null>(null)
@@ -55,9 +54,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const sendUpdateRef = useRef(sendUpdate)
   sendUpdateRef.current = sendUpdate
 
-  // Every discovery takes a ticket and only the newest one may write to the page. `close` bumps it
-  // without starting anything, which is what keeps a closed panel closed when a discovery the user
-  // walked away from lands — and it drops course B's answer when the user has moved on to C.
+  // Only the newest discovery's ticket may write; `close` bumps it too, so an answer the user walked
+  // away from cannot reopen the panel.
   const discoveryId = useRef(0)
 
   // Structural sharing is load-bearing: replacing only the edited ref's slice leaves every other
@@ -70,10 +68,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   }, [])
   const rowEdits = useMemo(() => ({ setName, setKind }), [setName, setKind])
 
-  // A probe verdict is stamped onto the item itself, so it outlives the row and a segment switch —
-  // and a later /list simply restates it from auto's own cache. Only the resolved item's identity
-  // changes, leaving the memoized sibling rows alone. A ref that isn't here (an expanded playlist
-  // child, whose items live in the expansions store) is a no-op — those are never 'unknown' rows.
+  // Stamps a probe verdict onto the item, changing only its identity. An unknown ref (a playlist
+  // child, held in the expansions store) is a no-op — those are never 'unknown' rows.
   const resolveMedia = useCallback((ref: string, media: ResolvedMedia) => {
     setItems((prev) => prev.map((i) => (i.ref === ref ? { ...i, resolvedMedia: media } : i)))
   }, [])
@@ -92,9 +88,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     setError(null)
   }, [])
 
-  // The course is promoted to `selected` only once its items are in hand, so an expired session
-  // leaves the page exactly as it was — a toast and nothing else, instead of a recordings view that
-  // paints and unpaints. A plain failure still promotes it: the panel is where that error is shown.
+  // Promoted to `selected` only with items in hand, so an expired session leaves the page as it was;
+  // a plain failure still promotes it, since the panel shows that error.
   const discover = useCallback(
     async (course: Course) => {
       if (!course.source_url) return
@@ -114,9 +109,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
           return
         }
         if (id !== discoveryId.current) return
-        // A bot-protection challenge is the site's, not the account's: it paints nothing and moves
-        // no chip, just says to wait. Unlike the reconnect hint it stays behind the ticket guard —
-        // there is no chip to correct, so a discovery the user walked away from toasts nothing.
+        // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
+        // hint it stays behind the ticket guard.
         if (isBlockedError(err)) {
           sendUpdateRef.current?.('error', blockedMessage())
           return

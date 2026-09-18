@@ -1,7 +1,4 @@
-"""Frozen entry point for `services.exe`: one bundle holding both Python services, picked by argv[1].
-
-Exists only inside the PyInstaller bundle — dev runs each service's own module directly.
-"""
+"""Frozen entry point for `services.exe`, picking a Python service by argv[1]; dev never runs it."""
 
 import sys
 
@@ -17,9 +14,8 @@ def main() -> None:
     if mode not in _MODES:
         sys.exit(f"usage: services {{{'|'.join(_MODES)}}}")
 
-    # Imported inside the branch, not at module scope: `runtime` calls load_dotenv() at import and
-    # both services read env while importing, so `runtime` has to already be in sys.modules — and
-    # one service's import-time failure must not stop the other from starting.
+    # Imported here, after `runtime` (whose import loads .env the services read while importing), and
+    # per branch so one service's import-time failure cannot stop the other.
     if mode == "backend":
         import backend_main as service
     else:

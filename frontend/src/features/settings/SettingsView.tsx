@@ -113,9 +113,8 @@ export default function SettingsView() {
       const saved = await saveSettings(next)
       setStored(saved)
       setSettings(saved)
-      // The key fields are write-only, so they go back to their "a key is saved" placeholder, and
-      // the data root takes the store's normalized spelling — else the next save diffs against the
-      // raw text and re-raises the guard.
+      // Key fields return to their placeholder; the data root takes the store's normalized spelling,
+      // else the next save diffs against the raw text and re-raises the guard.
       setForm({
         ...current,
         dataRoot: saved.dataRoot ?? '',

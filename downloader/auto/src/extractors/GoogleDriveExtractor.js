@@ -64,9 +64,8 @@ export function filenameFromHtml(html) {
   return null;
 }
 
-// Ask Drive for the file's real name without an API key. The direct-download URL answers a
-// readable file with `Content-Disposition` (one request, happy path); a large one answers the
-// confirm interstitial instead, which still carries the name; `/view`'s <title> is the fallback.
+// The file's real name without an API key: direct-download's Content-Disposition, else the large-
+// file confirm interstitial, else `/view`'s <title>.
 async function fetchDriveFilename(fileId) {
   const res = await fetch(driveDownloadUrl(fileId));
   const fromHeader = filenameFromDisposition(res.headers.get('content-disposition'));
@@ -88,12 +87,8 @@ function unsharedError(url) {
 }
 
 /**
- * Resolve what a Drive link actually is before downloading it. `server/`'s download jobs are
- * fire-and-forget (200 immediately), so the routing decision has to be made here: the filename
- * is a fact about the file, unlike yt-dlp's stderr wording. Memoized per file id for the session,
- * including the throw below; `force` re-probes, since an owner can flip sharing on mid-session.
- * Throws UnsupportedError (→ 422) when Drive serves no name at all — the file isn't shared
- * "anyone with the link" (or was removed).
+ * Resolve what a Drive link is before downloading it, memoized per file id (the unshared throw
+ * included). Throws UnsupportedError (→ 422) when Drive serves no name. See docs/BROWSING.md.
  * @param {string} url
  * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
  * @returns {Promise<{ fileId: string, filename: string, media: 'video'|'material'|null,
@@ -121,11 +116,8 @@ export async function probeDriveFile(url, { force = false } = {}) {
 }
 
 /**
- * Moodle `url` module linking to a single Google Drive file. The target (contents[].fileurl)
- * is known at list time, so the Drive host + single-file path are decided with no fetch; what
- * the file IS only comes out of the download-time filename probe (probeDriveFile). Not
- * expandable (folder links are out of scope) and needs no browser: Drive serves "anyone with
- * the link" files without a Google session.
+ * Moodle `url` module linking to a single Google Drive file; what the file IS only comes out of
+ * the download-time probeDriveFile. No browser: Drive serves "anyone with the link" files anonymously.
  */
 export class GoogleDriveExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -134,9 +126,8 @@ export class GoogleDriveExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a `url` module whose direct external target is a single Drive file. The target is a
-   * fact about the URL; what the file IS stays unknown until the download-time probe, and the
-   * row lists as Unknown until then rather than being dropped on a title's say-so.
+   * Claim a `url` module whose direct external target is a single Drive file (a folder falls to
+   * DirectUrlExtractor).
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */

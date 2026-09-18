@@ -1,6 +1,5 @@
-"""Shared Gemini (google-genai) client for the summarize step and the course overview
-analysis: GEMINI_API_KEY auth, stripped replies, and SDK failures surfaced as RuntimeError
-(429s as GeminiRateLimitError) so endpoints can return {"status": "error"}."""
+"""Shared Gemini client for summarize and the course overview: SDK failures surface as
+RuntimeError (429s as GeminiRateLimitError) so endpoints can return {"status": "error"}."""
 
 import os
 import re
@@ -58,9 +57,8 @@ def _detail(inner: dict, type_suffix: str) -> dict:
 
 
 def parse_gemini_rate_limit(body: dict, fallback_text: str = "") -> dict:
-    """Pull the quota facts out of a 429 body, falling back to regex over the raw error text.
-    Only an explicit per-minute quotaId is waitable — an unknown one is assumed daily, since
-    sleeping an hour on a quota that returns at midnight is the worse failure."""
+    """Pull the quota facts out of a 429 body, falling back to regex over the raw text. An
+    unknown quotaId is assumed daily — see docs/PIPELINE.md."""
 
     inner = body.get("error", body) if isinstance(body, dict) else {}
     if not isinstance(inner, dict):

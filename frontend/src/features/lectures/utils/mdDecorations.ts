@@ -66,9 +66,8 @@ export function scanCodeFences(text: string): TextRange[] {
   return out
 }
 
-// Complete `::: <class>` … `:::` blocks outside code fences. An unknown class or an unclosed block
-// yields nothing, so a typo stays visibly unboxed; the dialect has no nested divs, so the first bare
-// `:::` closes and an opener inside a block is content.
+// Complete `::: <class>` blocks outside fences; an unknown class or unclosed block yields nothing, so
+// a typo stays unboxed. No nesting: the first bare `:::` closes.
 export function scanCallouts(text: string): CalloutRange[] {
   const fences = scanCodeFences(text)
   const out: CalloutRange[] = []

@@ -33,15 +33,12 @@ HEBREW_FONT = FONTS_DIR / "NotoSansHebrew-Regular.ttf"
 HEBREW_FONT_BOLD = FONTS_DIR / "NotoSansHebrew-Bold.ttf"
 DIRECTION_FILTER = resource_path("assets", "filters", "text_direction.lua")
 
-# The fonts are copied into the build directory and referenced relatively, never by absolute path.
-# fontspec folds `Path=` and the font name into one bracketed XeTeX spec — `[C:/…/Font.ttf]/OT` —
-# which tectonic hands to Win32 as a filename; with `C:` out of drive position Windows rejects it
-# (os error 123), and with the backslashes verbatim it dies earlier still, on `\Users` read as a
-# control sequence. `./` is the same string on both platforms and under either engine.
+# Fonts are copied into the build dir and referenced relatively — an absolute path breaks on
+# Windows. See docs/PDF.md.
 BUILD_FONTS_PATH = "./"
 
 # Preamble pandoc injects via --include-in-header. Package order and the callout box
-# design are load-bearing — see docs/PDF.md.
+# design are load-bearing — see docs/BIDI.md.
 LATEX_HEADER = r"""
 \usepackage{fvextra}
 \fvset{breaklines=true, breakanywhere=true, breakautoindent=true, breaksymbolleft={}, breaksymbolright={}, breakanywheresymbolpre={}}
@@ -83,14 +80,12 @@ class PdfRenderError(RuntimeError):
 BUILD_STEM = "build"  # the engine names its outputs after the .tex stem
 _LOG_TAIL_CHARS = 2000
 
-# Tectonic's own diagnostics, which go to stderr while `note:` goes to stdout. Extracted by
-# pattern rather than tailed: a failed run can emit a thousand `Missing character` warnings, so a
-# tail buries the one line that says what actually went wrong.
+# Tectonic's own stderr diagnostics, extracted rather than tailed: a failed run can emit a
+# thousand `Missing character` lines that bury the one that matters.
 _TECTONIC_ERROR_RE = re.compile(r"^error:.*$", re.MULTILINE)
 
-# Two concurrent first-ever renders each build the format into a temp file and rename it onto the
-# final name. On Windows the loser hits the winner's open handle. The rename is atomic, so the
-# surviving .fmt is never corrupt and a single retry runs warm.
+# Two concurrent first-ever renders race to rename the built format; on Windows the loser hits
+# the winner's open handle. The rename is atomic, so one retry runs warm.
 _FORMAT_RACE_MARKER = "failed to persist temporary file"
 
 # A font the engine cannot load is dropped glyph by glyph: the render exits 0 and writes a
@@ -100,9 +95,8 @@ _FONT_ERROR_PREFIX = "Font "
 # A render is seconds against a complete cache, so a minute is already wedged. Bounded because the
 # caller holds a per-lecture lock across it — a hang would leave that lecture permanently `busy`.
 _TOOL_TIMEOUT_SECONDS = 60
-# A dev cache starts empty and the first render fetches the LaTeX bundle over the network, which
-# is minutes and happens once per machine. The packaged app never reaches this: its cache ships
-# complete and `--only-cached` forbids the fetch outright.
+# A dev cache starts empty and the first render fetches the LaTeX bundle — minutes, once per
+# machine. The packaged app never reaches this; its cache ships complete.
 _COLD_CACHE_TIMEOUT_SECONDS = 900
 
 
@@ -124,9 +118,8 @@ def _tectonic_cmd() -> list[str]:
         # The shipped app must never fetch mid-render; a gap in the cache has to fail loudly here
         # rather than hang on a network the user may not have.
         cmd.append("--only-cached")
-    # Replaces xelatex's -interaction=nonstopmode. Without it a recoverable error yields no PDF at
-    # all; with it the run exits 0 having written a degraded one, which is why the warning below
-    # is read out of the log and never off the return code.
+    # Without it a recoverable error yields no PDF; with it the run exits 0 on a degraded one,
+    # so the warning is read from the log, never the return code.
     cmd += ["-Z", "continue-on-errors", f"{BUILD_STEM}.tex"]
     return cmd
 
@@ -167,9 +160,8 @@ def _read_log(build: Path) -> str:
 
 
 def _tectonic_errors(stderr: str) -> str:
-    """Tectonic's `error:` lines, joined. Non-empty stderr is not failure on either platform —
-    Windows emits a Fontconfig complaint on every run and Linux several `warning:` lines even on
-    a clean one — so only `error:` is kept."""
+    """Tectonic's `error:` lines, joined. Non-empty stderr is not failure on either platform, so
+    only `error:` is kept."""
 
     return "\n".join(m.group(0) for m in _TECTONIC_ERROR_RE.finditer(stderr))
 
@@ -189,7 +181,7 @@ def _render(build: Path, tex_source: str):
 
 def preprocess_markdown(text: str) -> str:
     """The prose fix chain, in order. Runs via `apply_outside_fences`, so it never sees a
-    fenced code block or a `::: callout` marker line. Order matters — see docs/PDF.md."""
+    fenced code block or a `::: callout` marker line. Order matters — see docs/BIDI.md."""
 
     text = close_unbalanced_display_math(text)
     text = normalize_dashes(text)
@@ -284,9 +276,8 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
 
         built_pdf = build / f"{BUILD_STEM}.pdf"
         if not built_pdf.exists() or built_pdf.stat().st_size == 0:
-            # An unrecoverable font failure writes a log with zero `!` lines that ends "Output
-            # written on build.xdv" — it reads like success — and a cold-cache panic writes no log
-            # at all. Both name their cause only on stderr, so that is the fallback.
+            # A font failure's log reads like success and a cold-cache panic writes none; both
+            # name their cause only on stderr.
             raise PdfRenderError(
                 classify(
                     log,
@@ -310,9 +301,8 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
         shutil.move(str(built_pdf), str(output_path))
 
         if errors:
-            # -Z continue-on-errors makes a run that errored still exit 0, so the log is what says
-            # a page came out damaged. The return code would drop the warning on every run it
-            # exists for.
+            # -Z continue-on-errors exits 0 on an errored run, so only the log says a page came
+            # out damaged.
             return str(output_path), format_tex_errors(errors)
         if run.returncode != 0:
             return str(output_path), (

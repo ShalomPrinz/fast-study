@@ -129,9 +129,8 @@ _DONE_PAGE = (
 
 
 class _RedirectApp:
-    """WSGI app for the one request the consent flow expects: it keeps the redirect's full
-    URL, code and all, and answers with a page telling the user to close the tab — it runs
-    before the token exchange, so that page can never claim success."""
+    """WSGI app for the consent redirect: keeps its full URL and tells the user to close the tab.
+    It answers before the token exchange, so the page can never claim success."""
 
     def __init__(self):
         self.request_uri: str | None = None

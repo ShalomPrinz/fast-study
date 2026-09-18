@@ -1,6 +1,5 @@
-// Replaying a captured Range/conditional header makes the CDN return a partial
-// body whose offset-0 MP4 header is missing (unplayable). Stripped everywhere the
-// captured headers are reused (probe + curl). See docs/DOWNLOAD.md.
+// A replayed Range/conditional header makes the CDN return a partial body missing the offset-0
+// MP4 header. Stripped wherever captured headers are reused (probe + curl). See docs/DOWNLOAD.md.
 export const SKIP_HEADERS = new Set([
   'range',
   'if-range',
@@ -21,10 +20,8 @@ export function headersToObject(headers) {
 
 const TIMEOUT_MS = 10_000;
 
-// fetch already does the two things this probe needs from a redirect chain: it follows
-// hops (so Content-Length describes the file, not a 3xx stub) and drops Cookie/Authorization
-// when a hop changes origin — captured credentials belong to the issuing origin only.
-// Null on any failure, so a dead URL degrades to "unknown size" rather than throwing.
+// fetch follows redirects (so Content-Length is the file's, not a stub's) and drops credentials
+// on a cross-origin hop. Null on any failure, so a dead URL degrades to "unknown size".
 async function requestFinal(url, headers, method, extraHeaders) {
   // headersToObject drops `host`, so each hop's Host is derived from its own URL.
   try {

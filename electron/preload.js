@@ -1,17 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// Synchronous on purpose: the frontend resolves the service URLs and the launch secret at module
-// scope, so the bridge has to be complete before the bundle evaluates. The launch screen loads
-// through this same preload and reads none of it — its `urls` are empty, nothing has a port yet. Sent over IPC rather than
-// through `additionalArguments`, which would put the launch secret on a command line every other
-// process on the machine can read.
+// Synchronous: the frontend reads URLs and secret at module scope. IPC, not `additionalArguments`,
+// keeps the secret off the command line — see docs/RENDERER.md.
 const config = ipcRenderer.sendSync('faststudy:config');
 
 contextBridge.exposeInMainWorld('faststudy', {
   urls: config.urls,
   secret: config.secret,
-  // What this machine can and cannot do, probed once at boot. The settings screens degrade on it —
-  // an unavailable key store disables the API-key fields instead of failing the save.
+  // Machine facts probed once at boot; the settings screens degrade on them.
   checks: config.checks,
   // The installed version and the OS language: what an error report is stamped with, and the
   // frontend's initial locale when nothing is stored.
@@ -23,19 +19,16 @@ contextBridge.exposeInMainWorld('faststudy', {
     read: () => ipcRenderer.invoke('faststudy:settings-read'),
     write: (patch) => ipcRenderer.invoke('faststudy:settings-write', patch),
   },
-  // Opening a DATA_ROOT file sends identifiers, never a path: `database/` resolves the layout and
-  // the OS opens the file in the user's own app. `openExternal` is http(s) links only.
+  // Identifiers, never a path, for a file; http(s) only for a link.
   open: {
     file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
     external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
   },
-  // Structured fields, never a URL: main writes the report file, composes the `mailto:` and opens
-  // it, so no renderer-supplied scheme ever reaches `shell.openExternal`.
+  // Fields, never a URL: main composes the `mailto:`, so no renderer scheme reaches openExternal.
   report: {
     mail: (fields) => ipcRenderer.invoke('faststudy:report-mail', fields),
   },
-  // The launch screen only. It loads before any service exists, so it takes a snapshot first and
-  // then follows the pushes — main's first event can land before this page has a listener.
+  // The launch screen only: a snapshot first, since main's first push can beat the listener.
   boot: {
     snapshot: () => ipcRenderer.invoke('faststudy:boot-state'),
     subscribe: (callback) => ipcRenderer.on('faststudy:boot', (_event, state) => callback(state)),

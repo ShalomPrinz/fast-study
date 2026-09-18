@@ -1,8 +1,6 @@
 <!doctype html>
-<!-- The launch screen: the only thing on screen while the four services start. It is a plain
-     file:// page rather than part of the frontend bundle, because the bundle resolves its service
-     URLs at module scope and none of them exist yet. English only for now — the app's own locale
-     wiring is a separate piece of work. -->
+<!-- The launch screen, a plain file:// page because the frontend bundle cannot render before the
+     services have URLs — see docs/BOOT.md. -->
 <html lang="en">
   <head>
     <meta charset="UTF-8" />

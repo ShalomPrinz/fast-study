@@ -33,9 +33,8 @@ export function missingEntries(input: RequiredInput): RequiredField[] {
   return missing
 }
 
-/** What the init wall gates on, read straight from the store: both keys present and a data root
- *  chosen. Nothing else blocks — language and Drive are answered on the wall but never required.
- *  The keys drop out of the gate where they cannot be stored, for the reason above. */
+/** The init wall's gate: both keys stored (where they can be) and a data root chosen. Language and
+ *  Drive are asked on the wall but never required. */
 export function isInitialized(settings: Settings, canStoreApiKeys: boolean): boolean {
   if (!settings.dataRoot) return false
   return !canStoreApiKeys || (settings.geminiApiKeySet && settings.groqApiKeySet)

@@ -1,8 +1,7 @@
 # Settings
 
-Every user-facing setting the app has, the first-run wall that collects the required ones, and the
-route that edits them all. The module behind it is
-`services/settings.ts` (see `SERVICES.md`); this file covers the surface.
+Every user-facing setting, the first-run wall that collects the required ones, the `/settings` route that
+edits them all, and the prerequisites and accounts both screens show.
 
 ## The entries
 
@@ -19,254 +18,135 @@ route that edits them all. The module behind it is
 | Nightly catch-up  | on                                        | off                   | `backend/`  |
 | Nightly hour      | 03:00                                     | any hour, 00:00-23:00 | `backend/`  |
 
-The model list comes from `GET /config/options`, so a model id that the free tier does not serve can
-never be typed in — a wrong one surfaces minutes later as a pipeline failure.
+The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
+typed in and fail minutes later mid-pipeline.
 
-**Auto-run is a ceiling on unattended work, not a schedule.** It caps a video dropped on a lecture or
-fetched by the downloader, and the backend's nightly catch-up pass, at the whole pipeline / the audio
-step / nothing at all. It never caps a run the user starts: the `/running` page's button always runs
-everything. Unset means the whole pipeline, the same fallback `settings.auto_run()` applies, so both
-ends agree on a fresh install (`useAutoRun`, beside `useDriveEnabled`).
-
-**The nightly pass has two independent gates.** Its own switch decides whether the cron is scheduled
-at all and at which hour; auto-run still caps what that pass may do, so `off` there means nothing
-runs unattended whatever the switch says. Unset means on — the cron ran before it was a setting, and
-`settings.nightly_run()` keeps that — and the hour is a number on the wire, never the `<select>`'s
-string, since the store rejects a string. An unset or out-of-range hour reads as 3 on both ends
-(`toNightlyHour`), so the screen always shows the hour that will actually fire.
+**Auto-run is a ceiling on unattended work, not a schedule.** It caps a dropped or downloaded video and
+the nightly pass; it never caps a run the user starts. **The nightly pass has two gates**: its own switch
+decides whether the cron runs and when, auto-run still caps what it does. Every unset value reads as the
+backend's own fallback (`useAutoRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
+a number on the wire, never the `<select>`'s string, which the store rejects.
 
 ## What is not a setting
 
-The list above is closed on purpose. Each of these looks like a field and deliberately isn't one:
+The list is closed on purpose; each of these looks like a field and deliberately isn't one.
 
-| Not a setting                                                                         | Why                                                                                                                                                    |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| The Whisper model and the `he` transcript language (`backend/pipeline/transcribe.py`) | The corpus is Hebrew lectures; no user has a reason to change either                                                                                   |
-| The summary length budget (`LENGTH_BUDGET_SUFFIX`, `backend/pipeline/summarize.py`)   | A prompt-shaped tuning knob, not a preference                                                                                                          |
-| The Moodle site (`DEFAULT_SITE`, `downloader/auto/src/moodle/wsClient.js`)            | One university, one site — and one field fewer on first run                                                                                            |
-| Service ports and the `BACKEND_URL` / `DATABASE_URL` overrides                        | Wiring, not preference: the frontend takes its URLs from the runtime bridge, and a settings save leaves the keys in `.env` untouched                   |
-| `FRONTEND_URL`                                                                        | A CORS origin the download server defaults for itself; only a non-default dev origin ever sets it                                                      |
-| `DOWNLOADER_EXTENSION_ID`                                                             | No default: unset unless a dev loading the unpacked extension sets it, and the packaged app never talks to that dev-only surface                       |
-| The last opened lecture and the search view's chosen course                           | Per-view memory, kept in `localStorage` by the view that owns it — no other view and no service has to agree on it                                     |
-| The Google Drive account (`components/DriveConnection.tsx`)                           | A consent flow and a token, not a preference: nothing types it in, the backend holds it, and it is connected or it is not                              |
-| Running unfinished lectures at app start                                              | A pipeline sweep is a deliberate act; the `/running` page's button and `backend/`'s nightly cron already cover both the manual and the unattended case |
+| Not a setting                                             | Why                                                                                         |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Whisper model, `he` transcript language                   | The corpus is Hebrew lectures; no user has a reason to change either                        |
+| The summary length budget                                 | A prompt-shaped tuning knob, not a preference                                               |
+| The Moodle site                                           | One university, one site — and one field fewer on first run                                 |
+| Service ports, `BACKEND_URL` / `DATABASE_URL`             | Wiring: the frontend takes its URLs from the runtime bridge                                 |
+| `FRONTEND_URL`, `DOWNLOADER_EXTENSION_ID`                 | Dev-only CORS and extension wiring the packaged app never uses                              |
+| The last opened lecture, the search view's course         | Per-view memory in `localStorage`; nothing else has to agree on it                          |
+| The Google Drive account                                  | A consent flow and a token, connected or not — see below                                    |
+| Running unfinished lectures at app start                  | A sweep is a deliberate act; `/running`'s button and the nightly pass cover both cases      |
+
+## The store — `services/settings.ts`
+
+`Settings` is the read view, `null` for anything unstored — the client owns every default.
+`SettingsPatch` is partial; omitted fields are left alone. **The API keys are write-only**: the patch
+carries them, the read view only reports `…ApiKeySet`, so a stored key never reaches the renderer.
+
+`pickBacking()` is the one place the store's backing is chosen: the preload bridge's
+`window.faststudy.settings` packaged, the database service's `/settings` in browser dev. Same interface,
+no adapter, and both stay permanent so browser-only dev remains a first-class loop.
+
+`saveSettings` is **two phases, in order**: the store first (it is what a fresh boot reads), then each
+changed field to its owner's `POST /config`. Nothing restarts. The UI language has no owner: it lives only
+in `localStorage` ([I18N.md](I18N.md)).
 
 ## `/settings`
 
-`features/settings/SettingsView.tsx`, reachable from the sidebar's fifth nav row. It loads the store
-and the backend's options once, edits a local form, and saves the changed fields in one
-`saveSettings` call.
+Loads the store and options once, edits a local form, saves changed fields in one `saveSettings` call.
+**Every save answers**, failure included — a connection error's own toast is deduped and reads as noise.
+A failure after the store write leaves the service behind until a retry, so the toast asks for one.
 
-**Every save answers.** Success toasts, and so does failure — including a connection error, whose
-own toast is deduped per service and reads as ambient noise. The store is written before the owning
-services, so a failure after that point leaves the `.env` current and the running process behind
-until a restart or a successful retry; the toast asks for the retry rather than naming the phase.
+A saved key shows an "a key is saved" placeholder; a blank key field is never sent, since empty would
+clear the stored key. The language applies the moment it is picked and reaches no save.
 
-**The key fields are write-only.** A stored key never comes back from the store, so a set field shows
-a "a key is saved" placeholder and typing replaces it; an untouched (blank) field is never sent,
-because an empty value there would clear the stored key.
-
-**The language applies the moment it is picked**, so the rest of the screen reads in the chosen
-language while it is still being filled in. It reaches no save at all: `localStorage['fast-study:locale']`
-is the only place it lives, and `services/i18n.ts` owns it.
-
-**Only the data folder is guarded.** On save, `utils/dataRootGuard.ts` reads `RunnerStatusContext` —
-already SSE-fed, so its view is current — and raises `ConfirmModal` naming the runs in flight, since
-changing the root mid-run leaves one lecture split across two roots. The check is advisory: the user
-is never blocked, and the route alone carries a standing warning that a change re-points only and
-never moves data. Every other setting applies immediately with no check, because a key or a model id cannot
-corrupt anything.
+**Only the data folder is guarded**: `utils/dataRootGuard.ts` reads the SSE-fed `RunnerStatusContext` and
+raises a `ConfirmModal` naming runs in flight, since a mid-run change splits a lecture across two roots.
+Advisory only; the route also warns that a change re-points and never moves data. A key or a model cannot
+corrupt anything, so nothing else is checked.
 
 ## The first-run wall
 
-`app/InitGate.tsx` reads the store once at boot and decides between `features/settings/InitWall.tsx`
-and the app. The wall is **not a page inside the app**: while it is up there is no sidebar, no route
-and no way past it, and finishing it routes to the app's home.
+`app/InitGate.tsx` reads the store once at boot and shows either `features/settings/InitWall.tsx` or the
+app — no sidebar, no route, no way past. `isInitialized` (`utils/required.ts`) is the whole gate: both keys
+stored (where they can be, below) and a data folder chosen. An unreachable store shows the app anyway: a
+downed service is not an unconfigured install.
 
-`isInitialized` (`utils/required.ts`) is the whole gate: both API keys stored and a data folder
-chosen — the keys only on a machine that can store one, see below. If the store cannot be reached at all the app is shown anyway — a downed service is not an
-unconfigured install, and dropping a working app into onboarding over a transient outage is worse
-than the connection toast the client already shows.
+The wall also offers the language (so the rest reads in it) and the Drive toggle (so the account is
+connected now, not mid-run); neither blocks, and Drive's folder is required only while it is on. Auto-run
+and the nightly pass keep their defaults. The data folder is **prefilled but confirmed** by a checkbox. In
+browser dev an already-filled `.env` passes the wall instantly; blank the values to exercise it.
 
-The wall shows more than it requires. The language picker is there so the rest of the screen reads in
-the user's own language, and the Drive toggle so the account is connected during onboarding rather
-than being asked for mid-run; neither blocks, and Drive's folder field is required only while the toggle is on.
-Auto-run and the nightly pass are not asked about and keep their defaults — a first install has
-nothing to run yet, and cron hours are not a first-run question.
-
-The keys and the data folder each carry a where-your-data-lives note in place of the route's re-point warning.
-
-The data folder is **prefilled but confirmed, never silently accepted** — a checkbox, not an
-implicit acceptance. In browser dev the prefill is whatever the store already holds, so an
-already-filled `.env` satisfies the wall and it passes instantly; exercising it means blanking the
-values.
-
-For a non-technical user this is the hardest moment in the product, so each provider carries a short
-how-to-generate-a-key guide beside its console link. That prose is frontend content and lives in the
-Lingui catalogs, keyed by provider id; a provider with no entry simply shows the link alone. A save
-failure is shown in place rather than toasted — a rejected data folder is the one thing standing in
-the way.
-
-Key validation is the same component as the route's, below, and so are the browser prerequisite and
-the BIU account — the two things on the wall that report a state without standing in the way.
+Each provider carries a short how-to-get-a-key guide beside its console link, in the Lingui catalogs keyed
+by provider id. A save failure shows in place — a rejected data folder is the one thing in the way.
 
 ## When the computer can't store a key
 
-The packaged app keeps the two API keys encrypted by the operating system, and a machine with no
-keystore to encrypt against — a Linux box with no keyring — cannot store them at all. The launcher
-reports that on the runtime bridge, `services/runtime.ts` resolves it once as `canStoreApiKeys`, and
-the frontend treats it as degraded rather than fatal: no bridge at all means browser dev, where keys
-go into `database/`'s `.env` and secure storage never enters into it, so a missing answer means a
-machine that is fine.
+The packaged app keeps the keys encrypted by the OS keystore; a machine with none (Linux without a
+keyring) cannot store them. `runtime.ts` resolves the launcher's report once as `canStoreApiKeys`;
+no bridge means browser dev, where keys go to `.env`, so a missing answer means a machine that is fine.
 
-Both screens treat it the same way: the key fields are not rendered at all, and the note
-(`components/SecureStorageNotice.tsx`, the single source of that copy) stands where they would have
-been, under the section's own heading. A field that can never be filled is noise, and a disabled one
-invites a user to try. The summary model goes with them on `/settings`, since a model no key can
-reach is one more pointless pick, so on both screens that section is its heading and the note alone.
-
-A save therefore carries no key field at all: nothing can type into one, and `buildPatch` omits a
-blank key anyway — the same rule that stops an untouched write-only field clearing a stored key. The
-model cannot be blanked either, though for a narrower reason: an unrendered select still holds what
-the form loaded, which is the stored model where there is one and otherwise the first curated id, so
-a save either omits the model or writes the default the backend would have applied anyway. Every
-other setting — data folder, Drive, auto-run, language — saves as usual, which is the whole of what
-"degraded" means.
-
-The keys also stop counting as required, in `missingEntries` and `isInitialized` alike: an entry
-that can never be filled would leave the wall with no way past it and the app unreachable, while the
-data folder (and Drive's folder when Drive is on) still blocks as always. Both functions take the
-flag as an argument rather than reading the module, which keeps them pure and unit-tested.
+Degraded, not fatal: both screens drop the key fields — and on `/settings` the summary model — leaving
+`SecureStorageNotice` under the section heading, since a field that can never be filled invites a user to
+try. The keys stop counting in `missingEntries` and `isInitialized` (which take the flag as an argument,
+staying pure), or the wall would have no way past. A save stays safe: a blank key is never sent, and an
+unrendered model select still holds the stored or default id.
 
 ## Key validation — `components/ApiKeyField.tsx`
 
-One write-only field, one status slot, three outcomes. It probes through `probeKey` on blur and on
-paste, and only when the value actually changed and is non-empty (`utils/keyStatus.ts`), so cycling
-focus costs the provider nothing.
+Probes through `probeKey` on blur and paste, only when the value changed and is non-empty
+(`utils/keyStatus.ts`). An edit resets the probe memory — the sequence number, so an old probe cannot land
+on new text, and the last-probed value, so retyping a rejected key asks again.
 
-**An edit resets the field's probe memory** — the sequence number, so a probe still in flight for the
-old text cannot land its verdict on the new one, and the last-probed value, so typing back to a key
-the provider already rejected asks again rather than showing an empty slot. Only an untouched field
-keeps its verdict for free.
+`probeKey` answers `valid`, `rejected` or `unverified`, and every failure short of a verdict is
+`unverified`, since an unreachable provider must never call a good key bad. **Save is always permitted.**
+The key-prefix mismatch is an instant offline warning in the same slot, overwritten by any probe result;
+prefixes are convention, not contract, so it never blocks.
 
-| Outcome      | Fills the slot with                                 |
-| ------------ | --------------------------------------------------- |
-| `valid`      | verified, nothing further to do                     |
-| `rejected`   | the key is wrong, and the console link is beside it |
-| `unverified` | we could not check it — **not** that the key is bad |
+## Prerequisites and accounts
 
-The key-prefix mismatch is an instant offline warning that fills the same slot and is **overwritten**
-by any probe result, so a key the provider accepts shows no stale prefix warning: there is nowhere
-for one to survive. Prefixes are provider convention rather than contract, so a mismatch never blocks.
+Three controls share one field vocabulary (a chip or status slot, a link, one action), and **none
+blocks**: they reach neither `missingEntries` nor `isInitialized`.
 
-**Save is always permitted.** An unreachable provider must never reject a valid key, so `unverified`
-is not a failure state.
+- **Browser** (`BrowserPrereqField`) — `fetchBrowserPrereq()`, `GET /prereqs/browser` on the
+  auto-downloader, always `200` with `{ available, channel, browser, detail }`, since "no browser" is an
+  answer. States `available` / `missing` / `unknown` (unreachable, **not** missing). A missing browser
+  costs auto-download and Zoom capture only, and the copy says a hand-added video still becomes a summary.
+  Only success is cached server-side, so **Check again** re-probes. The link is Chrome's: Edge ships with
+  Windows, so only a machine missing both sees it. `detail` is English fine print, `dir="ltr"`.
+- **BIU account** (`MoodleAccountField`) — the downloads page's `AccountStatus` ([DOWNLOADS.md](DOWNLOADS.md)),
+  with `--danger` retoned to neutral: red belongs on the page the session actually blocks. It is what makes
+  a settings screen call `/auth/status`; the wall, outside `Layout`, brings its own `AuthStatusProvider`.
+  A down auto-downloader shows one toast, deduped with the browser check's.
+- **Google account** (`DriveConnection`, over `services/drive.ts`) — rendered only while Drive is on.
+  States `unknown` / `disconnected` / `pending` / `connected`. `POST /config/drive/connect` opens the
+  browser on the backend's side and answers the URL, so **Connect** opens nothing itself; the pending
+  state's reopen link connects again (same URL, no rival flow) and hands it to `openExternalUrl`. A landed
+  token, a failed flow and a disconnect each notify, so the chip follows SSE; only `pending` is recorded
+  by its caller. Failures fill the status slot, since the wall renders outside the toast container. A
+  lecture with no token still finishes as a local PDF.
 
-## The browser prerequisite — `components/BrowserPrereqField.tsx`
-
-The second prerequisite both screens carry, in the same field vocabulary as an API key: a status
-slot, a console-style link, and a way to re-run the check. `GET /prereqs/browser` on the
-auto-downloader answers `{ available, channel, browser, detail }` and always `200` — "no browser" is
-an answer, not a failure — so the field renders `browser`, the display name, and can say _Microsoft
-Edge_ rather than _a browser_.
-
-**It never blocks.** A missing Chromium browser costs auto-download and Zoom capture and nothing
-else, so it reaches neither `missingEntries` nor `isInitialized`, and the copy says plainly what is
-lost and that a video added by hand still becomes a summary. That is the whole difference from the
-two keys.
-
-| State       | Shows                                                                            |
-| ----------- | -------------------------------------------------------------------------------- |
-| `available` | the browser that was found, by name                                              |
-| `missing`   | the consequence, Chrome's download page, the service's diagnostic line, re-check |
-| `unknown`   | the service was unreachable — **not** that no browser exists — and re-check      |
-
-Only a success is cached server-side, so **Check again** after installing a browser genuinely
-re-probes. Edge has no install link on purpose: it ships with Windows, so the only machine that ever
-sees the link is one missing both, where Chrome is the fix. `detail` is one English diagnostic line
-naming every channel tried and the path it looked at; it renders as fine print under the note,
-`dir="ltr"`, and is never the primary message.
-
-The state is on the field as `browser-prereq--{available,missing,unknown,checking}` beside
-`#browser-prereq`, and the status line is `#browser-prereq-status`.
-
-## The BIU account — `components/MoodleAccountField.tsx`
-
-The downloads page's own `AccountStatus` — one chip and the single button that can move it — wrapped
-in the field vocabulary above and sitting beside the browser check on both screens. It is never a
-requirement in any sense: it reaches neither `missingEntries` nor `isInitialized`, and an
-unconnected account costs only `/downloads`, which already disables itself. So the `chip--danger`
-tone the downloads header uses is retoned to neutral here — red belongs on the page the missing
-session actually blocks, not on a screen offering an optional connection.
-
-`AuthStatusContext` probes nothing on mount and `AccountStatus` asks wherever it renders, so this
-field is what makes a settings screen call `/auth/status` at all. `/settings` takes the provider
-`Layout` already wraps every route in; the wall renders outside `Layout` and brings its own
-instance. Neither adds a toast when the auto-downloader is down: the browser check beside it calls the
-same service and the connection toast is deduped per base URL, so the wall shows one toast, not two.
-
-The field is `#moodle-account`; its state is `AccountStatus`'s own chip variant.
-
-## The Google account — `components/DriveConnection.tsx`
-
-Drive uploads need a Google token, and it is not a setting: it is a consent flow, so it lives beside
-the Drive toggle rather than in the store. The control renders only while the toggle is on — the
-account for a feature that is off is one more pointless pick — and shows one chip and the single
-button that moves it, in the same field vocabulary as the browser check and the BIU account.
-
-| State          | Shows                                                           |
-| -------------- | --------------------------------------------------------------- |
-| `unknown`      | the backend was unreachable — **not** that nothing is connected |
-| `disconnected` | a neutral chip and **Connect**                                  |
-| `pending`      | a flow is waiting on the browser, and a way to reopen its page  |
-| `connected`    | the token is stored, and **Disconnect**                         |
-
-**It never blocks**, exactly like the two prerequisites above: it reaches neither `missingEntries`
-nor `isInitialized`, Drive is off by default, and a lecture with no token still finishes as a PDF on
-this computer.
-
-`POST /config/drive/connect` opens the browser on the backend's own side and answers the URL, so
-**Connect** never opens anything itself; the pending state's **Open the sign-in page** connects again
-— a second call answers the same URL rather than starting a rival flow — and hands that URL to
-`openExternalUrl`. Everything else pushes: a landed token, a failed or timed-out flow and a
-disconnect each fire a notify, so the chip follows over SSE and nothing polls. `pending` is the one
-transition the backend does not push, and its own caller records it.
-
-A failure fills the field's status slot rather than toasting, because the init wall renders outside
-the toast container and could not show one. The state is on the field as
-`drive-connection--{unknown,disconnected,pending,connected}` beside `#drive-connection`.
+Stable hooks: `#browser-prereq` / `.browser-prereq--{state}` / `#browser-prereq-status`, `#moodle-account`,
+`#drive-connection` / `.drive-connection--{state}`.
 
 ## Asking for consent mid-run — `app/DriveConsentPrompt.tsx`
 
-Drive can be switched on long before an account is connected, so the pipeline's Drive step fails for
-want of a token and the backend records `consent_needed`. That flag is what raises a single
-`ConfirmModal` asking whether to connect now; **consent is never started without it being confirmed**.
+A Drive step with no token fails and the backend records `consent_needed`; that flag raises one
+`ConfirmModal`, and **consent never starts unconfirmed**. It mounts in `Layout` because the run wanting the
+token is not the screen the user is on; the wall is out of its reach, with nothing processed yet.
 
-It mounts in `Layout` rather than on a screen, because the run that wants the token is not the screen
-the user is on — from there it survives every route change and reaches the user wherever they are.
-The first-run wall is deliberately out of its reach: it renders outside `Layout`, and an install with
-nothing processed yet has no failed step to consent for.
-
-**One flag, one ask.** `consent_needed` is a single backend flag set by the first step that gives up,
-so a queue of lectures raises one modal by construction and the frontend adds no dedupe of its own.
-It is answered once in either direction — a decline that left the flag standing would otherwise
-re-raise the modal on the very next notify — and the ask re-arms when the flag clears, which is what
-a landed token does. Confirming posts to `/config/drive/connect` and toasts that a sign-in page
-opened; the "didn't open?" link lives on the settings control, which is where a stalled flow is
-recovered.
-
-The prompt asks nothing while the Drive toggle is off: the flag can outlive the switch, and offering
-to connect an account for a feature the user has since turned off is noise. The modal's own detail
-line carries `.drive-consent-detail`, the selector for "the ask is up".
+The flag is set once by the first step that gives up, so a queue raises one modal with no frontend dedupe.
+Either answer is final until the flag clears (a landed token re-arms it), or a decline would re-raise on
+the next notify. Nothing asks while the Drive toggle is off. `.drive-consent-detail` marks "the ask is up".
 
 ## Settings the rest of the app reads — `shared/contexts/SettingsContext.tsx`
 
-Some settings decide what other screens render, so the store's answer is held in a context wrapping
-the whole app. It fetches nothing itself: `app/InitGate` pushes the read it already makes at boot,
-the wall pushes what it saved, and `/settings` pushes each save — so a change reaches every screen
-without a reload, and the settings screen stays the only place that talks to the store.
-
-`useDriveEnabled` and `useAutoRun` are its consumers. Nothing stored means Drive off, the same default the
-backend's `settings.drive_enabled()` gives a missing `DRIVE_ENABLED`, so both ends agree on a fresh
-install; it drives the pipeline's Drive stage and the definition of a complete lecture (see
-[LECTURES.md](LECTURES.md)).
+Holds the store's answer for other screens. It fetches nothing: `InitGate` pushes its boot read, the wall
+and `/settings` push each save, so a change reaches every screen without a reload. `useDriveEnabled`
+(unset means off, matching the backend) drives the Drive stage and what counts as a complete lecture
+([LECTURES.md](LECTURES.md)); `useAutoRun` is the other consumer.

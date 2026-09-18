@@ -1,79 +1,38 @@
 # CLAUDE.md — frontend
 
-React + Vite + TypeScript SPA driving the lecture pipeline. It talks to the FastAPI backend (:8000) for
-runs and to the database service (:8001) for all filesystem state; the Vite dev server only serves the SPA.
+React + Vite + TypeScript SPA driving the lecture pipeline. It calls the FastAPI backend (:8000) for runs,
+the database service (:8001) for all filesystem state, and the two downloader services (:3052, :3053) for
+the downloads page; the Vite dev server only serves the SPA.
 
 ## Running
 
 ```bash
 npm run dev      # localhost:5173
 npm run build    # tsc -b && vite build → dist/
-npm run test     # vitest run (config lives in vite.config.ts; `test:watch` for watch mode)
+npm run test     # vitest run
+npm run extract  # update the Lingui catalogs — see docs/I18N.md
 ```
 
-The frontend reads no env var. The four service base URLs come from the Electron preload bridge at
-runtime (`services/runtime.ts`), falling back to the dev ports `:8000`, `:8001`, `:3052` and `:3053`. The
-same bridge carries the launch secret every request sends as `X-FastStudy-Secret`; it is absent in browser
-dev, where the services enforce nothing. It also reports whether this machine can store the API keys at all
-(`canStoreApiKeys`) — see `docs/SETTINGS.md` — and opens `DATA_ROOT` files and external links through the
-OS, since a new browser tab cannot carry the secret (`services/open.ts`). It also carries the installed
-version and the OS language, which is the initial locale when nothing is stored (`services/i18n.ts`), and
-mails a crash report from the error boundary (`services/report.ts`).
-
-## Verifying layout changes
-
-Check layout/CSS work against the **real page**, not a hand-built HTML harness: start `npm run dev` on a
-spare port, drive it with Playwright, and fulfil the service calls from the test script — `/settings` (the
-InitGate wall gates everything behind it), `/tree`, `/auth/status`, `/list`. Stubbing at the browser poses
-any data shape, including ones no local course has, without booting four services or writing to `DATA_ROOT`.
-Measure with `getBoundingClientRect` whenever the claim is "aligned" or "centred", and screenshot every
-row/card shape — a grid that fixes the wide window can overlap at a narrow one.
-
-The packaged app renders at a **1008x655** viewport on GitHub's `windows-latest` runner: the runner
-desktop is 1024x768 and Windows clamps the 1400x900 window `electron/main.js` asks for (measured in
-[`delivery/README.md`](../delivery/README.md)). A window-width breakpoint at or above ~1008px therefore
-flips CI — and every 1366x768 laptop — into the narrow branch while dev machines stay wide, which is why
-the lecture header's ⋮ collapse sits at 960px (`features/lectures/hooks/useCompactHeaderActions.ts`).
-
-Use **one** `page.route("**/*")` handler that lets the dev-server origin `continue_()` and answers
-everything else by URL suffix. A narrower glob like `**/list` or `**/events*` also matches Vite's own module
-URLs (`/src/services/events.ts`), and aborting one blanks the app with no console error.
-
-The spare port holds only while every call is stubbed. A run that lets a request reach a **real** peer
-service needs `npm run dev -- --port 5173 --strictPort`: the peers pin their CORS origins as literals
-rather than reading a port from the environment (`downloader/auto/src/lib/config.js` is
-`['http://localhost:5173', 'app://bundle']`), so any other port gets `No 'Access-Control-Allow-Origin'
-header` — visible only as a console error under an unexplained empty or loading UI. Never widen a peer's
-allowlist to suit the harness; that is another service's file.
-
-State that arrives over SSE is drivable from the same script: fulfil `/events` with one
-`event: notify\ndata: {}\n\n` body and `text/event-stream`. That closes the stream, `EventSource`
-reconnects, and every reconnect delivers another notify — so flipping a stubbed value and waiting is
-enough to prove the UI follows the push rather than polling.
-
-Two dev-only artefacts that read as bugs and are not: StrictMode double-invokes mount effects, so a probe
-that fires on mount shows **two** requests, and `.init-wall` scrolls itself rather than the document, so a
-`full_page` screenshot crops it — screenshot the element.
-
-A new UI state — a notice, a disabled control, an empty state — needs a stable selector, and the report
-naming a change has to name it: the user checks frontend work by querying the live DOM over CDP in the real
-Electron app, so a state with no stable hook cannot be asserted on. Prefer an element's existing `id`
-(`#key-gemini`, `#key-groq` on the API key inputs). Where nothing stable exists, add a modifier class —
-`.settings-note--no-key-storage` on the secure-storage warning. `data-testid` is reserved for the release
-smoke suite's contract (`docs/ARCHITECTURE.md` §Smoke-suite test ids); never add one for anything else.
+The frontend reads no env var. Service URLs, the launch secret and everything else packaged come from the
+Electron preload bridge (`services/runtime.ts`), falling back to the dev ports — see
+[docs/SERVICES.md](docs/SERVICES.md).
 
 ## Docs
 
-| Doc                       | Covers                                                                                                                   |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `docs/ARCHITECTURE.md`    | layering, `@/` alias, routing, SSE refresh model, mode toggles, styling, smoke-suite test ids                            |
-| `docs/SERVICES.md`        | the boundary rule, http client + ConnectionError, each service, URL encoding                                             |
-| `docs/LECTURES.md`        | pipeline constants, lecture view, materials, in-flight state, edit view, sidebar, tree pane                              |
-| `docs/COURSE-OVERVIEW.md` | extractors, phases, generate/continue/re-generate, per-slug gating                                                       |
-| `docs/DOWNLOADS.md`       | layout, auth, discovery, media segments, row edits, reflected bulk run, passcode                                         |
-| `docs/SETTINGS.md`        | the settings entries, the first-run wall, the `/settings` route, the prerequisites, the optional accounts, Drive consent |
-| `docs/SEARCH.md`          | in-memory corpus, find → group → build phases, overlap merge, Hebrew boundaries                                          |
-| `docs/I18N.md`            | translated chrome vs. untranslated data, the extract loop, RTL logical properties                                        |
+| Doc                                        | Covers                                                                            |
+| ------------------------------------------ | --------------------------------------------------------------------------------- |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md)    | layering, SSE refresh, routes, error boundary, mode toggles, styling, test ids    |
+| [SERVICES.md](docs/SERVICES.md)            | the boundary rule, http client and errors, each service, the bridge, URL encoding |
+| [LECTURES.md](docs/LECTURES.md)            | pipeline constants, lecture view, materials, runner state, sidebar, tree pane     |
+| [EDITOR.md](docs/EDITOR.md)                | the summary editor: save cycle, `PdfViewer`, `MarkdownEditor`                     |
+| [OVERVIEW.md](docs/OVERVIEW.md)            | course overview: extractors, generate/continue/re-generate, per-slug gating       |
+| [DOWNLOADS.md](docs/DOWNLOADS.md)          | downloads page: auth, session, discovery, row edits, already-downloaded rule      |
+| [JOBS.md](docs/JOBS.md)                    | following a download: the jobs reflection, grouping by `ref`, bars, retry         |
+| [BULK.md](docs/BULK.md)                    | a section's "Download all": the reflected run, derived outcome, passcode          |
+| [SETTINGS.md](docs/SETTINGS.md)            | the settings, the store, the first-run wall, prerequisites, accounts, Drive consent |
+| [SEARCH.md](docs/SEARCH.md)                | client-side corpus, find → group → build, snippets, paging                        |
+| [I18N.md](docs/I18N.md)                    | translated chrome vs. untranslated data, the extract loop, RTL                    |
+| [TESTING.md](docs/TESTING.md)              | vitest conventions, verifying layout with Playwright, stable selectors            |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 
@@ -81,31 +40,27 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
 
 - Each file under `services/` is the single boundary for one external concern — no raw `fetch`,
   `EventSource` or `react-toastify` at call sites.
-- Open every file and outside link through `services/open.ts` — never `window.open`, `target="_blank"` or an outside
-  `href` without `preventDefault()`. Packaged, the first two do nothing; the last loads the site in the app window, secret included.
-- Derive steps from `features/lectures/constants/pipeline.ts`; build URLs with `shared/utils/url.ts`; route patterns come from `shared/utils/routes.ts`.
-- Every user-facing string goes through a Lingui macro, and every direction-sensitive CSS declaration
-  is a logical property. See `docs/I18N.md` — including what deliberately stays untranslated.
+- Open every file and outside link through `services/open.ts` — never `window.open`, `target="_blank"` or
+  an outside `href` without `preventDefault()`. Packaged, the first two do nothing; the last loads the site
+  in the app window, secret included.
+- Derive steps from `features/lectures/constants/pipeline.ts`; build URLs with `shared/utils/url.ts`;
+  route patterns come from `shared/utils/routes.ts`.
+- Every user-facing string goes through a Lingui macro, and every direction-sensitive CSS declaration is a
+  logical property ([docs/I18N.md](docs/I18N.md)).
 - UI lives in components, not contexts or hooks — those expose state and callbacks only.
-- Import via `@/` for anything outside the current directory; siblings may be relative.
-- Tests are vitest `*.test.ts` colocated with the logic they cover, and assert decisions — never markup,
-  CSS or translated copy. A hook whose logic is its async ordering or its providers is tested with
-  `renderHook` under a `// @vitest-environment jsdom` docblock, providers built with `createElement` so the
-  file stays `.ts`. The only shared setup is `src/test-setup.ts`, which activates the English catalog.
-- A fix for a UI-state bug — a flash, flicker, stale value or wrong count — moves the deciding logic into a
-  pure function and tests it in the same change.
+- Import via `@/` (`src/*`, set in `tsconfig.json` and `vite.config.ts`) for anything outside the current
+  directory; siblings may be relative.
+- Tests assert decisions, never markup, CSS or translated copy; a UI-state bug fix moves the deciding
+  logic into a pure function and tests it in the same change ([docs/TESTING.md](docs/TESTING.md)).
+- A new UI state needs a stable selector; `data-testid` is reserved for the smoke suite
+  ([docs/TESTING.md](docs/TESTING.md)).
 - A component's styles live in `X.css` beside `X.tsx`, or in a named `src/styles/*.css` when 2+ components
   share the class; every component imports every stylesheet that affects it. There is no global stylesheet
   beyond `styles/tokens.css`, and cross-file rules disambiguate by specificity, never source order.
 - Every colour, size and space step comes from a `styles/tokens.css` custom property — no new hex, no
-  off-scale padding. The one exception is a colour mirroring another service's constant, which carries a
-  comment naming its source (`MarkdownEditor.css`'s callout tints). Buttons are `.btn` + a variant, state
-  labels are `.chip` + a variant, and run state is `StatusNode`. See `docs/ARCHITECTURE.md` §Styling.
-
-## Documentation style
-
-Root `CLAUDE.md` covers the general rules. Frontend-specific: architecture belongs in `docs/`, and when a change makes these docs stale, update them in the same pass.
-
-## React Best Practices
-
-- Hooks and functions must return a narrow surface. A hook returning more than ~5 fields is a design smell — split it or reconsider the boundary. Similarly, a component with more than ~5 props is a design smell.
+  off-scale padding. The one exception mirrors another service's constant and names its source in a
+  comment (`MarkdownEditor.css`'s callout tints). Buttons are `.btn` + a variant, state labels `.chip` + a
+  variant, run state `StatusNode` ([docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) §Styling).
+- Hooks and components keep a narrow surface: more than ~5 returned fields or ~5 props is a design smell —
+  split it or reconsider the boundary.
+- When a change makes these docs stale, update them in the same pass.

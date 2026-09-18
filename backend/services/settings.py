@@ -1,6 +1,5 @@
-"""User-facing backend settings: the effective Gemini model, the Drive toggle, and the
-writer POST /config uses. Every value is read at call time, never at import, so a config
-update applies to the running process with no restart."""
+"""User-facing backend settings and the writer POST /config uses. Every value is read at call
+time, never at import, so an update applies with no restart."""
 
 import os
 

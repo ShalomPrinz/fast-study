@@ -3,9 +3,8 @@
 import { NAMED_FILE, classifyFilename, filenameFromDisposition } from './fileMedia.js';
 import { cacheProbe, getProbe } from '../core/probeCache.js';
 
-// One probe must not outlive a user's patience, and `server/` walks a section queue through
-// /resolve one row at a time — Node's fetch has no default timeout, so a hung host would stall
-// the whole bulk run. Generous enough for a slow CDN's first byte.
+// Node's fetch has no default timeout, and `server/` walks a section queue through /resolve one
+// row at a time — a hung host would stall the whole bulk run. Generous for a slow CDN.
 const PROBE_TIMEOUT_MS = 15_000;
 
 /**
@@ -39,10 +38,8 @@ function pathFilename(url) {
   }
 }
 
-// Content-Type → a verdict this service can stand behind, or undefined for "says nothing".
-// `text/html` is a share page or a syllabus doc — a definite no. A generic binary type
-// (application/octet-stream, and anything else unrecognized) is the CDN saying it doesn't know
-// either, which must not harden into a permanent "unsupported".
+// Content-Type → a verdict, or undefined for "says nothing": `text/html` is a definite no, while a
+// generic binary type is the CDN not knowing either and must not harden into "unsupported".
 function classifyContentType(header) {
   const mime = String(header ?? '')
     .split(';')[0]
@@ -54,14 +51,12 @@ function classifyContentType(header) {
   return undefined;
 }
 
-// The host answering that there is nothing to fetch — a fact about the LINK, as final as reading
-// its name. Every other refusal it can voice (a 403 wall, a 429, a 5xx) may pass on the next
-// attempt, so those stay uncertain rather than greying a working link out for the session.
+// The host saying there is nothing to fetch — a fact about the LINK. Every other refusal (403,
+// 429, 5xx) may pass next time, so those stay uncertain.
 const DEAD_STATUSES = new Set([404, 410]);
 
-// Headers for a URL without pulling the body: HEAD first, then a one-byte ranged GET for the
-// hosts that answer HEAD with 405/403. `'dead'` when the host says the link is gone; null when
-// nothing was learned at all — offline, DNS, TLS, timeout, a login wall.
+// Headers without the body: HEAD, then a one-byte ranged GET for hosts that reject HEAD. `'dead'`
+// when the host says the link is gone; null when nothing was learned at all.
 async function fetchHeaders(url) {
   let dead = false;
   for (const init of [{ method: 'HEAD' }, { method: 'GET', headers: { Range: 'bytes=0-0' } }]) {
@@ -87,23 +82,8 @@ function isNamedFile(name) {
 }
 
 /**
- * Resolve what a link is before downloading it. Always asks the host — one header-only round trip —
- * and weighs three pieces of evidence from it, strongest first:
- *
- *  1. the `Content-Disposition` filename: the host explicitly naming the file. `L1.zip` is a
- *     definite no even under a `video/mp4` type, because hosts mistype archives and a stated name
- *     does not lie.
- *  2. `Content-Type`: `text/html` is a definite no — a login wall, a share page, a syllabus doc.
- *  3. the URL's own filename, as a fallback. It is only a guess: `…/syllabus.pdf` behind SSO answers
- *     `200 text/html` with the login page, and `server/`'s `curl --fail` would save that as the
- *     lecture's material. The type above vetoes the guess, which is why this is never read first.
- *
- * `certain` separates a verdict about the LINK from a failure to learn one: an unreachable host, or
- * a nameless response typed only as generic binary, is `{ media: null, certain: false }` — worth
- * retrying, never remembered. A 404/410 is certain (`reason: 'missing'`): the host answered, and
- * its answer is that there is nothing there. Only certain verdicts are memoized (per normalized
- * URL, for the session, the definite `null`s included), so a row can never be permanently greyed
- * out by one bad moment on the network.
+ * Resolve what a link is from one header-only round trip: Content-Disposition name, then
+ * Content-Type, then the URL's filename. Only `certain` verdicts are memoized. See docs/BROWSING.md.
  * @param {string} url
  * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
  * @returns {Promise<{ probeKey: string, media: 'video'|'material'|null, filename: string|null,

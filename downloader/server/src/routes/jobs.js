@@ -4,7 +4,7 @@ import { subscribe } from '../events.js';
 
 const router = Router();
 
-// `/events` is how a consumer follows downloads
+// `/events` is how a consumer follows downloads and section runs.
 router.get('/events', (req, res) => subscribe(res));
 
 // `/jobs` is how a consumer resyncs after subscribing late or reconnecting (docs/JOBS.md).

@@ -1,8 +1,5 @@
-"""Overview compile phase: merge every lecture's summary.md into one `all-lectures.md`
-holding the full course content. Pure work — the runner owns the loop, status and failure
-isolation.
-
-Sibling of collect.py: that one keeps headings only, this one keeps the bodies."""
+"""Overview compile phase: merge every lecture's summary.md into one `all-lectures.md`.
+Sibling of collect.py, which keeps headings only; this keeps the bodies."""
 
 from datetime import datetime
 
@@ -44,12 +41,8 @@ def _collapse_blanks(lines: list[str]) -> str:
 
 
 def strip_and_demote(md: str) -> str:
-    """One summary's body: built-in sections dropped whole, every heading pushed one level
-    down (H1→H2, …) to make room for the per-lecture H1, and horizontal rules removed.
-    Callout divs pass through verbatim so the merged PDF renders the same boxes.
-
-    summarize.md mandates exactly two `---` rules, both bordering a built-in section, so
-    dropping all of them leaves only the rule this phase inserts between lectures."""
+    """One summary's body: built-ins dropped, headings demoted one level, rules removed, callout
+    divs kept — see docs/OVERVIEW.md for why every `---` can go."""
 
     kept: list[str] = []
     skipping = (

@@ -18,17 +18,15 @@
  *             strategy: 'videostream'|'youtube-playlist'|'zoom'|'google-drive'|'moodle-file'|'direct-url',
  *             section: string, likelyRecording?: boolean }} Recording
  *
- * A recording resolved for download — url = the .mp4 (videostream) or a YouTube
- * URL (playlist entry). Shape maps straight onto server.js's download endpoints.
- * @typedef {{ title: string, url: string, headers?: Record<string, string>,
+ * A browser capture resolved for download — url = the sniffed .mp4, headers = its request's
+ * headers in server/'s curl shape.
+ * @typedef {{ title: string, url: string, headers?: Array<{name: string, value: string}>,
  *             kind: string }} VideoCapture
  */
 
 /**
- * Per-activity extraction strategy, selected by auto-detection (`canHandle`), not
- * by university or course page. Named by the mechanism/player it handles
- * (VideostreamExtractor, YoutubePlaylistExtractor, …). The per-LMS course parser
- * enumerates activities; each is routed to the extractor whose canHandle matches.
+ * Per-activity extraction strategy, named by the mechanism it handles and selected by
+ * `canHandle` (first match in core/registry.js), not by university or course page.
  */
 export class VideoExtractor {
   /**
@@ -41,8 +39,8 @@ export class VideoExtractor {
   }
 
   /**
-   * Does this strategy handle this activity? Keys off the Moodle module type
-   * (and, for redirects, the resolved target host at download time). Sync + cheap.
+   * Does this strategy handle this activity? Keys off the Moodle module type (and, for a
+   * `url` module, its external target). Sync + cheap, no network.
    * @param {Activity} activity
    * @returns {boolean}
    */

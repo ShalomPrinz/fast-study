@@ -43,7 +43,7 @@ function takeGroups(groups: MatchGroup[], limit: number): MatchGroup[] {
   return out
 }
 
-// Client-side search over one course's summaries. See docs/search.md.
+// Client-side search over one course's summaries. See docs/SEARCH.md.
 export default function SearchView() {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()

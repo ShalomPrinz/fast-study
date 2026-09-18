@@ -1,6 +1,5 @@
-"""Shared vocabulary for reading a lecture's summary.md — the structure summarize.md
-produces. Both course-level workers that consume summaries (collect, merge) import this,
-so the built-in section names live in exactly one place."""
+"""Shared vocabulary for reading a summary.md, so collect and merge share one definition of
+the built-in sections."""
 
 import re
 
@@ -39,9 +38,8 @@ def bullet(marker: str, text: str, indent: int = 0) -> str:
 
 
 def lines_with_code_flag(md: str):
-    """Yield (line, in_code) for every line. Fenced blocks are opaque to callers, so a
-    `## fake` line in a code sample is never mistaken for a heading; the fence lines
-    themselves report in_code=True so they travel with their block."""
+    """Yield (line, in_code) for every line, so a `## x` inside a code sample is never a heading.
+    Fence lines report in_code=True so they travel with their block."""
 
     in_code = False
     for line in md.split("\n"):

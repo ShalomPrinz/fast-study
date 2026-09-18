@@ -1,10 +1,8 @@
 import re
 
 _LIST_ITEM_RE = re.compile(r"^(\s*(?:[-*+]|\d+\.)\s)")
-# A pandoc fenced-div marker line — the callout syntax summarize.md emits (`::: definition`
-# to open, `:::` to close). `attr` is empty exactly on a closing marker. Lives here because
-# it is markdown structure both the render chain and course/summary_md.py read; pipeline/
-# may not import course/, so course imports this one rather than restating it.
+# A callout div marker line (`::: definition` opens, `:::` closes; `attr` empty on a close).
+# Here rather than in course/ because pipeline/ may not import course/.
 DIV_MARKER_RE = re.compile(r"^ {0,3}:{3,}[ \t]*(?P<attr>.*?)[ \t]*$")
 _DISPLAY_MATH = r"\$\$[\s\S]*?\$\$"
 # Excludes the backtick: a `$` inside inline code is a literal, and pandoc won't let
@@ -62,10 +60,7 @@ def _latex_escape(s: str) -> str:
 
 def apply_outside_fences(text: str, transform):
     """Run `transform` on prose only, passing fenced code blocks and callout div markers
-    through untouched (the other helpers assume prose; code blocks are the Lua filter's job).
-
-    A `::: definition` line must survive verbatim: the prose chain would rewrite its Latin
-    class name to `::: \\LR{definition}` and pandoc would stop reading it as a div."""
+    through verbatim — see docs/BIDI.md."""
 
     out, buf, in_fence = [], [], False
     for line in text.splitlines(keepends=True):

@@ -1,187 +1,119 @@
 # MOODLE.md — the Moodle Web-Services API and how this package speaks it
 
-BIU runs Moodle. The auto-downloader authenticates **once** to Moodle's mobile web-service,
-receives a long-lived **web-service token**, and thereafter drives Moodle's REST API over
-plain stateless HTTP — no browser, no cookies, no re-MFA. This is the Google-Drive-refresh-token
-model, native to Moodle: MFA collapses from "every few hours" to ~once per token lifetime
-(Moodle default: 12 weeks). This doc is the protocol reference for that integration.
+BIU runs Moodle. The service authenticates **once** to Moodle's mobile web service, receives a
+long-lived **web-service token**, and thereafter drives the REST API over plain stateless HTTP — no
+browser, no cookies, no re-MFA. It is the Google-Drive-refresh-token model, native to Moodle: MFA
+drops from "every few hours" to about once per token lifetime (Moodle default: 12 weeks).
 
-Two modules implement the client side:
-
-- **`src/moodle/wsClient.js`** — the stateless REST client (`getSiteInfo`, `getCourseContents`,
-  `getAutologinKey`, `pluginfileUrl`, `courseIdFrom`, `invalidToken`, `blocked`, `WsError`,
-  `WsBlockedError`, `DEFAULT_SITE`).
-- **`src/auth/moodleToken.js`** — the one-time headed token grab + persistence (`MoodleToken`).
+`src/moodle/wsClient.js` is the stateless REST client; `src/auth/moodleToken.js` is the one-time
+headed grab + persistence ([AUTH.md](AUTH.md)).
 
 ## Token acquisition (the one headed step)
 
-Moodle's mobile app obtains its token from `admin/tool/mobile/launch.php`. We drive the same
-flow headed, exactly once:
+The mobile app gets its token from `admin/tool/mobile/launch.php`; we drive the same flow headed,
+once:
 
 ```
 GET {site}/admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=<rand>&urlscheme=moodlemobile
-  → require_login drives the Microsoft Entra SSO   (user completes MFA by hand, once)
+  → require_login drives the Microsoft Entra SSO   (user completes MFA by hand)
   → 302  Location: moodlemobile://token=<base64>
 ```
 
-- `service=moodle_mobile_app` is Moodle's built-in mobile service (460 functions enabled on BIU,
-  including `core_course_get_contents`, with `downloadfiles=1`).
-- `passport` is any client-generated nonce; it's only used app-side to verify the returned
-  site id, so we generate a throwaway value and don't check it.
-- `urlscheme=moodlemobile` makes launch.php hand the token back via a custom-scheme redirect.
+- `service=moodle_mobile_app` is Moodle's built-in mobile service, which on BIU enables
+  `core_course_get_contents` with `downloadfiles=1`.
+- `passport` is a client nonce, only used app-side to verify the site id — a throwaway here.
 
-**Capturing the token.** Chromium can't _follow_ the `moodlemobile://` scheme, so the token
-never lands as a page URL — it surfaces on whichever low-level signal fires first. `connect()`
-watches all three (redundant by design):
+**Capturing the token.** Chromium can't _follow_ `moodlemobile://`, so the token never lands as a page
+URL; it surfaces on whichever signal fires first, and `connect()` watches all three (redundant by
+design): `context.on('response')` (the 302's `location`), `context.on('requestfailed')` (the failed
+navigation to the scheme) and `page.on('framenavigated')`.
 
-```
-context.on('response')      → the 302's `location` response header
-context.on('requestfailed') → the failed navigation to the custom scheme
-page.on('framenavigated')   → the frame URL
-```
-
-each tested against the `moodlemobile://token=` prefix.
-
-**Decoding.** The captured value is base64. Decode it, and if the result lacks `:::` retry
-after `decodeURIComponent` (something along the path can percent-encode the `+ / =`). The
-decoded payload is `:::`-joined:
-
-```
-md5(wwwroot + passport)  :::  wstoken  :::  privatetoken
-       parts[0]                parts[1]        parts[2]   (privatetoken may be absent)
-```
-
-We persist `{ wstoken, privatetoken, savedAt }` to `auth/biu-token.json` under the state root (gitignored).
-`wstoken` authenticates every REST call; `privatetoken` is only for autologin (see below).
+**Decoding.** Base64; if the result lacks `:::`, retry after `decodeURIComponent` (something on the
+path can percent-encode `+ / =`). The payload is `md5(wwwroot + passport) ::: wstoken ::: privatetoken`
+(`privatetoken` may be absent). We persist `{ wstoken, privatetoken, savedAt }`; `wstoken`
+authenticates every REST call, `privatetoken` only autologin.
 
 ## The REST API
 
-Every call goes to `webservice/rest/server.php`, authenticated by the token in the query:
+Every call goes to `{site}/webservice/rest/server.php?wstoken=…&moodlewsrestformat=json&wsfunction=<fn>`,
+GET with params in the query — except `tool_mobile_get_autologin_key` (below). Every call sends
+`User-Agent: MoodleMobile 4.4.0 (44000)`: Moodle gates app-only functions on
+`core_useragent::is_moodle_app()`, which substring-matches `MoodleMobile` in the UA.
 
-```
-{site}/webservice/rest/server.php?wstoken=<wstoken>&moodlewsrestformat=json&wsfunction=<fn>[&<params>]
-```
+**Error shape.** A _failed_ call — a dead token included — answers **HTTP 200** with
+`{ exception, errorcode, message }`, never an HTTP error. `callWs` throws a `WsError` carrying
+`errorcode`; `invalidToken(err)` keys on `errorcode ∈ { invalidtoken, accessexception }`, the
+"Reconnect" signal. Any other errorcode is a real fault.
 
-Calls are GET with params in the query, except `tool_mobile_get_autologin_key` (see below). Every
-call sends `User-Agent: MoodleMobile 4.4.0 (44000)`: the token is minted through the app's own
-`launch.php` (`service=moodle_mobile_app`), and Moodle gates app-only functions on
-`core_useragent::is_moodle_app()`, which just substring-matches `MoodleMobile` in the UA.
-
-**Error shape (important):** Moodle answers a _failed_ call — including a dead/expired token —
-with **HTTP 200** and a JSON body `{ exception, errorcode, message }`, not an HTTP error status.
-`callWs` detects `.exception` and throws a `WsError` carrying `errorcode`. `invalidToken(err)`
-keys on `errorcode ∈ { invalidtoken, accessexception }` — that's the "session died → Reconnect"
-signal (one MFA to re-grab a token). Any other errorcode is a real fault.
-
-**Bot protection (the other failure).** `lemida.biu.ac.il` sits behind Radware Bot Manager. When
-it decides a client is automated — a burst of calls is enough — `webservice/rest/server.php` stops
-answering the WS protocol at all: it serves a captcha page (**HTTP 200, `text/html`**, ~15 KB,
-setting `__uzma`/`__uzmb`/`__uzmc`/`__uzmd` cookies) or a **302** to one, for any client and any
-User-Agent, and keeps doing so for minutes. So a non-JSON answer is a category of its own, not a WS
-fault: `callWs` checks the status and content-type _before_ parsing and throws `WsBlockedError`,
-recognized by `blocked(err)`. Parsing first would report only `SyntaxError: Unexpected token '<'`,
-which names the symptom and hides the cause. `/list` and `/resolve` map it to
-`503 {status:'blocked', message}` — no retry and no client-side throttling: the wait is minutes
-long, and retrying is what deepens the block.
-
-The challenge reaches `pluginfile.php` too, where it is a corruption risk rather than a crash:
-it is HTTP 200, so `server/`'s `curl --fail` would save the captcha page as `material.pdf` with
-no error at all. `assertPluginfileReadable` therefore rejects an HTML (or redirected) answer as
-`WsBlockedError` before the download is handed over. Keying on HTML is safe because only
-resource files the WS declared `application/pdf` are routed down this path
-(`MoodleFileExtractor.claims`), so an HTML body is never the requested file.
+**Bot protection.** `lemida.biu.ac.il` sits behind Radware Bot Manager. When it decides a client is
+automated — a burst of calls is enough — `server.php` stops speaking the WS protocol for minutes: it
+serves a captcha page (**HTTP 200, `text/html`**, ~15 KB, `__uzma`…`__uzmd` cookies) or a **302** to
+one, for any client and any UA. So `callWs` checks status and content-type _before_ parsing and throws
+`WsBlockedError` (`blocked(err)`); parsing first would report only `SyntaxError: Unexpected token '<'`,
+naming the symptom and hiding the cause. `/list` and `/resolve` map it to `503 {status:'blocked'}` —
+no retry and no throttling: the wait is minutes long, and retrying is what deepens the block. It never
+marks the token expired, so the UI must not steer to Reconnect on it. This is also why no change is
+ever verified by a live request to the site.
 
 ### `core_webservice_get_site_info`
 
-Identity + capability probe. Fields we rely on: `userid` (needed for autologin), `functions[]`
-(must include `core_course_get_contents`), `downloadfiles` (`1` = pluginfile downloads permitted),
-`release` (Moodle version, `4.5.10` on BIU).
+Identity + capability probe: `userid` (needed for autologin), `functions[]`, `downloadfiles`
+(`1` = pluginfile downloads permitted; could be disabled per site), `release` (`4.5.10` on BIU).
 
 ### `core_course_get_contents(courseid)`
 
-The whole course as JSON — sections, their `modules[]`, and each section's `summary` HTML.
-`courseIdFrom(courseUrl)` parses the numeric `id=` from `…/course/view.php?id=N` to feed it.
-Returns an array of **sections**:
+The whole course as an array of sections — `{ section, name, summary, modules[] }`, where `name` and
+`summary` are HTML strings and each module carries `modname`, `name`, `url` (its view page) and, for
+`resource`/`url` modules, `contents[]`. `courseIdFrom(courseUrl)` parses the numeric `id=` from
+`…/course/view.php?id=N`.
 
-```jsonc
-[
-  {
-    "section": 1,
-    "name": "הרצאות",
-    "summary": "<p>הרצאה מספר 1 …<a href=\"https://…zoom.us/rec/share/…\">…</a></p>", // HTML
-    "modules": [
-      {
-        "modname": "videostream", // module type
-        "name": "שילוב סרטון",
-        "url": "https://lemida.biu.ac.il/mod/videostream/view.php?id=…", // the view page
-        "contents": [/* present for resource/url modules — see below */],
-      },
-    ],
-  },
-]
-```
+## Module → strategy
 
-## Module → item mapping
+| `modname`       | Strategy                                              | Target comes from                                                              |
+| --------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `videostream`   | `videostream`                                         | `module.url`; the `.mp4` is sniffed there — it is **not** in the WS response   |
+| `url`           | `youtube-playlist`, `google-drive` or `direct-url`    | `contents[0].fileurl`, the **external** target — no redirect hop needed        |
+| `resource`      | `moodle-file` (PDF files only)                        | each `contents[]` entry with `type:'file'` — one module can hold several       |
+| (section summary) | `zoom`                                              | `rec/share` links in `section.summary` HTML, not modules                        |
 
-| `modname`                 | Meaning                     | Strategy                                                                 | Where the target comes from                                                                                       |
-| ------------------------- | --------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `videostream`             | in-site recorded lecture    | `videostream`                                                            | `module.url` (the view.php page); the `.mp4` is sniffed there — **not** in the WS response                        |
-| `url` (recording keyword) | off-site link module        | `youtube-playlist` if the target host is YouTube, else `422 unsupported` | `module.contents[].fileurl` = the **external** target (YouTube/zoom/Drive/GitHub) — no redirect-navigation needed |
-| `resource`                | Moodle-hosted file (PDF, …) | skipped (video-only)                                                     | `module.contents[].fileurl` — download proven; see `PDF_RES_FUTURE.md`                                            |
-
-Zoom recordings are **not** modules. Their `rec/share` links live in each **`section.summary`**
-HTML string. The section parser runs the same regex over `summary` that the DOM parser used to
-run over the live page, tracking the most-recent `הרצאה מספר N` label to title each link.
-Recitation-vs-lecture classification reuses the keyword list in `discovery/moodleCourse.js`.
+Routing is in [BROWSING.md](BROWSING.md). Recitation vs lecture is a keyword match over heading +
+title (`discovery/moodleCourse.js`).
 
 ## File download via `pluginfile.php?token=`
 
-Moodle-hosted files (the `fileurl` on `resource`/other file contents) download statelessly by
-appending the wstoken to the query — no cookies, no headers:
+Moodle-hosted files download statelessly with the wstoken in the query — no cookies, no headers.
+`pluginfileUrl` sets it with `searchParams.set`, because `fileurl` may already carry
+`?forcedownload=1` and string concatenation would produce a broken double query.
 
-```js
-const u = pluginfileUrl(content.fileurl, wstoken); // sets ?token=… via the URL API
-await fetch(u); // 200, application/pdf, bytes
-```
+`assertPluginfileReadable` probes one byte (`Range: bytes=0-0`) before the URL is handed over, since
+`server/`'s download is fire-and-forget and this is the last point a failure can be reported instead
+of written to disk:
 
-`pluginfileUrl` uses `searchParams.set` (not string concat) because `fileurl` may already carry
-a query (e.g. `?forcedownload=1`) — a naïve `?token=` would produce a broken double-query.
-`assertPluginfileReadable` probes one byte first (`Range: bytes=0-0`) and refuses to hand over a
-URL that answers with Moodle's JSON exception body (dead token → `WsError`) or with a
-bot-protection challenge (→ `WsBlockedError`); `server/`'s download is fire-and-forget, so this
-is the last point where either can still be reported instead of written to disk.
-Verified against BIU: a 10.6 MB `resource` PDF → HTTP 200, `application/pdf`. (Wiring this into
-the pipeline is deferred — see `PDF_RES_FUTURE.md`.)
+- a dead token answers HTTP 200 + the JSON exception body → `WsError`, which `invalidToken` recognizes;
+- a bot-protection challenge is HTTP 200 too, and `curl --fail` would save the captcha page as the
+  PDF → an HTML (or redirected) answer is `WsBlockedError`. Keying on HTML is safe because only files
+  the WS declared `application/pdf` are routed here (`MoodleFileExtractor.canHandle`).
 
-## Autologin (the only remaining browser use besides zoom)
+## Autologin (the only browser use besides zoom)
 
-A `videostream` `.mp4` is short-lived and token-gated _in the page_, not exposed via the WS API —
-so it still has to be sniffed in a logged-in browser. But we no longer keep a cookie session:
-instead the `privatetoken` mints a one-shot login with **no MFA**.
+A `videostream` `.mp4` is short-lived and token-gated _in the page_, so it still has to be sniffed in a
+logged-in browser — but instead of keeping a cookie session, the `privatetoken` mints a one-shot
+login with **no MFA**:
 
 ```
-tool_mobile_get_autologin_key   (privatetoken in a form-encoded POST body — Moodle
-                                 rejects it as a GET param: invalidprivatetoken)
-  → { key, autologinurl, warnings }
-navigate a headless browser to  {autologinurl}?userid=<userid>&key=<key>
-  → sets the Moodle session cookie
-navigate to module.url, sniff the .mp4 as before (same capture as background.js)
+POST tool_mobile_get_autologin_key   (privatetoken in a form-encoded body — as a GET param
+                                      Moodle rejects it: invalidprivatetoken)
+  → { key, autologinurl }
+navigate to {autologinurl}?userid=<userid>&key=<key>   → sets the Moodle session cookie
+navigate to module.url and sniff the .mp4
 ```
 
-Constraints: autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the
-requesting IP**; fine for on-demand sniffing, needs graceful backoff. `userid` comes from
-`core_webservice_get_site_info`.
+Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**; the
+cookie's freshness is cached ~20 min so back-to-back downloads don't trip the limit ([AUTH.md](AUTH.md)).
 
-## Constraints / gotchas
+## Constraints
 
-- **Bot protection** — a challenge is transient and not the token's fault; `blocked` never marks
-  the token expired, so the UI must not steer to Reconnect on it.
-- **Token lifetime** — Moodle default 12 weeks, admin-configurable; also revoked on password
-  change. On `invalidToken` the UI shows Reconnect (one MFA to re-grab). Expected, not an error.
-- **`downloadfiles`** — pluginfile downloads require this capability; `1` on BIU today, but it
-  could be disabled per-site later.
-- **`resource` folders** — a single `mod_resource` can hold multiple files; iterate all
-  `contents[]` with `type === 'file'`, not just the first.
-- **Recordings in summaries, not modules** — confirm against a course that actually has posted
-  `rec/share` links; the sample course's recordings section was empty and its recitation zoom
-  was a _meeting_ (not recording) link.
+- **Token lifetime** — 12 weeks by default, admin-configurable, and revoked on password change. An
+  `invalidToken` shows Reconnect (one MFA); expected, not an error.
+- **Recordings in summaries** — unconfirmed against a course that actually posts `rec/share` links:
+  the sample course's recordings section was empty and its recitation zoom link was a _meeting_.

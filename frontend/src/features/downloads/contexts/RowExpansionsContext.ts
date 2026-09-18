@@ -19,9 +19,8 @@ export const IDLE_EXPAND: ExpandState = Object.freeze({
   error: null,
 })
 
-// Module-level store: the page's expansions, with per-ref subscriptions on top, so expanding one
-// playlist re-renders only that row. It outlives every component, so the session's `clear()` calls
-// `clearExpansions()` on course switch and close to bound its lifetime.
+// Module store of playlist expansions with per-ref subscriptions; it outlives every component, so
+// the session's `clear()` resets it.
 let expansions: Record<string, ExpandState> = {}
 const listeners = new Set<() => void>()
 

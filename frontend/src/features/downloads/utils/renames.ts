@@ -2,9 +2,8 @@ import { t } from '@lingui/core/macro'
 import { toast } from '@/services/toaster'
 import type { Rename } from '../services/downloadServer'
 
-// The server canonicalizes every submitted name for disk and reports what it changed. Adopting its
-// spelling as the row's name is what keeps the green "already downloaded" row and a run's landed
-// check comparing against what actually lands. `submitted` only names the change in the toast.
+// Adopts the server's on-disk spelling as the row's name, so every "already there" check compares
+// against what lands. `submitted` only names the change in the toast.
 export function applyRenames(
   renames: Rename[] | undefined,
   submitted: { ref: string; name: string }[],

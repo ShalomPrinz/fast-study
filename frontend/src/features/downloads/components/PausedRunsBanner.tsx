@@ -10,10 +10,8 @@ interface Props {
   onSelectMedia: (media: Media) => void
 }
 
-// Page-level notice for every run parked at a passcode gate: the prompt itself lives in the run's
-// own `SectionGroup`, which is off-screen on the other segments and absent for any other course.
-// Only a run in the open course, on a segment other than the open one, is a jump target — another
-// course's rows aren't discovered yet, and a run on this segment already renders its own prompt.
+// Every run parked at a passcode gate, since the prompt renders only in its own `SectionGroup`. Only
+// a run in the open course on another segment is a jump target — see docs/BULK.md.
 export default function PausedRunsBanner({ course, media, onSelectMedia }: Props) {
   const { t } = useLingui()
   const paused = usePausedRuns()

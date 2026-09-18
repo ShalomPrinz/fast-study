@@ -21,9 +21,8 @@ interface Props {
   discovering?: boolean
 }
 
-// One course row: name + source URL (a real link once set, pencil to edit) + Load recordings, which
-// becomes a Loaded chip on the open course. With no URL there's nothing to link to, so
-// "+ add source URL" opens edit mode directly.
+// One course: name, source URL (pencil to edit; with none, "+ add source URL" opens edit mode) and
+// Load recordings, a Loaded chip on the open course.
 export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()

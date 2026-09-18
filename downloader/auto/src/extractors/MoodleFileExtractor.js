@@ -1,10 +1,8 @@
 import { VideoExtractor } from './VideoExtractor.js';
 
 /**
- * Moodle `resource` module file — a course-hosted PDF (slide deck, handout) that lands as
- * one of the lecture's materials. Unlike the video strategies this one has NO capture phase:
- * the WS token turns `fileurl` into a plain HTTP URL (`pluginfileUrl`), which `server/`
- * fetches directly, so no browser is ever launched and `_captureVideo` is never called.
+ * Moodle `resource` module file — a course-hosted PDF that lands as one of the lecture's
+ * materials. No capture phase: the WS token makes `fileurl` a plain URL `server/` fetches.
  */
 export class MoodleFileExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -13,8 +11,8 @@ export class MoodleFileExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a resource file by mimetype alone — exact where the `url` extractors' keyword
-   * gate is a guess, and a listed grade-sheet PDF costs less than a missed slide deck.
+   * Claim a resource file by mimetype alone — exact where a keyword is a guess, and a listed
+   * grade-sheet PDF costs less than a missed slide deck.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */

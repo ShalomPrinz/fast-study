@@ -1,6 +1,5 @@
-// Session-scoped replay cache. A capture is expensive (open the share, clear the passcode,
-// sniff the .mp4), so keep each resulting cap keyed by its FINAL download target for cheap
-// replay on retry. In-memory only — dies with the process.
+// Session-scoped, in-memory replay cache: a capture is expensive (open the share, clear the
+// passcode, sniff the .mp4), so each cap is kept under its FINAL download target for retries.
 
 // Collision-safe key over the download target:
 // course/lecture/kind pick the folder, `media` ('video'|'material') picks which file it becomes

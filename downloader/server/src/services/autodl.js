@@ -8,9 +8,8 @@ export function resolved(status) {
 }
 
 /**
- * Resolver edge to auto/ (3053): a discovery `ref` → `{ media, targets }`, the caps this
- * server then runs as jobs. A non-2xx is RETURNED, never thrown, so `/download-item` can
- * forward auto's status and body verbatim (its 401/409/422 contract is the frontend's).
+ * Resolver edge to auto/: a discovery `ref` → `{ media, targets }`. A non-2xx is RETURNED, never
+ * thrown, so `/download-item` can forward auto's status and body verbatim.
  * @param {{ ref: string, course: string, name: string, kind: string,
  *           only?: boolean, forceCapture?: boolean }} args
  * @returns {Promise<{ status: number, body: object|null }>} status 0 = unreachable

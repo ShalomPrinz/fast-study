@@ -32,11 +32,10 @@ app.use(
 );
 // After cors, which answers the preflight itself, so no OPTIONS ever reaches the guard.
 app.use(requireSecret);
-app.use(express.json()); // empty body → req.body = {} (matches the old JSON.parse(body || '{}'))
+app.use(express.json()); // an empty body parses to req.body = {}
 
-// The external binaries this service spawns. Probed once at startup, never per request: the boot
-// screen polls /health, and re-spawning them per poll would cost more than the answer is worth.
-// A tool installed afterwards is picked up on the next launch.
+// Probed once at startup, never per request: the boot screen polls /health, and re-spawning per
+// poll costs more than the answer is worth. A tool installed later is seen on the next launch.
 const TOOLS = ['yt-dlp'];
 let toolStatus = {};
 

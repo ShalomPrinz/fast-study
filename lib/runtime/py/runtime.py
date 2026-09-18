@@ -38,8 +38,7 @@ def state_path(*parts) -> Path:
     """The writable state root with `parts` joined onto it: `FASTSTUDY_STATE_DIR` if set,
     else `.state/` at the repo root."""
 
-    # A pure join that deliberately creates nothing: importing a module that merely names a
-    # state file must not leave a directory behind, least of all one redirected elsewhere.
+    # A pure join that creates nothing, so merely naming a state file leaves no directory behind.
     root = os.environ.get("FASTSTUDY_STATE_DIR") or _REPO_ROOT / ".state"
     return Path(root).joinpath(*parts)
 
@@ -53,9 +52,7 @@ class SecretMiddleware:
         """Wrap app, checking each HTTP request against the launch secret."""
 
         self.app = app
-        # Kept as bytes: compare_digest refuses a str holding any non-ASCII character, so a
-        # malformed secret would raise instead of being rejected. latin-1 matches the latin-1
-        # decode of the query string, so an arbitrary byte round-trips to what was sent.
+        # Bytes: compare_digest raises on a non-ASCII str. latin-1 matches the query decode.
         self.secret = secret.encode("latin-1")
 
     async def __call__(self, scope, receive, send):
@@ -86,10 +83,8 @@ class SecretMiddleware:
             encoding="latin-1",
         )
         values = query.get("secret", [])
-        # One value or none: a duplicated parameter is rejected outright rather than resolved to its
-        # first, so both halves of this contract answer a repeated `?secret=` the same way. Blank
-        # values are kept because a blank duplicate is still a duplicate — dropping it would let
-        # `?secret=<right>&secret=` collapse back to one value and pass.
+        # One value or none, blanks included, so `?secret=<right>&secret=` is a duplicate like in
+        # express — see lib/runtime/CLAUDE.md.
         param = values[0].encode("latin-1") if len(values) == 1 else b""
         # Tried independently rather than `header or param`: a wrong or blank header must not
         # shadow the query parameter, which is the only credential EventSource can send.
@@ -138,6 +133,6 @@ def serve(app, default_port: int) -> None:
     # Listen before announcing, so a launcher connecting the instant it reads the line is not refused.
     sock.listen()
     print(f"FASTSTUDY_PORT={sock.getsockname()[1]}", flush=True)
-    # log_config=None: uvicorn's own dictConfig runs at Config() construction and would replace
-    # the uvicorn.access handler setup_logging() already installed, losing the [api] format.
+    # log_config=None keeps setup_logging()'s access handler and stdout's handshake intact — see
+    # lib/runtime/CLAUDE.md.
     uvicorn.Server(uvicorn.Config(app, log_config=None)).run(sockets=[sock])

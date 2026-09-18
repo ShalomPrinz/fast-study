@@ -24,9 +24,8 @@ export interface Hit {
   ranges: { start: number; end: number }[]
 }
 
-// Hebrew is invisible to JS `\b`, so word boundaries are checked against this class explicitly
-// rather than by anchoring the RegExp. Letters and niqqud only: the block's punctuation — geresh,
-// gershayim, maqaf, sof pasuq — separates words (״ספר״, תנ״ך) exactly as Latin punctuation does.
+// JS `\b` ignores Hebrew, so word boundaries check this class. Letters and niqqud only: Hebrew
+// punctuation separates words (״ספר״) as Latin punctuation does.
 const WORD_CHAR = /[0-9A-Za-z_\u05B0-\u05BD\u05BF\u05C1\u05C2\u05C7\u05D0-\u05EA\u05EF-\u05F2]/
 
 // Sentence separators: terminal and clause punctuation, plus any line break — in markdown a newline
@@ -44,12 +43,8 @@ function isWordChar(ch: string | undefined): boolean {
   return ch !== undefined && WORD_CHAR.test(ch)
 }
 
-/**
- * Every occurrence of `query` across the given summaries, as positions only. Case-insensitive
- * substring; `wholeWord` additionally requires a non-word character (or a text edge) on both sides.
- * Deliberately cheap — a one-letter Hebrew query matches ~15k times, and building a snippet for each
- * costs ~1s, so strings are left to `buildHit` for the handful of groups actually rendered.
- */
+/** Every case-insensitive occurrence as a position only — strings are left to `buildHit`, since a
+ *  one-letter Hebrew query matches ~15k times. See docs/SEARCH.md. */
 export function findMatches(
   summaries: CourseSummary[],
   query: string,
@@ -77,9 +72,8 @@ export function findMatches(
   return matches
 }
 
-// The content window one match would show on its own: the sentence containing it, from the delimiter
-// before the match to the one after it, inclusive. Never length-clamped — cutting at a character
-// count landed mid-word, and a whole sentence is the smallest unit that reads correctly.
+// One match's window: its whole sentence, delimiter to delimiter. Never length-clamped — a character
+// cut lands mid-word.
 function windowFor(match: Match): { from: number; to: number } {
   const { content } = match.summary
   const { index: start, end } = match
@@ -106,12 +100,8 @@ function windowFor(match: Match): { from: number; to: number } {
   return { from, to }
 }
 
-/**
- * Collapses matches whose windows touch or overlap into one group, so nearby matches yield a single
- * snippet with several highlights instead of near-duplicate cards. Since windows are whole sentences
- * this now merges exactly the matches sharing a sentence — distinct sentences never overlap.
- * Relies on `findMatches` order (by summary, then ascending index); groups never span summaries.
- */
+/** Merges matches whose windows touch or overlap — exactly those sharing a sentence — into one group.
+ *  Relies on `findMatches` order; groups never span summaries. */
 export function groupMatches(matches: Match[]): MatchGroup[] {
   const groups: MatchGroup[] = []
 
@@ -129,10 +119,8 @@ export function groupMatches(matches: Match[]): MatchGroup[] {
   return groups
 }
 
-/**
- * The snippet for one group: its window with every whitespace run collapsed to a single space, plus
- * the offset of each occurrence inside the result. The only phase that builds strings.
- */
+/** One group's snippet, whitespace collapsed, with each occurrence's offset. The only phase that
+ *  builds strings. */
 export function buildHit(group: MatchGroup): Hit {
   const { summary, matches, from, to } = group
   const { content } = summary

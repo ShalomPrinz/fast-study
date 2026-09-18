@@ -1,28 +1,29 @@
 # CLAUDE.md — backend
 
-Guidance for Claude Code when working inside `backend/`.
-
 ## What this is
 
 FastAPI app exposing two things over HTTP: the per-lecture video → audio → transcript → summary → PDF → Drive pipeline, and the per-course overview generator. Every mutating endpoint is fire-and-forget — it schedules a background asyncio task and returns `started`/`busy`; the frontend reads outcomes from the status endpoints, refetching on the database service's SSE notify.
 
 ## Docs
 
-`docs/` holds the durable architecture and hard-won knowledge. Read the relevant one before changing that area, and update it in the same pass when a change makes it stale.
+Read the relevant doc before changing that area, and update it in the same pass when a change makes it stale.
 
-- [docs/PIPELINE.md](docs/PIPELINE.md) — per-lecture stages, execution/lock model, rate-limit handling, timing
-- [docs/OVERVIEW.md](docs/OVERVIEW.md) — course overview: extractors, phases, run/lock model, `from_phase` + `skip_existing`
-- [docs/API.md](docs/API.md) — endpoint reference
-- [docs/PDF.md](docs/PDF.md) — the pandoc → tectonic render, the outcome rules and warning recovery, bidi gotchas, the markdown preprocessing chain
-- `timing/README.md` — timing.db schema, queries, maintenance scripts
+| Doc                                    | Covers                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [docs/PIPELINE.md](docs/PIPELINE.md)   | per-lecture stages and files, the run/lock/queue model, `AUTO_RUN`, nightly pass, rate limits |
+| [docs/OVERVIEW.md](docs/OVERVIEW.md)   | course overview: extractors, phases, run/lock model, `from_phase` + `skip_existing`        |
+| [docs/API.md](docs/API.md)             | endpoint reference                                                                         |
+| [docs/PDF.md](docs/PDF.md)             | the pandoc → tectonic render, outcome rules, warning markers, failure messages            |
+| [docs/BIDI.md](docs/BIDI.md)           | Hebrew RTL: engine limits, the Lua filter, the markdown preprocessing chain, verifying a fix |
+| [timing/README.md](timing/README.md)   | timing.db schema, queries, maintenance scripts                                             |
 
 ## Layout
 
-Fonts in `assets/fonts/` are bundled — never assume a system install; the render copies them into its build dir rather than pointing at them (`docs/PDF.md`). Hebrew prompts live in `assets/instructions/` (`summarize.md`, `overview/{slug}.md`); edit the file, no code change. `tests/` subdirs mirror the source packages.
+Fonts in `assets/fonts/` are bundled — never assume a system install; the render copies them into its build dir rather than pointing at them ([docs/PDF.md](docs/PDF.md)). Hebrew prompts live in `assets/instructions/` (`summarize.md`, `overview/{slug}.md`); edit the file, no code change.
 
 ## Lecture files
 
-Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_ROOT}/{course}/Recitations/{name}/`. Paths are never resolved here — every read/write goes through `services/db_client.py` (HTTP to `database/` on port 8001), and `(course, lecture, kind)` is the only identifier the backend carries. File names and their producing steps are listed in `docs/PIPELINE.md`.
+Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_ROOT}/{course}/Recitations/{name}/`. Paths are never resolved here — every read/write goes through `services/db_client.py` (HTTP to `database/` on port 8001), and `(course, lecture, kind)` is the only identifier the backend carries. File names and their producing steps are in [docs/PIPELINE.md](docs/PIPELINE.md).
 
 ## Key rules
 
@@ -31,17 +32,17 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_R
 - **Keep `backend_main.py` thin** — validation and boundary parsing live in the runners.
 - Shipped read-only files (`assets/`, `credentials.json`) resolve through `resource_path()` in `services/resources.py`, never off `__file__`.
 - **A new top-level module needs a name `database/` could never want too.** Both services freeze into one PyInstaller bundle whose module graph is flat, so `backend_main`, `course`, `pipeline`, `services` and `timing` are global names — prefix a generic one or nest it under an existing package (root `CLAUDE.md`). Code that never freezes (`timing/scripts/`, `tests/`) is exempt.
-- **`database/` never calls back.** The backend calls it, so a return call would make the service graph cyclic and the packaged build unspawnable (see root `CLAUDE.md`). When a backend feature wants the store to notify or trigger it, invert it: the acting client reports in, or the backend subscribes to the database's SSE channel.
+- **`database/` never calls back.** The backend calls it, so a return call would make the service graph cyclic and the packaged build unspawnable (root `CLAUDE.md`). When a backend feature wants the store to notify or trigger it, invert it: the acting client reports in, or the backend subscribes to the database's SSE channel.
 
 ## Environment
 
-Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GDRIVE_ROOT_FOLDER` once Drive is on. Optional: `DATABASE_URL` (default `http://localhost:8001`), `GEMINI_MODEL` and `DRIVE_ENABLED` (defaults in `services/settings.py`).
+Reads the repo-root `.env`. Required: `GROQ_API_KEY`, `GEMINI_API_KEY`, plus `GDRIVE_ROOT_FOLDER` once Drive is on. Optional: `DATABASE_URL` (default `http://localhost:8001`), plus `GEMINI_MODEL`, `DRIVE_ENABLED`, `AUTO_RUN`, `NIGHTLY_RUN` and `NIGHTLY_HOUR` (defaults in `services/settings.py`).
 
 **Never read a setting at import.** `POST /config` rewrites `os.environ` on the running process, so every consumer reads its variable at call time — `services/settings.py` for the model and the Drive toggle, `llm_client`/`transcribe`/`upload_to_drive` for the keys and the Drive folder.
 
-Google Drive consent is a settings action, never a pipeline one: `services/google_auth.py` loads and refreshes `auth/token_drive.json` and raises `DriveNotConnected` when there is none, and `/config/drive/connect` runs the browser flow on a daemon thread so no run ever blocks on a human (`docs/API.md`).
+Google Drive consent is a settings action, never a pipeline one — no run ever blocks on a human ([docs/PIPELINE.md](docs/PIPELINE.md), [docs/API.md](docs/API.md)).
 
-`services/providers.py` is the API-key provider table behind `/config/probe-key` and `/config/options`: adding a provider is one row. Each row owns the provider's base URL, which the probe and both SDK clients read — so no ambient variable redirects a call (`docs/PIPELINE.md`) — and it never leaves the backend.
+`services/providers.py` is the API-key provider table behind `/config/probe-key` and `/config/options`: adding a provider is one row. Each row owns the provider's base URL, which the probe and both SDK clients read — so no ambient variable redirects a call ([docs/PIPELINE.md](docs/PIPELINE.md)) — and it never leaves the backend.
 
 ## Running
 
@@ -55,22 +56,19 @@ uv run pytest tests/ -q                  # CI runs exactly this on every push
 
 This environment is also what the frozen bundle is built from, for both Python services, so `pyproject.toml` here has to carry every runtime dependency `database/` declares as well (root `CLAUDE.md`).
 
-`FASTSTUDY_SECRET` (launch-time, set by the packaged launcher) makes the secret check installed by `runtime.install_secret_check` reject every unauthenticated inbound request and makes `db_client` send the secret on its calls to `database/`; unset means no enforcement, which is what dev runs on. Rules and header names: `docs/API.md`.
+`import runtime` and `import tools` are [lib/runtime](../lib/runtime/CLAUDE.md) and [lib/tools](../lib/tools/CLAUDE.md), which own their rules. Backend-specific use:
 
-`runtime` is the shared launch module from `lib/runtime/py`, installed as a top-level `import runtime`. `runtime.serve` binds the loopback socket itself so it can print `FASTSTUDY_PORT=<port>` on stdout for the launcher to parse — `uvicorn.run(port=0)` never reports what it bound.
-
-External tools — `ffmpeg`, `pandoc`, `tectonic` — are spawned through `tool_path(name)` from `lib/tools/py` (installed as a top-level `import tools`), never by bare name: `FASTSTUDY_BIN_DIR` set means an absolute path into the shipped binaries, unset means PATH, which is dev. `backend_main.py` probes all three once at startup, logs each missing one, and reports the result on `/health` as `tools` — a missing binary fails only the steps that need it, so it never stops the service starting. All three must be installed for a dev machine to run the pipeline end to end.
-
-`runtime.state_path(*parts)` resolves everything the backend writes outside `DATA_ROOT` — `timing.db` and the per-scope Google token — under one root: `FASTSTUDY_STATE_DIR` if set, else `.state/` at the repo root. It is a pure join and creates nothing, so each caller mkdirs its own parent — otherwise an import would leave a directory behind, including in tests that redirect the path.
+- `FASTSTUDY_SECRET` enforces the launch secret on inbound requests, and `db_client` forwards it to `database/` ([docs/API.md](docs/API.md)).
+- `runtime.serve` binds the socket and prints the port handshake; `backend_main.py` is the packaged entry.
+- `ffmpeg`, `pandoc` and `tectonic` are spawned through `tool_path(name)`, never by bare name. `backend_main.py` probes them once at startup and reports the result on `/health`; a missing one fails only the steps that need it. A dev machine needs all three to run the pipeline end to end.
+- `runtime.state_path` locates everything written outside `DATA_ROOT` — `timing.db` and the Google token — and each caller mkdirs its own parent.
 
 ## Testing
 
 New tests go in the matching `tests/{pipeline,course,services}/test_<module>.py`. Never silently delete or skip a failing test — fix the code or update the test deliberately.
 
-This applies to "small" changes too — the `pipeline/pdf/` preprocessing helpers look trivial and interact with bidi/LaTeX in surprising ways, which is why every one of them has a test class under `tests/pipeline/pdf/`.
+This applies to "small" changes too: the `pipeline/pdf/` preprocessing helpers look trivial and interact with bidi/LaTeX in surprising ways, which is why every one of them has a test class under `tests/pipeline/pdf/`.
 
-## Documentation and comment style
+## Comment style
 
-Root `CLAUDE.md` covers the general rules. Backend-specific: docstrings are one line, two at most, followed by one blank line before the body. Architecture belongs in `docs/`.
-
-Docs and comments describe the **current state** and the durable WHY — never plans, phase/step numbers, or "was TODO / now done". When behavior changes, edit the affected line to read as if it always worked that way.
+Root `CLAUDE.md` covers the general rules. Backend-specific: docstrings are one line, two at most, followed by one blank line before the body.

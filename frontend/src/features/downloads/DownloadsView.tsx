@@ -126,9 +126,8 @@ export default function DownloadsView() {
                                     <div className="recordings-status">{emptyState[media]}</div>
                                   )
                                 : sections.map((section) => {
-                                    // The synthetic bucket gets no run identity at all: it spans every
-                                    // heading in the course, and an id would collide with a real
-                                    // heading spelled the same — one run slot for two sections.
+                                    // No run identity for the synthetic bucket: an id would collide
+                                    // with a real heading spelled the same — see docs/DOWNLOADS.md.
                                     const id = section.synthetic
                                       ? null
                                       : sectionId(selected, media, section.title)

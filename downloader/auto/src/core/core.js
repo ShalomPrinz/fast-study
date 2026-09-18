@@ -10,12 +10,8 @@ import { splitName } from '../lib/naming.js';
 import { cacheCap, getCap } from './replayCache.js';
 import { stripTags } from '../lib/html.js';
 
-// Flatten the WS section tree into activities. `url` modules carry their external target
-// in contents[].fileurl (YouTube/zoom/Drive/…) — the direct link the extractor expands,
-// not the redirect view page. A `resource` module is the one type that can hold SEVERAL
-// files, so it yields one activity per file (each its own downloadable row); every other
-// modType yields exactly one. Unknown modTypes match no extractor → skipped.
-// Names arrive as HTML, so they're flattened before being displayed or keyword-matched.
+// Flatten the WS section tree into activities: one per module, except a `resource`, which yields
+// one per file. Names arrive as HTML and are flattened first. See docs/BROWSING.md.
 function mapModules(sections) {
   const activities = [];
   for (const section of sections ?? []) {
@@ -77,9 +73,8 @@ function baseName(name) {
   return m ? m[1] : name;
 }
 
-// Capture the whole recording fresh → [{ name, cap }] download targets, caching each.
-// Zoom recordings yield `<name>.1`/`<name>.2`, so split only on a distinct second .mp4.
-// Every other strategy yields one. `name` here is the BASE name the split derives from.
+// Capture the whole recording fresh → [{ name, cap }], caching each. `name` is the BASE name:
+// a zoom share with a distinct second .mp4 yields `<name>.1`/`<name>.2`, anything else one.
 async function captureTargets(page, recording, extractor, { name, course, kind, passcode, ref }) {
   let targets;
   if (recording.strategy === 'zoom') {
@@ -114,11 +109,8 @@ function cachedTargets(recording, course, name, kind) {
 }
 
 /**
- * RESOLVE PATH (HTTP), no browser: the WS token turns the Moodle fileurl into a plain HTTP
- * URL that server/ fetches as one of the lecture's materials. Its own entry point because a
- * strategy that needs no browser must be handed its credential explicitly — folding it into
- * the capture dispatcher made every per-strategy secret look optional. Single target, so
- * there is no `only` semantics; the cap is just a `{url}`. See docs/BROWSING.md.
+ * RESOLVE PATH (HTTP), no browser: the WS token turns the Moodle fileurl into a plain URL
+ * server/ fetches as a lecture material. Takes its credential explicitly. See docs/BROWSING.md.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, wstoken: string,
  *           ref?: string|null, forceCapture?: boolean }} args
@@ -167,12 +159,8 @@ export async function resolveYtDlp({ recording, course, name, kind, ref, forceCa
 }
 
 /**
- * RESOLVE PATH (HTTP), no browser: a single Google Drive file. Its own entry point because it
- * is the one strategy whose media isn't known until it runs — the probe resolves the real
- * filename first and routes on its extension: a video goes to yt-dlp, a PDF becomes one of the
- * lecture's materials, anything else can never succeed and says so (422). Single target; the
- * cap is just a `{url}`, cached under the media that actually lands. `forceCapture` also re-runs
- * the probe, the way back in for a file whose owner shared it only after the first attempt.
+ * RESOLVE PATH (HTTP), no browser: a single Google Drive file, routed by its probed filename
+ * (video → yt-dlp, PDF → material, else 422). `forceCapture` also re-probes. See docs/BROWSING.md.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
@@ -208,15 +196,8 @@ export async function resolveDriveFile({
 }
 
 /**
- * RESOLVE PATH (HTTP), no browser: any other off-site link. Mirrors resolveDriveFile — the media
- * isn't known until it runs, so the probe (`probeUrl`) asks the host first and the target is
- * built under whatever it turned out to be. Single target; the cap is just a `{url}`.
- * `forceCapture` also re-runs the probe, the way back in for a link that only started working
- * after the first attempt.
- *
- * An UNCERTAIN verdict (the host never answered, or answered as generic binary with no name) is a
- * plain Error, not UnsupportedError: it becomes a 500 "try again" and the row stays clickable,
- * where a 422 would grey the button out for the rest of the session over one bad moment.
+ * RESOLVE PATH (HTTP), no browser: any other off-site link, routed by `probeUrl`. An uncertain
+ * verdict is a plain Error (500, row stays clickable), never a 422. See docs/BROWSING.md.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, ref?: string|null,
  *           forceCapture?: boolean }} args
@@ -257,10 +238,8 @@ export async function resolveDirectUrl({
 }
 
 /**
- * RESOLVE PATH (HTTP), browser capture: resolve one echoed-back recording on the live shared
- * page into its download target(s). videostream/zoom sniff the .mp4 fresh; the no-browser
- * strategies have their own entry points above. Each resolved cap is kept in the session replay
- * cache (see replayCache.js) so a retry replays it without re-capturing. See docs/BROWSING.md.
+ * RESOLVE PATH (HTTP), browser capture (videostream, zoom): one echoed-back recording on the
+ * shared page → its target(s), each cap kept in the replay cache. See docs/BROWSING.md.
  * @param {import('playwright').Page} page  live shared page
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null,

@@ -11,7 +11,7 @@ _EXE_SUFFIX = ".exe" if os.name == "nt" else ""
 # `-version` is the form that exits 0. Everything else takes the GNU spelling.
 _VERSION_FLAG = {"ffmpeg": "-version"}
 
-# Long enough for a cold binary on a slow disk, short enough that four of them cannot delay boot
+# Long enough for a cold binary on a slow disk, short enough that a few of them cannot delay boot
 # past the launcher's health wait.
 _VERSION_TIMEOUT_SECONDS = 15
 

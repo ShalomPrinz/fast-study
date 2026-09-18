@@ -1,19 +1,17 @@
 # HTTP API
 
-All endpoints are defined in `backend_main.py`, which stays thin route glue — validation helpers and boundary parsing live in the runners.
-
-Every mutating endpoint is fire-and-forget: it schedules a background asyncio task and returns immediately. Results never come back in the HTTP response; the frontend reads them from the status endpoints.
+All endpoints are in `backend_main.py`. A mutating one never returns its result — it schedules a task and the frontend reads the outcome from a status endpoint.
 
 CORS is open to the frontend's two origins only: `http://localhost:5173` in dev and `app://bundle` in the packaged app.
 
 ## The launch secret
 
-When `FASTSTUDY_SECRET` is set, every request must carry it — as the `X-FastStudy-Secret` header, or as a `secret` query parameter for the one caller that cannot set a header (native `EventSource`). Missing or wrong → `401 {"error": "unauthorized"}`, except a request whose `Accept` contains `text/event-stream`, which is refused as an empty `text/event-stream` body (Chromium reports any other MIME on an `EventSource` as a bare transport error). `GET /health` is the sole exemption, so the launcher can tell a wrong secret from a dead child. Unset means no enforcement at all, which is what dev runs on. The check (`runtime.install_secret_check`) is installed before the CORS middleware so a 401 still carries CORS headers, and `services/db_client.py` sends the same header on every outbound call to `database/`.
+When `FASTSTUDY_SECRET` is set, every request but `GET /health` must carry it; the header, the `secret` query parameter, the 401 shapes and the ordering against CORS are [lib/runtime](../../lib/runtime/CLAUDE.md)'s (`runtime.install_secret_check`). `services/db_client.py` sends the same header on every call to `database/`.
 
 ## Health
 
 `GET /health`
-`{"status": "ok"}` — liveness only, what the launcher waits on before opening the window. It reports nothing else on purpose: paths, config and key-set flags stay on routes that can be refused.
+`{"status": "ok", "tools": {...}}` — liveness plus the boot-time probe of `ffmpeg`, `pandoc` and `tectonic` ([lib/tools](../../lib/tools/CLAUDE.md)), so the launcher's boot screen can render a missing binary. Nothing else on purpose: paths, config and key-set flags stay on routes that can be refused.
 
 ## Per-lecture
 
@@ -48,7 +46,7 @@ Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": .
 ## Course overview
 
 `POST /courses/{course}/overview/generate?extractors=<csv>&from_phase=<id>&skip_existing=<bool>`
-`extractors` is an optional CSV of extractor **slugs** (default: all). `from_phase` omitted → each extractor's full chain; an unknown value → `{"status": "error"}`. → `{"status": "started"|"busy"}`, or an error envelope for an unknown extractor/course. Semantics of the run, the phases, and both flags are in `OVERVIEW.md`.
+`extractors` is an optional CSV of extractor **slugs** (default: all). `from_phase` omitted → each extractor's full chain; an unknown value → `{"status": "error"}`. → `{"status": "started"|"busy"}`, or an error envelope for an unknown extractor/course. Semantics of the run, the phases, and both flags are in [OVERVIEW.md](OVERVIEW.md).
 
 There is deliberately no per-phase endpoint — the frontend never sequences phases itself, mirroring `/run-all`.
 
@@ -63,7 +61,7 @@ Static `{"extractors": [{"slug", "title", "phases"}]}` in declaration order. `ph
 The backend-owned settings: both API keys, the Gemini model, the Drive toggle, the Drive root folder, the `AUTO_RUN` ceiling and the nightly cron's on/off switch and hour. `database/` owns `DATA_ROOT` and the persistent store; these endpoints only move values in and out of the running process.
 
 `POST /config`
-body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder, auto_run, nightly_run, nightly_hour}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. The nightly cron is then re-applied unconditionally — an out-of-range `nightly_hour` is clamped to 03:00 there, never rejected here (docs/PIPELINE.md). → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
+body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled, gdrive_root_folder, auto_run, nightly_run, nightly_hour}`. Writes each field to its environment variable, so the change applies with no restart; omitted fields are untouched. The nightly cron is then re-applied unconditionally — an out-of-range `nightly_hour` is clamped to 03:00 there, never rejected here ([PIPELINE.md](PIPELINE.md)). → `{"status": "ok", "applied": [field names]}` — a key value is never logged and never echoed back.
 
 `GET /config/options`
 `{"providers": [{"id", "display_name", "key_prefix", "console_url"}], "gemini_models": [...]}` from `services/providers.py` and `services/settings.py`, so the settings screens hold no second copy of either list. Each provider's base URL stays server-side.

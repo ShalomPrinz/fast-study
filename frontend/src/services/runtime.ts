@@ -26,9 +26,8 @@ declare global {
       // The installed app version and the OS language, straight from `app.getVersion()`/`getLocale()`.
       version?: string
       locale?: string
-      // Not optional: `services/open.ts` treats the whole bridge's absence as the browser-dev test,
-      // so a present bridge always carries these. Identifiers only — `database/` resolves the path,
-      // and a `target` without `lecture` addresses a course-level `overview/` file.
+      // Not optional: the bridge's absence is the browser-dev test. Identifiers only — `database/`
+      // resolves the path; a `target` without `lecture` is a course-level `overview/` file.
       open: {
         file: (target: {
           course: string
@@ -40,11 +39,7 @@ declare global {
       }
       // Fields, never a URL: main writes the report file and composes the `mailto:` itself.
       report: {
-        mail: (fields: {
-          details: string
-          error: string
-          route: string
-        }) => Promise<ReportResult>
+        mail: (fields: { details: string; error: string; route: string }) => Promise<ReportResult>
       }
     }
   }
@@ -56,9 +51,8 @@ export function runtimeBridge(): Window['faststudy'] {
   return typeof window === 'undefined' ? undefined : window.faststudy
 }
 
-// Resolved once, synchronously: every service builds its client at module scope, and `contextBridge`
-// has the bridge on `window` before the bundle evaluates. The fallbacks are the dev ports each
-// service listens on when the app is run outside the packaged build.
+// Resolved synchronously at import, since every client is built at module scope and the preload runs
+// before the bundle; the fallbacks are the dev ports.
 const urls = runtimeBridge()?.urls
 
 export const BACKEND_URL = urls?.backend ?? 'http://localhost:8000'
@@ -66,9 +60,8 @@ export const DATABASE_URL = urls?.database ?? 'http://localhost:8001'
 export const DOWNLOAD_SERVER_URL = urls?.downloadServer ?? 'http://localhost:3052'
 export const AUTO_DOWNLOADER_URL = urls?.autoDownloader ?? 'http://localhost:3053'
 
-// Whether this machine can keep the API keys safely. Missing bridge means browser dev, which has no
-// Electron store at all — keys go to `database/`'s `.env` and secure storage never enters into it —
-// so the absence of an answer is a working machine, never an unsupported one.
+// Whether this machine can keep the API keys. No bridge is browser dev, where keys go to `.env`, so
+// a missing answer means a working machine — see docs/SETTINGS.md.
 export const canStoreApiKeys = runtimeBridge()?.checks?.secureStorage ?? true
 
 // The launch secret the services check on every request. Undefined in browser dev, where the

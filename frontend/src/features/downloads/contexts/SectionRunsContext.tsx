@@ -12,9 +12,8 @@ import { fetchRuns, subscribeRuns } from '../services/downloadServer'
 import { sequencedRefresh } from '../utils/sequencedRefresh'
 import { useDownloadsActions } from './DownloadsSessionContext'
 
-// Module-level store: `GET /runs` grouped by section id, with per-section subscriptions on top, so a
-// `run:change` ping re-renders only the sections that have a run. It outlives the provider, so the
-// provider clears it on unmount — a stale snapshot would show a run that is no longer there.
+// Module store of `GET /runs` by section id with per-section subscriptions; it outlives the provider,
+// which clears it on unmount.
 let runsBySection: ReadonlyMap<string, SectionRun> = new Map()
 let pausedRuns: readonly SectionRun[] = []
 const listeners = new Set<() => void>()
@@ -27,10 +26,8 @@ function subscribe(listener: () => void): () => void {
 function publish(snapshot: SectionRun[]) {
   runsBySection = new Map(snapshot.map((run) => [run.sectionId, run]))
   const paused = snapshot.filter((run) => run.status === 'paused')
-  // Keep the previous array when the same runs are still parked: `useSyncExternalStore` compares
-  // snapshots by identity, and every ping decodes fresh objects, so a bare filter would re-render
-  // the banner on every progress frame anywhere on the page. Keyed by id alone, so it carries run
-  // identity only — a consumer reading a mutable field off it must widen this comparison first.
+  // Same parked ids keep the previous array, or every ping would re-render the banner. Keyed by id
+  // alone: a consumer reading a mutable field must widen this comparison first.
   if (paused.length !== pausedRuns.length || paused.some((run, i) => run.id !== pausedRuns[i].id))
     pausedRuns = paused
   for (const listener of listeners) listener()
@@ -39,8 +36,7 @@ function publish(snapshot: SectionRun[]) {
 // Guard only — the runs themselves come from the module store, not from the context value.
 const SectionRunsContext = createContext(false)
 
-// One section's run, or null while it has never run — and always null for a section with no id, the
-// synthetic bucket that starts none. `null` is a stable snapshot identity, which is what lets a
+// One section's run, or null — always for the id-less synthetic bucket. A stable `null` lets a
 // section with no run bail out of every ping.
 export function useSectionRun(sectionId: string | null): SectionRun | null {
   if (!useContext(SectionRunsContext))
@@ -62,14 +58,12 @@ export function usePausedRuns(): readonly SectionRun[] {
   return useSyncExternalStore(subscribe, () => pausedRuns)
 }
 
-// Reflects the downloader server's section runs and nothing more, the way `RunnerStatusContext`
-// reflects the pipeline runner: the page starts a run with one POST and then only reads it back, so
-// progress, dispositions and a passcode pause survive a segment switch, a reload and a closed tab.
+// Reflects the downloader server's section runs, as `RunnerStatusContext` does the pipeline runner.
+// See docs/BULK.md.
 export function SectionRunsProvider({ children }: { children: ReactNode }) {
   const { reconnectHint } = useDownloadsActions()
-  // A reflected status is re-read on every ping, so the reconnect hint needs its own memory to fire
-  // once per run. `primed` seeds the first snapshot: a run that was already aborted before this page
-  // loaded is history, and the auth pill probes on mount anyway.
+  // Fires the reconnect hint once per run id; `primed` seeds the first snapshot, since a run aborted
+  // before load is history.
   const reported = useRef<Set<string>>(new Set())
   const primed = useRef(false)
 

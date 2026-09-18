@@ -65,7 +65,7 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand — the downloader uploads to brand-new lectures.
 - **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
-  LAYOUT.md) and returning it. Also creates the lecture dir on demand. Callers that already know
+  [LAYOUT.md](LAYOUT.md#materials)) and returning it. Also creates the lecture dir on demand. Callers that already know
   the exact filename keep using `PUT /…/files/{name}`; delete/get/head go through the files
   routes unchanged. `GET /…/materials` returns the same entries the tree inlines, so a caller
   needing one lecture's materials doesn't pull the whole tree; a missing lecture yields `[]`
@@ -110,10 +110,8 @@ Summary writes never go through the generic files route — that would skip the 
 
 ## No outbound calls
 
-This service never calls another service; it only answers requests and fans out SSE on `/events`.
-Whoever uploads a video reports the arrival to the backend itself — "a video arrived, so run the
-pipeline" is backend policy (`AUTO_RUN`), and the store has no stake in it. Keeping the store
-call-free is also what stops a `backend ↔ database` dependency cycle.
+This service calls nobody (root `CLAUDE.md`). Whoever uploads a video reports it to the backend
+itself: "a video arrived, so run the pipeline" is backend policy (`AUTO_RUN`), not the store's.
 
 ## Settings
 
@@ -126,48 +124,24 @@ merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 | `PUT /settings` | `200` with the same shape; `400` `{error}` on a rejected value                                        |
 | `POST /config`  | `204`, clearing the unconfigured state; `400` `{error}` on a data root that is relative or unwritable |
 
-`PUT /settings` is the second exception to the 204-on-mutation convention: it answers with the
-`GET` shape so the client never needs a follow-up read.
-
-Values are typed three ways — string, bool (`drive_enabled`, `nightly_run`) and int
-(`nightly_hour`) — and the type is the whole of the validation: a wrong type is `400`, but a value's
-meaning, like whether an hour is in `0..23`, is the owning service's to enforce. `PUT` rejects a
-boolean for an int field on purpose, since Python would otherwise store `true` as `1`.
-
 ## Access logging
 
-`setup_logging()` from the shared [`lib/logging`](../../lib/logging/CLAUDE.md), called once at
-`database_main.py` import, owns the `uvicorn.access` logger outright: at that point uvicorn has
-configured nothing, so it installs its own `StreamHandler` and sets `propagate = False` rather than
-re-formatting a handler uvicorn placed. `runtime.serve()` then starts uvicorn with `log_config=None`
-so uvicorn's own `dictConfig` never runs and never replaces it — the two go together. The access log
-therefore goes to stderr, off stdout, which is the `FASTSTUDY_PORT=<n>` port-handshake channel
-uvicorn's default access handler would otherwise share. Lines come out as
-`[api] POST /courses/X/… → 200`, and the routine classes are suppressed: every `HEAD`, every
-`OPTIONS`, and every `GET` that returned 2xx. Those requests still run normally — they are the
-frontend's constant existence probes, CORS preflights, and tree/status reads, and only their log
-lines are dropped. Failing GETs and all writes are always logged.
+[`lib/logging`](../../lib/logging/CLAUDE.md)'s `setup_logging()`, called at `database_main.py`
+import. The lines it drops — every `HEAD`, `OPTIONS` and 2xx `GET` — are here the frontend's
+existence probes, CORS preflights and tree reads; failing GETs and every write are logged.
 
 ## Trust model
 
-Localhost only. When `FASTSTUDY_SECRET` is set, `runtime.install_secret_check` requires it on every
-request — the `X-FastStudy-Secret` header **or** a `secret` query parameter, the latter because native
-`EventSource` cannot set a header. `GET /health` is the only exemption, so the launcher can tell a
-wrong secret from a dead child. Rejections are `401 {"error": "unauthorized"}`, except a request whose
-`Accept` contains `text/event-stream`, answered `401` with an empty `text/event-stream` body — any
-other MIME makes `EventSource` report a bare transport error instead of the auth failure. Binding to
-loopback is not itself a defence: the secret is what keeps another local process or page off the API.
-An unset `FASTSTUDY_SECRET` installs no middleware at all, which is what dev runs on.
+Localhost only, and loopback is not itself a defence: when `FASTSTUDY_SECRET` is set, the launch
+secret is what keeps another local process or page off the API. The check and its rules — header or
+`?secret=`, the `/health` exemption, the `401` shapes — are
+[`lib/runtime`](../../lib/runtime/CLAUDE.md)'s `install_secret_check`, installed before
+`CORSMiddleware` so a `401` carries CORS headers.
 
-CORS allows `http://localhost:5173` (browser dev) and `app://bundle`, the packaged frontend's
-origin, matched verbatim because browsers send it with no trailing slash; the backend and
-downloader call server-to-server and need no entry. The secret check is installed _before_
-`CORSMiddleware` so CORS stays outermost and a `401` carries CORS headers; Starlette short-circuits
-preflights, so `OPTIONS` never reaches the check.
+CORS allows `http://localhost:5173` (browser dev) and `app://bundle` (the packaged frontend, matched
+verbatim — root `CLAUDE.md`); the backend and downloader call server-to-server and need no entry.
 
-Every caller-supplied file name goes through `check_safe_segment` (`fs/paths.py`: no separator,
-`..`, or NUL) before it is joined onto a resolved directory — both resolvers (`fs/files.file_path`,
-`fs/overview.overview_file_path`) and both mutators (`fs/crud.write_file`, `crud.delete_file`) —
-answering `400`. It matters most on the `/path` routes, whose answer the launcher hands to
-`shell.openPath`, but a write or delete is the same primitive. Course and lecture names need no
-separate guard, since the resolvers run them through `safe_name()`, which drops separators.
+Every caller-supplied file name goes through `check_safe_segment` before it is joined onto a
+resolved directory, on every resolver and mutator, answering `400`. It matters most on the `/path`
+routes, whose answer the launcher hands to `shell.openPath`, but a write or delete is the same
+primitive. Course and lecture names need no separate guard: `safe_name()` drops separators.

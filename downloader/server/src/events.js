@@ -1,6 +1,5 @@
-// Push side of the two registries (docs/JOBS.md, docs/RUNS.md): pure notification. Every
-// transition fires one contentless frame — `job:change` or `run:change`; the frame carries no
-// state, it only tells the client to refetch `/jobs` or `/runs`, the single sources of truth.
+// Push side of the two registries (docs/JOBS.md, docs/RUNS.md): one contentless `job:change` or
+// `run:change` frame per transition, telling the client to refetch `/jobs` or `/runs`.
 const subscribers = new Set();
 
 // A silent stream is killed by idle timeouts; a comment line keeps it warm.

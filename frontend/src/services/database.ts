@@ -71,9 +71,8 @@ export async function uploadVideo(
     headers: { 'Content-Type': 'video/mp4' },
     body: file,
   })
-  // Uploading a video means announcing it too, or the next call site silently loses auto-run — a
-  // concern spanning both services by design, like the settings boundary in `settings.ts`.
-  // A failed report is swallowed: the bytes are stored, and the user can still run by hand.
+  // Announced here so no caller silently loses auto-run. A failed report is swallowed: the bytes are
+  // stored, and the user can still run by hand.
   try {
     await reportVideoArrived(course, lecture, kind)
   } catch (err) {

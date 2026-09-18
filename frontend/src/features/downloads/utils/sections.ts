@@ -42,11 +42,8 @@ export function parseSectionId(id: string): { course: string; media: Media; titl
   return { course: id.slice(0, first), media: media as Media, title }
 }
 
-// The active media's items, grouped by Moodle heading in first-seen order — so a section with
-// nothing on this side is absent rather than empty. A row the keyword hint says is not a recording
-// (a random course YouTube link, a syllabus PDF) is pulled out of its heading into the synthetic
-// bucket last — visible, but out of the lecture sections, and out of any bulk run: only a `url`
-// module can carry the false, and those are exactly the rows listing now claims on the URL alone.
+// The active media's items by Moodle heading, first-seen order; rows the keyword hint marks as not a
+// recording go to the synthetic bucket, last. See docs/DOWNLOADS.md §Discovery.
 export function groupSections(items: Item[], media: Media): Section[] {
   const map = new Map<string, Item[]>()
   const strays: Item[] = []
