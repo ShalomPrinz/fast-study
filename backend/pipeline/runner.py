@@ -559,6 +559,12 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
             "progress": None,
         }
         _errors.pop(skey, None)  # clear any stale error from a previous attempt
+        if step == "summarize":
+            # Any summarize attempt re-tests Gemini's quota: drop every quota record and lift the
+            # run's stop, so lectures still queued retry; a fresh hit re-sets both below.
+            for key in [k for k, e in _errors.items() if e["code"] == "quota"]:
+                del _errors[key]
+            _summarize_block = None
         db_client.notify()
 
         result = await _call_step(course, lecture, kind, step)

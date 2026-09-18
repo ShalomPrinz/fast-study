@@ -683,6 +683,88 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
         runner._summarize_block = None
 
 
+def test_summarize_start_clears_quota_records_and_lifts_block():
+    """Any summarize attempt drops every lecture's quota record and the run's stop;
+    other errors stay."""
+    runner._errors.update(
+        {
+            "hit": runner._error_record("summarize", "q", quota=True),
+            "stopped": runner._error_record("summarize", "q", quota=True, blocked=True),
+            "other": runner._error_record("pdf", "boom"),
+        }
+    )
+    runner._summarize_block = "q"
+
+    async def fake_call(course, lecture, kind, step):
+        return {"status": "done"}
+
+    async def go():
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner.run_step("C1", "L9", "lecture", "summarize")
+
+    try:
+        asyncio.run(go())
+        assert list(runner._errors) == ["other"]
+        assert runner._summarize_block is None
+    finally:
+        runner._errors.clear()
+        runner._summarize_block = None
+
+
+def test_manual_summarize_mid_run_lets_queued_lectures_summarize():
+    """L1 hits the quota; a manual summarize elsewhere lifts the stop before L2 is
+    taken, so L2 and L3 call Gemini instead of being stopped."""
+    summarized: set[str] = set()
+    calls: list[str] = []
+    manual_done = False
+
+    async def fake_fetch(course, lecture, kind):
+        nonlocal manual_done
+        if lecture == "L2" and not manual_done:
+            manual_done = True
+            await runner.run_step("C1", "M", "lecture", "summarize")
+        done = lecture in summarized
+        return _files(
+            video=True,
+            audio=True,
+            transcript=True,
+            summary=done,
+            pdf=done,
+            drive=done,
+        )
+
+    async def fake_call(course, lecture, kind, step):
+        calls.append(lecture)
+        if lecture == "L1":
+            return _quota_error_result()
+        summarized.add(lecture)
+        return {"status": "done"}
+
+    async def go():
+        with (
+            patch.object(runner, "_fetch_files", fake_fetch),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            runner._queue[:] = [
+                runner.QueueEntry("C1", lecture, "lecture", "full")
+                for lecture in ("L1", "L2", "L3")
+            ]
+            await runner.run_all()
+
+    try:
+        asyncio.run(go())
+        assert calls == ["L1", "M", "L2", "L3"]
+        assert runner._errors == {}  # L1's hit record was cleared by M's attempt
+    finally:
+        runner._errors.clear()
+        runner._queue.clear()
+        runner._summarize_block = None
+
+
 @pytest.fixture
 def clean_queue():
     """The queue, the locks and the run flag are module state; every test here mutates them."""
