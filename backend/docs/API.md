@@ -30,7 +30,7 @@ Scans for pending lectures and queues them at depth `full`, whatever `AUTO_RUN` 
 `all_in_flight` means every pending lecture is already owned by a concurrent trigger — the run would have skipped them all, so the UI can say so instead of appearing to do nothing.
 
 `GET /status`
-`{runner: {running, total, done, last_error}, in_flight: [...], queue: [...], errors: {skey: message}}`. `queue` lists what the runner has left to take, in the order it will take them, each `{course, lecture, kind, depth}` with `depth ∈ {full, audio}`. Cheap; the UI refetches it on each SSE notify.
+`{runner: {running, total, done, last_error}, in_flight: [...], queue: [...], errors: {skey: {step, message, code, provider}}}`. An error is the last failed step of that lecture; `code` is `"quota"` with `provider` `"gemini"` for Gemini's daily quota, else both `null`. A lecture a run stopped before summarize because an earlier one hit that quota carries the same quota record. `queue` lists what the runner has left to take, in the order it will take them, each `{course, lecture, kind, depth}` with `depth ∈ {full, audio}`. Cheap; the UI refetches it on each SSE notify.
 
 ## Timing
 

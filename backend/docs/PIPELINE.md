@@ -40,7 +40,8 @@ Outcomes of the fire-and-forget endpoints live in runner state, read via `GET /s
 
 - `_locks[(course, lecture, kind)]` — one `asyncio.Lock` per lecture, serializing concurrent triggers.
 - `_in_flight[skey]` — all in-flight entries regardless of trigger (runner / `/pipeline` / single `/run/{step}` all populate the same map, so the frontend doesn't care which path queued them). `skey` is the string `"course||lecture||kind"` and appears verbatim in `/status`.
-- `_errors[skey]` — last error, survives after `_in_flight` clears.
+- `_errors[skey]` — last error as `{step, message, code, provider}`, survives after `_in_flight` clears; cleared when that lecture next starts a step.
+- `_summarize_block` — the Gemini daily-quota message that stops `run_all` from summarizing further lectures; each one it stops gets the same quota record in `_errors`. Reset at every run's start and end.
 - `_runner_status` — `{running, total, done, last_error}` for `run_all`.
 - `_queue` — the ordered `QueueEntry(course, lecture, kind, depth)` list `run_all` drains. In memory only: a restart empties it, and those lectures simply fall back to "has work left, nothing scheduled", which the frontend derives from the tree.
 
@@ -91,7 +92,7 @@ Resume validates the meta against `audio.mp3`'s size AND mtime. Re-downloading a
 **Gemini / summarize.** `LLMClient.generate` parses a 429 body into `GeminiRateLimitError` (`{quota_id, quota_value, model, is_daily}`) instead of leaking the SDK's JSON blob. The 429's `retryDelay` is never parsed — the quota kind says everything actionable, and a daily quota's `retryDelay` lies (claims 59s, actually resets at midnight Pacific).
 
 - Per-minute quota → normal `rate_limited` path, sleeping `GEMINI_MINUTE_QUOTA_SLEEP_SECONDS`.
-- Daily quota (`quotaId` containing `PerDay`, or anything unrecognised — the safe default) → plain error, no retry. It also sets the run-scoped `_summarize_blocked` flag so every later lecture in the same `run_all` stops silently at `transcript.txt`: one error in the UI, not N. Audio+transcribe are Groq (separate quota) so the queue still gets fully transcribed, and tomorrow's run resumes each lecture at summarize.
+- Daily quota (`quotaId` containing `PerDay`, or anything unrecognised — the safe default) → plain error, no retry. It also sets the run-scoped `_summarize_block` so every later lecture in the same `run_all` stops at `transcript.txt` without calling Gemini, carrying the same quota record so it reads as blocked rather than pending. Audio+transcribe are Groq (separate quota) so the queue still gets fully transcribed, and tomorrow's run resumes each lecture at summarize.
 
 Manual `/run/summarize` and `/pipeline` triggers ignore the flag — the user may have swapped keys.
 
