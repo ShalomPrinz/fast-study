@@ -101,8 +101,8 @@ export function backend({ urls, secret }) {
         },
         { timeoutMs, intervalMs: 500, message: `${label} on ${course}/${name} never finished` },
       );
-      // The backend's own error key, as /status spells it.
-      return snapshot.errors[`${course}||${name}||lecture`] ?? null;
+      // The backend's own error key, as /status spells it; each entry carries the message.
+      return snapshot.errors[`${course}||${name}||lecture`]?.message ?? null;
     },
     runPipeline: async (course, name) =>
       (await at('POST', `${lecture(course, name)}/pipeline`)).json(),
