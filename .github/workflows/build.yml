@@ -1,10 +1,18 @@
 name: Build and smoke-test
 
-# Manual only. Builds the installer once, runs the release smoke suite against exactly those bytes on
-# a fresh runner, and only then uploads them to a draft Release v<version>. Nothing here publishes:
-# electron-updater never sees a draft, and publish.yml is the one way a draft goes live.
+# Every push, plus a dispatch to rebuild a commit whose artifact expired. Builds the installer once
+# and runs the release smoke suite against exactly those bytes on a fresh runner; nothing here
+# publishes — publish.yml takes the `installer` artifact of this workflow's green run for its commit.
 on:
+  push:
+    # Branches only: a tag names a commit a branch push already built.
+    branches: ["**"]
   workflow_dispatch:
+
+# Only the newest push on a ref builds; a superseded run is cancelled rather than queued.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   # Pinned, because each one is a claim the repo has measured. tectonic is the version the shipped
@@ -23,8 +31,6 @@ jobs:
     defaults:
       run:
         shell: bash
-    outputs:
-      version: ${{ steps.version.outputs.version }}
 
     steps:
       - uses: actions/checkout@v4
@@ -154,6 +160,9 @@ jobs:
             electron/dist/FastStudy-Setup-${{ steps.version.outputs.version }}.exe.blockmap
             electron/dist/latest.yml
           if-no-files-found: error
+          # The public-repo maximum: publish.yml can release this commit until then, and a dispatch
+          # of this workflow on it rebuilds one that expired.
+          retention-days: 90
 
       - uses: actions/upload-artifact@v4
         with:
@@ -162,7 +171,7 @@ jobs:
           if-no-files-found: error
 
   # A fresh runner, so the install is a first install. It installs and tests the uploaded artifact,
-  # which is byte for byte what the draft job below attaches.
+  # which is byte for byte what publish.yml releases — and only a run this job passed counts as green.
   smoke:
     needs: build
     runs-on: windows-latest
@@ -226,46 +235,3 @@ jobs:
           name: smoke-traces
           path: delivery/smoke/test-results/traces/
           if-no-files-found: ignore
-
-  # Attaches the tested files, never rebuilt ones, and never publishes. A rebuild of the same version
-  # replaces the draft's files and re-targets it at this commit.
-  draft:
-    needs: [build, smoke]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    # Shared with publish.yml, so a draft is never rewritten while it is being flipped live.
-    concurrency:
-      group: release
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      GH_REPO: ${{ github.repository }}
-      TAG: v${{ needs.build.outputs.version }}
-
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: installer
-          path: installer
-
-      - name: Upload to the draft Release
-        run: |
-          files=(installer/*)
-          if view=$(gh release view "$TAG" --json isDraft 2> view.err); then
-            if [ "$(jq -r .isDraft <<< "$view")" != "true" ]; then
-              echo "::error::$TAG is already published; bump electron/package.json's version and rebuild"
-              exit 1
-            fi
-            gh release edit "$TAG" --target "$GITHUB_SHA"
-            for asset in $(gh release view "$TAG" --json assets --jq '.assets[].name'); do
-              gh release delete-asset "$TAG" "$asset" --yes
-            done
-            gh release upload "$TAG" "${files[@]}"
-            echo "replaced the files of draft $TAG, now targeting $GITHUB_SHA"
-          elif grep -q "release not found" view.err; then
-            gh release create "$TAG" "${files[@]}" --draft --target "$GITHUB_SHA" --title "$TAG" --notes ""
-            echo "created draft $TAG targeting $GITHUB_SHA"
-          else
-            cat view.err
-            exit 1
-          fi

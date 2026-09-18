@@ -1,8 +1,8 @@
 name: Publish
 
-# Manual only, no input, and it builds nothing: it flips the draft Release that build.yml attached
-# the smoke-tested files to, which is the moment every installed copy's updater can see it. Run it
-# on the same commit the build ran on, since that is the draft it looks for.
+# Manual only, no input, and it builds nothing: it releases the `installer` artifact of build.yml's
+# green run for the dispatched commit — the bytes the smoke job tested — as Release v<version>,
+# which is the moment every installed copy's updater can see it.
 on:
   workflow_dispatch:
 
@@ -10,8 +10,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       contents: write
-    # Shared with build.yml's draft job, so the files cannot be replaced mid-flip.
+    # Two dispatches would race between the existence check and the create.
     concurrency:
       group: release
     env:
@@ -21,34 +22,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Flip the tested draft live
+      - name: Release the tested installer
         run: |
           version=$(node -p "require('./electron/package.json').version")
           tag="v$version"
-          if ! view=$(gh release view "$tag" --json isDraft,targetCommitish,assets); then
-            echo "::error::no draft $tag; run build.yml on $GITHUB_SHA first"
+          if view=$(gh release view "$tag" --json isDraft 2> view.err); then
+            echo "::error::a Release $tag already exists (draft: $(jq -r .isDraft <<< "$view")); bump electron/package.json's version"
+            exit 1
+          elif ! grep -q "release not found" view.err; then
+            cat view.err
             exit 1
           fi
-          if [ "$(jq -r .isDraft <<< "$view")" != "true" ]; then
-            echo "::error::$tag is already published"
-            exit 1
-          fi
-          target=$(jq -r .targetCommitish <<< "$view")
-          if [ "$target" != "$GITHUB_SHA" ]; then
-            echo "::error::draft $tag was built from $target, not the dispatched $GITHUB_SHA"
-            exit 1
-          fi
-          # A draft whose upload died halfway would go live without what the updater reads.
-          for asset in "FastStudy-Setup-$version.exe" "FastStudy-Setup-$version.exe.blockmap" latest.yml; do
-            if ! jq -e --arg name "$asset" '.assets | any(.name == $name)' <<< "$view" > /dev/null; then
-              echo "::error::draft $tag has no $asset"
-              exit 1
-            fi
-          done
-          # Publishing creates the tag at the target; one that already exists would be reused as-is.
+          # Creating the Release creates the tag at the target; one that already exists would be reused as-is.
           if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
             echo "::error::tag $tag already exists"
             exit 1
           fi
-          gh release edit "$tag" --draft=false --latest
-          echo "published $tag at $GITHUB_SHA"
+
+          # A run's conclusion is success only when every job passed, smoke included.
+          run=$(gh run list --workflow build.yml --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -z "$run" ]; then
+            echo "::error::no successful build.yml run for $GITHUB_SHA; dispatch build.yml on this commit, then publish again"
+            exit 1
+          fi
+          if ! gh api "repos/$GH_REPO/actions/runs/$run/artifacts" --jq '.artifacts[] | select(.name == "installer" and (.expired | not)) | .id' | grep -q .; then
+            echo "::error::the installer artifact of build.yml run $run for $GITHUB_SHA has expired; dispatch build.yml on this commit, then publish again"
+            exit 1
+          fi
+          gh run download "$run" -n installer -D installer
+
+          files=("installer/FastStudy-Setup-$version.exe" "installer/FastStudy-Setup-$version.exe.blockmap" installer/latest.yml)
+          for file in "${files[@]}"; do
+            [ -f "$file" ] || { echo "::error::build.yml run $run's installer artifact has no ${file#installer/}"; ls -l installer; exit 1; }
+          done
+
+          gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "$tag" --notes "" --latest
+          echo "published $tag at $GITHUB_SHA from build.yml run $run"

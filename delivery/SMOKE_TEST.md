@@ -1,11 +1,13 @@
 # Release smoke test — the manual half
 
 `build.yml`'s smoke job covers everything that needs no account, key or human. This list is what a
-runner cannot reach. Run it on a real Windows machine, against the installer attached to the draft
-Release, before dispatching `publish.yml` — all but the last item, which needs the release live.
+runner cannot reach. Run it on a real Windows machine, against the `installer` artifact of the
+commit's green `build.yml` run, before dispatching `publish.yml` — all but the last item, which
+needs the release live. Download the artifact in a browser and extract it with Windows Explorer, so the `.exe` keeps
+the Mark-of-the-Web the SmartScreen item needs.
 
-- [ ] **SmartScreen.** Download the installer through a browser and start it: "More info → Run
-      anyway" gets past "Windows protected your PC".
+- [ ] **SmartScreen.** Start the extracted installer: "More info → Run anyway" gets past "Windows
+      protected your PC".
 - [ ] **A clean machine.** Install on a Windows with no developer tools or extra VC++ runtimes; the
       app boots and renders a PDF.
 - [ ] **Moodle connect.** Connect the account, completing MFA by hand.

@@ -41,12 +41,14 @@ The version is `electron/package.json`'s `version`, bumped in a commit before a 
 `app.getVersion()` reports it and `launch.log`'s first line already carries it, so the log says which
 build produced it. The channel is `latest`.
 
-Nothing here publishes. `.github/workflows/build.yml` builds with `--publish never`, smoke-tests the installer, and only then uploads it, its `.blockmap` and `latest.yml` to a **draft**
-Release `v<version>`; `publish.yml` flips that draft live. electron-updater never sees a draft, so no
-installed copy can update to bytes the smoke job did not test.
+Nothing here publishes. `.github/workflows/build.yml` runs on every push (and on dispatch), builds
+with `--publish never`, smoke-tests the installer and keeps it as the `installer` Actions artifact
+(90-day retention). `publish.yml`, dispatched by hand, creates Release `v<version>` already published
+from that commit's green `build.yml` run's `installer` artifact. It never builds, so no installed copy
+can update to bytes the smoke job did not test.
 
 The repo is public, so **no token ships with the app** — the updater only needs anonymous reads of
-the Releases API and the asset. A token is needed only by the workflows that upload and publish.
+the Releases API and the asset. Only `publish.yml` needs a token with write access.
 
 ## Not proven
 

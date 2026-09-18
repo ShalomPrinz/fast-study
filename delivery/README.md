@@ -16,9 +16,9 @@ runtime, and no dev command touches any of it.
 
 ## The installer
 
-`.github/workflows/build.yml`, run by hand from the Actions tab, is the only thing that produces
-one. It runs on `windows-latest` because neither PyInstaller nor electron-builder's NSIS target can
-cross-compile from WSL, so nothing here is buildable on a dev machine — which is also why everything
+`.github/workflows/build.yml`, run on every push, is the only thing that produces one. It runs on
+`windows-latest` because neither PyInstaller nor electron-builder's NSIS target can cross-compile
+from WSL, so nothing here is buildable on a dev machine — which is also why everything
 the build reads has to be committed, `backend/credentials.json` alone excepted: it arrives as the
 `GOOGLE_CREDENTIALS_JSON` Actions secret, and a build without it still produces a bundle, just one
 that cannot do Drive consent.
@@ -32,33 +32,37 @@ collected, since a missing document surfaces only as a failed Drive upload on a 
 
 ### Build, test, publish
 
-Two workflows, both dispatched by hand, and neither takes an input. The bytes users update to are
-exactly the bytes the smoke job tested.
+Two workflows, neither taking an input. The bytes users update to are exactly the bytes the smoke
+job tested.
 
-- **`build.yml`** builds with `--publish never` — the installer, its `.blockmap` and `latest.yml`,
-  plus a second installer of the same staged tree at a lower version that exists only for the
-  update check and never leaves Actions. The build fails if the shipped `app-update.yml` does not
-  name this repo's GitHub Releases, which the smoke job rewrites and so cannot check. Its smoke job installs the uploaded artifact on a fresh
-  runner and runs `smoke/`; on failure it uploads two artifacts — `smoke-logs`, the per-launch
-  `launch.log`s, the state root's own and the failing test's DOM snapshot, ~60KB, and
-  `smoke-traces`, the Playwright traces, ~11MB, which almost nothing needs. Only a green smoke job
-  attaches the three files to a **draft** Release `v<version>` targeted at the built commit.
-  Rebuilding the same version replaces the draft's files; a version that is already published is
-  refused.
-- **`publish.yml`** builds nothing. It reads the version at the dispatched commit, refuses unless a
-  draft `v<version>` targets that commit and carries all three files, and flips it live, which is
-  when the tag is created.
+- **`build.yml`** runs on every branch push — only the newest per ref, a superseded run is
+  cancelled — and on dispatch. It builds with `--publish never` — the installer, its `.blockmap`
+  and `latest.yml`, uploaded as the `installer` artifact, kept 90 days, plus a second installer of
+  the same staged tree at a lower version that exists only for the update check and never leaves
+  Actions. The build fails if the shipped `app-update.yml` does not name this repo's GitHub
+  Releases, which the smoke job rewrites and so cannot check. Its smoke job installs the uploaded
+  artifact on a fresh runner and runs `smoke/`; on failure it uploads two artifacts —
+  `smoke-logs`, the per-launch `launch.log`s, the state root's own and the failing test's DOM
+  snapshot, ~60KB, and `smoke-traces`, the Playwright traces, ~11MB, which almost nothing needs.
+  The run is green only when both jobs pass. It writes nothing to Releases.
+- **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It reads the
+  version there, refuses if a Release or tag `v<version>` already exists, takes the `installer`
+  artifact of `build.yml`'s newest green run for that commit, checks all three files are in it and
+  creates Release `v<version>` from them, published and targeted at that commit.
+
+An `installer` artifact expires after 90 days; `publish.yml` then fails naming the commit, and
+dispatching `build.yml` on it builds and smoke-tests a fresh one.
 
 `.claude/skills/debug-ci/` reads both smoke artifacts by name and by their inner layout, from
 outside `delivery/` — nothing here fails when a rename breaks it, so it is a consumer to change in
 the same pass.
 
-electron-updater never sees a draft, so a tested build sits invisible to every installed copy until
-`publish.yml` runs. `latest.yml` is what those copies read. Run [`SMOKE_TEST.md`](SMOKE_TEST.md) on
-a real machine against the draft's installer before publishing.
+Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what they read. Run
+[`SMOKE_TEST.md`](SMOKE_TEST.md) on a real machine against the commit's `installer` artifact before
+publishing.
 
-Bump `version` in `electron/package.json` in a commit **before** dispatching. It is the tag, the
-installer's file name and what `app.getVersion()` reports. The launcher's side of this — the silent
+Bump `version` in `electron/package.json` in the commit to release. It is the tag, the installer's
+file name and what `app.getVersion()` reports. The launcher's side of this — the silent
 check, the download and the install on quit — is
 [`electron/docs/UPDATES.md`](../electron/docs/UPDATES.md).
 
