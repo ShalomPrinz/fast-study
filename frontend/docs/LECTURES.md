@@ -60,8 +60,8 @@ daily quota, set on every lecture a run-all stopped at summarize for it, and the
 leads with a localized headline above the backend's prose.
 
 Error toasts go through `useReportOnce`, which dedupes `(key, message)` across refreshes; `prune` lets a
-key fire again if the error recurs. Quota errors skip it: one localized toast fires only when the set of
-them goes from empty to non-empty.
+key fire again if the error recurs. A quota error toasts the localized line instead, and only when not
+`blocked` — the lecture that hit the limit, not each one run-all then stopped at summarize.
 
 `useRemoteInflightState` turns the open lecture's entry into a render descriptor; progress comes from the
 entry, else from `transcript.partial.txt` for a transcribe step. `useTimingStats(step, bytes)` fetches the

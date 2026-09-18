@@ -128,12 +128,13 @@ export interface RunnerStatus {
 }
 
 // A lecture's last step failure; `step` is the backend's step name. `code: 'quota'` is Gemini's daily
-// quota running out, set on the lecture that hit it and on each one run-all then stopped at summarize.
+// quota running out; `blocked` marks a lecture run-all then stopped at summarize without calling Gemini.
 export interface RunError {
   step: string
   message: string
   code: 'quota' | null
   provider: 'gemini' | null
+  blocked: boolean
 }
 
 export type CoursePhase = 'extract' | 'analyze' | 'topics' | 'compile' | 'to_pdf'

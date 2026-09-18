@@ -44,9 +44,6 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     seed: seedError,
     prune: pruneErrors,
   } = useReportOnce((msg) => sendUpdateRef.current?.('error', msg))
-  // Quota errors toast once, when the set goes from empty to non-empty: a batch stopped at summarize
-  // records one per lecture across several snapshots, and they all say the same thing.
-  const hadQuota = useRef(false)
 
   const latest = useLatestRequest()
   // First applied status carries errors from before load: seed-and-suppress them, toast later ones.
@@ -64,14 +61,12 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       if (!s.runner.running && s.runner.lastError) {
         announce('runner-crash', s.runner.lastError)
       }
+      // A quota error toasts the localized line only on the lecture that hit the limit; the ones run-all
+      // then stopped at summarize are `blocked`, or one batch would toast once per lecture.
       for (const [key, error] of Object.entries(s.errors)) {
         if (error.code !== 'quota') announce(key, error.message)
+        else if (!error.blocked) announce(key, i18n._(QUOTA_MESSAGE))
       }
-      const hasQuota = Object.values(s.errors).some((e) => e.code === 'quota')
-      if (primed.current && hasQuota && !hadQuota.current) {
-        sendUpdateRef.current?.('error', i18n._(QUOTA_MESSAGE))
-      }
-      hadQuota.current = hasQuota
       primed.current = true
     } catch {
       // SSE will fire again on the next backend transition; nothing to do.
