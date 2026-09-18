@@ -29,6 +29,12 @@ any data shape, including ones no local course has, without booting four service
 Measure with `getBoundingClientRect` whenever the claim is "aligned" or "centred", and screenshot every
 row/card shape — a grid that fixes the wide window can overlap at a narrow one.
 
+The packaged app renders at a **1008x655** viewport on GitHub's `windows-latest` runner: the runner
+desktop is 1024x768 and Windows clamps the 1400x900 window `electron/main.js` asks for (measured in
+[`delivery/README.md`](../delivery/README.md)). A window-width breakpoint at or above ~1008px therefore
+flips CI — and every 1366x768 laptop — into the narrow branch while dev machines stay wide, which is why
+the lecture header's ⋮ collapse sits at 960px (`features/lectures/hooks/useCompactHeaderActions.ts`).
+
 Use **one** `page.route("**/*")` handler that lets the dev-server origin `continue_()` and answers
 everything else by URL suffix. A narrower glob like `**/list` or `**/events*` also matches Vite's own module
 URLs (`/src/services/events.ts`), and aborting one blanks the app with no console error.

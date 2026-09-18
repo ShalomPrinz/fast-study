@@ -104,6 +104,12 @@ off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` 
 - **A Hebrew temp path is proven used.** The audio and PDF steps run with `TEMP` on a Hebrew folder,
   watched to prove each step's workspace landed there; the backend's line naming it must reach
   `launch.log` as UTF-8, not lost or `\u05..`-escaped.
+- **The window is 1008x655 CSS px**, not the 1400x900 `electron/main.js` asks for — the runner's
+  desktop is 1024x768 and Windows clamps the window to it. Read it back off any `smoke-traces`
+  launch trace (`"viewport"` in the unzipped `trace.trace`); a green run uploads none. So the
+  frontend is exercised just under the breakpoints a dev machine stays above, and a step touching a
+  layout-dependent control has to work in both branches — which is why test 8 clicks
+  `lecture-actions-menu` only when it is in the DOM.
 - Launched with `--lang=en-US`, so a failure screenshot is readable.
 
 Each assumption only a Windows run can prove — the silent per-user install, Playwright attaching to
