@@ -83,6 +83,8 @@ other fails here rather than in a service:
   Driven over the wire rather than against a fake `req`, because the duplicate- and bracketed-query
   cases are assertions about express's own parser.
 
+A change to the table ships with a test pinning it in both languages, even when it had no coverage before.
+
 Both also drive `serve()` in a child process, on a free port and on an occupied one, since either
 outcome ends the process.
 

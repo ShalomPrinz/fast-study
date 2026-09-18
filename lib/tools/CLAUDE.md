@@ -75,6 +75,8 @@ fails here rather than in a service:
 - `py/tests/test_tools.py` — `uv run --extra test pytest` from `py/`.
 - `js/tests/tools.test.js` — `npm test` from `js/`.
 
+A change to the table ships with a test pinning it in both languages, even when it had no coverage before.
+
 Both write their fake binaries to whatever path `tool_path` resolves, rather than composing a
 filename by hand, so the exe-suffix rule is exercised on whichever platform the suite runs on.
 
