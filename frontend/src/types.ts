@@ -27,6 +27,8 @@ export type FileInfo = {
   mtime: number | null
   url?: string
   warning?: string
+  // `video.mp4` only: seconds read from the MP4 header, omitted while absent, mid-download or unreadable.
+  duration?: number
 }
 export type FileStatus = Record<FileName, FileInfo>
 

@@ -8,10 +8,12 @@ interface Props {
   // Inline facts about what the page shows; the caller separates them with `<PageHeaderDot />`.
   meta?: ReactNode
   actions?: ReactNode
+  // A second action row under the title line, clear of the title column, which has no width floor.
+  secondaryActions?: ReactNode
 }
 
 // The band every view opens with: breadcrumb, title, metadata row, and a right-aligned action group.
-export default function PageHeader({ eyebrow, title, meta, actions }: Props) {
+export default function PageHeader({ eyebrow, title, meta, actions, secondaryActions }: Props) {
   return (
     <header className="page-header">
       {eyebrow && (
@@ -28,6 +30,7 @@ export default function PageHeader({ eyebrow, title, meta, actions }: Props) {
         </div>
         {actions && <div className="page-header-actions">{actions}</div>}
       </div>
+      {secondaryActions && <div className="page-header-secondary">{secondaryActions}</div>}
     </header>
   )
 }

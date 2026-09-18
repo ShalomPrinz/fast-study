@@ -41,11 +41,23 @@
   color: var(--text-3);
 }
 
+/* Never shrinks, so a long title wraps inside `.page-header-text` instead of pushing the group
+   narrower — the text column has `min-width: 0` and would otherwise share the squeeze. */
 .page-header-actions {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   flex-shrink: 0;
+}
+
+/* A full-width row of its own under the title line: the actions that do not fit beside a title with
+   no width floor sit below it rather than beside it, at the inline-end. */
+.page-header-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
 }
 
 /* Live state as a metadata fact: a coloured dot plus one line, handed in by the view. */

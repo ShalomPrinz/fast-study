@@ -10,8 +10,8 @@ export interface LectureAction {
   testId?: string
 }
 
-// The overflow beside the page's one primary button: the per-file actions that no longer sit inline
-// on their pipeline row. Renders nothing when the lecture offers none of them yet.
+// The narrow-window shape of the header's secondary actions: the per-file actions that get a row of
+// their own above the breakpoint. Renders nothing when the lecture offers none of them yet.
 export default function LectureActionsMenu({ actions }: { actions: LectureAction[] }) {
   const { t } = useLingui()
   const [open, setOpen] = useState(false)

@@ -4,7 +4,7 @@ import type { MaterialInfo } from '@/types'
 export type MaterialIndicatorState = { text: string; cls: string }
 
 // How the lecture's materials relate to its summary: none on disk, pending, all used, none used, or
-// only some. Each material's mtime vs. the summary's is a heuristic for "was fed to the model" — see
+// only some — and no chip at all for a summary made when the lecture had nothing to use. Each material's mtime vs. the summary's is a heuristic for "was fed to the model" — see
 // docs/LECTURES.md.
 // A single material is named and several are counted, so each case is two whole sentences rather
 // than one with a spliced-in subject — the verb agrees with the subject in Hebrew.
@@ -12,7 +12,7 @@ export function materialIndicator(
   materials: MaterialInfo[],
   summaryExists: boolean,
   summaryMtime: number | null,
-): MaterialIndicatorState {
+): MaterialIndicatorState | null {
   const count = materials.length
   const name = count === 1 ? materials[0].name : ''
 
@@ -27,11 +27,7 @@ export function materialIndicator(
         }
       : { text: t`no material found`, cls: 'material-indicator--missing' }
 
-  if (count === 0)
-    return {
-      text: t`summary did not use material`,
-      cls: 'material-indicator--was-missing',
-    }
+  if (count === 0) return null
 
   const used = summaryMtime === null ? 0 : materials.filter((m) => m.mtime <= summaryMtime).length
 

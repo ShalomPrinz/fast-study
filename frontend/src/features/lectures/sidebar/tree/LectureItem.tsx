@@ -104,10 +104,11 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
-        dir="auto"
       >
         <span className={`lecture-dot${dotState ? ` lecture-dot--${dotState}` : ''}`} />
-        <span className="lecture-name">{lecture.name}</span>
+        <span className="lecture-name" dir="auto">
+          {lecture.name}
+        </span>
       </button>
     </li>
   )

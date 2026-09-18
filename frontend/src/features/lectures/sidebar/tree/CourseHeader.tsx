@@ -76,12 +76,13 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             if (e.shiftKey) startRenaming(e)
             else expand.toggle()
           }}
-          dir="auto"
         >
           <span className="chevron">
             <Chevron open={expand.isOpen} />
           </span>
-          <span className="course-name">{course.name}</span>
+          <span className="course-name" dir="auto">
+            {course.name}
+          </span>
           {progress.total > 0 && (
             <span className="course-count" title={t`Fully processed lectures`}>
               {progress.complete}/{progress.total}
