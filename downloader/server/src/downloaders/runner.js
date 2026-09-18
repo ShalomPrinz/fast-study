@@ -35,13 +35,8 @@ function isAuthError(message) {
   );
 }
 
-// Source-agnostic runner: probe size, spawn the silent child in a temp dir, and on clean exit
-// hand the result to the source's required `upload` (which uploads + cleans + notifies).
-// Adding a source = a new downloaders/*.js registered in index.js; no edits here.
-// `jobId` was created synchronously by the route; every exit path must terminate it.
-// `reresolve` (null when the caller has no ref, e.g. the extension) refreshes a stale cached cap
-// so THIS job re-runs on it: `{downloader, input}` to re-run, or `{error}` — a ready-to-display
-// terminal message, since only the resolver edge knows what its failures mean. See docs/JOBS.md.
+// Source-agnostic runner (docs/DOWNLOAD.md). Every exit path must terminate `jobId`; `reresolve`
+// (null without a ref) drives the one silent auth recovery (docs/JOBS.md).
 export async function runDownloadJob(
   downloader,
   input,

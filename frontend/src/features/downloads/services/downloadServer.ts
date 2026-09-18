@@ -15,10 +15,8 @@ export interface Rename {
   name: string
 }
 
-// Resolving means queued — every failure leaves as an error (401/409/422/500), forwarded verbatim
-// from the auto-downloader, hence the shared reconnect-aware POST. `media` is what the item turned
-// out to be: the answer that resolves an 'unknown' row without a re-list. `only` re-triggers a
-// single named item (a zoom split clip) without re-downloading its siblings — used by per-job retry.
+// Resolving means queued; every failure is an error status. `media` resolves an 'unknown' row, and
+// `only` re-triggers a single named clip for per-job retry.
 export async function downloadItem(args: {
   ref: string
   course: string
@@ -37,11 +35,8 @@ export async function downloadItem(args: {
 // spawns and the real one is known.
 export type DownloadTool = 'curl' | 'yt-dlp' | null
 
-// One background download. `ref` is the discovery-row id that spawned it (a zoom before/after-break
-// pair lands under `<name>.1`/`<name>.2` but both carry the parent row's `ref`), so the UI groups a
-// row's jobs by `job.ref`. `expectedBytes` is null when the size probe couldn't determine a size
-// (common for yt-dlp), `startedAt` (epoch ms) is null until the child spawns, and `done` means the
-// video reached the database service — not merely that the tool exited.
+// One background download, grouped onto its row by `ref` (a zoom pair shares its parent's). `done`
+// means the file reached the database service, not merely that the tool exited.
 export interface DownloadJob {
   id: string
   status: 'queued' | 'running' | 'done' | 'error'
@@ -56,10 +51,8 @@ export interface DownloadJob {
   message: string | null
 }
 
-// Every non-evicted job, including ones the Chrome extension started. The single source of truth —
-// the stream only says "something changed", this says what. Bypasses the shared client because a
-// reconnect loop against a downed service would stack one ConnectionError toast per attempt — so
-// the launch secret goes on by hand.
+// Every non-evicted job, the source of truth the pings point at. Bypasses the shared client, whose
+// toast per ConnectionError would stack in a reconnect loop.
 export async function fetchJobs(): Promise<DownloadJob[]> {
   const res = await fetch(downloadServer.url('/jobs'), { headers: secretHeaders() })
   if (!res.ok) throw httpError(res)
@@ -67,16 +60,14 @@ export async function fetchJobs(): Promise<DownloadJob[]> {
   return data.jobs ?? []
 }
 
-// `job:change` is a contentless "refetch now" ping fired on every job transition (queued, start,
-// end). `open` fires on connect and every auto-reconnect, so calling `onChange` there gives the
-// initial sync plus a resync for any events missed during a reconnect gap.
+// A contentless ping per job transition; `open` also calls back, for the initial sync and a resync
+// after every reconnect.
 export function subscribeJobs(onChange: () => void): () => void {
   return subscribe('job:change', onChange)
 }
 
-// The same contract one level up: `run:change` fires on every section-run transition. Its own
-// subscription rather than a shared one, so the runs reflection and the jobs reflection stay
-// independent — the price is a second connection to the same `/events` stream.
+// The same contract for section runs, on its own connection so the two reflections stay
+// independent.
 export function subscribeRuns(onChange: () => void): () => void {
   return subscribe('run:change', onChange)
 }
@@ -92,11 +83,8 @@ function subscribe(event: 'job:change' | 'run:change', onChange: () => void): ()
   }
 }
 
-// One row of a section's bulk run, and what the run itself decided about it. Mirrors the server's
-// target shape one-for-one (`downloader/server/docs/RUNS.md` — change one, change the other).
-// `pending` means the queue has not reached the row yet; `queued` is the only disposition whose
-// outcome is still open — it is read later off the tree and the jobs, keyed on `media`, the POST's
-// answer for a queued row and the row's own media otherwise.
+// One row of a bulk run and the run's decision on it — mirrors the server's target shape
+// (`downloader/server/docs/RUNS.md`); change one, change the other. See docs/BULK.md.
 export interface RunTarget {
   ref: string
   name: string
@@ -118,10 +106,8 @@ export interface SectionRun {
   paused: { index: number; reason: PasscodeError['reason']; name: string } | null
 }
 
-// Hand the whole section queue to the server, which drives it and owns its progress from here on.
-// Replaces whatever run that section had. Targets arrive with `skipped`/`unsupported` already
-// stamped: that rule reads the live course tree, which only the page has. Answers with the names it
-// rewrote — the run itself is read back off `/runs`, so the run id is of no use here.
+// Hands the section queue to the server, replacing any earlier run. Returns only the renames — the
+// run itself is read back off `/runs`.
 export async function startSectionRun(args: {
   sectionId: string
   course: string

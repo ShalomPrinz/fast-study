@@ -48,17 +48,14 @@ export function isRtl(locale: string): boolean {
   return locale === 'he'
 }
 
-// The packaged app follows the OS, which is `app.getLocale()` off the bridge; `navigator.language`
-// is Chromium's own guess and stays the browser-dev fallback. A stored pick outranks both.
-// `||`, not `??`: Chromium answers `''` when it cannot determine the OS locale, and an empty string
-// resolves to Hebrew — which would flip an English machine to an RTL UI rather than ask the browser.
+// Stored pick, then the OS locale off the bridge, then `navigator.language`. `||`, not `??`: Chromium
+// answers `''` when it cannot read the OS locale, which would otherwise resolve to Hebrew.
 export function initialLocale(): Locale {
   return resolveLocale(readStored(), runtimeBridge()?.locale || navigator.language)
 }
 
-// Loads the catalog, activates it, and points the document at the new language — `dir` here is what
-// flips the whole UI between LTR and RTL. Deliberately does not persist: only an explicit pick is
-// remembered, so a boot-time guess never outranks a later browser-language change forever.
+// Loads and activates the catalog; the `dir` write flips the whole UI. Does not persist — only an
+// explicit pick (`chooseLocale`) is stored, so a boot-time guess never outranks a later change.
 export async function activateLocale(locale: Locale): Promise<void> {
   const { messages } = await CATALOGS[locale]()
   i18n.loadAndActivate({ locale, messages })

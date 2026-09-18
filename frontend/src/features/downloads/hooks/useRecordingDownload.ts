@@ -17,10 +17,8 @@ import { useRowEditsDispatch } from '@/features/downloads/contexts/RowEditsConte
 
 type Result = 'fail' | null
 
-// Owns just the download effect: the action (whole-row download + per-clip retry) and its own
-// pending/retrying/queue-failure/passcode state. Display and the overwrite confirm live in the row.
-// Called unconditionally, so the row's expandable branch can early-return past the download surface.
-// `name` is the row's effective (resolved) name.
+// The download effect only — whole-row download, per-clip retry and their own state; display and
+// the overwrite confirm live in the row. `name` is the row's resolved name.
 export function useRecordingDownload({
   item,
   course,
@@ -52,10 +50,8 @@ export function useRecordingDownload({
   // or a single job's retry. `name` is what the passcode is saved for and what a failure toasts.
   const passcodeResume = useRef<{ name: string; run: () => Promise<void> } | null>(null)
 
-  // Shared trigger for the row download and per-job retry: funnels the reconnect/passcode gates the
-  // same way. Success is the jobs' to report (the snapshot ping drives the row into flight); only a
-  // failure to queue — which throws — is the trigger's to surface. `resume` re-runs this intent
-  // post-passcode.
+  // Shared trigger behind the reconnect/passcode gates. Success is the jobs' to report; only a
+  // failure to queue surfaces here. `resume` re-runs the intent after a passcode.
   async function runIntent(
     args: { ref: string; course: string; name: string; kind: Kind; only?: boolean },
     name: string,

@@ -18,9 +18,8 @@ from tools import check_tools
 setup_logging()
 log = logging.getLogger("api")
 
-# The external binaries this service spawns. Probed once at startup, never per request: the boot
-# screen polls /health, and re-spawning three binaries per poll would cost more than the answer is
-# worth. A tool installed afterwards is picked up on the next launch.
+# Probed once at startup, never per request: the boot screen polls /health, and re-spawning three
+# binaries per poll costs more than the answer. A tool installed later is seen on the next launch.
 TOOLS = ("ffmpeg", "pandoc", "tectonic")
 
 # The dev port, and the fallback the packaged launcher gets when FASTSTUDY_PORT is unset. Read by
@@ -64,9 +63,8 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
-    """Liveness plus the boot-time tool probe — what the launcher waits on before opening the
-    window, and what its boot screen renders a missing binary from. Reports nothing else on
-    purpose: paths, config and key-set flags stay on routes that can be refused."""
+    """Liveness plus the boot-time tool probe, and nothing else on purpose: paths, config and
+    key-set flags stay on routes that can be refused."""
 
     return {"status": "ok", "tools": tool_status}
 

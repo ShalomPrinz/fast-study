@@ -1,145 +1,80 @@
 # Search page
 
-`/search` — full-text search across one course's summaries. Corpus is `summary.md` only: not transcripts,
-not course-level `overview/` files.
+`/search` — full-text search across one course's `summary.md` files (not transcripts, not `overview/`).
 
 ## Client-side corpus, not a server search
 
-`GET /courses/{course}/summaries` returns every non-empty summary of a course as
-`{summaries: [{name, kind, content}]}` in one request. `useCourseSummaries` fetches it on course
-selection, keeps it in a `useRef` map for the session, and all matching, filtering and highlighting run
-locally — no request per keystroke, no index, no server-side search. This is justified by size: the
-largest course is ~760 KB across 35 summaries, so the whole corpus is cheaper than a debounce.
+`GET /courses/{course}/summaries` returns every non-empty summary of a course in one request.
+`useCourseSummaries` fetches it on course selection and keeps it for the session; all matching and
+highlighting run locally — no request per keystroke, no index. Justified by size: the largest course is
+~760 KB across 35 summaries, cheaper than a debounce. `name` is the lecture directory, so a hit builds its
+`summary.pdf` target directly.
 
-`name` is the bare lecture/recitation directory name — the same identifier every lecture-scoped route
-takes — so a hit builds `fileUrl(course, name, 'summary.pdf', kind)` directly.
+`{summaries, loading, error}` is **one** state object so a resolved fetch lands results and clears the flag
+in the same render (three `useState`s left a frame with both). The loading line shows only with a
+non-empty query — a course switch with an empty box is nothing the user waits on.
 
-`useCourseSummaries` holds `{summaries, loading, error}` in **one** state object, so a resolved fetch lands
-the results and clears the flag in the same render; as three separate `useState`s the `.then`/`.finally` pair
-left a frame in which the loading line sat above the new results and then vanished.
-
-The loading line shows only while the query box is non-empty. Switching course with an empty box is nothing
-the user is waiting on, and on a cached-corpus-sized fetch a flash was all the line ever communicated.
-
-**The corpus is never invalidated.** A summary edited elsewhere mid-session keeps matching its old text
-until the page is reloaded. Deliberate: the staleness window is one visit and re-fetching on every SSE
-notify would re-download the course for edits the searcher isn't looking at.
+**The corpus is never invalidated.** A summary edited mid-session matches its old text until reload;
+re-fetching on every notify would re-download the course for edits the searcher isn't looking at.
 
 ## Matching — `utils/search.ts`
 
-Three pure functions, React-free and dependency-free, so the module is unit-testable on its own.
+Three pure phases: `findMatches` returns every occurrence as a position only; `groupMatches` merges them
+into groups with the content window their snippet covers; `buildHit` builds strings for one group. The
+split is for cost: over the largest course a one-letter Hebrew query finds 15k matches in ~11ms and groups
+them in ~15ms, while building every snippet took ~1s and froze the tab on the first keystroke. Grouping
+stays eager (the counts need it); strings are built only for the groups on screen.
 
-`findMatches(summaries, query, { wholeWord })` scans the whole corpus and returns **every** occurrence as
-a position only — `{summary, index, end}`, the summary held by reference so no content is copied.
-Case-insensitive substring; the query is regex-escaped before it becomes a `RegExp`.
-
-`groupMatches(matches)` turns those positions into `MatchGroup`s — each a run of matches plus the
-`{from, to}` content window their shared snippet will cover. Still position-only.
-
-`buildHit(group)` is the only phase that builds strings: it slices the window, collapses whitespace and
-returns `{summary, snippet, ranges}`. A snippet carries no leading or trailing ellipsis — it is a
-complete sentence, so there is nothing to signal as cut off.
-
-The split exists because the phases differ by two orders of magnitude: over the largest course, the
-one-letter query `ר` finds 15k matches in ~11ms and groups them in ~15ms, while building every snippet
-cost ~1s and froze the tab on the first letter of any Hebrew word. Window computation is cheap enough to
-stay eager (grouping can't be decided without it); string assembly is built only for the groups on screen.
-
-Whole-word is implemented by inspecting the characters adjacent to the match against an explicit
-letter/digit class that includes Hebrew letters and niqqud — JS `\b` doesn't recognise Hebrew letters as
-word characters, so anchoring the RegExp would match every Hebrew word. Hebrew punctuation (geresh,
-gershayim, maqaf, sof pasuq) is deliberately outside the class: it separates words, so `״ספר״` is a
+Case-insensitive substring over a regex-escaped query. Whole-word checks the adjacent characters against
+an explicit letter/digit class including Hebrew letters and niqqud, because JS `\b` doesn't know Hebrew
+letters. Hebrew punctuation (geresh, gershayim, maqaf, sof pasuq) is outside the class: `״ספר״` is a
 whole-word hit for `ספר`.
 
-## Snippet window and overlap merging
+## Snippets
 
-A match's window is **the sentence containing it** — from the delimiter before the match to the delimiter
-after it, inclusive. Delimiters are `.` `?` `!` `;` `:` `…` and any line break; a newline is what ends a
-heading, a bullet or a paragraph in markdown, and the markdown marker opening the line (`#`, `-`, `*`,
-`>`) is stripped off the snippet's front.
+A match's window is **the sentence containing it**, delimiter to delimiter (`.` `?` `!` `;` `:` `…` or a
+line break, which ends a markdown heading, bullet or paragraph), with the line's markdown marker stripped.
+There is **no length clamp**: a character cut lands mid-word, and a whole sentence is the smallest unit
+that reads correctly — so a delimiter-less paragraph renders in full, and no ellipsis is ever needed.
 
-There is **no length clamp**. Snippets are always whole words and whole sentences, so a delimiter-less
-paragraph renders in full rather than being cut at a character count — the previous ~140/200-char clamp
-severed words mid-token, which is what this replaces.
+Overlapping windows merge into one snippet with several `<mark>`s — with sentence windows, exactly the
+matches sharing a sentence. Merging never crosses a summary and relies on `findMatches` order.
 
-**If two matches' windows overlap they become one snippet with both occurrences highlighted**, chained so
-a whole run collapses into a single block with N `<mark>`s. With sentence-aligned windows this means
-exactly the matches that share a sentence: two distinct sentences never overlap, so they stay separate
-cards. Merging never crosses a summary, and relies on `findMatches` order (by summary, ascending index)
-rather than re-sorting.
-
-Whitespace collapses to single spaces, one regex pass per segment (before the first match, between
-consecutive matches, after the last), accumulating offsets as it goes. That is only correct because the
-needle is trimmed: a match never begins or ends on whitespace, so no whitespace run can straddle a match
-boundary and collapse into two spaces. The view slices the snippet at the returned offsets and wraps each
-range in a `<mark>` — never `dangerouslySetInnerHTML`.
+Whitespace collapses in one pass per segment between matches, accumulating offsets. That is correct only
+because the needle is trimmed, so no whitespace run straddles a match boundary. The view slices at the
+offsets and wraps each range in `<mark>` — never `dangerouslySetInnerHTML`.
 
 ## Rendering and paging
 
-**One card per lecture.** `SearchResult` renders a lecture's header row once — file icon, name, a neutral
-`.chip` reading `lecture`/`recitation`, and the open glyph — followed by that lecture's visible snippets
-(`SearchSnippet`), indented to clear the icon column and parted by `--line-soft` rules. Matches wear
-`--highlight`.
+**One card per lecture**: a header row, then that lecture's snippets. Two independent limits: **5
+findings per card** and **20 per page**, both counting occurrences, and **a group is never split** —
+the group crossing a limit is included whole, since a merged snippet cut mid-group would show an
+occurrence unhighlighted. `takeGroups(groups, limit)` is that walk for both.
 
-Two independent limits bound what is on screen: **5 findings per lecture card** and **20 findings per page**.
-Both count findings — individual occurrences — and both obey the same rule: **a group is never split**, so the
-group crossing a limit is included whole and each limit is a minimum rather than an exact cut. A merged
-snippet's text extends past a mid-group cut, so stopping there would leave an occurrence visible in the text
-but unhighlighted, which reads as a bug; completing the group guarantees every occurrence on screen is marked.
-`takeGroups(groups, limit)` is that walk, shared by both limits.
+**The page is a set of whole lectures**, taken until their _collapsed_ counts reach 20. Sizing at the
+5-per-card cap keeps the limits independent: expanding a card grows it in place and never pushes a later
+lecture off the page. A card's **Show N more** opens that lecture in full (`expanded` is a `Set` of
+`kind:name`), revealing exactly the `N` it names.
 
-**The page is a set of whole lectures.** Groups are bucketed into consecutive-summary lectures once, then
-lectures are taken in order until their *base-capped* counts reach 20. Sizing the page at the 5-per-lecture
-cap — never at the expanded counts — is what keeps the two limits independent: expanding a card grows it in
-place and can never push a later lecture off the page. Bucketing up front also replaces the old regroup-on-
-render step, so a title still can never appear twice.
+The page's button advances from what is rendered (`pageCount + 20`), not the previous threshold — a
+lecture overshooting the threshold would otherwise be re-selected and the click do nothing — and it is
+keyed on lectures remaining, since collapsed cards always leave findings over.
 
-A card's own **Show N more** opens that lecture **in full** — the 5 is the collapsed state, not a page size,
-so `expanded` is a `Set` of `kind:name` rather than a map of thresholds. `N` is the findings left in that
-lecture and clicking reveals exactly those `N`; a per-click increment promised 20 and delivered 5, because the
-label counted what remained while the increment counted what was added. The card is handed that `remaining`
-count rather than a boolean.
-
-The page's button does still **advance from what is rendered, not from the previous threshold**
-(`pageCount + 20`). A lecture that overshoots the threshold would otherwise be re-selected unchanged by the
-next threshold and the click would do nothing. It is also keyed on **lectures** remaining, not findings
-remaining: with cards collapsed there are always findings left over, and a button that re-renders the same
-page of lectures does nothing.
-
-Grouping always runs over the *full* match list (it is cheap, ~15ms for 15k matches, and gives the count line
-its totals); only `buildHit` is restricted to the groups actually rendered — at most 5-or-slightly-more per
-card. The counts sit at the end of the `Results` caption and report findings
-(`71 results in 16 lectures — showing 21`), where the "showing" number is the true count rendered, in-card
-expansions included, and vanishes once everything is shown. They are **two `<Plural>` messages, not one**: a
-single message would need a plural nested in a plural, and each half already reads as a phrase on its own.
-The lecture count is bound to a local literally named `lectures` because Lingui keys the placeholder on the
-identifier — renaming it silently orphans the Hebrew translation. Both the page threshold and the `expanded`
-set reset on any change to the query, the filters, the whole-word toggle or the course, so a new search never
-inherits the previous one's expanded cards.
+The caption's counts are **two `<Plural>` messages**, since one would need a plural nested in a plural.
+The lecture count is bound to a local named `lectures` because Lingui keys the placeholder on the
+identifier — renaming it orphans the Hebrew translation. The threshold and `expanded` reset on any change
+to query, filters, whole-word or course.
 
 ## Controls
 
-The page leads with **one field** — search icon, the autofocused query input, a divider, and the course
-picker — so the course reads as scope on the query rather than a control of its own. Switching course
-mid-search is rare, which is what earns the picker its place inside. It stays a real `<select>`: it is
-keyboard-accessible and its option list is already the course list. Its own focus ring is suppressed — the
-black box it drew around the picker was redundant next to `.search-field:focus-within`, which already accents
-the whole field's border.
+**One field** — icon, autofocused query, divider, course picker — so the course reads as the query's
+scope. The picker stays a real `<select>` (keyboard-accessible, options are the course list), its own
+focus ring suppressed in favour of the field's `:focus-within`. Options exclude archived courses; the
+choice is derived — the stored name if it still exists, else the first active course.
 
-Course options come from `CourseTreeContext`, archived excluded. The selection is derived, not stored:
-the last choice is persisted in `localStorage`, and a stored name that no longer exists (or a tree that
-hasn't loaded yet) falls back to the first active course.
+Three toggle pills (Lectures, Recitations, Whole word only) are `<button role="switch" aria-checked>`.
+No match-case (Hebrew has none) and no regex. A card's Show more is a seam across the card's foot, not a
+second button, so it never looks like a rival to the page's pager.
 
-Under the field sit three **toggle pills** — Lectures, Recitations, Whole word only — each a
-`<button role="switch" aria-checked>` rather than a styled `<div>`, so space and enter work. All three are
-view-local; the two kind filters default on. No match-case (Hebrew has none) and no regex. A query that
-matches nothing renders the shared `.empty-state` card. The page's **Show more** is the full-width ghost
-button; a card's is a seam across the card's foot — a hairline, a centred label and a chevron, tinting to
-`--surface-sunken` on hover — pulled back out through the card's padding by negative margins so it spans the
-full width and rounds off the card's bottom corners. It reads as the snippet list continuing rather than as a
-second button, so the two never look like rival pagers.
-
-A result never navigates. The **whole header row is one button** that opens the lecture's `summary.pdf`
-through `services/open.ts` — icon, title, kind chip and the (decorative) external-link glyph are all inside it, so
-there is one tab stop and one click target per lecture. It is **disabled, not hidden**, when
-`CourseTreeContext` says that lecture has no PDF, and the glyph is then replaced by a muted `no PDF`.
+A result never navigates: the **whole header row is one button** opening the lecture's `summary.pdf`
+through `services/open.ts` — one tab stop per lecture — **disabled, not hidden**, when the tree has no PDF.

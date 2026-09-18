@@ -29,10 +29,8 @@ function safeURIDecode(s) {
 }
 
 /**
- * Moodle Web-Services token auth for BIU. Authenticate once headed (user completes MFA by
- * hand) via admin/tool/mobile/launch.php; capture the moodlemobile://token redirect, decode
- * it, and persist { wstoken, privatetoken }. Thereafter the token authenticates the stateless
- * WS API with no browser and no re-MFA — the Google-Drive-refresh-token model, native to Moodle.
+ * Moodle Web-Services token auth for BIU: one headed launch.php grab (MFA by hand), then a
+ * persisted { wstoken, privatetoken } for the stateless WS API. See docs/AUTH.md, docs/MOODLE.md.
  */
 export class MoodleToken extends AuthProvider {
   /** @param {{ tokenPath: string, site?: string }} opts  absolute token file path; the caller (core/registry.js) owns where it lives. */
@@ -103,13 +101,8 @@ export class MoodleToken extends AuthProvider {
       const context = await browser.newContext();
       const page = await context.newPage();
 
-      // Chromium can't follow the custom moodlemobile:// scheme, so the token surfaces on
-      // whichever signal fires first — the redirect's Location header, the failed navigation
-      // to the custom scheme, or the frame's URL. Watch all three (redundant by design).
-      // On capture we close the headed window immediately: complete() persists from the
-      // already-resolved token string and doesn't need a live browser, so leaving the window
-      // open would just strand the user on a dead tab + Chromium's xdg-open prompt for the
-      // unknown moodlemobile:// scheme (looks like a hang).
+      // Chromium can't follow moodlemobile://, so watch all three signals the token can surface
+      // on, and close the window on capture — complete() needs no live browser. See docs/MOODLE.md.
       let apptoken = null;
       let resolveToken;
       const tokenPromise = new Promise((resolve) => {
@@ -133,10 +126,8 @@ export class MoodleToken extends AuthProvider {
       await page.goto(launchUrl, { waitUntil: 'load' }).catch(() => {});
 
       this._pending = { browser, context, tokenPromise };
-      // "Login abandoned" signal = the headed browser closing before a token is captured.
-      // apptoken is truthy only after grab() fired our own post-capture close, so guard on it:
-      // a self-close is a SUCCESS, not a cancellation — misfiring here would null _pending and
-      // break complete() ("no pending login").
+      // The browser closing before a token is captured = login abandoned. Our own post-capture
+      // close is a success, so guard on apptoken or complete() would find no pending login.
       browser.on('disconnected', () => {
         if (apptoken) return;
         if (this._pending && this._pending.browser === browser) {

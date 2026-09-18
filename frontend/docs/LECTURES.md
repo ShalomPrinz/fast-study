@@ -1,232 +1,111 @@
 # Lectures mode
 
-The sidebar, the lectures tree pane and the two lecture views (`MainView`, `EditSummaryView`).
+The sidebar, the lectures tree pane and the lecture page (`MainView`). The summary editor is
+[EDITOR.md](EDITOR.md).
 
 ## Pipeline steps are declared once
 
-`constants/pipeline.ts` holds `PIPELINE` — the ordered
-`{ file, stageLabel, step, runningLabel, actionLabel, prereq }` chain
-(video → audio → transcript → summary.md → summary.pdf → drive_url.txt) — and derives `STEP_FILE`,
-`STEP_INPUT_FILE`, `STEP_LABEL`, `STEP_ERROR_LABEL`, `STEP_SET` from it. Never hard-code a step name,
-its output file or its prerequisite anywhere else.
+`constants/pipeline.ts`'s `PIPELINE` is the ordered chain (video → audio → transcript → summary.md →
+summary.pdf → drive_url.txt); `STEP_FILE`, `STEP_INPUT_FILE`, `STEP_LABEL` and friends derive from it.
+Never hard-code a step name, its output file or its prerequisite elsewhere.
 
-`visiblePipeline(driveEnabled, files)` is what a lecture actually renders: with Drive off it drops the
-Drive stage, matching the backend, which rejects `run/drive` and ends the pipeline at `summary.pdf`. A
-lecture uploaded while Drive was on keeps the row, so its `drive_url.txt` stays reachable.
+`visiblePipeline(driveEnabled, files)` drops the Drive stage with Drive off, matching the backend, which
+rejects `run/drive` then; a lecture uploaded while Drive was on keeps the row so its link stays reachable.
 
-Three label sets, all `msg` descriptors resolved at the render site: `stageLabel` names the stage
-(`Video`, `Audio`, `Transcript`, …) whether it is pending or done, `runningLabel` replaces it only while
-the step is in flight (`Extracting audio`, `Transcribing`, …), and `actionLabel` is the button that
-starts it. There is deliberately no past-tense fourth form — a done row reuses `stageLabel`.
-
-A step's button is enabled only when its prereq file exists and nothing is in flight for the lecture.
-`transcript.partial.txt` present but `transcript.txt` missing relabels the action "Continue transcription".
+Three `msg` label sets: `stageLabel` names the stage pending or done, `runningLabel` replaces it only in
+flight, `actionLabel` is the button. There is deliberately no past-tense form. A step's button needs its
+prereq file and nothing in flight for the lecture; `transcript.partial.txt` without `transcript.txt`
+relabels it "Continue transcription".
 
 ## The lecture view
 
-`MainView` is a `PageHeader` band above one scrolling body. The header carries the course as eyebrow,
-the lecture name as title, a metadata row (running step or `Complete`, video size, material count),
-and the page's single primary button, `Run Remaining`, beside a `LectureActionsMenu` overflow holding
-the per-file actions — edit summary, open PDF, open in Drive — that no longer sit on their rows.
+`MainView` is a `PageHeader` (course eyebrow, lecture title, running step or `Complete`, video size,
+material count, the single primary `Run Remaining`, and a `LectureActionsMenu` overflow for edit summary,
+open PDF and open in Drive) over one `.pipeline-card` holding all stages as rows parted by inset rules.
+Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
+`--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
 
-Below it, `.pipeline-card` (shared with the course overview, in `styles/pipeline-card.css`) is **one**
-bordered card holding all six stages, parted by rules inset to
-clear the status column, not six boxes. Each row is a `StatusNode`, the stage name, and the raw
-filename plus size as a monospace subtitle; completion is carried by the node alone, never by tinting
-the row. The running row sits on `--surface-sunken`, swaps in `runningLabel`, and lays its body out as
-a grid so `ProgressBar`'s own ETA label lands at the end of the stage line with the track beneath.
+**Rotate** deletes a file _and every later file in `PIPELINE`_ that exists, then re-runs its step — why
+it derives from `PIPELINE` order rather than a per-step list. A refused delete (`423`, the file open in the
+user's PDF app) toasts and stops before the step, which would only hit the same lock; the editor's
+re-export and a material delete share the guard.
 
-## Rotate
-
-Rotating a file deletes it _and every later file in `PIPELINE`_ that exists, then re-runs its step — the
-confirm modal lists exactly those. This is why rotate must derive from the `PIPELINE` order rather than a
-per-step list. A refused delete — the file open in the user's own pdf app, `423` from the database service —
-toasts and stops before the step, which would only fail on the same lock; the same guard covers the edit
-view's re-export and a material delete.
+Rate limiting is not an error: with `sleepingUntil` set, the view shows a countdown with the chunk
+progress instead of a failure.
 
 ## Materials
 
-A lecture holds any number of materials — `material.pdf`, `material.2.pdf`, … — carried on the tree entry
-as `materials: {name, size, mtime}[]` beside `files` (always present, `[]` when none, index order). They
-are summarize inputs rather than pipeline outputs, so `MainView` shows them as a row of outlined chips
-under their own "Materials" heading rather than as stages — the chip's name opens the file and its trash
-button deletes it, both **by name** via the per-file routes. Deleting one never renames the others, so a
-held URL stays valid and the indices simply gain gaps.
+A lecture holds any number of `material[.N].pdf`, carried on the tree entry as `materials` beside `files`.
+They are summarize inputs, not stages, so they render as chips under their own heading, opened and deleted
+**by name**; a delete never renames the rest, so indices gain gaps and held URLs stay valid.
 
-`materialIndicator(materials, summaryExists, summaryMtime)` (pure, in `utils/`) drives the chip on the
-Summary row. With no summary yet: `no material found`, or `will be used`. With a summary, each material's
-mtime is compared against it and the counts pick the state — all older → `was used` (green), none older →
-`did not use any material` (grey; a lone material is named instead of counted), and in between →
-`summary used only N of M materials` (amber, milder than a total miss). The copy names a single material
-and counts several throughout. The chip carries the text and the colour.
-
-**mtime is a proxy for "was fed to the model", not a record of it.** Re-downloading an unchanged PDF bumps
-its mtime and so reads as unused, and the partial count inherits that fuzziness. Being exact would need the
-backend to persist which materials each summarize run consumed; until it does, the indicator is a hint, not
-an audit.
+`materialIndicator` drives the Summary row's chip: before a summary, `no material found` / `will be
+used`; after, each material's mtime against the summary's picks all used (green), none used (grey), or
+`N of M` (amber). **mtime is a proxy for "was fed to the model", not a record** — re-downloading an
+unchanged PDF reads as unused. Exactness would need the backend to persist each run's inputs.
 
 ## Runner status and in-flight state
 
-`RunnerStatusContext` (mounted in `Layout`) holds the whole runner picture from `GET /status`, refreshed on
-mount and on every SSE notify — never polled:
+`RunnerStatusContext` (in `Layout`) holds `GET /status`, refreshed on mount and every notify, never
+polled. `inFlight` covers active steps from any trigger; `errors` keeps a lecture's last failure after it
+leaves; `runner.lastError` is an exception that aborted a sweep, distinct from per-step failures. Keys are
+`course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror `_skey` in
+`backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
+the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
 
-```ts
-{ runner: { running, total, done, lastError }, inFlight: InFlightEntry[], errors: Record<skey, string> }
-```
+Error toasts go through `useReportOnce`, which dedupes `(key, message)` across refreshes; `prune` lets a
+key fire again if the error recurs.
 
-`inFlight` covers active steps from _any_ trigger (runner sweep, `/pipeline`, single `/run/{step}`);
-`errors` persists a lecture's last failure after the entry leaves `inFlight`. Keys are
-`course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror backend `runner.py::_skey`**.
-`runner.lastError` is an unexpected exception that aborted a sweep, distinct from the expected per-step
-failures in `errors`.
-
-`queue` is what the runner has left to take, in order. `/running`, reached from the sidebar's Running
-pipelines row, is the whole surface for the queue, the in-flight entries and the lectures nothing is
-scheduled to pick up; the row itself only reads `runner` for its badge.
-
-Error toasts fan out through `useReportOnce`, which dedupes `(key, message)` so a repeated refresh doesn't
-re-toast, and `prune(validKeys)` lets a key fire again if the same error recurs later.
+`useRemoteInflightState` turns the open lecture's entry into a render descriptor; progress comes from the
+entry, else from `transcript.partial.txt` for a transcribe step. `useTimingStats(step, bytes)` fetches the
+backend's regression estimate for the step's _input_ size and drops answers for a key the caller left.
 
 ## summary.pdf badges
 
-`PdfWarningBadge` (shared — the course overview reuses it) renders the badge it is handed. For
-`summary.pdf` that badge is **one** of, chosen by `pdfBadge(files)`: a render warning
-(⚠) if there is one, else a stale marker (≠) when `summary.md` has a newer `mtime` than `summary.pdf`.
-The warning wins because it describes _this_ PDF; staleness resurfaces on its own once it clears. It
-appears on the `summary.pdf` row in `MainView`; the `EditSummaryView` toolbar spells the same
-`pdfBadge(files)` out as a `--warn` chip, since its preview pane would otherwise show the outdated
-render with no hint and the toolbar has room for the sentence.
+`pdfBadge(files)` picks **one** badge for `summary.pdf`: a render warning (⚠) if any, else stale (≠) when
+`summary.md` is newer. The warning wins because it describes _this_ PDF. `MainView` shows it on the row;
+the editor toolbar spells it out as a chip. A **missing** PDF is never stale — every re-render path deletes
+`summary.pdf` first, which keeps a pending re-render quiet — and equal mtimes don't warn.
 
-Staleness means the PDF no longer reflects the summary — after a revert, an edit that never regenerated,
-or a re-run `summarize`. A **missing** PDF is never stale, which is what keeps a pending re-render quiet:
-every path that re-renders (rotate, edit-view re-export) deletes `summary.pdf` first, and a fresh pipeline has
-not written one yet. Equal mtimes don't warn, so a same-second render can't flicker.
-
-### Render warnings
-
-A `summary.pdf` that rendered despite LaTeX errors carries a one-line `warning` on its `FileInfo` (the
-database service inlines the `.pdf_warning` dotfile onto the tree entry; the key is absent when clean).
-It is non-fatal, message on hover, and `CourseTreeContext` announces it once through `useReportOnce` +
-`announcePdfWarnings`: the first applied tree only seeds, so warnings predating page load don't toast,
-and a vanished warning is pruned so it can fire again. It lives on the tree, not `/status`, which is why
-it is announced there and not in
-`RunnerStatusContext`. Deleting `summary.pdf` (rotate, edit-view re-export) drops `.pdf_warning` inside the
-database service, so no frontend path clears it.
-
-`useRemoteInflightState` turns the entry for the currently open lecture into a render descriptor: step,
-start time, timing estimate, `completedFraction`, `sleepingUntil`, `progress`. Progress comes from the
-entry when present, else from `transcript.partial.txt`'s completed/total for a transcribe step.
-
-`useTimingStats(step, fileSizeBytes)` fetches the backend's linear-regression estimate for the step's
-_input_ file size and drops responses for a `(step, size)` key the caller has moved on from.
-
-Rate limiting is not an error: when the runner sets `sleepingUntil`, `MainView` renders a countdown panel
-with the chunk progress instead of a failure.
-
-## Edit summary view
-
-A toolbar over two labelled panes. The toolbar runs: back, a rule, the lecture name (`dir="auto"`), the
-stale/warning PDF chip, then a demoted `Restore original` a gap away from the primary `Save & update PDF`.
-The left pane heads its PDF with `Current PDF`, the zoom controls, the page under the middle of the
-viewport and an open-in-new-tab button; the right pane heads `MarkdownEditor` with `summary.md` and,
-whenever the buffer differs from what was last read or written, an amber `Unsaved changes` dot.
-
-`MarkdownEditor` is CodeMirror 6 composed extension by extension — no `basicSetup`, so no autocomplete,
-search, lint or line numbers. It is rich-styled _source_: markers stay in the buffer and the document is
-never re-serialized. `@codemirror/lang-markdown` supplies the tags, and a `HighlightStyle` sizes headings,
-bolds `**bold**`, sets `tags.monospace` in `--font-mono`, dims `tags.processingInstruction` (the markers
-themselves) to `--text-4` and draws `---` as a tinted chip, since exactly two of them carry the document's
-structure. `utils/mdDecorations.ts` scans the dialect as pure functions over the text — pandoc
-`::: <class>` callouts, `$…$` / `$$…$$` math and fenced code — and a `ViewPlugin` turns their ranges
-into line and mark decorations; the callout colours mirror `LATEX_HEADER` in `backend/pipeline/to_pdf.py`,
-and only `definition`/`warning`/`insight` get a box so a typo renders plain. Math carries
-`unicode-bidi: isolate`, without which an LTR run scrambles inside an RTL line; a fenced block gets a
-line decoration instead, opening and closing fence included, because the RTL base direction `dir="auto"`
-gives every line of a Hebrew summary cannot be undone from an inline span. The editor holds Hebrew
-markdown, so it is set in the UI font with wide leading, never monospace, and takes `dir="auto"` through
-`EditorView.contentAttributes` rather than a hard-coded `rtl` — recitation and English content exists.
-CodeMirror owns its buffer, so the view is built once and an incoming `value` is pushed in only when it
-differs from `view.state.doc`; that guard is what stops the editor's own edits echoing back.
-
-`Save & update PDF` is the only write path — a saved summary whose PDF still shows the old text is never
-what the editor wanted — and runs save → tree refresh (the chip comparing the two mtimes reads the tree) →
-delete `summary.pdf` → run the `pdf` step, then wait for SSE. It is enabled whenever there is something to
-do: a dirty buffer, a stale PDF, or no PDF at all. `Restore original` discards every edit and deletes the
-snapshot, so it is confirm-gated by `ConfirmModal`. The effect that watches
-`files`/`lectureError` runs on every refresh, so a `pdfFiredRef` gate limits it to the run this view
-started — otherwise a sibling file change or another lecture's error would clear the generating state,
-and the self-inflicted missing PDF mid-run would flash the "no PDF yet" placeholder. `PdfViewer`'s
-`generating` prop wins over both the placeholder and the document, so one spinner covers the whole cycle.
-The file URL carries `t=<summary.pdf mtime>` (`utils/pdfUrl.ts`), so the browser cache is reused only
-while the file on disk is unchanged. `PdfViewer` hands react-pdf a `{ url, httpHeaders }` object so
-pdf.js's own XHR carries the launch secret, memoized on `url` because react-pdf compares `file` by identity.
-Its pop-out button is an `onPopOut` prop, not four more identifiers: `EditSummaryView` already holds the
-lecture's identity, and hands down a callback that opens `summary.pdf` through `services/open.ts`.
-
-`PdfViewer` captures scroll during the render phase before React commits the new URL (the old pages are
-still mounted, so `scrollTop` is the real position) and restores it from each page's `onRenderSuccess`;
-with no captured position it snaps to the right edge for RTL.
+A render warning is the database service's `.pdf_warning` inlined onto the tree's `FileInfo`. It lives on
+the tree, not `/status`, so `CourseTreeContext` announces it (`announcePdfWarnings`): the first tree only
+seeds, and a vanished warning is pruned so it can fire again. Deleting `summary.pdf` drops the dotfile
+server-side, so no frontend path clears it.
 
 ## Sidebar
 
-`Sidebar` opens with the brand, then five route rows — Lectures, Running pipelines, Downloads, Search,
-Settings — each active on its own pages (`docs/ARCHITECTURE.md` §Routes). Running pipelines carries a
-`current/total` badge while the runner is on (`current` is `done + 1` capped at `total`) and none when
-idle; Downloads carries a count of running jobs, read off `DownloadJobsContext`. The footer holds only
-`LanguageSwitcher`; every glyph in the sidebar is inline SVG from `Icon`.
+The brand, then five route rows — Lectures, Running pipelines, Downloads, Search, Settings — exactly one
+active per page ([ARCHITECTURE.md](ARCHITECTURE.md) §Routes). Running pipelines shows `current/total`
+while the runner is on; Downloads counts running jobs. The footer holds `LanguageSwitcher`; every glyph is
+inline SVG from `Icon`.
 
-Lectures reopens the last lecture opened: `LecturesLayout` writes each lecture page it shows (never the
-`/course/:course/overview` page) to `localStorage['fastStudyLastLecture']` (`utils/lastLecture.ts`), and the row navigates to it while the
-tree still has it, falling back to `/` when it was renamed, deleted or never stored.
+Lectures reopens the last lecture page `LecturesLayout` showed (`utils/lastLecture.ts`, never the overview
+page) while the tree still has it, else `/`.
 
 ## Tree pane
 
-`LecturesTreePane` (`.tree-pane`) is rendered by `LecturesLayout` beside `/`, `/course/:course/overview` and
-`/:course/:lecture` only; the editor and the other routes get the full width. It holds the active
-courses' `CourseGroup`s, then `ArchivedSection`, then `New course`, inside `PendingUploadProvider` so an
-mp4 dropped on a lecture row can prompt. Each expanded course opens with an Overview row
-(`.course-overview-row`) that opens `/course/:course/overview` and is selected while that page is open; the
-course header itself only expands and collapses.
+`LecturesTreePane` renders beside `/`, the overview and `/:course/:lecture` only. It holds the active
+`CourseGroup`s, `ArchivedSection` and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
+lecture row can prompt. An expanded course opens with an Overview row; the course header only toggles.
 
-`utils/lectureProgress.ts` feeds the tree's two progress signals: `isLectureComplete` (the last
-pipeline output existing — `drive_url.txt`, or `summary.pdf` with Drive off, mirroring the backend's
-`final_output()`) gives each lecture row its leading dot, green when
-complete, accent while a step of it is in flight, hollow otherwise; `courseProgress` gives each course
-header its right-aligned `N/M`, lectures and recitations together, and returns `0/0` for an archived
-course so the badge stays off there.
+`utils/lectureProgress.ts`: `isLectureComplete` (the last pipeline output exists, mirroring the backend's
+`final_output()`) colours each lecture's dot; `courseProgress` gives the header's `N/M`, `0/0` for an
+archived course so the badge stays off.
 
-## Tree state
+- `CourseTreeContext` owns `courses`, `loaded` and `refreshCourses`, refreshes on notify and sorts through
+  `sortLectures`; everything reads it directly, no props or outlet context.
+- `CourseGroup` owns `expanded` and `recExpanded`, so the recitations sub-group survives collapsing the
+  course. It auto-expands when one of its lectures or its overview is the open route (deep links).
+- The pane unmounts on other routes; only each course's expansion (a module map in `CourseGroup.tsx`) and
+  the nav's scroll position survive, the latter saved on each scroll because a detached nav reads 0. The
+  auto-expand re-runs on remount: keeping the open page's course visible deliberately beats restoring an
+  explicit collapse.
+- `CourseGroupContext` and `LectureListContext` reach the recursive rows without prop-drilling;
+  `AddLectureInput` renders only in the list being added to.
 
-State ownership is deliberate:
+Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. `useShiftHeld`
+resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
-- `CourseTreeContext` owns `courses` + `loaded` + `refreshCourses`, refreshes on SSE notify, and sorts each
-  course's lectures/recitations through `sortLectures`. Everything reads it directly — no props, no outlet
-  context. `useLectureRoute` derives the open lecture's `files`/`transcribePartial` from it plus the route
-  params.
-- `CourseGroup` owns both `expanded` and `recExpanded` and passes 1-prop `ExpandHandle`s down, so the
-  recitations sub-group's open state survives collapsing and re-expanding the course. It auto-expands once
-  the first time one of its lectures or its overview page is the open route (deep links), opening
-  recitations too only for a recitation.
-- The pane unmounts on every route that doesn't show it, and only two things survive that, in module scope
-  for the session: each active course's `expanded`/`recExpanded` (a map in `CourseGroup.tsx`, keyed by
-  course name) and the course nav's scroll position, saved on each scroll because a detached nav reads 0.
-  Everything else — inline inputs, renames, the Archived section and archived courses' expansion, upload
-  prompts — resets. The auto-expand runs again on remount, so returning to an open lecture or overview
-  re-expands its course (and Recitations, for a recitation) even if the user collapsed it: the open page's
-  course staying visible deliberately wins over restoring an explicit collapse.
-- `CourseGroupContext` carries `{ course, add }` and `LectureListContext` carries just `kind`, so the
-  recursive rows reach them without prop-drilling. `AddLectureInput` renders only in the list whose kind is
-  being added, so the two lists never show an input at once.
-
-Interaction conventions: shift-click a course or lecture row renames it inline; holding shift swaps the
-course "+" button for archive/unarchive. `useShiftHeld` resets on window blur because an alt-tab mid-hold
-never delivers `keyup`.
-
-## Name suggestion and sorting
-
-`nextName.ts` suggests the next name from what the course already has: `Lecture N+1`, except that a
-trailing `Lecture N.1` suggests `Lecture N.2` (a split session's second half). Recitations are plain
-`Recitation N+1`.
-
-`lectureSort.ts` orders by parsed `(number, sub-number)` from `Lecture|Recitation N[.M]`; unparsed names
-sort to the head, then alphabetically among themselves.
+`nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second
+half); recitations have no sub-sessions ([I18N.md](I18N.md) for the prefix). `lectureSort.ts` orders by
+parsed `(number, sub-number)`; unparsed names sort first, alphabetically.

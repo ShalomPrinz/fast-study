@@ -63,9 +63,8 @@ export function seedYtdlp() {
   }
 }
 
-// Lets the writable copy update itself, in the background. Every failure is one stderr line and
-// nothing else: offline and rate-limited GitHub are the normal case, and a few minutes on the
-// shipped yt-dlp costs nothing.
+// Lets the writable copy update itself in the background. Every failure is one stderr line and
+// nothing else: offline and rate-limited GitHub are the normal case.
 export function updateYtdlp() {
   const copy = copyPath();
   if (!copy || !fs.existsSync(copy)) return;

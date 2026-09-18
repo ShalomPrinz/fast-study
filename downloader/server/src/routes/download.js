@@ -6,9 +6,8 @@ import { createJob } from '../jobs.js';
 
 const router = Router();
 
-// Every route here fire-and-forgets so a slow size probe doesn't delay the HTTP response.
-// The job entry is created synchronously, before that probe, so the returned jobId is
-// already pollable on /jobs the instant the caller holds it.
+// Every route here fire-and-forgets past a slow size probe; the job is created synchronously
+// first, so the returned jobId is already on /jobs the instant the caller holds it.
 
 /**
  * Start one background download and return its job id (docs/JOBS.md). Shared with

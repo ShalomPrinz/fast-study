@@ -6,92 +6,78 @@ Turns a Hebrew video lecture into a structured written summary and uploads it to
 
 ## Architecture
 
-Four services share one `.env` and one on-disk layout under `DATA_ROOT`:
+| Service              | Stack             | Dev port | Role                                                                  |
+| -------------------- | ----------------- | -------- | --------------------------------------------------------------------- |
+| `database/`          | FastAPI (Python)  | 8001     | Owns every read/write under `DATA_ROOT`, plus the cross-service SSE bus |
+| `backend/`           | FastAPI (Python)  | 8000     | Runs the pipeline steps, timing stats and the course runner           |
+| `frontend/`          | React + Vite + TS | 5173     | Web UI that drives the pipeline                                       |
+| `downloader/server/` | Node (express)    | 3052     | Downloads source videos and PDFs and hands them to `database/`        |
+| `downloader/auto/`   | Node (Playwright) | 3053     | Discovers a Moodle course's recordings and handouts                   |
 
-| Service       | Stack                    | Port | Role                                                                            |
-| ------------- | ------------------------ | ---- | ------------------------------------------------------------------------------- |
-| `backend/`    | FastAPI (Python)         | 8000 | Runs the pipeline steps; serves timing stats and the resume runner              |
-| `database/`   | FastAPI (Python)         | 8001 | Owns every read/write under `DATA_ROOT` + the cross-service SSE bus             |
-| `frontend/`   | React + Vite + TS        | 5173 | Web UI that drives the pipeline                                                 |
-| `downloader/` | Chrome MV3 + Node server | 3052 | Captures source videos (and PDFs) from lecture sites and hands them to database |
+Beside them: `electron/` is the desktop launcher, `delivery/` builds the Windows installer, and `lib/`
+holds the modules several services share. Each folder's `CLAUDE.md` is its developer doc.
 
-On-disk layout (single source of truth: `database/fs/paths.py`):
-
-```
-{DATA_ROOT}/{course}/{lecture}/...                  # lectures
-{DATA_ROOT}/{course}/Recitations/{name}/...         # recitations
-```
-
-Per-service docs live next to each service in `CLAUDE.md`.
+Lectures live at `{DATA_ROOT}/{course}/{lecture}/`, recitations at
+`{DATA_ROOT}/{course}/Recitations/{name}/` — see [`database/docs/LAYOUT.md`](database/docs/LAYOUT.md).
 
 ## Requirements
 
-- Python 3.12+
-- Node.js 18+
+- [uv](https://docs.astral.sh/uv/) (fetches Python 3.12) and Node.js 22
 - `ffmpeg` — `sudo apt install ffmpeg`
-- `pandoc` **2.9.2.1** — `sudo apt install pandoc`. The version is pinned; see `PANDOC_VERSION.md`
-- `tectonic` — download the release binary from [tectonic-typesetting/tectonic](https://github.com/tectonic-typesetting/tectonic/releases) onto your PATH. It is a self-contained XeTeX and needs no TeX Live install; the first render fetches its LaTeX packages over the network (minutes, once per machine) and every render after that is offline
-- `yt-dlp` (only if you'll download from YouTube) — `pipx install yt-dlp` or `sudo apt install yt-dlp`
-- [Groq API key](https://console.groq.com) — Whisper transcription
-- [Gemini API key](https://aistudio.google.com/apikey) — summary generation
-- Google OAuth client (`backend/credentials.json`) — Drive upload
+- `pandoc` **2.9.2.1** — `sudo apt install pandoc`; 3.x breaks the render, see [pinned tool versions](delivery/docs/RELEASE.md#pinned-tool-versions)
+- [`tectonic`](https://github.com/tectonic-typesetting/tectonic/releases) on your PATH — a self-contained XeTeX; the first render fetches its packages once, later renders are offline
+- `yt-dlp` — only for YouTube sources
+- Chrome or Edge — for `downloader/auto/`, plus `Xvfb` on Linux for Zoom capture
+- [Groq API key](https://console.groq.com) (transcription) and [Gemini API key](https://aistudio.google.com/apikey) (summary)
+- Google OAuth client at `backend/credentials.json` — Drive upload
 
-The Hebrew fonts (Noto Sans Hebrew for body text, Miriam Mono CLM for code) are bundled in `backend/assets/fonts/` — no system font install needed.
+Hebrew fonts ship in `backend/assets/fonts/`. A missing binary disables only the feature that needs it;
+each service reports its tools on `/health`.
 
-Every service resolves these binaries off `$PATH` and probes them at startup, reporting what is missing on its `/health`. `FASTSTUDY_BIN_DIR` in the environment overrides that with a directory of bundled binaries, which is what the packaged build sets.
+## Configuration
 
-## Environment
-
-Single `.env` at the repo root, shared by all services:
+One `.env` at the repo root, shared by every service. The app's settings page edits it too.
 
 ```
 DATA_ROOT=/absolute/path/to/data
 GROQ_API_KEY=gsk_...
 GEMINI_API_KEY=...
 GDRIVE_ROOT_FOLDER=FastStudy
-# Optional overrides
-DATABASE_URL=http://localhost:8001
-BACKEND_URL=http://localhost:8000
 ```
 
-The frontend reads no env file. It resolves the four service URLs at runtime from the Electron preload bridge (`frontend/src/services/runtime.ts`), falling back to the dev ports above.
+Optional keys (models, Drive toggle, auto-run, ports, peer URLs) are listed in each service's `CLAUDE.md`.
 
 ## Running
 
-All four services boot in one terminal:
-
 ```bash
-npm install        # one-time: the root dev tools, and links lib/ for the services that share it
-npm run dev
+npm install     # once: root dev tools, and links lib/ into the services
+npm run dev     # every service in one terminal, hot reload; Ctrl-C stops all
+npm run app     # builds the frontend, then runs everything under the Electron launcher
 ```
 
-Logs are prefixed `Backend` / `Frontend` / `Downloader` / `Database` and color-coded; Ctrl-C kills all four. Per-service commands live in each service's `CLAUDE.md`.
+`npm run app` runs the services the way the installed app does — ephemeral ports, a launch secret —
+so a UI change needs it rerun; `npm run dev` is the edit loop.
 
-The desktop shell runs the same services the way the packaged app does — every service on an
-ephemeral port behind a launch secret, the frontend served over `app://bundle` instead of Vite:
-
-```bash
-npm run app        # builds frontend/dist, then launches the Electron window
-```
-
-It needs a built frontend, so a UI change means rebuilding; `npm run dev` stays the loop with hot
-reload. See `electron/CLAUDE.md`.
-
-The Chrome extension is dev-only and not part of the packaged build. It is loaded unpacked from `downloader/extension/regular`; after loading, set `DOWNLOADER_EXTENSION_ID` in the repo-root `.env` to the ID Chrome assigned — there is no default, and unset means the server allowlists no extension origin, so CORS blocks the popup. See `downloader/README.md` for the full install guide.
+The Chrome extension is dev-only: load `downloader/extension/regular` unpacked, then set
+`DOWNLOADER_EXTENSION_ID` in `.env` to the ID Chrome assigned. Full guide:
+[`downloader/README.md`](downloader/README.md).
 
 ## Tests
 
-The backend uses [uv](https://docs.astral.sh/uv/) (manages Python 3.12 + deps); CI runs the same command on every push/PR.
+CI runs every suite on each push. Locally, from each folder:
 
-```bash
-cd backend && uv run pytest tests/ -q
-```
+| Where                                      | Command                   |
+| ------------------------------------------ | ------------------------- |
+| `backend/`, `database/`                    | `uv run pytest tests/ -q` |
+| `lib/runtime/py`, `lib/tools/py`, `lib/logging/py` | `uv run --extra test pytest tests/ -q` |
+| `frontend/`, `electron/`, `downloader/server`, `downloader/auto` | `npm test`  |
+| repo root (`lib/*/js`)                     | `npm test --workspaces`   |
 
-The other suites, each in its own package: `cd database && uv run pytest -q`, `npm test` in
-`downloader/server` and `downloader/auto`, and — for the shared modules four services import —
-`uv run --extra test pytest` in `lib/runtime/py`, `lib/tools/py` and `lib/logging/py`, plus
-`npm test` in `lib/runtime/js` and `lib/tools/js`.
+`npm run lint` at the root lints everything.
 
-## Customizing the summary format
+## Customizing the summary
 
-Edit `backend/assets/instructions/summarize.md` — it's the Hebrew prompt sent to Gemini alongside the transcript (and every material PDF attached to the lecture, if any). No code change needed.
+Edit `backend/assets/instructions/summarize.md` — the Hebrew prompt sent to Gemini with the transcript
+and any material PDFs attached to the lecture. No code change needed.
+
+We will support prompt customization in-app soon.

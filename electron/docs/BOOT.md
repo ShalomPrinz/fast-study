@@ -8,10 +8,9 @@
    ignored and the scheme silently loses its origin. See [`RENDERER.md`](RENDERER.md).
 3. One secret is generated for the launch: 32 random bytes, hex. It goes into every child's
    environment as `FASTSTUDY_SECRET` and reaches the renderer through the preload bridge.
-4. The startup checks run, once, and are carried for the launch — see
-   [`RENDERER.md`](RENDERER.md). They sit inline in the boot path, so each has to be cheap: no
-   network, no spawn, no real disk work. Their duration is logged for exactly that reason, and a
-   check reports a fact rather than deciding whether to launch.
+4. The startup checks run once and are carried for the launch ([`RENDERER.md`](RENDERER.md)). They
+   sit inline in the boot path, so each has to be cheap — no network, no spawn, no real disk work —
+   and their duration is logged to catch one that stops being so.
 5. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below.
 6. The four children start **in dependency order** — `database → backend → auto → server` — one at a
    time. Each is spawned, its port read off stdout, and its `/health` waited on before the next
@@ -25,12 +24,12 @@
 `boot.html` and `boot.js`: one row per child, its state, and — once a child is up — anything its
 `/health` tool probe could not run. It is a plain `file://` page rather than part of the frontend
 bundle, for the same reason the window cannot open on the frontend: the bundle resolves the service
-URLs at module scope and none of them exist while it renders. It is English only; the app's own
+URLs at module scope and none of them exist while it renders. It is English only: the frontend's
 locale wiring does not reach it.
 
 Main pushes the whole state on `faststudy:boot` at every change, and the page reads one snapshot
-over `faststudy:boot-state` when it loads — the snapshot is what closes the race between the page's
-first script and main's first push, which would otherwise reach a page with no listener.
+over `faststudy:boot-state` when it loads — which closes the race with main's first push reaching a
+page that has no listener yet.
 
 A boot that fails anywhere **stays on the launch screen**, with the failure on the child that did not
 come up, the message, and the path to the log. Everything that did start is killed first, so no row
@@ -52,17 +51,15 @@ that correct, and it survives only while the call graph stays acyclic (root `CLA
 
 ## The port handshake
 
-Each service binds `127.0.0.1:0` — main sets `FASTSTUDY_PORT=0` — and prints `FASTSTUDY_PORT=<n>`
-alone on a line. Main reads stdout line by line and matches `^FASTSTUDY_PORT=(\d+)$`. Every service
-listens _before_ printing, so connecting the instant the line arrives is safe.
+Main sets `FASTSTUDY_PORT=0` and matches each stdout line against `^FASTSTUDY_PORT=(\d+)$`; the
+service side, including why the line comes only after `listen()`, is
+[`lib/runtime`](../../lib/runtime/CLAUDE.md). Every other line on either stream is log output, and a
+child that exits before reporting a port fails the boot with what it exited on.
 
-Everything else on a child's stdout and stderr is log output. A child that exits before reporting a
-port fails the boot with what it exited on.
-
-`/health` is then polled until it answers. Polling is the only option here and the one place the
-repo's push-over-poll preference does not apply: a booting child's single channel back to main is
-the stdout line it has already sent, and `/health` is deliberately the one route exempt from the
-secret check so the answer distinguishes a wrong secret from a dead child.
+`/health` is then polled until it answers — the one place the repo's push-over-poll preference does
+not apply, since a booting child's only channel back to main is the port line it already sent.
+`/health` is the one route exempt from the secret check, so the answer tells a wrong secret from a
+dead child.
 
 ## The child environment
 
@@ -72,8 +69,8 @@ running, and the settings store's contents as the env vars each owning service r
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
 
 The environment is read **once, at boot**. A settings change while the app runs reaches each service
-through its own `POST /config`, which the renderer sends right after the store write — so nothing
-needs a restart and main never has to re-spawn a child.
+through its own `POST /config`, which the renderer sends after the store write, so main never
+re-spawns a child.
 
 The state root is `.state/` at the repo root in dev and `%LOCALAPPDATA%\FastStudy` packaged, and it
 is always passed explicitly rather than left to each service's fallback, so main's own log lands
@@ -94,11 +91,10 @@ Each child's cwd branches with its command — its package in the repo tree in d
 directory under `resources/` packaged. A cwd that does not exist fails the spawn outright, and in a
 package the repo tree is not there: `__dirname` is inside `app.asar`.
 
-Dev spawns the repo sources, which is what makes the whole launch path runnable and testable without
-an installer. The Node services run on **Electron's own binary as node** when packaged, because no
-other JS runtime ships — and that is the same `process.execPath` yt-dlp is pointed at as its player
-JS runtime (`downloader/server/docs/DOWNLOAD.md`). Main owes yt-dlp nothing beyond running the server
-on that binary; the flags and `ELECTRON_RUN_AS_NODE` on its own spawn live in `server/`.
+Dev spawns the repo sources, which makes the whole launch path runnable without an installer.
+Packaged, the Node services run on **Electron's own binary as node** because no other JS runtime
+ships; it is also yt-dlp's player JS runtime, whose flags live in `server/`
+([`DOWNLOAD.md`](../../downloader/server/docs/DOWNLOAD.md#the-js-runtime)).
 
 The packaged tree main assumes, staged by the build as `electron`'s `extraResources`:
 
@@ -117,11 +113,10 @@ Children are spawned in their own process group (POSIX), so the kill reaches the
 — ffmpeg, chrome, yt-dlp — and not just the service. Quit kills the group with `SIGTERM`; Windows
 has no process groups, so it is `taskkill /T /F` there.
 
-The kill runs from `will-quit`, from `process.on('exit')`, from `SIGINT`/`SIGTERM`, from a failed
-boot before its retry, and from an uncaught exception, because an orphaned service keeps a port and keeps writing `DATA_ROOT` after the
-app is gone, and the next launch would then run a second backend against the same `timing.db`. The
-one case none of that covers is main being `SIGKILL`ed, where the OS gives the process no chance to
-run anything.
+The kill runs from `will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its
+retry, and an uncaught exception, because an orphaned service keeps a port and keeps writing
+`DATA_ROOT` after the app is gone, and the next launch would run a second backend against the same
+`timing.db`. Only a `SIGKILL` of main escapes it.
 
 The `will-quit` kill also has to stay where it is for a packaged update to install — see
 [`UPDATES.md`](UPDATES.md).
@@ -131,9 +126,7 @@ The `will-quit` kill also has to stay where it is for a packaged update to insta
 Everything both streams of every child print, plus main's own boot lines, is written to
 `<state root>/logs/launch.log`, each line tagged with the child that wrote it. It is truncated at
 each launch: one launch's four children are the whole story a bug report needs, and appending would
-grow without bound over a machine's lifetime.
+grow without bound.
 
-`<state root>/logs/` also holds the error reports the frontend's boundary mails —
-`report-<timestamp>.txt`, one per send, each carrying the crash details and the log tail at that
-moment ([`RENDERER.md`](RENDERER.md)). They are never truncated or cleaned up: a report is only
-written when a user asks for one, and its whole purpose is to still be there to attach.
+`<state root>/logs/` also holds the error reports ([`RENDERER.md`](RENDERER.md)), which are never
+cleaned up: one is written only when a user asks, and its purpose is to still be there to attach.

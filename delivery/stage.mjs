@@ -1,11 +1,5 @@
-// Assemble the tree electron-builder ships as `resources/`, from artifacts the release workflow has
-// already built. The shape is `electron/docs/BOOT.md`'s packaged tree, and this script is the one
-// place that has to match it.
-//
-//   node delivery/stage.mjs <stage-dir>
-//
-// `bin/` and `latex/` are not here: the workflow downloads the binaries and primes the tectonic
-// cache straight into the stage dir, so nothing has to be copied twice.
+// Assemble the tree electron-builder ships as `resources/` — electron/docs/BOOT.md's packaged tree —
+// from built outputs; `bin/` and `latex/` the workflow writes itself. See docs/RELEASE.md.
 
 import fs from 'node:fs';
 import path from 'node:path';

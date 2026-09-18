@@ -8,8 +8,7 @@ const runs = new Map();
 
 /**
  * What an orchestrator status does to the run: `status` halts the run in that state, `disposition`
- * records it on the target and the queue continues. Mirrors what the frontend's client-side queue
- * has always done with the same four cases (docs/RUNS.md).
+ * records it on the target and the queue continues (docs/RUNS.md).
  */
 export function outcomeFor(status) {
   if (status >= 200 && status < 300) return { disposition: 'queued' };
@@ -69,8 +68,8 @@ export function resumeRun(id, { skip = false } = {}) {
   if (!run) return 'unknown run';
   if (run.status !== 'paused') return 'run is not paused';
   const { index } = run.paused;
-  // A skipped gate matches what a failed passcode save does today: the item is recorded as failed
-  // to queue and the queue moves on, rather than the whole run being abandoned.
+  // A skipped gate records the row as failed to queue and moves on, rather than abandoning the
+  // whole run.
   if (skip) run.targets[index].disposition = 'queue-failed';
   void drive(run, skip ? index + 1 : index);
   return null;
@@ -91,9 +90,8 @@ function isCurrent(run) {
   return runs.get(run.sectionId) === run && run.status !== 'cancelled';
 }
 
-// Trigger the queue sequentially from `from`. Sequential by design: auto/ serializes browser work
-// per call anyway, and the downloads themselves run on, so several land in parallel regardless.
-// `trigger` is the seam the tests drive the queue through; production always uses `downloadItem`.
+// Trigger the queue sequentially from `from` — the downloads themselves still overlap. `trigger`
+// is the tests' seam; production always uses `downloadItem`.
 export async function drive(run, from, trigger = downloadItem) {
   run.status = 'running';
   run.paused = null;

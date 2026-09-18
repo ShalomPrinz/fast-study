@@ -8,53 +8,44 @@
 
 One check per launch, fired from `runBoot()` right after the window navigates to the frontend — not
 before, so the check never competes with four service starts and never sits on the path that decides
-whether the app comes up. If there is a newer release it downloads in the background and NSIS
-installs it the next time the app quits. **Nothing reaches the screen**: no dialog, no notification,
-no bridge channel, no launch-screen row. The user starts the app one day and it is newer.
+whether the app comes up. A newer release downloads in the background and NSIS installs it the next
+time the app quits. **Nothing reaches the screen**: no dialog, no notification, no bridge channel,
+no launch-screen row.
 
-That makes `launch.log` the entire user-visible surface of the feature, which is why the updater
-logs through main's own `log('updater', ...)` rather than electron-updater's default `console`,
-which goes nowhere in a package. A check that fails is logged and dropped — an unreachable GitHub is
-the ordinary offline case, not a fault.
+That makes `launch.log` the feature's entire surface, which is why the updater logs through main's
+`log('updater', ...)` rather than electron-updater's default `console`, which goes nowhere in a
+package. A failed check is logged and dropped — an unreachable GitHub is the ordinary offline case.
 
 The signal that would justify an in-app "update ready" banner is a user saying they had no idea an
-update happened. Until then the silence is the point.
+update happened.
 
 ## Why the kill has to stay on `will-quit`
 
 `autoInstallOnAppQuit` hooks `app.once('quit')`, which fires **after** `will-quit`, where main's
 `killChildren()` runs — synchronously, so it completes before the handler returns. The installer
-therefore starts only once all four services are dead and no longer hold anything under
-`resources/` open. Moving the kill to a later hook would leave a running service holding the files
-NSIS is about to replace, and no dev run would ever show it: dev does not update.
+therefore starts only once all four services are dead and hold nothing under `resources/` open.
+Moving the kill to a later hook would leave a service holding files NSIS is about to replace, and no
+dev run would show it: dev does not update.
 
 ## The installer replaces `resources/` wholesale
 
 Nothing that must survive an update lives there. Tectonic's `formats/` is a per-machine artifact the
-next render simply rebuilds (~2s), and yt-dlp is meant to run from a writable per-user copy under
-`%LOCALAPPDATA%` rather than out of `resources/bin/`, so it can update itself. Settings
-(`userData`) and the state root are both outside the install directory and are untouched.
+next render rebuilds (~2s), and yt-dlp runs from its writable per-user copy under the state root so
+it can update itself ([`DOWNLOAD.md`](../../downloader/server/docs/DOWNLOAD.md#the-writable-copy-and-its-self-update)).
+Settings (`userData`) and the state root are both outside the install directory.
 
-## Versions and the channel
+## Versions and publishing
 
-Major and minor come from `electron/package.json`'s `version`, whose patch is ignored; `build.yml`
-sets the patch to one past the newest Release `v<major>.<minor>.<n>` (0 if none) and injects it with
-`-c.extraMetadata.version` — see [delivery/README.md](../../delivery/README.md#build-test-publish).
-`app.getVersion()` reports it and `launch.log`'s first line already carries it, so the log says which
-build produced it. The channel is `latest`.
+The version is computed by `build.yml` and injected at build time
+([`RELEASE.md`](../../delivery/docs/RELEASE.md#versions)); `app.getVersion()` reports it and
+`launch.log`'s first line carries it. Nothing here publishes: a Release is only ever the installer
+the smoke job tested ([`RELEASE.md`](../../delivery/docs/RELEASE.md#build-test-publish)).
 
-Nothing here publishes. `.github/workflows/build.yml` runs on every push to `main` (and on dispatch), builds
-with `--publish never`, smoke-tests the installer and keeps it as the `installer` Actions artifact
-(90-day retention). `publish.yml`, dispatched by hand, creates Release `v<version>` already published
-from that commit's green `build.yml` run's `installer` artifact. It never builds, so no installed copy
-can update to bytes the smoke job did not test.
-
-The repo is public, so **no token ships with the app** — the updater only needs anonymous reads of
-the Releases API and the asset. Only `publish.yml` needs a token with write access.
+The repo is public, so **no token ships with the app** — the updater needs only anonymous reads of
+the Releases API and the asset.
 
 ## Not proven
 
-electron-updater has never run against a real Release: no installer has been built yet, so nothing
-here has been observed end to end. The first release is what confirms that `app-update.yml` lands in
-the package, that the check finds the Release, and that the quit-time install actually replaces a
-running installation. Treat every claim above as the intended design until then.
+The smoke suite proves the download and the quit-time install end to end, against a generic feed it
+serves itself ([`SMOKE.md`](../../delivery/docs/SMOKE.md)). The GitHub provider — `app-update.yml`
+finding a real Release — is exercised by nothing until the first Release is published.

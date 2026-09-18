@@ -1,6 +1,6 @@
 # Per-lecture pipeline
 
-`pipeline/` holds per-LECTURE logic; `course/` holds per-COURSE logic (see `OVERVIEW.md`). Anything aggregating across a course's lectures never belongs here.
+`pipeline/`'s stages, run and lock model; the per-course counterpart is [OVERVIEW.md](OVERVIEW.md).
 
 ## Stages
 
@@ -9,28 +9,24 @@
 | `audio`      | `audio.mp3`      | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR.                               |
 | `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB). Chunk count comes from `services/mp3.py`, an in-process header parse rather than a spawned probe. |
 | `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ every material PDF) uploaded as file parts.  |
-| `pdf`        | `summary.pdf`    | pandoc → `.tex` → tectonic (one run). See `PDF.md`.                                      |
+| `pdf`        | `summary.pdf`    | pandoc → `.tex` → tectonic (one run). See [PDF.md](PDF.md).                                      |
 | `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link. Runs only while `DRIVE_ENABLED` is on, and only with Drive connected. |
 
-Other files in a lecture dir: `video.mp4` (user/downloader), any number of material PDFs (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see `PDF.md`).
+Other files in a lecture dir: `video.mp4` (user/downloader), any number of material PDFs (user, optional), `transcript.partial.txt` + `transcript.partial.meta.json` (transcribe, on rate-limit), `.pdf_warning` + `.pdf_build.tex` (pdf, on a recovered or failed render — see [PDF.md](PDF.md)).
 
 A LaTeX error that still yielded a usable PDF is **not** a step failure: `_exec_pdf` returns `done` and persists the warning to `.pdf_warning`, so the run continues to `drive`. The runner stays error-only — there is no warning channel in `/status`.
 
-Drive consent never happens inside a run. `services/google_auth.py` only loads and refreshes the stored token, so a drive step with none raises `DriveNotConnected` before it fetches the PDF: the lecture stops at `summary.pdf` and nothing waits on a human. That first failure sets one process flag, reported as `consent_needed` on `GET /config/drive/status` and pushed over SSE, so a queue of N lectures leaves the UI one thing to render; the consent flow itself is `POST /config/drive/connect` (docs/API.md).
+Drive consent never happens inside a run. `services/google_auth.py` only loads and refreshes the stored token, so a drive step with none raises `DriveNotConnected` before it fetches the PDF: the lecture stops at `summary.pdf` and nothing waits on a human. That first failure sets one process flag, reported as `consent_needed` on `GET /config/drive/status` and pushed over SSE, so a queue of N lectures leaves the UI one thing to render; the consent flow itself is `POST /config/drive/connect` ([API.md](API.md)).
 
 A lecture may hold any number of material PDFs. `database/` owns their naming, so the backend never constructs one: `_exec_summarize` lists them via `db_client.list_materials`, downloads each into the workspace and passes them all to `summarize`. The step result's `usedMaterial` stays a bool — true iff at least one reached Gemini.
 
-The Hebrew summarize prompt lives at `assets/instructions/summarize.md` — edit the file to change output structure, no code change. Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` — `LLMClient`'s default, so summarize and the course overview cannot drift apart.
+Gemini auth uses `GEMINI_API_KEY`: the SDK silently ignores OAuth `credentials=` outside Vertex AI mode. The model is `settings.gemini_model()` — `LLMClient`'s default, so summarize and the course overview cannot drift apart.
 
 No environment variable redirects a provider call: both SDK clients get `providers.base_url()` explicitly and Gemini gets `vertexai=False`, because the launcher passes its whole environment to every child, so a stray `GROQ_BASE_URL` / `GOOGLE_GEMINI_BASE_URL` / `GOOGLE_GENAI_USE_VERTEXAI` on a user's machine would otherwise reroute calls the key probe never checked. Proxy and CA variables stay honored.
 
-## Purity and the database round-trip
+## The database round-trip
 
-Pipeline functions are pure — paths/strings in, no global state, no knowledge of `DATA_ROOT`. Every filesystem access goes through `services/db_client.py` (HTTP to `database/`, port 8001). The only identity the backend carries is `(course, lecture, kind)`; `kind="recitation"` is forwarded as a query string so the database service injects the `Recitations/` segment.
-
-`runner._db_workspace` is the bridge: a `tempfile.TemporaryDirectory` per step that pre-downloads named inputs and uploads named outputs on clean exit. ffmpeg/pandoc/Gemini need real filesystem paths, so the bytes have to land somewhere.
-
-Asset paths (`assets/fonts`, `assets/instructions`, `assets/templates`) resolve through `resource_path()` in `services/resources.py`, which reads them from the backend root in dev and from `sys._MEIPASS` when frozen.
+`kind="recitation"` is forwarded to `database/` as a query string, so it injects the `Recitations/` segment. `runner._db_workspace` bridges the pure functions to it: a tempdir per step that pre-downloads named inputs and uploads named outputs on clean exit — ffmpeg, pandoc and Gemini need real filesystem paths.
 
 ## Empty-file guard
 
@@ -40,9 +36,7 @@ Material PDFs are the exception: they are user-supplied optional inputs with no 
 
 ## Execution model
 
-Endpoints are fire-and-forget: they schedule a background asyncio task and return `{"status": "started"|"busy"}`. Outcomes live in runner state, which the frontend reads via `GET /status`.
-
-State in `pipeline/runner.py`:
+Outcomes of the fire-and-forget endpoints live in runner state, read via `GET /status`. State in `pipeline/runner.py`:
 
 - `_locks[(course, lecture, kind)]` — one `asyncio.Lock` per lecture, serializing concurrent triggers.
 - `_in_flight[skey]` — all in-flight entries regardless of trigger (runner / `/pipeline` / single `/run/{step}` all populate the same map, so the frontend doesn't care which path queued them). `skey` is the string `"course||lecture||kind"` and appears verbatim in `/status`.
@@ -52,7 +46,9 @@ State in `pipeline/runner.py`:
 
 `next_step` is pure file-existence over `enabled_steps()`: the first step whose output is missing. That makes every trigger resumable with no stored progress.
 
-`enabled_steps()` is `STEP_ORDER` minus the steps their setting switches off — today only `drive`, on `DRIVE_ENABLED`. It is read per call, so `POST /config` flips the step without a restart. With Drive off a lecture is complete at `final_output()` = `summary.pdf`; completion stays pure file existence rather than gaining a marker file, and the cost is that turning Drive back on re-pends every lecture that finished while it was off.
+`db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
+
+`enabled_steps()` is `STEP_ORDER` minus the steps a setting switches off — only `drive`, on `DRIVE_ENABLED`. It is read per call, so `POST /config` flips the step without a restart. With Drive off a lecture is complete at `final_output()` = `summary.pdf`; completion stays pure file existence rather than gaining a marker file, and the cost is that turning Drive back on re-pends every lecture that finished while it was off.
 
 ## One queue
 
@@ -66,7 +62,7 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 ## `AUTO_RUN` — the ceiling on automatic work
 
-`settings.auto_run()` returns `off`, `audio` or `full`; unset or unrecognised means `full`, which is the historical behaviour, so a typo can never silently stop every unattended run.
+`settings.auto_run()` returns `off`, `audio` or `full`; unset or unrecognised means `full`, so a typo can never silently stop every unattended run.
 
 | Value   | A video arriving (`/video-arrived`) | The nightly cron                                |
 | ------- | ----------------------------------- | ----------------------------------------------- |
@@ -78,16 +74,13 @@ It never caps a run the user asked for: `POST /run-all` always enqueues at depth
 
 The uploading service reports the arrival as a fact and holds no step names — the depth is the backend's alone.
 
-`db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
-
 ## The nightly catch-up pass
 
 `pipeline/schedule.py` owns the APScheduler instance that fires `_scheduled_run` once a day. It lives there, not in `backend_main.py`'s lifespan, so `POST /config` can re-apply the settings on the running process: `apply()` adds, reschedules or removes the single `run_all_daily` job and is idempotent, so the endpoint calls it unconditionally.
 
-`settings.nightly_run()` is the switch and `settings.nightly_hour()` the hour. Unset means on at 03:00 — the pass predates both settings, so no value has to preserve the old behaviour — and an hour that is non-numeric or outside 0-23 falls back to 03:00 rather than leaving the install with no nightly pass. The store validates an integer, not an hour; the range is enforced here.
+`settings.nightly_run()` is the switch and `settings.nightly_hour()` the hour. Unset means on at 03:00, and an hour that is non-numeric or outside 0-23 falls back to 03:00 rather than leaving the install with no nightly pass. The store validates an integer, not an hour; the range is enforced here.
 
 `NIGHTLY_RUN` and `AUTO_RUN` are independent gates and are deliberately not merged: `AUTO_RUN` is the depth ceiling on _all_ unattended work, `NIGHTLY_RUN` switches off only this pass. `AUTO_RUN=off` still stops the scheduled run from inside `_scheduled_run`.
-
 
 ## Rate limits
 
@@ -104,14 +97,10 @@ Manual `/run/summarize` and `/pipeline` triggers ignore the flag — the user ma
 
 ## Timing
 
-`timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. See `timing/README.md` for queries and the outlier-cleaning scripts.
+`timing/` logs `(operation, file_size_bytes, duration_seconds)` to a SQLite db via the `@timed_pipeline` decorator; `get_stats` returns a linear-regression ETA. See [timing/README.md](../timing/README.md) for queries and the outlier-cleaning scripts.
 
 The db sits at `runtime.state_path("timing.db")`, outside the `backend/` tree `--reload` watches, so the runner's constant writes never restart the dev server. `timing/__init__.py` owns that path and `init_db()` creates the directory — `state_path` itself only joins.
 
 ## Logging
 
-`logging_setup` (the shared `lib/logging/py` module, imported as `from logging_setup import setup_logging`) owns all logging config; `backend_main.py` calls `setup_logging()` at entry-module import, so it is the last thing to configure `uvicorn.access` on either path — packaged, uvicorn never configures that logger at all; under `--reload`, uvicorn's CLI configures it first and `setup_logging()` then replaces its handler list outright, leaving both paths identical. It sets the root logger to INFO with `[%(name)s] %(message)s`, silences `httpx`'s per-request INFO line (one per Groq chunk), and installs its own `uvicorn.access` handler — `[api] POST /path → 200`, `propagate` off — owning that logger outright rather than re-formatting one uvicorn placed.
-
-`runtime.serve()` starts uvicorn with `log_config=None` so uvicorn's own `dictConfig` never runs and never replaces that handler; the two go together. `uvicorn`/`uvicorn.error` propagate to root instead, so startup lines read `[uvicorn.error] Started server process`.
-
-Access lines for `HEAD`, `OPTIONS` (CORS preflights) and for 2xx `GET` are deliberately dropped — the frontend fires those constantly and they carry no information. Those requests still run; only their log line is suppressed. Everything else (any non-2xx, any mutating method) is logged.
+`backend_main.py` calls `setup_logging()` at import; the format, the dropped access lines and why it owns `uvicorn.access` are [lib/logging](../../lib/logging/CLAUDE.md)'s. The silenced `httpx` INFO line would otherwise print once per Groq chunk.

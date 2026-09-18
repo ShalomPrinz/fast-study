@@ -1,9 +1,8 @@
 // What a filename says the file is. Shared by every probe that ends up holding a name —
 // one table, so a Drive link and a plain URL can never disagree about what a .mp4 is.
 
-// A name only counts as resolved when it carries an extension: that is what the routing
-// reads, and it also rejects the page titles Drive serves instead ("Sign in", "Virus scan
-// warning") when the file isn't readable anonymously.
+// A name counts only with an extension: that is what routing reads, and it rejects the page
+// titles Drive serves ("Sign in", "Virus scan warning") for a file not readable anonymously.
 export const NAMED_FILE = /^(.+)\.([A-Za-z0-9]{1,5})$/;
 
 // Containers yt-dlp actually produces here; anything else it cannot turn into video.mp4.

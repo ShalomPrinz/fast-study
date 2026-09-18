@@ -1,10 +1,8 @@
 import { t } from '@lingui/core/macro'
 import type { Course, Kind } from '@/types'
 
-// Any prefix followed by a number, so a course names its sessions in whatever language it uses.
-// A recitation has no sub-session form, so `תרגול 3.1` is rejected rather than parsed.
-// This assumes a course holds only indexed sessions: a stray `סיכום 2024` parses too, and its year
-// outranks every real lecture number.
+// Any prefix then a number, so a course names sessions in its own language; recitations reject the
+// `.N` form. A stray `סיכום 2024` parses too — see docs/I18N.md.
 const PATTERN = /^(.+?)\s+(\d+)(?:\.(\d+))?$/
 
 export interface LatestName {
@@ -48,10 +46,8 @@ export function sessionPrefix(courses: Course[], courseName: string, kind: Kind)
   )
 }
 
-// The wording a course with nothing to copy falls back to. The `directory name` context keeps this
-// msgid separate from the UI's `Lecture` / `Recitation` button copy: the two render the same word
-// today, but this one becomes a directory under DATA_ROOT, and a translator shortening a button
-// label to fit the segmented control must not rename directories.
+// The fallback for a course with nothing to copy. Its own `directory name` msgid, since it lands on
+// disk and must not change when a translator shortens the identical button label.
 export function fallbackPrefix(kind: Kind): string {
   return kind === 'recitation'
     ? t({ message: 'Recitation', context: 'directory name' })

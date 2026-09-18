@@ -24,9 +24,8 @@ const MP4_WAIT_MS = 30000;
 const SECOND_MP4_WAIT_MS = 15000;
 
 /**
- * Zoom cloud recording from a passcode-gated `zoom.us/rec/share/…` link (found in a
- * section summary, not an `li.activity` card). Serves a direct `.mp4`, captured like
- * `videostream`; one share can hold two recordings. See docs/ZOOM.md.
+ * Zoom cloud recording from a passcode-gated `zoom.us/rec/share/…` link (found in a section
+ * summary, not a module). Serves a direct `.mp4`; one share can hold two. See docs/ZOOM.md.
  */
 export class ZoomExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -126,9 +125,8 @@ export class ZoomExtractor extends VideoExtractor {
     // Gate is up but we have nothing to type — don't burn 5 empty submits; ask upstream
     // for a passcode straight away.
     if (!passcode) throw new PasscodeError('missing');
-    // The share form is a Vue SPA whose passcode binding lands a beat after the input
-    // appears, so a fill fired too early is dropped and the gate never clears. Re-fill +
-    // click each retry until #passcode detaches. See docs/ZOOM.md.
+    // Vue binds the input a beat after it appears and drops an early fill, so re-fill + click
+    // until #passcode detaches. See docs/ZOOM.md.
     for (let i = 0; i < 5; i++) {
       await page.fill('input#passcode, input[type="password"]', passcode).catch(() => {});
       await page.click('#passcode_btn, button:has-text("Watch Recording")').catch(() => {});

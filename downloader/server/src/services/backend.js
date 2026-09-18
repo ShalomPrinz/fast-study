@@ -1,9 +1,8 @@
 import { BACKEND_URL } from '../config.js';
 import { peerHeaders } from '@faststudy/runtime';
 
-// Announce a video landing on disk so the backend can apply its auto-run policy. Fire-and-forget
-// and silent on failure: the bytes are already stored, so a dead backend must never turn a
-// completed download into a failed job — the user can still start the pipeline by hand.
+// Announce a stored video so the backend can apply its auto-run policy. Silent on failure: a dead
+// backend must never fail a completed download (docs/DATABASE.md).
 export function reportVideoArrived(course, lecture, kind) {
   const url = `${BACKEND_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/video-arrived?kind=${encodeURIComponent(kind)}`;
   fetch(url, { method: 'POST', headers: peerHeaders() }).catch(() => {});

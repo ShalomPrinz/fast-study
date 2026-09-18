@@ -74,7 +74,7 @@ export function finishJob(id, status, message = null) {
   job.status = status;
   job.message = message;
   broadcastJobs();
-  // Delete after short timeout. See @docs/JOBS.md.
+  // Only `done` is evicted on a timer; `error` stays until a retry supersedes it (docs/JOBS.md).
   if (status === 'done') setTimeout(() => jobs.delete(id), DONE_BRIDGE_MS).unref();
 }
 

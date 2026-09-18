@@ -66,9 +66,8 @@ function JobProgressBar({
   )
 }
 
-// The row's per-job block: one bar (or per-clip button) per download job. Renders nothing unless a
-// job is running or the recording fans out to more than one clip. Per-clip retry buttons show only
-// when `split`, since a lone job retries via the main row button.
+// One bar or per-clip button per job; nothing unless a job runs or the row is split. A lone job
+// retries from the main row button.
 export default function RecordingJobList({
   jobs,
   split,

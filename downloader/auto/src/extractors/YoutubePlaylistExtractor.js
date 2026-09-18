@@ -34,12 +34,8 @@ function unsupported(host) {
 }
 
 /**
- * Moodle `url` module that links off-site. canHandle claims `url` activities whose direct
- * external target (contents[].fileurl) is a YouTube host — the host is known at list time
- * with no fetch/redirect hop, so non-YouTube links (Drive, GitHub, …) fall to their own
- * extractor rather than being surfaced here and rejected on expand.
- * The expand-time 422 in listEntries is now only a fallback (an echoed ref can still
- * reach the download path).
+ * Moodle `url` module whose external target is a YouTube host. Lists as one unexpanded row;
+ * `/list/expand` flat-lists it with yt-dlp. See docs/BROWSING.md.
  */
 export class YoutubePlaylistExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -48,10 +44,8 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
   }
 
   /**
-   * Claim a `url` module whose direct external target is a YouTube host (known from
-   * contents[].fileurl, no fetch). The host is what makes the row expandable; whether it looks
-   * like a lecture is `likelyRecording`'s job, a display hint rather than a reason to drop it.
-   * Unparseable target (safeHost → null) → not claimed.
+   * Claim a `url` module whose direct external target is a YouTube host; an unparseable target
+   * is not claimed. Whether it looks like a lecture is only the `likelyRecording` hint.
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}
    */

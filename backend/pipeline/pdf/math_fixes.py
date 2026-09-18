@@ -114,9 +114,8 @@ _MERGE_RTL_NUMBER_RE = re.compile(
 
 
 def merge_rtl_math_number(text: str) -> str:
-    """Pull a number adjacent to a Hebrew \\text{} into its \\RL{} run — left outside,
-    the number stays in LTR math flow and the two islands order wrongly against each
-    other. \\RL{} is text-mode only, so the merged run has to live inside the \\text{}."""
+    """Pull a number adjacent to a Hebrew \\text{} into its \\RL{} run, else the two islands
+    order wrongly. \\RL{} is text-mode only, so the merged run lives inside the \\text{}."""
 
     def repl(m: re.Match) -> str:
         num, body = (m.group(1), m.group(3)) if m.group(1) else (m.group(6), m.group(4))

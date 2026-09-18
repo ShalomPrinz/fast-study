@@ -24,11 +24,8 @@ export async function listCourses() {
     }));
 }
 
-// Stream the just-downloaded video.mp4 to the database, then remove the temp dir
-// whether or not the upload succeeded. This PUT also wipes derived audio/transcript/
-// summary (correct for a fresh video). `tool` labels errors (curl / yt-dlp).
-// Returns null on success or the error message rather than throwing — the caller turns it
-// into the job's terminal state.
+// Stream the temp video.mp4 to the database (a PUT that wipes derived artifacts), removing the
+// temp dir either way. Never throws: null on success, else the job's error message.
 export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   const file = path.join(tempDir, VIDEO_FILENAME);
   try {
@@ -65,11 +62,8 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   }
 }
 
-// Stream the just-downloaded PDF to the /materials endpoint, then remove the temp dir either
-// way. The database allocates the name (material.pdf, material.2.pdf, …) so a second PDF appends
-// instead of overwriting, and derived transcript/summary artifacts are left alone (unlike the video PUT).
-// Returns null on success or the error message rather than throwing — the caller turns it
-// into the job's terminal state.
+// Stream the temp PDF to the appending /materials, removing the temp dir either way. Never
+// throws: null on success, else the job's error message.
 export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
   const file = path.join(tempDir, MATERIAL_TEMP_FILENAME);
   try {
@@ -103,10 +97,8 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
   }
 }
 
-// Forward already-fetched PDF bytes to the /materials endpoint: the database allocates the
-// name (a second PDF appends) and derived artifacts survive, unlike the video PUT. Throws on
-// network error (route -> 500); returns null on success or the error message on a
-// database-level failure (route -> 502).
+// Forward already-fetched PDF bytes to /materials. Throws on a network error (route → 500);
+// returns the message on a database-level failure (route → 502).
 export async function uploadPdf(buf, course, lecture, kind) {
   const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
   const res = await fetch(url, {

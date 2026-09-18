@@ -9,23 +9,20 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 import { resolveBrowserChannel } from './browserChannel.js';
 
-// Stealth to close automation leaks, but DELETE its 'user-agent-override' evasion — a
-// rewritten UA desyncs from the browser's own Client-Hints and zoom flags it. Registered ONLY on
-// playwright-extra's chromium (plain launches stay stealth-free). See docs/ZOOM.md.
+// Stealth minus its 'user-agent-override' evasion (a rewritten UA desyncs from Client-Hints),
+// registered ONLY on playwright-extra's chromium so plain launches stay clean. See docs/ZOOM.md.
 const stealth = StealthPlugin();
 stealth.enabledEvasions.delete('user-agent-override');
 chromium.use(stealth);
 
-// Managed Xvfb virtual display, spawned lazily on the first zoom launch (LINUX ONLY — on
-// Windows the window is parked off-screen instead, so this stays `null` and every Xvfb
-// helper below is dead code there). Killed on session close / process exit.
+// Managed Xvfb virtual display, Linux only (Windows parks the window off-screen, so this stays
+// null there). Spawned lazily on the first zoom launch; killed on session close / process exit.
 let xvfb = null; // { proc: ChildProcess, display: ':N', authFile: string }
 
 const XVFB_READY_TIMEOUT_MS = 10_000;
 
-// Pick a free X display EXPLICITLY (step up from :99), not via `-displayfd`: on WSLg
-// /tmp/.X11-unix is a read-only tmpfs, so an auto-picked display can't create its FS
-// socket. An explicit `:N` falls back to an abstract Unix socket. See docs/ZOOM.md.
+// Pick a free display EXPLICITLY (up from :99), never via `-displayfd`: WSLg's read-only
+// /tmp/.X11-unix needs the abstract socket only an explicit `:N` falls back to. See docs/ZOOM.md.
 function findFreeDisplay() {
   for (let n = 99; n < 1000; n++) {
     if (fs.existsSync(`/tmp/.X${n}-lock`)) continue;
@@ -128,12 +125,8 @@ export function stopXvfb() {
 }
 
 /**
- * Launch the browser the ZOOM recording player needs: the user's installed Chrome or Edge
- * (browserChannel.js), stealth-cloaked, HEADED — keeps the real GPU renderer + a browser's own
- * clean UA, both of which headless lacks. There is NO bundled-Chromium fallback here: headless
- * SwiftShader is exactly what the player rejects. Hidden per platform: an Xvfb virtual display on
- * Linux, an off-screen window on Windows. Do NOT override the UA or add `--use-angle=vulkan`
- * (both drop it to SwiftShader / flag it). See docs/ZOOM.md.
+ * Launch the browser the zoom player needs: the user's Chrome or Edge, stealth-cloaked, HEADED
+ * but hidden per platform, with no bundled fallback. Hard constraints in docs/ZOOM.md.
  * @returns {Promise<import('playwright').Browser>}
  */
 export async function launchZoomBrowser() {

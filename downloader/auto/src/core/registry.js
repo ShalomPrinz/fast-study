@@ -1,6 +1,5 @@
-// Two concerns, matched at different granularities.
-// Auth: per university (host). Extractor: per activity (modType). Discovery is the
-// stateless Moodle WS API (core_course_get_contents), not a per-LMS DOM parser.
+// Two concerns, matched at different granularities: auth per university (host), extraction per
+// activity (modType + target).
 import { statePath } from '@faststudy/runtime';
 import { MoodleToken } from '../auth/moodleToken.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
@@ -20,12 +19,11 @@ const UNIVERSITIES = [
   },
 ];
 
-// Extractors own the per-activity EXTRACTION mechanism. Ordered; first
-// canHandle(activity) wins. Unknown modTypes match none → skipped.
+// Ordered; the first canHandle(activity) wins, and an activity no extractor claims is skipped.
 const EXTRACTORS = [
   new VideostreamExtractor(), // modType 'videostream' → in-site .mp4
-  new YoutubePlaylistExtractor(), // modType 'url'      → YouTube playlist (redirect)
-  new GoogleDriveExtractor(), // modType 'url'          → Google Drive single video file
+  new YoutubePlaylistExtractor(), // modType 'url'      → YouTube playlist
+  new GoogleDriveExtractor(), // modType 'url'          → single Google Drive file → probed on download
   new ZoomExtractor(), // modType 'zoom' (synthetic) → passcode-gated zoom share .mp4
   new MoodleFileExtractor(), // modType 'resource'     → course-hosted PDF → lecture material
   new DirectUrlExtractor(), // modType 'url' (last)    → any other off-site link → probed on download

@@ -12,10 +12,8 @@ function endsWithMp4(url) {
 const MP4_WAIT_MS = 20000;
 
 /**
- * BIU Moodle `videostream` module: recorded lectures hosted in-site, each behind
- * its own /mod/videostream/view.php page. Listing is metadata-only (the parser
- * already did the DOM walk); the .mp4 lives on the view.php page and is captured
- * fresh at download time (tokens are short-lived).
+ * BIU Moodle `videostream` module: an in-site recorded lecture behind its own view.php page.
+ * Listing is metadata-only; the .mp4 is sniffed fresh at download time (tokens are short-lived).
  */
 export class VideostreamExtractor extends VideoExtractor {
   /** Recording.strategy this extractor produces — used to route echoed-back recordings. */
@@ -48,9 +46,8 @@ export class VideostreamExtractor extends VideoExtractor {
   }
 
   /**
-   * DOWNLOAD PHASE: navigate the view.php page and sniff the first .mp4 request —
-   * its url + live headers (Referer/Origin/token) are the replay material server.js
-   * needs, and they're short-lived so we grab them fresh here.
+   * DOWNLOAD PHASE: navigate the view.php page and sniff the first .mp4 request — its url +
+   * live headers (Referer/Origin/token) are what server/'s curl replays.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}

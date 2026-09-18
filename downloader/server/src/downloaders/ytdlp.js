@@ -8,28 +8,20 @@ import { NO_WINDOW, toolPath } from '@faststudy/tools';
 export const YTDLP_HOST_RE =
   /(^|\.)youtube\.com$|^youtu\.be$|^drive\.google\.com$|^docs\.google\.com$/i;
 
-// Recent yt-dlp needs a JS runtime to run YouTube's player script and extract formats; both the
-// probe and the download must carry these or format extraction errors. The runtime is the process
-// running this server — Electron in a package, node in dev — so no separate binary ships.
-// --no-js-runtimes first is load-bearing: deno outranks node in yt-dlp's priority order, so a user
-// with deno installed would silently get theirs. Never add a bare `--js-runtimes node` after this
-// pair — the parser keys runtimes by name, so the later flag would overwrite the path with null.
+// yt-dlp's JS runtime is this process; both probe and download carry these. --no-js-runtimes must
+// come first and no bare `--js-runtimes node` may follow — see docs/DOWNLOAD.md ("The JS runtime").
 const YT_PLAYER_JS_FLAGS = ['--no-js-runtimes', '--js-runtimes', `node:${process.execPath}`];
 
-// Electron only behaves as node when told to, and it must be told explicitly rather than by
-// inheritance: yt-dlp's runtime probe sets nothing, and a bare Electron prefixes its version with
-// a CRLF that yt-dlp's start-anchored `^v(\S+)` misses — it then reports `node-unknown
-// (unsupported)` and falls back silently.
+// Set explicitly, never inherited: a bare Electron's CRLF-prefixed version makes yt-dlp fall back
+// silently (docs/DOWNLOAD.md).
 const YT_PLAYER_JS_ENV = { ELECTRON_RUN_AS_NODE: '1' };
 
 // yt-dlp's cache must be writable — it writes youtube-sigfuncs/<id>.json there — so it points at
 // the per-user state root rather than the default under a possibly read-only installed home.
 const CACHE_DIR_FLAGS = ['--cache-dir', statePath('ytdlp-cache')];
 
-// Sum yt-dlp's printed filesize fields for the same `bv*+ba/b` selection the real
-// download uses, without downloading — approximates the merged mp4's size.
-// Needs YT_PLAYER_JS_FLAGS: without a JS runtime yt-dlp can't extract formats, so the
-// probe would error and resolve null ("unknown") even though the download succeeds.
+// Sum the printed filesizes for the download's own `bv*+ba/b` selection — the merged mp4's size.
+// Needs YT_PLAYER_JS_FLAGS, or it resolves null even though the download would succeed.
 function probeYoutubeSize(url) {
   return new Promise((resolve) => {
     execFile(

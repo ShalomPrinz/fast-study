@@ -1,9 +1,7 @@
 import { useCallback, useRef } from 'react'
 
-// Dedupes `(key, msg)` so a repeated status refresh doesn't re-toast the same error.
-// Before: every refresh re-sends errors[key]. After: sent once; prune(validKeys) rearms the key.
-// prune's `inScope` limits deletion to the caller's own keys, so other scopes aren't rearmed.
-// seed(key, msg) records a pair without sending, so pre-existing errors on load are suppressed.
+// Dedupes `(key, msg)` across refreshes; `prune` rearms keys gone from `validKeys` (within `inScope`
+// only), and `seed` records a pair unsent so errors predating load stay quiet.
 export function useReportOnce(send: ((msg: string) => void) | undefined) {
   const sendRef = useRef(send)
   sendRef.current = send

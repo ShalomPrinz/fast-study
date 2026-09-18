@@ -57,15 +57,12 @@ function exe(name) {
   return process.platform === 'win32' ? `${name}.exe` : name;
 }
 
-/** The four children in dependency order. `peerVar` is the env var this service is published to
- *  later children under; `bridgeKey` is its name in the renderer's `window.faststudy.urls`. The
- *  cwd goes through the same `isPackaged` branch as the command: the repo directories do not exist
- *  in a package — `__dirname` is inside the asar — and spawn fails ENOENT on a missing cwd. */
+/** The four children in dependency order. `peerVar` is the env var later children get this one
+ *  under; `bridgeKey` its name in `window.faststudy.urls`. cwd branches too — see docs/BOOT.md. */
 function childSpecs() {
   const dev = !app.isPackaged;
   const services = path.join(process.resourcesPath, 'services', exe('services'));
-  // Packaged, the Node services run on Electron's own binary as node — nothing else ships one, and
-  // yt-dlp is pointed at that same execPath as its JS runtime.
+  // Packaged, the Node services run on Electron's own binary as node — nothing else ships one.
   const node = (dir, entry) => {
     const staged = path.join(process.resourcesPath, dir);
     return dev
@@ -110,15 +107,13 @@ function childSpecs() {
   ];
 }
 
-/** The environment every child shares: the launch contract, plus the stored settings as the env
- *  vars each owning service already reads. A later settings change reaches a running service
- *  through its own `POST /config`, so this is read once, at boot. */
+/** The environment every child shares: the launch contract plus the stored settings. Read once, at
+ *  boot — a later change reaches a running service through its own `POST /config`. */
 function sharedEnv() {
   const packaged = app.isPackaged
     ? {
         FASTSTUDY_BIN_DIR: path.join(process.resourcesPath, 'bin'),
-        // The shipped, complete LaTeX cache — its presence is also what makes tectonic render
-        // `--only-cached`, so an install can never fetch mid-render.
+        // The shipped LaTeX cache; its presence also makes tectonic render `--only-cached`.
         TECTONIC_CACHE_DIR: path.join(process.resourcesPath, 'latex'),
       }
     : {};
@@ -198,9 +193,8 @@ async function waitForHealth(spec, url) {
   }
 }
 
-/** Start all four in dependency order, handing each one the peers that are already running.
- *  Every peer is knowable before the service that calls it starts, which is what lets the whole
- *  handshake be plain env vars — see the service call graph in the root CLAUDE.md. */
+/** Start all four in dependency order, handing each the peers already running — plain env vars,
+ *  valid only while the call graph stays acyclic (docs/BOOT.md). */
 async function boot() {
   const specs = childSpecs();
   bootState = {
@@ -237,18 +231,15 @@ async function runBoot() {
     // The site root, never `/index.html`: the router matches on the path, and `/index.html` is not
     // one of its routes, so the app would mount and render nothing once the wall is behind it.
     mainWindow.loadURL(`${APP_ORIGIN}/`);
-    // After the window navigates, never before: an update check must not compete with four service
-    // starts, and must never sit on the path that decides whether the app comes up. It is silent —
-    // `launch.log` is its whole surface. See `docs/UPDATES.md`.
+    // After the window navigates, never before, so it stays off the path that decides whether the
+    // app comes up — see docs/UPDATES.md.
     startUpdater(log);
   } catch (error) {
     log('main', `boot failed: ${error.stack ?? error.message}`);
-    // Whatever came up before the failure is torn down: a retry re-spawns all four, and a surviving
-    // child would hold a port and a second writer on DATA_ROOT.
+    // A retry re-spawns all four, so a surviving child would hold a port and a second DATA_ROOT writer.
     killChildren();
     const failing = bootState.services.find((service) => service.state === 'starting');
-    // Nothing is running any more, so no row may still read ready — only the one that broke keeps a
-    // state of its own.
+    // Nothing is running any more, so no row may still read ready.
     for (const service of bootState.services) {
       service.state = service === failing ? 'failed' : 'pending';
       service.tools = null;
@@ -278,9 +269,8 @@ function killChildren() {
   }
 }
 
-/** Open one DATA_ROOT file in whatever app the user registered for it. The renderer sends
- *  identifiers and `database/` resolves them, so the layout stays owned by one service and a
- *  compromised renderer never gets an open-any-file primitive. `lecture` absent means an overview file. */
+/** Open one DATA_ROOT file in the user's own app. Identifiers in, `database/` resolves the path —
+ *  no open-any-file primitive for the renderer (docs/RENDERER.md). No `lecture`: an overview file. */
 async function openDataFile({ course, lecture, name, kind }) {
   if (!serviceUrls.database) return { ok: false, error: 'the database service is not running' };
   const q = encodeURIComponent;
@@ -340,10 +330,8 @@ function logTail() {
   }
 }
 
-/** Mail an error report: the whole thing to a file beside the log, a triageable summary in the
- *  `mailto:` body. The renderer never composes the URL — that is what keeps `openExternalUrl`
- *  http(s)-only and leaves no reachable second scheme. A file that cannot be written must not stop
- *  the mail: the two carriers are deliberately independent. */
+/** Mail an error report: the whole of it to a file beside the log, a summary in the `mailto:`.
+ *  The two carriers are independent, so neither failing stops the other — see docs/RENDERER.md. */
 async function mailReport({ details, error, route }) {
   const version = app.getVersion();
   const stamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
@@ -421,11 +409,8 @@ function createWindow(checks) {
       nodeIntegration: false,
     },
   });
-  // The launch screen reads none of this; it is the app's bridge, and the URLs are filled in by the
-  // time the window navigates there.
+  // The app's bridge; the URLs are filled in by the time the window navigates to the frontend.
   ipcMain.on('faststudy:config', (event) => {
-    // `version` is what the installer put on disk, not a build-time constant, and `locale` is the
-    // OS's — the frontend's initial language when the profile carries no pick of its own.
     event.returnValue = {
       urls: serviceUrls,
       secret: SECRET,
@@ -442,10 +427,8 @@ function createWindow(checks) {
   ipcMain.handle('faststudy:boot-state', () => bootState);
   ipcMain.on('faststudy:boot-retry', () => runBoot());
   ipcMain.on('faststudy:boot-quit', () => app.quit());
-  // Every window.open is denied. A child window Electron opened itself would inherit this one's
-  // security webPreferences — the preload, and so the launch secret, on a third-party origin.
-  // Chromium routes target="_blank" here too, so a link that skipped `open.ts` dies silently in a
-  // packaged build and nowhere else; the log line is what makes that diagnosable from launch.log.
+  // Denied, or the child would inherit the preload and so the secret (docs/RENDERER.md). The log
+  // line is how a `target="_blank"` link that skipped `open.ts` shows up at all.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     log('main', `denied window.open: ${url} — UI links must go through open.external`);
     return { action: 'deny' };
@@ -466,8 +449,7 @@ if (!app.requestSingleInstanceLock()) {
   });
   app.on('window-all-closed', () => app.quit());
   app.on('will-quit', killChildren);
-  // The crash paths: an uncaught exception, a signal, and whatever else ends the process. None of
-  // them run `will-quit`, and an orphaned service would keep writing DATA_ROOT after the app is gone.
+  // The paths that skip `will-quit`; an orphaned service would keep writing DATA_ROOT (docs/BOOT.md).
   process.on('exit', killChildren);
   for (const signal of ['SIGINT', 'SIGTERM']) {
     process.on(signal, () => {
@@ -484,16 +466,14 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(async () => {
     openLog();
     serveBundle();
-    // Timed in the log because these run inline in the boot path: a check that stops being cheap
-    // shows up here rather than as a launch that quietly got slower.
+    // Timed because they run inline in the boot path: a check that stops being cheap shows up here.
     const started = process.hrtime.bigint();
     const checks = runStartupChecks();
     const took = Number(process.hrtime.bigint() - started) / 1e6;
     log('main', `startup checks in ${took.toFixed(2)}ms — ${JSON.stringify(checks)}`);
     createWindow(checks);
-    // The window shows the launch screen while this runs, and navigates to the frontend only once
-    // all four are healthy: a renderer that loaded first would build its service clients at module
-    // scope against URLs that do not exist yet.
+    // The frontend loads only once all four are healthy: it builds its service clients at module
+    // scope, against URLs that do not exist until then.
     runBoot();
   });
 }

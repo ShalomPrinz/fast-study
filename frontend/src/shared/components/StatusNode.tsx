@@ -2,9 +2,8 @@ import './StatusNode.css'
 
 export type StatusNodeState = 'done' | 'running' | 'pending' | 'paused' | 'failed'
 
-// The one "where is this up to" glyph — the lecture pipeline, the course branches and their steps
-// all read from the same five states at the same 22px size. `paused` is a run waiting out a
-// provider's rate limit: still ours, not a failure.
+// The one run-state glyph for pipeline rows, course branches and their steps. `paused` is a run
+// waiting out a provider's rate limit: still ours, not a failure.
 export default function StatusNode({ state, title }: { state: StatusNodeState; title?: string }) {
   return (
     <span className={`status-node status-node--${state}`} title={title} role="status">

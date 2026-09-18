@@ -1,67 +1,45 @@
 # CLAUDE.md — database
 
-## What this is
+FastAPI service that owns every read, write and listing under `DATA_ROOT`, plus the cross-service
+SSE notify channel. No other service touches disk. The one file it writes outside `DATA_ROOT` is the
+repo-root `.env` behind the settings store.
 
-FastAPI service that owns every read, write, and listing under `DATA_ROOT`, plus the
-cross-service SSE notify channel. The frontend, downloader, and backend all get filesystem state
-from here — no other service touches disk. One exception to "under `DATA_ROOT`": it also owns the
-settings store, which is the repo-root `.env`.
-
-It is the single source of truth for the on-disk path layout and for the HTTP contract the other
-services depend on. Treat changes to endpoints, response shapes, or the layout as contract
-changes: keep them backward-compatible or flag the impact.
+It is the single source of truth for the on-disk layout and for the HTTP contract the other services
+depend on: treat a change to an endpoint, a response shape or the layout as a contract change — keep
+it backward-compatible or flag the impact.
 
 ## Docs
 
-| Doc                                  | Covers                                                                       |
-| ------------------------------------ | ---------------------------------------------------------------------------- |
-| [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, path resolution, dotfiles, tree shape                    |
-| [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, access logging, trust model |
-| [docs/SETTINGS.md](docs/SETTINGS.md) | the settings store: fields, `.env` merge, `DATA_ROOT` validation             |
-| [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity                  |
-| [docs/EVENTS.md](docs/EVENTS.md)     | SSE channel and clean shutdown                                               |
+| Doc                                  | Covers                                                                 |
+| ------------------------------------ | ---------------------------------------------------------------------- |
+| [docs/LAYOUT.md](docs/LAYOUT.md)     | `DATA_ROOT` layout, name sanitizing, materials, dotfiles, tree shape   |
+| [docs/API.md](docs/API.md)           | route table, response envelope, write semantics, file locks, trust model |
+| [docs/SETTINGS.md](docs/SETTINGS.md) | the settings store: fields, `.env` merge, `DATA_ROOT` validation, unset root |
+| [docs/OVERVIEW.md](docs/OVERVIEW.md) | the course-level `overview/` area and `meta.json` atomicity            |
+| [docs/EVENTS.md](docs/EVENTS.md)     | the SSE notify channel and clean shutdown                              |
 
-## Layout
+## Rules
 
-`fs/paths.py` is the single source of truth for path resolution and layout constants, and holds the data root as module state written only by `set_data_root()`. It also owns the two guards every caller shares: `check_safe_segment()` (refuse a caller-supplied file name that could escape its dir) and `reject_if_locked()` (turn a Windows sharing violation into `FileLocked`, which the routes answer `423`). `tests/` uses a conftest that points that state at a per-test tmp dir.
+- **`fs/paths.py` owns path resolution.** `lecture_dir(course, lecture, kind)` is the only resolver,
+  and the data root is module state written only by `set_data_root()`. It also owns the two guards
+  every caller shares: `check_safe_segment()` and `reject_if_locked()` (a Windows sharing violation →
+  `FileLocked` → `423`).
+- **No outbound HTTP calls, ever** — it only answers requests and fans out SSE, so it holds no peer
+  URLs. Why that is a packaging blocker is in the root [`CLAUDE.md`](../CLAUDE.md); a peer that needs
+  to hear about something here calls in or subscribes to `/events`.
+- **Frozen with `backend/` into one PyInstaller bundle** (root `CLAUDE.md`). This side owns the
+  top-level names `database_main`, `events`, `fs` and `settings` — any new one must not collide with
+  backend's or a dependency's (`fs` is a real PyPI package). A new runtime dependency must also go
+  into `backend/pyproject.toml`, or the bundle lacks it; test-only extras are exempt.
+- `database_main.DEFAULT_PORT` is the single `8001` default, read by the dev `__main__` path and by
+  `delivery/entry.py`.
 
 ## Environment
 
-Reads the repo-root `.env` via `python-dotenv`:
-
-- `DATA_ROOT` — absolute path to the data directory. Absent or blank still boots: the root stays unset and every filesystem endpoint answers `409` until `POST /config` sets one.
-  `GET /health` is liveness only and answers `200` regardless, so the launcher can tell healthy-but-unconfigured from dead.
-
-It holds no peer URLs, because it makes **no outbound HTTP calls** — it only answers requests and
-fans out SSE. Every peer address it would need belongs to a service that already calls it, so
-staying call-free keeps the service graph acyclic. That is a packaging constraint, not a
-preference: the packaged build binds every service to `127.0.0.1:0` and spawns them
-`database → backend → auto → server`, passing each peer's port on as a plain env var, so a
-`database → backend` call has no valid spawn order. When a peer needs to hear about something
-here, it either calls in or reads the SSE `/events` channel — announcing a stored video, for
-instance, is done by the uploader (downloader server, frontend), not by the store.
-
-`settings.py` also _writes_ that `.env`: it is the store behind the app's settings surface in
-browser dev (`GET`/`PUT /settings`), and `POST /config` sets the running process's data root with
-no restart. The write is a merge — only settings keys are rewritten, and the API keys are
-write-only. See [docs/SETTINGS.md](docs/SETTINGS.md).
-
-## Packaged bundle
-
-This service and `backend/` freeze into one PyInstaller bundle, built out of `backend/`'s
-environment, and a PyInstaller module graph is flat. Two consequences bind every change here:
-
-- **Top-level module names are global across both services.** This side owns `database_main`,
-  `events`, `fs` and `settings`; backend owns `backend_main`, `course`, `pipeline`, `services` and
-  `timing`. A duplicate silently shadows one of them, and the generic names here are the ones a
-  future dependency could collide with — `fs` is a real PyPI package.
-- **Runtime dependencies here must already be in `backend/pyproject.toml`.** One declared only in
-  this service's `pyproject.toml` is simply absent from the bundle and fails on a clean machine.
-  Flag the backend addition rather than adding it here alone. Test-only extras are exempt — tests
-  are not bundled.
-
-`database_main.DEFAULT_PORT` is the single source of the `8001` default, read both by the dev
-`__main__` path and by the bundle's `delivery/entry.py` dispatcher.
+`DATA_ROOT` comes from the repo-root `.env`, loaded by `import runtime` — which is why that import
+precedes the module-level root seeding in `database_main.py` ([`lib/runtime`](../lib/runtime/CLAUDE.md)).
+Absent or blank still boots: filesystem routes answer `409` until `POST /config` sets a root, and
+`GET /health` answers `200` regardless. See [docs/SETTINGS.md](docs/SETTINGS.md).
 
 ## Running and testing
 
@@ -71,24 +49,16 @@ uv run uvicorn database_main:app --reload --port 8001   # dev
 uv run pytest tests/ -q
 ```
 
-Port `8001` (backend 8000, frontend 5173, downloader 3052). `npm run dev` at the repo root brings
-all four up together.
+`npm run dev` at the repo root brings all four services up together (backend 8000, frontend 5173,
+downloader 3052).
 
-`uv run python database_main.py` is the packaged entry point instead, never the dev one: `runtime.serve` binds
-`127.0.0.1:$FASTSTUDY_PORT` (`0` asks for an ephemeral port, unset means `8001`) and prints
-`FASTSTUDY_PORT=<n>` on stdout, because uvicorn never reports what `port=0` resolved to and the
-launcher has to read the real port back. Loopback only, no reload.
+`uv run python database_main.py` is the packaged entry point, never the dev one: `runtime.serve`
+does the launcher's port handshake, and `runtime.install_secret_check` enforces `FASTSTUDY_SECRET`,
+installed before `CORSMiddleware` so a `401` carries CORS headers. Both are the shared
+[`lib/runtime`](../lib/runtime/CLAUDE.md); the access log is [`lib/logging`](../lib/logging/CLAUDE.md).
 
-`runtime.install_secret_check` then requires `$FASTSTUDY_SECRET` on every request but `GET /health`
-— as the `X-FastStudy-Secret` header or a `secret` query parameter, since `EventSource` cannot set a
-header. Unset (dev) installs nothing. It is pure ASGI and sits inside CORS on purpose; see
-[docs/API.md](docs/API.md).
-
-Both come from the shared [`lib/runtime`](../lib/runtime/CLAUDE.md), imported as plain
-`import runtime` — the launch contract is a wire contract with the other services, so a second copy
-that drifted would leave this service unreachable by the launcher or less protected than its peers.
-`import runtime` also calls `load_dotenv()`, which is why it must stay above any module that reads
-the environment at import time.
+Tests call the app through `TestClient` or the `fs/` helpers directly; an autouse fixture in
+`tests/conftest.py` points `fs.paths._data_root` at a per-test tmp dir, so no test touches real data.
 
 ## Documentation rules
 

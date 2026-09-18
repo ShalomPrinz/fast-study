@@ -23,7 +23,7 @@ additionally needs `Xvfb`; on Windows the window is hidden off-screen instead.
 ## Run
 
 ```bash
-npm start   # HTTP service on port 3053 (src/http/server.js)
+npm start   # HTTP service on port 3053 (app.js)
 ```
 
 The service holds one persistent browser per profile (the zoom profile runs headed
@@ -34,7 +34,7 @@ only; override the port with `AUTODL_PORT` in the repo-root `.env`, or with
 `FASTSTUDY_PORT` in the environment, which wins.
 
 The HTTP surface is **mechanism-agnostic**: `/list` and `/list/expand` return
-uniform `Item = { ref, title, kind, expandable, section }` and `/resolve` takes
+uniform `Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording }` and `/resolve` takes
 `{ ref, … }`. The download mechanism (videostream / youtube / zoom) is hidden
 inside the opaque `ref` (base64url of the internal `Recording`, see `src/lib/ref.js`)
 — the frontend round-trips `ref` and never parses it.

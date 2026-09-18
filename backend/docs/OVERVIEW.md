@@ -1,6 +1,6 @@
 # Course overview
 
-`course/` aggregates across a whole course's lectures. It mirrors `pipeline/` in shape (registry + workers + runner) but is keyed by `(course, slug)` instead of `(course, lecture, kind)`, so it needs its own state store rather than the per-lecture `_in_flight` map.
+`course/` aggregates across a whole course's lectures; the per-lecture side is [PIPELINE.md](PIPELINE.md). It mirrors `pipeline/` in shape (registry + workers + runner) but is keyed by `(course, slug)` instead of `(course, lecture, kind)`, so it needs its own state store rather than the per-lecture `_in_flight` map.
 
 Outputs land in `{DATA_ROOT}/{course}/overview/` via the database service's overview endpoints.
 
@@ -18,7 +18,7 @@ An extractor only runs phases it declares, so a topics-only run never fetches tr
 
 ### Slug is the identity
 
-Each extractor's kebab-case `slug` is the on-disk file stem, the status-map key, and the `?extractors=` CSV value. The human `title` appears only in the UI and the report header. Historically the display name doubled as the file stem, which desynced on-disk `exam-hints.txt` from a frontend lookup of `Exam Hints.txt`. Keep filenames slug-based across backend, database, and frontend.
+Each extractor's kebab-case `slug` is the on-disk file stem, the status-map key, and the `?extractors=` CSV value. The human `title` appears only in the UI and the report header — never in a filename, where it would desync on-disk `exam-hints.txt` from a frontend lookup of `Exam Hints.txt`. Keep filenames slug-based across backend, database, and frontend.
 
 ## Phase workers
 
@@ -28,7 +28,7 @@ Each worker is pure work returning a `"done"`/`"skipped"` status dict, raising o
 - `analyze.py` — reads `{slug}.txt`, sends it to Gemini with the extractor's prompt, writes `{slug}.md`. Missing `.txt` → skipped.
 - `merge.py` — merges every LECTURE `summary.md` (recitations deliberately excluded — this is the lecture content) into `all-lectures.md`: one `# הרצאה N` heading per lecture, its summary demoted a level (H1→H2, saturating at H6) so it nests under that heading, built-in sections dropped whole, and lectures separated by a `---` rule. summarize.md mandates exactly two `---` per summary, both bordering a built-in section, so every in-summary rule is dropped and the only rules left are the inter-lecture ones. Fenced code is opaque — a `## x` or `---` inside a block survives verbatim. Callout divs (`::: definition`) pass through so the merged PDF renders the same boxes, but the div depth is tracked per lecture: any still-open div is closed at the end of its section and an orphan `:::` is dropped, so one lecture's box can never swallow the next.
 - `collect.py` — distills every `summary.md` into `topics.md` as **headers only** (H2 topics + nested H3 subtopics; built-in sections from `summarize.md` dropped). Entry headings are translated to Hebrew הרצאה/תרגול for display while sorting stays on the original English name so numeric order is unaffected. PDF's direction comes from polyglossia's `\setmainlanguage{hebrew}`, which ignores the text.
-- `to_pdf.py` — renders `{slug}.md` → `{slug}.pdf` through `pipeline/to_pdf.py`'s `convert_to_pdf`. Missing `.md` → skipped. Distinct from `pipeline/to_pdf.py`: this is the per-course phase worker, that is the per-lecture md→PDF primitive it reuses. A recovered render's warning lands in `.{slug}.pdf_warning` (see `PDF.md`).
+- `to_pdf.py` — renders `{slug}.md` → `{slug}.pdf` through `pipeline/to_pdf.py`'s `convert_to_pdf`. Missing `.md` → skipped. Distinct from `pipeline/to_pdf.py`: this is the per-course phase worker, that is the per-lecture md→PDF primitive it reuses. A recovered render's warning lands in `.{slug}.pdf_warning` (see [PDF.md](PDF.md)).
 
 `summary_md.py` — the shared summary.md vocabulary both consumers need: `BUILTINS` (the summarize.md boilerplate section names), the heading/rule regexes, the callout `DIV_MARKER_RE` (re-exported from `pipeline/pdf/text.py`, which needs the same pattern), natural sort, the English→Hebrew display label, and the code-fence-aware line iterator. It exists so the built-in section names have exactly one definition — collect and merge must never disagree on what is boilerplate.
 

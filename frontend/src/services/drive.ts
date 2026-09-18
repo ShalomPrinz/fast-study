@@ -2,14 +2,12 @@ import { t } from '@lingui/core/macro'
 import { createClient } from './http'
 import { BACKEND_URL } from './runtime'
 
-// The boundary for linking a Google account to Drive: the consent flow's state, its start and its
-// undo. Separate from `settings.ts` because it has a caller outside the settings screens — the
-// prompt that asks for consent when a run needs it.
+// Linking a Google account to Drive. Apart from `settings.ts` because `DriveConsentPrompt` calls it
+// outside the settings screens.
 const backend = createClient(BACKEND_URL, 'backend service')
 
-/** A stored token (an expired one still counts — it refreshes silently), a consent flow waiting on
- *  the browser, and whether a pipeline step gave up for want of a token. Always answers: none of
- *  the three is a failure. */
+/** Token stored (an expired one refreshes silently), a flow waiting on the browser, and whether a
+ *  step gave up for want of a token. Always answered: none of the three is a failure. */
 export interface DriveStatus {
   connected: boolean
   pending: boolean

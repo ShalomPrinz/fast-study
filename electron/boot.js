@@ -1,6 +1,4 @@
-// The launch screen's renderer. It reads one snapshot through the preload bridge and then re-renders
-// on every push; the snapshot is what closes the race between this script running and main's first
-// event, which would otherwise be sent to a page with no listener yet.
+// The launch screen's renderer: one snapshot, then a re-render on every push — see docs/BOOT.md.
 
 const LABELS = {
   database: 'Database',
@@ -17,8 +15,7 @@ const elements = {
   actions: document.getElementById('actions'),
 };
 
-// A tool the boot probe could not run: the service is up and one feature of it is not, which is worth
-// saying here and never worth failing a launch over.
+// A tool the boot probe could not run costs one feature, never the launch.
 function unusableTools(tools) {
   return Object.entries(tools ?? {})
     .filter(([, state]) => state !== 'ok')

@@ -47,11 +47,11 @@ Every service carries its own module named `runtime` (`runtime.py` / `runtime.js
 
 A service that spells any of these differently cannot be launched or called by its peers, so treat a change to a name or a rule as a cross-service change and surface it rather than editing one service's `runtime` alone. Per-service specifics (which routes, which files) live in each service's `CLAUDE.md` and `docs/`.
 
-`app://bundle` is frozen as a literal, never computed. A page at `app://bundle/index.html` sends `Origin: app://bundle` with no trailing slash on every CORS-mode request including the preflight, but Electron's _permission-handler_ API reports the same origin **with** one — deriving the allowlist from that API silently rejects every request. Verified on Electron 44.1.1 / Chromium 152.
+`app://bundle` is frozen as a literal, never computed — why is in [`electron/docs/RENDERER.md`](electron/docs/RENDERER.md).
 
 The state root separates read-only installed resources from per-user writable state, and only the services that write outside `DATA_ROOT` have a state join (`backend/`, both `downloader/` services). Dev deliberately uses the same layout with no fallback to the old scattered locations, so a layout bug surfaces on a dev machine rather than only in an installer build. The packaged `%LOCALAPPDATA%\FastStudy` default is intentionally in no service — the Electron launcher passes `FASTSTUDY_STATE_DIR` explicitly.
 
-`FASTSTUDY_BIN_DIR` is the same shape one level down: set, every external tool (`ffmpeg`, `pandoc`, `tectonic`, `yt-dlp`) is spawned by absolute path out of it and never off `$PATH`, so a stray binary earlier in a user's PATH cannot be picked up instead of the one that shipped. `yt-dlp` is spawned out of the writable per-user copy under the state root when one exists, because it updates itself and the install directory does not survive an app update. `curl` is the other exception — Windows 10+ ships `curl.exe`, so it stays a PATH lookup — and that exception lives in `lib/tools/`, not in each caller. Each service probes its own tools once at startup, logs a missing one loudly, and reports the result on `/health` beside `status`; a missing binary disables one feature, never the service. Every binary here ships in the installer, so before adding one, check whether a short in-process parse would do and say what the binary costs in installer size.
+`FASTSTUDY_BIN_DIR` is the same shape one level down: set, every external tool (`ffmpeg`, `pandoc`, `tectonic`, `yt-dlp`) is spawned by absolute path out of it, with the `yt-dlp` and `curl` exceptions explained in [`lib/tools/CLAUDE.md`](lib/tools/CLAUDE.md). Each service probes its own tools at startup and reports them on `/health`; a missing binary disables one feature, never the service. Every binary here ships in the installer, so before adding one, check whether a short in-process parse would do and say what the binary costs in installer size.
 
 ## The frozen Python bundle — `delivery/`
 
@@ -98,16 +98,12 @@ that splits its halves into a `py/` and a `js/` package with the shared `CLAUDE.
 `lib/runtime/` (the launch contract — port handshake, launch-secret check, state root; Python + JS),
 `lib/tools/` (external-binary resolution and the boot-time version probe; Python + JS) and
 `lib/logging/` (`setup_logging()`; Python only, so its `js/` slot stays empty — the Node services use
-plain `console`). Consumers declare a real dependency — `[tool.uv.sources]` editable path deps on
-`../lib/<name>/py` for `backend/` and `database/`, a `file:../../lib/<name>/js` dependency for both
-downloader packages — so `import runtime` and `@faststudy/runtime` resolve to one copy.
+plain `console`). Consumers declare a real dependency (editable path deps for Python, `file:` deps
+for the downloader packages), so every service resolves one copy.
 
 A module earns a place there when a second service needs it _and_ divergence between copies would be
-a defect, which is what all three are: contracts the launcher writes and the services read, one of
-them a security boundary, where two copies drifting apart is a bug by definition. A helper with one
-consumer stays in its service. Read
-[`lib/CLAUDE.md`](lib/CLAUDE.md) and the per-module ones before changing anything there — an edit
-under `lib/` is live in four services at once.
+a defect; a helper with one consumer stays in its service. Read [`lib/CLAUDE.md`](lib/CLAUDE.md) and
+the per-module ones before changing anything there — an edit under `lib/` is live in four services at once.
 
 ## Service subagents
 

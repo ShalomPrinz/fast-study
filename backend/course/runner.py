@@ -1,9 +1,5 @@
-"""Course-level overview orchestrator: phase boundaries live here, the work lives in the
-phase modules. Mirrors pipeline/runner.py but is keyed by (course, slug).
-
-Each 'generate' trigger is one OverviewRun owning its selection and transcript sources; status
-is NOT run-scoped — runs write into the shared module-level store. See docs/OVERVIEW.md for the
-lock/collision/failure-isolation model."""
+"""Course-level overview orchestrator, keyed by (course, slug); the work lives in the phase
+modules. Lock, collision and failure-isolation model: docs/OVERVIEW.md."""
 
 import asyncio
 from datetime import datetime, timezone
@@ -164,9 +160,8 @@ class OverviewRun:
         if it raised, so the caller stops that slug's chain."""
 
         entries = _status.setdefault(self.course, {})
-        # Fresh dict so a prior phase's message can't linger, but `phase` and `started_at` are
-        # carried across the running→result transition so the UI's per-step spinner and the
-        # branch's elapsed clock stay correct.
+        # Fresh dict so a prior phase's message can't linger; `phase` and `started_at` carry over
+        # so the UI's spinner and the branch's elapsed clock stay correct.
         carried = {
             "phase": phase.id,
             "started_at": entries.get(slug, {}).get("started_at"),

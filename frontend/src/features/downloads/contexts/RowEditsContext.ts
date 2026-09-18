@@ -15,10 +15,8 @@ export interface RowEditsDispatch {
   setKind: (ref: string, kind: Kind) => void
 }
 
-// The course's per-row (name, kind) edits, keyed by item ref — reaches recursive rows without
-// prop-drilling, and keeps the green row and the bulk skip rule reading the same values. State and
-// dispatch are separate contexts so a keystroke only invalidates the rows that slice the map:
-// leaf rows read the stable dispatch and take their own slice as a prop.
+// Per-row (name, kind) overrides keyed by ref. State and dispatch are split so a keystroke re-renders
+// only the rows that slice the map — see docs/DOWNLOADS.md.
 export const RowEditsStateContext = createContext<Record<string, RowEdit> | null>(null)
 export const RowEditsDispatchContext = createContext<RowEditsDispatch | null>(null)
 

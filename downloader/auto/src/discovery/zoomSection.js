@@ -28,8 +28,7 @@ function anchorShareUrls(paragraph) {
 /**
  * Discover zoom-share recordings in the WS `section.summary` HTML: walk each summary's
  * paragraphs tracking the most recent `הרצאה מספר N` label, emit one synthetic
- * `modType:'zoom'` activity per `zoom.us/rec/share` link. Same regex + label-precedes-link
- * + dedup-by-share-token logic the DOM parser ran, but over the summary string in Node.
+ * `modType:'zoom'` activity per `zoom.us/rec/share` link, deduped by share token.
  * Passcode text is ignored (docs/ZOOM.md).
  * @param {Array<{ name?: string, summary?: string }>} sections  core_course_get_contents result
  * @returns {Activity[]}  in document order
@@ -42,8 +41,8 @@ export function parseZoomSummaries(sections) {
     const sectionName = stripTags(section.name || '');
 
     let label = '';
-    // Split on the whole opening <p …> tag so each chunk is one paragraph's inner HTML —
-    // preserves the ordering the DOM's querySelectorAll('p') walk relied on to title links.
+    // Split on the whole opening <p …> tag so each chunk is one paragraph's inner HTML, in
+    // document order — a label paragraph titles the link paragraphs that follow it.
     for (const paragraph of summary.split(/<p\b[^>]*>/i)) {
       const text = stripTags(paragraph);
 

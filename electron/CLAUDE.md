@@ -3,8 +3,8 @@
 ## What this is
 
 The desktop shell: one Electron main process that opens a window on its launch screen, starts the
-four services, waits for them to be healthy, and navigates that window to the built frontend. It holds no product logic — no pipeline, no
-paths, no HTTP surface of its own. What it owns is the launch: the per-launch secret, the spawn
+four services, waits for them to be healthy, and navigates that window to the built frontend. It
+holds no product logic — no pipeline, no paths, no HTTP surface of its own. What it owns is the launch: the per-launch secret, the spawn
 order, the port handshake, the settings store the children's environment comes from, and killing
 everything on quit.
 
@@ -20,9 +20,11 @@ everything on quit.
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
-Read [`docs/BOOT.md`](docs/BOOT.md) for the launch sequence, [`docs/RENDERER.md`](docs/RENDERER.md)
-for the scheme, the bridge and the store, and [`docs/UPDATES.md`](docs/UPDATES.md) for how a
-packaged app updates itself.
+| Doc                                | Covers                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------ |
+| [BOOT.md](docs/BOOT.md)            | The launch sequence, launch screen, child env, spawns, teardown, the log |
+| [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open/report, checks, settings store  |
+| [UPDATES.md](docs/UPDATES.md)      | How a packaged app updates itself                                        |
 
 ## Run
 
@@ -67,17 +69,17 @@ failure.
 
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
 covering `resolveWithin`'s path containment, the store's tables and refusal rules, and `report.js`'s
-`mailto:` trimming. It runs under plain `node`: no display, no Electron binary, no spawned service.
-`tests/stubElectron.js` is how — it puts a fake `electron` in the module cache before the module
-under test is required, which is also the switch the unavailable-keystore and failed-decrypt paths
-are reached through. Nothing that spawns or waits on a process is in it.
+`mailto:` trimming. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+`electron` in the module cache before the module under test is required, which is also how the
+unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns or waits on a process
+is in it.
 
 ## CommonJS, deliberately
 
 Every other JS package in the repo is ESM; this one is not. A sandboxed preload script cannot be an
 ES module — Electron loads ESM preloads only with an `.mjs` extension and an unsandboxed renderer —
-and splitting one four-file package across both module systems to gain nothing is worse than
-matching Electron's own default. `eslint.config.js` gives `electron/**/*.js` its own
+and splitting one package across both module systems to gain nothing is worse than matching
+Electron's own default. `eslint.config.js` gives `electron/**/*.js` its own
 `sourceType: 'commonjs'` block for the same reason.
 
 ## What it must not become
@@ -107,9 +109,9 @@ the `build` block in `package.json`.
   `Uninstall FastStudy.exe` (`common.nsh` uses `PRODUCT_FILENAME`).
 
 - **The asar holds this package's own files only.** The four services, the built frontend, the
-  binaries and the LaTeX cache ship as `extraResources` from `delivery/stage/`, which the build
-  workflow stages in exactly the tree [`docs/BOOT.md`](docs/BOOT.md) lists, and land under
-  `process.resourcesPath` where main looks.
+  binaries and the LaTeX cache ship as `extraResources` from `delivery/stage/`
+  ([`RELEASE.md`](../delivery/docs/RELEASE.md#staging)), in exactly the tree
+  [`docs/BOOT.md`](docs/BOOT.md#dev-and-packaged-spawns) lists, under `process.resourcesPath`.
 - **`files` is globbed — `*.js`, `*.html`, `package.json` — never a hand-listed set.** A source file
   missing from that list is simply absent from the asar, and the only symptom is `Cannot find
   module` on the first launch of a packaged build: dev and lint both stay green, and WSL cannot
@@ -119,10 +121,8 @@ the `build` block in `package.json`.
   is that a top-level `.js` added here that is _not_ meant to ship would ship.
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
-- **Updates are silent and packaged-only.** `updater.js` checks GitHub Releases once per launch,
-  downloads in the background and lets NSIS install on quit — nothing on screen, `launch.log` the
-  whole surface. The installer replaces `resources/` wholesale, which is why nothing that must
-  survive an update lives there. See [`docs/UPDATES.md`](docs/UPDATES.md).
+- **Updates are silent and packaged-only**, and replace `resources/` wholesale — see
+  [`docs/UPDATES.md`](docs/UPDATES.md).
 - **The icon is `assets/icon.ico`, named explicitly** rather than left to electron-builder's default
   `buildResources` directory: that default is `build/`, and the repo's root `.gitignore` ignores
   `build/` wholesale as PyInstaller's output. The output directory stays the default `dist/`, which

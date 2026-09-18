@@ -2,16 +2,14 @@ import { t } from '@lingui/core/macro'
 import { toast } from '@/services/toaster'
 import { isBlockedError, isUnsupportedError } from '@/features/downloads/services/autoDownloader'
 
-// The one wording for a bot-protection challenge, shared by every surface that can hit one. It
-// names the wait rather than the failure, and never the account: the challenge says nothing about
-// the session, so it must not read as something reconnecting would fix.
+// The one wording for a bot-protection challenge: it names the wait, never the account, so it does
+// not read as something reconnecting would fix.
 export function blockedMessage(): string {
   return t`The university site is temporarily refusing automated requests. Wait a few minutes and try again.`
 }
 
-// Only UnsupportedError carries a display-ready message; the server's `blocked` message is an
-// English log line, so it is replaced. httpError/500 messages are internal, so every other failure
-// (including no error at all) gets the generic copy.
+// Only UnsupportedError's message is display-ready; `blocked` gets its own copy and everything
+// else the generic one.
 export function toastDownloadError(name: string, err?: unknown): void {
   const message = isBlockedError(err)
     ? blockedMessage()

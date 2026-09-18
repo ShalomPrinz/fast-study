@@ -17,9 +17,8 @@ function stateOf(status: DriveStatus | null): State {
   return status.connected ? 'connected' : 'disconnected'
 }
 
-// The Google account summaries upload to: one chip and the single button that can move it. A failure
-// fills the field's own status slot rather than a toast — the init wall renders outside the toast
-// container. See docs/SETTINGS.md.
+// The Google account summaries upload to. Failures fill the status slot, never a toast — the init
+// wall renders outside the toast container. See docs/SETTINGS.md.
 export default function DriveConnection() {
   const { t } = useLingui()
   const [status, setStatus] = useState<DriveStatus | null>(null)

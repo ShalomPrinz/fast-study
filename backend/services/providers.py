@@ -1,6 +1,5 @@
-"""The API-key provider table and the key probe behind POST /config/probe-key. One row
-per provider holds the language-neutral facts; the prose that goes around them lives in
-the frontend's locale catalogs."""
+"""The API-key provider table and the key probe behind POST /config/probe-key. Rows hold
+language-neutral facts; the prose around them lives in the frontend's locale catalogs."""
 
 import logging
 
@@ -53,9 +52,8 @@ def base_url(provider: str) -> str:
 
 
 def probe_key(provider: str, key: str) -> str:
-    """Authenticate one key against its provider's list-models endpoint.
-    Returns "valid" | "rejected" | "unverified" — only an explicit 401/403 is a rejection,
-    since an unreachable provider must never report a good key as bad."""
+    """Authenticate one key against its provider's list-models endpoint → "valid" | "rejected" |
+    "unverified"; only an explicit 401/403 rejects, so an offline check never condemns a key."""
 
     row = PROVIDERS[provider]
     try:

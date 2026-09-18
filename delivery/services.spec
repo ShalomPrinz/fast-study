@@ -1,14 +1,5 @@
-# PyInstaller spec for the one-dir bundle holding both Python services, selected by entry.py's
-# argv[1]. Built from backend/'s environment:
-#
-#   cd backend && uv run --with pyinstaller pyinstaller ../delivery/services.spec
-#
-# That works because database/'s dependencies are a strict SUBSET of backend/'s, which is an
-# invariant this build rests on rather than something it checks: a dependency added to database/
-# alone would be absent from the bundle and fail at runtime on a clean machine, so it has to be
-# added to backend/pyproject.toml too.
-#
-# Every path is derived from SPECPATH, so the build does not care what the working directory is.
+# PyInstaller spec for `services`, the one-dir bundle holding both Python services, picked by entry.py's
+# argv[1]; built from backend/'s environment, paths off SPECPATH — see docs/RELEASE.md.
 
 from pathlib import Path
 
@@ -51,9 +42,8 @@ hiddenimports = [
 
 a = Analysis(  # noqa: F821
     [str(Path(SPECPATH) / "entry.py")],  # noqa: F821
-    # The lib/ source dirs are listed explicitly: consumers depend on them as editable installs,
-    # whose .pth import hook PyInstaller never runs, so `runtime`, `logging_setup` and `tools`
-    # are otherwise unresolvable.
+    # lib/'s source dirs, explicitly: PyInstaller never runs an editable install's .pth hook, so
+    # `runtime`, `logging_setup` and `tools` are otherwise unresolvable.
     pathex=[
         str(_BACKEND),
         str(_DATABASE),

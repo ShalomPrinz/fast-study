@@ -1,6 +1,5 @@
-// Thin fetch wrapper over Moodle's Web-Services REST API (webservice/rest/server.php).
-// Stateless: a wstoken authenticates every call — no browser, no cookies. Protocol
-// reference: docs/MOODLE.md.
+// Thin fetch wrapper over Moodle's Web-Services REST API; a wstoken authenticates every call —
+// no browser, no cookies. Protocol reference: docs/MOODLE.md.
 
 // Default Moodle site; kept a parameter (not hardcoded in URL building) so callers can inject.
 export const DEFAULT_SITE = 'https://lemida.biu.ac.il';
@@ -44,16 +43,12 @@ export function invalidToken(err) {
   return err instanceof WsError && INVALID_TOKEN_CODES.has(err.errorcode);
 }
 
-// Our token is minted through the app's own launch.php (service=moodle_mobile_app), and Moodle's
-// core_useragent::is_moodle_app() substring-matches `MoodleMobile` in the UA to decide whether a
-// caller really is the app.
+// The token is minted as the mobile app's, and Moodle's is_moodle_app() gates app-only functions
+// on `MoodleMobile` in the UA.
 const APP_USER_AGENT = 'MoodleMobile 4.4.0 (44000)';
 
-// One WS call: build the URL (?wstoken=…&moodlewsrestformat=json&wsfunction=… + extra
-// params), fetch, parse JSON. With `post`, the extra params move to a form-encoded body
-// instead (the three control params stay in the query). A JSON body with `.exception` is
-// Moodle's error shape (HTTP is still 200) → throw a WsError so callers can inspect it.
-// An answer that isn't JSON at all is the bot-protection challenge → WsBlockedError.
+// One WS call. With `post`, the extra params move to a form-encoded body. An `.exception` body
+// (under HTTP 200) throws WsError; a non-JSON answer is the challenge → WsBlockedError.
 async function callWs(token, fn, params = {}, { site = DEFAULT_SITE, post = false } = {}) {
   const url = new URL(`${site}/webservice/rest/server.php`);
   url.searchParams.set('wstoken', token);
@@ -94,33 +89,23 @@ export function getCourseContents(token, courseId, { site = DEFAULT_SITE } = {})
   return callWs(token, 'core_course_get_contents', { courseid: courseId }, { site });
 }
 
-// tool_mobile_get_autologin_key mints a one-shot no-MFA browser login. It's authenticated
-// by the wstoken (like every WS call) and takes the privatetoken as a parameter — they're
-// two distinct secrets from the launch payload. Rate-limited (~1/user/6 min) and IP-bound.
-// Moodle rejects the long-lived privatetoken in a query string (it would land in access logs):
-// GET -> {errorcode:'invalidprivatetoken'}; only a form-encoded POST body is accepted.
+// Mint a one-shot no-MFA browser login; rate-limited (~1/user/6 min) and IP-bound. POST only:
+// Moodle rejects the privatetoken in a query string (invalidprivatetoken). See docs/MOODLE.md.
 /** @returns {Promise<{ key: string, autologinurl: string, warnings: unknown[] }>} */
 export function getAutologinKey(wstoken, privatetoken, { site = DEFAULT_SITE } = {}) {
   return callWs(wstoken, 'tool_mobile_get_autologin_key', { privatetoken }, { site, post: true });
 }
 
-// WS pluginfile auth = token in the query string. fileurl may already carry a query
-// (e.g. ?forcedownload=1), so add token via the URL API — string-concatenating ?token=
-// would produce a broken double-query. Pure function, no fetch.
+// Pluginfile authenticates by a query-string token. Set via the URL API: fileurl may already
+// carry ?forcedownload=1, and concatenating ?token= would break it.
 export function pluginfileUrl(fileurl, token) {
   const u = new URL(fileurl);
   u.searchParams.set('token', token);
   return u.toString();
 }
 
-// Preflight a tokened pluginfile URL. A dead token gets Moodle's JSON exception body under
-// HTTP 200 (never a 403), so an unchecked download would silently save that blob as the PDF —
-// probe one byte and surface it as a WsError, which invalidToken() recognizes. `server/`'s
-// download job is fire-and-forget, so this is the only place the caller can still answer 401.
-// The same is true of a bot-protection challenge, and worse: it is HTTP 200, so `server/`'s
-// `curl --fail` writes the captcha page to material.pdf without erroring. Only resource files
-// the WS declared `application/pdf` are routed here (MoodleFileExtractor.claims), so an HTML
-// answer is never the requested file.
+// Preflight a tokened pluginfile URL: a dead token and a bot challenge both answer HTTP 200, and
+// server/'s job would save either as the PDF. The last point to report them. See docs/MOODLE.md.
 export async function assertPluginfileReadable(url) {
   const res = await fetch(url, {
     headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT },

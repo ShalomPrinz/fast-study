@@ -45,9 +45,8 @@ const RESOLVED_LABEL: Record<ResolvedMedia, MessageDescriptor> = {
   unsupported: msg`Unsupported`,
 }
 
-// One discovered recording as a two-line card — what it is, then where it is going; an expandable
-// one renders each child as a recursive RecordingRow instead.
-// Memoized on its own `edit` slice, so typing in one card leaves its siblings untouched.
+// One recording as a two-line card, or a playlist's recursive children. Memoized on its own `edit`
+// slice, so typing in one card leaves its siblings untouched.
 const RecordingRow = memo(function RecordingRow({
   item,
   edit,
@@ -263,9 +262,8 @@ const RecordingRow = memo(function RecordingRow({
             <Trans>Downloading</Trans>
           </span>
         ) : alreadyDownloaded && !failed ? (
-          // Settled: the target exists, so the chip carries the state and the action shrinks to an
-          // icon — always visible rather than hover-revealed, so it stays keyboard- and touch-reachable.
-          // It routes through the same handler, which turns a settled row into the overwrite confirm.
+          // Settled: an always-visible icon (keyboard- and touch-reachable) through the same handler,
+          // which turns a settled row into the overwrite confirm.
           <span className="recording-settled">
             <span className="chip chip--ok">
               <Icon icon="check" />
@@ -327,9 +325,8 @@ const RecordingRow = memo(function RecordingRow({
 
 export default RecordingRow
 
-// Slices the edits map for an expanded playlist's children. Split out of RecordingRow so only
-// non-leaf rows subscribe to the map — a leaf that subscribed would re-render on every keystroke
-// in the section, memo or not.
+// Slices the edits map for a playlist's children, so only non-leaf rows subscribe to it — a leaf that
+// did would re-render on every keystroke in the section.
 function ChildRows({
   items,
   course,

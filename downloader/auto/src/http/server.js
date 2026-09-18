@@ -45,9 +45,8 @@ function probeKeyOf(recording) {
   return null;
 }
 
-// What an 'unknown' row was probed as this session, or undefined when never probed. The cache
-// keeps both unusable flavours (a real .zip, or a file the host serves no name for) as media
-// null — surfaced as 'unsupported'.
+// What an 'unknown' row was probed as this session, or undefined when never probed; a cached
+// null media (either unusable flavour) surfaces as 'unsupported'.
 function resolvedMediaOf(recording) {
   const key = probeKeyOf(recording);
   if (!key) return undefined;
@@ -56,10 +55,8 @@ function resolvedMediaOf(recording) {
   return media ?? 'unsupported';
 }
 
-// Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An
-// unexpanded playlist (pageUrl, no url) is expandable, else downloadable. `media` says which
-// file lands on disk (video.mp4 vs a material PDF), never how it is fetched. `likelyRecording` is
-// the keyword HINT, never a gate — only a `url` module can carry a false. See docs/BROWSING.md.
+// Mechanism-agnostic item; the mechanism hides inside the opaque `ref`. An unexpanded playlist
+// (pageUrl, no url) is expandable. Field meanings in docs/BROWSING.md.
 function toItem(recording) {
   const resolvedMedia = resolvedMediaOf(recording);
   return {
@@ -82,9 +79,8 @@ function authFor(uni) {
   return authInstances.get(uni.id);
 }
 
-// Reuse the autologin cookie across back-to-back videostream downloads: autologin is
-// rate-limited (~1/user/6 min), so re-minting a key every download would 429. Well under
-// the Moodle session lifetime, so a cached cookie stays valid within the window.
+// Autologin is rate-limited (~1/user/6 min), so its cookie is reused for this long — well under
+// the Moodle session lifetime, so it stays valid within the window.
 const AUTOLOGIN_TTL_MS = 20 * 60 * 1000;
 
 // Thin wrapper over Express's res.status().json() so the handler call sites stay
@@ -112,9 +108,8 @@ export function sendUnsupported(res, message) {
   send(res, 422, { status: 'unsupported', message });
 }
 
-// Distinct "the site served a bot-protection challenge instead of a web-service answer" signal
-// so the page can say to wait rather than showing a generic failure. 503: the site is refusing
-// us for now, nothing about the request is wrong.
+// Distinct "the site served a bot-protection challenge" signal, so the page can say to wait.
+// 503: the site is refusing us for now; nothing about the request is wrong.
 function sendBlocked(res, message) {
   send(res, 503, { status: 'blocked', message });
 }
@@ -125,8 +120,8 @@ function sendPasscode(res, { reason, course, name }) {
   send(res, 409, { status: 'passcode', reason, course, name });
 }
 
-// Same guard as server/server.js: reject path-traversal / empty names before
-// they reach the database service.
+// Reject an empty or multi-segment name — the traversal half of server/'s
+// validate.js::storedName, which owns the full canonicalization.
 function isSafeName(name) {
   return (
     typeof name === 'string' &&
@@ -165,11 +160,8 @@ export async function handleAuthDisconnect(req, res) {
 
 // ── Prerequisite endpoints ──────────────────────────────────────────────────
 
-// Is one of the Chromium-family browsers this service drives installed? It gates the whole
-// download surface and none of the pipeline, so the settings screen lists it as a prerequisite
-// beside the API keys and names the browser it found. Always 200 — "no browser" is an answer,
-// not a failure — and safe to re-run: a negative is never cached, so re-checking after the user
-// installs one is the intended flow.
+// Is Chrome or Edge installed? Always 200 — "no browser" is an answer, not a failure — and a
+// negative is never cached, so re-checking after an install needs no restart (docs/SESSIONS.md).
 export async function handleBrowserPrereq(req, res) {
   logReq('GET', '/prereqs/browser');
   try {
@@ -308,9 +300,8 @@ async function resolveItem(req, res) {
   if (kind !== 'lecture' && kind !== 'recitation')
     return send(res, 400, { error: `invalid kind: ${kind}` });
 
-  // only = act on just this one (course,name,kind) target — meaningful only for the capture
-  // strategies (the no-browser ones have a single target, so a retry's `only` is a no-op there)
-  // forceCapture = bypass the replay cache and capture fresh
+  // only = act on just this one (course,name,kind) target (a no-op for the single-target
+  // browserless strategies); forceCapture = bypass the replay and probe caches
   const opts = { only: only === true, forceCapture: forceCapture === true };
 
   // moodle-file needs no browser either: the ref carries the Moodle fileurl, and the WS
@@ -399,9 +390,8 @@ async function resolveItem(req, res) {
   const profile = resolveExtractorForRecording(recording)?.browserProfile ?? 'plain';
   const session = getSession(profile);
 
-  // Zoom shares live on `*.zoom.us`, gated by a passcode not BIU SSO — no university to
-  // resolve and no login. Open a blank session and let captureVideo clear the passcode
-  // gate. See docs/ZOOM.md.
+  // Zoom shares are gated by a passcode, not BIU SSO — no university and no login; captureVideo
+  // clears the gate on a blank session. See docs/ZOOM.md.
   if (recording.strategy === 'zoom') {
     // Per-course default with an optional per-lecture override; null → the gate throws
     // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
@@ -448,9 +438,8 @@ async function resolveItem(req, res) {
       });
     });
   } catch (e) {
-    // A dead token surfaces from getSiteInfo/getAutologinKey as an invalidToken WS
-    // exception → Reconnect; the same two calls surface a bot-protection challenge as
-    // WsBlockedError. Other faults (rate-limit lockout, no .mp4) fall to 500.
+    // getSiteInfo/getAutologinKey surface a dead token (→ 401) or a challenge (→ 503); other
+    // faults (rate-limit lockout, no .mp4) fall to 500.
     if (invalidToken(e)) {
       auth.markExpired();
       logResult('/resolve', 'reconnect (401)');
@@ -466,9 +455,8 @@ async function resolveItem(req, res) {
   send(res, 200, { media: 'video', targets });
 }
 
-// Log the shared plain session into Moodle via a one-shot autologin key so the token-gated
-// .mp4 sniffs authenticated. Skips the rate-limited key mint while a prior cookie is fresh.
-// MUST run inside the session lock (navigates the shared page).
+// Log the shared plain session into Moodle via a one-shot autologin key, unless a prior cookie is
+// still fresh. MUST run inside the session lock (navigates the shared page).
 async function ensureAutologin(session, token) {
   if (session.isAuthed()) return;
   if (!token?.privatetoken) {

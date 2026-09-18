@@ -3,11 +3,8 @@ import type { MaterialInfo } from '@/types'
 
 export type MaterialIndicatorState = { text: string; cls: string }
 
-// How the lecture's materials relate to its summary: none on disk, pending, all used, none used, or
-// only some. Each material's mtime vs. the summary's is a heuristic for "was fed to the model" — see
-// docs/LECTURES.md.
-// A single material is named and several are counted, so each case is two whole sentences rather
-// than one with a spliced-in subject — the verb agrees with the subject in Hebrew.
+// How the materials relate to the summary, by mtime — a heuristic, see docs/LECTURES.md. One material
+// is named and several counted as whole sentences, since the Hebrew verb agrees with the subject.
 export function materialIndicator(
   materials: MaterialInfo[],
   summaryExists: boolean,

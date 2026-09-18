@@ -26,10 +26,8 @@ const RESERVED_NAMES = new Set([
 ]);
 const MAX_NAME_LEN = 80;
 
-// Port of `database/fs/paths.py::safe_name`, which is the authority — change one, change the
-// other. Applied at this server's request boundary so a caller learns the spelling the database
-// will actually store, instead of comparing its own against a tree that silently differs.
-// Answers '' where the Python raises (no legal characters left), which `storedName` maps to null.
+// Port of `database/fs/paths.py::safe_name`, the authority — change one, change the other. Answers
+// '' where the Python raises (no legal characters left); `storedName` maps that to null.
 function canonicalize(name) {
   const kept = [...name]
     .filter((c) => !ILLEGAL_NAME_CHARS.has(c))
@@ -43,9 +41,8 @@ function canonicalize(name) {
   return RESERVED_NAMES.has(cleaned.split('.')[0].toUpperCase()) ? `${cleaned}_` : cleaned;
 }
 
-// The spelling the database will store, or null when the name can't become one. The segment check
-// MUST run first: `canonicalize` drops '/' as an illegal character, so 'a/b' would quietly collapse
-// to 'ab' instead of being rejected as traversal.
+// The spelling the database will store, or null. The segment check MUST run first: `canonicalize`
+// drops '/', so 'a/b' would collapse to 'ab' instead of being rejected as traversal.
 export function storedName(name) {
   return isSingleSegment(name) ? canonicalize(name) || null : null;
 }

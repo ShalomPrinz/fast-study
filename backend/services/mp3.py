@@ -43,8 +43,7 @@ def _parse_frame_header(h: bytes) -> Optional[dict]:
 
 def read_duration(path: Path) -> Optional[float]:
     """Return an mp3's duration in seconds from its header, or None when it can't be read.
-
-    Header parse instead of ffprobe: one read, and one fewer binary in the installer."""
+    Parsed rather than ffprobe'd: one read, and one fewer binary in the installer."""
 
     try:
         with open(path, "rb") as f:

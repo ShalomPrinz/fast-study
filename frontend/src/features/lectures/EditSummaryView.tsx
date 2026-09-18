@@ -52,9 +52,8 @@ export default function EditSummaryView() {
   const pdfFiredRef = useRef(false)
   const latest = useLatestRequest()
 
-  // Runs on every SSE refresh; the ref gates both branches so a sibling file change or another
-  // lecture's error can't disturb a generate in flight — the missing PDF mid-generate is our own
-  // delete, not a real "no PDF" state.
+  // Runs on every refresh; the ref limits it to the generate this view started, whose missing PDF
+  // is our own delete — see docs/EDITOR.md.
   useEffect(() => {
     if (!files) return
     const pdfExists = files['summary.pdf'].exists

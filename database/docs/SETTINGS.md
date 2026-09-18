@@ -7,7 +7,7 @@ from the cwd — each service runs with its own directory as cwd.
 Under Electron the same fields live in `%APPDATA%` (the API keys in a `safeStorage` blob beside
 it), so the two backings must agree on shape. The field names below are the wire contract: they
 match `backend/services/settings.py` and the frontend's `WIRE` map in
-`frontend/src/services/settings.ts`, and any future Electron backing joins that agreement.
+`frontend/src/services/settings.ts`, and the Electron store holds to the same names.
 
 ## Fields
 
@@ -28,7 +28,8 @@ knows about a value. It validates the _type_ and nothing else: `nightly_hour` is
 integer, and clamping it to a real hour is the backend's job, exactly as `AUTO_RUN`'s allowed modes
 are. Meaning belongs to the owning service; the store stays generic. An int that is unparsable in
 `.env` reads back as `null`, the same as an absent one, so a hand-edited typo falls back to the
-client's default instead of erroring.
+client's default instead of erroring. `PUT` rejects a boolean for an int field, which Python would
+otherwise store as `1`.
 
 The two API keys are **write-only**: `PUT` accepts `gemini_api_key` / `groq_api_key`, and the read
 path reports only whether each is set, so a stored key never travels back to the client — the same

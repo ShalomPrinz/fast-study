@@ -1,512 +1,124 @@
 # Downloads page
 
 `/downloads` — connect the BIU account, keep each course's source URL, then discover and download
-recordings into the same `DATA_ROOT` courses the pipeline uses. Talks to two services: the auto-downloader
-(:3053) for auth and discovery, and the downloader server (:3052) for queueing downloads, their job progress
-and each section's bulk run — see `SERVICES.md` for their clients and error signals.
+recordings into the same `DATA_ROOT` courses the pipeline uses. Discovery and auth go to the
+auto-downloader (:3053), downloads and bulk runs to the downloader server (:3052); their clients and
+error classes are in [SERVICES.md](SERVICES.md). A download's progress is [JOBS.md](JOBS.md), a
+section's "Download all" is [BULK.md](BULK.md).
 
 ## Layout
 
-A `PageHeader` band over a `.page-column` body: the account state and the count of courses with a
-source are header metadata, then a **Course sources** caption over one `CourseSourceRow` per active course
-plus the dashed `AddCourseRow`, then — once a course is loaded — a **Recordings · course** caption over the
-`.recordings-panel`. The 880px page measure is sized for this page: a recording's second line carries a
-kind toggle, a name input and an action side by side.
+A `PageHeader` (account chip, count of courses with a source) over one `CourseSourceRow` per active
+course plus `AddCourseRow`, then — once a course is loaded — the `.recordings-panel`. The 880px measure
+fits a recording's second line: kind toggle, name input and action side by side.
 
-A source row is three grid tracks — name, URL, the pencil and Load recordings as one cell — with the side
-ones equal, so the URL sits at the row's midpoint and every row's URL lines up down the list however long
-the name beside it is. Only the action track is floored at its own content: a window too narrow for the
-even split costs the URL its exact centring rather than sliding the buttons over it.
+A source row is three grid tracks with the side ones equal, so every row's URL sits at the midpoint and
+lines up down the list; only the action track is floored at its content, so a narrow window costs the
+URL its centring rather than sliding the buttons over it. `ModeToggle` emits its segments and body as
+siblings, so the panel is a two-column grid: segments and close button on row 1, the body spanning both.
 
-The panel holds the media segments and its close control on one row and the sections beneath. `ModeToggle`
-emits its segments and its body as siblings, so the panel is a two-column grid that places them: the
-segments and the close button share row 1, everything the body renders spans both columns.
-
-Each recording is a card on two lines — **what it is** (title, plus the resolved-type chip on an `unknown`
-row) over **where it is going** (a `Save as` label, the Lecture/Recitation toggle, the name input, and the
-action). The states are tints: accent while downloading, with the job's bars stacked inside the card;
-`--ok` once the target exists in the course, where an `In course` chip and an icon-only `Download again`
-button take the place of the button; and faded for an `unsupported` row, whose button stays disabled behind
-its tooltip. That re-download stays visible rather than hover-revealed, so it is keyboard- and
-touch-reachable, and it routes through the row's own handler straight into the overwrite confirm.
+A recording is a two-line card — what it is, then where it is going (`Save as`, kind toggle, name,
+action). States are tints: accent while downloading, `--ok` once the target is in the course (an
+`In course` chip plus an icon-only `Download again`, always visible so it is keyboard- and
+touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
 ## Auth
 
-The probe lives in `AuthStatusProvider` (`contexts/AuthStatusContext.tsx`), mounted in `Layout` beside the
-session provider, so the header chip and every course row read one `/auth/status` answer. It probes nothing
-on mount — `AccountStatus` asks wherever it renders, which leaves the auto-downloader alone on a route
-carrying no account control, where a boot-time probe would toast it as down. `status` is `null` for
-"unknown": no answer yet, or a probe that failed.
+`AuthStatusProvider` sits in `Layout` so the header chip and every course row read one `/auth/status`
+answer. It probes nothing on mount — `AccountStatus` asks wherever it renders — so a route with no
+account control never toasts the auto-downloader as down. `status: null` is "unknown".
 
-`AccountStatus` renders the answer as a header chip — `--ok` connected,
-`--warn` expired or mid-login, `--danger` not connected — beside the one button that can move it. Both
-settings screens reuse it as an optional field (see [SETTINGS.md](SETTINGS.md)), where the `--danger` tone is
-retoned: only this page is actually blocked by a missing session. Connect
-pops a headed browser on the host for MFA and returns immediately; the chip then waits for the user to click
-Done, which calls `/auth/complete` to persist the storage state and re-probes.
+Connect pops a headed browser on the host for MFA and returns at once; Done calls `/auth/complete` and
+re-probes. Disconnect sits behind a `ConfirmModal`, since getting the token back is another MFA
+round-trip. Both settings screens reuse `AccountStatus` with the `--danger` tone retoned
+([SETTINGS.md](SETTINGS.md)) — only this page is blocked by a missing session.
 
-A connected session's button is `Disconnect`, behind a `ConfirmModal`: `/auth/disconnect` deletes the stored
-token, and getting it back is another headed MFA round-trip, so it must not fire on a stray click. It
-re-probes on success, and the button disables in flight the way Connect and Done do.
+A `ReconnectError` anywhere toasts a hint and bumps `reconnectKey`, the `key` on `<AccountStatus>`:
+remounting re-runs the probe, since the cached status predates the 401. That is why the probe lives in
+the component, not the never-remounting provider. A `BlockedError` (the site's bot protection answering
+a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
+`blockedMessage()` and leaves the chip alone.
 
-A `ReconnectError` from anywhere on the page toasts a hint and bumps `reconnectKey`, which is the `key` on
-`<AccountStatus>` — remounting re-runs its probe effect, since the cached status predates the 401 and would
-otherwise still read "connected". That is why the probe is fired from the component rather than from the
-provider, which never remounts.
-
-A `BlockedError` is deliberately not that path. `lemida.biu.ac.il` sits behind bot protection that answers
-a burst of calls with a captcha page instead of a web-service response; the challenge is transient and says
-nothing about the token, so it toasts `blockedMessage()` — the site is temporarily refusing automated
-requests, wait a few minutes — and leaves the account chip alone. Its copy is written here rather than taken
-from the server's `message`, which is an English log line.
-
-A course row's `Load recordings` is disabled, with a hint in its `title`, only when the probe came back
-`connected: false`. An unknown status leaves it enabled: guessing "disconnected" from a probe still in
-flight or one the service never answered would lock a working session out of discovery.
+`Load recordings` disables only on `connected: false`; unknown leaves it enabled, since guessing
+"disconnected" from an unanswered probe would lock a working session out.
 
 ## The page session
 
-Everything the page discovers or accumulates — `selected`/`pending`, `items`, `error`, the row edits and
-`reconnectKey` — lives in `DownloadsSessionProvider`
-(`contexts/DownloadsSessionContext.tsx`), mounted in `Layout` above the outlet. `/downloads` is a route, so
-its view unmounts on any navigation; holding the session above the router is what lets the user open a
-lecture and come back to the same course and the same typed names. `discover`
-and `close` live there too, so a discovery still in flight when the user navigates away lands anyway.
+`DownloadsSessionProvider` (in `Layout`) holds everything the page accumulates — `selected`/`pending`,
+`items`, `error`, row edits, `reconnectKey`, plus `discover` and `close` — so a trip to a lecture and back
+finds the same course and typed names, and a discovery in flight when the user leaves still lands. State
+and an identity-stable actions bag are separate contexts; the memoized rows bail out on the setters'
+identity.
 
-Two contexts, as with the row edits: state, and an **identity-stable** actions bag. Stability is
-load-bearing — the memoized rows bail out on the setters' identity. The provider renders `{children}` and
-nothing else, so a keystroke in a row re-renders its consumers and leaves the sidebar and the outlet alone.
-
-`DownloadJobsProvider` is mounted in `Layout` too, just outside the session provider, and
-`SectionRunsProvider` just inside it (it raises the session's own reconnect hint). Both stores are
-module-level but each provider owns its connection and clears its store on
-unmount, so mounting them app-wide is what keeps the SSE subscriptions, the snapshots and the error-toast
-dedupe alive across navigation. One consequence: a job that fails while the user is on a lecture page toasts
-there and then, instead of being reseeded away as history by `primed` on a later remount.
+`discover` sets `pending` and promotes the course to `selected` only once `listRecordings` resolves, so
+an expired session or a `BlockedError` leaves the page as it was, a toast and nothing else. A plain
+failure does promote it: the panel is where that error shows. Each discovery takes a ticket; `close` or
+another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
+the exception — an expired session is true whichever discovery found it.
 
 ## Discovery
 
-One course is selected at a time; `listRecordings(sourceUrl)` returns a flat `Item[]` in page order.
-
-The course being discovered and the course on the page are separate values. `discover` sets `pending`, and
-only once `listRecordings` resolves does it clear the old items and promote the name to `selected` — so a
-discovery that dies on an expired session leaves the page exactly as it was, a toast and nothing else,
-instead of a recordings view that paints and unpaints. A `BlockedError` — the site's bot-protection
-challenge — behaves the same way, and is the one other error that paints nothing. A plain failure does
-promote it: the panel is where that error is shown. The row's `Loading…` state follows `pending`, while `.source-row--selected` and the
-recordings sections follow `selected`.
-
-Each discovery takes a ticket, and a superseded one writes nothing: closing the panel or loading another
-course bumps the ticket, so an answer the user has walked away from cannot reopen the panel or replace what
-is on it. The reconnect hint is the exception — an expired session is true whichever discovery found it, and
-it moves only the account chip.
-
-Each item carries `media`, one of three values: `'material'` for a Moodle PDF resource (appended as the
-lecture's next `material.N.pdf`), `'unknown'` for a Google Drive row — a Drive `url` module carries no
-filename, so auto genuinely cannot tell a video from a PDF from a `.zip` without a download-time probe —
-and `'video'` for everything else (lands as `video.mp4`). The destination file is derived server-side from
-the opaque `ref` — the frontend only branches its own affordances on `media`, it never sends it.
-
-An `unknown` item may also carry `resolvedMedia` (`'video' | 'material' | 'unsupported'`), what auto's
-session probe cache found the file to be; it is absent until the file has been probed once, and
-`'unsupported'` means a real file the downloader can't fetch (a `.zip`). **A row never changes segment
-when it resolves** — the answer shows up as a chip instead (below).
-
-A `ModeToggle` at the top of the panel, each segment carrying its own item count, splits the three — **Videos** (default), **Materials**, **Unknown** —
-and `groupSections(items, media)` filters by `media` _before_ grouping by `item.section` (the
-Moodle heading) in first-seen order, blank → "Other". So each side shows only its own sections, a section
-with nothing on the active side doesn't render, and an empty side shows its own "No recordings found." /
-"No materials found." / "No files of unknown type found." while every segment stays clickable.
-`groupSections` is a pure helper (`utils/sections.ts`)
-precisely so the filter+group rule is testable without a DOM.
-
-A row auto stamped `likelyRecording: false` — a `url` module whose Moodle heading and title carry no
-recording keyword, so a stray course link rather than a lecture — is pulled out of its heading into a
-synthetic **Other links** bucket placed last, on whichever segment it lands. auto lists every `url`
-module now, so this is what keeps a random course YouTube link out of the lecture sections without
-hiding it; the tradeoff is that those rows lose their real heading and are downloaded per row. It
-applies to the **Unknown** segment too, and that is where it matters most: every newly-listed
-`direct-url` row is `media: 'unknown'`, so without it the strays would sit interleaved with real
-headings _and_ a section's "Download all" would serially probe each dead link. The bucket is marked
-`synthetic` rather than recognised by its title — a real Moodle heading spelled "Other Links" is a
-different section, and stays one.
-
-That bucket has **no run identity at all**: `DownloadsView` passes `section.id = null` and a fixed React
-key for it, so it renders no "Download all", starts no server run, keeps its rows out of every bulk
-queue, and shares nothing with a real heading of the same name. Giving it a `sectionId` would be the actual bug — `runs.js` keys its run map by
-`${course}:${media}:${title}`, so the two sections would share one run slot, one `useSectionRun`
-subscription and one React key. `useSectionRun` therefore takes `string | null` and a null id always
-reads as "no run", which every consumer already handles as the idle state. Everything below a section — including
-"Download all" — therefore operates on one media only: a bulk run covers just the active side.
-
-An item is either downloadable or `expandable` (a playlist). The expand state, the fetched children and
-the cache live in a module-level store (`contexts/RowExpansionsContext.ts`) rather than in the row, because
-the bulk queue needs resolved children and the "Download all" button needs to know whether every playlist is
-expanded; living outside the components also keeps them alive across a segment switch. `SectionGroup` drives
-them: it subscribes to the whole map (`useAllExpansions`) for those two rules, and owns `toggleExpand`, the
-only caller of `patchExpansion` — a `useCallback` stable across renders, which reads the current state
-through the store instead of closing over the map. Each `RecordingRow` subscribes to its own ref
-(`useRowExpansion`), so one playlist's expand re-renders that row alone; a never-expanded ref reads the
-shared `IDLE_EXPAND`. Children are cached on first expand, so collapse/re-expand never refetches. Expandable
-rows render their children as recursive `RecordingRow`s.
-
-The store outlives every component, so the session's `clear()` calls `clearExpansions()` — course switch and
-close must not leave another course's refs behind.
-
-## Unknown rows and the resolved type
-
-An `unknown` row carries a chip beside its title: `?` while the type is unknown, then `Video` / `Material` /
-`Unsupported`. Video and material rows carry none — it would only restate their segment.
-
-`RecordingRow` reads `item.resolvedMedia` and nothing else. A download reports the verdict upward through
-`ResolvedMediaContext` — a dispatch-only context provided by `DownloadsView` from the session's
-`resolveMedia`, which stamps it onto the matching item in `items`. `POST /download-item` answers with a `media`, and a 422 `UnsupportedError` is
-just as much a verdict, so both update the chip on the interaction that resolved it — no re-list. The
-provider sits above the media segments deliberately: switching segment unmounts every row and every
-`SectionGroup`, so a verdict held in either would be lost on the way back. It still dies with a
-re-discover; auto's cache is what makes it survive a reload. A row resolved to `material` picks up the whole material
-affordance (attach-to dropdown, material count, no overwrite confirm). An `unsupported` card fades and
-its Download button is disabled; the 422's message names the actual extension and is toasted by
-`toastDownloadError`, which already shows an `UnsupportedError` verbatim.
-
-## Row name and kind: one source of truth
-
-`contexts/RowEditsContext.ts` (the map owned by the session provider, exposed by `DownloadsView` above the
-media toggle, keyed by `item.ref`) stores **only overrides** — `{ name?, kind? }`. `resolveRow` derives `{ kind, suggestion, value, name }`
-from an override plus the live tree. Two consequences fall out of storing overrides rather than values:
-
-- With no `name` override the displayed name keeps tracking the kind toggle; the first keystroke pins it.
-- The green "already downloaded" row and the bulk queue's skip rule read the same resolved values, so they
-  can never disagree.
-
-Edits are never cleared within a course, so they survive an SSE tree refresh, a collapse/re-expand, a bulk
-run, a segment switch — including the one a probe forces when it moves an `unknown` row to Videos — and a
-trip to a lecture and back. Discovering another course, or closing the panel, resets the map (along with the
-expansions and the runs) so refs from two courses can never collide.
-
-The edits live behind **two** contexts: `RowEditsStateContext` (the map) and `RowEditsDispatchContext`
-(`{ setName, setKind }`, identity-stable for the page's lifetime). Only the components that slice the
-map subscribe to the state context — `SectionGroup` for its top-level rows, and `ChildRows` for an expanded
-playlist's children. `RecordingRow` is `memo`ized and takes its own `edit` slice as a prop, reading only the
-dispatch context via `useRowEdit(item, edit, course)`, so a keystroke re-renders just the edited row. The
-setters update with `{ ...prev, [ref]: { ...prev[ref], name } }` — leaving every other slice's identity
-untouched is what lets the siblings bail out. (An SSE tree refresh still re-renders every row: leaf rows
-consume `CourseTreeContext` for the suggestion and the green highlight.)
-
-The bulk queue reads the map **once**, at submit: the whole section is resolved into targets and handed to
-the server, so a name typed after that is not picked up by the run already in flight. It still feeds
-`ResolvedMediaContext`, now off the run's own recorded verdicts rather than per-item responses, so a bulk
-run resolves the `unknown` rows it touches — reported once per ref, since every `run:change` ping re-reads
-the same targets.
-
-**The server owns the on-disk spelling.** Both submit endpoints canonicalize every name they are given
-(`Lecture: 3` → `Lecture 3` — `:` is illegal on NTFS) and answer with `renames: [{ ref, name }]` for the rows
-they changed, `[]` otherwise; the answer comes back before any file lands, since both endpoints only enqueue.
-`applyRenames` (`utils/renames.ts`) writes each canonical name back through `setName` and warns once — one
-toast per submission, never one per row. The stored name is therefore the on-disk one, which is what lets the
-green row, the bulk skip and `targetLanded` match at all; there is no client-side sanitizing and no
-normalizing at comparison time, which would only hide the desync.
-
-`hasResource(item, name, kind, courses, course)` is the single already-downloaded rule, so the green row
-and the bulk queue's skip can never disagree. It finds the node named `name` in the live tree and checks
-what the media implies — `video` → `video.mp4` exists, `material` → `materialsOf(...)` is non-empty. A
-lecture that exists but holds neither is not "already there" for either row. `resolvedMedia` wins over
-`media` when present; an unprobed `unknown` row (and an `unsupported` one) has no reliable on-disk target,
-so it is always false rather than ever showing a wrong "already downloaded".
-
-A video row's Download on an existing target opens an overwrite confirm first; the bulk run skips instead.
-For a video row whose base name isn't itself on disk, `splitSiblings` (same lookup) checks for
-`${name}.1`/`.2` — a zoom row splits lazily into those during download — and Download opens a "might
-overwrite" confirm naming the siblings; exact match takes precedence.
-
-**A material row never confirms.** A material download appends as the next `material.N.pdf` and a PDF
-always lands on the one lecture picked, so neither hazard applies; instead the row shows a non-blocking
-"N materials" note for the selected lecture, live off the same tree lookup.
-
-## Material rows
-
-A material row picks which lecture the PDF attaches to, and takes its suggestion from `suggestItemName`
-like a video row — the Moodle activity title ("שקפי הרצאה 5", "תרגול 3 - פתרונות") names the lecture the
-PDF belongs to, so the number in it wins. A numberless title falls through to the next-new name.
-
-The destination field is a native `<input list>` + `<datalist>` of `existingNames(kind, …)`: dropdown of
-what exists plus free text for a lecture that doesn't exist yet, in one element with no focus/keyboard
-handling to reinvent. The options follow the kind toggle, and the input's `aria-label` reads "Attach material to" rather than
-"Lecture name" — the only in-row material affordance, since the media toggle already carries the signal.
-The row shell is otherwise shared with video rows; it just drops both confirms and shows the target's
-material count instead.
-
-`suggestItemName` derives the name from the recording title: the first integer becomes `Lecture N` /
-`Recitation N`, plus at most one sub-session marker glued to those digits (optionally after `.`/`-`/`_`) as
-a decimal — a Latin letter (a=1…z=26), one of `אבגדהוזחטי` (א=1…י=10), or a bare digit when a separator is
-present. Ambiguity voids the marker rather than guessing (whitespace, a second letter, a date tail), and a
-title with no number at all falls back to the tree's next-number suggestion.
-
-A row's failure to _start_ flips the button to "Retry ✗" and toasts via `toastDownloadError` (generic copy,
-except an `UnsupportedError` whose message is display-ready and a `BlockedError`, which gets the wait-and-retry
-copy). Reconnect, passcode and a cancelled passcode prompt don't toast — they steer the UI elsewhere. A failure _after_ the start is a job failure, below.
-
-## Download progress
-
-`POST /download-item` (on the downloader server) returns `{ media, jobIds, renames }` — a 200 means queued by
-construction (every failure to queue is an error status), `media` is what the file turned out to be, which
-resolves an `unknown` row's column, and the curl/yt-dlp job runs on in the background. The row does not
-route by `jobIds`: every spawned job is stamped with the row's `ref`, so the row re-finds its jobs in the
-snapshot below. The 200 is never the row's outcome — treating it as one reports "Downloaded ✓"
-mid-download and swallows every background failure.
-
-The jobs context mirrors the pipeline's `RunnerStatusContext`: `GET /jobs` is the **single source of
-truth**, and the stream is a contentless "refetch now" ping. `GET /events` (SSE) fires one event,
-`job:change` (`data: {}`), on every job transition — queued, start, end. Each ping refetches `/jobs`; **no
-byte count is transported** — the bar is a client-side ETA animation, so following a download costs one open
-connection and a refetch per transition rather than a request per second.
-
-`GET /jobs` returns every non-evicted `DownloadJob` (a `done` job is dropped after short bridge period; an `error` has no timeout and is evicted only when a retry supersedes it), including ones the
-Chrome extension started. Each job carries the discovery-row **`ref`** it belongs to: a zoom
-before/after-break pair lands under lecture names `<name>.1`/`<name>.2`, but both jobs carry the parent
-row's `ref`. So the row-to-job link is server-side — no client id↔row map, no seeding, no delta merge.
-
-**One job per target — the server guarantees it.** When the server silently recovers a stale token — or a
-manual retry runs — `createJob` calls `supersedeTerminal`, evicting any prior _terminal_ job (`done`/`error`)
-for the same `(course, lecture, kind, ref)` before minting the fresh one. So a `/jobs` snapshot never holds
-two jobs for one target, and no superseded `error` survives to flash a stale row or toast a recovery that
-actually succeeded. The client trusts the snapshot as-is — no client-side dedupe. (A zoom pair's `.1`/`.2`
-halves are distinct targets under one `ref`, so both legitimately coexist.)
-
-`DownloadJobsProvider` (mounted in `Layout`, so the connection and the snapshot outlive the route) owns
-**one EventSource for the app** — always open, which is the price of following downloads from anywhere — and feeds each `/jobs` snapshot into the module-level
-store in `DownloadJobsContext.tsx`. `open` fires on connect and every auto-reconnect and also refetches, so
-the initial sync and any events missed during a reconnect gap are covered. A failed refetch is a no-op —
-the stream reconnects and pings again. Refetches go through `utils/sequencedRefresh.ts`, so only the newest
-reply publishes: the last job's `done` is the final ping, and an older reply landing after it would
-republish that job as `running` — a live ETA bar and a section wedged with "Download all" disabled, with
-nothing left to correct it until some unrelated job transitions.
-
-The store keeps no context value: each snapshot is grouped **once** into a `Map<ref, JobProgress[]>`, and
-rows read it through `useSyncExternalStore`. `useRowJobs(ref)` subscribes a row to its own ref, so a ping
-re-renders only the rows that _have_ jobs — the memoized rows with none read one shared frozen `EMPTY_JOBS`
-and bail out. That's the whole win, and on a section where one row is downloading it's the difference
-between one re-render and all of them; grouping allocates a fresh bucket array per ref per snapshot, so a
-row with jobs re-renders on every ping regardless. `useJobsByRef()` hands `SectionGroup` the whole map,
-which is the right scope there: the bulk summary reads arbitrary refs the run queued. (A context is still mounted, purely to fail loudly when a hook is
-used outside the provider.)
-
-**Re-attaching after a reload just works.** The grouping keys on `job.ref`, so a download still running
-after a reload shows on its row with no extra lookup. A queued job pings too, so the row flips into flight
-from the snapshot alone once the POST returns. A job with a **null `ref`** is one the Chrome extension
-started; it belongs to no discovery row and is dropped while grouping.
-
-**A `ref` groups the row; its jobs are the display atoms.** Each bucket is a `JobProgress[]` — one entry per
-matching job (id, `job.lecture` title, plus `ref`/`course`/`kind` for retry, `status`, `startedAt`,
-`expectedBytes`, `operation`), sorted by lecture so a zoom pair's two bars never reorder.
-`RecordingJobList` maps each to a `JobProgressBar`, which owns its own `useTimingStats(operation, expectedBytes)` call —
-so each clip regresses independently and one unknown probe blanks only its own bar (no summing, no
-null-poisoning across siblings). `tool: curl` → `download:curl`, `yt-dlp` → `download:ytdlp`, two buckets
-because their throughput profiles differ. A null `expectedBytes` shows "Not enough data to estimate"; so
-does a tool with too few recorded runs. The per-bar `.1`/`.2` title shows only when a row has more than one
-bar — a lone bar leaves it off (the row already names it). The 99% non-zoom case is one job → one untitled
-bar, unchanged.
-
-**Per-clip retry.** On a multi-job (zoom-pair) row, a terminal job renders a per-clip **Retry ✗** (error)
-or **Re-download ↻** (done) button instead of a bar, so one failed half replays without touching the other.
-It re-issues `POST /download-item` with `{ ref, course, name: job.lecture, kind, only: true }` (`only`
-re-triggers just that named clip) and reuses the row's reconnect/passcode gates via the shared `runIntent`.
-A done clip's **Re-download ↻** overwrites, so it opens the overwrite confirm named for that clip (`job.title`)
-and only replays on Yes; an errored clip's **Retry ✗** downloaded nothing to overwrite, so it retries directly.
-A lone job needs no per-clip button — its retry lives on the main row button, which replays the whole row.
-
-Whole-row state comes from `rowStatus(jobs)` (running if any job is non-terminal, else error if any failed,
-else done, else null). On a split row (`jobs.length > 1`) the per-clip buttons own re-download/retry, so the
-main control becomes a non-clickable status label (`.recording-download-btn--label`) — "Downloading…" /
-"Downloaded ✓" / "Failed ✗" — never triggering a whole-row overwrite. Non-split rows keep the clickable
-button; confirm-overwrite and passcode flows stay whole-row and keyed on `ref`.
-
-`RecordingRow` is the integrator: it derives the display (`jobs`/`status`/`split`/`alreadyDownloaded`) and
-owns the overwrite confirm. `useRecordingDownload` is the download effect only — the action plus its own
-pending/retry/queue-failure/passcode state. `RecordingJobList` is the presentational per-job block.
-
-Each bar is literally `MainView`'s — same component, same `Estimating…` / `Not enough data to estimate` /
-`Nm Ns remaining` / `Taking longer than expected` states; the bars render inside the card, stacked beneath
-its "save as" line. While any job runs the action is a "Downloading" chip over an accent-tinted card; on
-all-done the SSE tree refresh lands at the same moment, so the card turns green and the action becomes the
-`In course` chip beside its re-download icon; on error the button comes back reading "Retry ✗".
-
-The provider — not the row — toasts a job failure via `toastJobError`, so one place covers single and bulk
-rows alike. It toasts each error id once (a failed job lingers until a retry supersedes it), guarded by a
-`primed` flag: the first snapshot's errors are seeded into the toasted set and suppressed, since a failure
-already terminal before this session saw it is history, not a live outcome.
-
-## Bulk download
-
-**The page starts a run and then only reflects it.** "Download all" is one `POST /download-section`; the
-queue, its progress, each row's disposition and the passcode pause are the downloader server's
-(`downloader/server/docs/RUNS.md`), and the page reads them back. So a run survives a segment switch, a
-closed recordings panel, a reload and a closed tab — the client-side queue it replaced died with the tab,
-losing the progress and a prompt the user was one keystroke from answering. This mirrors
-`RunnerStatusContext` over the pipeline runner, and `DownloadJobsContext` structurally.
-
-`SectionRunsProvider` (`contexts/SectionRunsContext.tsx`, mounted in `Layout` inside the session provider)
-is that reflection: one `EventSource` for the contentless `run:change` ping, a `GET /runs` refetch per ping,
-and a module-level store keyed by `sectionId` that `useSectionRun(id)` subscribes to per section. Refetches
-go through the same `sequencedRefresh` as the jobs reflection — the driver pings several times per target, so
-overlapping `GET /runs` can answer out of order, and an older reply landing after the terminal `done`
-snapshot would strand the section on "Downloading…" — `done` is the last frame a run emits. The key is
-the section's own identity `${course}:${media}:${title}` (the same string that keys the `SectionGroup`
-element), built and read back through `sectionId`/`parseSectionId` in `utils/sections.ts` so the two stay in
-step — parsing takes the first two colons as delimiters (a course name can't hold one, media is an enum) and
-everything after as the title. The server holds one run per key. Both qualifiers matter: one Moodle heading usually holds both
-a video and its slides, and a run outlives the course it started in.
-
-A run is `{ id, sectionId, course, targets, at, total, status, paused }`. `status` is
-`running | paused | done | reconnect | cancelled`, `at` is the 1-based position the queue is on, and `paused`
-is `{ index, reason, name }` or null. `RunTarget` — `{ ref, name, kind, media, disposition }` — is a
-**cross-wire contract**: TypeScript in `services/downloadServer.ts`, plain JS in the server's `runs.js`.
-Change one, change the other. `disposition` is what the run itself decided: `pending` (the queue has not
-reached it), `skipped`, `unsupported`, `queue-failed` — or `queued`, the only one whose outcome is still
-open. `media` is the POST's answer for a queued row and `resolvedMedia ?? media` otherwise, because it is
-what says where the download lands on disk.
-
-**Nothing about the outcome is stored.** `utils/runStatus.ts` derives it on every render, per target and in
-this order: `pending` is not-yet-started and stops there; a recorded non-`queued` disposition wins; else one
-of the target's jobs is `running` → `in-flight`; else the row landed in the course tree → `downloaded`; else
-one of its jobs is an `error` → `failed`; else `in-flight`. `pending` needs its own answer precisely because
-the run holds its whole queue from the start: absence of a job means "not triggered yet" for those rows,
-where for a `queued` row it means "the snapshot has not caught up". `summarize` counts those into
-`N downloaded, N failed, N unsupported, N already there` (each part only when non-zero; `pending` and
-`in-flight` are counted nowhere). Both are pure and unit-tested; `SectionGroup` is their only caller, and its
-three inputs — the run, the tree and the jobs — are all live reflections a remount simply re-reads.
-
-A running job outranks the tree because a zoom share downloads as two clips: once `name.1` lands the tree
-would already say `downloaded` while `name.2` is still going, and the section would free its "Download all"
-button mid-run. "The target's jobs" is `ref` **and** name-scoped (`name`, `name.1`, `name.2`): a job is keyed
-by lecture name while the target is keyed by ref, so a row renamed between runs leaves the old name's jobs
-under the same ref, and they are not this target's outcome.
-
-That works because each half of the derivation is durable where the jobs are not. The tree — read through
-`targetLanded`, which asks `hasResource` about `name`, `name.1` and `name.2` alike, so a zoom share that
-lands as split clips still counts — owns "downloaded"; the download server evicts a `done` job 60s later
-precisely because it is only bridging until the tree SSE arrives. Every candidate name goes through the one
-`hasResource` rule so that a bare `name.1` folder left by an earlier run cannot read as landed on a row the
-queue's own skip would still queue. An `error` job is never time-evicted and `createJob` supersedes any
-earlier terminal job for the same target, so it is positive evidence that the _latest_ attempt failed — no
-baseline of pre-existing jobs to subtract. And absence of evidence reads as "still going", which is exactly
-right in the window after the POST where the browser's `/jobs` snapshot has not caught up.
-
-The line is therefore live: retrying a failed row from its own button improves it, and deleting a lecture
-folder with the page open changes it too.
-
-**Busy is positive evidence, never the fallback.** The derivation's last branch — absence of evidence reads
-as "still going" — is honest for a summary but has no expiry, so it must not decide whether the section is
-busy: a `queued` row that permanently loses both its sources would hold "Download all" disabled forever, and
-that button is the only thing that could replace the run. `runningCount` is therefore its own rule — a target
-with a `running` job — which is exactly what a single row's own button uses (`rowStatus(jobs) === 'running'`,
-`RecordingRow.tsx`), and why the single-download path never had this failure mode. A running job cannot
-outlive the work, so the section always frees itself. It still covers the tail after the queue finishes,
-because the jobs are what outlive the queue.
-
-**Unverified rows.** `unverifiedCount` names the set the run can no longer account for (`queued`, no jobs at
-all, not in the tree), meaningful only once the run has stopped. They no longer hold the section busy, but
-`summarize` counts them nowhere, so a 4-row section would silently read "3 downloaded". Instead the section
-renders a warning line below the header saying how many and why — the causes are all outside the run and
-unguessable from here: the lecture was deleted or renamed after landing, the name the run holds desynced
-from the one on disk, or the tree is briefly unreachable (`CourseTreeContext` publishes an empty tree on
-failure, which flips every landed row at once). There is no action attached because none of them is fixable
-from this page.
-
-**Rows the run never reached.** The driver decides every row it walks past, so a `pending` target left once
-the run has stopped is proof the run stopped short — `notStartedCount` is that count, and the section renders
-it as a second warning line. Without it a 401 at row 3 of 20 reads "2 downloaded", pixel-identical to a
-finished section with 17 rows silently untouched, and the `reconnect` toast that explained it is seconds gone.
-This one does carry an action, because the run's own status says why it stopped: reconnect and run the section
-again after a `reconnect`, run it again after a cancel.
-
-Two limits follow from deriving with no memory:
-
-- For one SSE round-trip after a retry POST, the just-superseded `error` job is still in the browser's
-  snapshot, so the target flickers through `failed` before the fresh `running` job arrives.
-- A half-failed zoom pair reads as `downloaded`: with no job running, the `.1` clip on disk satisfies
-  `targetLanded` before the `error` job for `.2` is reached. Per-half accounting needs the POST to return
-  job ids, which it does not.
-
-"Download all" flattens the section into downloadable leaves — a playlist contributes its children, never
-its own ref, which the backend rejects. It is disabled until every expandable is expanded, and never
-auto-expands. Each leaf is resolved into a `RunTarget` **at submit**: the name and kind the row shows
-(`resolveRow`), plus the two verdicts this page owns because they read the live course tree — `skipped` for
-a row already on disk (`hasResource`, the same rule that tints the row green, so the two can never disagree)
-and `unsupported` for a row a probe already condemned. Everything else goes over as `pending`. Starting a run
-replaces whatever run that section had. The POST answers `{ runId, renames }`; the run itself is read back off
-`/runs`, so `startSectionRun` returns only the renames (above).
-
-**Two costs of the run being server-owned**, both accepted: a name typed _while the queue runs_ is no longer
-picked up when that row's turn arrives — the server got every name up front — and a row downloaded by
-something outside this run mid-queue is no longer skipped, since the skip set was computed at submit; it is
-re-triggered and overwrites itself.
-
-The **triggering** runs sequentially by design: the auto-downloader drives one shared browser session, so
-parallel requests would contend. The downloads themselves run on, so by the end of the queue several rows
-are downloading at once, each with its own bar.
-
-Per-item outcomes are the server's, and it maps them exactly as the client-side queue used to: a 401 stops
-the run at `reconnect`; a 409 parks it at that index with `paused`; a 422 records `unsupported` (see below);
-anything else records `queue-failed` and continues.
-
-`unsupported` is counted apart from `failed` because it is not a run problem and, unlike a failure, it is
-permanent: a row already known unsupported is skipped before the request, so four `.zip`s cost one probe
-round-trip each per server lifetime rather than one per bulk run. Since the bulk run never toasts per item,
-recording the verdict is also the only thing that carries the 422's reason out of the run — as the faded
-card and its chip.
-
-A section header is a caret, the heading, how many cards it holds, and the bulk `Download all N` at the far
-end. It renders three progress states in order: `Downloading {at}/{total}…` while the run is `running` or `paused`,
-else `Downloading n more…` for the targets with a running job, else the derived summary (shown only once the
-section has a run at all). "Download all" stays disabled through the first two, and the two warning lines —
-never-reached rows, then unverified ones — render below the header independently of which of the three is
-showing. The bulk run never toasts per
-item itself — a job failure toasts once from the jobs provider.
-
-A run that ends at `reconnect` raises the page's "BIU session expired" hint, and the provider — not the
-section — owns that: a status is re-read on every ping, so it fires **once per run id**, held in a set beside
-a `primed` flag that seeds the first snapshot. A run already aborted before the page loaded is history, and
-the account chip probes on mount anyway.
-
-## Zoom passcode
-
-`PasscodePrompt` is a masked-input modal mirroring `ConfirmModal`'s portal + Escape/overlay-cancel shape
-(`ConfirmModal` can't host an input). It owns its input and scope state, and the parent unmounts it between
-openings so a wrong-passcode re-prompt mounts fresh and empty. Scope defaults to course-wide; "just this
-lecture" narrows it to the one recording.
-
-A bulk run's pause is a **rendered status, not held state**: the prompt renders whenever the reflected run
-reads `paused`, from `run.paused.{reason,name}`. So a gate hit while the user is on another page — or after
-a reload — still asks when the section renders again, and the server holds the queue there indefinitely
-rather than hanging on a prompt that never mounted. Submitting saves the passcode through auto (the passcode
-store stays there) and then `POST /runs/:id/resume`, which retries that same row; a failed save resumes with
-`{skip:true}`, giving up on the gated row and continuing from the next. Cancel is `POST /runs/:id/cancel` and
-abandons the rest of the queue, not just the gated row. The only run state left in `SectionGroup` is the
-save's own in-flight flag, which drives the prompt's busy state; a double submit is the server's to reject
-(409 on a run that is no longer parked), not a race the component guards.
-
-Because the prompt renders only inside its own `SectionGroup`, `PausedRunsBanner` sits above the sections and
-lists every paused run the store holds — `usePausedRuns` reads them off the same module store, handing out a
-cached array so an unchanged paused set doesn't re-render the banner on every progress ping. **The cache is
-keyed by run id only**: the same parked runs keep the previous array even as their records change underneath,
-so a consumer that reads more than `id`/`sectionId`/`course` off it (a re-parked `paused.index`, a `reason`
-flipping `missing`→`incorrect`) would be served the stale copy and must widen the comparison first.
-
-An entry is a button only when its section is in the open course but on **another** segment: clicking it
-calls the `ModeToggle` body's `selectMode` and the prompt mounts with the section. Everything else is plain
-text, because there is nowhere to jump — a run on the open segment already renders its own prompt just below,
-another course's rows were never discovered, and an id this page can't parse names no segment at all. The
-course is prefixed ("Course Y · Section X is waiting for a passcode") whenever the run belongs to a different
-course, including the unparseable case, where it is all the entry can say about where the run is.
-
-The banner is mounted **inside the open course panel**, under the `ModeToggle` body that owns the segment it
-switches to. So it is scoped to `/downloads` with a course open: closing the panel or navigating away hides
-it, and a run parked in another course is surfaced only while some course is open. That is the same reach the
-sections themselves have, and a page-wide notice would need the paused set lifted above the route.
-
-In a single row, the passcode prompt and the overwrite confirm can never co-render — the confirm is already
-dismissed by the time `download()` can hit the 409. The modal's own `savingPasscode` busy state drives its
-spinner; on submit it saves the passcode and resumes whichever intent hit the gate (row download or a
-per-clip retry) via `passcodeResume`, closing the modal and starting the resume in one render so no spinner
-flashes off.
+`listRecordings(sourceUrl)` returns a flat `Item[]` in page order. `media` is `'video'` (lands as
+`video.mp4`), `'material'` (a Moodle PDF, appended as the next `material.N.pdf`) or `'unknown'` (a
+Google Drive row — no filename, so only a download-time probe can tell). The destination is derived
+server-side from the opaque `ref`; the frontend branches its own affordances on `media` and never sends
+it.
+
+A `ModeToggle` splits the three segments, each with its count, and `groupSections(items, media)` filters
+by media _before_ grouping by Moodle heading (first-seen order, blank → "Other"), so a section with
+nothing on the active side does not render and "Download all" covers one media only.
+
+A row auto stamps `likelyRecording: false` (a `url` module with no recording keyword) moves into a
+synthetic **Other links** bucket, placed last — this keeps stray links out of the lecture sections, and
+on Unknown keeps "Download all" from serially probing each one. The bucket is marked `synthetic`, never
+recognised by title, and has **no run identity**: `section.id = null`, no "Download all", out of every
+bulk queue. Giving it an id would collide with a real heading of the same name in the server's run map.
+`useSectionRun(null)` reads as "no run".
+
+A playlist row is `expandable`. Expansion state and fetched children live in a module store
+(`RowExpansionsContext.ts`), not the row: the bulk queue needs resolved children, "Download all" needs to
+know every playlist is expanded, and the state must survive a segment switch. Each row subscribes to its
+own ref; children are cached on first expand; the session's `clear()` calls `clearExpansions()`.
+
+## Unknown rows
+
+An `unknown` row carries a chip — `?`, then `Video` / `Material` / `Unsupported` — and **never changes
+segment** once resolved. `resolvedMedia` comes from auto's session probe cache on listing, or from a
+download: `POST /download-item`'s `media` and a 422 `UnsupportedError` are both verdicts, reported
+through the dispatch-only `ResolvedMediaContext` and stamped onto the item. It sits above the segments
+because a segment switch unmounts every row. A row resolved to `material` gets the whole material
+affordance; an `unsupported` one fades with Download disabled.
+
+## Row name and kind
+
+`RowEditsContext` stores **only overrides** (`{ name?, kind? }` per `ref`); `resolveRow` derives the
+displayed values from the override plus the live tree. So an untouched name keeps tracking the kind
+toggle, and the green row and the bulk skip read the same resolved values. Edits persist for the whole
+course (SSE refresh, segment switch, navigation) and reset on another course or close, so refs never
+collide. State and dispatch are split: only `SectionGroup` and `ChildRows` subscribe to the map, and the
+memoized `RecordingRow` takes its slice as a prop, so a keystroke re-renders one row.
+
+**The server owns the on-disk spelling.** Both submit endpoints canonicalize names (`:` is illegal on
+NTFS) and answer `renames`; `applyRenames` writes them back through `setName` with one toast per
+submission. The stored name is then the on-disk one, which is what lets every "already there" check
+match — no client-side sanitizing, which would only hide the desync.
+
+`hasResource(item, name, kind, courses, course)` is the single already-downloaded rule: the named node
+holds `video.mp4` for a video, any material for a material. An unprobed `unknown` or an `unsupported` row
+is always false rather than ever showing a wrong "downloaded". A video row on an existing target confirms
+overwrite; `splitSiblings` also catches `${name}.1`/`.2` (a zoom row splits into those) with a "might
+overwrite" confirm. **A material row never confirms** — it appends, and shows the target's material
+count instead.
+
+## Material rows and name suggestion
+
+A material row's destination is a native `<input list>` + `<datalist>` of `existingNames(kind, …)`:
+existing lectures plus free text for a new one, with no focus handling to reinvent. Its `aria-label`
+reads "Attach material to".
+
+`suggestItemName` turns the title's first integer into `<prefix> N`, plus at most one sub-session marker
+glued to it as a decimal (a Latin letter, a Hebrew letter א–י, or a digit after a separator). Ambiguity
+voids the marker rather than guessing; a title with no number falls back to the tree's next name.
+
+A row's failure to _start_ flips its button to "Retry ✗" and toasts through `toastDownloadError`;
+reconnect, passcode and a cancelled prompt don't toast, they steer the UI.

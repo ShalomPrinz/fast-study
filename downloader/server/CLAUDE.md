@@ -1,10 +1,10 @@
 # CLAUDE.md — downloader/server
 
-The local server for downloading videos and documents. It has no disk conventions of its
-own: it captures a video (curl header-replay or yt-dlp) or receives a PDF, then hands the bytes to the **database service** (8001), which writes them under
-`DATA_ROOT`. It tells the **backend** (8000) that a video arrived and posts download duration
-samples to it, and calls **auto/** (3053) to resolve a discovery row into download targets — and
-to re-resolve one whose cached token went stale (`docs/JOBS.md`).
+The local server for downloading videos and documents. It holds no disk conventions of its own: it
+captures a video (curl header replay or yt-dlp) or receives a PDF, then hands the bytes to the
+**database** (8001), which writes them under `DATA_ROOT`. It tells the **backend** (8000) that a
+video arrived and posts download duration samples to it, and calls **auto/** (3053) to resolve a
+discovery row into download targets — and to re-resolve one whose cached token went stale.
 
 ## Run
 
@@ -13,94 +13,95 @@ npm --prefix downloader/server start   # node src/index.js, loopback-only on por
 npm --prefix downloader/server test    # node --test, pure logic only (no network, no subprocess)
 ```
 
-`yt-dlp` and `curl` must be installed system-wide for a dev run (the server shells out to them).
-Both are spawned through `toolPath(name)` from `@faststudy/tools`: `FASTSTUDY_BIN_DIR` set means an
-absolute path into the shipped binaries, unset means PATH. `curl` is the exception that stays a PATH
-lookup either way — Windows 10+ ships `curl.exe`, so it is deliberately not bundled. Both are probed
-once at startup and reported on `/health` as `tools`; a missing one fails only the downloads that
-need it.
+A dev run needs `yt-dlp` and `curl` on PATH. Both resolve through
+[`@faststudy/tools`](../../lib/tools/CLAUDE.md), are probed once at startup and reported on
+`/health` as `tools`; a missing one fails only the downloads that need it. Packaged, this service
+alone seeds and self-updates the writable yt-dlp copy ([DOWNLOAD.md](docs/DOWNLOAD.md)).
 
-Packaged, `yt-dlp` runs from a writable per-user copy that this service seeds from the shipped
-binary and then lets update itself, because an app update replaces the install directory wholesale
-(`services/ytdlpUpdate.js`, `docs/DOWNLOAD.md`). A dev run never seeds it.
+## Config (repo-root `.env`; all optional)
 
-## Config (repo-root `.env`; all optional except as noted)
+| Key                       | Default                 | Meaning                                                                                  |
+| ------------------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
+| `DOWNLOADER_PORT`         | `3052`                  | default listen port (`FASTSTUDY_PORT` in the environment wins)                           |
+| `DOWNLOADER_EXTENSION_ID` | none                    | extension CORS origin — required to use the dev-only extension                          |
+| `FRONTEND_URL`            | `http://localhost:5173` | frontend CORS origin; the packaged `app://bundle` is always allowed beside it            |
+| `DATABASE_URL`            | `http://localhost:8001` | database base URL                                                                        |
+| `BACKEND_URL`             | `http://localhost:8000` | backend base URL — timing samples and the video-arrived report                          |
+| `AUTODL_URL`              | `http://localhost:3053` | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve             |
 
-| Key                       | Default                            | Meaning                                                                      |
-| ------------------------- | ---------------------------------- | ---------------------------------------------------------------------------- |
-| `DOWNLOADER_PORT`         | `3052`                             | default listen port (`FASTSTUDY_PORT` in the environment wins)               |
-| `DOWNLOADER_EXTENSION_ID` | none — no extension origin         | extension CORS origin; required to use the dev-only extension                |
-| `FRONTEND_URL`            | `http://localhost:5173`            | frontend CORS origin (downloads, `/events`, `/jobs`, `/runs`); the packaged app's `app://bundle` is always allowed alongside it |
-| `DATABASE_URL`            | `http://localhost:8001`            | database service base URL                                                    |
-| `BACKEND_URL`             | `http://localhost:8000`            | backend base URL — timing samples and the video-arrived report               |
-| `AUTODL_URL`              | `http://localhost:3053`            | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve |
+`DOWNLOADER_EXTENSION_ID` has no default, so a packaged build allowlists no `chrome-extension://`
+origin. The extension is dev-only — it hardcodes `http://localhost:3052` and has no way to receive
+`FASTSTUDY_SECRET` — so a dev sets this to the ID Chrome assigned (it changes on reload) or CORS
+blocks the popup.
 
-`DOWNLOADER_EXTENSION_ID` has no default: unset, no `chrome-extension://` origin is allowlisted
-at all, which is what a packaged build always is. The extension is dev-only — it hardcodes
-`http://localhost:3052` against an ephemeral port and has no bridge to receive `FASTSTUDY_SECRET` —
-so a dev must set this to the ID Chrome assigned (it changes on reload) or CORS blocks the popup.
-
-`FASTSTUDY_SECRET` (environment, not `.env` — the launcher sets it) gates every route but
-`/health`: `requireSecret` from `@faststudy/runtime` (the shared launch-contract package at `lib/runtime/js/`
-in the repo root) rejects a request lacking the `X-FastStudy-Secret` header or
-`?secret=`, and its `peerHeaders` adds the header to every outbound call to a peer —
-never to `services/probe.js`, which fetches an external lecture host. Unset means no enforcement.
-
-`@faststudy/runtime`'s `statePath` returns the per-user writable state root — `FASTSTUDY_STATE_DIR` when set,
-else `.state/` at the repo root. It is where yt-dlp's `--cache-dir` points, and it only joins the
-path; each writer creates its own directory.
+Launch contract — the `FASTSTUDY_SECRET` check (`requireSecret`, every route but `/health`), the
+secret on outbound peer calls (`peerHeaders`) and the state root (`statePath`, where yt-dlp's cache
+and writable copy live) — comes from [`@faststudy/runtime`](../../lib/runtime/CLAUDE.md).
+`peerHeaders` goes on calls to our own services only, never on `services/probe.js`'s fetch of an
+external lecture host.
 
 ## Endpoints
 
-| Method + path                             | Purpose                                                                                                                                           |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET  /health`                            | `{status:'ok', tools}` — liveness plus the boot-time binary probe, what the launcher waits on before opening the window                          |
-| `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                                                        |
-| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged-GET)                                                                                                  |
-| `POST /download`                          | curl header-replay capture; 200 immediately with a `jobId`, runs in background                                                                    |
-| `POST /download-file`                     | plain-URL (no header replay) capture added to the lecture's materials; 200 immediately with a `jobId`                                             |
-| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file hosts); 200 immediately with a `jobId`                                                         |
-| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim)                 |
-| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives that section's bulk queue in the background, or joins its active run (`docs/RUNS.md`) |
-| `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                                                 |
-| `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                                                         |
-| `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition (`docs/JOBS.md`, `docs/RUNS.md`)                                                 |
-| `GET  /jobs`                              | all live download jobs (snapshot includes `ref`) — the single source of truth                                                                     |
-| `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                                                      |
-| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                                                    |
+| Method + path                             | Purpose                                                                                                           |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `GET  /health`                            | `{status:'ok', tools}` — what the launcher waits on                                                               |
+| `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                        |
+| `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET)                                                                  |
+| `POST /download`                          | curl header-replay capture; 200 at once with a `jobId`, runs in the background                                    |
+| `POST /download-file`                     | plain-URL capture added to the lecture's materials; 200 at once with a `jobId`                                    |
+| `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); 200 at once with a `jobId`                             |
+| `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim) |
+| `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives or joins that section's bulk run                      |
+| `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                 |
+| `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                         |
+| `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition                                                  |
+| `GET  /jobs`                              | every live download job — the resync for `job:change`                                                             |
+| `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                      |
+| `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                    |
 
 `kind` is `lecture` (default) or `recitation`.
 
 ## Module layout
 
-`downloaders/` holds one descriptor per source — `curl` (header replay), `ytdlp`, and `fetch` (plain
-URL). Each names its own `upload` (required): `uploadVideo` for the two video sources, `uploadMaterial` for `fetch`.
-`jobs.js` is the state (job registry over the download entries) and `runs.js` the state one level up
-(section-run registry + the queue driver, which calls `downloadItem` directly rather than over HTTP);
-`events.js` is the notification for both (SSE fan-out of the contentless `job:change` / `run:change`
-pings). All `DATABASE_URL` I/O goes through `services/database.js`, which also announces a stored
-video to the backend (`services/backend.js`).
+`downloaders/` holds one descriptor per source — `curl` (header replay), `ytdlp`, `fetch` (plain
+URL) — run by the source-agnostic `runner.js`. `jobs.js` is the job registry, `runs.js` the
+section-run registry + queue driver (it calls `downloadItem` directly, not over HTTP), and
+`events.js` the SSE fan-out for both. All `DATABASE_URL` I/O goes through `services/database.js`.
 
-Deep rationale lives in `docs/`: `DOWNLOAD.md` (header replay, SKIP_HEADERS, yt-dlp
-DASH + JS-runtime, size probe, the writable yt-dlp copy and its self-update), `PROGRESS.md` (silent children, TTY vs pipe, curl-file
-vs yt-dlp-dir measure), `JOBS.md` (job lifecycle, event stream vs resync,
-`done` = uploaded, per-tool timing samples), `RUNS.md` (one run per section, dispositions, the
-indefinite passcode pause, the caller-owned skip rule, the `RunTarget` cross-wire contract),
-`DATABASE.md` (video PUT wipes derived artifacts vs the
-appending `/materials` POST, `/tree` reshape, notify ping).
+| Doc                                | Concern                                                                                  |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| [DOWNLOAD.md](docs/DOWNLOAD.md)    | header replay and `SKIP_HEADERS`, yt-dlp's JS runtime, the writable copy + self-update, size probe |
+| [JOBS.md](docs/JOBS.md)            | job lifecycle, `done` = uploaded, silent auth recovery, event stream vs resync, retention, timing samples |
+| [RUNS.md](docs/RUNS.md)            | one run per section, dispositions, the indefinite passcode pause, the caller-owned skip rule, `RunTarget` |
+| [DATABASE.md](docs/DATABASE.md)    | video PUT wipes derived artifacts vs appending `/materials`, `/tree` reshape, notify, arrival report |
+
+## Terminal progress (`src/progress.js`)
+
+Children run **silent** (curl `--silent`, yt-dlp `--no-progress`) and the server is the sole
+terminal writer: two children's own `\r` bars on one terminal stomp each other and our logs. One
+shared ~1.5s interval measures each temp dir against the probed total — curl's lone `video.mp4` is
+stat'ed (`measure:'file'`); yt-dlp writes separate audio/video files before merging, so the whole
+dir is summed (`measure:'dir'`) and percent is clamped ≤99% until exit, since the merge can overshoot.
+
+- **TTY** (`npm start`) repaints a compact block in place via ANSI.
+- **Pipe** (`npm run dev` under `concurrently`, every line prefixed `Downloader |`) makes ANSI
+  garbage, so it prints a throttled whole line per ≥5% or ~8s.
+
+Every lifecycle log goes through `emitLog`/`emitError`, which wipe the painted block first. Stderr
+is not inherited, so `makeStderrTail` keeps the last ~64 KB and a failure reports its last 15 lines.
+These bytes are terminal-only; the job registry reads the same entries but pushes only transitions.
 
 ## Conventions
 
 - ESM only (`import`, never `require`).
-- Subprocesses via `execFile`/`spawn` with **argv arrays, never shell strings** — a
-  captured header value must not be able to inject.
-- Every course/lecture name arriving at a route goes through `validate.js::storedName`, which
-  rejects traversal and then rewrites the rest into the spelling the database stores (a port of
+- Subprocesses via `execFile`/`spawn` with **argv arrays, never shell strings** — a captured header
+  value must not be able to inject.
+- Every course/lecture name arriving at a route goes through `validate.js::storedName`, which rejects
+  traversal and rewrites the rest into the spelling the database stores (a port of
   `database/fs/paths.py::safe_name` — change one, change the other); `null` is a 400. What it
-  rewrote is reported back as `renames` by `/download-item` and `/download-section`.
-- Saved video is always `video.mp4` (`config.js`); PDFs are POSTed to the database's
-  `/materials`, which allocates the name (`material.pdf`, `material.2.pdf`, …) — the server
-  never names a material, so a lecture can hold several.
-- Add a download source = new `downloaders/*.js` + one registry line; don't edit the runner.
-- HTTP goes through `fetch`. Node's `fetch` has no forbidden-header list, so it replays a
-  captured `Cookie` and drops it on a cross-origin redirect on its own.
+  rewrote comes back as `renames` from `/download-item` and `/download-section`.
+- Saved video is always `video.mp4`; PDFs are POSTed to the database's `/materials`, which allocates
+  the name (`material.pdf`, `material.2.pdf`, …), so a lecture can hold several.
+- Add a download source = a new `downloaders/*.js` + one registry line; never edit the runner.
+- HTTP goes through `fetch`. Node's `fetch` has no forbidden-header list, so it replays a captured
+  `Cookie`, and drops it on a cross-origin redirect on its own.

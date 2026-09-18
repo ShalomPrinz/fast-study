@@ -4,10 +4,10 @@ import dotenv from 'dotenv';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // src/lib/ -> src/ -> auto/ -> downloader/ -> repo root. No override: dotenv must not clobber
-// already-set process.env vars (matches the old `if (process.env[...] === undefined)` guard).
+// vars already set in the process environment.
 dotenv.config({ path: path.resolve(__dirname, '../../../..', '.env'), quiet: true });
 
-// Port for this package's own HTTP service (src/server.js). Env-overridable.
+// Default listen port; FASTSTUDY_PORT in the environment wins (@faststudy/runtime's serve).
 export const AUTODL_PORT = Number(process.env.AUTODL_PORT ?? 3053);
 
 // CORS origins: the Vite dev server and the packaged app's frozen 'app://bundle' origin,

@@ -54,9 +54,8 @@ export class BrowserSession {
     this._authedUntil = Date.now() + ttlMs;
   }
 
-  // Async mutex: chain fn onto the tail so only one page op runs at a time (two concurrent
-  // /list calls on the shared page would otherwise abort each other's nav). Serializes only
-  // the quick navigate+sniff; the heavy download runs afterward in server/, so it overlaps.
+  // Async mutex: one page op at a time, or two calls on the shared page abort each other's
+  // navigation. Only the quick navigate+sniff; downloads run later in server/ and overlap.
   withLock(fn) {
     const run = this._lock.then(fn, fn); // run regardless of the prior op's outcome
     this._lock = run.then(
@@ -105,7 +104,7 @@ export function getSession(profile = 'plain') {
   return sessions.get(key);
 }
 
-/** Close every session and stop the managed Xvfb, if any (on /close, idle-shutdown, or signals). */
+/** Close every session and stop the managed Xvfb, if any (on /close and shutdown signals). */
 export async function closeAllSessions() {
   await Promise.all([...sessions.values()].map((s) => s.close()));
   stopXvfb();
