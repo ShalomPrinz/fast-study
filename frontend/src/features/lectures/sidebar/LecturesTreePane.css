@@ -1,6 +1,8 @@
 /* The pane doesn't scroll — each nav region scrolls on its own, so the archived bar and the
-   footer stay put while the course list scrolls. */
+   footer stay put while the course list scrolls. The block-start inset sits outside the scroller,
+   so a scrolled list still never runs flush against the window's top edge. */
 .tree-pane {
+  padding-block-start: var(--space-4);
   width: var(--tree-pane-width);
   min-width: var(--tree-pane-width);
   background: var(--tree-pane-bg);

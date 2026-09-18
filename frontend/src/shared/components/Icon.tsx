@@ -16,6 +16,8 @@ export type IconName =
   | 'trash'
   | 'overflow'
   | 'file'
+  | 'document'
+  | 'cloud'
   | 'chevron-start'
   | 'chevron-end'
   | 'chevron-down'
@@ -231,7 +233,7 @@ const TrashIcon = () => (
   </svg>
 )
 
-// Vertical ellipsis: the menu holding the actions a row no longer shows inline.
+// Vertical ellipsis: the menu the header's secondary actions collapse into on a narrow window.
 const OverflowIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <circle cx="8" cy="3" r="1.2" fill="currentColor" />
@@ -250,6 +252,32 @@ const FileIcon = () => (
       strokeLinejoin="round"
     />
     <path d="M7 1.5v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+  </svg>
+)
+
+// A dog-eared page with text lines — the rendered summary document, against `file`'s bare page.
+const DocumentIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M3 1.5h4l3 3v7a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinejoin="round"
+    />
+    <path d="M7 1.5v3h3" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round" />
+    <path d="M4 7.5h4.5M4 9.8h3" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+  </svg>
+)
+
+// A cloud — the summary's copy in Google Drive.
+const CloudIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M4 11h6.3a2.7 2.7 0 0 0 .4-5.37A3.8 3.8 0 0 0 3.4 5.4 2.8 2.8 0 0 0 4 11z"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinejoin="round"
+    />
   </svg>
 )
 
@@ -331,6 +359,8 @@ const icons: Record<IconName, () => JSX.Element> = {
   trash: TrashIcon,
   overflow: OverflowIcon,
   file: FileIcon,
+  document: DocumentIcon,
+  cloud: CloudIcon,
   'chevron-start': ChevronStartIcon,
   'chevron-end': ChevronEndIcon,
   'chevron-down': ChevronDownIcon,

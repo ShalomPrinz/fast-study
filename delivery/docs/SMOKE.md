@@ -44,6 +44,9 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
 - **A Hebrew temp path is proven used.** The audio and PDF steps run with `TEMP` on a Hebrew folder,
   watched to prove each workspace landed there; the backend's line naming it must reach `launch.log`
   as UTF-8, not lost or `\u05..`-escaped.
+- **The window is 1008x655 CSS px**, not the 1400x900 `electron/main.js` asks for — Windows clamps it
+  to the runner's 1024x768 desktop (`"viewport"` in any `smoke-traces` launch trace). So a step touching
+  a layout-dependent control works in both branches — test 8 clicks `lecture-actions-menu` only if present.
 - **Launched with `--lang=en-US`**, so a failure screenshot is readable.
 
 ## Unproven until a Windows run

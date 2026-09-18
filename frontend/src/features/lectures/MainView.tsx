@@ -8,6 +8,7 @@ import { deleteFile, deleteMaterial } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
 import { runStep, runPipeline } from '@/services/backend'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
+import { useCompactHeaderActions } from '@/features/lectures/hooks/useCompactHeaderActions'
 import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -32,6 +33,7 @@ import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode from '@/shared/components/StatusNode'
 import Icon from '@/shared/components/Icon'
+import type { IconName } from '@/shared/components/Icon'
 import LectureActionsMenu from './components/LectureActionsMenu'
 import type { LectureAction } from './components/LectureActionsMenu'
 import '@/styles/spinner.css'
@@ -48,6 +50,12 @@ interface RotateTarget {
   toDelete: FileName[]
 }
 
+// A header action in both of its shapes: an icon-and-label button on the wide layout's own row, and
+// a label-only item in the ⋮ menu, which ignores the icon.
+interface HeaderAction extends LectureAction {
+  icon: IconName
+}
+
 // The chip on the Summary row: how the lecture's materials relate to the summary it will produce.
 function MaterialIndicator({
   materials,
@@ -58,9 +66,10 @@ function MaterialIndicator({
   summaryExists: boolean
   summaryMtime: number | null
 }) {
-  const { text, cls } = materialIndicator(materials, summaryExists, summaryMtime)
+  const indicator = materialIndicator(materials, summaryExists, summaryMtime)
+  if (!indicator) return null
 
-  return <span className={`chip material-indicator ${cls}`}>{text}</span>
+  return <span className={`chip material-indicator ${indicator.cls}`}>{indicator.text}</span>
 }
 
 function RateLimitPanel({
@@ -104,6 +113,7 @@ export default function MainView() {
   const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
   const { courses, loaded, refreshCourses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
+  const compactActions = useCompactHeaderActions()
   const navigate = useNavigate()
   const [rotateTarget, setRotateTarget] = useState<RotateTarget | null>(null)
   const [materialToDelete, setMaterialToDelete] = useState<string | null>(null)
@@ -140,7 +150,7 @@ export default function MainView() {
   const summaryMtime = files['summary.md'].mtime
   const stageCount = stages.length
   const doneCount = stages.filter(({ file }) => files[file].exists).length
-  const videoSize = files['video.mp4'].exists ? files['video.mp4'].size : null
+  const videoDuration = files['video.mp4'].duration
 
   // A delete can be refused because the file is open in the user's pdf viewer, so it needs saying.
   function reportDeleteFailure(e: unknown) {
@@ -229,7 +239,7 @@ export default function MainView() {
 
   const metaItems: ReactNode[] = [
     stateItem,
-    videoSize !== null ? <span>{t`${formatBytes(videoSize)} video`}</span> : null,
+    videoDuration !== undefined ? <span>{t`${formatDuration(videoDuration)} video`}</span> : null,
     materials.length > 0 ? (
       <span>
         <Plural value={materials.length} one="# material" other="# materials" />
@@ -237,21 +247,26 @@ export default function MainView() {
     ) : null,
   ].filter((item) => item !== null)
 
-  const overflowActions: LectureAction[] = [
+  // One list, two shapes: the wide layout spreads it across a row of its own under the title, the
+  // narrow one folds it into the ⋮ menu. Each entry appears only once its file exists.
+  const headerActions: HeaderAction[] = [
     summaryExists && {
+      icon: 'edit' as const,
       label: t`Edit summary`,
       onClick: () => navigate({ pathname: 'edit', search: kindQuery(kind) }),
     },
     pdfExists && {
+      icon: 'document' as const,
       label: t`Open PDF`,
       onClick: () => openLectureFile(course, lecture, 'summary.pdf', kind),
       testId: 'open-pdf',
     },
     pdfUploaded && {
+      icon: 'cloud' as const,
       label: t`Open in Drive`,
       onClick: () => openExternalUrl(files!['drive_url.txt'].url),
     },
-  ].filter(Boolean) as LectureAction[]
+  ].filter(Boolean) as HeaderAction[]
 
   return (
     <main
@@ -272,13 +287,28 @@ export default function MainView() {
         ))}
         actions={
           <>
-            <LectureActionsMenu actions={overflowActions} />
+            {compactActions && <LectureActionsMenu actions={headerActions} />}
             {hasActions && (
               <button className="btn btn--primary" onClick={handleRunRemaining} disabled={inflight}>
                 <Trans>Run Remaining</Trans>
               </button>
             )}
           </>
+        }
+        secondaryActions={
+          !compactActions && headerActions.length > 0
+            ? headerActions.map(({ label, icon, onClick, testId }) => (
+                <button
+                  key={label}
+                  className="btn btn--ghost header-action"
+                  onClick={onClick}
+                  data-testid={testId}
+                >
+                  <Icon icon={icon} />
+                  {label}
+                </button>
+              ))
+            : null
         }
       />
 

@@ -117,8 +117,8 @@ filenames, counts and durations.
 
 `.btn` + `--primary`/`--ghost`/`--danger` is the whole button vocabulary, `.chip` + five colour variants
 the whole state-label vocabulary, and `StatusNode` the six run states (`done`, `running`, `pending`,
-`paused`, `failed`, `quota`) at one size. `PageHeader` opens every full-page view with one primary action, and
-`.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
+`paused`, `failed`, `quota`) at one size. `PageHeader` opens every full-page view with one primary action and an
+optional second action row, and `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
 `services/toaster.css`.
 
 **No cross-file rule may depend on source order.** Vite's import order differs between dev (per-module
@@ -136,21 +136,25 @@ reads visible text. Renaming, removing or re-scoping one is a smoke-suite change
 else. A value the suite asserts on rides a `data-*` attribute spelled as the code's enum, never a
 translated string.
 
-| id                            | extra attributes                                                                                                         | component                                                   | marks                                           |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ----------------------------------------------- |
-| `init-wall`                   | —                                                                                                                        | `features/settings/InitWall.tsx`                            | the first-run wall's root                       |
-| `init-wall-submit`            | —                                                                                                                        | `features/settings/InitWall.tsx`                            | its save button (`disabled` until complete)     |
-| `api-key-input`               | `data-provider`: `gemini` \| `groq`                                                                                      | `features/settings/components/ApiKeyField`                  | a key input, wall and `/settings`               |
-| `api-key-status`              | `data-provider`; `data-status`: `prefix` \| `checking` \| `valid` \| `rejected` \| `unverified`, absent when blank       | `features/settings/components/ApiKeyField`                  | that key's probe line                           |
-| `data-root-input`             | —                                                                                                                        | `features/settings/components/DataRootField`                | the data folder input, wall and `/settings`     |
-| `data-root-confirm`           | —                                                                                                                        | `features/settings/components/DataRootField`                | the wall-only confirm checkbox                  |
-| `browser-prereq`              | `data-status`: `checking` \| `available` \| `missing` \| `unknown`; `data-channel`: `chrome` \| `msedge` when available  | `features/settings/components/BrowserPrereqField`           | the browser prerequisite, wall and `/settings`  |
-| `browser-prereq-install-link` | —                                                                                                                        | `features/settings/components/BrowserPrereqField`           | the install link, rendered only when missing    |
-| `lecture`                     | `data-course`, `data-lecture`; `data-kind`: `lecture` \| `recitation`                                                    | `features/lectures/sidebar/tree/LectureItem`                | a tree pane lecture row                         |
-| `lecture-view`                | `data-course`, `data-lecture`, `data-kind`                                                                               | `features/lectures/MainView.tsx`                            | the lecture page's root                         |
-| `step-status`                 | `data-step`: `audio` \| `transcribe` \| `summarize` \| `pdf` \| `drive`; `data-status`: `done` \| `running` \| `pending` \| `failed` \| `quota` | `features/lectures/MainView.tsx`                            | one pipeline row that has a step                |
-| `lecture-error`               | —                                                                                                                        | `features/lectures/MainView.tsx`                            | the lecture's last run error                    |
-| `lecture-error-message`       | —                                                                                                                        | `features/lectures/MainView.tsx`                            | that error's service prose, untranslated        |
-| `lecture-actions-menu`        | —                                                                                                                        | `features/lectures/components/LectureActionsMenu`           | the overflow trigger that reveals `open-pdf`    |
-| `open-pdf`                    | —                                                                                                                        | `features/lectures/MainView.tsx` (via `LectureActionsMenu`) | "Open PDF", through `services/open.ts`'s bridge |
-| `drive-consent-modal`         | —                                                                                                                        | `app/DriveConsentPrompt.tsx`                                | the Drive consent modal's body                  |
+`lecture-actions-menu` and `open-pdf` follow the lecture header's two shapes: from 960px the actions sit
+inline and the menu is absent; below, `open-pdf` appears only once the ⋮ menu is open
+(`features/lectures/hooks/useCompactHeaderActions.ts`).
+
+| id                            | extra attributes                                                                                                         | component                                         | marks                                           |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | ----------------------------------------------- |
+| `init-wall`                   | —                                                                                                                        | `features/settings/InitWall.tsx`                  | the first-run wall's root                       |
+| `init-wall-submit`            | —                                                                                                                        | `features/settings/InitWall.tsx`                  | its save button (`disabled` until complete)     |
+| `api-key-input`               | `data-provider`: `gemini` \| `groq`                                                                                      | `features/settings/components/ApiKeyField`        | a key input, wall and `/settings`               |
+| `api-key-status`              | `data-provider`; `data-status`: `prefix` \| `checking` \| `valid` \| `rejected` \| `unverified`, absent when blank       | `features/settings/components/ApiKeyField`        | that key's probe line                           |
+| `data-root-input`             | —                                                                                                                        | `features/settings/components/DataRootField`      | the data folder input, wall and `/settings`     |
+| `data-root-confirm`           | —                                                                                                                        | `features/settings/components/DataRootField`      | the wall-only confirm checkbox                  |
+| `browser-prereq`              | `data-status`: `checking` \| `available` \| `missing` \| `unknown`; `data-channel`: `chrome` \| `msedge` when available  | `features/settings/components/BrowserPrereqField` | the browser prerequisite, wall and `/settings`  |
+| `browser-prereq-install-link` | —                                                                                                                        | `features/settings/components/BrowserPrereqField` | the install link, rendered only when missing    |
+| `lecture`                     | `data-course`, `data-lecture`; `data-kind`: `lecture` \| `recitation`                                                    | `features/lectures/sidebar/tree/LectureItem`      | a tree pane lecture row                         |
+| `lecture-view`                | `data-course`, `data-lecture`, `data-kind`                                                                               | `features/lectures/MainView.tsx`                  | the lecture page's root                         |
+| `step-status`                 | `data-step`: `audio` \| `transcribe` \| `summarize` \| `pdf` \| `drive`; `data-status`: `done` \| `running` \| `pending` \| `failed` \| `quota` | `features/lectures/MainView.tsx`                  | one pipeline row that has a step                |
+| `lecture-error`               | —                                                                                                                        | `features/lectures/MainView.tsx`                  | the lecture's last run error                    |
+| `lecture-error-message`       | —                                                                                                                        | `features/lectures/MainView.tsx`                  | that error's service prose, untranslated        |
+| `lecture-actions-menu`        | —                                                                                                                        | `features/lectures/components/LectureActionsMenu` | the ⋮ trigger, only below 960px                 |
+| `open-pdf`                    | —                                                                                                                        | `features/lectures/MainView.tsx`                  | "Open PDF", through `services/open.ts`'s bridge |
+| `drive-consent-modal`         | —                                                                                                                        | `app/DriveConsentPrompt.tsx`                      | the Drive consent modal's body                  |

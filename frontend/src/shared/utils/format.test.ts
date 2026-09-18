@@ -21,7 +21,14 @@ describe('formatDuration', () => {
 
   it('splits minutes and seconds above a minute', () => {
     expect(formatDuration(330)).toBe('5:30')
-    expect(formatDuration(3600)).toBe('60:00')
+    expect(formatDuration(3599)).toBe('59:59')
+  })
+
+  it('adds padded hours from an hour up', () => {
+    expect(formatDuration(3600)).toBe('1:00:00')
+    expect(formatDuration(3930)).toBe('1:05:30')
+    expect(formatDuration(3599.6)).toBe('1:00:00')
+    expect(formatDuration(36005)).toBe('10:00:05')
   })
 })
 

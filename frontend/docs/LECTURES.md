@@ -19,9 +19,13 @@ relabels it "Continue transcription".
 
 ## The lecture view
 
-`MainView` is a `PageHeader` (course eyebrow, lecture title, running step or `Complete`, video size,
-material count, the single primary `Run Remaining`, and a `LectureActionsMenu` overflow for edit summary,
-open PDF and open in Drive) over one `.pipeline-card` holding all stages as rows parted by inset rules.
+`MainView` is a `PageHeader` (course eyebrow, lecture title, running step or `Complete`, video duration
+when the MP4 header yields one, material count, the single primary `Run Remaining`) over one
+`.pipeline-card` holding all stages as rows parted by inset rules. The per-file actions — edit summary,
+open PDF, open in Drive, each once its file exists — sit on a second header row, keeping them off a title
+column with no width floor. Below 960px `useCompactHeaderActions` (one `matchMedia` on window width; the
+content pane is always the window less 536) folds them into `LectureActionsMenu`, a ⋮ left of
+`Run Remaining` so the primary button never moves.
 Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
 A missing file whose step is the lecture's `error.step` shows `failed`, or `quota` for a Gemini quota
@@ -43,8 +47,9 @@ They are summarize inputs, not stages, so they render as chips under their own h
 
 `materialIndicator` drives the Summary row's chip: before a summary, `no material found` / `will be
 used`; after, each material's mtime against the summary's picks all used (green), none used (grey), or
-`N of M` (amber). **mtime is a proxy for "was fed to the model", not a record** — re-downloading an
-unchanged PDF reads as unused. Exactness would need the backend to persist each run's inputs.
+`N of M` (amber), and a summary made with no materials gets no chip. **mtime is a proxy for "was fed to
+the model", not a record** — re-downloading an unchanged PDF reads as unused. Exactness would need the
+backend to persist each run's inputs.
 
 ## Runner status and in-flight state
 

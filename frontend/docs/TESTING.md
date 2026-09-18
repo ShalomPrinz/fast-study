@@ -30,6 +30,9 @@ or "centred", and screenshot every row/card shape at more than one width.
 - SSE state is drivable too: fulfil `/events` with one `event: notify\ndata: {}\n\n` body as
   `text/event-stream`. The stream closes, `EventSource` reconnects, and each reconnect is another notify —
   so flipping a stub and waiting proves the UI follows the push.
+- The packaged app renders at **1008x655** on the CI runner (Windows clamps the 1400x900 window to its
+  1024x768 desktop — [delivery/docs/SMOKE.md](../../delivery/docs/SMOKE.md)), so a width breakpoint at or
+  above ~1008px flips CI and every 1366x768 laptop narrow; hence the lecture header's ⋮ collapse at 960px.
 - Two dev-only artefacts are not bugs: StrictMode double-invokes mount effects (two requests per mount
   probe), and `.init-wall` scrolls itself, so screenshot the element rather than `full_page`.
 

@@ -1,3 +1,10 @@
+/* The header's secondary actions on their own row, a step below `.btn`'s type and padding.
+   Outspecifies `.btn--ghost` rather than relying on sheet order. */
+.btn.header-action {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--fs-fine);
+}
+
 /* Outspecifies `.section-head`'s margin from the shared sheet rather than relying on order. */
 .section-head.section-head--materials {
   margin-top: var(--space-7);
