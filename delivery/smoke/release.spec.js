@@ -246,6 +246,9 @@ test('1. fresh install', async () => {
   await test.step("resources/ matches electron/docs/BOOT.md's packaged tree", async () => {
     const shipped = [
       'services/services.exe',
+      // The one Google API discovery document services.spec keeps, under PyInstaller's one-dir
+      // contents directory. Missing, Drive upload fails on a user's machine and nowhere earlier.
+      'services/_internal/googleapiclient/discovery_cache/documents/drive.v3.json',
       'auto/app.js',
       'server/src/index.js',
       'frontend/index.html',

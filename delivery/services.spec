@@ -28,7 +28,8 @@ _credentials = _BACKEND / "credentials.json"
 if _credentials.exists():
     datas.append((str(_credentials), "."))
 
-# Data files no import reaches: certifi's CA bundle, and googleapiclient's API discovery JSON.
+# Data files no import reaches: certifi's CA bundle, and googleapiclient's API discovery JSON, cut
+# to the one document the app reads by the prune below.
 datas += collect_data_files("certifi")
 datas += collect_data_files("googleapiclient")
 
@@ -61,6 +62,30 @@ a = Analysis(  # noqa: F821
     datas=datas,
     hiddenimports=hiddenimports,
 )
+
+# The app builds one client — build("drive", "v3") in backend/pipeline/upload_to_drive.py, which
+# reads its document off disk, not the network — so the other 581 are 97MB of the bundle for nothing.
+_DOCUMENTS = "googleapiclient/discovery_cache/documents/"
+_DRIVE_DOC = _DOCUMENTS + "drive.v3.json"
+
+
+def _dest(entry):
+    # A TOC entry's bundle-relative destination, slash-separated whatever the build host is.
+    return entry[0].replace("\\", "/")
+
+
+# Pruned on the finished TOC, not on `datas`: PyInstaller's own googleapiclient.model hook collects
+# every document a second time, out of reach of the collect_data_files above.
+a.datas = [
+    entry
+    for entry in a.datas
+    if not _dest(entry).startswith(_DOCUMENTS) or _dest(entry) == _DRIVE_DOC
+]
+
+# A second build() call, or an upstream rename, would otherwise ship a bundle that imports fine and
+# dies on a user's first upload — silently, and only on Windows.
+if not any(_dest(entry) == _DRIVE_DOC for entry in a.datas):
+    raise SystemExit(f"services.spec: nothing collects {_DRIVE_DOC}")
 
 pyz = PYZ(a.pure)  # noqa: F821
 

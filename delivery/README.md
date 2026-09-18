@@ -26,6 +26,10 @@ that cannot do Drive consent.
 Roughly 20 minutes to build, most of it the LaTeX prime and ~450MB of binary downloads, then the
 smoke job. The artifact is one unsigned per-user NSIS `.exe`.
 
+Of googleapiclient's 582 API discovery documents the frozen bundle carries one, `drive.v3.json`, the
+only client the app builds — the rest are 97MB. The spec fails the build if that one is not
+collected, since a missing document surfaces only as a failed Drive upload on a user's machine.
+
 ### Build, test, publish
 
 Two workflows, both dispatched by hand, and neither takes an input. The bytes users update to are

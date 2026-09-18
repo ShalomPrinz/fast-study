@@ -1,7 +1,9 @@
+import socket
 from unittest.mock import patch
 
 import pytest
 import upload_to_drive as drive_mod
+from google.auth.credentials import AnonymousCredentials
 from upload_to_drive import upload_to_drive
 
 
@@ -122,3 +124,22 @@ def test_subfolder_file_lookup_is_scoped_to_subfolder(tmp_path, store):
     pdfs = [f for f in store["files"] if f["name"] == "t.pdf"]
     assert len(pdfs) == 2  # one in course root, one in Recitations
     assert len(store["update_calls"]) == 1  # only the second Recitations upload updated
+
+
+def test_drive_client_builds_offline():
+    # build() must resolve the Drive API from the discovery document shipped inside
+    # google-api-python-client, never over the network: the packaged bundle carries
+    # only drive.v3.json, so a fetch here would fail an upload on an installed machine.
+    # Passing discoveryServiceUrl or static_discovery=False turns it back into a fetch.
+    def blocked(*args, **kwargs):
+        raise AssertionError("building the Drive client must not touch the network")
+
+    with patch.object(socket, "socket", blocked):
+        with patch.object(
+            drive_mod, "get_credentials", return_value=AnonymousCredentials()
+        ):
+            service = drive_mod._get_service()
+
+        # Resolving a method proves the API surface is really there, rather than a
+        # shell that would only fail once a request is made.
+        assert callable(service.files().create)
