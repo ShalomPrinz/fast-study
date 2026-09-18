@@ -1,12 +1,12 @@
 name: Build and smoke-test
 
-# Every push, plus a dispatch to rebuild a commit whose artifact expired. Builds the installer once
-# and runs the release smoke suite against exactly those bytes on a fresh runner; nothing here
-# publishes — publish.yml takes the `installer` artifact of this workflow's green run for its commit.
+# Every push to main, plus a dispatch to rebuild a commit whose artifact expired or whose version
+# was taken. Builds the installer once and runs the release smoke suite against exactly those bytes
+# on a fresh runner; nothing here publishes — publish.yml takes the `installer` artifact of this
+# workflow's green run for its commit.
 on:
   push:
-    # Branches only: a tag names a commit a branch push already built.
-    branches: ["**"]
+    branches: [main]
   workflow_dispatch:
 
 # Only the newest push on a ref builds; a superseded run is cancelled rather than queued.
@@ -43,10 +43,23 @@ jobs:
 
       # The tag, the installer's file name and what app.getVersion() reports; the update check's
       # second installer needs any version below it, so this refuses a version with nothing below.
+      # Major and minor come from electron/package.json, whose patch is ignored: the patch is one
+      # past the highest non-draft Release tagged v<major>.<minor>.<n>, or 0 when there is none.
       - name: Read the version
         id: version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          version=$(node -p "require('./electron/package.json').version")
+          base=$(node -p "require('./electron/package.json').version")
+          # Drafts are invisible to this token and reserve no tag; a prerelease's tag is taken, so it counts.
+          tags=$(gh api "repos/$GH_REPO/releases" --paginate --jq '.[] | select(.draft | not) | .tag_name')
+          version=$(node -e '
+            const [, major, minor] = /^(\d+)\.(\d+)\./.exec(process.argv[1]) ?? process.exit(1);
+            const tag = new RegExp(`^v${major}\\.${minor}\\.(0|[1-9]\\d*)$`);
+            const patches = process.argv[2].split("\n").map((t) => tag.exec(t.trim())?.[1]).filter(Boolean).map(Number);
+            console.log(`${major}.${minor}.${patches.length ? Math.max(...patches) + 1 : 0}`);
+          ' "$base" "$tags") || { echo "::error::electron/package.json's version $base has no major.minor"; exit 1; }
           previous=$(node -e '
             const [major, minor, patch] = process.argv[1].split(/[.-]/).map(Number);
             if (patch > 0) console.log(`${major}.${minor}.${patch - 1}`);
@@ -134,7 +147,7 @@ jobs:
       # latest.yml; --publish never is in the script, so this step can upload nothing.
       - name: Build the installer
         working-directory: electron
-        run: npm ci && npm run dist
+        run: npm ci && npm run dist -- "-c.extraMetadata.version=${{ steps.version.outputs.version }}"
 
       # The smoke job rewrites app-update.yml to a loopback feed, so this is the only check that the
       # shipped copy points installed apps at this repo's Releases.

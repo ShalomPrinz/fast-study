@@ -35,8 +35,8 @@ collected, since a missing document surfaces only as a failed Drive upload on a 
 Two workflows, neither taking an input. The bytes users update to are exactly the bytes the smoke
 job tested.
 
-- **`build.yml`** runs on every branch push — only the newest per ref, a superseded run is
-  cancelled — and on dispatch. It builds with `--publish never` — the installer, its `.blockmap`
+- **`build.yml`** runs on every push to `main` — only the newest, a superseded run is cancelled —
+  and on dispatch. It builds with `--publish never` — the installer, its `.blockmap`
   and `latest.yml`, uploaded as the `installer` artifact, kept 90 days, plus a second installer of
   the same staged tree at a lower version that exists only for the update check and never leaves
   Actions. The build fails if the shipped `app-update.yml` does not name this repo's GitHub
@@ -45,10 +45,10 @@ job tested.
   `smoke-logs`, the per-launch `launch.log`s, the state root's own and the failing test's DOM
   snapshot, ~60KB, and `smoke-traces`, the Playwright traces, ~11MB, which almost nothing needs.
   The run is green only when both jobs pass. It writes nothing to Releases.
-- **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It reads the
-  version there, refuses if a Release or tag `v<version>` already exists, takes the `installer`
-  artifact of `build.yml`'s newest green run for that commit, checks all three files are in it and
-  creates Release `v<version>` from them, published and targeted at that commit.
+- **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It takes the
+  `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
+  `latest.yml`, refuses if a Release or tag `v<version>` already exists, checks all three files are
+  in it and creates Release `v<version>` from them, published and targeted at that commit.
 
 An `installer` artifact expires after 90 days; `publish.yml` then fails naming the commit, and
 dispatching `build.yml` on it builds and smoke-tests a fresh one.
@@ -61,8 +61,11 @@ Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what 
 [`SMOKE_TEST.md`](SMOKE_TEST.md) on a real machine against the commit's `installer` artifact before
 publishing.
 
-Bump `version` in `electron/package.json` in the commit to release. It is the tag, the installer's
-file name and what `app.getVersion()` reports. The launcher's side of this — the silent
+`build.yml` computes the version: major and minor from `electron/package.json`, whose patch is
+ignored, and the patch one past the highest non-draft Release `v<major>.<minor>.<n>`, else 0 — so
+bumping the minor there starts a new series. It is the tag, the installer's file name and what
+`app.getVersion()` reports. Two builds before a publish compute the same version, so publishing
+the second refuses on the existing Release; re-dispatch `build.yml` on that commit for a fresh one. The launcher's side of this — the silent
 check, the download and the install on quit — is
 [`electron/docs/UPDATES.md`](../electron/docs/UPDATES.md).
 

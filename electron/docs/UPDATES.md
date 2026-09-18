@@ -37,11 +37,13 @@ next render simply rebuilds (~2s), and yt-dlp is meant to run from a writable pe
 
 ## Versions and the channel
 
-The version is `electron/package.json`'s `version`, bumped in a commit before a release is built.
+Major and minor come from `electron/package.json`'s `version`, whose patch is ignored; `build.yml`
+sets the patch to one past the newest Release `v<major>.<minor>.<n>` (0 if none) and injects it with
+`-c.extraMetadata.version` — see [delivery/README.md](../../delivery/README.md#build-test-publish).
 `app.getVersion()` reports it and `launch.log`'s first line already carries it, so the log says which
 build produced it. The channel is `latest`.
 
-Nothing here publishes. `.github/workflows/build.yml` runs on every push (and on dispatch), builds
+Nothing here publishes. `.github/workflows/build.yml` runs on every push to `main` (and on dispatch), builds
 with `--publish never`, smoke-tests the installer and keeps it as the `installer` Actions artifact
 (90-day retention). `publish.yml`, dispatched by hand, creates Release `v<version>` already published
 from that commit's green `build.yml` run's `installer` artifact. It never builds, so no installed copy

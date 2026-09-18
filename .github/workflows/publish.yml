@@ -1,8 +1,9 @@
 name: Publish
 
 # Manual only, no input, and it builds nothing: it releases the `installer` artifact of build.yml's
-# green run for the dispatched commit — the bytes the smoke job tested — as Release v<version>,
-# which is the moment every installed copy's updater can see it.
+# green run for the dispatched commit — the bytes the smoke job tested — as Release v<version>, the
+# version build.yml computed and wrote into its latest.yml. That is the moment every installed
+# copy's updater can see it.
 on:
   workflow_dispatch:
 
@@ -24,21 +25,6 @@ jobs:
 
       - name: Release the tested installer
         run: |
-          version=$(node -p "require('./electron/package.json').version")
-          tag="v$version"
-          if view=$(gh release view "$tag" --json isDraft 2> view.err); then
-            echo "::error::a Release $tag already exists (draft: $(jq -r .isDraft <<< "$view")); bump electron/package.json's version"
-            exit 1
-          elif ! grep -q "release not found" view.err; then
-            cat view.err
-            exit 1
-          fi
-          # Creating the Release creates the tag at the target; one that already exists would be reused as-is.
-          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
-            echo "::error::tag $tag already exists"
-            exit 1
-          fi
-
           # A run's conclusion is success only when every job passed, smoke included.
           run=$(gh run list --workflow build.yml --commit "$GITHUB_SHA" --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
           if [ -z "$run" ]; then
@@ -50,6 +36,27 @@ jobs:
             exit 1
           fi
           gh run download "$run" -n installer -D installer
+
+          # build.yml computes the version, and latest.yml carries it — the same line installed copies read.
+          version=$(sed -n 's/^version:[[:space:]]*\([^[:space:]]*\)[[:space:]]*$/\1/p' installer/latest.yml 2> /dev/null)
+          if [ -z "$version" ]; then
+            echo "::error::build.yml run $run's installer artifact has no latest.yml version line"
+            ls -l installer
+            exit 1
+          fi
+          tag="v$version"
+          if view=$(gh release view "$tag" --json isDraft 2> view.err); then
+            echo "::error::a Release $tag already exists (draft: $(jq -r .isDraft <<< "$view")); dispatch build.yml on this commit to build a fresh version, then publish again"
+            exit 1
+          elif ! grep -q "release not found" view.err; then
+            cat view.err
+            exit 1
+          fi
+          # Creating the Release creates the tag at the target; one that already exists would be reused as-is.
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" > /dev/null; then
+            echo "::error::tag $tag already exists"
+            exit 1
+          fi
 
           files=("installer/FastStudy-Setup-$version.exe" "installer/FastStudy-Setup-$version.exe.blockmap" installer/latest.yml)
           for file in "${files[@]}"; do
