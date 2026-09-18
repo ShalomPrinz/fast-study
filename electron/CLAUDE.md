@@ -44,14 +44,26 @@ Two checks, because the package is two kinds of code.
 processes and wait on them, so nothing short of that proves it. The WSL dev box runs WSLg
 (`DISPLAY=:0`, `/mnt/wslg`), so a real window opens here.
 
+Launch it with `npm --prefix electron start` and read `<state root>/logs/launch.log`. A healthy dev
+run ends with all four `ready on http://127.0.0.1:<port>`; `{"secureStorage":false}` in the
+startup-checks line is the expected WSL result and not a failure, since `safeStorage` has no keyring
+to bind to there.
+
+**Teardown is verified by signalling the electron main process itself** — never by wrapping the
+launch in `timeout`, which signals `npm`, leaving electron to die _by_ SIGTERM with its
+`process.on('SIGTERM')` handler never running, so `killChildren()` never fires and all four children
+are orphaned.
+
 ```bash
-timeout 90 npm --prefix electron start   # SIGTERM at 90s exercises the teardown path
+electron/node_modules/electron/dist/electron . &        # the real binary — .bin/electron is a node shim whose pid is not main's
+kill -TERM "$(pgrep -f 'electron/dist/electron \.$')"   # once the log shows all four ready
 pgrep -af 'services|database_main|backend_main|app.js|src/index.js'   # must find nothing after
 ```
 
-Then read `<state root>/logs/launch.log`. A healthy dev run ends with all four `ready on
-http://127.0.0.1:<port>`; `{"secureStorage":false}` in the startup-checks line is the expected WSL
-result and not a failure, since `safeStorage` has no keyring to bind to there.
+The log then ends with `[server] exited (SIGTERM)`. That `pgrep` pattern matches the same processes
+under any launch, so a concurrent `npm run dev` — including one in a sibling worktree — shows up as
+hits that are not orphans; tell them apart by `/proc/<pid>/cwd` rather than reading the check as a
+failure.
 
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
 covering `resolveWithin`'s path containment, the store's tables and refusal rules, and `report.js`'s
