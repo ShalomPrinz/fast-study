@@ -113,7 +113,7 @@ async function expectNetworkFailure(page, course, lecture, step) {
   );
   // The backend's untranslated prose — the one visible text the suite reads.
   await expect(page.getByTestId('lecture-error-message')).toHaveText(error);
-  await expect(byTestId(page, 'step-status', { step })).toHaveAttribute('data-status', 'pending');
+  await expect(byTestId(page, 'step-status', { step })).toHaveAttribute('data-status', 'failed');
   expect((await services.api.health()).status, 'the backend stopped answering').toBe('ok');
 }
 
