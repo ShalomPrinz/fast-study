@@ -42,7 +42,10 @@ const TEMP_LECTURE = 'Hebrew Temp Lecture';
 const UPDATE_COURSE = 'Update Course';
 // A line of fixtures/summary.md: Hebrew only, so a missing Hebrew font cannot drop it unnoticed.
 const PDF_PHRASE = 'רדיוס ההתכנסות נתון על ידי נוסחת קושי הדמר';
-const TOOLS = ['ffmpeg', 'ffprobe', 'pandoc', 'tectonic', 'yt-dlp'];
+// Every binary resources/bin/ ships, which is every tool the services probe but curl — Windows
+// ships curl.exe, so lib/tools resolves it off PATH instead.
+const TOOLS = ['ffmpeg', 'pandoc', 'tectonic', 'yt-dlp'];
+const PATH_TOOLS = ['curl'];
 const INSTALL_TIMEOUT_MS = 5 * 60_000;
 const MARKER = 'faststudy-smoke-marker.txt';
 
@@ -246,7 +249,6 @@ test('1. fresh install', async () => {
       'auto/app.js',
       'server/src/index.js',
       'frontend/index.html',
-      ...TOOLS.map((tool) => `bin/${tool}.exe`),
       'latex/bundles',
       // Not in the tree, but what the update check rewrites: electron-builder's publish config.
       'app-update.yml',
@@ -254,6 +256,13 @@ test('1. fresh install', async () => {
     for (const entry of shipped) {
       expect(fs.existsSync(path.join(paths.resourcesDir(), entry)), `resources/${entry}`).toBe(true);
     }
+    // bin/ as a set, not as existence checks: a binary nothing spawns any more still installs
+    // cleanly, and its only symptom is the installer's size.
+    expect(
+      fs.readdirSync(paths.binDir()).sort(),
+      'resources/bin/ does not hold exactly the shipped tools',
+    ).toEqual(TOOLS.map((tool) => `${tool}.exe`).sort());
+
     const bundles = fs.readdirSync(path.join(paths.resourcesDir(), 'latex', 'bundles'));
     expect(bundles.length, 'resources/latex/bundles is empty').toBeGreaterThan(0);
     expect(fs.existsSync(paths.formatsDir()), 'latex/formats/ shipped; it is per-machine').toBe(false);
@@ -299,6 +308,14 @@ test('2. boot', async () => {
     const unusable = Object.entries(answer.tools ?? {}).filter(([, state]) => state !== 'ok');
     expect(unusable, `${name} reports tools it cannot run`).toEqual([]);
   }
+
+  // What the services probe is what bin/ ships: a tool dropped from one side and left on the other
+  // is either dead weight in the installer or a feature that only fails on a user's machine.
+  const probedTools = Object.values(health).flatMap((answer) => Object.keys(answer.tools ?? {}));
+  expect(
+    [...new Set(probedTools)].filter((tool) => !PATH_TOOLS.includes(tool)).sort(),
+    'the services probe a different set of tools than resources/bin/ ships',
+  ).toEqual([...TOOLS].sort());
 
   await test.step('every service refuses a request without the launch secret', async () => {
     // A path no service routes: the secret check runs before routing, so 401 rather than 404.

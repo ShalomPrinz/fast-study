@@ -13,6 +13,8 @@ from services import providers
 from timing import timed_pipeline
 from tools import tool_path
 
+from pipeline.mp3 import read_duration
+
 log = logging.getLogger("transcribe")
 
 CHUNK_MINUTES = 10
@@ -27,26 +29,14 @@ class TranscribeRateLimitError(Exception):
 
 
 def get_duration(audio_path: str) -> float:
-    """Audio duration in seconds, via ffprobe."""
+    """Audio duration in seconds, read from the mp3 header."""
 
-    result = subprocess.run(
-        [
-            tool_path("ffprobe"),
-            "-v",
-            "error",
-            "-show_entries",
-            "format=duration",
-            "-of",
-            "default=noprint_wrappers=1:nokey=1",
-            audio_path,
-        ],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",  # else the OS locale codepage decodes ffprobe's output
-        errors="replace",
-        check=True,
-    )
-    return float(result.stdout.strip())
+    # Raises where mp3.read_duration reports None: callers divide by the duration to
+    # pick a chunk count, so an unreadable file has to stop the step, not yield zero.
+    duration = read_duration(Path(audio_path))
+    if duration is None:
+        raise ValueError(f"could not read an mp3 duration from {audio_path}")
+    return duration
 
 
 def split_one_chunk(

@@ -35,9 +35,9 @@ consumer today.
   developer's own PATH copy is never shadowed. Membership is `SELF_UPDATING_TOOLS`, so a stray file
   in the state bin dir cannot shadow `ffmpeg` or `pandoc`. JS only — Python spawns no yt-dlp — and it
   is why `js/` depends on `@faststudy/runtime` for `statePath` rather than re-deriving the state root.
-- **`ffmpeg` and `ffprobe` need `-version`, not `--version`.** They print the banner for either, but
-  `--version` exits 1 — there is no input file to work on — which a preflight would read as a broken
-  binary. `VERSION_FLAG` carries the two exceptions; everything else takes the GNU spelling.
+- **`ffmpeg` needs `-version`, not `--version`.** It prints the banner for either, but `--version`
+  exits 1 — there is no input file to work on — which a preflight would read as a broken binary.
+  `VERSION_FLAG` carries the one exception; everything else takes the GNU spelling.
 - **Every Node tool spawn spreads `NO_WINDOW` (`{ windowsHide: true }`, i.e. `CREATE_NO_WINDOW`).**
   The launcher's own `windowsHide` on the service spawn silences a console-subsystem service's
   children, which share its hidden console, but Windows ignores it for a GUI-subsystem one. Packaged,
@@ -61,7 +61,7 @@ boot screen can render a missing binary instead of the user meeting it mid-pipel
 
 | Service              | Tools                                  |
 | -------------------- | -------------------------------------- |
-| `backend/`           | `ffmpeg`, `ffprobe`, `pandoc`, `tectonic` |
+| `backend/`           | `ffmpeg`, `pandoc`, `tectonic`         |
 | `downloader/server`  | `yt-dlp`, `curl`                       |
 | `downloader/auto`    | `yt-dlp`                               |
 

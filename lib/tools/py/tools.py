@@ -7,9 +7,9 @@ _SYSTEM_TOOLS = {"curl"}
 
 _EXE_SUFFIX = ".exe" if os.name == "nt" else ""
 
-# ffmpeg and ffprobe print their banner for `--version` but exit 1, having no input file to work
-# on; `-version` is the form that exits 0. Everything else takes the GNU spelling.
-_VERSION_FLAG = {"ffmpeg": "-version", "ffprobe": "-version"}
+# ffmpeg prints its banner for `--version` but exits 1, having no input file to work on;
+# `-version` is the form that exits 0. Everything else takes the GNU spelling.
+_VERSION_FLAG = {"ffmpeg": "-version"}
 
 # Long enough for a cold binary on a slow disk, short enough that four of them cannot delay boot
 # past the launcher's health wait.

@@ -7,7 +7,7 @@
 | Step         | Output           | Notes                                                                                     |
 | ------------ | ---------------- | ----------------------------------------------------------------------------------------- |
 | `audio`      | `audio.mp3`      | ffmpeg → mono 16 kHz 32 kbps. Minimal size, enough for ASR.                               |
-| `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB).            |
+| `transcribe` | `transcript.txt` | Groq `whisper-large-v3`, Hebrew, 10-min chunks (Groq caps a request at 25 MB). Chunk count comes from `pipeline/mp3.py`, an in-process header parse rather than a spawned probe. |
 | `summarize`  | `summary.md`     | Gemini via `google-genai`; transcript (+ every material PDF) uploaded as file parts.  |
 | `pdf`        | `summary.pdf`    | pandoc → `.tex` → tectonic (one run). See `PDF.md`.                                      |
 | `drive`      | `drive_url.txt`  | Uploads to `{GDRIVE_ROOT_FOLDER}/{course}/[Recitations/]`, writes the share link. Runs only while `DRIVE_ENABLED` is on, and only with Drive connected. |

@@ -53,8 +53,11 @@ jobs:
           echo "building $version, with $previous for the update check"
 
       # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
-      # curl is the one exception and ships with Windows, so it is not here. The msvc tectonic
-      # build, never gnu: the gnu binary imports six MinGW DLLs its own zip does not contain.
+      # curl is the one exception and ships with Windows, so it is not here. Nothing spawns
+      # ffprobe, so the ffmpeg zip's second binary — 98MB unpacked, 26MB of the installer — stays
+      # behind.
+      # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
+      # not contain.
       - name: Download the bundled binaries
         run: |
           mkdir -p "$STAGE/bin" downloads
@@ -69,7 +72,6 @@ jobs:
           cp downloads/tectonic/tectonic.exe "$STAGE/bin/"
           cp "downloads/pandoc/pandoc-$PANDOC_VERSION/pandoc.exe" "$STAGE/bin/"
           cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffmpeg.exe" "$STAGE/bin/"
-          cp "downloads/ffmpeg/ffmpeg-$FFMPEG_VERSION-essentials_build/bin/ffprobe.exe" "$STAGE/bin/"
           ls -l "$STAGE/bin"
 
       # The one build input that is not committed: it is gitignored so the client secret never

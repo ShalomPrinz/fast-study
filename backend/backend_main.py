@@ -19,9 +19,9 @@ setup_logging()
 log = logging.getLogger("api")
 
 # The external binaries this service spawns. Probed once at startup, never per request: the boot
-# screen polls /health, and re-spawning four binaries per poll would cost more than the answer is
+# screen polls /health, and re-spawning three binaries per poll would cost more than the answer is
 # worth. A tool installed afterwards is picked up on the next launch.
-TOOLS = ("ffmpeg", "ffprobe", "pandoc", "tectonic")
+TOOLS = ("ffmpeg", "pandoc", "tectonic")
 
 # The dev port, and the fallback the packaged launcher gets when FASTSTUDY_PORT is unset. Read by
 # `delivery/entry.py` too, so the frozen dispatcher and the `__main__` path below cannot diverge.

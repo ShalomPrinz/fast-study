@@ -76,6 +76,9 @@ since each check builds on the machine state the last one left: install, boot, f
 pipeline, quit, the tools under a Hebrew temp path, the browser chain, and an in-place update. It needs an installed Windows build, so
 off the runner only `cd delivery/smoke && npm ci && npx playwright test --list` works.
 
+- **`resources/bin/` is one set with what the services probe.** Its contents are compared exactly,
+  not entry by entry, and against the tool names `/health` reports minus `curl` — a binary nothing
+  spawns any more installs cleanly and shows up only as installer size.
 - **Offline, enforced.** Per-program outbound firewall rules block `FastStudy.exe`, `services.exe`,
   every exe under `resources/bin/` and the state root's yt-dlp copy. The suite first proves a
   blocked program still reaches loopback and reaches nothing else, so a wrong firewall assumption

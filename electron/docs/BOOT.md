@@ -107,7 +107,7 @@ resources/services/services(.exe)   the PyInstaller one-dir bundle, service pick
 resources/auto/app.js               the auto-downloader, run on Electron-as-node
 resources/server/src/index.js       the download server, likewise
 resources/frontend/                 the built frontend, served over app://bundle
-resources/bin/                      ffmpeg, ffprobe, pandoc, tectonic, yt-dlp → FASTSTUDY_BIN_DIR
+resources/bin/                      ffmpeg, pandoc, tectonic, yt-dlp → FASTSTUDY_BIN_DIR
 resources/latex/                    the primed tectonic cache → TECTONIC_CACHE_DIR
 ```
 

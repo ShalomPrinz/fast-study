@@ -24,6 +24,16 @@ def write_tool(name: str, exit_code: int) -> Path:
     return path
 
 
+def write_arg_recorder(name: str, record: Path) -> Path:
+    """An executable that writes the flag it was spawned with to `record`, so a test can pin which
+    version flag a name probes with."""
+
+    path = Path(tool_path(name))
+    path.write_text(f'#!/bin/sh\nprintf "%s" "$1" > "{record}"\n')
+    path.chmod(path.stat().st_mode | stat.S_IEXEC)
+    return path
+
+
 def test_unset_bin_dir_leaves_the_bare_name(monkeypatch):
     monkeypatch.delenv("FASTSTUDY_BIN_DIR", raising=False)
     assert tool_path("ffmpeg") == "ffmpeg"
@@ -63,3 +73,18 @@ def test_a_failing_tool_reports_its_exit_code(bin_dir):
 def test_every_name_is_reported(bin_dir):
     write_tool("good", 0)
     assert check_tools(["good", "bad"]) == {"good": "ok", "bad": "missing"}
+
+
+def test_ffmpeg_probes_with_one_dash(bin_dir, tmp_path):
+    # `--version` exits 1 on ffmpeg, which a preflight would read as a broken binary.
+    record = tmp_path / "flag"
+    write_arg_recorder("ffmpeg", record)
+    assert check_tools(["ffmpeg"]) == {"ffmpeg": "ok"}
+    assert record.read_text() == "-version"
+
+
+def test_a_name_with_no_entry_probes_with_the_gnu_spelling(bin_dir, tmp_path):
+    record = tmp_path / "flag"
+    write_arg_recorder("faketool", record)
+    assert check_tools(["faketool"]) == {"faketool": "ok"}
+    assert record.read_text() == "--version"
