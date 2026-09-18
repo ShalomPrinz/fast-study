@@ -175,6 +175,16 @@
   margin-inline-end: var(--space-2);
 }
 
+/* A quota error leads with the localized headline and drops the backend's prose to its own line. */
+.lecture-error-headline {
+  font-weight: 600;
+}
+
+.lecture-error-headline + span {
+  display: block;
+  color: var(--text-2);
+}
+
 .rate-limit-panel {
   margin-top: var(--space-6);
   padding: var(--space-5) var(--space-6);

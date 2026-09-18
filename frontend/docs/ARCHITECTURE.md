@@ -116,8 +116,8 @@ self-hosted through `@fontsource` so the app renders offline; Heebo is Hebrew-fi
 filenames, counts and durations.
 
 `.btn` + `--primary`/`--ghost`/`--danger` is the whole button vocabulary, `.chip` + five colour variants
-the whole state-label vocabulary, and `StatusNode` the five run states (`done`, `running`, `pending`,
-`paused`, `failed`) at one size. `PageHeader` opens every full-page view with one primary action, and
+the whole state-label vocabulary, and `StatusNode` the six run states (`done`, `running`, `pending`,
+`paused`, `failed`, `quota`) at one size. `PageHeader` opens every full-page view with one primary action, and
 `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
 `services/toaster.css`.
 
