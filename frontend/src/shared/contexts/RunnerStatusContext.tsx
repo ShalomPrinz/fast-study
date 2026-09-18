@@ -44,12 +44,9 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     seed: seedError,
     prune: pruneErrors,
   } = useReportOnce((msg) => sendUpdateRef.current?.('error', msg))
-  // Quota errors dedupe per key like the rest but only raise this flag: a batch stopped at summarize
-  // records one per lecture, and all that are new in one snapshot share a single toast.
-  const freshQuota = useRef(false)
-  const quotaReports = useReportOnce(() => {
-    freshQuota.current = true
-  })
+  // Quota errors toast once, when the set goes from empty to non-empty: a batch stopped at summarize
+  // records one per lecture across several snapshots, and they all say the same thing.
+  const hadQuota = useRef(false)
 
   const latest = useLatestRequest()
   // First applied status carries errors from before load: seed-and-suppress them, toast later ones.
@@ -63,18 +60,18 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       const validKeys = new Set(Object.keys(s.errors))
       validKeys.add('runner-crash')
       pruneErrors(validKeys)
-      quotaReports.prune(validKeys)
       const announce = primed.current ? reportError : seedError
-      const announceQuota = primed.current ? quotaReports.report : quotaReports.seed
       if (!s.runner.running && s.runner.lastError) {
         announce('runner-crash', s.runner.lastError)
       }
       for (const [key, error] of Object.entries(s.errors)) {
-        if (error.code === 'quota') announceQuota(key, error.message)
-        else announce(key, error.message)
+        if (error.code !== 'quota') announce(key, error.message)
       }
-      if (freshQuota.current) sendUpdateRef.current?.('error', i18n._(QUOTA_MESSAGE))
-      freshQuota.current = false
+      const hasQuota = Object.values(s.errors).some((e) => e.code === 'quota')
+      if (primed.current && hasQuota && !hadQuota.current) {
+        sendUpdateRef.current?.('error', i18n._(QUOTA_MESSAGE))
+      }
+      hadQuota.current = hasQuota
       primed.current = true
     } catch {
       // SSE will fire again on the next backend transition; nothing to do.
