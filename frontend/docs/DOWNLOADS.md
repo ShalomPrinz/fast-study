@@ -82,7 +82,7 @@ own ref; children are cached on first expand; the session's `clear()` calls `cle
 
 Each section header's caret + title is a toggle that hides (never unmounts) everything below it — the
 rows and the passcode prompt hold in-flight state. Collapsed keys live in
-a sibling module store (`SectionCollapseContext.ts`, keyed `section.id` or `'other-links'`, open by
+a sibling module store (`SectionCollapseContext.ts`, keyed `section.id`, or `course:media` for the synthetic pile, open by
 default), so they survive a segment switch; `clear()` resets it, and a paused run re-opens its section so
 the passcode prompt can't stay hidden.
 

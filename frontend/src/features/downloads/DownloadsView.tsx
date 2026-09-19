@@ -131,9 +131,13 @@ export default function DownloadsView() {
                                     const id = section.synthetic
                                       ? null
                                       : sectionId(selected, media, section.title)
+                                    // The pile is per course and media too; one colon never matches a
+                                    // run id, which always has two.
+                                    const key = id ?? `${selected}:${media}`
                                     return (
                                       <SectionGroup
-                                        key={id ?? 'other-links'}
+                                        key={key}
+                                        collapseKey={key}
                                         section={{ ...section, id }}
                                         items={section.items}
                                         course={selected}

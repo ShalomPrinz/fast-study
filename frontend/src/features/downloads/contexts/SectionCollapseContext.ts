@@ -1,7 +1,7 @@
 import { useCallback, useSyncExternalStore } from 'react'
 
-// Module store of collapsed sections, keyed like `DownloadsView`'s section key (`section.id`, or
-// `'other-links'`). Absent means open; it outlives every component, so the session's `clear()` resets it.
+// Module store of collapsed sections, keyed by `SectionGroup`'s `collapseKey`. Absent means open;
+// it outlives every component, so the session's `clear()` resets it.
 let collapsed: Record<string, true> = {}
 const listeners = new Set<() => void>()
 

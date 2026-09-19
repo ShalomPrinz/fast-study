@@ -52,6 +52,8 @@ interface Props {
   // `id` keys the section's run (`${course}:${media}:${title}`), null for the synthetic pile, whose
   // title is ours rather than Moodle's.
   section: { id: string | null; title: string; synthetic: boolean }
+  // The section's collapse key: `id`, or a course- and media-qualified one for the synthetic pile.
+  collapseKey: string
   items: Item[]
   course: string
   onReconnect: () => void
@@ -61,7 +63,7 @@ const NO_TARGETS: readonly RunTarget[] = Object.freeze([])
 
 // One Moodle section: starts its bulk run and reflects it, and drives the expansions the queue needs.
 // See docs/BULK.md.
-export default function SectionGroup({ section, items, course, onReconnect }: Props) {
+export default function SectionGroup({ section, collapseKey, items, course, onReconnect }: Props) {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   const jobsByRef = useJobsByRef()
@@ -86,8 +88,6 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
 
   const targets = run?.targets ?? NO_TARGETS
   const paused = run?.status === 'paused' ? run.paused : null
-  // Same key as `DownloadsView`'s React key for this section.
-  const collapseKey = id ?? 'other-links'
   const open = useSectionOpen(collapseKey)
   const bodyId = useId()
 
