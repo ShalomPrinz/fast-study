@@ -645,21 +645,25 @@ async def run_pipeline_for(
 
 
 def try_run_step(course: str, lecture: str, kind: str, step: str) -> str:
-    """Fire-and-forget run_step if the lecture isn't already locked. Returns 'busy' or 'started'."""
+    """Fire-and-forget run_step if the lecture isn't already locked, pulling it out of the
+    runner queue. Returns 'busy' or 'started'."""
 
     lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
     if lock.locked():
         return "busy"
+    _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
     asyncio.create_task(run_step(course, lecture, kind, step))
     return "started"
 
 
 def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
-    """Fire-and-forget run_pipeline_for if the lecture isn't already locked. Returns 'busy' or 'started'."""
+    """Fire-and-forget run_pipeline_for if the lecture isn't already locked, pulling it out of
+    the runner queue. Returns 'busy' or 'started'."""
 
     lock = _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock())
     if lock.locked():
         return "busy"
+    _queue[:] = [q for q in _queue if q[:3] != (course, lecture, kind)]
     asyncio.create_task(run_pipeline_for(course, lecture, kind))
     return "started"
 

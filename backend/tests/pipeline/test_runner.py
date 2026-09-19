@@ -2,7 +2,7 @@ import asyncio
 import sys
 from contextlib import ExitStack
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -840,6 +840,30 @@ class TestEnqueue:
         asyncio.run(go())
         assert len(runs) == 1
         assert runner._runner_status["running"] is True
+
+
+@pytest.mark.parametrize(
+    "start",
+    [
+        lambda: runner.try_run_step("C1", "L2", "lecture", "audio"),
+        lambda: runner.try_run_pipeline("C1", "L2", "lecture"),
+    ],
+    ids=["step", "pipeline"],
+)
+def test_a_manual_run_pulls_its_lecture_out_of_the_queue(clean_queue, start):
+    """A queued lecture the user runs by hand runs now; the queue must not list or re-run it."""
+
+    async def go():
+        runner._queue[:] = [_entry("L1"), _entry("L2"), _entry("L3")]
+        with (
+            patch.object(runner, "run_step", AsyncMock()),
+            patch.object(runner, "run_pipeline_for", AsyncMock()),
+        ):
+            assert start() == "started"
+            await asyncio.sleep(0)
+
+    asyncio.run(go())
+    assert runner._queue == [_entry("L1"), _entry("L3")]
 
 
 class TestQueueDrain:

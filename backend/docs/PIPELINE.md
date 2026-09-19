@@ -57,7 +57,7 @@ Every automatic trigger feeds one sequential queue rather than a task per lectur
 
 `enqueue(entry)` is the single point of entry. It refuses a lecture that is already queued, already in `_in_flight`, or whose lock a concurrent trigger holds, and starts `run_all` when the runner is idle — flipping `_runner_status["running"]` itself, because the task it creates only starts at the next await and a burst of arrivals would otherwise each start a drain.
 
-`run_all` takes no argument: it drains `_queue` until empty, so a video arriving mid-run joins that run instead of racing it, and `_runner_status["total"]` is recomputed each iteration from `done + len(_queue)` so a growing queue is reflected. A lecture whose lock is already held is skipped rather than awaited.
+`run_all` takes no argument: it drains `_queue` until empty, so a video arriving mid-run joins that run instead of racing it, and `_runner_status["total"]` is recomputed each iteration from `done + len(_queue)` so a growing queue is reflected. A lecture whose lock is already held is skipped rather than awaited. A manual run (`try_run_step` / `try_run_pipeline`) that starts a queued lecture pulls its entry out of `_queue`, so it runs now, alongside the drain, and the queue never re-runs it.
 
 `depth` is how far that entry may go: `full` is `run_pipeline_for(..., honor_block=True)`, `audio` is the single `audio` step and nothing after it (skipped outright when `audio.mp3` is already there). `scan_pending` still walks the tree for lectures with `video.mp4` but no `final_output()` and returns bare `(course, lecture, kind)`; the depth is attached at each call site.
 
