@@ -28,6 +28,8 @@ content pane is always the window less 536) folds them into `LectureActionsMenu`
 `Run Remaining` so the primary button never moves.
 Completion is carried by the `StatusNode` alone, never a row tint; the running row sits on
 `--surface-sunken` with `ProgressBar`'s ETA at the end of the stage line.
+A missing file whose step is the lecture's `error.step` shows `failed`, or `quota` for a Gemini quota
+error (`utils/stepState.ts`); the row's `data-status` carries the same state.
 
 **Rotate** deletes a file _and every later file in `PIPELINE`_ that exists, then re-runs its step — why
 it derives from `PIPELINE` order rather than a per-step list. A refused delete (`423`, the file open in the
@@ -58,8 +60,13 @@ leaves; `runner.lastError` is an exception that aborted a sweep, distinct from p
 `backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
 
+`errors` maps each key to `{ step, message, code, provider }`; `code: 'quota'` marks Gemini's exhausted
+daily quota, set on every lecture a run-all stopped at summarize for it, and the "Last error" box then
+leads with a localized headline above the backend's prose.
+
 Error toasts go through `useReportOnce`, which dedupes `(key, message)` across refreshes; `prune` lets a
-key fire again if the error recurs.
+key fire again if the error recurs. A quota error toasts the localized line instead, and only when not
+`blocked` — the lecture that hit the limit, not each one run-all then stopped at summarize.
 
 `useRemoteInflightState` turns the open lecture's entry into a render descriptor; progress comes from the
 entry, else from `transcript.partial.txt` for a transcribe step. `useTimingStats(step, bytes)` fetches the

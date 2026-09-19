@@ -1,9 +1,11 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { t } from '@lingui/core/macro'
-import type { RunnerStatus, InFlightEntry, Kind } from '@/types'
+import { i18n } from '@lingui/core'
+import type { RunnerStatus, InFlightEntry, Kind, RunError } from '@/types'
 import { runAll, fetchRunnerStatus } from '@/services/backend'
 import { isConnectionError } from '@/services/http'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
+import { QUOTA_MESSAGE } from '@/shared/utils/runError'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useNotify } from '@/shared/hooks/useNotify'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
@@ -13,7 +15,7 @@ interface RunnerStatusValue {
   trigger: () => Promise<void>
   isInFlight: (course: string, lecture: string, kind: Kind) => boolean
   getInFlight: (course: string, lecture: string, kind: Kind) => InFlightEntry | null
-  getError: (course: string, lecture: string, kind: Kind) => string | null
+  getError: (course: string, lecture: string, kind: Kind) => RunError | null
 }
 
 const RunnerStatusContext = createContext<RunnerStatusValue>({
@@ -59,8 +61,11 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       if (!s.runner.running && s.runner.lastError) {
         announce('runner-crash', s.runner.lastError)
       }
-      for (const [key, message] of Object.entries(s.errors)) {
-        announce(key, message)
+      // A quota error toasts the localized line only on the lecture that hit the limit; the ones run-all
+      // then stopped at summarize are `blocked`, or one batch would toast once per lecture.
+      for (const [key, error] of Object.entries(s.errors)) {
+        if (error.code !== 'quota') announce(key, error.message)
+        else if (!error.blocked) announce(key, i18n._(QUOTA_MESSAGE))
       }
       primed.current = true
     } catch {
@@ -102,7 +107,7 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     return status?.inFlight.find((e) => inFlightKey(e.course, e.lecture, e.kind) === key) ?? null
   }
 
-  function getError(course: string, lecture: string, kind: Kind): string | null {
+  function getError(course: string, lecture: string, kind: Kind): RunError | null {
     return status?.errors[inFlightKey(course, lecture, kind)] ?? null
   }
 

@@ -48,10 +48,11 @@ _locks: dict[
 ] = {}  # per-lecture; created lazily via setdefault
 _in_flight: dict[str, dict] = {}  # skey → entry; cleared on step completion or error
 _errors: dict[
-    str, str
-] = {}  # skey → last error message; survives after _in_flight clears
+    str, dict
+] = {}  # skey → last error record (see _error_record); survives after _in_flight clears
 _runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": None}
-_summarize_blocked = False  # run-scoped; set on Gemini's DAILY quota, reset by run_all
+# Run-scoped; the message of Gemini's DAILY quota error that blocked summarize, reset by run_all.
+_summarize_block: str | None = None
 
 
 class QueueEntry(NamedTuple):
@@ -78,6 +79,21 @@ def _skey(course: str, lecture: str, kind: str) -> str:
     """String key into _in_flight and _errors; appears verbatim in /status output."""
 
     return f"{course}||{lecture}||{kind}"
+
+
+def _error_record(
+    step: str, message: str, *, quota: bool = False, blocked: bool = False
+) -> dict:
+    """One /status error: the failed step and message, `code`/`provider` for Gemini's daily quota,
+    and `blocked` when run_all stopped this lecture on another's quota rather than it hitting one."""
+
+    return {
+        "step": step,
+        "message": message,
+        "code": "quota" if quota else None,
+        "provider": "gemini" if quota else None,
+        "blocked": blocked,
+    }
 
 
 def _now_iso() -> str:
@@ -529,7 +545,7 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
     """Drive one step to a terminal outcome, retrying after rate-limit sleeps.
     Unsafe: the caller must hold this lecture's lock."""
 
-    global _summarize_blocked
+    global _summarize_block
     skey = _skey(course, lecture, kind)
     # Each iteration = one attempt; rate_limited cycles back, done/error exits.
     while True:
@@ -543,6 +559,12 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
             "progress": None,
         }
         _errors.pop(skey, None)  # clear any stale error from a previous attempt
+        if step == "summarize":
+            # Any summarize attempt re-tests Gemini's quota: drop every quota record and lift the
+            # run's stop, so lectures still queued retry; a fresh hit re-sets both below.
+            for key in [k for k, e in _errors.items() if e["code"] == "quota"]:
+                del _errors[key]
+            _summarize_block = None
         db_client.notify()
 
         result = await _call_step(course, lecture, kind, step)
@@ -564,10 +586,11 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
             # loop → retry same step
         else:  # error
             _in_flight.pop(skey, None)
-            if result.get("daily_quota"):
-                _summarize_blocked = True
             msg = result.get("message") or result.get("status") or "unknown error"
-            _errors[skey] = msg
+            quota = bool(result.get("daily_quota"))
+            if quota:
+                _summarize_block = msg
+            _errors[skey] = _error_record(step, msg, quota=quota)
             log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
             db_client.notify()
             return
@@ -584,7 +607,12 @@ async def _run_pipeline_unlocked(
         step = next_step(files)
         if step is None:
             return False
-        if step == "summarize" and honor_block and _summarize_blocked:
+        if step == "summarize" and honor_block and _summarize_block is not None:
+            # Same record as the lecture that hit the quota, so this one doesn't look pending.
+            _errors[_skey(course, lecture, kind)] = _error_record(
+                "summarize", _summarize_block, quota=True, blocked=True
+            )
+            db_client.notify()
             log.info(
                 "%s/%s (%s): summarize blocked (Gemini daily quota), stopping here",
                 course,
@@ -663,13 +691,13 @@ async def run_all() -> dict:
     """Drain the runner queue sequentially until it is empty, so a lecture enqueued mid-run joins
     this run instead of racing it. The caller enqueues; this never re-scans."""
 
-    global _summarize_blocked
+    global _summarize_block
     log.info(
         "run_all starting with %d queued lecture(s): %s",
         len(_queue),
         [f"\n{e.course}/{e.lecture} ({e.kind}, {e.depth})" for e in _queue],
     )
-    _summarize_blocked = False
+    _summarize_block = None
     blocked_count = 0
     _runner_status["running"] = True
     _runner_status["done"] = 0
@@ -726,7 +754,7 @@ async def run_all() -> dict:
         return {"status": "completed", **get_status()}
     finally:
         _runner_status["running"] = False
-        _summarize_blocked = False
+        _summarize_block = None
         db_client.notify()
 
 

@@ -5,6 +5,7 @@ import type {
   TimingOperation,
   Kind,
   RunnerStatus,
+  RunError,
   QueueEntry,
   OverviewExtractor,
   CoursePhase,
@@ -71,7 +72,7 @@ interface RawRunnerStatus {
   runner: { running: boolean; total: number; done: number; last_error: string | null }
   in_flight?: RawInFlightEntry[]
   queue?: QueueEntry[]
-  errors?: Record<string, string>
+  errors?: Record<string, Pick<RunError, 'step' | 'message'> & Partial<RunError>>
 }
 
 function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
@@ -92,7 +93,18 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
       progress: e.progress,
     })),
     queue: raw.queue ?? [],
-    errors: raw.errors ?? {},
+    errors: Object.fromEntries(
+      Object.entries(raw.errors ?? {}).map(([key, e]) => [
+        key,
+        {
+          step: e.step,
+          message: e.message,
+          code: e.code ?? null,
+          provider: e.provider ?? null,
+          blocked: e.blocked ?? false,
+        },
+      ]),
+    ),
   }
 }
 

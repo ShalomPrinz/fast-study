@@ -36,7 +36,7 @@ export default function EditSummaryView() {
   const navigate = useNavigate()
   const { getError } = useRunnerStatus()
   const { courses, loaded: treeLoaded, refreshCourses } = useCourseTreeContext()
-  const lectureError = getError(course, lecture, kind)
+  const lectureError = getError(course, lecture, kind)?.message ?? null
 
   const [content, setContent] = useState('')
   // What is on disk, so the toolbar and the editor pane can tell an edited buffer from a clean one.

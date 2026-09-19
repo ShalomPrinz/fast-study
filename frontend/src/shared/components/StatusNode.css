@@ -14,7 +14,7 @@
   border-radius: 50%;
 }
 
-/* The five state variants below recolour .status-node at equal specificity, so they must stay in
+/* The six state variants below recolour .status-node at equal specificity, so they must stay in
    this file, after it. */
 .status-node--done {
   background: var(--ok-soft);
@@ -41,5 +41,11 @@
   color: var(--danger);
   font-size: var(--fs-body);
   font-weight: 700;
+  cursor: help;
+}
+
+.status-node--quota {
+  border: 1.5px solid var(--danger);
+  color: var(--danger);
   cursor: help;
 }

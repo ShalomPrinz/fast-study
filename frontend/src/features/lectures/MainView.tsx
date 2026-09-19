@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { Step, FileName, MaterialInfo } from '@/types'
+import { QUOTA_MESSAGE } from '@/shared/utils/runError'
 import { deleteFile, deleteMaterial } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
 import { runStep, runPipeline } from '@/services/backend'
@@ -23,6 +24,7 @@ import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+import { stepState } from '@/features/lectures/utils/stepState'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import { lectureNotFound } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
@@ -323,7 +325,7 @@ export default function MainView() {
             {stages.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
               const exists = files[file].exists
               const isRunning = runningFile === file
-              const state = exists ? 'done' : isRunning ? 'running' : 'pending'
+              const state = stepState(exists, isRunning, step, lectureError)
               const prereqMet = !prereq || files[prereq].exists
               const isResumeTranscribe =
                 file === 'transcript.txt' && !exists && files['transcript.partial.txt'].exists
@@ -348,7 +350,12 @@ export default function MainView() {
                   data-step={step}
                   data-status={step ? state : undefined}
                 >
-                  <StatusNode state={state} />
+                  <StatusNode
+                    state={state}
+                    title={
+                      state === 'failed' || state === 'quota' ? lectureError?.message : undefined
+                    }
+                  />
                   <div className="pipeline-row-body">
                     <div className="pipeline-stage-line">
                       <span
@@ -445,7 +452,10 @@ export default function MainView() {
               <strong>
                 <Trans>Last error:</Trans>
               </strong>{' '}
-              <span data-testid="lecture-error-message">{lectureError}</span>
+              {lectureError.code === 'quota' && (
+                <span className="lecture-error-headline">{t(QUOTA_MESSAGE)}</span>
+              )}
+              <span data-testid="lecture-error-message">{lectureError.message}</span>
             </div>
           )}
 

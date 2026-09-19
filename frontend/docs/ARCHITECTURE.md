@@ -116,8 +116,8 @@ self-hosted through `@fontsource` so the app renders offline; Heebo is Hebrew-fi
 filenames, counts and durations.
 
 `.btn` + `--primary`/`--ghost`/`--danger` is the whole button vocabulary, `.chip` + five colour variants
-the whole state-label vocabulary, and `StatusNode` the five run states (`done`, `running`, `pending`,
-`paused`, `failed`) at one size. `PageHeader` opens every full-page view with one primary action and an
+the whole state-label vocabulary, and `StatusNode` the six run states (`done`, `running`, `pending`,
+`paused`, `failed`, `quota`) at one size. `PageHeader` opens every full-page view with one primary action and an
 optional second action row, and `.pipeline-card` holds its rows on the lecture and overview pages. The toast surface is skinned in
 `services/toaster.css`.
 
@@ -152,7 +152,7 @@ inline and the menu is absent; below, `open-pdf` appears only once the ⋮ menu 
 | `browser-prereq-install-link` | —                                                                                                                        | `features/settings/components/BrowserPrereqField` | the install link, rendered only when missing    |
 | `lecture`                     | `data-course`, `data-lecture`; `data-kind`: `lecture` \| `recitation`                                                    | `features/lectures/sidebar/tree/LectureItem`      | a tree pane lecture row                         |
 | `lecture-view`                | `data-course`, `data-lecture`, `data-kind`                                                                               | `features/lectures/MainView.tsx`                  | the lecture page's root                         |
-| `step-status`                 | `data-step`: `audio` \| `transcribe` \| `summarize` \| `pdf` \| `drive`; `data-status`: `done` \| `running` \| `pending` | `features/lectures/MainView.tsx`                  | one pipeline row that has a step                |
+| `step-status`                 | `data-step`: `audio` \| `transcribe` \| `summarize` \| `pdf` \| `drive`; `data-status`: `done` \| `running` \| `pending` \| `failed` \| `quota` | `features/lectures/MainView.tsx`                  | one pipeline row that has a step                |
 | `lecture-error`               | —                                                                                                                        | `features/lectures/MainView.tsx`                  | the lecture's last run error                    |
 | `lecture-error-message`       | —                                                                                                                        | `features/lectures/MainView.tsx`                  | that error's service prose, untranslated        |
 | `lecture-actions-menu`        | —                                                                                                                        | `features/lectures/components/LectureActionsMenu` | the ⋮ trigger, only below 960px                 |

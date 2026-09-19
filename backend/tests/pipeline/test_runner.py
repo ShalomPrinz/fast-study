@@ -432,7 +432,13 @@ def test_run_step_logs_error(caplog):
 
     skey = runner._skey("C1", "L1", "lecture")
     stored = runner._errors.pop(skey, None)  # capture + clean up module-global state
-    assert stored == "boom"
+    assert stored == {
+        "step": "transcribe",
+        "message": "boom",
+        "code": None,
+        "provider": None,
+        "blocked": False,
+    }
     assert any("step transcribe failed" in r.getMessage() for r in caplog.records)
 
 
@@ -557,9 +563,40 @@ def _quota_error_result(
     return {"status": "error", "message": message, "daily_quota": True}
 
 
-def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
-    """First lecture records the real error and halts; every later lecture stops
-    silently at transcript.txt — one error in the UI, not N identical ones."""
+def test_daily_quota_error_record():
+    """A daily-quota failure is tagged quota/gemini so the UI can say so."""
+
+    async def fake_call(course, lecture, kind, step):
+        return _quota_error_result("quota msg")
+
+    async def go():
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner._run_step_unlocked("C1", "L1", "lecture", "summarize")
+
+    try:
+        asyncio.run(go())
+        assert runner.get_status()["errors"] == {
+            runner._skey("C1", "L1", "lecture"): {
+                "step": "summarize",
+                "message": "quota msg",
+                "code": "quota",
+                "provider": "gemini",
+                "blocked": False,
+            }
+        }
+        assert runner._summarize_block == "quota msg"
+    finally:
+        runner._errors.clear()
+        runner._summarize_block = None
+
+
+def test_daily_quota_blocks_summarize_for_later_lectures(caplog):
+    """First lecture calls Gemini and hits the quota; every later lecture stops at
+    transcript.txt without calling it, carrying the same quota record, and still
+    counts as blocked rather than halted."""
     steps_run: list[tuple[str, str]] = []
     queue = [
         runner.QueueEntry("C1", lecture, "lecture", "full")
@@ -580,6 +617,7 @@ def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
             patch.object(runner, "_fetch_files", fake_fetch),
             patch.object(runner, "_call_step", fake_call),
             patch.object(runner.db_client, "notify"),
+            caplog.at_level("INFO", logger="runner"),
         ):
             runner._queue[:] = queue
             return await runner.run_all()
@@ -589,14 +627,27 @@ def test_daily_quota_blocks_summarize_for_later_lectures_without_extra_errors():
         assert steps_run == [("L1", "summarize")], (
             "only the first lecture may call Gemini"
         )
-        assert list(runner._errors) == [runner._skey("C1", "L1", "lecture")]
-        assert (
-            "daily quota reached" in runner._errors[runner._skey("C1", "L1", "lecture")]
+        record = {
+            "step": "summarize",
+            "message": _quota_error_result()["message"],
+            "code": "quota",
+            "provider": "gemini",
+        }
+        assert runner._errors == {
+            runner._skey("C1", lecture, "lecture"): {
+                **record,
+                "blocked": lecture != "L1",  # L1 hit the quota; the rest were stopped
+            }
+            for lecture in ("L1", "L2", "L3")
+        }
+        assert any(
+            "summarize skipped for 2 (Gemini daily quota)" in r.getMessage()
+            for r in caplog.records
         )
     finally:
         runner._errors.clear()
         runner._queue.clear()
-        runner._summarize_blocked = False
+        runner._summarize_block = None
 
 
 def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
@@ -619,8 +670,8 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
         ):
             runner._queue[:] = [runner.QueueEntry("C1", "L1", "lecture", "full")]
             await runner.run_all()
-            assert runner._summarize_blocked is False  # cleared by run_all's finally
-            runner._summarize_blocked = True  # as if a run were still blocked
+            assert runner._summarize_block is None  # cleared by run_all's finally
+            runner._summarize_block = "quota"  # as if a run were still blocked
             await runner.run_pipeline_for("C1", "L2", "lecture")
 
     try:
@@ -629,7 +680,89 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
     finally:
         runner._errors.clear()
         runner._queue.clear()
-        runner._summarize_blocked = False
+        runner._summarize_block = None
+
+
+def test_summarize_start_clears_quota_records_and_lifts_block():
+    """Any summarize attempt drops every lecture's quota record and the run's stop;
+    other errors stay."""
+    runner._errors.update(
+        {
+            "hit": runner._error_record("summarize", "q", quota=True),
+            "stopped": runner._error_record("summarize", "q", quota=True, blocked=True),
+            "other": runner._error_record("pdf", "boom"),
+        }
+    )
+    runner._summarize_block = "q"
+
+    async def fake_call(course, lecture, kind, step):
+        return {"status": "done"}
+
+    async def go():
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner.run_step("C1", "L9", "lecture", "summarize")
+
+    try:
+        asyncio.run(go())
+        assert list(runner._errors) == ["other"]
+        assert runner._summarize_block is None
+    finally:
+        runner._errors.clear()
+        runner._summarize_block = None
+
+
+def test_manual_summarize_mid_run_lets_queued_lectures_summarize():
+    """L1 hits the quota; a manual summarize elsewhere lifts the stop before L2 is
+    taken, so L2 and L3 call Gemini instead of being stopped."""
+    summarized: set[str] = set()
+    calls: list[str] = []
+    manual_done = False
+
+    async def fake_fetch(course, lecture, kind):
+        nonlocal manual_done
+        if lecture == "L2" and not manual_done:
+            manual_done = True
+            await runner.run_step("C1", "M", "lecture", "summarize")
+        done = lecture in summarized
+        return _files(
+            video=True,
+            audio=True,
+            transcript=True,
+            summary=done,
+            pdf=done,
+            drive=done,
+        )
+
+    async def fake_call(course, lecture, kind, step):
+        calls.append(lecture)
+        if lecture == "L1":
+            return _quota_error_result()
+        summarized.add(lecture)
+        return {"status": "done"}
+
+    async def go():
+        with (
+            patch.object(runner, "_fetch_files", fake_fetch),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            runner._queue[:] = [
+                runner.QueueEntry("C1", lecture, "lecture", "full")
+                for lecture in ("L1", "L2", "L3")
+            ]
+            await runner.run_all()
+
+    try:
+        asyncio.run(go())
+        assert calls == ["L1", "M", "L2", "L3"]
+        assert runner._errors == {}  # L1's hit record was cleared by M's attempt
+    finally:
+        runner._errors.clear()
+        runner._queue.clear()
+        runner._summarize_block = None
 
 
 @pytest.fixture
