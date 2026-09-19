@@ -80,6 +80,12 @@ A playlist row is `expandable`. Expansion state and fetched children live in a m
 know every playlist is expanded, and the state must survive a segment switch. Each row subscribes to its
 own ref; children are cached on first expand; the session's `clear()` calls `clearExpansions()`.
 
+Each section header's caret + title is a toggle that hides (never unmounts) everything below it — the
+rows and the passcode prompt hold in-flight state. Collapsed keys live in
+a sibling module store (`SectionCollapseContext.ts`, keyed `section.id` or `'other-links'`, open by
+default), so they survive a segment switch; `clear()` resets it, and a paused run re-opens its section so
+the passcode prompt can't stay hidden.
+
 ## Unknown rows
 
 An `unknown` row carries a chip — `?`, then `Video` / `Material` / `Unsupported` — and **never changes

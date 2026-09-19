@@ -6,6 +6,7 @@ import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
 import { blockedMessage } from '../utils/downloadErrors'
 import { clearExpansions } from './RowExpansionsContext'
+import { clearSectionCollapse } from './SectionCollapseContext'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
 import type { ResolveMedia } from './ResolvedMediaContext'
 
@@ -85,6 +86,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     setItems([])
     setEdits({})
     clearExpansions()
+    clearSectionCollapse()
     setError(null)
   }, [])
 

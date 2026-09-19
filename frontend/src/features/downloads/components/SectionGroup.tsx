@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { plural } from '@lingui/core/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
@@ -28,6 +28,11 @@ import {
   useAllExpansions,
 } from '@/features/downloads/contexts/RowExpansionsContext'
 import { useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
+import {
+  expandSection,
+  toggleSection,
+  useSectionOpen,
+} from '@/features/downloads/contexts/SectionCollapseContext'
 import { hasResource } from '@/features/downloads/utils/existingItems'
 import {
   notStartedCount,
@@ -81,6 +86,15 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
 
   const targets = run?.targets ?? NO_TARGETS
   const paused = run?.status === 'paused' ? run.paused : null
+  // Same key as `DownloadsView`'s React key for this section.
+  const collapseKey = id ?? 'other-links'
+  const open = useSectionOpen(collapseKey)
+  const bodyId = useId()
+
+  // A parked run's passcode prompt lives in the body, so a pause opens the section.
+  useEffect(() => {
+    if (paused) expandSection(collapseKey)
+  }, [paused, collapseKey])
 
   function stateOf(ref: string): ExpandState {
     return expansions[ref] ?? IDLE_EXPAND
@@ -209,12 +223,20 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
   return (
     <div className="recordings-section">
       <div className="recordings-section-header">
-        <span className="recordings-section-caret" aria-hidden="true">
-          <Chevron open />
-        </span>
-        <span className="recordings-section-title" dir="auto">
-          {label}
-        </span>
+        <button
+          type="button"
+          className="recordings-section-toggle"
+          aria-expanded={open}
+          aria-controls={bodyId}
+          onClick={() => toggleSection(collapseKey)}
+        >
+          <span className="recordings-section-caret" aria-hidden="true">
+            <Chevron open={open} />
+          </span>
+          <span className="recordings-section-title" dir="auto">
+            {label}
+          </span>
+        </button>
         <span className="recordings-section-count">
           <Plural value={items.length} one="# item" other="# items" />
         </span>
@@ -247,44 +269,47 @@ export default function SectionGroup({ section, items, course, onReconnect }: Pr
         )}
       </div>
 
-      {notStarted > 0 && (
-        <div className="recordings-section-stalled">
-          {plural(notStarted, {
-            one: `# row never started — ${stoppedBecause}`,
-            other: `# rows never started — ${stoppedBecause}`,
-          })}
-        </div>
-      )}
+      {/* Hidden, not unmounted: the rows and the prompt hold in-flight download and passcode state. */}
+      <div id={bodyId} className="recordings-section-body" hidden={!open}>
+        {notStarted > 0 && (
+          <div className="recordings-section-stalled">
+            {plural(notStarted, {
+              one: `# row never started — ${stoppedBecause}`,
+              other: `# rows never started — ${stoppedBecause}`,
+            })}
+          </div>
+        )}
 
-      {stalled > 0 && (
-        <div className="recordings-section-stalled">
-          <Plural
-            value={stalled}
-            one="Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name."
-            other="Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name."
+        {stalled > 0 && (
+          <div className="recordings-section-stalled">
+            <Plural
+              value={stalled}
+              one="Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name."
+              other="Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name."
+            />
+          </div>
+        )}
+
+        {items.map((item) => (
+          <RecordingRow
+            key={item.ref}
+            item={item}
+            edit={edits[item.ref]}
+            course={course}
+            onReconnect={onReconnect}
+            onToggle={toggleExpand}
           />
-        </div>
-      )}
+        ))}
 
-      {items.map((item) => (
-        <RecordingRow
-          key={item.ref}
-          item={item}
-          edit={edits[item.ref]}
-          course={course}
-          onReconnect={onReconnect}
-          onToggle={toggleExpand}
-        />
-      ))}
-
-      {paused && (
-        <PasscodePrompt
-          reason={paused.reason}
-          busy={saving}
-          onSubmit={submitPasscode}
-          onCancel={() => void cancelPasscode()}
-        />
-      )}
+        {paused && (
+          <PasscodePrompt
+            reason={paused.reason}
+            busy={saving}
+            onSubmit={submitPasscode}
+            onCancel={() => void cancelPasscode()}
+          />
+        )}
+      </div>
     </div>
   )
 }
