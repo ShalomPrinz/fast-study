@@ -1,7 +1,6 @@
 // The error report's `mailto:` composition — pure string work, kept out of main.js to be testable.
 
-// The group does not exist yet.
-const REPORT_RECIPIENT = 'faststudy-reports@googlegroups.com';
+const REPORT_RECIPIENT = 'fast-study-reports@googlegroups.com';
 // The Windows shell caps a mailto near 2KB, so the body is trimmed to fit the *encoded* URL under
 // this; the rest of the report rides in the file whose path the body names.
 const MAILTO_LIMIT = 1800;

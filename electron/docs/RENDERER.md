@@ -92,8 +92,9 @@ frames. Unpaired surrogates are replaced first, since `encodeURIComponent` throw
 name's timestamp uses `-` for `:`, which Windows forbids in a path.
 
 `report.js` holds the composition because it is pure string work and so unit-testable; `mailReport`
-stays in `main.js` beside the log tail and state root it needs. The recipient Google Group does not
-exist yet.
+stays in `main.js` beside the log tail and state root it needs. The recipient is the
+`fast-study-reports@googlegroups.com` group, which forwards to the maintainer — the destination
+changes in the group's settings, never in a release.
 
 ## Startup checks
 
