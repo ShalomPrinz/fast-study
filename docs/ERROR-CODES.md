@@ -17,13 +17,14 @@ fallback an unknown code renders.
 
 ## The wire
 
-Four channels carry failures, and all four carry the same two fields beside the prose they already
-had.
+Failures travel on these channels, and every one carries the same two fields beside the prose it
+already had.
 
 | Channel         | Shape                                                                      | Produced by                                                  |
 | --------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------ |
 | HTTP body       | `{error, code, params}` on every non-2xx                                   | all four services                                            |
 | Pipeline error  | `{step, message, code, params, provider, blocked}` per lecture on `/status` | `backend/pipeline/runner.py`                                 |
+| Runner crash    | `runner.last_error` — `{message, code, params}` or `null`                   | `backend/pipeline/runner.py`                                 |
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{state, code, params}`                          | `lib/tools/`, reported on each service's `/health`           |
@@ -46,8 +47,9 @@ frontend's — Hebrew puts the same values in a different order, and
 seen from the other end.
 
 That forbids the tempting shortcut of shipping the English clause as a param. `EMPTY_FILE_ISSUES`
-(`backend/pipeline/runner.py`) held six explanatory hints, one per file; they are gone, and
-`empty_file` carries only `{file}`, off which the frontend keys its own clause.
+(`backend/pipeline/runner.py`) holds six explanatory hints, one per file; they stay in the English
+prose, where a service's wording always may, and reach no param. `empty_file` carries only `{file}`,
+off which the frontend keys its own clause.
 
 `detail` is the one reserved param name: it holds text from outside this repo — ffmpeg, Groq, Gemini,
 pandoc, tectonic, yt-dlp, curl, Playwright, Moodle, Google Drive, the OS. **Third-party text never
@@ -115,7 +117,6 @@ unreachable or refused; `internal_error` is everything else.
 | `pipeline/to_pdf.py`                    | `pdf_missing_font`          | `detail`                        | user  |
 | `pipeline/to_pdf.py`                    | `pdf_asset_missing`         | `asset`                         | user  |
 | `pipeline/pdf/tex_errors.py`            | `latex_error`               | `message`, `line`, `at`, `more_count` | user |
-| `pipeline/to_pdf.py` warning            | `pdf_engine_exit`           | `exit_code`                     | user  |
 | `pipeline/to_pdf.py`                    | `internal_missing_input`    | `file`                          | dev   |
 | `pipeline/upload_to_drive.py`           | `drive_upload_failed`       | `detail`                        | user  |
 | `services/google_auth.py`               | `drive_not_connected`       | —                               | user  |
@@ -149,6 +150,7 @@ with one string, and `provider` and `blocked` stay on the record — the fronten
 | `course/merge.py`        | `no_summaries_found`     | —                 | user  |
 | `course/collect.py`      | `no_summaries_found`     | —                 | user  |
 | `course/runner.py`       | `internal_unknown_phase` | `phase`           | dev   |
+| `course/runner.py` worker| `internal_error`         | `detail`          | user  |
 
 A phase worker's own exception no longer reaches this channel as a bare `str(e)`: the worker's code
 and params ride through, and only a truly untyped exception falls back to `internal_error`.
@@ -175,10 +177,17 @@ and params ride through, and only a truly untyped exception falls back to `inter
 | `database_main.py`    | `create_dir_failed`             | `path`, `detail`  | user      |
 | `database_main.py`    | `rename_failed`                 | `from`, `to`, `detail` | user |
 | `database_main.py`    | `file_write_failed`             | `file`, `detail`  | user      |
+| `database_main.py`    | `file_read_failed`              | `file`, `detail`  | user      |
+| `database_main.py`    | `file_delete_failed`            | `file`, `detail`  | user      |
 | `database_main.py`    | `file_not_found`                | `file`            | user      |
 | `database_main.py`    | `summary_io_failed`             | `detail`          | uncertain |
 | `database_main.py`    | `overview_read_failed`          | `detail`          | uncertain |
 | `database_main.py`    | `settings_store_io_failed`      | `detail`          | uncertain |
+
+Reading, writing and deleting are three codes, not one: a wrong-verb sentence for a failed read is a
+user-visible defect, not a naming quibble. Two params are knowingly thin — `file_write_failed` on
+`POST /…/materials` carries no `file`, because the name is allocated inside the write that failed,
+and `overview_read_failed` covers all four overview read routes without one.
 
 Every route handler catches bare `Exception`, so an unlabelled stdlib exception is the common case,
 not the exceptional one. The code therefore lives on the exception class — every authored message
@@ -247,12 +256,20 @@ emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.
 | `app.js` backstop               | `internal_error`              | `detail`                 | user  |
 | `http/server.js`, request checks| `invalid_request`             | `field`                  | dev   |
 
-`UnsupportedError` and `PasscodeError` (`src/lib/errors.js`) carry `code` and `params` so the code
-survives the throw up to `handleResolve` and the backstop; the four typed refusals (401/409/422/503)
-relay their thrower's code rather than only a message.
+`UnsupportedError` and `PasscodeError` extend `CodedError` (`src/lib/errors.js`), so the code survives
+the throw up to `handleResolve` and the backstop and the four typed refusals (401/409/422/503) relay
+their thrower's code rather than only a message. A base class rather than a bare `err.code` tag
+because **Node system errors already spell `err.code`** — `'ENOENT'` would otherwise reach the SPA as
+a protocol code.
 
 `browser_missing` reaches the SPA through two different responses — the 200 `{available:false}` body
 of `/prereqs/browser` and the 500 backstop — and is one code in both.
+
+Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
+English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`
+and `name` are filled by the route, not the thrower — the passcode gate knows neither. And `detail`
+is `null` rather than absent wherever there was nothing to carry: an empty stderr tail, a Moodle
+error with no `message`, a 422 that carried no message.
 
 ### `lib/tools/`
 
@@ -307,5 +324,10 @@ to any service.
 - **`audio_extraction_failed`'s `detail` is a bare exit code.** `pipeline/strip_audio.py` sends
   ffmpeg's stderr to `DEVNULL`, so there is nothing more to carry. Capturing it would make the
   headline's detail line worth reading.
-- **`course/analyze.py` does not special-case a Gemini daily quota**, so an overview analyze that
-  exhausts it reports a generic failure rather than `gemini_quota_exhausted`.
+- **`course/analyze.py` does not special-case a Gemini daily quota.** The code rides through from
+  `llm_client`, so the entry does read `gemini_quota_exhausted` — but there is no run-scoped block
+  and no `provider` field, so the overview has nothing like the pipeline's blocked records.
+- **A PDF render warning carries no code.** `.pdf_warning` is a file `database/` inlines into the
+  tree as a plain string, not one of the four channels above, so `tectonic exited N with no
+  reported error` and a recovered render's `LaTeX error: …` stay English prose. Giving the marker a
+  code would mean changing its on-disk format in three services at once.
