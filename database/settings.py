@@ -4,6 +4,7 @@ import re
 from pathlib import Path
 
 from dotenv import dotenv_values
+from fs.paths import CodedValueError
 
 # Resolved from this file, never from the cwd — each service runs with its own directory as cwd.
 ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
@@ -92,11 +93,17 @@ def _incoming(field: str, value) -> str:
     """Validate one incoming setting value and return the text to store."""
 
     if not isinstance(value, str):
-        raise ValueError(f"{field} must be a string")
+        raise CodedValueError(
+            f"{field} must be a string", "setting_must_be_string", field=field
+        )
     text = value.strip()
     # Single quotes and newlines cannot be represented in the quoting above, and no real value has one.
     if "'" in text or "\n" in text or "\r" in text:
-        raise ValueError(f"{field} may not contain quotes or line breaks")
+        raise CodedValueError(
+            f"{field} may not contain quotes or line breaks",
+            "setting_may_not_contain_quotes",
+            field=field,
+        )
     return text
 
 
@@ -105,7 +112,9 @@ def _incoming_flag(field: str, value) -> str:
 
     # A bare truth test would let the string "false" store `true`, silently flipping the setting on.
     if not isinstance(value, bool):
-        raise ValueError(f"{field} must be a boolean")
+        raise CodedValueError(
+            f"{field} must be a boolean", "setting_must_be_boolean", field=field
+        )
     return "true" if value else "false"
 
 
@@ -114,7 +123,9 @@ def _incoming_int(field: str, value) -> str:
 
     # `isinstance(True, int)` is True, so without this guard a boolean would silently store 1 or 0.
     if isinstance(value, bool) or not isinstance(value, int):
-        raise ValueError(f"{field} must be an integer")
+        raise CodedValueError(
+            f"{field} must be an integer", "setting_must_be_integer", field=field
+        )
     return str(value)
 
 
@@ -123,13 +134,21 @@ def prepare_data_root(value) -> str:
 
     text = _incoming("data_root", value)
     if not text:
-        raise ValueError("data root may not be empty")
+        raise CodedValueError("data root may not be empty", "data_root_empty")
     path = Path(text)
     # Relative would resolve against each service's own cwd, silently splitting the data directory.
     if not path.is_absolute():
-        raise ValueError(f"data root must be an absolute path: {text}")
+        raise CodedValueError(
+            f"data root must be an absolute path: {text}",
+            "data_root_not_absolute",
+            path=text,
+        )
     if path.exists() and not path.is_dir():
-        raise ValueError(f"data root exists but is not a directory: {text}")
+        raise CodedValueError(
+            f"data root exists but is not a directory: {text}",
+            "data_root_not_a_directory",
+            path=text,
+        )
     try:
         path.mkdir(parents=True, exist_ok=True)
         # A probe write turns an unwritable root into a fixable error now, not a pipeline failure later.
@@ -137,7 +156,12 @@ def prepare_data_root(value) -> str:
         probe.write_bytes(b"")
         probe.unlink()
     except OSError as e:
-        raise ValueError(f"data root is not writable: {text} ({e})") from e
+        raise CodedValueError(
+            f"data root is not writable: {text} ({e})",
+            "data_root_not_writable",
+            path=text,
+            detail=str(e),
+        ) from e
     return str(path)
 
 
@@ -201,7 +225,9 @@ def write_settings(patch: dict) -> dict:
         elif field in INT_FIELDS:
             updates[INT_FIELDS[field]] = _incoming_int(field, value)
         else:
-            raise ValueError(f"unknown setting: {field}")
+            raise CodedValueError(
+                f"unknown setting: {field}", "unknown_setting", field=field
+            )
     if updates:
         text = ENV_PATH.read_text(encoding="utf-8") if ENV_PATH.exists() else ""
         ENV_PATH.write_text(merge_env_text(text, updates), encoding="utf-8")

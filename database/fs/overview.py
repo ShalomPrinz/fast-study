@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 
 from .paths import (
+    CourseNotFound,
     check_safe_segment,
     course_dir,
     overview_dir,
@@ -26,7 +27,7 @@ def write_overview_file(course: str, name: str, data: bytes) -> None:
 
     p = overview_file_path(course, name)
     if not course_dir(course).is_dir():
-        raise FileNotFoundError(f"course not found: {course}")
+        raise CourseNotFound(f"course not found: {course}", course=course)
     p.parent.mkdir(exist_ok=True)
     try:
         p.write_bytes(data)
@@ -92,7 +93,7 @@ def merge_overview_meta(course: str, slug: str, entry) -> None:
     check_safe_segment(course)
     check_safe_segment(slug)
     if not course_dir(course).is_dir():
-        raise FileNotFoundError(f"course not found: {course}")
+        raise CourseNotFound(f"course not found: {course}", course=course)
     d = overview_dir(course)
     d.mkdir(exist_ok=True)
     meta_path = d / OVERVIEW_META

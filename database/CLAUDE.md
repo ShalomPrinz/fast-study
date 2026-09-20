@@ -24,6 +24,10 @@ it backward-compatible or flag the impact.
   and the data root is module state written only by `set_data_root()`. It also owns the two guards
   every caller shares: `check_safe_segment()` and `reject_if_locked()` (a Windows sharing violation →
   `FileLocked` → `423`).
+- **Every non-2xx body is `{error, code, params}`** — English prose, the machine code, its flat
+  values. The code rides on the exception (`CodedError` in `fs/paths.py`), so it survives the frames
+  between a raise and the route that catches it; see [docs/API.md](docs/API.md) and the repo-wide
+  [docs/ERROR-CODES.md](../docs/ERROR-CODES.md).
 - **No outbound HTTP calls, ever** — it only answers requests and fans out SSE, so it holds no peer
   URLs. Why that is a packaging blocker is in the root [`CLAUDE.md`](../CLAUDE.md); a peer that needs
   to hear about something here calls in or subscribes to `/events`.

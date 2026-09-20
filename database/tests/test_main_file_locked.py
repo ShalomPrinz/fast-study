@@ -9,6 +9,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 
+def _locked_body(file: str) -> dict:
+    """The exact 423 envelope for a file held open elsewhere: prose, code, and the file it names."""
+
+    return {
+        "error": f"{file} is open in another program. Close it and try again.",
+        "code": "file_locked",
+        "params": {"file": file},
+    }
+
+
 @pytest.fixture
 def client(data_root):
     """TestClient over the app."""
@@ -69,9 +79,7 @@ class TestWriteFile:
             "/courses/Algo/lectures/L1/files/summary.pdf", content=b"%PDF-new"
         )
         assert r.status_code == 423
-        assert r.json() == {
-            "error": "summary.pdf is open in another program. Close it and try again."
-        }
+        assert r.json() == _locked_body("summary.pdf")
 
     def test_plain_permission_error_stays_400(self, client, lecture, monkeypatch):
         monkeypatch.setattr("pathlib.Path.write_bytes", _plain_permission_error)
@@ -81,6 +89,9 @@ class TestWriteFile:
         )
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+        assert r.json()["code"] == "file_write_failed"
+        assert r.json()["params"]["file"] == "summary.pdf"
+        assert "Permission denied" in r.json()["params"]["detail"]
 
 
 class TestWriteFileCrtDenial:
@@ -95,9 +106,7 @@ class TestWriteFileCrtDenial:
             "/courses/Algo/lectures/L1/files/summary.pdf", content=b"%PDF-new"
         )
         assert r.status_code == 423
-        assert r.json() == {
-            "error": "summary.pdf is open in another program. Close it and try again."
-        }
+        assert r.json() == _locked_body("summary.pdf")
 
     def test_same_error_on_posix_stays_400(self, client, lecture, monkeypatch):
         monkeypatch.setattr("pathlib.Path.write_bytes", _crt_denial)
@@ -107,6 +116,9 @@ class TestWriteFileCrtDenial:
         )
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+        assert r.json()["code"] == "file_write_failed"
+        assert r.json()["params"]["file"] == "summary.pdf"
+        assert "Permission denied" in r.json()["params"]["detail"]
 
     def test_read_only_file_on_win32_stays_400(
         self, client, lecture, on_windows, monkeypatch
@@ -119,6 +131,9 @@ class TestWriteFileCrtDenial:
         )
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+        assert r.json()["code"] == "file_write_failed"
+        assert r.json()["params"]["file"] == "summary.pdf"
+        assert "Permission denied" in r.json()["params"]["detail"]
 
     def test_missing_file_on_win32_stays_400(
         self, client, lecture, on_windows, monkeypatch
@@ -128,6 +143,9 @@ class TestWriteFileCrtDenial:
         r = client.put("/courses/Algo/lectures/L1/files/gone.pdf", content=b"%PDF-new")
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+        assert r.json()["code"] == "file_write_failed"
+        assert r.json()["params"]["file"] == "gone.pdf"
+        assert "Permission denied" in r.json()["params"]["detail"]
 
 
 class TestDeleteFile:
@@ -136,9 +154,7 @@ class TestDeleteFile:
 
         r = client.delete("/courses/Algo/lectures/L1/files/summary.pdf")
         assert r.status_code == 423
-        assert r.json() == {
-            "error": "summary.pdf is open in another program. Close it and try again."
-        }
+        assert r.json() == _locked_body("summary.pdf")
 
     def test_plain_permission_error_stays_400(self, client, lecture, monkeypatch):
         monkeypatch.setattr("pathlib.Path.unlink", _plain_permission_error)
@@ -146,6 +162,9 @@ class TestDeleteFile:
         r = client.delete("/courses/Algo/lectures/L1/files/summary.pdf")
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+        assert r.json()["code"] == "file_delete_failed"
+        assert r.json()["params"]["file"] == "summary.pdf"
+        assert "Permission denied" in r.json()["params"]["detail"]
 
 
 def _locked_file(name: str):
@@ -181,9 +200,7 @@ class TestWriteOverviewFile:
 
         r = client.put("/courses/Algo/overview/files/exam.pdf", content=b"%PDF-new")
         assert r.status_code == 423
-        assert r.json() == {
-            "error": "exam.pdf is open in another program. Close it and try again."
-        }
+        assert r.json() == _locked_body("exam.pdf")
 
     def test_plain_permission_error_stays_400(self, client, data_root, monkeypatch):
         (data_root / "Algo").mkdir()
@@ -192,6 +209,9 @@ class TestWriteOverviewFile:
         r = client.put("/courses/Algo/overview/files/exam.pdf", content=b"%PDF-new")
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+        assert r.json()["code"] == "file_write_failed"
+        assert r.json()["params"]["file"] == "exam.pdf"
+        assert "Permission denied" in r.json()["params"]["detail"]
 
 
 class TestWriteVideo:
@@ -203,9 +223,7 @@ class TestWriteVideo:
 
         r = client.put("/courses/Algo/lectures/L1/video", content=b"new")
         assert r.status_code == 423
-        assert r.json() == {
-            "error": "summary.pdf is open in another program. Close it and try again."
-        }
+        assert r.json() == _locked_body("summary.pdf")
         # The whole wipe set survives, so a re-upload after closing the viewer starts clean.
         assert (lecture / "video.mp4").read_bytes() == b"old"
         assert (lecture / "audio.mp3").exists()
@@ -222,9 +240,7 @@ class TestWriteVideo:
 
         r = client.put("/courses/Algo/lectures/L1/video", content=b"new")
         assert r.status_code == 423
-        assert r.json() == {
-            "error": "summary.pdf is open in another program. Close it and try again."
-        }
+        assert r.json() == _locked_body("summary.pdf")
         # The probe has to refuse before the unlink loop, so the whole wipe set is still on disk.
         assert (lecture / "video.mp4").read_bytes() == b"old"
         assert (lecture / "audio.mp3").exists()
@@ -246,3 +262,6 @@ class TestWriteVideo:
         r = client.put("/courses/Algo/lectures/L1/video", content=b"new")
         assert r.status_code == 400
         assert "Permission denied" in r.json()["error"]
+        assert r.json()["code"] == "file_write_failed"
+        assert r.json()["params"]["file"] == "video.mp4"
+        assert "Permission denied" in r.json()["params"]["detail"]

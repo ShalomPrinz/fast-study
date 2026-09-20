@@ -2,6 +2,7 @@ import logging
 import os
 import signal
 from contextlib import asynccontextmanager
+from json import JSONDecodeError
 
 import runtime
 import settings
@@ -13,7 +14,14 @@ from fs import crud, materials, overview, paths, tree
 from fs import summaries as summaries_fs
 from fs import summary as summary_fs
 from fs.files import file_path
-from fs.paths import DataRootNotConfigured, FileLocked, lecture_dir
+from fs.paths import (
+    ARCHIVED_MARKER,
+    SOURCE_URL_MARKER,
+    CodedError,
+    DataRootNotConfigured,
+    FileLocked,
+    lecture_dir,
+)
 from logging_setup import setup_logging
 
 setup_logging()
@@ -73,28 +81,35 @@ def health():
     return {"status": "ok"}
 
 
-def _error(message: str, status: int):
-    """Build the service's failure body ({error})."""
+def _error(message: str, status: int, code: str, params: dict | None = None):
+    """Build the service's failure body ({error, code, params}) — English prose, machine code, values."""
 
-    return JSONResponse({"error": message}, status_code=status)
+    return JSONResponse(
+        {"error": message, "code": code, "params": params or {}}, status_code=status
+    )
 
 
-def _failure(exc: Exception, status: int):
-    """Build the failure body for a caught exception, promoting the two errors that have an exact
-    status of their own — the routes catch Exception, so a handler would never see them."""
+def _failure(exc: Exception, status: int, code: str, params: dict | None = None):
+    """Build the failure body for a caught exception: its own code when it carries one, else the
+    route's wrapper code with str(exc) as params.detail. Routes catch Exception, so that is the norm."""
 
     if isinstance(exc, DataRootNotConfigured):
-        return _error(str(exc), 409)
+        return _error(str(exc), 409, exc.code, exc.params)
     if isinstance(exc, FileLocked):
-        return _error(str(exc), 423)
-    return _error(str(exc), status)
+        return _error(str(exc), 423, exc.code, exc.params)
+    if isinstance(exc, CodedError):
+        return _error(str(exc), status, exc.code, exc.params)
+    # A malformed or incomplete JSON body is the caller's bug whatever the route meant to do.
+    if isinstance(exc, (KeyError, JSONDecodeError)):
+        return _error(str(exc), status, "bad_request_body", {"detail": str(exc)})
+    return _error(str(exc), status, code, {**(params or {}), "detail": str(exc)})
 
 
 @app.exception_handler(DataRootNotConfigured)
 def data_root_not_configured(request: Request, exc: DataRootNotConfigured):
     """Answer 409 on the endpoints that have no blanket handler of their own, /tree above all."""
 
-    return _error(str(exc), 409)
+    return _error(str(exc), 409, exc.code, exc.params)
 
 
 @app.get("/tree")
@@ -108,24 +123,28 @@ def get_tree():
 async def post_course(request: Request):
     """Create a new course directory, optionally with a source_url."""
 
+    name = None
     try:
         body = await request.json()
-        crud.create_course(body["name"], body.get("source_url"))
+        name = body["name"]
+        crud.create_course(name, body.get("source_url"))
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "create_dir_failed", {"path": name})
 
 
 @app.patch("/courses/{course}")
 async def patch_course(course: str, request: Request):
     """Rename a course directory."""
 
+    name = None
     try:
         body = await request.json()
-        crud.rename_course(course, body["name"])
+        name = body["name"]
+        crud.rename_course(course, name)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "rename_failed", {"from": course, "to": name})
 
 
 @app.patch("/courses/{course}/source_url")
@@ -137,7 +156,7 @@ async def patch_course_source_url(course: str, request: Request):
         crud.set_course_source_url(course, body.get("source_url"))
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_write_failed", {"file": SOURCE_URL_MARKER})
 
 
 @app.patch("/courses/{course}/archived")
@@ -149,19 +168,21 @@ async def patch_course_archived(course: str, request: Request):
         crud.set_course_archived(course, body["archived"])
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_write_failed", {"file": ARCHIVED_MARKER})
 
 
 @app.post("/courses/{course}/lectures")
 async def post_lecture(course: str, request: Request, kind: str = Query("lecture")):
     """Create a lecture or recitation under the given course."""
 
+    name = None
     try:
         body = await request.json()
-        crud.create_lecture(course, body["name"], kind)
+        name = body["name"]
+        crud.create_lecture(course, name, kind)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "create_dir_failed", {"path": name})
 
 
 @app.patch("/courses/{course}/lectures/{lecture}")
@@ -170,12 +191,14 @@ async def patch_lecture(
 ):
     """Rename a lecture or recitation."""
 
+    name = None
     try:
         body = await request.json()
-        crud.rename_lecture(course, lecture, body["name"], kind)
+        name = body["name"]
+        crud.rename_lecture(course, lecture, name, kind)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "rename_failed", {"from": lecture, "to": name})
 
 
 @app.put("/courses/{course}/lectures/{lecture}/video")
@@ -189,7 +212,7 @@ async def put_video(
         crud.write_video(course, lecture, kind, data)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_write_failed", {"file": "video.mp4"})
 
 
 @app.get("/courses/{course}/lectures/{lecture}/materials")
@@ -201,7 +224,7 @@ def get_materials(course: str, lecture: str, kind: str = Query("lecture")):
             "materials": materials.list_materials(lecture_dir(course, lecture, kind))
         }
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_read_failed")
 
 
 @app.post("/courses/{course}/lectures/{lecture}/materials")
@@ -215,7 +238,8 @@ async def post_material(
         name = materials.write_material(course, lecture, kind, data)
         return JSONResponse({"name": name})
     except Exception as e:
-        return _failure(e, 400)
+        # The name is allocated inside the failing write, so only the OS detail is knowable here.
+        return _failure(e, 400, "file_write_failed")
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -228,7 +252,7 @@ def delete_file_endpoint(
         crud.delete_file(course, lecture, name, kind)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_delete_failed", {"file": name})
 
 
 @app.put("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -242,7 +266,7 @@ async def put_file(
         crud.write_file(course, lecture, name, kind, data)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_write_failed", {"file": name})
 
 
 @app.head("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -252,7 +276,8 @@ def head_file(course: str, lecture: str, name: str, kind: str = Query("lecture")
     try:
         p = file_path(course, lecture, name, kind)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_read_failed", {"file": name})
+    # A bodyless 404 on purpose: absence is this route's normal answer, not a failure.
     if not p.exists():
         return Response(status_code=404)
     return Response(status_code=200)
@@ -265,7 +290,7 @@ def get_summary(course: str, lecture: str, kind: str = Query("lecture")):
     try:
         return summary_fs.read_summary(course, lecture, kind)
     except Exception as e:
-        return _failure(e, 500)
+        return _failure(e, 500, "summary_io_failed")
 
 
 @app.put("/courses/{course}/lectures/{lecture}/summary")
@@ -279,7 +304,7 @@ async def put_summary(
         summary_fs.write_summary(course, lecture, kind, content)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 500)
+        return _failure(e, 500, "summary_io_failed")
 
 
 @app.delete("/courses/{course}/lectures/{lecture}/summary")
@@ -290,7 +315,7 @@ def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
         summary_fs.revert_summary(course, lecture, kind)
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 500)
+        return _failure(e, 500, "summary_io_failed")
 
 
 @app.get("/courses/{course}/lectures/{lecture}/files/{name}")
@@ -300,9 +325,9 @@ def get_file(course: str, lecture: str, name: str, kind: str = Query("lecture"))
     try:
         p = file_path(course, lecture, name, kind)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_read_failed", {"file": name})
     if not p.exists():
-        return Response("Not found", status_code=404)
+        return _error("Not found", 404, "file_not_found", {"file": name})
     media_type = "application/pdf" if name.endswith(".pdf") else None
     return FileResponse(str(p), media_type=media_type)
 
@@ -314,9 +339,9 @@ def get_file_path(course: str, lecture: str, name: str, kind: str = Query("lectu
     try:
         p = file_path(course, lecture, name, kind)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_read_failed", {"file": name})
     if not p.exists():
-        return Response("Not found", status_code=404)
+        return _error("Not found", 404, "file_not_found", {"file": name})
     return {"path": str(p)}
 
 
@@ -327,9 +352,9 @@ def get_course_summaries(course: str):
     try:
         return {"summaries": summaries_fs.read_course_summaries(course)}
     except FileNotFoundError as e:
-        return _error(str(e), 404)
+        return _failure(e, 404, "course_not_found", {"course": course})
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "summary_io_failed")
 
 
 @app.put("/courses/{course}/overview/files/{name}")
@@ -341,9 +366,9 @@ async def put_overview_file(course: str, name: str, request: Request):
         overview.write_overview_file(course, name, data)
         return Response(status_code=204)
     except FileNotFoundError as e:
-        return _error(str(e), 404)
+        return _failure(e, 404, "course_not_found", {"course": course})
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_write_failed", {"file": name})
 
 
 @app.get("/courses/{course}/overview/files")
@@ -353,7 +378,7 @@ def list_overview_files(course: str):
     try:
         return {"files": overview.list_overview_files(course)}
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "overview_read_failed")
 
 
 @app.get("/courses/{course}/overview/meta")
@@ -363,7 +388,7 @@ def get_overview_meta(course: str):
     try:
         return {"meta": overview.read_overview_meta(course)}
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "overview_read_failed")
 
 
 @app.patch("/courses/{course}/overview/meta")
@@ -375,9 +400,9 @@ async def patch_overview_meta(course: str, request: Request):
         overview.merge_overview_meta(course, body["slug"], body["entry"])
         return Response(status_code=204)
     except FileNotFoundError as e:
-        return _error(str(e), 404)
+        return _failure(e, 404, "course_not_found", {"course": course})
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "file_write_failed", {"file": overview.OVERVIEW_META})
 
 
 @app.get("/courses/{course}/overview/files/{name}")
@@ -387,9 +412,9 @@ def get_overview_file(course: str, name: str):
     try:
         p = overview.overview_file_path(course, name)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "overview_read_failed")
     if not p.exists():
-        return Response("Not found", status_code=404)
+        return _error("Not found", 404, "file_not_found", {"file": name})
     media_type = "application/pdf" if name.endswith(".pdf") else None
     return FileResponse(str(p), media_type=media_type)
 
@@ -401,9 +426,9 @@ def get_overview_file_path(course: str, name: str):
     try:
         p = overview.overview_file_path(course, name)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "overview_read_failed")
     if not p.exists():
-        return Response("Not found", status_code=404)
+        return _error("Not found", 404, "file_not_found", {"file": name})
     return {"path": str(p)}
 
 
@@ -414,7 +439,7 @@ def get_settings():
     try:
         return settings.read_settings()
     except Exception as e:
-        return _failure(e, 500)
+        return _failure(e, 500, "settings_store_io_failed")
 
 
 @app.put("/settings")
@@ -425,7 +450,7 @@ async def put_settings(request: Request):
         body = await request.json()
         return settings.write_settings(body)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "settings_store_io_failed")
 
 
 @app.post("/config")
@@ -439,7 +464,7 @@ async def post_config(request: Request):
             paths.set_data_root(settings.prepare_data_root(body["data_root"]))
         return Response(status_code=204)
     except Exception as e:
-        return _failure(e, 400)
+        return _failure(e, 400, "settings_store_io_failed")
 
 
 @app.get("/events")

@@ -25,4 +25,7 @@ def test_put_video_reports_a_failed_write(client, data_root):
 
     r = client.put("/courses/Algo/lectures/Lecture 1/video", content=b"\x00mp4")
     assert r.status_code == 400
-    assert "error" in r.json()
+    assert r.json()["code"] == "file_write_failed"
+    assert r.json()["params"]["file"] == "video.mp4"
+    # The OS text is the only string that says what went wrong, so it rides as detail.
+    assert r.json()["params"]["detail"]

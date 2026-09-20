@@ -39,13 +39,15 @@ def test_tree_answers_409(client, unconfigured):
 
     assert r.status_code == 409
     assert "not configured" in r.json()["error"]
+    assert r.json()["code"] == "data_root_not_configured"
+    assert r.json()["params"] == {}
 
 
 def test_a_blanket_handler_endpoint_answers_409_not_400(client, unconfigured):
     r = client.get("/courses/Algo/lectures/L1/materials")
 
     assert r.status_code == 409
-    assert "error" in r.json()
+    assert r.json()["code"] == "data_root_not_configured"
 
 
 def test_config_clears_the_condition(client, unconfigured, tmp_path):
