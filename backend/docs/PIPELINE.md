@@ -30,7 +30,7 @@ No environment variable redirects a provider call: both SDK clients get `provide
 
 ## Empty-file guard
 
-A pipeline file is never legitimately 0 bytes; when one is, the producing tool returned success with no content and raised nothing to explain it. `_require_nonempty` rejects 0-byte data at every workspace read and write, and `EMPTY_FILE_ISSUES` supplies the likely cause per filename. Without it a 0-byte file counts as "exists" for `next_step` and the run advances, surfacing a misleading downstream error instead.
+A pipeline file is never legitimately 0 bytes; when one is, the producing tool returned success with no content and raised nothing to explain it. `_require_nonempty` rejects 0-byte data at every workspace read and write, and `EMPTY_FILE_ISSUES` supplies the likely cause per filename. Without it a 0-byte file counts as "exists" for `next_step` and the run advances, surfacing a misleading downstream error instead. All six are one code, `empty_file`, carrying `{file}` only — the hints are sentence fragments and stay in the English prose.
 
 Material PDFs are the exception: they are user-supplied optional inputs with no producing step, so an empty one is skipped with a warning and the run continues on the remaining materials (or transcript-only).
 
@@ -40,9 +40,9 @@ Outcomes of the fire-and-forget endpoints live in runner state, read via `GET /s
 
 - `_locks[(course, lecture, kind)]` — one `asyncio.Lock` per lecture, serializing concurrent triggers.
 - `_in_flight[skey]` — all in-flight entries regardless of trigger (runner / `/pipeline` / single `/run/{step}` all populate the same map, so the frontend doesn't care which path queued them). `skey` is the string `"course||lecture||kind"` and appears verbatim in `/status`.
-- `_errors[skey]` — last error as `{step, message, code, provider, blocked}`, survives after `_in_flight` clears; cleared when that lecture next starts a step. A summarize start from any trigger also drops every quota record and lifts `_summarize_block`, since it re-tests the quota.
-- `_summarize_block` — the Gemini daily-quota message that stops `run_all` from summarizing further lectures; each one it stops gets the same quota record in `_errors`, with `blocked: true`. Reset at every run's start and end, and by any summarize start.
-- `_runner_status` — `{running, total, done, last_error}` for `run_all`.
+- `_errors[skey]` — last error as `{step, message, code, params, provider, blocked}`, survives after `_in_flight` clears; cleared when that lecture next starts a step. A summarize start from any trigger also drops every record whose `code` is in `_GEMINI_QUOTA_CODES` and lifts `_summarize_block`, since it re-tests the quota. The sweep tests membership of that set: a code it does not cover would strand every lecture the run stopped, whose record no later attempt would clear.
+- `_summarize_block` — the `{message, params}` of the Gemini daily quota that stops `run_all` from summarizing further lectures; each one it stops gets `gemini_quota_blocked` with those same params in `_errors`, with `blocked: true`. Reset at every run's start and end, and by any summarize start.
+- `_runner_status` — `{running, total, done, last_error}` for `run_all`; `last_error` is a crashed lecture as `{message, code, params}` (`run_crashed`), or `null`.
 - `_queue` — the ordered `QueueEntry(course, lecture, kind, depth)` list `run_all` drains. In memory only: a restart empties it, and those lectures simply fall back to "has work left, nothing scheduled", which the frontend derives from the tree.
 
 `next_step` is pure file-existence over `enabled_steps()`: the first step whose output is missing. That makes every trigger resumable with no stored progress.
@@ -89,7 +89,7 @@ The uploading service reports the arrival as a fact and holds no step names — 
 
 Resume validates the meta against `audio.mp3`'s size AND mtime. Re-downloading audio gives it a fresh mtime, so the transcribe executor restores the mtime recorded in the partial meta — otherwise every resume silently falls back to a full restart.
 
-**Gemini / summarize.** `LLMClient.generate` parses a 429 body into `GeminiRateLimitError` (`{quota_id, quota_value, model, is_daily}`) instead of leaking the SDK's JSON blob. The 429's `retryDelay` is never parsed — the quota kind says everything actionable, and a daily quota's `retryDelay` lies (claims 59s, actually resets at midnight Pacific).
+**Gemini / summarize.** `LLMClient.generate` parses a 429 body into `GeminiRateLimitError` (`{quota_id, quota_value, model, is_daily}`) instead of leaking the SDK's JSON blob. Those same facts ride the wire as the `gemini_quota_exhausted` params `{scope, model, limit, tier}` (`quota_params`), so the sentence is a renderer's to build rather than the backend's. The 429's `retryDelay` is never parsed — the quota kind says everything actionable, and a daily quota's `retryDelay` lies (claims 59s, actually resets at midnight Pacific).
 
 - Per-minute quota → normal `rate_limited` path, sleeping `GEMINI_MINUTE_QUOTA_SLEEP_SECONDS`.
 - Daily quota (`quotaId` containing `PerDay`, or anything unrecognised — the safe default) → plain error, no retry. It also sets the run-scoped `_summarize_block` so every later lecture in the same `run_all` stops at `transcript.txt` without calling Gemini, carrying the same quota record so it reads as blocked rather than pending. Audio+transcribe are Groq (separate quota) so the queue still gets fully transcribed, and tomorrow's run resumes each lecture at summarize.

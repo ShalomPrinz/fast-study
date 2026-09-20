@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+from services.errors import CodedError
 from services.resources import resource_path
 from timing import timed_pipeline
 from tools import tool_path
@@ -68,12 +69,18 @@ LATEX_HEADER = r"""
 """
 
 
-class PdfRenderError(RuntimeError):
+class PdfRenderError(CodedError):
     """A render that produced no usable PDF. Carries the generated .tex source so the
     caller — which owns the lecture identity this module must not know — can persist it."""
 
-    def __init__(self, message: str, tex_source: str | None = None):
-        super().__init__(message)
+    def __init__(
+        self,
+        message: str,
+        code: str,
+        params: dict | None = None,
+        tex_source: str | None = None,
+    ):
+        super().__init__(message, code, **(params or {}))
         self.tex_source = tex_source
 
 
@@ -143,8 +150,12 @@ def _run_tool(
             timeout=timeout,
         )
     except subprocess.TimeoutExpired:
+        tool = Path(cmd[0]).stem
         raise PdfRenderError(
-            f"{Path(cmd[0]).stem} timed out after {timeout}s", tex_source
+            f"{tool} timed out after {timeout}s",
+            "pdf_tool_timeout",
+            {"tool": tool, "seconds": timeout},
+            tex_source,
         ) from None
 
 
@@ -203,12 +214,17 @@ def build_tex(markdown: str, build: Path) -> str:
     """Populate `build` with the fonts, header and input, run pandoc, and return build.tex's
     source. The markdown must already be pandoc-ready — the caller owns preprocessing."""
 
-    if not HEBREW_FONT.exists():
-        raise FileNotFoundError(f"Font not found: {HEBREW_FONT}")
-    if not HEBREW_FONT_BOLD.exists():
-        raise FileNotFoundError(f"Font not found: {HEBREW_FONT_BOLD}")
-    if not DIRECTION_FILTER.exists():
-        raise FileNotFoundError(f"Lua filter not found: {DIRECTION_FILTER}")
+    for label, asset in (
+        ("Font", HEBREW_FONT),
+        ("Font", HEBREW_FONT_BOLD),
+        ("Lua filter", DIRECTION_FILTER),
+    ):
+        if not asset.exists():
+            raise PdfRenderError(
+                f"{label} not found: {asset}",
+                "pdf_asset_missing",
+                {"asset": asset.name},
+            )
 
     template_path = resource_path("assets", "templates", "pandoc_template.tex")
     header = LATEX_HEADER.replace("FONTS_DIR_PLACEHOLDER", BUILD_FONTS_PATH)
@@ -239,12 +255,14 @@ def build_tex(markdown: str, build: Path) -> str:
     if result.returncode != 0:
         # pandoc relays errors on either stream; with no `! …` at all the failure is
         # pandoc's own and falls back to the stream TAIL, since this reaches a toast.
-        raise PdfRenderError(
-            classify(
-                f"{result.stdout}\n{result.stderr}",
-                f"pandoc failed:\n{result.stderr[-_LOG_TAIL_CHARS:]}",
-            )
+        tail = result.stderr[-_LOG_TAIL_CHARS:]
+        message, code, params = classify(
+            f"{result.stdout}\n{result.stderr}",
+            f"pandoc failed:\n{tail}",
+            "pdf_pandoc_failed",
+            detail=tail,
         )
+        raise PdfRenderError(message, code, params)
 
     tex_path = build / f"{BUILD_STEM}.tex"
     return tex_path.read_text(encoding="utf-8", errors="replace")
@@ -257,7 +275,11 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
 
     input_path = Path(md_path)
     if not input_path.exists():
-        raise FileNotFoundError(f"File not found: {md_path}")
+        raise PdfRenderError(
+            f"File not found: {md_path}",
+            "internal_missing_input",
+            {"file": input_path.name},
+        )
 
     output_path = input_path.with_suffix(".pdf")
 
@@ -278,14 +300,14 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
         if not built_pdf.exists() or built_pdf.stat().st_size == 0:
             # A font failure's log reads like success and a cold-cache panic writes none; both
             # name their cause only on stderr.
-            raise PdfRenderError(
-                classify(
-                    log,
-                    f"tectonic produced no usable PDF:\n"
-                    f"{engine_errors or log[-_LOG_TAIL_CHARS:]}",
-                ),
-                tex_source=tex_source,
+            detail = engine_errors or log[-_LOG_TAIL_CHARS:]
+            message, code, params = classify(
+                log,
+                f"tectonic produced no usable PDF:\n{detail}",
+                "pdf_engine_no_output",
+                detail=detail,
             )
+            raise PdfRenderError(message, code, params, tex_source=tex_source)
 
         errors = parse_tex_errors(log)
         font_errors = [e for e in errors if e.message.startswith(_FONT_ERROR_PREFIX)]
@@ -295,6 +317,8 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
             raise PdfRenderError(
                 f"missing font, characters would be dropped — "
                 f"{format_tex_errors(font_errors)}",
+                "pdf_missing_font",
+                {"detail": font_errors[0].message},
                 tex_source=tex_source,
             )
 

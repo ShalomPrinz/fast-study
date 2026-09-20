@@ -5,13 +5,15 @@ import asyncio
 from datetime import datetime, timezone
 
 from services import db_client
+from services.errors import CodedError, error_fields, failure
 
 from course import analyze, collect, extract, merge, overview, to_pdf
 from course.overview import Phase
 
 # Per-(course, slug); created lazily via setdefault, persists across runs so same-slug triggers serialize.
 _locks: dict[tuple[str, str], asyncio.Lock] = {}
-# course → { slug → entry }; entry = {"status", "phase"?, "message"?, "started_at"?}. The lock-holder
+# course → { slug → entry }; entry = {"status", "phase"?, "message"?, "code"?, "params"?,
+# "started_at"?}. The lock-holder
 # is the only writer of a given slug's entry; survives after the run finishes so `get_status` can read it.
 _status: dict[str, dict[str, dict]] = {}
 
@@ -30,26 +32,33 @@ def get_status(course: str) -> dict:
     }
 
 
-def resolve_slugs(csv: str | None) -> tuple[list[str], str | None]:
-    """Parse the optional `extractors` CSV into extractor slugs (default: all)."""
+def resolve_slugs(csv: str | None) -> tuple[list[str], dict | None]:
+    """Parse the optional `extractors` CSV into extractor slugs (default: all). The second
+    element is a ready-to-serve {error, code, params} body, or None when the CSV parsed."""
 
     if not csv:
         return overview.ALL_SLUGS, None
     slugs = [s.strip() for s in csv.split(",") if s.strip()]
     unknown = [s for s in slugs if s not in overview.EXTRACTORS_BY_SLUG]
     if unknown:
-        return slugs, f"unknown extractor(s): {', '.join(unknown)}"
+        joined = ", ".join(unknown)
+        return slugs, failure(
+            f"unknown extractor(s): {joined}", "unknown_extractors", slugs=joined
+        )
     return slugs, None
 
 
-def resolve_from_phase(from_phase: str | None) -> tuple[Phase | None, str | None]:
-    """Parse the optional from_phase id into a Phase (None = full chain / not provided)."""
+def resolve_from_phase(from_phase: str | None) -> tuple[Phase | None, dict | None]:
+    """Parse the optional from_phase id into a Phase (None = full chain / not provided),
+    mirroring `resolve_slugs`' (value, failure body) shape."""
 
     if from_phase is None:
         return None, None
     phase = Phase.from_id(from_phase)
     if phase is None:
-        return None, f"unknown phase: {from_phase}"
+        return None, failure(
+            f"unknown phase: {from_phase}", "unknown_phase", phase=from_phase
+        )
     return phase, None
 
 
@@ -153,7 +162,14 @@ class OverviewRun:
     def _mark_kept(self, slug: str) -> None:
         """A kept (already-on-disk) participant: non-error status, keeping the stamped phase."""
 
-        self._entry(slug).update({"status": "skipped", "message": "already generated"})
+        self._entry(slug).update(
+            {
+                "status": "skipped",
+                "message": "already generated",
+                "code": "already_generated",
+                "params": {},
+            }
+        )
 
     def _run_slug_phase(self, slug: str, phase: Phase) -> bool:
         """Run one (slug, phase) worker and fold its result into the shared entry; returns True
@@ -171,7 +187,14 @@ class OverviewRun:
             entries[slug] = {**self._phase_worker(slug, phase), **carried}
             errored = False
         except Exception as e:
-            entries[slug] = {"status": "error", "message": str(e), **carried}
+            code, params = error_fields(e, "internal_error")
+            entries[slug] = {
+                "status": "error",
+                "message": str(e),
+                "code": code,
+                "params": params,
+                **carried,
+            }
             errored = True
         finally:
             db_client.notify()
@@ -192,4 +215,6 @@ class OverviewRun:
             return merge.run_merge(self.course, self.course_node)
         if phase is Phase.TO_PDF:
             return to_pdf.run_to_pdf(self.course, slug)
-        raise ValueError(f"unknown phase: {phase}")
+        raise CodedError(
+            f"unknown phase: {phase}", "internal_unknown_phase", phase=phase.id
+        )

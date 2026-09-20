@@ -157,6 +157,8 @@ class TestRunMerge:
         assert run_merge(self.COURSE, node) == {
             "status": "skipped",
             "message": "no summaries found",
+            "code": "no_summaries_found",
+            "params": {},
         }
 
     def test_recitations_never_included(self, monkeypatch):

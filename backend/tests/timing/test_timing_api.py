@@ -26,7 +26,11 @@ class TestPostTiming:
         }
         response = client.post("/timing", json=body)
         assert response.status_code == 400
-        assert "file_size_bytes" in response.json()["error"]
+        assert response.json() == {
+            "error": "file_size_bytes must be positive, got 0",
+            "code": "invalid_timing_sample",
+            "params": {"field": "file_size_bytes", "value": 0},
+        }
 
         stats = client.get(
             "/timing/download:curl", params={"file_size_bytes": 1000}
@@ -41,4 +45,8 @@ class TestPostTiming:
         }
         response = client.post("/timing", json=body)
         assert response.status_code == 400
-        assert response.json() == {"error": "unknown operation: trasncribe"}
+        assert response.json() == {
+            "error": "unknown operation: trasncribe",
+            "code": "unknown_timing_operation",
+            "params": {"operation": "trasncribe"},
+        }

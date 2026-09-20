@@ -121,7 +121,12 @@ def run_extractor(
     sections = [(label, extract_snippets(extractor, text)) for label, text in sources]
     report = build_report(extractor, course, sections)
     if not report:
-        return {"status": "skipped", "message": "no snippets found"}
+        return {
+            "status": "skipped",
+            "message": "no snippets found",
+            "code": "no_snippets_found",
+            "params": {},
+        }
     db_client.put_overview_file(course, f"{extractor.slug}.txt", report.encode("utf-8"))
 
     # Snapshot the source range at generation time; later-phase re-runs leave it intact.

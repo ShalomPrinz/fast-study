@@ -1,4 +1,9 @@
-from pipeline.pdf.tex_errors import classify, format_tex_errors, parse_tex_errors
+from pipeline.pdf.tex_errors import (
+    classify,
+    format_tex_errors,
+    parse_tex_errors,
+    tex_error_params,
+)
 
 # ---------------------------------------------------------------------------
 # TeX log classification
@@ -91,20 +96,54 @@ class TestFormatTexErrors:
         assert format_tex_errors([]) == ""
 
 
+class TestTexErrorParams:
+    """The same facts as the formatted line, named rather than spliced into a sentence —
+    the frame (`LaTeX error:`, `line N:`, `and K more`) belongs to whoever renders it."""
+
+    def test_first_error_plus_count(self):
+        assert tex_error_params(parse_tex_errors(MULTI_ERROR_LOG)) == {
+            "message": "Undefined control sequence",
+            "line": 417,
+            "at": r"\Pi",
+            "more_count": 1,
+        }
+
+    def test_error_without_line_marker_has_no_line_or_error_point(self):
+        assert tex_error_params(parse_tex_errors("! Emergency stop.\n")) == {
+            "message": "Emergency stop",
+            "line": None,
+            "at": None,
+            "more_count": 0,
+        }
+
+    def test_the_error_point_is_truncated_like_the_formatted_line(self):
+        log = "! Undefined control sequence.\nl.9 \\foo " + "x" * 200 + "\n"
+        assert len(tex_error_params(parse_tex_errors(log))["at"]) == 40
+
+
 class TestClassify:
     def test_parsed_error_wins_over_the_fallback(self):
         fallback = "tectonic produced no usable PDF:\n" + MULTI_ERROR_LOG
-        msg = classify(MULTI_ERROR_LOG, fallback)
-        assert msg == format_tex_errors(parse_tex_errors(MULTI_ERROR_LOG))
-        assert msg != fallback
+        message, code, params = classify(
+            MULTI_ERROR_LOG, fallback, "pdf_engine_no_output", detail="raw"
+        )
+        assert message == format_tex_errors(parse_tex_errors(MULTI_ERROR_LOG))
+        assert message != fallback
+        assert code == "latex_error"
+        assert params == tex_error_params(parse_tex_errors(MULTI_ERROR_LOG))
 
     def test_log_without_bang_line_returns_the_fallback_verbatim(self):
         # pandoc's own failures (bad markdown, missing template) carry no `! …`,
         # so the caller's full-log fallback is the only useful message.
         fallback = "pandoc failed:\nTry pandoc --help."
-        assert classify("pandoc: unrecognized option `--nope'\n", fallback) == fallback
+        assert classify(
+            "pandoc: unrecognized option `--nope'\n",
+            fallback,
+            "pdf_pandoc_failed",
+            detail="Try pandoc --help.",
+        ) == (fallback, "pdf_pandoc_failed", {"detail": "Try pandoc --help."})
 
     def test_empty_log_returns_the_fallback(self):
-        assert classify("", "tectonic exited 1 with no reported error") == (
-            "tectonic exited 1 with no reported error"
-        )
+        assert classify(
+            "", "tectonic exited 1 with no reported error", "pdf_engine_no_output"
+        ) == ("tectonic exited 1 with no reported error", "pdf_engine_no_output", {})

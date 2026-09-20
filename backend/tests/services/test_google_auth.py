@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from google.oauth2.credentials import Credentials
 from services import google_auth
+from services.errors import CodedError
 
 DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file"
 
@@ -82,8 +83,12 @@ class TestGetCredentials:
             google_auth.get_credentials("drive")
 
     def test_unknown_scope_key(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(CodedError) as e:
             google_auth.get_credentials("gmail")
+        assert (e.value.code, e.value.params) == (
+            "internal_unknown_scope",
+            {"scope": "gmail"},
+        )
 
 
 class TestConsentNeededFlag:

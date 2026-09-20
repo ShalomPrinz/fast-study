@@ -6,7 +6,9 @@ CORS is open to the frontend's two origins only: `http://localhost:5173` in dev 
 
 ## Failures
 
-A refused request answers `{"error": "<message>"}` with a non-2xx status, the same shape `database/` uses (`_error` in `backend_main.py`) — never a 200 envelope, so the frontend surfaces every failure through the one error its HTTP layer throws. A bad query value or request body is FastAPI's own `422 {"detail": [...]}`; `kind` is a `Literal`, so it is validated there rather than in a handler.
+A refused request answers `{"error": "<message>", "code": "<snake_case>", "params": {...}}` with a non-2xx status, the same shape `database/` uses (`_error` + `failure` in `backend_main.py`) — never a 200 envelope, so the frontend surfaces every failure through the one error its HTTP layer throws. `error` is the developer-facing English; `code` and its flat `params` are what a client renders from ([docs/ERROR-CODES.md](../../docs/ERROR-CODES.md)). A bad query value or request body is FastAPI's own `422 {"detail": [...]}`; `kind` is a `Literal`, so it is validated there rather than in a handler.
+
+An exception that escapes a route answers the same body from an app-level middleware — `storage_unavailable` when `database/` is unreachable or refused, `internal_error` otherwise. It sits inside CORS, because a 500 raised outside it reaches the browser as a network error rather than a body.
 
 ## The launch secret
 
@@ -34,7 +36,7 @@ Scans for pending lectures and queues them at depth `full`, whatever `AUTO_RUN` 
 `all_in_flight` means every pending lecture is already owned by a concurrent trigger — the run would have skipped them all, so the UI can say so instead of appearing to do nothing.
 
 `GET /status`
-`{runner: {running, total, done, last_error}, in_flight: [...], queue: [...], errors: {skey: {step, message, code, provider, blocked}}}`. An error is the last failed step of that lecture; `code` is `"quota"` with `provider` `"gemini"` for Gemini's daily quota, else both `null`. A lecture a run stopped before summarize because an earlier one hit that quota carries the same quota record with `blocked: true`; every other record, the one that hit the quota included, has `blocked: false`. `queue` lists what the runner has left to take, in the order it will take them, each `{course, lecture, kind, depth}` with `depth ∈ {full, audio}`. Cheap; the UI refetches it on each SSE notify.
+`{runner: {running, total, done, last_error}, in_flight: [...], queue: [...], errors: {skey: {step, message, code, params, provider, blocked}}}`. An error is the last failed step of that lecture; `code` names the failure and `params` holds its named values, with `provider` `"gemini"` on the two Gemini quota codes and `null` elsewhere. `last_error` is a run crash, `{message, code, params}` or `null`. A lecture a run stopped before summarize because an earlier one hit that quota carries `gemini_quota_blocked` with the same params and `blocked: true`; every other record, the one that hit the quota included, has `blocked: false`. `queue` lists what the runner has left to take, in the order it will take them, each `{course, lecture, kind, depth}` with `depth ∈ {full, audio}`. Cheap; the UI refetches it on each SSE notify.
 
 ## Timing
 
@@ -55,7 +57,7 @@ Records one sample. → `{"status": "ok"}`, or 400 for a blank/unknown operation
 There is deliberately no per-phase endpoint — the frontend never sequences phases itself, mirroring `/run-all`.
 
 `GET /courses/{course}/overview/status`
-`{"running": bool, "extractors": {slug: {"status": "pending"|"running"|"done"|"skipped"|"error", "phase"?, "message"?, "started_at"?}}}` (snake_case on the wire). `started_at` is an ISO UTC stamp of when that slug's phase chain began — one per chain, so the UI can clock a running branch. Never-run course → `{"running": false, "extractors": {}}`.
+`{"running": bool, "extractors": {slug: {"status": "pending"|"running"|"done"|"skipped"|"error", "phase"?, "message"?, "code"?, "params"?, "started_at"?}}}` (snake_case on the wire). `code` and `params` sit beside `message` on every skipped or errored entry, as everywhere else. `started_at` is an ISO UTC stamp of when that slug's phase chain began — one per chain, so the UI can clock a running branch. Never-run course → `{"running": false, "extractors": {}}`.
 
 `GET /overview/extractors`
 Static `{"extractors": [{"slug", "title", "phases"}]}` in declaration order. `phases` lets the UI tell immediate extractors apart from pattern ones.

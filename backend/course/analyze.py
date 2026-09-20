@@ -2,6 +2,7 @@
 write the result. Pure work — the runner owns the loop, status and failure isolation."""
 
 from services import db_client
+from services.errors import CodedError
 from services.llm_client import LLMClient
 from services.resources import resource_path
 
@@ -26,9 +27,16 @@ def run_analyze(course: str, extractor: Extractor) -> dict:
     try:
         report = db_client.get_overview_file(course, f"{slug}.txt").decode("utf-8")
     except db_client.DbClientError:
-        return {"status": "skipped", "message": "no snippets file — run extract first"}
+        return {
+            "status": "skipped",
+            "message": "no snippets file — run extract first",
+            "code": "missing_prerequisite",
+            "params": {"file": f"{slug}.txt", "step": "extract"},
+        }
     analyzed = analyze(extractor, report, course)
     if not analyzed:
-        raise RuntimeError("Gemini returned no text")
+        raise CodedError(
+            "Gemini returned no text", "empty_model_output", provider="gemini"
+        )
     db_client.put_overview_file(course, f"{slug}.md", analyzed.encode("utf-8"))
     return {"status": "done"}

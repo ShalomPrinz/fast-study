@@ -184,6 +184,35 @@ def test_require_nonempty_unknown_file_is_generic():
     assert str(exc.value) == "mystery.bin is empty"
 
 
+def test_require_nonempty_carries_only_the_filename():
+    """One code for all six files: the hint is a sentence fragment and stays in the prose,
+    so a renderer keys its own clause off `file` instead."""
+
+    with pytest.raises(runner.CodedError) as exc:
+        runner._require_nonempty("summary.md", b"")
+    assert exc.value.code == "empty_file"
+    assert exc.value.params == {"file": "summary.md"}
+
+
+def test_every_step_guard_names_the_file_and_its_producing_step():
+    """The five guards collapse into one code; `step` is the machine id the producing step
+    goes by, never the label the English sentence carries."""
+
+    guards = {
+        "audio": ("video.mp4", "download"),
+        "transcribe": ("audio.mp3", "audio"),
+        "summarize": ("transcript.txt", "transcribe"),
+        "pdf": ("summary.md", "summarize"),
+        "drive": ("summary.pdf", "pdf"),
+    }
+    with patch.object(runner.db_client, "file_exists", return_value=False):
+        for step, (file, producer) in guards.items():
+            result = runner.execute_step("C1", "L1", "lecture", step)
+            assert result["status"] == "error"
+            assert result["code"] == "missing_prerequisite"
+            assert result["params"] == {"file": file, "step": producer}
+
+
 def test_db_workspace_rejects_empty_upload():
     """Output side: the shared upload path (audio/pdf/drive) must refuse a 0-byte
     output and never write it to the database service."""
@@ -435,7 +464,9 @@ def test_run_step_logs_error(caplog):
     assert stored == {
         "step": "transcribe",
         "message": "boom",
-        "code": None,
+        # An executor that named no code folds into the developer-facing catch-all.
+        "code": "unknown_error",
+        "params": {},
         "provider": None,
         "blocked": False,
     }
@@ -552,15 +583,67 @@ def test_exec_summarize_daily_quota_is_error_not_retried():
     assert result["status"] == "error"
     assert result["daily_quota"] is True
     assert result["message"] == "quota message"
+    assert result["code"] == "gemini_quota_exhausted"
+    assert result["params"] == {
+        "scope": "daily",
+        "model": None,
+        "limit": None,
+        "tier": None,
+    }
+
+
+def test_a_crashed_run_records_a_coded_last_error():
+    """A crash is the one failure with no lecture record to hang on, so it rides `last_error`
+    — carrying the same {message, code, params} shape as every other channel."""
+
+    async def boom(entry):
+        raise RuntimeError("database service is down")
+
+    async def go():
+        with (
+            patch.object(runner, "_run_entry", boom),
+            patch.object(runner.db_client, "notify"),
+        ):
+            runner._queue[:] = [runner.QueueEntry("C1", "L1", "lecture", "full")]
+            await runner.run_all()
+
+    try:
+        asyncio.run(go())
+        assert runner._runner_status["last_error"] == {
+            "message": "C1/L1: database service is down",
+            "code": "run_crashed",
+            "params": {
+                "course": "C1",
+                "lecture": "L1",
+                "detail": "database service is down",
+            },
+        }
+    finally:
+        runner._runner_status["last_error"] = None
+        runner._queue.clear()
 
 
 # ---- Gemini daily-quota block ----
 
 
+QUOTA_PARAMS = {
+    "scope": "daily",
+    "model": "gemini-2.5-flash",
+    "limit": 20,
+    "tier": "free",
+}
+
+
 def _quota_error_result(
     message="Gemini free-tier daily quota reached (20 requests/day) — resets at midnight Pacific",
 ):
-    return {"status": "error", "message": message, "daily_quota": True}
+    return {
+        "status": "error",
+        "message": message,
+        "daily_quota": True,
+        "code": "gemini_quota_exhausted",
+        "params": QUOTA_PARAMS,
+    }
 
 
 def test_daily_quota_error_record():
@@ -582,12 +665,16 @@ def test_daily_quota_error_record():
             runner._skey("C1", "L1", "lecture"): {
                 "step": "summarize",
                 "message": "quota msg",
-                "code": "quota",
+                "code": "gemini_quota_exhausted",
+                "params": QUOTA_PARAMS,
                 "provider": "gemini",
                 "blocked": False,
             }
         }
-        assert runner._summarize_block == "quota msg"
+        assert runner._summarize_block == {
+            "message": "quota msg",
+            "params": QUOTA_PARAMS,
+        }
     finally:
         runner._errors.clear()
         runner._summarize_block = None
@@ -630,13 +717,17 @@ def test_daily_quota_blocks_summarize_for_later_lectures(caplog):
         record = {
             "step": "summarize",
             "message": _quota_error_result()["message"],
-            "code": "quota",
+            "params": QUOTA_PARAMS,
             "provider": "gemini",
         }
         assert runner._errors == {
             runner._skey("C1", lecture, "lecture"): {
                 **record,
-                "blocked": lecture != "L1",  # L1 hit the quota; the rest were stopped
+                # L1 hit the quota; the rest were stopped on it, and say so in the code.
+                "code": "gemini_quota_exhausted"
+                if lecture == "L1"
+                else "gemini_quota_blocked",
+                "blocked": lecture != "L1",
             }
             for lecture in ("L1", "L2", "L3")
         }
@@ -671,7 +762,8 @@ def test_daily_quota_block_is_cleared_and_bypassed_by_manual_runs():
             runner._queue[:] = [runner.QueueEntry("C1", "L1", "lecture", "full")]
             await runner.run_all()
             assert runner._summarize_block is None  # cleared by run_all's finally
-            runner._summarize_block = "quota"  # as if a run were still blocked
+            # As if a run were still blocked.
+            runner._summarize_block = {"message": "quota", "params": QUOTA_PARAMS}
             await runner.run_pipeline_for("C1", "L2", "lecture")
 
     try:
@@ -688,12 +780,20 @@ def test_summarize_start_clears_quota_records_and_lifts_block():
     other errors stay."""
     runner._errors.update(
         {
-            "hit": runner._error_record("summarize", "q", quota=True),
-            "stopped": runner._error_record("summarize", "q", quota=True, blocked=True),
-            "other": runner._error_record("pdf", "boom"),
+            "hit": runner._error_record(
+                "summarize", "q", code="gemini_quota_exhausted", params=QUOTA_PARAMS
+            ),
+            "stopped": runner._error_record(
+                "summarize",
+                "q",
+                code="gemini_quota_blocked",
+                params=QUOTA_PARAMS,
+                blocked=True,
+            ),
+            "other": runner._error_record("pdf", "boom", code="pdf_pandoc_failed"),
         }
     )
-    runner._summarize_block = "q"
+    runner._summarize_block = {"message": "q", "params": QUOTA_PARAMS}
 
     async def fake_call(course, lecture, kind, step):
         return {"status": "done"}
@@ -707,6 +807,8 @@ def test_summarize_start_clears_quota_records_and_lifts_block():
 
     try:
         asyncio.run(go())
+        # The sweep tests membership of BOTH quota codes: missing one strands every lecture
+        # the run stopped, whose record no later attempt would ever clear.
         assert list(runner._errors) == ["other"]
         assert runner._summarize_block is None
     finally:
@@ -1103,6 +1205,13 @@ def test_exec_pdf_hard_failure_stores_the_generated_tex():
     def convert(md_path):
         raise runner.PdfRenderError(
             "LaTeX error: Undefined control sequence (line 417)",
+            "latex_error",
+            {
+                "message": "Undefined control sequence",
+                "line": 417,
+                "at": None,
+                "more_count": 0,
+            },
             tex_source="\\documentclass{article}",
         )
 
@@ -1119,7 +1228,9 @@ def test_exec_pdf_hard_failure_clears_a_stale_warning():
     build's, so the marker has to go."""
 
     def convert(md_path):
-        raise runner.PdfRenderError("LaTeX error: boom (line 9)", tex_source="\\x")
+        raise runner.PdfRenderError(
+            "LaTeX error: boom (line 9)", "latex_error", tex_source="\\x"
+        )
 
     _, db = _run_exec_pdf(convert)
     assert db.deletes == [runner.PDF_WARNING_FILE]
@@ -1130,7 +1241,7 @@ def test_exec_pdf_failure_with_no_tex_keeps_the_existing_warning():
     timeout carries no .tex, so the surviving summary.pdf keeps its badge."""
 
     def convert(md_path):
-        raise runner.PdfRenderError("pandoc timed out after 60s")
+        raise runner.PdfRenderError("pandoc timed out after 60s", "pdf_tool_timeout")
 
     _, db = _run_exec_pdf(convert)
     assert db.deletes == []
@@ -1140,7 +1251,9 @@ def test_exec_pdf_failed_tex_upload_keeps_the_existing_warning():
     """The old .pdf_build.tex is untouched when the store failed, so the pair still agrees."""
 
     def convert(md_path):
-        raise runner.PdfRenderError("LaTeX error: boom (line 9)", tex_source="\\x")
+        raise runner.PdfRenderError(
+            "LaTeX error: boom (line 9)", "latex_error", tex_source="\\x"
+        )
 
     db = _PdfDb()
     with ExitStack() as stack:

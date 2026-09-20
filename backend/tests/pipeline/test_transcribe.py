@@ -1,14 +1,42 @@
 import json
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
+import transcribe as transcribe_mod
 from transcribe import (
     PARTIAL_META,
     PARTIAL_TXT,
     _load_resume_state,
     parse_rate_limit_message,
+    transcribe_audio,
 )
+
+
+def test_a_missing_groq_key_names_the_provider(monkeypatch, tmp_path):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="GROQ_API_KEY") as e:
+        transcribe_audio(str(tmp_path / "audio.mp3"))
+    assert (e.value.code, e.value.params) == ("missing_api_key", {"provider": "groq"})
+
+
+def test_a_groq_failure_carries_its_own_text_as_detail(monkeypatch, tmp_path):
+    """Whisper's wording is untranslatable, so it rides as `detail` on a code of ours."""
+
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_x")
+    audio = tmp_path / "audio.mp3"
+    audio.write_bytes(b"\x00" * 64)
+    client = MagicMock()
+    client.audio.transcriptions.create.side_effect = Exception("400 invalid file")
+    monkeypatch.setattr(transcribe_mod, "Groq", MagicMock(return_value=client))
+    monkeypatch.setattr(transcribe_mod, "get_duration", lambda p: 60.0)
+    monkeypatch.setattr(transcribe_mod, "split_one_chunk", lambda *a: str(audio))
+
+    with pytest.raises(RuntimeError) as e:
+        transcribe_audio(str(audio))
+    assert e.value.code == "transcription_failed"
+    assert e.value.params == {"detail": "400 invalid file"}
+
 
 GROQ_429_MESSAGE = (
     "Rate limit reached for model `whisper-large-v3` in organization "

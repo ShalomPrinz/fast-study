@@ -8,15 +8,30 @@ from google import genai
 from google.genai import types
 
 from services import providers
+from services.errors import CodedError
 from services.settings import gemini_model
 
 
-class GeminiRateLimitError(RuntimeError):
+def quota_params(info: dict) -> dict:
+    """The named values behind a Gemini quota message: which window ran out, for which model,
+    at what limit and on which tier. Shared with the blocked record runner.py writes."""
+
+    return {
+        "scope": "daily" if info["is_daily"] else "per_minute",
+        "model": info.get("model"),
+        "limit": info.get("quota_value"),
+        "tier": "free" if "FreeTier" in (info.get("quota_id") or "") else None,
+    }
+
+
+class GeminiRateLimitError(CodedError):
     """A 429 from Gemini; info = {quota_id, quota_value, model, is_daily}."""
 
     def __init__(self, info: dict):
         self.info = info
-        super().__init__(info["message"])
+        super().__init__(
+            info["message"], "gemini_quota_exhausted", **quota_params(info)
+        )
 
 
 def _extract_gemini_body(err: Exception) -> dict:
@@ -112,7 +127,11 @@ class LLMClient:
         # The Developer API path used here requires an API key; OAuth is Vertex-only.
         api_key = api_key or os.environ.get("GEMINI_API_KEY")
         if not api_key:
-            raise RuntimeError("GEMINI_API_KEY is not set in the environment")
+            raise CodedError(
+                "GEMINI_API_KEY is not set in the environment",
+                "missing_api_key",
+                provider="gemini",
+            )
         self.model = model or gemini_model()
         # vertexai=False, or GOOGLE_GENAI_USE_VERTEXAI reroutes an api-key client onto Vertex.
         self.client = genai.Client(
@@ -132,6 +151,8 @@ class LLMClient:
             body = _extract_gemini_body(e)
             if _is_rate_limit(e, body):
                 info = parse_gemini_rate_limit(body, str(e))
+                # Resolved here so the message and the params name the same model.
+                info["model"] = info.get("model") or self.model
                 info["message"] = _quota_message(info, self.model)
                 raise GeminiRateLimitError(info) from e
             raise RuntimeError(str(e)) from e

@@ -6,6 +6,7 @@ import struct
 import subprocess
 
 import pytest
+from services.errors import CodedError
 from services.mp3 import read_duration
 from transcribe import get_duration
 
@@ -109,8 +110,9 @@ def test_missing_file_returns_none(tmp_path):
 
 def test_get_duration_raises_on_unreadable(tmp_path):
     p = write(tmp_path, b"not an mp3 at all")
-    with pytest.raises(ValueError):
+    with pytest.raises(CodedError) as e:
         get_duration(str(p))
+    assert (e.value.code, e.value.params) == ("unreadable_audio", {"file": p.name})
 
 
 def _ffmpeg_available():

@@ -607,8 +607,10 @@ class TestBuildTexSeam:
             with tempfile.TemporaryDirectory() as d:
                 with patch("subprocess.run", fake):
                     with patch.object(to_pdf, attr, Path(d) / "gone"):
-                        with pytest.raises(FileNotFoundError, match=message):
+                        with pytest.raises(PdfRenderError, match=message) as e:
                             build_tex("x\n", Path(d))
+                        assert e.value.code == "pdf_asset_missing"
+                        assert e.value.params == {"asset": "gone"}
         assert fake.calls == []
 
     def test_a_pandoc_failure_is_a_render_error(self):
@@ -644,8 +646,20 @@ class TestRenderRecovery:
     def test_no_pdf_raises_with_classified_message(self):
         fake = FakeRun(tectonic_rc=1, pdf_bytes=None, log_text=ERROR_LOG)
         with _render(fake) as md_path:
-            with pytest.raises(PdfRenderError, match="Undefined control sequence"):
+            with pytest.raises(PdfRenderError, match="Undefined control sequence") as e:
                 convert_to_pdf(md_path)
+        # A parsed `! …` names itself; only an unclassifiable log stays pdf_engine_no_output.
+        assert e.value.code == "latex_error"
+        assert e.value.params["message"] == "Undefined control sequence"
+        assert e.value.params["line"] == 417
+
+    def test_a_missing_markdown_input_names_itself(self):
+        """A caller that lost its own input is a bug in ours, so it carries a dev code."""
+
+        with pytest.raises(PdfRenderError, match="File not found") as e:
+            convert_to_pdf("/nonexistent/summary.md")
+        assert e.value.code == "internal_missing_input"
+        assert e.value.params == {"file": "summary.md"}
 
     def test_empty_pdf_is_fatal(self):
         fake = FakeRun(tectonic_rc=1, pdf_bytes=b"", log_text=ERROR_LOG)
@@ -662,8 +676,10 @@ class TestRenderRecovery:
             tectonic_rc=1, pdf_bytes=None, log_text=log, tectonic_stderrs=(stderr,)
         )
         with _render(fake) as md_path:
-            with pytest.raises(PdfRenderError, match="Cannot proceed without"):
+            with pytest.raises(PdfRenderError, match="Cannot proceed without") as e:
                 convert_to_pdf(md_path)
+        assert e.value.code == "pdf_engine_no_output"
+        assert e.value.params == {"detail": stderr.strip()}
 
     def test_the_cause_is_extracted_from_stderr_not_tailed(self):
         # A failed run emits ~1000 `Missing character` lines; a tail would bury the one line
@@ -690,8 +706,10 @@ class TestRenderRecovery:
     def test_pandoc_failure_raises_before_any_render(self):
         fake = FakeRun(pandoc_rc=1, pandoc_stderr="template not found")
         with _render(fake) as md_path:
-            with pytest.raises(PdfRenderError, match="template not found"):
+            with pytest.raises(PdfRenderError, match="template not found") as e:
                 convert_to_pdf(md_path)
+        assert e.value.code == "pdf_pandoc_failed"
+        assert e.value.params == {"detail": "template not found"}
         assert fake.tectonic_cmds == []
 
     def test_pandoc_failure_with_tex_error_is_classified(self):
@@ -735,6 +753,9 @@ class TestMissingFontIsFatal:
             with pytest.raises(PdfRenderError) as exc:
                 convert_to_pdf(md_path)
         assert "MiriamMonoCLM-Book" in str(exc.value)
+        assert exc.value.code == "pdf_missing_font"
+        # The engine's own line, untranslated, is what names which font went missing.
+        assert "MiriamMonoCLM-Book" in exc.value.params["detail"]
 
     def test_it_carries_the_generated_tex(self):
         fake = FakeRun(tectonic_rc=0, log_text=FONT_LOG)
@@ -791,8 +812,10 @@ class TestToolTimeout:
     def test_pandoc_hang_raises_before_any_render(self):
         fake = FakeRun(hangs=("pandoc",))
         with _render(fake) as md_path:
-            with pytest.raises(PdfRenderError, match="pandoc timed out after 60s"):
+            with pytest.raises(PdfRenderError, match="pandoc timed out after 60s") as e:
                 convert_to_pdf(md_path)
+        assert e.value.code == "pdf_tool_timeout"
+        assert e.value.params == {"tool": "pandoc", "seconds": 60}
         assert fake.tectonic_cmds == []
 
     def test_a_render_hang_raises_and_carries_the_generated_tex(self):

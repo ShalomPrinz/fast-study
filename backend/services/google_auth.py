@@ -15,6 +15,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 from services import db_client
+from services.errors import CodedError
 from services.resources import resource_path
 
 log = logging.getLogger("google_auth")
@@ -41,8 +42,11 @@ _consent_needed = False
 _pending_url: str | None = None
 
 
-class DriveNotConnected(RuntimeError):
+class DriveNotConnected(CodedError):
     """No usable Drive token on disk — the user has to run the consent flow."""
+
+    def __init__(self, message: str):
+        super().__init__(message, "drive_not_connected")
 
 
 def _token_path(scope_key: ScopeKey) -> Path:
@@ -96,7 +100,11 @@ def get_credentials(scope_key: ScopeKey) -> Credentials:
     interactive: with no usable token it raises DriveNotConnected instead of blocking."""
 
     if scope_key not in SCOPES_MAP:
-        raise ValueError(f"Unknown scope key: {scope_key}")
+        raise CodedError(
+            f"Unknown scope key: {scope_key}",
+            "internal_unknown_scope",
+            scope=scope_key,
+        )
 
     creds = _load_token(scope_key)
     if creds and not creds.valid:
@@ -158,9 +166,11 @@ def start_consent() -> str:
             return _pending_url
 
         if not Path(CREDENTIALS_PATH).exists():
-            raise RuntimeError(
+            raise CodedError(
                 f"Google credentials file not found at {CREDENTIALS_PATH}. "
-                "Download credentials.json from Google Cloud Console and place it there."
+                "Download credentials.json from Google Cloud Console and place it there.",
+                "google_credentials_missing",
+                path=CREDENTIALS_PATH,
             )
 
         flow = InstalledAppFlow.from_client_secrets_file(

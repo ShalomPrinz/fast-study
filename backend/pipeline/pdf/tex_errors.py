@@ -57,8 +57,24 @@ def format_tex_errors(errors: list[TexError]) -> str:
     return f"LaTeX error: {first.message}{where}{more}"
 
 
-def classify(log: str, fallback: str) -> str:
-    """One-line classification of a TeX/pandoc log; the raw fallback when it has no `! …`."""
+def tex_error_params(errors: list[TexError]) -> dict:
+    """The named values behind `format_tex_errors`' line. `message` and `at` are the engine's own
+    text and stay untranslated; the frame around them belongs to whoever renders it."""
+
+    first = errors[0]
+    return {
+        "message": first.message,
+        "line": first.line,
+        "at": first.at[:_AT_MAX_CHARS] or None,
+        "more_count": len(errors) - 1,
+    }
+
+
+def classify(log: str, fallback: str, code: str, **params) -> tuple[str, str, dict]:
+    """(message, code, params) for a TeX/pandoc log: its first `! …` error when it has one,
+    else the caller's raw fallback under the caller's own code."""
 
     errors = parse_tex_errors(log)
-    return format_tex_errors(errors) if errors else fallback
+    if errors:
+        return format_tex_errors(errors), "latex_error", tex_error_params(errors)
+    return fallback, code, params

@@ -3,6 +3,7 @@ from pathlib import Path
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
+from services.errors import CodedError
 from services.google_auth import get_credentials
 from timing import timed_pipeline
 
@@ -81,7 +82,10 @@ def upload_to_drive(
 
     root_folder_name = os.environ.get("GDRIVE_ROOT_FOLDER")
     if not root_folder_name:
-        raise RuntimeError("GDRIVE_ROOT_FOLDER is not set in the environment")
+        raise CodedError(
+            "GDRIVE_ROOT_FOLDER is not set in the environment",
+            "drive_folder_not_configured",
+        )
     try:
         service = _get_service()
 
@@ -108,7 +112,7 @@ def upload_to_drive(
         if existing_id:
             return _update_file(service, existing_id, media)
         return _create_file(service, file_name, parent_id, media)
-    except RuntimeError:
-        raise
+    except CodedError:
+        raise  # an unconnected Drive already names itself
     except Exception as e:
-        raise RuntimeError(str(e)) from e
+        raise CodedError(str(e), "drive_upload_failed", detail=str(e)) from e

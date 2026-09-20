@@ -92,7 +92,12 @@ def run_collect(course: str, course_node: dict) -> dict:
             summary = db_client.get_summary(course, entry["name"], kind)
             collected[kind].append((entry["name"], summary))
     if not collected["lecture"] and not collected["recitation"]:
-        return {"status": "skipped", "message": "no summaries found"}
+        return {
+            "status": "skipped",
+            "message": "no summaries found",
+            "code": "no_summaries_found",
+            "params": {},
+        }
 
     md = build_topics_md(collected["lecture"], collected["recitation"])
     db_client.put_overview_file(course, "topics.md", md.encode("utf-8"))

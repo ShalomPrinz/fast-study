@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from services.errors import CodedError
 from services.llm_client import LLMClient
 from services.resources import resource_path
 from timing import timed_pipeline
@@ -51,6 +52,10 @@ def summarize(transcript_path: Path, material_paths: list[Path] | None = None) -
         contents += ["--- INSTRUCTIONS ---", prompt]
 
         return client.generate(contents)
+    except CodedError:
+        raise  # a quota hit or a missing key already names itself
+    except Exception as e:
+        raise CodedError(str(e), "summarization_failed", detail=str(e)) from e
     finally:
         for handle in uploaded:
             client.delete_file(handle.name)
