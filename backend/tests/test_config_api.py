@@ -74,20 +74,21 @@ class TestProbeKey:
         assert body == {"result": "rejected"}
         assert probe.call_args.args == ("gemini", "AIza-bad")
 
-    def test_unknown_provider_is_an_error_envelope(self):
-        body = client.post(
+    def test_unknown_provider_is_a_400(self):
+        response = client.post(
             "/config/probe-key", json={"provider": "openai", "key": "x"}
-        ).json()
-        assert body["status"] == "error"
-        assert "openai" in body["message"]
+        )
+        assert response.status_code == 400
+        assert response.json() == {"error": "unknown provider: openai"}
 
 
 class TestDisabledStep:
     def test_run_drive_is_refused_while_drive_is_off(self, monkeypatch):
         monkeypatch.setenv("DRIVE_ENABLED", "false")
         with patch.object(backend_main.runner, "try_run_step") as run:
-            body = client.post("/courses/C/lectures/L/run/drive").json()
-        assert body == {"status": "error", "message": "drive is disabled in settings"}
+            response = client.post("/courses/C/lectures/L/run/drive")
+        assert response.status_code == 409
+        assert response.json() == {"error": "drive is disabled in settings"}
         run.assert_not_called()
 
     def test_run_pdf_is_unaffected(self, monkeypatch):
@@ -146,14 +147,14 @@ class TestDriveRoutes:
             "auth_url": "https://consent/url"
         }
 
-    def test_connect_without_client_secrets_is_an_error_envelope(self, monkeypatch):
+    def test_connect_without_client_secrets_is_a_500(self, monkeypatch):
         def boom():
             raise RuntimeError("Google credentials file not found")
 
         monkeypatch.setattr(google_auth, "start_consent", boom)
-        body = client.post("/config/drive/connect").json()
-        assert body["status"] == "error"
-        assert "credentials file not found" in body["message"]
+        response = client.post("/config/drive/connect")
+        assert response.status_code == 500
+        assert "credentials file not found" in response.json()["error"]
 
     def test_a_drive_step_with_no_token_leaves_one_state_for_the_ui(self, monkeypatch):
         monkeypatch.setattr(google_auth.db_client, "file_exists", lambda *a: True)

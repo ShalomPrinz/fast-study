@@ -4,6 +4,10 @@ All endpoints are in `backend_main.py`. A mutating one never returns its result 
 
 CORS is open to the frontend's two origins only: `http://localhost:5173` in dev and `app://bundle` in the packaged app.
 
+## Failures
+
+A refused request answers `{"error": "<message>"}` with a non-2xx status, the same shape `database/` uses (`_error` in `backend_main.py`) — never a 200 envelope, so the frontend surfaces every failure through the one error its HTTP layer throws. A bad query value or request body is FastAPI's own `422 {"detail": [...]}`; `kind` is a `Literal`, so it is validated there rather than in a handler.
+
 ## The launch secret
 
 When `FASTSTUDY_SECRET` is set, every request but `GET /health` must carry it; the header, the `secret` query parameter, the 401 shapes and the ordering against CORS are [lib/runtime](../../lib/runtime/CLAUDE.md)'s (`runtime.install_secret_check`). `services/db_client.py` sends the same header on every call to `database/`.
@@ -17,7 +21,7 @@ When `FASTSTUDY_SECRET` is set, every request but `GET /health` must carry it; t
 
 `POST /courses/{course}/lectures/{lecture}/run/{step}?kind={lecture|recitation}`
 `step ∈ {audio, transcribe, summarize, pdf, drive}`, `kind` defaults to `lecture`.
-Validates that the step's prerequisite file exists (`_STEP_CONFIG`), returning `{"status": "error", "message": "<file> is required — run <previous step> first"}` otherwise. A step a setting has switched off → `{"status": "error", "message": "<step> is disabled in settings"}`. On success → `{"status": "started"|"busy"}`.
+Unknown step → 404. Validates that the step's prerequisite file exists (`_STEP_CONFIG`), answering 409 `"<file> is required — run <previous step> first"` otherwise; a step a setting has switched off is 409 `"<step> is disabled in settings"`. On success → `{"status": "started"|"busy"}`.
 
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`. Both this and `run/{step}` pull a lecture waiting in the runner queue out of it when they start it.
@@ -41,12 +45,12 @@ Regression ETA from past runs, or `{"message": "not-enough-data"}`.
 
 `POST /timing`
 body `{"operation": str, "file_size_bytes": int, "duration_seconds": float}`
-Records one sample. → `{"status": "ok"}`, or `{"status": "error", "message": ...}` for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from an arbitrary browser page, since CORS only allows the frontend's own origins.
+Records one sample. → `{"status": "ok"}`, or 400 for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from an arbitrary browser page, since CORS only allows the frontend's own origins.
 
 ## Course overview
 
 `POST /courses/{course}/overview/generate?extractors=<csv>&from_phase=<id>&skip_existing=<bool>`
-`extractors` is an optional CSV of extractor **slugs** (default: all). `from_phase` omitted → each extractor's full chain; an unknown value → `{"status": "error"}`. → `{"status": "started"|"busy"}`, or an error envelope for an unknown extractor/course. Semantics of the run, the phases, and both flags are in [OVERVIEW.md](OVERVIEW.md).
+`extractors` is an optional CSV of extractor **slugs** (default: all). `from_phase` omitted → each extractor's full chain; an unknown value, like an unknown extractor slug, is 400. Unknown course → 404. On success → `{"status": "started"|"busy"}`. Semantics of the run, the phases, and both flags are in [OVERVIEW.md](OVERVIEW.md).
 
 There is deliberately no per-phase endpoint — the frontend never sequences phases itself, mirroring `/run-all`.
 
@@ -70,10 +74,10 @@ body: any subset of `{gemini_api_key, groq_api_key, gemini_model, drive_enabled,
 `{"connected": bool, "pending": bool, "consent_needed": bool}` — a stored Drive token, a consent flow waiting on the user, and whether a pipeline step gave up for want of a token. The last one is process state, not an event, so a queue of lectures with no token leaves the UI one thing to render; it clears when a token lands. A landed token, a flow that failed or timed out, and a disconnect each push on the database SSE channel, so no screen polls this; the caller of `connect` learns `pending` from its own response.
 
 `POST /config/drive/connect`
-Starts the Google consent flow and returns `{"auth_url": str}` at once, without waiting for the user; the backend opens the browser itself, so the URL is only the "didn't open?" fallback. A second call while one flow is pending returns the same URL rather than starting a rival flow. Missing `credentials.json` → an error envelope. The URL is never printed to stdout — the launcher parses this process's stdout for its port.
+Starts the Google consent flow and returns `{"auth_url": str}` at once, without waiting for the user; the backend opens the browser itself, so the URL is only the "didn't open?" fallback. A second call while one flow is pending returns the same URL rather than starting a rival flow. Missing `credentials.json` → 500, since it is a packaging fault rather than the caller's. The URL is never printed to stdout — the launcher parses this process's stdout for its port.
 
 `POST /config/drive/disconnect`
 Deletes the stored token → `{"status": "ok"}`. Already disconnected is success.
 
 `POST /config/probe-key`
-body `{"provider": "groq"|"gemini", "key": str}` → `{"result": "valid"|"rejected"|"unverified"}`, or an error envelope for an unknown provider. The key is authenticated against the provider's list-models endpoint (zero tokens, no per-model quota). Only an explicit 401/403 is `rejected`; every other status, a timeout or an unreachable host is `unverified` — an offline user must never be told a good key is bad. `key_prefix` from `/config/options` is an offline hint for the UI and is not enforced here.
+body `{"provider": "groq"|"gemini", "key": str}` → `{"result": "valid"|"rejected"|"unverified"}`, or 400 for an unknown provider. The key is authenticated against the provider's list-models endpoint (zero tokens, no per-model quota). Only an explicit 401/403 is `rejected`; every other status, a timeout or an unreachable host is `unverified` — an offline user must never be told a good key is bad. `key_prefix` from `/config/options` is an offline hint for the UI and is not enforced here.

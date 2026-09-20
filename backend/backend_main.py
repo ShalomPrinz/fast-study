@@ -1,13 +1,14 @@
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Literal, get_args
+from typing import Literal
 
 import runtime
 from course import overview
 from course import runner as course_runner
 from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from logging_setup import setup_logging
 from pipeline import runner, schedule
 from pydantic import BaseModel
@@ -78,43 +79,34 @@ _STEP_CONFIG: dict[str, tuple[str, str]] = {
 }
 
 
+# 'recitation' routes files under a Recitations/ subdir; FastAPI answers any other value 422.
 Kind = Literal["lecture", "recitation"]
-_VALID_KINDS = set(get_args(Kind))
 
 
-def _validate_kind(kind: str):
-    """Guard used by every route handler; 'recitation' routes files under a Recitations/ subdir."""
+def _error(message: str, status: int):
+    """Build the service's failure body ({error}) — the same shape database/ answers with."""
 
-    if kind not in _VALID_KINDS:
-        return {"status": "error", "message": f"invalid kind: {kind}"}
-    return None
+    return JSONResponse({"error": message}, status_code=status)
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
 async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
     if step not in _STEP_CONFIG:
-        return {"status": "error", "message": f"Unknown step: {step}"}
+        return _error(f"Unknown step: {step}", 404)
     if step not in runner.enabled_steps():
-        return {"status": "error", "message": f"{step} is disabled in settings"}
-    if err := _validate_kind(kind):
-        return err
+        return _error(f"{step} is disabled in settings", 409)
 
     # Each step depends on the previous step's output file.
     required_file, prev_step = _STEP_CONFIG[step]
     if not await asyncio.to_thread(
         runner.db_client.file_exists, course, lecture, kind, required_file
     ):
-        return {
-            "status": "error",
-            "message": f"{required_file} is required — run {prev_step} first",
-        }
+        return _error(f"{required_file} is required — run {prev_step} first", 409)
     return {"status": runner.try_run_step(course, lecture, kind, step)}
 
 
 @app.post("/courses/{course}/lectures/{lecture}/pipeline")
 async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture")):
-    if err := _validate_kind(kind):
-        return err
     return {"status": runner.try_run_pipeline(course, lecture, kind)}
 
 
@@ -123,22 +115,17 @@ async def video_arrived(course: str, lecture: str, kind: Kind = Query("lecture")
     """A new video.mp4 landed on disk. The database reports the fact; AUTO_RUN decides how much
     of the pipeline it starts, and the work is queued rather than run inline."""
 
-    if err := _validate_kind(kind):
-        return err
     return {"status": runner.enqueue_arrival(course, lecture, kind)}
 
 
 # ---- Overview (course-level, not per-lecture — state lives in course/runner.py) ----
 
 
-async def _find_course(course: str) -> tuple[dict | None, dict | None]:
-    """Locate a course node in the tree; returns (node, error envelope)."""
+async def _find_course(course: str) -> dict | None:
+    """Locate a course node in the tree; None when no course goes by that name."""
 
     tree = await asyncio.to_thread(db_client.get_tree)
-    node = next((c for c in tree if c.get("name") == course), None)
-    if node is None:
-        return None, {"status": "error", "message": f"course not found: {course}"}
-    return node, None
+    return next((c for c in tree if c.get("name") == course), None)
 
 
 @app.post("/courses/{course}/overview/generate")
@@ -153,15 +140,15 @@ async def overview_generate(
 
     phase, err = course_runner.resolve_from_phase(from_phase)
     if err:
-        return {"status": "error", "message": err}
+        return _error(err, 400)
 
     slugs, err = course_runner.resolve_slugs(extractors)
     if err:
-        return {"status": "error", "message": err}
+        return _error(err, 400)
 
-    course_node, err = await _find_course(course)
-    if course_node is None or err is not None:
-        return err
+    course_node = await _find_course(course)
+    if course_node is None:
+        return _error(f"course not found: {course}", 404)
     return {
         "status": course_runner.try_run_generate(
             course, course_node, slugs, phase, skip_existing
@@ -232,7 +219,10 @@ class TimingSample(BaseModel):
 def timing_record(sample: TimingSample):
     """Record one duration sample."""
 
-    return record(sample.operation, sample.file_size_bytes, sample.duration_seconds)
+    try:
+        return record(sample.operation, sample.file_size_bytes, sample.duration_seconds)
+    except ValueError as e:
+        return _error(str(e), 400)
 
 
 # ---- Config ----
@@ -282,7 +272,7 @@ async def config_probe_key(probe: KeyProbe):
     `unverified` means we could not reach the provider, never that the key is bad."""
 
     if probe.provider not in providers.PROVIDERS:
-        return {"status": "error", "message": f"unknown provider: {probe.provider}"}
+        return _error(f"unknown provider: {probe.provider}", 400)
     result = await asyncio.to_thread(providers.probe_key, probe.provider, probe.key)
     return {"result": result}
 
@@ -303,7 +293,7 @@ async def drive_connect():
     try:
         auth_url = await asyncio.to_thread(google_auth.start_consent)
     except RuntimeError as e:
-        return {"status": "error", "message": str(e)}
+        return _error(str(e), 500)
     return {"auth_url": auth_url}
 
 

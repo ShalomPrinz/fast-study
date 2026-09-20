@@ -56,24 +56,19 @@ def _record(operation: str, file_size_bytes: int, duration_seconds: float):
 
 
 def record(operation: str, file_size_bytes: int, duration_seconds: float) -> dict:
-    """Public entry point for recording a sample (used by external services over HTTP)."""
+    """Public entry point for recording a sample (used by external services over HTTP).
+    Raises ValueError on a blank/unknown operation or a non-positive size or duration."""
 
     operation = (operation or "").strip()
     if not operation:
-        return {"status": "error", "message": "operation is required"}
+        raise ValueError("operation is required")
     if operation not in _allowed_operations():
         log.warning("rejected unknown timing operation: %r", operation)
-        return {"status": "error", "message": f"unknown operation: {operation}"}
+        raise ValueError(f"unknown operation: {operation}")
     if file_size_bytes <= 0:
-        return {
-            "status": "error",
-            "message": f"file_size_bytes must be positive, got {file_size_bytes}",
-        }
+        raise ValueError(f"file_size_bytes must be positive, got {file_size_bytes}")
     if duration_seconds <= 0:
-        return {
-            "status": "error",
-            "message": f"duration_seconds must be positive, got {duration_seconds}",
-        }
+        raise ValueError(f"duration_seconds must be positive, got {duration_seconds}")
 
     _record(operation, file_size_bytes, duration_seconds)
     return {"status": "ok"}

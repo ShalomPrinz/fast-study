@@ -282,17 +282,15 @@ class TestGenerateSubset:
         assert db.notifies == 4
 
     def test_unknown_extractor_is_error(self):
-        # Route glue returns {"status": "error", "message": err} from this pair.
+        # Route glue turns this pair's err into a 400 {"error": err}.
         slugs, err = course_runner.resolve_slugs("nope")
         assert err is not None and "nope" in err
 
-    def test_unknown_course_is_error(self, db):
+    def test_unknown_course_is_not_found(self, db):
         async def go():
             return await backend_main._find_course("אין-כזה")
 
-        node, err = asyncio.run(go())
-        assert node is None
-        assert err == {"status": "error", "message": "course not found: אין-כזה"}
+        assert asyncio.run(go()) is None
 
 
 class TestPhaseTransitions:

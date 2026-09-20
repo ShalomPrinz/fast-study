@@ -23,8 +23,8 @@ class TestRecord:
 
     @pytest.mark.parametrize("operation", ["", "   "])
     def test_rejects_blank_operation(self, operation):
-        result = timing.record(operation, 1000, 2.5)
-        assert result["status"] == "error"
+        with pytest.raises(ValueError, match="operation is required"):
+            timing.record(operation, 1000, 2.5)
         assert _rows() == []
 
     @pytest.mark.parametrize(
@@ -35,23 +35,20 @@ class TestRecord:
         assert _rows() == [(operation, 1000, 2.5)]
 
     def test_rejects_unknown_operation(self):
-        result = timing.record("trasncribe", 1000, 2.5)  # typo
-        assert result["status"] == "error"
-        assert "unknown operation" in result["message"]
+        with pytest.raises(ValueError, match="unknown operation"):
+            timing.record("trasncribe", 1000, 2.5)  # typo
         assert _rows() == []  # no dead bucket written
 
     @pytest.mark.parametrize("size", [0, -1])
     def test_rejects_non_positive_size(self, size):
-        result = timing.record("download:curl", size, 2.5)
-        assert result["status"] == "error"
-        assert "file_size_bytes" in result["message"]
+        with pytest.raises(ValueError, match="file_size_bytes"):
+            timing.record("download:curl", size, 2.5)
         assert _rows() == []
 
     @pytest.mark.parametrize("duration", [0, -0.5])
     def test_rejects_non_positive_duration(self, duration):
-        result = timing.record("download:curl", 1000, duration)
-        assert result["status"] == "error"
-        assert "duration_seconds" in result["message"]
+        with pytest.raises(ValueError, match="duration_seconds"):
+            timing.record("download:curl", 1000, duration)
         assert _rows() == []
 
     def test_round_trip_into_get_stats(self):
