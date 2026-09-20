@@ -321,7 +321,11 @@ test('3. boot', async () => {
   );
   for (const [name, answer] of Object.entries(health)) {
     expect(answer.status, `${name} /health`).toBe('ok');
-    const unusable = Object.entries(answer.tools ?? {}).filter(([, state]) => state !== 'ok');
+    // A usable tool is the bare string `ok`, an unusable one a {state, code, params} object, so the
+    // offenders are rendered rather than printed raw: the reason reads, the code greps ERROR-CODES.md.
+    const unusable = Object.entries(answer.tools ?? {})
+      .filter(([, result]) => result !== 'ok')
+      .map(([tool, result]) => `${tool}: ${result?.state ?? result} (${result?.code ?? 'no code'})`);
     expect(unusable, `${name} reports tools it cannot run`).toEqual([]);
   }
 
