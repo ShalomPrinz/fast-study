@@ -4,6 +4,7 @@ import { openOverviewFile } from '@/services/open'
 import { formatDuration, formatMonthDate, formatFullTimestamp } from '@/shared/utils/format'
 import { formatRange } from '@/features/course-overview/utils/overview'
 import { toastInitResult } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import {
   lastGeneratedFile,
   branchStatus,
@@ -64,11 +65,13 @@ export default function ExtractorHeader() {
 
   // The context never toasts; components do.
   async function handleGenerate() {
-    const result = await generate([slug])
-    toastInitResult(result, {
-      busy: t`Overview is already running for this course`,
-      error: t`Overview failed to start`,
-    })
+    try {
+      toastInitResult(await generate([slug]), {
+        busy: t`Overview is already running for this course`,
+      })
+    } catch (e) {
+      toastFailure(e)
+    }
   }
 
   return (

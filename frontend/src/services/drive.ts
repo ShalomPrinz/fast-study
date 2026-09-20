@@ -1,4 +1,3 @@
-import { t } from '@lingui/core/macro'
 import { createClient } from './http'
 import { BACKEND_URL } from './runtime'
 
@@ -28,9 +27,7 @@ export async function fetchDriveStatus(): Promise<DriveStatus> {
 /** Starts the flow and returns the URL the backend has already opened a browser on, so the URL is
  *  only a "didn't open?" fallback. A second call while one is pending answers the same URL. */
 export async function connectDrive(): Promise<string> {
-  const raw = await backend.post<{ auth_url?: string; message?: string }>('/config/drive/connect')
-  // No `auth_url` is the error envelope missing `credentials.json` answers with.
-  if (!raw.auth_url) throw new Error(raw.message ?? t`Couldn't start the Google sign-in.`)
+  const raw = await backend.post<{ auth_url: string }>('/config/drive/connect')
   return raw.auth_url
 }
 

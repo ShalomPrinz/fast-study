@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { OverviewExtractor } from '@/types'
 import { toastInitResult } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import { generatedFiles } from '@/features/course-overview/constants/overview'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
@@ -23,11 +24,13 @@ export default function ExtractorRow({ extractor }: { extractor: OverviewExtract
   // No skipExisting: an explicit re-generate overwrites.
   async function regenerate() {
     setRegenerateOpen(false)
-    const result = await generate([slug])
-    toastInitResult(result, {
-      busy: t`Overview is already running for this course`,
-      error: t`Overview failed to start`,
-    })
+    try {
+      toastInitResult(await generate([slug]), {
+        busy: t`Overview is already running for this course`,
+      })
+    } catch (e) {
+      toastFailure(e)
+    }
   }
 
   const value: ExtractorValue = {

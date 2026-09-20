@@ -18,7 +18,8 @@ It does not name the file, which would have to be parsed back out of the URL.
 **Connection errors are handled once, here.** Only a network failure rejects as a `TypeError` (aborts are
 `DOMException` and pass through), so that branch wraps it in `ConnectionError`, toasts it keyed by base
 URL — a downed service shows one toast, not a stack — and rethrows. Call sites add no connection handling
-of their own; they ignore the throw or check `isConnectionError`.
+of their own; they ignore the throw or check `isConnectionError`. `shared/utils/failure.ts`'s
+`toastFailure` is that check plus the toast, for the call sites that report a refused request themselves.
 
 ## `backend.ts` → FastAPI (:8000)
 
@@ -74,7 +75,8 @@ closed on the last, consumed only through `useNotify`.
 
 `toaster.ts` is the one `react-toastify` import (its CSS too) and hosts every toast shape — new shapes get
 a helper here. `ToastContainer` is mounted in `App` above the init gate, since a toast with no mounted
-container is queued, not shown. `toastInitResult` does nothing on `'started'`: completion arrives over SSE.
+container is queued, not shown. `toastInitResult` only reports `'busy'` — `'started'` arrives over SSE and
+a refused run rejects, which the caller reports with `toastFailure`.
 Every toast dismisses on a click; `toastPromise` re-states `closeOnClick` because a loading toast opts out.
 
 ## URL building — `shared/utils/url.ts`

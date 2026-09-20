@@ -87,9 +87,12 @@ export function CourseOverviewProvider({
     fromPhase?: CoursePhase,
     skipExisting?: boolean,
   ): Promise<RunInitResult> {
-    const result = await runOverview(course, names, fromPhase, skipExisting)
-    refresh()
-    return result
+    // A refused run refreshes too: the backend turned it down over state we may be showing stale.
+    try {
+      return await runOverview(course, names, fromPhase, skipExisting)
+    } finally {
+      refresh()
+    }
   }
 
   const value: CourseOverviewValue = { course, extractors, files, meta, status, generate }

@@ -138,13 +138,15 @@ export default function EditSummaryView() {
       setGenerating(false)
       return
     }
-    const initResult = await runStep(course, lecture, 'pdf', kind)
-    if (initResult.status !== 'started') {
-      toastInitResult(initResult, {
-        busy: t`Step already running`,
-        error: t`Failed to generate PDF`,
-      })
-      if (initResult.status === 'error') setError(initResult.message ?? t`Failed to generate PDF`)
+    try {
+      const initResult = await runStep(course, lecture, 'pdf', kind)
+      if (initResult.status !== 'started') {
+        toastInitResult(initResult, { busy: t`Step already running` })
+        setGenerating(false)
+        return
+      }
+    } catch (e) {
+      reportFailure(e, t`Failed to generate PDF`)
       setGenerating(false)
       return
     }

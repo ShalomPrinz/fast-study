@@ -13,15 +13,12 @@ import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
-import {
-  visiblePipeline,
-  STEP_FILE,
-  STEP_ERROR_LABEL,
-} from '@/features/lectures/constants/pipeline'
+import { visiblePipeline, STEP_FILE } from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
 import { formatBytes, formatDuration } from '@/shared/utils/format'
 import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
+import { toastFailure } from '@/shared/utils/failure'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { stepState } from '@/features/lectures/utils/stepState'
@@ -159,11 +156,12 @@ export default function MainView() {
   }
 
   async function handleStep(step: Step) {
-    const initResult = await runStep(course, lecture, step, kind)
-    toastInitResult(initResult, {
-      busy: t`Step already running`,
-      error: t(STEP_ERROR_LABEL[step]),
-    })
+    // A refused step refreshes too: it was refused over state the tree may be showing stale.
+    try {
+      toastInitResult(await runStep(course, lecture, step, kind), { busy: t`Step already running` })
+    } catch (e) {
+      toastFailure(e)
+    }
     refreshCourses()
   }
 
@@ -182,11 +180,13 @@ export default function MainView() {
   }
 
   async function handleRunRemaining() {
-    const result = await runPipeline(course, lecture, kind)
-    toastInitResult(result, {
-      busy: t`Pipeline already running`,
-      error: t`Pipeline failed to start`,
-    })
+    try {
+      toastInitResult(await runPipeline(course, lecture, kind), {
+        busy: t`Pipeline already running`,
+      })
+    } catch (e) {
+      toastFailure(e)
+    }
     refreshCourses()
   }
 

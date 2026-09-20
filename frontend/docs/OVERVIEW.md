@@ -11,7 +11,8 @@ Everything derived (`generatedFiles`, `lastGeneratedFile`, `startedSlug`, `branc
 
 `CourseOverviewContext` is data-only: extractors, the `overview/` listing, meta and status, each behind
 its own `useLatestRequest` and refreshed on every notify. `generate(names?, fromPhase?, skipExisting?)`
-triggers and refreshes but never toasts; the caller toasts the `RunInitResult`.
+triggers and refreshes — refused or not — but never toasts; the caller toasts a `busy` `RunInitResult`
+and the rejection a refused run throws.
 
 ## The view
 

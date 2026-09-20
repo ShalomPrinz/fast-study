@@ -89,8 +89,7 @@ export interface RateLimitProgress {
   total: number | null
 }
 
-export type RunInitResult =
-  { status: 'started' } | { status: 'busy' } | { status: 'error'; message: string }
+export type RunInitResult = { status: 'started' } | { status: 'busy' }
 
 export interface Selected {
   course: string

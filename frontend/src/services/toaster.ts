@@ -28,11 +28,8 @@ export function toastPromise<T>(
   return toast.promise(promise, messages, { closeOnClick: true })
 }
 
-export function toastInitResult(
-  result: RunInitResult,
-  messages: { busy: string; error: string },
-): void {
+// A refused run rejects instead (the backend answers 4xx with its own prose), so `busy` — the one
+// refusal that is not an error — is all this has left to say. 'started' is a no-op: SSE reports it.
+export function toastInitResult(result: RunInitResult, messages: { busy: string }): void {
   if (result.status === 'busy') appToast('error', messages.busy)
-  else if (result.status === 'error') appToast('error', result.message ?? messages.error)
-  // 'started' is a no-op — completion arrives via SSE.
 }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { OverviewStep } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import { stepsFor, branchStatus } from '@/features/course-overview/constants/overview'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
@@ -32,11 +33,13 @@ export default function StepRow({ step }: { step: OverviewStep }) {
 
   async function regenerateFromStep() {
     setRegenerateOpen(false)
-    const result = await generate([slug], step.phase)
-    toastInitResult(result, {
-      busy: t`Overview is already running for this course`,
-      error: t`Overview failed to start`,
-    })
+    try {
+      toastInitResult(await generate([slug], step.phase), {
+        busy: t`Overview is already running for this course`,
+      })
+    } catch (e) {
+      toastFailure(e)
+    }
   }
 
   const modifier = exists ? ' overview-phase--done' : stepRunning ? ' overview-phase--running' : ''

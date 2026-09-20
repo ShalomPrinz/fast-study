@@ -82,11 +82,3 @@ export const STEP_FILE: Partial<Record<Step, FileName>> = STEP_FILE_MUT
 export const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = STEP_INPUT_FILE_MUT
 export const STEP_LABEL: Partial<Record<Step, MessageDescriptor>> = STEP_LABEL_MUT
 export const STEP_SET: Set<string> = STEP_SET_MUT
-
-export const STEP_ERROR_LABEL: Record<Step, MessageDescriptor> = {
-  audio: msg`Audio extraction failed`,
-  transcribe: msg`Transcription failed`,
-  summarize: msg`Summarization failed`,
-  pdf: msg`PDF export failed`,
-  drive: msg`Drive upload failed`,
-}

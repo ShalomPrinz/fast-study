@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro'
 import { useCourseOverview } from '@/features/course-overview/contexts/CourseOverviewContext'
 import { branchStatus, startedSlug } from '@/features/course-overview/constants/overview'
 import { toastInitResult } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
 
@@ -22,11 +23,13 @@ export default function GenerateAllButton() {
     extractors.every((e) => branchStatus(status, files, e.slug, e.phases).done)
 
   async function handleGenerate() {
-    const result = await generate(undefined, undefined, true)
-    toastInitResult(result, {
-      busy: t`Overview is already running for this course`,
-      error: t`Overview failed to start`,
-    })
+    try {
+      toastInitResult(await generate(undefined, undefined, true), {
+        busy: t`Overview is already running for this course`,
+      })
+    } catch (e) {
+      toastFailure(e)
+    }
   }
 
   return (
