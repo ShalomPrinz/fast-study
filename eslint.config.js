@@ -39,6 +39,17 @@ export default [
     rules: baseline,
   },
 
+  // The bug-hunting harness under .claude/: agent tooling, ESM on Node, never shipped.
+  {
+    files: ['.claude/hunt-bugs/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node },
+    },
+    rules: baseline,
+  },
+
   // Release smoke suite: ESM on Node, with `page.evaluate` callbacks that run in the app's renderer.
   {
     files: ['delivery/smoke/**/*.js'],
