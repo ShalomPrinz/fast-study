@@ -1,4 +1,5 @@
 import { VideoExtractor } from './VideoExtractor.js';
+import { CodedError } from '../lib/errors.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
 function endsWithMp4(url) {
@@ -79,7 +80,9 @@ export class VideostreamExtractor extends VideoExtractor {
     }
 
     if (!request) {
-      throw new Error(
+      throw new CodedError(
+        'videostream_no_media_request',
+        { url: rec.pageUrl },
         `No .mp4 request captured on ${rec.pageUrl} (playback may need a manual trigger)`,
       );
     }

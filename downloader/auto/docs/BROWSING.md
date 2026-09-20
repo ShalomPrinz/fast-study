@@ -85,7 +85,8 @@ into one lecture appends (`material.2.pdf`).
 An unexpanded playlist lists as ONE `expandable` item whose `pageUrl` is the module's direct
 target. `/list/expand` runs `yt-dlp --flat-playlist` on it, spreading `NO_WINDOW` from
 [`@faststudy/tools`](../../../lib/tools/CLAUDE.md). The YouTube-host check in `listEntries` is a
-fallback for an echoed ref: a non-YouTube host there is `422`, distinct from a 500 "try again".
+fallback for an echoed ref: a non-YouTube host there is `422` (`expand_unsupported_host {host}`),
+distinct from a 500 "try again".
 
 ## Google Drive — the filename probe
 
@@ -93,12 +94,13 @@ A Drive item is one file, but nothing in the WS payload says _what_ (a Drive lin
 section is as easily `L1.zip`). `server/`'s job is fire-and-forget once started, so `/resolve` decides
 here: `probeDriveFile` reads the real filename and routes on its extension via `classifyFilename`
 (`lib/fileMedia.js`) — video → a `ytdlp` target on the Drive link itself, `.pdf` → a `fetch` target on the
-direct-download URL, anything else → `422` naming the extension. The filename is a fact about the
-file, unlike yt-dlp's stderr wording.
+direct-download URL, anything else → `422` (`link_not_a_video {source:'drive', url, ext}`) naming the
+extension. The filename is a fact about the file, unlike yt-dlp's stderr wording.
 
 The name comes from `Content-Disposition` on `uc?export=download&id=<ID>` (one request); a large
 file's confirm interstitial and `/file/d/<ID>/view`'s `<title>` are the fallbacks. A file not shared
-"anyone with the link" (or removed) yields no name and is a `422` naming the sharing cause and the URL.
+"anyone with the link" (or removed) yields no name and is a `422` (`drive_not_shared {url}`) naming
+the sharing cause and the URL.
 Every verdict, the unshared one included (`reason:'unshared'`), is memoized per **file id** in
 `core/probeCache.js`; `forceCapture` re-probes — the way back in once the owner shares it.
 
@@ -119,10 +121,11 @@ All of it routes through the one table in `lib/fileMedia.js`, so a Drive link an
 never disagree about what a `.mp4` is.
 
 A **certain** verdict — usable, a definite no, or a `404`/`410` (`reason:'missing'`: the host says
-nothing is there) — memoizes under the normalized URL and a no answers `422`. An **uncertain** one —
-nothing answered (offline, DNS, TLS, the 15s timeout Node's `fetch` lacks by default), a refusal that
-can pass (`403` wall, `429`, `5xx`), or bare `application/octet-stream` with no name — is a plain `500`
-"try again" and is **not cached**: a 422 disables the row for the session, which must not be the price
+nothing is there) — memoizes under the normalized URL and a no answers `422`: `link_dead {url}` for
+the missing one, else `link_not_a_video {source:'link', url, ext}`, whose `ext` is null for a web page.
+An **uncertain** one — nothing answered (offline, DNS, TLS, the 15s timeout Node's `fetch` lacks by
+default), a refusal that can pass (`403` wall, `429`, `5xx`), or bare `application/octet-stream` with
+no name — is a plain `500` `link_probe_inconclusive {url}` "try again" and is **not cached**: a 422 disables the row for the session, which must not be the price
 of one bad moment on the network.
 
 ## Moodle files

@@ -55,6 +55,23 @@ ETA buckets — [JOBS.md](server/docs/JOBS.md)). `auto/` calls nothing of ours. 
 popup calls `server/`, and the frontend calls `server/` for every download (start, job and run events,
 resync) and `auto/` for listing, auth and passcodes.
 
+## Failure envelope
+
+Every non-2xx body either service answers is `{error, code, params}`, and every failed download job
+carries the same `code`/`params` beside its `message` on `GET /jobs`. `code` is a lower_snake_case
+name for the failure, `params` is flat (strings, numbers, booleans, null — no nesting, no prose), and
+text from outside this repo (yt-dlp, curl, undici, Playwright, Moodle, the database service's body)
+rides as the reserved `detail` param. `error`/`message` stays English: it is the developer-facing
+description and the frontend's fallback for a code it has no sentence for.
+
+`auto/`'s four typed refusals keep their `status` and `message` on top of that, so the frontend's
+existing branch on `status` is untouched. The full vocabulary is in the repo-root
+[`docs/ERROR-CODES.md`](../docs/ERROR-CODES.md); a request-validation body carries `invalid_request`
+with the offending `field` and deliberately has no catalog row.
+
+The emoji prefixes are `progress.js`'s console wrappers only — nothing emoji-prefixed reaches an
+HTTP body or a job message.
+
 ## Why these specific hacks (extension)
 
 - **Per-tab badge / per-page filter.** Multiple lectures open in different tabs would otherwise pollute each other's capture list. (The download/curl/yt-dlp hacks live in `server/docs/DOWNLOAD.md`.)

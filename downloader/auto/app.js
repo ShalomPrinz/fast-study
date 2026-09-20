@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { ALLOWED_ORIGINS, AUTODL_PORT } from './src/lib/config.js';
-import { UnsupportedError } from './src/lib/errors.js';
+import { UnsupportedError, failureOf } from './src/lib/errors.js';
 import { serve, requireSecret } from '@faststudy/runtime';
 import { checkTools } from '@faststudy/tools';
 import { closeAllSessions } from './src/browser/browserSession.js';
@@ -55,11 +55,12 @@ app.post('/zoom/passcode', handleZoomPasscode);
 app.post('/close', handleClose);
 
 // Centralized error backstop: Express 5 forwards async-handler rejections here.
-// A rethrown UnsupportedError maps to 422; anything else to 500.
+// A rethrown UnsupportedError maps to 422; anything else to 500, carrying its own code when it
+// has one and `internal_error` when it does not.
 app.use((err, req, res, next) => {
   console.error(err?.stack ?? String(err));
-  if (err instanceof UnsupportedError) return sendUnsupported(res, err.message);
-  res.status(500).json({ error: err.message ?? 'Server error' });
+  if (err instanceof UnsupportedError) return sendUnsupported(res, err);
+  res.status(500).json(failureOf(err));
 });
 
 // Close every session (and the managed Xvfb) on shutdown so no browser or virtual
@@ -72,8 +73,10 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 
 checkTools(TOOLS).then((status) => {
   toolStatus = status;
-  for (const [name, state] of Object.entries(status)) {
-    if (state !== 'ok') console.error(`❌ ${name} is ${state} — playlist expansion will fail`);
+  // A probe answers 'ok' or a {state, code, params} record; the boot line wants its state.
+  for (const [name, probe] of Object.entries(status)) {
+    if (probe !== 'ok')
+      console.error(`❌ ${name} is ${probe.state} — playlist expansion will fail`);
   }
 });
 

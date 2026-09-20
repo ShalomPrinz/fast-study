@@ -17,7 +17,7 @@ import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
 import { getProbedMedia } from '../core/probeCache.js';
 import { probeKeyForUrl } from '../lib/probeUrl.js';
 import { encodeRef, decodeRef } from '../lib/ref.js';
-import { UnsupportedError, PasscodeError } from '../lib/errors.js';
+import { CodedError, UnsupportedError, PasscodeError, failureOf } from '../lib/errors.js';
 import * as passcodes from '../lib/passcodes.js';
 import {
   courseIdFrom,
@@ -97,27 +97,42 @@ function logResult(path, msg) {
   console.log(`↳ ${path} → ${msg}`);
 }
 
+// A request our own SPA, popup or peer shaped wrongly: today's English plus the offending field,
+// so every body on the wire has the same shape (repo-root `docs/ERROR-CODES.md`).
+function invalid(field, error) {
+  return { error, code: 'invalid_request', params: { field } };
+}
+
 // Distinct "session expired → steer the user to Reconnect" signal.
 function sendReconnect(res) {
-  send(res, 401, { status: 'reconnect' });
+  send(res, 401, { status: 'reconnect', code: 'moodle_reconnect_required', params: {} });
 }
 
 // Distinct "this item can't be expanded/downloaded" signal (e.g. a `url` module
-// redirecting off-YouTube) so the page shows the specific reason.
-export function sendUnsupported(res, message) {
-  send(res, 422, { status: 'unsupported', message });
+// redirecting off-YouTube) so the page shows the specific reason. Relays the thrower's code —
+// what is unsupported differs per source, and only the throw site knows which.
+export function sendUnsupported(res, err) {
+  send(res, 422, { status: 'unsupported', message: err.message, code: err.code, params: err.params });
 }
 
 // Distinct "the site served a bot-protection challenge" signal, so the page can say to wait.
 // 503: the site is refusing us for now; nothing about the request is wrong.
-function sendBlocked(res, message) {
-  send(res, 503, { status: 'blocked', message });
+function sendBlocked(res, err) {
+  send(res, 503, { status: 'blocked', message: err.message, code: err.code, params: err.params });
 }
 
 // Distinct "the zoom passcode gate couldn't be cleared" signal so the page can prompt
-// for a passcode (reason 'missing') or flag a wrong one (reason 'incorrect') and retry.
-function sendPasscode(res, { reason, course, name }) {
-  send(res, 409, { status: 'passcode', reason, course, name });
+// for a passcode (reason 'missing') or flag a wrong one (reason 'incorrect') and retry. The gate
+// knows neither course nor lecture, so the route's own are what reach the params.
+export function sendPasscode(res, err, { course, name }) {
+  send(res, 409, {
+    status: 'passcode',
+    reason: err.reason,
+    course,
+    name,
+    code: err.code,
+    params: { reason: err.reason, course, name },
+  });
 }
 
 // Reject an empty or multi-segment name — the traversal half of server/'s
@@ -175,7 +190,17 @@ export async function handleBrowserPrereq(req, res) {
     });
   } catch (e) {
     logResult('/prereqs/browser', `unavailable: ${e.message}`);
-    return send(res, 200, { available: false, channel: null, browser: null, detail: e.message });
+    const { code, params } = failureOf(e);
+    // `available:false` is an answer, not a failure — but it carries the same code the 500 backstop
+    // would, so a consumer reads one code for "no browser" whichever response it came from.
+    return send(res, 200, {
+      available: false,
+      channel: null,
+      browser: null,
+      detail: e.message,
+      code,
+      params,
+    });
   }
 }
 
@@ -185,13 +210,13 @@ export async function handleList(req, res) {
   const { courseUrl } = req.body;
   logReq('POST', '/list', courseUrl);
   if (typeof courseUrl !== 'string' || !/^https?:\/\//.test(courseUrl)) {
-    return send(res, 400, { error: 'valid courseUrl required' });
+    return send(res, 400, invalid('courseUrl', 'valid courseUrl required'));
   }
   let uni;
   try {
     uni = resolveUniversity(courseUrl);
   } catch (e) {
-    return send(res, 400, { error: e.message });
+    return send(res, 400, failureOf(e));
   }
 
   const auth = authFor(uni);
@@ -204,7 +229,7 @@ export async function handleList(req, res) {
   try {
     courseId = courseIdFrom(courseUrl);
   } catch (e) {
-    return send(res, 400, { error: e.message });
+    return send(res, 400, failureOf(e));
   }
 
   // Stateless WS: no browser needed. A dead token comes back as an invalidToken
@@ -221,7 +246,7 @@ export async function handleList(req, res) {
     }
     if (blocked(e)) {
       logResult('/list', `blocked (503): ${e.message}`);
-      return sendBlocked(res, e.message);
+      return sendBlocked(res, e);
     }
     throw e;
   }
@@ -238,7 +263,7 @@ export async function handleListExpand(req, res) {
   const recording = decodeRef(ref);
   const extractor = resolveExtractorForRecording(recording);
   if (!recording?.pageUrl || typeof extractor?.listEntries !== 'function') {
-    return send(res, 400, { error: 'item is not expandable' });
+    return send(res, 400, invalid('ref', 'item is not expandable'));
   }
   let entries;
   try {
@@ -246,7 +271,7 @@ export async function handleListExpand(req, res) {
   } catch (e) {
     if (e instanceof UnsupportedError) {
       logResult('/list/expand', `unsupported (422): ${e.message}`);
-      return sendUnsupported(res, e.message);
+      return sendUnsupported(res, e);
     }
     throw e; // other failures fall through to the centralized 500 ("try again")
   }
@@ -275,12 +300,12 @@ export async function handleResolve(req, res) {
   } catch (e) {
     if (e instanceof UnsupportedError) {
       logResult('/resolve', `unsupported (422): ${e.message}`);
-      return sendUnsupported(res, e.message);
+      return sendUnsupported(res, e);
     }
     if (e instanceof PasscodeError) {
       const { course, name } = req.body;
       logResult('/resolve', `passcode ${e.reason} (409)`);
-      return sendPasscode(res, { reason: e.reason, course, name });
+      return sendPasscode(res, e, { course, name });
     }
     throw e;
   }
@@ -294,11 +319,15 @@ async function resolveItem(req, res) {
   const rowRef = typeof ref === 'string' ? ref : null;
   const recording = decodeRef(ref);
   if (!recording || typeof recording !== 'object')
-    return send(res, 400, { error: 'valid ref required' });
+    return send(res, 400, invalid('ref', 'valid ref required'));
   if (!isSafeName(course) || !isSafeName(name))
-    return send(res, 400, { error: 'course and name are required' });
+    return send(
+      res,
+      400,
+      invalid(isSafeName(course) ? 'name' : 'course', 'course and name are required'),
+    );
   if (kind !== 'lecture' && kind !== 'recitation')
-    return send(res, 400, { error: `invalid kind: ${kind}` });
+    return send(res, 400, invalid('kind', `invalid kind: ${kind}`));
 
   // only = act on just this one (course,name,kind) target (a no-op for the single-target
   // browserless strategies); forceCapture = bypass the replay and probe caches
@@ -331,7 +360,7 @@ async function resolveItem(req, res) {
       }
       if (blocked(e)) {
         logResult('/resolve', `blocked (503): ${e.message}`);
-        return sendBlocked(res, e.message);
+        return sendBlocked(res, e);
       }
       throw e;
     }
@@ -383,7 +412,7 @@ async function resolveItem(req, res) {
     logResult('/resolve', `ok (${targets.length} target, video)`);
     return send(res, 200, { media: 'video', targets });
   }
-  if (!recording.pageUrl) return send(res, 400, { error: 'ref is not downloadable' });
+  if (!recording.pageUrl) return send(res, 400, invalid('ref', 'ref is not downloadable'));
 
   // The extractor picks its own browser profile (DI): videostream runs on the plain
   // headless session; zoom runs on the headed chrome+stealth session.
@@ -447,7 +476,7 @@ async function resolveItem(req, res) {
     }
     if (blocked(e)) {
       logResult('/resolve', `blocked (503): ${e.message}`);
-      return sendBlocked(res, e.message);
+      return sendBlocked(res, e);
     }
     throw e;
   }
@@ -460,7 +489,11 @@ async function resolveItem(req, res) {
 async function ensureAutologin(session, token) {
   if (session.isAuthed()) return;
   if (!token?.privatetoken) {
-    throw new Error('token has no privatetoken; Reconnect to enable videostream capture');
+    throw new CodedError(
+      'moodle_token_no_privatetoken',
+      {},
+      'token has no privatetoken; Reconnect to enable videostream capture',
+    );
   }
   const { userid } = await getSiteInfo(token.wstoken);
   const { key, autologinurl } = await getAutologinKey(token.wstoken, token.privatetoken);
@@ -477,13 +510,13 @@ async function ensureAutologin(session, token) {
 export function handleZoomPasscode(req, res) {
   const { course, name, passcode, scope } = req.body;
   logReq('POST', '/zoom/passcode', `${course}${scope === 'lecture' ? `/${name}` : ''} (${scope})`);
-  if (!isSafeName(course)) return send(res, 400, { error: 'course is required' });
+  if (!isSafeName(course)) return send(res, 400, invalid('course', 'course is required'));
   if (scope !== 'course' && scope !== 'lecture')
-    return send(res, 400, { error: `invalid scope: ${scope}` });
+    return send(res, 400, invalid('scope', `invalid scope: ${scope}`));
   if (scope === 'lecture' && !isSafeName(name))
-    return send(res, 400, { error: 'name is required for lecture scope' });
+    return send(res, 400, invalid('name', 'name is required for lecture scope'));
   if (typeof passcode !== 'string' || passcode.length === 0)
-    return send(res, 400, { error: 'passcode is required' });
+    return send(res, 400, invalid('passcode', 'passcode is required'));
   passcodes.save({ course, name, passcode, scope });
   logResult('/zoom/passcode', 'ok');
   send(res, 200, {});

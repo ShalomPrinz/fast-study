@@ -6,6 +6,10 @@ import { downloadItem } from './routes/downloadItem.js';
 // section identity so a client that reloaded can find its run again with no id to remember.
 const runs = new Map();
 
+// The two refusals both the registry and its routes answer with (repo-root `docs/ERROR-CODES.md`).
+export const UNKNOWN_RUN = { error: 'unknown run', code: 'run_unknown', params: {} };
+export const RUN_NOT_PAUSED = { error: 'run is not paused', code: 'run_not_paused', params: {} };
+
 /**
  * What an orchestrator status does to the run: `status` halts the run in that state, `disposition`
  * records it on the target and the queue continues (docs/RUNS.md).
@@ -61,12 +65,12 @@ export function getRun(id) {
   return listRuns().find((run) => run.id === id) ?? null;
 }
 
-// null on success, else the message — a resume is only meaningful on a run parked at a passcode
-// gate, and re-entering the driver on a running one would download every remaining row twice.
+// null on success, else the failure body — a resume is only meaningful on a run parked at a
+// passcode gate, and re-entering the driver on a running one would download every remaining row twice.
 export function resumeRun(id, { skip = false } = {}) {
   const run = getRun(id);
-  if (!run) return 'unknown run';
-  if (run.status !== 'paused') return 'run is not paused';
+  if (!run) return UNKNOWN_RUN;
+  if (run.status !== 'paused') return RUN_NOT_PAUSED;
   const { index } = run.paused;
   // A skipped gate records the row as failed to queue and moves on, rather than abandoning the
   // whole run.
@@ -77,7 +81,7 @@ export function resumeRun(id, { skip = false } = {}) {
 
 export function cancelRun(id) {
   const run = getRun(id);
-  if (!run) return 'unknown run';
+  if (!run) return UNKNOWN_RUN;
   run.status = 'cancelled';
   run.paused = null;
   broadcastRuns();

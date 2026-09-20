@@ -55,7 +55,8 @@ app.use(pdfRouter);
 // The unused `next` is load-bearing: express identifies error handlers by arity.
 app.use((err, req, res, next) => {
   emitError(err?.stack ?? String(err));
-  res.status(500).json({ error: err.message ?? 'Server error' });
+  const error = err?.message ?? 'Server error';
+  res.status(500).json({ error, code: 'internal_error', params: { detail: error } });
 });
 
 // Synchronous and before the probe: the copy it seeds is what toolPath resolves to from here on,
@@ -64,9 +65,10 @@ seedYtdlp();
 
 checkTools(TOOLS).then((status) => {
   toolStatus = status;
-  for (const [name, state] of Object.entries(status)) {
-    if (state !== 'ok')
-      console.error(`❌ ${name} is ${state} — the downloads that need it will fail`);
+  // A probe answers 'ok' or a {state, code, params} record; the boot line wants its state.
+  for (const [name, probe] of Object.entries(status)) {
+    if (probe !== 'ok')
+      console.error(`❌ ${name} is ${probe.state} — the downloads that need it will fail`);
   }
   // Fire-and-forget, but only after the probe: `-U` swaps the exe in place, and a probe landing in
   // that window would pin /health at `yt-dlp: missing` for the whole session.

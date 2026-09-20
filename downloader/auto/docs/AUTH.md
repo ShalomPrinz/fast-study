@@ -27,7 +27,8 @@ location.
 
 There is no expiry heuristic — a token's validity shows only when the WS API is called. Moodle
 answers a dead token with HTTP 200 + an `invalidtoken` body, which `/list`, the moodle-file resolve
-and the videostream resolve map (`invalidToken(err)`) to `markExpired()` + `401 {status:'reconnect'}`.
+and the videostream resolve map (`invalidToken(err)`) to `markExpired()` + `401 {status:'reconnect'}`
+(`moodle_reconnect_required`).
 `complete()` clears the flag. A bot-protection challenge (`blocked(err)`) is deliberately _not_ that
 signal: it says nothing about the token, so it leaves the flag alone and answers `503`.
 

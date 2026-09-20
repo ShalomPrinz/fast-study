@@ -2,7 +2,7 @@ import { Router } from 'express';
 import express from 'express';
 import { uploadPdf } from '../services/database.js';
 import { emitLog, formatBytes } from '../progress.js';
-import { storedName, validateKind } from '../validate.js';
+import { invalidRequest, storedName, validateKind } from '../validate.js';
 
 const router = Router();
 
@@ -16,7 +16,12 @@ router.post('/upload-pdf', express.raw({ type: '*/*', limit: '1gb' }), async (re
   if (!course || !lecture) {
     return res
       .status(400)
-      .json({ error: 'course and lecture with a legal character are required' });
+      .json(
+        invalidRequest(
+          course ? 'lecture' : 'course',
+          'course and lecture with a legal character are required',
+        ),
+      );
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
@@ -26,12 +31,12 @@ router.post('/upload-pdf', express.raw({ type: '*/*', limit: '1gb' }), async (re
     `\n📥 PDF upload received: ${formatBytes(buf?.length ?? 0)} for ${course}/${lecture} (kind=${kind})`,
   );
   if (!Buffer.isBuffer(buf) || buf.length === 0) {
-    return res.status(400).json({ error: 'empty body' });
+    return res.status(400).json(invalidRequest('body', 'empty body'));
   }
 
   // Network error throws -> 500 (error middleware); database-level failure -> 502.
   const uploadError = await uploadPdf(buf, course, lecture, kind);
-  if (uploadError) return res.status(502).json({ error: uploadError });
+  if (uploadError) return res.status(502).json(uploadError);
   res.json({ status: 'PDF uploaded', target: `${course}/${lecture}` });
 });
 

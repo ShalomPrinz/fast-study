@@ -55,8 +55,9 @@ the gate; the frontend saves one via `POST /zoom/passcode`.
 
 The form is a Vue SPA whose binding lands a beat after the input appears, so a fill fired too early
 is dropped: fill+click is **retried up to 5×** until `#passcode` detaches. The gate throws
-`PasscodeError` → `409`: `reason:'missing'` up front when none is stored (no empty submits), or
-`'incorrect'` when a stored one never clears. No gate means already authorized.
+`PasscodeError` → `409` `zoom_passcode_required {reason, course, name}`: `reason:'missing'` up front
+when none is stored (no empty submits), or `'incorrect'` when a stored one never clears. The gate knows
+neither course nor lecture, so the route fills those two in. No gate means already authorized.
 
 ## Before/after-break split
 

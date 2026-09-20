@@ -82,6 +82,8 @@ async function fetchDriveFilename(fileId) {
 // One wording for the no-filename verdict, so a cache hit 422s as accurately as a fresh probe.
 function unsharedError(url) {
   return new UnsupportedError(
+    'drive_not_shared',
+    { url },
     `Google Drive file is not publicly shared (or was removed): ${url}. Open it in a browser and download manually.`,
   );
 }
@@ -96,7 +98,12 @@ function unsharedError(url) {
  */
 export async function probeDriveFile(url, { force = false } = {}) {
   const fileId = driveFileId(url);
-  if (!fileId) throw new UnsupportedError(`not a Google Drive file link: ${url}`);
+  if (!fileId)
+    throw new UnsupportedError(
+      'drive_link_malformed',
+      { url },
+      `not a Google Drive file link: ${url}`,
+    );
   const downloadUrl = driveDownloadUrl(fileId);
 
   const cached = force ? undefined : getProbe(fileId);

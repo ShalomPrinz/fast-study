@@ -50,7 +50,8 @@ automated — a burst of calls is enough — `server.php` stops speaking the WS 
 serves a captcha page (**HTTP 200, `text/html`**, ~15 KB, `__uzma`…`__uzmd` cookies) or a **302** to
 one, for any client and any UA. So `callWs` checks status and content-type _before_ parsing and throws
 `WsBlockedError` (`blocked(err)`); parsing first would report only `SyntaxError: Unexpected token '<'`,
-naming the symptom and hiding the cause. `/list` and `/resolve` map it to `503 {status:'blocked'}` —
+naming the symptom and hiding the cause. `/list` and `/resolve` map it to `503 {status:'blocked'}`,
+code `site_blocked` with the shape it served as `detail` —
 no retry and no throttling: the wait is minutes long, and retrying is what deepens the block. It never
 marks the token expired, so the UI must not steer to Reconnect on it. This is also why no change is
 ever verified by a live request to the site.

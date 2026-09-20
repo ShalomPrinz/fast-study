@@ -8,6 +8,7 @@ import { chromium } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 import { resolveBrowserChannel } from './browserChannel.js';
+import { CodedError } from '../lib/errors.js';
 
 // Stealth minus its 'user-agent-override' evasion (a rewritten UA desyncs from Client-Hints),
 // registered ONLY on playwright-extra's chromium so plain launches stay clean. See docs/ZOOM.md.
@@ -19,6 +20,12 @@ chromium.use(stealth);
 // null there). Spawned lazily on the first zoom launch; killed on session close / process exit.
 let xvfb = null; // { proc: ChildProcess, display: ':N', authFile: string }
 
+// Every way the virtual display fails to come up is one code; whatever Xvfb itself said rides in
+// the message, which is also the `detail` param.
+function xvfbUnavailable(message) {
+  return new CodedError('xvfb_unavailable', { detail: message }, message);
+}
+
 const XVFB_READY_TIMEOUT_MS = 10_000;
 
 // Pick a free display EXPLICITLY (up from :99), never via `-displayfd`: WSLg's read-only
@@ -29,7 +36,7 @@ function findFreeDisplay() {
     if (fs.existsSync(`/tmp/.X11-unix/X${n}`)) continue;
     return n;
   }
-  throw new Error('no free X display number found (:99-:999 all taken)');
+  throw xvfbUnavailable('no free X display number found (:99-:999 all taken)');
 }
 
 // Per-run XAUTHORITY (MIT-MAGIC-COOKIE for :N), handed to both Xvfb (-auth) and the browser
@@ -70,13 +77,13 @@ function startXvfb() {
       fn(arg);
     };
     proc.once('error', (e) =>
-      finish(reject, new Error(`Failed to spawn Xvfb (${e.message}); is it installed?`)),
+      finish(reject, xvfbUnavailable(`Failed to spawn Xvfb (${e.message}); is it installed?`)),
     );
     proc.once('exit', (code) => {
       fs.rmSync(authFile, { force: true });
       finish(
         reject,
-        new Error(`Xvfb exited early (code ${code}).${err ? ` Xvfb said: ${err.trim()}` : ''}`),
+        xvfbUnavailable(`Xvfb exited early (code ${code}).${err ? ` Xvfb said: ${err.trim()}` : ''}`),
       );
     });
 
@@ -96,7 +103,7 @@ function startXvfb() {
           fs.rmSync(authFile, { force: true });
           finish(
             reject,
-            new Error(
+            xvfbUnavailable(
               `Xvfb :${num} did not accept connections within timeout.${err ? ` Xvfb said: ${err.trim()}` : ''}`,
             ),
           );

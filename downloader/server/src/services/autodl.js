@@ -27,6 +27,9 @@ export async function resolve({ ref, course, name, kind, only = false, forceCapt
     } catch {}
     return { status: res.status, body };
   } catch (err) {
-    return { status: 0, body: { error: err.message } };
+    return {
+      status: 0,
+      body: { error: err.message, code: 'autodl_unreachable', params: { detail: err.message } },
+    };
   }
 }

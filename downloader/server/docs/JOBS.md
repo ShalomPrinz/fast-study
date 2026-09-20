@@ -24,7 +24,7 @@ would find nothing. `createJob` runs synchronously in the route, before any awai
 sit in a private temp dir nobody else can see, and a failed upload is an `error` like any other.
 First terminal call wins, so a spawn failure (which fires both `error` and `close`) keeps the
 informative reason. `message` carries the child's stderr tail, the upload's error, or the thrown
-message.
+message, and `code`/`params` carry the same failure in machine form (below).
 
 ## Silent auth recovery
 
@@ -41,11 +41,11 @@ denied/expired-token phrasing — the curl `--fail` / yt-dlp signatures):
 - **auth error AND `fromCache` AND a closure** → the replayed token went stale. `reresolve()` asks
   auto/ for this one target fresh (`only:true, forceCapture:true`, `services/autodl.js`) and answers
   `{downloader, input}` — the runner re-runs **the same `jobId`**, so the job never leaves `/jobs` and
-  its id stays the caller's attempt identity — or `{error}`, a ready-to-display terminal message.
-  That message is built in `routes/downloadItem.js`, because what auto's statuses mean is the
-  resolver edge's knowledge, not the source-agnostic runner's: 401 → "reconnect Moodle", 409 →
-  "passcode needed", 422 → "source unsupported", anything else (a 2xx with no usable target
-  included) → "re-capture failed: …".
+  its id stays the caller's attempt identity — or `{failure}`, a ready-to-display terminal failure.
+  That failure is built in `routes/downloadItem.js`, because what auto's statuses mean is the
+  resolver edge's knowledge, not the source-agnostic runner's: 401 → `recapture_reconnect_required`,
+  409 → `recapture_passcode_required`, 422 → `recapture_unsupported {detail}`, anything else (a 2xx
+  with no usable target included) → `recapture_failed {detail}`.
 - **otherwise** → finalized as-is; a fresh-capture auth failure reads "authentication failed".
 
 **No-loop invariant:** the re-run's input is freshly captured, so it runs with `fromCache:false` and
@@ -76,10 +76,24 @@ so `/jobs` holds at most one job per target and the frontend does no client-side
 
 ## The `/jobs` shape
 
-`{ id, status, course, lecture, kind, tool, ref, operation, expectedBytes, startedAt, message }`.
-`operation` (`'download:curl'|'download:ytdlp'|null`) derives from `tool` via `services/timing.js`.
-`ref` (or `null`) is the discovery row that spawned the job; jobs sharing a `ref` group under one
-row, which is what keeps a zoom `<name>.1`/`<name>.2` pair together.
+`{ id, status, course, lecture, kind, tool, ref, operation, expectedBytes, startedAt, message, code,
+params }`. `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `tool` via
+`services/timing.js`. `ref` (or `null`) is the discovery row that spawned the job; jobs sharing a
+`ref` group under one row, which is what keeps a zoom `<name>.1`/`<name>.2` pair together.
+
+## Failure codes
+
+`message` is English and developer-facing; `code`/`params` are what a client renders from (repo-root
+[`docs/ERROR-CODES.md`](../../../docs/ERROR-CODES.md)). All three are `null` on a job that succeeded.
+
+| code                          | params                       | when                                            |
+| ----------------------------- | ---------------------------- | ----------------------------------------------- |
+| `download_tool_spawn_failed`  | `tool`, `detail`             | the child never started                          |
+| `download_tool_failed`        | `tool`, `exit_code`, `detail`| non-zero exit; `detail` is the stderr tail       |
+| `download_auth_failed`        | `tool`, `exit_code`, `detail`| the same exit, classified by `isAuthError`       |
+| `download_failed`             | `tool`, `detail`             | the probe or command build threw                 |
+| `database_store_failed`       | `detail`                     | the bytes never reached the database             |
+| `recapture_*`                 | see above                    | the one silent re-resolve failed                 |
 
 ## Timing samples
 
