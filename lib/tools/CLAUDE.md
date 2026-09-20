@@ -43,6 +43,15 @@ the Python half is here with one consumer.
 - **`check_tools` / `checkTools` never raise.** A missing tool disables one feature (no PDF, no
   YouTube), not the service, so the result is a map of reasons for the caller to log and publish. A
   service that refused to start would take down everything it can still do.
+- **A usable tool maps to the bare string `"ok"`; an unusable one maps to `{state, code, params}`.**
+  `state` is the one-line developer-facing reason (`missing`, `exited 3`), `code` is its row in
+  [`docs/ERROR-CODES.md`](../../docs/ERROR-CODES.md) — `tool_missing`, `tool_unusable`,
+  `tool_probe_timeout`, `tool_probe_exit` — and `params` carries the values a sentence needs. Success
+  stays a string on purpose: every consumer compares `!= "ok"`, and an object is never equal to it,
+  so the comparison keeps its meaning while the failure side gains structure.
+- **`tool_unusable`'s `detail` is opaque.** It is the OS phrase on the Python side (`Permission
+  denied`) and a whole Node sentence (`Command failed: …`) on the JS side. Log it, render it, never
+  pattern-match it.
 - **The version probe is not a version *check*.** It answers "can this binary be spawned", nothing
   more. Pinning a particular pandoc or tectonic version is the build's job, in
   [`delivery/`](../../delivery/docs/RELEASE.md#pinned-tool-versions).

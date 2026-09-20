@@ -57,22 +57,48 @@ def test_curl_stays_on_path_even_when_bundled(bin_dir):
 
 
 def test_a_working_tool_reports_ok(bin_dir):
+    # Success stays the bare string, so every consumer's `!= "ok"` keeps its meaning.
     write_tool("faketool", 0)
     assert check_tools(["faketool"]) == {"faketool": "ok"}
 
 
 def test_an_absent_tool_reports_missing(bin_dir):
-    assert check_tools(["faketool"]) == {"faketool": "missing"}
+    assert check_tools(["faketool"]) == {
+        "faketool": {
+            "state": "missing",
+            "code": "tool_missing",
+            "params": {"tool": "faketool"},
+        }
+    }
 
 
 def test_a_failing_tool_reports_its_exit_code(bin_dir):
     write_tool("faketool", 3)
-    assert check_tools(["faketool"]) == {"faketool": "exited 3"}
+    assert check_tools(["faketool"]) == {
+        "faketool": {
+            "state": "exited 3",
+            "code": "tool_probe_exit",
+            "params": {"tool": "faketool", "exit_code": 3},
+        }
+    }
+
+
+def test_an_unusable_tool_carries_the_os_text_as_detail(bin_dir):
+    # A directory where the binary should be: the OS phrase is opaque developer text, so the test
+    # pins the code and the param names, never the wording.
+    Path(tool_path("faketool")).mkdir()
+    result = check_tools(["faketool"])["faketool"]
+    assert result["code"] == "tool_unusable"
+    assert result["params"]["tool"] == "faketool"
+    assert result["params"]["detail"]
+    assert result["state"] == f"unusable: {result['params']['detail']}"
 
 
 def test_every_name_is_reported(bin_dir):
     write_tool("good", 0)
-    assert check_tools(["good", "bad"]) == {"good": "ok", "bad": "missing"}
+    result = check_tools(["good", "bad"])
+    assert result["good"] == "ok"
+    assert result["bad"]["code"] == "tool_missing"
 
 
 def test_ffmpeg_probes_with_one_dash(bin_dir, tmp_path):
