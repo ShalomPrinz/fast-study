@@ -105,6 +105,19 @@ A module earns a place there when a second service needs it _and_ divergence bet
 a defect; a helper with one consumer stays in its service. Read [`lib/CLAUDE.md`](lib/CLAUDE.md) and
 the per-module ones before changing anything there — an edit under `lib/` is live in four services at once.
 
+## Error codes
+
+Every failure a service reports carries a stable machine `code` and a flat `params` object beside its
+English prose, and the frontend renders the sentence from its own Lingui catalogs. The services author
+no user-facing wording; their prose is the developer-facing description and the fallback an unknown
+code renders. Third-party text — ffmpeg, Gemini, yt-dlp, the OS — is never translated: it rides as a
+`detail` param and renders verbatim beneath a translated headline.
+
+The whole vocabulary, per channel and per service, is in [`docs/ERROR-CODES.md`](docs/ERROR-CODES.md),
+with the excluded set and the reason each row is excluded. Adding a failure means adding a row there
+and a catalog entry in `frontend/`; adding one without the catalog entry is supported — it falls back
+to the English prose — but is not finished.
+
 ## Service subagents
 
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
