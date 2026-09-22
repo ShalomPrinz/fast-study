@@ -416,7 +416,7 @@ msgstr "חזרה"
 msgid "BIU account"
 msgstr "חשבון בר-אילן"
 
-#: src/features/downloads/components/AccountStatus.tsx:94
+#: src/features/downloads/components/AccountStatus.tsx:93
 msgid "BIU account connected"
 msgstr "חשבון בר-אילן מחובר"
 
@@ -465,7 +465,7 @@ msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחר
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
-#: src/features/downloads/components/AccountStatus.tsx:70
+#: src/features/downloads/components/AccountStatus.tsx:69
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -506,7 +506,7 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/downloads/components/AccountStatus.tsx:121
+#: src/features/downloads/components/AccountStatus.tsx:120
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחבר"
@@ -519,7 +519,7 @@ msgstr "לחבר את Google Drive עכשיו?"
 msgid "Connect your BIU account first"
 msgstr "יש לחבר תחילה את חשבון בר-אילן"
 
-#: src/features/downloads/components/AccountStatus.tsx:106
+#: src/features/downloads/components/AccountStatus.tsx:105
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -674,16 +674,16 @@ msgstr "מחק את {0}"
 msgid "Discard all edits"
 msgstr "מחק את כל העריכות"
 
-#: src/features/downloads/components/AccountStatus.tsx:101
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתק"
 
-#: src/features/downloads/components/AccountStatus.tsx:105
+#: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Disconnect the BIU account?"
 msgstr "לנתק את חשבון בר-אילן?"
 
-#: src/features/downloads/components/AccountStatus.tsx:101
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
@@ -692,7 +692,7 @@ msgstr "מתנתק…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
-#: src/features/downloads/components/AccountStatus.tsx:82
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "Done"
 msgstr "סיום"
 
@@ -837,18 +837,10 @@ msgstr "נכשל ✗"
 #~ msgid "Failed to delete file"
 #~ msgstr "מחיקת הקובץ נכשלה"
 
-#: src/features/downloads/components/AccountStatus.tsx:62
-msgid "Failed to disconnect the account."
-msgstr "ניתוק החשבון נכשל."
-
 #: src/features/lectures/EditSummaryView.tsx:140
 #: src/features/lectures/EditSummaryView.tsx:152
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
-
-#: src/features/downloads/components/AccountStatus.tsx:38
-msgid "Failed to launch the login browser."
-msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
 #: src/features/lectures/EditSummaryView.tsx:106
 msgid "Failed to save summary"
@@ -878,7 +870,7 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:79
+#: src/features/downloads/components/AccountStatus.tsx:78
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
@@ -890,7 +882,7 @@ msgstr "יש להשלים את ההתחברות ל-Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "יש להשלים את ההתחברות ל-Google בלשונית שנפתחה בדפדפן."
 
-#: src/features/downloads/components/AccountStatus.tsx:82
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "finishing…"
 msgstr "מסיים…"
 
@@ -1179,7 +1171,7 @@ msgstr "אין"
 msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
-#: src/features/downloads/components/AccountStatus.tsx:118
+#: src/features/downloads/components/AccountStatus.tsx:117
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
@@ -1407,7 +1399,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:121
+#: src/features/downloads/components/AccountStatus.tsx:120
 msgid "Reconnect"
 msgstr "התחבר מחדש"
 
@@ -1557,7 +1549,7 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "Send report"
 msgstr "שלח דיווח"
 
-#: src/features/downloads/components/AccountStatus.tsx:118
+#: src/features/downloads/components/AccountStatus.tsx:117
 msgid "session expired"
 msgstr "החיבור פג"
 

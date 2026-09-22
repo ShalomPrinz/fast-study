@@ -416,7 +416,7 @@ msgstr "Back"
 msgid "BIU account"
 msgstr "BIU account"
 
-#: src/features/downloads/components/AccountStatus.tsx:94
+#: src/features/downloads/components/AccountStatus.tsx:93
 msgid "BIU account connected"
 msgstr "BIU account connected"
 
@@ -465,7 +465,7 @@ msgstr "Changing this re-points the app only — it never moves anything. The ol
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:70
+#: src/features/downloads/components/AccountStatus.tsx:69
 msgid "checking account…"
 msgstr "checking account…"
 
@@ -506,7 +506,7 @@ msgstr "Compile"
 msgid "Complete"
 msgstr "Complete"
 
-#: src/features/downloads/components/AccountStatus.tsx:121
+#: src/features/downloads/components/AccountStatus.tsx:120
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
@@ -519,7 +519,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your BIU account first"
 msgstr "Connect your BIU account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:106
+#: src/features/downloads/components/AccountStatus.tsx:105
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "Connecting again needs a full login in a browser window, including MFA."
 
@@ -674,16 +674,16 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:101
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:105
+#: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Disconnect the BIU account?"
 msgstr "Disconnect the BIU account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:101
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -692,7 +692,7 @@ msgstr "disconnecting…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
-#: src/features/downloads/components/AccountStatus.tsx:82
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "Done"
 msgstr "Done"
 
@@ -837,18 +837,10 @@ msgstr "Failed ✗"
 #~ msgid "Failed to delete file"
 #~ msgstr "Failed to delete file"
 
-#: src/features/downloads/components/AccountStatus.tsx:62
-msgid "Failed to disconnect the account."
-msgstr "Failed to disconnect the account."
-
 #: src/features/lectures/EditSummaryView.tsx:140
 #: src/features/lectures/EditSummaryView.tsx:152
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
-
-#: src/features/downloads/components/AccountStatus.tsx:38
-msgid "Failed to launch the login browser."
-msgstr "Failed to launch the login browser."
 
 #: src/features/lectures/EditSummaryView.tsx:106
 msgid "Failed to save summary"
@@ -878,7 +870,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:79
+#: src/features/downloads/components/AccountStatus.tsx:78
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -890,7 +882,7 @@ msgstr "finish signing in to Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
 
-#: src/features/downloads/components/AccountStatus.tsx:82
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "finishing…"
 msgstr "finishing…"
 
@@ -1179,7 +1171,7 @@ msgstr "None"
 msgid "Not a file the downloader can fetch"
 msgstr "Not a file the downloader can fetch"
 
-#: src/features/downloads/components/AccountStatus.tsx:118
+#: src/features/downloads/components/AccountStatus.tsx:117
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1407,7 +1399,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:121
+#: src/features/downloads/components/AccountStatus.tsx:120
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1557,7 +1549,7 @@ msgstr "Select a lecture to get started"
 msgid "Send report"
 msgstr "Send report"
 
-#: src/features/downloads/components/AccountStatus.tsx:118
+#: src/features/downloads/components/AccountStatus.tsx:117
 msgid "session expired"
 msgstr "session expired"
 
