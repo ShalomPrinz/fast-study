@@ -62,6 +62,9 @@ export interface Client {
   put<T>(path: string, init?: RequestOptions): Promise<T>
   patch<T>(path: string, init?: RequestOptions): Promise<T>
   delete<T>(path: string, init?: RequestOptions): Promise<T>
+  // The raw response, for a caller that reads meaning out of a refusal's body; a network failure
+  // still becomes a toasted ConnectionError.
+  send(path: string, method: string, init?: RequestOptions): Promise<Response>
   url(path: string): string
 }
 
@@ -86,11 +89,10 @@ function buildInit(init: RequestOptions | undefined, method: string): RequestIni
 export function createClient(baseUrl: string, serviceName: string): Client {
   const url = (path: string) => `${baseUrl}${path}`
 
-  const json = async <T>(path: string, method: string, init?: RequestOptions): Promise<T> => {
+  const send = async (path: string, method: string, init?: RequestOptions): Promise<Response> => {
     const reqInit = buildInit(init, method)
-    let res: Response
     try {
-      res = await fetch(url(path), reqInit)
+      return await fetch(url(path), reqInit)
     } catch (err) {
       // Per the Fetch spec only network failures reject as TypeError; aborts are DOMException.
       if (err instanceof TypeError) {
@@ -100,6 +102,10 @@ export function createClient(baseUrl: string, serviceName: string): Client {
       }
       throw err
     }
+  }
+
+  const json = async <T>(path: string, method: string, init?: RequestOptions): Promise<T> => {
+    const res = await send(path, method, init)
     if (!res.ok) throw await failureError(res)
     // Mutations answer 204 with no body; res.json() would throw a SyntaxError on it.
     if (res.status === 204 || res.headers.get('Content-Length') === '0') return undefined as T
@@ -112,6 +118,7 @@ export function createClient(baseUrl: string, serviceName: string): Client {
     put: (path, init) => json(path, 'PUT', init),
     patch: (path, init) => json(path, 'PATCH', init),
     delete: (path, init) => json(path, 'DELETE', init),
+    send,
     url,
   }
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BlockedError, UnsupportedError } from '@/features/downloads/services/autoDownloader'
+import { ConnectionError } from '@/services/http'
 import { toastDownloadError } from './downloadErrors'
 
 // The toaster is the boundary under observation: what reaches it is the whole assertion.
@@ -39,5 +40,11 @@ describe('toastDownloadError', () => {
 
     expect(toast.mock.calls[0][1]).toContain('Lecture 3')
     expect(toast.mock.calls[0][1]).not.toBe(BLOCKED_COPY)
+  })
+
+  it('stays silent on a ConnectionError, which the client already toasted', () => {
+    toastDownloadError('Lecture 3', new ConnectionError('downloader server', 'http://x'))
+
+    expect(toast).not.toHaveBeenCalled()
   })
 })

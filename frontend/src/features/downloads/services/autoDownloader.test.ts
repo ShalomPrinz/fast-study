@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import { isConnectionError } from '@/services/http'
 import { listRecordings, isBlockedError, isReconnectError } from './autoDownloader'
+
+const { toastConnectionError } = vi.hoisted(() => ({ toastConnectionError: vi.fn() }))
+vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError }))
 
 // Minimal stand-ins for the parts of Response this boundary touches: it reads the status and,
 // for a status it discriminates, the body.
@@ -49,5 +53,21 @@ describe('the blocked discriminator', () => {
 
     expect(isBlockedError(err)).toBe(false)
     expect(err).toBeInstanceOf(Error)
+  })
+})
+
+describe('an unreachable auto-downloader', () => {
+  it('throws the shared ConnectionError and toasts it once', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('Failed to fetch')
+      }),
+    )
+
+    const err = await listRecordings('https://lemida.example/course/1').catch((e) => e)
+
+    expect(isConnectionError(err)).toBe(true)
+    expect(toastConnectionError).toHaveBeenCalledTimes(1)
   })
 })

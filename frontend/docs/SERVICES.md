@@ -7,7 +7,8 @@ alone (`features/downloads/services/`).
 ## `http.ts` — client factory
 
 `createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON and headers, including
-`X-FastStudy-Secret`; `url(path)` gives URLs the page loads itself (pdf.js, `open.ts`'s dev fallback).
+`X-FastStudy-Secret`; `url(path)` gives URLs the page loads itself (pdf.js, `open.ts`'s dev fallback), and
+`send(path, method, init)` hands back the raw `Response` for a caller that reads a refusal's body.
 
 A refused request throws a `RequestError` carrying the body's `{error, code, params}` — the one failure
 shape every service sends — falling back to the status line when there is no body to read. The prose is the
@@ -91,8 +92,8 @@ into another `path`**. The browser route is `/{course}/{lecture}` (`lectureRoute
 ## `features/downloads/services/autoDownloader.ts` → auto-downloader (:3053)
 
 Discovery and auth. An `Item`'s `ref` is opaque — round-trip it, never parse it. `/list` and `/list/expand`
-go through `postReconnectAware`, a bespoke `fetch` because the shared client discards the body and these
-encode meaning in it:
+go through `postReconnectAware`, which uses the client's raw `send` because its JSON path discards the body
+and these encode meaning in it:
 
 | HTTP | body                  | thrown                                                                    |
 | ---- | --------------------- | ------------------------------------------------------------------------- |
@@ -101,7 +102,7 @@ encode meaning in it:
 | 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`               |
 | 503  | `status: blocked`     | `BlockedError` — bot-protection challenge; transient, carries no message |
 
-The trade-off is no central `ConnectionError` wrapping: a refused connection is a raw `TypeError`.
+A downed service is still the shared, already-toasted `ConnectionError`, so its callers stay silent on it.
 `BlockedError` drops the body's `message`, an English log line, and writes its own copy. `PasscodeError` maps `name` to `lecture`
 because `name` collides with `Error.name`. The helper takes a `Client` because the downloader server's
 `/download-item` forwards the same four bodies verbatim.

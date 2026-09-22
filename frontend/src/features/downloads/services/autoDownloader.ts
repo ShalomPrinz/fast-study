@@ -1,6 +1,6 @@
 import type { Client } from '@/services/http'
 import { createClient, httpError } from '@/services/http'
-import { AUTO_DOWNLOADER_URL, secretHeaders } from '@/services/runtime'
+import { AUTO_DOWNLOADER_URL } from '@/services/runtime'
 import type { Kind } from '@/types'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
@@ -92,18 +92,14 @@ export function isPasscodeError(err: unknown): err is PasscodeError {
   return err instanceof PasscodeError
 }
 
-// A direct fetch, secret added by hand, because the shared client discards the body these endpoints
-// encode meaning in — see docs/SERVICES.md for the trade-off and why it takes a `Client`.
+// The client's raw `send`, because its JSON path discards the body these endpoints encode meaning
+// in; a downed service still throws the shared, already-toasted ConnectionError. See docs/SERVICES.md.
 export async function postReconnectAware<T>(
   client: Client,
   path: string,
   body: unknown,
 ): Promise<T> {
-  const res = await fetch(client.url(path), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...secretHeaders() },
-    body: JSON.stringify(body),
-  })
+  const res = await client.send(path, 'POST', { json: body })
   if (res.status === 401) {
     const data = await res.json().catch(() => null)
     if (data?.status === 'reconnect') throw new ReconnectError()

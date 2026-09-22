@@ -1,5 +1,6 @@
 import { t } from '@lingui/core/macro'
 import { toast } from '@/services/toaster'
+import { isConnectionError } from '@/services/http'
 import { isBlockedError, isUnsupportedError } from '@/features/downloads/services/autoDownloader'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
@@ -11,8 +12,9 @@ export function blockedMessage(): string {
 }
 
 // Only an UnsupportedError carries a code worth resolving; `blocked` gets its own copy and
-// everything else the generic one.
+// everything else the generic one. A ConnectionError was already toasted by the client.
 export function toastDownloadError(name: string, err?: unknown): void {
+  if (isConnectionError(err)) return
   if (isUnsupportedError(err)) {
     toast('error', serviceErrorNode(err))
     return
