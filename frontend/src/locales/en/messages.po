@@ -25,7 +25,7 @@ msgstr "\"{course}\" has no lecture named \"{lecture}\"."
 msgid "\"{course}\" has no recitation named \"{lecture}\"."
 msgstr "\"{course}\" has no recitation named \"{lecture}\"."
 
-#: src/shared/i18n/serviceErrors.ts:92
+#: src/shared/i18n/serviceErrors.ts:94
 msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "\"{name}\" has no characters that can be used in a folder name."
 
@@ -162,11 +162,11 @@ msgstr "{effectiveName} may split into parts that overwrite existing {existing} 
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 
-#: src/shared/i18n/serviceErrors.ts:108
+#: src/shared/i18n/serviceErrors.ts:109
 msgid "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
 msgstr "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
 
-#: src/shared/i18n/serviceErrors.ts:104
+#: src/shared/i18n/serviceErrors.ts:106
 msgid "{file, select, undefined {Could not save the file.} other {Could not save {file}.}}"
 msgstr "{file, select, undefined {Could not save the file.} other {Could not save {file}.}}"
 
@@ -174,7 +174,7 @@ msgstr "{file, select, undefined {Could not save the file.} other {Could not sav
 msgid "{file} came out empty. Run the step that creates it again."
 msgstr "{file} came out empty. Run the step that creates it again."
 
-#: src/shared/i18n/serviceErrors.ts:79
+#: src/shared/i18n/serviceErrors.ts:81
 msgid "{file} was not found in the course's overview."
 msgstr "{file} was not found in the course's overview."
 
@@ -199,7 +199,7 @@ msgstr "{materialCount, plural, one {# material} other {# materials}}"
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} will be deleted."
 
-#: src/shared/i18n/serviceErrors.ts:69
+#: src/shared/i18n/serviceErrors.ts:71
 msgid "{more_count, plural, =0 {LaTeX reported an error while building the PDF.} other {LaTeX reported an error while building the PDF, and # more.}}"
 msgstr "{more_count, plural, =0 {LaTeX reported an error while building the PDF.} other {LaTeX reported an error while building the PDF, and # more.}}"
 
@@ -215,11 +215,11 @@ msgstr "{name} will be used"
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 
-#: src/shared/i18n/serviceErrors.ts:101
+#: src/shared/i18n/serviceErrors.ts:103
 msgid "{path} cannot be written to."
 msgstr "{path} cannot be written to."
 
-#: src/shared/i18n/serviceErrors.ts:100
+#: src/shared/i18n/serviceErrors.ts:102
 msgid "{path} exists but is not a folder."
 msgstr "{path} exists but is not a folder."
 
@@ -231,7 +231,7 @@ msgstr "{phaseLabel}…"
 msgid "{processed} fully processed"
 msgstr "{processed} fully processed"
 
-#: src/shared/i18n/serviceErrors.ts:84
+#: src/shared/i18n/serviceErrors.ts:86
 msgid "{provider, select, gemini {Gemini returned nothing. Try again.} other {The model returned nothing. Try again.}}"
 msgstr "{provider, select, gemini {Gemini returned nothing. Try again.} other {The model returned nothing. Try again.}}"
 
@@ -299,7 +299,7 @@ msgstr "+ add source URL"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ Download all"
 
-#: src/shared/i18n/serviceErrors.ts:67
+#: src/shared/i18n/serviceErrors.ts:69
 msgid "A file the PDF template needs is missing: {asset}."
 msgstr "A file the PDF template needs is missing: {asset}."
 
@@ -307,7 +307,7 @@ msgstr "A file the PDF template needs is missing: {asset}."
 msgid "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 msgstr "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 
-#: src/shared/i18n/serviceErrors.ts:66
+#: src/shared/i18n/serviceErrors.ts:68
 msgid "A font the PDF needs is missing."
 msgstr "A font the PDF needs is missing."
 
@@ -315,7 +315,7 @@ msgstr "A font the PDF needs is missing."
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:319
+#: src/features/settings/SettingsView.tsx:322
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 
@@ -343,7 +343,7 @@ msgstr "All edits will be discarded and the original AI summary restored."
 msgid "All Generated"
 msgstr "All Generated"
 
-#: src/shared/i18n/serviceErrors.ts:82
+#: src/shared/i18n/serviceErrors.ts:84
 msgid "Already generated."
 msgstr "Already generated."
 
@@ -355,11 +355,11 @@ msgstr "Already up to date"
 msgid "Analyze"
 msgstr "Analyze"
 
-#: src/features/settings/SettingsView.tsx:168
+#: src/features/settings/SettingsView.tsx:171
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:247
+#: src/features/settings/SettingsView.tsx:250
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -449,11 +449,11 @@ msgstr "Can't reach the auto-downloader. Make sure it's running."
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/settings/SettingsView.tsx:283
+#: src/features/settings/SettingsView.tsx:286
 msgid "Catch up on unfinished lectures overnight"
 msgstr "Catch up on unfinished lectures overnight"
 
-#: src/features/settings/SettingsView.tsx:318
+#: src/features/settings/SettingsView.tsx:321
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -478,7 +478,7 @@ msgstr "checking Drive…"
 msgid "Checking…"
 msgstr "Checking…"
 
-#: src/shared/i18n/serviceErrors.ts:98
+#: src/shared/i18n/serviceErrors.ts:100
 msgid "Choose a data folder."
 msgstr "Choose a data folder."
 
@@ -543,11 +543,11 @@ msgstr "Copied!"
 msgid "Copy details"
 msgstr "Copy details"
 
-#: src/shared/i18n/serviceErrors.ts:64
+#: src/shared/i18n/serviceErrors.ts:66
 msgid "Could not convert the summary for printing."
 msgstr "Could not convert the summary for printing."
 
-#: src/shared/i18n/serviceErrors.ts:102
+#: src/shared/i18n/serviceErrors.ts:104
 msgid "Could not create \"{path}\"."
 msgstr "Could not create \"{path}\"."
 
@@ -587,7 +587,7 @@ msgstr "Could not open your mail app. The report was saved to <0>{0}</0>"
 msgid "Could not read the audio in {file}."
 msgstr "Could not read the audio in {file}."
 
-#: src/shared/i18n/serviceErrors.ts:103
+#: src/shared/i18n/serviceErrors.ts:105
 msgid "Could not rename \"{from}\" to \"{to}\"."
 msgstr "Could not rename \"{from}\" to \"{to}\"."
 
@@ -603,8 +603,8 @@ msgstr "Could not tell what {url} is — the site didn't answer usefully."
 #~ msgid "Couldn't download \"{name}\": {detail}"
 #~ msgstr "Couldn't download \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:20
-#: src/features/downloads/utils/downloadErrors.ts:27
+#: src/features/downloads/utils/downloadErrors.ts:22
+#: src/features/downloads/utils/downloadErrors.ts:30
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "Couldn't download \"{name}\". Try again."
 
@@ -616,7 +616,7 @@ msgstr "Couldn't load entries. Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/settings/SettingsView.tsx:130
+#: src/features/settings/SettingsView.tsx:132
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "Couldn't save all settings — check the services are running and try again."
 
@@ -684,7 +684,7 @@ msgstr "Disconnect the BIU account?"
 msgid "disconnecting…"
 msgstr "disconnecting…"
 
-#: src/features/settings/SettingsView.tsx:264
+#: src/features/settings/SettingsView.tsx:267
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
@@ -725,7 +725,7 @@ msgstr "Downloading {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
-#: src/features/settings/SettingsView.tsx:239
+#: src/features/settings/SettingsView.tsx:242
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
@@ -812,7 +812,7 @@ msgstr "Extract"
 msgid "Extract Audio"
 msgstr "Extract Audio"
 
-#: src/features/settings/SettingsView.tsx:263
+#: src/features/settings/SettingsView.tsx:266
 msgid "Extract the audio only"
 msgstr "Extract the audio only"
 
@@ -939,7 +939,7 @@ msgstr "Google account"
 msgid "Google credentials are missing. Put credentials.json at {path}."
 msgstr "Google credentials are missing. Put credentials.json at {path}."
 
-#: src/features/settings/SettingsView.tsx:226
+#: src/features/settings/SettingsView.tsx:229
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -947,7 +947,7 @@ msgstr "Google Drive"
 msgid "Google Drive (optional)"
 msgstr "Google Drive (optional)"
 
-#: src/shared/i18n/serviceErrors.ts:74
+#: src/shared/i18n/serviceErrors.ts:76
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive is not connected. Connect it in Settings."
 
@@ -1083,7 +1083,7 @@ msgstr "New course"
 msgid "Next"
 msgstr "Next"
 
-#: src/features/settings/SettingsView.tsx:289
+#: src/features/settings/SettingsView.tsx:292
 msgid "Nightly pass hour"
 msgstr "Nightly pass hour"
 
@@ -1107,7 +1107,7 @@ msgstr "No Chromium browser was found. Install one and try again."
 msgid "No files of unknown type found."
 msgstr "No files of unknown type found."
 
-#: src/shared/i18n/serviceErrors.ts:75
+#: src/shared/i18n/serviceErrors.ts:77
 msgid "No Google Drive folder is set. Choose one in Settings."
 msgstr "No Google Drive folder is set. Choose one in Settings."
 
@@ -1220,7 +1220,7 @@ msgstr "Nothing to run - All pipelines complete"
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "Nothing to run - All remaining pipelines already running"
 
-#: src/shared/i18n/serviceErrors.ts:83
+#: src/shared/i18n/serviceErrors.ts:85
 msgid "Nothing was found to analyze in this course."
 msgstr "Nothing was found to analyze in this course."
 
@@ -1478,7 +1478,7 @@ msgstr "Rotate {file}"
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
-#: src/features/settings/SettingsView.tsx:262
+#: src/features/settings/SettingsView.tsx:265
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
@@ -1504,7 +1504,7 @@ msgstr "Running pipelines"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/settings/SettingsView.tsx:160
+#: src/features/settings/SettingsView.tsx:163
 msgid "Save"
 msgstr "Save"
 
@@ -1558,7 +1558,7 @@ msgid "session expired"
 msgstr "session expired"
 
 #: src/features/settings/SettingsView.tsx:88
-#: src/features/settings/SettingsView.tsx:153
+#: src/features/settings/SettingsView.tsx:156
 #: src/shared/sidebar/Sidebar.tsx:90
 msgid "Settings"
 msgstr "Settings"
@@ -1606,7 +1606,7 @@ msgstr "Step {0} of {1}"
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:216
+#: src/features/settings/SettingsView.tsx:219
 msgid "Storage"
 msgstr "Storage"
 
@@ -1650,7 +1650,7 @@ msgstr "summary did not use any material"
 #~ msgid "summary did not use material"
 #~ msgstr "summary did not use material"
 
-#: src/features/settings/SettingsView.tsx:194
+#: src/features/settings/SettingsView.tsx:197
 msgid "Summary model"
 msgstr "Summary model"
 
@@ -1692,7 +1692,7 @@ msgstr "That passcode didn't work. Try another one"
 msgid "That playlist has no entries."
 msgstr "That playlist has no entries."
 
-#: src/shared/i18n/serviceErrors.ts:95
+#: src/shared/i18n/serviceErrors.ts:97
 msgid "That setting may not contain quotes or line breaks."
 msgstr "That setting may not contain quotes or line breaks."
 
@@ -1712,7 +1712,7 @@ msgstr "the BIU session expired. Reconnect, then run the section again."
 #~ msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly 03:00 pass alike, never a run you start from the running pipelines page."
 #~ msgstr "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly 03:00 pass alike, never a run you start from the running pipelines page."
 
-#: src/features/settings/SettingsView.tsx:267
+#: src/features/settings/SettingsView.tsx:270
 msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly catch-up pass alike, never a run you start from the running pipelines page."
 msgstr "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly catch-up pass alike, never a run you start from the running pipelines page."
 
@@ -1720,7 +1720,7 @@ msgstr "The ceiling on unattended work: it caps a dropped or downloaded video an
 msgid "The course \"{course}\" was not found."
 msgstr "The course \"{course}\" was not found."
 
-#: src/shared/i18n/serviceErrors.ts:99
+#: src/shared/i18n/serviceErrors.ts:101
 msgid "The data folder must be a full path: {path}."
 msgstr "The data folder must be a full path: {path}."
 
@@ -1732,7 +1732,7 @@ msgstr "The download was refused — the session has expired. Reconnect the acco
 msgid "The downloaded file could not be stored."
 msgstr "The downloaded file could not be stored."
 
-#: src/shared/i18n/serviceErrors.ts:91
+#: src/shared/i18n/serviceErrors.ts:93
 msgid "The file is open in another program. Close it and try again."
 msgstr "The file is open in another program. Close it and try again."
 
@@ -1761,7 +1761,7 @@ msgstr "The Moodle session expired. Reconnect the account and try again."
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
-#: src/shared/i18n/serviceErrors.ts:65
+#: src/shared/i18n/serviceErrors.ts:67
 msgid "The PDF engine produced no file."
 msgstr "The PDF engine produced no file."
 
@@ -1769,7 +1769,7 @@ msgstr "The PDF engine produced no file."
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
-#: src/shared/i18n/serviceErrors.ts:78
+#: src/shared/i18n/serviceErrors.ts:80
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 
@@ -1789,7 +1789,7 @@ msgstr "The storage service could not complete the request."
 msgid "The storage service is not answering. Make sure it's running."
 msgstr "The storage service is not answering. Make sure it's running."
 
-#: src/features/settings/SettingsView.tsx:306
+#: src/features/settings/SettingsView.tsx:309
 msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 msgstr "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 
@@ -1815,7 +1815,7 @@ msgstr "This cannot be undone."
 msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 msgstr "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 
-#: src/shared/i18n/serviceErrors.ts:88
+#: src/shared/i18n/serviceErrors.ts:90
 msgid "This course has no summaries yet."
 msgstr "This course has no summaries yet."
 
@@ -1905,7 +1905,7 @@ msgstr "Upload to Drive"
 msgid "Uploading to Drive"
 msgstr "Uploading to Drive"
 
-#: src/shared/i18n/serviceErrors.ts:73
+#: src/shared/i18n/serviceErrors.ts:75
 msgid "Uploading to Google Drive failed."
 msgstr "Uploading to Google Drive failed."
 
@@ -1930,7 +1930,7 @@ msgstr "We couldn't check right now."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 
-#: src/features/settings/SettingsView.tsx:253
+#: src/features/settings/SettingsView.tsx:256
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 

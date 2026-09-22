@@ -25,7 +25,7 @@ msgstr "ל\"{course}\" אין הרצאה בשם \"{lecture}\"."
 msgid "\"{course}\" has no recitation named \"{lecture}\"."
 msgstr "ל\"{course}\" אין תרגול בשם \"{lecture}\"."
 
-#: src/shared/i18n/serviceErrors.ts:92
+#: src/shared/i18n/serviceErrors.ts:94
 msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "ב\"{name}\" אין תווים שאפשר להשתמש בהם בשם תיקייה."
 
@@ -162,11 +162,11 @@ msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {ex
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} הוא דף אינטרנט, לא קובץ. פתח אותו בדפדפן והורד ידנית.} other {{url} הוא קובץ {ext}, לא סרטון. פתח אותו בדפדפן והורד ידנית.}}"
 
-#: src/shared/i18n/serviceErrors.ts:108
+#: src/shared/i18n/serviceErrors.ts:109
 msgid "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
 msgstr "{file, select, undefined {לא ניתן לקרוא את הקובץ.} other {לא ניתן לקרוא את {file}.}}"
 
-#: src/shared/i18n/serviceErrors.ts:104
+#: src/shared/i18n/serviceErrors.ts:106
 msgid "{file, select, undefined {Could not save the file.} other {Could not save {file}.}}"
 msgstr "{file, select, undefined {לא ניתן לשמור את הקובץ.} other {לא ניתן לשמור את {file}.}}"
 
@@ -174,7 +174,7 @@ msgstr "{file, select, undefined {לא ניתן לשמור את הקובץ.} oth
 msgid "{file} came out empty. Run the step that creates it again."
 msgstr "{file} יצא ריק. הרץ שוב את השלב שיוצר אותו."
 
-#: src/shared/i18n/serviceErrors.ts:79
+#: src/shared/i18n/serviceErrors.ts:81
 msgid "{file} was not found in the course's overview."
 msgstr "{file} לא נמצא בסקירת הקורס."
 
@@ -199,7 +199,7 @@ msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other
 msgid "{materialToDelete} will be deleted."
 msgstr "{materialToDelete} יימחק."
 
-#: src/shared/i18n/serviceErrors.ts:69
+#: src/shared/i18n/serviceErrors.ts:71
 msgid "{more_count, plural, =0 {LaTeX reported an error while building the PDF.} other {LaTeX reported an error while building the PDF, and # more.}}"
 msgstr "{more_count, plural, =0 {LaTeX דיווח על שגיאה בבניית ה-PDF.} one {LaTeX דיווח על שגיאה בבניית ה-PDF, ועוד שגיאה אחת.} two {LaTeX דיווח על שגיאה בבניית ה-PDF, ועוד # שגיאות.} other {LaTeX דיווח על שגיאה בבניית ה-PDF, ועוד # שגיאות.}}"
 
@@ -215,11 +215,11 @@ msgstr "{name} ישמש"
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {שורה אחת לא התחילה — {stoppedBecause}} two {# שורות לא התחילו — {stoppedBecause}} other {# שורות לא התחילו — {stoppedBecause}}}"
 
-#: src/shared/i18n/serviceErrors.ts:101
+#: src/shared/i18n/serviceErrors.ts:103
 msgid "{path} cannot be written to."
 msgstr "לא ניתן לכתוב אל {path}."
 
-#: src/shared/i18n/serviceErrors.ts:100
+#: src/shared/i18n/serviceErrors.ts:102
 msgid "{path} exists but is not a folder."
 msgstr "{path} קיים אבל אינו תיקייה."
 
@@ -231,7 +231,7 @@ msgstr "{phaseLabel}…"
 msgid "{processed} fully processed"
 msgstr "{processed} עובדו במלואן"
 
-#: src/shared/i18n/serviceErrors.ts:84
+#: src/shared/i18n/serviceErrors.ts:86
 msgid "{provider, select, gemini {Gemini returned nothing. Try again.} other {The model returned nothing. Try again.}}"
 msgstr "{provider, select, gemini {Gemini לא החזיר תוכן. נסה שוב.} other {המודל לא החזיר תוכן. נסה שוב.}}"
 
@@ -299,7 +299,7 @@ msgstr "+ הוסף כתובת מקור"
 #~ msgid "⭳ Download all"
 #~ msgstr "⭳ הורד הכל"
 
-#: src/shared/i18n/serviceErrors.ts:67
+#: src/shared/i18n/serviceErrors.ts:69
 msgid "A file the PDF template needs is missing: {asset}."
 msgstr "חסר קובץ שתבנית ה-PDF זקוקה לו: {asset}."
 
@@ -307,7 +307,7 @@ msgstr "חסר קובץ שתבנית ה-PDF זקוקה לו: {asset}."
 msgid "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 msgstr "סיכום מוכן ממתין להעלאה, ול-Fast Study עדיין אין הרשאה ל-Drive שלך. בחירה בכן תפתח דף התחברות של Google בדפדפן; כך או כך כל סיכום נשמר במחשב הזה."
 
-#: src/shared/i18n/serviceErrors.ts:66
+#: src/shared/i18n/serviceErrors.ts:68
 msgid "A font the PDF needs is missing."
 msgstr "חסר גופן שה-PDF זקוק לו."
 
@@ -315,7 +315,7 @@ msgstr "חסר גופן שה-PDF זקוק לו."
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלידו כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:319
+#: src/features/settings/SettingsView.tsx:322
 msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -343,7 +343,7 @@ msgstr "כל העריכות יימחקו והסיכום המקורי של ה-AI 
 msgid "All Generated"
 msgstr "הכל יוצר"
 
-#: src/shared/i18n/serviceErrors.ts:82
+#: src/shared/i18n/serviceErrors.ts:84
 msgid "Already generated."
 msgstr "כבר נוצר."
 
@@ -355,11 +355,11 @@ msgstr "כבר מעודכן"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:168
+#: src/features/settings/SettingsView.tsx:171
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:247
+#: src/features/settings/SettingsView.tsx:250
 msgid "Appearance and behaviour"
 msgstr "מראה והתנהגות"
 
@@ -449,11 +449,11 @@ msgstr "אין גישה למוריד האוטומטי. ודא שהוא פועל.
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/settings/SettingsView.tsx:283
+#: src/features/settings/SettingsView.tsx:286
 msgid "Catch up on unfinished lectures overnight"
 msgstr "להשלים הרצאות שלא הסתיימו במהלך הלילה"
 
-#: src/features/settings/SettingsView.tsx:318
+#: src/features/settings/SettingsView.tsx:321
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -478,7 +478,7 @@ msgstr "בודק את Drive…"
 msgid "Checking…"
 msgstr "בודקים…"
 
-#: src/shared/i18n/serviceErrors.ts:98
+#: src/shared/i18n/serviceErrors.ts:100
 msgid "Choose a data folder."
 msgstr "בחר תיקיית נתונים."
 
@@ -543,11 +543,11 @@ msgstr "הועתק!"
 msgid "Copy details"
 msgstr "העתק פרטים"
 
-#: src/shared/i18n/serviceErrors.ts:64
+#: src/shared/i18n/serviceErrors.ts:66
 msgid "Could not convert the summary for printing."
 msgstr "לא ניתן להמיר את הסיכום להדפסה."
 
-#: src/shared/i18n/serviceErrors.ts:102
+#: src/shared/i18n/serviceErrors.ts:104
 msgid "Could not create \"{path}\"."
 msgstr "לא ניתן ליצור את \"{path}\"."
 
@@ -587,7 +587,7 @@ msgstr "לא ניתן לפתוח את תוכנת הדואר. הדיווח נשמ
 msgid "Could not read the audio in {file}."
 msgstr "לא ניתן לקרוא את האודיו ב-{file}."
 
-#: src/shared/i18n/serviceErrors.ts:103
+#: src/shared/i18n/serviceErrors.ts:105
 msgid "Could not rename \"{from}\" to \"{to}\"."
 msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 
@@ -603,8 +603,8 @@ msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר
 #~ msgid "Couldn't download \"{name}\": {detail}"
 #~ msgstr "לא ניתן להוריד את \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:20
-#: src/features/downloads/utils/downloadErrors.ts:27
+#: src/features/downloads/utils/downloadErrors.ts:22
+#: src/features/downloads/utils/downloadErrors.ts:30
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
@@ -616,7 +616,7 @@ msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/settings/SettingsView.tsx:130
+#: src/features/settings/SettingsView.tsx:132
 msgid "Couldn't save all settings — check the services are running and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
@@ -684,7 +684,7 @@ msgstr "לנתק את חשבון בר-אילן?"
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
-#: src/features/settings/SettingsView.tsx:264
+#: src/features/settings/SettingsView.tsx:267
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
@@ -725,7 +725,7 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/settings/SettingsView.tsx:239
+#: src/features/settings/SettingsView.tsx:242
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
@@ -812,7 +812,7 @@ msgstr "חילוץ"
 msgid "Extract Audio"
 msgstr "חלץ אודיו"
 
-#: src/features/settings/SettingsView.tsx:263
+#: src/features/settings/SettingsView.tsx:266
 msgid "Extract the audio only"
 msgstr "לחלץ רק את האודיו"
 
@@ -939,7 +939,7 @@ msgstr "חשבון Google"
 msgid "Google credentials are missing. Put credentials.json at {path}."
 msgstr "חסרים פרטי ההתחברות ל-Google. שים את credentials.json בנתיב {path}."
 
-#: src/features/settings/SettingsView.tsx:226
+#: src/features/settings/SettingsView.tsx:229
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -947,7 +947,7 @@ msgstr "Google Drive"
 msgid "Google Drive (optional)"
 msgstr "Google Drive (רשות)"
 
-#: src/shared/i18n/serviceErrors.ts:74
+#: src/shared/i18n/serviceErrors.ts:76
 msgid "Google Drive is not connected. Connect it in Settings."
 msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
 
@@ -1083,7 +1083,7 @@ msgstr "קורס חדש"
 msgid "Next"
 msgstr "הבאה"
 
-#: src/features/settings/SettingsView.tsx:289
+#: src/features/settings/SettingsView.tsx:292
 msgid "Nightly pass hour"
 msgstr "שעת המעבר הלילי"
 
@@ -1107,7 +1107,7 @@ msgstr "לא נמצא דפדפן Chromium. התקן אחד ונסה שוב."
 msgid "No files of unknown type found."
 msgstr "לא נמצאו קבצים מסוג לא ידוע."
 
-#: src/shared/i18n/serviceErrors.ts:75
+#: src/shared/i18n/serviceErrors.ts:77
 msgid "No Google Drive folder is set. Choose one in Settings."
 msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרות."
 
@@ -1220,7 +1220,7 @@ msgstr "אין מה להריץ - כל הצינורות הושלמו"
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל הצינורות הנותרים כבר רצים"
 
-#: src/shared/i18n/serviceErrors.ts:83
+#: src/shared/i18n/serviceErrors.ts:85
 msgid "Nothing was found to analyze in this course."
 msgstr "לא נמצא חומר לניתוח בקורס הזה."
 
@@ -1478,7 +1478,7 @@ msgstr "החלף את {file}"
 msgid "Run Remaining"
 msgstr "הרץ את הנותר"
 
-#: src/features/settings/SettingsView.tsx:262
+#: src/features/settings/SettingsView.tsx:265
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל הצינור"
 
@@ -1504,7 +1504,7 @@ msgstr "צינורות בהרצה"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/settings/SettingsView.tsx:160
+#: src/features/settings/SettingsView.tsx:163
 msgid "Save"
 msgstr "שמור"
 
@@ -1558,7 +1558,7 @@ msgid "session expired"
 msgstr "החיבור פג"
 
 #: src/features/settings/SettingsView.tsx:88
-#: src/features/settings/SettingsView.tsx:153
+#: src/features/settings/SettingsView.tsx:156
 #: src/shared/sidebar/Sidebar.tsx:90
 msgid "Settings"
 msgstr "הגדרות"
@@ -1606,7 +1606,7 @@ msgstr "שלב {0} מתוך {1}"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:216
+#: src/features/settings/SettingsView.tsx:219
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1650,7 +1650,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 #~ msgid "summary did not use material"
 #~ msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:194
+#: src/features/settings/SettingsView.tsx:197
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1692,7 +1692,7 @@ msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 msgid "That playlist has no entries."
 msgstr "אין פריטים ברשימת ההשמעה הזו."
 
-#: src/shared/i18n/serviceErrors.ts:95
+#: src/shared/i18n/serviceErrors.ts:97
 msgid "That setting may not contain quotes or line breaks."
 msgstr "ההגדרה הזו לא יכולה להכיל גרשיים או מעברי שורה."
 
@@ -1712,7 +1712,7 @@ msgstr "החיבור לבר-אילן פג. התחבר מחדש והרץ את ה�
 #~ msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly 03:00 pass alike, never a run you start from the running pipelines page."
 #~ msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם על וידאו שנגרר או הורד וגם על המעבר הלילי ב-03:00, ולעולם לא על הרצה שהתחלת מדף הצינורות בהרצה."
 
-#: src/features/settings/SettingsView.tsx:267
+#: src/features/settings/SettingsView.tsx:270
 msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly catch-up pass alike, never a run you start from the running pipelines page."
 msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם על וידאו שנגרר או הורד וגם על מעבר ההשלמה הלילי, ולעולם לא על הרצה שהתחלת מדף הצינורות בהרצה."
 
@@ -1720,7 +1720,7 @@ msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם �
 msgid "The course \"{course}\" was not found."
 msgstr "הקורס \"{course}\" לא נמצא."
 
-#: src/shared/i18n/serviceErrors.ts:99
+#: src/shared/i18n/serviceErrors.ts:101
 msgid "The data folder must be a full path: {path}."
 msgstr "תיקיית הנתונים חייבת להיות נתיב מלא: {path}."
 
@@ -1732,7 +1732,7 @@ msgstr "ההורדה נדחתה — תוקף החיבור פג. חבר מחדש 
 msgid "The downloaded file could not be stored."
 msgstr "לא ניתן לשמור את הקובץ שהורד."
 
-#: src/shared/i18n/serviceErrors.ts:91
+#: src/shared/i18n/serviceErrors.ts:93
 msgid "The file is open in another program. Close it and try again."
 msgstr "הקובץ פתוח בתוכנה אחרת. סגור אותו ונסה שוב."
 
@@ -1761,7 +1761,7 @@ msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון 
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
-#: src/shared/i18n/serviceErrors.ts:65
+#: src/shared/i18n/serviceErrors.ts:67
 msgid "The PDF engine produced no file."
 msgstr "מנוע ה-PDF לא יצר קובץ."
 
@@ -1769,7 +1769,7 @@ msgstr "מנוע ה-PDF לא יצר קובץ."
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "הריצה נעצרה מוקדם. הרץ את הקטע שוב כדי להשלים אותן."
 
-#: src/shared/i18n/serviceErrors.ts:78
+#: src/shared/i18n/serviceErrors.ts:80
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "הריצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
@@ -1789,7 +1789,7 @@ msgstr "שירות האחסון לא הצליח להשלים את הבקשה."
 msgid "The storage service is not answering. Make sure it's running."
 msgstr "שירות האחסון לא מגיב. ודא שהוא פועל."
 
-#: src/features/settings/SettingsView.tsx:306
+#: src/features/settings/SettingsView.tsx:309
 msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 msgstr "שני השערים בלתי תלויים: ההגדרה שלמעלה חלה גם על המעבר הלילי, ולכן כשהיא מוגדרת לא לעשות דבר, שום דבר לא ירוץ ללא השגחה בכל שעה שתיבחר."
 
@@ -1815,7 +1815,7 @@ msgstr "לא ניתן לבטל את הפעולה."
 msgid "This computer can't keep API keys safely, so they can't be saved here. Everything else on this screen works as usual."
 msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, ולכן אי אפשר לשמור אותם כאן. כל שאר ההגדרות במסך הזה פועלות כרגיל."
 
-#: src/shared/i18n/serviceErrors.ts:88
+#: src/shared/i18n/serviceErrors.ts:90
 msgid "This course has no summaries yet."
 msgstr "אין עדיין סיכומים בקורס הזה."
 
@@ -1905,7 +1905,7 @@ msgstr "העלה ל-Drive"
 msgid "Uploading to Drive"
 msgstr "מעלה ל-Drive"
 
-#: src/shared/i18n/serviceErrors.ts:73
+#: src/shared/i18n/serviceErrors.ts:75
 msgid "Uploading to Google Drive failed."
 msgstr "ההעלאה ל-Google Drive נכשלה."
 
@@ -1930,7 +1930,7 @@ msgstr "לא הצלחנו לבדוק כרגע."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/SettingsView.tsx:253
+#: src/features/settings/SettingsView.tsx:256
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
