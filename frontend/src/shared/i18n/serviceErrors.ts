@@ -97,6 +97,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   setting_may_not_contain_quotes: msg({
     message: 'That setting may not contain quotes or line breaks.',
   }),
+  data_root_not_configured: msg({ message: 'No data folder is set. Choose one in Settings.' }),
   data_root_empty: msg({ message: 'Choose a data folder.' }),
   data_root_not_absolute: msg({ message: 'The data folder must be a full path: {path}.' }),
   data_root_not_a_directory: msg({ message: '{path} exists but is not a folder.' }),
