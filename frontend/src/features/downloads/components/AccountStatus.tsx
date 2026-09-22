@@ -9,6 +9,7 @@ import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import { toast } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import '@/styles/chip.css'
 import '@/styles/button.css'
 
@@ -44,8 +45,9 @@ export default function AccountStatus() {
     try {
       await completeAuth()
       await refresh()
-    } catch {
-      toast('error', t`Failed to complete login. Try reconnecting.`)
+    } catch (err) {
+      // The service says why (timed out, window closed, nothing pending), so its code is the toast.
+      toastFailure(err)
     }
     setPhase('idle')
   }

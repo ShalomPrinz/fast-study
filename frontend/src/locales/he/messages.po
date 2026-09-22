@@ -416,7 +416,7 @@ msgstr "חזרה"
 msgid "BIU account"
 msgstr "חשבון בר-אילן"
 
-#: src/features/downloads/components/AccountStatus.tsx:92
+#: src/features/downloads/components/AccountStatus.tsx:94
 msgid "BIU account connected"
 msgstr "חשבון בר-אילן מחובר"
 
@@ -424,7 +424,7 @@ msgstr "חשבון בר-אילן מחובר"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "חשבון בר-אילן מחובר ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:79
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:78
 msgid "BIU session expired. Reconnect your account."
 msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
@@ -465,7 +465,7 @@ msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחר
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:70
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -506,7 +506,7 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:121
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחבר"
@@ -519,7 +519,7 @@ msgstr "לחבר את Google Drive עכשיו?"
 msgid "Connect your BIU account first"
 msgstr "יש לחבר תחילה את חשבון בר-אילן"
 
-#: src/features/downloads/components/AccountStatus.tsx:104
+#: src/features/downloads/components/AccountStatus.tsx:106
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -603,14 +603,18 @@ msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר
 #~ msgid "Couldn't download \"{name}\": {detail}"
 #~ msgstr "לא ניתן להוריד את \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:22
-#: src/features/downloads/utils/downloadErrors.ts:30
+#: src/features/downloads/utils/downloadErrors.ts:24
+#: src/features/downloads/utils/downloadErrors.ts:32
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
 #: src/features/downloads/components/SectionGroup.tsx:121
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
+
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:121
+msgid "Couldn't load recordings for \"{name}\". Try again."
+msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה שוב."
 
 #: src/features/search/hooks/useCourseSummaries.ts:44
 msgid "Couldn't load summaries for {course}."
@@ -670,16 +674,16 @@ msgstr "מחק את {0}"
 msgid "Discard all edits"
 msgstr "מחק את כל העריכות"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:101
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתק"
 
-#: src/features/downloads/components/AccountStatus.tsx:103
+#: src/features/downloads/components/AccountStatus.tsx:105
 msgid "Disconnect the BIU account?"
 msgstr "לנתק את חשבון בר-אילן?"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:101
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
@@ -688,7 +692,7 @@ msgstr "מתנתק…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:82
 msgid "Done"
 msgstr "סיום"
 
@@ -829,15 +833,11 @@ msgstr "נכשל"
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/downloads/components/AccountStatus.tsx:48
-msgid "Failed to complete login. Try reconnecting."
-msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
-
 #: src/features/lectures/MainView.tsx:155
 #~ msgid "Failed to delete file"
 #~ msgstr "מחיקת הקובץ נכשלה"
 
-#: src/features/downloads/components/AccountStatus.tsx:60
+#: src/features/downloads/components/AccountStatus.tsx:62
 msgid "Failed to disconnect the account."
 msgstr "ניתוק החשבון נכשל."
 
@@ -846,7 +846,7 @@ msgstr "ניתוק החשבון נכשל."
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
 
-#: src/features/downloads/components/AccountStatus.tsx:37
+#: src/features/downloads/components/AccountStatus.tsx:38
 msgid "Failed to launch the login browser."
 msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
@@ -878,7 +878,7 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:77
+#: src/features/downloads/components/AccountStatus.tsx:79
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
@@ -890,7 +890,7 @@ msgstr "יש להשלים את ההתחברות ל-Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "יש להשלים את ההתחברות ל-Google בלשונית שנפתחה בדפדפן."
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:82
 msgid "finishing…"
 msgstr "מסיים…"
 
@@ -1042,10 +1042,6 @@ msgstr "טען הקלטות"
 msgid "Loaded"
 msgstr "נטען"
 
-#: src/features/downloads/DownloadsView.tsx:101
-msgid "Loading recordings…"
-msgstr "טוען הקלטות…"
-
 #: src/features/search/SearchView.tsx:223
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
@@ -1067,7 +1063,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:185
+#: src/shared/i18n/serviceErrors.ts:189
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1118,6 +1114,10 @@ msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרו
 #: src/features/course-overview/utils/overview.ts:7
 msgid "No Lectures"
 msgstr "אין הרצאות"
+
+#: src/shared/i18n/serviceErrors.ts:188
+msgid "No login is in progress. Connect again."
+msgstr "אין התחברות בתהליך. התחבר שוב."
 
 #: src/features/lectures/utils/materialIndicator.ts:25
 msgid "no material found"
@@ -1179,7 +1179,7 @@ msgstr "אין"
 msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:118
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
@@ -1407,7 +1407,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:121
 msgid "Reconnect"
 msgstr "התחבר מחדש"
 
@@ -1557,7 +1557,7 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "Send report"
 msgstr "שלח דיווח"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:118
 msgid "session expired"
 msgstr "החיבור פג"
 
@@ -1756,6 +1756,10 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייוצרו מחדש:"
 
+#: src/shared/i18n/serviceErrors.ts:185
+msgid "The login window was closed before login finished. Connect again."
+msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
+
 #: src/shared/i18n/serviceErrors.ts:184
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
@@ -1801,7 +1805,7 @@ msgstr "שירות האחסון לא מגיב. ודא שהוא פועל."
 msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 msgstr "שני השערים בלתי תלויים: ההגדרה שלמעלה חלה גם על המעבר הלילי, ולכן כשהיא מוגדרת לא לעשות דבר, שום דבר לא ירוץ ללא השגחה בכל שעה שתיבחר."
 
-#: src/features/downloads/utils/downloadErrors.ts:10
+#: src/features/downloads/utils/downloadErrors.ts:11
 #: src/shared/i18n/serviceErrors.ts:140
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב."

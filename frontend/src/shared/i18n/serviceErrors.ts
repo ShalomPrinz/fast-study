@@ -182,6 +182,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message: 'This Moodle session cannot capture videostream recordings. Reconnect the account.',
   }),
   moodle_login_timeout: msg({ message: 'The Moodle login timed out. Try connecting again.' }),
+  moodle_login_abandoned: msg({
+    message: 'The login window was closed before login finished. Connect again.',
+  }),
+  moodle_login_not_pending: msg({ message: 'No login is in progress. Connect again.' }),
   moodle_ws_error: msg({ message: 'Moodle refused the request.' }),
 }
 

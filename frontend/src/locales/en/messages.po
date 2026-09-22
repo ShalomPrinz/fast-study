@@ -416,7 +416,7 @@ msgstr "Back"
 msgid "BIU account"
 msgstr "BIU account"
 
-#: src/features/downloads/components/AccountStatus.tsx:92
+#: src/features/downloads/components/AccountStatus.tsx:94
 msgid "BIU account connected"
 msgstr "BIU account connected"
 
@@ -424,7 +424,7 @@ msgstr "BIU account connected"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "BIU account connected ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:79
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:78
 msgid "BIU session expired. Reconnect your account."
 msgstr "BIU session expired. Reconnect your account."
 
@@ -465,7 +465,7 @@ msgstr "Changing this re-points the app only — it never moves anything. The ol
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:70
 msgid "checking account…"
 msgstr "checking account…"
 
@@ -506,7 +506,7 @@ msgstr "Compile"
 msgid "Complete"
 msgstr "Complete"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:121
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
@@ -519,7 +519,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your BIU account first"
 msgstr "Connect your BIU account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:104
+#: src/features/downloads/components/AccountStatus.tsx:106
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "Connecting again needs a full login in a browser window, including MFA."
 
@@ -603,14 +603,18 @@ msgstr "Could not tell what {url} is — the site didn't answer usefully."
 #~ msgid "Couldn't download \"{name}\": {detail}"
 #~ msgstr "Couldn't download \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:22
-#: src/features/downloads/utils/downloadErrors.ts:30
+#: src/features/downloads/utils/downloadErrors.ts:24
+#: src/features/downloads/utils/downloadErrors.ts:32
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "Couldn't download \"{name}\". Try again."
 
 #: src/features/downloads/components/SectionGroup.tsx:121
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
+
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:121
+msgid "Couldn't load recordings for \"{name}\". Try again."
+msgstr "Couldn't load recordings for \"{name}\". Try again."
 
 #: src/features/search/hooks/useCourseSummaries.ts:44
 msgid "Couldn't load summaries for {course}."
@@ -670,16 +674,16 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:101
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:103
+#: src/features/downloads/components/AccountStatus.tsx:105
 msgid "Disconnect the BIU account?"
 msgstr "Disconnect the BIU account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:101
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -688,7 +692,7 @@ msgstr "disconnecting…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:82
 msgid "Done"
 msgstr "Done"
 
@@ -829,15 +833,11 @@ msgstr "failed"
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
-#: src/features/downloads/components/AccountStatus.tsx:48
-msgid "Failed to complete login. Try reconnecting."
-msgstr "Failed to complete login. Try reconnecting."
-
 #: src/features/lectures/MainView.tsx:155
 #~ msgid "Failed to delete file"
 #~ msgstr "Failed to delete file"
 
-#: src/features/downloads/components/AccountStatus.tsx:60
+#: src/features/downloads/components/AccountStatus.tsx:62
 msgid "Failed to disconnect the account."
 msgstr "Failed to disconnect the account."
 
@@ -846,7 +846,7 @@ msgstr "Failed to disconnect the account."
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
-#: src/features/downloads/components/AccountStatus.tsx:37
+#: src/features/downloads/components/AccountStatus.tsx:38
 msgid "Failed to launch the login browser."
 msgstr "Failed to launch the login browser."
 
@@ -878,7 +878,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:77
+#: src/features/downloads/components/AccountStatus.tsx:79
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -890,7 +890,7 @@ msgstr "finish signing in to Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:82
 msgid "finishing…"
 msgstr "finishing…"
 
@@ -1042,10 +1042,6 @@ msgstr "Load recordings"
 msgid "Loaded"
 msgstr "Loaded"
 
-#: src/features/downloads/DownloadsView.tsx:101
-msgid "Loading recordings…"
-msgstr "Loading recordings…"
-
 #: src/features/search/SearchView.tsx:223
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
@@ -1067,7 +1063,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:185
+#: src/shared/i18n/serviceErrors.ts:189
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1118,6 +1114,10 @@ msgstr "No Google Drive folder is set. Choose one in Settings."
 #: src/features/course-overview/utils/overview.ts:7
 msgid "No Lectures"
 msgstr "No Lectures"
+
+#: src/shared/i18n/serviceErrors.ts:188
+msgid "No login is in progress. Connect again."
+msgstr "No login is in progress. Connect again."
 
 #: src/features/lectures/utils/materialIndicator.ts:25
 msgid "no material found"
@@ -1179,7 +1179,7 @@ msgstr "None"
 msgid "Not a file the downloader can fetch"
 msgstr "Not a file the downloader can fetch"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:118
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1407,7 +1407,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:121
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1557,7 +1557,7 @@ msgstr "Select a lecture to get started"
 msgid "Send report"
 msgstr "Send report"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:118
 msgid "session expired"
 msgstr "session expired"
 
@@ -1756,6 +1756,10 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
+#: src/shared/i18n/serviceErrors.ts:185
+msgid "The login window was closed before login finished. Connect again."
+msgstr "The login window was closed before login finished. Connect again."
+
 #: src/shared/i18n/serviceErrors.ts:184
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
@@ -1801,7 +1805,7 @@ msgstr "The storage service is not answering. Make sure it's running."
 msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 msgstr "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 
-#: src/features/downloads/utils/downloadErrors.ts:10
+#: src/features/downloads/utils/downloadErrors.ts:11
 #: src/shared/i18n/serviceErrors.ts:140
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 msgstr "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
