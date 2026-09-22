@@ -820,7 +820,7 @@ msgstr "Extract the audio only"
 msgid "Extracting audio"
 msgstr "Extracting audio"
 
-#: src/features/course-overview/constants/overview.ts:75
+#: src/features/course-overview/constants/overview.ts:88
 #: src/features/course-overview/CourseView.tsx:44
 msgid "failed"
 msgstr "failed"
@@ -1574,6 +1574,10 @@ msgstr "Show more"
 #: src/features/settings/SettingsView.tsx:235
 #~ msgid "Show the run controls in the sidebar"
 #~ msgstr "Show the run controls in the sidebar"
+
+#: src/features/course-overview/constants/overview.ts:69
+msgid "skipped"
+msgstr "skipped"
 
 #: src/app/ErrorBoundary.tsx:138
 msgid "Something went wrong"

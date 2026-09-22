@@ -1,6 +1,6 @@
 import { msg, t } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
-import type { CoursePhase, CourseStatus, CourseFile } from '@/types'
+import type { CoursePhase, CourseStatus, CourseExtractorState, CourseFile } from '@/types'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 
 export interface OverviewStep {
@@ -57,8 +57,21 @@ export interface BranchStatus {
   warning: string | null
 }
 
+// The kept-on-disk skip: the branch already reads as done and every "Generate all" pass re-stamps
+// it, so announcing it would badge every finished branch on the healthy path.
+const SILENT_SKIP_CODES = new Set(['already_generated'])
+
+// Why a phase chain stopped short of producing anything. A skip is not a failure, so its reason
+// rides the neutral `warning` channel rather than `error`.
+function skipReason(st: CourseExtractorState | undefined): string | null {
+  if (st?.status !== 'skipped') return null
+  if (st.code && SILENT_SKIP_CODES.has(st.code)) return null
+  return serviceErrorText({ message: st.message ?? t`skipped`, code: st.code, params: st.params })
+}
+
 // One extractor's derived state; `done` means its last phase output exists.
-// `warning` rides on the produced PDF and is not a failure — the branch still reads as done.
+// `warning` is the neutral channel — a skipped phase's reason, else the produced PDF's render
+// warning. Neither is a failure, so the branch still reads as done.
 export function branchStatus(
   status: CourseStatus | null,
   files: CourseFile[],
@@ -74,6 +87,7 @@ export function branchStatus(
       st?.status === 'error'
         ? serviceErrorText({ message: st.message ?? t`failed`, code: st.code, params: st.params })
         : null,
-    warning: last?.warning ?? null,
+    // The skip is about this run; a render warning may be left over from an older one.
+    warning: skipReason(st) ?? last?.warning ?? null,
   }
 }

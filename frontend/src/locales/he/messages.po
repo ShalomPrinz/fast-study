@@ -820,7 +820,7 @@ msgstr "לחלץ רק את האודיו"
 msgid "Extracting audio"
 msgstr "מחלץ אודיו"
 
-#: src/features/course-overview/constants/overview.ts:75
+#: src/features/course-overview/constants/overview.ts:88
 #: src/features/course-overview/CourseView.tsx:44
 msgid "failed"
 msgstr "נכשל"
@@ -1574,6 +1574,10 @@ msgstr "הצג עוד"
 #: src/features/settings/SettingsView.tsx:235
 #~ msgid "Show the run controls in the sidebar"
 #~ msgstr "להציג את פקדי ההרצה בסרגל הצד"
+
+#: src/features/course-overview/constants/overview.ts:69
+msgid "skipped"
+msgstr "דולג"
 
 #: src/app/ErrorBoundary.tsx:138
 msgid "Something went wrong"

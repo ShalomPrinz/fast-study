@@ -167,6 +167,14 @@ with one string, and `provider` and `blocked` stay on the record — the fronten
 A phase worker's own exception no longer reaches this channel as a bare `str(e)`: the worker's code
 and params ride through, and only a truly untyped exception falls back to `internal_error`.
 
+A `skipped` entry is not a failure and never toasts. Its reason renders inline on the branch in the
+course overview, on the same neutral badge a PDF render warning uses — `branchStatus()` in
+`frontend/src/features/course-overview/constants/overview.ts` resolves it from the code like any
+other. `already_generated` is the one skip that renders nothing: the branch already reads as done,
+and every "Generate All" pass re-stamps the code on every kept participant, so showing it would badge
+every finished branch of a healthy course. It keeps its catalog row, which is the protocol's answer
+for the code whichever view chooses to show it.
+
 ### `database/`
 
 | origin                | code                            | params            | reach     |
