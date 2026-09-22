@@ -25,6 +25,8 @@ def run_to_pdf(course: str, slug: str) -> dict:
         return {
             "status": "skipped",
             "message": "no analyzed markdown — run analyze first",
+            "code": "missing_prerequisite",
+            "params": {"file": md_name, "step": "analyze"},
         }
     # convert_to_pdf needs the .md on disk and drops the .pdf beside it, so round-trip
     # through a temp dir.

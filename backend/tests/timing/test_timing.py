@@ -2,6 +2,7 @@ import sqlite3
 
 import pytest
 import timing
+from services.errors import CodedError
 
 
 # conftest's autouse fixture already points timing.DB_PATH at a temp db.
@@ -23,8 +24,9 @@ class TestRecord:
 
     @pytest.mark.parametrize("operation", ["", "   "])
     def test_rejects_blank_operation(self, operation):
-        with pytest.raises(ValueError, match="operation is required"):
+        with pytest.raises(CodedError) as e:
             timing.record(operation, 1000, 2.5)
+        assert (e.value.code, e.value.params) == ("timing_operation_required", {})
         assert _rows() == []
 
     @pytest.mark.parametrize(
@@ -35,20 +37,32 @@ class TestRecord:
         assert _rows() == [(operation, 1000, 2.5)]
 
     def test_rejects_unknown_operation(self):
-        with pytest.raises(ValueError, match="unknown operation"):
+        with pytest.raises(CodedError) as e:
             timing.record("trasncribe", 1000, 2.5)  # typo
+        assert (e.value.code, e.value.params) == (
+            "unknown_timing_operation",
+            {"operation": "trasncribe"},
+        )
         assert _rows() == []  # no dead bucket written
 
     @pytest.mark.parametrize("size", [0, -1])
     def test_rejects_non_positive_size(self, size):
-        with pytest.raises(ValueError, match="file_size_bytes"):
+        with pytest.raises(CodedError) as e:
             timing.record("download:curl", size, 2.5)
+        assert (e.value.code, e.value.params) == (
+            "invalid_timing_sample",
+            {"field": "file_size_bytes", "value": size},
+        )
         assert _rows() == []
 
     @pytest.mark.parametrize("duration", [0, -0.5])
     def test_rejects_non_positive_duration(self, duration):
-        with pytest.raises(ValueError, match="duration_seconds"):
+        with pytest.raises(CodedError) as e:
             timing.record("download:curl", 1000, duration)
+        assert (e.value.code, e.value.params) == (
+            "invalid_timing_sample",
+            {"field": "duration_seconds", "value": duration},
+        )
         assert _rows() == []
 
     def test_round_trip_into_get_stats(self):

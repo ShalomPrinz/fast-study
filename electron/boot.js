@@ -15,11 +15,12 @@ const elements = {
   actions: document.getElementById('actions'),
 };
 
-// A tool the boot probe could not run costs one feature, never the launch.
+// A tool the boot probe could not run costs one feature, never the launch. A usable tool is the
+// bare string 'ok'; anything else is lib/tools' {state, params}, whose `state` is the reason.
 function unusableTools(tools) {
   return Object.entries(tools ?? {})
-    .filter(([, state]) => state !== 'ok')
-    .map(([name, state]) => `${name} ${state}`);
+    .filter(([, result]) => result !== 'ok')
+    .map(([name, result]) => `${name} ${result?.state ?? result}`);
 }
 
 function detailFor(service) {

@@ -15,6 +15,14 @@ DOWNLOADER_EXTENSION_ID=abcdef
 """
 
 
+def _rejected(patch: dict) -> tuple[str, dict]:
+    """Write a settings patch that must be refused and return the (code, params) it refused with."""
+
+    with pytest.raises(ValueError) as caught:
+        settings.write_settings(patch)
+    return caught.value.code, caught.value.params
+
+
 @pytest.fixture
 def env_file(tmp_path, monkeypatch):
     """Point the store at a throwaway .env holding settings, unknown keys, comments and blanks."""
@@ -118,15 +126,19 @@ def test_integers_round_trip(env_file):
 
 # `isinstance(True, int)` is True, so a bool must be refused rather than stored as 1.
 def test_a_boolean_is_rejected_for_an_int_field(env_file):
-    with pytest.raises(ValueError):
-        settings.write_settings({"nightly_hour": True})
+    assert _rejected({"nightly_hour": True}) == (
+        "setting_must_be_integer",
+        {"field": "nightly_hour"},
+    )
 
     assert "NIGHTLY_HOUR" not in env_file.read_text(encoding="utf-8")
 
 
 def test_a_non_int_is_rejected_for_an_int_field(env_file):
-    with pytest.raises(ValueError):
-        settings.write_settings({"nightly_hour": "3"})
+    assert _rejected({"nightly_hour": "3"}) == (
+        "setting_must_be_integer",
+        {"field": "nightly_hour"},
+    )
 
     assert "NIGHTLY_HOUR" not in env_file.read_text(encoding="utf-8")
 
@@ -168,8 +180,10 @@ def test_a_hash_inside_an_unquoted_value_is_not_a_comment():
 
 
 def test_a_string_boolean_is_rejected_rather_than_read_as_truthy(env_file):
-    with pytest.raises(ValueError):
-        settings.write_settings({"drive_enabled": "false"})
+    assert _rejected({"drive_enabled": "false"}) == (
+        "setting_must_be_boolean",
+        {"field": "drive_enabled"},
+    )
 
     assert "DRIVE_ENABLED" not in env_file.read_text(encoding="utf-8")
 
@@ -178,6 +192,8 @@ def test_put_rejects_a_string_boolean(client, env_file):
     r = client.put("/settings", json={"drive_enabled": "false"})
 
     assert r.status_code == 400
+    assert r.json()["code"] == "setting_must_be_boolean"
+    assert r.json()["params"] == {"field": "drive_enabled"}
     assert settings.read_settings()["drive_enabled"] is None
 
 
@@ -189,15 +205,16 @@ def test_null_leaves_a_stored_value_alone(env_file):
 
 
 def test_unknown_setting_is_rejected(env_file):
-    with pytest.raises(ValueError):
-        settings.write_settings({"whisper_model": "large"})
+    assert _rejected({"whisper_model": "large"}) == (
+        "unknown_setting",
+        {"field": "whisper_model"},
+    )
 
 
 # The UI language and the runner-control toggle are the browser profile's own, never the store's.
 def test_a_frontend_only_preference_is_rejected(env_file):
     for field in ("ui_language", "runner_controls_visible"):
-        with pytest.raises(ValueError):
-            settings.write_settings({field: "he"})
+        assert _rejected({field: "he"}) == ("unknown_setting", {"field": field})
 
 
 def test_data_root_is_created_and_probed(env_file, tmp_path):
@@ -214,15 +231,37 @@ def test_unwritable_data_root_is_rejected(env_file, tmp_path):
     blocker = tmp_path / "afile"
     blocker.write_text("x", encoding="utf-8")
 
-    with pytest.raises(ValueError):
-        settings.write_settings({"data_root": str(blocker)})
+    assert _rejected({"data_root": str(blocker)}) == (
+        "data_root_not_a_directory",
+        {"path": str(blocker)},
+    )
 
     assert "DATA_ROOT=/old/root" in env_file.read_text(encoding="utf-8")
 
 
 def test_relative_data_root_is_rejected(env_file):
-    with pytest.raises(ValueError):
-        settings.write_settings({"data_root": "relative/data"})
+    assert _rejected({"data_root": "relative/data"}) == (
+        "data_root_not_absolute",
+        {"path": "relative/data"},
+    )
+
+
+def test_a_non_string_setting_is_rejected(env_file):
+    assert _rejected({"gemini_model": 3}) == (
+        "setting_must_be_string",
+        {"field": "gemini_model"},
+    )
+
+
+def test_a_quoted_value_is_rejected(env_file):
+    assert _rejected({"gdrive_root_folder": "it's"}) == (
+        "setting_may_not_contain_quotes",
+        {"field": "gdrive_root_folder"},
+    )
+
+
+def test_an_empty_data_root_is_rejected(env_file):
+    assert _rejected({"data_root": "   "}) == ("data_root_empty", {})
 
 
 def test_get_and_put_over_http(client, env_file, tmp_path):
@@ -251,7 +290,8 @@ def test_put_rejects_a_bad_data_root(client, env_file):
     r = client.put("/settings", json={"data_root": "nope"})
 
     assert r.status_code == 400
-    assert "error" in r.json()
+    assert r.json()["code"] == "data_root_not_absolute"
+    assert r.json()["params"] == {"path": "nope"}
 
 
 def test_config_applies_data_root_without_restart(client, tmp_path):
@@ -272,4 +312,5 @@ def test_config_rejects_an_unusable_data_root(client, tmp_path):
     r = client.post("/config", json={"data_root": "still-relative"})
 
     assert r.status_code == 400
+    assert r.json()["code"] == "data_root_not_absolute"
     assert data_root() == before

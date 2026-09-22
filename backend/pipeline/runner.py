@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 
 from services import db_client, google_auth, settings
+from services.errors import CodedError
 from services.llm_client import GeminiRateLimitError
 
 from pipeline.strip_audio import strip_audio
@@ -51,8 +52,13 @@ _errors: dict[
     str, dict
 ] = {}  # skey → last error record (see _error_record); survives after _in_flight clears
 _runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": None}
-# Run-scoped; the message of Gemini's DAILY quota error that blocked summarize, reset by run_all.
-_summarize_block: str | None = None
+# Run-scoped; the {message, params} of Gemini's DAILY quota error that blocked summarize, reset
+# by run_all. Every lecture it then stops carries the same facts as the one that hit the limit.
+_summarize_block: dict | None = None
+
+# The two codes a Gemini daily quota produces: the lecture that hit it, and every lecture run_all
+# then stopped. Membership — not equality with one string — is what lifts the block on a retry.
+_GEMINI_QUOTA_CODES = frozenset({"gemini_quota_exhausted", "gemini_quota_blocked"})
 
 
 class QueueEntry(NamedTuple):
@@ -82,18 +88,48 @@ def _skey(course: str, lecture: str, kind: str) -> str:
 
 
 def _error_record(
-    step: str, message: str, *, quota: bool = False, blocked: bool = False
+    step: str,
+    message: str,
+    *,
+    code: str | None = None,
+    params: dict | None = None,
+    blocked: bool = False,
 ) -> dict:
-    """One /status error: the failed step and message, `code`/`provider` for Gemini's daily quota,
-    and `blocked` when run_all stopped this lecture on another's quota rather than it hitting one."""
+    """One /status error: the failed step, its machine code and named params beside the
+    developer-facing message, `provider` for Gemini's daily quota, and `blocked` when run_all
+    stopped this lecture on another's quota rather than it hitting one."""
 
+    code = code or "unknown_error"
     return {
         "step": step,
         "message": message,
-        "code": "quota" if quota else None,
-        "provider": "gemini" if quota else None,
+        "code": code,
+        "params": params or {},
+        "provider": "gemini" if code in _GEMINI_QUOTA_CODES else None,
         "blocked": blocked,
     }
+
+
+def _missing_prerequisite(message: str, file: str, step: str) -> dict:
+    """An executor whose input file is not there yet — one code whichever step asked."""
+
+    return {
+        "status": "error",
+        "message": message,
+        "code": "missing_prerequisite",
+        "params": {"file": file, "step": step},
+    }
+
+
+def _failed(exc: Exception) -> dict:
+    """An executor's error result, carrying the exception's own code and params when it names
+    itself; an untyped one falls back to `unknown_error` in `_error_record`."""
+
+    result = {"status": "error", "message": str(exc)}
+    if isinstance(exc, CodedError):
+        result["code"] = exc.code
+        result["params"] = exc.params
+    return result
 
 
 def _now_iso() -> str:
@@ -131,7 +167,12 @@ def _require_nonempty(filename: str, data: bytes) -> None:
 
     if not data:
         hint = EMPTY_FILE_ISSUES.get(filename)
-        raise RuntimeError(f"{filename} is empty" + (f" — {hint}" if hint else ""))
+        # The hint is prose, so it rides the message only: `file` is what a renderer keys off.
+        raise CodedError(
+            f"{filename} is empty" + (f" — {hint}" if hint else ""),
+            "empty_file",
+            file=filename,
+        )
 
 
 # ---- db_workspace ----
@@ -164,14 +205,16 @@ def _exec_audio(course: str, lecture: str, kind: str) -> dict:
 
     try:
         if not db_client.file_exists(course, lecture, kind, "video.mp4"):
-            return {"status": "error", "message": "video.mp4 is required"}
+            return _missing_prerequisite(
+                "video.mp4 is required", "video.mp4", "download"
+            )
         with _db_workspace(
             course, lecture, kind, download=["video.mp4"], upload=["audio.mp3"]
         ) as ws:
             strip_audio(str(ws["video.mp4"]), str(ws["audio.mp3"]))
         return {"status": "done"}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return _failed(e)
 
 
 def _persist_transcribe_partial(
@@ -191,10 +234,9 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
 
     try:
         if not db_client.file_exists(course, lecture, kind, "audio.mp3"):
-            return {
-                "status": "error",
-                "message": "audio.mp3 is required — run Extract Audio first",
-            }
+            return _missing_prerequisite(
+                "audio.mp3 is required — run Extract Audio first", "audio.mp3", "audio"
+            )
 
         with tempfile.TemporaryDirectory() as tmp:
             audio_path = Path(tmp) / "audio.mp3"
@@ -236,7 +278,7 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
                 }
             except Exception as e:
                 _persist_transcribe_partial(course, lecture, kind, Path(tmp))
-                return {"status": "error", "message": str(e)}
+                return _failed(e)
 
             transcript_bytes = transcript.encode("utf-8")
             _require_nonempty("transcript.txt", transcript_bytes)
@@ -247,7 +289,7 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
             db_client.delete_file(course, lecture, kind, PARTIAL_META)
             return {"status": "done"}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return _failed(e)
 
 
 def _download_materials(course: str, lecture: str, kind: str, dest: Path) -> list[Path]:
@@ -275,10 +317,11 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
 
     try:
         if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
-            return {
-                "status": "error",
-                "message": "transcript.txt is required — run Transcribe first",
-            }
+            return _missing_prerequisite(
+                "transcript.txt is required — run Transcribe first",
+                "transcript.txt",
+                "transcribe",
+            )
         with _db_workspace(course, lecture, kind, download=["transcript.txt"]) as ws:
             transcript = ws["transcript.txt"]
             materials = _download_materials(course, lecture, kind, transcript.parent)
@@ -296,13 +339,13 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
     except GeminiRateLimitError as e:
         # A daily quota's retryDelay lies: it says 59s while the quotaId says PerDay.
         if e.info["is_daily"]:
-            return {"status": "error", "message": str(e), "daily_quota": True}
+            return {**_failed(e), "daily_quota": True}
         return {
             "status": "rate_limited",
             "retry_after": GEMINI_MINUTE_QUOTA_SLEEP_SECONDS,
         }
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return _failed(e)
 
 
 def _drop_marker(course: str, lecture: str, kind: str, name: str) -> None:
@@ -321,10 +364,11 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
 
     try:
         if not db_client.file_exists(course, lecture, kind, "summary.md"):
-            return {
-                "status": "error",
-                "message": "summary.md is required — run Summarize first",
-            }
+            return _missing_prerequisite(
+                "summary.md is required — run Summarize first",
+                "summary.md",
+                "summarize",
+            )
         with _db_workspace(course, lecture, kind, upload=["summary.pdf"]) as ws:
             # summary.md comes from get_summary (envelope-wrapped), not get_file_bytes.
             md_path = ws["summary.pdf"].parent / "summary.md"
@@ -365,9 +409,9 @@ def _exec_pdf(course: str, lecture: str, kind: str) -> dict:
         # warning's `l.<N>`. Only that overwrite does — otherwise the old pair still agrees.
         if stored_tex:
             _drop_marker(course, lecture, kind, PDF_WARNING_FILE)
-        return {"status": "error", "message": str(e)}
+        return _failed(e)
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return _failed(e)
 
 
 def _exec_drive(course: str, lecture: str, kind: str) -> dict:
@@ -375,10 +419,9 @@ def _exec_drive(course: str, lecture: str, kind: str) -> dict:
 
     try:
         if not db_client.file_exists(course, lecture, kind, "summary.pdf"):
-            return {
-                "status": "error",
-                "message": "summary.pdf is required — run PDF first",
-            }
+            return _missing_prerequisite(
+                "summary.pdf is required — run PDF first", "summary.pdf", "pdf"
+            )
         # Checked before the workspace download: an unconnected Drive fails every queued
         # lecture, and each one would otherwise fetch its PDF first.
         google_auth.get_credentials("drive")
@@ -396,7 +439,7 @@ def _exec_drive(course: str, lecture: str, kind: str) -> dict:
             ws["drive_url.txt"].write_bytes(url.encode("utf-8"))
         return {"status": "done", "url": url}
     except Exception as e:
-        return {"status": "error", "message": str(e)}
+        return _failed(e)
 
 
 _EXECUTORS = {
@@ -562,7 +605,9 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
         if step == "summarize":
             # Any summarize attempt re-tests Gemini's quota: drop every quota record and lift the
             # run's stop, so lectures still queued retry; a fresh hit re-sets both below.
-            for key in [k for k, e in _errors.items() if e["code"] == "quota"]:
+            for key in [
+                k for k, e in _errors.items() if e["code"] in _GEMINI_QUOTA_CODES
+            ]:
                 del _errors[key]
             _summarize_block = None
         db_client.notify()
@@ -587,10 +632,12 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
         else:  # error
             _in_flight.pop(skey, None)
             msg = result.get("message") or result.get("status") or "unknown error"
-            quota = bool(result.get("daily_quota"))
-            if quota:
-                _summarize_block = msg
-            _errors[skey] = _error_record(step, msg, quota=quota)
+            params = result.get("params") or {}
+            if result.get("daily_quota"):
+                _summarize_block = {"message": msg, "params": params}
+            _errors[skey] = _error_record(
+                step, msg, code=result.get("code"), params=params
+            )
             log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
             db_client.notify()
             return
@@ -610,7 +657,11 @@ async def _run_pipeline_unlocked(
         if step == "summarize" and honor_block and _summarize_block is not None:
             # Same record as the lecture that hit the quota, so this one doesn't look pending.
             _errors[_skey(course, lecture, kind)] = _error_record(
-                "summarize", _summarize_block, quota=True, blocked=True
+                "summarize",
+                _summarize_block["message"],
+                code="gemini_quota_blocked",
+                params=_summarize_block["params"],
+                blocked=True,
             )
             db_client.notify()
             log.info(
@@ -741,7 +792,15 @@ async def run_all() -> dict:
                     blocked_count += 1
             except Exception as e:
                 log.exception("pipeline crashed for %s/%s: %s", course, lecture, e)
-                _runner_status["last_error"] = f"{course}/{lecture}: {e}"
+                _runner_status["last_error"] = {
+                    "message": f"{course}/{lecture}: {e}",
+                    "code": "run_crashed",
+                    "params": {
+                        "course": course,
+                        "lecture": lecture,
+                        "detail": str(e),
+                    },
+                }
             _runner_status["done"] += 1
         blocked = (
             f", summarize skipped for {blocked_count} (Gemini daily quota)"

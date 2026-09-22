@@ -11,6 +11,10 @@ Every tool spawn — the runner's child, the yt-dlp size probe, the yt-dlp self-
 `NO_WINDOW` from `@faststudy/tools`, or a packaged build flashes a console window per spawn
 ([why](../../../lib/tools/CLAUDE.md)).
 
+A spawn that fails, a non-zero exit and a throw before either are three different job codes, each
+carrying the tool and whatever the tool said as `detail` ([JOBS.md](JOBS.md)). The stderr tail is
+third-party text, so it rides as `detail` and is never translated.
+
 ## curl (generic `.mp4`)
 
 Streaming sites gate `.mp4` URLs behind short-lived tokens and Referer/Origin checks, so a naive

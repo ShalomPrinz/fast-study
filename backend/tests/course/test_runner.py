@@ -282,9 +282,13 @@ class TestGenerateSubset:
         assert db.notifies == 4
 
     def test_unknown_extractor_is_error(self):
-        # Route glue turns this pair's err into a 400 {"error": err}.
+        # Route glue answers this pair's second element as a 400 body, verbatim.
         slugs, err = course_runner.resolve_slugs("nope")
-        assert err is not None and "nope" in err
+        assert err == {
+            "error": "unknown extractor(s): nope",
+            "code": "unknown_extractors",
+            "params": {"slugs": "nope"},
+        }
 
     def test_unknown_course_is_not_found(self, db):
         async def go():
@@ -402,6 +406,9 @@ class TestErrors:
         assert status["extractors"]["exam-hints"] == {
             "status": "error",
             "message": "gemini exploded",
+            # A worker exception that named no code of its own.
+            "code": "internal_error",
+            "params": {"detail": "gemini exploded"},
             "phase": "analyze",
         }
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt"]
@@ -457,6 +464,8 @@ class TestToPdfPhase:
         assert status["extractors"]["student-qa"] == {
             "status": "skipped",
             "message": "no analyzed markdown — run analyze first",
+            "code": "missing_prerequisite",
+            "params": {"file": "student-qa.md", "step": "analyze"},
             "phase": "to_pdf",
         }
 
@@ -474,6 +483,8 @@ class TestToPdfPhase:
         assert status["extractors"]["exam-hints"] == {
             "status": "error",
             "message": "pandoc boom",
+            "code": "internal_error",
+            "params": {"detail": "pandoc boom"},
             "phase": "to_pdf",
         }
         # analyze still wrote the .md; only the .pdf upload was skipped.
@@ -589,7 +600,11 @@ class TestFromPhase:
         # rather than defended inside try_run_generate.
         phase, err = course_runner.resolve_from_phase("bogus")
         assert phase is None
-        assert err == "unknown phase: bogus"
+        assert err == {
+            "error": "unknown phase: bogus",
+            "code": "unknown_phase",
+            "params": {"phase": "bogus"},
+        }
 
 
 class TestSkipExisting:
@@ -634,6 +649,8 @@ class TestSkipExisting:
         assert status["extractors"]["exam-hints"] == {
             "status": "skipped",
             "message": "already generated",
+            "code": "already_generated",
+            "params": {},
             "phase": "to_pdf",
         }
         assert db.puts == []  # nothing overwritten
@@ -1070,6 +1087,8 @@ class TestSlugBySlug:
         assert status["extractors"]["exam-hints"] == {
             "status": "error",
             "message": "boom",
+            "code": "internal_error",
+            "params": {"detail": "boom"},
             "phase": "analyze",
         }
         assert "exam-hints.pdf" not in db.overview_store
@@ -1172,6 +1191,8 @@ class TestPhaseFiltering:
         assert status["extractors"]["exam-hints"] == {
             "status": "error",
             "message": "gemini boom",
+            "code": "internal_error",
+            "params": {"detail": "gemini boom"},
             "phase": "analyze",
         }
         # topics is unaffected by the pattern extractor's failure.
@@ -1232,7 +1253,12 @@ class TestPhaseWorkerSeam:
         result = course_extract.run_extractor(
             COURSE, self.EXAM, [("Lecture 1", "משפט רגיל.")]
         )
-        assert result == {"status": "skipped", "message": "no snippets found"}
+        assert result == {
+            "status": "skipped",
+            "message": "no snippets found",
+            "code": "no_snippets_found",
+            "params": {},
+        }
 
     def test_extract_done_writes_txt(self, monkeypatch):
         puts = []
@@ -1257,13 +1283,19 @@ class TestPhaseWorkerSeam:
         assert result == {
             "status": "skipped",
             "message": "no snippets file — run extract first",
+            "code": "missing_prerequisite",
+            "params": {"file": "exam-hints.txt", "step": "extract"},
         }
 
     def test_analyze_raises_on_empty_gemini(self, monkeypatch):
         monkeypatch.setattr(db_client, "get_overview_file", lambda c, f: b"report")
         monkeypatch.setattr(course_analyze, "analyze", lambda ext, report, course: "")
-        with pytest.raises(RuntimeError, match="Gemini returned no text"):
+        with pytest.raises(RuntimeError, match="Gemini returned no text") as e:
             course_analyze.run_analyze(COURSE, self.EXAM)
+        assert (e.value.code, e.value.params) == (
+            "empty_model_output",
+            {"provider": "gemini"},
+        )
 
     def test_analyze_done_writes_md(self, monkeypatch):
         puts = []
@@ -1286,6 +1318,8 @@ class TestPhaseWorkerSeam:
         assert result == {
             "status": "skipped",
             "message": "no analyzed markdown — run analyze first",
+            "code": "missing_prerequisite",
+            "params": {"file": "exam-hints.md", "step": "analyze"},
         }
 
     def test_to_pdf_done_writes_pdf(self, monkeypatch):

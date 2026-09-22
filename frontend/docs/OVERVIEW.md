@@ -43,9 +43,13 @@ gates on its own slug, so one branch can be re-generated while another churns. `
 per chain, so the clock counts the whole branch.
 
 `branchStatus` is the single derivation of a row's `{ running, done, error, warning }`: `done` means the
-extractor's _last_ file exists, and `warning` is a `{slug}.pdf` that rendered despite LaTeX errors — still
-done and green, with a ⚠ `PdfWarningBadge` and no toast. Errors toast once per `(course, slug, message)`
-through `useReportOnce`, pruned only within the current course so switching back does not re-toast.
+extractor's _last_ file exists, and `warning` is the neutral channel — a skipped phase's reason, else a
+`{slug}.pdf` that rendered despite LaTeX errors. Either way the row stays green, with a ⚠
+`PdfWarningBadge` and no toast. A skip is not a failure, so `no_snippets_found`, `no_summaries_found` and
+the overview's `missing_prerequisite` read through `serviceErrors.ts` onto that badge rather than an error
+toast; `already_generated` is suppressed, since the row already reads as done and every "Generate All"
+pass re-stamps it. Errors toast once per `(course, slug, failure)` through `useReportOnce`, pruned only
+within the current course so switching back does not re-toast.
 
 `overview/meta` gives per-slug lecture/recitation ranges and `generatedAt`, rendered by `formatRange`
 ("Lectures 2-9, Recitations 1-4") and a short date with the full timestamp on hover.

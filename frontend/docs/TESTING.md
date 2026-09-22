@@ -8,6 +8,11 @@ copy. So components go untested by design; what they decide is pulled into pure 
 `constants/`) that are. A UI-state bug fix — a flash, flicker, stale value or wrong count — moves the
 deciding logic into such a function and tests it in the same change.
 
+One test reads outside `frontend/`: `shared/i18n/errorCodeDrift.test.ts` walks the service sources, the
+repo's `docs/ERROR-CODES.md` and `serviceErrors.ts` to hold the error-code vocabulary in step. Vitest is
+the only runner here that sees the whole tree, which is why that guard lives in this suite rather than
+with any one service.
+
 A hook whose logic is its async ordering or its providers is tested with `renderHook` under a
 `// @vitest-environment jsdom` docblock, providers built with `createElement` so the file stays `.ts`.
 Everything else runs in `node`, where `window` does not exist — why `runtimeBridge()` guards it. The only

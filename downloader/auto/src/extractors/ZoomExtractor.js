@@ -1,5 +1,5 @@
 import { VideoExtractor } from './VideoExtractor.js';
-import { PasscodeError } from '../lib/errors.js';
+import { CodedError, PasscodeError } from '../lib/errors.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
 function endsWithMp4(url) {
@@ -93,7 +93,9 @@ export class ZoomExtractor extends VideoExtractor {
         .catch(() => null);
     }
     if (!request) {
-      throw new Error(
+      throw new CodedError(
+        'zoom_no_media_request',
+        { url: rec.pageUrl },
         `No .mp4 request captured on zoom share ${rec.pageUrl} (passcode/player may need a manual trigger)`,
       );
     }

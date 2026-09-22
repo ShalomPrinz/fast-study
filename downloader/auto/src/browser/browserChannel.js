@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { CodedError } from '../lib/errors.js';
 
 // Most preferred first; both proven against the zoom player. A packaged install ships no browser,
 // so this chain IS the prerequisite — never empty on Windows, where Edge is preinstalled.
@@ -45,7 +46,8 @@ async function probeChain() {
       failures.push(`${candidate.channel}: ${firstLine(err)}`);
     }
   }
-  throw new Error(`No Chromium browser found. ${failures.join(' | ')}`);
+  const detail = failures.join(' | ');
+  throw new CodedError('browser_missing', { detail }, `No Chromium browser found. ${detail}`);
 }
 
 // Playwright's launch errors are multi-paragraph install advice; the first line carries the

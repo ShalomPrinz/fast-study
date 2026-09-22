@@ -1,13 +1,14 @@
 // Thin fetch wrapper over Moodle's Web-Services REST API; a wstoken authenticates every call —
 // no browser, no cookies. Protocol reference: docs/MOODLE.md.
+import { CodedError } from '../lib/errors.js';
 
 // Default Moodle site; kept a parameter (not hardcoded in URL building) so callers can inject.
 export const DEFAULT_SITE = 'https://lemida.biu.ac.il';
 
 /** A Moodle WS exception body ({ exception, errorcode, message }) surfaced as an Error. */
-export class WsError extends Error {
+export class WsError extends CodedError {
   constructor(errorcode, message) {
-    super(message || errorcode);
+    super('moodle_ws_error', { errorcode, detail: message ?? null }, message || errorcode);
     this.name = 'WsError';
     this.errorcode = errorcode;
   }
@@ -19,9 +20,11 @@ export class WsError extends Error {
  * Bot Manager, which serves one (HTTP 200, text/html) to a client it reads as automated, so this
  * is a distinct failure from a WS fault and never a JSON parse bug.
  */
-export class WsBlockedError extends Error {
+export class WsBlockedError extends CodedError {
   constructor(detail) {
     super(
+      'site_blocked',
+      { detail },
       `the site is refusing automated requests — it served a bot-protection challenge ` +
         `instead of a valid response (${detail}); wait a few minutes and retry`,
     );
@@ -118,13 +121,18 @@ export async function assertPluginfileReadable(url) {
   if (!type.includes('application/json')) return;
   const body = await res.json().catch(() => null);
   if (body?.errorcode) throw new WsError(body.errorcode, body.message);
-  throw new Error(`pluginfile served JSON, not a file: ${url}`);
+  throw new CodedError('moodle_file_unreadable', { url }, `pluginfile served JSON, not a file: ${url}`);
 }
 
 // Parse the numeric course id from a Moodle course URL (…/course/view.php?id=109063).
 // Returned as a string to match the WS &courseid= usage.
 export function courseIdFrom(courseUrl) {
   const id = new URL(courseUrl).searchParams.get('id');
-  if (!id || !/^\d+$/.test(id)) throw new Error(`no numeric course id in URL: ${courseUrl}`);
+  if (!id || !/^\d+$/.test(id))
+    throw new CodedError(
+      'course_url_no_id',
+      { url: courseUrl },
+      `no numeric course id in URL: ${courseUrl}`,
+    );
   return id;
 }

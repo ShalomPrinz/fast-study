@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 export interface InlineEdit {
   value: string
@@ -119,7 +120,7 @@ export interface QueueEntry {
 
 export interface RunnerStatus {
   // lastError: an unexpected exception that aborted a sweep, not a step-level failure.
-  runner: { running: boolean; total: number; done: number; lastError: string | null }
+  runner: { running: boolean; total: number; done: number; lastError: ServiceFailure | null }
   inFlight: InFlightEntry[]
   // What the runner has left to take, in the order it will take them. In-memory server-side, so a
   // backend restart empties it and those lectures become "not queued".
@@ -128,12 +129,14 @@ export interface RunnerStatus {
   errors: Record<string, RunError>
 }
 
-// A lecture's last step failure; `step` is the backend's step name. `code: 'quota'` is Gemini's daily
-// quota running out; `blocked` marks a lecture run-all then stopped at summarize without calling Gemini.
+// A lecture's last step failure; `step` is the backend's step name, `code`/`params` the protocol's
+// (repo-root docs/ERROR-CODES.md). `provider` marks a Gemini quota, and `blocked` a lecture run-all
+// stopped at summarize on another lecture's quota, without calling Gemini itself.
 export interface RunError {
   step: string
   message: string
-  code: 'quota' | null
+  code: string | null
+  params: ErrorParams
   provider: 'gemini' | null
   blocked: boolean
 }
@@ -149,6 +152,8 @@ export interface OverviewExtractor {
 export interface CourseExtractorState {
   status: 'pending' | 'running' | 'done' | 'skipped' | 'error'
   message?: string
+  code?: string | null
+  params?: ErrorParams | null
   phase?: CoursePhase | null
   // ISO stamp of when this branch's phase chain began — one per chain, not per phase.
   startedAt?: string | null

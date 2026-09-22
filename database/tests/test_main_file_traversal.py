@@ -91,3 +91,25 @@ class TestWriteRoutes:
             client.delete(f"/courses/Algo/lectures/L1/files/{name}")
 
         assert (lecture / "summary.pdf").exists()
+
+
+# Only the backslash forms reach the guard; ".." and a slashed name are routed away before it.
+REACHES_THE_GUARD = ("..\\..\\..\\Windows\\x.exe", "C:\\Windows\\win.ini")
+
+
+class TestRefusalBody:
+    @pytest.mark.parametrize("name", REACHES_THE_GUARD)
+    def test_a_refused_write_names_the_segment(self, client, lecture, name):
+        r = client.put(f"/courses/Algo/lectures/L1/files/{name}", content=b"x")
+
+        assert r.status_code == 400
+        assert r.json()["code"] == "unsafe_path_segment"
+        assert r.json()["params"] == {"segment": name}
+
+    @pytest.mark.parametrize("name", REACHES_THE_GUARD)
+    def test_a_refused_path_read_names_the_segment(self, client, lecture, name):
+        r = client.get(f"/courses/Algo/lectures/L1/files/{name}/path")
+
+        assert r.status_code == 400
+        assert r.json()["code"] == "unsafe_path_segment"
+        assert r.json()["params"] == {"segment": name}

@@ -10,6 +10,7 @@ from pathlib import Path
 import groq
 from groq import Groq
 from services import providers
+from services.errors import CodedError
 from services.mp3 import read_duration
 from timing import timed_pipeline
 from tools import tool_path
@@ -34,7 +35,11 @@ def get_duration(audio_path: str) -> float:
     # pick a chunk count, so an unreadable file has to stop the step, not yield zero.
     duration = read_duration(Path(audio_path))
     if duration is None:
-        raise ValueError(f"could not read an mp3 duration from {audio_path}")
+        raise CodedError(
+            f"could not read an mp3 duration from {audio_path}",
+            "unreadable_audio",
+            file=Path(audio_path).name,
+        )
     return duration
 
 
@@ -168,7 +173,11 @@ def transcribe_audio(audio_path: str) -> str:
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        raise RuntimeError("GROQ_API_KEY is not set in the environment")
+        raise CodedError(
+            "GROQ_API_KEY is not set in the environment",
+            "missing_api_key",
+            provider="groq",
+        )
     client = Groq(api_key=api_key, base_url=providers.base_url("groq"))
     lecture_dir = Path(audio_path).parent
     partial_path = lecture_dir / PARTIAL_TXT
@@ -201,8 +210,8 @@ def transcribe_audio(audio_path: str) -> str:
     with tempfile.TemporaryDirectory() as tmpdir:
         for i in range(completed, total):
             log.info(f"chunk {i + 1}/{total}")
-            chunk_path = split_one_chunk(audio_path, tmpdir, i, chunk_seconds)
             try:
+                chunk_path = split_one_chunk(audio_path, tmpdir, i, chunk_seconds)
                 with open(chunk_path, "rb") as f:
                     response = client.audio.transcriptions.create(
                         model="whisper-large-v3",
@@ -216,6 +225,8 @@ def transcribe_audio(audio_path: str) -> str:
                 info["completed_chunks"] = i
                 info["total_chunks"] = total
                 raise TranscribeRateLimitError(info) from e
+            except Exception as e:
+                raise CodedError(str(e), "transcription_failed", detail=str(e)) from e
 
             text = (
                 response.strip() if isinstance(response, str) else str(response).strip()

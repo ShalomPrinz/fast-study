@@ -105,3 +105,5 @@ These bytes are terminal-only; the job registry reads the same entries but pushe
 - Add a download source = a new `downloaders/*.js` + one registry line; never edit the runner.
 - HTTP goes through `fetch`. Node's `fetch` has no forbidden-header list, so it replays a captured
   `Cookie`, and drops it on a cross-origin redirect on its own.
+- Every non-2xx body and every failed job carries `{code, params}` beside its English prose
+  ([downloader CLAUDE.md](../CLAUDE.md)); a rejected request is `invalid_request` with the `field`.

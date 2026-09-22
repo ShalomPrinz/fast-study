@@ -3,6 +3,7 @@ import path from 'node:path';
 import { AuthProvider } from './AuthProvider.js';
 import { launchBrowser } from '../browser/browserLaunch.js';
 import { DEFAULT_SITE } from '../moodle/wsClient.js';
+import { CodedError } from '../lib/errors.js';
 
 const SERVICE = 'moodle_mobile_app';
 const URLSCHEME = 'moodlemobile';
@@ -153,7 +154,10 @@ export class MoodleToken extends AuthProvider {
     this._pending = null;
     try {
       const timeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('no token captured (timed out)')), CAPTURE_TIMEOUT_MS),
+        setTimeout(
+          () => reject(new CodedError('moodle_login_timeout', {}, 'no token captured (timed out)')),
+          CAPTURE_TIMEOUT_MS,
+        ),
       );
       const apptoken = await Promise.race([tokenPromise, timeout]);
 

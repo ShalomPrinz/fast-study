@@ -5,6 +5,7 @@ import time
 from pathlib import Path
 
 import runtime
+from services.errors import CodedError
 
 DB_PATH = runtime.state_path("timing.db")
 
@@ -57,18 +58,32 @@ def _record(operation: str, file_size_bytes: int, duration_seconds: float):
 
 def record(operation: str, file_size_bytes: int, duration_seconds: float) -> dict:
     """Public entry point for recording a sample (used by external services over HTTP).
-    Raises ValueError on a blank/unknown operation or a non-positive size or duration."""
+    Raises CodedError on a blank/unknown operation or a non-positive size or duration."""
 
     operation = (operation or "").strip()
     if not operation:
-        raise ValueError("operation is required")
+        raise CodedError("operation is required", "timing_operation_required")
     if operation not in _allowed_operations():
         log.warning("rejected unknown timing operation: %r", operation)
-        raise ValueError(f"unknown operation: {operation}")
+        raise CodedError(
+            f"unknown operation: {operation}",
+            "unknown_timing_operation",
+            operation=operation,
+        )
     if file_size_bytes <= 0:
-        raise ValueError(f"file_size_bytes must be positive, got {file_size_bytes}")
+        raise CodedError(
+            f"file_size_bytes must be positive, got {file_size_bytes}",
+            "invalid_timing_sample",
+            field="file_size_bytes",
+            value=file_size_bytes,
+        )
     if duration_seconds <= 0:
-        raise ValueError(f"duration_seconds must be positive, got {duration_seconds}")
+        raise CodedError(
+            f"duration_seconds must be positive, got {duration_seconds}",
+            "invalid_timing_sample",
+            field="duration_seconds",
+            value=duration_seconds,
+        )
 
     _record(operation, file_size_bytes, duration_seconds)
     return {"status": "ok"}

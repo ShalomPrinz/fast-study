@@ -9,6 +9,12 @@ import { reportVideoArrived } from './backend.js';
 // All DATABASE_URL I/O lives here. Contract details (video PUT wipes derived
 // artifacts vs appending /materials, /tree reshape, notify) in docs/DATABASE.md.
 
+// A store that didn't happen, in the one shape both its channels carry: the 502 body of
+// /upload-pdf and a job's terminal failure (docs/JOBS.md). `error` stays the database's own text.
+function storeFailed(detail) {
+  return { error: detail, code: 'database_store_failed', params: { detail } };
+}
+
 // /tree returns rich lecture/recitation objects; the popup only wants the names,
 // and archived courses are dropped so finished ones don't clutter suggestions.
 export async function listCourses() {
@@ -25,7 +31,7 @@ export async function listCourses() {
 }
 
 // Stream the temp video.mp4 to the database (a PUT that wipes derived artifacts), removing the
-// temp dir either way. Never throws: null on success, else the job's error message.
+// temp dir either way. Never throws: null on success, else the job's failure.
 export async function uploadVideo(tempDir, course, lecture, kind, tool) {
   const file = path.join(tempDir, VIDEO_FILENAME);
   try {
@@ -44,7 +50,7 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     if (!res.ok) {
       const error = body?.error ?? `HTTP ${res.status}`;
       emitError(`❌ ${tool} upload to database failed: ${error}`);
-      return error;
+      return storeFailed(error);
     }
     emitLog(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
@@ -54,7 +60,7 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     return null;
   } catch (err) {
     emitError(`❌ ${tool} upload to database failed: ${err.message}`);
-    return err.message;
+    return storeFailed(err.message);
   } finally {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -63,7 +69,7 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
 }
 
 // Stream the temp PDF to the appending /materials, removing the temp dir either way. Never
-// throws: null on success, else the job's error message.
+// throws: null on success, else the job's failure.
 export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
   const file = path.join(tempDir, MATERIAL_TEMP_FILENAME);
   try {
@@ -82,14 +88,14 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
     if (!res.ok) {
       const error = body?.error ?? `HTTP ${res.status}`;
       emitError(`❌ ${tool} upload to database failed: ${error}`);
-      return error;
+      return storeFailed(error);
     }
     emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
     return null;
   } catch (err) {
     emitError(`❌ ${tool} upload to database failed: ${err.message}`);
-    return err.message;
+    return storeFailed(err.message);
   } finally {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -98,7 +104,7 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
 }
 
 // Forward already-fetched PDF bytes to /materials. Throws on a network error (route → 500);
-// returns the message on a database-level failure (route → 502).
+// returns the failure body on a database-level failure (route → 502).
 export async function uploadPdf(buf, course, lecture, kind) {
   const url = `${DATABASE_URL}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/materials?kind=${encodeURIComponent(kind)}`;
   const res = await fetch(url, {
@@ -113,7 +119,7 @@ export async function uploadPdf(buf, course, lecture, kind) {
   if (!res.ok) {
     const error = body?.error ?? `HTTP ${res.status}`;
     emitError(`❌ PDF upload to database failed: ${error}`);
-    return error;
+    return storeFailed(error);
   }
   emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
   notifyFrontend();

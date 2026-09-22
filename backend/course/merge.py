@@ -113,7 +113,12 @@ def run_merge(course: str, course_node: dict) -> dict:
             (entry["name"], db_client.get_summary(course, entry["name"], "lecture"))
         )
     if not collected:
-        return {"status": "skipped", "message": "no summaries found"}
+        return {
+            "status": "skipped",
+            "message": "no summaries found",
+            "code": "no_summaries_found",
+            "params": {},
+        }
 
     md = build_all_lectures_md(collected)
     db_client.put_overview_file(course, f"{SLUG}.md", md.encode("utf-8"))

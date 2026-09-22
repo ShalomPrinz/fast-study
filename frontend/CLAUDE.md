@@ -47,6 +47,9 @@ There are no sub-services under `frontend/` — this is the only CLAUDE.md.
   route patterns come from `shared/utils/routes.ts`.
 - Every user-facing string goes through a Lingui macro, and every direction-sensitive CSS declaration is a
   logical property ([docs/I18N.md](docs/I18N.md)).
+- A service failure renders through `shared/i18n/serviceErrors.ts` and `ServiceError`, never its raw
+  `message`; adding a failure means a row there and one in [../docs/ERROR-CODES.md](../docs/ERROR-CODES.md),
+  which `shared/i18n/errorCodeDrift.test.ts` holds in step with what the services emit.
 - UI lives in components, not contexts or hooks — those expose state and callbacks only.
 - Import via `@/` (`src/*`, set in `tsconfig.json` and `vite.config.ts`) for anything outside the current
   directory; siblings may be relative.

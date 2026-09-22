@@ -45,7 +45,7 @@ One `generate` trigger is one `OverviewRun`. The run owns its selection (slugs, 
 Module-level state in `course/runner.py`:
 
 - `_locks[(course, slug)]` — persists across runs so same-slug triggers serialize.
-- `_status[course][slug]` — the shared store runs write into; entry is `{"status", "phase"?, "message"?, "started_at"?}`. It survives after a run finishes so `get_status` can read it. `running` is DERIVED (any entry running); `phase` is per-entry and is always the **string** `phase.id` — a `Phase` object must never reach the JSON-serialized store. `started_at` is stamped once when a slug enters its chain and carried across every phase's entry rebuild, so the UI clocks the branch rather than the phase.
+- `_status[course][slug]` — the shared store runs write into; entry is `{"status", "phase"?, "message"?, "code"?, "params"?, "started_at"?}`; `code` and flat `params` sit beside `message` on every skipped or errored entry ([docs/ERROR-CODES.md](../../docs/ERROR-CODES.md)). It survives after a run finishes so `get_status` can read it. `running` is DERIVED (any entry running); `phase` is per-entry and is always the **string** `phase.id` — a `Phase` object must never reach the JSON-serialized store. `started_at` is stamped once when a slug enters its chain and carried across every phase's entry rebuild, so the UI clocks the branch rather than the phase.
 
 `execute` is slug-by-slug in declaration order. For each slug it does a non-blocking `lock.locked()` check then `async with lock`; an un-held `asyncio.Lock` acquires without yielding, so with no await in between the skip-on-collision is atomic.
 
@@ -55,7 +55,7 @@ Module-level state in `course/runner.py`:
 
 Because a slug holds its lock across its whole phase chain, the UI shows one spinner per slug with no false "done" flicker between phases.
 
-**Failure isolation.** A (slug, phase) failure marks that entry `error`, stops that slug's chain (no `to_pdf` on a failed analyze) and leaves the other slugs running. A slug already in `error` is left as-is by later phases, so the real failure survives to the final status instead of being masked as a downstream `skipped`.
+**Failure isolation.** A (slug, phase) failure marks that entry `error`, stops that slug's chain (no `to_pdf` on a failed analyze) and leaves the other slugs running. A worker exception that names itself carries its own code and params through; only a truly untyped one falls back to `internal_error` with `str(e)` as `detail`. A slug already in `error` is left as-is by later phases, so the real failure survives to the final status instead of being masked as a downstream `skipped`.
 
 `db_client.notify()` fires after each (slug, phase) work unit — done/skipped/error/kept — and once at run end.
 

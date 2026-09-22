@@ -1,23 +1,37 @@
 import { t } from '@lingui/core/macro'
 import { secretHeaders } from '@/services/runtime'
 import { toastConnectionError } from '@/services/toaster'
+import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
-export function httpError(res: Response): Error {
-  return new Error(`${res.status} ${res.statusText}`)
+// A request a service refused. It carries the protocol's machine `code` and flat `params` beside
+// the service's English prose, so the render site can say it in the user's language and fall back
+// to the prose when the code has no catalog row — repo-root docs/ERROR-CODES.md.
+export class RequestError extends Error implements ServiceFailure {
+  constructor(
+    message: string,
+    public code: string | null = null,
+    public params: ErrorParams | null = null,
+  ) {
+    super(message)
+    this.name = 'RequestError'
+  }
 }
 
-// Every service reports a failure as JSON prose in `{error}`, which says far more than the status
-// line (a data root that turned out not to be writable, not "400 Bad Request").
-async function failureError(res: Response): Promise<Error> {
-  // 423 is the one body we replace: the database service's prose is the fallback for the
-  // backend-mediated case, but here it reaches the user as a toast, so it has to be localized.
-  if (res.status === 423) {
-    return new Error(t`The file is open in another program. Close it and try again.`)
-  }
+export function httpError(res: Response): RequestError {
+  return new RequestError(`${res.status} ${res.statusText}`)
+}
+
+// Every service reports a failure as `{error, code, params}`, whose prose says far more than the
+// status line (a data root that turned out not to be writable, not "400 Bad Request").
+async function failureError(res: Response): Promise<RequestError> {
   try {
     const body = JSON.parse(await res.text())
     const message = body?.error
-    if (typeof message === 'string' && message) return new Error(message)
+    if (typeof message === 'string' && message) {
+      const code = typeof body?.code === 'string' ? body.code : null
+      const params = body?.params && typeof body.params === 'object' ? body.params : null
+      return new RequestError(message, code, params)
+    }
   } catch {
     // Not JSON, or no body at all — the status line is all there is to report.
   }

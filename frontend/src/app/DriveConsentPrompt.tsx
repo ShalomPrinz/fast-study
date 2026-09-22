@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { connectDrive, fetchDriveStatus } from '@/services/drive'
 import { toast } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { useNotify } from '@/shared/hooks/useNotify'
@@ -40,7 +41,7 @@ export default function DriveConsentPrompt() {
       await connectDrive()
       toast('info', t`Finish signing in to Google in the browser tab that opened.`)
     } catch (err) {
-      toast('error', (err as Error).message)
+      toastFailure(err)
     }
   }
 

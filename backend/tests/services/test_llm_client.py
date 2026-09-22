@@ -59,8 +59,12 @@ def _patched_client(genai_client, monkeypatch):
 
 def test_missing_api_key_raises(monkeypatch):
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    with pytest.raises(RuntimeError, match="GEMINI_API_KEY"):
+    with pytest.raises(RuntimeError, match="GEMINI_API_KEY") as exc:
         LLMClient()
+    assert (exc.value.code, exc.value.params) == (
+        "missing_api_key",
+        {"provider": "gemini"},
+    )
 
 
 def test_uses_explicit_api_key_and_default_model(monkeypatch):
@@ -170,6 +174,14 @@ def test_generate_raises_gemini_rate_limit_with_readable_message(monkeypatch):
     assert str(exc.value) == (
         "Gemini free-tier daily quota reached (20 requests/day for gemini-3.5-flash) — resets at midnight Pacific"
     )
+    # The same facts as the sentence, named — so a renderer can word them its own way.
+    assert exc.value.code == "gemini_quota_exhausted"
+    assert exc.value.params == {
+        "scope": "daily",
+        "model": "gemini-3.5-flash",
+        "limit": 20,
+        "tier": "free",
+    }
 
 
 def test_generate_non_429_still_raises_plain_runtime_error(monkeypatch):

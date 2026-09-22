@@ -1,6 +1,7 @@
 // Two concerns, matched at different granularities: auth per university (host), extraction per
 // activity (modType + target).
 import { statePath } from '@faststudy/runtime';
+import { CodedError } from '../lib/errors.js';
 import { MoodleToken } from '../auth/moodleToken.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
@@ -35,7 +36,12 @@ const EXTRACTORS = [
  */
 export function resolveUniversity(courseUrl) {
   const uni = UNIVERSITIES.find((u) => u.matches(courseUrl));
-  if (!uni) throw new Error(`No university/auth handler for ${courseUrl}`);
+  if (!uni)
+    throw new CodedError(
+      'course_url_unsupported_site',
+      { url: courseUrl },
+      `No university/auth handler for ${courseUrl}`,
+    );
   return uni;
 }
 

@@ -7,6 +7,8 @@ from urllib.parse import quote
 import requests
 import runtime
 
+from services.errors import CodedError
+
 DATABASE_URL = os.environ.get("DATABASE_URL", "http://localhost:8001")
 
 # One session so the launch secret is set once rather than threaded through every call site.
@@ -15,8 +17,23 @@ if _secret := runtime.secret():
     _session.headers["X-FastStudy-Secret"] = _secret
 
 
-class DbClientError(RuntimeError):
-    """Raised when a database service call fails, i.e. answers a non-2xx status."""
+class DbClientError(CodedError):
+    """Raised when a database service call fails, i.e. answers a non-2xx status. It carries the
+    peer's own code, which is all that survives the hop into a pipeline step error: the backend
+    folds the body into a `message` and the HTTP status is lost there."""
+
+    def __init__(self, message: str, code: str = "storage_error", **params):
+        super().__init__(message, code, **params)
+
+
+def _request(method: str, url: str, **kwargs) -> requests.Response:
+    """One call to the database service. An unreachable peer is a DbClientError like any refusal,
+    so a caller never has to know that the storage lives behind HTTP."""
+
+    try:
+        return _session.request(method, url, **kwargs)
+    except requests.RequestException as e:
+        raise DbClientError(str(e), "storage_error", detail=str(e)) from e
 
 
 def _q(s: str) -> str:
@@ -34,24 +51,38 @@ def _summary_url(course: str, lecture: str) -> str:
 
 
 def _raise_for_status(resp: requests.Response) -> None:
-    """Raise DbClientError carrying the database's {error} message on a non-2xx status, so
+    """Raise DbClientError carrying the database's {error, code, params} on a non-2xx status, so
     callers see failures as exceptions rather than silently succeeding."""
 
-    if not resp.ok:
-        try:
-            body = resp.json()
-            err = body.get("error") if isinstance(body, dict) else None
-        except Exception:
-            err = None
-        raise DbClientError(err or f"HTTP {resp.status_code}: {resp.text[:200]}")
+    if resp.ok:
+        return
+    try:
+        body = resp.json()
+    except Exception:
+        body = None
+    if not isinstance(body, dict):
+        body = {}
+    message = body.get("error") or f"HTTP {resp.status_code}: {resp.text[:200]}"
+    code = body.get("code")
+    params = body.get("params")
+    if not code:
+        # A peer too old (or too broken) to name its failure still gets a uniform wire shape.
+        raise DbClientError(message, "storage_error", detail=message)
+    raise DbClientError(message, code, **(params if isinstance(params, dict) else {}))
 
 
 def get_file_bytes(course: str, lecture: str, kind: str, filename: str) -> bytes:
     """Fetch one file from the lecture dir as raw bytes. Raises if missing."""
 
-    r = _session.get(_file_url(course, lecture, filename), params={"kind": kind})
+    r = _request("GET", _file_url(course, lecture, filename), params={"kind": kind})
     if r.status_code == 404:
-        raise DbClientError(f"{filename} not found for {course}/{lecture}")
+        raise DbClientError(
+            f"{filename} not found for {course}/{lecture}",
+            "file_not_found",
+            file=filename,
+            course=course,
+            lecture=lecture,
+        )
     _raise_for_status(r)
     return r.content
 
@@ -61,8 +92,8 @@ def put_file_bytes(
 ) -> None:
     """Upload raw bytes for one file in the lecture dir. Neutral write — no artifact wipe."""
 
-    r = _session.put(
-        _file_url(course, lecture, filename), params={"kind": kind}, data=data
+    r = _request(
+        "PUT", _file_url(course, lecture, filename), params={"kind": kind}, data=data
     )
     _raise_for_status(r)
 
@@ -70,14 +101,14 @@ def put_file_bytes(
 def file_exists(course: str, lecture: str, kind: str, filename: str) -> bool:
     """Cheap existence check via HEAD — avoids streaming the body."""
 
-    r = _session.head(_file_url(course, lecture, filename), params={"kind": kind})
+    r = _request("HEAD", _file_url(course, lecture, filename), params={"kind": kind})
     return r.status_code == 200
 
 
 def delete_file(course: str, lecture: str, kind: str, filename: str) -> None:
     """Delete one file in a lecture dir (no-op server-side if missing)."""
 
-    r = _session.delete(_file_url(course, lecture, filename), params={"kind": kind})
+    r = _request("DELETE", _file_url(course, lecture, filename), params={"kind": kind})
     _raise_for_status(r)
 
 
@@ -85,7 +116,8 @@ def list_materials(course: str, lecture: str, kind: str) -> list[dict]:
     """List a lecture's material PDFs as [{name, size, mtime}] — empty when it has none.
     The database service owns their naming, so never construct a material filename here."""
 
-    r = _session.get(
+    r = _request(
+        "GET",
         f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/materials",
         params={"kind": kind},
     )
@@ -100,16 +132,21 @@ def _overview_url(course: str, name: str) -> str:
 def put_overview_file(course: str, filename: str, data: bytes) -> None:
     """Write one file into the course-level overview dir (created server-side on demand)."""
 
-    r = _session.put(_overview_url(course, filename), data=data)
+    r = _request("PUT", _overview_url(course, filename), data=data)
     _raise_for_status(r)
 
 
 def get_overview_file(course: str, filename: str) -> bytes:
     """Fetch one course-level overview file as raw bytes. Raises if missing."""
 
-    r = _session.get(_overview_url(course, filename))
+    r = _request("GET", _overview_url(course, filename))
     if r.status_code == 404:
-        raise DbClientError(f"{filename} not found in {course}/overview")
+        raise DbClientError(
+            f"{filename} not found in {course}/overview",
+            "overview_file_not_found",
+            file=filename,
+            course=course,
+        )
     _raise_for_status(r)
     return r.content
 
@@ -117,7 +154,7 @@ def get_overview_file(course: str, filename: str) -> bytes:
 def list_overview_files(course: str) -> list[dict]:
     """List a course's overview files as [{name, size, mtime}]."""
 
-    r = _session.get(f"{DATABASE_URL}/courses/{_q(course)}/overview/files")
+    r = _request("GET", f"{DATABASE_URL}/courses/{_q(course)}/overview/files")
     _raise_for_status(r)
     return r.json().get("files", [])
 
@@ -130,7 +167,7 @@ def get_overview_meta(course: str) -> dict:
     """Fetch the course's overview meta map (slug -> entry), unwrapping the {meta} envelope.
     Returns {} when the course has no meta.json yet."""
 
-    r = _session.get(_overview_meta_url(course))
+    r = _request("GET", _overview_meta_url(course))
     _raise_for_status(r)
     return r.json().get("meta", {})
 
@@ -139,14 +176,16 @@ def patch_overview_meta(course: str, slug: str, entry: dict) -> None:
     """Merge one slug's entry into the course's overview meta.json. The merge is server-side
     (atomic across concurrent per-slug PATCHes from parallel overview runs of the same course)."""
 
-    r = _session.patch(_overview_meta_url(course), json={"slug": slug, "entry": entry})
+    r = _request(
+        "PATCH", _overview_meta_url(course), json={"slug": slug, "entry": entry}
+    )
     _raise_for_status(r)
 
 
 def get_tree() -> list[dict]:
     """Fetch the full course tree (courses → lectures + recitations)."""
 
-    r = _session.get(f"{DATABASE_URL}/tree")
+    r = _request("GET", f"{DATABASE_URL}/tree")
     _raise_for_status(r)
     return r.json()
 
@@ -154,7 +193,7 @@ def get_tree() -> list[dict]:
 def get_summary(course: str, lecture: str, kind: str) -> str:
     """Fetch summary.md content, unwrapping the {content, hasOriginal} envelope."""
 
-    r = _session.get(_summary_url(course, lecture), params={"kind": kind})
+    r = _request("GET", _summary_url(course, lecture), params={"kind": kind})
     _raise_for_status(r)
     return r.json()["content"]
 
@@ -162,7 +201,8 @@ def get_summary(course: str, lecture: str, kind: str) -> str:
 def put_summary(course: str, lecture: str, kind: str, content: str) -> None:
     """Write summary.md. The database service snapshots the original on first write (enables revert)."""
 
-    r = _session.put(
+    r = _request(
+        "PUT",
         _summary_url(course, lecture),
         params={"kind": kind},
         data=content.encode("utf-8"),

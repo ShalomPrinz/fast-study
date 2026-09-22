@@ -36,12 +36,17 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose down
 
 **Session replay cache** (`src/core/replayCache.js`). Every resolved cap is kept in memory keyed by its final `(course, lecture, kind, media)` target, so a retry replays it without re-capturing — never logged (caps hold cookies/tokens), unbounded (session-small). `only:true` acts on just the one named target (a zoom split name included); `forceCapture:true` bypasses the cache (and every probe cache). `fromCache` on each target tells `server/` whether an auth failure is worth one silent re-resolve. `only`+`forceCapture` re-sniffs the whole share (one zoom share yields both clips) and returns just the matching cap.
 
-Error statuses, each a distinct signal the frontend branches on:
+Error statuses, each a distinct signal the frontend branches on. All four carry `code` and `params`
+beside the fields below, as every non-2xx body here does ([downloader CLAUDE.md](../CLAUDE.md)):
 
-- `401 {status:'reconnect'}` — the Moodle WS token is missing or answered `invalidtoken` ([AUTH.md](docs/AUTH.md)).
-- `409 {status:'passcode', reason, course, name}` — zoom passcode `missing` or `incorrect`; save one via `/zoom/passcode` and retry ([ZOOM.md](docs/ZOOM.md)).
-- `422 {status:'unsupported', message}` — the source can never be handled here (a link that probes as a non-video, non-PDF file, a web page, a dead link, an unshared Drive file). Memoized per probe key, so `/list` stamps `resolvedMedia:'unsupported'` ([BROWSING.md](docs/BROWSING.md)).
-- `503 {status:'blocked', message}` — the Moodle site served a bot-protection challenge; transient, unrelated to the token, never retried here ([MOODLE.md](docs/MOODLE.md)).
+- `401 {status:'reconnect'}`, `moodle_reconnect_required` — the Moodle WS token is missing or answered `invalidtoken` ([AUTH.md](docs/AUTH.md)).
+- `409 {status:'passcode', reason, course, name}`, `zoom_passcode_required {reason, course, name}` — zoom passcode `missing` or `incorrect`; save one via `/zoom/passcode` and retry ([ZOOM.md](docs/ZOOM.md)).
+- `422 {status:'unsupported', message}` — the source can never be handled here (a link that probes as a non-video, non-PDF file, a web page, a dead link, an unshared Drive file). The code is the thrower's own (`link_not_a_video`, `link_dead`, `drive_not_shared`, `drive_link_malformed`, `expand_unsupported_host`), never one flat "unsupported". Memoized per probe key, so `/list` stamps `resolvedMedia:'unsupported'` ([BROWSING.md](docs/BROWSING.md)).
+- `503 {status:'blocked', message}`, `site_blocked {detail}` — the Moodle site served a bot-protection challenge; transient, unrelated to the token, never retried here ([MOODLE.md](docs/MOODLE.md)).
+
+A throw carries its code up to the route through `CodedError` (`src/lib/errors.js`), which
+`UnsupportedError` and `PasscodeError` extend; anything untyped reaching `app.js`'s backstop is
+`internal_error {detail}`.
 
 ## Docs
 

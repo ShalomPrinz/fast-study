@@ -9,17 +9,19 @@ alone (`features/downloads/services/`).
 `createClient(baseUrl, serviceName)` centralizes `!res.ok → throw`, JSON and headers, including
 `X-FastStudy-Secret`; `url(path)` gives URLs the page loads itself (pdf.js, `open.ts`'s dev fallback).
 
-A failure's message is the body's `{error}` — the one failure shape every service sends — falling back to
-the status line, which says nothing useful to the settings screens. `423` is the exception: the database
-service sends it when another program (usually the user's PDF viewer) holds the file, and its English
-prose is written for pipeline run errors, so a user's own delete gets a localized message here instead.
-It does not name the file, which would have to be parsed back out of the URL.
+A refused request throws a `RequestError` carrying the body's `{error, code, params}` — the one failure
+shape every service sends — falling back to the status line when there is no body to read. The prose is the
+developer-facing fallback; the sentence the user reads comes from the code
+([../../docs/ERROR-CODES.md](../../docs/ERROR-CODES.md), rendered per [I18N.md](I18N.md)). No status is
+special-cased here: a `423` is `file_locked` like any other code, which is what lets the same lock read the
+same way when `backend/` relays it through a pipeline error and the status is gone.
 
 **Connection errors are handled once, here.** Only a network failure rejects as a `TypeError` (aborts are
 `DOMException` and pass through), so that branch wraps it in `ConnectionError`, toasts it keyed by base
 URL — a downed service shows one toast, not a stack — and rethrows. Call sites add no connection handling
 of their own; they ignore the throw or check `isConnectionError`. `shared/utils/failure.ts`'s
-`toastFailure` is that check plus the toast, for the call sites that report a refused request themselves.
+`toastFailure` is that check plus the resolved sentence, and is the single funnel for a refused request's
+wording; `failureNode` is the same thing for a call site that shows it in place instead of toasting.
 
 ## `backend.ts` → FastAPI (:8000)
 
@@ -54,7 +56,7 @@ Packaged, a fresh navigation cannot carry `X-FastStudy-Secret`, so a service URL
 is a `401` and a blank page. `openLectureFile`, `openOverviewFile` and `openExternalUrl` hand
 **identifiers** to `window.faststudy.open`, which resolves the path through `database/` and opens it in
 the user's own app — a path never reaches the renderer, so a compromised one gets no open-any-file
-primitive. A failure toasts its English prose inside a translated wrapper.
+primitive. A failure toasts its English prose inside a translated wrapper — the bridge is not a service and sends no code.
 
 A link keeps its `href` for hover and copy but calls `openExternalUrl` with `preventDefault()`: the shell
 denies every `window.open`, so `target="_blank"` does nothing, and a bare `href` would load the site in the
@@ -95,12 +97,12 @@ encode meaning in it:
 | HTTP | body                  | thrown                                                                    |
 | ---- | --------------------- | ------------------------------------------------------------------------- |
 | 401  | `status: reconnect`   | `ReconnectError` — steer to the account chip                              |
-| 422  | `status: unsupported` | `UnsupportedError` — permanent; `message` is display-ready                |
+| 422  | `status: unsupported` | `UnsupportedError` — permanent; carries the body's `code`/`params`         |
 | 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`               |
 | 503  | `status: blocked`     | `BlockedError` — bot-protection challenge; transient, carries no message |
 
 The trade-off is no central `ConnectionError` wrapping: a refused connection is a raw `TypeError`.
-`BlockedError` drops the body's `message`, an English log line. `PasscodeError` maps `name` to `lecture`
+`BlockedError` drops the body's `message`, an English log line, and writes its own copy. `PasscodeError` maps `name` to `lecture`
 because `name` collides with `Error.name`. The helper takes a `Client` because the downloader server's
 `/download-item` forwards the same four bodies verbatim.
 

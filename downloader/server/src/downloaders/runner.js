@@ -81,7 +81,10 @@ export async function runDownloadJob(
     child.on('error', (err) => {
       deregisterDownload(tempDir);
       emitError(`❌ ${downloader.tool} failed: ${err.message}`);
-      finishJob(jobId, 'error', err.message);
+      finishJob(jobId, 'error', err.message, 'download_tool_spawn_failed', {
+        tool: downloader.tool,
+        detail: err.message,
+      });
       removeTempDir(tempDir);
     });
     child.on('close', async (code) => {
@@ -97,8 +100,9 @@ export async function runDownloadJob(
         if (isAuthError(detail) && fromCache && reresolve) {
           emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
           const fresh = await reresolve();
-          if (fresh.error) {
-            finishJob(jobId, 'error', fresh.error);
+          if (fresh.failure) {
+            const { error, code, params } = fresh.failure;
+            finishJob(jobId, 'error', error, code, params);
             return;
           }
           runDownloadJob(fresh.downloader, fresh.input, { course, lecture, kind, jobId });
@@ -107,10 +111,13 @@ export async function runDownloadJob(
 
         // Non-auth error, a fresh-capture auth failure, or no re-resolve → finalize as-is.
         emitError(`❌ ${downloader.tool} failed: ${message}`);
+        const auth = isAuthError(detail);
         finishJob(
           jobId,
           'error',
-          isAuthError(detail) ? `authentication failed\n${message}` : message,
+          auth ? `authentication failed\n${message}` : message,
+          auth ? 'download_auth_failed' : 'download_tool_failed',
+          { tool: downloader.tool, exit_code: code, detail: detail || null },
         );
         return;
       }
@@ -119,12 +126,16 @@ export async function runDownloadJob(
       // Not done at exit 0 — the bytes are still in a temp dir nobody else can see.
       // The job turns `done` only once the database has them.
       const uploadError = await downloader.upload(tempDir, course, lecture, kind, downloader.tool);
-      if (uploadError) finishJob(jobId, 'error', uploadError);
+      if (uploadError)
+        finishJob(jobId, 'error', uploadError.error, uploadError.code, uploadError.params);
       else finishJob(jobId, 'done');
     });
   } catch (err) {
     emitError(`❌ ${downloader.tool} failed: ${err.message}`);
-    finishJob(jobId, 'error', err.message);
+    finishJob(jobId, 'error', err.message, 'download_failed', {
+      tool: downloader.tool,
+      detail: err.message,
+    });
     removeTempDir(tempDir);
   }
 }

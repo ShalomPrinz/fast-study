@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import summarize as summarize_mod
+from services.llm_client import GeminiRateLimitError
 from summarize import summarize
 
 
@@ -168,8 +169,34 @@ def test_summarize_raises_on_api_failure(tmp_path):
     fake = MagicMock()
     fake.upload_file.side_effect = RuntimeError("boom")
     with patch.object(summarize_mod, "LLMClient", return_value=fake):
-        with pytest.raises(RuntimeError, match="boom"):
+        with pytest.raises(RuntimeError, match="boom") as e:
             summarize(transcript)
+    assert e.value.code == "summarization_failed"
+    assert e.value.params == {"detail": "boom"}
+
+
+def test_a_quota_hit_keeps_its_own_code_rather_than_the_step_wrapper(tmp_path):
+    """The run-scoped Gemini block keys off the quota codes, so re-labelling one here would
+    silently stop every queued lecture from ever being retried."""
+
+    transcript = tmp_path / "transcript.txt"
+    transcript.write_text("hello")
+
+    quota = GeminiRateLimitError(
+        {
+            "message": "Gemini daily quota reached",
+            "is_daily": True,
+            "quota_id": "GenerateRequestsPerDayPerProjectPerModel-FreeTier",
+            "quota_value": 20,
+            "model": "gemini-3.5-flash",
+        }
+    )
+    fake = MagicMock()
+    fake.generate.side_effect = quota
+    with patch.object(summarize_mod, "LLMClient", return_value=fake):
+        with pytest.raises(GeminiRateLimitError) as e:
+            summarize(transcript)
+    assert e.value.code == "gemini_quota_exhausted"
 
 
 def test_summarize_returns_empty_on_empty_response(tmp_path):

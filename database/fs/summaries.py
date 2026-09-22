@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .paths import OVERVIEW_DIR, RECITATIONS_DIR, course_dir, lecture_dir
+from .paths import OVERVIEW_DIR, RECITATIONS_DIR, CourseNotFound, course_dir, lecture_dir
 
 
 def _read_summary(course: str, name: str, kind: str) -> dict | None:
@@ -26,7 +26,7 @@ def read_course_summaries(course: str) -> list[dict]:
 
     root = course_dir(course)
     if not root.is_dir():
-        raise FileNotFoundError(f"course not found: {course}")
+        raise CourseNotFound(f"course not found: {course}", course=course)
     names = [
         (n, "lecture") for n in _entry_names(root, (RECITATIONS_DIR, OVERVIEW_DIR))
     ] + [(n, "recitation") for n in _entry_names(root / RECITATIONS_DIR)]

@@ -48,12 +48,40 @@ MATERIAL_EXT = ".pdf"
 _data_root: Path | None = None
 
 
-class DataRootNotConfigured(Exception):
+class CodedError(Exception):
+    """A failure carrying its machine code and flat params beside today's English prose."""
+
+    # A subclass that always means one failure names it here; the generic ones pass it in.
+    code = ""
+
+    def __init__(self, message: str, code: str = "", **params):
+        """Keep the prose as str(exc) and the code with its flat params beside it."""
+
+        super().__init__(message)
+        self.code = code or self.code
+        self.params = params
+
+
+class CodedValueError(CodedError, ValueError):
+    """A coded failure that is also a ValueError, so callers catching ValueError still catch it."""
+
+
+class DataRootNotConfigured(CodedError):
     """Raised when a path is resolved before a data root has been configured."""
 
+    code = "data_root_not_configured"
 
-class FileLocked(Exception):
+
+class FileLocked(CodedError):
     """Raised when a write or delete is refused because another program holds the file open."""
+
+    code = "file_locked"
+
+
+class CourseNotFound(CodedError, FileNotFoundError):
+    """Raised when a course directory named by a request does not exist."""
+
+    code = "course_not_found"
 
 
 # ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION, as os.unlink/os.replace report them — see docs/API.md.
@@ -70,7 +98,9 @@ def check_safe_segment(segment: str) -> None:
         or "\\" in segment
         or "\x00" in segment
     ):
-        raise ValueError(f"unsafe path segment: {segment!r}")
+        raise CodedValueError(
+            f"unsafe path segment: {segment!r}", "unsafe_path_segment", segment=segment
+        )
 
 
 def _denied_by_share(exc: PermissionError) -> bool:
@@ -94,7 +124,7 @@ def reject_if_locked(exc: PermissionError, file: str) -> None:
     # problem — relabelling it would send the user chasing a viewer that isn't the cause.
     if getattr(exc, "winerror", None) in _SHARING_VIOLATIONS or _denied_by_share(exc):
         raise FileLocked(
-            f"{file} is open in another program. Close it and try again."
+            f"{file} is open in another program. Close it and try again.", file=file
         ) from exc
 
 
@@ -145,7 +175,11 @@ def safe_name(name: str) -> str:
     if cleaned.split(".")[0].upper() in RESERVED_NAMES:
         cleaned += "_"
     if not cleaned:
-        raise ValueError(f"name has no legal characters: {name!r}")
+        raise CodedValueError(
+            f"name has no legal characters: {name!r}",
+            "name_has_no_legal_characters",
+            name=name,
+        )
     return cleaned
 
 

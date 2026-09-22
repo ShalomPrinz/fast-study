@@ -72,8 +72,8 @@ and costs a Map entry; a timeout would silently discard work the user is one pas
 `POST /runs/:id/resume` re-enters the driver at the paused index, retrying that row. The passcode is
 **not** in this request: the client saves it through auto's `POST /zoom/passcode` first, because the
 passcode store stays in auto/. `{skip:true}` marks the gated row `queue-failed` and continues from
-the next. Resume on a run that isn't parked is a 409 — re-entering a running driver would trigger
-every remaining row twice. `POST /runs/:id/cancel` gives up the whole sweep, not just the gated row.
+the next. Resume on a run that isn't parked is a 409 `run_not_paused` (and an id nobody registered
+a 404 `run_unknown`) — re-entering a running driver would trigger every remaining row twice. `POST /runs/:id/cancel` gives up the whole sweep, not just the gated row.
 
 `GET /runs` is the resync, exactly as `/jobs` is for jobs: every transition fires one contentless
 `run:change` on the shared `/events` stream. A frame costs each client a `GET /runs`, so the driver

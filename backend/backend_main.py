@@ -13,6 +13,7 @@ from logging_setup import setup_logging
 from pipeline import runner, schedule
 from pydantic import BaseModel
 from services import db_client, google_auth, providers, settings
+from services.errors import CodedError, failure
 from timing import get_stats, init_db, record
 from tools import check_tools
 
@@ -29,7 +30,8 @@ DEFAULT_PORT = 8000
 tool_status = check_tools(TOOLS)
 for _name, _state in tool_status.items():
     if _state != "ok":
-        log.error(f"{_name} is {_state} — the steps that need it will fail")
+        # A usable tool is the bare string "ok"; a failure is a {state, params} record.
+        log.error(f"{_name} is {_state['state']} — the steps that need it will fail")
 
 
 @asynccontextmanager
@@ -49,6 +51,23 @@ init_db()
 
 # Added first so the CORS middleware below ends up outside it.
 runtime.install_secret_check(app)
+
+
+@app.middleware("http")
+async def answer_failures_as_json(request, call_next):
+    """Answer an escaped exception with the same {error, code, params} body as every other
+    failure — FastAPI's own 500 is plain text, which no client can parse. Inside CORS, so the
+    browser is allowed to read it."""
+
+    try:
+        return await call_next(request)
+    except db_client.DbClientError as e:
+        log.exception("storage call failed on %s", request.url.path)
+        return _error(failure(str(e), "storage_unavailable", detail=str(e)), 500)
+    except Exception as e:
+        log.exception("unhandled error on %s", request.url.path)
+        return _error(failure(str(e), "internal_error", detail=str(e)), 500)
+
 
 # CORS stays the LAST add_middleware call: Starlette makes the last-added middleware the outermost,
 # and a 401 raised outside CORS carries no CORS headers, which the browser reports as a network error.
@@ -70,12 +89,14 @@ def health():
     return {"status": "ok", "tools": tool_status}
 
 
-_STEP_CONFIG: dict[str, tuple[str, str]] = {
-    "audio": ("video.mp4", "Download"),
-    "transcribe": ("audio.mp3", "Extract Audio"),
-    "summarize": ("transcript.txt", "Transcribe"),
-    "pdf": ("summary.md", "Summarize"),
-    "drive": ("summary.pdf", "PDF"),
+# Per step: the file it reads, the step that produces it, and that step's display label. The id
+# is what the wire carries; the label exists only for the English prose.
+_STEP_CONFIG: dict[str, tuple[str, str, str]] = {
+    "audio": ("video.mp4", "download", "Download"),
+    "transcribe": ("audio.mp3", "audio", "Extract Audio"),
+    "summarize": ("transcript.txt", "transcribe", "Transcribe"),
+    "pdf": ("summary.md", "summarize", "Summarize"),
+    "drive": ("summary.pdf", "pdf", "PDF"),
 }
 
 
@@ -83,25 +104,48 @@ _STEP_CONFIG: dict[str, tuple[str, str]] = {
 Kind = Literal["lecture", "recitation"]
 
 
-def _error(message: str, status: int):
-    """Build the service's failure body ({error}) — the same shape database/ answers with."""
+def _error(body: dict, status: int):
+    """Answer with a failure body ({error, code, params}) — the shape database/ answers with too."""
 
-    return JSONResponse({"error": message}, status_code=status)
+    return JSONResponse(body, status_code=status)
+
+
+# The refusals from database/ that name something the user can fix rather than a storage outage.
+# A route reading through db_client that can get one answers it by name (409) instead of letting the
+# middleware call the storage unreachable; every other code re-raises, because the middleware only
+# names failures it was given and never translates a peer code into the backend's vocabulary.
+_USER_ACTIONABLE_STORAGE_CODES = frozenset({"data_root_not_configured"})
+
+
+def _is_user_actionable(e: db_client.DbClientError) -> bool:
+    """True when the storage refused for a reason the user can act on, not a failed call."""
+
+    return e.code in _USER_ACTIONABLE_STORAGE_CODES
 
 
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
 async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
     if step not in _STEP_CONFIG:
-        return _error(f"Unknown step: {step}", 404)
+        return _error(failure(f"Unknown step: {step}", "unknown_step", step=step), 404)
     if step not in runner.enabled_steps():
-        return _error(f"{step} is disabled in settings", 409)
+        return _error(
+            failure(f"{step} is disabled in settings", "step_disabled", step=step), 409
+        )
 
     # Each step depends on the previous step's output file.
-    required_file, prev_step = _STEP_CONFIG[step]
+    required_file, prev_step, prev_label = _STEP_CONFIG[step]
     if not await asyncio.to_thread(
         runner.db_client.file_exists, course, lecture, kind, required_file
     ):
-        return _error(f"{required_file} is required — run {prev_step} first", 409)
+        return _error(
+            failure(
+                f"{required_file} is required — run {prev_label} first",
+                "missing_prerequisite",
+                file=required_file,
+                step=prev_step,
+            ),
+            409,
+        )
     return {"status": runner.try_run_step(course, lecture, kind, step)}
 
 
@@ -146,9 +190,17 @@ async def overview_generate(
     if err:
         return _error(err, 400)
 
-    course_node = await _find_course(course)
+    try:
+        course_node = await _find_course(course)
+    except db_client.DbClientError as e:
+        if not _is_user_actionable(e):
+            raise
+        return _error(failure(str(e), e.code, **e.params), 409)
     if course_node is None:
-        return _error(f"course not found: {course}", 404)
+        return _error(
+            failure(f"course not found: {course}", "course_not_found", course=course),
+            404,
+        )
     return {
         "status": course_runner.try_run_generate(
             course, course_node, slugs, phase, skip_existing
@@ -182,7 +234,12 @@ async def run_all_endpoint():
 
     if runner._runner_status["running"]:
         return {"status": "already_running", **runner.get_status()}
-    pending = await runner.scan_pending()
+    try:
+        pending = await runner.scan_pending()
+    except db_client.DbClientError as e:
+        if not _is_user_actionable(e):
+            raise
+        return _error(failure(str(e), e.code, **e.params), 409)
     if not pending:
         return {"status": "empty_queue"}
     queued = [
@@ -221,8 +278,8 @@ def timing_record(sample: TimingSample):
 
     try:
         return record(sample.operation, sample.file_size_bytes, sample.duration_seconds)
-    except ValueError as e:
-        return _error(str(e), 400)
+    except CodedError as e:
+        return _error(failure(str(e), e.code, **e.params), 400)
 
 
 # ---- Config ----
@@ -272,7 +329,14 @@ async def config_probe_key(probe: KeyProbe):
     `unverified` means we could not reach the provider, never that the key is bad."""
 
     if probe.provider not in providers.PROVIDERS:
-        return _error(f"unknown provider: {probe.provider}", 400)
+        return _error(
+            failure(
+                f"unknown provider: {probe.provider}",
+                "unknown_provider",
+                provider=probe.provider,
+            ),
+            400,
+        )
     result = await asyncio.to_thread(providers.probe_key, probe.provider, probe.key)
     return {"result": result}
 
@@ -292,8 +356,8 @@ async def drive_connect():
 
     try:
         auth_url = await asyncio.to_thread(google_auth.start_consent)
-    except RuntimeError as e:
-        return _error(str(e), 500)
+    except CodedError as e:
+        return _error(failure(str(e), e.code, **e.params), 500)
     return {"auth_url": auth_url}
 
 

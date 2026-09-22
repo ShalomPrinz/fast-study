@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
-import { createClient, isConnectionError, type ConnectionError } from './http'
+import { createClient, isConnectionError, type ConnectionError, type RequestError } from './http'
 
 const { toastConnectionError } = vi.hoisted(() => ({ toastConnectionError: vi.fn() }))
 vi.mock('@/services/toaster', () => ({ toastConnectionError }))
@@ -60,10 +60,28 @@ describe('http client failure prose', () => {
     expect(await messageFor('')).toBe('500 Internal Server Error')
   })
 
-  it('replaces a 423 body with its own message', async () => {
-    const message = await messageFor(JSON.stringify({ error: 'locked by pid 42' }), 423, 'Locked')
-    expect(message).not.toBe('locked by pid 42')
-    expect(message).not.toBe('423 Locked')
+  it("carries the body's code and params through for the render site to resolve", async () => {
+    stubFetch(async () =>
+      failing(
+        423,
+        'Locked',
+        JSON.stringify({ error: 'locked', code: 'file_locked', params: { file: 'summary.pdf' } }),
+      ),
+    )
+
+    const err = (await rejection(client.get('/x'))) as RequestError
+
+    expect(err.code).toBe('file_locked')
+    expect(err.params).toEqual({ file: 'summary.pdf' })
+  })
+
+  it('leaves the code null when the body carries none, so the prose is all there is', async () => {
+    stubFetch(async () => failing(500, 'Internal Server Error', JSON.stringify({ error: 'e' })))
+
+    const err = (await rejection(client.get('/x'))) as RequestError
+
+    expect(err.code).toBeNull()
+    expect(err.params).toBeNull()
   })
 })
 

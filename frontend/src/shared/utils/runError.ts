@@ -1,4 +1,8 @@
-import { msg } from '@lingui/core/macro'
+// The two codes Gemini's daily quota produces: the lecture that hit the limit, and every lecture
+// run-all then stopped at summarize without calling Gemini. `backend/pipeline/runner.py` spells the
+// same pair, and membership — not equality with one string — is what marks the quota glyph.
+const GEMINI_QUOTA_CODES = new Set(['gemini_quota_exhausted', 'gemini_quota_blocked'])
 
-// What a quota `RunError` says in the user's language, in its toast and atop the lecture's error box.
-export const QUOTA_MESSAGE = msg`Gemini's daily quota is used up. It resets at midnight Pacific time.`
+export function isGeminiQuota(code: string | null | undefined): boolean {
+  return !!code && GEMINI_QUOTA_CODES.has(code)
+}

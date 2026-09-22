@@ -4,6 +4,7 @@ from unittest.mock import patch
 import pytest
 import upload_to_drive as drive_mod
 from google.auth.credentials import AnonymousCredentials
+from services.google_auth import DriveNotConnected
 from upload_to_drive import upload_to_drive
 
 
@@ -143,3 +144,45 @@ def test_drive_client_builds_offline():
         # Resolving a method proves the API surface is really there, rather than a
         # shell that would only fail once a request is made.
         assert callable(service.files().create)
+
+
+class TestFailureCodes:
+    """Drive's own words are unusable for anything but a detail line, so each failure
+    rides a code of ours with the third-party text as `detail`."""
+
+    def test_an_unset_root_folder_names_itself(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("GDRIVE_ROOT_FOLDER", raising=False)
+        pdf = tmp_path / "x.pdf"
+        pdf.write_bytes(b"%PDF")
+        with pytest.raises(RuntimeError, match="GDRIVE_ROOT_FOLDER") as e:
+            upload_to_drive(str(pdf), "Course")
+        assert (e.value.code, e.value.params) == ("drive_folder_not_configured", {})
+
+    def test_an_api_failure_carries_the_apis_own_text_as_detail(
+        self, tmp_path, monkeypatch
+    ):
+        monkeypatch.setenv("GDRIVE_ROOT_FOLDER", "FastStudy")
+        pdf = tmp_path / "x.pdf"
+        pdf.write_bytes(b"%PDF")
+        with patch.object(
+            drive_mod, "_get_service", side_effect=Exception("403 insufficient scope")
+        ):
+            with pytest.raises(RuntimeError) as e:
+                upload_to_drive(str(pdf), "Course")
+        assert e.value.code == "drive_upload_failed"
+        assert e.value.params == {"detail": "403 insufficient scope"}
+
+    def test_an_unconnected_drive_keeps_its_own_code(self, tmp_path, monkeypatch):
+        """DriveNotConnected already names itself, so the upload wrapper must not relabel it."""
+
+        monkeypatch.setenv("GDRIVE_ROOT_FOLDER", "FastStudy")
+        pdf = tmp_path / "x.pdf"
+        pdf.write_bytes(b"%PDF")
+        with patch.object(
+            drive_mod,
+            "get_credentials",
+            side_effect=DriveNotConnected("Google Drive is not connected"),
+        ):
+            with pytest.raises(DriveNotConnected) as e:
+                upload_to_drive(str(pdf), "Course")
+        assert e.value.code == "drive_not_connected"

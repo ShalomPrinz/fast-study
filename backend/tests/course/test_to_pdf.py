@@ -75,5 +75,7 @@ class TestWarningMarker:
         assert course_to_pdf.run_to_pdf(COURSE, SLUG) == {
             "status": "skipped",
             "message": "no analyzed markdown — run analyze first",
+            "code": "missing_prerequisite",
+            "params": {"file": f"{SLUG}.md", "step": "analyze"},
         }
         assert db.calls == []

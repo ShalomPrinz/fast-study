@@ -30,6 +30,8 @@ export function createJob({ course, lecture, kind, tool, ref = null, fromCache =
     startedAt: null,
     receivedBytes: 0,
     message: null,
+    code: null,
+    params: null,
     entry: null,
   });
   broadcastJobs(); // a queued job must ping so the frontend row flips to in-flight
@@ -67,12 +69,16 @@ function terminal(job) {
   return !job || job.status === 'done' || job.status === 'error';
 }
 
-export function finishJob(id, status, message = null) {
+// A failure terminates with its machine `code` and flat `params` beside the English `message`
+// (repo-root `docs/ERROR-CODES.md`); a `done` job carries none of the three.
+export function finishJob(id, status, message = null, code = null, params = null) {
   const job = jobs.get(id);
   if (terminal(job)) return;
   freezeJobBytes(id);
   job.status = status;
   job.message = message;
+  job.code = code;
+  job.params = params;
   broadcastJobs();
   // Only `done` is evicted on a timer; `error` stays until a retry supersedes it (docs/JOBS.md).
   if (status === 'done') setTimeout(() => jobs.delete(id), DONE_BRIDGE_MS).unref();
@@ -102,7 +108,8 @@ function liveBytes(job) {
 }
 
 function snapshot(job) {
-  const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt, message } = job;
+  const { id, status, course, lecture, kind, tool, ref, expectedBytes, startedAt } = job;
+  const { message, code, params } = job;
   return {
     id,
     status,
@@ -115,6 +122,8 @@ function snapshot(job) {
     expectedBytes,
     startedAt,
     message,
+    code,
+    params,
   };
 }
 

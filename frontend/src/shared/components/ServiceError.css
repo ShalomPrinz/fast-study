@@ -1,0 +1,24 @@
+/* Names what the failure is about — a recording, an overview branch — when one sentence covers
+   several. It is a name off disk, so `dir="auto"` in the markup lays it out by its own script. */
+.service-error-lead {
+  margin-inline-end: var(--space-2);
+}
+
+.service-error-headline {
+  font-weight: 600;
+}
+
+/* Third-party text is English inside an RTL page: pinned LTR and isolated, so it cannot reorder
+   the Hebrew sentence above it. Its own line, since it is detail rather than the verdict. */
+.service-error-detail {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--text-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-align: start;
+  direction: ltr;
+  unicode-bidi: isolate;
+}

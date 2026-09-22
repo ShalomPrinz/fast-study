@@ -169,6 +169,8 @@ class TestRunCollect:
         assert run_collect(self.COURSE, node) == {
             "status": "skipped",
             "message": "no summaries found",
+            "code": "no_summaries_found",
+            "params": {},
         }
 
     def test_done_writes_topics_md(self, monkeypatch):

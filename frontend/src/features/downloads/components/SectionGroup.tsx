@@ -11,6 +11,7 @@ import {
 } from '@/features/downloads/services/autoDownloader'
 import type { RunTarget } from '@/features/downloads/services/downloadServer'
 import { cancelRun, resumeRun, startSectionRun } from '@/features/downloads/services/downloadServer'
+import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import Chevron from '@/shared/components/Chevron'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
@@ -115,7 +116,9 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
         patchExpansion(item.ref, { children, expanded: true, expanding: false })
       } catch (err) {
         if (isReconnectError(err)) onReconnect()
-        const message = isUnsupportedError(err) ? err.message : t`Couldn't load entries. Try again.`
+        const message = isUnsupportedError(err)
+          ? serviceErrorText(err)
+          : t`Couldn't load entries. Try again.`
         patchExpansion(item.ref, {
           expanding: false,
           error: isReconnectError(err) ? null : message,

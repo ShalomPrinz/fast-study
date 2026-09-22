@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
-import { UnsupportedError } from '../lib/errors.js';
+import { CodedError, UnsupportedError } from '../lib/errors.js';
 import { statePath } from '@faststudy/runtime';
 import { NO_WINDOW, toolPath } from '@faststudy/tools';
 
@@ -29,6 +29,8 @@ function safeHost(url) {
 // tell the user exactly what redirected off-YouTube.
 function unsupported(host) {
   return new UnsupportedError(
+    'expand_unsupported_host',
+    { host },
     `Unsupported recording source (${host}). Only YouTube playlists can be expanded.`,
   );
 }
@@ -99,7 +101,11 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
         err.code === 'ENOENT'
           ? `yt-dlp not found at ${toolPath('yt-dlp')}`
           : err.stderr || err.message;
-      throw new Error(`yt-dlp failed to list playlist: ${detail}`);
+      throw new CodedError(
+        'playlist_list_failed',
+        { detail },
+        `yt-dlp failed to list playlist: ${detail}`,
+      );
     }
 
     const entries = stdout
@@ -111,7 +117,12 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
         return { title, url };
       })
       .filter((e) => e.url);
-    if (!entries.length) throw new Error(`no playlist entries found at ${finalUrl}`);
+    if (!entries.length)
+      throw new CodedError(
+        'playlist_empty',
+        { url: finalUrl },
+        `no playlist entries found at ${finalUrl}`,
+      );
     return entries;
   }
 }

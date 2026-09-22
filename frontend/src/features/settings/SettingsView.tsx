@@ -14,6 +14,7 @@ import {
 import { isConnectionError } from '@/services/http'
 import { canStoreApiKeys } from '@/services/runtime'
 import { toast } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import PageHeader from '@/shared/components/PageHeader'
@@ -125,12 +126,14 @@ export default function SettingsView() {
     } catch (err) {
       // The http client already toasts a connection error, but that toast is deduped per service and
       // reads as ambient noise — a save that went nowhere still owes its own verdict.
-      toast(
-        'error',
-        isConnectionError(err)
-          ? t`Couldn't save all settings — check the services are running and try again.`
-          : `${(err as Error).message}`,
-      )
+      if (isConnectionError(err)) {
+        toast(
+          'error',
+          t`Couldn't save all settings — check the services are running and try again.`,
+        )
+      } else {
+        toastFailure(err)
+      }
     } finally {
       setSaving(false)
     }

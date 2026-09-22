@@ -8,6 +8,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi.testclient import TestClient
 from pipeline import schedule
 from services import google_auth, providers, settings
+from services.errors import CodedError
 
 client = TestClient(backend_main.app)
 
@@ -79,7 +80,11 @@ class TestProbeKey:
             "/config/probe-key", json={"provider": "openai", "key": "x"}
         )
         assert response.status_code == 400
-        assert response.json() == {"error": "unknown provider: openai"}
+        assert response.json() == {
+            "error": "unknown provider: openai",
+            "code": "unknown_provider",
+            "params": {"provider": "openai"},
+        }
 
 
 class TestDisabledStep:
@@ -88,7 +93,11 @@ class TestDisabledStep:
         with patch.object(backend_main.runner, "try_run_step") as run:
             response = client.post("/courses/C/lectures/L/run/drive")
         assert response.status_code == 409
-        assert response.json() == {"error": "drive is disabled in settings"}
+        assert response.json() == {
+            "error": "drive is disabled in settings",
+            "code": "step_disabled",
+            "params": {"step": "drive"},
+        }
         run.assert_not_called()
 
     def test_run_pdf_is_unaffected(self, monkeypatch):
@@ -149,12 +158,36 @@ class TestDriveRoutes:
 
     def test_connect_without_client_secrets_is_a_500(self, monkeypatch):
         def boom():
-            raise RuntimeError("Google credentials file not found")
+            raise CodedError(
+                "Google credentials file not found",
+                "google_credentials_missing",
+                path="/app/credentials.json",
+            )
 
         monkeypatch.setattr(google_auth, "start_consent", boom)
         response = client.post("/config/drive/connect")
         assert response.status_code == 500
-        assert "credentials file not found" in response.json()["error"]
+        assert response.json() == {
+            "error": "Google credentials file not found",
+            "code": "google_credentials_missing",
+            "params": {"path": "/app/credentials.json"},
+        }
+
+    def test_a_malformed_credentials_file_is_a_readable_500(self, monkeypatch):
+        """Anything start_consent did not name itself still answers {error, code, params} —
+        a bare 500 body is the one thing the frontend cannot parse."""
+
+        def boom():
+            raise ValueError("No section: 'installed'")
+
+        monkeypatch.setattr(google_auth, "start_consent", boom)
+        response = client.post("/config/drive/connect")
+        assert response.status_code == 500
+        assert response.json() == {
+            "error": "No section: 'installed'",
+            "code": "internal_error",
+            "params": {"detail": "No section: 'installed'"},
+        }
 
     def test_a_drive_step_with_no_token_leaves_one_state_for_the_ui(self, monkeypatch):
         monkeypatch.setattr(google_auth.db_client, "file_exists", lambda *a: True)

@@ -1,6 +1,7 @@
 import { createClient, httpError } from '@/services/http'
 import { DOWNLOAD_SERVER_URL, secretHeaders, withSecretParam } from '@/services/runtime'
 import type { DownloadOperation, Kind } from '@/types'
+import type { ErrorParams } from '@/shared/i18n/serviceErrors'
 import type { Media, PasscodeError, ProbedMedia } from './autoDownloader'
 import { postReconnectAware } from './autoDownloader'
 
@@ -48,7 +49,10 @@ export interface DownloadJob {
   ref: string | null
   expectedBytes: number | null
   startedAt: number | null
+  // The protocol's failure fields on a terminal `error` job (repo-root docs/ERROR-CODES.md).
   message: string | null
+  code?: string | null
+  params?: ErrorParams | null
 }
 
 // Every non-evicted job, the source of truth the pings point at. Bypasses the shared client, whose

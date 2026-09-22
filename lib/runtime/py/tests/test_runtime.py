@@ -88,7 +88,7 @@ def test_non_sse_401_is_json(client):
     response = client.get("/thing")
     assert response.status_code == 401
     assert response.headers["content-type"].startswith("application/json")
-    assert response.json() == {"error": "unauthorized"}
+    assert response.json() == {"error": "unauthorized", "code": "unauthorized", "params": {}}
 
 
 def test_unset_secret_installs_nothing(monkeypatch):

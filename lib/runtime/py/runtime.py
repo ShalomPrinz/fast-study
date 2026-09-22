@@ -65,7 +65,9 @@ class SecretMiddleware:
         if b"text/event-stream" in _header(scope, b"accept"):
             response = Response(status_code=401, media_type="text/event-stream")
         else:
-            response = JSONResponse({"error": "unauthorized"}, status_code=401)
+            response = JSONResponse(
+                {"error": "unauthorized", "code": "unauthorized", "params": {}}, status_code=401
+            )
         await response(scope, receive, send)
 
     def _authorized(self, scope) -> bool:

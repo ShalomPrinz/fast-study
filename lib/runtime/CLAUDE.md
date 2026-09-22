@@ -26,6 +26,9 @@ header **or** a `secret` query parameter. The query parameter exists solely beca
 wrong or blank header cannot shadow the only credential an SSE caller can send. A 401 on a request
 that asked for `text/event-stream` answers with that same MIME — Chromium reports any other MIME on
 an `EventSource` as a bare transport error, hiding the auth failure behind a dropped connection.
+Every other 401 answers `{error: 'unauthorized', code: 'unauthorized', params: {}}`, the envelope in
+[`docs/ERROR-CODES.md`](../../docs/ERROR-CODES.md); the SSE one carries no body at all and so is the
+one failure in the repo that cannot carry a code.
 Comparison is constant-time on both sides (`compare_digest` / `timingSafeEqual`); JS checks length
 first because `timingSafeEqual` throws on unequal buffers, and the length is fixed by the launcher,
 not itself a secret.

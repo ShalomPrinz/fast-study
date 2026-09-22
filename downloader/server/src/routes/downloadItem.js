@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { downloaders } from '../downloaders/index.js';
-import { storedName, validateKind } from '../validate.js';
+import { invalidRequest, storedName, validateKind } from '../validate.js';
 import { resolve, resolved } from '../services/autodl.js';
 import { startJob } from './download.js';
 
@@ -18,13 +18,24 @@ function toRun(target) {
   };
 }
 
-// A failed re-resolve → the job's user-actionable terminal message. Here, not in the runner,
-// because what auto's statuses MEAN is the resolver edge's knowledge.
-function reresolveMessage(status, body) {
-  if (status === 401) return 'reconnect Moodle';
-  if (status === 409) return 'passcode needed';
-  if (status === 422) return `source unsupported${body?.message ? `: ${body.message}` : ''}`;
-  return `re-capture failed: ${body?.error ?? `HTTP ${status || 'network'}`}`;
+// A failed re-resolve → the job's terminal failure. Here, not in the runner, because what auto's
+// statuses MEAN is the resolver edge's knowledge.
+export function reresolveFailure(status, body) {
+  if (status === 401)
+    return { error: 'reconnect Moodle', code: 'recapture_reconnect_required', params: {} };
+  if (status === 409)
+    return { error: 'passcode needed', code: 'recapture_passcode_required', params: {} };
+  if (status === 422)
+    return {
+      error: `source unsupported${body?.message ? `: ${body.message}` : ''}`,
+      code: 'recapture_unsupported',
+      params: { detail: body?.message ?? null },
+    };
+  return recaptureFailed(body?.error ?? `HTTP ${status || 'network'}`);
+}
+
+function recaptureFailed(detail) {
+  return { error: `re-capture failed: ${detail}`, code: 'recapture_failed', params: { detail } };
 }
 
 // Re-resolve ONE target fresh → `{downloader, input}` or `{error}`. `only`+`forceCapture` makes
@@ -39,12 +50,12 @@ function makeReresolve({ ref, course, name, kind }) {
       only: true,
       forceCapture: true,
     });
-    if (!resolved(status)) return { error: reresolveMessage(status, body) };
+    if (!resolved(status)) return { failure: reresolveFailure(status, body) };
     const fresh = body?.targets?.find((t) => t.name === name) ?? body?.targets?.[0];
     const run = fresh && toRun(fresh);
     // A 2xx we can't run is still a failed re-resolve; it reads as the generic failure because
     // no status describes it — auto's own was a 200.
-    if (!run) return { error: 're-capture failed: auto returned no usable target' };
+    if (!run) return { failure: recaptureFailed('auto returned no usable target') };
     return run;
   };
 }
@@ -68,13 +79,25 @@ export async function downloadItem({
   const renames = name === rawName ? [] : [{ ref, name }];
   const { status, body } = await resolve({ ref, course, name, kind, only, forceCapture });
   if (!resolved(status)) {
-    return { status: status || 502, body: body ?? { error: 'auto-downloader unreachable' } };
+    // auto's own body — code included — is forwarded verbatim; the fallback is for a non-2xx it
+    // answered with nothing parseable.
+    return {
+      status: status || 502,
+      body: body ?? {
+        error: 'auto-downloader unreachable',
+        code: 'autodl_unreachable',
+        params: { detail: `HTTP ${status}` },
+      },
+    };
   }
 
   const targets = body?.targets ?? [];
   const runs = targets.map(toRun);
   if (!targets.length || runs.some((r) => !r)) {
-    return { status: 502, body: { error: 'auto returned no usable target' } };
+    return {
+      status: 502,
+      body: { error: 'auto returned no usable target', code: 'autodl_no_target', params: {} },
+    };
   }
 
   // The job's lecture is the stored spelling; a zoom split's `.1`/`.2` can push a long base past
@@ -94,9 +117,17 @@ export async function downloadItem({
 
 router.post('/download-item', async (req, res) => {
   const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body ?? {};
-  if (typeof ref !== 'string' || !ref) return res.status(400).json({ error: 'valid ref required' });
+  if (typeof ref !== 'string' || !ref)
+    return res.status(400).json(invalidRequest('ref', 'valid ref required'));
   if (!storedName(course) || !storedName(name)) {
-    return res.status(400).json({ error: 'course and name with a legal character are required' });
+    return res
+      .status(400)
+      .json(
+        invalidRequest(
+          storedName(course) ? 'name' : 'course',
+          'course and name with a legal character are required',
+        ),
+      );
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);

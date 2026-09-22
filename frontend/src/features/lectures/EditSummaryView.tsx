@@ -16,6 +16,9 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { toast, toastInitResult } from '@/services/toaster'
 import { isConnectionError } from '@/services/http'
+import { failureOf } from '@/shared/utils/failure'
+import ServiceError, { serviceErrorNode } from '@/shared/components/ServiceError'
+import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { lectureNotFound } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
@@ -36,7 +39,7 @@ export default function EditSummaryView() {
   const navigate = useNavigate()
   const { getError } = useRunnerStatus()
   const { courses, loaded: treeLoaded, refreshCourses } = useCourseTreeContext()
-  const lectureError = getError(course, lecture, kind)?.message ?? null
+  const lectureError: ServiceFailure | null = getError(course, lecture, kind)
 
   const [content, setContent] = useState('')
   // What is on disk, so the toolbar and the editor pane can tell an edited buffer from a clean one.
@@ -44,7 +47,7 @@ export default function EditSummaryView() {
   const [hasOriginal, setHasOriginal] = useState(false)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<ServiceFailure | null>(null)
   const [showPdf, setShowPdf] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
 
@@ -66,7 +69,7 @@ export default function EditSummaryView() {
       setGenerating(false)
       setShowPdf(pdfExists)
       setError(lectureError)
-      toast('error', lectureError)
+      toast('error', serviceErrorNode(lectureError))
     } else if (pdfExists) {
       pdfFiredRef.current = false
       setGenerating(false)
@@ -90,9 +93,9 @@ export default function EditSummaryView() {
 
   // Shows a failed write in the toolbar and as a toast; connection errors are toasted centrally.
   function reportFailure(e: unknown, fallback: string): void {
-    const message = e instanceof Error ? e.message : fallback
-    if (!isConnectionError(e)) toast('error', message)
-    setError(message)
+    const failure = e instanceof Error ? failureOf(e) : { message: fallback }
+    if (!isConnectionError(e)) toast('error', serviceErrorNode(failure))
+    setError(failure)
   }
 
   // Writes the editor buffer to summary.md; false means it failed and was already reported.
@@ -110,7 +113,7 @@ export default function EditSummaryView() {
 
   async function handleRestore() {
     setConfirmRestore(false)
-    setError('')
+    setError(null)
     await revertSummary(course, lecture, kind)
     await loadContent()
     // Restore rewrites summary.md with no SSE notify behind it, so the tree's mtimes — and the
@@ -122,7 +125,7 @@ export default function EditSummaryView() {
   // the editor wanted, so the buffer and the PDF always move together.
   async function handleSaveAndUpdatePdf() {
     setGenerating(true)
-    setError('')
+    setError(null)
     if (!(await persist())) {
       setGenerating(false)
       return
@@ -208,7 +211,11 @@ export default function EditSummaryView() {
         </div>
       </div>
 
-      {error && <p className="edit-error">{error}</p>}
+      {error && (
+        <p className="edit-error">
+          <ServiceError failure={error} />
+        </p>
+      )}
 
       <div className="edit-panels">
         <div className="edit-panel edit-panel--pdf">

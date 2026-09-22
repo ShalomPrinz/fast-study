@@ -47,8 +47,15 @@ export function storedName(name) {
   return isSingleSegment(name) ? canonicalize(name) || null : null;
 }
 
+// A request our own popup, SPA or peer shaped wrongly: today's English plus the offending field,
+// so every body on the wire has the same shape (repo-root `docs/ERROR-CODES.md`).
+export function invalidRequest(field, error) {
+  return { error, code: 'invalid_request', params: { field } };
+}
+
 // null when valid, else the 400 body. kind selects lecture vs Recitations layout.
 export function validateKind(kind) {
-  if (kind !== 'lecture' && kind !== 'recitation') return { error: `invalid kind: ${kind}` };
+  if (kind !== 'lecture' && kind !== 'recitation')
+    return invalidRequest('kind', `invalid kind: ${kind}`);
   return null;
 }

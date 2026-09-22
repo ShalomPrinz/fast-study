@@ -5,19 +5,30 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 
 ## Conventions
 
-- Mutations return a bare `204 No Content`, or `{error}` with a non-2xx status. Two answer with a
-  body instead: `POST /…/materials` returns `200 {name}` with the filename it allocated, and
+- Mutations return a bare `204 No Content`, or the failure envelope with a non-2xx status. Two answer
+  with a body instead: `POST /…/materials` returns `200 {name}` with the filename it allocated, and
   `PUT /settings` returns `200` with the stored view.
   Reads return their payload directly (`{summaries: [...]}`, `{files: [...]}`, the tree array).
+- **Every non-2xx body is `{error, code, params}`.** `error` is the English prose — developer-facing,
+  and the client's fallback for a code it does not know; `code` names the failure; `params` is flat
+  (string, number, boolean or null), never a sentence fragment, with `detail` reserved for text from
+  outside this repo. The vocabulary is [ERROR-CODES.md](../../docs/ERROR-CODES.md).
+- The code rides on the exception, not the route: `CodedError` in `fs/paths.py` (and its `ValueError`
+  twin) carries `code` and `params` from the raise site through every frame in between. A route that
+  catches an uncoded stdlib exception answers its own wrapper code with `params.detail = str(exc)`,
+  so `code` is never absent.
 - `?kind=lecture|recitation` addresses the two lecture families; it defaults to `lecture`.
 - Bodies are raw bytes for file/video/summary writes, JSON for metadata routes.
-- Every route that touches `DATA_ROOT` answers `409` `{error}` while no data root is configured;
-  the exceptions are the three settings routes, since the first-run wall depends on them, and
-  `/health`, which the launcher polls before either exists. See [SETTINGS.md](SETTINGS.md).
-- `423` `{error}` means another program holds the file open — a write or delete refused by a
-  Windows sharing violation. Every route that writes or deletes a file raises it; see Write semantics.
-- `400` `{error}` covers a `{name}` that could escape its directory, on every file route; see the
-  trust model.
+- Every route that touches `DATA_ROOT` answers `409` `data_root_not_configured` while no data root is
+  configured; the exceptions are the three settings routes, since the first-run wall depends on them,
+  and `/health`, which the launcher polls before either exists. See [SETTINGS.md](SETTINGS.md).
+- `423` `file_locked` `{file}` means another program holds the file open — a write or delete refused
+  by a Windows sharing violation. Every route that writes or deletes a file raises it; see Write
+  semantics.
+- `400` `unsafe_path_segment` `{segment}` covers a `{name}` that could escape its directory, on every
+  file route; see the trust model.
+- A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.
+  `HEAD` answers a bodyless `404` instead: absence is its normal answer, not a failure.
 
 ## Routes
 
@@ -77,7 +88,9 @@ The two file-write paths differ on purpose, and confusing them destroys data:
 Every route that writes or deletes a file answers `423 Locked` when Windows refuses the operation
 because another process holds the file open — a native PDF viewer left open on `summary.pdf` is the
 everyday cause, since the app opens PDFs in the user's own registered app. The `{error}` text names
-the file and the fix, and the backend passes it straight through into the pipeline step error.
+the file and the fix, and the backend passes it straight through into the pipeline step error — a hop
+that loses the status, so `file_locked` is what survives it. It carries `{file}` even though today's
+sentence already names the file, so the client can gain the filename without a contract change.
 
 Detecting it takes two checks, because the two ways to reach the filesystem report a lock
 differently. `os.unlink`/`os.replace` go through Win32 and carry `winerror`
@@ -118,11 +131,16 @@ itself: "a video arrived, so run the pipeline" is backend policy (`AUTO_RUN`), n
 The settings store is the repo-root `.env` rather than anything under `DATA_ROOT`; its fields,
 merge semantics and `DATA_ROOT` validation live in [SETTINGS.md](SETTINGS.md).
 
-| Route           | Answers                                                                                               |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| `GET /settings` | `200` with every field, `null` when unset; `500` `{error}` if the store is unreadable                 |
-| `PUT /settings` | `200` with the same shape; `400` `{error}` on a rejected value                                        |
-| `POST /config`  | `204`, clearing the unconfigured state; `400` `{error}` on a data root that is relative or unwritable |
+| Route           | Answers                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| `GET /settings` | `200` with every field, `null` when unset; `500` `settings_store_io_failed` if the store is unreadable   |
+| `PUT /settings` | `200` with the same shape; `400` on a rejected value                                                     |
+| `POST /config`  | `204`, clearing the unconfigured state; `400` on a data root that is relative, not a dir, or unwritable  |
+
+A rejected value names which rule it broke: `setting_must_be_string`, `setting_must_be_boolean`,
+`setting_must_be_integer`, `setting_may_not_contain_quotes` and `unknown_setting` all carry `{field}`,
+and the data root's own four are `data_root_empty`, `data_root_not_absolute`,
+`data_root_not_a_directory` and `data_root_not_writable` (the last three carry `{path}`).
 
 ## Access logging
 

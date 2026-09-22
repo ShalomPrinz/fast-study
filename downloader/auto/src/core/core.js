@@ -5,7 +5,7 @@ import { parseZoomSummaries } from '../discovery/zoomSection.js';
 import { classifyKind } from '../discovery/moodleCourse.js';
 import { probeDriveFile } from '../extractors/GoogleDriveExtractor.js';
 import { probeUrl } from '../lib/probeUrl.js';
-import { UnsupportedError } from '../lib/errors.js';
+import { CodedError, UnsupportedError } from '../lib/errors.js';
 import { splitName } from '../lib/naming.js';
 import { cacheCap, getCap } from './replayCache.js';
 import { stripTags } from '../lib/html.js';
@@ -64,6 +64,13 @@ export function listRecordings(sections) {
     for (const recording of extractor.toRecordings(activity)) recordings.push(recording);
   }
   return recordings;
+}
+
+// A filename's extension without its dot, or null when it has none — `link_not_a_video`'s `ext`,
+// where null means the link served a web page rather than a file.
+function extOf(filename) {
+  const dot = filename ? filename.lastIndexOf('.') : -1;
+  return dot > 0 ? filename.slice(dot + 1) : null;
 }
 
 // Invert splitName: '<base>.1'/'<base>.2' -> base; any other name is its own base. Used to
@@ -181,6 +188,8 @@ export async function resolveDriveFile({
   if (!media) {
     const ext = filename.slice(filename.lastIndexOf('.'));
     throw new UnsupportedError(
+      'link_not_a_video',
+      { source: 'drive', url: recording.pageUrl, ext: extOf(filename) },
       `Google Drive file is a ${ext}, not a video: ${recording.pageUrl}. Open it in a browser and download manually.`,
     );
   }
@@ -215,9 +224,16 @@ export async function resolveDirectUrl({
   const url = recording.pageUrl;
   const { media, filename, certain, reason } = await probeUrl(url, { force: forceCapture });
   if (!media) {
-    if (!certain) throw new Error(`couldn't read what ${url} is — the host didn't answer usefully`);
+    if (!certain)
+      throw new CodedError(
+        'link_probe_inconclusive',
+        { url },
+        `couldn't read what ${url} is — the host didn't answer usefully`,
+      );
     if (reason === 'missing')
       throw new UnsupportedError(
+        'link_dead',
+        { url },
         `${url} no longer exists — the host says the link is dead. Check the course page for a new one.`,
       );
     // A CDN path can name the file without an extension ('…/asset'), so slice only on a real dot —
@@ -225,7 +241,11 @@ export async function resolveDirectUrl({
     const dot = filename ? filename.lastIndexOf('.') : -1;
     const what =
       dot > 0 ? `a ${filename.slice(dot + 1)} file, not a video` : 'a web page, not a file';
-    throw new UnsupportedError(`${url} is ${what}. Open it in a browser and download manually.`);
+    throw new UnsupportedError(
+      'link_not_a_video',
+      { source: 'link', url, ext: extOf(filename) },
+      `${url} is ${what}. Open it in a browser and download manually.`,
+    );
   }
   let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
   const fromCache = Boolean(cap);
@@ -279,7 +299,8 @@ export async function resolveRecording(
     });
     const chosen =
       captured.find((t) => t.name === name) ?? (captured.length === 1 ? captured[0] : null);
-    if (!chosen) throw new Error(`captured clips don't include ${name}`);
+    if (!chosen)
+      throw new CodedError('zoom_clip_missing', { name }, `captured clips don't include ${name}`);
     return [toTarget({ name: chosen.name, cap: chosen.cap, tool, fromCache: false })];
   }
 

@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { downloaders, runDownloadJob } from '../downloaders/index.js';
 import { YTDLP_HOST_RE } from '../downloaders/ytdlp.js';
-import { storedName, validateKind } from '../validate.js';
+import { invalidRequest, storedName, validateKind } from '../validate.js';
 import { createJob } from '../jobs.js';
 
 const router = Router();
@@ -35,6 +35,14 @@ function storedNames(course, lecture) {
   return stored.course && stored.lecture ? stored : null;
 }
 
+// The 400 for a pair that can't both become one on-disk segment, naming the one that failed.
+function namesError(course, lecture) {
+  return invalidRequest(
+    storedName(course) ? 'lecture' : 'course',
+    'course and lecture with a legal character are required',
+  );
+}
+
 // The extension reads `status`/`target` verbatim, so the three public routes keep answering
 // with them alongside the job id.
 function startAndAnswer(res, downloader, input, { course, lecture, kind }) {
@@ -45,13 +53,11 @@ function startAndAnswer(res, downloader, input, { course, lecture, kind }) {
 router.post('/download', (req, res) => {
   const { url, headers, course, lecture, kind = 'lecture' } = req.body ?? {};
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
-    return res.status(400).json({ error: 'valid url required' });
+    return res.status(400).json(invalidRequest('url', 'valid url required'));
   }
   const names = storedNames(course, lecture);
   if (!names) {
-    return res
-      .status(400)
-      .json({ error: 'course and lecture with a legal character are required' });
+    return res.status(400).json(namesError(course, lecture));
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
@@ -63,13 +69,11 @@ router.post('/download', (req, res) => {
 router.post('/download-file', (req, res) => {
   const { url, course, lecture, kind = 'lecture' } = req.body ?? {};
   if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
-    return res.status(400).json({ error: 'valid url required' });
+    return res.status(400).json(invalidRequest('url', 'valid url required'));
   }
   const names = storedNames(course, lecture);
   if (!names) {
-    return res
-      .status(400)
-      .json({ error: 'course and lecture with a legal character are required' });
+    return res.status(400).json(namesError(course, lecture));
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
@@ -84,13 +88,11 @@ router.post('/download-youtube', (req, res) => {
     host = new URL(url).hostname;
   } catch {}
   if (!host || !YTDLP_HOST_RE.test(host)) {
-    return res.status(400).json({ error: 'valid youtube or google drive url required' });
+    return res.status(400).json(invalidRequest('url', 'valid youtube or google drive url required'));
   }
   const names = storedNames(course, lecture);
   if (!names) {
-    return res
-      .status(400)
-      .json({ error: 'course and lecture with a legal character are required' });
+    return res.status(400).json(namesError(course, lecture));
   }
   const kindErr = validateKind(kind);
   if (kindErr) return res.status(400).json(kindErr);
