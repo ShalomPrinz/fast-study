@@ -57,6 +57,18 @@ gets a code of its own.** It rides as `detail` on the code of whatever of ours w
 frontend renders it verbatim beneath a translated headline, direction-isolated so an English
 stack trace cannot reorder the Hebrew sentence around it.
 
+## `error` and `detail` may carry the same string
+
+A wrapper whose only information is the third-party text sends that text twice — the four
+`CodedError(str(e), "…", detail=str(e))` sites in `backend/pipeline/` and every fallback path in
+`database/database_main.py`. The duplication is deliberate, because the two fields answer to
+different readers and only coincide here. `error` is the developer-facing sentence: the one
+human-readable field the row-less `dev` and `uncertain` codes carry at all, and what logs, a bare
+`curl`, `delivery/smoke/` and `backend/services/db_client.py` print. `detail` is the block the UI
+renders verbatim beneath a translated headline. Collapsing them would mean a per-code "this code's
+detail is its prose" flag for the frontend to know when to promote `error` into the detail slot —
+more machinery, and a second thing to keep in step, than the repeated string costs.
+
 ## Resolution and the unknown-code fallback
 
 `frontend/src/shared/i18n/serviceErrors.ts` maps a code to a Lingui message descriptor, resolved with
