@@ -185,9 +185,12 @@ and params ride through, and only a truly untyped exception falls back to `inter
 | `database_main.py`    | `settings_store_io_failed`      | `detail`          | uncertain |
 
 Reading, writing and deleting are three codes, not one: a wrong-verb sentence for a failed read is a
-user-visible defect, not a naming quibble. Two params are knowingly thin — `file_write_failed` on
+user-visible defect, not a naming quibble. Three params are knowingly thin — `file_write_failed` on
 `POST /…/materials` carries no `file`, because the name is allocated inside the write that failed,
-and `overview_read_failed` covers all four overview read routes without one.
+`file_read_failed` on `GET /…/materials` carries none because it lists a directory rather than reading
+one file, and `overview_read_failed` covers all four overview read routes without one. The frontend's
+`file_write_failed` and `file_read_failed` rows therefore select on `file` and name it only when it is
+there.
 
 Every route handler catches bare `Exception`, so an unlabelled stdlib exception is the common case,
 not the exceptional one. The code therefore lives on the exception class — every authored message
