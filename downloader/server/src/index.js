@@ -65,7 +65,7 @@ seedYtdlp();
 
 checkTools(TOOLS).then((status) => {
   toolStatus = status;
-  // A probe answers 'ok' or a {state, code, params} record; the boot line wants its state.
+  // A probe answers 'ok' or a {state, params} record; the boot line wants its state.
   for (const [name, probe] of Object.entries(status)) {
     if (probe !== 'ok')
       console.error(`❌ ${name} is ${probe.state} — the downloads that need it will fail`);
