@@ -106,8 +106,8 @@ bug in one of our own callers can, and it renders its English prose through the 
 | app-level handler                 | `storage_unavailable`      | `detail`           | user  |
 | app-level handler                 | `internal_error`           | `detail`           | user  |
 
-The last two are new. An unhandled exception previously escaped as FastAPI's plain-text 500, which
-`failureError` cannot parse, so a user with `database/` down read `500 Internal Server Error`.
+The last two come from a middleware because FastAPI's own 500 is plain text, which `failureError`
+cannot parse — without it a user with `database/` down would read `500 Internal Server Error`.
 `storage_unavailable` is `DbClientError` reaching the top of a route — a storage call that failed
 and no route handled; `internal_error` is everything else. The middleware names only failures it was
 given, so a refusal the user can act on is caught by the route instead and re-emitted under
