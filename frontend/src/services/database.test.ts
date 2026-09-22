@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { uploadVideo, deleteFile } from './database'
+import type { RequestError } from './http'
 
 // Minimal stand-ins for the parts of Response the http client touches.
 function noContent(): Response {
@@ -26,7 +27,8 @@ function locked(): Response {
     status: 423,
     statusText: 'Locked',
     headers: { get: () => null },
-    text: async () => '{"error": "summary.pdf is open in another program. Close it and try again."}',
+    text: async () =>
+      '{"error": "summary.pdf is open in another program. Close it and try again.", "code": "file_locked", "params": {"file": "summary.pdf"}}',
   } as unknown as Response
 }
 
@@ -89,13 +91,11 @@ describe('uploadVideo', () => {
 })
 
 describe('deleteFile', () => {
-  it('replaces the 423 body with a localized message', async () => {
-    // The database service's prose is English written for the pipeline's run errors; a delete the
-    // user made themselves has to speak their language.
+  it("carries the lock's code through, so the toast is written here and not by the service", async () => {
     stubFetch(() => locked())
 
-    await expect(deleteFile('C', 'L', 'summary.pdf')).rejects.toThrow(
-      'The file is open in another program. Close it and try again.',
-    )
+    const err = (await deleteFile('C', 'L', 'summary.pdf').catch((e) => e)) as RequestError
+
+    expect(err.code).toBe('file_locked')
   })
 })

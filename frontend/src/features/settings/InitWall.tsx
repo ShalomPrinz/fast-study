@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusContext'
+import { failureNode } from '@/shared/utils/failure'
 import { canStoreApiKeys } from '@/services/runtime'
 import {
   toAutoRun,
@@ -80,7 +81,7 @@ export default function InitWall({ stored, onDone }: Props) {
   })
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [failure, setFailure] = useState('')
+  const [failure, setFailure] = useState<ReactNode>(null)
 
   useEffect(() => {
     async function load() {
@@ -109,12 +110,12 @@ export default function InitWall({ stored, onDone }: Props) {
 
   async function finish() {
     setSaving(true)
-    setFailure('')
+    setFailure(null)
     try {
       onDone(await saveSettings(buildPatch(form, stored)))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
-      setFailure((err as Error).message)
+      setFailure(failureNode(err))
     } finally {
       setSaving(false)
     }

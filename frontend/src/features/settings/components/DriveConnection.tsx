@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { connectDrive, disconnectDrive, fetchDriveStatus, type DriveStatus } from '@/services/drive'
 import { openExternalUrl } from '@/services/open'
 import Icon from '@/shared/components/Icon'
 import { useNotify } from '@/shared/hooks/useNotify'
+import { failureNode } from '@/shared/utils/failure'
 import '@/styles/button.css'
 import '@/styles/chip.css'
 import '@/styles/settings-form.css'
@@ -23,7 +24,7 @@ export default function DriveConnection() {
   const { t } = useLingui()
   const [status, setStatus] = useState<DriveStatus | null>(null)
   const [busy, setBusy] = useState(false)
-  const [failure, setFailure] = useState('')
+  const [failure, setFailure] = useState<ReactNode>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -42,35 +43,35 @@ export default function DriveConnection() {
 
   async function connect() {
     setBusy(true)
-    setFailure('')
+    setFailure(null)
     try {
       await connectDrive()
       // The one transition the backend does not push, so its caller records it here.
       setStatus((s) => ({ ...(s ?? { connected: false, consentNeeded: false }), pending: true }))
     } catch (err) {
-      setFailure((err as Error).message)
+      setFailure(failureNode(err))
     }
     setBusy(false)
   }
 
   async function reopen() {
-    setFailure('')
+    setFailure(null)
     try {
       // Connecting again while a flow is pending answers its URL rather than starting a rival flow.
       await openExternalUrl(await connectDrive())
     } catch (err) {
-      setFailure((err as Error).message)
+      setFailure(failureNode(err))
     }
   }
 
   async function disconnect() {
     setBusy(true)
-    setFailure('')
+    setFailure(null)
     try {
       await disconnectDrive()
       await refresh()
     } catch (err) {
-      setFailure((err as Error).message)
+      setFailure(failureNode(err))
     }
     setBusy(false)
   }

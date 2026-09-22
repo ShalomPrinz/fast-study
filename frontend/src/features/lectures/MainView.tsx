@@ -3,7 +3,8 @@ import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
 import type { Step, FileName, MaterialInfo } from '@/types'
-import { QUOTA_MESSAGE } from '@/shared/utils/runError'
+import { serviceErrorText } from '@/shared/i18n/serviceErrors'
+import ServiceError from '@/shared/components/ServiceError'
 import { deleteFile, deleteMaterial } from '@/services/database'
 import { openLectureFile, openExternalUrl } from '@/services/open'
 import { runStep, runPipeline } from '@/services/backend'
@@ -16,8 +17,7 @@ import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { visiblePipeline, STEP_FILE } from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
 import { formatBytes, formatDuration } from '@/shared/utils/format'
-import { toast, toastInitResult } from '@/services/toaster'
-import { isConnectionError } from '@/services/http'
+import { toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
@@ -149,12 +149,6 @@ export default function MainView() {
   const doneCount = stages.filter(({ file }) => files[file].exists).length
   const videoDuration = files['video.mp4'].duration
 
-  // A delete can be refused because the file is open in the user's pdf viewer, so it needs saying.
-  function reportDeleteFailure(e: unknown) {
-    if (isConnectionError(e)) return // connection errors are toasted centrally
-    toast('error', e instanceof Error ? e.message : t`Failed to delete file`)
-  }
-
   async function handleStep(step: Step) {
     // A refused step refreshes too: it was refused over state the tree may be showing stale.
     try {
@@ -171,7 +165,7 @@ export default function MainView() {
     } catch (e) {
       // Re-running over a file we failed to delete would fail the same way; the refresh shows
       // which of the others did go.
-      reportDeleteFailure(e)
+      toastFailure(e)
       refreshCourses()
       return
     }
@@ -204,7 +198,7 @@ export default function MainView() {
     try {
       await deleteMaterial(course, lecture, name, kind)
     } catch (e) {
-      reportDeleteFailure(e)
+      toastFailure(e)
     }
     refreshCourses()
   }
@@ -353,7 +347,9 @@ export default function MainView() {
                   <StatusNode
                     state={state}
                     title={
-                      state === 'failed' || state === 'quota' ? lectureError?.message : undefined
+                      (state === 'failed' || state === 'quota') && lectureError
+                        ? serviceErrorText(lectureError)
+                        : undefined
                     }
                   />
                   <div className="pipeline-row-body">
@@ -452,10 +448,9 @@ export default function MainView() {
               <strong>
                 <Trans>Last error:</Trans>
               </strong>{' '}
-              {lectureError.code === 'quota' && (
-                <span className="lecture-error-headline">{t(QUOTA_MESSAGE)}</span>
-              )}
-              <span data-testid="lecture-error-message">{lectureError.message}</span>
+              <span data-testid="lecture-error-message">
+                <ServiceError failure={lectureError} />
+              </span>
             </div>
           )}
 

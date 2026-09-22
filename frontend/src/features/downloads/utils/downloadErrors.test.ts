@@ -21,10 +21,17 @@ describe('toastDownloadError', () => {
     expect(toast).toHaveBeenCalledWith('error', BLOCKED_COPY)
   })
 
-  it('still shows an unsupported source its own display-ready message', () => {
-    toastDownloadError('Lecture 3', new UnsupportedError('That link is a .zip.'))
+  it('routes an unsupported source through the resolver, so its own code names it', () => {
+    const err = new UnsupportedError('That link is a .zip.', 'link_not_a_video', {
+      source: 'link',
+      url: 'http://x/y.zip',
+      ext: 'zip',
+    })
 
-    expect(toast).toHaveBeenCalledWith('error', 'That link is a .zip.')
+    toastDownloadError('Lecture 3', err)
+
+    expect(toast).toHaveBeenCalledTimes(1)
+    expect(toast.mock.calls[0][1].props.failure).toBe(err)
   })
 
   it('falls back to the generic copy for anything else', () => {

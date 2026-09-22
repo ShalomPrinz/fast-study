@@ -2,6 +2,7 @@ import type { Client } from '@/services/http'
 import { createClient, httpError } from '@/services/http'
 import { AUTO_DOWNLOADER_URL, secretHeaders } from '@/services/runtime'
 import type { Kind } from '@/types'
+import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 // Feature-local boundary for the auto-downloader service (persistent-browser BIU capture).
 const autoDownloader = createClient(AUTO_DOWNLOADER_URL, 'auto-downloader service')
@@ -45,10 +46,14 @@ export function isReconnectError(err: unknown): err is ReconnectError {
   return err instanceof ReconnectError
 }
 
-// HTTP 422 { status: 'unsupported' } from /list/expand: non-YouTube redirect target.
-// Permanent failure, and `message` is display-ready — show it verbatim, no retry prompt.
-export class UnsupportedError extends Error {
-  constructor(message: string) {
+// HTTP 422 { status: 'unsupported' } from /list/expand: non-YouTube redirect target. Permanent
+// failure — no retry prompt — and it names which source, so it carries the protocol's code.
+export class UnsupportedError extends Error implements ServiceFailure {
+  constructor(
+    message: string,
+    public code: string | null = null,
+    public params: ErrorParams | null = null,
+  ) {
     super(message)
     this.name = 'UnsupportedError'
   }
@@ -106,7 +111,11 @@ export async function postReconnectAware<T>(
   if (res.status === 422) {
     const data = await res.json().catch(() => null)
     if (data?.status === 'unsupported') {
-      throw new UnsupportedError(data.message ?? 'Unsupported recording source.')
+      throw new UnsupportedError(
+        data.message ?? 'Unsupported recording source.',
+        typeof data.code === 'string' ? data.code : null,
+        data.params ?? null,
+      )
     }
   }
   if (res.status === 503) {

@@ -1,6 +1,7 @@
 import { msg, t } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
 import type { CoursePhase, CourseStatus, CourseFile } from '@/types'
+import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 
 export interface OverviewStep {
   phase: CoursePhase
@@ -69,7 +70,10 @@ export function branchStatus(
   return {
     running: st?.status === 'running',
     done: last !== undefined,
-    error: st?.status === 'error' ? (st.message ?? t`failed`) : null,
+    error:
+      st?.status === 'error'
+        ? serviceErrorText({ message: st.message ?? t`failed`, code: st.code, params: st.params })
+        : null,
     warning: last?.warning ?? null,
   }
 }

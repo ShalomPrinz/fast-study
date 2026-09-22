@@ -12,6 +12,7 @@ import type {
   CourseExtractorState,
   CourseStatus,
 } from '@/types'
+import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import {
   kindQuery,
   lectureBase,
@@ -69,7 +70,7 @@ interface RawInFlightEntry {
 }
 
 interface RawRunnerStatus {
-  runner: { running: boolean; total: number; done: number; last_error: string | null }
+  runner: { running: boolean; total: number; done: number; last_error: ServiceFailure | null }
   in_flight?: RawInFlightEntry[]
   queue?: QueueEntry[]
   errors?: Record<string, Pick<RunError, 'step' | 'message'> & Partial<RunError>>
@@ -100,6 +101,7 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
           step: e.step,
           message: e.message,
           code: e.code ?? null,
+          params: e.params ?? {},
           provider: e.provider ?? null,
           blocked: e.blocked ?? false,
         },

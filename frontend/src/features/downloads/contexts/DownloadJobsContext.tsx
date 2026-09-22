@@ -138,7 +138,10 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
         if (!primed.current) {
           toastedIds.current.add(job.id) // seed and suppress: history from before this session
         } else if (!toastedIds.current.has(job.id)) {
-          toastJobError(job.lecture || 'recording', job.message)
+          const failure = job.message
+            ? { message: job.message, code: job.code, params: job.params }
+            : null
+          toastJobError(job.lecture || 'recording', failure)
           toastedIds.current.add(job.id)
         }
       }

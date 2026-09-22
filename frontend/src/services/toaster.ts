@@ -1,4 +1,5 @@
 // The only `react-toastify` import site — everything else toasts through these helpers.
+import type { ReactNode } from 'react'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import './toaster.css'
@@ -9,7 +10,9 @@ export { ToastContainer }
 
 type ToastKind = 'info' | 'warning' | 'error'
 
-function appToast(kind: ToastKind, message: string): void {
+// ReactNode, not string: a failure whose sentence carries third-party text renders it in an
+// isolated block beneath the sentence (`shared/components/ServiceError`).
+function appToast(kind: ToastKind, message: ReactNode): void {
   toast[kind](message)
 }
 export { appToast as toast }

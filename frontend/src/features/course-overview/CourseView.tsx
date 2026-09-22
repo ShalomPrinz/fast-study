@@ -10,6 +10,8 @@ import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import { toast } from '@/services/toaster'
+import { failureId } from '@/shared/i18n/serviceErrors'
+import { serviceErrorNode } from '@/shared/components/ServiceError'
 import {
   CourseOverviewProvider,
   useCourseOverview,
@@ -26,9 +28,11 @@ function CourseOverviewBody() {
   const { course, extractors, files, status } = useCourseOverview()
   const { courses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
-  const { report: reportError, prune: pruneErrors } = useReportOnce((msg) => toast('error', msg))
+  const { report: reportError, prune: pruneErrors } = useReportOnce<ReactNode>((node) =>
+    toast('error', node),
+  )
 
-  // Toast each extractor error once per (course, slug, message).
+  // Toast each extractor error once per (course, slug, failure).
   useEffect(() => {
     if (!status) return
     const titleBySlug = new Map(extractors?.map((e) => [e.slug, e.title]))
@@ -37,8 +41,10 @@ function CourseOverviewBody() {
       if (st.status !== 'error') continue
       const key = `${course}/${slug}`
       valid.add(key)
+      const failure = { message: st.message ?? t`failed`, code: st.code, params: st.params }
       const title = titleBySlug.get(slug) ?? slug
-      reportError(key, `${title}: ${st.message ?? t`failed`}`)
+      // The branch's own name leads, so a course generating several says which one failed.
+      reportError(key, `${title}|${failureId(failure)}`, serviceErrorNode(failure, title))
     }
     // Prune only this course's keys, or returning to another course would re-toast its errors.
     pruneErrors(valid, (k) => k.startsWith(`${course}/`))

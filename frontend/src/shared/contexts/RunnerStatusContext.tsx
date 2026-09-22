@@ -1,11 +1,13 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { t } from '@lingui/core/macro'
-import { i18n } from '@lingui/core'
 import type { RunnerStatus, InFlightEntry, Kind, RunError } from '@/types'
 import { runAll, fetchRunnerStatus } from '@/services/backend'
 import { isConnectionError } from '@/services/http'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
-import { QUOTA_MESSAGE } from '@/shared/utils/runError'
+import { isGeminiQuota } from '@/shared/utils/runError'
+import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
+import { serviceErrorNode } from '@/shared/components/ServiceError'
+import { failureNode } from '@/shared/utils/failure'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useNotify } from '@/shared/hooks/useNotify'
 import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
@@ -29,7 +31,7 @@ const RunnerStatusContext = createContext<RunnerStatusValue>({
 type UpdateKind = 'info' | 'error'
 
 interface ProviderProps {
-  sendUpdate?: (kind: UpdateKind, message: string) => void
+  sendUpdate?: (kind: UpdateKind, message: ReactNode) => void
   children: ReactNode
 }
 
@@ -43,7 +45,7 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
     report: reportError,
     seed: seedError,
     prune: pruneErrors,
-  } = useReportOnce((msg) => sendUpdateRef.current?.('error', msg))
+  } = useReportOnce<ReactNode>((node) => sendUpdateRef.current?.('error', node))
 
   const latest = useLatestRequest()
   // First applied status carries errors from before load: seed-and-suppress them, toast later ones.
@@ -57,15 +59,19 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       const validKeys = new Set(Object.keys(s.errors))
       validKeys.add('runner-crash')
       pruneErrors(validKeys)
-      const announce = primed.current ? reportError : seedError
+      // Seeded before the first status is applied, so failures predating page load stay quiet.
+      const announce = (key: string, failure: ServiceFailure) =>
+        primed.current
+          ? reportError(key, failureId(failure), serviceErrorNode(failure))
+          : seedError(key, failureId(failure))
       if (!s.runner.running && s.runner.lastError) {
         announce('runner-crash', s.runner.lastError)
       }
-      // A quota error toasts the localized line only on the lecture that hit the limit; the ones run-all
-      // then stopped at summarize are `blocked`, or one batch would toast once per lecture.
+      // A quota toasts only on the lecture that hit the limit; the ones run-all then stopped at
+      // summarize are `blocked`, or one batch would toast the same sentence once per lecture.
       for (const [key, error] of Object.entries(s.errors)) {
-        if (error.code !== 'quota') announce(key, error.message)
-        else if (!error.blocked) announce(key, i18n._(QUOTA_MESSAGE))
+        if (isGeminiQuota(error.code) && error.blocked) continue
+        announce(key, error)
       }
       primed.current = true
     } catch {
@@ -93,7 +99,7 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       setStatus(s)
     } catch (err) {
       if (isConnectionError(err)) return // already toasted centrally by the http client
-      sendUpdateRef.current?.('error', `Runner failed: ${err}`)
+      sendUpdateRef.current?.('error', failureNode(err))
     }
   }
 
