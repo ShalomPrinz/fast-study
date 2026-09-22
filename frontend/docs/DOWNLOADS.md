@@ -45,14 +45,15 @@ a burst with a captcha) is deliberately not that path: it says nothing about the
 ## The page session
 
 `DownloadsSessionProvider` (in `Layout`) holds everything the page accumulates — `selected`/`pending`,
-`items`, `error`, row edits, `reconnectKey`, plus `discover` and `close` — so a trip to a lecture and back
+`items`, row edits, `reconnectKey`, plus `discover` and `close` — so a trip to a lecture and back
 finds the same course and typed names, and a discovery in flight when the user leaves still lands. State
 and an identity-stable actions bag are separate contexts; the memoized rows bail out on the setters'
 identity.
 
-`discover` sets `pending` and promotes the course to `selected` only once `listRecordings` resolves, so
-an expired session or a `BlockedError` leaves the page as it was, a toast and nothing else. A plain
-failure does promote it: the panel is where that error shows. Each discovery takes a ticket; `close` or
+`discover` sets `pending` (the row's `Loading…`) and promotes the course to `selected` only once
+`listRecordings` resolves, so every failure leaves the page as it was — the open course included — and
+toasts once: the reconnect hint, `blockedMessage()`, the client's connection toast, or a generic "couldn't
+load" line. Each discovery takes a ticket; `close` or
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.
 

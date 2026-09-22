@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 import { t } from '@lingui/core/macro'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
+import { isConnectionError } from '@/services/http'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
 import { blockedMessage } from '../utils/downloadErrors'
@@ -16,7 +17,6 @@ interface DownloadsSessionState {
   selected: string | null
   pending: string | null
   items: Item[]
-  error: string | null
   edits: Record<string, RowEdit>
   reconnectKey: number
 }
@@ -46,7 +46,6 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   const [selected, setSelected] = useState<string | null>(null)
   const [pending, setPending] = useState<string | null>(null)
   const [items, setItems] = useState<Item[]>([])
-  const [error, setError] = useState<string | null>(null)
   const [reconnectKey, setReconnectKey] = useState(0)
   // Keyed by item ref and living above the media toggle, so a typed name, a kind toggle and a
   // playlist's cached children all survive a segment switch.
@@ -87,11 +86,10 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     setEdits({})
     clearExpansions()
     clearSectionCollapse()
-    setError(null)
   }, [])
 
-  // Promoted to `selected` only with items in hand, so an expired session leaves the page as it was;
-  // a plain failure still promotes it, since the panel shows that error.
+  // Promoted to `selected` only with items in hand, so every failure leaves the page as it was and
+  // says so in a toast.
   const discover = useCallback(
     async (course: Course) => {
       if (!course.source_url) return
@@ -111,15 +109,17 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
           return
         }
         if (id !== discoveryId.current) return
+        // The client already toasted an unreachable service; a second toast would restate it.
+        if (isConnectionError(err)) return
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.
-        if (isBlockedError(err)) {
-          sendUpdateRef.current?.('error', blockedMessage())
-          return
-        }
-        clear()
-        setSelected(course.name)
-        setError('Failed to load recordings. Is the auto-downloader running?')
+        const name = course.name
+        sendUpdateRef.current?.(
+          'error',
+          isBlockedError(err)
+            ? blockedMessage()
+            : t`Couldn't load recordings for "${name}". Try again.`,
+        )
       } finally {
         if (id === discoveryId.current) setPending(null)
       }
@@ -139,8 +139,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
     [discover, close, reconnectHint, resolveMedia, rowEdits],
   )
   const state = useMemo(
-    () => ({ selected, pending, items, error, edits, reconnectKey }),
-    [selected, pending, items, error, edits, reconnectKey],
+    () => ({ selected, pending, items, edits, reconnectKey }),
+    [selected, pending, items, edits, reconnectKey],
   )
 
   // Rendering `{children}` and nothing else is what keeps the sidebar and the outlet out of this:
