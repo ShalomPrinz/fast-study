@@ -85,6 +85,27 @@ describe('a failed discovery', () => {
   })
 })
 
+describe("a failed discovery's toast", () => {
+  it("renders the service's reason when the refusal carries a code", async () => {
+    stubFetch(Response.json({ error: 'Moodle said no', code: 'moodle_ws_error' }, { status: 500 }))
+    const { result } = render()
+
+    await act(() => result.current.actions.discover(ALGEBRA))
+
+    expect(sendUpdate).toHaveBeenCalledTimes(1)
+    expect(sendUpdate.mock.calls[0][1].props.failure.code).toBe('moodle_ws_error')
+  })
+
+  it('falls back to the generic line for a codeless refusal', async () => {
+    stubFetch(refused())
+    const { result } = render()
+
+    await act(() => result.current.actions.discover(ALGEBRA))
+
+    expect(typeof sendUpdate.mock.calls[0][1]).toBe('string')
+  })
+})
+
 describe('a discovery against a downed auto-downloader', () => {
   it('toasts once, through the shared connection toast, and selects nothing', async () => {
     stubFetch(new TypeError('Failed to fetch'))

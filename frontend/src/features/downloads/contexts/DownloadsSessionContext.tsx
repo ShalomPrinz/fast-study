@@ -3,6 +3,7 @@ import { t } from '@lingui/core/macro'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
 import { isConnectionError } from '@/services/http'
+import { failureNode, failureOf } from '@/shared/utils/failure'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
 import { blockedMessage } from '../utils/downloadErrors'
@@ -38,7 +39,7 @@ const DownloadsSessionActionsContext = createContext<DownloadsSessionActions | n
 type UpdateKind = 'info' | 'warning' | 'error'
 
 interface ProviderProps {
-  sendUpdate?: (kind: UpdateKind, message: string) => void
+  sendUpdate?: (kind: UpdateKind, message: ReactNode) => void
   children: ReactNode
 }
 
@@ -113,11 +114,16 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         if (isConnectionError(err)) return
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.
+        if (isBlockedError(err)) {
+          sendUpdateRef.current?.('error', blockedMessage())
+          return
+        }
+        // A coded refusal says why in the service's words; only a codeless one gets the generic line.
         const name = course.name
         sendUpdateRef.current?.(
           'error',
-          isBlockedError(err)
-            ? blockedMessage()
+          failureOf(err).code
+            ? failureNode(err)
             : t`Couldn't load recordings for "${name}". Try again.`,
         )
       } finally {

@@ -52,8 +52,8 @@ identity.
 
 `discover` sets `pending` (the row's `Loading…`) and promotes the course to `selected` only once
 `listRecordings` resolves, so every failure leaves the page as it was — the open course included — and
-toasts once: the reconnect hint, `blockedMessage()`, the client's connection toast, or a generic "couldn't
-load" line. Each discovery takes a ticket; `close` or
+toasts once: the reconnect hint, `blockedMessage()`, the client's connection toast, the service's reason for a
+coded refusal, or a generic "couldn't load" line. Each discovery takes a ticket; `close` or
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.
 

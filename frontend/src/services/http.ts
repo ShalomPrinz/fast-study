@@ -23,7 +23,7 @@ export function httpError(res: Response): RequestError {
 
 // Every service reports a failure as `{error, code, params}`, whose prose says far more than the
 // status line (a data root that turned out not to be writable, not "400 Bad Request").
-async function failureError(res: Response): Promise<RequestError> {
+export async function failureError(res: Response): Promise<RequestError> {
   try {
     const body = JSON.parse(await res.text())
     const message = body?.error

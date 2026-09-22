@@ -424,7 +424,7 @@ msgstr "BIU account connected"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "BIU account connected ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:78
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:79
 msgid "BIU session expired. Reconnect your account."
 msgstr "BIU session expired. Reconnect your account."
 
@@ -612,7 +612,7 @@ msgstr "Couldn't download \"{name}\". Try again."
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:121
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:127
 msgid "Couldn't load recordings for \"{name}\". Try again."
 msgstr "Couldn't load recordings for \"{name}\". Try again."
 

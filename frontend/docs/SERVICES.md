@@ -102,7 +102,8 @@ and these encode meaning in it:
 | 409  | `status: passcode`    | `PasscodeError` — zoom gate; `reason: missing \| incorrect`               |
 | 503  | `status: blocked`     | `BlockedError` — bot-protection challenge; transient, carries no message |
 
-A downed service is still the shared, already-toasted `ConnectionError`, so its callers stay silent on it.
+Any other refusal is the shared `RequestError`, code and params kept. A downed service is still the shared,
+already-toasted `ConnectionError`, so its callers stay silent on it.
 `BlockedError` drops the body's `message`, an English log line, and writes its own copy. `PasscodeError` maps `name` to `lecture`
 because `name` collides with `Error.name`. The helper takes a `Client` because the downloader server's
 `/download-item` forwards the same four bodies verbatim.

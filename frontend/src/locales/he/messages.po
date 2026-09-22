@@ -424,7 +424,7 @@ msgstr "חשבון בר-אילן מחובר"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "חשבון בר-אילן מחובר ✓"
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:78
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:79
 msgid "BIU session expired. Reconnect your account."
 msgstr "החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
@@ -612,7 +612,7 @@ msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:121
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:127
 msgid "Couldn't load recordings for \"{name}\". Try again."
 msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה שוב."
 
