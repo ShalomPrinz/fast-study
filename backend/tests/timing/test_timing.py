@@ -81,3 +81,31 @@ class TestRecord:
         assert timing.get_stats("download:ytdlp", 1000) == {
             "message": "not-enough-data"
         }
+
+
+class TestCorruptDb:
+    def test_init_quarantines_garbage_db(self, tmp_path, monkeypatch):
+        db = tmp_path / "state" / "timing.db"
+        db.parent.mkdir()
+        db.write_bytes(b"this is not a sqlite database" * 100)
+        (db.parent / "timing.db.corrupt").write_bytes(b"older")
+        monkeypatch.setattr(timing, "DB_PATH", db)
+
+        timing.init_db()
+
+        assert (db.parent / "timing.db.corrupt").read_bytes().startswith(b"this is not")
+        assert timing.record("download:curl", 1000, 2.5) == {"status": "ok"}
+        assert _rows() == [("download:curl", 1000, 2.5)]
+
+    def test_timed_step_survives_corrupt_db(self):
+        timing.DB_PATH.write_bytes(b"garbage" * 100)
+
+        @timing.timed_pipeline("transcribe")
+        def step(text):
+            return text.upper()
+
+        assert step("done") == "DONE"
+
+    def test_get_stats_on_corrupt_db_is_not_enough_data(self):
+        timing.DB_PATH.write_bytes(b"garbage" * 100)
+        assert timing.get_stats("transcribe", 1000) == {"message": "not-enough-data"}
