@@ -15,9 +15,13 @@ location.
   then returns with the login still pending. The window closes itself the instant the
   `moodlemobile://token` redirect is captured, so the user never sits on a dead tab or Chromium's
   xdg-open prompt for the custom scheme. That self-close is a success, so the `disconnected` handler
-  that reports an abandoned login ignores it once a token is held.
+  that reports an abandoned login ignores it once a token is held. Closing the last window does not
+  end a Playwright-launched browser, so the user closing every login window before a token arrives
+  closes the browser itself, which drops the pending login.
 - `complete()` — waits (bounded) for the captured token, decodes it and persists
   `{ wstoken, privatetoken }` to `auth/biu-token.json` under the state root. Needs no live browser.
+  Fails at once with `moodle_login_abandoned` if the window is closed while it waits, and with
+  `moodle_login_not_pending` if nothing is pending.
 - `status()` — no browser, no API call: `{ connected: token file exists, expired: markExpired flag }`.
 - `disconnect()` — deletes the token file, clears the flag, closes a headed login still in flight;
   a missing token is success. It never calls Moodle's revoke: a server-side revoke can fail _after_

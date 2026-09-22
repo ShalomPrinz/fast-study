@@ -34,11 +34,15 @@ function safeURIDecode(s) {
  * persisted { wstoken, privatetoken } for the stateless WS API. See docs/AUTH.md, docs/MOODLE.md.
  */
 export class MoodleToken extends AuthProvider {
-  /** @param {{ tokenPath: string, site?: string }} opts  absolute token file path; the caller (core/registry.js) owns where it lives. */
-  constructor({ tokenPath, site = DEFAULT_SITE }) {
+  /**
+   * @param {{ tokenPath: string, site?: string, launch?: typeof launchBrowser }} opts  absolute token
+   *   file path (core/registry.js owns where it lives); `launch` is injectable so tests need no browser.
+   */
+  constructor({ tokenPath, site = DEFAULT_SITE, launch = launchBrowser }) {
     super();
     this.tokenPath = tokenPath;
     this.site = site;
+    this._launch = launch;
     // Headed login in progress; held on the instance so connect() and complete() (two HTTP
     // calls) share the same live headed browser + its capture promise. Null when none pending.
     this._pending = null;
@@ -97,10 +101,9 @@ export class MoodleToken extends AuthProvider {
    */
   async connect({ onCancel } = {}) {
     if (this._pending) return;
-    const browser = await launchBrowser({ headless: false });
+    const browser = await this._launch({ headless: false });
     try {
       const context = await browser.newContext();
-      const page = await context.newPage();
 
       // Chromium can't follow moodlemobile://, so watch all three signals the token can surface
       // on, and close the window on capture — complete() needs no live browser. See docs/MOODLE.md.
@@ -109,6 +112,12 @@ export class MoodleToken extends AuthProvider {
       const tokenPromise = new Promise((resolve) => {
         resolveToken = resolve;
       });
+      // Rejected when the login is abandoned, so a complete() already waiting fails at once.
+      let abandon;
+      const abandoned = new Promise((_, reject) => {
+        abandon = reject;
+      });
+      abandoned.catch(() => {}); // nobody may be racing it yet
       const grab = (url) => {
         if (url && url.startsWith(TOKEN_PREFIX) && !apptoken) {
           apptoken = url.slice(TOKEN_PREFIX.length);
@@ -118,24 +127,39 @@ export class MoodleToken extends AuthProvider {
       };
       context.on('response', (resp) => grab(resp.headers()['location'] || ''));
       context.on('requestfailed', (req) => grab(req.url()));
+      // Closing the last window does not end a Playwright-launched browser, so 'disconnected' alone
+      // never sees the user give up: no pages left without a token = abandoned (SSO may open popups).
+      context.on('page', (p) =>
+        p.on('close', () => {
+          if (!apptoken && context.pages().length === 0) browser.close().catch(() => {});
+        }),
+      );
+      const page = await context.newPage();
       page.on('framenavigated', (f) => grab(f.url()));
+
+      this._pending = { browser, context, tokenPromise, abandoned };
+      // The browser closing before a token is captured = login abandoned. Our own post-capture
+      // close is a success, so guard on apptoken or complete() would find no pending login.
+      browser.on('disconnected', () => {
+        if (apptoken) return;
+        abandon(
+          new CodedError(
+            'moodle_login_abandoned',
+            {},
+            'login window closed before a token was captured',
+          ),
+        );
+        if (this._pending && this._pending.browser === browser) {
+          this._pending = null;
+          onCancel?.();
+        }
+      });
 
       const passport = String(Date.now()) + String(Math.floor(Math.random() * 1e6));
       const launchUrl =
         `${this.site}/admin/tool/mobile/launch.php` +
         `?service=${SERVICE}&passport=${passport}&urlscheme=${URLSCHEME}`;
       await page.goto(launchUrl, { waitUntil: 'load' }).catch(() => {});
-
-      this._pending = { browser, context, tokenPromise };
-      // The browser closing before a token is captured = login abandoned. Our own post-capture
-      // close is a success, so guard on apptoken or complete() would find no pending login.
-      browser.on('disconnected', () => {
-        if (apptoken) return;
-        if (this._pending && this._pending.browser === browser) {
-          this._pending = null;
-          onCancel?.();
-        }
-      });
     } catch (err) {
       await browser.close().catch(() => {});
       throw err;
@@ -144,22 +168,25 @@ export class MoodleToken extends AuthProvider {
 
   /**
    * UI-triggered login, step 2: wait (bounded) for the captured apptoken, decode it, persist
-   * { wstoken, privatetoken }, and close the headed browser. Throws if no login is pending or
-   * no token was captured before the timeout.
+   * { wstoken, privatetoken }, and close the headed browser. Throws if no login is pending, the
+   * window is closed first, or no token was captured before the timeout.
    * @returns {Promise<{ wstoken: string, privatetoken: string|null, savedAt: string }>}
    */
   async complete() {
-    if (!this._pending) throw new Error('no pending login (call connect first)');
-    const { browser, tokenPromise } = this._pending;
+    if (!this._pending) {
+      throw new CodedError('moodle_login_not_pending', {}, 'no pending login (call connect first)');
+    }
+    const { browser, tokenPromise, abandoned } = this._pending;
     this._pending = null;
+    let timer;
     try {
-      const timeout = new Promise((_, reject) =>
-        setTimeout(
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(
           () => reject(new CodedError('moodle_login_timeout', {}, 'no token captured (timed out)')),
           CAPTURE_TIMEOUT_MS,
-        ),
-      );
-      const apptoken = await Promise.race([tokenPromise, timeout]);
+        );
+      });
+      const apptoken = await Promise.race([tokenPromise, abandoned, timeout]);
 
       const parts = decodeApptoken(apptoken).split(':::');
       const record = {
@@ -172,6 +199,7 @@ export class MoodleToken extends AuthProvider {
       this._invalidated = false; // fresh token persisted — a prior runtime invalidToken is no longer sticky
       return record;
     } finally {
+      clearTimeout(timer);
       await browser.close().catch(() => {});
     }
   }
