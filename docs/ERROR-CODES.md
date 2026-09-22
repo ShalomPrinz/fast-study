@@ -27,7 +27,7 @@ already had.
 | Runner crash    | `runner.last_error` — `{message, code, params}` or `null`                   | `backend/pipeline/runner.py`                                 |
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
-| Tool probe      | `tools[name]` — `"ok"`, or `{state, code, params}`                          | `lib/tools/`, reported on each service's `/health`           |
+| Tool probe      | `tools[name]` — `"ok"`, or `{state, params}`                                | `lib/tools/`, reported on each service's `/health`           |
 
 Every field is additive. `error`/`message` keep today's text and today's meaning, so a consumer that
 never learned about `code` keeps working — which is what makes the fallback below honest rather than
@@ -274,25 +274,6 @@ and `name` are filled by the route, not the thrower — the passcode gate knows 
 is `null` rather than absent wherever there was nothing to carry: an empty stderr tail, a Moodle
 error with no `message`, a 422 that carried no message.
 
-### `lib/tools/`
-
-| code                 | params                | reach |
-| -------------------- | --------------------- | ----- |
-| `tool_missing`       | `tool`                | user  |
-| `tool_unusable`      | `tool`, `detail`      | user  |
-| `tool_probe_timeout` | `tool`, `seconds`     | user  |
-| `tool_probe_exit`    | `tool`, `exit_code`   | user  |
-
-These are the one set with no catalog row despite being user-reachable, because **the frontend never
-reads `/health`**. Their only user-facing render is `electron/boot.js`, the launch screen, which has
-no catalogs and keeps printing English. The codes exist so that render can be localized without a
-cross-service change; the sentence would be the launcher's to own, not the SPA's.
-
-The probe result keeps `"ok"` as a bare string and becomes `{state, code, params}` only on failure,
-so every `state !== 'ok'` comparison in `backend/`, both downloader services, `electron/` and the
-release smoke suite keeps its meaning. Both halves of `lib/tools/` spell the same codes; a change to
-one is a change to both.
-
 ---
 
 ## Excluded, and why
@@ -312,6 +293,16 @@ reports back as `renames`.
 message, an `OSError` string — these are often the only string that identifies the failure, and no
 protocol can translate them. They render verbatim, direction-isolated, beneath a translated headline
 naming what failed.
+
+**The tool probe carries no code.** `lib/tools/`'s boot-time probe reports a usable tool as the
+bare string `"ok"` and an unusable one as `{state, params}` — `state` is the one-line
+developer-facing reason (`missing`, `exited 3`), `params` the values a sentence would need. There is
+no code because nothing would resolve one: the frontend never reads `/health`, and the probe's only
+user-facing render is `electron/boot.js`, the launch screen, which has no catalogs and prints
+English. A code nothing resolves is a field nothing checks. `params` stays, because it is what a
+localized launch screen would key its own sentence off. Success stays a bare string on purpose:
+every consumer compares `!= "ok"`, and an object is never equal to it, so `backend/`, both
+downloader services, `electron/` and the release smoke suite all keep their meaning.
 
 **Out of scope by decision:** the `downloader/extension/` popup, which is not the SPA; the date and
 duration gap in `frontend/src/shared/utils/format.ts`; a third locale; and sending the user's locale

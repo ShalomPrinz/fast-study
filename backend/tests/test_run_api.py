@@ -93,7 +93,6 @@ class TestHealth:
 
         record = {
             "state": "missing",
-            "code": "tool_missing",
             "params": {"tool": "tectonic"},
         }
         tools = {"ffmpeg": "ok", "tectonic": record}

@@ -43,13 +43,17 @@ the Python half is here with one consumer.
 - **`check_tools` / `checkTools` never raise.** A missing tool disables one feature (no PDF, no
   YouTube), not the service, so the result is a map of reasons for the caller to log and publish. A
   service that refused to start would take down everything it can still do.
-- **A usable tool maps to the bare string `"ok"`; an unusable one maps to `{state, code, params}`.**
-  `state` is the one-line developer-facing reason (`missing`, `exited 3`), `code` is its row in
-  [`docs/ERROR-CODES.md`](../../docs/ERROR-CODES.md) — `tool_missing`, `tool_unusable`,
-  `tool_probe_timeout`, `tool_probe_exit` — and `params` carries the values a sentence needs. Success
-  stays a string on purpose: every consumer compares `!= "ok"`, and an object is never equal to it,
-  so the comparison keeps its meaning while the failure side gains structure.
-- **`tool_unusable`'s `detail` is opaque.** It is the OS phrase on the Python side (`Permission
+- **A usable tool maps to the bare string `"ok"`; an unusable one maps to `{state, params}`.**
+  `state` is the one-line developer-facing reason (`missing`, `exited 3`) and `params` carries the
+  same facts as named values (`tool`, plus `detail`, `seconds` or `exit_code`), which is what a
+  localized render would need. Success stays a string on purpose: every consumer compares `!= "ok"`,
+  and an object is never equal to it, so the comparison keeps its meaning while the failure side
+  gains structure.
+- **The record carries no machine code.** Its only user-facing render is the launcher's boot screen,
+  which has no catalogs, and the frontend never reads `/health` — so a code would be a field nothing
+  resolves and nothing checks. `params` is what a localized launch screen would need the day it
+  grows catalogs; the code can come back with it.
+- **The `unusable` state's `detail` is opaque.** It is the OS phrase on the Python side (`Permission
   denied`) and a whole Node sentence (`Command failed: …`) on the JS side. Log it, render it, never
   pattern-match it.
 - **The version probe is not a version *check*.** It answers "can this binary be spawned", nothing

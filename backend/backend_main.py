@@ -30,7 +30,7 @@ DEFAULT_PORT = 8000
 tool_status = check_tools(TOOLS)
 for _name, _state in tool_status.items():
     if _state != "ok":
-        # A usable tool is the bare string "ok"; a failure is a {state, code, params} record.
+        # A usable tool is the bare string "ok"; a failure is a {state, params} record.
         log.error(f"{_name} is {_state['state']} — the steps that need it will fail")
 
 

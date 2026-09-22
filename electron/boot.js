@@ -16,7 +16,7 @@ const elements = {
 };
 
 // A tool the boot probe could not run costs one feature, never the launch. A usable tool is the
-// bare string 'ok'; anything else is lib/tools' {state, code, params}, whose `state` is the reason.
+// bare string 'ok'; anything else is lib/tools' {state, params}, whose `state` is the reason.
 function unusableTools(tools) {
   return Object.entries(tools ?? {})
     .filter(([, result]) => result !== 'ok')

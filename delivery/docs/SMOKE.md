@@ -13,8 +13,8 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   names `/health` reports minus `curl`, since a binary nothing spawns installs cleanly and shows up
   only as installer size.
 - **No service boots reporting an unusable tool.** `/health`'s `tools` maps a usable tool to the
-  bare string `ok` and an unusable one to `{state, code, params}`; the failure names each offender's
-  `state` and `code` ([`lib/tools/CLAUDE.md`](../../lib/tools/CLAUDE.md)).
+  bare string `ok` and an unusable one to `{state, params}`; the failure names each offender's
+  `state` ([`lib/tools/CLAUDE.md`](../../lib/tools/CLAUDE.md)).
 - **A clean machine, read statically.** Every installed `.exe`/`.dll`/`.pyd`/`.node` may import,
   normally or delay-loaded, only DLLs the install ships, API sets, or System32 DLLs that are not a
   VC++ redistributable — the runner has those, a user's PC may not. Runtime `LoadLibrary`/ctypes

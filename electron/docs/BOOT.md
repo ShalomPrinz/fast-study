@@ -26,9 +26,8 @@
 `state` ([ERROR-CODES.md](../../docs/ERROR-CODES.md)). It is a plain `file://` page rather than
 part of the frontend bundle, for the same reason the window cannot open on the frontend: the bundle
 resolves the service URLs at module scope and none of them exist while it renders. It is English
-only: the frontend's locale wiring does not reach it, and the probe's machine `code` goes
-unrendered — this is the only place in the app a tool probe is shown, so localizing it later needs
-no cross-service change.
+only: the frontend's locale wiring does not reach it, and this is the only place in the app a tool
+probe is shown.
 
 Main pushes the whole state on `faststudy:boot` at every change, and the page reads one snapshot
 over `faststudy:boot-state` when it loads — which closes the race with main's first push reaching a
