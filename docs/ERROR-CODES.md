@@ -345,3 +345,10 @@ to any service.
   tree as a plain string, not one of the four channels above, so `tectonic exited N with no
   reported error` and a recovered render's `LaTeX error: …` stay English prose. Giving the marker a
   code would mean changing its on-disk format in three services at once.
+- **The drift test greps; it does not parse.** `frontend/src/shared/i18n/errorCodeDrift.test.ts`
+  holds the codes the services emit, the tables above and `serviceErrors.ts`'s rows to one
+  vocabulary — but it finds a code by the shapes one is written in: a literal in a known argument
+  position, `code = "x"`, `"code": "x"`. A code reached through a ternary, returned inside a tuple
+  or defaulted behind an `or` is invisible to it, so it misses silently and never cries wolf.
+  Closing that would take a generated registry every service imports, and `lib/` reaches neither
+  `frontend/` nor `electron/` — such a registry would be a second source of truth, not one.

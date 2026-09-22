@@ -116,7 +116,9 @@ code renders. Third-party text — ffmpeg, Gemini, yt-dlp, the OS — is never t
 The whole vocabulary, per channel and per service, is in [`docs/ERROR-CODES.md`](docs/ERROR-CODES.md),
 with the excluded set and the reason each row is excluded. Adding a failure means adding a row there
 and a catalog entry in `frontend/`; adding one without the catalog entry is supported — it falls back
-to the English prose — but is not finished.
+to the English prose — but is not finished. `frontend/src/shared/i18n/errorCodeDrift.test.ts` holds
+the three in step: it greps the services for emitted codes and fails when one is undocumented, or
+when the doc calls a code user-reachable and no catalog row says it.
 
 ## Service subagents
 
