@@ -159,7 +159,7 @@ def db(monkeypatch):
 async def _wait_done(course=COURSE, timeout=5.0):
     """Await the scheduled run task(s) themselves, then return the course's status.
     The store is NOT a completion signal: between phases every entry can already look terminal
-    (a slug 'skipped' at extract is still waiting for to_pdf), so polling for terminal entries
+    (a slug kept at extract is still waiting for analyze), so polling for terminal entries
     returns mid-run. The task finishing is the only exact one."""
     pending = asyncio.all_tasks() - {asyncio.current_task()}
     if pending:
@@ -198,19 +198,18 @@ class TestGenerateAll:
             return await _wait_done()
 
         status = asyncio.run(go())
-        # Every slug ran through its last phase (to_pdf) — phase now lives per entry, not top-level.
-        assert _phase(COURSE, "topics") == "to_pdf"
         assert list(status["extractors"]) == [e.slug for e in ep.EXTRACTORS]
         # exam-hints matched → extract .txt → analyze .md → to_pdf .pdf, all done.
         assert status["extractors"]["exam-hints"] == {
             "status": "done",
             "phase": "to_pdf",
         }
-        # No match → extract skipped, so nothing downstream to analyze/render → skipped throughout.
-        assert status["extractors"]["student-qa"]["status"] == "skipped"
-        assert status["extractors"]["pitfalls"]["status"] == "skipped"
-        # topics has no summaries in this tree → collect skips, then to_pdf finds no topics.md → skipped.
-        assert status["extractors"]["topics"]["status"] == "skipped"
+        # No match → extract skips and the chain stops there, keeping the originating reason.
+        assert status["extractors"]["student-qa"]["code"] == "no_snippets_found"
+        assert status["extractors"]["pitfalls"]["code"] == "no_snippets_found"
+        # topics has no summaries in this tree → collect skips and its chain stops at topics.
+        assert status["extractors"]["topics"]["code"] == "no_summaries_found"
+        assert _phase(COURSE, "topics") == "topics"
 
     def test_writes_txt_then_md_then_pdf(self, db):
         async def go():
@@ -233,11 +232,12 @@ class TestGenerateAll:
     def test_notify_fires_per_slug_phase_plus_run_end(self, db):
         # One ping per (slug, phase) work unit + one at run end (no separate phase-boundary pings).
         # All 5 extractors (3 pattern + topics + all-lectures); tree has transcripts but no summaries, so:
+        # A skip stops its slug's chain, so skipped slugs ping once:
         #   exam-hints : extract done + analyze done + to_pdf done      → 3
-        #   student-qa : extract skip + analyze skip + to_pdf skip      → 3
-        #   pitfalls   : extract skip + analyze skip + to_pdf skip      → 3
-        #   topics     : topics skip + to_pdf skip                      → 2
-        #   all-lectures: compile skip + to_pdf skip                     → 2
+        #   student-qa : extract skip                                   → 1
+        #   pitfalls   : extract skip                                   → 1
+        #   topics     : topics skip                                    → 1
+        #   all-lectures: compile skip                                   → 1
         #   run end                                                     → 1
         async def go():
             slugs, _ = course_runner.resolve_slugs(None)
@@ -245,7 +245,7 @@ class TestGenerateAll:
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 14
+        assert db.notifies == 8
 
 
 class TestGenerateSubset:
@@ -275,11 +275,11 @@ class TestGenerateSubset:
             return await _wait_done()
 
         status = asyncio.run(go())
-        # Extract finds nothing → skipped; analyze finds no .txt, to_pdf finds no .md → skipped throughout.
+        # Extract finds nothing → skipped, and the chain stops there.
         assert status["extractors"]["student-qa"]["status"] == "skipped"
         assert db.puts == []
-        # 1 ping per (slug, phase): extract + analyze + to_pdf = 3, plus run end = 4.
-        assert db.notifies == 4
+        # 1 ping for extract, plus run end = 2.
+        assert db.notifies == 2
 
     def test_unknown_extractor_is_error(self):
         # Route glue answers this pair's second element as a 400 body, verbatim.
@@ -435,6 +435,60 @@ class TestErrors:
         )  # no snippets → no .txt
 
 
+class TestSkipStopsChain:
+    """A worker's `skipped` wrote no output, so it ends the slug's chain like an error does;
+    a continue-mode keep (`already_generated`) left its output on disk, so the chain goes on."""
+
+    def test_extract_skip_stops_chain_and_keeps_its_reason(self, db, monkeypatch):
+        monkeypatch.setattr(
+            course_analyze,
+            "run_analyze",
+            lambda *a: pytest.fail("analyze must not run after an extract skip"),
+        )
+        monkeypatch.setattr(
+            course_to_pdf,
+            "run_to_pdf",
+            lambda *a: pytest.fail("to_pdf must not run after an extract skip"),
+        )
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["student-qa"])
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert status["extractors"]["student-qa"] == {
+            "status": "skipped",
+            "message": "no snippets found",
+            "code": "no_snippets_found",
+            "params": {},
+            "phase": "extract",
+        }
+
+    def test_already_generated_keep_proceeds_to_next_phase(self, db, monkeypatch):
+        db.overview_store["exam-hints.txt"] = b"report"
+        analyzed = []
+        real_run_analyze = course_analyze.run_analyze
+
+        def spy(course, extractor):
+            analyzed.append(extractor.slug)
+            return real_run_analyze(course, extractor)
+
+        monkeypatch.setattr(course_analyze, "run_analyze", spy)
+
+        async def go():
+            course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints"], skip_existing=True
+            )
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        assert analyzed == ["exam-hints"]
+        assert status["extractors"]["exam-hints"] == {
+            "status": "done",
+            "phase": "to_pdf",
+        }
+
+
 class TestToPdfPhase:
     # A transcript matching TWO extractors (exam-hints "במבחן" + pitfalls "שימו לב"), so both
     # reach the to_pdf phase with an analyzed .md and PDF error isolation can be exercised.
@@ -455,9 +509,11 @@ class TestToPdfPhase:
         assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
 
     def test_missing_analyzed_md_skips(self, db):
-        # student-qa never matches → no .txt, no .md → to_pdf has nothing to render.
+        # A run starting at to_pdf with no .md on disk: the phase's own skip is the reason.
         async def go():
-            course_runner.try_run_generate(COURSE, _course_node(), ["student-qa"])
+            course_runner.try_run_generate(
+                COURSE, _course_node(), ["student-qa"], ep.Phase.TO_PDF
+            )
             return await _wait_done()
 
         status = asyncio.run(go())
@@ -1170,7 +1226,7 @@ class TestPhaseFiltering:
             return await _wait_done()
 
         status = asyncio.run(go())
-        assert _phase(COURSE, "pitfalls") == "to_pdf"
+        assert _phase(COURSE, "exam-hints") == "to_pdf"
         assert "topics" not in status["extractors"]
 
     def test_error_isolation_holds_across_new_phase_list(self, db, monkeypatch):

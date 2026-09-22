@@ -55,7 +55,7 @@ Module-level state in `course/runner.py`:
 
 Because a slug holds its lock across its whole phase chain, the UI shows one spinner per slug with no false "done" flicker between phases.
 
-**Failure isolation.** A (slug, phase) failure marks that entry `error`, stops that slug's chain (no `to_pdf` on a failed analyze) and leaves the other slugs running. A worker exception that names itself carries its own code and params through; only a truly untyped one falls back to `internal_error` with `str(e)` as `detail`. A slug already in `error` is left as-is by later phases, so the real failure survives to the final status instead of being masked as a downstream `skipped`.
+**Failure isolation.** A (slug, phase) failure marks that entry `error`, stops that slug's chain (no `to_pdf` on a failed analyze) and leaves the other slugs running. A worker exception that names itself carries its own code and params through; only a truly untyped one falls back to `internal_error` with `str(e)` as `detail`. A worker's `skipped` (e.g. `no_snippets_found`) stops the chain the same way, since it wrote no output — so the entry keeps the originating reason instead of a downstream `missing_prerequisite`. A continue-mode keep (`already_generated`) is not a dead end: its output is on disk, so the chain goes on.
 
 `db_client.notify()` fires after each (slug, phase) work unit — done/skipped/error/kept — and once at run end.
 

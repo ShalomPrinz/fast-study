@@ -116,7 +116,7 @@ class OverviewRun:
 
     async def execute(self) -> None:
         """Walk the selected slugs in declaration order, running each one's phase chain under its
-        own lock. One slug's failure stops only its own remaining phases."""
+        own lock. One slug's error or skip stops only its own remaining phases."""
 
         # Snapshot the overview dir once at run start (continue mode reads only this snapshot).
         existing = self._existing_outputs() if self.skip_existing else set()
@@ -140,7 +140,7 @@ class OverviewRun:
                         continue
 
                     if await asyncio.to_thread(self._run_slug_phase, slug, phase):
-                        break  # slug errored: stop its chain, the other slugs go on
+                        break  # dead end: stop this slug's chain, the other slugs go on
         db_client.notify()
 
     def _existing_outputs(self) -> set[str]:
@@ -173,7 +173,7 @@ class OverviewRun:
 
     def _run_slug_phase(self, slug: str, phase: Phase) -> bool:
         """Run one (slug, phase) worker and fold its result into the shared entry; returns True
-        if it raised, so the caller stops that slug's chain."""
+        if it raised or skipped, since either wrote no output for the next phase to read."""
 
         entries = _status.setdefault(self.course, {})
         # Fresh dict so a prior phase's message can't linger; `phase` and `started_at` carry over
@@ -185,7 +185,7 @@ class OverviewRun:
         entries[slug] = {"status": "running", **carried}
         try:
             entries[slug] = {**self._phase_worker(slug, phase), **carried}
-            errored = False
+            stop = entries[slug]["status"] == "skipped"
         except Exception as e:
             code, params = error_fields(e, "internal_error")
             entries[slug] = {
@@ -195,10 +195,10 @@ class OverviewRun:
                 "params": params,
                 **carried,
             }
-            errored = True
+            stop = True
         finally:
             db_client.notify()
-        return errored
+        return stop
 
     def _phase_worker(self, slug: str, phase: Phase) -> dict:
         """Dispatch one (slug, phase) to its worker. Dispatch lives here, not in the registry —
