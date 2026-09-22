@@ -121,7 +121,11 @@ export async function assertPluginfileReadable(url) {
   if (!type.includes('application/json')) return;
   const body = await res.json().catch(() => null);
   if (body?.errorcode) throw new WsError(body.errorcode, body.message);
-  throw new CodedError('moodle_file_unreadable', { url }, `pluginfile served JSON, not a file: ${url}`);
+  throw new CodedError(
+    'moodle_file_unreadable',
+    { url },
+    `pluginfile served JSON, not a file: ${url}`,
+  );
 }
 
 // Parse the numeric course id from a Moodle course URL (…/course/view.php?id=109063).

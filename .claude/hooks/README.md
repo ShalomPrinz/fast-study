@@ -6,7 +6,7 @@ run at the end of every turn and every subagent. They exist to keep the repo's s
 
 | Script | Does | Blocks the turn |
 | ------ | ---- | --------------- |
-| `format.sh` | `ruff format` + import sort on Python, prettier on JS/TS/CSS, in place | never |
+| `format.sh` | `ruff format` + import sort on Python, prettier on every other file it parses, in place | never |
 | `lint.sh` | `ruff check` + `eslint` at pyflakes/recommended level, plus the frontend CSS layout rules | yes |
 | `typecheck.sh` | `tsc --noEmit` over `frontend/` | yes |
 
@@ -31,13 +31,15 @@ hash the failure text into `$TMPDIR/claude-{lint,typecheck}-$session`; an identi
 run downgrades to a visible warning and lets the turn end. The state file is per-session and cleared
 on success.
 
-**`CLAUDE_PROJECT_DIR` can point at a deleted worktree.** A session that entered one keeps the
-variable pointing there after it's gone, so every script falls back to `git rev-parse
---show-toplevel` rather than skipping silently.
+**The tree is the session's `cwd`, not `CLAUDE_PROJECT_DIR`.** A session started in the main
+checkout that edits a worktree by absolute path keeps `CLAUDE_PROJECT_DIR` on main, so a hook keyed
+on it checks the wrong tree and reports `-`. Each script takes the git top-level of the hook input's
+`cwd`, falling back to `CLAUDE_PROJECT_DIR` and then its own `git rev-parse --show-toplevel`.
 
 **The format baseline.** `format.sh` sweeps the entire repo the first time it runs in a tree and
 drops [`../.format-baseline`](../.format-baseline) (git-ignored). Without that one-time pass every
-later edit to a never-formatted file would arrive as a whole-file reformat diff. A new worktree
+later edit to a never-formatted file would arrive as a whole-file reformat diff. The per-turn pass
+covers the same files the sweep does, so no file drifts until the next sweep rewrites it. A new worktree
 inherits the marker — see [`../skills/worktree/setup.sh`](../skills/worktree/setup.sh).
 
 **`lint.sh` also enforces the frontend CSS layout** — three greps asserting `main.tsx` imports no

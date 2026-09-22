@@ -3,13 +3,15 @@
 # eslint for frontend/ + downloader/ + lib/. Blocks the turn on failure. See README.md.
 set -uo pipefail
 
-# CLAUDE_PROJECT_DIR can outlive a deleted worktree — see README.md.
-ROOT="${CLAUDE_PROJECT_DIR:-}"
+payload="$(cat)"
+# The tree the session is working in, not the one it started in — see README.md.
+cwd="$(printf '%s' "$payload" | jq -r '.cwd // empty' 2>/dev/null)"
+ROOT="$(git -C "${cwd:-.}" rev-parse --show-toplevel 2>/dev/null)"
+[ -d "$ROOT" ] || ROOT="${CLAUDE_PROJECT_DIR:-}"
 [ -d "$ROOT" ] || ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
 [ -d "$ROOT" ] || exit 0
 cd "$ROOT" || exit 0
 
-payload="$(cat)"
 session="$(printf '%s' "$payload" | jq -r '.session_id // "nosession"' 2>/dev/null || echo nosession)"
 state="${TMPDIR:-/tmp}/claude-lint-${session}"
 

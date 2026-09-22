@@ -9,7 +9,8 @@ import path from 'node:path';
 
 function env(name) {
   const value = process.env[name];
-  if (!value) throw new Error(`${name} is not set; the smoke suite runs only on the Windows runner`);
+  if (!value)
+    throw new Error(`${name} is not set; the smoke suite runs only on the Windows runner`);
   return value;
 }
 

@@ -15,7 +15,8 @@ export const COURSES = {
 };
 
 // Long on purpose: a sidebar, a heading and a PDF title all have to survive it.
-const LONG_LECTURE = 'שיעור 11 — מבוא ארוך במיוחד שנועד לבדוק גלישת טקסט בכותרת, בתפריט הצד וברשימת הקבצים';
+const LONG_LECTURE =
+  'שיעור 11 — מבוא ארוך במיוחד שנועד לבדוק גלישת טקסט בכותרת, בתפריט הצד וברשימת הקבצים';
 
 async function course(name, sourceUrl) {
   await json(`${DATABASE}/courses`, 'POST', sourceUrl ? { name, source_url: sourceUrl } : { name });
@@ -27,7 +28,10 @@ async function lecture(courseName, name, kind = 'lecture') {
 
 async function put(courseName, lectureName, file, buffer, type, kind = 'lecture') {
   const base = `${DATABASE}/courses/${encode(courseName)}/lectures/${encode(lectureName)}`;
-  const url = file === 'video.mp4' ? `${base}/video?kind=${kind}` : `${base}/files/${encode(file)}?kind=${kind}`;
+  const url =
+    file === 'video.mp4'
+      ? `${base}/video?kind=${kind}`
+      : `${base}/files/${encode(file)}?kind=${kind}`;
   await bytes(url, 'PUT', buffer, type);
 }
 

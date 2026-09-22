@@ -112,7 +112,12 @@ function sendReconnect(res) {
 // redirecting off-YouTube) so the page shows the specific reason. Relays the thrower's code —
 // what is unsupported differs per source, and only the throw site knows which.
 export function sendUnsupported(res, err) {
-  send(res, 422, { status: 'unsupported', message: err.message, code: err.code, params: err.params });
+  send(res, 422, {
+    status: 'unsupported',
+    message: err.message,
+    code: err.code,
+    params: err.params,
+  });
 }
 
 // Distinct "the site served a bot-protection challenge" signal, so the page can say to wait.

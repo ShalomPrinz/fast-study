@@ -37,16 +37,31 @@ const value = (name, fallback) => {
   return at === -1 ? fallback : args[at + 1];
 };
 
-const paths = harnessPaths(path.resolve(value('--harness', process.env.HUNT_BUGS_HARNESS ?? defaultRoot())));
+const paths = harnessPaths(
+  path.resolve(value('--harness', process.env.HUNT_BUGS_HARNESS ?? defaultRoot())),
+);
 
 // A 20-second clip: long enough that the audio step does real ffmpeg work and the UI shows a
 // duration, short enough that a full run is seconds rather than minutes.
 const VIDEO_ARGS = [
   '-y',
-  '-f', 'lavfi', '-i', 'testsrc=size=640x360:rate=15:duration=20',
-  '-f', 'lavfi', '-i', 'sine=frequency=440:duration=20',
-  '-c:v', 'libx264', '-preset', 'ultrafast', '-pix_fmt', 'yuv420p',
-  '-c:a', 'aac', '-shortest',
+  '-f',
+  'lavfi',
+  '-i',
+  'testsrc=size=640x360:rate=15:duration=20',
+  '-f',
+  'lavfi',
+  '-i',
+  'sine=frequency=440:duration=20',
+  '-c:v',
+  'libx264',
+  '-preset',
+  'ultrafast',
+  '-pix_fmt',
+  'yuv420p',
+  '-c:a',
+  'aac',
+  '-shortest',
 ];
 
 // A valid one-page PDF, written by hand: the material path only needs bytes a PDF reader accepts,
@@ -68,7 +83,17 @@ function say(line) {
 }
 
 async function buildHarness() {
-  for (const dir of [paths.root, paths.data, paths.state, paths.logs, paths.evidence, paths.fixtures, paths.bin, paths.drive, paths.tls]) {
+  for (const dir of [
+    paths.root,
+    paths.data,
+    paths.state,
+    paths.logs,
+    paths.evidence,
+    paths.fixtures,
+    paths.bin,
+    paths.drive,
+    paths.tls,
+  ]) {
     fs.mkdirSync(dir, { recursive: true });
   }
   // The guard the whole harness rests on: it runs against a data root it made, and nothing else.
@@ -79,8 +104,14 @@ async function buildHarness() {
   fs.writeFileSync(marker, `${BANNER}\n`);
   fs.writeFileSync(path.join(paths.root, 'README.txt'), `${BANNER}\n`);
 
-  fs.copyFileSync(path.join(HUNT_ROOT, 'fixtures', 'transcript.txt'), path.join(paths.fixtures, 'transcript.txt'));
-  fs.copyFileSync(path.join(HUNT_ROOT, 'fixtures', 'summary.md'), path.join(paths.fixtures, 'summary.md'));
+  fs.copyFileSync(
+    path.join(HUNT_ROOT, 'fixtures', 'transcript.txt'),
+    path.join(paths.fixtures, 'transcript.txt'),
+  );
+  fs.copyFileSync(
+    path.join(HUNT_ROOT, 'fixtures', 'summary.md'),
+    path.join(paths.fixtures, 'summary.md'),
+  );
   fs.writeFileSync(path.join(paths.fixtures, 'handout.pdf'), MINIMAL_PDF);
 
   const video = path.join(paths.fixtures, 'video.mp4');
@@ -88,10 +119,19 @@ async function buildHarness() {
 
   if (!fs.existsSync(path.join(paths.tls, 'cert.pem'))) {
     await run('openssl', [
-      'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '3650',
-      '-keyout', path.join(paths.tls, 'key.pem'),
-      '-out', path.join(paths.tls, 'cert.pem'),
-      '-subj', '/CN=hunt-bugs-fake-site',
+      'req',
+      '-x509',
+      '-newkey',
+      'rsa:2048',
+      '-nodes',
+      '-days',
+      '3650',
+      '-keyout',
+      path.join(paths.tls, 'key.pem'),
+      '-out',
+      path.join(paths.tls, 'cert.pem'),
+      '-subj',
+      '/CN=hunt-bugs-fake-site',
     ]);
   }
 
@@ -99,7 +139,10 @@ async function buildHarness() {
   // name in a dev run, so PATH is the whole mechanism — no production code has to know.
   for (const tool of ['curl', 'yt-dlp']) {
     const wrapper = path.join(paths.bin, tool);
-    fs.writeFileSync(wrapper, `#!/bin/sh\nexec ${process.execPath} ${path.join(HUNT_ROOT, 'fakes', 'tool.mjs')} ${tool} "$@"\n`);
+    fs.writeFileSync(
+      wrapper,
+      `#!/bin/sh\nexec ${process.execPath} ${path.join(HUNT_ROOT, 'fakes', 'tool.mjs')} ${tool} "$@"\n`,
+    );
     fs.chmodSync(wrapper, 0o755);
   }
 
@@ -122,7 +165,10 @@ async function buildHarness() {
 
   // The environment each half of the stack runs with, written out so one service can be killed
   // and restarted mid-sweep without reconstructing it by hand.
-  for (const [name, env] of [['python', pythonEnv(paths)], ['node', nodeEnv(paths)]]) {
+  for (const [name, env] of [
+    ['python', pythonEnv(paths)],
+    ['node', nodeEnv(paths)],
+  ]) {
     const lines = Object.entries(env)
       .filter(([key, item]) => item !== process.env[key])
       .map(([key, item]) => `export ${key}=${JSON.stringify(item)}`);
@@ -135,31 +181,69 @@ async function buildHarness() {
   fs.mkdirSync(path.dirname(tokenPath), { recursive: true });
   fs.writeFileSync(
     tokenPath,
-    JSON.stringify({ wstoken: FAKE_WSTOKEN, privatetoken: 'hunt-bugs-private', savedAt: new Date().toISOString() }),
+    JSON.stringify({
+      wstoken: FAKE_WSTOKEN,
+      privatetoken: 'hunt-bugs-private',
+      savedAt: new Date().toISOString(),
+    }),
   );
 }
 
 function startFakes() {
   const env = { ...nodeEnv(paths), HUNT_BUGS_WSTOKEN: FAKE_WSTOKEN, NODE_OPTIONS: '' };
-  start('fake-providers', process.execPath, [path.join(HUNT_ROOT, 'fakes', 'providers.mjs')], { cwd: HUNT_ROOT, env, paths });
-  start('fake-site', process.execPath, [path.join(HUNT_ROOT, 'fakes', 'site.mjs')], { cwd: HUNT_ROOT, env, paths });
+  start('fake-providers', process.execPath, [path.join(HUNT_ROOT, 'fakes', 'providers.mjs')], {
+    cwd: HUNT_ROOT,
+    env,
+    paths,
+  });
+  start('fake-site', process.execPath, [path.join(HUNT_ROOT, 'fakes', 'site.mjs')], {
+    cwd: HUNT_ROOT,
+    env,
+    paths,
+  });
 }
 
 function startServices() {
   const py = pythonEnv(paths);
   const node = nodeEnv(paths);
-  start('database', 'uv', ['run', 'uvicorn', 'database_main:app', '--host', '127.0.0.1', '--port', String(PORTS.database)], {
-    cwd: path.join(REPO_ROOT, 'database'),
-    env: py,
+  start(
+    'database',
+    'uv',
+    [
+      'run',
+      'uvicorn',
+      'database_main:app',
+      '--host',
+      '127.0.0.1',
+      '--port',
+      String(PORTS.database),
+    ],
+    {
+      cwd: path.join(REPO_ROOT, 'database'),
+      env: py,
+      paths,
+    },
+  );
+  start(
+    'backend',
+    'uv',
+    ['run', 'uvicorn', 'backend_main:app', '--host', '127.0.0.1', '--port', String(PORTS.backend)],
+    {
+      cwd: path.join(REPO_ROOT, 'backend'),
+      env: py,
+      paths,
+    },
+  );
+  start('downloader-server', 'npm', ['start'], {
+    cwd: path.join(REPO_ROOT, 'downloader', 'server'),
+    env: node,
     paths,
   });
-  start('backend', 'uv', ['run', 'uvicorn', 'backend_main:app', '--host', '127.0.0.1', '--port', String(PORTS.backend)], {
-    cwd: path.join(REPO_ROOT, 'backend'),
-    env: py,
+  start('downloader-auto', 'npm', ['start'], {
+    cwd: path.join(REPO_ROOT, 'downloader', 'auto'),
+    env: node,
     paths,
   });
-  start('downloader-server', 'npm', ['start'], { cwd: path.join(REPO_ROOT, 'downloader', 'server'), env: node, paths });
-  start('downloader-auto', 'npm', ['start'], { cwd: path.join(REPO_ROOT, 'downloader', 'auto'), env: node, paths });
   // No shim on the dev server: it serves the SPA and talks to nobody, and NODE_OPTIONS would ride
   // into every tool vite spawns.
   start('frontend', 'npm', ['run', 'dev'], {
@@ -170,12 +254,24 @@ function startServices() {
 }
 
 async function waitForEverything() {
-  await waitFor('fake providers', `http://127.0.0.1:${PORTS.providers}/health`, { logFile: logOf('fake-providers') });
-  await waitFor('fake site', `http://127.0.0.1:${PORTS.site}/health`, { logFile: logOf('fake-site') });
-  await waitFor('database', `http://127.0.0.1:${PORTS.database}/health`, { logFile: logOf('database') });
-  await waitFor('backend', `http://127.0.0.1:${PORTS.backend}/health`, { logFile: logOf('backend') });
-  await waitFor('downloader server', `http://127.0.0.1:${PORTS.server}/health`, { logFile: logOf('downloader-server') });
-  await waitFor('auto-downloader', `http://127.0.0.1:${PORTS.auto}/health`, { logFile: logOf('downloader-auto') });
+  await waitFor('fake providers', `http://127.0.0.1:${PORTS.providers}/health`, {
+    logFile: logOf('fake-providers'),
+  });
+  await waitFor('fake site', `http://127.0.0.1:${PORTS.site}/health`, {
+    logFile: logOf('fake-site'),
+  });
+  await waitFor('database', `http://127.0.0.1:${PORTS.database}/health`, {
+    logFile: logOf('database'),
+  });
+  await waitFor('backend', `http://127.0.0.1:${PORTS.backend}/health`, {
+    logFile: logOf('backend'),
+  });
+  await waitFor('downloader server', `http://127.0.0.1:${PORTS.server}/health`, {
+    logFile: logOf('downloader-server'),
+  });
+  await waitFor('auto-downloader', `http://127.0.0.1:${PORTS.auto}/health`, {
+    logFile: logOf('downloader-auto'),
+  });
   await waitFor('frontend', `http://127.0.0.1:${PORTS.frontend}/`, { logFile: logOf('frontend') });
 }
 
@@ -206,7 +302,9 @@ async function preflightPorts() {
   }
   const busy = portOwners(PORTS);
   if (busy.length) {
-    const lines = busy.map((owner) => `  :${owner.port} (${owner.name}) held by pid ${owner.pid} — ${owner.command}`);
+    const lines = busy.map(
+      (owner) => `  :${owner.port} (${owner.name}) held by pid ${owner.pid} — ${owner.command}`,
+    );
     throw new Error(
       `these ports are already in use, most likely a previous harness or a plain \`npm run dev\`:\n${lines.join('\n')}\n` +
         'Stop it, or re-run with --stop to have the harness terminate them first.',
@@ -224,9 +322,15 @@ async function main() {
   say('  ✓ fixtures, fake binaries, scratch .env and Moodle token written');
 
   startFakes();
-  await waitFor('fake providers', `http://127.0.0.1:${PORTS.providers}/health`, { logFile: logOf('fake-providers') });
-  await waitFor('fake site', `http://127.0.0.1:${PORTS.site}/health`, { logFile: logOf('fake-site') });
-  say(`  ✓ fakes up: providers :${PORTS.providers}, lecture site :${PORTS.site} (:${PORTS.siteTls} tls)`);
+  await waitFor('fake providers', `http://127.0.0.1:${PORTS.providers}/health`, {
+    logFile: logOf('fake-providers'),
+  });
+  await waitFor('fake site', `http://127.0.0.1:${PORTS.site}/health`, {
+    logFile: logOf('fake-site'),
+  });
+  say(
+    `  ✓ fakes up: providers :${PORTS.providers}, lecture site :${PORTS.site} (:${PORTS.siteTls} tls)`,
+  );
 
   if (flag('--no-launch')) {
     say(`\nLaunch the stack yourself, sourcing the environment it needs:
@@ -240,17 +344,21 @@ async function main() {
   say('  ✓ database, backend, downloader server, auto-downloader and the dev server all answering');
   for (const line of await reportTools()) say(line);
 
-  if (!isScratchData(paths.data)) throw new Error('the data root lost its scratch marker — refusing to seed');
+  if (!isScratchData(paths.data))
+    throw new Error('the data root lost its scratch marker — refusing to seed');
   if (flag('--reseed')) {
     for (const entry of fs.readdirSync(paths.data)) {
-      if (entry !== SCRATCH_MARKER) fs.rmSync(path.join(paths.data, entry), { recursive: true, force: true });
+      if (entry !== SCRATCH_MARKER)
+        fs.rmSync(path.join(paths.data, entry), { recursive: true, force: true });
     }
   }
   // Re-running against the same harness keeps whatever the last sweep left, which is often the
   // point — a bug reproduced on the state that produced it. --reseed wipes back to the fixtures.
   const existing = fs.readdirSync(paths.data).filter((entry) => entry !== SCRATCH_MARKER);
   if (existing.length) {
-    say(`  ✓ reusing the scratch data already in ${paths.data} (${existing.length} courses; --reseed to start over)`);
+    say(
+      `  ✓ reusing the scratch data already in ${paths.data} (${existing.length} courses; --reseed to start over)`,
+    );
   } else {
     const seeded = await seed(paths);
     say(`  ✓ seeded ${seeded.courses} courses / ${seeded.lectures} lectures into ${paths.data}`);

@@ -103,8 +103,12 @@ function json(res, body, status = 200) {
 // What Radware serves a client it reads as automated: HTTP 200, text/html, no WS body. The one
 // answer `WsBlockedError` exists for.
 function challenge(res) {
-  const body = '<!doctype html><title>Bot check</title><p>hunt-bugs: pretending to be a challenge page.';
-  res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': Buffer.byteLength(body) });
+  const body =
+    '<!doctype html><title>Bot check</title><p>hunt-bugs: pretending to be a challenge page.';
+  res.writeHead(200, {
+    'content-type': 'text/html; charset=utf-8',
+    'content-length': Buffer.byteLength(body),
+  });
   res.end(body);
 }
 
@@ -174,7 +178,11 @@ function handle(req, res) {
     }
     if (fn === 'core_course_get_contents') return json(res, courseContents());
     if (fn === 'tool_mobile_get_autologin_key') {
-      return json(res, { key: 'hunt-autologin', autologinurl: `${SITE}/admin/tool/mobile/autologin.php`, warnings: [] });
+      return json(res, {
+        key: 'hunt-autologin',
+        autologinurl: `${SITE}/admin/tool/mobile/autologin.php`,
+        warnings: [],
+      });
     }
     return json(res, {
       exception: 'moodle_exception',
@@ -186,8 +194,12 @@ function handle(req, res) {
   if (route.startsWith('/pluginfile.php/')) return serveFile(req, res, PDF, 'application/pdf');
   if (route.startsWith('/media/')) return serveFile(req, res, VIDEO, 'video/mp4');
   if (route.startsWith('/page/')) {
-    const body = '<!doctype html><meta charset="utf-8"><h1>hunt-bugs: an ordinary web page, not a recording.';
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'content-length': Buffer.byteLength(body) });
+    const body =
+      '<!doctype html><meta charset="utf-8"><h1>hunt-bugs: an ordinary web page, not a recording.';
+    res.writeHead(200, {
+      'content-type': 'text/html; charset=utf-8',
+      'content-length': Buffer.byteLength(body),
+    });
     return res.end(body);
   }
   if (route.startsWith('/gone/')) return json(res, { error: 'gone' }, 404);

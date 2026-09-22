@@ -39,7 +39,7 @@ jobs:
     env:
       # database/ carries no .python-version of its own, so pin the interpreter here — otherwise a
       # runner image bump silently moves the version the suite runs on.
-      UV_PYTHON: "3.12"
+      UV_PYTHON: '3.12'
     steps:
       - uses: actions/checkout@v4
 
@@ -78,7 +78,7 @@ jobs:
     env:
       # Both suites are unit tests over the extractors and the express routes; neither launches a
       # browser, so skip playwright's browser download rather than pay for it on every run.
-      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+      PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
     steps:
       - uses: actions/checkout@v4
 
@@ -118,7 +118,7 @@ jobs:
     env:
       # The suite is pure logic over a fake `electron` module, so it only needs the package
       # resolvable — never the ~100MB platform binary electron's postinstall would fetch.
-      ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
+      ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
     steps:
       - uses: actions/checkout@v4
 
@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # No .python-version under lib/ either — see database-tests.
-      UV_PYTHON: "3.12"
+      UV_PYTHON: '3.12'
     steps:
       - uses: actions/checkout@v4
 

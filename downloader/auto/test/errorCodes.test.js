@@ -30,7 +30,11 @@ import {
 import { encodeRef } from '../src/lib/ref.js';
 
 // What was thrown, never what was returned — every site here fails by throwing.
-const thrown = async (fn) => fn().then(() => null, (e) => e);
+const thrown = async (fn) =>
+  fn().then(
+    () => null,
+    (e) => e,
+  );
 const codeOf = (err) => ({ code: err.code, params: err.params });
 
 function stubFetch(t, impl) {
@@ -100,10 +104,13 @@ test('a course URL from an unhandled site, and one with no id', () => {
     code: 'course_url_unsupported_site',
     params: { url: 'https://moodle.other.ac.il/x' },
   });
-  assert.deepEqual(codeOf(thrownSync(() => courseIdFrom('https://lemida.biu.ac.il/course/view.php'))), {
-    code: 'course_url_no_id',
-    params: { url: 'https://lemida.biu.ac.il/course/view.php' },
-  });
+  assert.deepEqual(
+    codeOf(thrownSync(() => courseIdFrom('https://lemida.biu.ac.il/course/view.php'))),
+    {
+      code: 'course_url_no_id',
+      params: { url: 'https://lemida.biu.ac.il/course/view.php' },
+    },
+  );
 });
 
 function thrownSync(fn) {
@@ -156,9 +163,17 @@ test('a pluginfile that serves JSON instead of the file', async (t) => {
 test('a dead link, a non-video file and a web page are three different codes', async (t) => {
   stubFetch(t, async () => ({ ok: false, status: 404, body: { cancel: async () => {} } }));
   const dead = await thrown(() =>
-    resolveDirectUrl({ recording: directUrlRecording('https://files.test/e1/gone.mp4'), course: 'C', name: 'L', kind: 'lecture' }),
+    resolveDirectUrl({
+      recording: directUrlRecording('https://files.test/e1/gone.mp4'),
+      course: 'C',
+      name: 'L',
+      kind: 'lecture',
+    }),
   );
-  assert.deepEqual(codeOf(dead), { code: 'link_dead', params: { url: 'https://files.test/e1/gone.mp4' } });
+  assert.deepEqual(codeOf(dead), {
+    code: 'link_dead',
+    params: { url: 'https://files.test/e1/gone.mp4' },
+  });
 
   globalThis.fetch = async (url) => ({
     ok: true,
@@ -168,7 +183,12 @@ test('a dead link, a non-video file and a web page are three different codes', a
     body: { cancel: async () => {} },
   });
   const slides = await thrown(() =>
-    resolveDirectUrl({ recording: directUrlRecording('https://files.test/e2/deck.pptx'), course: 'C', name: 'L', kind: 'lecture' }),
+    resolveDirectUrl({
+      recording: directUrlRecording('https://files.test/e2/deck.pptx'),
+      course: 'C',
+      name: 'L',
+      kind: 'lecture',
+    }),
   );
   assert.deepEqual(codeOf(slides), {
     code: 'link_not_a_video',
@@ -184,7 +204,12 @@ test('a dead link, a non-video file and a web page are three different codes', a
     body: { cancel: async () => {} },
   });
   const page = await thrown(() =>
-    resolveDirectUrl({ recording: directUrlRecording('https://files.test/e3/watch'), course: 'C', name: 'L', kind: 'lecture' }),
+    resolveDirectUrl({
+      recording: directUrlRecording('https://files.test/e3/watch'),
+      course: 'C',
+      name: 'L',
+      kind: 'lecture',
+    }),
   );
   assert.deepEqual(codeOf(page), {
     code: 'link_not_a_video',
@@ -197,7 +222,12 @@ test('a host that answers nothing useful stays inconclusive, not unsupported', a
     throw new Error('ECONNREFUSED');
   });
   const err = await thrown(() =>
-    resolveDirectUrl({ recording: directUrlRecording('https://files.test/e4/opaque'), course: 'C', name: 'L', kind: 'lecture' }),
+    resolveDirectUrl({
+      recording: directUrlRecording('https://files.test/e4/opaque'),
+      course: 'C',
+      name: 'L',
+      kind: 'lecture',
+    }),
   );
   assert.deepEqual(codeOf(err), {
     code: 'link_probe_inconclusive',
@@ -207,10 +237,13 @@ test('a host that answers nothing useful stays inconclusive, not unsupported', a
 });
 
 test('a Drive link that is not a file link, and one nobody shared', async (t) => {
-  assert.deepEqual(codeOf(await thrown(() => probeDriveFile('https://drive.google.com/drive/folders/x'))), {
-    code: 'drive_link_malformed',
-    params: { url: 'https://drive.google.com/drive/folders/x' },
-  });
+  assert.deepEqual(
+    codeOf(await thrown(() => probeDriveFile('https://drive.google.com/drive/folders/x'))),
+    {
+      code: 'drive_link_malformed',
+      params: { url: 'https://drive.google.com/drive/folders/x' },
+    },
+  );
 
   stubFetch(t, async () => ({ status: 200, headers: { get: () => null }, text: async () => '' }));
   const url = 'https://drive.google.com/file/d/1unshared-fixture-id/view';
@@ -240,10 +273,13 @@ test('every request-validation body names the field that was wrong', async () =>
     const res = fakeRes();
     handleZoomPasscode({ body }, res);
     assert.equal(res.code, 400);
-    assert.deepEqual({ code: res.body.code, params: res.body.params }, {
-      code: 'invalid_request',
-      params: { field },
-    });
+    assert.deepEqual(
+      { code: res.body.code, params: res.body.params },
+      {
+        code: 'invalid_request',
+        params: { field },
+      },
+    );
   }
 });
 
@@ -258,10 +294,13 @@ test('/resolve rejects a ref, a name and a kind it cannot use', async () => {
     const res = fakeRes();
     await handleResolve({ body }, res);
     assert.equal(res.code, 400);
-    assert.deepEqual({ code: res.body.code, params: res.body.params }, {
-      code: 'invalid_request',
-      params: { field },
-    });
+    assert.deepEqual(
+      { code: res.body.code, params: res.body.params },
+      {
+        code: 'invalid_request',
+        params: { field },
+      },
+    );
   }
 });
 

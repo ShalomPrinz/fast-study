@@ -18,9 +18,9 @@ env:
   # Pinned, because each one is a claim the repo has measured. tectonic is the version the shipped
   # LaTeX cache was primed against; pandoc 3.x crashes text_direction.lua, so the binary and
   # backend/assets/templates/pandoc_template.tex only ever move together.
-  TECTONIC_VERSION: "0.17.0"
-  PANDOC_VERSION: "2.9.2.1"
-  FFMPEG_VERSION: "8.0"
+  TECTONIC_VERSION: '0.17.0'
+  PANDOC_VERSION: '2.9.2.1'
+  FFMPEG_VERSION: '8.0'
   STAGE: delivery/stage
 
 jobs:
@@ -124,7 +124,7 @@ jobs:
       # launch resolves channel:'chrome' or 'msedge' — out of the installer.
       - name: Install the Node services
         env:
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: "1"
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
         run: |
           # Each in a subshell rather than `npm --prefix`: run from the repo root, npm would pick up
           # the root package.json's `lib/*/js` workspaces instead of the service's own tree.

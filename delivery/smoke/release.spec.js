@@ -55,7 +55,8 @@ const ASSUMPTION = {
   nsis: 'NSIS /S performs the per-user install with no prompt',
   rename:
     "renaming a browser's install dir is equivalent to uninstalling it for Playwright's channel resolve",
-  updater: 'electron-updater installs an unsigned build over an unsigned build from a generic provider',
+  updater:
+    'electron-updater installs an unsigned build over an unsigned build from a generic provider',
   wholesale: 'an electron-updater install preserves nothing in the install directory',
 };
 const failed = (assumption) => `assumption failed: ${assumption}`;
@@ -258,7 +259,9 @@ test('1. fresh install', async () => {
       'app-update.yml',
     ];
     for (const entry of shipped) {
-      expect(fs.existsSync(path.join(paths.resourcesDir(), entry)), `resources/${entry}`).toBe(true);
+      expect(fs.existsSync(path.join(paths.resourcesDir(), entry)), `resources/${entry}`).toBe(
+        true,
+      );
     }
     // bin/ as a set, not as existence checks: a binary nothing spawns any more still installs
     // cleanly, and its only symptom is the installer's size.
@@ -269,7 +272,9 @@ test('1. fresh install', async () => {
 
     const bundles = fs.readdirSync(path.join(paths.resourcesDir(), 'latex', 'bundles'));
     expect(bundles.length, 'resources/latex/bundles is empty').toBeGreaterThan(0);
-    expect(fs.existsSync(paths.formatsDir()), 'latex/formats/ shipped; it is per-machine').toBe(false);
+    expect(fs.existsSync(paths.formatsDir()), 'latex/formats/ shipped; it is per-machine').toBe(
+      false,
+    );
   });
 
   await test.step('every shipped program is blocked from the network', async () => {
@@ -282,8 +287,7 @@ test('1. fresh install', async () => {
   });
 
   await test.step('loopback still works under the block, and nothing else does', () =>
-    proveOfflineEnforcement(),
-  );
+    proveOfflineEnforcement());
 });
 
 test('2. every shipped binary imports only what ships or what Windows has', () => {
@@ -291,7 +295,10 @@ test('2. every shipped binary imports only what ships or what Windows has', () =
   // trusting that everything loads here. DLLs loaded at runtime (LoadLibrary, ctypes) are not covered.
   const system32 = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32');
   const { scanned, failures } = unresolvedImports(paths.installDir(), system32);
-  expect(scanned, 'no PE file under the install dir parsed; the import reader is broken').toBeGreaterThan(0);
+  expect(
+    scanned,
+    'no PE file under the install dir parsed; the import reader is broken',
+  ).toBeGreaterThan(0);
   expect(
     failures.map(({ file, missing }) => `${file}: ${missing.join(', ')}`),
     'imports neither shipped nor a non-redistributable System32 DLL',
@@ -341,9 +348,10 @@ test('3. boot', async () => {
     // A path no service routes: the secret check runs before routing, so 401 rather than 404.
     for (const [name, url] of Object.entries(services.urls)) {
       const { status } = await fetch(`${url}/__smoke`);
-      expect(status, `${name} answered ${status}, so the launcher did not hand it the launch secret`).toBe(
-        401,
-      );
+      expect(
+        status,
+        `${name} answered ${status}, so the launcher did not hand it the launch secret`,
+      ).toBe(401);
     }
   });
 });
@@ -355,9 +363,13 @@ test('4. first run', async () => {
   const text = fs.readFileSync(paths.settingsFile(), 'utf8');
   const stored = JSON.parse(text);
   for (const [provider, key] of Object.entries(PLACEHOLDER_KEYS)) {
-    expect(text.includes(key), `the ${provider} key sits in settings.json in the clear`).toBe(false);
+    expect(text.includes(key), `the ${provider} key sits in settings.json in the clear`).toBe(
+      false,
+    );
     const field = stored[`${provider}_api_key`];
-    expect(typeof field === 'string' && field.length > 0, `no ${provider} key was stored`).toBe(true);
+    expect(typeof field === 'string' && field.length > 0, `no ${provider} key was stored`).toBe(
+      true,
+    );
     expect(
       Buffer.from(field, 'base64').includes(Buffer.from(key)),
       `the ${provider} key is only base64-encoded`,
@@ -379,12 +391,10 @@ test('5. the provider steps fail on the network, and only there', async () => {
     expect(await db.exists(COURSE, LECTURE, 'audio.mp3')).toBe(true);
   });
   await test.step('transcribe fails on the network', () =>
-    expectNetworkFailure(page, COURSE, LECTURE, 'transcribe'),
-  );
+    expectNetworkFailure(page, COURSE, LECTURE, 'transcribe'));
   await db.putFile(COURSE, LECTURE, 'transcript.txt', fixture('transcript.txt'));
   await test.step('summarize fails on the network over the fixed transcript', () =>
-    expectNetworkFailure(page, COURSE, LECTURE, 'summarize'),
-  );
+    expectNetworkFailure(page, COURSE, LECTURE, 'summarize'));
 });
 
 test('6. the PDF, for real', async () => {
@@ -404,7 +414,10 @@ test('6. the PDF, for real', async () => {
   expect(carriesPhrase(text, PDF_PHRASE), 'summary.pdf dropped glyphs of the fixed summary').toBe(
     true,
   );
-  await expect(byTestId(page, 'step-status', { step: 'pdf' })).toHaveAttribute('data-status', 'done');
+  await expect(byTestId(page, 'step-status', { step: 'pdf' })).toHaveAttribute(
+    'data-status',
+    'done',
+  );
 });
 
 test('7. a live SSE update', async () => {
@@ -428,7 +441,10 @@ test('8. drive off', async () => {
   const { page } = session;
   const { db, api } = services;
   await openLecture(page, COURSE, LECTURE);
-  await expect(byTestId(page, 'step-status', { step: 'pdf' })).toHaveAttribute('data-status', 'done');
+  await expect(byTestId(page, 'step-status', { step: 'pdf' })).toHaveAttribute(
+    'data-status',
+    'done',
+  );
   await expect(byTestId(page, 'step-status', { step: 'drive' })).toHaveCount(0);
 
   expect(await api.runPipeline(COURSE, LECTURE)).toEqual({ status: 'started' });
@@ -521,7 +537,10 @@ test('11. the tools run under a Hebrew temp path', async () => {
     const entries = new Set();
     const watcher = fs.watch(temp, (_, name) => name && entries.add(name));
     try {
-      expect(await api.runStep(COURSE, TEMP_LECTURE, step), `the ${step} step failed: ${broke}`).toBeNull();
+      expect(
+        await api.runStep(COURSE, TEMP_LECTURE, step),
+        `the ${step} step failed: ${broke}`,
+      ).toBeNull();
     } finally {
       watcher.close();
     }
@@ -593,7 +612,8 @@ test('13. an in-place update', async () => {
     await runToExit(paths.uninstallerExe(), ['/S'], { timeoutMs: INSTALL_TIMEOUT_MS });
     // The NSIS uninstaller re-launches itself from a temp copy that deletes FastStudy.exe first and the registry keys last.
     await waitFor(
-      async () => !fs.existsSync(paths.installDir()) && (await processesNamed(['Au_*', 'Un_*'])).length === 0,
+      async () =>
+        !fs.existsSync(paths.installDir()) && (await processesNamed(['Au_*', 'Un_*'])).length === 0,
       {
         timeoutMs: INSTALL_TIMEOUT_MS,
         message: `${paths.installDir()} or its uninstaller was still there 5 minutes after the silent uninstall`,
@@ -646,7 +666,8 @@ test('13. an in-place update', async () => {
         {
           timeoutMs: 10 * 60_000,
           intervalMs: 2000,
-          message: () => `no "${downloaded}" in launch.log; the feed saw: ${feed.requests.join(', ')}`,
+          message: () =>
+            `no "${downloaded}" in launch.log; the feed saw: ${feed.requests.join(', ')}`,
         },
       );
       await stop();

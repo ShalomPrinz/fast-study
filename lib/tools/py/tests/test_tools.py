@@ -71,7 +71,10 @@ def test_an_absent_tool_reports_missing(bin_dir):
 def test_a_failing_tool_reports_its_exit_code(bin_dir):
     write_tool("faketool", 3)
     assert check_tools(["faketool"]) == {
-        "faketool": {"state": "exited 3", "params": {"tool": "faketool", "exit_code": 3}}
+        "faketool": {
+            "state": "exited 3",
+            "params": {"tool": "faketool", "exit_code": 3},
+        }
     }
 
 

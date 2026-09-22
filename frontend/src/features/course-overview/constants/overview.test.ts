@@ -68,7 +68,7 @@ describe('branchStatus', () => {
     expect(bs.warning).not.toBe('no snippets found')
   })
 
-  it('fills a skip reason\'s params into its sentence', () => {
+  it("fills a skip reason's params into its sentence", () => {
     const st = skipped({
       message: 'no snippets file — run extract first',
       code: 'missing_prerequisite',

@@ -51,7 +51,9 @@ export async function proveOfflineEnforcement() {
     (error) => `ERROR ${error.message}`,
   );
   if (!unblocked.startsWith('STATUS')) {
-    throw new Error(`the runner itself cannot reach ${external} (${unblocked}), so no block can be proven`);
+    throw new Error(
+      `the runner itself cannot reach ${external} (${unblocked}), so no block can be proven`,
+    );
   }
   const blocked = await fetchAsApp(external);
   if (!blocked.startsWith('ERROR')) {

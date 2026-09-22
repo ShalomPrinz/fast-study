@@ -51,14 +51,18 @@ async function download(outputName) {
 }
 
 if (args.includes('--version')) {
-  process.stdout.write(tool === 'curl' ? 'curl 8.5.0 (hunt-bugs fake)\n' : '2025.01.01 (hunt-bugs fake)\n');
+  process.stdout.write(
+    tool === 'curl' ? 'curl 8.5.0 (hunt-bugs fake)\n' : '2025.01.01 (hunt-bugs fake)\n',
+  );
 } else if (args.includes('-U') || args.includes('--update')) {
   process.stdout.write('yt-dlp is up to date (hunt-bugs fake)\n');
 } else if (args.includes('--flat-playlist')) {
   // title<TAB>url per entry, which is the --print format the playlist expander asks for.
   process.stdout.write(
-    ['הרצאה 1\thttps://www.youtube.com/watch?v=hunt001', 'הרצאה 2\thttps://www.youtube.com/watch?v=hunt002'].join('\n') +
-      '\n',
+    [
+      'הרצאה 1\thttps://www.youtube.com/watch?v=hunt001',
+      'הרצאה 2\thttps://www.youtube.com/watch?v=hunt002',
+    ].join('\n') + '\n',
   );
 } else if (args.includes('--skip-download')) {
   process.stdout.write(`${fs.statSync(VIDEO).size}\n`);

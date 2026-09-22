@@ -39,7 +39,9 @@ function parse(fd) {
   const dirCount = opt.readUInt32LE(plus ? 108 : 92);
   const dirsAt = plus ? 112 : 96;
   const dirRva = (index) =>
-    index < dirCount && dirsAt + index * 8 + 8 <= opt.length ? opt.readUInt32LE(dirsAt + index * 8) : 0;
+    index < dirCount && dirsAt + index * 8 + 8 <= opt.length
+      ? opt.readUInt32LE(dirsAt + index * 8)
+      : 0;
 
   const table = read(peAt + 24 + optSize, sectionCount * 40);
   const sections = [];

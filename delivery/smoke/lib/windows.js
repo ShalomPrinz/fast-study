@@ -134,7 +134,10 @@ $h.Close()`,
   let stderr = '';
   child.stderr.on('data', (chunk) => (stderr += chunk));
   await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`no lock on ${file} within ${timeoutMs}ms`)), timeoutMs);
+    const timer = setTimeout(
+      () => reject(new Error(`no lock on ${file} within ${timeoutMs}ms`)),
+      timeoutMs,
+    );
     child.stdout.on('data', (chunk) => {
       if (String(chunk).includes('LOCKED')) {
         clearTimeout(timer);

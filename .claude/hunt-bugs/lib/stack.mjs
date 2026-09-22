@@ -40,7 +40,10 @@ export async function waitFor(name, url, { timeoutMs = 90_000, logFile } = {}) {
     }
     await sleep(400);
   }
-  const tail = logFile && fs.existsSync(logFile) ? fs.readFileSync(logFile, 'utf8').split('\n').slice(-25).join('\n') : '';
+  const tail =
+    logFile && fs.existsSync(logFile)
+      ? fs.readFileSync(logFile, 'utf8').split('\n').slice(-25).join('\n')
+      : '';
   throw new Error(`${name} never answered ${url} (${lastError})\n--- ${logFile} ---\n${tail}`);
 }
 
@@ -78,7 +81,11 @@ export function portOwners(ports) {
     if (!pid) continue;
     let command = 'unknown';
     try {
-      command = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').split('\0').filter(Boolean).join(' ');
+      command = fs
+        .readFileSync(`/proc/${pid}/cmdline`, 'utf8')
+        .split('\0')
+        .filter(Boolean)
+        .join(' ');
     } catch {}
     owners.push({ name, port, pid: Number(pid), command });
   }
@@ -94,7 +101,9 @@ export function stopPortOwners(ports) {
   const stopped = [];
   for (const owner of portOwners(ports)) {
     if (!OURS.test(owner.command)) {
-      throw new Error(`:${owner.port} is held by pid ${owner.pid} (${owner.command}) — not a FastStudy process, refusing to kill it`);
+      throw new Error(
+        `:${owner.port} is held by pid ${owner.pid} (${owner.command}) — not a FastStudy process, refusing to kill it`,
+      );
     }
     try {
       process.kill(owner.pid, 'SIGTERM');

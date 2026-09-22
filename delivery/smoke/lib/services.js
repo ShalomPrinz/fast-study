@@ -37,13 +37,19 @@ export function database({ urls, secret }) {
     /** Resolves once the data root the wall saved has reached the running service. */
     async configured() {
       await expect
-        .poll(async () => (await fetch(`${urls.database}/tree`, { headers: { 'X-FastStudy-Secret': secret } })).status, {
-          timeout: 30_000,
-        })
+        .poll(
+          async () =>
+            (await fetch(`${urls.database}/tree`, { headers: { 'X-FastStudy-Secret': secret } }))
+              .status,
+          {
+            timeout: 30_000,
+          },
+        )
         .toBe(200);
     },
     createCourse: (course) => at('POST', '/courses', { json: { name: course } }),
-    createLecture: (course, name) => at('POST', `/courses/${q(course)}/lectures`, { json: { name } }),
+    createLecture: (course, name) =>
+      at('POST', `/courses/${q(course)}/lectures`, { json: { name } }),
     putVideo: (course, name, bytes) => at('PUT', `${lecture(course, name)}/video`, { bytes }),
     putFile: (course, name, file, bytes) =>
       at('PUT', `${lecture(course, name)}/files/${q(file)}`, { bytes }),
@@ -56,11 +62,14 @@ export function database({ urls, secret }) {
       return response.status === 200;
     },
     async bytes(course, name, file) {
-      return Buffer.from(await (await at('GET', `${lecture(course, name)}/files/${q(file)}`)).arrayBuffer());
+      return Buffer.from(
+        await (await at('GET', `${lecture(course, name)}/files/${q(file)}`)).arrayBuffer(),
+      );
     },
     /** The absolute path, resolved by the same route the open-file IPC path uses. */
     async path(course, name, file) {
-      return (await (await at('GET', `${lecture(course, name)}/files/${q(file)}/path`)).json()).path;
+      return (await (await at('GET', `${lecture(course, name)}/files/${q(file)}/path`)).json())
+        .path;
     },
     /** One lecture's entry in the tree, `files` and all. */
     async entry(course, name) {

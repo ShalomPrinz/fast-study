@@ -88,7 +88,9 @@ router.post('/download-youtube', (req, res) => {
     host = new URL(url).hostname;
   } catch {}
   if (!host || !YTDLP_HOST_RE.test(host)) {
-    return res.status(400).json(invalidRequest('url', 'valid youtube or google drive url required'));
+    return res
+      .status(400)
+      .json(invalidRequest('url', 'valid youtube or google drive url required'));
   }
   const names = storedNames(course, lecture);
   if (!names) {

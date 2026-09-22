@@ -25,7 +25,14 @@ const SERVICE_ROOTS = ['backend', 'database', 'downloader/server/src', 'download
 
 // Tests are deliberately out: a fixture is a stand-in for a service's output, not an emission, so
 // it may legitimately name a stale or invented code.
-const SKIP_DIRS = new Set(['node_modules', '.venv', '__pycache__', 'dist', 'tests', '.pytest_cache'])
+const SKIP_DIRS = new Set([
+  'node_modules',
+  '.venv',
+  '__pycache__',
+  'dist',
+  'tests',
+  '.pytest_cache',
+])
 
 const CODE_LITERAL = /^(['"])([a-z][a-z0-9_]*)\1$/
 
@@ -118,7 +125,10 @@ function documented(): Map<string, Set<string>> {
       codeAt = -1
       continue
     }
-    const cells = line.split('|').slice(1, -1).map((c) => c.trim().replace(/`/g, ''))
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((c) => c.trim().replace(/`/g, ''))
     if (codeAt === -1) {
       codeAt = cells.indexOf('code')
       reachAt = cells.indexOf('reach')
@@ -140,9 +150,11 @@ const emitted = new Set(
 // The keys of `serviceErrors.ts`'s map, read as source so the map itself stays private. Each one is
 // put back through `serviceErrorRow`, which proves the pattern found real keys and not prose.
 const resolved = new Set(
-  [...readFileSync(join(REPO, 'frontend/src/shared/i18n/serviceErrors.ts'), 'utf8').matchAll(
-    /^ {2}([a-z][a-z0-9_]*): msg\(/gm,
-  )].map((m) => m[1]),
+  [
+    ...readFileSync(join(REPO, 'frontend/src/shared/i18n/serviceErrors.ts'), 'utf8').matchAll(
+      /^ {2}([a-z][a-z0-9_]*): msg\(/gm,
+    ),
+  ].map((m) => m[1]),
 )
 
 const docs = documented()

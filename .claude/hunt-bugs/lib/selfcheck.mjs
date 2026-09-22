@@ -44,13 +44,17 @@ async function pythonEscapeRefused(paths) {
 }
 
 async function nodeEscapeRefusedAndSiteRedirected(paths) {
-  const { stdout } = await run('node', ['--input-type=module', '-e', NODE_PROBE], { env: nodeEnv(paths) });
+  const { stdout } = await run('node', ['--input-type=module', '-e', NODE_PROBE], {
+    env: nodeEnv(paths),
+  });
   const result = JSON.parse(stdout);
   if (!result.offsite.includes('harness is offline')) {
     throw new Error(`a Node process reached off loopback (got ${result.offsite})`);
   }
   if (!result.site.includes('"status":"ok"')) {
-    throw new Error(`the fake lecture site did not answer a redirected https request (got ${result.site})`);
+    throw new Error(
+      `the fake lecture site did not answer a redirected https request (got ${result.site})`,
+    );
   }
   return 'node: example.com refused, lemida.biu.ac.il served by the fake site over TLS';
 }
@@ -67,7 +71,9 @@ async function noRealKeyInTheServices(paths) {
   }
   const { body } = await call(`${DATABASE}/settings`);
   if (body.data_root !== paths.data) {
-    throw new Error(`the database service reports data_root ${body.data_root}, not the scratch tree`);
+    throw new Error(
+      `the database service reports data_root ${body.data_root}, not the scratch tree`,
+    );
   }
   return `keys ${FAKE_KEYS.GROQ_API_KEY.slice(0, 12)}…/${FAKE_KEYS.GEMINI_API_KEY.slice(0, 12)}…, data ${paths.data}`;
 }

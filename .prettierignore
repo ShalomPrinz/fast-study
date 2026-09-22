@@ -3,3 +3,4 @@ dist
 package-lock.json
 downloader/**/downloads
 *.md
+.claude/settings.local.json

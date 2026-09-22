@@ -78,7 +78,9 @@ if _HARNESS:
             ("GEMINI_API_KEY", "AIzaHuntBugs"),
         ):
             if not os.environ.get(name, "").startswith(expected):
-                problems.append(f"{name} is not the harness key — the repo .env won the race")
+                problems.append(
+                    f"{name} is not the harness key — the repo .env won the race"
+                )
         data_root = os.environ.get("DATA_ROOT", "")
         if not data_root.startswith(str(HARNESS)):
             problems.append(f"DATA_ROOT is {data_root!r}, outside the harness")
@@ -168,12 +170,16 @@ if _HARNESS:
 
         def _save(store):
             store_dir.mkdir(parents=True, exist_ok=True)
-            store_path.write_text(json.dumps(store, ensure_ascii=False, indent=2), encoding="utf-8")
+            store_path.write_text(
+                json.dumps(store, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
 
         def _record(op, detail):
             store_dir.mkdir(parents=True, exist_ok=True)
             with open(ops_path, "a", encoding="utf-8") as handle:
-                handle.write(json.dumps({"op": op, **detail}, ensure_ascii=False) + "\n")
+                handle.write(
+                    json.dumps({"op": op, **detail}, ensure_ascii=False) + "\n"
+                )
 
         FOLDER = "application/vnd.google-apps.folder"
 
@@ -190,7 +196,7 @@ if _HARNESS:
                 parent = re.search(r"'([^']+)' in parents", q or "")
                 wants_folder = f"mimeType='{FOLDER}'" in (q or "")
                 store = _load()
-                target = (name.group(1).replace("\\'", "'") if name else None)
+                target = name.group(1).replace("\\'", "'") if name else None
                 parent_id = parent.group(1) if parent else None
                 hits = [
                     {"id": fid}
@@ -214,14 +220,20 @@ if _HARNESS:
                 _record("create", {"id": file_id, **store["files"][file_id]})
                 self._keep(file_id, media_body)
                 return _Request(
-                    {"id": file_id, "webViewLink": f"https://drive.fake/hunt-bugs/{file_id}"}
+                    {
+                        "id": file_id,
+                        "webViewLink": f"https://drive.fake/hunt-bugs/{file_id}",
+                    }
                 )
 
             def update(self, fileId=None, media_body=None, fields=None, **kwargs):
                 _record("update", {"id": fileId})
                 self._keep(fileId, media_body)
                 return _Request(
-                    {"id": fileId, "webViewLink": f"https://drive.fake/hunt-bugs/{fileId}"}
+                    {
+                        "id": fileId,
+                        "webViewLink": f"https://drive.fake/hunt-bugs/{fileId}",
+                    }
                 )
 
             def _keep(self, file_id, media_body):

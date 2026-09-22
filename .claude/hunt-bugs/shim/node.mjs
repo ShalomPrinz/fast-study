@@ -35,7 +35,10 @@ if (HARNESS) {
   function note(line) {
     try {
       fs.mkdirSync(path.dirname(LOG), { recursive: true });
-      fs.appendFileSync(LOG, `${new Date().toISOString()} ${process.env.HUNT_BUGS_SERVICE ?? 'node'} ${line}\n`);
+      fs.appendFileSync(
+        LOG,
+        `${new Date().toISOString()} ${process.env.HUNT_BUGS_SERVICE ?? 'node'} ${line}\n`,
+      );
     } catch {}
   }
 

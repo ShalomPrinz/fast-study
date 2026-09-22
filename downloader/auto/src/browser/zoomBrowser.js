@@ -83,7 +83,9 @@ function startXvfb() {
       fs.rmSync(authFile, { force: true });
       finish(
         reject,
-        xvfbUnavailable(`Xvfb exited early (code ${code}).${err ? ` Xvfb said: ${err.trim()}` : ''}`),
+        xvfbUnavailable(
+          `Xvfb exited early (code ${code}).${err ? ` Xvfb said: ${err.trim()}` : ''}`,
+        ),
       );
     });
 

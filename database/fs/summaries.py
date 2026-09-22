@@ -1,6 +1,12 @@
 from pathlib import Path
 
-from .paths import OVERVIEW_DIR, RECITATIONS_DIR, CourseNotFound, course_dir, lecture_dir
+from .paths import (
+    OVERVIEW_DIR,
+    RECITATIONS_DIR,
+    CourseNotFound,
+    course_dir,
+    lecture_dir,
+)
 
 
 def _read_summary(course: str, name: str, kind: str) -> dict | None:

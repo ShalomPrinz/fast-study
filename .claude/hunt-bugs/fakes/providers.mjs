@@ -34,7 +34,10 @@ function json(res, status, body, headers = {}) {
 
 function text(res, status, body) {
   const payload = Buffer.from(body, 'utf8');
-  res.writeHead(status, { 'content-type': 'text/plain; charset=utf-8', 'content-length': payload.length });
+  res.writeHead(status, {
+    'content-type': 'text/plain; charset=utf-8',
+    'content-length': payload.length,
+  });
   res.end(payload);
 }
 
@@ -148,7 +151,10 @@ async function handle(req, res) {
       res,
       200,
       {},
-      { 'x-goog-upload-url': `http://127.0.0.1:${PORT}${route}?upload_id=${uploads + 1}`, 'x-goog-upload-status': 'active' },
+      {
+        'x-goog-upload-url': `http://127.0.0.1:${PORT}${route}?upload_id=${uploads + 1}`,
+        'x-goog-upload-status': 'active',
+      },
     );
   }
   if (route.includes('/v1beta/files/')) {
@@ -164,10 +170,13 @@ async function handle(req, res) {
   if (route.includes('/v1beta/models/') && route.endsWith(':generateContent')) {
     await readBody(req);
     if (mode.gemini === '429') return geminiRateLimit(res);
-    if (mode.gemini === '500') return json(res, 500, { error: { code: 500, message: 'fake gemini is down' } });
+    if (mode.gemini === '500')
+      return json(res, 500, { error: { code: 500, message: 'fake gemini is down' } });
     const body = mode.gemini === 'empty' ? '' : SUMMARY;
     return json(res, 200, {
-      candidates: [{ content: { role: 'model', parts: [{ text: body }] }, finishReason: 'STOP', index: 0 }],
+      candidates: [
+        { content: { role: 'model', parts: [{ text: body }] }, finishReason: 'STOP', index: 0 },
+      ],
       usageMetadata: { promptTokenCount: 1200, candidatesTokenCount: 800, totalTokenCount: 2000 },
       modelVersion: 'hunt-bugs-fake',
     });
@@ -176,7 +185,9 @@ async function handle(req, res) {
   // The Drive consent URL the faked settings flow hands the UI; opening it explains itself.
   if (route === '/drive/consent') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
-    return res.end('<!doctype html><meta charset="utf-8"><p>hunt-bugs: fake Drive consent. Nothing was signed in.');
+    return res.end(
+      '<!doctype html><meta charset="utf-8"><p>hunt-bugs: fake Drive consent. Nothing was signed in.',
+    );
   }
 
   return json(res, 404, { error: { message: `fake provider has no route for ${route}` } });

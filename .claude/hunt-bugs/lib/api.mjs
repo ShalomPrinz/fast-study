@@ -27,7 +27,11 @@ export async function call(url, { method = 'GET', body, headers = {}, expect = t
 }
 
 export const json = (url, method, payload) =>
-  call(url, { method, body: JSON.stringify(payload), headers: { 'content-type': 'application/json' } });
+  call(url, {
+    method,
+    body: JSON.stringify(payload),
+    headers: { 'content-type': 'application/json' },
+  });
 
 export const bytes = (url, method, buffer, type) =>
   call(url, { method, body: buffer, headers: { 'content-type': type } });
@@ -38,10 +42,18 @@ export const lectureFile = (course, lecture, name, kind = 'lecture') =>
   `${DATABASE}/courses/${encode(course)}/lectures/${encode(lecture)}/files/${encode(name)}?kind=${kind}`;
 
 /** Poll until one of a lecture's files exists, or fail saying what never landed. */
-export async function waitForFile(course, lecture, name, { kind = 'lecture', timeoutMs = 180_000 } = {}) {
+export async function waitForFile(
+  course,
+  lecture,
+  name,
+  { kind = 'lecture', timeoutMs = 180_000 } = {},
+) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
-    const { status } = await call(lectureFile(course, lecture, name, kind), { method: 'HEAD', expect: false });
+    const { status } = await call(lectureFile(course, lecture, name, kind), {
+      method: 'HEAD',
+      expect: false,
+    });
     if (status === 200) return;
     await sleep(500);
   }

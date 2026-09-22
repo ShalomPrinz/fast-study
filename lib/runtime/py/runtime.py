@@ -66,7 +66,8 @@ class SecretMiddleware:
             response = Response(status_code=401, media_type="text/event-stream")
         else:
             response = JSONResponse(
-                {"error": "unauthorized", "code": "unauthorized", "params": {}}, status_code=401
+                {"error": "unauthorized", "code": "unauthorized", "params": {}},
+                status_code=401,
             )
         await response(scope, receive, send)
 

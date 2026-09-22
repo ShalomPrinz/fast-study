@@ -53,7 +53,10 @@ test('a failed job carries its code and params to /jobs', () => {
 test('a job that succeeded carries neither', () => {
   const id = createJob({ course: 'C', lecture: 'L2', kind: 'lecture', tool: 'curl' });
   finishJob(id, 'done');
-  assert.deepEqual({ code: jobOf(id).code, params: jobOf(id).params }, { code: null, params: null });
+  assert.deepEqual(
+    { code: jobOf(id).code, params: jobOf(id).params },
+    { code: null, params: null },
+  );
 });
 
 // ── the section-run registry ────────────────────────────────────────────────

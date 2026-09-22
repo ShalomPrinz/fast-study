@@ -30,7 +30,9 @@ export async function launch(env = {}) {
   try {
     page = await app.firstWindow({ timeout: 60_000 });
   } catch (error) {
-    throw new Error(`the app opened no window Playwright could see (${ASSUMPTION_ELECTRON}): ${error.message}`);
+    throw new Error(
+      `the app opened no window Playwright could see (${ASSUMPTION_ELECTRON}): ${error.message}`,
+    );
   }
   return { app, page, n };
 }
@@ -79,7 +81,10 @@ export async function quit(session) {
     .evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().forEach((w) => w.close()))
     .catch(() => {});
   const timeout = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error('the app did not exit within 60s of its window closing')), 60_000),
+    setTimeout(
+      () => reject(new Error('the app did not exit within 60s of its window closing')),
+      60_000,
+    ),
   );
   try {
     await Promise.race([exited, timeout]);
