@@ -6,12 +6,10 @@ import type { Item } from '@/features/downloads/services/autoDownloader'
 import {
   expandItem,
   isReconnectError,
-  isUnsupportedError,
   saveZoomPasscode,
 } from '@/features/downloads/services/autoDownloader'
 import type { RunTarget } from '@/features/downloads/services/downloadServer'
 import { cancelRun, resumeRun, startSectionRun } from '@/features/downloads/services/downloadServer'
-import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import Chevron from '@/shared/components/Chevron'
 import PasscodePrompt from './PasscodePrompt'
 import RecordingRow from './RecordingRow'
@@ -41,7 +39,7 @@ import {
   summarize,
   unverifiedCount,
 } from '@/features/downloads/utils/runStatus'
-import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
+import { expandErrorText, toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { sectionTitle } from '@/features/downloads/utils/sections'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
@@ -116,16 +114,10 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
         patchExpansion(item.ref, { children, expanded: true, expanding: false })
       } catch (err) {
         if (isReconnectError(err)) onReconnect()
-        const message = isUnsupportedError(err)
-          ? serviceErrorText(err)
-          : t`Couldn't load entries. Try again.`
-        patchExpansion(item.ref, {
-          expanding: false,
-          error: isReconnectError(err) ? null : message,
-        })
+        patchExpansion(item.ref, { expanding: false, error: expandErrorText(err) })
       }
     },
-    [onReconnect, t],
+    [onReconnect],
   )
 
   const expandables = items.filter((i) => i.expandable)

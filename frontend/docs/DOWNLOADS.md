@@ -128,4 +128,6 @@ glued to it as a decimal (a Latin letter, a Hebrew letter א–י, or a digit af
 voids the marker rather than guessing; a title with no number falls back to the tree's next name.
 
 A row's failure to _start_ flips its button to "Retry ✗" and toasts through `toastDownloadError`;
-reconnect, passcode and a cancelled prompt don't toast, they steer the UI.
+reconnect, passcode and a cancelled prompt don't toast, they steer the UI. A coded failure — here, in a
+section run and in a playlist's in-row `expandErrorText` — reads in the service's words; only a codeless
+one gets the generic line.

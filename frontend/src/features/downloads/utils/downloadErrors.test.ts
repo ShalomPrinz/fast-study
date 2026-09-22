@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { BlockedError, UnsupportedError } from '@/features/downloads/services/autoDownloader'
-import { ConnectionError } from '@/services/http'
-import { toastDownloadError } from './downloadErrors'
+import {
+  BlockedError,
+  ReconnectError,
+  UnsupportedError,
+} from '@/features/downloads/services/autoDownloader'
+import { ConnectionError, RequestError } from '@/services/http'
+import { expandErrorText, toastDownloadError } from './downloadErrors'
 
 // The toaster is the boundary under observation: what reaches it is the whole assertion.
 // `vi.hoisted` because the mock factory is lifted above the imports it feeds.
@@ -46,5 +50,45 @@ describe('toastDownloadError', () => {
     toastDownloadError('Lecture 3', new ConnectionError('downloader server', 'http://x'))
 
     expect(toast).not.toHaveBeenCalled()
+  })
+
+  it("renders a coded refusal in the service's words, led by the row name", () => {
+    toastDownloadError('Lecture 3', new RequestError('Moodle said no', 'moodle_ws_error', {}))
+
+    expect(toast).toHaveBeenCalledTimes(1)
+    const node = toast.mock.calls[0][1]
+    expect(node.props.failure.code).toBe('moodle_ws_error')
+    expect(node.props.lead).toBe('Lecture 3')
+  })
+
+  it('keeps the generic copy for a codeless refusal', () => {
+    toastDownloadError('Lecture 3', new RequestError('500 Internal Server Error'))
+
+    expect(typeof toast.mock.calls[0][1]).toBe('string')
+  })
+})
+
+describe('expandErrorText', () => {
+  const GENERIC = expandErrorText(new Error('boom'))
+
+  it('says nothing in the row for a reconnect — the account chip reports it', () => {
+    expect(expandErrorText(new ReconnectError())).toBeNull()
+  })
+
+  it("resolves a coded refusal to the service's sentence, not the generic line", () => {
+    const err = new RequestError('Moodle said no', 'moodle_ws_error', {})
+
+    expect(expandErrorText(err)).not.toBe(GENERIC)
+    expect(expandErrorText(err)).not.toBe('Moodle said no')
+  })
+
+  it('resolves an unsupported source even without a code', () => {
+    expect(expandErrorText(new UnsupportedError('That host is not supported.'))).toBe(
+      'That host is not supported.',
+    )
+  })
+
+  it('keeps the generic line for a codeless refusal', () => {
+    expect(expandErrorText(new RequestError('500 Internal Server Error'))).toBe(GENERIC)
   })
 })
