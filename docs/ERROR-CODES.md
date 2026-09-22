@@ -97,6 +97,7 @@ bug in one of our own callers can, and it renders its English prose through the 
 | `course/runner.py` resolve        | `unknown_phase`            | `phase`            | dev   |
 | `course/runner.py` resolve        | `unknown_extractors`       | `slugs`            | dev   |
 | `backend_main.py` overview        | `course_not_found`         | `course`           | user  |
+| `backend_main.py` overview, run-all| `data_root_not_configured`| —                  | user  |
 | `timing/__init__.py` record       | `timing_operation_required`| —                  | dev   |
 | `timing/__init__.py` record       | `unknown_timing_operation` | `operation`        | dev   |
 | `timing/__init__.py` record       | `invalid_timing_sample`    | `field`, `value`   | dev   |
@@ -107,8 +108,11 @@ bug in one of our own callers can, and it renders its English prose through the 
 
 The last two are new. An unhandled exception previously escaped as FastAPI's plain-text 500, which
 `failureError` cannot parse, so a user with `database/` down read `500 Internal Server Error`.
-`storage_unavailable` is `DbClientError` reaching the top of a route — the storage service is
-unreachable or refused; `internal_error` is everything else.
+`storage_unavailable` is `DbClientError` reaching the top of a route — a storage call that failed
+and no route handled; `internal_error` is everything else. The middleware names only failures it was
+given, so a refusal the user can act on is caught by the route instead and re-emitted under
+`database/`'s own code (`_USER_ACTIONABLE_STORAGE_CODES` in `backend_main.py`, today just
+`data_root_not_configured`), which is why that code appears in both tables.
 
 ### `backend/` — pipeline run errors
 
@@ -180,7 +184,7 @@ for the code whichever view chooses to show it.
 | origin                | code                            | params            | reach     |
 | --------------------- | ------------------------------- | ----------------- | --------- |
 | `fs/paths.py`         | `file_locked`                   | `file`            | user      |
-| `fs/paths.py`         | `data_root_not_configured`      | —                 | uncertain |
+| `fs/paths.py`         | `data_root_not_configured`      | —                 | user      |
 | `fs/paths.py`         | `unsafe_path_segment`           | `segment`         | dev       |
 | `fs/paths.py`         | `name_has_no_legal_characters`  | `name`            | user      |
 | `fs/overview.py`, `fs/summaries.py` | `course_not_found`  | `course`          | user      |

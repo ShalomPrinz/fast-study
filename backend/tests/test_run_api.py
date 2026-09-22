@@ -86,6 +86,63 @@ class TestOverviewGenerate:
             "params": {"course": "C"},
         }
 
+    def test_an_unconfigured_data_root_is_a_409_naming_the_refusal(self):
+        """The storage answered and refused for a reason the user can fix, so the route re-emits
+        the peer's own code rather than letting the backstop call the storage unreachable."""
+
+        with patch.object(
+            backend_main.db_client,
+            "get_tree",
+            side_effect=DbClientError(
+                "No data folder is configured", "data_root_not_configured"
+            ),
+        ):
+            response = client.post("/courses/C/overview/generate")
+        assert response.status_code == 409
+        assert response.json() == {
+            "error": "No data folder is configured",
+            "code": "data_root_not_configured",
+            "params": {},
+        }
+
+    def test_any_other_storage_failure_stays_the_500_backstop(self):
+        with patch.object(
+            backend_main.db_client,
+            "get_tree",
+            side_effect=DbClientError("connection refused", "storage_error"),
+        ):
+            response = client.post("/courses/C/overview/generate")
+        assert response.status_code == 500
+        assert response.json() == {
+            "error": "connection refused",
+            "code": "storage_unavailable",
+            "params": {"detail": "connection refused"},
+        }
+
+
+class TestRunAll:
+    def test_an_unconfigured_data_root_is_a_409_naming_the_refusal(self):
+        with patch.object(
+            backend_main.runner.db_client,
+            "get_tree",
+            side_effect=DbClientError(
+                "No data folder is configured", "data_root_not_configured"
+            ),
+        ):
+            response = client.post("/run-all")
+        assert response.status_code == 409
+        assert response.json()["code"] == "data_root_not_configured"
+
+    def test_any_other_storage_failure_stays_the_500_backstop(self):
+        with patch.object(
+            backend_main.runner.db_client,
+            "get_tree",
+            side_effect=DbClientError("connection refused", "storage_error"),
+        ):
+            response = client.post("/run-all")
+        assert response.status_code == 500
+        assert response.json()["code"] == "storage_unavailable"
+
 
 class TestHealth:
     def test_a_failed_tool_probe_passes_through_unchanged(self):

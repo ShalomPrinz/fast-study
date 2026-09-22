@@ -8,7 +8,9 @@ CORS is open to the frontend's two origins only: `http://localhost:5173` in dev 
 
 A refused request answers `{"error": "<message>", "code": "<snake_case>", "params": {...}}` with a non-2xx status, the same shape `database/` uses (`_error` + `failure` in `backend_main.py`) — never a 200 envelope, so the frontend surfaces every failure through the one error its HTTP layer throws. `error` is the developer-facing English; `code` and its flat `params` are what a client renders from ([docs/ERROR-CODES.md](../../docs/ERROR-CODES.md)). A bad query value or request body is FastAPI's own `422 {"detail": [...]}`; `kind` is a `Literal`, so it is validated there rather than in a handler.
 
-An exception that escapes a route answers the same body from an app-level middleware — `storage_unavailable` when `database/` is unreachable or refused, `internal_error` otherwise. It sits inside CORS, because a 500 raised outside it reaches the browser as a network error rather than a body.
+An exception that escapes a route answers the same body from an app-level middleware — `storage_unavailable` when a call to `database/` failed without the route handling it, `internal_error` otherwise. It sits inside CORS, because a 500 raised outside it reaches the browser as a network error rather than a body.
+
+The middleware never translates a peer code it wasn't given, so a refusal the user can act on is answered by the route that can receive it: it catches `DbClientError`, and when the code is in `_USER_ACTIONABLE_STORAGE_CODES` (today `data_root_not_configured`) re-emits the peer's own code and params as a 409 — every other code re-raises to the backstop. `POST /courses/{course}/overview/generate` and `POST /run-all` read the tree and do this; a new route that reads through `db_client` and can be refused by name joins them.
 
 ## The launch secret
 

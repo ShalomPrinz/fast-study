@@ -110,6 +110,19 @@ def _error(body: dict, status: int):
     return JSONResponse(body, status_code=status)
 
 
+# The refusals from database/ that name something the user can fix rather than a storage outage.
+# A route reading through db_client that can get one answers it by name (409) instead of letting the
+# middleware call the storage unreachable; every other code re-raises, because the middleware only
+# names failures it was given and never translates a peer code into the backend's vocabulary.
+_USER_ACTIONABLE_STORAGE_CODES = frozenset({"data_root_not_configured"})
+
+
+def _is_user_actionable(e: db_client.DbClientError) -> bool:
+    """True when the storage refused for a reason the user can act on, not a failed call."""
+
+    return e.code in _USER_ACTIONABLE_STORAGE_CODES
+
+
 @app.post("/courses/{course}/lectures/{lecture}/run/{step}")
 async def run_step(course: str, lecture: str, step: str, kind: Kind = Query("lecture")):
     if step not in _STEP_CONFIG:
@@ -177,7 +190,12 @@ async def overview_generate(
     if err:
         return _error(err, 400)
 
-    course_node = await _find_course(course)
+    try:
+        course_node = await _find_course(course)
+    except db_client.DbClientError as e:
+        if not _is_user_actionable(e):
+            raise
+        return _error(failure(str(e), e.code, **e.params), 409)
     if course_node is None:
         return _error(
             failure(f"course not found: {course}", "course_not_found", course=course),
@@ -216,7 +234,12 @@ async def run_all_endpoint():
 
     if runner._runner_status["running"]:
         return {"status": "already_running", **runner.get_status()}
-    pending = await runner.scan_pending()
+    try:
+        pending = await runner.scan_pending()
+    except db_client.DbClientError as e:
+        if not _is_user_actionable(e):
+            raise
+        return _error(failure(str(e), e.code, **e.params), 409)
     if not pending:
         return {"status": "empty_queue"}
     queued = [
