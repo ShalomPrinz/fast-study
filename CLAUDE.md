@@ -55,41 +55,11 @@ The state root separates read-only installed resources from per-user writable st
 
 ## The frozen Python bundle — `delivery/`
 
-`backend/` and `database/` ship as **one** PyInstaller one-dir bundle, `services`, with the service
-picked by `argv[1]`. `delivery/services.spec` is the build and `delivery/entry.py` is its entry
-point; both are build-only inputs that no dev command touches.
-
-```
-cd backend && uv run --with pyinstaller pyinstaller ../delivery/services.spec
-```
-
-The build runs out of `backend/`'s environment, which works only because **`database/`'s
-dependencies are a strict subset of `backend/`'s**. That is an invariant nothing checks: a
-dependency added to `database/` alone would be absent from the bundle and fail at runtime on a
-clean machine, so it has to be added to `backend/pyproject.toml` too.
-
-PyInstaller's module graph is flat, so no top-level module name may appear in both services. That is
-why the entry points are `backend_main.py` and `database_main.py` rather than two `main.py`, and it
-is a live constraint on every new top-level module: `backend/` owns `course`, `pipeline`,
-`services`, `timing`; `database/` owns `events`, `fs`, `settings`. The generic names on the
-`database/` side are the ones a future dependency could collide with — `fs` is a real PyPI package.
-
-Freezing moves `__file__` inside the bundle, so **every read-only file that ships with the code
-resolves through `resource_path()`** (`backend/services/resources.py`), never a `__file__` walk —
-`assets/` and `credentials.json`. Binaries are not among them: they resolve through `lib/tools/` off
-`FASTSTUDY_BIN_DIR`, which freezing does not affect.
+`backend/` and `database/` ship as **one** PyInstaller bundle, so they share three invariants nothing checks: `database/`'s dependencies stay a strict subset of `backend/`'s, no top-level module name appears in both, and shipped read-only files resolve through `resource_path()`. The why is in [`delivery/CLAUDE.md`](delivery/CLAUDE.md#the-frozen-bundles-invariants).
 
 ## The launcher — `electron/`
 
-The desktop shell that turns the four services into one app: it generates the launch secret, spawns
-`database → backend → auto → server` on ephemeral ports, waits for each `/health`, and opens a
-window on the built frontend served over `app://bundle`. It also owns the settings store the
-children's environment comes from — JSON under `%APPDATA%`, the two API keys through `safeStorage`,
-decrypted into each child's environment at spawn — and killing every child on quit.
-
-It holds no product logic and never touches `DATA_ROOT`. Read [`electron/CLAUDE.md`](electron/CLAUDE.md)
-before changing anything there; the names it spells are the launch contract above, so a change to
-one of them is a cross-service change.
+The desktop shell that spawns the four services and opens the window; it holds no product logic and never touches `DATA_ROOT`. Read [`electron/CLAUDE.md`](electron/CLAUDE.md) before changing anything there — the names it spells are the launch contract above.
 
 ## Shared modules — `lib/`
 

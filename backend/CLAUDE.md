@@ -31,7 +31,7 @@ Each lecture lives at `{DATA_ROOT}/{course}/{lecture}/`, recitations at `{DATA_R
 - **`pipeline/` is per-lecture, `course/` is per-course.** Anything aggregating across a course's lectures belongs in `course/`, never `pipeline/`.
 - **Keep `backend_main.py` thin** — validation and boundary parsing live in the runners.
 - Shipped read-only files (`assets/`, `credentials.json`) resolve through `resource_path()` in `services/resources.py`, never off `__file__`.
-- **A new top-level module needs a name `database/` could never want too.** Both services freeze into one PyInstaller bundle whose module graph is flat, so `backend_main`, `course`, `pipeline`, `services` and `timing` are global names — prefix a generic one or nest it under an existing package (root `CLAUDE.md`). Code that never freezes (`timing/scripts/`, `tests/`) is exempt.
+- **A new top-level module needs a name `database/` could never want too.** Both services freeze into one PyInstaller bundle whose module graph is flat, so `backend_main`, `course`, `pipeline`, `services` and `timing` are global names — prefix a generic one or nest it under an existing package ([`delivery/CLAUDE.md`](../delivery/CLAUDE.md#the-frozen-bundles-invariants)). Code that never freezes (`timing/scripts/`, `tests/`) is exempt.
 - **Every failure names itself.** A refusal, a step error and an overview status entry all carry a machine `code` plus flat `params` beside their English prose, which stays developer-facing — `services/errors.py` holds `CodedError` and `failure()`, and the vocabulary is the repo-root [docs/ERROR-CODES.md](../docs/ERROR-CODES.md). Never word a sentence for a user here; never ship an English clause as a param.
 - **`database/` never calls back.** The backend calls it, so a return call would make the service graph cyclic and the packaged build unspawnable (root `CLAUDE.md`). When a backend feature wants the store to notify or trigger it, invert it: the acting client reports in, or the backend subscribes to the database's SSE channel.
 
@@ -55,7 +55,7 @@ uv run python backend_main.py            # packaged: binds FASTSTUDY_PORT (0 = e
 uv run pytest tests/ -q                  # CI runs exactly this on every push
 ```
 
-This environment is also what the frozen bundle is built from, for both Python services, so `pyproject.toml` here has to carry every runtime dependency `database/` declares as well (root `CLAUDE.md`).
+This environment is also what the frozen bundle is built from, for both Python services, so `pyproject.toml` here has to carry every runtime dependency `database/` declares as well ([`delivery/CLAUDE.md`](../delivery/CLAUDE.md#the-frozen-bundles-invariants)).
 
 `import runtime` and `import tools` are [lib/runtime](../lib/runtime/CLAUDE.md) and [lib/tools](../lib/tools/CLAUDE.md), which own their rules. Backend-specific use:
 

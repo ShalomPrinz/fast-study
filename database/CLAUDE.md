@@ -31,7 +31,7 @@ it backward-compatible or flag the impact.
 - **No outbound HTTP calls, ever** — it only answers requests and fans out SSE, so it holds no peer
   URLs. Why that is a packaging blocker is in the root [`CLAUDE.md`](../CLAUDE.md); a peer that needs
   to hear about something here calls in or subscribes to `/events`.
-- **Frozen with `backend/` into one PyInstaller bundle** (root `CLAUDE.md`). This side owns the
+- **Frozen with `backend/` into one PyInstaller bundle** ([`delivery/CLAUDE.md`](../delivery/CLAUDE.md#the-frozen-bundles-invariants)). This side owns the
   top-level names `database_main`, `events`, `fs` and `settings` — any new one must not collide with
   backend's or a dependency's (`fs` is a real PyPI package). A new runtime dependency must also go
   into `backend/pyproject.toml`, or the bundle lacks it; test-only extras are exempt.

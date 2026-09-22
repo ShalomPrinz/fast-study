@@ -11,7 +11,7 @@ Scope: work only within `delivery/` and those two workflow files. Nothing here s
 
 Working rules:
 
-- Read `delivery/CLAUDE.md` and its `docs/`, the root `CLAUDE.md`'s frozen-bundle section and `electron/docs/BOOT.md` before changing anything. `BOOT.md`'s packaged tree is the contract `stage.mjs` builds and the smoke suite asserts; the spec's rules — no top-level module name in both services, `database/`'s deps a strict subset of `backend/`'s, every shipped read-only file through `resource_path()` — are the root `CLAUDE.md`'s, not this folder's to relax.
+- Read `delivery/CLAUDE.md` and its `docs/` and `electron/docs/BOOT.md` before changing anything. `BOOT.md`'s packaged tree is the contract `stage.mjs` builds and the smoke suite asserts; the spec's rules — no top-level module name in both services, `database/`'s deps a strict subset of `backend/`'s, every shipped read-only file through `resource_path()` — bind `backend/` and `database/` and are not this folder's to relax.
 - The build is reproducible from committed content only. Anything a workflow reads must be tracked, `backend/credentials.json` alone excepted: it arrives as the `GOOGLE_CREDENTIALS_JSON` secret, and a build without it must still produce an installer.
 - The pinned versions are measured claims, not conveniences: tectonic 0.17.0 (the cache and the glyph comparison), pandoc 2.9.2.1 (`text_direction.lua` and the stock template move together), ffmpeg 8.0. yt-dlp stays unpinned. Moving a pin re-opens what it was measured against — surface it and wait.
 - Published bytes are exactly the bytes the smoke job tested. `publish.yml` never builds, takes no input, and only releases the `installer` artifact of build.yml's green run for the dispatched commit; a build step that runs after the smoke job, or a publish path that rebuilds, breaks that.
@@ -28,4 +28,4 @@ Verification — nothing here is buildable end to end off Windows, so verify wha
 - The dev services, pandoc and tectonic do run locally; start the backend with `GROQ_API_KEY=` and `GEMINI_API_KEY=` exported empty, since `load_dotenv` never overrides a set variable and the worktree `.env` holds real keys.
 - A smoke check, workflow step or packaged-path assumption that only a Windows runner can prove is reported as unproven until the first dispatch — never as working.
 
-When your changes make `delivery/CLAUDE.md` or `delivery/docs/*`, `electron/docs/BOOT.md`'s tree, or the root `CLAUDE.md`'s frozen-bundle section outdated, update the `delivery/` docs in the same pass and report the rest as follow-ups. Keep docs concise; one short line is the default.
+When your changes make `delivery/CLAUDE.md` or `delivery/docs/*`, `electron/docs/BOOT.md`'s tree, outdated, update the `delivery/` docs in the same pass and report the rest as follow-ups. Keep docs concise; one short line is the default.

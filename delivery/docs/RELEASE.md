@@ -66,7 +66,7 @@ moving one re-opens that measurement, so surface it rather than bump it:
 ## The frozen bundle
 
 `services.spec` builds `services`, one one-dir bundle picked by `argv[1]` through `entry.py`. Its
-rules are the root [`CLAUDE.md`](../../CLAUDE.md)'s frozen-bundle section; the spec's own decisions:
+rules are [`delivery/CLAUDE.md`](../CLAUDE.md#the-frozen-bundles-invariants); the spec's own decisions:
 
 - **One Drive discovery document.** Of googleapiclient's 582 the bundle keeps `drive.v3.json`, the
   only client the app builds — the rest are 97MB. The prune runs on the finished TOC, since

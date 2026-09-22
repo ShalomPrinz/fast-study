@@ -37,12 +37,31 @@ with `FASTSTUDY_PORT=0` for the port line and `/health`.
   input; no build step may run after the smoke job — [RELEASE.md](docs/RELEASE.md#build-test-publish).
 - **Pinned tool versions are measured claims** — moving one re-opens what it was measured against
   ([RELEASE.md](docs/RELEASE.md#pinned-tool-versions)).
-- **The spec's invariants are the root's** — one top-level module name per service, `database/`'s
-  deps a strict subset of `backend/`'s, shipped read-only files through `resource_path()`: see the
-  root [`CLAUDE.md`](../CLAUDE.md), frozen-bundle section. Not this folder's to relax.
+- **The spec's invariants bind `backend/` and `database/`** — see below. Not this folder's to relax.
 - **The packaged tree is [`electron/docs/BOOT.md`](../electron/docs/BOOT.md#dev-and-packaged-spawns)'s.**
   `stage.mjs` builds it and the smoke suite asserts it; every name in it belongs to a consumer.
 - **The smoke suite's dependencies are its own** — nothing it installs reaches `resources/`.
+
+## The frozen bundle's invariants
+
+`backend/` and `database/` ship as **one** PyInstaller one-dir bundle, `services`, with the service
+picked by `argv[1]`; `services.spec` is the build and `entry.py` its entry point.
+
+The build runs out of `backend/`'s environment, which works only because **`database/`'s
+dependencies are a strict subset of `backend/`'s**. That is an invariant nothing checks: a
+dependency added to `database/` alone would be absent from the bundle and fail at runtime on a
+clean machine, so it has to be added to `backend/pyproject.toml` too.
+
+PyInstaller's module graph is flat, so no top-level module name may appear in both services. That is
+why the entry points are `backend_main.py` and `database_main.py` rather than two `main.py`, and it
+is a live constraint on every new top-level module: `backend/` owns `course`, `pipeline`,
+`services`, `timing`; `database/` owns `events`, `fs`, `settings`. The generic names on the
+`database/` side are the ones a future dependency could collide with — `fs` is a real PyPI package.
+
+Freezing moves `__file__` inside the bundle, so **every read-only file that ships with the code
+resolves through `resource_path()`** (`backend/services/resources.py`), never a `__file__` walk —
+`assets/` and `credentials.json`. Binaries are not among them: they resolve through `lib/tools/` off
+`FASTSTUDY_BIN_DIR`, which freezing does not affect.
 
 ## Docs
 
