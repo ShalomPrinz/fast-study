@@ -75,6 +75,8 @@ launcher's boot screen can render a missing binary instead of the user meeting i
 
 `database/` spawns nothing and its `/health` stays liveness-only.
 
+The record's shape is read by `electron/boot.js` (`unusableTools`, the only user-facing render), `delivery/smoke/release.spec.js` (every tool `"ok"`) and each producer's boot log; `frontend/` never reads `/health`.
+
 ## Tests
 
 Two suites assert the same table in both languages, so a rule that holds in one and not the other
