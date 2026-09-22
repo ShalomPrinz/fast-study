@@ -339,9 +339,6 @@ to any service.
   body-carried code cannot reach an SSE caller, so that one failure stays code-less.
 - **FastAPI's own 422** answers `{detail: [...]}`, not `{error}`, for a malformed request body or an
   invalid `kind`. Shape and prose are both pydantic's. Developer-facing; left alone.
-- **`audio_extraction_failed`'s `detail` is a bare exit code.** `pipeline/strip_audio.py` sends
-  ffmpeg's stderr to `DEVNULL`, so there is nothing more to carry. Capturing it would make the
-  headline's detail line worth reading.
 - **`course/analyze.py` does not special-case a Gemini daily quota.** The code rides through from
   `llm_client`, so the entry does read `gemini_quota_exhausted` — but there is no run-scoped block
   and no `provider` field, so the overview has nothing like the pipeline's blocked records.

@@ -3,7 +3,6 @@ import logging
 import math
 import os
 import re
-import subprocess
 import tempfile
 from pathlib import Path
 
@@ -11,9 +10,9 @@ import groq
 from groq import Groq
 from services import providers
 from services.errors import CodedError
+from services.ffmpeg import run_ffmpeg
 from services.mp3 import read_duration
 from timing import timed_pipeline
-from tools import tool_path
 
 log = logging.getLogger("transcribe")
 
@@ -49,9 +48,8 @@ def split_one_chunk(
     """Cut one fixed-length mp3 chunk out of the audio; Groq caps a request at 25 MB."""
 
     chunk_path = os.path.join(tmpdir, f"chunk_{index:04d}.mp3")
-    subprocess.run(
+    run_ffmpeg(
         [
-            tool_path("ffmpeg"),
             "-y",
             "-i",
             audio_path,
@@ -66,10 +64,7 @@ def split_one_chunk(
             "-b:a",
             "32k",
             chunk_path,
-        ],
-        check=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        ]
     )
     return chunk_path
 
