@@ -238,30 +238,33 @@ class TestHebrewInCodeBlockRenders:
         "```\n"
     )
 
-    def _render_text(self) -> str:
+    def _render_text(self) -> tuple[str, str | None]:
         import fitz
 
         with tempfile.TemporaryDirectory() as d:
             md_path = os.path.join(d, "snippet.md")
             with open(md_path, "w", encoding="utf-8") as f:
                 f.write(self.MD)
-            pdf_path, _ = convert_to_pdf(md_path)
+            # Keep the render warning so a failure shows its cause, not just the symptom.
+            pdf_path, warning = convert_to_pdf(md_path)
             try:
-                return fitz.open(pdf_path).load_page(0).get_text()
+                return fitz.open(pdf_path).load_page(0).get_text(), warning
             finally:
                 os.unlink(pdf_path)
 
     def test_no_notdef_glyphs_in_code_block(self):
+        text, warning = self._render_text()
         # ￿ is what pymupdf emits for a notdef (missing) glyph — the bug.
-        assert "￿" not in self._render_text()
+        assert "￿" not in text, f"notdef glyph in code block; render warning: {warning}"
 
     def test_hebrew_comment_words_rendered(self):
-        text = self._render_text()
+        text, warning = self._render_text()
         # Words from the Hebrew comments must be present (PDF text order is
         # visual, so check membership of whole words, not the full line).
         for word in ("שמירת", "בסיס", "המחסנית", "הגדרת"):
             assert word in text, (
-                f"Hebrew word {word!r} missing from rendered code block"
+                f"Hebrew word {word!r} missing from rendered code block; "
+                f"render warning: {warning}"
             )
 
 
