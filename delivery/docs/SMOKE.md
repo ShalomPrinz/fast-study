@@ -33,9 +33,10 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   [`electron/docs/BOOT.md`](../../electron/docs/BOOT.md#the-launch-screen). A missing id is a
   follow-up for that consumer, never a text selector.
 - **One step at a time, through the backend.** A provider failure and a locked `summary.pdf` run
-  alone via backend `run/{step}`, so the error is that step's; the suite asserts it equals
-  `lecture-error-message` — the one text read, the backend's untranslated prose — and a provider
-  step's `step-status` reads `failed`. The lock is PowerShell holding the file with no sharing.
+  alone via backend `run/{step}`, so the error is that step's. A provider's untranslated text must
+  appear in `lecture-error-message` — the one text read — and its `step-status` reads `failed`; the
+  lock is asserted by `/status`'s `file_locked` code and `file` param, since it carries no verbatim
+  text. The lock is PowerShell holding the file with no sharing.
 - **Live SSE is the audio step flipping pending → done** without a reload, never `running`, which a
   fast failure can skip.
 - **An outcome, never a live process.** What Windows does asynchronously — a quit-time NSIS install,

@@ -105,14 +105,14 @@ async function tone() {
 /** Run one provider step alone and prove it died on the network: not a crash, not an import
  *  error, not a missing key, and the backend still up. Only that step ran, so the error is its own. */
 async function expectNetworkFailure(page, course, lecture, step) {
-  const error = await services.api.runStep(course, lecture, step);
+  const error = (await services.api.runStep(course, lecture, step))?.message ?? null;
   expect(error, `${step} succeeded, so a provider answered`).not.toBeNull();
   expect(error, `${step} failed, but not on the network`).toMatch(NETWORK_FAILURE);
   expect(error, `${step} failed on something a network block cannot cause`).not.toMatch(
     NOT_A_NETWORK_FAILURE,
   );
-  // The backend's untranslated prose — the one visible text the suite reads.
-  await expect(page.getByTestId('lecture-error-message')).toHaveText(error);
+  // The provider's own text rides verbatim beneath the translated headline — the one visible text read.
+  await expect(page.getByTestId('lecture-error-message')).toContainText(error);
   await expect(byTestId(page, 'step-status', { step })).toHaveAttribute('data-status', 'failed');
   expect((await services.api.health()).status, 'the backend stopped answering').toBe('ok');
 }
@@ -476,9 +476,10 @@ test('9. opening a PDF', async () => {
     try {
       const error = await api.runStep(COURSE, LECTURE, 'pdf');
       expect(error, 'the PDF step wrote over a locked summary.pdf').not.toBeNull();
-      // database/'s wording for a Windows sharing violation, which the backend passes through.
-      expect(error).toContain('summary.pdf is open in another program');
-      await expect(page.getByTestId('lecture-error-message')).toHaveText(error);
+      // database/'s code for a Windows sharing violation, which the backend forwards with its params.
+      expect(error.code, error.message).toBe('file_locked');
+      expect(error.params?.file).toBe('summary.pdf');
+      await expect(page.getByTestId('lecture-error-message')).toBeVisible();
     } finally {
       await lock.release();
     }

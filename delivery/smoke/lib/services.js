@@ -81,7 +81,7 @@ export function backend({ urls, secret }) {
     async health() {
       return (await fetch(`${urls.backend}/health`)).json();
     },
-    /** Start one step and wait for that run to end; answers the error it left, or null. */
+    /** Start one step and wait for that run to end; answers the error entry it left, or null. */
     async runStep(course, name, step, { timeoutMs = 300_000 } = {}) {
       const started = await (await at('POST', `${lecture(course, name)}/run/${step}`)).json();
       expect(started, `run/${step} did not start`).toEqual({ status: 'started' });
@@ -101,8 +101,8 @@ export function backend({ urls, secret }) {
         },
         { timeoutMs, intervalMs: 500, message: `${label} on ${course}/${name} never finished` },
       );
-      // The backend's own error key, as /status spells it; each entry carries the message.
-      return snapshot.errors[`${course}||${name}||lecture`]?.message ?? null;
+      // The backend's own error key, as /status spells it; the entry carries message, code and params.
+      return snapshot.errors[`${course}||${name}||lecture`] ?? null;
     },
     runPipeline: async (course, name) =>
       (await at('POST', `${lecture(course, name)}/pipeline`)).json(),
