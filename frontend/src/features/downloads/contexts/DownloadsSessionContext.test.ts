@@ -94,6 +94,7 @@ describe("a failed discovery's toast", () => {
 
     expect(sendUpdate).toHaveBeenCalledTimes(1)
     expect(sendUpdate.mock.calls[0][1].props.failure.code).toBe('moodle_ws_error')
+    expect(sendUpdate.mock.calls[0][1].props.lead).toBe('Algebra')
   })
 
   it('falls back to the generic line for a codeless refusal', async () => {

@@ -3,7 +3,8 @@ import { t } from '@lingui/core/macro'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
 import { isConnectionError } from '@/services/http'
-import { failureNode, failureOf } from '@/shared/utils/failure'
+import { serviceErrorNode } from '@/shared/components/ServiceError'
+import { failureOf } from '@/shared/utils/failure'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
 import { blockedMessage } from '../utils/downloadErrors'
@@ -118,12 +119,14 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
           sendUpdateRef.current?.('error', blockedMessage())
           return
         }
-        // A coded refusal says why in the service's words; only a codeless one gets the generic line.
+        // A coded refusal says why in the service's words, led by the course name so it never reads
+        // as the open course failing; only a codeless one gets the generic line.
         const name = course.name
+        const failure = failureOf(err)
         sendUpdateRef.current?.(
           'error',
-          failureOf(err).code
-            ? failureNode(err)
+          failure.code
+            ? serviceErrorNode(failure, name)
             : t`Couldn't load recordings for "${name}". Try again.`,
         )
       } finally {
