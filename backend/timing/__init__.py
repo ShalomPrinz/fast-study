@@ -2,6 +2,7 @@ import functools
 import logging
 import sqlite3
 import time
+from contextlib import closing
 from pathlib import Path
 
 import runtime
@@ -25,12 +26,26 @@ def _allowed_operations() -> frozenset:
 
 
 def init_db():
-    """Create the state directory and the timing table if they don't exist."""
+    """Create the state directory and the timing table if they don't exist; a corrupt db is
+    moved aside to `timing.db.corrupt` and replaced with a fresh one."""
 
     # The only place the state dir is created — `state_path` is a pure join, and every other
     # entry point runs after this one.
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(DB_PATH) as conn:
+    try:
+        _create_schema()
+    except sqlite3.DatabaseError as e:
+        corrupt = DB_PATH.with_name(DB_PATH.name + ".corrupt")
+        log.warning(
+            "timing db %s is unreadable (%s); moving it to %s", DB_PATH, e, corrupt
+        )
+        DB_PATH.replace(corrupt)
+        _create_schema()
+
+
+def _create_schema():
+    # Closed explicitly: `with connect()` only commits, and Windows can't rename an open file.
+    with closing(sqlite3.connect(DB_PATH)) as conn, conn:
         # Initial table creation
         conn.execute("""
             CREATE TABLE IF NOT EXISTS timing (
@@ -49,11 +64,15 @@ def init_db():
 
 
 def _record(operation: str, file_size_bytes: int, duration_seconds: float):
-    with sqlite3.connect(DB_PATH) as conn:
-        conn.execute(
-            "INSERT INTO timing (operation, file_size_bytes, duration_seconds) VALUES (?, ?, ?)",
-            (operation, file_size_bytes, duration_seconds),
-        )
+    # Best-effort: runs after the timed step already succeeded, so a db failure must not fail it.
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            conn.execute(
+                "INSERT INTO timing (operation, file_size_bytes, duration_seconds) VALUES (?, ?, ?)",
+                (operation, file_size_bytes, duration_seconds),
+            )
+    except sqlite3.Error as e:
+        log.warning("could not record %s timing sample: %s", operation, e)
 
 
 def record(operation: str, file_size_bytes: int, duration_seconds: float) -> dict:
@@ -93,11 +112,15 @@ def get_stats(operation: str, file_size_bytes: int) -> dict:
     """Duration stats for one operation, with a linear-regression estimate for this file size.
     All durations are in seconds; falls back to the average below two data points."""
 
-    with sqlite3.connect(DB_PATH) as conn:
-        rows = conn.execute(
-            "SELECT file_size_bytes, duration_seconds FROM timing WHERE operation = ?",
-            (operation,),
-        ).fetchall()
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            rows = conn.execute(
+                "SELECT file_size_bytes, duration_seconds FROM timing WHERE operation = ?",
+                (operation,),
+            ).fetchall()
+    except sqlite3.Error as e:
+        log.warning("could not read %s timing stats: %s", operation, e)
+        rows = []
 
     if not rows:
         return {
