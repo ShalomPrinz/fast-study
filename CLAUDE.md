@@ -133,6 +133,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 - Before surfacing an incidental finding — git history, branch state, earlier attempts, side effects — ask whether the user would decide or act differently knowing it. If yes, say it in one line with what it changes; if not, drop it, from replies and prompt files alike.
 - User owns every version-control write. Never run `add`/`commit`/`stash`/`checkout`.
 - Verify empirically — start the service, curl it, kill it, quote the exact output — rather than asserting it works. For anything a user would see, run it on the `app-harness` skill's private offline stack ([`.claude/harness/`](.claude/harness/README.md)).
+- WSL interop is off, so no `.exe` runs from this shell — but the user has a Windows machine with PowerShell and Claude Code. When something needs verifying on Windows, ask them to run it there: give exact PowerShell commands or a self-contained prompt for that Claude Code, rather than leaving the Windows behavior unproven. That Claude Code is allowed to access this repo too, so when a check needs the code on the Windows side, tell the user it should work from the repo.
 
 ## Linting
 
