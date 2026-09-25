@@ -52,6 +52,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{provider, select, gemini {The Gemini API key is not set. Add it in Settings.} groq {The Groq API key is not set. Add it in Settings.} other {The {provider} API key is not set. Add it in Settings.}}',
   }),
+  api_key_rejected: msg({
+    message:
+      '{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}',
+  }),
   gemini_quota_exhausted: msg({
     message:
       "{scope, select, daily {Gemini's daily quota is used up. It resets at midnight Pacific time.} other {Gemini's rate limit was reached. Try again in a minute.}}",

@@ -38,6 +38,35 @@ def test_a_groq_failure_carries_its_own_text_as_detail(monkeypatch, tmp_path):
     assert e.value.params == {"detail": "400 invalid file"}
 
 
+@pytest.mark.parametrize(
+    ("error_cls", "status"),
+    [("AuthenticationError", 401), ("PermissionDeniedError", 403)],
+)
+def test_a_rejected_groq_key_raises_api_key_rejected(
+    monkeypatch, tmp_path, error_cls, status
+):
+    import groq
+    import httpx
+
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_bad")
+    audio = tmp_path / "audio.mp3"
+    audio.write_bytes(b"\x00" * 64)
+    response = httpx.Response(
+        status, request=httpx.Request("POST", "https://api.groq.com/x")
+    )
+    client = MagicMock()
+    client.audio.transcriptions.create.side_effect = getattr(groq, error_cls)(
+        "Invalid API Key", response=response, body=None
+    )
+    monkeypatch.setattr(transcribe_mod, "Groq", MagicMock(return_value=client))
+    monkeypatch.setattr(transcribe_mod, "get_duration", lambda p: 60.0)
+    monkeypatch.setattr(transcribe_mod, "split_one_chunk", lambda *a: str(audio))
+
+    with pytest.raises(RuntimeError) as e:
+        transcribe_audio(str(audio))
+    assert (e.value.code, e.value.params) == ("api_key_rejected", {"provider": "groq"})
+
+
 GROQ_429_MESSAGE = (
     "Rate limit reached for model `whisper-large-v3` in organization "
     "`org_01kqa6gm4behr9sv6rr3fqkxw9` service tier `on_demand` on seconds of "

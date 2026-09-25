@@ -124,6 +124,7 @@ given, so a refusal the user can act on is caught by the route instead and re-em
 | `pipeline/transcribe.py`                | `transcription_failed`      | `detail`                        | user  |
 | `pipeline/transcribe.py`                | `unreadable_audio`          | `file`                          | user  |
 | `pipeline/transcribe.py`, `llm_client.py`| `missing_api_key`          | `provider`                      | user  |
+| `pipeline/transcribe.py`, `llm_client.py`| `api_key_rejected`         | `provider`                      | user  |
 | `services/llm_client.py`                | `gemini_quota_exhausted`    | `scope`, `model`, `limit`, `tier`| user |
 | `pipeline/runner.py` blocked record     | `gemini_quota_blocked`      | `scope`, `model`, `limit`, `tier`| user |
 | `pipeline/summarize.py`                 | `summarization_failed`      | `detail`                        | user  |

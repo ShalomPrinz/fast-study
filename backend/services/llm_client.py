@@ -60,6 +60,20 @@ def _is_rate_limit(err: Exception, body: dict) -> bool:
     return "RESOURCE_EXHAUSTED" in str(err)
 
 
+def _key_rejected_error(err: Exception, body: dict) -> CodedError | None:
+    """An api_key_rejected CodedError when the SDK error says the key itself is bad, else None."""
+
+    inner = body.get("error", body) if isinstance(body, dict) else None
+    status = getattr(err, "code", None)
+    if status is None and isinstance(inner, dict):
+        status = inner.get("code")
+    if providers.key_rejected(status, body):
+        return CodedError(
+            "Gemini rejected the API key", "api_key_rejected", provider="gemini"
+        )
+    return None
+
+
 def _detail(inner: dict, type_suffix: str) -> dict:
     """Find one entry of the error body's `details` list by its @type suffix."""
 
@@ -155,7 +169,7 @@ class LLMClient:
                 info["model"] = info.get("model") or self.model
                 info["message"] = _quota_message(info, self.model)
                 raise GeminiRateLimitError(info) from e
-            raise RuntimeError(str(e)) from e
+            raise _key_rejected_error(e, body) or RuntimeError(str(e)) from e
         return (response.text or "").strip()
 
     def upload_file(self, path, mime_type: str):
@@ -166,7 +180,8 @@ class LLMClient:
                 file=str(path), config={"mime_type": mime_type}
             )
         except Exception as e:
-            raise RuntimeError(str(e)) from e
+            body = _extract_gemini_body(e)
+            raise _key_rejected_error(e, body) or RuntimeError(str(e)) from e
 
     def delete_file(self, name: str) -> None:
         """Best-effort cleanup of server-side upload quota; swallows errors."""

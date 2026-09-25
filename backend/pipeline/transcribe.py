@@ -220,6 +220,10 @@ def transcribe_audio(audio_path: str) -> str:
                 info["completed_chunks"] = i
                 info["total_chunks"] = total
                 raise TranscribeRateLimitError(info) from e
+            except (groq.AuthenticationError, groq.PermissionDeniedError) as e:
+                raise CodedError(
+                    "Groq rejected the API key", "api_key_rejected", provider="groq"
+                ) from e
             except Exception as e:
                 raise CodedError(str(e), "transcription_failed", detail=str(e)) from e
 

@@ -4,6 +4,7 @@ from unittest.mock import MagicMock
 import pytest
 import services.llm_client as llm_mod
 from google.genai import types
+from services.errors import CodedError
 from services.llm_client import (
     GeminiRateLimitError,
     LLMClient,
@@ -46,8 +47,10 @@ def _quota_body(
 class _SdkError(Exception):
     """Stand-in for google-genai's APIError, which exposes the body as `details`."""
 
-    def __init__(self, details: dict, text: str = "429 RESOURCE_EXHAUSTED."):
-        self.code = 429
+    def __init__(
+        self, details: dict, text: str = "429 RESOURCE_EXHAUSTED.", code: int = 429
+    ):
+        self.code = code
         self.details = details
         super().__init__(text)
 
@@ -220,3 +223,56 @@ def test_delete_file_swallows_errors(monkeypatch):
     # Must not raise — best-effort cleanup.
     LLMClient(api_key="k").delete_file("files/handle1")
     sdk.files.delete.assert_called_once_with(name="files/handle1")
+
+
+# ---- rejected key ----
+
+_INVALID_KEY_BODY = {
+    "error": {
+        "code": 400,
+        "status": "INVALID_ARGUMENT",
+        "details": [
+            {
+                "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                "reason": "API_KEY_INVALID",
+            }
+        ],
+    }
+}
+
+
+@pytest.mark.parametrize(
+    "error",
+    [
+        _SdkError(_INVALID_KEY_BODY, "400 INVALID_ARGUMENT", code=400),
+        _SdkError({}, "401 UNAUTHENTICATED", code=401),
+        _SdkError({}, "403 PERMISSION_DENIED", code=403),
+    ],
+)
+@pytest.mark.parametrize("call", ["generate", "upload_file"])
+def test_a_rejected_key_raises_api_key_rejected(monkeypatch, error, call):
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = error
+    sdk.files.upload.side_effect = error
+    _patched_client(sdk, monkeypatch)
+    client = LLMClient(api_key="k")
+
+    with pytest.raises(CodedError) as exc:
+        if call == "generate":
+            client.generate(["x"])
+        else:
+            client.upload_file("/tmp/t.txt", "text/plain")
+    assert (exc.value.code, exc.value.params) == (
+        "api_key_rejected",
+        {"provider": "gemini"},
+    )
+
+
+def test_another_400_stays_a_plain_runtime_error(monkeypatch):
+    body = {"error": {"code": 400, "status": "INVALID_ARGUMENT"}}
+    sdk = MagicMock()
+    sdk.models.generate_content.side_effect = _SdkError(body, "400 bad", code=400)
+    _patched_client(sdk, monkeypatch)
+    with pytest.raises(RuntimeError) as exc:
+        LLMClient(api_key="k").generate(["x"])
+    assert not isinstance(exc.value, CodedError)
