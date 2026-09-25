@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
 import { AUTO, BACKEND, DATABASE, PROVIDERS, SITE, call, json, waitForFile } from './api.mjs';
-import { connectDrive } from './baseline.mjs';
+import { backendGeminiModel, connectDrive } from './baseline.mjs';
 import { appServices, appUrl, openBrowser } from './browser.mjs';
 import {
   DEFAULT_DOWNLOAD_MS,
@@ -101,10 +101,11 @@ async function noRealKeyInTheServices(paths) {
 async function settingsWritesMissTheRealEnv(paths) {
   const realEnv = path.join(REPO_ROOT, '.env');
   const before = fs.statSync(realEnv).mtimeMs; // stat only: the real .env is never read here
-  await json(`${DATABASE}/settings`, 'PUT', { gemini_model: 'gemini-2.5-flash' });
+  const model = await backendGeminiModel();
+  await json(`${DATABASE}/settings`, 'PUT', { gemini_model: model });
   const written = fs.readFileSync(paths.env, 'utf8');
   // The store quotes what it writes, so match the value, not the exact line.
-  if (!/GEMINI_MODEL=['"]?gemini-2\.5-flash/.test(written)) {
+  if (!new RegExp(`GEMINI_MODEL=['"]?${model.replaceAll('.', '\\.')}`).test(written)) {
     throw new Error(`a settings save did not land in ${paths.env}`);
   }
   if (fs.statSync(realEnv).mtimeMs !== before) {
@@ -170,7 +171,7 @@ async function controlModesSwitchAndSwitchBack() {
   };
   const gemini = async (lecture) => {
     const { status, body } = await call(
-      `${PROVIDERS}/gemini/v1beta/models/gemini-2.5-flash:generateContent`,
+      `${PROVIDERS}/gemini/v1beta/models/harness-fake:generateContent`,
       {
         method: 'POST',
         expect: false,

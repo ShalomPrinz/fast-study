@@ -55,7 +55,7 @@ baseline again.
 ## The baseline, and one course per flow
 
 A seed wipes both scratch roots and restores everything a flow can change: the scratch `.env` (fake
-keys, `gemini-2.5-flash`, Drive on under `Harness`, `AUTO_RUN=full`, nightly off at hour 3) pushed
+keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, nightly off at hour 3) pushed
 to the running backend and database through `POST /config`, the Moodle token (after
 `/auth/disconnect`, the only thing that clears the auto-downloader's in-memory "expired"), both
 fakes' modes, the fake Drive store, and Drive **connected**. It then seeds, through `database/`'s

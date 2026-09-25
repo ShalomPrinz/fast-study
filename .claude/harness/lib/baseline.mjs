@@ -23,12 +23,17 @@ export const SETTINGS = {
   NIGHTLY_HOUR: ['nightly_hour', 'int'],
 };
 
-/** The baseline settings, as ENV name → text. */
-export function baselineEnv(paths) {
+/** The model the running backend offers first — read live, so the baseline never names one it lacks. */
+export async function backendGeminiModel() {
+  return (await call(`${BACKEND}/config/options`)).body.gemini_models[0];
+}
+
+/** The baseline settings, as ENV name → text. With no model (before boot), the backend's default applies. */
+export function baselineEnv(paths, geminiModel) {
   return {
     DATA_ROOT: paths.data,
     ...FAKE_KEYS,
-    GEMINI_MODEL: 'gemini-2.5-flash',
+    ...(geminiModel && { GEMINI_MODEL: geminiModel }),
     GDRIVE_ROOT_FOLDER: 'Harness',
     DRIVE_ENABLED: 'true',
     AUTO_RUN: 'full',
@@ -57,8 +62,10 @@ export function settingsPatch(env) {
 }
 
 /** The scratch settings store, rewritten whole from the baseline. */
-export function writeScratchEnv(paths) {
-  const lines = Object.entries(baselineEnv(paths)).map(([name, text]) => `${name}=${text}`);
+export function writeScratchEnv(paths, geminiModel) {
+  const lines = Object.entries(baselineEnv(paths, geminiModel)).map(
+    ([name, text]) => `${name}=${text}`,
+  );
   fs.writeFileSync(paths.env, `# ${BANNER}\n${lines.join('\n')}\n`);
 }
 
@@ -91,9 +98,10 @@ export async function connectDrive() {
 
 /** Put a live stack's settings, tokens, fake modes, file locks and Drive back to the baseline. */
 export async function restore(paths) {
-  writeScratchEnv(paths);
+  const geminiModel = await backendGeminiModel();
+  writeScratchEnv(paths, geminiModel);
   // The store is right already; this reaches the processes, which hold what the last save pushed.
-  const { data_root: dataRoot, ...rest } = settingsPatch(baselineEnv(paths));
+  const { data_root: dataRoot, ...rest } = settingsPatch(baselineEnv(paths, geminiModel));
   await json(`${BACKEND}/config`, 'POST', rest);
   await json(`${DATABASE}/config`, 'POST', { data_root: dataRoot });
   // Disconnect first: it is the only thing that clears the auto-downloader's in-memory "expired".

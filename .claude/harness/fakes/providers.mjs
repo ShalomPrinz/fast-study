@@ -210,7 +210,7 @@ async function handle(req, res) {
   if (route.endsWith('/v1beta/models') && req.method === 'GET') {
     if (failure('gemini', req, ['500']) !== 'ok')
       return json(res, 500, { error: { message: 'fake gemini is down' } });
-    return json(res, 200, { models: [{ name: 'models/gemini-2.5-flash' }] });
+    return json(res, 200, { models: [{ name: 'models/harness-fake' }] });
   }
   if (route.includes('/upload/') && route.endsWith('/files')) {
     await readBody(req);
