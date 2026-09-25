@@ -1,6 +1,6 @@
 import type { Client } from '@/services/http'
-import { createClient, httpError } from '@/services/http'
-import { AUTO_DOWNLOADER_URL, secretHeaders } from '@/services/runtime'
+import { createClient, failureError } from '@/services/http'
+import { AUTO_DOWNLOADER_URL } from '@/services/runtime'
 import type { Kind } from '@/types'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
@@ -92,43 +92,34 @@ export function isPasscodeError(err: unknown): err is PasscodeError {
   return err instanceof PasscodeError
 }
 
-// A direct fetch, secret added by hand, because the shared client discards the body these endpoints
-// encode meaning in — see docs/SERVICES.md for the trade-off and why it takes a `Client`.
+// The client's raw `send`, because its JSON path discards the body these endpoints encode meaning
+// in; a downed service still throws the shared, already-toasted ConnectionError. See docs/SERVICES.md.
 export async function postReconnectAware<T>(
   client: Client,
   path: string,
   body: unknown,
 ): Promise<T> {
-  const res = await fetch(client.url(path), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...secretHeaders() },
-    body: JSON.stringify(body),
-  })
-  if (res.status === 401) {
-    const data = await res.json().catch(() => null)
-    if (data?.status === 'reconnect') throw new ReconnectError()
-  }
-  if (res.status === 422) {
-    const data = await res.json().catch(() => null)
-    if (data?.status === 'unsupported') {
+  const res = await client.send(path, 'POST', { json: body })
+  if (!res.ok) {
+    // Read from a clone, so a body that is none of these still reaches `failureError` unread.
+    const data = await res
+      .clone()
+      .json()
+      .catch(() => null)
+    if (res.status === 401 && data?.status === 'reconnect') throw new ReconnectError()
+    if (res.status === 422 && data?.status === 'unsupported') {
       throw new UnsupportedError(
         data.message ?? 'Unsupported recording source.',
         typeof data.code === 'string' ? data.code : null,
         data.params ?? null,
       )
     }
-  }
-  if (res.status === 503) {
-    const data = await res.json().catch(() => null)
-    if (data?.status === 'blocked') throw new BlockedError()
-  }
-  if (res.status === 409) {
-    const data = await res.json().catch(() => null)
-    if (data?.status === 'passcode') {
+    if (res.status === 503 && data?.status === 'blocked') throw new BlockedError()
+    if (res.status === 409 && data?.status === 'passcode') {
       throw new PasscodeError(data.reason, { course: data.course, lecture: data.name })
     }
+    throw await failureError(res)
   }
-  if (!res.ok) throw httpError(res)
   return res.json() as Promise<T>
 }
 

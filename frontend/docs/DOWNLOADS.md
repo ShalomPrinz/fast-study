@@ -45,14 +45,15 @@ a burst with a captcha) is deliberately not that path: it says nothing about the
 ## The page session
 
 `DownloadsSessionProvider` (in `Layout`) holds everything the page accumulates — `selected`/`pending`,
-`items`, `error`, row edits, `reconnectKey`, plus `discover` and `close` — so a trip to a lecture and back
+`items`, row edits, `reconnectKey`, plus `discover` and `close` — so a trip to a lecture and back
 finds the same course and typed names, and a discovery in flight when the user leaves still lands. State
 and an identity-stable actions bag are separate contexts; the memoized rows bail out on the setters'
 identity.
 
-`discover` sets `pending` and promotes the course to `selected` only once `listRecordings` resolves, so
-an expired session or a `BlockedError` leaves the page as it was, a toast and nothing else. A plain
-failure does promote it: the panel is where that error shows. Each discovery takes a ticket; `close` or
+`discover` sets `pending` (the row's `Loading…`) and promotes the course to `selected` only once
+`listRecordings` resolves, so every failure leaves the page as it was — the open course included — and
+toasts once: the reconnect hint, `blockedMessage()`, the client's connection toast, the service's reason for a
+coded refusal, or a generic "couldn't load" line. Each discovery takes a ticket; `close` or
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.
 
@@ -127,4 +128,6 @@ glued to it as a decimal (a Latin letter, a Hebrew letter א–י, or a digit af
 voids the marker rather than guessing; a title with no number falls back to the tree's next name.
 
 A row's failure to _start_ flips its button to "Retry ✗" and toasts through `toastDownloadError`;
-reconnect, passcode and a cancelled prompt don't toast, they steer the UI.
+reconnect, passcode and a cancelled prompt don't toast, they steer the UI. A coded failure — here, in a
+section run and in a playlist's in-row `expandErrorText` — reads in the service's words; only a codeless
+one gets the generic line.

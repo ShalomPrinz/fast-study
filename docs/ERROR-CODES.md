@@ -278,6 +278,8 @@ emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.
 | `browser/zoomBrowser.js`        | `xvfb_unavailable`            | `detail`                 | user  |
 | `http/server.js`                | `moodle_token_no_privatetoken`| —                        | user  |
 | `auth/moodleToken.js`           | `moodle_login_timeout`        | —                        | user  |
+| `auth/moodleToken.js`           | `moodle_login_abandoned`      | —                        | user  |
+| `auth/moodleToken.js`           | `moodle_login_not_pending`    | —                        | user  |
 | `moodle/wsClient.js`            | `moodle_file_unreadable`      | `url`                    | uncertain |
 | `moodle/wsClient.js` `WsError`  | `moodle_ws_error`             | `errorcode`, `detail`    | user  |
 | `app.js` backstop               | `internal_error`              | `detail`                 | user  |

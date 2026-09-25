@@ -30,7 +30,7 @@ msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "\"{name}\" has no characters that can be used in a folder name."
 
 #. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:244
+#: src/features/downloads/components/SectionGroup.tsx:236
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {# item} other {# items}}"
 
@@ -211,7 +211,7 @@ msgstr "{name} was used"
 msgid "{name} will be used"
 msgstr "{name} will be used"
 
-#: src/features/downloads/components/SectionGroup.tsx:279
+#: src/features/downloads/components/SectionGroup.tsx:271
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 
@@ -255,7 +255,7 @@ msgstr "{scope, select, daily {Gemini's daily quota is used up. It resets at mid
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · step {stepNumber} of {stageCount}"
 
-#: src/features/downloads/components/SectionGroup.tsx:288
+#: src/features/downloads/components/SectionGroup.tsx:280
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 
@@ -416,7 +416,7 @@ msgstr "Back"
 msgid "BIU account"
 msgstr "BIU account"
 
-#: src/features/downloads/components/AccountStatus.tsx:92
+#: src/features/downloads/components/AccountStatus.tsx:93
 msgid "BIU account connected"
 msgstr "BIU account connected"
 
@@ -465,7 +465,7 @@ msgstr "Changing this re-points the app only — it never moves anything. The ol
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:69
 msgid "checking account…"
 msgstr "checking account…"
 
@@ -506,7 +506,7 @@ msgstr "Compile"
 msgid "Complete"
 msgstr "Complete"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:120
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
@@ -519,7 +519,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your BIU account first"
 msgstr "Connect your BIU account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:104
+#: src/features/downloads/components/AccountStatus.tsx:105
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "Connecting again needs a full login in a browser window, including MFA."
 
@@ -603,14 +603,18 @@ msgstr "Could not tell what {url} is — the site didn't answer usefully."
 #~ msgid "Couldn't download \"{name}\": {detail}"
 #~ msgstr "Couldn't download \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:22
-#: src/features/downloads/utils/downloadErrors.ts:30
+#: src/features/downloads/utils/downloadErrors.ts:34
+#: src/features/downloads/utils/downloadErrors.ts:51
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "Couldn't download \"{name}\". Try again."
 
-#: src/features/downloads/components/SectionGroup.tsx:121
+#: src/features/downloads/utils/downloadErrors.ts:44
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
+
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:127
+msgid "Couldn't load recordings for \"{name}\". Try again."
+msgstr "Couldn't load recordings for \"{name}\". Try again."
 
 #: src/features/search/hooks/useCourseSummaries.ts:44
 msgid "Couldn't load summaries for {course}."
@@ -670,16 +674,16 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:103
+#: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Disconnect the BIU account?"
 msgstr "Disconnect the BIU account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -688,7 +692,7 @@ msgstr "disconnecting…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "Done"
 msgstr "Done"
 
@@ -702,7 +706,7 @@ msgid "Download again"
 msgstr "Download again"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:270
+#: src/features/downloads/components/SectionGroup.tsx:262
 msgid "Download all {0}"
 msgstr "Download all {0}"
 
@@ -717,11 +721,11 @@ msgstr "Downloading"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:248
+#: src/features/downloads/components/SectionGroup.tsx:240
 msgid "Downloading {0}/{1}…"
 msgstr "Downloading {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:255
+#: src/features/downloads/components/SectionGroup.tsx:247
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
@@ -734,7 +738,7 @@ msgid "Downloading recordings (optional)"
 msgstr "Downloading recordings (optional)"
 
 #: src/features/downloads/components/RecordingRow.tsx:257
-#: src/features/downloads/components/SectionGroup.tsx:270
+#: src/features/downloads/components/SectionGroup.tsx:262
 msgid "Downloading…"
 msgstr "Downloading…"
 
@@ -791,7 +795,7 @@ msgstr "Everything stays on this computer. Fast Study has no servers of its own 
 msgid "Expand"
 msgstr "Expand"
 
-#: src/features/downloads/components/SectionGroup.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:260
 msgid "Expand every playlist in this section first"
 msgstr "Expand every playlist in this section first"
 
@@ -829,26 +833,14 @@ msgstr "failed"
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
-#: src/features/downloads/components/AccountStatus.tsx:48
-msgid "Failed to complete login. Try reconnecting."
-msgstr "Failed to complete login. Try reconnecting."
-
 #: src/features/lectures/MainView.tsx:155
 #~ msgid "Failed to delete file"
 #~ msgstr "Failed to delete file"
-
-#: src/features/downloads/components/AccountStatus.tsx:60
-msgid "Failed to disconnect the account."
-msgstr "Failed to disconnect the account."
 
 #: src/features/lectures/EditSummaryView.tsx:140
 #: src/features/lectures/EditSummaryView.tsx:152
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
-
-#: src/features/downloads/components/AccountStatus.tsx:37
-msgid "Failed to launch the login browser."
-msgstr "Failed to launch the login browser."
 
 #: src/features/lectures/EditSummaryView.tsx:106
 msgid "Failed to save summary"
@@ -878,7 +870,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:77
+#: src/features/downloads/components/AccountStatus.tsx:78
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -890,7 +882,7 @@ msgstr "finish signing in to Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "finishing…"
 msgstr "finishing…"
 
@@ -1042,10 +1034,6 @@ msgstr "Load recordings"
 msgid "Loaded"
 msgstr "Loaded"
 
-#: src/features/downloads/DownloadsView.tsx:101
-msgid "Loading recordings…"
-msgstr "Loading recordings…"
-
 #: src/features/search/SearchView.tsx:223
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
@@ -1067,7 +1055,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:185
+#: src/shared/i18n/serviceErrors.ts:189
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1118,6 +1106,10 @@ msgstr "No Google Drive folder is set. Choose one in Settings."
 #: src/features/course-overview/utils/overview.ts:7
 msgid "No Lectures"
 msgstr "No Lectures"
+
+#: src/shared/i18n/serviceErrors.ts:188
+msgid "No login is in progress. Connect again."
+msgstr "No login is in progress. Connect again."
 
 #: src/features/lectures/utils/materialIndicator.ts:25
 msgid "no material found"
@@ -1179,7 +1171,7 @@ msgstr "None"
 msgid "Not a file the downloader can fetch"
 msgstr "Not a file the downloader can fetch"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:117
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1271,7 +1263,7 @@ msgstr "Open the sign-in page"
 msgid "Other"
 msgstr "Other"
 
-#: src/features/downloads/components/SectionGroup.tsx:82
+#: src/features/downloads/components/SectionGroup.tsx:80
 msgid "Other links"
 msgstr "Other links"
 
@@ -1407,7 +1399,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:120
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1557,7 +1549,7 @@ msgstr "Select a lecture to get started"
 msgid "Send report"
 msgstr "Send report"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:117
 msgid "session expired"
 msgstr "session expired"
 
@@ -1712,7 +1704,7 @@ msgstr "That step is turned off in settings."
 #~ msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 #~ msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 
-#: src/features/downloads/components/SectionGroup.tsx:221
+#: src/features/downloads/components/SectionGroup.tsx:213
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "the BIU session expired. Reconnect, then run the section again."
 
@@ -1756,6 +1748,10 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
+#: src/shared/i18n/serviceErrors.ts:185
+msgid "The login window was closed before login finished. Connect again."
+msgstr "The login window was closed before login finished. Connect again."
+
 #: src/shared/i18n/serviceErrors.ts:184
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
@@ -1773,7 +1769,7 @@ msgstr "The other materials keep their names."
 msgid "The PDF engine produced no file."
 msgstr "The PDF engine produced no file."
 
-#: src/features/downloads/components/SectionGroup.tsx:224
+#: src/features/downloads/components/SectionGroup.tsx:216
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
@@ -1781,7 +1777,7 @@ msgstr "the run stopped early. Run the section again to pick them up."
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:223
+#: src/features/downloads/components/SectionGroup.tsx:215
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
@@ -1801,7 +1797,7 @@ msgstr "The storage service is not answering. Make sure it's running."
 msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 msgstr "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 
-#: src/features/downloads/utils/downloadErrors.ts:10
+#: src/features/downloads/utils/downloadErrors.ts:16
 #: src/shared/i18n/serviceErrors.ts:140
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 msgstr "The university site is temporarily refusing automated requests. Wait a few minutes and try again."

@@ -30,7 +30,7 @@ msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "ב\"{name}\" אין תווים שאפשר להשתמש בהם בשם תיקייה."
 
 #. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:244
+#: src/features/downloads/components/SectionGroup.tsx:236
 msgid "{0, plural, one {# item} other {# items}}"
 msgstr "{0, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
@@ -211,7 +211,7 @@ msgstr "{name} שימש"
 msgid "{name} will be used"
 msgstr "{name} ישמש"
 
-#: src/features/downloads/components/SectionGroup.tsx:279
+#: src/features/downloads/components/SectionGroup.tsx:271
 msgid "{notStarted, plural, one {# row never started — {stoppedBecause}} other {# rows never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {שורה אחת לא התחילה — {stoppedBecause}} two {# שורות לא התחילו — {stoppedBecause}} other {# שורות לא התחילו — {stoppedBecause}}}"
 
@@ -255,7 +255,7 @@ msgstr "{scope, select, daily {המכסה היומית של Gemini נוצלה. �
 msgid "{stage} · step {stepNumber} of {stageCount}"
 msgstr "{stage} · שלב {stepNumber} מתוך {stageCount}"
 
-#: src/features/downloads/components/SectionGroup.tsx:288
+#: src/features/downloads/components/SectionGroup.tsx:280
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.}}"
 
@@ -416,7 +416,7 @@ msgstr "חזרה"
 msgid "BIU account"
 msgstr "חשבון בר-אילן"
 
-#: src/features/downloads/components/AccountStatus.tsx:92
+#: src/features/downloads/components/AccountStatus.tsx:93
 msgid "BIU account connected"
 msgstr "חשבון בר-אילן מחובר"
 
@@ -465,7 +465,7 @@ msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחר
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:69
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -506,7 +506,7 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:120
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחבר"
@@ -519,7 +519,7 @@ msgstr "לחבר את Google Drive עכשיו?"
 msgid "Connect your BIU account first"
 msgstr "יש לחבר תחילה את חשבון בר-אילן"
 
-#: src/features/downloads/components/AccountStatus.tsx:104
+#: src/features/downloads/components/AccountStatus.tsx:105
 msgid "Connecting again needs a full login in a browser window, including MFA."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -603,14 +603,18 @@ msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר
 #~ msgid "Couldn't download \"{name}\": {detail}"
 #~ msgstr "לא ניתן להוריד את \"{name}\": {detail}"
 
-#: src/features/downloads/utils/downloadErrors.ts:22
-#: src/features/downloads/utils/downloadErrors.ts:30
+#: src/features/downloads/utils/downloadErrors.ts:34
+#: src/features/downloads/utils/downloadErrors.ts:51
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 
-#: src/features/downloads/components/SectionGroup.tsx:121
+#: src/features/downloads/utils/downloadErrors.ts:44
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
+
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:127
+msgid "Couldn't load recordings for \"{name}\". Try again."
+msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה שוב."
 
 #: src/features/search/hooks/useCourseSummaries.ts:44
 msgid "Couldn't load summaries for {course}."
@@ -670,16 +674,16 @@ msgstr "מחק את {0}"
 msgid "Discard all edits"
 msgstr "מחק את כל העריכות"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתק"
 
-#: src/features/downloads/components/AccountStatus.tsx:103
+#: src/features/downloads/components/AccountStatus.tsx:104
 msgid "Disconnect the BIU account?"
 msgstr "לנתק את חשבון בר-אילן?"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
@@ -688,7 +692,7 @@ msgstr "מתנתק…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "Done"
 msgstr "סיום"
 
@@ -702,7 +706,7 @@ msgid "Download again"
 msgstr "הורד מחדש"
 
 #. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:270
+#: src/features/downloads/components/SectionGroup.tsx:262
 msgid "Download all {0}"
 msgstr "הורד הכל ({0})"
 
@@ -717,11 +721,11 @@ msgstr "מוריד"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:248
+#: src/features/downloads/components/SectionGroup.tsx:240
 msgid "Downloading {0}/{1}…"
 msgstr "מוריד {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:255
+#: src/features/downloads/components/SectionGroup.tsx:247
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
@@ -734,7 +738,7 @@ msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (רשות)"
 
 #: src/features/downloads/components/RecordingRow.tsx:257
-#: src/features/downloads/components/SectionGroup.tsx:270
+#: src/features/downloads/components/SectionGroup.tsx:262
 msgid "Downloading…"
 msgstr "מוריד…"
 
@@ -791,7 +795,7 @@ msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים מ�
 msgid "Expand"
 msgstr "הרחב"
 
-#: src/features/downloads/components/SectionGroup.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:260
 msgid "Expand every playlist in this section first"
 msgstr "יש להרחיב תחילה כל רשימת השמעה בקטע זה"
 
@@ -829,26 +833,14 @@ msgstr "נכשל"
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
-#: src/features/downloads/components/AccountStatus.tsx:48
-msgid "Failed to complete login. Try reconnecting."
-msgstr "השלמת ההתחברות נכשלה. נסה להתחבר מחדש."
-
 #: src/features/lectures/MainView.tsx:155
 #~ msgid "Failed to delete file"
 #~ msgstr "מחיקת הקובץ נכשלה"
-
-#: src/features/downloads/components/AccountStatus.tsx:60
-msgid "Failed to disconnect the account."
-msgstr "ניתוק החשבון נכשל."
 
 #: src/features/lectures/EditSummaryView.tsx:140
 #: src/features/lectures/EditSummaryView.tsx:152
 msgid "Failed to generate PDF"
 msgstr "ייצור ה-PDF נכשל"
-
-#: src/features/downloads/components/AccountStatus.tsx:37
-msgid "Failed to launch the login browser."
-msgstr "הפעלת דפדפן ההתחברות נכשלה."
 
 #: src/features/lectures/EditSummaryView.tsx:106
 msgid "Failed to save summary"
@@ -878,7 +870,7 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלאו את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:77
+#: src/features/downloads/components/AccountStatus.tsx:78
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
@@ -890,7 +882,7 @@ msgstr "יש להשלים את ההתחברות ל-Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "יש להשלים את ההתחברות ל-Google בלשונית שנפתחה בדפדפן."
 
-#: src/features/downloads/components/AccountStatus.tsx:80
+#: src/features/downloads/components/AccountStatus.tsx:81
 msgid "finishing…"
 msgstr "מסיים…"
 
@@ -1042,10 +1034,6 @@ msgstr "טען הקלטות"
 msgid "Loaded"
 msgstr "נטען"
 
-#: src/features/downloads/DownloadsView.tsx:101
-msgid "Loading recordings…"
-msgstr "טוען הקלטות…"
-
 #: src/features/search/SearchView.tsx:223
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
@@ -1067,7 +1055,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:185
+#: src/shared/i18n/serviceErrors.ts:189
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1118,6 +1106,10 @@ msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרו
 #: src/features/course-overview/utils/overview.ts:7
 msgid "No Lectures"
 msgstr "אין הרצאות"
+
+#: src/shared/i18n/serviceErrors.ts:188
+msgid "No login is in progress. Connect again."
+msgstr "אין התחברות בתהליך. התחבר שוב."
 
 #: src/features/lectures/utils/materialIndicator.ts:25
 msgid "no material found"
@@ -1179,7 +1171,7 @@ msgstr "אין"
 msgid "Not a file the downloader can fetch"
 msgstr "זה לא קובץ שהמוריד יכול להביא"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:117
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
@@ -1271,7 +1263,7 @@ msgstr "פתיחת דף ההתחברות"
 msgid "Other"
 msgstr "אחר"
 
-#: src/features/downloads/components/SectionGroup.tsx:82
+#: src/features/downloads/components/SectionGroup.tsx:80
 msgid "Other links"
 msgstr "קישורים אחרים"
 
@@ -1407,7 +1399,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:120
 msgid "Reconnect"
 msgstr "התחבר מחדש"
 
@@ -1557,7 +1549,7 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "Send report"
 msgstr "שלח דיווח"
 
-#: src/features/downloads/components/AccountStatus.tsx:116
+#: src/features/downloads/components/AccountStatus.tsx:117
 msgid "session expired"
 msgstr "החיבור פג"
 
@@ -1712,7 +1704,7 @@ msgstr "השלב הזה כבוי בהגדרות."
 #~ msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 #~ msgstr "הכפתור \"הרץ צינורות לא שלמים\" ורשימת ההרצאות שבעבודה."
 
-#: src/features/downloads/components/SectionGroup.tsx:221
+#: src/features/downloads/components/SectionGroup.tsx:213
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "החיבור לבר-אילן פג. התחבר מחדש והרץ את הקטע שוב."
 
@@ -1756,6 +1748,10 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייוצרו מחדש:"
 
+#: src/shared/i18n/serviceErrors.ts:185
+msgid "The login window was closed before login finished. Connect again."
+msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
+
 #: src/shared/i18n/serviceErrors.ts:184
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
@@ -1773,7 +1769,7 @@ msgstr "שאר החומרים ישמרו על שמם."
 msgid "The PDF engine produced no file."
 msgstr "מנוע ה-PDF לא יצר קובץ."
 
-#: src/features/downloads/components/SectionGroup.tsx:224
+#: src/features/downloads/components/SectionGroup.tsx:216
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "הריצה נעצרה מוקדם. הרץ את הקטע שוב כדי להשלים אותן."
 
@@ -1781,7 +1777,7 @@ msgstr "הריצה נעצרה מוקדם. הרץ את הקטע שוב כדי ל�
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "הריצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:223
+#: src/features/downloads/components/SectionGroup.tsx:215
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "הריצה בוטלה. הרץ את הקטע שוב כדי להשלים אותן."
 
@@ -1801,7 +1797,7 @@ msgstr "שירות האחסון לא מגיב. ודא שהוא פועל."
 msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 msgstr "שני השערים בלתי תלויים: ההגדרה שלמעלה חלה גם על המעבר הלילי, ולכן כשהיא מוגדרת לא לעשות דבר, שום דבר לא ירוץ ללא השגחה בכל שעה שתיבחר."
 
-#: src/features/downloads/utils/downloadErrors.ts:10
+#: src/features/downloads/utils/downloadErrors.ts:16
 #: src/shared/i18n/serviceErrors.ts:140
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב."

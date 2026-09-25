@@ -28,7 +28,7 @@ export default function DownloadsView() {
   const active = courses.filter((c) => !c.archived)
   const withSource = active.filter((c) => c.source_url).length
 
-  const { selected, pending, items, error, edits, reconnectKey } = useDownloadsSession()
+  const { selected, pending, items, edits, reconnectKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
 
   const countOf = (media: Media) => items.filter((i) => i.media === media).length
@@ -96,14 +96,6 @@ export default function DownloadsView() {
                   <button className="recordings-close" onClick={close} aria-label={t`Close`}>
                     ×
                   </button>
-                  {pending && (
-                    <div className="recordings-status">
-                      <Trans>Loading recordings…</Trans>
-                    </div>
-                  )}
-                  {error && (
-                    <div className="recordings-status recordings-status--error">{error}</div>
-                  )}
                   <RowEditsDispatchContext.Provider value={rowEdits}>
                     <RowEditsStateContext.Provider value={edits}>
                       <ModeToggle
@@ -120,31 +112,30 @@ export default function DownloadsView() {
                                 media={media}
                                 onSelectMedia={selectMedia}
                               />
-                              {!sections.length
-                                ? !pending &&
-                                  !error && (
-                                    <div className="recordings-status">{emptyState[media]}</div>
+                              {!sections.length ? (
+                                <div className="recordings-status">{emptyState[media]}</div>
+                              ) : (
+                                sections.map((section) => {
+                                  // No run identity for the synthetic bucket: an id would collide
+                                  // with a real heading spelled the same — see docs/DOWNLOADS.md.
+                                  const id = section.synthetic
+                                    ? null
+                                    : sectionId(selected, media, section.title)
+                                  // The pile is per course and media too; one colon never matches a
+                                  // run id, which always has two.
+                                  const key = id ?? `${selected}:${media}`
+                                  return (
+                                    <SectionGroup
+                                      key={key}
+                                      collapseKey={key}
+                                      section={{ ...section, id }}
+                                      items={section.items}
+                                      course={selected}
+                                      onReconnect={reconnectHint}
+                                    />
                                   )
-                                : sections.map((section) => {
-                                    // No run identity for the synthetic bucket: an id would collide
-                                    // with a real heading spelled the same — see docs/DOWNLOADS.md.
-                                    const id = section.synthetic
-                                      ? null
-                                      : sectionId(selected, media, section.title)
-                                    // The pile is per course and media too; one colon never matches a
-                                    // run id, which always has two.
-                                    const key = id ?? `${selected}:${media}`
-                                    return (
-                                      <SectionGroup
-                                        key={key}
-                                        collapseKey={key}
-                                        section={{ ...section, id }}
-                                        items={section.items}
-                                        course={selected}
-                                        onReconnect={reconnectHint}
-                                      />
-                                    )
-                                  })}
+                                })
+                              )}
                             </>
                           )
                         }}
