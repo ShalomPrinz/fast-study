@@ -13,4 +13,5 @@ Working rules:
 
 - Follow existing conventions in the backend code and `backend/CLAUDE.md`. Pipeline functions stay pure (paths/strings in, no global state); all filesystem access goes through `services/db_client.py`.
 - Run tests with `uv run pytest tests/ -q`. Per `backend/CLAUDE.md`, any change to `pipeline/` (or its helpers) is not done until the suite is green and the new logic has a test — especially `to_pdf.py` bidi/LaTeX helpers.
+- To see a change working in the real app, or to reproduce a bug, use the `app-harness` skill: a private offline stack on its own ports, so it never collides with another agent's.
 - When your changes make `backend/CLAUDE.md` (or `backend/docs/*`) outdated, update them in the same pass — endpoints, signatures, the directory/file-naming listings, design decisions. Keep docs concise; one short line is the default.

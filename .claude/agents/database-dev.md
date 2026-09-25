@@ -13,4 +13,5 @@ Working rules:
 
 - Follow existing conventions in the code and `database/CLAUDE.md`: all path resolution goes through `lecture_dir(course, lecture, kind)` in `fs/paths.py` — never re-encode the layout elsewhere; `PUT /…/video` wipes derived artifacts (the uploader, not this service, then tells the backend), while `PUT /…/files/{name}` is neutral; SSE producers fire-and-forget.
 - Every `def`/`async def` gets a one-line docstring of intent; add the WHY line when non-obvious (see existing examples).
+- To see a change working in the real app, or to reproduce a bug, use the `app-harness` skill: a private offline stack on its own ports, so it never collides with another agent's.
 - When your changes make `database/CLAUDE.md` or `database/docs/*` outdated, update them in the same pass. Keep docs concise; one short line is the default.

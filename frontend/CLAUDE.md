@@ -13,8 +13,9 @@ npm run test     # vitest run
 npm run extract  # update the Lingui catalogs — see docs/I18N.md
 ```
 
-The frontend reads no env var. Service URLs, the launch secret and everything else packaged come from the
-Electron preload bridge (`services/runtime.ts`), falling back to the dev ports — see
+The frontend reads no env var beyond the dev-only `VITE_*_URL` service overrides. Service URLs, the launch
+secret and everything else packaged come from the Electron preload bridge (`services/runtime.ts`), falling
+back to those overrides, then the dev ports — see
 [docs/SERVICES.md](docs/SERVICES.md).
 
 ## Docs

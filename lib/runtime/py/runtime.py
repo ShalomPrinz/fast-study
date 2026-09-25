@@ -34,6 +34,21 @@ def secret() -> str | None:
     return os.environ.get("FASTSTUDY_SECRET") or None
 
 
+# Any dev frontend port, so parallel dev stacks each reach their own backend. Same literal as
+# runtime.js; [0-9] because Python's \d is not ASCII-only and JS's is.
+_DEV_ORIGIN_PATTERN = r"^http://localhost:[0-9]+$"
+
+
+def cors_origins(exact: list[str]) -> dict:
+    """CORSMiddleware's origin kwargs: `exact` only when the launch secret is set, plus any
+    `http://localhost:<port>` in dev."""
+
+    return {
+        "allow_origins": list(exact),
+        "allow_origin_regex": None if secret() else _DEV_ORIGIN_PATTERN,
+    }
+
+
 def state_path(*parts) -> Path:
     """The writable state root with `parts` joined onto it: `FASTSTUDY_STATE_DIR` if set,
     else `.state/` at the repo root."""

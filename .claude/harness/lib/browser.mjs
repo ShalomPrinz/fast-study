@@ -10,16 +10,16 @@ const { chromium } = createRequire(path.join(REPO_ROOT, 'downloader', 'auto', 'p
   'playwright',
 );
 
-// localhost, never 127.0.0.1: every service's CORS allowlist names this origin and no other.
-export const APP = `http://localhost:${PORTS.frontend}`;
+// localhost, never 127.0.0.1: a dev service's CORS allowlist takes any localhost port and no other host.
+export const appUrl = () => `http://localhost:${PORTS.frontend}`;
 
-// Where the frontend reaches each service in a dev run (frontend/src/services/runtime.ts).
-export const APP_SERVICES = {
+// Where the frontend reaches each service, handed to vite as VITE_*_URL (frontend/src/services/runtime.ts).
+export const appServices = () => ({
   database: `http://localhost:${PORTS.database}`,
   backend: `http://localhost:${PORTS.backend}`,
   'downloader-server': `http://localhost:${PORTS.server}`,
   'downloader-auto': `http://localhost:${PORTS.auto}`,
-};
+});
 
 // The newest installed build, not the pinned one: the cache often lags the Playwright version.
 // Headless shell first, the full chromium as a fallback — both run headless.

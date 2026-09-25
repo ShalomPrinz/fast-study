@@ -9,6 +9,7 @@ from pathlib import Path
 import pytest
 import runtime
 from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
 from starlette.testclient import TestClient
 
 SECRET = "s3cr3t"
@@ -348,3 +349,61 @@ def test_failed_bind_names_the_address_and_errno_on_stderr(taken_port):
     assert "EADDRINUSE" in stderr
     # stdout is the launcher's handshake channel and must carry nothing when the bind failed.
     assert "FASTSTUDY_PORT=" not in stdout
+
+
+def _cors_client(monkeypatch, secret_value):
+    """A throwaway app behind a real CORSMiddleware built from cors_origins, with or without the secret."""
+
+    if secret_value is None:
+        monkeypatch.delenv("FASTSTUDY_SECRET", raising=False)
+    else:
+        monkeypatch.setenv("FASTSTUDY_SECRET", secret_value)
+    app = FastAPI()
+
+    @app.get("/thing")
+    def ok():
+        return {"ok": True}
+
+    app.add_middleware(
+        CORSMiddleware,
+        **runtime.cors_origins(["http://localhost:5173", "app://bundle"]),
+    )
+    return TestClient(app)
+
+
+def _allowed(client, origin: str) -> bool:
+    """Whether the middleware echoes `origin` back as allowed."""
+
+    headers = client.get("/thing", headers={"Origin": origin}).headers
+    return headers.get("access-control-allow-origin") == origin
+
+
+# The same table runtime.test.js pins for corsOrigins: (origin, allowed with secret, allowed without).
+CORS_TABLE = [
+    ("http://localhost:5173", True, True),
+    ("app://bundle", True, True),
+    ("http://localhost:5174", False, True),
+    ("http://localhost", False, False),
+    ("http://127.0.0.1:5173", False, False),
+    ("https://localhost:5174", False, False),
+    ("app://bundle/", False, False),
+    ("http://localhost:5174.evil.com", False, False),
+]
+
+
+@pytest.mark.parametrize("origin,packaged,dev", CORS_TABLE)
+def test_cors_origins_with_the_secret_set_allows_only_the_exact_list(
+    monkeypatch, origin, packaged, dev
+):
+    assert _allowed(_cors_client(monkeypatch, SECRET), origin) is packaged
+
+
+@pytest.mark.parametrize("origin,packaged,dev", CORS_TABLE)
+def test_cors_origins_with_the_secret_unset_also_allows_any_localhost_port(
+    monkeypatch, origin, packaged, dev
+):
+    assert _allowed(_cors_client(monkeypatch, None), origin) is dev
+
+
+def test_cors_origins_treats_a_blank_secret_as_dev(monkeypatch):
+    assert _allowed(_cors_client(monkeypatch, ""), "http://localhost:5174")

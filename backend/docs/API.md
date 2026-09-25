@@ -2,7 +2,7 @@
 
 All endpoints are in `backend_main.py`. A mutating one never returns its result — it schedules a task and the frontend reads the outcome from a status endpoint.
 
-CORS is open to the frontend's two origins only: `http://localhost:5173` in dev and `app://bundle` in the packaged app.
+CORS allows `http://localhost:5173` and `app://bundle` (the packaged frontend), plus any `http://localhost:<port>` when `FASTSTUDY_SECRET` is unset (dev), via `runtime.cors_origins`.
 
 ## Failures
 
@@ -49,7 +49,7 @@ Regression ETA from past runs, or `{"message": "not-enough-data"}`.
 
 `POST /timing`
 body `{"operation": str, "file_size_bytes": int, "duration_seconds": float}`
-Records one sample. → `{"status": "ok"}`, or 400 for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from an arbitrary browser page, since CORS only allows the frontend's own origins.
+Records one sample. → `{"status": "ok"}`, or 400 for a blank/unknown operation or a non-positive size/duration (a non-positive sample would skew every later estimate; an unknown operation would log a warning and silently create a dead bucket nothing queries). Server-to-server; not reachable from an arbitrary browser page, since CORS only allows the frontend's own origins (any localhost port in dev).
 
 ## Course overview
 

@@ -7,7 +7,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 import { AUTO, BACKEND, DATABASE, PROVIDERS, SITE, call, json, waitForFile } from './api.mjs';
 import { connectDrive } from './baseline.mjs';
-import { APP, APP_SERVICES, openBrowser } from './browser.mjs';
+import { appServices, appUrl, openBrowser } from './browser.mjs';
 import {
   DEFAULT_DOWNLOAD_MS,
   FAILURE_ROWS,
@@ -49,7 +49,7 @@ console.log(JSON.stringify({
 `;
 
 // Names the probe in network.log, so `hb refused` can tell its deliberate escape from a real one.
-const probeEnv = (env) => ({ ...env, HUNT_BUGS_SERVICE: SELFCHECK_TAG });
+const probeEnv = (env) => ({ ...env, HARNESS_SERVICE: SELFCHECK_TAG });
 
 async function pythonEscapeRefused(paths) {
   const { stdout } = await run('python3', ['-c', PY_PROBE], { env: probeEnv(pythonEnv(paths)) });
@@ -82,7 +82,7 @@ async function nodeEscapeRefusedAndSiteRedirected(paths) {
 async function noRealKeyInTheServices(paths) {
   for (const service of ['backend', 'database']) {
     const log = fs.readFileSync(path.join(paths.logs, `${service}.log`), 'utf8');
-    if (!log.includes('hunt-bugs shim: live')) {
+    if (!log.includes('harness shim: live')) {
       throw new Error(`${service} started without the shim — its PYTHONPATH did not take`);
     }
     if (!log.includes(FAKE_KEYS.GROQ_API_KEY.slice(0, 12))) {
@@ -174,7 +174,7 @@ async function controlModesSwitchAndSwitchBack() {
       {
         method: 'POST',
         expect: false,
-        headers: lecture ? { 'x-hunt-bugs-lecture': encodeURI(lecture) } : {},
+        headers: lecture ? { 'x-harness-lecture': encodeURI(lecture) } : {},
       },
     );
     if (status === 400) return body.error.details[0].reason;
@@ -232,6 +232,7 @@ async function driveDisconnectsAndReconnects() {
 // The frontend-to-service path, from the app's own origin: a CORS allowlist that does not name it
 // fails here rather than on a flow's first click. The page is screenshotted either way.
 async function theAppLoadsFromItsOrigin(paths) {
+  const APP = appUrl();
   const { body: tree } = await call(`${DATABASE}/tree`);
   const courses = tree.filter((course) => !course.archived).map((course) => course.name);
   const { browser, page } = await openBrowser();
@@ -249,7 +250,7 @@ async function theAppLoadsFromItsOrigin(paths) {
             ),
           ),
         ),
-      APP_SERVICES,
+      appServices(),
     );
     const blocked = reached.filter((line) => !line.endsWith(' 200'));
     if (blocked.length) {

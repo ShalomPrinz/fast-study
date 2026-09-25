@@ -24,7 +24,7 @@ alone seeds and self-updates the writable yt-dlp copy ([DOWNLOAD.md](docs/DOWNLO
 | ------------------------- | ----------------------- | ---------------------------------------------------------------------------------------- |
 | `DOWNLOADER_PORT`         | `3052`                  | default listen port (`FASTSTUDY_PORT` in the environment wins)                           |
 | `DOWNLOADER_EXTENSION_ID` | none                    | extension CORS origin — required to use the dev-only extension                          |
-| `FRONTEND_URL`            | `http://localhost:5173` | frontend CORS origin; the packaged `app://bundle` is always allowed beside it            |
+| `FRONTEND_URL`            | `http://localhost:5173` | frontend CORS origin; `app://bundle` always, and any `http://localhost:<port>` in dev, beside it |
 | `DATABASE_URL`            | `http://localhost:8001` | database base URL                                                                        |
 | `BACKEND_URL`             | `http://localhost:8000` | backend base URL — timing samples and the video-arrived report                          |
 | `AUTODL_URL`              | `http://localhost:3053` | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve             |

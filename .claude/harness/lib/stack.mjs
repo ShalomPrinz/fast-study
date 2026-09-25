@@ -1,11 +1,12 @@
 // Starting the fakes and the five dev processes, waiting for each to answer, and killing them.
 // Every child gets its own process group, recorded in `<harness>/stack.json`, so teardown reaps what
 // a service spawned too — the uv/npm parent, a uvicorn worker, vite's esbuild, a running download.
-import { execFileSync, spawn } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import fs from 'node:fs';
+import net from 'node:net';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { BANNER, HUNT_ROOT } from './env.mjs';
+import { BANNER, HARNESS_ROOT, PORT_NAMES, readPorts } from './env.mjs';
 
 const stackFile = (paths) => path.join(paths.root, 'stack.json');
 
@@ -23,6 +24,18 @@ function writeStack(paths, stack) {
   fs.writeFileSync(stackFile(paths), JSON.stringify(stack, null, 2), { mode: 0o600 });
 }
 
+/** The pid of a live setup already holding this harness, or null. */
+export function liveHolder(paths) {
+  const { holder } = readStack(paths);
+  if (!holder || holder === process.pid) return null;
+  try {
+    process.kill(holder, 0);
+    return holder;
+  } catch {
+    return null;
+  }
+}
+
 /** Begin a fresh record held by this setup process, dropping whatever a dead run left. */
 export function resetStack(paths) {
   writeStack(paths, { holder: process.pid, services: {} });
@@ -37,7 +50,7 @@ function spawnSpec(name, spec, paths) {
   const handle = fs.openSync(logOf(paths, name), 'a');
   const child = spawn(spec.command, spec.args, {
     cwd: spec.cwd,
-    env: { ...spec.env, HUNT_BUGS_SERVICE: name },
+    env: { ...spec.env, HARNESS_SERVICE: name },
     stdio: ['ignore', handle, handle],
     detached: true,
   });
@@ -56,15 +69,18 @@ export function start(name, command, args, { cwd, env, paths, health }) {
 }
 
 /** Start a browser.mjs session, recorded as `browser-<tag>` so --down reaps it, and wait for it. */
-export async function startBrowser(paths, tag, port) {
-  const script = path.join(HUNT_ROOT, 'browser.mjs');
+export async function startBrowser(paths, tag) {
+  const [port] = await freePorts(1);
+  fs.writeFileSync(paths.ports, JSON.stringify({ ...readPorts(paths), [`browser-${tag}`]: port }));
+  const script = path.join(HARNESS_ROOT, 'browser.mjs');
   start(`browser-${tag}`, process.execPath, [script, '--port', String(port), '--tag', tag], {
-    cwd: HUNT_ROOT,
-    env: { ...process.env, HUNT_BUGS_HARNESS: paths.root, NODE_OPTIONS: '' },
+    cwd: HARNESS_ROOT,
+    env: { ...process.env, HARNESS_DIR: paths.root, NODE_OPTIONS: '' },
     paths,
     health: `http://127.0.0.1:${port}/health`,
   });
   await waitForService(paths, `browser-${tag}`);
+  return port;
 }
 
 /** Poll a URL until it answers 2xx, or fail naming the log that says why it never did. */
@@ -146,56 +162,47 @@ export async function restart(paths, name, overrides) {
     .join('');
   fs.appendFileSync(
     logOf(paths, name),
-    `\n# hunt-bugs: restarted ${new Date().toISOString()}${extra ? ` with${extra}` : ''}\n`,
+    `\n# harness: restarted ${new Date().toISOString()}${extra ? ` with${extra}` : ''}\n`,
   );
   spawnSpec(name, { ...spec, env: { ...spec.env, ...overrides } }, paths);
   await waitForService(paths, name);
 }
 
-// Who is listening on one of our ports, as `{ port, pid, command }`. A previous harness, or a
-// plain `npm run dev`, holds exactly these — and a run that quietly attached to one would test a
-// stack configured for somebody else's data root.
-export function portOwners(ports) {
-  const owners = [];
-  for (const [name, port] of Object.entries(ports)) {
-    let line;
-    try {
-      line = execFileSync('ss', ['-lptnH', `sport = :${port}`], { encoding: 'utf8' });
-    } catch {
-      continue;
-    }
-    const pid = /pid=(\d+)/.exec(line)?.[1];
-    if (!pid) continue;
-    let command = 'unknown';
-    try {
-      command = fs
-        .readFileSync(`/proc/${pid}/cmdline`, 'utf8')
-        .split('\0')
-        .filter(Boolean)
-        .join(' ');
-    } catch {}
-    owners.push({ name, port, pid: Number(pid), command });
-  }
-  return owners;
+// Listening on all of them at once, so no two come back equal; closed before the caller binds.
+async function freePorts(count) {
+  const servers = await Promise.all(
+    Array.from(
+      { length: count },
+      () =>
+        new Promise((resolve, reject) => {
+          const server = net.createServer().once('error', reject);
+          server.listen(0, '127.0.0.1', () => resolve(server));
+        }),
+    ),
+  );
+  const ports = servers.map((server) => server.address().port);
+  await Promise.all(servers.map((server) => new Promise((resolve) => server.close(resolve))));
+  return ports;
 }
 
-// Only what this harness or `npm run dev` starts may be stopped by --stop; anything else on the
-// port is somebody's own process and the run refuses instead.
-const OURS = /uvicorn|backend_main|database_main|src\/index\.js|app\.js|vite|hunt-bugs/;
+function isFree(port) {
+  return new Promise((resolve) => {
+    const server = net.createServer().once('error', () => resolve(false));
+    server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
+  });
+}
 
-/** SIGTERM whatever holds our ports, refusing to touch a process we do not recognise. */
-export function stopPortOwners(ports) {
-  const stopped = [];
-  for (const owner of portOwners(ports)) {
-    if (!OURS.test(owner.command)) {
-      throw new Error(
-        `:${owner.port} is held by pid ${owner.pid} (${owner.command}) — not a FastStudy process, refusing to kill it`,
-      );
-    }
-    try {
-      process.kill(owner.pid, 'SIGTERM');
-      stopped.push(`${owner.name} (pid ${owner.pid})`);
-    } catch {}
-  }
-  return stopped;
+/** This stack's ports: the last run's when every one is still free, so seeded links stay valid, else a fresh set. */
+export async function allocatePorts(paths) {
+  const previous = readPorts(paths);
+  const reuse =
+    PORT_NAMES.every((name) => previous[name]) &&
+    (await Promise.all(PORT_NAMES.map((name) => isFree(previous[name])))).every(Boolean);
+  const fresh = reuse ? [] : await freePorts(PORT_NAMES.length);
+  const ports = Object.fromEntries(
+    PORT_NAMES.map((name, index) => [name, reuse ? previous[name] : fresh[index]]),
+  );
+  fs.mkdirSync(paths.root, { recursive: true });
+  fs.writeFileSync(paths.ports, JSON.stringify(ports));
+  return ports;
 }

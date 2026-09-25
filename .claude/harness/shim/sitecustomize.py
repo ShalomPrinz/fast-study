@@ -15,13 +15,13 @@ import threading
 from importlib.abc import MetaPathFinder
 from pathlib import Path
 
-_HARNESS = os.environ.get("HUNT_BUGS_HARNESS")
+_HARNESS = os.environ.get("HARNESS_DIR")
 
 # Inert without the variable, so a stray `uv run` that happens to inherit PYTHONPATH is not
 # crippled by a half-applied harness. The self-checks prove the shim IS live in the services.
 if _HARNESS:
     HARNESS = Path(_HARNESS)
-    PROVIDERS = os.environ.get("HUNT_BUGS_PROVIDERS", "http://127.0.0.1:4598")
+    PROVIDERS = os.environ["HARNESS_PROVIDERS"]
 
     class HarnessEscape(RuntimeError):
         """A request tried to leave loopback. Raised, never logged away — an escaped call means
@@ -41,7 +41,7 @@ if _HARNESS:
         from datetime import datetime, timezone
 
         stamp = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
-        service = os.environ.get("HUNT_BUGS_SERVICE", "python")
+        service = os.environ.get("HARNESS_SERVICE", "python")
         try:
             log = HARNESS / "logs" / "network.log"
             log.parent.mkdir(parents=True, exist_ok=True)
@@ -53,7 +53,7 @@ if _HARNESS:
     def _refuse(host, port):
         _note(f"REFUSED {host}:{port}")
         raise HarnessEscape(
-            f"hunt-bugs harness is offline — refused a connection to {host}:{port}. "
+            f"harness is offline — refused a connection to {host}:{port}. "
             "A provider or Google call that is not going through the fakes is a harness bug."
         )
 
@@ -90,8 +90,8 @@ if _HARNESS:
 
         problems = []
         for name, expected in (
-            ("GROQ_API_KEY", "gsk_huntbugs"),
-            ("GEMINI_API_KEY", "AIzaHuntBugs"),
+            ("GROQ_API_KEY", "gsk_harness"),
+            ("GEMINI_API_KEY", "AIzaHarness"),
         ):
             if not os.environ.get(name, "").startswith(expected):
                 problems.append(
@@ -102,10 +102,10 @@ if _HARNESS:
             problems.append(f"DATA_ROOT is {data_root!r}, outside the harness")
         if problems:
             for problem in problems:
-                print(f"hunt-bugs shim: {problem}", file=sys.stderr, flush=True)
+                print(f"harness shim: {problem}", file=sys.stderr, flush=True)
             os._exit(3)
         print(
-            f"hunt-bugs shim: live (keys {os.environ['GROQ_API_KEY'][:12]}…/"
+            f"harness shim: live (keys {os.environ['GROQ_API_KEY'][:12]}…/"
             f"{os.environ['GEMINI_API_KEY'][:12]}…, data {data_root})",
             file=sys.stderr,
             flush=True,
@@ -127,7 +127,7 @@ if _HARNESS:
         class _FakeCredentials:
             valid = True
             expired = False
-            token = "hunt-bugs-fake-token"
+            token = "harness-fake-token"
 
         def _load_token(scope_key):
             return _FakeCredentials() if token_file.exists() else None
@@ -238,7 +238,7 @@ if _HARNESS:
                 return _Request(
                     {
                         "id": file_id,
-                        "webViewLink": f"https://drive.fake/hunt-bugs/{file_id}",
+                        "webViewLink": f"https://drive.fake/harness/{file_id}",
                     }
                 )
 
@@ -248,7 +248,7 @@ if _HARNESS:
                 return _Request(
                     {
                         "id": fileId,
-                        "webViewLink": f"https://drive.fake/hunt-bugs/{fileId}",
+                        "webViewLink": f"https://drive.fake/harness/{fileId}",
                     }
                 )
 
@@ -308,7 +308,7 @@ if _HARNESS:
         def stamped(self, request, *args, **kwargs):
             path = getattr(_target, "path", None)
             if path:
-                request.headers["x-hunt-bugs-lecture"] = quote(path, safe="/")
+                request.headers["x-harness-lecture"] = quote(path, safe="/")
             return send(self, request, *args, **kwargs)
 
         module.Client.send = stamped

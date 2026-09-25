@@ -67,7 +67,7 @@ runtime.install_secret_check(app)
 app.add_middleware(
     CORSMiddleware,
     # app://bundle is the packaged frontend's origin — browsers send it with no trailing slash, so match it verbatim.
-    allow_origins=["http://localhost:5173", "app://bundle"],
+    **runtime.cors_origins(["http://localhost:5173", "app://bundle"]),
     allow_methods=["*"],
     allow_headers=["*"],
 )

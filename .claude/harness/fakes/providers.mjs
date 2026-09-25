@@ -7,8 +7,8 @@ import http from 'node:http';
 import path from 'node:path';
 
 // The harness's own copy, not the repo's: everything a run reads or writes lives under one root.
-const FIXTURES = path.join(process.env.HUNT_BUGS_HARNESS, 'fixtures');
-const PORT = Number(process.env.HUNT_BUGS_PROVIDERS_PORT ?? 4598);
+const FIXTURES = path.join(process.env.HARNESS_DIR, 'fixtures');
+const PORT = Number(process.env.HARNESS_PROVIDERS_PORT);
 
 const TRANSCRIPT = fs
   .readFileSync(path.join(FIXTURES, 'transcript.txt'), 'utf8')
@@ -17,7 +17,7 @@ const TRANSCRIPT = fs
 const SUMMARY = fs.readFileSync(path.join(FIXTURES, 'summary.md'), 'utf8');
 
 // Each provider's rule: `mode` is what a matching request gets, `match` limits it to the lectures
-// whose `x-hunt-bugs-lecture` path holds it as whole segments, and `times` drains one per hit, back
+// whose `x-harness-lecture` path holds it as whole segments, and `times` drains one per hit, back
 // to 'ok' at zero. 'empty' is the "model returned nothing" branch each step has its own message for.
 const MODES = {
   groq: ['ok', '429', '500', 'empty'],
@@ -49,7 +49,7 @@ function failure(provider, req, honoured) {
   const rule = mode[provider];
   if (!honoured.includes(rule.mode)) return 'ok';
   if (rule.match !== null) {
-    const target = decodeURIComponent(req.headers['x-hunt-bugs-lecture'] ?? '');
+    const target = decodeURIComponent(req.headers['x-harness-lecture'] ?? '');
     if (!`/${target}/`.includes(`/${rule.match}/`)) return 'ok';
   }
   const hit = rule.mode;
@@ -262,7 +262,7 @@ async function handle(req, res) {
         { content: { role: 'model', parts: [{ text: body }] }, finishReason: 'STOP', index: 0 },
       ],
       usageMetadata: { promptTokenCount: 1200, candidatesTokenCount: 800, totalTokenCount: 2000 },
-      modelVersion: 'hunt-bugs-fake',
+      modelVersion: 'harness-fake',
     });
   }
 
@@ -270,7 +270,7 @@ async function handle(req, res) {
   if (route.startsWith('/drive/view/')) {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     return res.end(
-      '<!doctype html><meta charset="utf-8"><p>hunt-bugs: fake Drive file. Nothing was uploaded.',
+      '<!doctype html><meta charset="utf-8"><p>harness: fake Drive file. Nothing was uploaded.',
     );
   }
 
@@ -278,7 +278,7 @@ async function handle(req, res) {
   if (route === '/drive/consent') {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     return res.end(
-      '<!doctype html><meta charset="utf-8"><p>hunt-bugs: fake Drive consent. Nothing was signed in.',
+      '<!doctype html><meta charset="utf-8"><p>harness: fake Drive consent. Nothing was signed in.',
     );
   }
 

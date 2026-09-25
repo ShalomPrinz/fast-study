@@ -1,5 +1,5 @@
 ---
-description: Run the real app offline on the hunt-bugs harness and report every bug found in real user flows.
+description: Run the real app offline on the app harness and report every bug found in real user flows.
 argument-hint: [optional flow or area to focus on]
 ---
 
@@ -11,8 +11,8 @@ The one limitation: **no third party is ever reached.** Providers, Google APIs, 
 the download binaries are local fakes, and `DATA_ROOT` is a scratch tree. Everything else — the
 services, the SPA, ffmpeg/pandoc/tectonic, the disk layout, SSE, the jobs — runs for real.
 
-`.claude/hunt-bugs/` is the harness that arranges all of that, and `setup.mjs` replaces what used to
-be three steps of hand-built shims. **You do not build a harness; you use this one.**
+`.claude/harness/` is the app harness that arranges all of that, and `.claude/hunt-bugs/` adds the
+wave's brief and findings merge on top. **You do not build a harness; you use this one.**
 
 **If arguments were passed** (e.g. `/hunt-bugs the downloads page`), restrict Step 2's sweep to that
 area. Start the whole harness anyway — a service you do not drive still has to boot.
@@ -22,7 +22,7 @@ area. Start the whole harness anyway — a service you do not drive still has to
 ## Step 0 — Ground yourself
 
 Read the root `CLAUDE.md`, the `CLAUDE.md` of every service you will drive, and
-[`.claude/hunt-bugs/README.md`](../hunt-bugs/README.md) — which lists what is faked, how, and the
+[`.claude/harness/README.md`](../harness/README.md) — which lists what is faked, how, and the
 blind spots those fakes leave. Skim the `docs/` page for each flow you plan to take, so you know
 what the app is *supposed* to do before you judge what it does.
 
@@ -34,10 +34,10 @@ nothing from it.
 ## Step 1 — Start the harness
 
 ```bash
-node .claude/hunt-bugs/setup.mjs --harness <your scratchpad>/hunt --browsers mgmt,dl,edit,nav
+node .claude/harness/setup.mjs --harness <your scratchpad>/hunt --browsers settings,mgmt,dl,pipeline,fail,edit,nav
 ```
 
-`--browsers` names the flows that get a browser session (the README lists the tags and ports).
+`--browsers` names the flows that get a browser session, each on a port of its own.
 
 Run it in the background and leave it running; it holds the stack up, and Ctrl-C or
 `setup.mjs --harness <same dir> --down` takes everything down. It builds the fixtures, fakes and scratch `.env`, launches
@@ -49,15 +49,15 @@ headless chromium lists the courses and reaches every service from its origin, a
 `transcribe` runs green. A failed proof aborts the run.
 
 When it aborts, fix the harness before going further — a half-working shim produces findings about
-nothing. Two common ones: **ports already in use** (a previous harness or a plain `npm run dev`;
-re-run with `--stop`), and a **self-check failure**, which names the assumption that broke.
+nothing. A **self-check failure** names the assumption that broke.
 
 It prints where everything is. What you will use most:
 
-- `http://localhost:5173` — the app (localhost, not 127.0.0.1: the CORS allowlists name only
-  localhost). Drive it only through a `browser.mjs` session — never write your own Playwright
-  driver. Each flow owns one session on its port (`mgmt` 4710, `dl` 4711, `edit` 4712, `nav` 4713,
-  `pipeline` 4714, `fail` 4715, `settings` 4716); one not started with `--browsers` comes from
+- Every port is this harness's own: `hb.mjs --harness <same dir> url` lists them all, `url <name>`
+  prints one.
+- The app, at `url frontend` (localhost, not 127.0.0.1: dev CORS takes only localhost). Drive it
+  only through a `browser.mjs` session — never write your own Playwright driver. Each flow owns one
+  session, at `url browser-<tag>`; one not started with `--browsers` comes from
   `hb.mjs --harness <same dir> browser <tag>`. Over curl: `goto`, `click`, `fill`, `text`,
   `screenshot` (lands as `evidence/<tag>-<name>.png`), `eval`, `log`, `mutations` — the README has
   the exact calls. Every answer ends with the console errors and failed or 4xx/5xx requests the
@@ -68,24 +68,25 @@ It prints where everything is. What you will use most:
   only real escapes: the self-check's deliberate probes log as `selfcheck` and are left out.
 - `<harness>/drive/ops.jsonl` — what "upload to Drive" actually did.
 - The fake course URL it prints, for the downloads page.
-- `curl -s localhost:4598/control -d '{"gemini":"429"}'` and
-  `curl -s localhost:4599/control -d '{"mode":"blocked"}'` — provider quota, provider outage,
+- `curl -s $(hb url providers)/control -d '{"gemini":"429"}'` and
+  `curl -s $(hb url site)/control -d '{"mode":"blocked"}'` — provider quota, provider outage,
   a rejected Gemini key, bot-protection challenge and a dead Moodle token, on demand;
   `-d '{"downloadMs":60000}'` on the site makes the next downloads take a minute, with no restart.
   A provider failure can target one lecture and the next N calls —
   `-d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'` — so it hits your flow's
   lecture and nobody else's. The README lists every mode.
-- `node .claude/hunt-bugs/setup.mjs --harness <same dir> --restart <service> [ENV=val…]` — restart
+- `node .claude/harness/setup.mjs --harness <same dir> --restart <service> [ENV=val…]` — restart
   one service mid-flow with its exact recorded environment, plus any overrides; the README lists
   the service names.
-- `node .claude/hunt-bugs/hb.mjs --harness <same dir> <command>` — `set NAME=value…` (a setting,
+- `node .claude/harness/hb.mjs --harness <same dir> <command>` — `set NAME=value…` (a setting,
   saved as the settings screen saves it), `reseed` (baseline + flow courses on the live stack),
   `state` (save `state.json`, diff against the seed), `wall` / `unwall` (the first-run screen),
   `add-material <course> <lecture> [file]` (a material PDF, with the notify the downloader sends),
   `rm-lecture <course> <lecture>` (the folder deleted on disk, mid-run if you like),
   `lock <glob>` / `unlock` (the database fails that file as Windows does one open in a viewer —
-  `423 file_locked`), `refused`, `brief <tag>` (a flow agent's brief, Step 2) and `findings` (the
-  merge, Step 4). `hb.mjs help` lists them all.
+  `423 file_locked`) and `refused`. `hb.mjs help` lists them all.
+- `node .claude/hunt-bugs/hunt.mjs --harness <same dir> <command>` — `brief <tag>` (a flow agent's
+  brief, Step 2) and `findings` (the merge, Step 4).
 - PDFs: no `pdftotext`/`pdftoppm` here — read and render them with PyMuPDF through
   `cd backend && uv run python`; the README has the two one-liners.
 
@@ -106,7 +107,7 @@ reported `missing` explains failures later — know it now rather than discoveri
 ## Step 2 — Take the flows
 
 Run each flow as its own agent, side by side. Hand each one its brief verbatim:
-`hb brief <tag> [focus…]` prints [`brief.md`](../hunt-bugs/brief.md) filled in for this harness
+`hunt.mjs brief <tag> [focus…]` prints [`brief.md`](../hunt-bugs/brief.md) filled in for this harness
 and tag (`settings`, `mgmt`, `dl`, `pipeline`, `fail`, `edit`, `nav`). The brief holds the flow's
 sweep items, course, browser session, the rules below and Step 3. It also defines the fragment
 format. Each agent writes its findings to `<harness>/fragments/<tag>.md`. A flow you take yourself
@@ -161,7 +162,7 @@ For every anomaly, in this order:
    word, or dropped.
 2. **Rule out the harness.** Prove the symptom is the app's and not a fake's — read the code path
    and say which line produces it. The README's "what is faked" table is the first place to check;
-   a fake returning the wrong shape is your bug, so fix it in `.claude/hunt-bugs/` and re-run.
+   a fake returning the wrong shape is your bug, so fix it in `.claude/harness/` and re-run.
 3. **Locate it.** Name the file and line where the defect lives, and the service that owns it.
 4. **Classify severity** by what it costs a user: data loss > a flow that cannot complete > wrong
    information shown > cosmetic.
@@ -181,19 +182,19 @@ Severity, Owner, Flow, Observed, Expected, Evidence, Lands in and Harness ruled 
 When every flow agent has reported:
 
 ```bash
-node .claude/hunt-bugs/hb.mjs --harness <same dir> state
-node .claude/hunt-bugs/hb.mjs --harness <same dir> findings <area-or-sweep> <YYYY-MM-DD>
+node .claude/harness/hb.mjs --harness <same dir> state
+node .claude/hunt-bugs/hunt.mjs --harness <same dir> findings <area-or-sweep> <YYYY-MM-DD>
 ```
 
-`hb state` saves what the wave left changed. `hb findings` writes
+`hb state` saves what the wave left changed. `hunt.mjs findings` writes
 `findings-<area-or-sweep>-<YYYY-MM-DD>.md` at the project root. That is the only file you write into
 the repo, unless you fixed a fake. The merged file holds the Run line with the state diff, the flows
 with no fragment, a summary table numbered by severity (severity, owner, symptom, flow), the
 **Overlaps across flows** list and every fragment verbatim, its findings numbered to match.
 
-A malformed fragment makes `hb findings` write nothing and name each bad `file:line`. Send the
+A malformed fragment makes `hunt.mjs findings` write nothing and name each bad `file:line`. Send the
 fragment back to its agent, or fix its shape yourself without changing what it says. Then run
-`hb findings` again. It refuses to overwrite a merged file, so delete that file first.
+`hunt.mjs findings` again. It refuses to overwrite a merged file, so delete that file first.
 
 Then finish the merged file by hand:
 
@@ -210,7 +211,7 @@ Then print the summary table.
 
 ## Step 5 — Tear down
 
-Stop the harness (Ctrl-C, or `node .claude/hunt-bugs/setup.mjs --harness <same dir> --down`) and
+Stop the harness (Ctrl-C, or `node .claude/harness/setup.mjs --harness <same dir> --down`) and
 say so. That also stops every browser session it or `hb browser` started. Do not stop them
 yourself. Leave the harness directory in place, because the findings file points into it. The next
 session starts from what the findings file's state diff names, and `hb reseed` puts all of it back.
@@ -223,7 +224,7 @@ session starts from what the findings file's state diff names, and `hb reseed` p
   something wanted the real internet. Fix the fake, re-run the flow, then judge the finding.
 - **No production code edits.** This command reports; it does not fix. Do not write prompt files or
   branches either — the user decides what gets fixed and routes it to the owning service subagent.
-  Editing `.claude/hunt-bugs/` to correct or extend a fake is allowed and expected.
+  Editing `.claude/harness/` to correct or extend a fake is allowed and expected.
 - **No git writes**, ever. No `add`, `commit`, `stash`, `checkout`.
 - **Never touch the real `.env` or the real `DATA_ROOT`.** The harness is built so you cannot; do
   not work around it.

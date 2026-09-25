@@ -4,7 +4,7 @@
 // messages, page errors, failed and 4xx/5xx requests, every API request, and each non-GET request
 // with its body and answer — the last also appended to `<harness>/evidence/<tag>-mutations.jsonl`.
 //
-//   node .claude/hunt-bugs/browser.mjs --port N --tag T [--harness DIR]   (or HUNT_BUGS_HARNESS)
+//   node .claude/harness/browser.mjs --port N --tag T [--harness DIR]   (or HARNESS_DIR)
 //
 // Arguments ride as a JSON body or as query parameters, and the method does not matter:
 // /goto {"url"}                 a path on the app, or a full URL
@@ -23,7 +23,8 @@ import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { APP, openBrowser } from './lib/browser.mjs';
+import { bindPorts } from './lib/api.mjs';
+import { appUrl, openBrowser } from './lib/browser.mjs';
 import { harnessPaths } from './lib/env.mjs';
 
 const args = process.argv.slice(2);
@@ -33,12 +34,14 @@ const value = (name) => {
 };
 const port = Number(value('--port'));
 const tag = value('--tag');
-const root = value('--harness') ?? process.env.HUNT_BUGS_HARNESS;
+const root = value('--harness') ?? process.env.HARNESS_DIR;
 if (!port || !tag || !root) {
-  console.error('usage: browser.mjs --port N --tag T [--harness DIR]  (or HUNT_BUGS_HARNESS=DIR)');
+  console.error('usage: browser.mjs --port N --tag T [--harness DIR]  (or HARNESS_DIR=DIR)');
   process.exit(2);
 }
 const paths = harnessPaths(path.resolve(root));
+bindPorts(paths);
+const APP = appUrl();
 fs.mkdirSync(paths.evidence, { recursive: true });
 const mutationsFile = path.join(paths.evidence, `${tag}-mutations.jsonl`);
 

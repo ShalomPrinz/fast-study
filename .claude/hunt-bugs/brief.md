@@ -2,12 +2,12 @@ You are the **{{title}}** flow of a `/hunt-bugs` wave. You find bugs by using th
 user does. Read code only to explain a symptom you have already reproduced. The harness is already
 up at `{{harness}}`. Do not start it, stop it or reseed it.
 
-Every hb command below is run as `node .claude/hunt-bugs/hb.mjs --harness {{harness}} <command>`.
+Every hb command below is run as `node .claude/harness/hb.mjs --harness {{harness}} <command>`.
 
 ## Ground yourself
 
 Read `.claude/commands/hunt-bugs.md` (Steps 2 and 3 and the hard rules are your job),
-`.claude/hunt-bugs/README.md` (what is faked, and its blind spots), the root `CLAUDE.md`, the
+`.claude/harness/README.md` (what is faked, and its blind spots), the root `CLAUDE.md`, the
 `CLAUDE.md` of each service your flow touches, and the `docs/` page for your flow. Never read the
 repo-root `.env`.
 
@@ -37,11 +37,11 @@ the user. Quote error text and log lines verbatim. Anything you did not see happ
 Unconfirmed.
 
 Do not edit production code, write prompt files, or make any git write. Fixing a fake under
-`.claude/hunt-bugs/` is allowed. Say so under Harness gaps.
+`.claude/harness/` is allowed. Say so under Harness gaps.
 
 ## Your fragment
 
-Write exactly one file: `{{fragment}}`. Replace it if you re-run. `hb findings` joins every
+Write exactly one file: `{{fragment}}`. Replace it if you re-run. `hunt.mjs findings` joins every
 fragment into the wave's findings file. It refuses a malformed fragment and names the line, so keep
 to this shape:
 

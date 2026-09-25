@@ -1,22 +1,22 @@
 #!/usr/bin/env node
 // Build the offline harness, launch the app on it, and prove the harness before handing over.
-// Everything it makes lives under one scratch root; nothing it does touches the real DATA_ROOT,
-// the repo-root .env, or the network. Run it, leave it running, drive the app at :5173.
+// Everything it makes lives under one scratch root, ports included, so stacks run side by side;
+// nothing it does touches the real DATA_ROOT, the repo-root .env, or the network.
 //
-//   node .claude/hunt-bugs/setup.mjs [--harness DIR] [--browsers mgmt,nav…] [--no-launch] [--skip-pipeline-check]
-//   node .claude/hunt-bugs/setup.mjs --harness DIR --down
-//   node .claude/hunt-bugs/setup.mjs --harness DIR --restart <service> [ENV=val…]
+//   node .claude/harness/setup.mjs [--harness DIR] [--browsers main,…] [--no-launch] [--skip-pipeline-check]
+//   node .claude/harness/setup.mjs --harness DIR --down
+//   node .claude/harness/setup.mjs --harness DIR --restart <service> [ENV=val…]
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import { setTimeout as sleep } from 'node:timers/promises';
 import { promisify } from 'node:util';
+import { bindPorts } from './lib/api.mjs';
+import { appServices, appUrl } from './lib/browser.mjs';
 import {
   BANNER,
-  BROWSER_PORTS,
   FAKE_COURSE_URL,
   FAKE_WSTOKEN,
-  HUNT_ROOT,
+  HARNESS_ROOT,
   PORTS,
   REPO_ROOT,
   SCRATCH_MARKER,
@@ -28,13 +28,13 @@ import {
 import { markSeeded, reseed, writeMoodleToken, writeScratchEnv } from './lib/baseline.mjs';
 import { selfCheck } from './lib/selfcheck.mjs';
 import {
+  allocatePorts,
   down,
-  portOwners,
+  liveHolder,
   resetStack,
   restart,
   start,
   startBrowser,
-  stopPortOwners,
   waitForService,
 } from './lib/stack.mjs';
 
@@ -47,19 +47,11 @@ const value = (name, fallback) => {
   return at === -1 ? fallback : args[at + 1];
 };
 
-// The flows to open a browser session for, checked before anything starts.
+// The tags to open a browser session for, each on a port of its own.
 const browsers = value('--browsers', '').split(',').filter(Boolean);
-for (const tag of browsers) {
-  if (!BROWSER_PORTS[tag]) {
-    console.error(
-      `hunt-bugs: no browser port for "${tag}" (known: ${Object.keys(BROWSER_PORTS).join(', ')})`,
-    );
-    process.exit(2);
-  }
-}
 
 const paths = harnessPaths(
-  path.resolve(value('--harness', process.env.HUNT_BUGS_HARNESS ?? defaultRoot())),
+  path.resolve(value('--harness', process.env.HARNESS_DIR ?? defaultRoot())),
 );
 
 // A 20-second clip: long enough that the audio step does real ffmpeg work and the UI shows a
@@ -93,7 +85,7 @@ const MINIMAL_PDF = `%PDF-1.4
 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]/Resources<</Font<</F1 4 0 R>>>>/Contents 5 0 R>>endobj
 4 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>endobj
 5 0 obj<</Length 58>>stream
-BT /F1 18 Tf 72 760 Td (hunt-bugs fixture handout) Tj ET
+BT /F1 18 Tf 72 760 Td (harness fixture handout) Tj ET
 endstream
 endobj
 trailer<</Root 1 0 R>>
@@ -111,7 +103,6 @@ async function buildHarness() {
     paths.state,
     paths.logs,
     paths.evidence,
-    paths.fragments,
     paths.fixtures,
     paths.bin,
     paths.drive,
@@ -122,18 +113,18 @@ async function buildHarness() {
   // The guard the whole harness rests on: it runs against a data root it made, and nothing else.
   const marker = path.join(paths.data, SCRATCH_MARKER);
   if (fs.readdirSync(paths.data).length && !fs.existsSync(marker)) {
-    throw new Error(`${paths.data} is not a hunt-bugs scratch tree — refusing to run against it`);
+    throw new Error(`${paths.data} is not a harness scratch tree — refusing to run against it`);
   }
   fs.writeFileSync(marker, `${BANNER}\n`);
   fs.writeFileSync(path.join(paths.dataEmpty, SCRATCH_MARKER), `${BANNER}\n`);
   fs.writeFileSync(path.join(paths.root, 'README.txt'), `${BANNER}\n`);
 
   fs.copyFileSync(
-    path.join(HUNT_ROOT, 'fixtures', 'transcript.txt'),
+    path.join(HARNESS_ROOT, 'fixtures', 'transcript.txt'),
     path.join(paths.fixtures, 'transcript.txt'),
   );
   fs.copyFileSync(
-    path.join(HUNT_ROOT, 'fixtures', 'summary.md'),
+    path.join(HARNESS_ROOT, 'fixtures', 'summary.md'),
     path.join(paths.fixtures, 'summary.md'),
   );
   fs.writeFileSync(path.join(paths.fixtures, 'handout.pdf'), MINIMAL_PDF);
@@ -155,7 +146,7 @@ async function buildHarness() {
       '-out',
       path.join(paths.tls, 'cert.pem'),
       '-subj',
-      '/CN=hunt-bugs-fake-site',
+      '/CN=harness-fake-site',
     ]);
   }
 
@@ -166,7 +157,7 @@ async function buildHarness() {
     const wrapper = path.join(paths.bin, tool);
     fs.writeFileSync(
       wrapper,
-      `#!/bin/sh\nNODE_OPTIONS= exec ${process.execPath} ${path.join(HUNT_ROOT, 'fakes', 'tool.mjs')} ${tool} "$@"\n`,
+      `#!/bin/sh\nNODE_OPTIONS= exec ${process.execPath} ${path.join(HARNESS_ROOT, 'fakes', 'tool.mjs')} ${tool} "$@"\n`,
     );
     fs.chmodSync(wrapper, 0o755);
   }
@@ -191,15 +182,15 @@ async function buildHarness() {
 }
 
 function startFakes() {
-  const env = { ...nodeEnv(paths), HUNT_BUGS_WSTOKEN: FAKE_WSTOKEN, NODE_OPTIONS: '' };
-  start('fake-providers', process.execPath, [path.join(HUNT_ROOT, 'fakes', 'providers.mjs')], {
-    cwd: HUNT_ROOT,
+  const env = { ...nodeEnv(paths), HARNESS_WSTOKEN: FAKE_WSTOKEN, NODE_OPTIONS: '' };
+  start('fake-providers', process.execPath, [path.join(HARNESS_ROOT, 'fakes', 'providers.mjs')], {
+    cwd: HARNESS_ROOT,
     env,
     paths,
     health: `http://127.0.0.1:${PORTS.providers}/health`,
   });
-  start('fake-site', process.execPath, [path.join(HUNT_ROOT, 'fakes', 'site.mjs')], {
-    cwd: HUNT_ROOT,
+  start('fake-site', process.execPath, [path.join(HARNESS_ROOT, 'fakes', 'site.mjs')], {
+    cwd: HARNESS_ROOT,
     env,
     paths,
     health: `http://127.0.0.1:${PORTS.site}/health`,
@@ -241,21 +232,29 @@ function startServices() {
   );
   start('downloader-server', 'npm', ['start'], {
     cwd: path.join(REPO_ROOT, 'downloader', 'server'),
-    env: node,
+    env: { ...node, FASTSTUDY_PORT: String(PORTS.server) },
     paths,
     health: `http://127.0.0.1:${PORTS.server}/health`,
   });
   start('downloader-auto', 'npm', ['start'], {
     cwd: path.join(REPO_ROOT, 'downloader', 'auto'),
-    env: node,
+    env: { ...node, FASTSTUDY_PORT: String(PORTS.auto) },
     paths,
     health: `http://127.0.0.1:${PORTS.auto}/health`,
   });
   // No shim on the dev server: it serves the SPA and talks to nobody, and NODE_OPTIONS would ride
-  // into every tool vite spawns.
-  start('frontend', 'npm', ['run', 'dev'], {
+  // into every tool vite spawns. The VITE_*_URL pair the SPA with this stack's services.
+  const services = appServices();
+  start('frontend', 'npm', ['run', 'dev', '--', '--port', String(PORTS.frontend), '--strictPort'], {
     cwd: path.join(REPO_ROOT, 'frontend'),
-    env: { ...process.env, DATA_ROOT: paths.data },
+    env: {
+      ...process.env,
+      DATA_ROOT: paths.data,
+      VITE_DATABASE_URL: services.database,
+      VITE_BACKEND_URL: services.backend,
+      VITE_DOWNLOAD_SERVER_URL: services['downloader-server'],
+      VITE_AUTO_DOWNLOADER_URL: services['downloader-auto'],
+    },
     paths,
     health: `http://127.0.0.1:${PORTS.frontend}/`,
   });
@@ -282,24 +281,12 @@ function reportTools() {
   );
 }
 
-// Every port the harness needs. A stack already on one of them would answer /health and pass for
-// this run's — with somebody else's data root, fakes and fixtures behind it.
-async function preflightPorts() {
-  if (flag('--stop')) {
-    await down(paths);
-    const stopped = stopPortOwners(PORTS);
-    if (stopped.length) say(`  ✓ stopped what held the harness ports: ${stopped.join(', ')}`);
-    const deadline = Date.now() + 15_000;
-    while (portOwners(PORTS).length && Date.now() < deadline) await sleep(500);
-  }
-  const busy = portOwners(PORTS);
-  if (busy.length) {
-    const lines = busy.map(
-      (owner) => `  :${owner.port} (${owner.name}) held by pid ${owner.pid} — ${owner.command}`,
-    );
+// One setup per harness root: a second would overwrite the first's stack record and orphan it.
+function refuseSecondSetup() {
+  const holder = liveHolder(paths);
+  if (holder) {
     throw new Error(
-      `these ports are already in use, most likely a previous harness or a plain \`npm run dev\`:\n${lines.join('\n')}\n` +
-        'Stop it, or re-run with --stop to have the harness terminate them first.',
+      `setup pid ${holder} already holds ${paths.root} — use its stack, or stop it with --down first`,
     );
   }
 }
@@ -313,8 +300,8 @@ async function main() {
     const stopped = await down(paths);
     say(
       stopped.length
-        ? `hunt-bugs: stopped ${stopped.join(', ')}`
-        : `hunt-bugs: no stack recorded under ${paths.root}`,
+        ? `harness: stopped ${stopped.join(', ')}`
+        : `harness: no stack recorded under ${paths.root}`,
     );
     return;
   }
@@ -326,14 +313,15 @@ async function main() {
         .map((arg) => [arg.slice(0, arg.indexOf('=')), arg.slice(arg.indexOf('=') + 1)]),
     );
     await restart(paths, name, overrides);
-    say(`hunt-bugs: restarted ${name}`);
+    say(`harness: restarted ${name}`);
     return;
   }
 
-  say(`hunt-bugs: ${BANNER}`);
+  say(BANNER);
   say(`harness root: ${paths.root}`);
 
-  await preflightPorts();
+  refuseSecondSetup();
+  bindPorts(paths, await allocatePorts(paths));
 
   await buildHarness();
   say('  ✓ fixtures, fake binaries, scratch .env and Moodle token written');
@@ -377,23 +365,20 @@ async function main() {
   // After the self-check, so the lecture it ran on is part of the baseline `hb state` diffs against.
   if (seeding) await markSeeded(paths);
 
-  for (const tag of browsers) await startBrowser(paths, tag, BROWSER_PORTS[tag]);
-  if (browsers.length) {
-    say(
-      `  ✓ browser sessions: ${browsers.map((tag) => `${tag} :${BROWSER_PORTS[tag]}`).join(', ')}`,
-    );
-  }
+  const sessions = [];
+  for (const tag of browsers) sessions.push(`${tag} :${await startBrowser(paths, tag)}`);
+  if (sessions.length) say(`  ✓ browser sessions: ${sessions.join(', ')}`);
 
   say(`
-harness ready — drive the app at http://localhost:${PORTS.frontend}  (localhost, not 127.0.0.1: the services' CORS allowlists name only localhost)
+harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the services' dev CORS takes localhost only)
 
+  ports       ${paths.ports}   (hb url <name> prints one: ${[...Object.keys(PORTS), 'browser-<tag>'].join(', ')})
   logs        ${paths.logs}          (network.log lists every redirected and refused connection)
-  restart     node .claude/hunt-bugs/setup.mjs --harness ${paths.root} --restart <service> [ENV=val…]
+  restart     node .claude/harness/setup.mjs --harness ${paths.root} --restart <service> [ENV=val…]
   stop        Ctrl-C here, or the same with --down
-  helpers     node .claude/hunt-bugs/hb.mjs --harness ${paths.root} help   (set, reseed, state, wall, lock, add-material, rm-lecture, refused…)
-  browsers    node .claude/hunt-bugs/hb.mjs --harness ${paths.root} browser <tag>   (one more session; README lists its commands)
+  helpers     node .claude/harness/hb.mjs --harness ${paths.root} help   (url, set, reseed, state, wall, lock, add-material, rm-lecture, refused…)
+  browsers    node .claude/harness/hb.mjs --harness ${paths.root} browser <tag>   (one more session; README lists its commands)
   evidence    ${paths.evidence}      (screenshots, <tag>-mutations.jsonl)
-  fragments   ${paths.fragments}     (one <tag>.md per flow agent; hb brief / hb findings)
   scratch data${'  '}${paths.data}
   empty root  ${paths.dataEmpty}    (marked, for the data-folder switch)
   drive       ${paths.drive}         (store.json + ops.jsonl: what "upload to Drive" did)
@@ -402,14 +387,14 @@ harness ready — drive the app at http://localhost:${PORTS.frontend}  (localhos
     ${FAKE_COURSE_URL}
 
   drive a failure without waiting for a real one:
-    curl -s localhost:${PORTS.providers}/control -d '{"gemini":"429"}'    # quota exhausted
-    curl -s localhost:${PORTS.providers}/control -d '{"groq":"500"}'      # provider outage
-    curl -s localhost:${PORTS.providers}/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
-    curl -s localhost:${PORTS.providers}/control -d '{"gemini":"ok","groq":"ok"}'
-    curl -s localhost:${PORTS.site}/control -d '{"mode":"blocked"}'       # bot-protection challenge
-    curl -s localhost:${PORTS.site}/control -d '{"mode":"invalidtoken"}'  # the Moodle token died
-    curl -s localhost:${PORTS.site}/control -d '{"mode":"ok"}'
-    curl -s localhost:${PORTS.site}/control -d '{"downloadMs":60000}'     # slow downloads, live
+    curl -s 127.0.0.1:${PORTS.providers}/control -d '{"gemini":"429"}'    # quota exhausted
+    curl -s 127.0.0.1:${PORTS.providers}/control -d '{"groq":"500"}'      # provider outage
+    curl -s 127.0.0.1:${PORTS.providers}/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
+    curl -s 127.0.0.1:${PORTS.providers}/control -d '{"gemini":"ok","groq":"ok"}'
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"blocked"}'       # bot-protection challenge
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"invalidtoken"}'  # the Moodle token died
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"ok"}'
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"downloadMs":60000}'     # slow downloads, live
 
   not covered by this harness: the Electron shell, the installer, real provider behaviour,
   the headed Moodle/zoom logins and MFA, and zoom capture (it needs a real browser).
@@ -432,18 +417,18 @@ async function teardown(code) {
 // Includes the EPIPE a closed pipe raises out of a `say`: without this the detached children of a
 // setup that died writing its output would outlive it, and the next run would find the ports held.
 process.on('uncaughtException', (error) => {
-  console.error(`\nhunt-bugs stopped: ${error.message}`);
+  console.error(`\nharness stopped: ${error.message}`);
   teardown(1);
 });
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {
-    if (launched) say('\nhunt-bugs: stopping every service and fake');
+    if (launched) say('\nharness: stopping every service and fake');
     teardown(0);
   });
 }
 
 main().catch((error) => {
-  console.error(`\nhunt-bugs failed: ${error.message}`);
+  console.error(`\nharness failed: ${error.message}`);
   teardown(1);
 });

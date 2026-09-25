@@ -7,11 +7,11 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 
-const HARNESS = process.env.HUNT_BUGS_HARNESS;
+const HARNESS = process.env.HARNESS_DIR;
 
 if (HARNESS) {
-  const SITE = new URL(process.env.HUNT_BUGS_SITE ?? 'http://127.0.0.1:4599');
-  const SITE_TLS = new URL(process.env.HUNT_BUGS_SITE_TLS ?? 'https://127.0.0.1:4699');
+  const SITE = new URL(process.env.HARNESS_SITE);
+  const SITE_TLS = new URL(process.env.HARNESS_SITE_TLS);
   const LOG = path.join(HARNESS, 'logs', 'network.log');
 
   // Hosts the fake site answers for. Everything else off loopback is an escape: a real request
@@ -37,7 +37,7 @@ if (HARNESS) {
       fs.mkdirSync(path.dirname(LOG), { recursive: true });
       fs.appendFileSync(
         LOG,
-        `${new Date().toISOString()} ${process.env.HUNT_BUGS_SERVICE ?? 'node'} ${line}\n`,
+        `${new Date().toISOString()} ${process.env.HARNESS_SERVICE ?? 'node'} ${line}\n`,
       );
     } catch {}
   }
@@ -63,7 +63,7 @@ if (HARNESS) {
 
     if (!SERVED.some((re) => re.test(String(host)))) {
       const message =
-        `hunt-bugs harness is offline — refused a connection to ${host}:${port}. ` +
+        `harness is offline — refused a connection to ${host}:${port}. ` +
         'Nothing outside the fakes may be reached; a finding recorded after this is suspect.';
       note(`REFUSED ${host}:${port}`);
       process.nextTick(() => this.destroy(new Error(message)));
@@ -88,6 +88,6 @@ if (HARNESS) {
   };
 
   process.stderr.write(
-    `hunt-bugs shim: live (site ${SITE.host}, tls ${SITE_TLS.host}, bin ${path.join(HARNESS, 'bin')})\n`,
+    `harness shim: live (site ${SITE.host}, tls ${SITE_TLS.host}, bin ${path.join(HARNESS, 'bin')})\n`,
   );
 }

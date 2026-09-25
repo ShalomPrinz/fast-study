@@ -13,4 +13,5 @@ Working rules:
 
 - Follow existing conventions in the code and `frontend/CLAUDE.md`: each file under `src/services/` is the single boundary for one external concern (no raw `fetch`/`react-toastify` at call sites); steps derive from `constants/pipeline.ts`; URLs build via `utils/url.ts`; UI lives in components, not contexts/hooks; import via `@/`.
 - Verify with `npm run build` (`tsc -b && vite build`) so type errors surface; use `npm run dev` to run locally.
+- To see a change working in the real app, or to reproduce a bug, use the `app-harness` skill: a private offline stack on its own ports, so it never collides with another agent's.
 - When your changes make `frontend/CLAUDE.md` or `frontend/docs/*` outdated, update them in the same pass. Keep docs concise; one short line is the default.

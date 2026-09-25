@@ -29,7 +29,7 @@ export function baselineEnv(paths) {
     DATA_ROOT: paths.data,
     ...FAKE_KEYS,
     GEMINI_MODEL: 'gemini-2.5-flash',
-    GDRIVE_ROOT_FOLDER: 'HuntBugs',
+    GDRIVE_ROOT_FOLDER: 'Harness',
     DRIVE_ENABLED: 'true',
     AUTO_RUN: 'full',
     // Off: a cron firing mid-sweep would attribute its runs to whatever the agent was doing.
@@ -71,7 +71,7 @@ export function writeMoodleToken(paths) {
     tokenPath,
     JSON.stringify({
       wstoken: FAKE_WSTOKEN,
-      privatetoken: 'hunt-bugs-private',
+      privatetoken: 'harness-private',
       savedAt: new Date().toISOString(),
     }),
   );

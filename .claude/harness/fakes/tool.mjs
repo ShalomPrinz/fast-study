@@ -8,7 +8,7 @@ import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 
 const [tool, ...args] = process.argv.slice(2);
-const HARNESS = process.env.HUNT_BUGS_HARNESS;
+const HARNESS = process.env.HARNESS_DIR;
 const VIDEO = path.join(HARNESS, 'fixtures', 'video.mp4');
 const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
 const SLICES = 12;
@@ -60,7 +60,7 @@ async function download(outputName) {
   if (urlArg.includes('/deny/')) fail(403);
   // Speed and the one-time drop are the fake site's live settings, changed through its /control.
   const response = await fetch(
-    `${process.env.HUNT_BUGS_SITE}/tool?url=${encodeURIComponent(urlArg)}`,
+    `${process.env.HARNESS_SITE}/tool?url=${encodeURIComponent(urlArg)}`,
   );
   const { downloadMs, die } = await response.json();
   const source = fs.readFileSync(fixtureFor(urlArg));
@@ -80,10 +80,10 @@ async function download(outputName) {
 
 if (args.includes('--version')) {
   process.stdout.write(
-    tool === 'curl' ? 'curl 8.5.0 (hunt-bugs fake)\n' : '2025.01.01 (hunt-bugs fake)\n',
+    tool === 'curl' ? 'curl 8.5.0 (harness fake)\n' : '2025.01.01 (harness fake)\n',
   );
 } else if (args.includes('-U') || args.includes('--update')) {
-  process.stdout.write('yt-dlp is up to date (hunt-bugs fake)\n');
+  process.stdout.write('yt-dlp is up to date (harness fake)\n');
 } else if (args.includes('--flat-playlist')) {
   // title<TAB>url per entry, which is the --print format the playlist expander asks for.
   process.stdout.write(

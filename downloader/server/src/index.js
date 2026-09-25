@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
 import { emitError } from './progress.js';
-import { serve, requireSecret } from '@faststudy/runtime';
+import { serve, requireSecret, corsOrigins } from '@faststudy/runtime';
 import { checkTools } from '@faststudy/tools';
 import { seedYtdlp, updateYtdlp } from './services/ytdlpUpdate.js';
 import coursesRouter from './routes/courses.js';
@@ -18,12 +18,12 @@ const app = express();
 app.use(
   cors({
     // 'app://bundle' is frozen with no trailing slash (see the root CLAUDE.md). The extension
-    // origin appears only for a dev who set DOWNLOADER_EXTENSION_ID.
-    origin: [
+    // origin appears only for a dev who set DOWNLOADER_EXTENSION_ID; dev also allows any localhost port.
+    origin: corsOrigins([
       ...(EXTENSION_ID ? [`chrome-extension://${EXTENSION_ID}`] : []),
       FRONTEND_URL,
       'app://bundle',
-    ],
+    ]),
     methods: ['GET', 'POST', 'OPTIONS'],
     // A pinned allowedHeaders list is exhaustive: without X-FastStudy-Secret named here the
     // preflight strips it and every call fails as a CORS error rather than an auth one.

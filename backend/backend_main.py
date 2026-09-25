@@ -75,7 +75,7 @@ app.add_middleware(
     CORSMiddleware,
     # `app://bundle` is the packaged frontend's origin, exactly as Chromium sends it — no trailing
     # slash, unlike the same origin reported by Electron's permission-handler API. Never derive it.
-    allow_origins=["http://localhost:5173", "app://bundle"],
+    **runtime.cors_origins(["http://localhost:5173", "app://bundle"]),
     allow_methods=["*"],
     allow_headers=["*"],
 )

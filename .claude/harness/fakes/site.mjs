@@ -8,10 +8,10 @@ import https from 'node:https';
 import path from 'node:path';
 import { DEFAULT_DOWNLOAD_MS, FAILURE_ROWS } from '../lib/env.mjs';
 
-const HARNESS = process.env.HUNT_BUGS_HARNESS;
-const PORT = Number(process.env.HUNT_BUGS_SITE_PORT ?? 4599);
-const TLS_PORT = Number(process.env.HUNT_BUGS_SITE_TLS_PORT ?? 4699);
-const TOKEN = process.env.HUNT_BUGS_WSTOKEN;
+const HARNESS = process.env.HARNESS_DIR;
+const PORT = Number(process.env.HARNESS_SITE_PORT);
+const TLS_PORT = Number(process.env.HARNESS_SITE_TLS_PORT);
+const TOKEN = process.env.HARNESS_WSTOKEN;
 
 const VIDEO = path.join(HARNESS, 'fixtures', 'video.mp4');
 const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
@@ -112,7 +112,7 @@ function json(res, body, status = 200) {
 // answer `WsBlockedError` exists for.
 function challenge(res) {
   const body =
-    '<!doctype html><title>Bot check</title><p>hunt-bugs: pretending to be a challenge page.';
+    '<!doctype html><title>Bot check</title><p>harness: pretending to be a challenge page.';
   res.writeHead(200, {
     'content-type': 'text/html; charset=utf-8',
     'content-length': Buffer.byteLength(body),
@@ -195,11 +195,11 @@ function handle(req, res) {
     }
     if (fn === 'core_webservice_get_site_info') {
       return json(res, {
-        sitename: 'hunt-bugs Moodle',
+        sitename: 'harness Moodle',
         username: 'student',
         userid: 7,
         downloadfiles: 1,
-        release: '4.4 (Build: hunt-bugs)',
+        release: '4.4 (Build: harness)',
         functions: [],
       });
     }
@@ -214,7 +214,7 @@ function handle(req, res) {
     return json(res, {
       exception: 'moodle_exception',
       errorcode: 'invalidfunction',
-      message: `hunt-bugs fake site has no ${fn}`,
+      message: `harness fake site has no ${fn}`,
     });
   }
 
@@ -223,7 +223,7 @@ function handle(req, res) {
   if (/^\/(media|deny|die)\//.test(route)) return serveFile(req, res, VIDEO, 'video/mp4');
   if (route.startsWith('/page/')) {
     const body =
-      '<!doctype html><meta charset="utf-8"><h1>hunt-bugs: an ordinary web page, not a recording.';
+      '<!doctype html><meta charset="utf-8"><h1>harness: an ordinary web page, not a recording.';
     res.writeHead(200, {
       'content-type': 'text/html; charset=utf-8',
       'content-length': Buffer.byteLength(body),
@@ -232,7 +232,7 @@ function handle(req, res) {
   }
   if (route.startsWith('/gone/')) return json(res, { error: 'gone' }, 404);
 
-  return json(res, { error: `hunt-bugs fake site has no route for ${route}` }, 404);
+  return json(res, { error: `harness fake site has no route for ${route}` }, 404);
 }
 
 http.createServer(handle).listen(PORT, '127.0.0.1', () => console.log(`fake site on ${PORT}`));

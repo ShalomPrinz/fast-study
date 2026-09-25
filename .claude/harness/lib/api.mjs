@@ -2,13 +2,20 @@
 // the same rule the release smoke suite follows: the layout belongs to that service, and a harness
 // that hand-built paths would hide exactly the bugs it is here to find.
 import { setTimeout as sleep } from 'node:timers/promises';
-import { PORTS } from './env.mjs';
+import { PORTS, readPorts } from './env.mjs';
 
-export const DATABASE = `http://127.0.0.1:${PORTS.database}`;
-export const BACKEND = `http://127.0.0.1:${PORTS.backend}`;
-export const AUTO = `http://127.0.0.1:${PORTS.auto}`;
-export const PROVIDERS = `http://127.0.0.1:${PORTS.providers}`;
-export const SITE = `http://127.0.0.1:${PORTS.site}`;
+// Live bindings, set by `bindPorts` once the harness root is known: every importer sees the stack's URLs.
+export let DATABASE, BACKEND, AUTO, PROVIDERS, SITE;
+
+/** Point every harness module at this stack's ports — its `ports.json`, or `ports` when given. */
+export function bindPorts(paths, ports = readPorts(paths)) {
+  Object.assign(PORTS, ports);
+  DATABASE = `http://127.0.0.1:${PORTS.database}`;
+  BACKEND = `http://127.0.0.1:${PORTS.backend}`;
+  AUTO = `http://127.0.0.1:${PORTS.auto}`;
+  PROVIDERS = `http://127.0.0.1:${PORTS.providers}`;
+  SITE = `http://127.0.0.1:${PORTS.site}`;
+}
 
 /** One request; a non-2xx is an error naming the method, the route and the body it answered. */
 export async function call(url, { method = 'GET', body, headers = {}, expect = true } = {}) {

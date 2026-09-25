@@ -39,9 +39,9 @@ export default [
     rules: baseline,
   },
 
-  // The bug-hunting harness under .claude/: agent tooling, ESM on Node, never shipped.
+  // The app harness and the bug hunt on it under .claude/: agent tooling, ESM on Node, never shipped.
   {
-    files: ['.claude/hunt-bugs/**/*.mjs'],
+    files: ['.claude/{harness,hunt-bugs}/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 2023,
       sourceType: 'module',

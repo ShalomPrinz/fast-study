@@ -157,7 +157,8 @@ secret is what keeps another local process or page off the API. The check and it
 `CORSMiddleware` so a `401` carries CORS headers.
 
 CORS allows `http://localhost:5173` (browser dev) and `app://bundle` (the packaged frontend, matched
-verbatim — root `CLAUDE.md`); the backend and downloader call server-to-server and need no entry.
+verbatim — root `CLAUDE.md`), plus any `http://localhost:<port>` in dev (no `FASTSTUDY_SECRET`) so
+parallel dev stacks work; the backend and downloader call server-to-server and need no entry.
 
 Every caller-supplied file name goes through `check_safe_segment` before it is joined onto a
 resolved directory, on every resolver and mutator, answering `400`. It matters most on the `/path`

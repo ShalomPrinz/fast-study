@@ -5,7 +5,7 @@ half is in `py/` and JS half in `js/`, sharing one `CLAUDE.md` at the package ro
 
 | Package                         | What it is                                                                        | Consumers                                              |
 | ------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| [`runtime/`](runtime/CLAUDE.md) | The packaged launch contract: port handshake, launch-secret check, state root.    | py: `backend/`, `database/` · js: both `downloader/`   |
+| [`runtime/`](runtime/CLAUDE.md) | The packaged launch contract: port handshake, launch-secret check, CORS allowlist, state root. | py: `backend/`, `database/` · js: both `downloader/`   |
 | [`tools/`](tools/CLAUDE.md)     | External-binary resolution (`FASTSTUDY_BIN_DIR`) and the boot-time version probe. | py: `backend/` · js: both `downloader/`                |
 | [`logging/`](logging/CLAUDE.md) | `setup_logging()` — the stderr `[api] POST /path → 200` access log. Python only.  | `backend/`, `database/`                                |
 

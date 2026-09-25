@@ -42,7 +42,8 @@ The one file declaring `window.faststudy` (a second `declare global` would not c
 `runtimeBridge()`, which is `undefined` outside Electron and under vitest. Its import of `SettingsBacking`
 is type-only, so the mutual import with `settings.ts` is erased.
 
-- **Base URLs** — the four services from `urls` on the bridge, else the dev ports; resolved synchronously
+- **Base URLs** — the four services from `urls` on the bridge, else `VITE_{BACKEND,DATABASE,DOWNLOAD_SERVER,AUTO_DOWNLOADER}_URL`
+  (set by a harness running parallel stacks), else the dev ports; resolved synchronously
   at import, since every client is built at module scope and packaged ports are chosen at boot.
 - **Launch secret** — `secretHeaders()` for requests; `withSecretParam(url)` only for the two
   `EventSource`s, which cannot set a header. The header keeps the secret out of access logs. Both add

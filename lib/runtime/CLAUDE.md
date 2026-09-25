@@ -65,16 +65,22 @@ not itself a secret.
   `dictConfig` would replace the access handler [`lib/logging`](../logging/CLAUDE.md) installs, and
   its default would print access lines on *stdout*, the handshake channel. `uvicorn` /
   `uvicorn.error` still propagate to root, so startup, shutdown and ASGI tracebacks stay intact.
+- **`cors_origins(exact)` / `corsOrigins(exact)` build the CORS allowlist**, reading the secret the
+  same way the check does: set, only `exact`; unset (dev), also any `http://localhost:<port>`, so
+  parallel dev stacks on their own Vite ports work. `127.0.0.1` stays excluded in both. Python
+  returns `CORSMiddleware` kwargs (`allow_origins`, `allow_origin_regex`); JS returns the `cors`
+  package's `origin` array, with the pattern as a RegExp (never `/g` — `cors` reuses it).
 - **`peerHeaders` (JS) is for our own services only.** The launch secret must never ride an outbound
   call to an external lecture host.
 - **Runtime `dependencies` in `package.json` stay empty.** The module uses `node:` builtins only and
   takes the express app as an argument, so it adds nothing to what the downloader packages install.
-  `express` is a *dev*Dependency because `requireSecret` reads `req.path`, `req.query` and
-  `req.get()`, which only express defines; `file:` consumers do not install devDependencies.
+  `express` and `cors` are *dev*Dependencies — `requireSecret` reads `req.path`, `req.query` and
+  `req.get()`, which only express defines, and the `corsOrigins` tests drive the real `cors`;
+  `file:` consumers do not install devDependencies.
 
 ## Tests
 
-Two suites assert the same auth table in both languages, so a rule that holds in one and not the
+Two suites assert the same auth and CORS tables in both languages, so a rule that holds in one and not the
 other fails here rather than in a service. A change to the table ships with a test pinning it in
 both, even where it had no coverage before.
 

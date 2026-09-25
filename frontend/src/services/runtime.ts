@@ -52,13 +52,17 @@ export function runtimeBridge(): Window['faststudy'] {
 }
 
 // Resolved synchronously at import, since every client is built at module scope and the preload runs
-// before the bundle; the fallbacks are the dev ports.
+// before the bundle; then `VITE_*_URL` (a harness running parallel stacks), then the dev ports.
 const urls = runtimeBridge()?.urls
 
-export const BACKEND_URL = urls?.backend ?? 'http://localhost:8000'
-export const DATABASE_URL = urls?.database ?? 'http://localhost:8001'
-export const DOWNLOAD_SERVER_URL = urls?.downloadServer ?? 'http://localhost:3052'
-export const AUTO_DOWNLOADER_URL = urls?.autoDownloader ?? 'http://localhost:3053'
+export const BACKEND_URL =
+  urls?.backend ?? import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000'
+export const DATABASE_URL =
+  urls?.database ?? import.meta.env.VITE_DATABASE_URL ?? 'http://localhost:8001'
+export const DOWNLOAD_SERVER_URL =
+  urls?.downloadServer ?? import.meta.env.VITE_DOWNLOAD_SERVER_URL ?? 'http://localhost:3052'
+export const AUTO_DOWNLOADER_URL =
+  urls?.autoDownloader ?? import.meta.env.VITE_AUTO_DOWNLOADER_URL ?? 'http://localhost:3053'
 
 // Whether this machine can keep the API keys. No bridge is browser dev, where keys go to `.env`, so
 // a missing answer means a working machine — see docs/SETTINGS.md.

@@ -5,55 +5,33 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-export const HUNT_ROOT = path.resolve(fileURLToPath(import.meta.url), '../..');
-export const REPO_ROOT = path.resolve(HUNT_ROOT, '../..');
+export const HARNESS_ROOT = path.resolve(fileURLToPath(import.meta.url), '../..');
+export const REPO_ROOT = path.resolve(HARNESS_ROOT, '../..');
 
-// The dev ports, deliberately: the frontend falls back to exactly these when no preload bridge
-// hands it URLs, so a harness run reaches the services the same way a plain `npm run dev` does.
-export const PORTS = {
-  database: 8001,
-  backend: 8000,
-  server: 3052,
-  auto: 3053,
-  frontend: 5173,
-  providers: 4598, // fake Groq + Gemini
-  site: 4599, // fake lecture site, http
-  siteTls: 4699, // the same site over TLS, where the socket redirect sends :443
-};
-
-// One browser session per flow (browser.mjs), each on a known port; another tag names its own.
-export const BROWSER_PORTS = {
-  mgmt: 4710,
-  dl: 4711,
-  edit: 4712,
-  nav: 4713,
-  pipeline: 4714,
-  fail: 4715,
-  settings: 4716,
-};
-
-// The flows a wave runs, by browser tag: the Step 2 sweep items each owns and its seeded course.
-// Their order is the merged findings file's order.
-export const FLOWS = {
-  settings: { title: 'Settings', sweep: '1', course: null },
-  mgmt: { title: 'Course and lecture management', sweep: '2', course: 'hb-mgmt' },
-  dl: { title: 'Downloads', sweep: '3', course: 'hb-dl' },
-  pipeline: { title: 'Pipeline and course overview', sweep: '4 and 7', course: 'hb-pipeline' },
-  fail: { title: 'Failure surfacing', sweep: '5', course: 'hb-fail' },
-  edit: { title: 'Editor and PDF', sweep: '6', course: 'hb-edit' },
-  nav: { title: 'Search, materials, other links, navigation', sweep: '8', course: 'hb-nav' },
-};
+// Every port a stack listens on, by name. Each harness takes its own free set, so several stacks
+// run side by side; `PORTS` is filled from `<harness>/ports.json` by `bindPorts` before any use.
+export const PORT_NAMES = [
+  'database',
+  'backend',
+  'server',
+  'auto',
+  'frontend',
+  'providers', // fake Groq + Gemini
+  'site', // fake lecture site, http
+  'siteTls', // the same site over TLS, where the socket redirect sends :443
+];
+export const PORTS = {};
 
 // Recognisable on sight in a log, a header or an error, and shaped like the real thing so the
 // providers' own prefix validation still runs.
 export const FAKE_KEYS = {
-  GROQ_API_KEY: 'gsk_huntbugsFAKEkeyNeverReal000000000000000000000000000000',
-  GEMINI_API_KEY: 'AIzaHuntBugsFAKEkeyNeverReal0000000000',
+  GROQ_API_KEY: 'gsk_harnessFAKEkeyNeverReal0000000000000000000000000000000',
+  GEMINI_API_KEY: 'AIzaHarnessFAKEkeyNeverReal00000000000',
 };
 
 // The Moodle WS token the fake site accepts; seeded into the state root so /auth/status reads
 // connected without the headed MFA grab that only a human can finish.
-export const FAKE_WSTOKEN = 'huntbugswstoken0000000000000000';
+export const FAKE_WSTOKEN = 'harnesswstoken00000000000000000';
 
 // The one course URL the fake site answers for. A biu.ac.il host on purpose: auto/'s registry
 // routes auth by hostname, so a loopback URL would find no university at all.
@@ -70,13 +48,13 @@ export const FAILURE_ROWS = {
 // How long the fake tool takes over one download until `/control` says otherwise.
 export const DEFAULT_DOWNLOAD_MS = 3000;
 
-export const SCRATCH_MARKER = '.hunt-bugs-scratch';
+export const SCRATCH_MARKER = '.harness-scratch';
 
 // The service name the self-check's escape probes log under in network.log.
 export const SELFCHECK_TAG = 'selfcheck';
 
 export const BANNER =
-  'hunt-bugs harness: every provider, Google API, lecture site and download binary here is FAKE, ' +
+  'harness: every provider, Google API, lecture site and download binary here is FAKE, ' +
   'and DATA_ROOT is a scratch tree. Nothing in this run reflects real data or a real service.';
 
 /** Every path the harness owns, derived from one root. Creates nothing. */
@@ -90,8 +68,6 @@ export function harnessPaths(root) {
     state: at('state'),
     logs: at('logs'),
     evidence: at('evidence'),
-    // One findings fragment per flow agent, `<tag>.md`, joined by `hb findings`.
-    fragments: at('fragments'),
     fixtures: at('fixtures'),
     bin: at('bin'),
     drive: at('drive'),
@@ -103,13 +79,15 @@ export function harnessPaths(root) {
     // Globs the database fails to write as Windows does a file held open (`hb lock`).
     locks: at('locks.json'),
     network: at('logs', 'network.log'),
+    // This stack's ports, `browser-<tag>` sessions included (`hb url`).
+    ports: at('ports.json'),
   };
 }
 
 /** A default root under the system temp dir, stamped so two runs never share evidence. */
 export function defaultRoot() {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  return path.join(os.tmpdir(), 'faststudy-hunt', stamp);
+  return path.join(os.tmpdir(), 'faststudy-harness', stamp);
 }
 
 /** The environment shared by every child: fake keys, scratch roots, and where the fakes listen. */
@@ -119,11 +97,19 @@ function baseEnv(paths) {
     ...FAKE_KEYS,
     DATA_ROOT: paths.data,
     FASTSTUDY_STATE_DIR: paths.state,
-    HUNT_BUGS_HARNESS: paths.root,
-    HUNT_BUGS_PROVIDERS: `http://127.0.0.1:${PORTS.providers}`,
-    HUNT_BUGS_SITE: `http://127.0.0.1:${PORTS.site}`,
-    HUNT_BUGS_SITE_TLS: `https://127.0.0.1:${PORTS.siteTls}`,
-    GDRIVE_ROOT_FOLDER: 'HuntBugs',
+    HARNESS_DIR: paths.root,
+    HARNESS_PROVIDERS: `http://127.0.0.1:${PORTS.providers}`,
+    HARNESS_PROVIDERS_PORT: String(PORTS.providers),
+    HARNESS_SITE: `http://127.0.0.1:${PORTS.site}`,
+    HARNESS_SITE_PORT: String(PORTS.site),
+    HARNESS_SITE_TLS: `https://127.0.0.1:${PORTS.siteTls}`,
+    HARNESS_SITE_TLS_PORT: String(PORTS.siteTls),
+    // Where each service finds its peers, since none of them is on its default port.
+    DATABASE_URL: `http://127.0.0.1:${PORTS.database}`,
+    BACKEND_URL: `http://127.0.0.1:${PORTS.backend}`,
+    AUTODL_URL: `http://127.0.0.1:${PORTS.auto}`,
+    FRONTEND_URL: `http://localhost:${PORTS.frontend}`,
+    GDRIVE_ROOT_FOLDER: 'Harness',
     DRIVE_ENABLED: 'true',
     // Off by default: a cron firing mid-sweep would attribute its runs to whatever the agent
     // happened to be doing. The agent turns it on deliberately when testing the nightly pass.
@@ -133,7 +119,7 @@ function baseEnv(paths) {
 
 /** The Python services: the shim rides in on PYTHONPATH, which needs no production change. */
 export function pythonEnv(paths) {
-  const shim = path.join(HUNT_ROOT, 'shim');
+  const shim = path.join(HARNESS_ROOT, 'shim');
   const existing = process.env.PYTHONPATH;
   return {
     ...baseEnv(paths),
@@ -144,7 +130,7 @@ export function pythonEnv(paths) {
 
 /** The Node services: the shim through --import, the fake binaries first on PATH. */
 export function nodeEnv(paths) {
-  const shim = path.join(HUNT_ROOT, 'shim', 'node.mjs');
+  const shim = path.join(HARNESS_ROOT, 'shim', 'node.mjs');
   const existing = process.env.NODE_OPTIONS ? `${process.env.NODE_OPTIONS} ` : '';
   return {
     ...baseEnv(paths),
@@ -156,6 +142,15 @@ export function nodeEnv(paths) {
     // survive the handshake. Harness-only; no production code ever sets this.
     NODE_TLS_REJECT_UNAUTHORIZED: '0',
   };
+}
+
+/** This stack's recorded ports, `{}` before setup has allocated them. */
+export function readPorts(paths) {
+  try {
+    return JSON.parse(fs.readFileSync(paths.ports, 'utf8'));
+  } catch {
+    return {};
+  }
 }
 
 /** True when this data root is one the harness made, which is the only one it will run against. */

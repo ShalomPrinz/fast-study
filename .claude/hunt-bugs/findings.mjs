@@ -2,8 +2,25 @@
 // accepts exactly that shape and throws on anything else, so a finding is never silently dropped.
 import fs from 'node:fs';
 import path from 'node:path';
-import { FLOWS, HUNT_ROOT } from './env.mjs';
-import { diff } from './state.mjs';
+import { fileURLToPath } from 'node:url';
+import { diff } from '../harness/lib/state.mjs';
+
+const HUNT_ROOT = path.dirname(fileURLToPath(import.meta.url));
+
+// The flows a wave runs, by browser tag: the Step 2 sweep items each owns and its seeded course.
+// Their order is the merged findings file's order.
+export const FLOWS = {
+  settings: { title: 'Settings', sweep: '1', course: null },
+  mgmt: { title: 'Course and lecture management', sweep: '2', course: 'hb-mgmt' },
+  dl: { title: 'Downloads', sweep: '3', course: 'hb-dl' },
+  pipeline: { title: 'Pipeline and course overview', sweep: '4 and 7', course: 'hb-pipeline' },
+  fail: { title: 'Failure surfacing', sweep: '5', course: 'hb-fail' },
+  edit: { title: 'Editor and PDF', sweep: '6', course: 'hb-edit' },
+  nav: { title: 'Search, materials, other links, navigation', sweep: '8', course: 'hb-nav' },
+};
+
+/** Where each flow agent writes its `<tag>.md`, inside the harness root the wave runs on. */
+export const fragmentsDir = (paths) => path.join(paths.root, 'fragments');
 
 const SECTIONS = ['Confirmed', 'Unconfirmed / flaky', 'Harness gaps'];
 const FIELDS = [
@@ -158,10 +175,10 @@ const cell = (text) => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
 
 /** The merged findings file's text; throws with every malformed fragment line at once. */
 export function mergeFindings(paths, area, date) {
-  const files = fragmentFiles(paths.fragments);
-  if (!files.length) throw new Error(`no fragments in ${paths.fragments}`);
+  const files = fragmentFiles(fragmentsDir(paths));
+  if (!files.length) throw new Error(`no fragments in ${fragmentsDir(paths)}`);
   const flows = files.map((name) => {
-    const file = path.join(paths.fragments, name);
+    const file = path.join(fragmentsDir(paths), name);
     return { tag: name.slice(0, -3), ...parseFragment(file, fs.readFileSync(file, 'utf8')) };
   });
   const errors = flows.flatMap((flow) => flow.errors.map((error) => error.text));

@@ -1,14 +1,13 @@
 #!/usr/bin/env node
-// Helpers a sweep runs against a live harness. Each subcommand is one entry in COMMANDS; add one
+// Helpers run against a live harness. Each subcommand is one entry in COMMANDS; add one
 // there and `hb help` lists it.
 //
-//   node .claude/hunt-bugs/hb.mjs [--harness DIR] <command> [args…]   (or HUNT_BUGS_HARNESS=DIR)
+//   node .claude/harness/hb.mjs [--harness DIR] <command> [args…]   (or HARNESS_DIR=DIR)
 import fs from 'node:fs';
 import path from 'node:path';
-import { DATABASE, bytes, call, saveSettings } from './lib/api.mjs';
+import { DATABASE, bindPorts, bytes, call, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
-import { BROWSER_PORTS, FLOWS, REPO_ROOT, SELFCHECK_TAG, harnessPaths } from './lib/env.mjs';
-import { mergeFindings, renderBrief } from './lib/findings.mjs';
+import { SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
 import { startBrowser } from './lib/stack.mjs';
 import { diff, readLocks, snapshot } from './lib/state.mjs';
 
@@ -124,62 +123,32 @@ const COMMANDS = {
       writeLocks(paths, globs.length ? readLocks(paths).filter((g) => !globs.includes(g)) : []);
     },
   },
+  url: {
+    usage: 'url [name]',
+    summary: "print one of this stack's URLs (database, frontend, browser-<tag>…), or all of them",
+    async run(paths, [name]) {
+      const ports = readPorts(paths);
+      // The frontend by localhost, the only host its services' CORS takes; the rest by address.
+      const url = (key) => `http://${key === 'frontend' ? 'localhost' : '127.0.0.1'}:${ports[key]}`;
+      if (!name) {
+        for (const key of Object.keys(ports)) console.log(`${key.padEnd(18)} ${url(key)}`);
+        return;
+      }
+      if (!ports[name]) {
+        throw new Error(
+          `no port "${name}" in ${paths.ports} (known: ${Object.keys(ports).join(', ')})`,
+        );
+      }
+      console.log(url(name));
+    },
+  },
   browser: {
-    usage: 'browser <tag> [--port N]',
+    usage: 'browser <tag>',
     summary: 'start a browser.mjs session on the live stack, stopped by --down with the rest',
-    async run(paths, [tag, ...rest]) {
-      const at = rest.indexOf('--port');
-      const port = at === -1 ? BROWSER_PORTS[tag] : Number(rest[at + 1]);
-      if (!tag || !port) {
-        throw new Error(
-          `usage: browser <tag> [--port N] (known tags: ${Object.keys(BROWSER_PORTS).join(', ')})`,
-        );
-      }
-      await startBrowser(paths, tag, port);
+    async run(paths, [tag]) {
+      if (!tag) throw new Error('usage: browser <tag>');
+      const port = await startBrowser(paths, tag);
       console.log(`browser ${tag} on http://127.0.0.1:${port}, logged to logs/browser-${tag}.log`);
-    },
-  },
-  brief: {
-    usage: 'brief <tag> [focus…]',
-    summary: "print a flow agent's brief: brief.md filled in for this harness and flow tag",
-    async run(paths, [tag, ...focus]) {
-      const flow = FLOWS[tag];
-      if (!flow)
-        throw new Error(`usage: brief <tag> [focus…] (tags: ${Object.keys(FLOWS).join(', ')})`);
-      console.log(
-        renderBrief({
-          title: flow.title,
-          tag,
-          sweep: flow.sweep,
-          focus: focus.length ? ` Narrowed to: ${focus.join(' ')}.` : '',
-          course: flow.course
-            ? `\`${flow.course}\`. Stay in it, and give any course you create the prefix \`${flow.course}-\`.`
-            : 'none of your own. Settings are global, so put back everything you change.',
-          port: String(BROWSER_PORTS[tag]),
-          harness: paths.root,
-          since: new Date().toISOString().slice(0, 19) + 'Z',
-          fragment: path.join(paths.fragments, `${tag}.md`),
-        }),
-      );
-    },
-  },
-  findings: {
-    usage: 'findings <area> <YYYY-MM-DD> [--out FILE]',
-    summary:
-      'join fragments/*.md into findings-<area>-<date>.md at the repo root: summary table, duplicate locations',
-    async run(paths, args) {
-      const at = args.indexOf('--out');
-      const out = at === -1 ? null : args.splice(at, 2)[1];
-      const [area, date] = args;
-      if (!area || /[\s/]/.test(area) || !/^\d{4}-\d{2}-\d{2}$/.test(date ?? '')) {
-        throw new Error(
-          'usage: findings <area> <YYYY-MM-DD> [--out FILE] (area: no spaces or slashes)',
-        );
-      }
-      const file = out ? path.resolve(out) : path.join(REPO_ROOT, `findings-${area}-${date}.md`);
-      if (fs.existsSync(file)) throw new Error(`${file} exists; delete it to merge again`);
-      fs.writeFileSync(file, mergeFindings(paths, area, date));
-      console.log(`wrote ${file}`);
     },
   },
   refused: {
@@ -214,15 +183,17 @@ function help() {
 async function main() {
   const args = process.argv.slice(2);
   const at = args.indexOf('--harness');
-  const root = at === -1 ? process.env.HUNT_BUGS_HARNESS : args.splice(at, 2)[1];
+  const root = at === -1 ? process.env.HARNESS_DIR : args.splice(at, 2)[1];
   const [name, ...rest] = args;
   if (!name || name === 'help' || !COMMANDS[name]) {
     help();
     if (name && name !== 'help') throw new Error(`unknown command "${name}"`);
     return;
   }
-  if (!root) throw new Error('which harness? pass --harness DIR or set HUNT_BUGS_HARNESS');
-  await COMMANDS[name].run(harnessPaths(path.resolve(root)), rest);
+  if (!root) throw new Error('which harness? pass --harness DIR or set HARNESS_DIR');
+  const paths = harnessPaths(path.resolve(root));
+  bindPorts(paths);
+  await COMMANDS[name].run(paths, rest);
 }
 
 main().catch((error) => {

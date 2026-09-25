@@ -10,7 +10,7 @@ npx playwright install chromium      # once, as the plain profile's fallback bro
 npm --prefix downloader/auto test    # node --test, pure logic only (no browser, no network)
 ```
 
-Port **3053** (`AUTODL_PORT` in the repo-root `.env`; `FASTSTUDY_PORT` in the environment wins), bound to `127.0.0.1`. CORS allows `http://localhost:5173` and `app://bundle`. An installed Chrome or Edge is required for every browser profile, and zoom capture also needs `Xvfb` on Linux ([SESSIONS.md](docs/SESSIONS.md)).
+Port **3053** (`AUTODL_PORT` in the repo-root `.env`; `FASTSTUDY_PORT` in the environment wins), bound to `127.0.0.1`. CORS allows `http://localhost:5173` and `app://bundle`, plus any `http://localhost:<port>` in dev (no `FASTSTUDY_SECRET`). An installed Chrome or Edge is required for every browser profile, and zoom capture also needs `Xvfb` on Linux ([SESSIONS.md](docs/SESSIONS.md)).
 
 Launch contract — the `FASTSTUDY_SECRET` check (`requireSecret`, every route but `GET /health`) and the state root (`statePath`, under which the Moodle token, the zoom passcode store and the yt-dlp cache live) — comes from [`@faststudy/runtime`](../../lib/runtime/CLAUDE.md). `yt-dlp` resolves through [`@faststudy/tools`](../../lib/tools/CLAUDE.md) and is reported on `/health` as `tools`. It only runs `--flat-playlist`, which never touches YouTube's player script, so it carries none of `server/`'s JS-runtime flags.
 
