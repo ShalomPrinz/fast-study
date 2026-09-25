@@ -1,4 +1,4 @@
-// The two service APIs the harness itself talks to. Disk is only ever reached through `database/`,
+// The service APIs the harness itself talks to. Disk is only ever reached through `database/`,
 // the same rule the release smoke suite follows: the layout belongs to that service, and a harness
 // that hand-built paths would hide exactly the bugs it is here to find.
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -6,6 +6,9 @@ import { PORTS } from './env.mjs';
 
 export const DATABASE = `http://127.0.0.1:${PORTS.database}`;
 export const BACKEND = `http://127.0.0.1:${PORTS.backend}`;
+export const AUTO = `http://127.0.0.1:${PORTS.auto}`;
+export const PROVIDERS = `http://127.0.0.1:${PORTS.providers}`;
+export const SITE = `http://127.0.0.1:${PORTS.site}`;
 
 /** One request; a non-2xx is an error naming the method, the route and the body it answered. */
 export async function call(url, { method = 'GET', body, headers = {}, expect = true } = {}) {
@@ -58,4 +61,13 @@ export async function waitForFile(
     await sleep(500);
   }
   throw new Error(`${course}/${lecture}: ${name} never appeared`);
+}
+
+/** Save settings the way the settings screen does: the store first, then the owner's live process. */
+export async function saveSettings(patch) {
+  const { data_root: dataRoot, ...rest } = patch;
+  const { body } = await json(`${DATABASE}/settings`, 'PUT', patch);
+  if (Object.keys(rest).length) await json(`${BACKEND}/config`, 'POST', rest);
+  if (dataRoot !== undefined) await json(`${DATABASE}/config`, 'POST', { data_root: dataRoot });
+  return body;
 }

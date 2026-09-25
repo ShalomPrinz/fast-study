@@ -35,7 +35,23 @@ if _HARNESS:
         name = str(host)
         return name in _LOCAL or name.startswith("127.")
 
+    def _note(line):
+        """One line in network.log, in the Node shim's format, so `hb refused` sees both languages."""
+
+        from datetime import datetime, timezone
+
+        stamp = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
+        service = os.environ.get("HUNT_BUGS_SERVICE", "python")
+        try:
+            log = HARNESS / "logs" / "network.log"
+            log.parent.mkdir(parents=True, exist_ok=True)
+            with open(log, "a", encoding="utf-8") as handle:
+                handle.write(f"{stamp.replace('+00:00', 'Z')} {service} {line}\n")
+        except OSError:
+            pass
+
     def _refuse(host, port):
+        _note(f"REFUSED {host}:{port}")
         raise HarnessEscape(
             f"hunt-bugs harness is offline — refused a connection to {host}:{port}. "
             "A provider or Google call that is not going through the fakes is a harness bug."
@@ -252,12 +268,115 @@ if _HARNESS:
 
         module.build = lambda *args, **kwargs: _Service()
 
+    # The lecture the current thread works for, as its path under DATA_ROOT; the fake providers
+    # target a failure at it, since nothing the SDKs send names the lecture.
+    _target = threading.local()
+
+    def _targeting(fn, path_of):
+        def wrapped(*args, **kwargs):
+            _target.path = path_of(*args)
+            try:
+                return fn(*args, **kwargs)
+            finally:
+                _target.path = None
+
+        return wrapped
+
+    def _patch_pipeline_runner(module):
+        """Each step runs in its own worker thread, so the thread names the lecture its calls are for."""
+
+        def path_of(course, lecture, kind):
+            return (
+                f"{course}/Recitations/{lecture}"
+                if kind == "recitation"
+                else f"{course}/{lecture}"
+            )
+
+        for step, fn in module._EXECUTORS.items():
+            module._EXECUTORS[step] = _targeting(fn, path_of)
+
+    def _patch_course_analyze(module):
+        module.run_analyze = _targeting(module.run_analyze, lambda course, *_: course)
+
+    def _patch_httpx(module):
+        """Both SDKs send through httpx.Client, so this one hook stamps every provider call."""
+
+        from urllib.parse import quote
+
+        send = module.Client.send
+
+        def stamped(self, request, *args, **kwargs):
+            path = getattr(_target, "path", None)
+            if path:
+                request.headers["x-hunt-bugs-lecture"] = quote(path, safe="/")
+            return send(self, request, *args, **kwargs)
+
+        module.Client.send = stamped
+
+    def _patch_locks(module):
+        """Windows refuses to write, delete or rename a file a viewer holds open; Linux never does.
+        Paths matching a glob in locks.json (`hb lock`) fail the way Windows reports it."""
+
+        import builtins
+        import errno
+        import io
+        from fnmatch import fnmatchcase
+
+        locks_file = HARNESS / "locks.json"
+
+        def _locked(path):
+            try:
+                patterns = json.loads(_open(locks_file, encoding="utf-8").read())
+            except (OSError, ValueError):
+                return False
+            text = os.fspath(path) if isinstance(path, (str, os.PathLike)) else ""
+            return any(fnmatchcase(text, f"*/{pattern}") for pattern in patterns)
+
+        def _violation(path):
+            # ERROR_SHARING_VIOLATION: what os.unlink/open report on Windows, winerror and all.
+            error = PermissionError(
+                errno.EACCES,
+                "The process cannot access the file because it is being used by another process",
+                os.fspath(path),
+            )
+            error.winerror = 32
+            return error
+
+        _open, _unlink, _rename, _replace = io.open, os.unlink, os.rename, os.replace
+
+        def guarded_open(file, mode="r", *args, **kwargs):
+            if any(flag in mode for flag in "wax+") and _locked(file):
+                raise _violation(file)
+            return _open(file, mode, *args, **kwargs)
+
+        def guarded_unlink(path, *args, **kwargs):
+            if _locked(path):
+                raise _violation(path)
+            return _unlink(path, *args, **kwargs)
+
+        def guarded_move(original):
+            def move(src, dst, *args, **kwargs):
+                for path in (src, dst):
+                    if _locked(path):
+                        raise _violation(path)
+                return original(src, dst, *args, **kwargs)
+
+            return move
+
+        io.open = builtins.open = guarded_open
+        os.unlink = os.remove = guarded_unlink
+        os.rename, os.replace = guarded_move(_rename), guarded_move(_replace)
+
     _PATCHES = {
+        "fs.paths": _patch_locks,
         "runtime": _patch_runtime,
         "services.providers": _patch_providers,
         "services.google_auth": _patch_google_auth,
         "settings": _patch_settings,
         "googleapiclient.discovery": _patch_discovery,
+        "pipeline.runner": _patch_pipeline_runner,
+        "course.analyze": _patch_course_analyze,
+        "httpx": _patch_httpx,
     }
 
     class _PatchAfterImport(MetaPathFinder):

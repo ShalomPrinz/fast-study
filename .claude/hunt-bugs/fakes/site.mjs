@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
+import { DEFAULT_DOWNLOAD_MS, FAILURE_ROWS } from '../lib/env.mjs';
 
 const HARNESS = process.env.HUNT_BUGS_HARNESS;
 const PORT = Number(process.env.HUNT_BUGS_SITE_PORT ?? 4599);
@@ -18,12 +19,17 @@ const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
 // 'ok' | 'blocked' (bot-protection challenge) | 'invalidtoken' — the two upstream refusals the
 // downloader has typed errors for, on tap.
 let mode = 'ok';
+// The fake tool's live settings live here, beside the URLs they fake, so `/control` changes a
+// download's speed without restarting the downloader; `died` makes each /die/ URL fail only once.
+let downloadMs = DEFAULT_DOWNLOAD_MS;
+const died = new Set();
 
 const SITE = 'https://lemida.biu.ac.il';
 
 // One course, shaped exactly like core_course_get_contents: sections of modules, names as HTML.
 // It carries a row per path the downloader can take — direct mp4, YouTube, PDF resource, a plain
-// web page (unsupported), a dead link — plus Hebrew names and one multi-file resource.
+// web page (unsupported), a dead link, a 403 and a mid-download drop — plus Hebrew names and one
+// multi-file resource.
 function courseContents() {
   return [
     {
@@ -36,7 +42,9 @@ function courseContents() {
         mod('url', 'הקלטה 3 — עצים', `${SITE}/media/הרצאה-03.mp4`),
         mod('url', 'הקלטות הקורס ביוטיוב', 'https://www.youtube.com/playlist?list=huntbugs'),
         mod('url', 'קישור לסילבוס', `${SITE}/page/syllabus.html`),
-        mod('url', 'הקלטה 9 — הוסרה', `${SITE}/gone/lecture-09.mp4`),
+        mod('url', FAILURE_ROWS.gone, `${SITE}/gone/lecture-09.mp4`),
+        mod('url', FAILURE_ROWS.deny, `${SITE}/deny/lecture-07.mp4`),
+        mod('url', FAILURE_ROWS.die, `${SITE}/die/lecture-08.mp4`),
       ],
     },
     {
@@ -148,11 +156,30 @@ function handle(req, res) {
     const parts = [];
     req.on('data', (part) => parts.push(part));
     return req.on('end', () => {
-      mode = JSON.parse(Buffer.concat(parts).toString('utf8') || '{}').mode ?? 'ok';
-      json(res, { mode });
+      const body = JSON.parse(Buffer.concat(parts).toString('utf8') || '{}');
+      // `reset` is what a reseed sends; any other field sets only itself.
+      if (body.reset) {
+        mode = 'ok';
+        downloadMs = DEFAULT_DOWNLOAD_MS;
+        died.clear();
+      }
+      if (body.mode) mode = body.mode;
+      if (body.downloadMs !== undefined) {
+        const ms = Number(body.downloadMs);
+        if (!Number.isFinite(ms) || ms < 0) return json(res, { error: 'downloadMs: ms ≥ 0' }, 400);
+        downloadMs = ms;
+      }
+      json(res, { mode, downloadMs });
     });
   }
-  if (route === '/health') return json(res, { status: 'ok', mode });
+  if (route === '/health') return json(res, { status: 'ok', mode, downloadMs });
+  // Asked by the fake tool once per download: how long to take, and whether to drop halfway.
+  if (route === '/tool') {
+    const target = url.searchParams.get('url') ?? '';
+    const die = target.includes('/die/') && !died.has(target);
+    if (die) died.add(target);
+    return json(res, { downloadMs, die });
+  }
 
   if (mode === 'blocked') return challenge(res);
 
@@ -192,7 +219,8 @@ function handle(req, res) {
   }
 
   if (route.startsWith('/pluginfile.php/')) return serveFile(req, res, PDF, 'application/pdf');
-  if (route.startsWith('/media/')) return serveFile(req, res, VIDEO, 'video/mp4');
+  // /deny/ and /die/ probe as a video like /media/; they fail only in the fake tool's download.
+  if (/^\/(media|deny|die)\//.test(route)) return serveFile(req, res, VIDEO, 'video/mp4');
   if (route.startsWith('/page/')) {
     const body =
       '<!doctype html><meta charset="utf-8"><h1>hunt-bugs: an ordinary web page, not a recording.';

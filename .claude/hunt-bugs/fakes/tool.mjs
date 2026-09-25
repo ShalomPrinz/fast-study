@@ -1,8 +1,8 @@
 // The fake `curl` and `yt-dlp`, reached through PATH (a dev run resolves both by bare name).
-// They never open a socket: a download writes the fixture video into the job's temp dir in slices,
-// so the real job, its byte-counting progress and its SSE stream all run on real growing bytes.
-// A URL path is the switch for a failure: /gone/ is a 404, /deny/ is the 403 that drives the
-// downloader's one silent re-resolve.
+// They never reach the lecture site's files: a download writes the fixture matching the URL into
+// the job's temp dir in slices, so the real job, its byte-counting progress and its SSE stream all
+// run on real growing bytes. A URL path is the switch for a failure: /gone/ is a 404, /deny/ is
+// the 403 that drives the downloader's one silent re-resolve, /die/ drops halfway the first time.
 import fs from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -10,7 +10,7 @@ import { setTimeout as sleep } from 'node:timers/promises';
 const [tool, ...args] = process.argv.slice(2);
 const HARNESS = process.env.HUNT_BUGS_HARNESS;
 const VIDEO = path.join(HARNESS, 'fixtures', 'video.mp4');
-const TOTAL_MS = Number(process.env.HUNT_BUGS_DOWNLOAD_MS ?? 3000);
+const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
 const SLICES = 12;
 
 function valueAfter(...flags) {
@@ -23,27 +23,55 @@ function valueAfter(...flags) {
 
 const urlArg = [...args].reverse().find((arg) => /^https?:\/\//.test(arg)) ?? '';
 
-function fail(code, message) {
+// What each real tool prints for the same failure, so a job's verbatim `detail` reads true.
+const FAILURES = {
+  404: {
+    curl: [22, 'curl: (22) The requested URL returned error: 404'],
+    'yt-dlp': [1, 'ERROR: unable to download video data: HTTP Error 404: Not Found'],
+  },
+  403: {
+    curl: [22, 'curl: (22) The requested URL returned error: 403'],
+    'yt-dlp': [1, 'ERROR: unable to download video data: HTTP Error 403: Forbidden'],
+  },
+  drop: {
+    curl: [18, 'curl: (18) transfer closed with outstanding read data remaining'],
+    'yt-dlp': [1, 'ERROR: unable to download video data: Connection reset by peer'],
+  },
+};
+
+function fail(kind) {
+  const [code, message] = FAILURES[kind][tool];
   process.stderr.write(`${message}\n`);
   process.exit(code);
 }
 
+// A PDF URL gets the PDF fixture, anything else the video — what a real fetch of it would bring.
+function fixtureFor(url) {
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith('.pdf') ? PDF : VIDEO;
+  } catch {
+    return VIDEO;
+  }
+}
+
 async function download(outputName) {
   const name = (outputName ?? 'video.mp4').replace('%(ext)s', 'mp4');
-  if (urlArg.includes('/gone/')) {
-    fail(22, `${tool}: (22) The requested URL returned error: 404`);
-  }
-  if (urlArg.includes('/deny/')) {
-    fail(22, `${tool}: (22) The requested URL returned error: 403 Forbidden`);
-  }
-  const source = fs.readFileSync(VIDEO);
+  if (urlArg.includes('/gone/')) fail(404);
+  if (urlArg.includes('/deny/')) fail(403);
+  // Speed and the one-time drop are the fake site's live settings, changed through its /control.
+  const response = await fetch(
+    `${process.env.HUNT_BUGS_SITE}/tool?url=${encodeURIComponent(urlArg)}`,
+  );
+  const { downloadMs, die } = await response.json();
+  const source = fs.readFileSync(fixtureFor(urlArg));
   const target = path.resolve(process.cwd(), name);
   const handle = fs.openSync(target, 'w');
   try {
     const slice = Math.ceil(source.length / SLICES);
     for (let at = 0; at < source.length; at += slice) {
+      if (die && at >= source.length / 2) fail('drop');
       fs.writeSync(handle, source.subarray(at, Math.min(at + slice, source.length)));
-      await sleep(TOTAL_MS / SLICES);
+      await sleep(downloadMs / SLICES);
     }
   } finally {
     fs.closeSync(handle);
@@ -65,7 +93,7 @@ if (args.includes('--version')) {
     ].join('\n') + '\n',
   );
 } else if (args.includes('--skip-download')) {
-  process.stdout.write(`${fs.statSync(VIDEO).size}\n`);
+  process.stdout.write(`${fs.statSync(fixtureFor(urlArg)).size}\n`);
 } else {
   await download(valueAfter('--output', '-o'));
 }

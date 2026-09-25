@@ -21,6 +21,29 @@ export const PORTS = {
   siteTls: 4699, // the same site over TLS, where the socket redirect sends :443
 };
 
+// One browser session per flow (browser.mjs), each on a known port; another tag names its own.
+export const BROWSER_PORTS = {
+  mgmt: 4710,
+  dl: 4711,
+  edit: 4712,
+  nav: 4713,
+  pipeline: 4714,
+  fail: 4715,
+  settings: 4716,
+};
+
+// The flows a wave runs, by browser tag: the Step 2 sweep items each owns and its seeded course.
+// Their order is the merged findings file's order.
+export const FLOWS = {
+  settings: { title: 'Settings', sweep: '1', course: null },
+  mgmt: { title: 'Course and lecture management', sweep: '2', course: 'hb-mgmt' },
+  dl: { title: 'Downloads', sweep: '3', course: 'hb-dl' },
+  pipeline: { title: 'Pipeline and course overview', sweep: '4 and 7', course: 'hb-pipeline' },
+  fail: { title: 'Failure surfacing', sweep: '5', course: 'hb-fail' },
+  edit: { title: 'Editor and PDF', sweep: '6', course: 'hb-edit' },
+  nav: { title: 'Search, materials, other links, navigation', sweep: '8', course: 'hb-nav' },
+};
+
 // Recognisable on sight in a log, a header or an error, and shaped like the real thing so the
 // providers' own prefix validation still runs.
 export const FAKE_KEYS = {
@@ -36,7 +59,21 @@ export const FAKE_WSTOKEN = 'huntbugswstoken0000000000000000';
 // routes auth by hostname, so a loopback URL would find no university at all.
 export const FAKE_COURSE_URL = 'https://lemida.biu.ac.il/course/view.php?id=101';
 
+// The fake course's failure rows, by URL switch → title: the site lists them, the self-check
+// proves each one is in the real listing. /deny/ and /die/ list as recordings and fail in the tool.
+export const FAILURE_ROWS = {
+  gone: 'הקלטה 9 — הוסרה',
+  deny: 'הקלטה 7 — גישה נחסמה',
+  die: 'הקלטה 8 — נקטעת באמצע',
+};
+
+// How long the fake tool takes over one download until `/control` says otherwise.
+export const DEFAULT_DOWNLOAD_MS = 3000;
+
 export const SCRATCH_MARKER = '.hunt-bugs-scratch';
+
+// The service name the self-check's escape probes log under in network.log.
+export const SELFCHECK_TAG = 'selfcheck';
 
 export const BANNER =
   'hunt-bugs harness: every provider, Google API, lecture site and download binary here is FAKE, ' +
@@ -48,14 +85,24 @@ export function harnessPaths(root) {
   return {
     root,
     data: at('data'),
+    // A second marked root, empty, for the data-folder switch.
+    dataEmpty: at('data-empty'),
     state: at('state'),
     logs: at('logs'),
     evidence: at('evidence'),
+    // One findings fragment per flow agent, `<tag>.md`, joined by `hb findings`.
+    fragments: at('fragments'),
     fixtures: at('fixtures'),
     bin: at('bin'),
     drive: at('drive'),
     env: at('.env'),
     tls: at('tls'),
+    // What the app looked like right after the last seed, and at the last `hb state`.
+    seedSnapshot: at('state-seed.json'),
+    snapshot: at('state.json'),
+    // Globs the database fails to write as Windows does a file held open (`hb lock`).
+    locks: at('locks.json'),
+    network: at('logs', 'network.log'),
   };
 }
 
@@ -103,7 +150,7 @@ export function nodeEnv(paths) {
     ...baseEnv(paths),
     NODE_OPTIONS: `${existing}--import "${pathToFileURL(shim)}"`,
     // toolPath() hands back a bare `curl`/`yt-dlp` in a dev run, so PATH is what decides which
-    // binary a download spawns — the fake ones, which never open a socket.
+    // binary a download spawns — the fake ones, which never fetch the site's files.
     PATH: `${paths.bin}${path.delimiter}${process.env.PATH}`,
     // The fake site's TLS listener is self-signed, and a redirected https:// request has to
     // survive the handshake. Harness-only; no production code ever sets this.
