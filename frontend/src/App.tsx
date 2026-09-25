@@ -1,6 +1,6 @@
 import { Trans } from '@lingui/react/macro'
 import { useLingui } from '@lingui/react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from '@/app/Layout'
 import InitGate from '@/app/InitGate'
 import { SettingsProvider } from '@/shared/contexts/SettingsContext'
@@ -59,6 +59,7 @@ export default function App() {
             <Route path={ROUTES.running} element={<RunnerView />} />
             <Route path={ROUTES.settings} element={<SettingsView />} />
             <Route path={ROUTES.editor} element={<EditSummaryView />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </InitGate>

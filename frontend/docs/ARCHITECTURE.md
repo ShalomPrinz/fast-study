@@ -55,6 +55,7 @@ fresher one.
 | `/settings`                | `SettingsView`    |
 | `/:course/:lecture`        | `MainView`        |
 | `/:course/:lecture/edit`   | `EditSummaryView` |
+| `*`                        | redirect to `/`   |
 
 `kind` is the query param `?kind=recitation`, propagated everywhere, never a segment. The static segments
 outrank `/:course/:lecture` in v7 ranking, and a pathless layout adds no segment. The overview is three
