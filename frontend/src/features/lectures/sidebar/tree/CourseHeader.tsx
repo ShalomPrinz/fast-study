@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
 import { renameCourse, setCourseArchived } from '@/services/database'
+import { toastFailure } from '@/shared/utils/failure'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useShiftHeld } from '@/features/lectures/hooks/useShiftHeld'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
@@ -39,7 +40,12 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     setRenaming(false)
     renameEdit.setValue('')
     if (!name || name === course.name) return
-    await renameCourse(course.name, name)
+    try {
+      await renameCourse(course.name, name)
+    } catch (e) {
+      toastFailure(e)
+      return
+    }
     if (selected?.course === course.name) {
       onSelect(name, selected.lecture, selected.kind)
     }

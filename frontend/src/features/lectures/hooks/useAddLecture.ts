@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Course, Kind, InlineEdit } from '@/types'
 import { createLecture } from '@/services/database'
+import { toastFailure } from '@/shared/utils/failure'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { suggestName } from '@/features/lectures/utils/nextName'
@@ -36,7 +37,12 @@ export function useAddLecture(course: Course): AddLecture {
     setTarget(null)
     edit.setValue('')
     if (!name) return
-    await createLecture(course.name, name, t.kind)
+    try {
+      await createLecture(course.name, name, t.kind)
+    } catch (e) {
+      toastFailure(e)
+      return
+    }
     refreshCourses()
   }
 

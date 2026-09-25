@@ -95,9 +95,13 @@ const MESSAGES: Record<string, MessageDescriptor> = {
 
   // database
   file_locked: msg({ message: 'The file is open in another program. Close it and try again.' }),
+  folder_in_use: msg({
+    message: 'A file inside "{name}" is open in another program. Close it and try again.',
+  }),
   name_has_no_legal_characters: msg({
     message: '"{name}" has no characters that can be used in a folder name.',
   }),
+  name_taken: msg({ message: 'A course or lecture named "{name}" already exists.' }),
   setting_may_not_contain_quotes: msg({
     message: 'That setting may not contain quotes or line breaks.',
   }),

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { createCourse } from '@/services/database'
+import { toastFailure } from '@/shared/utils/failure'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
@@ -17,7 +18,12 @@ export default function NewCourseRow() {
     setAddingCourse(false)
     addCourseEdit.setValue('')
     if (!name) return
-    await createCourse(name)
+    try {
+      await createCourse(name)
+    } catch (e) {
+      toastFailure(e)
+      return
+    }
     await refreshCourses()
   }
 

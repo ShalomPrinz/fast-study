@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { createCourse } from '@/services/database'
+import { toastFailure } from '@/shared/utils/failure'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
@@ -29,6 +30,8 @@ export default function AddCourseRow() {
       await createCourse(trimmed, url.trim())
       await refreshCourses()
       reset()
+    } catch (e) {
+      toastFailure(e)
     } finally {
       setSaving(false)
     }

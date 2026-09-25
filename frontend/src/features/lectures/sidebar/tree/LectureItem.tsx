@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { Lecture } from '@/types'
 import { renameLecture } from '@/services/database'
+import { toastFailure } from '@/shared/utils/failure'
 import { toast } from '@/services/toaster'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
@@ -49,7 +50,12 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     setRenaming(false)
     renameEdit.setValue('')
     if (!name || name === lecture.name) return
-    await renameLecture(course.name, lecture.name, name, kind)
+    try {
+      await renameLecture(course.name, lecture.name, name, kind)
+    } catch (e) {
+      toastFailure(e)
+      return
+    }
     if (isSelected) onSelect(course.name, name, kind)
     refreshCourses()
   }
