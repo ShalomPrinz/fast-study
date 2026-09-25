@@ -155,7 +155,7 @@ in `stack.json`), and logs every event to `logs/browser-<tag>.log`.
 
 ```bash
 B=$(node .claude/harness/hb.mjs --harness DIR url browser-main)
-curl -s $B/goto -d '{"url":"/hb-mgmt"}'                   # a path on the app, or a full URL
+curl -s $B/goto -d '{"url":"/course/hb-mgmt/overview"}'   # a path on the app (a lecture is /<course>/<lecture>), or a full URL
 curl -s $B/click -d '{"selector":"text=New course"}'      # any Playwright selector
 curl -s $B/fill -d '{"selector":"input[placeholder=\"Course name…\"]","value":"hb-mgmt-x"}'
 curl -s $B/text                                           # body innerText; or {"selector":…}

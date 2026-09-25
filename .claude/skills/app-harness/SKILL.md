@@ -32,7 +32,7 @@ export HARNESS_DIR=<scratchpad>/harness
 hb() { node .claude/harness/hb.mjs "$@"; }
 hb url                                   # every URL of this stack; `hb url <name>` prints one
 B=$(hb url browser-main)
-curl -s $B/goto -d '{"url":"/hb-edit"}'
+curl -s $B/goto -d '{"url":"/course/hb-edit/overview"}'
 curl -s $B/click -d '{"selector":"text=…"}'
 curl -s $B/text
 curl -s $B/screenshot -d '{"name":"after-save"}' # → $HARNESS_DIR/evidence/main-after-save.png
