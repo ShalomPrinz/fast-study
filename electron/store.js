@@ -10,6 +10,8 @@ const STRING_FIELDS = {
   gdrive_root_folder: 'GDRIVE_ROOT_FOLDER',
   auto_run: 'AUTO_RUN',
 };
+// Mirrors AUTO_RUN_MODES in backend/services/settings.py, which reads an unknown value as 'full'.
+const AUTO_RUN_MODES = ['off', 'audio', 'full'];
 const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED' };
 // Write-only: these are held as safeStorage ciphertext and reported to the renderer as set/unset.
 const SECRET_FIELDS = { gemini_api_key: 'GEMINI_API_KEY', groq_api_key: 'GROQ_API_KEY' };
@@ -99,7 +101,15 @@ function write(patch) {
       updates[field] = value;
     } else {
       if (typeof value !== 'string') throw new Error(`${key} must be a string`);
-      updates[field] = field in SECRET_FIELDS ? encrypt(value) : value.trim();
+      if (field === 'auto_run') {
+        const mode = value.trim().toLowerCase();
+        if (!AUTO_RUN_MODES.includes(mode)) {
+          throw new Error(`${key} must be one of ${AUTO_RUN_MODES.join(', ')}`);
+        }
+        updates[field] = mode;
+      } else {
+        updates[field] = field in SECRET_FIELDS ? encrypt(value) : value.trim();
+      }
     }
   }
   save({ ...load(), ...updates });

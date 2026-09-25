@@ -143,6 +143,27 @@ def test_a_non_int_is_rejected_for_an_int_field(env_file):
     assert "NIGHTLY_HOUR" not in env_file.read_text(encoding="utf-8")
 
 
+@pytest.mark.parametrize("mode", ["off", "audio", "full"])
+def test_each_auto_run_mode_is_accepted(env_file, mode):
+    assert settings.write_settings({"auto_run": mode})["auto_run"] == mode
+
+
+def test_auto_run_is_stored_trimmed_and_lowercased(env_file):
+    assert settings.write_settings({"auto_run": "  Audio "})["auto_run"] == "audio"
+
+    assert "AUTO_RUN='audio'" in env_file.read_text(encoding="utf-8")
+
+
+# The backend runs an unknown mode as `full`, so a typo must fail loudly instead of being stored.
+def test_an_unknown_auto_run_mode_is_rejected(env_file):
+    assert _rejected({"auto_run": " Nightly "}) == (
+        "setting_invalid_choice",
+        {"field": "auto_run", "value": "nightly"},
+    )
+
+    assert "AUTO_RUN" not in env_file.read_text(encoding="utf-8")
+
+
 # The store validates an integer, not an hour — clamping to 0..23 is the owning service's job.
 def test_an_out_of_range_hour_is_stored_unchanged(env_file):
     assert settings.write_settings({"nightly_hour": 99})["nightly_hour"] == 99

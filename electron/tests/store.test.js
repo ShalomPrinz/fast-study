@@ -12,7 +12,7 @@ const full = {
   dataRoot: '/data/root',
   geminiModel: 'gemini-2.5-pro',
   gdriveRootFolder: 'FastStudy',
-  autoRun: 'nightly',
+  autoRun: 'audio',
   driveEnabled: true,
   geminiApiKey: 'gemini-secret',
   groqApiKey: 'groq-secret',
@@ -35,6 +35,22 @@ test('a patch is all-or-nothing even when the valid field comes first', () => {
   assert.equal(store.read().dataRoot, null);
 });
 
+test('an unknown autoRun mode is refused and nothing is written', () => {
+  store.write({ autoRun: 'off' });
+  const before = fs.readFileSync(store.file());
+
+  assert.throws(
+    () => store.write({ dataRoot: '/data/root', autoRun: 'nightly' }),
+    /autoRun must be one of off, audio, full/,
+  );
+  assert.deepEqual(fs.readFileSync(store.file()), before);
+});
+
+test('autoRun is trimmed and lowercased before it is stored', () => {
+  assert.equal(store.write({ autoRun: '  Audio ' }).autoRun, 'audio');
+  assert.equal(store.serviceEnv().AUTO_RUN, 'audio');
+});
+
 test('the string "false" cannot store true', () => {
   store.write({ driveEnabled: true });
   assert.throws(() => store.write({ driveEnabled: 'false' }), /must be a boolean/);
@@ -43,11 +59,11 @@ test('the string "false" cannot store true', () => {
 
 test('null and undefined leave a stored field alone', () => {
   store.write({ dataRoot: '/data/root', geminiModel: 'gemini-2.5-pro' });
-  const written = store.write({ dataRoot: null, geminiModel: undefined, autoRun: 'nightly' });
+  const written = store.write({ dataRoot: null, geminiModel: undefined, autoRun: 'audio' });
 
   assert.equal(written.dataRoot, '/data/root');
   assert.equal(written.geminiModel, 'gemini-2.5-pro');
-  assert.equal(written.autoRun, 'nightly');
+  assert.equal(written.autoRun, 'audio');
 });
 
 test('echoing a read back blanks nothing', () => {
@@ -99,7 +115,7 @@ test('serviceEnv maps every field onto its service env var', () => {
     DATA_ROOT: '/data/root',
     GEMINI_MODEL: 'gemini-2.5-pro',
     GDRIVE_ROOT_FOLDER: 'FastStudy',
-    AUTO_RUN: 'nightly',
+    AUTO_RUN: 'audio',
     DRIVE_ENABLED: 'true',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',

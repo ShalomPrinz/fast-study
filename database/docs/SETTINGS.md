@@ -25,8 +25,10 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 
 Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` — which is all the store
 knows about a value. It validates the _type_ and nothing else: `nightly_hour` is stored as any
-integer, and clamping it to a real hour is the backend's job, exactly as `AUTO_RUN`'s allowed modes
-are. Meaning belongs to the owning service; the store stays generic. An int that is unparsable in
+integer, and clamping it to a real hour is the backend's job. Meaning belongs to the owning service;
+the store stays generic. The one exception is `auto_run`, stored lowercased and refused
+(`setting_invalid_choice`) unless `off`/`audio`/`full`, because the backend silently runs an unknown
+mode as `full`; the list is a deliberate copy of the backend's `AUTO_RUN_MODES`. An int that is unparsable in
 `.env` reads back as `null`, the same as an absent one, so a hand-edited typo falls back to the
 client's default instead of erroring. `PUT` rejects a boolean for an int field, which Python would
 otherwise store as `1`.

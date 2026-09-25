@@ -42,6 +42,9 @@ _UNQUOTED_COMMENT = re.compile(r"[^\S\r\n]+#")
 
 _TRUTHY = {"1", "true", "yes", "on"}
 
+# Duplicated on purpose: the backend's copy is AUTO_RUN_MODES in backend/services/settings.py.
+AUTO_RUN_MODES = ("off", "audio", "full")
+
 
 def _text(value) -> str | None:
     """Normalize a stored value to a non-empty string, or None when the key is absent or blank."""
@@ -103,6 +106,21 @@ def _incoming(field: str, value) -> str:
             f"{field} may not contain quotes or line breaks",
             "setting_may_not_contain_quotes",
             field=field,
+        )
+    return text
+
+
+def _incoming_auto_run(value) -> str:
+    """Validate an incoming auto-run mode and return it normalized to lowercase."""
+
+    # The backend silently runs an unknown mode as `full`, so a typo must be refused here.
+    text = _incoming("auto_run", value).lower()
+    if text not in AUTO_RUN_MODES:
+        raise CodedValueError(
+            f"auto_run must be one of {', '.join(AUTO_RUN_MODES)}: {text}",
+            "setting_invalid_choice",
+            field="auto_run",
+            value=text,
         )
     return text
 
@@ -216,6 +234,8 @@ def write_settings(patch: dict) -> dict:
             continue
         if field == "data_root":
             updates["DATA_ROOT"] = prepare_data_root(value)
+        elif field == "auto_run":
+            updates["AUTO_RUN"] = _incoming_auto_run(value)
         elif field in STRING_FIELDS:
             updates[STRING_FIELDS[field]] = _incoming(field, value)
         elif field in SECRET_FIELDS:

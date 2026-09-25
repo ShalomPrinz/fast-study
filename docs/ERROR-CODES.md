@@ -194,6 +194,7 @@ for the code whichever view chooses to show it.
 | `settings.py`         | `setting_must_be_integer`       | `field`           | dev       |
 | `settings.py`         | `setting_may_not_contain_quotes`| `field`           | user      |
 | `settings.py`         | `unknown_setting`               | `field`           | dev       |
+| `settings.py`         | `setting_invalid_choice`        | `field`, `value`  | dev       |
 | `settings.py`         | `data_root_empty`               | —                 | user      |
 | `settings.py`         | `data_root_not_absolute`        | `path`            | user      |
 | `settings.py`         | `data_root_not_a_directory`     | `path`            | user      |
