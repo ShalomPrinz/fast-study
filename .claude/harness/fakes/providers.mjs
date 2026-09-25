@@ -173,11 +173,14 @@ async function handle(req, res) {
   }
   if (route === '/health') return json(res, 200, { status: 'ok', mode });
 
-  // A key containing `bad` is rejected the way the key probe reads a rejection, so the settings
-  // screen's rejected-key path is drivable by typing one.
+  // A key containing `bad` is rejected the way each real provider rejects one — Groq 401, Gemini
+  // 400 API_KEY_INVALID — so the settings screen's rejected-key path is drivable by typing one.
   const key = `${req.headers.authorization ?? ''} ${req.headers['x-goog-api-key'] ?? ''} ${url.searchParams.get('key') ?? ''}`;
-  if (key.includes('bad'))
+  if (key.includes('bad')) {
+    await readBody(req);
+    if (route.startsWith('/gemini/')) return geminiKeyInvalid(res);
     return json(res, 401, { error: { code: 401, message: 'fake: invalid API key' } });
+  }
 
   // Groq: the key probe lists models, transcription takes the multipart chunk ffmpeg produced.
   if (route.endsWith('/openai/v1/models')) {

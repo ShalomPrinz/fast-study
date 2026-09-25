@@ -51,9 +51,27 @@ def base_url(provider: str) -> str:
     return PROVIDERS[provider]["base_url"]
 
 
+def key_rejected(status, body) -> bool:
+    """True when a provider answer means the key itself is bad: a 401/403, or Gemini's 400 whose
+    body carries an ErrorInfo detail with reason API_KEY_INVALID. Any other 400 is not."""
+
+    if status in (401, 403):
+        return True
+    if status != 400 or not isinstance(body, dict):
+        return False
+    inner = body.get("error", body)
+    details = inner.get("details") if isinstance(inner, dict) else None
+    return any(
+        isinstance(entry, dict)
+        and str(entry.get("@type", "")).endswith("ErrorInfo")
+        and entry.get("reason") == "API_KEY_INVALID"
+        for entry in (details if isinstance(details, list) else [])
+    )
+
+
 def probe_key(provider: str, key: str) -> str:
     """Authenticate one key against its provider's list-models endpoint → "valid" | "rejected" |
-    "unverified"; only an explicit 401/403 rejects, so an offline check never condemns a key."""
+    "unverified"; only an explicit key rejection counts, so an offline check never condemns a key."""
 
     row = PROVIDERS[provider]
     try:
@@ -69,7 +87,11 @@ def probe_key(provider: str, key: str) -> str:
 
     if 200 <= response.status_code < 300:
         return "valid"
-    if response.status_code in (401, 403):
+    try:
+        body = response.json() if response.status_code == 400 else None
+    except ValueError:
+        body = None
+    if key_rejected(response.status_code, body):
         return "rejected"
     log.info("%s key probe inconclusive: HTTP %s", provider, response.status_code)
     return "unverified"

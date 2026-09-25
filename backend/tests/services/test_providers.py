@@ -70,3 +70,42 @@ class TestProbeKey:
             _probe(status=500)
             _probe(error=requests.ConnectionError("failed for url https://x"))
         assert "secret-key" not in caplog.text
+
+
+def _gemini_400(reason: str) -> dict:
+    """A trimmed copy of the body real Gemini answers a 400 with."""
+
+    return {
+        "error": {
+            "code": 400,
+            "status": "INVALID_ARGUMENT",
+            "details": [
+                {"@type": "type.googleapis.com/google.rpc.ErrorInfo", "reason": reason}
+            ],
+        }
+    }
+
+
+def _probe_400(json_result=None, json_error=None):
+    """probe_key against a faked 400 whose .json() returns or raises the given value."""
+
+    response = MagicMock(status_code=400)
+    response.json.side_effect = json_error
+    response.json.return_value = json_result
+    with patch.object(providers.requests, "get", MagicMock(return_value=response)):
+        return providers.probe_key("gemini", "secret-key")
+
+
+class TestProbeKey400:
+    def test_gemini_api_key_invalid_is_rejected(self):
+        assert _probe_400(_gemini_400("API_KEY_INVALID")) == "rejected"
+
+    @pytest.mark.parametrize(
+        "body", [_gemini_400("SOMETHING_ELSE"), {"error": {"code": 400}}, [], "x"]
+    )
+    def test_any_other_400_is_unverified(self, body):
+        assert _probe_400(body) == "unverified"
+
+    def test_an_unparseable_400_body_is_unverified(self):
+        error = requests.JSONDecodeError("bad", "doc", 0)
+        assert _probe_400(json_error=error) == "unverified"
