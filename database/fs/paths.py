@@ -78,10 +78,22 @@ class FileLocked(CodedError):
     code = "file_locked"
 
 
+class FolderInUse(CodedError):
+    """Raised when a folder rename is refused because another program holds a file inside it open."""
+
+    code = "folder_in_use"
+
+
 class CourseNotFound(CodedError, FileNotFoundError):
     """Raised when a course directory named by a request does not exist."""
 
     code = "course_not_found"
+
+
+class NameTaken(CodedError):
+    """Raised when a create or rename targets a course/lecture name that already exists."""
+
+    code = "name_taken"
 
 
 # ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION, as os.unlink/os.replace report them — see docs/API.md.

@@ -185,9 +185,11 @@ for the code whichever view chooses to show it.
 | origin                | code                            | params            | reach     |
 | --------------------- | ------------------------------- | ----------------- | --------- |
 | `fs/paths.py`         | `file_locked`                   | `file`            | user      |
+| `fs/crud.py`          | `folder_in_use`                 | `name`            | user      |
 | `fs/paths.py`         | `data_root_not_configured`      | —                 | user      |
 | `fs/paths.py`         | `unsafe_path_segment`           | `segment`         | dev       |
 | `fs/paths.py`         | `name_has_no_legal_characters`  | `name`            | user      |
+| `fs/crud.py`          | `name_taken`                    | `name`            | user      |
 | `fs/overview.py`, `fs/summaries.py` | `course_not_found`  | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
 | `settings.py`         | `setting_must_be_boolean`       | `field`           | dev       |

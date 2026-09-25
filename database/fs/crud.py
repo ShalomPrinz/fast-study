@@ -1,3 +1,7 @@
+import os
+import sys
+from pathlib import Path
+
 from .materials import material_names
 from .paths import (
     ARCHIVED_MARKER,
@@ -6,6 +10,8 @@ from .paths import (
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
+    FolderInUse,
+    NameTaken,
     check_safe_segment,
     course_dir,
     lecture_dir,
@@ -13,10 +19,37 @@ from .paths import (
 )
 
 
-def create_course(name: str, source_url: str | None = None) -> None:
-    """Create a new course directory under DATA_ROOT (idempotent), optionally seeding its source_url."""
+def _mkdir_new(d: Path, name: str) -> None:
+    """Create a directory, refusing one that already exists; the mkdir itself is the atomic check."""
 
-    course_dir(name).mkdir(parents=True, exist_ok=True)
+    try:
+        d.mkdir(parents=True)
+    except FileExistsError:
+        raise NameTaken(f"'{name}' already exists", name=name) from None
+
+
+def _rename_dir(old: Path, new: Path, old_name: str, new_name: str) -> None:
+    """Rename a directory, refusing an existing target unless it is the same dir under another case."""
+
+    # Path.rename silently replaces an empty target on POSIX; samefile lets a case-only rename through on NTFS.
+    if new.exists() and not (old.exists() and os.path.samefile(old, new)):
+        raise NameTaken(f"'{new_name}' already exists", name=new_name)
+    try:
+        old.rename(new)
+    except PermissionError as e:
+        # Windows answers ERROR_ACCESS_DENIED (5) for an open file at any depth; POSIX has no such lock.
+        if sys.platform == "win32" and getattr(e, "winerror", None) == 5:
+            raise FolderInUse(
+                f"{old_name} has a file open in another program. Close it and try again.",
+                name=old_name,
+            ) from e
+        raise
+
+
+def create_course(name: str, source_url: str | None = None) -> None:
+    """Create a new course directory under DATA_ROOT, optionally seeding its source_url."""
+
+    _mkdir_new(course_dir(name), name)
     if source_url:
         set_course_source_url(name, source_url)
 
@@ -45,7 +78,7 @@ def set_course_archived(name: str, archived: bool) -> None:
 def rename_course(old: str, new: str) -> None:
     """Rename a course directory in place."""
 
-    course_dir(old).rename(course_dir(new))
+    _rename_dir(course_dir(old), course_dir(new), old, new)
 
 
 def create_lecture(course: str, name: str, kind: str) -> None:
@@ -53,13 +86,15 @@ def create_lecture(course: str, name: str, kind: str) -> None:
 
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
-    lecture_dir(course, name, kind).mkdir(parents=True, exist_ok=True)
+    _mkdir_new(lecture_dir(course, name, kind), name)
 
 
 def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
     """Rename a lecture or recitation directory in place."""
 
-    lecture_dir(course, old, kind).rename(lecture_dir(course, new, kind))
+    _rename_dir(
+        lecture_dir(course, old, kind), lecture_dir(course, new, kind), old, new
+    )
 
 
 def _check_none_locked(paths) -> None:

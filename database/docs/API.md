@@ -27,6 +27,8 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   semantics.
 - `400` `unsafe_path_segment` `{segment}` covers a `{name}` that could escape its directory, on every
   file route; see the trust model.
+- `409` `name_taken` `{name}` refuses a create or rename onto a course/lecture that already exists;
+  a case-only rename (the same dir on NTFS) is not a collision.
 - A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.
   `HEAD` answers a bodyless `404` instead: absence is its normal answer, not a failure.
 
@@ -37,11 +39,11 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /health`                                           | launcher liveness; `200 {status: ok}` even with no data root configured   |
 | `GET    /tree`                                             | full course tree; `video.mp4` entries carry `duration` (seconds; omitted when unknown) |
 | `POST   /courses`                                          | create course (`{name}`, optional `{source_url}`)                         |
-| `PATCH  /courses/{course}`                                 | rename course (`{name}`)                                                  |
+| `PATCH  /courses/{course}`                                 | rename course (`{name}`); `423` if a file under it is open elsewhere      |
 | `PATCH  /courses/{course}/source_url`                      | set/clear source_url; empty or null clears                                |
 | `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`)                                          |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`)                                      |
-| `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`)                                      |
+| `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `423` if a file in it is open elsewhere |
 | `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf; returns `{name}` with the allocated filename          |
@@ -98,8 +100,13 @@ differently. `os.unlink`/`os.replace` go through Win32 and carry `winerror`
 CRT, which sets `errno=EACCES` and leaves `winerror` unset — indistinguishable from a real denial
 until the alternatives are excluded, so on Windows an `EACCES` naming an existing, writable regular
 file counts as a lock too. Everything else stays a `400`: POSIX has no mandatory locking, and a
-read-only file or a directory is a genuine permissions problem that mislabelling would send the
-user chasing the wrong thing.
+read-only file, or a directory outside the folder-rename case below, is a genuine permissions
+problem that mislabelling would send the user chasing the wrong thing.
+
+Renaming a course or lecture folder is the one exception: on Windows it fails with `winerror` 5
+(`ERROR_ACCESS_DENIED`) whenever any file beneath it, at any depth, is open — even one shared for
+read/write/delete, so no pre-probe of the files catches it. The rename routes answer `423`
+`folder_in_use` `{name}` for exactly that case and leave every other `PermissionError` a `400`.
 
 `DELETE /…/files/summary.pdf` additionally drops `.pdf_warning`. `crud.delete_file` is the single
 chokepoint for that rule — a warning describes THIS pdf and cannot outlive it — so backend

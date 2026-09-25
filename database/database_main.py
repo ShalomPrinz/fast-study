@@ -20,6 +20,8 @@ from fs.paths import (
     CodedError,
     DataRootNotConfigured,
     FileLocked,
+    FolderInUse,
+    NameTaken,
     lecture_dir,
 )
 from logging_setup import setup_logging
@@ -95,8 +97,10 @@ def _failure(exc: Exception, status: int, code: str, params: dict | None = None)
 
     if isinstance(exc, DataRootNotConfigured):
         return _error(str(exc), 409, exc.code, exc.params)
-    if isinstance(exc, FileLocked):
+    if isinstance(exc, (FileLocked, FolderInUse)):
         return _error(str(exc), 423, exc.code, exc.params)
+    if isinstance(exc, NameTaken):
+        return _error(str(exc), 409, exc.code, exc.params)
     if isinstance(exc, CodedError):
         return _error(str(exc), status, exc.code, exc.params)
     # A malformed or incomplete JSON body is the caller's bug whatever the route meant to do.
