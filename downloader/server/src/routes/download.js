@@ -36,7 +36,7 @@ function storedNames(course, lecture) {
 }
 
 // The 400 for a pair that can't both become one on-disk segment, naming the one that failed.
-function namesError(course, lecture) {
+function namesError(course, _lecture) {
   return invalidRequest(
     storedName(course) ? 'lecture' : 'course',
     'course and lecture with a legal character are required',

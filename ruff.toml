@@ -1,5 +1,18 @@
-# Python lint for backend/, database/ and lib/. Pyflakes-level only (undefined names,
-# unused imports, syntax errors) — style is deliberately not enforced, because
-# .claude/lint.sh runs this on every turn and it has to stay instant.
+# Python lint for backend/, database/ and lib/. Bug-catching only (undefined names, unused
+# symbols and arguments, bugbear) — style is deliberately not enforced, because
+# .claude/hooks/lint.sh runs this on every turn and it has to stay instant.
 [lint]
-select = ["E9", "F"]
+select = ["E9", "F", "ARG", "B", "RUF100"]
+
+[lint.per-file-ignores]
+# pytest fixtures requested only for their side effects, and monkeypatch lambdas matching a real signature.
+"**/tests/**" = ["ARG001", "ARG002", "ARG005"]
+# Fakes that mirror Google API signatures; callers pass those arguments by keyword, so they can't take a `_`.
+".claude/harness/shim/**" = ["ARG"]
+
+[lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[lint.flake8-bugbear]
+# FastAPI's dependency markers are meant to be called in argument defaults.
+extend-immutable-calls = ["fastapi.Query", "fastapi.Depends", "fastapi.Body", "fastapi.Header"]

@@ -41,20 +41,20 @@ export class VideoExtractor {
   /**
    * Does this strategy handle this activity? Keys off the Moodle module type (and, for a
    * `url` module, its external target). Sync + cheap, no network.
-   * @param {Activity} activity
+   * @param {Activity} _activity
    * @returns {boolean}
    */
-  canHandle(activity) {
+  canHandle(_activity) {
     throw new Error('not implemented');
   }
 
   /**
    * Turn one handled activity into its listed recording(s). Cheap — no navigation
    * (a YouTube playlist is listed as ONE unexpanded entry; it expands at download).
-   * @param {Activity} activity
+   * @param {Activity} _activity
    * @returns {Recording[]}
    */
-  toRecordings(activity) {
+  toRecordings(_activity) {
     throw new Error('not implemented');
   }
 
@@ -77,11 +77,11 @@ export class VideoExtractor {
   /**
    * Resolve one Recording to a downloadable video (per strategy). Not used by
    * youtube-playlist, which expands via listEntries + /list/expand instead.
-   * @param {import('playwright').Page} page
-   * @param {Recording} rec
+   * @param {import('playwright').Page} _page
+   * @param {Recording} _rec
    * @returns {Promise<VideoCapture|VideoCapture[]>}
    */
-  async _captureVideo(page, rec) {
+  async _captureVideo(_page, _rec) {
     throw new Error('not implemented');
   }
 

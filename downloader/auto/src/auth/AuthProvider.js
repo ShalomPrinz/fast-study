@@ -4,10 +4,10 @@ export class AuthProvider {
   /**
    * Start the (headed) login and return once it's up, so the user can finish MFA by
    * hand. Paired with complete().
-   * @param {{ onCancel?: () => void }} [opts]  onCancel fires if the login is abandoned.
+   * @param {{ onCancel?: () => void }} [_opts]  onCancel fires if the login is abandoned.
    * @returns {Promise<void>}
    */
-  async connect(opts) {
+  async connect(_opts) {
     throw new Error('not implemented');
   }
 

@@ -31,7 +31,7 @@ def fit(xs, ys):
     if n < 2:
         return 0.0, (sum(ys) / n if n else 0.0)
     sx, sy = sum(xs), sum(ys)
-    sxy = sum(x * y for x, y in zip(xs, ys))
+    sxy = sum(x * y for x, y in zip(xs, ys, strict=True))
     sxx = sum(x * x for x in xs)
     denom = n * sxx - sx * sx
     if denom == 0:
@@ -61,7 +61,7 @@ def plot_op(ax, op, rows):
 
     slope, intercept = fit(xs_b, ys)
     preds = [slope * b + intercept for b in xs_b]
-    resids = [y - p for y, p in zip(ys, preds)]
+    resids = [y - p for y, p in zip(ys, preds, strict=True)]
     n = len(resids)
     mean_r = sum(resids) / n if n else 0.0
     var_r = sum((r - mean_r) ** 2 for r in resids) / n if n else 0.0
@@ -69,7 +69,7 @@ def plot_op(ax, op, rows):
     threshold = OUTLIER_K * std_r if std_r > 0 else float("inf")
 
     normal_x, normal_y, out_x, out_y, out_lbl = [], [], [], [], []
-    for i, (x_mb, y, r) in enumerate(zip(xs_mb, ys, resids)):
+    for i, (x_mb, y, r) in enumerate(zip(xs_mb, ys, resids, strict=True)):
         if abs(r) > threshold:
             out_x.append(x_mb)
             out_y.append(y)
@@ -87,7 +87,7 @@ def plot_op(ax, op, rows):
         marker="x",
         label=f"outliers (|resid|>{OUTLIER_K}σ)",
     )
-    for x, y, lbl in zip(out_x, out_y, out_lbl):
+    for x, y, lbl in zip(out_x, out_y, out_lbl, strict=True):
         ax.annotate(
             lbl,
             (x, y),
@@ -124,7 +124,7 @@ def main():
     rows_n = (len(ops) + cols - 1) // cols
     fig, axes = plt.subplots(rows_n, cols, figsize=(12, 4 * rows_n))
     axes = axes.flatten() if rows_n * cols > 1 else [axes]
-    for ax, op in zip(axes, ops):
+    for ax, op in zip(axes, ops, strict=False):
         plot_op(ax, op, by_op[op])
     for ax in axes[len(ops) :]:
         ax.set_visible(False)

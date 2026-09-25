@@ -138,7 +138,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 
 Every service is linted, and new code must land lint-clean — `npm run lint` from the repo root runs both linters over everything.
 
-Both stay at pyflakes/recommended level — undefined names and unused symbols, no style enforcement — so they run in about a second. Reach for an inline `eslint-disable` / `noqa` only with a reason on the same line; if a rule is wrong repo-wide, change the config instead.
+Both catch bugs, never style — undefined names, unused symbols and arguments (a load-bearing unused name takes a `_` prefix), plus ruff's bugbear — so they run in about a second. Reach for an inline `eslint-disable` / `noqa` only with a reason on the same line; if a rule is wrong repo-wide, change the config instead.
 
 Style is separate and automatic: `ruff format` + import sort for Python, prettier for JS/TS/CSS (`.prettierrc` keeps `frontend/` semicolon-free and `downloader/` semicolon'd, matching what each already was). Never hand-format — `.claude/hooks/format.sh` rewrites changed files at the end of every turn.
 

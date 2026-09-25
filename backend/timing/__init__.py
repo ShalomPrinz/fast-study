@@ -138,7 +138,7 @@ def get_stats(operation: str, file_size_bytes: int) -> dict:
     if n >= 2:
         sum_x = sum(xs)
         sum_y = sum(ys)
-        sum_xy = sum(x * y for x, y in zip(xs, ys))
+        sum_xy = sum(x * y for x, y in zip(xs, ys, strict=True))
         sum_xx = sum(x * x for x in xs)
         denom = n * sum_xx - sum_x**2
         if denom != 0:

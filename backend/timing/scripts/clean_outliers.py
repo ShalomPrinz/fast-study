@@ -26,7 +26,7 @@ def fit(xs, ys):
     if n < 2:
         return 0.0, (sum(ys) / n if n else 0.0)
     sx, sy = sum(xs), sum(ys)
-    sxy = sum(x * y for x, y in zip(xs, ys))
+    sxy = sum(x * y for x, y in zip(xs, ys, strict=True))
     sxx = sum(x * x for x in xs)
     denom = n * sxx - sx * sx
     if denom == 0:
@@ -43,13 +43,15 @@ def find_outliers(rows, k):
     xs = [r[1] for r in rows]
     ys = [r[2] for r in rows]
     slope, intercept = fit(xs, ys)
-    resids = [y - (slope * x + intercept) for x, y in zip(xs, ys)]
+    resids = [y - (slope * x + intercept) for x, y in zip(xs, ys, strict=True)]
     mean_r = sum(resids) / len(resids)
     std_r = (sum((r - mean_r) ** 2 for r in resids) / len(resids)) ** 0.5
     if std_r == 0:
         return [], 0.0
     threshold = k * std_r
-    return [r[0] for r, res in zip(rows, resids) if abs(res) > threshold], std_r
+    return [
+        r[0] for r, res in zip(rows, resids, strict=True) if abs(res) > threshold
+    ], std_r
 
 
 def main():

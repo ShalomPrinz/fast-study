@@ -572,7 +572,9 @@ async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
             for name in names
         ]
     )
-    return {name: {"exists": exists} for name, exists in zip(names, results)}
+    return {
+        name: {"exists": exists} for name, exists in zip(names, results, strict=True)
+    }
 
 
 # ---- Async step/pipeline runners ----

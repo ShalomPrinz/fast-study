@@ -35,7 +35,7 @@ for _name, _state in tool_status.items():
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Run the nightly catch-up cron for the lifetime of the app; NIGHTLY_RUN and
     NIGHTLY_HOUR decide whether it is scheduled and when."""
 

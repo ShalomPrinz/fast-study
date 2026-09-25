@@ -16,8 +16,8 @@ _REPO = _DELIVERY.parent
 # way services.spec puts it on `pathex`.
 sys.path.insert(0, str(_REPO / "backend"))
 
-from pipeline.to_pdf import BUILD_STEM, build_tex  # noqa: E402
-from tools import tool_path  # noqa: E402
+from pipeline.to_pdf import BUILD_STEM, build_tex
+from tools import tool_path
 
 SINK = _DELIVERY / "kitchen-sink.md"
 SUPPLEMENT = _DELIVERY / "cache-supplement.txt"

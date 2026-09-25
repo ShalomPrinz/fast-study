@@ -147,7 +147,7 @@ def serve(app, default_port: int) -> None:
             file=sys.stderr,
             flush=True,
         )
-        raise SystemExit(1)
+        raise SystemExit(1) from None
     # Listen before announcing, so a launcher connecting the instant it reads the line is not refused.
     sock.listen()
     print(f"FASTSTUDY_PORT={sock.getsockname()[1]}", flush=True)

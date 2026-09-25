@@ -7,14 +7,23 @@ import tseslint from 'typescript-eslint';
 // lint without four separate eslint installs. Rules stay at the recommended
 // baseline (no-undef, no-unused-vars) because .claude/lint.sh runs this on every
 // turn; type-aware rules are deliberately off, they need a full tsc pass.
-// Three baseline rules are relaxed repo-wide: empty `catch {}` is the codebase's
-// deliberate fire-and-forget idiom, unused *params* are load-bearing signatures
-// (express's 4-arg error handler, overridable extractor hooks), and requiring an
-// error `cause` on every rethrow is churn this code doesn't need.
+// Empty `catch {}` is the codebase's deliberate fire-and-forget idiom, and requiring an
+// error `cause` on every rethrow is churn this code doesn't need. A load-bearing unused
+// name (express's 4-arg error handler, an overridable extractor hook) takes a `_` prefix.
+const unusedVars = {
+  args: 'after-used',
+  argsIgnorePattern: '^_',
+  varsIgnorePattern: '^_',
+  caughtErrorsIgnorePattern: '^_',
+  destructuredArrayIgnorePattern: '^_',
+};
+
 const baseline = {
   ...js.configs.recommended.rules,
   'no-empty': ['error', { allowEmptyCatch: true }],
-  'no-unused-vars': ['error', { args: 'none' }],
+  'no-unused-vars': ['error', unusedVars],
+  'no-unused-private-class-members': 'error',
+  'no-useless-assignment': 'error',
   'preserve-caught-error': 'off',
 };
 
@@ -109,6 +118,9 @@ export default [
     },
     rules: {
       'no-undef': 'off',
+      '@typescript-eslint/no-unused-vars': ['error', unusedVars],
+      'no-unused-private-class-members': 'error',
+      'no-useless-assignment': 'error',
     },
   },
 ];

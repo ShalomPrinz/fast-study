@@ -57,7 +57,7 @@ app.post('/close', handleClose);
 // Centralized error backstop: Express 5 forwards async-handler rejections here.
 // A rethrown UnsupportedError maps to 422; anything else to 500, carrying its own code when it
 // has one and `internal_error` when it does not.
-app.use((err, req, res, next) => {
+app.use((err, req, res, _next) => {
   console.error(err?.stack ?? String(err));
   if (err instanceof UnsupportedError) return sendUnsupported(res, err);
   res.status(500).json(failureOf(err));

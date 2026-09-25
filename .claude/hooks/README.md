@@ -7,7 +7,7 @@ run at the end of every turn and every subagent. They exist to keep the repo's s
 | Script | Does | Blocks the turn |
 | ------ | ---- | --------------- |
 | `format.sh` | `ruff format` + import sort on Python, prettier on every other file it parses, in place | never |
-| `lint.sh` | `ruff check` + `eslint` at pyflakes/recommended level, plus the frontend CSS layout rules | yes |
+| `lint.sh` | `ruff check` + `eslint` at bug-catching level (no style), plus the frontend CSS layout rules | yes |
 | `typecheck.sh` | `tsc --noEmit` over `frontend/` | yes |
 
 All three act only on **changed files** — tracked modifications against `HEAD` plus untracked files,

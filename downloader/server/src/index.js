@@ -52,8 +52,8 @@ app.use(jobsRouter);
 app.use(runsRouter);
 app.use(pdfRouter);
 
-// The unused `next` is load-bearing: express identifies error handlers by arity.
-app.use((err, req, res, next) => {
+// The unused `_next` is load-bearing: express identifies error handlers by arity.
+app.use((err, req, res, _next) => {
   emitError(err?.stack ?? String(err));
   const error = err?.message ?? 'Server error';
   res.status(500).json({ error, code: 'internal_error', params: { detail: error } });

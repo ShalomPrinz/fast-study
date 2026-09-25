@@ -37,7 +37,7 @@ if os.environ.get("DATA_ROOT"):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI):
     """Close SSE streams on SIGINT/SIGTERM so Ctrl-C exits cleanly instead of stalling on them."""
 
     # At signal time, not lifespan shutdown, which uvicorn runs only after connections close.
@@ -106,7 +106,7 @@ def _failure(exc: Exception, status: int, code: str, params: dict | None = None)
 
 
 @app.exception_handler(DataRootNotConfigured)
-def data_root_not_configured(request: Request, exc: DataRootNotConfigured):
+def data_root_not_configured(_request: Request, exc: DataRootNotConfigured):
     """Answer 409 on the endpoints that have no blanket handler of their own, /tree above all."""
 
     return _error(str(exc), 409, exc.code, exc.params)
