@@ -18,6 +18,10 @@ node .claude/harness/setup.mjs --harness <scratchpad>/harness --browsers main   
 Wait for `harness ready` in its output (about 10 s warm); a failed self-check aborts and names the
 assumption that broke — fix that before anything else. It stays in the foreground holding the stack.
 
+Never wrap it in `timeout` or a foreground call: the stack lives exactly as long as that process, so
+a time limit kills it mid-session. Launch it with no limit in the background, redirect to a log, and
+poll that log for `harness ready` for up to 3 minutes (a cold start runs the self-check's pipeline).
+
 It runs the code of the checkout it lives in, so in a worktree run the worktree's own
 `.claude/harness/setup.mjs`.
 
