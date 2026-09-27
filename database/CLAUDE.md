@@ -45,6 +45,12 @@ precedes the module-level root seeding in `database_main.py` ([`lib/runtime`](..
 Absent or blank still boots: filesystem routes answer `409` until `POST /config` sets a root, and
 `GET /health` answers `200` regardless. See [docs/SETTINGS.md](docs/SETTINGS.md).
 
+Unhandled errors go to Sentry when `FASTSTUDY_SENTRY_DSN` is set: `database_main.py` inits at import,
+so both run paths get it, under the shared [`lib/sentry`](../lib/sentry/CLAUDE.md) policy; no DSN, no
+SDK. Sentry ingest is an external service, not a peer, so the no-outbound-calls rule is untouched.
+The scrubber's `DATA_ROOT` rule reads `os.environ`, which holds the boot-time root only — one set
+later through `POST /config` or `PUT /settings` is covered by the Hebrew and home rules until restart.
+
 ## Running and testing
 
 ```bash

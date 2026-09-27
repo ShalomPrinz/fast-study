@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from json import JSONDecodeError
 
 import runtime
+import sentry_policy
+import sentry_sdk
 import settings
 from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
@@ -28,6 +30,12 @@ from logging_setup import setup_logging
 
 setup_logging()
 log = logging.getLogger("db")
+
+# At import, after `runtime` loaded .env, so the dev uvicorn path and the frozen entry both init
+# before the app exists; no DSN means no SDK at all.
+if sentry_policy.enabled():
+    sentry_sdk.init(**sentry_policy.options("database"))
+    sentry_sdk.set_tags(sentry_policy.tags("database"))
 
 # The dev __main__ path and the frozen dispatcher both read the port from here, so there is one default.
 DEFAULT_PORT = 8001
