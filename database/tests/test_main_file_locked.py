@@ -265,3 +265,106 @@ class TestWriteVideo:
         assert r.json()["code"] == "file_write_failed"
         assert r.json()["params"]["file"] == "video.mp4"
         assert "Permission denied" in r.json()["params"]["detail"]
+
+
+def _deny_for(name: str, method: str, raiser=_sharing_violation):
+    """A Path.{method} replacement that raises `raiser` for the file {name} and passes others through."""
+
+    real = getattr(Path, method)
+
+    def fake(self, *args, **kwargs):
+        if self.name == name:
+            raiser(self)
+        return real(self, *args, **kwargs)
+
+    return fake
+
+
+@pytest.fixture
+def summarized(data_root):
+    """A lecture dir holding a pipeline summary.md that has never been edited."""
+
+    d = data_root / "Algo" / "L1"
+    d.mkdir(parents=True)
+    (d / "summary.md").write_text("pipeline", encoding="utf-8")
+    return d
+
+
+class TestPutSummary:
+    def test_locked_first_edit_rename_is_423(self, client, summarized, monkeypatch):
+        monkeypatch.setattr("pathlib.Path.rename", _deny_for("summary.md", "rename"))
+
+        r = client.put("/courses/Algo/lectures/L1/summary", content="edited".encode())
+        assert r.status_code == 423
+        assert r.json() == _locked_body("summary.md")
+        assert (summarized / "summary.md").read_text(encoding="utf-8") == "pipeline"
+        assert not (summarized / "original_summary.md").exists()
+
+    def test_crt_locked_write_is_423(self, client, summarized, on_windows, monkeypatch):
+        (summarized / "original_summary.md").write_text("pipeline", encoding="utf-8")
+        monkeypatch.setattr(
+            "pathlib.Path.write_text",
+            _deny_for("summary.md", "write_text", _crt_denial),
+        )
+
+        r = client.put("/courses/Algo/lectures/L1/summary", content="edited".encode())
+        assert r.status_code == 423
+        assert r.json() == _locked_body("summary.md")
+
+    def test_plain_permission_error_stays_500(self, client, summarized, monkeypatch):
+        monkeypatch.setattr("pathlib.Path.write_text", _plain_permission_error)
+
+        r = client.put("/courses/Algo/lectures/L1/summary", content="edited".encode())
+        assert r.status_code == 500
+        assert r.json()["code"] == "summary_io_failed"
+        assert "Permission denied" in r.json()["params"]["detail"]
+
+
+class TestRevertSummary:
+    @pytest.fixture
+    def edited(self, summarized):
+        """An edited lecture: summary.md holds the edit, original_summary.md the pipeline output."""
+
+        (summarized / "original_summary.md").write_text("pipeline", encoding="utf-8")
+        (summarized / "summary.md").write_text("edited", encoding="utf-8")
+        return summarized
+
+    def test_crt_locked_summary_is_423(self, client, edited, on_windows, monkeypatch):
+        monkeypatch.setattr(
+            "pathlib.Path.write_bytes",
+            _deny_for("summary.md", "write_bytes", _crt_denial),
+        )
+
+        r = client.delete("/courses/Algo/lectures/L1/summary")
+        assert r.status_code == 423
+        assert r.json() == _locked_body("summary.md")
+        assert (edited / "original_summary.md").exists()
+
+    def test_locked_original_unlink_is_423(self, client, edited, monkeypatch):
+        monkeypatch.setattr(
+            "pathlib.Path.unlink", _deny_for("original_summary.md", "unlink")
+        )
+
+        r = client.delete("/courses/Algo/lectures/L1/summary")
+        assert r.status_code == 423
+        assert r.json() == _locked_body("original_summary.md")
+
+    def test_crt_locked_original_read_is_423(
+        self, client, edited, on_windows, monkeypatch
+    ):
+        monkeypatch.setattr(
+            "pathlib.Path.read_bytes",
+            _deny_for("original_summary.md", "read_bytes", _crt_denial),
+        )
+
+        r = client.delete("/courses/Algo/lectures/L1/summary")
+        assert r.status_code == 423
+        assert r.json() == _locked_body("original_summary.md")
+        assert (edited / "summary.md").read_text(encoding="utf-8") == "edited"
+
+    def test_plain_permission_error_stays_500(self, client, edited, monkeypatch):
+        monkeypatch.setattr("pathlib.Path.unlink", _plain_permission_error)
+
+        r = client.delete("/courses/Algo/lectures/L1/summary")
+        assert r.status_code == 500
+        assert r.json()["code"] == "summary_io_failed"
