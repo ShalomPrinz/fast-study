@@ -63,6 +63,7 @@ This environment is also what the frozen bundle is built from, for both Python s
 - `runtime.serve` binds the socket and prints the port handshake; `backend_main.py` is the packaged entry.
 - `ffmpeg`, `pandoc` and `tectonic` are spawned through `tool_path(name)`, never by bare name. `backend_main.py` probes them once at startup and reports the result on `/health`; a missing one fails only the steps that need it. A dev machine needs all three to run the pipeline end to end.
 - `runtime.state_path` locates everything written outside `DATA_ROOT` — `timing.db` and the Google token — and each caller mkdirs its own parent.
+- With `FASTSTUDY_SENTRY_DSN` set, `backend_main.py` inits Sentry at import under the [lib/sentry](../lib/sentry/CLAUDE.md) policy, before the app exists on both run paths; unset, nothing inits. Every ERROR log becomes an event (so an escaped route error and a failed step do), and overview phase failures, which log nothing, are captured in `course/runner.py`.
 
 ## Testing
 

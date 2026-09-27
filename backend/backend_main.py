@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from typing import Literal
 
 import runtime
+import sentry_policy
+import sentry_sdk
 from course import overview
 from course import runner as course_runner
 from fastapi import FastAPI, Query
@@ -19,6 +21,12 @@ from tools import check_tools
 
 setup_logging()
 log = logging.getLogger("api")
+
+# At import, after `runtime` loaded .env, so the dev uvicorn path and the frozen entry both init
+# before the app exists; no DSN means no SDK at all.
+if sentry_policy.enabled():
+    sentry_sdk.init(**sentry_policy.options("backend"))
+    sentry_sdk.set_tags(sentry_policy.tags("backend"))
 
 # Probed once at startup, never per request: the boot screen polls /health, and re-spawning three
 # binaries per poll costs more than the answer. A tool installed later is seen on the next launch.
