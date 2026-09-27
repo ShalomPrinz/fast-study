@@ -41,7 +41,7 @@ for (const [from, to] of COPIES) {
 // A symlinked `@faststudy/*` would be a dangling link the moment the tree is copied into the
 // installer, so the workflow installs with `--install-links` and this is the check that it did.
 for (const service of ['auto', 'server']) {
-  for (const name of ['runtime', 'tools']) {
+  for (const name of ['runtime', 'tools', 'sentry']) {
     const dep = path.join(stage, service, 'node_modules', '@faststudy', name);
     if (fs.lstatSync(dep).isSymbolicLink()) {
       throw new Error(`${service}: @faststudy/${name} is a symlink — install with --install-links`);

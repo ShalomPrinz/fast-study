@@ -46,6 +46,21 @@ the minor starts a new series. It is injected with `-c.extraMetadata.version` an
 installer's file name and `app.getVersion()`. Two builds before a publish compute the same version,
 so publishing the second refuses on the existing Release; re-dispatch `build.yml` for a fresh one.
 
+## Error reporting
+
+Two optional secrets; a fork or a build without them still produces an installer that sends nothing.
+
+- **`FASTSTUDY_SENTRY_DSN`** is baked twice: into the frontend bundle as `VITE_SENTRY_DSN`, and
+  into the asar's `package.json` as `sentryDsn` via `-c.extraMetadata.sentryDsn` — passed only when
+  set, so an empty secret leaves the key absent. Main hands it to every child
+  ([`lib/sentry/CLAUDE.md`](../../lib/sentry/CLAUDE.md)).
+- **`SENTRY_AUTH_TOKEN`** (an org token, so org and region route themselves; `vars.SENTRY_ORG` is
+  optional) makes the frontend build upload hidden source maps to `faststudy@<version>`, with
+  `FASTSTUDY_VERSION` set from the computed version. The frontend builds once, so the
+  previous-version installer reuses the same bundle and there is one upload per run.
+
+The smoke run's installs carry the DSN, but the per-program firewall blocks every event they send.
+
 ## Pinned tool versions
 
 `build.yml` downloads the bundled binaries at pinned versions, each a claim the repo has measured —
@@ -73,7 +88,10 @@ rules are [`delivery/CLAUDE.md`](../CLAUDE.md#the-frozen-bundles-invariants); th
   PyInstaller's own hook collects them a second time, and the build fails if the one is missing:
   otherwise it surfaces only as a failed upload on a user's machine.
 - **`lib/` source dirs on `pathex`.** Consumers install them editable, and PyInstaller never runs the
-  `.pth` hook, so `runtime`, `logging_setup` and `tools` are otherwise unresolvable.
+  `.pth` hook, so `runtime`, `logging_setup`, `tools` and `sentry_policy` are otherwise unresolvable.
+- **No Sentry hidden imports.** `sentry_sdk` loads its integrations by import string, but
+  pyinstaller-hooks-contrib's `hook-sentry_sdk` collects the default and auto-enabling ones
+  (`fastapi`, `starlette`, `logging` among them).
 - **UTF-8 mode** (`X utf8=1`): piped stdio on Windows otherwise takes the ANSI codepage, and a Hebrew
   log line reaches `launch.log` escaped or not at all.
 - **`console=True`**: the launcher reads the port line off stdout, and tool spawns stay hidden by
