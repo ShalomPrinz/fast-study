@@ -332,15 +332,32 @@ if _HARNESS:
             text = os.fspath(path) if isinstance(path, (str, os.PathLike)) else ""
             return any(fnmatchcase(text, f"*/{pattern}") for pattern in patterns)
 
+        class _WinPermissionError(PermissionError):
+            """A PermissionError that carries winerror and prints as Windows does; POSIX drops both."""
+
+            def __init__(self, winerror, strerror, filename, filename2=None):
+                super().__init__(errno.EACCES, strerror, filename, None, filename2)
+                self.winerror = winerror
+
+            def __str__(self):
+                tail = f" -> {self.filename2!r}" if self.filename2 is not None else ""
+                return f"[WinError {self.winerror}] {self.strerror}: {self.filename!r}{tail}"
+
         def _violation(path):
-            # ERROR_SHARING_VIOLATION: what os.unlink/open report on Windows, winerror and all.
-            error = PermissionError(
-                errno.EACCES,
+            # ERROR_SHARING_VIOLATION: what os.unlink/open report on Windows for the file itself.
+            return _WinPermissionError(
+                32,
                 "The process cannot access the file because it is being used by another process",
                 os.fspath(path),
             )
-            error.winerror = 32
-            return error
+
+        def _holds_locked(directory):
+            """Tell whether any path at any depth under a directory matches a lock glob."""
+
+            for parent, dirs, files in os.walk(directory):
+                if any(_locked(os.path.join(parent, name)) for name in dirs + files):
+                    return True
+            return False
 
         _open, _unlink, _rename, _replace = io.open, os.unlink, os.rename, os.replace
 
@@ -359,6 +376,11 @@ if _HARNESS:
                 for path in (src, dst):
                     if _locked(path):
                         raise _violation(path)
+                # Windows refuses a directory rename with ERROR_ACCESS_DENIED while a file beneath is open.
+                if os.path.isdir(src) and _holds_locked(src):
+                    raise _WinPermissionError(
+                        5, "Access is denied", os.fspath(src), os.fspath(dst)
+                    )
                 return original(src, dst, *args, **kwargs)
 
             return move
@@ -367,8 +389,20 @@ if _HARNESS:
         os.unlink = os.remove = guarded_unlink
         os.rename, os.replace = guarded_move(_rename), guarded_move(_replace)
 
+    def _patch_crud(module):
+        """The folder rename maps winerror 5 only on win32, so this module alone is told it runs there."""
+
+        class _WindowsSys:
+            platform = "win32"
+
+            def __getattr__(self, name):
+                return getattr(sys, name)
+
+        module.sys = _WindowsSys()
+
     _PATCHES = {
         "fs.paths": _patch_locks,
+        "fs.crud": _patch_crud,
         "runtime": _patch_runtime,
         "services.providers": _patch_providers,
         "services.google_auth": _patch_google_auth,

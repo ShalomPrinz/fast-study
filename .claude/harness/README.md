@@ -113,8 +113,10 @@ Inside the database process the shim fails every write-mode open, delete and ren
 matching a glob with the `PermissionError` Windows raises (`winerror` 32), so the database's own
 classifier turns it into its real `423 file_locked`, and the backend's pipeline error carries that
 code. A glob matches the tail of the path — `hb-fail/שיעור 3/summary.pdf`, or `*/summary.pdf` for
-every lecture. Reads still succeed, as they do past a viewer's lock. Only the file itself is locked:
-renaming its lecture folder, which Windows would also refuse, still succeeds. The globs live in
+every lecture. Reads still succeed, as they do past a viewer's lock. Renaming any folder with a
+matching path at any depth beneath it — the lecture or its course — fails as Windows fails it,
+`PermissionError` `winerror` 5 `[WinError 5] Access is denied: 'old' -> 'new'`, and the shim tells
+the database's `fs.crud` alone that it runs on `win32`, so that becomes its real `423 folder_in_use`. The globs live in
 `<harness>/locks.json`, are read on each call, show in `hb state`, and `hb reseed` clears them.
 
 `refused` prints the `REFUSED` lines in `logs/network.log` and exits 1 when there are any. It leaves
