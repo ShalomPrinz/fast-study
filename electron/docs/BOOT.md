@@ -65,8 +65,9 @@ dead child.
 
 ## The child environment
 
-Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, the peers already
-running, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
+Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_VERSION`
+(`app.getVersion()`, each Sentry init's release), `FASTSTUDY_SENTRY_DSN` when main's own env has one,
+the peers already running, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
 `GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
 
@@ -130,5 +131,4 @@ Everything both streams of every child print, plus main's own boot lines, is wri
 each launch: one launch's four children are the whole story a bug report needs, and appending would
 grow without bound.
 
-`<state root>/logs/` also holds the error reports ([`RENDERER.md`](RENDERER.md)), which are never
-cleaned up: one is written only when a user asks, and its purpose is to still be there to attach.
+Its scrubbed tail rides on every Sentry event main sends ([`RENDERER.md`](RENDERER.md#error-reporting-sentry)).

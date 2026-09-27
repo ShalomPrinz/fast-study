@@ -10,9 +10,8 @@ everything on quit.
 
 | File          | Owns                                                                            |
 | ------------- | ------------------------------------------------------------------------------- |
-| `main.js`     | The launch: secret, child specs, ports, health, window, teardown, log, shell   |
+| `main.js`     | The launch: secret, child specs, ports, health, window, teardown, log, Sentry  |
 | `protocol.js` | The `app://bundle` scheme and serving `frontend/dist` over it                   |
-| `report.js`   | The error report's `mailto:` — recipient, encoding, the trim to the size cap    |
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
 | `updater.js`  | The update check — electron-updater against GitHub Releases, silent            |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
@@ -23,7 +22,7 @@ everything on quit.
 | Doc                                | Covers                                                                   |
 | ---------------------------------- | ------------------------------------------------------------------------ |
 | [BOOT.md](docs/BOOT.md)            | The launch sequence, launch screen, child env, spawns, teardown, the log |
-| [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open/report, checks, settings store  |
+| [RENDERER.md](docs/RENDERER.md)    | `app://bundle`, `window.faststudy`, open, Sentry, checks, settings store |
 | [UPDATES.md](docs/UPDATES.md)      | How a packaged app updates itself                                        |
 
 ## Run
@@ -68,8 +67,7 @@ hits that are not orphans; tell them apart by `/proc/<pid>/cwd` rather than read
 failure.
 
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
-covering `resolveWithin`'s path containment, the store's tables and refusal rules, and `report.js`'s
-`mailto:` trimming. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+covering `resolveWithin`'s path containment and the store's tables and refusal rules. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
 unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns or waits on a process
 is in it.
@@ -80,7 +78,8 @@ Every other JS package in the repo is ESM; this one is not. A sandboxed preload 
 ES module — Electron loads ESM preloads only with an `.mjs` extension and an unsandboxed renderer —
 and splitting one package across both module systems to gain nothing is worse than matching
 Electron's own default. `eslint.config.js` gives `electron/**/*.js` its own
-`sourceType: 'commonjs'` block for the same reason.
+`sourceType: 'commonjs'` block for the same reason. The ESM `@faststudy/sentry` loads through
+`require(esm)` (Node 24 in Electron 44) — synchronous, which the Sentry init before `ready` needs.
 
 ## What it must not become
 
@@ -118,7 +117,9 @@ the `build` block in `package.json`.
   produce the failure. The globs match every top-level source file and nothing else — `node_modules`
   electron-builder force-excludes and collects separately from `dependencies`, `dist/` is the
   output directory, and `assets/`, `docs/`, `tests/` and `package-lock.json` match neither. The trade
-  is that a top-level `.js` added here that is _not_ meant to ship would ship.
+  is that a top-level `.js` added here that is _not_ meant to ship would ship. The `file:` dep
+  `@faststudy/sentry` is a symlink after a plain `npm ci`, and electron-builder still packs it as
+  real files.
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
 - **Updates are silent and packaged-only**, and replace `resources/` wholesale — see

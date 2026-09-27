@@ -29,15 +29,13 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, open, report,
-boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, open, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
 `version` is `app.getVersion()` rather than a Vite `define`, so it is what the installer put on
 disk with no build-time coupling to `electron/package.json`. `locale` is `app.getLocale()`, the
 frontend's initial language when the profile holds no pick ([`I18N.md`](../../frontend/docs/I18N.md)).
-Browser dev has neither, which is why a report can only come from a packaged build.
 
 `boot` belongs to the launch screen alone, which loads in the same window and so through the same
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
@@ -71,30 +69,32 @@ secret, on a third-party origin. Chromium routes `target="_blank"` here too, and
 logged. Nothing guards navigation or checks an IPC sender, so the window must never leave
 `boot.html` and `app://bundle`.
 
-## Mailing an error report
+## Error reporting (Sentry)
 
-`report.mail({ details, error, route })` is what the frontend's error boundary calls. It answers
-`{ ok, path, error }` — `path` being the report file the user is asked to attach.
+Main inits `@sentry/electron/main` from `lib/sentry`'s policy (`options('electron')`), before
+`registerScheme()` and before `ready`, which the SDK requires. `FASTSTUDY_SENTRY_DSN` unset means the
+SDK is never even loaded, and there is no fallback carrier: no DSN, no report.
 
-**Two carriers, because one cannot hold it.** The whole report — the boundary's details, the
-component stack and the tail of `launch.log`, which only main can read — is written to
-`<state root>/logs/report-<timestamp>.txt`; a truncated `mailto:` carries version, platform, route,
-that file's path and the top stack frames. Neither depends on the other: a failed file write
-degrades the body to saying so, and `path` comes back even when `ok` is false — which is why a throw
-while composing the URL is caught rather than allowed to reject the IPC.
+**A renderer's event travels renderer SDK → IPC → main → Sentry.** The SDK registers its own preload
+on the default session (`registerPreloadScript`); it requires only `electron`, so it runs in the
+sandbox where `preload.js` could not `require` it, and exposes `window.__SENTRY_IPC__` beside
+`window.faststudy`. `ipcMode` is `Classic`: the `sentry-ipc://` fallback would register a second
+privileged scheme through a wrapper around `registerSchemesAsPrivileged`, tying `app://`'s
+privileges to call order. The renderer sends over IPC, not `fetch`, so no CSP `connect-src` is involved.
 
-**The renderer sends fields, never a URL.** Main composes and encodes the `mailto:` itself, so
-`open.external` stays http(s)-only and no renderer-supplied scheme can reach `shell.openExternal`.
-Truncation is measured on the *encoded* URL against ~1800 characters — the Windows shell caps a
-`mailto:` near 2KB, and escaping costs 1–6 characters per source character, so Hebrew and ASCII
-bodies have no common ratio. It keeps a prefix, which is why the path line sits above the stack
-frames. Unpaired surrogates are replaced first, since `encodeURIComponent` throws on one. The file
-name's timestamp uses `-` for `:`, which Windows forbids in a path.
+**Main's `beforeSend` sees every event, a renderer's included**, and does three things:
 
-`report.js` holds the composition because it is pure string work and so unit-testable; `mailReport`
-stays in `main.js` beside the log tail and state root it needs. The recipient is the
-`fast-study-reports@googlegroups.com` group, which forwards to the maintainer — the destination
-changes in the group's settings, never in a release.
+- **Tags.** The SDK copies a renderer's scope tags onto main's scope, so main re-tags any event not
+  from a renderer `service=electron`; a renderer event keeps the `service=frontend` it arrived with.
+- **Scrubs** with the policy's `scrub`, after putting the launch secret and the stored `DATA_ROOT`
+  and API keys on `process.env` for the synchronous call — the policy reads only env, and main holds
+  those elsewhere. A renderer, which has neither, gets its `DATA_ROOT` paths redacted here.
+- **Attaches** the tail of `launch.log` (the last 200KB) as `launch.log`, run through the same scrub
+  first — it carries every child's output, Hebrew paths included.
+
+Minidumps are off (`SentryMinidump` filtered out): raw process memory is past any scrub. An
+attachment a renderer adds rides through unscrubbed, so the frontend adds none. On an uncaught
+exception main kills the children, then flushes (2s) before exiting, or the event would be lost.
 
 ## Startup checks
 
