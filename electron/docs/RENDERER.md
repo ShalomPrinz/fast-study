@@ -72,8 +72,9 @@ logged. Nothing guards navigation or checks an IPC sender, so the window must ne
 ## Error reporting (Sentry)
 
 Main inits `@sentry/electron/main` from `lib/sentry`'s policy (`options('electron')`), before
-`registerScheme()` and before `ready`, which the SDK requires. `FASTSTUDY_SENTRY_DSN` unset means the
-SDK is never even loaded, and there is no fallback carrier: no DSN, no report.
+`registerScheme()` and before `ready`, which the SDK requires. The DSN is `FASTSTUDY_SENTRY_DSN` from
+main's env, else `package.json`'s `sentryDsn`, which only the release build stamps
+(`-c.extraMetadata.sentryDsn`); neither set means the SDK is never loaded: no DSN, no report.
 
 **A renderer's event travels renderer SDK → IPC → main → Sentry.** The SDK registers its own preload
 on the default session (`registerPreloadScript`); it requires only `electron`, so it runs in the

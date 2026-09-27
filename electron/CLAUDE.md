@@ -120,6 +120,8 @@ the `build` block in `package.json`.
   is that a top-level `.js` added here that is _not_ meant to ship would ship. The `file:` dep
   `@faststudy/sentry` is a symlink after a plain `npm ci`, and electron-builder still packs it as
   real files.
+- **The packaged Sentry DSN is stamped at build** (`-c.extraMetadata.sentryDsn`), never committed;
+  main reads `FASTSTUDY_SENTRY_DSN` first, then `package.json`'s `sentryDsn`, and hands it to every child.
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
 - **Updates are silent and packaged-only**, and replace `resources/` wholesale — see

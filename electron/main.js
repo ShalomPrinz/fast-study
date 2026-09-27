@@ -17,6 +17,9 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const SECRET = randomBytes(32).toString('hex');
 const PORT_LINE = /^FASTSTUDY_PORT=(\d+)$/;
 const HEALTH_TIMEOUT_MS = 60_000;
+// Env wins so dev and tests can point elsewhere; the packaged value is stamped into package.json at
+// build. Neither set means no DSN anywhere: main and every child report nothing.
+const SENTRY_DSN = process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || '';
 
 // Per-user writable state: what `statePath`/`state_path` join onto in every service. Passed
 // explicitly rather than left to their fallback, so main's log lands beside the children's state.
@@ -48,10 +51,11 @@ registerScheme();
 
 /** Init the main-process SDK from the shared policy, or do nothing when no DSN is set. */
 function initSentry() {
-  if (!sentryPolicy.enabled(process.env.FASTSTUDY_SENTRY_DSN)) return;
+  if (!sentryPolicy.enabled(SENTRY_DSN)) return;
   sentry = require('@sentry/electron/main');
   sentry.init({
     ...sentryPolicy.options('electron', {
+      dsn: SENTRY_DSN,
       version: app.getVersion(),
       environment: app.isPackaged ? 'production' : 'development',
     }),
@@ -185,14 +189,13 @@ function sharedEnv() {
         TECTONIC_CACHE_DIR: path.join(process.resourcesPath, 'latex'),
       }
     : {};
-  const dsn = process.env.FASTSTUDY_SENTRY_DSN;
   return {
     FASTSTUDY_PORT: '0',
     FASTSTUDY_SECRET: SECRET,
     FASTSTUDY_STATE_DIR: STATE_DIR,
     // What each service's Sentry init reads; `release` is `faststudy@<version>` in all five processes.
     FASTSTUDY_VERSION: app.getVersion(),
-    ...(dsn ? { FASTSTUDY_SENTRY_DSN: dsn } : {}),
+    ...(SENTRY_DSN ? { FASTSTUDY_SENTRY_DSN: SENTRY_DSN } : {}),
     ...packaged,
     ...store.serviceEnv(),
   };
