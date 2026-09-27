@@ -1,0 +1,22 @@
+[project]
+name = "faststudy-sentry"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Single-module distribution claiming the top-level name `sentry_policy` — never `sentry` or
+# `sentry_sdk`, which the SDK itself installs into the same venv.
+[tool.setuptools]
+py-modules = ["sentry_policy"]

@@ -8,6 +8,7 @@ half is in `py/` and JS half in `js/`, sharing one `CLAUDE.md` at the package ro
 | [`runtime/`](runtime/CLAUDE.md) | The packaged launch contract: port handshake, launch-secret check, CORS allowlist, state root. | py: `backend/`, `database/` · js: both `downloader/`   |
 | [`tools/`](tools/CLAUDE.md)     | External-binary resolution (`FASTSTUDY_BIN_DIR`) and the boot-time version probe. | py: `backend/` · js: both `downloader/`                |
 | [`logging/`](logging/CLAUDE.md) | `setup_logging()` — the stderr `[api] POST /path → 200` access log. Python only.  | `backend/`, `database/`                                |
+| [`sentry/`](sentry/CLAUDE.md)   | Sentry policy, no SDK: the `before_send` scrubber, tags, init options.            | py: `backend/`, `database/` · js: both `downloader/`, `electron/`, `frontend/` |
 
 ## Admission rule
 
@@ -15,9 +16,10 @@ A module belongs here when **a second service needs it** _and_ **divergence betw
 a defect** — both, not one. A helper with a single consumer stays in its service, and so does one
 where two services legitimately want different behavior.
 
-All three qualify because they are contracts, one of them a security boundary: a service whose
-secret check or `/health` exemption drifts from its peers' is unreachable by the launcher or quietly
-less protected, and one that reads `FASTSTUDY_BIN_DIR` differently cannot spawn its own tools.
+All four qualify because they are contracts, two of them boundaries: a service whose secret check or
+`/health` exemption drifts from its peers' is unreachable by the launcher or quietly less protected,
+one whose scrubber drifts leaks course names or keys to Sentry, and one that reads
+`FASTSTUDY_BIN_DIR` differently cannot spawn its own tools.
 Duplicating a helper is cheap; duplicating a contract is not.
 
 ## Rules across packages
