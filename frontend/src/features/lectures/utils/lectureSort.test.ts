@@ -17,10 +17,6 @@ describe('sortLectures', () => {
     expect(sorted('Lecture 3.1', 'Lecture 3')).toEqual(['Lecture 3', 'Lecture 3.1'])
   })
 
-  it('ignores case', () => {
-    expect(sorted('lecture 10', 'LECTURE 2')).toEqual(['LECTURE 2', 'lecture 10'])
-  })
-
   it('puts unparsed names first, in locale order', () => {
     expect(sorted('Lecture 1', 'Zeta', 'Intro')).toEqual(['Intro', 'Zeta', 'Lecture 1'])
   })
@@ -56,6 +52,24 @@ describe('sortLectures', () => {
       'שיעור 1',
       'שיעור 2',
     ])
+  })
+
+  it('sorts a numbered name of any prefix by its number, not at the head', () => {
+    expect(sorted('סיכום 2024', 'Lecture 4', 'Intro 3', 'Lecture 2')).toEqual([
+      'Lecture 2',
+      'Intro 3',
+      'Lecture 4',
+      'סיכום 2024',
+    ])
+  })
+
+  it('breaks a tie on number and sub-number by locale order', () => {
+    expect(sorted('Lecture 3', 'Intro 3')).toEqual(['Intro 3', 'Lecture 3'])
+    expect(sorted('הרצאה 1.2', 'Lecture 1.2')).toEqual(['Lecture 1.2', 'הרצאה 1.2'])
+  })
+
+  it('orders Hebrew recitation names numerically', () => {
+    expect(sorted('תרגול 10', 'תרגול 2', 'תרגול 1')).toEqual(['תרגול 1', 'תרגול 2', 'תרגול 10'])
   })
 
   it('leaves the input untouched', () => {

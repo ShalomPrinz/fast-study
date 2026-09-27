@@ -14,7 +14,7 @@ function parse(name: string): Parsed | null {
 function compareLectureNames(a: string, b: string): number {
   const pa = parse(a)
   const pb = parse(b)
-  if (pa && pb) return pa.n - pb.n || pa.sub - pb.sub
+  if (pa && pb) return pa.n - pb.n || pa.sub - pb.sub || a.localeCompare(b)
   // Unparsed names sort to the head.
   if (pa) return 1
   if (pb) return -1
