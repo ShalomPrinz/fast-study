@@ -48,7 +48,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **Launch secret** — `secretHeaders()` for requests; `withSecretParam(url)` only for the two
   `EventSource`s, which cannot set a header. The header keeps the secret out of access logs. Both add
   nothing in browser dev, where no service enforces a secret.
-- **`open` and `report`** — non-optional: the whole bridge's absence is the browser-dev test.
+- **`open`** — non-optional: the whole bridge's absence is the browser-dev test.
 - **`canStoreApiKeys`** ([SETTINGS.md](SETTINGS.md)), the installed `version`, and the OS `locale`
   ([I18N.md](I18N.md)).
 
@@ -65,12 +65,29 @@ denies every `window.open`, so `target="_blank"` does nothing, and a bare `href`
 app window, where the preload is still exposed. Without the bridge (browser dev) it is a plain
 `window.open`. It is its own file because it needs both `runtime.ts` and `database.ts`.
 
-## `settings.ts`, `drive.ts`, `report.ts`
+## `settings.ts`, `drive.ts`
 
 `settings.ts` spans three services on purpose — a setting's owner is a property of the setting, not the
 screen — and `drive.ts` is apart from it because `app/DriveConsentPrompt` calls it outside the settings
-screens. Both are covered in [SETTINGS.md](SETTINGS.md). `report.ts` hands the error boundary's crash
-report to the bridge ([ARCHITECTURE.md](ARCHITECTURE.md) §Error boundary) and never toasts.
+screens. Both are covered in [SETTINGS.md](SETTINGS.md).
+
+## `sentry.ts` — error reporting
+
+`initSentry()` runs first in `main.tsx`, and only with the bridge and a baked `VITE_SENTRY_DSN`: the
+renderer SDK (`@sentry/electron/renderer`) sends over IPC to Electron main, which scrubs — `DATA_ROOT`
+included, which the renderer does not know — and attaches the launch log
+(`electron/docs/RENDERER.md` §Error reporting). Options come from `lib/sentry`'s `options('frontend')`,
+release `faststudy@<bridge version>`; the SDK drops `initialScope`, so the `service` tag is set after
+init. No tracing, no replay, and no attachments — main forwards a renderer's attachments unscrubbed.
+
+`captureRenderError` is the error boundary's one call ([ARCHITECTURE.md](ARCHITECTURE.md) §Error
+boundary). It answers `null` when Sentry is off, because the SDK mints an event id even with no client.
+
+Source maps upload only from a `vite build` with `SENTRY_AUTH_TOKEN` set (`SENTRY_ORG`, `SENTRY_PROJECT`
+defaulting to `faststudy`); the maps are `hidden` and deleted after upload, so none ship. The release
+comes from `FASTSTUDY_VERSION`, never `electron/package.json`, whose patch CI replaces; a token without
+it fails the build rather than upload to the wrong release. An org token routes to the org's region
+(EU included) on its own, so no `url` is set.
 
 ## `events.ts` and `toaster.ts`
 

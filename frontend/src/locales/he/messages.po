@@ -391,11 +391,6 @@ msgstr "בטוח שברצונך לייצר מחדש?"
 msgid "Attach material to"
 msgstr "צרף חומר אל"
 
-#. placeholder {0}: result.path
-#: src/app/ErrorBoundary.tsx:53
-msgid "Attach this file to the email: <0>{0}</0>"
-msgstr "צרף את הקובץ הזה למייל: <0>{0}</0>"
-
 #: src/features/lectures/constants/pipeline.ts:21
 msgid "Audio"
 msgstr "אודיו"
@@ -547,11 +542,11 @@ msgstr "המשך ייצור"
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
-#: src/app/ErrorBoundary.tsx:43
+#: src/app/ErrorBoundary.tsx:37
 msgid "Copied!"
 msgstr "הועתק!"
 
-#: src/app/ErrorBoundary.tsx:43
+#: src/app/ErrorBoundary.tsx:37
 msgid "Copy details"
 msgstr "העתק פרטים"
 
@@ -584,16 +579,6 @@ msgstr "לא ניתן לפתוח את הקובץ: {0}"
 #: src/services/open.ts:16
 msgid "Could not open the link: {0}"
 msgstr "לא ניתן לפתוח את הקישור: {0}"
-
-#. placeholder {0}: result.error ?? 'unknown error'
-#: src/app/ErrorBoundary.tsx:64
-msgid "Could not open your mail app: {0}"
-msgstr "לא ניתן לפתוח את תוכנת הדואר: {0}"
-
-#. placeholder {0}: result.path
-#: src/app/ErrorBoundary.tsx:60
-msgid "Could not open your mail app. The report was saved to <0>{0}</0>"
-msgstr "לא ניתן לפתוח את תוכנת הדואר. הדיווח נשמר אל <0>{0}</0>"
 
 #: src/shared/i18n/serviceErrors.ts:50
 msgid "Could not read the audio in {file}."
@@ -959,7 +944,7 @@ msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
 msgid "Groq rate limit reached"
 msgstr "הגעת למגבלת הקצב של Groq"
 
-#: src/app/ErrorBoundary.tsx:147
+#: src/app/ErrorBoundary.tsx:108
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
 msgstr "דף הבית"
@@ -1419,7 +1404,7 @@ msgstr "התחבר מחדש"
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
-#: src/app/ErrorBoundary.tsx:151
+#: src/app/ErrorBoundary.tsx:112
 msgid "Reload"
 msgstr "רענן"
 
@@ -1557,10 +1542,6 @@ msgstr "הקטע {0} ממתין לקוד גישה"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/app/ErrorBoundary.tsx:91
-msgid "Send report"
-msgstr "שלח דיווח"
-
 #: src/features/downloads/components/AccountStatus.tsx:117
 msgid "session expired"
 msgstr "החיבור פג"
@@ -1587,7 +1568,7 @@ msgstr "הצג עוד"
 msgid "skipped"
 msgstr "דולג"
 
-#: src/app/ErrorBoundary.tsx:138
+#: src/app/ErrorBoundary.tsx:99
 msgid "Something went wrong"
 msgstr "משהו השתבש"
 
@@ -1595,7 +1576,7 @@ msgstr "משהו השתבש"
 msgid "Something went wrong."
 msgstr "משהו השתבש."
 
-#: src/app/ErrorBoundary.tsx:141
+#: src/app/ErrorBoundary.tsx:102
 msgid "Sorry about it. Go home to keep working, or copy the details below to report it."
 msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד, או העתק את הפרטים למטה כדי לדווח על כך."
 
@@ -1841,6 +1822,14 @@ msgstr "אין עדיין סיכומים בקורס הזה."
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
+#: src/app/ErrorBoundary.tsx:52
+msgid "This error could not be reported automatically. Copy the details to report it."
+msgstr "לא ניתן היה לדווח על השגיאה הזו אוטומטית. העתק את הפרטים כדי לדווח עליה."
+
+#: src/app/ErrorBoundary.tsx:46
+msgid "This error was reported automatically. Reference: <0>{eventId}</0>"
+msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
+
 #: src/shared/i18n/serviceErrors.ts:171
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
@@ -1977,10 +1966,6 @@ msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 #: src/features/settings/InitWall.tsx:190
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלכם נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
-
-#: src/app/ErrorBoundary.tsx:57
-msgid "Your mail app is open. No report file could be saved."
-msgstr "תוכנת הדואר נפתחה. לא ניתן היה לשמור קובץ דיווח."
 
 #: src/features/settings/InitWall.tsx:175
 msgid "Your two API keys"

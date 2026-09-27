@@ -6,10 +6,13 @@ declare module '*.po' {
   export const messages: Messages
 }
 
-// Dev-only service URL overrides, read by `services/runtime.ts` when there is no preload bridge.
+// The dev-only service URL overrides `services/runtime.ts` reads when there is no preload bridge,
+// and the Sentry DSN.
 interface ImportMetaEnv {
   readonly VITE_BACKEND_URL?: string
   readonly VITE_DATABASE_URL?: string
   readonly VITE_DOWNLOAD_SERVER_URL?: string
   readonly VITE_AUTO_DOWNLOADER_URL?: string
+  // Baked at build time; unset means the renderer never inits Sentry.
+  readonly VITE_SENTRY_DSN?: string
 }

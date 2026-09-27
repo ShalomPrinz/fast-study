@@ -82,11 +82,11 @@ fallback (timestamp, URL, user agent, both stacks, a copy button) instead of a b
 `location.pathname`: the fallback replaces the sidebar too, so its Home link is the only way out and only a
 remount clears the error. Malformed escapes like `/a%/b` never reach it — the host rejects them first.
 
-**Send report** goes through `services/report.ts` to the bridge, which writes the report and launch-log
-tail under the state root and opens a truncated `mailto:` (`electron/docs/RENDERER.md`). File and mail fail
-independently, so all four outcomes are reported **in place, never as a toast** — the fallback has
-replaced the `App` that mounts the `ToastContainer`. It renders only when the bridge exists: browser dev
-has no version or launch log worth mailing.
+`componentDidCatch` reports each caught error through `services/sentry.ts` unprompted, with the route and
+the component stack, so every render crash lands in Sentry. The outcome renders **in place, never as a
+toast** — the fallback has replaced the `App` that mounts the `ToastContainer`: the event id on success
+(`.error-sent`), or a failure (`.error-sent--failed`) pointing at Copy details. It renders only while
+Sentry is initialized; browser dev and a DSN-less build have nowhere to send, so they say nothing.
 
 ## Mode toggles
 

@@ -15,6 +15,10 @@ import './styles/tokens.css'
 import App from './App'
 import ErrorBoundary from '@/app/ErrorBoundary'
 import { activateLocale, initialLocale } from '@/services/i18n'
+import { initSentry } from '@/services/sentry'
+
+// First, so an uncaught error from here on is reported.
+initSentry()
 
 // Awaited so no frame paints untranslated; English is the fallback, since a rejection here skips
 // `render` and the error boundary cannot catch it — see docs/I18N.md.

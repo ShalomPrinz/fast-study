@@ -391,11 +391,6 @@ msgstr "Are you sure you want to re-generate?"
 msgid "Attach material to"
 msgstr "Attach material to"
 
-#. placeholder {0}: result.path
-#: src/app/ErrorBoundary.tsx:53
-msgid "Attach this file to the email: <0>{0}</0>"
-msgstr "Attach this file to the email: <0>{0}</0>"
-
 #: src/features/lectures/constants/pipeline.ts:21
 msgid "Audio"
 msgstr "Audio"
@@ -547,11 +542,11 @@ msgstr "Continue Generating"
 msgid "Continue transcription"
 msgstr "Continue transcription"
 
-#: src/app/ErrorBoundary.tsx:43
+#: src/app/ErrorBoundary.tsx:37
 msgid "Copied!"
 msgstr "Copied!"
 
-#: src/app/ErrorBoundary.tsx:43
+#: src/app/ErrorBoundary.tsx:37
 msgid "Copy details"
 msgstr "Copy details"
 
@@ -584,16 +579,6 @@ msgstr "Could not open the file: {0}"
 #: src/services/open.ts:16
 msgid "Could not open the link: {0}"
 msgstr "Could not open the link: {0}"
-
-#. placeholder {0}: result.error ?? 'unknown error'
-#: src/app/ErrorBoundary.tsx:64
-msgid "Could not open your mail app: {0}"
-msgstr "Could not open your mail app: {0}"
-
-#. placeholder {0}: result.path
-#: src/app/ErrorBoundary.tsx:60
-msgid "Could not open your mail app. The report was saved to <0>{0}</0>"
-msgstr "Could not open your mail app. The report was saved to <0>{0}</0>"
 
 #: src/shared/i18n/serviceErrors.ts:50
 msgid "Could not read the audio in {file}."
@@ -959,7 +944,7 @@ msgstr "Google Drive is not connected. Connect it in Settings."
 msgid "Groq rate limit reached"
 msgstr "Groq rate limit reached"
 
-#: src/app/ErrorBoundary.tsx:147
+#: src/app/ErrorBoundary.tsx:108
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
 msgstr "Home"
@@ -1419,7 +1404,7 @@ msgstr "Reconnect"
 msgid "Recordings · {selected}"
 msgstr "Recordings · {selected}"
 
-#: src/app/ErrorBoundary.tsx:151
+#: src/app/ErrorBoundary.tsx:112
 msgid "Reload"
 msgstr "Reload"
 
@@ -1557,10 +1542,6 @@ msgstr "Section {0} is waiting for a passcode"
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 
-#: src/app/ErrorBoundary.tsx:91
-msgid "Send report"
-msgstr "Send report"
-
 #: src/features/downloads/components/AccountStatus.tsx:117
 msgid "session expired"
 msgstr "session expired"
@@ -1587,7 +1568,7 @@ msgstr "Show more"
 msgid "skipped"
 msgstr "skipped"
 
-#: src/app/ErrorBoundary.tsx:138
+#: src/app/ErrorBoundary.tsx:99
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
@@ -1595,7 +1576,7 @@ msgstr "Something went wrong"
 msgid "Something went wrong."
 msgstr "Something went wrong."
 
-#: src/app/ErrorBoundary.tsx:141
+#: src/app/ErrorBoundary.tsx:102
 msgid "Sorry about it. Go home to keep working, or copy the details below to report it."
 msgstr "Sorry about it. Go home to keep working, or copy the details below to report it."
 
@@ -1841,6 +1822,14 @@ msgstr "This course has no summaries yet."
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
+#: src/app/ErrorBoundary.tsx:52
+msgid "This error could not be reported automatically. Copy the details to report it."
+msgstr "This error could not be reported automatically. Copy the details to report it."
+
+#: src/app/ErrorBoundary.tsx:46
+msgid "This error was reported automatically. Reference: <0>{eventId}</0>"
+msgstr "This error was reported automatically. Reference: <0>{eventId}</0>"
+
 #: src/shared/i18n/serviceErrors.ts:171
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
@@ -1977,10 +1966,6 @@ msgstr "Yes, store my lectures in this folder"
 #: src/features/settings/InitWall.tsx:190
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
-
-#: src/app/ErrorBoundary.tsx:57
-msgid "Your mail app is open. No report file could be saved."
-msgstr "Your mail app is open. No report file could be saved."
 
 #: src/features/settings/InitWall.tsx:175
 msgid "Your two API keys"
