@@ -2,8 +2,8 @@ import { t } from '@lingui/core/macro'
 import type { Course, Kind } from '@/types'
 
 // Any prefix then a number, so a course names sessions in its own language; recitations reject the
-// `.N` form. A stray `סיכום 2024` parses too — see docs/I18N.md.
-const PATTERN = /^(.+?)\s+(\d+)(?:\.(\d+))?$/
+// `.N` form; `lectureSort.ts` orders by it too. A stray `סיכום 2024` parses — see docs/I18N.md.
+export const PATTERN = /^(.+?)\s+(\d+)(?:\.(\d+))?$/
 
 export interface LatestName {
   name: string

@@ -25,6 +25,39 @@ describe('sortLectures', () => {
     expect(sorted('Lecture 1', 'Zeta', 'Intro')).toEqual(['Intro', 'Zeta', 'Lecture 1'])
   })
 
+  it('orders any prefix numerically, not only Lecture', () => {
+    expect(sorted('שיעור 10', 'שיעור 2', 'שיעור 1', 'שיעור 11')).toEqual([
+      'שיעור 1',
+      'שיעור 2',
+      'שיעור 10',
+      'שיעור 11',
+    ])
+  })
+
+  it('orders Hebrew sub-numbers before the next number', () => {
+    expect(sorted('הרצאה 2', 'הרצאה 1.2', 'הרצאה 1.1')).toEqual([
+      'הרצאה 1.1',
+      'הרצאה 1.2',
+      'הרצאה 2',
+    ])
+  })
+
+  it('orders mixed prefixes by number alone', () => {
+    expect(sorted('Lecture 10', 'הרצאה 2', 'Lecture 1')).toEqual([
+      'Lecture 1',
+      'הרצאה 2',
+      'Lecture 10',
+    ])
+  })
+
+  it('keeps a trailing suffix unparsed, at the head', () => {
+    expect(sorted('שיעור 2', 'שיעור 10 - המשך', 'שיעור 1')).toEqual([
+      'שיעור 10 - המשך',
+      'שיעור 1',
+      'שיעור 2',
+    ])
+  })
+
   it('leaves the input untouched', () => {
     const input = names('Lecture 2', 'Lecture 1')
     sortLectures(input)

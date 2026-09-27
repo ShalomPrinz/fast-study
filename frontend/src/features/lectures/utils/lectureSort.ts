@@ -1,14 +1,14 @@
-// "Lecture 3" / "Lecture 1.2" / "Recitation 5" — group 1 = number, group 2 = sub-number.
-const PATTERN = /^(?:Lecture|Recitation)\s+(\d+)(?:\.(\d+))?$/i
+import { PATTERN } from './nextName'
 
 interface Parsed {
   n: number
   sub: number
 }
 
+// Any prefix, like nextName's suggestions: "Lecture 3", "הרצאה 1.2" — group 2 = number, 3 = sub.
 function parse(name: string): Parsed | null {
   const m = name.match(PATTERN)
-  return m ? { n: parseInt(m[1], 10), sub: m[2] ? parseInt(m[2], 10) : 0 } : null
+  return m ? { n: parseInt(m[2], 10), sub: m[3] ? parseInt(m[3], 10) : 0 } : null
 }
 
 function compareLectureNames(a: string, b: string): number {

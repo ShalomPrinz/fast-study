@@ -120,4 +120,4 @@ resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
 `nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second
 half); recitations have no sub-sessions ([I18N.md](I18N.md) for the prefix). `lectureSort.ts` orders by
-parsed `(number, sub-number)`; unparsed names sort first, alphabetically.
+`(number, sub-number)` parsed with the same any-prefix regex; unparsed names sort first, alphabetically.
