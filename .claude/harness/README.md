@@ -160,15 +160,19 @@ B=$(node .claude/harness/hb.mjs --harness DIR url browser-main)
 curl -s $B/goto -d '{"url":"/course/hb-mgmt/overview"}'   # a path on the app (a lecture is /<course>/<lecture>), or a full URL
 curl -s $B/click -d '{"selector":"text=New course"}'      # any Playwright selector
 curl -s $B/fill -d '{"selector":"input[placeholder=\"Course name…\"]","value":"hb-mgmt-x"}'
+curl -s $B/press -d '{"key":"Enter","screenshot":"created"}'   # on the focus, or {"selector":…}
 curl -s $B/text                                           # body innerText; or {"selector":…}
 curl -s $B/screenshot -d '{"name":"new-course"}'          # → evidence/mgmt-new-course.png ({"full":true})
-curl -s $B/eval --data-binary 'await page.keyboard.press("Enter"); return page.url()'
+curl -s $B/eval --data-binary 'await page.waitForTimeout(3000); return page.url()'
 curl -s "$B/log?since=0"                                  # every recorded event, numbered
 curl -s $B/mutations                                      # every non-GET request, with body and answer
 ```
 
 Arguments ride as a JSON body or query parameters, whatever the method. `/eval`'s raw body is an
-async function body given `page` and `context` — the escape hatch for keys, waits and new tabs.
+async function body given `page` and `context` — the escape hatch for waits and new tabs.
+`/click`, `/fill` and `/press` take an optional `screenshot` name, captured once the action settles
+(half a second) into the same file `/screenshot` would write, so a toast that is gone before a
+separate call still lands in the evidence.
 
 Each answer ends with any console error or warning, page error, 4xx/5xx or failed request that
 happened while the command ran, so a click's fallout arrives with it. `/log` also holds the rest:

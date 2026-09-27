@@ -34,6 +34,7 @@ hb url                                   # every URL of this stack; `hb url <nam
 B=$(hb url browser-main)
 curl -s $B/goto -d '{"url":"/course/hb-edit/overview"}'
 curl -s $B/click -d '{"selector":"text=…"}'
+curl -s $B/press -d '{"key":"Enter","screenshot":"saved"}'   # /click, /fill, /press take a screenshot name
 curl -s $B/text
 curl -s $B/screenshot -d '{"name":"after-save"}' # → $HARNESS_DIR/evidence/main-after-save.png
 ```

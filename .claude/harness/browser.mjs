@@ -10,6 +10,9 @@
 // /goto {"url"}                 a path on the app, or a full URL
 // /click {"selector"}           then the mouse leaves the page, so no tooltip covers the next
 // /fill {"selector","value"}
+// /press {"key","selector"}     a key (`Enter`, `Control+a`), on the selector when given, else the focus
+//                               /click, /fill and /press also take {"screenshot":name}: captured once the
+//                               action settles, so a short-lived toast is in the same call
 // /text {"selector"}            innerText; the whole body when no selector
 // /screenshot {"name","full"}   saved as <harness>/evidence/<tag>-<name>.png
 // /eval <js>                    raw body: an async function body given `page` and `context`
@@ -118,6 +121,16 @@ function evidenceName(name) {
   return path.join(paths.evidence, `${tag}-${safe}.png`);
 }
 
+async function shoot(name, full) {
+  const file = evidenceName(name);
+  await page.screenshot({ path: file, fullPage: full === true || full === 'true' });
+  return file;
+}
+
+// An action's answer, plus the screenshot it asked for, taken after its settle.
+const acted = async (line, screenshot) =>
+  screenshot ? `${line}\n${await shoot(screenshot)}` : line;
+
 const AsyncFunction = (async () => {}).constructor;
 
 const COMMANDS = {
@@ -126,16 +139,22 @@ const COMMANDS = {
     await settle();
     return `${response?.status()} ${page.url()}`;
   },
-  '/click': async ({ selector }) => {
+  '/click': async ({ selector, screenshot }) => {
     await page.click(selector);
     await page.mouse.move(-1, -1);
     await settle();
-    return `clicked ${selector}`;
+    return acted(`clicked ${selector}`, screenshot);
   },
-  '/fill': async ({ selector, value: text }) => {
+  '/fill': async ({ selector, value: text, screenshot }) => {
     await page.fill(selector, text ?? '');
     await settle();
-    return `filled ${selector}`;
+    return acted(`filled ${selector}`, screenshot);
+  },
+  '/press': async ({ key, selector, screenshot }) => {
+    if (selector) await page.press(selector, key);
+    else await page.keyboard.press(key);
+    await settle();
+    return acted(`pressed ${key}${selector ? ` on ${selector}` : ''}`, screenshot);
   },
   '/text': async ({ selector }) =>
     (
@@ -144,11 +163,7 @@ const COMMANDS = {
         .first()
         .innerText()
     ).replace(/\n{2,}/g, '\n'),
-  '/screenshot': async ({ name, full }) => {
-    const file = evidenceName(name);
-    await page.screenshot({ path: file, fullPage: full === true || full === 'true' });
-    return file;
-  },
+  '/screenshot': async ({ name, full }) => shoot(name, full),
   '/eval': async (_, raw) => {
     const result = await new AsyncFunction('page', 'context', raw)(page, context);
     return result === undefined || typeof result === 'string'
