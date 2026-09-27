@@ -19,12 +19,14 @@ export interface SentryOptions {
   environment: string;
   sampleRate: number;
   sendDefaultPii: false;
+  shutdownTimeout: number;
   beforeSend: typeof scrub;
   beforeBreadcrumb: typeof scrubBreadcrumb;
   initialScope: { tags: Tags };
 }
 
 export const SERVICES: readonly Service[];
+export const SHUTDOWN_TIMEOUT_MS: number;
 
 // Generic so each SDK's own Event/Breadcrumb type passes through; null means drop.
 export function scrub<T>(event: T, hint?: unknown): T | null;

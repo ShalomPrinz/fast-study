@@ -4,6 +4,10 @@ import sys
 
 SERVICES = frozenset({"backend", "database", "server", "auto", "electron", "frontend"})
 
+# The longest an exit waits to flush queued events; pinned, not left to the SDK default, because the
+# Sentry host may be down and nothing may wait on it. The launcher's kill grace assumes it.
+SHUTDOWN_TIMEOUT_S = 2
+
 _HE = "֐-׿יִ-ﭏ"
 # A Hebrew run, joined across the spaces and punctuation inside a name, in literal form and in the
 # percent-, \u- and \x-escaped forms a URL, a JSON dump or a bytes repr carries it in.
@@ -133,6 +137,7 @@ def options(service, *, dsn=None, version=None, environment=None):
         # No traces_sample_rate: even 0.0 turns tracing on and propagates trace headers.
         "sample_rate": 1.0,
         "send_default_pii": False,
+        "shutdown_timeout": SHUTDOWN_TIMEOUT_S,
         "before_send": scrub,
         "before_breadcrumb": scrub_breadcrumb,
     }

@@ -22,7 +22,7 @@ frontend`, anything else throws. `platform` is `win32`/`linux`/`darwin` in both 
 - `enabled(dsn?)` — false with no DSN; the caller then skips init entirely.
 - `options(service, …)` — what init spreads: `dsn` (`FASTSTUDY_SENTRY_DSN`), `release`
   `faststudy@<FASTSTUDY_VERSION>`, `environment` (`production` iff `FASTSTUDY_SECRET` is set),
-  sample rate 1, no default PII, both scrubbers. The traces rate is left unset, not `0`: `0` still
+  sample rate 1, no default PII, the shutdown flush bound, both scrubbers. The traces rate is left unset, not `0`: `0` still
   switches tracing on and propagates trace headers onto cross-origin calls to the services. `dsn`,
   `version` and `environment` can be passed explicitly — the renderer bakes `VITE_SENTRY_DSN`, electron main passes `app.getVersion()`.
   JS adds `initialScope: {tags}`; Python's `init` has no such option, so call
@@ -35,6 +35,9 @@ frontend`, anything else throws. `platform` is `win32`/`linux`/`darwin` in both 
 - **Env is read per call**, not at import, so a `DATA_ROOT` or key changed in Settings is scrubbed
   from the next event on. A value only in `.env` and never in `os.environ` is not seen; the
   shape-based rules (Hebrew, home, key patterns) still cover it.
+- **An exit never waits on Sentry beyond 2 s** — the host may be down. `SHUTDOWN_TIMEOUT_S`/`_MS`
+  pins it as `shutdown_timeout` (Python's atexit flush) and `shutdownTimeout` (the Node/Electron
+  crash-exit flush); electron main's `KILL_GRACE_MS` must stay above it.
 - **No fallback DSN anywhere.** Dev has none, so dev sends nothing; packaged, the launcher sets it.
   That is the claim on both run paths.
 - Sentry's free tier keeps events 30 days — an issue older than that is gone, not fixed.

@@ -2,7 +2,14 @@ import json
 
 import pytest
 import sentry_policy
-from sentry_policy import enabled, options, scrub, scrub_breadcrumb, tags
+from sentry_policy import (
+    SHUTDOWN_TIMEOUT_S,
+    enabled,
+    options,
+    scrub,
+    scrub_breadcrumb,
+    tags,
+)
 
 GROQ = "gsk_" + "A1b2C3d4E5f6G7h8I9j0K1l2M3n4"
 GEMINI = "AIza" + "SyD-abcdefghijklmnopqrstuvwxyz_0123"
@@ -247,6 +254,13 @@ def test_options_leave_tracing_unset():
     assert "traces_sample_rate" not in options("backend")
 
 
+def test_options_pin_the_shutdown_flush():
+    """The Sentry host may be down: an exit waits on it for a short, fixed bound and no longer."""
+
+    assert SHUTDOWN_TIMEOUT_S == 2
+    assert options("backend")["shutdown_timeout"] == SHUTDOWN_TIMEOUT_S
+
+
 def test_options_with_dsn_packaged(monkeypatch):
     monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", "https://abc@o1.ingest.sentry.io/2")
     monkeypatch.setenv("FASTSTUDY_VERSION", "1.4.0")
@@ -259,6 +273,7 @@ def test_options_with_dsn_packaged(monkeypatch):
         "environment": "production",
         "sample_rate": 1.0,
         "send_default_pii": False,
+        "shutdown_timeout": 2,
         "before_send": scrub,
         "before_breadcrumb": scrub_breadcrumb,
     }
