@@ -473,7 +473,10 @@ async def post_config(request: Request):
         body = await request.json()
         if "data_root" in body:
             # The setter is the only writer of fs.paths' root state, so this takes effect at once.
-            paths.set_data_root(settings.prepare_data_root(body["data_root"]))
+            root = settings.prepare_data_root(body["data_root"])
+            paths.set_data_root(root)
+            # lib/sentry's scrubber reads DATA_ROOT from os.environ per event, so it redacts the new root at once.
+            os.environ["DATA_ROOT"] = root
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "settings_store_io_failed")
