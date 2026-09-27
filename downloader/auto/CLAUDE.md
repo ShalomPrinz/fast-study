@@ -14,6 +14,8 @@ Port **3053** (`AUTODL_PORT` in the repo-root `.env`; `FASTSTUDY_PORT` in the en
 
 Launch contract — the `FASTSTUDY_SECRET` check (`requireSecret`, every route but `GET /health`) and the state root (`statePath`, under which the Moodle token, the zoom passcode store and the yt-dlp cache live) — comes from [`@faststudy/runtime`](../../lib/runtime/CLAUDE.md). `yt-dlp` resolves through [`@faststudy/tools`](../../lib/tools/CLAUDE.md) and is reported on `/health` as `tools`. It only runs `--flat-playlist`, which never touches YouTube's player script, so it carries none of `server/`'s JS-runtime flags.
 
+Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `instrument.js`, app.js's first import, inits with [`@faststudy/sentry`](../../lib/sentry/CLAUDE.md)'s scrubbing options, and Sentry's express handler sits before the backstop. An extractor fault that reaches the 500 backstop is an event, its stack naming the extractor; the typed 401/409/422/503 answers are not.
+
 ## HTTP surface
 
 Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose download mechanism hides inside an opaque `ref` (base64url `Recording`); `/resolve` takes `{ ref, … }`. The `Item` fields and their meaning are in [BROWSING.md](docs/BROWSING.md).

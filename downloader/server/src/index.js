@@ -1,3 +1,6 @@
+// First: Sentry has to init before the rest of the app loads.
+import './instrument.js';
+import * as Sentry from '@sentry/node';
 import express from 'express';
 import cors from 'cors';
 import { PORT, DATABASE_URL, EXTENSION_ID, FRONTEND_URL } from './config.js';
@@ -51,6 +54,9 @@ app.use(downloadItemRouter);
 app.use(jobsRouter);
 app.use(runsRouter);
 app.use(pdfRouter);
+
+// Captures a 5xx-bound error, then hands it on unchanged to the handler below; a no-op without a DSN.
+Sentry.setupExpressErrorHandler(app);
 
 // The unused `_next` is load-bearing: express identifies error handlers by arity.
 app.use((err, req, res, _next) => {
