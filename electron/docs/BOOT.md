@@ -113,8 +113,10 @@ resources/latex/                    the primed tectonic cache → TECTONIC_CACHE
 ## Teardown
 
 Children are spawned in their own process group (POSIX), so the kill reaches the tools they spawned
-— ffmpeg, chrome, yt-dlp — and not just the service. Quit kills the group with `SIGTERM`; Windows
-has no process groups, so it is `taskkill /T /F` there.
+— ffmpeg, chrome, yt-dlp — and not just the service. Quit sends the group `SIGTERM`, then `SIGKILL`
+after a 3s grace (longer than a service's ~2s Sentry flush) to any child still alive, and main waits
+for that before it exits, or the timer would die with it. Windows has no process groups, so it is
+`taskkill /T /F` there. `process.on('exit')` cannot wait, so it only sends the `SIGTERM`.
 
 The kill runs from `will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its
 retry, and an uncaught exception, because an orphaned service keeps a port and keeps writing

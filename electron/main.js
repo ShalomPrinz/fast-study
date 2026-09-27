@@ -2,7 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
-const { spawn, spawnSync } = require('node:child_process');
+const { spawn } = require('node:child_process');
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
 // An ES module, loaded by require(esm) — synchronous, which an init that must beat `ready` needs.
 const sentryPolicy = require('@faststudy/sentry');
@@ -10,6 +10,7 @@ const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const store = require('./store');
 const { startUpdater } = require('./updater');
+const { reapChildren, signalChildren } = require('./teardown');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 // One secret per launch, in every child's environment and in the renderer's bridge. 32 bytes of
@@ -17,6 +18,8 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const SECRET = randomBytes(32).toString('hex');
 const PORT_LINE = /^FASTSTUDY_PORT=(\d+)$/;
 const HEALTH_TIMEOUT_MS = 60_000;
+// Longer than a service's own Sentry shutdown flush (~2s), so a clean exit is never cut short.
+const KILL_GRACE_MS = 3000;
 // Env wins so dev and tests can point elsewhere; the packaged value is stamped into package.json at
 // build. Neither set means no DSN anywhere: main and every child report nothing.
 const SENTRY_DSN = process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || '';
@@ -35,6 +38,8 @@ const LOG_TAIL_BYTES = 200_000;
 const SCRUB_ENV = ['DATA_ROOT', 'GROQ_API_KEY', 'GEMINI_API_KEY'];
 
 const children = [];
+// In-flight SIGTERM→SIGKILL escalations; every exit path waits on them, or the timer dies with main.
+const reaping = new Set();
 let logStream = null;
 let mainWindow = null;
 // The launch screen's whole model: one row per child plus the failure, if the boot hit one.
@@ -312,7 +317,7 @@ async function runBoot() {
   } catch (error) {
     log('main', `boot failed: ${error.stack ?? error.message}`);
     // A retry re-spawns all four, so a surviving child would hold a port and a second DATA_ROOT writer.
-    killChildren();
+    await stopChildren();
     const failing = bootState.services.find((service) => service.state === 'starting');
     // Nothing is running any more, so no row may still read ready.
     for (const service of bootState.services) {
@@ -326,22 +331,22 @@ async function runBoot() {
   }
 }
 
-/** Stop every child. Idempotent — the list is emptied as it goes, so a retry and the exit handlers
- *  can all call it — and safe to call from a synchronous exit handler. */
+/** SIGTERM every child now — synchronous, for `process.on('exit')`, which cannot wait. Idempotent:
+ *  the list is emptied as it goes. Returns the children still to reap. */
 function killChildren() {
-  for (const child of children.splice(0)) {
-    if (child.exitCode !== null || child.signalCode !== null || !child.pid) continue;
-    try {
-      if (process.platform === 'win32') {
-        spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']);
-      } else {
-        // Negative pid: the child's whole process group, which is why they are spawned detached.
-        process.kill(-child.pid, 'SIGTERM');
-      }
-    } catch {
-      // Already gone, which is the outcome we wanted.
-    }
+  return signalChildren(children.splice(0));
+}
+
+/** Stop every child and resolve once each is gone, SIGKILLed if it outlived the grace. */
+function stopChildren() {
+  const signalled = killChildren();
+  if (signalled.length) {
+    const pending = reapChildren(signalled, KILL_GRACE_MS, (line) => log('main', line)).finally(
+      () => reaping.delete(pending),
+    );
+    reaping.add(pending);
   }
+  return Promise.all(reaping);
 }
 
 /** Open one DATA_ROOT file in the user's own app. Identifiers in, `database/` resolves the path —
@@ -457,21 +462,23 @@ if (!app.requestSingleInstanceLock()) {
     mainWindow.focus();
   });
   app.on('window-all-closed', () => app.quit());
-  app.on('will-quit', killChildren);
+  // Synchronous on Windows (`taskkill /F`), so `quit` — and a pending update install — still follows
+  // the kill (docs/UPDATES.md); POSIX holds the quit until the reap is done, then quits again.
+  app.on('will-quit', (event) => {
+    const done = stopChildren();
+    if (!reaping.size) return;
+    event.preventDefault();
+    done.finally(() => app.quit());
+  });
   // The paths that skip `will-quit`; an orphaned service would keep writing DATA_ROOT (docs/BOOT.md).
   process.on('exit', killChildren);
   for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.on(signal, () => {
-      killChildren();
-      process.exit(0);
-    });
+    process.on(signal, () => stopChildren().finally(() => process.exit(0)));
   }
   process.on('uncaughtException', (error) => {
     log('main', `uncaught: ${error.stack ?? error.message}`);
-    killChildren();
     // The SDK's own handler, registered first, has only queued the event; exiting now would drop it.
-    if (sentry) sentry.flush(2000).finally(() => process.exit(1));
-    else process.exit(1);
+    Promise.allSettled([stopChildren(), sentry?.flush(2000)]).finally(() => process.exit(1));
   });
 
   app.whenReady().then(async () => {

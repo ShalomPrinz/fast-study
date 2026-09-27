@@ -13,6 +13,7 @@ everything on quit.
 | `main.js`     | The launch: secret, child specs, ports, health, window, teardown, log, Sentry  |
 | `protocol.js` | The `app://bundle` scheme and serving `frontend/dist` over it                   |
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
+| `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
 | `updater.js`  | The update check — electron-updater against GitHub Releases, silent            |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
 | `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, the open bridge    |
@@ -67,10 +68,10 @@ hits that are not orphans; tell them apart by `/proc/<pid>/cwd` rather than read
 failure.
 
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
-covering `resolveWithin`'s path containment and the store's tables and refusal rules. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
+covering `resolveWithin`'s path containment, the store's tables and refusal rules, and the teardown's
+SIGTERM→SIGKILL escalation against real `sh` process groups. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
-unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns or waits on a process
-is in it.
+unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns a service is in it.
 
 ## CommonJS, deliberately
 
