@@ -72,6 +72,16 @@ def test_no_dsn_skips_init(reload_main, monkeypatch):
     assert not sentry_sdk.get_client().is_active()
 
 
+def test_google_genai_integration_is_disabled(reload_main, monkeypatch):
+    """Gemini calls are not instrumented: retried 429s and step failures must not become events."""
+
+    monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", FAKE_DSN)
+    reload_main()
+    client = sentry_sdk.get_client()
+    assert client.is_active()
+    assert client.get_integration("google_genai") is None
+
+
 def test_unhandled_route_error_reports_scrubbed_event(reload_main, monkeypatch):
     """An exception escaping a route becomes one event tagged backend, its Hebrew path redacted."""
 
