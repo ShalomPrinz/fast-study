@@ -50,6 +50,10 @@ frontend`, anything else throws. `platform` is `win32`/`linux`/`darwin` in both 
   crash-exit flush); electron main's `KILL_GRACE_MS` must stay above it.
 - **No fallback DSN anywhere.** Dev has none, so dev sends nothing; packaged, the launcher sets it.
   That is the claim on both run paths.
+- **A lone 200 from ingest is not proof of delivery** — Relay can accept the first envelope before
+  loading the project config, then drop it. Send two events, or curl a minimal envelope to
+  `/api/<project>/envelope/?sentry_key=<key>`; `403 … with_reason: ProjectId` means the key does not
+  belong to that project id.
 - Sentry's free tier keeps events 30 days — an issue older than that is gone, not fixed.
 
 Tests: `cd py && uv run --extra test pytest` and `cd js && npm test`. A change to one half is a

@@ -29,8 +29,18 @@ Duplicating a helper is cheap; duplicating a contract is not.
   invariant covering both and keep the difference: it is usually why the wiring exists.
 - **Outside the call graph.** `lib/` calls nothing and is depended on at build time, never over
   HTTP, so it cannot create a cycle and needs no port, secret or spawn slot.
-- **Consumers link, not copy** — an editable `[tool.uv.sources]` path dep on `../lib/<name>/py`, or
-  `file:../../lib/<name>/js` — so an edit here is live in every consumer with no reinstall.
+- **Consumers declare a path dep** — an editable `[tool.uv.sources]` path dep on `../lib/<name>/py`,
+  or `file:…/lib/<name>/js`. Python consumers, `electron/` and `frontend/` get a link, so an edit is
+  live there. Both `downloader/` packages install with `npm ci --install-links` (as CI and
+  `delivery/stage.mjs` require, so the staged tree has real files), which copies `@faststudy/*`: a
+  `js/` edit reaches them only after rerunning that in each. `readlink -f
+  downloader/*/node_modules/@faststudy/<pkg>` shows which you have.
+
+## Adding a `js/` package
+
+- It joins the root `workspaces: ["lib/*/js"]`: run `npm install` at the repo root so the root
+  `package-lock.json` lists it — CI's root `npm ci` fails on an out-of-sync lock.
+- Add its `py/` and `js/` suites to `.github/workflows/test.yml`, which lists each `lib/` suite by hand.
 
 ## Testing
 
