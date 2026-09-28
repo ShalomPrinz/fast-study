@@ -70,5 +70,8 @@ export function groupSections(items: Item[], media: Media): Section[] {
 // How many downloads the section stands for: a playlist counts its children once expanded, and
 // itself until then — "Download all" stays disabled in that window, so its count is exact when usable.
 export function leafCount(items: Item[], childrenOf: (ref: string) => Item[] | null): number {
-  return items.reduce((n, item) => n + (item.expandable ? (childrenOf(item.ref)?.length ?? 1) : 1), 0)
+  return items.reduce(
+    (n, item) => n + (item.expandable ? (childrenOf(item.ref)?.length ?? 1) : 1),
+    0,
+  )
 }
