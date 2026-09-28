@@ -35,9 +35,10 @@ restored from each page's `onRenderSuccess`; with nothing captured it snaps to t
 ## `MarkdownEditor`
 
 CodeMirror 6 composed extension by extension — no `basicSetup`, so no autocomplete, search, lint or line
-numbers. Its one keymap binds Ctrl/Cmd+Home/End (Shift extends) to the document's edges (`utils/docEdge.ts`):
-unbound, they fall to contenteditable, which only reaches the lines CodeMirror has rendered. It is
-rich-styled _source_: markers stay in the buffer and the document is never re-serialized.
+numbers. It does install `history()` and `defaultKeymap` + `historyKeymap` (`@codemirror/commands`):
+unbound, keys fall to contenteditable, whose Ctrl+Home/End only reach the lines CodeMirror has rendered.
+A pushed `value` (load, Restore) stays out of undo history, so Ctrl+Z never brings discarded text back.
+It is rich-styled _source_: markers stay in the buffer and the document is never re-serialized.
 A `HighlightStyle` sizes headings, dims the markers to `--text-4`, and draws `---` as a chip, since exactly
 two of them carry the document's structure.
 
