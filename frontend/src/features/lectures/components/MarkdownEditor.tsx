@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { EditorState } from '@codemirror/state'
 import type { Range, Text } from '@codemirror/state'
-import { EditorView, ViewPlugin, Decoration } from '@codemirror/view'
+import { EditorView, ViewPlugin, Decoration, keymap } from '@codemirror/view'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { markdown } from '@codemirror/lang-markdown'
 import { tags } from '@lezer/highlight'
 import { scanCallouts, scanCodeFences, scanMath } from '@/features/lectures/utils/mdDecorations'
 import type { CalloutClass } from '@/features/lectures/utils/mdDecorations'
+import { docEdgeSelection } from '@/features/lectures/utils/docEdge'
 import './MarkdownEditor.css'
 
 // Hebrew markdown is prose with marks in it, so the surface keeps the UI font and the wide leading
@@ -94,6 +95,20 @@ const dialectDecorations = ViewPlugin.fromClass(
   { decorations: (plugin) => plugin.decorations },
 )
 
+// Document start/end only, not `defaultKeymap`: every other key keeps its native contenteditable behaviour.
+const toDocEdge = (end: boolean, extend: boolean) => (view: EditorView) => {
+  view.dispatch({
+    selection: docEdgeSelection(view.state, end, extend),
+    scrollIntoView: true,
+    userEvent: 'select',
+  })
+  return true
+}
+const docEdgeKeymap = keymap.of([
+  { key: 'Mod-Home', run: toDocEdge(false, false), shift: toDocEdge(false, true) },
+  { key: 'Mod-End', run: toDocEdge(true, false), shift: toDocEdge(true, true) },
+])
+
 interface Props {
   value: string
   onChange: (value: string) => void
@@ -112,6 +127,7 @@ export default function MarkdownEditor({ value, onChange }: Props) {
         doc: value,
         extensions: [
           markdown(),
+          docEdgeKeymap,
           syntaxHighlighting(summaryHighlight),
           dialectDecorations,
           editorTheme,
