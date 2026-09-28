@@ -8,6 +8,7 @@ import {
   OTHER_SECTION,
   OTHER_LINKS_SECTION,
   groupSections,
+  leafCount,
   parseSectionId,
   sectionId,
   sectionTitle,
@@ -179,5 +180,23 @@ describe('sectionTitle', () => {
     i18n.loadAndActivate({ locale: 'he', messages: he })
     expect(sectionId('Algebra', 'video', OTHER_SECTION)).toBe(id)
     expect(parseSectionId(id)?.title).toBe('Other')
+  })
+})
+
+describe('leafCount', () => {
+  const playlist: Item = { ...item('p', 'Week 1'), expandable: true }
+  const rows = [item('a', 'Week 1'), playlist]
+
+  it('counts an expanded playlist as its children — the leaves the run queues', () => {
+    const children = { p: [item('p1', 'Week 1'), item('p2', 'Week 1')] }
+    expect(leafCount(rows, (ref) => children[ref as 'p'] ?? null)).toBe(3)
+  })
+
+  it('counts a playlist as itself until its children are known', () => {
+    expect(leafCount(rows, () => null)).toBe(2)
+  })
+
+  it('counts an expanded empty playlist as nothing', () => {
+    expect(leafCount(rows, () => [])).toBe(1)
   })
 })

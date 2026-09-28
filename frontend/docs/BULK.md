@@ -25,7 +25,8 @@ delimiters, which holds because a course name cannot contain one and media is an
 ## Submit
 
 The section flattens into downloadable leaves (a playlist contributes its children, never its own ref),
-so "Download all" is disabled until every playlist is expanded and never auto-expands. Each leaf becomes a
+so "Download all" is disabled until every playlist is expanded and never auto-expands. Its count and the
+header's are those leaves (`leafCount`; an unexpanded playlist counts as one until its children are known). Each leaf becomes a
 `RunTarget` **at submit**: the row's resolved name and kind, plus the two verdicts only the page can give
 because they read the live tree — `skipped` (`hasResource`, the rule that tints the row green, or
 `overwritesVideo`, so an unprobed `unknown` never replaces a stored video — a run has no confirm) and
