@@ -26,7 +26,7 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import MarkdownEditor from '@/features/lectures/components/MarkdownEditor'
-import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+import { pdfBadge, pdfNeedsUpdate } from '@/features/lectures/utils/pdfBadge'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
@@ -171,7 +171,7 @@ export default function EditSummaryView() {
   const badge = files && pdfBadge(files)
   const dirty = !loading && content !== savedContent
   // A stale or absent PDF is work to do even on a clean buffer: the press rebuilds it from disk.
-  const canUpdate = dirty || badge?.kind === 'stale' || !files?.['summary.pdf'].exists
+  const canUpdate = dirty || pdfNeedsUpdate(files)
 
   return (
     <div className="edit-view">

@@ -13,7 +13,8 @@ two panes: `PdfViewer` (zoom, current page, pop-out) and `MarkdownEditor`, heade
 
 `Save & update PDF` is the only write path — a saved summary whose PDF still shows the old text is never
 what the user wanted. It runs save → tree refresh (the stale chip reads the tree's mtimes) → delete
-`summary.pdf` → run `pdf`, then waits for SSE. It is enabled for a dirty buffer, a stale PDF or no PDF.
+`summary.pdf` → run `pdf`, then waits for SSE. It is enabled for a dirty buffer, a stale PDF or no PDF —
+stale by the mtime rule (`pdfNeedsUpdate`), not the chip, which a render warning outranks.
 `Restore original` discards every edit and deletes the snapshot, so it is confirm-gated.
 
 The effect watching `files`/`lectureError` runs on every refresh, so `pdfFiredRef` limits it to the run
