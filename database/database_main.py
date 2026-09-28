@@ -132,6 +132,7 @@ async def post_course(request: Request):
         body = await request.json()
         name = body["name"]
         crud.create_course(name, body.get("source_url"))
+        broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "create_dir_failed", {"path": name})
@@ -146,6 +147,7 @@ async def patch_course(course: str, request: Request):
         body = await request.json()
         name = body["name"]
         crud.rename_course(course, name)
+        broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "rename_failed", {"from": course, "to": name})
@@ -170,6 +172,7 @@ async def patch_course_archived(course: str, request: Request):
     try:
         body = await request.json()
         crud.set_course_archived(course, body["archived"])
+        broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "file_write_failed", {"file": ARCHIVED_MARKER})
@@ -184,6 +187,7 @@ async def post_lecture(course: str, request: Request, kind: str = Query("lecture
         body = await request.json()
         name = body["name"]
         crud.create_lecture(course, name, kind)
+        broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "create_dir_failed", {"path": name})
@@ -200,6 +204,7 @@ async def patch_lecture(
         body = await request.json()
         name = body["name"]
         crud.rename_lecture(course, lecture, name, kind)
+        broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "rename_failed", {"from": lecture, "to": name})
@@ -466,6 +471,8 @@ async def post_config(request: Request):
         if "data_root" in body:
             # The setter is the only writer of fs.paths' root state, so this takes effect at once.
             paths.set_data_root(settings.prepare_data_root(body["data_root"]))
+            # Every open tree still lists the old root's courses until it refetches.
+            broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 400, "settings_store_io_failed")

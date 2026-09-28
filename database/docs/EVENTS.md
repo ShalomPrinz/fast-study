@@ -8,8 +8,10 @@ proxies and clients see the stream open before any real traffic.
 The event carries **no payload** — the body of `/notify` is drained and discarded. It is a
 "something changed, refetch" ping, which keeps producers from having to model what changed and
 keeps the channel a single event type. Producers are the backend (each meaningful pipeline and
-course-overview state change, via `services/db_client.notify`) and the downloader server (after a
-successful upload).
+course-overview state change, via `services/db_client.notify`), the downloader server (after a
+successful upload), and this service itself after a successful course create, rename or archive,
+lecture create or rename, and a `POST /config` that applies a new `data_root` — so every open tree
+refetches, not just the window that acted.
 
 Delivery is fire-and-forget: per-queue failures are swallowed, and producers neither wait nor
 retry. A missed notify costs a stale view until the next one, never a blocked producer.
