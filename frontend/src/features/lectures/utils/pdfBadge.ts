@@ -2,7 +2,7 @@ import { t } from '@lingui/core/macro'
 import type { FileStatus, PdfBadge } from '@/types'
 
 // A getter, not a constant: the copy has to resolve against whichever locale is active now.
-export const stalePdfTitle = (): string => t`summary.pdf is older than summary.md. Re-generate it.`
+export const stalePdfTitle = (): string => t`The PDF is older than the summary. Re-generate it.`
 
 // summary.pdf is stale once summary.md is newer. A missing PDF never is: every re-render deletes it
 // first, which keeps a pending render quiet — see docs/LECTURES.md.

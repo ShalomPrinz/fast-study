@@ -32,8 +32,8 @@ export default function DriveFields({ value, onChange, folderMissing }: Props) {
           </span>
           <span className="settings-hint">
             <Trans>
-              With this off, a lecture is finished once its PDF is ready. Turning it back on marks
-              every lecture that finished meanwhile as unfinished again, and they will all upload.
+              With this off, a lecture is done once its PDF is ready. If you turn it back on, every
+              lecture that finished meanwhile counts as unfinished, and all of them will upload.
             </Trans>
           </span>
         </span>

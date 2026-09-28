@@ -33,14 +33,14 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   file_not_found: msg({ message: '{file} was not found.' }),
   internal_error: msg({ message: 'Something went wrong.' }),
   storage_unavailable: msg({
-    message: "The storage service is not answering. Make sure it's running.",
+    message: "Part of Fast Study isn't responding. Restart the app.",
   }),
-  storage_error: msg({ message: 'The storage service could not complete the request.' }),
+  storage_error: msg({ message: "Fast Study couldn't reach your files. Try again." }),
 
   // backend — HTTP
   step_disabled: msg({ message: 'That step is turned off in settings.' }),
   google_credentials_missing: msg({
-    message: 'Google credentials are missing. Put credentials.json at {path}.',
+    message: "Google Drive can't be connected: a file Fast Study needs is missing from {path}.",
   }),
 
   // backend — pipeline
@@ -65,16 +65,16 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   summarization_failed: msg({ message: 'Summarizing the transcript failed.' }),
   pdf_tool_timeout: msg({
-    message: '{tool} took too long and was stopped after {seconds} seconds.',
+    message: 'Building the PDF took too long and was stopped after {seconds} seconds.',
   }),
   pdf_pandoc_failed: msg({ message: 'Could not convert the summary for printing.' }),
-  pdf_engine_no_output: msg({ message: 'The PDF engine produced no file.' }),
+  pdf_engine_no_output: msg({ message: 'The PDF could not be created.' }),
   pdf_missing_font: msg({ message: 'A font the PDF needs is missing.' }),
   pdf_asset_missing: msg({ message: 'A file the PDF template needs is missing: {asset}.' }),
   // The frame is ours; the engine's own error text rides in `detail` (see `detailOf`).
   latex_error: msg({
     message:
-      '{more_count, plural, =0 {LaTeX reported an error while building the PDF.} other {LaTeX reported an error while building the PDF, and # more.}}',
+      '{more_count, plural, =0 {Something in the summary stopped the PDF from being built.} other {Something in the summary stopped the PDF from being built, along with # more problems.}}',
   }),
   drive_upload_failed: msg({ message: 'Uploading to Google Drive failed.' }),
   drive_not_connected: msg({ message: 'Google Drive is not connected. Connect it in Settings.' }),
@@ -122,13 +122,13 @@ const MESSAGES: Record<string, MessageDescriptor> = {
 
   // downloader/server
   autodl_unreachable: msg({
-    message: "Can't reach the auto-downloader. Make sure it's running.",
+    message: "The part of Fast Study that downloads recordings isn't responding. Restart the app.",
   }),
   database_store_failed: msg({ message: 'The downloaded file could not be stored.' }),
   run_unknown: msg({ message: 'That download run no longer exists.' }),
   run_not_paused: msg({ message: 'That download run is not paused.' }),
-  download_tool_spawn_failed: msg({ message: 'Could not start {tool}.' }),
-  download_tool_failed: msg({ message: '{tool} failed with exit code {exit_code}.' }),
+  download_tool_spawn_failed: msg({ message: "The download couldn't start." }),
+  download_tool_failed: msg({ message: 'The download failed.' }),
   download_auth_failed: msg({
     message: 'The download was refused — the session has expired. Reconnect the account.',
   }),
@@ -153,11 +153,13 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       '{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}',
   }),
-  browser_missing: msg({ message: 'No Chromium browser was found. Install one and try again.' }),
+  browser_missing: msg({
+    message: 'No Chrome or Edge was found on this computer. Install Chrome and try again.',
+  }),
   course_url_unsupported_site: msg({
     message: 'That course link is not from a supported site: {url}.',
   }),
-  course_url_no_id: msg({ message: 'That course link carries no course id: {url}.' }),
+  course_url_no_id: msg({ message: "That course link doesn't point to a specific course: {url}." }),
   link_not_a_video: msg({
     message:
       '{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}',
@@ -185,9 +187,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       'No video was captured on that Zoom page. The passcode or the player may need a manual start.',
   }),
-  xvfb_unavailable: msg({ message: 'The virtual display for Zoom capture could not start.' }),
+  xvfb_unavailable: msg({ message: "Couldn't start capturing the Zoom recording. Try again." }),
   moodle_token_no_privatetoken: msg({
-    message: 'This Moodle session cannot capture videostream recordings. Reconnect the account.',
+    message: "This Moodle connection can't download these recordings. Reconnect the account.",
   }),
   moodle_login_timeout: msg({ message: 'The Moodle login timed out. Try connecting again.' }),
   moodle_login_abandoned: msg({

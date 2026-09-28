@@ -284,7 +284,7 @@ const RecordingRow = memo(function RecordingRow({
             className="btn btn--ghost recording-download-btn"
             onClick={onDownloadClick}
             disabled={pending || unsupported}
-            title={unsupported ? t`Not a file the downloader can fetch` : undefined}
+            title={unsupported ? t`The downloader can't fetch this file` : undefined}
           >
             {pending ? (
               <span className="recording-spinner" />

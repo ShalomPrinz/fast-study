@@ -17,7 +17,7 @@ export default function MoodleAccountField() {
       <p className="settings-hint">
         <Trans>
           Fast Study signs in to your course site with this account to find and fetch recordings.
-          Nothing else needs it, and you can connect it later.
+          You can connect it later.
         </Trans>
       </p>
       <div className="moodle-account-control">

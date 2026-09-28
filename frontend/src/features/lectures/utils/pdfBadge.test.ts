@@ -32,7 +32,7 @@ describe('pdfBadge', () => {
   it('reports stale when summary.md is newer — the post-revert case', () => {
     expect(pdfBadge(files({ exists: true, mtime: 100 }, { exists: true, mtime: 200 }))).toEqual({
       kind: 'stale',
-      title: 'summary.pdf is older than summary.md. Re-generate it.',
+      title: 'The PDF is older than the summary. Re-generate it.',
     })
   })
 

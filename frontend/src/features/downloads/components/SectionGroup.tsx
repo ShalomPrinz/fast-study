@@ -269,8 +269,8 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
         {notStarted > 0 && (
           <div className="recordings-section-stalled">
             {plural(notStarted, {
-              one: `# row never started — ${stoppedBecause}`,
-              other: `# rows never started — ${stoppedBecause}`,
+              one: `# recording never started — ${stoppedBecause}`,
+              other: `# recordings never started — ${stoppedBecause}`,
             })}
           </div>
         )}
@@ -279,8 +279,8 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
           <div className="recordings-section-stalled">
             <Plural
               value={stalled}
-              one="Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name."
-              other="Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name."
+              one="Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name."
+              other="Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name."
             />
           </div>
         )}

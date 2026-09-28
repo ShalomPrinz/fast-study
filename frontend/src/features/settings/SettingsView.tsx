@@ -127,10 +127,7 @@ export default function SettingsView() {
       // The http client already toasts a connection error, but that toast is deduped per service and
       // reads as ambient noise — a save that went nowhere still owes its own verdict.
       if (isConnectionError(err)) {
-        toast(
-          'error',
-          t`Couldn't save all settings — check the services are running and try again.`,
-        )
+        toast('error', t`Couldn't save all settings. Restart the app and try again.`)
       } else {
         toastFailure(err)
       }
@@ -268,9 +265,9 @@ export default function SettingsView() {
               </select>
               <span className="settings-hint">
                 <Trans>
-                  The ceiling on unattended work: it caps a dropped or downloaded video and the
-                  nightly catch-up pass alike, never a run you start from the running pipelines
-                  page.
+                  This applies only to work that starts on its own: a video you drop in, a video
+                  that finishes downloading, and the daily run. Runs you start yourself are not
+                  affected.
                 </Trans>
               </span>
             </div>
@@ -283,13 +280,13 @@ export default function SettingsView() {
                 />
                 <span className="settings-check-text">
                   <span>
-                    <Trans>Catch up on unfinished lectures overnight</Trans>
+                    <Trans>Run unfinished lectures daily</Trans>
                   </span>
                 </span>
               </label>
               <div className="settings-label">
                 <label htmlFor="nightly-hour">
-                  <Trans>Nightly pass hour</Trans>
+                  <Trans>Daily run time</Trans>
                 </label>
               </div>
               <select
@@ -307,8 +304,8 @@ export default function SettingsView() {
               </select>
               <span className="settings-hint">
                 <Trans>
-                  The two gates are independent: the nightly pass is capped by the setting above as
-                  well, so with that set to do nothing, nothing runs unattended whatever the hour.
+                  The daily run also follows the setting above: if it's set to do nothing, the daily
+                  run does nothing either.
                 </Trans>
               </span>
             </div>
@@ -319,7 +316,7 @@ export default function SettingsView() {
       {pending && (
         <ConfirmModal
           message={t`Change the data folder while lectures are being processed?`}
-          warning={t`A lecture running now would have its earlier files in the old folder and the rest in the new one.`}
+          warning={t`A lecture running now would save some files in the old folder and the rest in the new one.`}
           detail={
             pending.runs.length > 0 ? (
               <ul className="settings-run-list">

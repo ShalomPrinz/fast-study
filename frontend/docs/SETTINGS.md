@@ -15,8 +15,8 @@ edits them all, and the prerequisites and accounts both screens show.
 | Drive root folder | none — required once Drive is on          | any folder name       | `backend/`  |
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`  |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`  |
-| Nightly catch-up  | on                                        | off                   | `backend/`  |
-| Nightly hour      | 03:00                                     | any hour, 00:00-23:00 | `backend/`  |
+| Daily run         | on                                        | off                   | `backend/`  |
+| Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`  |
 
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.

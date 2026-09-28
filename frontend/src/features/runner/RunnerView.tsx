@@ -127,7 +127,7 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
       <div>
         {remote?.progress && (
           <p className="row-sub">
-            {t`${remote.progress.completed} of ${remote.progress.total} chunks`}
+            {t`${remote.progress.completed} of ${remote.progress.total} parts`}
           </p>
         )}
         {entry.sleepingUntil ? (
@@ -220,8 +220,8 @@ export default function RunnerView() {
                       <span className="section-count">
                         <Plural
                           value={inFlight.length}
-                          one="# lecture in flight"
-                          other="# lectures in flight"
+                          one="# lecture running"
+                          other="# lectures running"
                         />
                       </span>
                     )}
@@ -339,8 +339,7 @@ export default function RunnerView() {
                       </div>
                       <p className="queue-note">
                         <Trans>
-                          Nothing is coming for these until you run them, or the nightly catch-up
-                          pass does.
+                          These won't start until you run them, or until the daily run does.
                         </Trans>
                       </p>
                     </>

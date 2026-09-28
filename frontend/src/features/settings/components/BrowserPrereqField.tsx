@@ -95,8 +95,8 @@ export default function BrowserPrereqField() {
       </div>
       <p className="settings-hint">
         <Trans>
-          Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course
-          site. Turning a video into a summary never uses it.
+          Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site.
+          Turning a video into a summary doesn't need it.
         </Trans>
       </p>
       <p className={`settings-status ${TONE[state.kind]}`} id="browser-prereq-status">

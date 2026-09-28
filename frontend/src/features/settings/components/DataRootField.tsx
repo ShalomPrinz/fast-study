@@ -46,8 +46,8 @@ export default function DataRootField({ value, onChange, confirmed, onConfirmedC
       ) : (
         <p className="settings-note settings-note--warn">
           <Trans>
-            Changing this re-points the app only — it never moves anything. The old folder stays
-            exactly as it is, and pointing back here brings it all back.
+            This only changes where the app looks — it never moves your files. The old folder stays
+            as it is, and choosing it again brings everything back.
           </Trans>
         </p>
       )}
