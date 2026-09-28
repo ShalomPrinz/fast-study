@@ -20,6 +20,7 @@ import { failureOf } from '@/shared/utils/failure'
 import ServiceError, { serviceErrorNode } from '@/shared/components/ServiceError'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { lectureNotFound } from '@/shared/utils/notFound'
+import { lectureRoute } from '@/shared/utils/url'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
@@ -175,7 +176,8 @@ export default function EditSummaryView() {
   return (
     <div className="edit-view">
       <div className="edit-toolbar">
-        <button className="edit-back" onClick={() => navigate(-1)}>
+        {/* The lecture, not history: the editor is often reached from a fresh tab or another page. */}
+        <button className="edit-back" onClick={() => navigate(lectureRoute(course, lecture, kind))}>
           <Icon icon="chevron-start" />
           <Trans>Back</Trans>
         </button>

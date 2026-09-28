@@ -4,8 +4,8 @@
 
 ## Layout
 
-A toolbar — back, the lecture name (`dir="auto"`), the stale/warning PDF chip ([LECTURES.md](LECTURES.md)
-§summary.pdf badges), a demoted `Restore original` a gap away from the primary `Save & update PDF` — over
+A toolbar — back (to the lecture page, never history, so a fresh tab stays in the app), the lecture name
+(`dir="auto"`), the stale/warning PDF chip ([LECTURES.md](LECTURES.md) §summary.pdf badges), a demoted `Restore original` a gap away from the primary `Save & update PDF` — over
 two panes: `PdfViewer` (zoom, current page, pop-out) and `MarkdownEditor`, headed by an amber
 `Unsaved changes` dot whenever the buffer differs from what was last read or written.
 
