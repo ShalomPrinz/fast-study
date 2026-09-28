@@ -23,6 +23,8 @@ const KILL_GRACE_MS = 3000;
 // Env wins so dev and tests can point elsewhere; the packaged value is stamped into package.json at
 // build. Neither set means no DSN anywhere: main and every child report nothing.
 const SENTRY_DSN = process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || '';
+// One value for main and every child, so all five processes report under the same environment.
+const SENTRY_ENVIRONMENT = app.isPackaged ? 'production' : 'development';
 
 // Per-user writable state: what `statePath`/`state_path` join onto in every service. Passed
 // explicitly rather than left to their fallback, so main's log lands beside the children's state.
@@ -62,7 +64,7 @@ function initSentry() {
     ...sentryPolicy.options('electron', {
       dsn: SENTRY_DSN,
       version: app.getVersion(),
-      environment: app.isPackaged ? 'production' : 'development',
+      environment: SENTRY_ENVIRONMENT,
     }),
     beforeSend,
     // Renderers reach main over the SDK's own preload, which it registers on the session and which
@@ -200,6 +202,7 @@ function sharedEnv() {
     FASTSTUDY_STATE_DIR: STATE_DIR,
     // What each service's Sentry init reads; `release` is `faststudy@<version>` in all five processes.
     FASTSTUDY_VERSION: app.getVersion(),
+    SENTRY_ENVIRONMENT,
     ...(SENTRY_DSN ? { FASTSTUDY_SENTRY_DSN: SENTRY_DSN } : {}),
     ...packaged,
     ...store.serviceEnv(),

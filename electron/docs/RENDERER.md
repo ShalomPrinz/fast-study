@@ -74,7 +74,8 @@ logged. Nothing guards navigation or checks an IPC sender, so the window must ne
 Main inits `@sentry/electron/main` from `lib/sentry`'s policy (`options('electron')`), before
 `registerScheme()` and before `ready`, which the SDK requires. The DSN is `FASTSTUDY_SENTRY_DSN` from
 main's env, else `package.json`'s `sentryDsn`, which only the release build stamps
-(`-c.extraMetadata.sentryDsn`); neither set means the SDK is never loaded: no DSN, no report.
+(`-c.extraMetadata.sentryDsn`); neither set means the SDK is never loaded: no DSN, no report. The
+environment is `production` packaged, else `development`: one constant, also every child's `SENTRY_ENVIRONMENT`.
 
 **A renderer's event travels renderer SDK → IPC → main → Sentry.** The SDK registers its own preload
 on the default session (`registerPreloadScript`); it requires only `electron`, so it runs in the
