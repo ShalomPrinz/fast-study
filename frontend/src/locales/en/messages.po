@@ -29,11 +29,6 @@ msgstr "\"{course}\" has no recitation named \"{lecture}\"."
 msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "\"{name}\" has no characters that can be used in a folder name."
 
-#. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:236
-msgid "{0, plural, one {# item} other {# items}}"
-msgstr "{0, plural, one {# item} other {# items}}"
-
 #. placeholder {0}: pending.length
 #: src/features/runner/RunnerView.tsx:314
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
@@ -90,7 +85,7 @@ msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, other {# unsupported}}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:150
+#: src/features/downloads/components/RecordingRow.tsx:161
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
@@ -170,17 +165,21 @@ msgstr "{count, plural, other {summary used only {used} of # materials}}"
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} of {stageCount} complete"
 
-#: src/features/downloads/components/RecordingRow.tsx:130
+#: src/features/downloads/components/RecordingRow.tsx:141
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} already exists in {course}. Download again and overwrite?"
 
-#: src/features/downloads/components/RecordingRow.tsx:139
+#: src/features/downloads/components/RecordingRow.tsx:150
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 
-#: src/shared/i18n/serviceErrors.ts:163
+#: src/shared/i18n/serviceErrors.ts:168
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
+
+#: src/shared/i18n/serviceErrors.ts:125
+msgid "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} other {Something went wrong.}}"
+msgstr "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} other {Something went wrong.}}"
 
 #: src/shared/i18n/serviceErrors.ts:118
 msgid "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
@@ -207,11 +206,15 @@ msgstr "{file} was not found."
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
+#: src/features/downloads/components/SectionGroup.tsx:242
+msgid "{leaves, plural, one {# item} other {# items}}"
+msgstr "{leaves, plural, one {# item} other {# items}}"
+
 #: src/features/search/SearchView.tsx:235
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:250
+#: src/features/downloads/components/RecordingRow.tsx:261
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
@@ -235,7 +238,7 @@ msgstr "{name} was used"
 msgid "{name} will be used"
 msgstr "{name} will be used"
 
-#: src/features/downloads/components/SectionGroup.tsx:271
+#: src/features/downloads/components/SectionGroup.tsx:277
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 
@@ -271,7 +274,7 @@ msgstr "{provider, select, gemini {The Gemini API key is not set. Add it in Sett
 msgid "{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}"
 msgstr "{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}"
 
-#: src/shared/i18n/serviceErrors.ts:152
+#: src/shared/i18n/serviceErrors.ts:157
 msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 msgstr "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 
@@ -291,7 +294,7 @@ msgstr "{stage} · step {stepNumber} of {stageCount}"
 #~ msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 #~ msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:280
+#: src/features/downloads/components/SectionGroup.tsx:286
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 
@@ -303,7 +306,7 @@ msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may h
 #~ msgid "{tool} took too long and was stopped after {seconds} seconds."
 #~ msgstr "{tool} took too long and was stopped after {seconds} seconds."
 
-#: src/shared/i18n/serviceErrors.ts:167
+#: src/shared/i18n/serviceErrors.ts:172
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} no longer exists. Check the course page for a new link."
 
@@ -423,7 +426,7 @@ msgstr "Archived ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
-#: src/features/downloads/components/RecordingRow.tsx:238
+#: src/features/downloads/components/RecordingRow.tsx:249
 msgid "Attach material to"
 msgstr "Attach material to"
 
@@ -542,7 +545,7 @@ msgstr "Choose a data folder."
 msgid "Close"
 msgstr "Close"
 
-#: src/features/downloads/components/RecordingRow.tsx:161
+#: src/features/downloads/components/RecordingRow.tsx:172
 msgid "Collapse"
 msgstr "Collapse"
 
@@ -615,7 +618,7 @@ msgstr "Could not delete {file}."
 msgid "Could not extract the audio from the video."
 msgstr "Could not extract the audio from the video."
 
-#: src/shared/i18n/serviceErrors.ts:181
+#: src/shared/i18n/serviceErrors.ts:186
 msgid "Could not list the playlist."
 msgstr "Could not list the playlist."
 
@@ -651,7 +654,7 @@ msgstr "Could not rename \"{from}\" to \"{to}\"."
 #~ msgid "Could not start {tool}."
 #~ msgstr "Could not start {tool}."
 
-#: src/shared/i18n/serviceErrors.ts:170
+#: src/shared/i18n/serviceErrors.ts:175
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "Could not tell what {url} is — the site didn't answer usefully."
 
@@ -684,7 +687,7 @@ msgstr "Couldn't load summaries for {course}."
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
-#: src/shared/i18n/serviceErrors.ts:190
+#: src/shared/i18n/serviceErrors.ts:195
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "Couldn't start capturing the Zoom recording. Try again."
 
@@ -692,7 +695,7 @@ msgstr "Couldn't start capturing the Zoom recording. Try again."
 #~ msgid "Couldn't start the Google sign-in."
 #~ msgstr "Couldn't start the Google sign-in."
 
-#: src/shared/i18n/serviceErrors.ts:140
+#: src/shared/i18n/serviceErrors.ts:145
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
@@ -764,36 +767,35 @@ msgstr "Do nothing — I'll start runs myself"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/RecordingRow.tsx:296
+#: src/features/downloads/components/RecordingRow.tsx:307
 msgid "Download"
 msgstr "Download"
 
-#: src/features/downloads/components/RecordingRow.tsx:276
-#: src/features/downloads/components/RecordingRow.tsx:277
+#: src/features/downloads/components/RecordingRow.tsx:287
+#: src/features/downloads/components/RecordingRow.tsx:288
 msgid "Download again"
 msgstr "Download again"
 
-#. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:262
-msgid "Download all {0}"
-msgstr "Download all {0}"
+#: src/features/downloads/components/SectionGroup.tsx:268
+msgid "Download all {leaves}"
+msgstr "Download all {leaves}"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
-#: src/features/downloads/components/RecordingRow.tsx:294
+#: src/features/downloads/components/RecordingRow.tsx:268
+#: src/features/downloads/components/RecordingRow.tsx:305
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
-#: src/features/downloads/components/RecordingRow.tsx:262
+#: src/features/downloads/components/RecordingRow.tsx:273
 msgid "Downloading"
 msgstr "Downloading"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:240
+#: src/features/downloads/components/SectionGroup.tsx:246
 msgid "Downloading {0}/{1}…"
 msgstr "Downloading {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:247
+#: src/features/downloads/components/SectionGroup.tsx:253
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
@@ -805,8 +807,8 @@ msgstr "Downloading recordings"
 msgid "Downloading recordings (optional)"
 msgstr "Downloading recordings (optional)"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
-#: src/features/downloads/components/SectionGroup.tsx:262
+#: src/features/downloads/components/RecordingRow.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:268
 msgid "Downloading…"
 msgstr "Downloading…"
 
@@ -859,11 +861,11 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 
-#: src/features/downloads/components/RecordingRow.tsx:161
+#: src/features/downloads/components/RecordingRow.tsx:172
 msgid "Expand"
 msgstr "Expand"
 
-#: src/features/downloads/components/SectionGroup.tsx:260
+#: src/features/downloads/components/SectionGroup.tsx:266
 msgid "Expand every playlist in this section first"
 msgstr "Expand every playlist in this section first"
 
@@ -897,7 +899,7 @@ msgstr "Extracting audio"
 msgid "failed"
 msgstr "failed"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
+#: src/features/downloads/components/RecordingRow.tsx:268
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
@@ -942,7 +944,7 @@ msgstr "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
-#: src/features/downloads/components/RecordingRow.tsx:204
+#: src/features/downloads/components/RecordingRow.tsx:215
 msgid "File type"
 msgstr "File type"
 
@@ -1036,7 +1038,7 @@ msgstr "Groq rate limit reached"
 msgid "Home"
 msgstr "Home"
 
-#: src/features/downloads/components/RecordingRow.tsx:270
+#: src/features/downloads/components/RecordingRow.tsx:281
 msgid "In course"
 msgstr "In course"
 
@@ -1069,7 +1071,7 @@ msgstr "Last error:"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/RecordingRow.tsx:220
+#: src/features/downloads/components/RecordingRow.tsx:231
 msgid "Lecture"
 msgstr "Lecture"
 
@@ -1087,7 +1089,7 @@ msgstr "Lecture {0}"
 #~ msgid "Lecture 1"
 #~ msgstr "Lecture 1"
 
-#: src/features/downloads/components/RecordingRow.tsx:238
+#: src/features/downloads/components/RecordingRow.tsx:249
 msgid "Lecture name"
 msgstr "Lecture name"
 
@@ -1130,7 +1132,7 @@ msgstr "Loading…"
 msgid "Match whole word"
 msgstr "Match whole word"
 
-#: src/features/downloads/components/RecordingRow.tsx:44
+#: src/features/downloads/components/RecordingRow.tsx:46
 msgid "Material"
 msgstr "Material"
 
@@ -1139,7 +1141,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:199
+#: src/shared/i18n/serviceErrors.ts:204
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1171,7 +1173,7 @@ msgstr "No archived courses"
 msgid "No Chrome or Edge found on this computer."
 msgstr "No Chrome or Edge found on this computer."
 
-#: src/shared/i18n/serviceErrors.ts:156
+#: src/shared/i18n/serviceErrors.ts:161
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "No Chrome or Edge was found on this computer. Install Chrome and try again."
 
@@ -1195,7 +1197,7 @@ msgstr "No Google Drive folder is set. Choose one in Settings."
 msgid "No Lectures"
 msgstr "No Lectures"
 
-#: src/shared/i18n/serviceErrors.ts:198
+#: src/shared/i18n/serviceErrors.ts:203
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
@@ -1243,11 +1245,11 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/shared/i18n/serviceErrors.ts:183
+#: src/shared/i18n/serviceErrors.ts:188
 msgid "No video was captured on that page. Play it once by hand and try again."
 msgstr "No video was captured on that page. Play it once by hand and try again."
 
-#: src/shared/i18n/serviceErrors.ts:186
+#: src/shared/i18n/serviceErrors.ts:191
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 
@@ -1316,7 +1318,7 @@ msgstr "Now running"
 msgid "Only .mp4 files are allowed"
 msgstr "Only .mp4 files are allowed"
 
-#: src/shared/i18n/serviceErrors.ts:178
+#: src/shared/i18n/serviceErrors.ts:183
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "Only YouTube playlists can be opened up; {host} cannot."
 
@@ -1458,7 +1460,7 @@ msgstr "Ready to retry"
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/RecordingRow.tsx:226
+#: src/features/downloads/components/RecordingRow.tsx:237
 msgid "Recitation"
 msgstr "Recitation"
 
@@ -1543,7 +1545,7 @@ msgid "Results"
 msgstr "Results"
 
 #: src/features/downloads/components/RecordingJobList.tsx:48
-#: src/features/downloads/components/RecordingRow.tsx:292
+#: src/features/downloads/components/RecordingRow.tsx:303
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
@@ -1610,7 +1612,7 @@ msgstr "Save"
 msgid "Save & update PDF"
 msgstr "Save & update PDF"
 
-#: src/features/downloads/components/RecordingRow.tsx:212
+#: src/features/downloads/components/RecordingRow.tsx:223
 msgid "Save as"
 msgstr "Save as"
 
@@ -1782,23 +1784,23 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 #~ msgid "That course link carries no course id: {url}."
 #~ msgstr "That course link carries no course id: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:162
+#: src/shared/i18n/serviceErrors.ts:167
 msgid "That course link doesn't point to a specific course: {url}."
 msgstr "That course link doesn't point to a specific course: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:159
+#: src/shared/i18n/serviceErrors.ts:164
 msgid "That course link is not from a supported site: {url}."
 msgstr "That course link is not from a supported site: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:129
+#: src/shared/i18n/serviceErrors.ts:134
 msgid "That download run is not paused."
 msgstr "That download run is not paused."
 
-#: src/shared/i18n/serviceErrors.ts:128
+#: src/shared/i18n/serviceErrors.ts:133
 msgid "That download run no longer exists."
 msgstr "That download run no longer exists."
 
-#: src/shared/i18n/serviceErrors.ts:177
+#: src/shared/i18n/serviceErrors.ts:182
 msgid "That is not a Google Drive file link: {url}."
 msgstr "That is not a Google Drive file link: {url}."
 
@@ -1806,7 +1808,7 @@ msgstr "That is not a Google Drive file link: {url}."
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
-#: src/shared/i18n/serviceErrors.ts:182
+#: src/shared/i18n/serviceErrors.ts:187
 msgid "That playlist has no entries."
 msgstr "That playlist has no entries."
 
@@ -1822,7 +1824,7 @@ msgstr "That step is turned off in settings."
 #~ msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 #~ msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 
-#: src/features/downloads/components/SectionGroup.tsx:213
+#: src/features/downloads/components/SectionGroup.tsx:219
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "the BIU session expired. Reconnect, then run the section again."
 
@@ -1846,23 +1848,23 @@ msgstr "The daily run also follows the setting above: if it's set to do nothing,
 msgid "The data folder must be a full path: {path}."
 msgstr "The data folder must be a full path: {path}."
 
-#: src/shared/i18n/serviceErrors.ts:130
+#: src/shared/i18n/serviceErrors.ts:135
 msgid "The download couldn't start."
 msgstr "The download couldn't start."
 
-#: src/shared/i18n/serviceErrors.ts:131
+#: src/shared/i18n/serviceErrors.ts:136
 msgid "The download failed."
 msgstr "The download failed."
 
-#: src/shared/i18n/serviceErrors.ts:132
+#: src/shared/i18n/serviceErrors.ts:137
 msgid "The download was refused — the session has expired. Reconnect the account."
 msgstr "The download was refused — the session has expired. Reconnect the account."
 
-#: src/shared/i18n/serviceErrors.ts:127
+#: src/shared/i18n/serviceErrors.ts:132
 msgid "The downloaded file could not be stored."
 msgstr "The downloaded file could not be stored."
 
-#: src/features/downloads/components/RecordingRow.tsx:287
+#: src/features/downloads/components/RecordingRow.tsx:298
 msgid "The downloader can't fetch this file"
 msgstr "The downloader can't fetch this file"
 
@@ -1882,16 +1884,16 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
-#: src/shared/i18n/serviceErrors.ts:195
+#: src/shared/i18n/serviceErrors.ts:200
 msgid "The login window was closed before login finished. Connect again."
 msgstr "The login window was closed before login finished. Connect again."
 
-#: src/shared/i18n/serviceErrors.ts:194
+#: src/shared/i18n/serviceErrors.ts:199
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
 
-#: src/shared/i18n/serviceErrors.ts:135
-#: src/shared/i18n/serviceErrors.ts:145
+#: src/shared/i18n/serviceErrors.ts:140
+#: src/shared/i18n/serviceErrors.ts:150
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
@@ -1899,7 +1901,7 @@ msgstr "The Moodle session expired. Reconnect the account and try again."
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
-#: src/shared/i18n/serviceErrors.ts:124
+#: src/shared/i18n/serviceErrors.ts:129
 msgid "The part of Fast Study that downloads recordings isn't responding. Restart the app."
 msgstr "The part of Fast Study that downloads recordings isn't responding. Restart the app."
 
@@ -1915,7 +1917,7 @@ msgstr "The PDF could not be created."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
 
-#: src/features/downloads/components/SectionGroup.tsx:216
+#: src/features/downloads/components/SectionGroup.tsx:222
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
@@ -1923,7 +1925,7 @@ msgstr "the run stopped early. Run the section again to pick them up."
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:215
+#: src/features/downloads/components/SectionGroup.tsx:221
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
@@ -1944,7 +1946,7 @@ msgstr "the runner takes these in order"
 #~ msgstr "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 
 #: src/features/downloads/utils/downloadErrors.ts:16
-#: src/shared/i18n/serviceErrors.ts:148
+#: src/shared/i18n/serviceErrors.ts:153
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 msgstr "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 
@@ -1983,11 +1985,11 @@ msgstr "This course has no summaries yet."
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
-#: src/shared/i18n/serviceErrors.ts:173
+#: src/shared/i18n/serviceErrors.ts:178
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 
-#: src/shared/i18n/serviceErrors.ts:191
+#: src/shared/i18n/serviceErrors.ts:196
 msgid "This Moodle connection can't download these recordings. Reconnect the account."
 msgstr "This Moodle connection can't download these recordings. Reconnect the account."
 
@@ -1999,11 +2001,11 @@ msgstr "This Moodle connection can't download these recordings. Reconnect the ac
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
-#: src/shared/i18n/serviceErrors.ts:138
+#: src/shared/i18n/serviceErrors.ts:143
 msgid "This recording needs a passcode."
 msgstr "This recording needs a passcode."
 
-#: src/shared/i18n/serviceErrors.ts:139
+#: src/shared/i18n/serviceErrors.ts:144
 msgid "This source can't be downloaded automatically."
 msgstr "This source can't be downloaded automatically."
 
@@ -2047,7 +2049,7 @@ msgstr "Unknown"
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
-#: src/features/downloads/components/RecordingRow.tsx:45
+#: src/features/downloads/components/RecordingRow.tsx:47
 msgid "Unsupported"
 msgstr "Unsupported"
 
@@ -2079,7 +2081,7 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/RecordingRow.tsx:43
+#: src/features/downloads/components/RecordingRow.tsx:45
 #: src/features/lectures/constants/pipeline.ts:18
 msgid "Video"
 msgstr "Video"

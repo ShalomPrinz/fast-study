@@ -121,6 +121,11 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   file_delete_failed: msg({ message: 'Could not delete {file}.' }),
 
   // downloader/server
+  // Only `name`/`course` are reachable by the user (a typed row name); any other field is a caller bug.
+  invalid_request: msg({
+    message:
+      "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} other {Something went wrong.}}",
+  }),
   autodl_unreachable: msg({
     message: "The part of Fast Study that downloads recordings isn't responding. Restart the app.",
   }),

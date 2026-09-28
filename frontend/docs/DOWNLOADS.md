@@ -94,7 +94,8 @@ segment** once resolved. `resolvedMedia` comes from auto's session probe cache o
 download: `POST /download-item`'s `media` and a 422 `UnsupportedError` are both verdicts, reported
 through the dispatch-only `ResolvedMediaContext` and stamped onto the item. It sits above the segments
 because a segment switch unmounts every row. A row resolved to `material` gets the whole material
-affordance; an `unsupported` one fades with Download disabled.
+affordance; an `unsupported` one (a dead link included) fades with Download disabled, never offering
+Retry (`rowAction`).
 
 ## Row name and kind
 
@@ -112,8 +113,10 @@ match — no client-side sanitizing, which would only hide the desync.
 
 `hasResource(item, name, kind, courses, course)` is the single already-downloaded rule: the named node
 holds `video.mp4` for a video, any material for a material. An unprobed `unknown` or an `unsupported` row
-is always false rather than ever showing a wrong "downloaded". A video row on an existing target confirms
-overwrite; `splitSiblings` also catches `${name}.1`/`.2` (a zoom row splits into those) with a "might
+is always false rather than ever showing a wrong "downloaded". The overwrite guard is the separate
+`overwritesVideo`: any non-material, non-unsupported row — an unprobed `unknown` included, since it may be a
+video and a video PUT wipes the transcript and summary — confirms when its target holds `video.mp4`;
+`splitSiblings` also catches `${name}.1`/`.2` (a zoom row splits into those) with a "might
 overwrite" confirm. **A material row never confirms** — it appends, and shows the target's material
 count instead.
 

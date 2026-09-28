@@ -244,7 +244,7 @@ other failure; they previously fell through to the bare status line.
 | `routes/runs.js`          | http       | `run_unknown`               | —                          | user  |
 | `routes/runs.js`          | http       | `run_not_paused`            | —                          | user  |
 | `src/index.js`            | http       | `internal_error`            | `detail`                   | user  |
-| routes, request checks    | http       | `invalid_request`           | `field`                    | dev   |
+| routes, request checks    | http       | `invalid_request`           | `field`                    | user  |
 | `downloaders/runner.js`   | job        | `download_tool_spawn_failed`| `tool`, `detail`           | user  |
 | `downloaders/runner.js`   | job        | `download_tool_failed`      | `tool`, `exit_code`, `detail` | user |
 | `downloaders/runner.js`   | job        | `download_auth_failed`      | `tool`, `exit_code`, `detail` | user |
@@ -311,13 +311,13 @@ error with no `message`, a 422 that carried no message.
 **Request-validation bodies keep their English.** The downloader's `valid url required` family — 24
 bodies in `server/src/routes/` and 10 in `auto/src/http/server.js` — guards values our own popup, SPA
 or peer call shaped, so reaching one means a bug in the caller and the English text is the useful
-signal for whoever debugs it. They carry `invalid_request` with the offending `field` for a uniform
-wire shape, and no catalog row. Same for the developer-facing rows marked `dev` above.
+signal for whoever debugs it — the English stays in the body and the service logs. They carry
+`invalid_request` with the offending `field` for a uniform wire shape. Same for the developer-facing
+rows marked `dev` above, which have no catalog row.
 
-One caveat is recorded rather than reclassified: the `storedName` family is the one excluded row a
-user could in principle reach, if a Moodle row were titled only from `<>:"/\|?*` and canonicalized to
-empty. It cannot fire from today's UI, where names come from row titles the server canonicalizes and
-reports back as `renames`.
+The exception is the `storedName` family: a name typed into a downloads row (`a/b`) reaches it, so the
+server's `invalid_request` row is `user`. Its one catalog row names the problem for `field` `name` and
+`course`, and reads as a generic failure for any other field, which is still a caller bug.
 
 **Third-party text is never translated.** ffmpeg's stderr, a tectonic log tail, Moodle's own error
 message, an `OSError` string — these are often the only string that identifies the failure, and no

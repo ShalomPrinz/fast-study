@@ -34,8 +34,27 @@ export function hasResource(
   const media = item.resolvedMedia ?? item.media
   if (media === 'material') return materialsOf(name, kind, courses, course).length > 0
   if (media !== 'video') return false
+  return holdsVideo(name, kind, courses, course)
+}
+
+function holdsVideo(name: string, kind: Kind, courses: Course[], course: string): boolean {
   const node = existingNodes(kind, courses, course).find((l) => l.name === name)
   return node?.files['video.mp4']?.exists ?? false
+}
+
+// Whether downloading this row could replace a stored video — the overwrite confirm's and the bulk
+// skip's rule. Unlike `hasResource` an unprobed 'unknown' counts: it may be a video, and a video PUT
+// wipes the lecture's transcript and summary.
+export function overwritesVideo(
+  item: { media: Media; resolvedMedia?: ResolvedMedia },
+  name: string,
+  kind: Kind,
+  courses: Course[],
+  course: string,
+): boolean {
+  const media = item.resolvedMedia ?? item.media
+  if (media === 'material' || media === 'unsupported') return false
+  return holdsVideo(name, kind, courses, course)
 }
 
 // A recording might split lazily into `${name}.1`/`.2` during download; returns whichever split

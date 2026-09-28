@@ -32,7 +32,7 @@ import {
   toggleSection,
   useSectionOpen,
 } from '@/features/downloads/contexts/SectionCollapseContext'
-import { hasResource } from '@/features/downloads/utils/existingItems'
+import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
 import {
   notStartedCount,
   runningCount,
@@ -41,7 +41,7 @@ import {
 } from '@/features/downloads/utils/runStatus'
 import { expandErrorText, toastDownloadError } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
-import { sectionTitle } from '@/features/downloads/utils/sections'
+import { leafCount, sectionTitle } from '@/features/downloads/utils/sections'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
@@ -122,6 +122,8 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
 
   const expandables = items.filter((i) => i.expandable)
   const allExpanded = expandables.every((i) => stateOf(i.ref).children !== null)
+  // The header's count and the button's are the leaves the run would queue, not the rows shown.
+  const leaves = leafCount(items, (ref) => stateOf(ref).children)
 
   // A playlist contributes its children, never its own ref — the backend rejects that.
   function buildQueue(): Item[] {
@@ -136,7 +138,11 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
       const media = item.resolvedMedia ?? item.media
       const target = { ref: item.ref, name, kind, media }
       if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
-      if (hasResource(item, name, kind, courses, course))
+      // A run never overwrites, so a target that would replace a stored video is skipped too.
+      if (
+        hasResource(item, name, kind, courses, course) ||
+        overwritesVideo(item, name, kind, courses, course)
+      )
         return { ...target, disposition: 'skipped' }
       return { ...target, disposition: 'pending' }
     })
@@ -233,7 +239,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
           </span>
         </button>
         <span className="recordings-section-count">
-          <Plural value={items.length} one="# item" other="# items" />
+          <Plural value={leaves} one="# item" other="# items" />
         </span>
         {queueing && run && (
           <span className="recordings-section-progress">
@@ -259,7 +265,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
             disabled={busy || !allExpanded}
             title={allExpanded ? undefined : t`Expand every playlist in this section first`}
           >
-            {busy ? t`Downloading…` : t`Download all ${items.length}`}
+            {busy ? t`Downloading…` : t`Download all ${leaves}`}
           </button>
         )}
       </div>

@@ -29,11 +29,6 @@ msgstr "ל\"{course}\" אין תרגול בשם \"{lecture}\"."
 msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "ב\"{name}\" אין תווים שאפשר להשתמש בהם בשם תיקייה."
 
-#. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:236
-msgid "{0, plural, one {# item} other {# items}}"
-msgstr "{0, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
-
 #. placeholder {0}: pending.length
 #: src/features/runner/RunnerView.tsx:314
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
@@ -90,7 +85,7 @@ msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, one {לא נתמכות: #} two {לא נתמכות: #} other {לא נתמכות: #}}"
 
 #. placeholder {0}: job.title
-#: src/features/downloads/components/RecordingRow.tsx:150
+#: src/features/downloads/components/RecordingRow.tsx:161
 msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -170,17 +165,21 @@ msgstr "{count, plural, one {הסיכום השתמש ב-{used} מתוך חומר
 msgid "{doneCount} of {stageCount} complete"
 msgstr "{doneCount} מתוך {stageCount} הושלמו"
 
-#: src/features/downloads/components/RecordingRow.tsx:130
+#: src/features/downloads/components/RecordingRow.tsx:141
 msgid "{effectiveName} already exists in {course}. Download again and overwrite?"
 msgstr "{effectiveName} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
-#: src/features/downloads/components/RecordingRow.tsx:139
+#: src/features/downloads/components/RecordingRow.tsx:150
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
-#: src/shared/i18n/serviceErrors.ts:163
+#: src/shared/i18n/serviceErrors.ts:168
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} הוא דף אינטרנט, לא קובץ. פתח אותו בדפדפן והורד ידנית.} other {{url} הוא קובץ {ext}, לא וידאו. פתח אותו בדפדפן והורד ידנית.}}"
+
+#: src/shared/i18n/serviceErrors.ts:125
+msgid "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} other {Something went wrong.}}"
+msgstr "{field, select, name {אי אפשר להשתמש בשם הזה כשם תיקייה. השתמש באותיות או בספרות, בלי / או \\.} course {אי אפשר להשתמש בשם הקורס הזה כשם תיקייה.} other {משהו השתבש.}}"
 
 #: src/shared/i18n/serviceErrors.ts:118
 msgid "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
@@ -207,11 +206,15 @@ msgstr "{file} לא נמצא."
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
+#: src/features/downloads/components/SectionGroup.tsx:242
+msgid "{leaves, plural, one {# item} other {# items}}"
+msgstr "{leaves, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
+
 #: src/features/search/SearchView.tsx:235
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} other {ב-# הרצאות}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:250
+#: src/features/downloads/components/RecordingRow.tsx:261
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
@@ -235,7 +238,7 @@ msgstr "{name} שימש"
 msgid "{name} will be used"
 msgstr "{name} ישמש"
 
-#: src/features/downloads/components/SectionGroup.tsx:271
+#: src/features/downloads/components/SectionGroup.tsx:277
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {ההורדה של הקלטה אחת לא התחילה — {stoppedBecause}} two {ההורדה של # הקלטות לא התחילה — {stoppedBecause}} other {ההורדה של # הקלטות לא התחילה — {stoppedBecause}}}"
 
@@ -271,7 +274,7 @@ msgstr "{provider, select, gemini {מפתח ה-API של Gemini לא מוגדר. 
 msgid "{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}"
 msgstr "{provider, select, gemini {מפתח ה-API של Gemini נדחה. בדוק אותו בהגדרות.} groq {מפתח ה-API של Groq נדחה. בדוק אותו בהגדרות.} other {מפתח ה-API של {provider} נדחה. בדוק אותו בהגדרות.}}"
 
-#: src/shared/i18n/serviceErrors.ts:152
+#: src/shared/i18n/serviceErrors.ts:157
 msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 msgstr "{reason, select, incorrect {קוד הגישה של Zoom שגוי. הזן אותו שוב.} other {ההקלטה הזו ב-Zoom דורשת קוד גישה.}}"
 
@@ -291,7 +294,7 @@ msgstr "{stage} · שלב {stepNumber} מתוך {stageCount}"
 #~ msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 #~ msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:280
+#: src/features/downloads/components/SectionGroup.tsx:286
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.}}"
 
@@ -303,7 +306,7 @@ msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — יי
 #~ msgid "{tool} took too long and was stopped after {seconds} seconds."
 #~ msgstr "{tool} לקח יותר מדי זמן ונעצר אחרי {seconds} שניות."
 
-#: src/shared/i18n/serviceErrors.ts:167
+#: src/shared/i18n/serviceErrors.ts:172
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
@@ -423,7 +426,7 @@ msgstr "ארכיון ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
 
-#: src/features/downloads/components/RecordingRow.tsx:238
+#: src/features/downloads/components/RecordingRow.tsx:249
 msgid "Attach material to"
 msgstr "צירוף חומר אל"
 
@@ -542,7 +545,7 @@ msgstr "בחר תיקיית נתונים."
 msgid "Close"
 msgstr "סגירה"
 
-#: src/features/downloads/components/RecordingRow.tsx:161
+#: src/features/downloads/components/RecordingRow.tsx:172
 msgid "Collapse"
 msgstr "כיווץ פלייליסט"
 
@@ -615,7 +618,7 @@ msgstr "לא ניתן למחוק את {file}."
 msgid "Could not extract the audio from the video."
 msgstr "לא ניתן לחלץ את השמע מהווידאו."
 
-#: src/shared/i18n/serviceErrors.ts:181
+#: src/shared/i18n/serviceErrors.ts:186
 msgid "Could not list the playlist."
 msgstr "לא ניתן לטעון את הפלייליסט."
 
@@ -651,7 +654,7 @@ msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 #~ msgid "Could not start {tool}."
 #~ msgstr "לא ניתן להפעיל את {tool}."
 
-#: src/shared/i18n/serviceErrors.ts:170
+#: src/shared/i18n/serviceErrors.ts:175
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
@@ -684,7 +687,7 @@ msgstr "לא ניתן לטעון את הסיכומים של {course}."
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:190
+#: src/shared/i18n/serviceErrors.ts:195
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
@@ -692,7 +695,7 @@ msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נס�
 #~ msgid "Couldn't start the Google sign-in."
 #~ msgstr "לא הצלחנו להתחיל את ההתחברות ל-Google."
 
-#: src/shared/i18n/serviceErrors.ts:140
+#: src/shared/i18n/serviceErrors.ts:145
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
@@ -764,36 +767,35 @@ msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 msgid "Done"
 msgstr "סיום"
 
-#: src/features/downloads/components/RecordingRow.tsx:296
+#: src/features/downloads/components/RecordingRow.tsx:307
 msgid "Download"
 msgstr "הורדה"
 
-#: src/features/downloads/components/RecordingRow.tsx:276
-#: src/features/downloads/components/RecordingRow.tsx:277
+#: src/features/downloads/components/RecordingRow.tsx:287
+#: src/features/downloads/components/RecordingRow.tsx:288
 msgid "Download again"
 msgstr "הורדה מחדש"
 
-#. placeholder {0}: items.length
-#: src/features/downloads/components/SectionGroup.tsx:262
-msgid "Download all {0}"
-msgstr "הורדת הכול ({0})"
+#: src/features/downloads/components/SectionGroup.tsx:268
+msgid "Download all {leaves}"
+msgstr "הורדת הכול ({leaves})"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
-#: src/features/downloads/components/RecordingRow.tsx:294
+#: src/features/downloads/components/RecordingRow.tsx:268
+#: src/features/downloads/components/RecordingRow.tsx:305
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
-#: src/features/downloads/components/RecordingRow.tsx:262
+#: src/features/downloads/components/RecordingRow.tsx:273
 msgid "Downloading"
 msgstr "מוריד"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:240
+#: src/features/downloads/components/SectionGroup.tsx:246
 msgid "Downloading {0}/{1}…"
 msgstr "מוריד {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:247
+#: src/features/downloads/components/SectionGroup.tsx:253
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
@@ -805,8 +807,8 @@ msgstr "הורדת הקלטות"
 msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (לא חובה)"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
-#: src/features/downloads/components/SectionGroup.tsx:262
+#: src/features/downloads/components/RecordingRow.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:268
 msgid "Downloading…"
 msgstr "מוריד…"
 
@@ -859,11 +861,11 @@ msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. 
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלך."
 
-#: src/features/downloads/components/RecordingRow.tsx:161
+#: src/features/downloads/components/RecordingRow.tsx:172
 msgid "Expand"
 msgstr "טעינת פלייליסט"
 
-#: src/features/downloads/components/SectionGroup.tsx:260
+#: src/features/downloads/components/SectionGroup.tsx:266
 msgid "Expand every playlist in this section first"
 msgstr "טען קודם כל פלייליסט ביחידה הזו"
 
@@ -897,7 +899,7 @@ msgstr "מחלץ שמע"
 msgid "failed"
 msgstr "נכשל"
 
-#: src/features/downloads/components/RecordingRow.tsx:257
+#: src/features/downloads/components/RecordingRow.tsx:268
 msgid "Failed ✗"
 msgstr "נכשל ✗"
 
@@ -942,7 +944,7 @@ msgstr "Fast Study משתמשת ב-Google Chrome או ב-Microsoft Edge כדי �
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
 
-#: src/features/downloads/components/RecordingRow.tsx:204
+#: src/features/downloads/components/RecordingRow.tsx:215
 msgid "File type"
 msgstr "סוג קובץ"
 
@@ -1036,7 +1038,7 @@ msgstr "יותר מדי בקשות ל-Groq"
 msgid "Home"
 msgstr "דף הבית"
 
-#: src/features/downloads/components/RecordingRow.tsx:270
+#: src/features/downloads/components/RecordingRow.tsx:281
 msgid "In course"
 msgstr "כבר בקורס"
 
@@ -1069,7 +1071,7 @@ msgstr "השגיאה האחרונה:"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/RecordingRow.tsx:220
+#: src/features/downloads/components/RecordingRow.tsx:231
 msgid "Lecture"
 msgstr "הרצאה"
 
@@ -1087,7 +1089,7 @@ msgstr "הרצאה {0}"
 #~ msgid "Lecture 1"
 #~ msgstr "הרצאה 1"
 
-#: src/features/downloads/components/RecordingRow.tsx:238
+#: src/features/downloads/components/RecordingRow.tsx:249
 msgid "Lecture name"
 msgstr "שם ההרצאה"
 
@@ -1130,7 +1132,7 @@ msgstr "טוען…"
 msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
-#: src/features/downloads/components/RecordingRow.tsx:44
+#: src/features/downloads/components/RecordingRow.tsx:46
 msgid "Material"
 msgstr "חומר"
 
@@ -1139,7 +1141,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:199
+#: src/shared/i18n/serviceErrors.ts:204
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1171,7 +1173,7 @@ msgstr "אין קורסים בארכיון"
 msgid "No Chrome or Edge found on this computer."
 msgstr "לא נמצא Chrome או Edge במחשב הזה."
 
-#: src/shared/i18n/serviceErrors.ts:156
+#: src/shared/i18n/serviceErrors.ts:161
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "לא נמצא Chrome או Edge במחשב הזה. התקן את Chrome ונסה שוב."
 
@@ -1195,7 +1197,7 @@ msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרו
 msgid "No Lectures"
 msgstr "אין הרצאות"
 
-#: src/shared/i18n/serviceErrors.ts:198
+#: src/shared/i18n/serviceErrors.ts:203
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -1243,11 +1245,11 @@ msgstr "אין תרגולים"
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/shared/i18n/serviceErrors.ts:183
+#: src/shared/i18n/serviceErrors.ts:188
 msgid "No video was captured on that page. Play it once by hand and try again."
 msgstr "לא זוהה וידאו בדף הזה. הפעל אותו פעם אחת ידנית ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:186
+#: src/shared/i18n/serviceErrors.ts:191
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
@@ -1316,7 +1318,7 @@ msgstr "בעיבוד עכשיו"
 msgid "Only .mp4 files are allowed"
 msgstr "מותרים קבצי .mp4 בלבד"
 
-#: src/shared/i18n/serviceErrors.ts:178
+#: src/shared/i18n/serviceErrors.ts:183
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
@@ -1458,7 +1460,7 @@ msgstr "מוכן לניסיון חוזר"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/RecordingRow.tsx:226
+#: src/features/downloads/components/RecordingRow.tsx:237
 msgid "Recitation"
 msgstr "תרגול"
 
@@ -1543,7 +1545,7 @@ msgid "Results"
 msgstr "תוצאות"
 
 #: src/features/downloads/components/RecordingJobList.tsx:48
-#: src/features/downloads/components/RecordingRow.tsx:292
+#: src/features/downloads/components/RecordingRow.tsx:303
 msgid "Retry ✗"
 msgstr "ניסיון חוזר ✗"
 
@@ -1610,7 +1612,7 @@ msgstr "שמירה"
 msgid "Save & update PDF"
 msgstr "שמירה ועדכון PDF"
 
-#: src/features/downloads/components/RecordingRow.tsx:212
+#: src/features/downloads/components/RecordingRow.tsx:223
 msgid "Save as"
 msgstr "שמירה בשם"
 
@@ -1782,23 +1784,23 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הזמן הארוך בי
 #~ msgid "That course link carries no course id: {url}."
 #~ msgstr "בקישור הקורס אין מזהה קורס: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:162
+#: src/shared/i18n/serviceErrors.ts:167
 msgid "That course link doesn't point to a specific course: {url}."
 msgstr "קישור הקורס לא מוביל לקורס מסוים: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:159
+#: src/shared/i18n/serviceErrors.ts:164
 msgid "That course link is not from a supported site: {url}."
 msgstr "קישור הקורס אינו מאתר נתמך: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:129
+#: src/shared/i18n/serviceErrors.ts:134
 msgid "That download run is not paused."
 msgstr "תהליך ההורדה הזה אינו מושהה."
 
-#: src/shared/i18n/serviceErrors.ts:128
+#: src/shared/i18n/serviceErrors.ts:133
 msgid "That download run no longer exists."
 msgstr "תהליך ההורדה הזה כבר לא קיים."
 
-#: src/shared/i18n/serviceErrors.ts:177
+#: src/shared/i18n/serviceErrors.ts:182
 msgid "That is not a Google Drive file link: {url}."
 msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 
@@ -1806,7 +1808,7 @@ msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/shared/i18n/serviceErrors.ts:182
+#: src/shared/i18n/serviceErrors.ts:187
 msgid "That playlist has no entries."
 msgstr "אין פריטים בפלייליסט הזה."
 
@@ -1822,7 +1824,7 @@ msgstr "השלב הזה כבוי בהגדרות."
 #~ msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 #~ msgstr "הכפתור \"הרץ צינורות לא שלמים\" ורשימת ההרצאות שבעבודה."
 
-#: src/features/downloads/components/SectionGroup.tsx:213
+#: src/features/downloads/components/SectionGroup.tsx:219
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "תוקף החיבור לבר-אילן פג. התחבר מחדש והרץ את היחידה שוב."
 
@@ -1846,23 +1848,23 @@ msgstr "גם ההרצה היומית פועלת לפי ההגדרה שלמעלה
 msgid "The data folder must be a full path: {path}."
 msgstr "תיקיית הנתונים חייבת להיות נתיב מלא: {path}."
 
-#: src/shared/i18n/serviceErrors.ts:130
+#: src/shared/i18n/serviceErrors.ts:135
 msgid "The download couldn't start."
 msgstr "לא ניתן להתחיל את ההורדה."
 
-#: src/shared/i18n/serviceErrors.ts:131
+#: src/shared/i18n/serviceErrors.ts:136
 msgid "The download failed."
 msgstr "ההורדה נכשלה."
 
-#: src/shared/i18n/serviceErrors.ts:132
+#: src/shared/i18n/serviceErrors.ts:137
 msgid "The download was refused — the session has expired. Reconnect the account."
 msgstr "ההורדה נדחתה — תוקף החיבור פג. חבר מחדש את החשבון."
 
-#: src/shared/i18n/serviceErrors.ts:127
+#: src/shared/i18n/serviceErrors.ts:132
 msgid "The downloaded file could not be stored."
 msgstr "לא ניתן לשמור את הקובץ שהורד."
 
-#: src/features/downloads/components/RecordingRow.tsx:287
+#: src/features/downloads/components/RecordingRow.tsx:298
 msgid "The downloader can't fetch this file"
 msgstr "אי אפשר להוריד את הקובץ הזה"
 
@@ -1882,16 +1884,16 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייווצרו מחדש:"
 
-#: src/shared/i18n/serviceErrors.ts:195
+#: src/shared/i18n/serviceErrors.ts:200
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:194
+#: src/shared/i18n/serviceErrors.ts:199
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:135
-#: src/shared/i18n/serviceErrors.ts:145
+#: src/shared/i18n/serviceErrors.ts:140
+#: src/shared/i18n/serviceErrors.ts:150
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון ונסה שוב."
 
@@ -1899,7 +1901,7 @@ msgstr "תוקף החיבור ל-Moodle פג. חבר מחדש את החשבון 
 msgid "The other materials keep their names."
 msgstr "שאר החומרים ישמרו על שמם."
 
-#: src/shared/i18n/serviceErrors.ts:124
+#: src/shared/i18n/serviceErrors.ts:129
 msgid "The part of Fast Study that downloads recordings isn't responding. Restart the app."
 msgstr "החלק של Fast Study שמוריד הקלטות לא מגיב. הפעל מחדש את האפליקציה."
 
@@ -1915,7 +1917,7 @@ msgstr "לא ניתן ליצור את ה-PDF."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
-#: src/features/downloads/components/SectionGroup.tsx:216
+#: src/features/downloads/components/SectionGroup.tsx:222
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -1923,7 +1925,7 @@ msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה ש
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:215
+#: src/features/downloads/components/SectionGroup.tsx:221
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -1944,7 +1946,7 @@ msgstr "ההרצות מתבצעות לפי הסדר"
 #~ msgstr "שני השערים בלתי תלויים: ההגדרה שלמעלה חלה גם על המעבר הלילי, ולכן כשהיא מוגדרת לא לעשות דבר, שום דבר לא ירוץ ללא השגחה בכל שעה שתיבחר."
 
 #: src/features/downloads/utils/downloadErrors.ts:16
-#: src/shared/i18n/serviceErrors.ts:148
+#: src/shared/i18n/serviceErrors.ts:153
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומטיות. המתן כמה דקות ונסה שוב."
 
@@ -1983,11 +1985,11 @@ msgstr "אין עדיין סיכומים בקורס הזה."
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
-#: src/shared/i18n/serviceErrors.ts:173
+#: src/shared/i18n/serviceErrors.ts:178
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:191
+#: src/shared/i18n/serviceErrors.ts:196
 msgid "This Moodle connection can't download these recordings. Reconnect the account."
 msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקלטות האלה. חבר מחדש את החשבון."
 
@@ -1999,11 +2001,11 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
-#: src/shared/i18n/serviceErrors.ts:138
+#: src/shared/i18n/serviceErrors.ts:143
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
 
-#: src/shared/i18n/serviceErrors.ts:139
+#: src/shared/i18n/serviceErrors.ts:144
 msgid "This source can't be downloaded automatically."
 msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 
@@ -2047,7 +2049,7 @@ msgstr "לא ידוע"
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
-#: src/features/downloads/components/RecordingRow.tsx:45
+#: src/features/downloads/components/RecordingRow.tsx:47
 msgid "Unsupported"
 msgstr "לא נתמך"
 
@@ -2079,7 +2081,7 @@ msgstr "ההעלאה ל-Google Drive נכשלה."
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/RecordingRow.tsx:43
+#: src/features/downloads/components/RecordingRow.tsx:45
 #: src/features/lectures/constants/pipeline.ts:18
 msgid "Video"
 msgstr "וידאו"
