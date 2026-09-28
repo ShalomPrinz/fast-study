@@ -8,6 +8,8 @@ A toolbar — back (to the lecture page, never history, so a fresh tab stays in 
 (`dir="auto"`), the stale/warning PDF chip ([LECTURES.md](LECTURES.md) §summary.pdf badges), a demoted `Restore original` a gap away from the primary `Save & update PDF` — over
 two panes: `PdfViewer` (zoom, current page, pop-out) and `MarkdownEditor`, headed by an amber
 `Unsaved changes` dot whenever the buffer differs from what was last read or written.
+Leaving the editor discards unsaved changes, with no confirm or `beforeunload`: an in-app guard needs
+`useBlocker`, which only works under a data router, and moving off `<BrowserRouter>` is not worth it yet.
 
 ## Saving
 
