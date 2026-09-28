@@ -20,6 +20,7 @@ import {
   splitSiblings,
 } from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
+import { rowAction } from '@/features/downloads/utils/rowAction'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -112,6 +113,7 @@ const RecordingRow = memo(function RecordingRow({
   const split = jobs.length > 1
   const downloading = status === 'running'
   const failed = queueFailed || status === 'error'
+  const action = rowAction({ pending, unsupported, failed, done: status === 'done' })
 
   // Pending overwrite confirm: `message` is what the modal shows, `run` is what a Yes replays
   // (the whole-row download or one clip's retry). Null means no modal.
@@ -295,11 +297,11 @@ const RecordingRow = memo(function RecordingRow({
             disabled={pending || unsupported}
             title={unsupported ? t`The downloader can't fetch this file` : undefined}
           >
-            {pending ? (
+            {action === 'pending' ? (
               <span className="recording-spinner" />
-            ) : failed ? (
+            ) : action === 'retry' ? (
               t`Retry ✗`
-            ) : status === 'done' ? (
+            ) : action === 'done' ? (
               t`Downloaded ✓`
             ) : (
               t`Download`

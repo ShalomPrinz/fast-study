@@ -94,7 +94,8 @@ segment** once resolved. `resolvedMedia` comes from auto's session probe cache o
 download: `POST /download-item`'s `media` and a 422 `UnsupportedError` are both verdicts, reported
 through the dispatch-only `ResolvedMediaContext` and stamped onto the item. It sits above the segments
 because a segment switch unmounts every row. A row resolved to `material` gets the whole material
-affordance; an `unsupported` one fades with Download disabled.
+affordance; an `unsupported` one (a dead link included) fades with Download disabled, never offering
+Retry (`rowAction`).
 
 ## Row name and kind
 
