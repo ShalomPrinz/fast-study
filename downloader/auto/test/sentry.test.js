@@ -38,6 +38,5 @@ test('a route error is captured tagged service=auto with its Hebrew path scrubbe
   const [event] = events;
   assert.equal(event.tags.service, 'auto');
   const value = event.exception.values[0].value;
-  assert.doesNotMatch(value, /[֐-׿]/);
-  assert.match(value, /<hebrew>/);
+  assert.equal(value, 'cannot open <path>/video.mp4');
 });

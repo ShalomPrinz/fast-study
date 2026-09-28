@@ -38,6 +38,5 @@ test('a route error is captured tagged service=server with its Hebrew path scrub
   const [event] = events;
   assert.equal(event.tags.service, 'server');
   const value = event.exception.values[0].value;
-  assert.doesNotMatch(value, /[֐-׿]/);
-  assert.match(value, /<hebrew>/);
+  assert.equal(value, 'cannot open <path>/video.mp4');
 });

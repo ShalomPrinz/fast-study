@@ -11,7 +11,15 @@ and guards every `process` read.
 
 - `scrub(event, hint)` — `before_send`. Every string in the event (message, exception values, frame
   paths, `vars`, context lines, breadcrumbs, `extra`, `contexts`, request URL and headers) loses:
-  anything under `DATA_ROOT` → `<data>`; Hebrew runs, literal or percent/`\u`/`\x`-escaped →
+  anything under `DATA_ROOT` → `<data>`; the folders of any other absolute path — drive, UNC, POSIX
+  (`/` or `\\` root; a lone `\` is an escape like `'\u05e7`), either separator, doubled or not — →
+  `<path>/`, keeping the file name (`D:\Lectures\Algebra\a.mp3` → `<path>/a.mp3`, `file:///…/a.mp3`
+  → `file://<path>/a.mp3`), because backend and the downloaders keep the `DATA_ROOT` they were
+  spawned with and miss a root the user moves later; other `scheme://` URLs stay whole
+  (`http://127.0.0.1:…/api/…`, `app://bundle/assets/…` for source maps), and so does a folderless
+  `/route?q`. A stack frame's `filename`/`abs_path`/`module` keep their folders — they name our
+  code, never user data, and a trace needs them — so only the other rules apply there; the frame's
+  `vars` and context lines are free text. Hebrew runs, literal or percent/`\u`/`\x`-escaped →
   `<hebrew>`; the real home → `<home>`, and any `C:\Users\<name>`, `/home/<name>`, `/Users/<name>`
   → `<user>` (prefix kept — the renderer knows no home); `GROQ_API_KEY`, `GEMINI_API_KEY` and
   `FASTSTUDY_SECRET` values, `gsk_…`/`AIza…` shapes and `secret=` query values → `<key>`.
@@ -21,7 +29,9 @@ and guards every `process` read.
 frontend`, anything else throws. `platform` is `win32`/`linux`/`darwin` in both languages.
 - `enabled(dsn?)` — false with no DSN; the caller then skips init entirely.
 - `options(service, …)` — what init spreads: `dsn` (`FASTSTUDY_SENTRY_DSN`), `release`
-  `faststudy@<FASTSTUDY_VERSION>`, `environment` (`production` iff `FASTSTUDY_SECRET` is set),
+  `faststudy@<FASTSTUDY_VERSION>`, `environment` (the explicit arg, else `SENTRY_ENVIRONMENT` —
+  which the launcher sets from `app.isPackaged` — else `development`; not `FASTSTUDY_SECRET`, which
+  dev launches set too),
   sample rate 1, no default PII, the shutdown flush bound, both scrubbers. The traces rate is left unset, not `0`: `0` still
   switches tracing on and propagates trace headers onto cross-origin calls to the services. `dsn`,
   `version` and `environment` can be passed explicitly — the renderer bakes `VITE_SENTRY_DSN`, electron main passes `app.getVersion()`.

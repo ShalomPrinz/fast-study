@@ -104,7 +104,7 @@ def test_unhandled_route_error_reports_scrubbed_event(reload_main, monkeypatch):
     event = events[0]
     assert event["tags"]["service"] == "backend"
     value = event["exception"]["values"][-1]["value"]
-    assert value == "cannot open /lectures/<hebrew>/<hebrew> 1/video.mp4"
+    assert value == "cannot open <path>/video.mp4"
     dumped = json.dumps(event, ensure_ascii=False, default=str)
     assert "מבני" not in dumped and "הרצאה" not in dumped
 

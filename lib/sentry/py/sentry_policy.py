@@ -20,8 +20,9 @@ _HEBREW = re.compile(
 )
 # A profile folder under a Windows, Linux or macOS home root: the prefix stays, the name goes. A
 # name with spaces counts only when a separator closes it, so trailing prose is not swallowed.
+# No match starts right after a slash: a long slash run would otherwise rescan in quadratic time.
 _HOME_GENERIC = re.compile(
-    r"((?:[A-Za-z]:)?[\\/]+(?:Users|home)[\\/]+)"
+    r"((?:[A-Za-z]:)?(?<![\\/])[\\/]+(?:Users|home)[\\/]+)"
     r"(?:[^\\/\r\n\t'\"<>|:]+?(?=[\\/])|[^\\/\s'\"<>|:]+)",
     re.IGNORECASE,
 )
@@ -30,6 +31,17 @@ _SECRET_PARAM = re.compile(r"([?&]secret=)[^&#\s'\"]+", re.IGNORECASE)
 # The rest of a path after a matched root: segments run to a quote, a colon or a line break.
 _PATH_TAIL = r"(?:[\\/]+[^\\/\r\n\t'\"<>|:]*)*"
 _KEY_ENVS = ("GROQ_API_KEY", "GEMINI_API_KEY", "FASTSTUDY_SECRET")
+# An absolute path's folders, in free text: a file:// URL, or a drive, UNC or POSIX root followed by
+# at least one folder. Other scheme://… URLs match first and stay, so their hosts and routes survive.
+# A root needs `/` or `\\`: a lone `\` after a quote or space is an escape like `'ק`, not a path.
+_ABS_PATH = re.compile(
+    r"(?P<file>file://[^\s'\"<>]*/)"
+    r"|(?P<url>(?<![\w+.-])[A-Za-z][\w+.-]+://[^\s'\"<>]*)"
+    r"|(?P<dirs>(?:(?<!\w)[A-Za-z]:|(?<![\w.\\/-])(?=/|\\\\))"
+    r"(?:[\\/]+[^\\/\r\n\t'\"<>|:]+)+[\\/]+)"
+)
+# Frame fields that name our own code files: their folders are what makes a stack trace readable.
+_FRAME_PATHS = frozenset({"filename", "abs_path", "module"})
 
 
 def _root_pattern(root):
@@ -38,12 +50,18 @@ def _root_pattern(root):
     parts = [re.escape(p) for p in re.split(r"[\\/]+", root) if p]
     if not parts:
         return None
-    lead = r"[\\/]+" if root[:1] in "\\/" else ""
+    lead = r"(?<![\\/])[\\/]+" if root[:1] in "\\/" else ""
     return lead + r"[\\/]+".join(parts) + r"(?![\w.-])"
 
 
-def _scrub_str(s):
-    """Redact keys, the launch secret, DATA_ROOT paths, home folders and Hebrew runs from one string."""
+def _redact_dirs(m):
+    if m.group("url"):
+        return m.group(0)
+    return "file://<path>/" if m.group("file") else "<path>/"
+
+
+def _scrub_str(s, dirs=True):
+    """Redact keys, the secret, DATA_ROOT, path folders (unless `dirs` is false), home and Hebrew."""
 
     for name in _KEY_ENVS:
         value = os.environ.get(name)
@@ -54,6 +72,8 @@ def _scrub_str(s):
     data_root = _root_pattern(os.environ.get("DATA_ROOT") or "")
     if data_root:
         s = re.sub(data_root + _PATH_TAIL, "<data>", s, flags=re.IGNORECASE)
+    if dirs:
+        s = _ABS_PATH.sub(_redact_dirs, s)
     home_dir = os.path.expanduser("~")
     home = _root_pattern(home_dir) if home_dir != "~" else None
     if home:
@@ -62,16 +82,22 @@ def _scrub_str(s):
     return _HEBREW.sub("<hebrew>", s)
 
 
-def _walk(value):
+def _walk(value, frames=False):
+    """Scrub every string; `frames` marks the items of a `frames` list, whose path fields keep folders."""
+
     if isinstance(value, str):
         return _scrub_str(value)
     if isinstance(value, dict):
         return {
-            (_scrub_str(k) if isinstance(k, str) else k): _walk(v)
+            (_scrub_str(k) if isinstance(k, str) else k): (
+                _scrub_str(v, dirs=False)
+                if frames and k in _FRAME_PATHS and isinstance(v, str)
+                else _walk(v, k == "frames")
+            )
             for k, v in value.items()
         }
     if isinstance(value, (list, tuple)):
-        return [_walk(v) for v in value]
+        return [_walk(v, frames) for v in value]
     return value
 
 
@@ -126,10 +152,8 @@ def options(service, *, dsn=None, version=None, environment=None):
 
     tags(service)
     version = version or os.environ.get("FASTSTUDY_VERSION") or "unknown"
-    if environment is None:
-        environment = (
-            "production" if os.environ.get("FASTSTUDY_SECRET") else "development"
-        )
+    # The launcher sets SENTRY_ENVIRONMENT from app.isPackaged; the secret is set on dev launches too.
+    environment = environment or os.environ.get("SENTRY_ENVIRONMENT") or "development"
     return {
         "dsn": dsn or os.environ.get("FASTSTUDY_SENTRY_DSN") or None,
         "release": f"faststudy@{version}",

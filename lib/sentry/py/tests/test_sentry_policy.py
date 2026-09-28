@@ -1,4 +1,5 @@
 import json
+import time
 
 import pytest
 import sentry_policy
@@ -27,6 +28,7 @@ def clean_env(monkeypatch):
         "FASTSTUDY_SECRET",
         "FASTSTUDY_SENTRY_DSN",
         "FASTSTUDY_VERSION",
+        "SENTRY_ENVIRONMENT",
     ):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("HOME", "/home/shalom")
@@ -137,44 +139,167 @@ def test_hebrew_escaped_forms():
 
     out = scrub(
         {
-            "a": "/x/%D7%A7%D7%95%D7%A8%D7%A1/y",
+            "a": "x/%D7%A7%D7%95%D7%A8%D7%A1/y",
             "b": r"'\u05e7\u05d5\u05e8'",
             "c": "\ufb2a\ufb2b",
         },
         None,
     )
-    assert out == {"a": "/x/<hebrew>/y", "b": "'<hebrew>'", "c": "<hebrew>"}
+    assert out == {"a": "x/<hebrew>/y", "b": "'<hebrew>'", "c": "<hebrew>"}
+
+
+def frame_paths(*paths):
+    """An event whose one exception frame names each path in turn as its abs_path."""
+
+    frames = [{"abs_path": p, "filename": p} for p in paths]
+    return {"exception": {"values": [{"stacktrace": {"frames": frames}}]}}
+
+
+def abs_paths(event):
+    return [
+        f["abs_path"] for f in event["exception"]["values"][0]["stacktrace"]["frames"]
+    ]
 
 
 def test_generic_home_patterns_keep_prefix(monkeypatch):
-    """With the real home unknown, each OS's profile folder keeps its prefix and loses the name."""
+    """In frame paths, with the real home unknown, a profile folder keeps its prefix, loses the name."""
 
     monkeypatch.setenv("HOME", "/nonexistent-home-for-test")
     out = scrub(
-        {
-            "w": r"C:\Users\Bob\AppData\x.log",
-            "f": "C:/Users/bob/x",
-            "l": "/home/alice/x",
-            "m": "/Users/carol",
-            "s": r"C:\Users\John Smith\Desktop",
-        },
+        frame_paths(
+            r"C:\Users\Bob\AppData\x.js",
+            "C:/Users/bob/x.js",
+            "/home/alice/x.py",
+            "/Users/carol",
+            r"C:\Users\John Smith\Desktop\x.js",
+        ),
         None,
     )
-    assert out == {
-        "w": r"C:\Users\<user>\AppData\x.log",
-        "f": "C:/Users/<user>/x",
-        "l": "/home/<user>/x",
-        "m": "/Users/<user>",
-        "s": r"C:\Users\<user>\Desktop",
-    }
+    assert abs_paths(out) == [
+        r"C:\Users\<user>\AppData\x.js",
+        "C:/Users/<user>/x.js",
+        "/home/<user>/x.py",
+        "/Users/<user>",
+        r"C:\Users\<user>\Desktop\x.js",
+    ]
 
 
 def test_actual_home_outside_standard_roots(monkeypatch):
-    """A home in a non-standard location is still redacted, as a whole path component."""
+    """In frame paths, a non-standard home is redacted as a whole path component."""
 
     monkeypatch.setenv("HOME", "/srv/profiles/shalom")
-    out = scrub({"a": "/srv/profiles/shalom/x", "b": "/srv/profiles/shalomX"}, None)
-    assert out == {"a": "<home>/x", "b": "/srv/profiles/shalomX"}
+    out = scrub(
+        frame_paths("/srv/profiles/shalom/x.py", "/srv/profiles/shalomX/y.py"), None
+    )
+    assert abs_paths(out) == ["<home>/x.py", "/srv/profiles/shalomX/y.py"]
+
+
+def test_frame_paths_keep_their_folders(monkeypatch):
+    """Our own code's frame paths stay readable; home, DATA_ROOT and Hebrew rules still apply."""
+
+    monkeypatch.setenv("DATA_ROOT", "/mnt/data")
+    out = scrub(
+        frame_paths(
+            "/opt/FastStudy/resources/backend/pipeline.py",
+            "app://bundle/assets/index-abc.js",
+            "/home/shalom/fast_study/backend/קוד/x.py",
+            "/mnt/data/Calculus/x.py",
+        ),
+        None,
+    )
+    assert abs_paths(out) == [
+        "/opt/FastStudy/resources/backend/pipeline.py",
+        "app://bundle/assets/index-abc.js",
+        "<home>/fast_study/backend/<hebrew>/x.py",
+        "<data>",
+    ]
+
+
+def test_frame_vars_and_context_lose_folders():
+    """Only a frame's own path fields keep folders; its vars and source lines are free text."""
+
+    frame = {
+        "abs_path": "/opt/app/x.py",
+        "context_line": "open('/mnt/data/Calculus/week 2/notes.pdf')",
+        "vars": {
+            "path": "'/mnt/data/Calculus/week 2/notes.pdf'",
+            "filename": "/mnt/a/b.pdf",
+        },
+    }
+    out = scrub({"exception": {"values": [{"stacktrace": {"frames": [frame]}}]}}, None)
+    got = out["exception"]["values"][0]["stacktrace"]["frames"][0]
+    assert got == {
+        "abs_path": "/opt/app/x.py",
+        "context_line": "open('<path>/notes.pdf')",
+        "vars": {"path": "'<path>/notes.pdf'", "filename": "<path>/b.pdf"},
+    }
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            r"cannot open D:\Lectures\Algebra\Lecture 3\audio.mp3: locked",
+            "cannot open <path>/audio.mp3: locked",
+        ),
+        (
+            json.dumps({"path": r"D:\Lectures\Algebra\Lecture 3\audio.mp3"}),
+            '{"path": "<path>/audio.mp3"}',
+        ),
+        (
+            "No such file: '/mnt/data/Calculus/week 2/notes.pdf'",
+            "No such file: '<path>/notes.pdf'",
+        ),
+        (
+            r"copy \\nas\share\Physics\Lab 1\notes.pdf done",
+            "copy <path>/notes.pdf done",
+        ),
+        (
+            "load file:///C:/Lectures/Algebra/Lecture%203/audio.mp3 failed",
+            "load file://<path>/audio.mp3 failed",
+        ),
+        (r"D:\Lectures\Algebra\הרצאה 3.mp3", "<path>/<hebrew> 3.mp3"),
+        (r"C:\Users\John Smith\Desktop\x.pdf", "<path>/x.pdf"),
+    ],
+)
+def test_free_text_paths_keep_only_the_file_name(text, expected):
+    """A runtime-changed data root is not DATA_ROOT here, so every absolute path loses its folders."""
+
+    assert scrub({"message": text}, None)["message"] == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (
+            "GET http://127.0.0.1:1234/api/lectures/Algebra 500",
+            "GET http://127.0.0.1:1234/api/lectures/Algebra 500",
+        ),
+        (
+            "http://127.0.0.1:8001/lecture/%D7%A7%D7%95%D7%A8%D7%A1/x",
+            "http://127.0.0.1:8001/lecture/<hebrew>/x",
+        ),
+        (
+            "at app://bundle/assets/index-abc.js:1:9700",
+            "at app://bundle/assets/index-abc.js:1:9700",
+        ),
+        ("GET /summary?c=x", "GET /summary?c=x"),
+    ],
+)
+def test_urls_and_bare_files_are_kept(text, expected):
+    """scheme:// URLs keep host and route (Hebrew still goes); a path with no folder is left alone."""
+
+    assert scrub({"message": text}, None)["message"] == expected
+
+
+def test_long_slash_run_scrubs_fast(monkeypatch):
+    """No root pattern rescans a slash run from every offset, so 50,000 slashes stay linear."""
+
+    monkeypatch.setenv("DATA_ROOT", "/mnt/data")
+    start = time.monotonic()
+    out = scrub({"message": "/" * 50_000 + "a"}, None)
+    assert time.monotonic() - start < 1
+    assert out["message"] == "/" * 50_000 + "a"
 
 
 def test_env_key_values_redacted(monkeypatch):
@@ -264,7 +389,7 @@ def test_options_pin_the_shutdown_flush():
 def test_options_with_dsn_packaged(monkeypatch):
     monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", "https://abc@o1.ingest.sentry.io/2")
     monkeypatch.setenv("FASTSTUDY_VERSION", "1.4.0")
-    monkeypatch.setenv("FASTSTUDY_SECRET", "launch-secret-789")
+    monkeypatch.setenv("SENTRY_ENVIRONMENT", "production")
     opts = options("database")
     assert enabled() is True
     assert opts == {
@@ -289,6 +414,16 @@ def test_options_explicit_overrides(monkeypatch):
         "faststudy@2.0.0",
         "staging",
     )
+
+
+def test_environment_precedence(monkeypatch):
+    """Explicit beats SENTRY_ENVIRONMENT beats development; the launch secret no longer decides it."""
+
+    monkeypatch.setenv("FASTSTUDY_SECRET", "launch-secret-789")
+    assert options("backend")["environment"] == "development"
+    monkeypatch.setenv("SENTRY_ENVIRONMENT", "production")
+    assert options("backend")["environment"] == "production"
+    assert options("backend", environment="staging")["environment"] == "staging"
 
 
 def test_options_unknown_service_raises():
