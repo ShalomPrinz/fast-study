@@ -57,7 +57,7 @@ moving one re-opens that measurement, so surface it rather than bump it:
 - **pandoc 2.9.2.1** — pandoc 3.x crashes `text_direction.lua`
   ([`backend/docs/BIDI.md`](../../backend/docs/BIDI.md#the-direction-filter)), so the binary and
   `backend/assets/templates/pandoc_template.tex` only ever move together.
-- **ffmpeg 8.0** — pinned only so a build is reproducible.
+- **ffmpeg 9.0.2** — pinned only so a build is reproducible; bump it for upstream security fixes.
 - **yt-dlp is deliberately unpinned** — it rots as YouTube changes signatures, so a build ships the
   newest.
 
