@@ -27,7 +27,8 @@ delimiters, which holds because a course name cannot contain one and media is an
 The section flattens into downloadable leaves (a playlist contributes its children, never its own ref),
 so "Download all" is disabled until every playlist is expanded and never auto-expands. Each leaf becomes a
 `RunTarget` **at submit**: the row's resolved name and kind, plus the two verdicts only the page can give
-because they read the live tree — `skipped` (`hasResource`, the rule that tints the row green) and
+because they read the live tree — `skipped` (`hasResource`, the rule that tints the row green, or
+`overwritesVideo`, so an unprobed `unknown` never replaces a stored video — a run has no confirm) and
 `unsupported` (a probe already condemned it; skipping it saves a probe round-trip per run). Everything
 else goes as `pending`. A new run replaces the section's old one.
 

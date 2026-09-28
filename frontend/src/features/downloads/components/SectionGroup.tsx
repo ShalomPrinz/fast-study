@@ -32,7 +32,7 @@ import {
   toggleSection,
   useSectionOpen,
 } from '@/features/downloads/contexts/SectionCollapseContext'
-import { hasResource } from '@/features/downloads/utils/existingItems'
+import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
 import {
   notStartedCount,
   runningCount,
@@ -136,7 +136,11 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
       const media = item.resolvedMedia ?? item.media
       const target = { ref: item.ref, name, kind, media }
       if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
-      if (hasResource(item, name, kind, courses, course))
+      // A run never overwrites, so a target that would replace a stored video is skipped too.
+      if (
+        hasResource(item, name, kind, courses, course) ||
+        overwritesVideo(item, name, kind, courses, course)
+      )
         return { ...target, disposition: 'skipped' }
       return { ...target, disposition: 'pending' }
     })

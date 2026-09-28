@@ -16,6 +16,7 @@ import {
   existingNames,
   hasResource,
   materialsOf,
+  overwritesVideo,
   splitSiblings,
 } from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
@@ -123,9 +124,17 @@ const RecordingRow = memo(function RecordingRow({
       download()
       return
     }
-    // Re-downloading overwrites an existing video, so confirm first. Exact match takes precedence;
-    // only otherwise warn if a zoom split ('${name}.1'/'.2') exists — this row might split onto it.
-    if (alreadyDownloaded || status === 'done') {
+    // Re-downloading overwrites an existing video, so confirm first — an unprobed 'unknown' too, since
+    // it may be a video. Exact match takes precedence; only otherwise warn if a zoom split
+    // ('${name}.1'/'.2') exists — this row might split onto it.
+    const overwrites = overwritesVideo(
+      { media: item.media, resolvedMedia: resolved },
+      effectiveName,
+      kind,
+      courses,
+      course,
+    )
+    if (overwrites || status === 'done') {
       setConfirm({
         message: t`${effectiveName} already exists in ${course}. Download again and overwrite?`,
         run: download,
