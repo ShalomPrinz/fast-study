@@ -66,10 +66,12 @@ The desktop shell that spawns the four services and opens the window; it holds n
 `lib/<name>/` holds the modules more than one service needs, each subfolder a self-contained package
 that splits its halves into a `py/` and a `js/` package with the shared `CLAUDE.md` at the parent:
 `lib/runtime/` (the launch contract — port handshake, launch-secret check, state root; Python + JS),
-`lib/tools/` (external-binary resolution and the boot-time version probe; Python + JS) and
+`lib/tools/` (external-binary resolution and the boot-time version probe; Python + JS),
 `lib/logging/` (`setup_logging()`; Python only, so its `js/` slot stays empty — the Node services use
-plain `console`). Consumers declare a real dependency (editable path deps for Python, `file:` deps
-for the downloader packages), so every service resolves one copy.
+plain `console`) and `lib/sentry/` (Sentry policy with no SDK — the scrubber, tags and init options
+for all six runtimes, `electron/` and `frontend/` included; Python + JS). Consumers declare a real
+dependency (editable path deps for Python, `file:` deps for the JS packages), so every runtime
+resolves one copy.
 
 A module earns a place there when a second service needs it _and_ divergence between copies would be
 a defect; a helper with one consumer stays in its service. Read [`lib/CLAUDE.md`](lib/CLAUDE.md) and

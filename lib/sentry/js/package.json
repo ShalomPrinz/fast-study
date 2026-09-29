@@ -1,0 +1,17 @@
+{
+  "name": "@faststudy/sentry",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "types": "./sentry.d.ts",
+  "exports": {
+    ".": {
+      "types": "./sentry.d.ts",
+      "default": "./sentry.js"
+    }
+  },
+  "sideEffects": false,
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}

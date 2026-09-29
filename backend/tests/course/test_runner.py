@@ -413,6 +413,27 @@ class TestErrors:
         }
         assert [f for _, f, _ in db.puts] == ["exam-hints.txt"]
 
+    def test_phase_failure_is_reported_to_sentry(self, db, monkeypatch):
+        """Nothing logs a phase failure, so the runner hands the exception to Sentry itself."""
+
+        err = RuntimeError("gemini exploded")
+
+        def boom(ext, report, course):
+            raise err
+
+        captured = []
+        monkeypatch.setattr(course_analyze, "analyze", boom)
+        monkeypatch.setattr(
+            course_runner.sentry_sdk, "capture_exception", captured.append
+        )
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
+            return await _wait_done()
+
+        asyncio.run(go())
+        assert captured == [err]
+
     def test_one_extractor_error_does_not_abort_others(self, db, monkeypatch):
         # exam-hints matches; force its analyze to fail — pitfalls (skipped) must still be reached.
         def selective(ext, report, course):

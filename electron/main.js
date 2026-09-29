@@ -1,18 +1,16 @@
 const fs = require('node:fs');
-const os = require('node:os');
 const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
-const { spawn, spawnSync } = require('node:child_process');
+const { spawn } = require('node:child_process');
 const { app, BrowserWindow, ipcMain, shell } = require('electron');
+// An ES module, loaded by require(esm) — synchronous, which an init that must beat `ready` needs.
+const sentryPolicy = require('@faststudy/sentry');
 const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const store = require('./store');
 const { startUpdater } = require('./updater');
-const { fitBody, mailtoUrl } = require('./report');
-
-// Must run before the app is ready, or the scheme is registered too late to be privileged.
-registerScheme();
+const { reapChildren, signalChildren } = require('./teardown');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 // One secret per launch, in every child's environment and in the renderer's bridge. 32 bytes of
@@ -20,6 +18,13 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const SECRET = randomBytes(32).toString('hex');
 const PORT_LINE = /^FASTSTUDY_PORT=(\d+)$/;
 const HEALTH_TIMEOUT_MS = 60_000;
+// Longer than a service's own Sentry shutdown flush (~2s), so a clean exit is never cut short.
+const KILL_GRACE_MS = 3000;
+// Env wins so dev and tests can point elsewhere; the packaged value is stamped into package.json at
+// build. Neither set means no DSN anywhere: main and every child report nothing.
+const SENTRY_DSN = process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || '';
+// One value for main and every child, so all five processes report under the same environment.
+const SENTRY_ENVIRONMENT = app.isPackaged ? 'production' : 'development';
 
 // Per-user writable state: what `statePath`/`state_path` join onto in every service. Passed
 // explicitly rather than left to their fallback, so main's log lands beside the children's state.
@@ -30,15 +35,89 @@ const STATE_DIR = app.isPackaged
 const LOG_FILE = path.join(STATE_DIR, 'logs', 'launch.log');
 
 const LOG_TAIL_BYTES = 200_000;
-const REPORT_STACK_FRAMES = 8;
+// The values the scrub reads from env that main holds elsewhere: the secret in a constant, the
+// rest in the settings store.
+const SCRUB_ENV = ['DATA_ROOT', 'GROQ_API_KEY', 'GEMINI_API_KEY'];
 
 const children = [];
+// In-flight SIGTERM→SIGKILL escalations; every exit path waits on them, or the timer dies with main.
+const reaping = new Set();
 let logStream = null;
 let mainWindow = null;
 // The launch screen's whole model: one row per child plus the failure, if the boot hit one.
 let bootState = null;
 let booting = false;
 let serviceUrls = {};
+// The main-process SDK, loaded only when a DSN is set; null otherwise, and everything here no-ops.
+let sentry = null;
+
+// Sentry must init before the app is ready; it runs first so an exception anywhere below is caught.
+initSentry();
+// Must run before the app is ready, or the scheme is registered too late to be privileged.
+registerScheme();
+
+/** Init the main-process SDK from the shared policy, or do nothing when no DSN is set. */
+function initSentry() {
+  if (!sentryPolicy.enabled(SENTRY_DSN)) return;
+  sentry = require('@sentry/electron/main');
+  sentry.init({
+    ...sentryPolicy.options('electron', {
+      dsn: SENTRY_DSN,
+      version: app.getVersion(),
+      environment: SENTRY_ENVIRONMENT,
+    }),
+    beforeSend,
+    // Renderers reach main over the SDK's own preload, which it registers on the session and which
+    // runs sandboxed. No `sentry-ipc://` fallback: its privileged-scheme registration wraps `app://`'s.
+    ipcMode: sentry.IPCMode.Classic,
+    // A minidump is raw process memory — decrypted keys, DATA_ROOT paths — that no scrub can reach.
+    integrations: (defaults) =>
+      defaults.filter((integration) => integration.name !== 'SentryMinidump'),
+  });
+}
+
+/** `beforeSend` for every event main sends, renderer ones included: tagged, scrubbed, and carrying
+ *  the scrubbed tail of launch.log as an attachment. */
+function beforeSend(event, hint) {
+  // The SDK copies a renderer's scope tags onto main's, so main's own events are re-tagged here; a
+  // renderer's event carries its own `service` and keeps it.
+  if (event.tags?.['event.process'] !== 'renderer') {
+    event.tags = { ...event.tags, ...sentryPolicy.tags('electron') };
+  }
+  return withScrubEnv(() => {
+    const scrubbed = sentryPolicy.scrub(event, hint);
+    if (!scrubbed) return null;
+    const tail = sentryPolicy.scrub({ extra: { log: logTail() } })?.extra.log;
+    if (tail) {
+      hint.attachments = [
+        ...(hint.attachments ?? []),
+        { filename: 'launch.log', data: tail, contentType: 'text/plain' },
+      ];
+    }
+    return scrubbed;
+  });
+}
+
+/** Run `fn` with the values the scrub reads from env set on `process.env`, then restore it: main
+ *  holds the secret and the stored settings outside its env. Synchronous, so no spawn sees the swap. */
+function withScrubEnv(fn) {
+  const stored = store.serviceEnv();
+  const values = { FASTSTUDY_SECRET: SECRET };
+  for (const name of SCRUB_ENV) values[name] = stored[name];
+  const saved = {};
+  for (const [name, value] of Object.entries(values)) {
+    saved[name] = process.env[name];
+    if (value) process.env[name] = value;
+  }
+  try {
+    return fn();
+  } finally {
+    for (const [name, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[name];
+      else process.env[name] = value;
+    }
+  }
+}
 
 function log(source, line) {
   logStream?.write(`[${source}] ${line}\n`);
@@ -121,6 +200,10 @@ function sharedEnv() {
     FASTSTUDY_PORT: '0',
     FASTSTUDY_SECRET: SECRET,
     FASTSTUDY_STATE_DIR: STATE_DIR,
+    // What each service's Sentry init reads; `release` is `faststudy@<version>` in all five processes.
+    FASTSTUDY_VERSION: app.getVersion(),
+    SENTRY_ENVIRONMENT,
+    ...(SENTRY_DSN ? { FASTSTUDY_SENTRY_DSN: SENTRY_DSN } : {}),
     ...packaged,
     ...store.serviceEnv(),
   };
@@ -237,7 +320,7 @@ async function runBoot() {
   } catch (error) {
     log('main', `boot failed: ${error.stack ?? error.message}`);
     // A retry re-spawns all four, so a surviving child would hold a port and a second DATA_ROOT writer.
-    killChildren();
+    await stopChildren();
     const failing = bootState.services.find((service) => service.state === 'starting');
     // Nothing is running any more, so no row may still read ready.
     for (const service of bootState.services) {
@@ -251,22 +334,22 @@ async function runBoot() {
   }
 }
 
-/** Stop every child. Idempotent — the list is emptied as it goes, so a retry and the exit handlers
- *  can all call it — and safe to call from a synchronous exit handler. */
+/** SIGTERM every child now — synchronous, for `process.on('exit')`, which cannot wait. Idempotent:
+ *  the list is emptied as it goes. Returns the children still to reap. */
 function killChildren() {
-  for (const child of children.splice(0)) {
-    if (child.exitCode !== null || child.signalCode !== null || !child.pid) continue;
-    try {
-      if (process.platform === 'win32') {
-        spawnSync('taskkill', ['/pid', String(child.pid), '/T', '/F']);
-      } else {
-        // Negative pid: the child's whole process group, which is why they are spawned detached.
-        process.kill(-child.pid, 'SIGTERM');
-      }
-    } catch {
-      // Already gone, which is the outcome we wanted.
-    }
+  return signalChildren(children.splice(0));
+}
+
+/** Stop every child and resolve once each is gone, SIGKILLed if it outlived the grace. */
+function stopChildren() {
+  const signalled = killChildren();
+  if (signalled.length) {
+    const pending = reapChildren(signalled, KILL_GRACE_MS, (line) => log('main', line)).finally(
+      () => reaping.delete(pending),
+    );
+    reaping.add(pending);
   }
+  return Promise.all(reaping);
 }
 
 /** Open one DATA_ROOT file in the user's own app. Identifiers in, `database/` resolves the path —
@@ -311,8 +394,8 @@ async function openExternalUrl(target) {
   }
 }
 
-/** The tail of this launch's log, for the report file. `launch.log` is main's to read: it sits
- *  outside `DATA_ROOT` and the renderer has no path to it. */
+/** The tail of this launch's log, attached to every Sentry event. `launch.log` is main's to read: it
+ *  sits outside `DATA_ROOT` and the renderer has no path to it. */
 function logTail() {
   try {
     const { size } = fs.statSync(LOG_FILE);
@@ -327,71 +410,6 @@ function logTail() {
     }
   } catch (error) {
     return `(could not read ${LOG_FILE}: ${error.message})`;
-  }
-}
-
-/** Mail an error report: the whole of it to a file beside the log, a summary in the `mailto:`.
- *  The two carriers are independent, so neither failing stops the other — see docs/RENDERER.md. */
-async function mailReport({ details, error, route }) {
-  const version = app.getVersion();
-  const stamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-  const file = path.join(STATE_DIR, 'logs', `report-${stamp}.txt`);
-  let written = null;
-  try {
-    const full = [
-      `FastStudy ${version} — ${process.platform} ${os.release()} — electron ${process.versions.electron}`,
-      `Route: ${route || '(unknown)'}`,
-      '',
-      details ?? '',
-      '',
-      '--- launch.log ---',
-      logTail(),
-    ].join('\n');
-    fs.mkdirSync(path.dirname(file), { recursive: true });
-    fs.writeFileSync(file, full, 'utf8');
-    written = file;
-  } catch (writeError) {
-    log('main', `report file failed: ${writeError.message}`);
-  }
-
-  const subject = `FastStudy ${version} error report`;
-  // `||` and `String`: an empty `error` is as absent as a missing one, and a renderer field that is
-  // not a string must not reach `.split`.
-  const frames = String(error || details || '')
-    .split('\n')
-    .slice(0, REPORT_STACK_FRAMES)
-    .join('\n');
-  const body = [
-    `Version: ${version}`,
-    `Platform: ${process.platform} ${os.release()}`,
-    `Route: ${route || '(unknown)'}`,
-    // Above the frames because truncation keeps a prefix: the frames are what it is allowed to eat.
-    written
-      ? `Full report and log: ${written}\nPlease attach that file.`
-      : 'No report file could be written, so this mail is the whole report.',
-    '',
-    frames,
-  ].join('\n');
-
-  // The file is already on disk, so a throw while composing the URL must still hand its path back.
-  let result;
-  try {
-    result = await openExternalMailto(mailtoUrl(subject, fitBody(subject, body)));
-  } catch (composeError) {
-    log('main', `report mail failed: ${composeError.message}`);
-    result = { ok: false, error: composeError.message };
-  }
-  return { ok: result.ok, path: written, error: result.error };
-}
-
-/** The one `mailto:` in the app. Separate from `openExternalUrl`, which stays http(s)-only so no
- *  renderer-supplied scheme can reach `shell.openExternal`. */
-async function openExternalMailto(url) {
-  try {
-    await shell.openExternal(url);
-    return { ok: true, error: null };
-  } catch (error) {
-    return { ok: false, error: error.message };
   }
 }
 
@@ -421,7 +439,6 @@ function createWindow(checks) {
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
   ipcMain.handle('faststudy:open-external', (event, url) => openExternalUrl(url));
-  ipcMain.handle('faststudy:report-mail', (event, fields) => mailReport(fields ?? {}));
   ipcMain.handle('faststudy:settings-read', () => store.read());
   ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
   ipcMain.handle('faststudy:boot-state', () => bootState);
@@ -448,19 +465,23 @@ if (!app.requestSingleInstanceLock()) {
     mainWindow.focus();
   });
   app.on('window-all-closed', () => app.quit());
-  app.on('will-quit', killChildren);
+  // Synchronous on Windows (`taskkill /F`), so `quit` — and a pending update install — still follows
+  // the kill (docs/UPDATES.md); POSIX holds the quit until the reap is done, then quits again.
+  app.on('will-quit', (event) => {
+    const done = stopChildren();
+    if (!reaping.size) return;
+    event.preventDefault();
+    done.finally(() => app.quit());
+  });
   // The paths that skip `will-quit`; an orphaned service would keep writing DATA_ROOT (docs/BOOT.md).
   process.on('exit', killChildren);
   for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.on(signal, () => {
-      killChildren();
-      process.exit(0);
-    });
+    process.on(signal, () => stopChildren().finally(() => process.exit(0)));
   }
   process.on('uncaughtException', (error) => {
     log('main', `uncaught: ${error.stack ?? error.message}`);
-    killChildren();
-    process.exit(1);
+    // The SDK's own handler, registered first, has only queued the event; exiting now would drop it.
+    Promise.allSettled([stopChildren(), sentry?.flush(2000)]).finally(() => process.exit(1));
   });
 
   app.whenReady().then(async () => {

@@ -4,6 +4,8 @@ from contextlib import asynccontextmanager
 from typing import Literal
 
 import runtime
+import sentry_policy
+import sentry_sdk
 from course import overview
 from course import runner as course_runner
 from fastapi import FastAPI, Query
@@ -12,6 +14,7 @@ from fastapi.responses import JSONResponse
 from logging_setup import setup_logging
 from pipeline import runner, schedule
 from pydantic import BaseModel
+from sentry_sdk.integrations.google_genai import GoogleGenAIIntegration
 from services import db_client, google_auth, providers, settings
 from services.errors import CodedError, failure
 from timing import get_stats, init_db, record
@@ -19,6 +22,16 @@ from tools import check_tools
 
 setup_logging()
 log = logging.getLogger("api")
+
+# At import, after `runtime` loaded .env, so the dev uvicorn path and the frozen entry both init
+# before the app exists; no DSN means no SDK at all.
+if sentry_policy.enabled():
+    # Off: it reports every 429 the pipeline retries and duplicates the step-failed log event.
+    sentry_sdk.init(
+        **sentry_policy.options("backend"),
+        disabled_integrations=[GoogleGenAIIntegration()],
+    )
+    sentry_sdk.set_tags(sentry_policy.tags("backend"))
 
 # Probed once at startup, never per request: the boot screen polls /health, and re-spawning three
 # binaries per poll costs more than the answer. A tool installed later is seen on the next launch.

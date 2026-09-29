@@ -9,8 +9,8 @@ contextBridge.exposeInMainWorld('faststudy', {
   secret: config.secret,
   // Machine facts probed once at boot; the settings screens degrade on them.
   checks: config.checks,
-  // The installed version and the OS language: what an error report is stamped with, and the
-  // frontend's initial locale when nothing is stored.
+  // The installed version and the OS language: the renderer's Sentry release, and the frontend's
+  // initial locale when nothing is stored.
   version: config.version,
   locale: config.locale,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
@@ -23,10 +23,6 @@ contextBridge.exposeInMainWorld('faststudy', {
   open: {
     file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
     external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
-  },
-  // Fields, never a URL: main composes the `mailto:`, so no renderer scheme reaches openExternal.
-  report: {
-    mail: (fields) => ipcRenderer.invoke('faststudy:report-mail', fields),
   },
   // The launch screen only: a snapshot first, since main's first push can beat the listener.
   boot: {

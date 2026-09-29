@@ -281,6 +281,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "faststudy-logging" },
     { name = "faststudy-runtime" },
+    { name = "faststudy-sentry" },
     { name = "faststudy-tools" },
     { name = "google-api-python-client" },
     { name = "google-auth-oauthlib" },
@@ -288,6 +289,7 @@ dependencies = [
     { name = "groq" },
     { name = "python-dotenv" },
     { name = "requests" },
+    { name = "sentry-sdk", extra = ["fastapi"] },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -304,6 +306,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.111" },
     { name = "faststudy-logging", editable = "../lib/logging/py" },
     { name = "faststudy-runtime", editable = "../lib/runtime/py" },
+    { name = "faststudy-sentry", editable = "../lib/sentry/py" },
     { name = "faststudy-tools", editable = "../lib/tools/py" },
     { name = "google-api-python-client", specifier = ">=2.0" },
     { name = "google-auth-oauthlib", specifier = ">=1.0" },
@@ -314,6 +317,7 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" },
     { name = "python-dotenv", specifier = ">=1.0" },
     { name = "requests", specifier = ">=2.31" },
+    { name = "sentry-sdk", extras = ["fastapi"], specifier = ">=2" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },
 ]
 provides-extras = ["test"]
@@ -362,6 +366,15 @@ requires-dist = [
     { name = "starlette", specifier = ">=0.37" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.29" },
 ]
+provides-extras = ["test"]
+
+[[package]]
+name = "faststudy-sentry"
+version = "0.1.0"
+source = { editable = "../lib/sentry/py" }
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'test'", specifier = ">=8.0" }]
 provides-extras = ["test"]
 
 [[package]]
@@ -946,6 +959,24 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/42/f2/05f29bc3913aea15eb670be136045bf5c5bbf4b99ecb839da9b422bb2c85/requests-oauthlib-2.0.0.tar.gz", hash = "sha256:b3dffaebd884d8cd778494369603a9e7b58d29111bf6b41bdc2dcd87203af4e9", size = 55650, upload-time = "2024-03-22T20:32:29.939Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3b/5d/63d4ae3b9daea098d5d6f5da83984853c1bbacd5dc826764b249fe119d24/requests_oauthlib-2.0.0-py2.py3-none-any.whl", hash = "sha256:7dd8a5c40426b779b0868c404bdef9768deccf22749cde15852df527e6269b36", size = 24179, upload-time = "2024-03-22T20:32:28.055Z" },
+]
+
+[[package]]
+name = "sentry-sdk"
+version = "2.70.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/52/0a/e37553f3106d0f7f0d4b8ad2c7b92410d131929786ffd116833d3b8164df/sentry_sdk-2.70.0.tar.gz", hash = "sha256:27e4b512f47be93136645dbe8f02d430473ee73a389ce430b2b7104baa66cf75", size = 1047234, upload-time = "2026-09-22T09:40:11.721Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/eb/ff/b1e56f009bfb9b8023910b533d5ebf4ec5650da49891f2b8c7f3d4815401/sentry_sdk-2.70.0-py3-none-any.whl", hash = "sha256:89600e8bb5fc5239cad5c4434217f453204f2207ad29399ea58947460b37a62e", size = 531752, upload-time = "2026-09-22T09:40:10.063Z" },
+]
+
+[package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
 ]
 
 [[package]]

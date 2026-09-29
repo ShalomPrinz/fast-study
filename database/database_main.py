@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 from json import JSONDecodeError
 
 import runtime
+import sentry_policy
+import sentry_sdk
 import settings
 from events.sse import broadcast_notify, close_all, subscribe
 from fastapi import FastAPI, Query, Request
@@ -28,6 +30,12 @@ from logging_setup import setup_logging
 
 setup_logging()
 log = logging.getLogger("db")
+
+# At import, after `runtime` loaded .env, so the dev uvicorn path and the frozen entry both init
+# before the app exists; no DSN means no SDK at all.
+if sentry_policy.enabled():
+    sentry_sdk.init(**sentry_policy.options("database"))
+    sentry_sdk.set_tags(sentry_policy.tags("database"))
 
 # The dev __main__ path and the frozen dispatcher both read the port from here, so there is one default.
 DEFAULT_PORT = 8001
@@ -470,7 +478,10 @@ async def post_config(request: Request):
         body = await request.json()
         if "data_root" in body:
             # The setter is the only writer of fs.paths' root state, so this takes effect at once.
-            paths.set_data_root(settings.prepare_data_root(body["data_root"]))
+            root = settings.prepare_data_root(body["data_root"])
+            paths.set_data_root(root)
+            # lib/sentry's scrubber reads DATA_ROOT from os.environ per event, so it redacts the new root at once.
+            os.environ["DATA_ROOT"] = root
             # Every open tree still lists the old root's courses until it refetches.
             broadcast_notify()
         return Response(status_code=204)

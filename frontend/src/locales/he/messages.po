@@ -386,7 +386,7 @@ msgstr "הוספת תרגול"
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
-#: src/features/lectures/EditSummaryView.tsx:252
+#: src/features/lectures/EditSummaryView.tsx:254
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -398,7 +398,7 @@ msgstr "הכול נוצר"
 msgid "Already generated."
 msgstr "כבר נוצר."
 
-#: src/features/lectures/EditSummaryView.tsx:207
+#: src/features/lectures/EditSummaryView.tsx:209
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -430,11 +430,6 @@ msgstr "בטוח שאתה רוצה ליצור מחדש?"
 msgid "Attach material to"
 msgstr "צירוף חומר אל"
 
-#. placeholder {0}: result.path
-#: src/app/ErrorBoundary.tsx:53
-msgid "Attach this file to the email: <0>{0}</0>"
-msgstr "צרף את הקובץ הזה למייל: <0>{0}</0>"
-
 #: src/features/lectures/constants/pipeline.ts:21
 msgid "Audio"
 msgstr "שמע"
@@ -459,7 +454,7 @@ msgstr "הרצה אוטומטית: כבויה"
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל השלבים"
 
-#: src/features/lectures/EditSummaryView.tsx:180
+#: src/features/lectures/EditSummaryView.tsx:182
 msgid "Back"
 msgstr "חזרה"
 
@@ -594,11 +589,11 @@ msgstr "המשך יצירה"
 msgid "Continue transcription"
 msgstr "המשך תמלול"
 
-#: src/app/ErrorBoundary.tsx:43
+#: src/app/ErrorBoundary.tsx:37
 msgid "Copied!"
 msgstr "הועתק!"
 
-#: src/app/ErrorBoundary.tsx:43
+#: src/app/ErrorBoundary.tsx:37
 msgid "Copy details"
 msgstr "העתקת פרטים"
 
@@ -631,16 +626,6 @@ msgstr "לא ניתן לפתוח את הקובץ: {0}"
 #: src/services/open.ts:16
 msgid "Could not open the link: {0}"
 msgstr "לא ניתן לפתוח את הקישור: {0}"
-
-#. placeholder {0}: result.error ?? 'unknown error'
-#: src/app/ErrorBoundary.tsx:64
-msgid "Could not open your mail app: {0}"
-msgstr "לא ניתן לפתוח את תוכנת הדואר: {0}"
-
-#. placeholder {0}: result.path
-#: src/app/ErrorBoundary.tsx:60
-msgid "Could not open your mail app. The report was saved to <0>{0}</0>"
-msgstr "לא ניתן לפתוח את תוכנת הדואר. הדיווח נשמר ב-<0>{0}</0>"
 
 #: src/shared/i18n/serviceErrors.ts:50
 msgid "Could not read the audio in {file}."
@@ -741,7 +726,7 @@ msgstr "תיקיית נתונים"
 msgid "Delete {0}"
 msgstr "מחיקת {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:199
+#: src/features/lectures/EditSummaryView.tsx:201
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
@@ -907,12 +892,12 @@ msgstr "נכשל ✗"
 #~ msgid "Failed to delete file"
 #~ msgstr "מחיקת הקובץ נכשלה"
 
-#: src/features/lectures/EditSummaryView.tsx:140
-#: src/features/lectures/EditSummaryView.tsx:152
+#: src/features/lectures/EditSummaryView.tsx:141
+#: src/features/lectures/EditSummaryView.tsx:153
 msgid "Failed to generate PDF"
 msgstr "יצירת ה-PDF נכשלה"
 
-#: src/features/lectures/EditSummaryView.tsx:106
+#: src/features/lectures/EditSummaryView.tsx:107
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
@@ -1033,7 +1018,7 @@ msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
 msgid "Groq rate limit reached"
 msgstr "יותר מדי בקשות ל-Groq"
 
-#: src/app/ErrorBoundary.tsx:147
+#: src/app/ErrorBoundary.tsx:108
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
 msgstr "דף הבית"
@@ -1209,7 +1194,7 @@ msgstr "לא נמצא חומר"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/EditSummaryView.tsx:199
+#: src/features/lectures/EditSummaryView.tsx:201
 msgid "No original saved"
 msgstr "אין גרסה מקורית שמורה"
 
@@ -1396,11 +1381,11 @@ msgstr "PDF"
 #~ msgid "PDF export failed"
 #~ msgstr "ייצוא ה-PDF נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:190
+#: src/features/lectures/EditSummaryView.tsx:192
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:191
+#: src/features/lectures/EditSummaryView.tsx:193
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -1502,7 +1487,7 @@ msgstr "התחברות מחדש"
 msgid "Recordings · {selected}"
 msgstr "הקלטות · {selected}"
 
-#: src/app/ErrorBoundary.tsx:151
+#: src/app/ErrorBoundary.tsx:112
 msgid "Reload"
 msgstr "רענון"
 
@@ -1532,7 +1517,7 @@ msgstr "להחליף את הווידאו הקיים ב\"{0}\"?"
 msgid "Required"
 msgstr "חובה"
 
-#: src/features/lectures/EditSummaryView.tsx:201
+#: src/features/lectures/EditSummaryView.tsx:203
 msgid "Restore original"
 msgstr "שחזור המקור"
 
@@ -1608,7 +1593,7 @@ msgstr "הרצאות בעיבוד"
 msgid "Save"
 msgstr "שמירה"
 
-#: src/features/lectures/EditSummaryView.tsx:209
+#: src/features/lectures/EditSummaryView.tsx:211
 msgid "Save & update PDF"
 msgstr "שמירה ועדכון PDF"
 
@@ -1653,10 +1638,6 @@ msgstr "היחידה {0} ממתינה לקוד גישה"
 msgid "Select a lecture to get started"
 msgstr "בחר הרצאה כדי להתחיל"
 
-#: src/app/ErrorBoundary.tsx:91
-msgid "Send report"
-msgstr "שליחת דיווח"
-
 #: src/features/downloads/components/AccountStatus.tsx:117
 msgid "session expired"
 msgstr "תוקף החיבור פג"
@@ -1683,7 +1664,7 @@ msgstr "הצג עוד"
 msgid "skipped"
 msgstr "דולג"
 
-#: src/app/ErrorBoundary.tsx:138
+#: src/app/ErrorBoundary.tsx:99
 msgid "Something went wrong"
 msgstr "משהו השתבש"
 
@@ -1691,11 +1672,7 @@ msgstr "משהו השתבש"
 msgid "Something went wrong."
 msgstr "משהו השתבש."
 
-#: src/app/ErrorBoundary.tsx:141
-#~ msgid "Sorry about it. Go home to keep working, or copy the details below to report it."
-#~ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד, או העתק את הפרטים למטה כדי לדווח על כך."
-
-#: src/app/ErrorBoundary.tsx:141
+#: src/app/ErrorBoundary.tsx:102
 msgid "Sorry about that. Go home to keep working, or copy the details below to report it."
 msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד, או העתק את הפרטים למטה כדי לדווח על כך."
 
@@ -1713,7 +1690,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:147
+#: src/features/lectures/EditSummaryView.tsx:148
 #: src/features/lectures/MainView.tsx:155
 msgid "Step already running"
 msgstr "השלב כבר רץ"
@@ -1967,7 +1944,7 @@ msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה ה
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
-#: src/features/lectures/EditSummaryView.tsx:253
+#: src/features/lectures/EditSummaryView.tsx:255
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
 
@@ -1984,6 +1961,14 @@ msgstr "אין עדיין סיכומים בקורס הזה."
 #: src/features/settings/components/ApiKeyField.tsx:66
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
+
+#: src/app/ErrorBoundary.tsx:52
+msgid "This error could not be reported automatically. Copy the details to report it."
+msgstr "לא ניתן היה לדווח על השגיאה הזו אוטומטית. העתק את הפרטים כדי לדווח עליה."
+
+#: src/app/ErrorBoundary.tsx:46
+msgid "This error was reported automatically. Reference: <0>{eventId}</0>"
+msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 
 #: src/shared/i18n/serviceErrors.ts:178
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
@@ -2045,7 +2030,7 @@ msgstr "הוצאת קורס מהארכיון"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:236
+#: src/features/lectures/EditSummaryView.tsx:238
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -2053,7 +2038,7 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
-#: src/features/lectures/EditSummaryView.tsx:209
+#: src/features/lectures/EditSummaryView.tsx:211
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 
@@ -2133,10 +2118,6 @@ msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 #: src/features/settings/InitWall.tsx:190
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
-
-#: src/app/ErrorBoundary.tsx:57
-msgid "Your mail app is open. No report file could be saved."
-msgstr "תוכנת הדואר נפתחה. לא ניתן היה לשמור קובץ דיווח."
 
 #: src/features/settings/InitWall.tsx:175
 msgid "Your two API keys"

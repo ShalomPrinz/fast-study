@@ -40,6 +40,11 @@ and writable copy live) — comes from [`@faststudy/runtime`](../../lib/runtime/
 `peerHeaders` goes on calls to our own services only, never on `services/probe.js`'s fetch of an
 external lecture host.
 
+Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `src/instrument.js`, index.js's
+first import, inits with [`@faststudy/sentry`](../../lib/sentry/CLAUDE.md)'s scrubbing options, and
+Sentry's express handler sits before ours. What reaches it: uncaught exceptions, unhandled rejections
+(still fatal) and 5xx route errors — a failed download job is a job status, never an event.
+
 ## Endpoints
 
 | Method + path                             | Purpose                                                                                                           |

@@ -1,3 +1,6 @@
+// First: Sentry has to init before the rest of the app loads.
+import './instrument.js';
+import * as Sentry from '@sentry/node';
 import express from 'express';
 import cors from 'cors';
 import { ALLOWED_ORIGINS, AUTODL_PORT } from './src/lib/config.js';
@@ -53,6 +56,9 @@ app.post('/list/expand', handleListExpand);
 app.post('/resolve', handleResolve);
 app.post('/zoom/passcode', handleZoomPasscode);
 app.post('/close', handleClose);
+
+// Captures a 5xx-bound error, then hands it on unchanged to the backstop below; a no-op without a DSN.
+Sentry.setupExpressErrorHandler(app);
 
 // Centralized error backstop: Express 5 forwards async-handler rejections here.
 // A rethrown UnsupportedError maps to 422; anything else to 500, carrying its own code when it

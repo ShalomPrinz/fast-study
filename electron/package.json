@@ -50,6 +50,8 @@
     }
   },
   "dependencies": {
+    "@faststudy/sentry": "file:../lib/sentry/js",
+    "@sentry/electron": "^7.20.0",
     "electron-updater": "^6.8.9"
   }
 }

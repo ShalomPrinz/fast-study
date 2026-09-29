@@ -8,11 +8,14 @@ dependencies = [
     "python-dotenv>=1.0",
     "faststudy-runtime",
     "faststudy-logging",
+    "sentry-sdk>=2",
+    "faststudy-sentry",
 ]
 
 [tool.uv.sources]
 faststudy-runtime = { path = "../lib/runtime/py", editable = true }
 faststudy-logging = { path = "../lib/logging/py", editable = true }
+faststudy-sentry = { path = "../lib/sentry/py", editable = true }
 
 [project.optional-dependencies]
 test = [

@@ -4,6 +4,7 @@ modules. Lock, collision and failure-isolation model: docs/OVERVIEW.md."""
 import asyncio
 from datetime import datetime, timezone
 
+import sentry_sdk
 from services import db_client
 from services.errors import CodedError, error_fields, failure
 
@@ -187,6 +188,8 @@ class OverviewRun:
             entries[slug] = {**self._phase_worker(slug, phase), **carried}
             stop = entries[slug]["status"] == "skipped"
         except Exception as e:
+            # Nothing logs a phase failure, so this is the only way it reaches Sentry; a no-op without a DSN.
+            sentry_sdk.capture_exception(e)
             code, params = error_fields(e, "internal_error")
             entries[slug] = {
                 "status": "error",

@@ -32,7 +32,9 @@ with `FASTSTUDY_PORT=0` for the port line and `/health`.
 
 - **Reproducible from committed content.** Everything a workflow reads is tracked, except
   `backend/credentials.json`, which arrives as the `GOOGLE_CREDENTIALS_JSON` secret; a build without
-  it still produces an installer, one that cannot do Drive consent.
+  it still produces an installer, one that cannot do Drive consent. The Sentry secrets
+  (`FASTSTUDY_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`) are inputs of the same kind: without them the
+  installer reports nothing and no source maps upload ([RELEASE.md](docs/RELEASE.md#error-reporting)).
 - **Published bytes are the bytes the smoke job tested.** `publish.yml` never builds and takes no
   input; no build step may run after the smoke job — [RELEASE.md](docs/RELEASE.md#build-test-publish).
 - **Pinned tool versions are measured claims** — moving one re-opens what it was measured against

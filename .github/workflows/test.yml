@@ -165,11 +165,15 @@ jobs:
         run: uv sync --extra test && uv run pytest tests/ -q
         working-directory: lib/logging/py
 
+      - name: Run sentry (py) tests
+        run: uv sync --extra test && uv run pytest tests/ -q
+        working-directory: lib/sentry/py
+
       # Both JS halves are npm workspaces of the repo root ("lib/*/js"), so one root install covers
       # them. --workspaces without --if-present on purpose: a new lib/*/js with no test script
       # should fail here rather than pass by being skipped.
       - name: Install JS workspace dependencies
         run: npm ci
 
-      - name: Run runtime and tools (js) tests
+      - name: Run runtime, tools and sentry (js) tests
         run: npm test --workspaces

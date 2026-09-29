@@ -43,11 +43,11 @@ hiddenimports = [
 a = Analysis(  # noqa: F821
     [str(Path(SPECPATH) / "entry.py")],  # noqa: F821
     # lib/'s source dirs, explicitly: PyInstaller never runs an editable install's .pth hook, so
-    # `runtime`, `logging_setup` and `tools` are otherwise unresolvable.
+    # `runtime`, `logging_setup`, `tools` and `sentry_policy` are otherwise unresolvable.
     pathex=[
         str(_BACKEND),
         str(_DATABASE),
-        *(str(_REPO / "lib" / name / "py") for name in ("runtime", "logging", "tools")),
+        *(str(_REPO / "lib" / name / "py") for name in ("runtime", "logging", "tools", "sentry")),
     ],
     datas=datas,
     hiddenimports=hiddenimports,

@@ -1,5 +1,7 @@
 """Settings store: .env merge fidelity, write-only keys, and the DATA_ROOT create/probe."""
 
+import os
+
 import pytest
 import settings
 from fastapi.testclient import TestClient
@@ -324,6 +326,17 @@ def test_config_applies_data_root_without_restart(client, tmp_path):
     assert r.status_code == 204
     assert data_root() == target
     assert target.is_dir()
+
+
+def test_config_publishes_the_root_to_the_environment(client, tmp_path, monkeypatch):
+    monkeypatch.setenv(
+        "DATA_ROOT", "placeholder"
+    )  # so teardown restores the original env
+    target = tmp_path / "קורסים"
+    r = client.post("/config", json={"data_root": str(target)})
+
+    assert r.status_code == 204
+    assert os.environ["DATA_ROOT"] == str(target)
 
 
 def test_config_rejects_an_unusable_data_root(client, tmp_path):
