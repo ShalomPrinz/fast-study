@@ -174,6 +174,11 @@ curl -s "$B/log?since=0"                                  # every recorded event
 curl -s $B/mutations                                      # every non-GET request, with body and answer
 ```
 
+A modal's buttons sit in `.modal-actions`: confirm is `.modal-actions .btn--primary`, cancel
+`.modal-actions .btn--ghost`, in either language — `ConfirmModal`'s Yes/No and the passcode prompt
+alike. Never pick one by text: `has-text("No")` is a case-insensitive substring that also matches
+"Recitation", and the confirm button comes first in the DOM.
+
 Arguments ride as a JSON body or query parameters, whatever the method. `/eval`'s raw body is an
 async function body given `page` and `context` — the escape hatch for waits and new tabs.
 `/click`, `/fill` and `/press` take an optional `screenshot` name, captured once the action settles
