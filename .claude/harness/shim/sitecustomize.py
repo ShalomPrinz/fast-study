@@ -238,7 +238,7 @@ if _HARNESS:
                 return _Request(
                     {
                         "id": file_id,
-                        "webViewLink": f"https://drive.fake/harness/{file_id}",
+                        "webViewLink": f"{PROVIDERS}/drive/view/{file_id}",
                     }
                 )
 
@@ -248,7 +248,7 @@ if _HARNESS:
                 return _Request(
                     {
                         "id": fileId,
-                        "webViewLink": f"https://drive.fake/harness/{fileId}",
+                        "webViewLink": f"{PROVIDERS}/drive/view/{fileId}",
                     }
                 )
 
