@@ -13,6 +13,7 @@ const full = {
   geminiModel: 'gemini-2.5-pro',
   gdriveRootFolder: 'FastStudy',
   autoRun: 'audio',
+  moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   geminiApiKey: 'gemini-secret',
   groqApiKey: 'groq-secret',
@@ -51,6 +52,14 @@ test('autoRun is trimmed and lowercased before it is stored', () => {
   assert.equal(store.serviceEnv().AUTO_RUN, 'audio');
 });
 
+test('moodleSite round-trips trimmed and reaches the child env as MOODLE_SITE', () => {
+  const view = store.write({ moodleSite: '  https://x.ac.il/moodle  ' });
+
+  assert.equal(view.moodleSite, 'https://x.ac.il/moodle');
+  assert.equal(store.read().moodleSite, 'https://x.ac.il/moodle');
+  assert.deepEqual(store.serviceEnv(), { MOODLE_SITE: 'https://x.ac.il/moodle' });
+});
+
 test('the string "false" cannot store true', () => {
   store.write({ driveEnabled: true });
   assert.throws(() => store.write({ driveEnabled: 'false' }), /must be a boolean/);
@@ -75,6 +84,7 @@ test('echoing a read back blanks nothing', () => {
     driveEnabled: written.driveEnabled,
     gdriveRootFolder: written.gdriveRootFolder,
     autoRun: written.autoRun,
+    moodleSite: written.moodleSite,
   };
 
   assert.deepEqual(store.write(echo), written);
@@ -105,6 +115,7 @@ test('an unset store reads as all-null', () => {
     driveEnabled: null,
     gdriveRootFolder: null,
     autoRun: null,
+    moodleSite: null,
   });
 });
 
@@ -116,6 +127,7 @@ test('serviceEnv maps every field onto its service env var', () => {
     GEMINI_MODEL: 'gemini-2.5-pro',
     GDRIVE_ROOT_FOLDER: 'FastStudy',
     AUTO_RUN: 'audio',
+    MOODLE_SITE: 'https://lemida.biu.ac.il',
     DRIVE_ENABLED: 'true',
     GEMINI_API_KEY: 'gemini-secret',
     GROQ_API_KEY: 'groq-secret',

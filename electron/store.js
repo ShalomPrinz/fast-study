@@ -9,6 +9,7 @@ const STRING_FIELDS = {
   gemini_model: 'GEMINI_MODEL',
   gdrive_root_folder: 'GDRIVE_ROOT_FOLDER',
   auto_run: 'AUTO_RUN',
+  moodle_site: 'MOODLE_SITE',
 };
 // Mirrors AUTO_RUN_MODES in backend/services/settings.py, which reads an unknown value as 'full'.
 const AUTO_RUN_MODES = ['off', 'audio', 'full'];
@@ -23,6 +24,7 @@ const FIELDS = {
   geminiModel: 'gemini_model',
   gdriveRootFolder: 'gdrive_root_folder',
   autoRun: 'auto_run',
+  moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   geminiApiKey: 'gemini_api_key',
   groqApiKey: 'groq_api_key',
@@ -82,6 +84,7 @@ function read() {
     driveEnabled: typeof stored.drive_enabled === 'boolean' ? stored.drive_enabled : null,
     gdriveRootFolder: text(stored.gdrive_root_folder),
     autoRun: text(stored.auto_run),
+    moodleSite: text(stored.moodle_site),
   };
 }
 
