@@ -15,6 +15,14 @@ function storeFailed(detail) {
   return { error: detail, code: 'database_store_failed', params: { detail } };
 }
 
+// A database refusal: its own code/params pass through as-is (the frontend already catalogs them);
+// `database_store_failed` is only for a body that carries no code.
+function refused(body, status) {
+  const error = body?.error ?? `HTTP ${status}`;
+  if (!body?.code) return storeFailed(error);
+  return { error, code: body.code, params: body.params ?? {} };
+}
+
 // /tree returns rich lecture/recitation objects; the popup only wants the names,
 // and archived courses are dropped so finished ones don't clutter suggestions.
 export async function listCourses() {
@@ -48,9 +56,9 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
       body = await res.json();
     } catch {}
     if (!res.ok) {
-      const error = body?.error ?? `HTTP ${res.status}`;
-      emitError(`❌ ${tool} upload to database failed: ${error}`);
-      return storeFailed(error);
+      const failure = refused(body, res.status);
+      emitError(`❌ ${tool} upload to database failed: ${failure.error}`);
+      return failure;
     }
     emitLog(`✅ Uploaded ${VIDEO_FILENAME} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
@@ -86,9 +94,9 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
       body = await res.json();
     } catch {}
     if (!res.ok) {
-      const error = body?.error ?? `HTTP ${res.status}`;
-      emitError(`❌ ${tool} upload to database failed: ${error}`);
-      return storeFailed(error);
+      const failure = refused(body, res.status);
+      emitError(`❌ ${tool} upload to database failed: ${failure.error}`);
+      return failure;
     }
     emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
     notifyFrontend();
@@ -117,9 +125,9 @@ export async function uploadPdf(buf, course, lecture, kind) {
     body = await res.json();
   } catch {}
   if (!res.ok) {
-    const error = body?.error ?? `HTTP ${res.status}`;
-    emitError(`❌ PDF upload to database failed: ${error}`);
-    return storeFailed(error);
+    const failure = refused(body, res.status);
+    emitError(`❌ PDF upload to database failed: ${failure.error}`);
+    return failure;
   }
   emitLog(`✅ Uploaded ${body?.name} to database (${course}/${lecture}, kind=${kind})`);
   notifyFrontend();

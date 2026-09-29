@@ -24,9 +24,13 @@ upload appends instead of overwriting and the server names nothing. Derived arti
 attaching material shouldn't invalidate an existing summary.
 
 `uploadVideo` and `uploadMaterial` are the job path: they stream from the temp dir, remove it either
-way, and never throw — `null` on success, else the error message the runner turns into the job's
+way, and never throw — `null` on success, else the failure body the runner turns into the job's
 terminal state. `uploadPdf` forwards bytes the extension already fetched: it throws on a network error
-(route → 500) and returns the message on a database-level failure (route → 502).
+(route → 500) and returns the failure body on a database-level failure (route → 502).
+
+A database refusal that carries a `code` is forwarded with its `code`/`params`/`error` unchanged
+(`name_reserved`, `file_locked`, …); only a codeless one — a network error, a non-JSON body — becomes
+`database_store_failed` with `detail`.
 
 ## After a successful upload
 

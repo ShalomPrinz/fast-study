@@ -8,7 +8,11 @@ import { createJob, finishJob, listJobs } from '../src/jobs.js';
 import { cancelRun, createRun, resumeRun } from '../src/runs.js';
 import { downloadItem, reresolveFailure } from '../src/routes/downloadItem.js';
 import { resolve } from '../src/services/autodl.js';
-import { uploadPdf } from '../src/services/database.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { MATERIAL_TEMP_FILENAME } from '../src/config.js';
+import { uploadMaterial, uploadPdf } from '../src/services/database.js';
 
 function stubFetch(t, impl) {
   const real = globalThis.fetch;
@@ -156,7 +160,24 @@ test('a 2xx with nothing runnable is its own code', async (t) => {
 
 // ── the database edge ───────────────────────────────────────────────────────
 
-test("a refused store carries the database's own text as detail", async (t) => {
+test("a refused store forwards the database's own code and params", async (t) => {
+  stubFetch(t, async () => ({
+    ok: false,
+    status: 409,
+    json: async () => ({
+      error: "'overview' is reserved",
+      code: 'name_reserved',
+      params: { name: 'overview' },
+    }),
+  }));
+  assert.deepEqual(await uploadPdf(Buffer.from('%PDF'), 'C', 'overview', 'lecture'), {
+    error: "'overview' is reserved",
+    code: 'name_reserved',
+    params: { name: 'overview' },
+  });
+});
+
+test('a forwarded code with no params still carries an object', async (t) => {
   stubFetch(t, async () => ({
     ok: false,
     status: 423,
@@ -164,8 +185,39 @@ test("a refused store carries the database's own text as detail", async (t) => {
   }));
   assert.deepEqual(await uploadPdf(Buffer.from('%PDF'), 'C', 'L1', 'lecture'), {
     error: 'file is open elsewhere',
+    code: 'file_locked',
+    params: {},
+  });
+});
+
+test('a refused job upload reaches /jobs with the database code unchanged', async (t) => {
+  stubFetch(t, async () => ({
+    ok: false,
+    status: 409,
+    json: async () => ({ error: 'reserved', code: 'name_reserved', params: { name: 'overview' } }),
+  }));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'upload-material-'));
+  fs.writeFileSync(path.join(tempDir, MATERIAL_TEMP_FILENAME), '%PDF');
+  const failure = await uploadMaterial(tempDir, 'C', 'overview', 'lecture', 'fetch');
+  assert.equal(fs.existsSync(tempDir), false);
+  const id = createJob({ course: 'C', lecture: 'overview', kind: 'lecture', tool: 'fetch' });
+  finishJob(id, 'error', failure.error, failure.code, failure.params);
+  assert.deepEqual(
+    { code: jobOf(id).code, params: jobOf(id).params },
+    { code: 'name_reserved', params: { name: 'overview' } },
+  );
+});
+
+test('a refusal with no code wraps its text as detail', async (t) => {
+  stubFetch(t, async () => ({
+    ok: false,
+    status: 500,
+    json: async () => ({ error: 'boom' }),
+  }));
+  assert.deepEqual(await uploadPdf(Buffer.from('%PDF'), 'C', 'L1', 'lecture'), {
+    error: 'boom',
     code: 'database_store_failed',
-    params: { detail: 'file is open elsewhere' },
+    params: { detail: 'boom' },
   });
 });
 

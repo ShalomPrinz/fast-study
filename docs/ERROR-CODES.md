@@ -256,6 +256,10 @@ other failure; they previously fell through to the bare status line.
 | `routes/downloadItem.js`  | job        | `recapture_unsupported`     | `detail`                   | user  |
 | `routes/downloadItem.js`  | job        | `recapture_failed`          | `detail`                   | user  |
 
+`services/database.js` forwards the database's own `code`/`params` (`name_reserved`, `file_locked`, …)
+on both channels unchanged, so `database_store_failed` is only the fallback for a failure with no code
+— a network error on the job path, or a non-JSON body. `/upload-pdf` keeps answering 502 either way.
+
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s
 `console` wrappers; `services/database.js` logs the emoji line and returns the bare error, so nothing
 emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.

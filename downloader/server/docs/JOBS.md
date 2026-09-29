@@ -93,6 +93,7 @@ params }`. `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `t
 | `download_auth_failed`        | `tool`, `exit_code`, `detail`| the same exit, classified by `isAuthError`       |
 | `download_failed`             | `tool`, `detail`             | the probe or command build threw                 |
 | `database_store_failed`       | `detail`                     | the bytes never reached the database             |
+| the database's own code      | as the database sent them    | the database refused the store (`docs/DATABASE.md`) |
 | `recapture_*`                 | see above                    | the one silent re-resolve failed                 |
 
 ## Timing samples
