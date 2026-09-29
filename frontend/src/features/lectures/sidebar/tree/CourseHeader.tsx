@@ -11,6 +11,8 @@ import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import Icon from '@/shared/components/Icon'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
+import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
@@ -24,6 +26,9 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { refreshCourses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const shiftHeld = useShiftHeld()
+  const { status } = useRunnerStatus()
+  // A course rename moves every lecture folder, so one running or queued lecture locks it.
+  const renameLocked = isCourseRenameLocked(status, course.name)
 
   const [renaming, setRenaming] = useState(false)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
@@ -39,7 +44,8 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     const name = renameEdit.value.trim()
     setRenaming(false)
     renameEdit.setValue('')
-    if (!name || name === course.name) return
+    // A run may have started while the input was open.
+    if (!name || name === course.name || renameLocked) return
     try {
       await renameCourse(course.name, name)
     } catch (e) {
@@ -78,9 +84,16 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
       ) : (
         <button
           className="course-toggle"
+          title={
+            renameLocked
+              ? t`Can't rename while one of its lectures is being processed or waiting in line`
+              : undefined
+          }
           onClick={(e) => {
-            if (e.shiftKey) startRenaming(e)
-            else expand.toggle()
+            if (e.shiftKey) {
+              if (!renameLocked) startRenaming(e)
+              else e.preventDefault()
+            } else expand.toggle()
           }}
         >
           <span className="chevron">

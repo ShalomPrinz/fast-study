@@ -11,6 +11,7 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { findLecture } from '@/features/lectures/utils/courseTree'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
+import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { usePendingUpload } from '@/features/lectures/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
@@ -23,7 +24,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const kind = useLectureListKind()
   const { selected, onSelect } = useSelection()
   const { courses, refreshCourses } = useCourseTreeContext()
-  const { isInFlight } = useRunnerStatus()
+  const { status, isInFlight } = useRunnerStatus()
   const driveEnabled = useDriveEnabled()
   const upload = usePendingUpload()
 
@@ -37,6 +38,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     selected?.kind === kind
 
   const running = isInFlight(course.name, lecture.name, kind)
+  const renameLocked = isLectureRenameLocked(status, course.name, lecture.name, kind)
   const dotState = isLectureComplete(lecture, driveEnabled) ? 'done' : running ? 'running' : null
 
   function startRenaming(e: React.MouseEvent) {
@@ -49,7 +51,8 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     const name = renameEdit.value.trim()
     setRenaming(false)
     renameEdit.setValue('')
-    if (!name || name === lecture.name) return
+    // A run may have started while the input was open.
+    if (!name || name === lecture.name || renameLocked) return
     try {
       await renameLecture(course.name, lecture.name, name, kind)
     } catch (e) {
@@ -100,9 +103,14 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
         data-course={course.name}
         data-lecture={lecture.name}
         data-kind={kind}
+        title={
+          renameLocked ? t`Can't rename while it's being processed or waiting in line` : undefined
+        }
         onClick={(e) => {
-          if (e.shiftKey) startRenaming(e)
-          else onSelect(course.name, lecture.name, kind)
+          if (e.shiftKey) {
+            if (!renameLocked) startRenaming(e)
+            else e.preventDefault()
+          } else onSelect(course.name, lecture.name, kind)
         }}
         onDragOver={(e) => {
           e.preventDefault()

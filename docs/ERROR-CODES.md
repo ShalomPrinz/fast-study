@@ -190,6 +190,8 @@ for the code whichever view chooses to show it.
 | `fs/paths.py`         | `unsafe_path_segment`           | `segment`         | dev       |
 | `fs/paths.py`         | `name_has_no_legal_characters`  | `name`            | user      |
 | `fs/crud.py`          | `name_taken`                    | `name`            | user      |
+| `fs/crud.py`          | `name_reserved`                 | `name`            | user      |
+| `fs/crud.py`, `fs/summary.py` | `lecture_not_found`     | `course`, `lecture` | user    |
 | `fs/overview.py`, `fs/summaries.py` | `course_not_found`  | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
 | `settings.py`         | `setting_must_be_boolean`       | `field`           | dev       |

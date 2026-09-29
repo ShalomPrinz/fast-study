@@ -49,9 +49,14 @@ ports, `DOWNLOADER_EXTENSION_ID`, `FRONTEND_URL`, comments, blank lines, orderin
 key survive. New keys append at the end. An omitted field — and a `null`, so echoing a read back
 blanks nothing — is left alone; `""` clears.
 
-Values are written single-quoted, which `.env` parsers read literally, so Windows backslashes
-survive; a value containing a single quote or a line break is refused, because that quoting cannot
-represent one.
+Values are written single-quoted with every `\` doubled, because python-dotenv (what every reader of
+these keys uses) unescapes `\\` and `\'` inside single quotes — so `\\nas\share` reads back intact.
+A value containing a single quote or a line break is refused, because that quoting cannot represent
+one. A value ending in `\` still does not survive: python-dotenv reads its closing `\'` as an escaped
+quote whenever a later line holds a `'`, losing that value and the next.
+
+A value an older build wrote undoubled reads back unchanged unless it held `\\`, which reads as one
+`\` and must be re-entered.
 
 ## `DATA_ROOT` validation
 

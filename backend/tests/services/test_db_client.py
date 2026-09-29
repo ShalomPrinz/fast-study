@@ -91,3 +91,49 @@ class TestNotFound:
                 db_client.get_overview_file("C", "exam-hints.md")
         assert e.value.code == "overview_file_not_found"
         assert e.value.params == {"file": "exam-hints.md", "course": "C"}
+
+    def test_a_vanished_lecture_is_forwarded_not_recoded_as_a_missing_file(self):
+        with _answering(
+            FakeResponse(
+                404,
+                {
+                    "error": "lecture not found",
+                    "code": "lecture_not_found",
+                    "params": {"course": "C", "lecture": "L"},
+                },
+            )
+        ):
+            with pytest.raises(DbClientError) as e:
+                db_client.get_file_bytes("C", "L", "lecture", "audio.mp3")
+        assert (e.value.code, e.value.params) == (
+            "lecture_not_found",
+            {"course": "C", "lecture": "L"},
+        )
+
+    def test_the_peers_file_not_found_still_gains_the_lecture(self):
+        with _answering(
+            FakeResponse(
+                404,
+                {
+                    "error": "Not found",
+                    "code": "file_not_found",
+                    "params": {"file": "a"},
+                },
+            )
+        ):
+            with pytest.raises(DbClientError) as e:
+                db_client.get_file_bytes("C", "L", "lecture", "audio.mp3")
+        assert e.value.params == {"file": "audio.mp3", "course": "C", "lecture": "L"}
+
+
+class TestPutSummary:
+    def _sent_params(self, **kwargs) -> dict:
+        with _answering(FakeResponse(204)) as request:
+            db_client.put_summary("C", "L", "lecture", "# s", **kwargs)
+        return request.call_args.kwargs["params"]
+
+    def test_new_ai_output_asks_for_a_fresh_summary(self):
+        assert self._sent_params(fresh=True) == {"kind": "lecture", "fresh": "true"}
+
+    def test_a_plain_write_omits_the_flag(self):
+        assert self._sent_params() == {"kind": "lecture"}

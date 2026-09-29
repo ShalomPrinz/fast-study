@@ -21,9 +21,9 @@ it backward-compatible or flag the impact.
 ## Rules
 
 - **`fs/paths.py` owns path resolution.** `lecture_dir(course, lecture, kind)` is the only resolver,
-  and the data root is module state written only by `set_data_root()`. It also owns the two guards
-  every caller shares: `check_safe_segment()` and `reject_if_locked()` (a Windows sharing violation →
-  `FileLocked` → `423`).
+  and the data root is module state written only by `set_data_root()`. It also owns the guards
+  every caller shares: `check_safe_segment()`, `reject_if_locked()` (a Windows sharing violation →
+  `FileLocked` → `423`) and `check_none_locked()`, which probes a set before any of it is touched.
 - **Every non-2xx body is `{error, code, params}`** — English prose, the machine code, its flat
   values. The code rides on the exception (`CodedError` in `fs/paths.py`), so it survives the frames
   between a raise and the route that catches it; see [docs/API.md](docs/API.md) and the repo-wide

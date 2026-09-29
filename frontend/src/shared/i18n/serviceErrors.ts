@@ -30,6 +30,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message: 'This step needs {file}, which is not there yet. Run the step before it first.',
   }),
   course_not_found: msg({ message: 'The course "{course}" was not found.' }),
+  lecture_not_found: msg({
+    message: '"{lecture}" no longer exists in "{course}". It may have been renamed or deleted.',
+  }),
   file_not_found: msg({ message: '{file} was not found.' }),
   internal_error: msg({ message: 'Something went wrong.' }),
   storage_unavailable: msg({
@@ -102,6 +105,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message: '"{name}" has no characters that can be used in a folder name.',
   }),
   name_taken: msg({ message: 'A course or lecture named "{name}" already exists.' }),
+  name_reserved: msg({
+    message:
+      '"{name}" is reserved for the course\'s own folders. Choose another name for the lecture.',
+  }),
   setting_may_not_contain_quotes: msg({
     message: 'That setting may not contain quotes or line breaks.',
   }),

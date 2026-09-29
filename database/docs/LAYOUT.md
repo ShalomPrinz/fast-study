@@ -46,6 +46,11 @@ resolvers depend on; a replacement rule has to be written carefully not to colla
 on a second pass. This is deliberately not exposed as a setting: reversing it is a migration once
 directories exist on disk, not a config change.
 
+A lecture or recitation whose sanitized name matches `overview` or `Recitations`, case-insensitively
+since NTFS is, is refused on create and rename with `409` `name_reserved`: the tree skips those folders,
+so the lecture would vanish into the course's own. Course names need no such check — nothing else
+lives at the data root.
+
 The rule is idempotent, which is what the arrangement rests on: a name read back off disk
 resolves to itself, so renames and tree round-trips are stable. `read_course` takes its name
 straight from the `iterdir()` walk and is the one place that deliberately skips sanitizing.
@@ -60,15 +65,15 @@ second only matters if the app ships beyond Windows.
 
 ## Predefined files
 
-`PREDEFINED_FILES` is the lecture-dir contract: exactly these files get a tree entry, and
-exactly these get wiped on a fresh video upload — all of them or none, since a file held open by
-a viewer aborts the wipe before the first unlink. Anything else on disk is invisible to the
+`PREDEFINED_FILES` is the lecture-dir contract: exactly these files get a tree entry, and a fresh
+video upload wipes all of them (plus the side-files below) or none, since a file held open by a
+viewer aborts the wipe before the first unlink. Anything else on disk is invisible to the
 frontend. Adding a pipeline artifact means adding it here.
 
 `original_summary.md` and `transcript.partial.meta.json` are deliberately outside the tuple —
 the first is edit state read through the summary endpoint, the second is progress metadata
-inlined as `transcribePartial`. Material PDFs are outside it too: they are a numbered family
-(below), not a fixed name.
+inlined as `transcribePartial` — but the video wipe takes both, since each describes the old video.
+Material PDFs are outside it too: they are a numbered family (below), not a fixed name.
 
 ## Materials
 
@@ -87,8 +92,8 @@ in between, and the single async writer makes that pair atomic. Adding an `await
 serving `POST /…/materials` from a plain `def` (threadpool) route, or running a second uvicorn
 worker each invalidate that and would put two uploads on one name.
 
-A fresh `video.mp4` wipes every material along with the derived artifacts: a new video means the
-lecture folder is being re-sourced from scratch, so a re-upload is a reset, not an append.
+A fresh `video.mp4` never touches materials: they are attached, not derived from the video, and a
+handout routinely arrives before its recording.
 
 ## Dotfiles
 

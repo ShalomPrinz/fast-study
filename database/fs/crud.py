@@ -2,21 +2,28 @@ import os
 import sys
 from pathlib import Path
 
-from .materials import material_names
 from .paths import (
     ARCHIVED_MARKER,
+    OVERVIEW_DIR,
     PDF_BUILD_TEX_MARKER,
     PDF_WARNING_MARKER,
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
     FolderInUse,
+    LectureNotFound,
+    NameReserved,
     NameTaken,
+    check_none_locked,
     check_safe_segment,
     course_dir,
     lecture_dir,
     reject_if_locked,
+    safe_name,
 )
+
+# Course-level folders the tree skips as lectures; casefolded because NTFS matches names case-insensitively.
+_RESERVED_LECTURE_NAMES = {OVERVIEW_DIR.casefold(), RECITATIONS_DIR.casefold()}
 
 
 def _mkdir_new(d: Path, name: str) -> None:
@@ -81,9 +88,18 @@ def rename_course(old: str, new: str) -> None:
     _rename_dir(course_dir(old), course_dir(new), old, new)
 
 
+def _check_not_reserved(name: str) -> None:
+    """Refuse a lecture/recitation name that sanitizes onto a reserved course-level folder."""
+
+    # A lecture dir named like one would be hidden from the tree and merged into that folder.
+    if safe_name(name).casefold() in _RESERVED_LECTURE_NAMES:
+        raise NameReserved(f"'{name}' is a reserved folder name", name=name)
+
+
 def create_lecture(course: str, name: str, kind: str) -> None:
     """Create a lecture or recitation directory, creating the Recitations parent on demand."""
 
+    _check_not_reserved(name)
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
     _mkdir_new(lecture_dir(course, name, kind), name)
@@ -92,24 +108,10 @@ def create_lecture(course: str, name: str, kind: str) -> None:
 def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
     """Rename a lecture or recitation directory in place."""
 
+    _check_not_reserved(new)
     _rename_dir(
         lecture_dir(course, old, kind), lecture_dir(course, new, kind), old, new
     )
-
-
-def _check_none_locked(paths) -> None:
-    """Raise FileLocked if any of the given files is held open by another program."""
-
-    # Opening for update is how a Windows sharing violation surfaces without touching the file;
-    # every other error is left to the operation itself, which is the one that has to succeed.
-    for p in paths:
-        try:
-            with p.open("r+b"):
-                pass
-        except PermissionError as e:
-            reject_if_locked(e, p.name)
-        except OSError:
-            continue
 
 
 def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
@@ -118,13 +120,13 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     d = lecture_dir(course, lecture, kind)
     # The downloader uploads here for brand-new lectures, so create the dir if missing.
     d.mkdir(parents=True, exist_ok=True)
-    # Materials go too: a fresh video means the folder is re-sourced from scratch, so a
-    # re-upload is a reset, not an append.
+    # Materials stay: they are attached by hand or by the downloader, not derived from the video.
+    # The summary snapshot goes, or "Restore original" would bring back the old video's summary.
     wipe = [
         d / f
         for f in (
             *PREDEFINED_FILES,
-            *material_names(d),
+            "original_summary.md",
             "transcript.partial.meta.json",
             PDF_WARNING_MARKER,
             PDF_BUILD_TEX_MARKER,
@@ -132,7 +134,7 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     ]
     # Probe the whole set before unlinking any of it: a lock hit mid-loop would leave the lecture
     # half-wiped with the new video never written.
-    _check_none_locked(wipe)
+    check_none_locked(wipe)
     for p in wipe:
         if p.exists():
             try:
@@ -161,13 +163,18 @@ def delete_file(course: str, lecture: str, file: str, kind: str) -> None:
 
 
 def write_file(course: str, lecture: str, file: str, kind: str, data: bytes) -> None:
-    """Write raw bytes to one file in a lecture dir; neutral — does NOT wipe derived artifacts."""
+    """Write raw bytes to one file in an existing lecture dir; neutral — does NOT wipe derived artifacts."""
 
     check_safe_segment(file)
     d = lecture_dir(course, lecture, kind)
-    d.mkdir(parents=True, exist_ok=True)
+    # No mkdir: a pipeline step finishing after its lecture was deleted or renamed must not resurrect it.
     try:
         (d / file).write_bytes(data)
+    except FileNotFoundError:
+        # The file is a single safe segment, so only a missing lecture dir can raise this.
+        raise LectureNotFound(
+            f"{course}/{lecture} does not exist", course=course, lecture=lecture
+        ) from None
     except PermissionError as e:
         reject_if_locked(e, file)
         raise

@@ -348,3 +348,22 @@ def test_config_rejects_an_unusable_data_root(client, tmp_path):
     assert r.status_code == 400
     assert r.json()["code"] == "data_root_not_absolute"
     assert data_root() == before
+
+
+@pytest.mark.parametrize("value", ["\\\\nas\\share", "C:\\x\\y", "a\\\\\\b"])
+def test_backslashes_round_trip(env_file, value):
+    # python-dotenv unescapes `\\` inside single quotes, so a UNC root would lose its leading slash.
+    settings.write_settings({"gdrive_root_folder": value, "auto_run": "off"})
+
+    assert settings.read_settings()["gdrive_root_folder"] == value
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="python-dotenv reads a closing `\\'` as an escaped quote whenever a later `'` exists",
+)
+def test_a_trailing_backslash_round_trips(env_file):
+    # Appended keys land in order, so the trailing-backslash value is followed by another quoted line.
+    settings.write_settings({"gdrive_root_folder": "C:\\data\\", "auto_run": "off"})
+
+    assert settings.read_settings()["gdrive_root_folder"] == "C:\\data\\"

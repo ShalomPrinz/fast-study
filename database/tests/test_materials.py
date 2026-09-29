@@ -1,4 +1,4 @@
-"""Material allocation (max+1, never renumber), tree listing, delete, and the video wipe."""
+"""Material allocation (max+1, never renumber), tree listing, delete, and surviving the video wipe."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -120,11 +120,16 @@ def test_delete_leaves_the_others_unrenamed(client, lecture):
     assert (lecture / "material.3.pdf").read_bytes() == b"c"
 
 
-def test_write_video_wipes_every_material(lecture):
+def test_write_video_keeps_every_material(lecture):
+    # A handout attached before its recording arrives must survive that recording's upload.
     for data in (b"a", b"b", b"c"):
         write_material("Algo", "Lecture 1", "lecture", data)
     crud.write_video("Algo", "Lecture 1", "lecture", b"vid")
-    assert list_materials(lecture) == []
+    assert [e["name"] for e in list_materials(lecture)] == [
+        "material.pdf",
+        "material.2.pdf",
+        "material.3.pdf",
+    ]
     assert (lecture / "video.mp4").read_bytes() == b"vid"
 
 

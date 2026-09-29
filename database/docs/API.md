@@ -29,6 +29,10 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   file route; see the trust model.
 - `409` `name_taken` `{name}` refuses a create or rename onto a course/lecture that already exists;
   a case-only rename (the same dir on NTFS) is not a collision.
+- `409` `name_reserved` `{name}` refuses a lecture/recitation create or rename whose sanitized name is
+  `overview` or `Recitations`, in any case ([LAYOUT.md](LAYOUT.md#names)).
+- `404` `lecture_not_found` `{course, lecture}` answers a neutral write (`PUT /…/files/{name}`,
+  `PUT /…/summary`) to a lecture dir that does not exist; nothing is written.
 - A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.
   `HEAD` answers a bodyless `404` instead: absence is its normal answer, not a failure.
 
@@ -44,16 +48,16 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`)                                          |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`)                                      |
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `423` if a file in it is open elsewhere |
-| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts; `423` if one is open elsewhere |
+| `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf; returns `{name}` with the allocated filename          |
-| `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `423` if it is open in another program           |
+| `PUT    /courses/{course}/lectures/{lecture}/files/{name}` | write one file; neutral; `404` if the lecture is missing; `423` if it is open in another program |
 | `HEAD   /courses/{course}/lectures/{lecture}/files/{name}` | 200 if present, else 404                                                  |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}` | stream one file                                                           |
 | `GET    /courses/{course}/lectures/{lecture}/files/{name}/path` | `{path}`, the absolute on-disk path; 404 if absent                   |
 | `DELETE /courses/{course}/lectures/{lecture}/files/{name}` | delete one file; `423` if it is open in another program                   |
 | `GET    /courses/{course}/lectures/{lecture}/summary`      | `{content, hasOriginal}`                                                  |
-| `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8)                                            |
+| `PUT    /courses/{course}/lectures/{lecture}/summary`      | write `summary.md` (raw utf-8); `?fresh=true` drops the snapshot; `404` if the lecture is missing |
 | `DELETE /courses/{course}/lectures/{lecture}/summary`      | revert to `original_summary.md`                                           |
 | `GET    /courses/{course}/summaries`                       | every non-empty summary in a course; 404 if the course is missing         |
 | `PUT    /courses/{course}/overview/files/{name}`           | write a course-level file; 404 if the course is missing; `423` if it is open in another program |
@@ -76,8 +80,8 @@ a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
 The two file-write paths differ on purpose, and confusing them destroys data:
 
 - **`PUT /…/video`** is the downloader's fresh-source path. It erases every predefined file plus
-  every material pdf, the partial-transcript meta, and both pdf dotfiles — they all belong to
-  the _old_ video. The wipe is all-or-nothing: the whole set is probed for locks first, so one
+  `original_summary.md`, the partial-transcript meta, and both pdf dotfiles — they all belong to
+  the _old_ video. Materials stay: they are attached, not derived. The wipe is all-or-nothing: the whole set is probed for locks first, so one
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
   It creates the lecture dir on demand — the downloader uploads to brand-new lectures.
 - **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
@@ -88,7 +92,8 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   rather than 404, matching how the tree degrades.
 - **`PUT /…/files/{name}`** is the backend pipeline's path (`audio.mp3`, `transcript.txt`,
   `summary.pdf`, `drive_url.txt`, …). It is strictly neutral; wiping here would erase earlier
-  outputs of the run in progress.
+  outputs of the run in progress. It never creates the lecture dir: a step finishing after its
+  lecture was deleted or renamed answers `404` `lecture_not_found` instead of resurrecting a ghost.
 
 Every route that writes or deletes a file answers `423 Locked` when Windows refuses the operation
 because another process holds the file open — a native PDF viewer left open on `summary.pdf` is the
@@ -128,6 +133,11 @@ what it is given, so an unchecked `..\` or `C:\…` would be an open-any-file pr
 `PUT /…/summary` renames the existing `summary.md` to `original_summary.md` on the _first_ edit
 only, so the pipeline's untouched output stays recoverable however many times the user edits.
 `hasOriginal` drives the revert affordance; `DELETE` restores and removes the original.
+
+`?fresh=true` is the pipeline's write of new AI output: it deletes any `original_summary.md` and
+writes without snapshotting, since a snapshot of the replaced summary would make restore bring that
+back. Both files are probed for locks first, so a `423` leaves the snapshot in place. Like the files
+route, it never creates the lecture dir.
 
 Summary writes never go through the generic files route — that would skip the snapshot.
 

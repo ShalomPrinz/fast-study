@@ -28,6 +28,8 @@ No environment variable redirects a provider call: both SDK clients get `provide
 
 `kind="recitation"` is forwarded to `database/` as a query string, so it injects the `Recitations/` segment. `runner._db_workspace` bridges the pure functions to it: a tempdir per step that pre-downloads named inputs and uploads named outputs on clean exit — ffmpeg, pandoc and Gemini need real filesystem paths.
 
+Writes never create a lecture dir: on one deleted mid-run `database/` answers `lecture_not_found`, which `db_client` forwards as the step's error, so the run stops there instead of re-listing the vanished lecture. `summarize` writes with `put_summary(..., fresh=True)`, so the database drops the editor's revert snapshot and Restore original can only return this output.
+
 ## Empty-file guard
 
 A pipeline file is never legitimately 0 bytes; when one is, the producing tool returned success with no content and raised nothing to explain it. `_require_nonempty` rejects 0-byte data at every workspace read and write, and `EMPTY_FILE_ISSUES` supplies the likely cause per filename. Without it a 0-byte file counts as "exists" for `next_step` and the run advances, surfacing a misleading downstream error instead. All six are one code, `empty_file`, carrying `{file}` only — the hints are sentence fragments and stay in the English prose.

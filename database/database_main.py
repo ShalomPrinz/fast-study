@@ -23,6 +23,8 @@ from fs.paths import (
     DataRootNotConfigured,
     FileLocked,
     FolderInUse,
+    LectureNotFound,
+    NameReserved,
     NameTaken,
     lecture_dir,
 )
@@ -107,8 +109,10 @@ def _failure(exc: Exception, status: int, code: str, params: dict | None = None)
         return _error(str(exc), 409, exc.code, exc.params)
     if isinstance(exc, (FileLocked, FolderInUse)):
         return _error(str(exc), 423, exc.code, exc.params)
-    if isinstance(exc, NameTaken):
+    if isinstance(exc, (NameTaken, NameReserved)):
         return _error(str(exc), 409, exc.code, exc.params)
+    if isinstance(exc, LectureNotFound):
+        return _error(str(exc), 404, exc.code, exc.params)
     if isinstance(exc, CodedError):
         return _error(str(exc), status, exc.code, exc.params)
     # A malformed or incomplete JSON body is the caller's bug whatever the route meant to do.
@@ -222,7 +226,7 @@ async def patch_lecture(
 async def put_video(
     course: str, lecture: str, request: Request, kind: str = Query("lecture")
 ):
-    """Upload video.mp4 from a raw body, wiping derived artifacts."""
+    """Upload video.mp4 from a raw body, wiping derived artifacts (materials stay)."""
 
     try:
         data = await request.body()
@@ -276,7 +280,7 @@ def delete_file_endpoint(
 async def put_file(
     course: str, lecture: str, name: str, request: Request, kind: str = Query("lecture")
 ):
-    """Write raw body bytes to one file in a lecture dir; neutral — does NOT wipe derived artifacts."""
+    """Write raw body bytes to one file in an existing lecture dir; neutral — does NOT wipe derived artifacts."""
 
     try:
         data = await request.body()
@@ -312,13 +316,18 @@ def get_summary(course: str, lecture: str, kind: str = Query("lecture")):
 
 @app.put("/courses/{course}/lectures/{lecture}/summary")
 async def put_summary(
-    course: str, lecture: str, request: Request, kind: str = Query("lecture")
+    course: str,
+    lecture: str,
+    request: Request,
+    kind: str = Query("lecture"),
+    fresh: bool = Query(False),
 ):
-    """Overwrite summary.md from a raw utf-8 body; first edit snapshots the original for later revert."""
+    """Overwrite summary.md from a raw utf-8 body; first edit snapshots the original for later revert,
+    while fresh=true (new pipeline output) drops any snapshot instead."""
 
     try:
         content = (await request.body()).decode("utf-8")
-        summary_fs.write_summary(course, lecture, kind, content)
+        summary_fs.write_summary(course, lecture, kind, content, fresh)
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 500, "summary_io_failed")

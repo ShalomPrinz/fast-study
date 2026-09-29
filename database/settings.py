@@ -87,9 +87,10 @@ def _comment(rest: str) -> str:
 
 
 def _quote(value: str) -> str:
-    """Single-quote a value for `.env`: no escape processing, so Windows backslashes survive intact."""
+    """Single-quote a value for `.env`, doubling backslashes so a Windows or UNC path reads back intact."""
 
-    return f"'{value}'"
+    # python-dotenv unescapes `\\` and `\'` inside single quotes; quotes are refused, so `\` is all to escape.
+    return "'" + value.replace("\\", "\\\\") + "'"
 
 
 def _incoming(field: str, value) -> str:

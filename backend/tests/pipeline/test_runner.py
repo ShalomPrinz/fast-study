@@ -313,6 +313,21 @@ def _run_exec_summarize_with_materials(contents: dict[str, bytes]) -> tuple[dict
     return result, seen
 
 
+def test_exec_summarize_writes_its_output_as_a_fresh_summary():
+    """New AI output must drop the old revert snapshot, or Restore original brings back a
+    previous summary (even a different video's) instead of this one."""
+
+    with (
+        patch.object(runner.db_client, "file_exists", return_value=True),
+        patch.object(runner.db_client, "list_materials", return_value=[]),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"transcript"),
+        patch.object(runner, "summarize", return_value="# new"),
+        patch.object(runner.db_client, "put_summary") as put_summary,
+    ):
+        runner._exec_summarize("C1", "L1", "lecture")
+    put_summary.assert_called_once_with("C1", "L1", "lecture", "# new", fresh=True)
+
+
 def test_exec_summarize_no_materials():
     result, seen = _run_exec_summarize_with_materials({})
     assert result == {"status": "done", "usedMaterial": False}
@@ -471,6 +486,53 @@ def test_run_step_logs_error(caplog):
         "blocked": False,
     }
     assert any("step transcribe failed" in r.getMessage() for r in caplog.records)
+
+
+# ---- lecture deleted mid-run ----
+
+
+def test_a_lecture_deleted_mid_step_stops_its_run_with_lecture_not_found():
+    """The step's output write is refused because the lecture dir is gone: the run stops
+    there with that code rather than re-listing the vanished lecture and running `audio`."""
+
+    fetches: list[int] = []
+
+    async def fake_fetch(course, lecture, kind):
+        fetches.append(1)
+        return _files(video=True, audio=True, transcript=True, summary=True)
+
+    def fake_render(md_path):
+        pdf = Path(md_path).with_suffix(".pdf")
+        pdf.write_bytes(b"%PDF")
+        return str(pdf), None
+
+    gone = runner.db_client.DbClientError(
+        "lecture not found",
+        "lecture_not_found",
+        course="C1",
+        lecture="L1",
+    )
+    with (
+        patch.object(runner, "_fetch_files", fake_fetch),
+        patch.object(runner.db_client, "file_exists", return_value=True),
+        patch.object(runner.db_client, "get_summary", return_value="# s"),
+        patch.object(runner, "convert_to_pdf", side_effect=fake_render),
+        patch.object(runner.db_client, "put_file_bytes", side_effect=gone),
+        patch.object(runner.db_client, "delete_file") as delete_file,
+        patch.object(runner, "strip_audio") as strip_audio,
+        patch.object(runner.db_client, "notify"),
+    ):
+        asyncio.run(runner.run_pipeline_for("C1", "L1", "lecture"))
+
+    stored = runner._errors.pop(runner._skey("C1", "L1", "lecture"))
+    assert (stored["step"], stored["code"], stored["params"]) == (
+        "pdf",
+        "lecture_not_found",
+        {"course": "C1", "lecture": "L1"},
+    )
+    assert fetches == [1]
+    strip_audio.assert_not_called()
+    delete_file.assert_not_called()
 
 
 # ---- rate-limit branch ----

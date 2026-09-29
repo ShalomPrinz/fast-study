@@ -29,7 +29,7 @@ SOURCE_URL_MARKER = ".source_url"
 PDF_WARNING_MARKER = ".pdf_warning"
 PDF_BUILD_TEX_MARKER = ".pdf_build.tex"
 
-# The tree surfaces exactly these and a fresh video.mp4 wipes exactly these — see docs/LAYOUT.md.
+# The tree surfaces exactly these and a fresh video.mp4 wipes these plus its side-files — see docs/LAYOUT.md.
 PREDEFINED_FILES = (
     "video.mp4",
     "audio.mp3",
@@ -96,6 +96,18 @@ class NameTaken(CodedError):
     code = "name_taken"
 
 
+class NameReserved(CodedError):
+    """Raised when a lecture/recitation create or rename targets a folder name the layout reserves."""
+
+    code = "name_reserved"
+
+
+class LectureNotFound(CodedError):
+    """Raised when a neutral write targets a lecture dir that does not exist; only a video upload creates one."""
+
+    code = "lecture_not_found"
+
+
 # ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION, as os.unlink/os.replace report them — see docs/API.md.
 _SHARING_VIOLATIONS = (32, 33)
 
@@ -138,6 +150,21 @@ def reject_if_locked(exc: PermissionError, file: str) -> None:
         raise FileLocked(
             f"{file} is open in another program. Close it and try again.", file=file
         ) from exc
+
+
+def check_none_locked(paths) -> None:
+    """Raise FileLocked if any of the given files is held open by another program."""
+
+    # Opening for update is how a Windows sharing violation surfaces without touching the file;
+    # every other error is left to the operation itself, which is the one that has to succeed.
+    for p in paths:
+        try:
+            with p.open("r+b"):
+                pass
+        except PermissionError as e:
+            reject_if_locked(e, p.name)
+        except OSError:
+            continue
 
 
 def material_name(index: int) -> str:

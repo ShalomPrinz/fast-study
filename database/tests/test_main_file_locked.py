@@ -319,6 +319,31 @@ class TestPutSummary:
         assert r.json()["code"] == "summary_io_failed"
         assert "Permission denied" in r.json()["params"]["detail"]
 
+    def test_fresh_write_with_a_locked_snapshot_is_423(
+        self, client, summarized, monkeypatch
+    ):
+        (summarized / "original_summary.md").write_text("old", encoding="utf-8")
+        monkeypatch.setattr(
+            "pathlib.Path.open", _deny_for("original_summary.md", "open")
+        )
+
+        r = client.put("/courses/Algo/lectures/L1/summary?fresh=true", content=b"new")
+        assert r.status_code == 423
+        assert r.json() == _locked_body("original_summary.md")
+        assert (summarized / "summary.md").read_text(encoding="utf-8") == "pipeline"
+
+    def test_fresh_write_with_a_locked_summary_keeps_the_snapshot(
+        self, client, summarized, monkeypatch
+    ):
+        # The probe refuses before the unlink, so a failed write never costs the snapshot too.
+        (summarized / "original_summary.md").write_text("old", encoding="utf-8")
+        monkeypatch.setattr("pathlib.Path.open", _deny_for("summary.md", "open"))
+
+        r = client.put("/courses/Algo/lectures/L1/summary?fresh=true", content=b"new")
+        assert r.status_code == 423
+        assert r.json() == _locked_body("summary.md")
+        assert (summarized / "original_summary.md").exists()
+
 
 class TestRevertSummary:
     @pytest.fixture

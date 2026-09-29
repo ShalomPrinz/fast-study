@@ -115,7 +115,9 @@ archived course so the badge stays off.
 - `CourseGroupContext` and `LectureListContext` reach the recursive rows without prop-drilling;
   `AddLectureInput` renders only in the list being added to.
 
-Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. `useShiftHeld`
+Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. A running
+or queued lecture, and a course holding one, refuse the rename (`utils/renameLock.ts`): the runner writes
+by the name it was given, so a mid-run rename splits the lecture in two. `useShiftHeld`
 resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
 `nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second

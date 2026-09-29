@@ -334,7 +334,7 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
             summary = summarize(transcript, materials)
         # Gemini can return HTTP 200 with no text (e.g. finish_reason MALFORMED_RESPONSE).
         _require_nonempty("summary.md", summary.encode("utf-8"))
-        db_client.put_summary(course, lecture, kind, summary)
+        db_client.put_summary(course, lecture, kind, summary, fresh=True)
         return {"status": "done", "usedMaterial": bool(materials)}
     except GeminiRateLimitError as e:
         # A daily quota's retryDelay lies: it says 59s while the quotaId says PerDay.

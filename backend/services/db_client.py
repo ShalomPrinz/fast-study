@@ -50,6 +50,16 @@ def _summary_url(course: str, lecture: str) -> str:
     return f"{DATABASE_URL}/courses/{_q(course)}/lectures/{_q(lecture)}/summary"
 
 
+def _peer_code(resp: requests.Response) -> str | None:
+    """The `code` a database refusal names itself by, or None for a bare or non-JSON body."""
+
+    try:
+        body = resp.json()
+    except Exception:
+        return None
+    return body.get("code") if isinstance(body, dict) else None
+
+
 def _raise_for_status(resp: requests.Response) -> None:
     """Raise DbClientError carrying the database's {error, code, params} on a non-2xx status, so
     callers see failures as exceptions rather than silently succeeding."""
@@ -75,7 +85,9 @@ def get_file_bytes(course: str, lecture: str, kind: str, filename: str) -> bytes
     """Fetch one file from the lecture dir as raw bytes. Raises if missing."""
 
     r = _request("GET", _file_url(course, lecture, filename), params={"kind": kind})
-    if r.status_code == 404:
+    # Only a plain missing file is re-coded with the lecture named; a 404 the peer coded as
+    # something else (`lecture_not_found`) is forwarded as its own failure.
+    if r.status_code == 404 and _peer_code(r) in (None, "file_not_found"):
         raise DbClientError(
             f"{filename} not found for {course}/{lecture}",
             "file_not_found",
@@ -198,13 +210,19 @@ def get_summary(course: str, lecture: str, kind: str) -> str:
     return r.json()["content"]
 
 
-def put_summary(course: str, lecture: str, kind: str, content: str) -> None:
-    """Write summary.md. The database service snapshots the original on first write (enables revert)."""
+def put_summary(
+    course: str, lecture: str, kind: str, content: str, *, fresh: bool = False
+) -> None:
+    """Write summary.md. `fresh` marks new AI output: the database drops the old revert snapshot
+    and takes none, so Restore original returns this text rather than a previous summary's."""
 
+    params = {"kind": kind}
+    if fresh:
+        params["fresh"] = "true"
     r = _request(
         "PUT",
         _summary_url(course, lecture),
-        params={"kind": kind},
+        params=params,
         data=content.encode("utf-8"),
     )
     _raise_for_status(r)
