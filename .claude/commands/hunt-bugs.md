@@ -103,7 +103,8 @@ wall or switch a fake's mode whenever your flow needs to. What you will use most
   `-d '{"downloadMs":60000}'` on the site makes the next downloads take a minute, with no restart.
   A provider failure can target one lecture and the next N calls —
   `-d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'` — so it hits that lecture
-  and leaves the rest of the course working. The README lists every mode.
+  and leaves the rest of the course working. `{"groq":{"mode":"slow","ms":20000,"match":…}}` holds
+  that lecture's step in flight for cancel, rename, reload or queue flows. The README lists every mode.
 - `node .claude/harness/setup.mjs --harness <your harness> --restart <service> [ENV=val…]` — restart
   one service mid-flow with its exact recorded environment, plus any overrides; the README lists
   the service names.

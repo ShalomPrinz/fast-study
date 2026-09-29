@@ -18,19 +18,20 @@ const SUMMARY = fs.readFileSync(path.join(FIXTURES, 'summary.md'), 'utf8');
 
 // Each provider's rule: `mode` is what a matching request gets, `match` limits it to the lectures
 // whose `x-harness-lecture` path holds it as whole segments, and `times` drains one per hit, back
-// to 'ok' at zero. 'empty' is the "model returned nothing" branch each step has its own message for.
+// to 'ok' at zero. 'empty' is the "model returned nothing" branch each step has its own message for;
+// 'slow' holds the call `ms` and then answers as 'ok', so a step stays in flight on demand.
 const MODES = {
-  groq: ['ok', '429', '500', 'empty'],
-  gemini: ['ok', '429', '500', 'empty', 'invalidkey'],
+  groq: ['ok', '429', '500', 'empty', 'slow'],
+  gemini: ['ok', '429', '500', 'empty', 'invalidkey', 'slow'],
 };
-const OK = { mode: 'ok', match: null, times: null };
+const OK = { mode: 'ok', match: null, times: null, ms: null };
 const mode = { groq: { ...OK }, gemini: { ...OK } };
 
 // A bare string is the untargeted rule, so `{"gemini":"429"}` still fails every call.
 function parseRule(provider, value) {
   const rule = { ...OK, ...(typeof value === 'string' ? { mode: value } : value) };
   const unknown = Object.keys(rule).filter((key) => !(key in OK));
-  if (unknown.length) throw new Error(`${provider} takes mode, match, times — not ${unknown}`);
+  if (unknown.length) throw new Error(`${provider} takes mode, match, times, ms — not ${unknown}`);
   if (rule.match !== null && (typeof rule.match !== 'string' || !rule.match)) {
     throw new Error(`${provider} match must be a non-empty path like "hb-fail/שיעור 4"`);
   }
@@ -40,12 +41,16 @@ function parseRule(provider, value) {
   if (rule.times !== null && !(Number.isInteger(rule.times) && rule.times > 0)) {
     throw new Error(`${provider} times must be a whole number ≥ 1`);
   }
+  if ((rule.mode === 'slow') !== (Number.isInteger(rule.ms) && rule.ms > 0)) {
+    throw new Error(`${provider} ms is a whole number ≥ 1, given with mode slow and only with it`);
+  }
   return rule;
 }
 
 // The failure this request gets among the modes its route honours, or 'ok'. The shim stamps the
 // lecture a pipeline step or an overview works on; a probe carries none, so only an untargeted rule reaches it.
-function failure(provider, req, honoured) {
+// A 'slow' hit is waited out here and answers 'ok'.
+async function failure(provider, req, honoured) {
   const rule = mode[provider];
   if (!honoured.includes(rule.mode)) return 'ok';
   if (rule.match !== null) {
@@ -54,7 +59,8 @@ function failure(provider, req, honoured) {
   }
   const hit = rule.mode;
   if (rule.times !== null && --rule.times === 0) mode[provider] = { ...OK };
-  return hit;
+  if (hit === 'slow') await new Promise((resolve) => setTimeout(resolve, rule.ms));
+  return hit === 'slow' ? 'ok' : hit;
 }
 
 let chunk = 0;
@@ -184,13 +190,13 @@ async function handle(req, res) {
 
   // Groq: the key probe lists models, transcription takes the multipart chunk ffmpeg produced.
   if (route.endsWith('/openai/v1/models')) {
-    if (failure('groq', req, ['500']) !== 'ok')
+    if ((await failure('groq', req, ['500'])) !== 'ok')
       return json(res, 500, { error: { message: 'fake groq is down' } });
     return json(res, 200, { object: 'list', data: [{ id: 'whisper-large-v3', object: 'model' }] });
   }
   if (route.endsWith('/openai/v1/audio/transcriptions')) {
     await readBody(req);
-    const fail = failure('groq', req, ['429', '500', 'empty']);
+    const fail = await failure('groq', req, ['429', '500', 'empty', 'slow']);
     if (fail === '429') return groqRateLimit(res);
     if (fail === '500') return json(res, 500, { error: { message: 'fake groq is down' } });
     if (fail === 'empty') return text(res, 200, '');
@@ -202,13 +208,13 @@ async function handle(req, res) {
   // and the resumable Files API they upload through. A rejected key is rejected on every route,
   // so the first thing the backend sends is what fails, as with a real bad key.
   if (route.startsWith('/gemini/')) {
-    if (failure('gemini', req, ['invalidkey']) !== 'ok') {
+    if ((await failure('gemini', req, ['invalidkey'])) !== 'ok') {
       await readBody(req);
       return geminiKeyInvalid(res);
     }
   }
   if (route.endsWith('/v1beta/models') && req.method === 'GET') {
-    if (failure('gemini', req, ['500']) !== 'ok')
+    if ((await failure('gemini', req, ['500'])) !== 'ok')
       return json(res, 500, { error: { message: 'fake gemini is down' } });
     return json(res, 200, { models: [{ name: 'models/harness-fake' }] });
   }
@@ -255,7 +261,7 @@ async function handle(req, res) {
   }
   if (route.includes('/v1beta/models/') && route.endsWith(':generateContent')) {
     await readBody(req);
-    const fail = failure('gemini', req, ['429', '500', 'empty']);
+    const fail = await failure('gemini', req, ['429', '500', 'empty', 'slow']);
     if (fail === '429') return geminiRateLimit(res);
     if (fail === '500')
       return json(res, 500, { error: { code: 500, message: 'fake gemini is down' } });

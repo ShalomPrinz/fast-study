@@ -252,6 +252,7 @@ P=$(node .claude/harness/hb.mjs url providers); S=$(node .claude/harness/hb.mjs 
 curl -s $P/control -d '{"gemini":"429"}'   # every call; groq: ok | 429 | 500 | empty
 curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
+curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
 curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | invalidtoken
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
@@ -267,7 +268,11 @@ so only an untargeted rule reaches it. `times` counts the calls the rule failed 
 chunk, one per Gemini request) and puts the provider back to `ok` at zero. A mode applies where it
 means something: `429` and `empty` to transcription and generation, `500` there and to the key
 probe, `invalidkey` to every Gemini route — the real 400 `API_KEY_INVALID` body, so the first
-upload of a run is what fails. An unknown mode or field is answered 400. `/health` shows each rule
+upload of a run is what fails. `slow`, on transcription and generation, holds each matched call
+`ms` and then answers as `ok` — a step that stays in flight long enough to cancel, rename, reload or
+queue behind; Groq is held once per chunk, so a lecture's step takes `ms` × its chunks. The Drive
+upload is an in-process fake in the backend, outside `/control`, so it has no `slow`. An unknown
+mode or field is answered 400. `/health` shows each rule
 and `hb state` diffs it field by field.
 
 Any key containing `bad` gets 401 on every route whatever the mode — what Groq sends for an unknown

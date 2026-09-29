@@ -192,6 +192,16 @@ async function controlModesSwitchAndSwitchBack() {
       expect(`${provider} back from ${mode}`, await read(), '200');
     }
   }
+  for (const [provider, read] of [
+    ['groq', groq],
+    ['gemini', gemini],
+  ]) {
+    await control(PROVIDERS, { [provider]: { mode: 'slow', ms: 300 } });
+    const started = Date.now();
+    expect(`${provider} slow`, await read(), '200');
+    expect(`${provider} slow held`, Date.now() - started >= 300, true);
+    await control(PROVIDERS, { [provider]: 'ok' });
+  }
   await control(PROVIDERS, { gemini: { mode: '500', match: 'hb-x/שיעור 1', times: 1 } });
   expect('targeted, other lecture', await gemini('hb-x/שיעור 10'), '200');
   expect('targeted, no lecture', await gemini(), '200');
@@ -217,7 +227,7 @@ async function controlModesSwitchAndSwitchBack() {
   expect('site downloadMs', await toolMs(), 1234);
   await control(SITE, { downloadMs: DEFAULT_DOWNLOAD_MS });
   expect('site downloadMs back', await toolMs(), DEFAULT_DOWNLOAD_MS);
-  return 'groq 429|500|empty, gemini 429|500|empty|invalidkey, a targeted next-1, site blocked|invalidtoken|downloadMs — each on and back off';
+  return 'groq 429|500|empty, gemini 429|500|empty|invalidkey, both slow, a targeted next-1, site blocked|invalidtoken|downloadMs — each on and back off';
 }
 
 // Through the backend's routes and the shim's fake consent, ending connected as the baseline has it.
