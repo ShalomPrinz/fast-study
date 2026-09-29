@@ -125,6 +125,10 @@ definitively isn't a usable Moodle can never work. So `unsupported` saves nothin
 bot wall or a dropped connection says nothing about the site; the post-login check in the auto-downloader
 is the backstop. What is saved is always the probe's canonical root, never the typed text.
 
+**The wall saves a confirmed site at once**: a `supported` answer writes `moodle_site` alone through
+`saveSettings` (store, then auto's `/config`), chained so a quicker second pick never lands first, which
+makes Connect live on the wall; the rest of the form saves on submit as before.
+
 **Switching sites drops the account.** The auto-downloader resets auth on a new site, so `/settings` raises
 an advisory `ConfirmModal` first while an account is connected, and re-probes the chip after the save.
 
@@ -143,7 +147,7 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   ([DOWNLOADS.md](DOWNLOADS.md)), with `--danger` retoned to neutral: red belongs on the page the session
   actually blocks. The hint names the saved site's host. It belongs to the saved site only, so with none
   saved — or another one chosen but unsaved — it shows a "save first" hint instead of a Connect that would
-  sign in to the wrong site. It is what makes a settings screen call `/auth/status`; the wall, outside
+  sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall, outside
   `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the
   browser check's.
 - **Google account** (`DriveConnection`, over `services/drive.ts`) — rendered only while Drive is on.

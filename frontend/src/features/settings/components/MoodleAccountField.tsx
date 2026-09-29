@@ -43,7 +43,8 @@ export default function MoodleAccountField({ site, switching }: Props) {
             </Trans>
           </p>
           <div className="moodle-account-control">
-            <AccountStatus />
+            {/* Keyed on the site: a new site is a new account, so the chip asks again. */}
+            <AccountStatus key={site} />
           </div>
         </>
       )}

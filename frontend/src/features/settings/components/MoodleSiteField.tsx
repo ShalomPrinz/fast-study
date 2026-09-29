@@ -11,6 +11,8 @@ interface Props {
   value: string
   // Called with `''` while nothing savable is chosen, which is what holds the save back.
   onChange: (site: string) => void
+  // Told of each site the probe confirms, before any save — the wall stores it right away.
+  onSupported?: (site: string) => void
 }
 
 const TONE: Record<string, string> = {
@@ -21,21 +23,22 @@ const TONE: Record<string, string> = {
 
 // The university's Moodle site: a preset or any pasted address, probed before it can be saved.
 // See docs/SETTINGS.md.
-export default function MoodleSiteField({ value, onChange }: Props) {
+export default function MoodleSiteField({ value, onChange, onSupported }: Props) {
   const { t } = useLingui()
   const [choice, setChoice] = useState(() => choiceForSite(value || null))
   const [typed, setTyped] = useState(() => (choice === OTHER_SITE ? value : ''))
   const [status, setStatus] = useState<SiteStatus>(null)
   // The probe lands after renders the parent's callback may have been replaced in.
-  const report = useRef(onChange)
-  report.current = onChange
+  const report = useRef({ onChange, onSupported })
+  report.current = { onChange, onSupported }
   const latest = useRef(typed)
   latest.current = typed
   const prober = useMemo(
     () =>
       siteProber(probeMoodleSite, (next) => {
         setStatus(next)
-        report.current(savableSite(next))
+        report.current.onChange(savableSite(next))
+        if (next?.kind === 'supported') report.current.onSupported?.(next.site)
       }),
     [],
   )

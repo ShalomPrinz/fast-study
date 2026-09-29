@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusContext'
 import { failureNode } from '@/shared/utils/failure'
@@ -63,8 +63,11 @@ function KeyGuide({ id }: { id: string }) {
 
 // The wall in front of the app: until the required entries are filled there is no sidebar, no route
 // and no way past. See docs/SETTINGS.md.
-export default function InitWall({ stored, onDone }: Props) {
+export default function InitWall({ stored: initial, onDone }: Props) {
   const { t } = useLingui()
+  // The store as this wall last wrote it: a confirmed site is saved ahead of the rest of the form.
+  const [stored, setStored] = useState(initial)
+  const siteSaves = useRef(Promise.resolve())
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<FormState>({
     geminiApiKey: '',
@@ -115,6 +118,8 @@ export default function InitWall({ stored, onDone }: Props) {
     setSaving(true)
     setFailure(null)
     try {
+      // A site save still in flight lands first; resending the same site is a no-op for its owner.
+      await siteSaves.current
       onDone(await saveSettings(buildPatch(form, stored)))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
@@ -122,6 +127,18 @@ export default function InitWall({ stored, onDone }: Props) {
     } finally {
       setSaving(false)
     }
+  }
+
+  // A site the probe confirms is written at once, so the account can be connected on the wall. Saves
+  // are chained, so a quick second pick can never land before the first and leave it stored.
+  function saveSite(site: string) {
+    siteSaves.current = siteSaves.current.then(async () => {
+      try {
+        setStored(await saveSettings({ moodleSite: site }))
+      } catch (err) {
+        setFailure(failureNode(err))
+      }
+    })
   }
 
   function keyField(provider: Provider | undefined, field: 'geminiApiKey' | 'groqApiKey') {
@@ -227,6 +244,7 @@ export default function InitWall({ stored, onDone }: Props) {
                 value={form.moodleSite}
                 // Functional: the probe answers after other fields may have changed.
                 onChange={(v) => setForm((f) => ({ ...f, moodleSite: v }))}
+                onSupported={saveSite}
               />
             </section>
 
