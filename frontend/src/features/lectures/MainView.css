@@ -22,6 +22,21 @@
   grid-column: 1 / -1;
 }
 
+/* In a narrow pane a row's button drops under its stage and file name rather than over them. */
+.lecture-pipeline .pipeline-row {
+  flex-wrap: wrap;
+}
+
+.lecture-pipeline .pipeline-row-body {
+  flex: 1 1 96px;
+  overflow-wrap: anywhere;
+}
+
+.lecture-pipeline .pipeline-row > .btn,
+.lecture-pipeline .pipeline-missing {
+  margin-inline-start: auto;
+}
+
 .pipeline-stage-line {
   display: flex;
   align-items: center;

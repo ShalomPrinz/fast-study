@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { createLatestGate } from './useLatestRequest'
+import { createLatestGate, createNewestGate } from './useLatestRequest'
 
 function deferred<T>() {
   let resolve!: (v: T) => void
@@ -72,5 +72,54 @@ describe('createLatestGate', () => {
     await expect(rb).rejects.toThrow('fresh failure')
     a.resolve('a')
     await expect(ra).resolves.toBeUndefined()
+  })
+})
+
+describe('createNewestGate', () => {
+  it('keeps an older call that settles first, then the newer one', async () => {
+    const gate = createNewestGate()
+    const a = deferred<string>()
+    const b = deferred<string>()
+    const ra = gate(a.promise)
+    const rb = gate(b.promise)
+    a.resolve('a')
+    await expect(ra).resolves.toBe('a')
+    b.resolve('b')
+    await expect(rb).resolves.toBe('b')
+  })
+
+  it('never starves: each overtaken call still lands while newer ones keep starting', async () => {
+    const gate = createNewestGate()
+    let prev = deferred<number>()
+    let pending = gate(prev.promise)
+    for (let i = 1; i <= 3; i++) {
+      const next = deferred<number>()
+      const rNext = gate(next.promise)
+      prev.resolve(i)
+      await expect(pending).resolves.toBe(i)
+      prev = next
+      pending = rNext
+    }
+  })
+
+  it('drops an older call that settles after a newer one returned', async () => {
+    const gate = createNewestGate()
+    const a = deferred<string>()
+    const ra = gate(a.promise)
+    await expect(gate(Promise.resolve('b'))).resolves.toBe('b')
+    a.resolve('a')
+    await expect(ra).resolves.toBeUndefined()
+  })
+
+  it('rejects only the newest call, resolving an overtaken failure to undefined', async () => {
+    const gate = createNewestGate()
+    const a = deferred<string>()
+    const b = deferred<string>()
+    const ra = gate(a.promise)
+    const rb = gate(b.promise)
+    a.reject(new Error('stale failure'))
+    await expect(ra).resolves.toBeUndefined()
+    b.reject(new Error('fresh failure'))
+    await expect(rb).rejects.toThrow('fresh failure')
   })
 })

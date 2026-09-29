@@ -23,6 +23,7 @@ import PdfWarningBadge from '@/shared/components/PdfWarningBadge'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { stepState } from '@/features/lectures/utils/stepState'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
+import { canRunRemaining, filesComplete } from '@/features/lectures/utils/lectureProgress'
 import { lectureNotFound } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
@@ -142,7 +143,8 @@ export default function MainView() {
   const pdfExists = files['summary.pdf'].exists
   const pdfUploaded = files['drive_url.txt'].exists
   const summaryExists = files['summary.md'].exists
-  const hasActions = stages.some(({ file, step }) => step && !files[file].exists)
+  const hasActions = canRunRemaining(files, driveEnabled)
+  const complete = filesComplete(files, driveEnabled)
 
   const summaryMtime = files['summary.md'].mtime
   const stageCount = stages.length
@@ -224,7 +226,7 @@ export default function MainView() {
       <span className="page-header-state-dot" />
       {runningStateText(runningEntry)}
     </span>
-  ) : doneCount === stageCount ? (
+  ) : complete ? (
     <span className="page-header-state page-header-state--done">
       <span className="page-header-state-dot" />
       <Trans>Complete</Trans>
@@ -315,7 +317,7 @@ export default function MainView() {
             <span className="section-count">{t`${doneCount} of ${stageCount} complete`}</span>
           </div>
 
-          <div className="pipeline-card">
+          <div className="pipeline-card lecture-pipeline">
             {stages.map(({ file, step, stageLabel, runningLabel, actionLabel, prereq }) => {
               const exists = files[file].exists
               const isRunning = runningFile === file
@@ -372,7 +374,8 @@ export default function MainView() {
                       {file}
                       {subtitle && ` · ${subtitle}`}
                     </p>
-                    {isRunning && remote && (
+                    {/* A rate-limit sleep is a pause, not a slow step: the panel below counts it down. */}
+                    {isRunning && remote && remote.sleepingUntil == null && (
                       <ProgressBar
                         stats={remote.timingStats}
                         startedAt={remote.startedAt}

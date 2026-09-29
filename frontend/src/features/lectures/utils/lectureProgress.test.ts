@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, FileName, FileStatus, Lecture } from '@/types'
-import { courseProgress, isLectureComplete } from './lectureProgress'
+import { canRunRemaining, courseProgress, isLectureComplete } from './lectureProgress'
 
 const FILES: FileName[] = [
   'video.mp4',
@@ -47,6 +47,29 @@ describe('isLectureComplete', () => {
     expect(isLectureComplete(partial('Lecture 1'), false)).toBe(true)
     expect(isLectureComplete(done('Lecture 2'), false)).toBe(true)
     expect(isLectureComplete(noPdf('Lecture 3'), false)).toBe(false)
+  })
+})
+
+describe('canRunRemaining', () => {
+  it('runs a lecture whose next step has its input', () => {
+    expect(canRunRemaining(files(['video.mp4']), true)).toBe(true)
+    expect(canRunRemaining(files(['video.mp4', 'transcript.txt']), true)).toBe(true)
+    expect(canRunRemaining(files(['video.mp4', 'audio.mp3', 'transcript.txt']), true)).toBe(true)
+  })
+
+  it('refuses a lecture with no video, whose first step cannot start', () => {
+    expect(canRunRemaining(files([]), true)).toBe(false)
+    expect(canRunRemaining(files(['transcript.txt', 'summary.md']), true)).toBe(false)
+  })
+
+  it('refuses a complete lecture even with an earlier output missing', () => {
+    expect(canRunRemaining(files(['video.mp4', 'summary.md', 'drive_url.txt']), true)).toBe(false)
+    expect(canRunRemaining(files(['video.mp4', 'summary.pdf']), false)).toBe(false)
+  })
+
+  it('stops at summary.pdf with Drive off', () => {
+    const upToPdf = files(['video.mp4', 'audio.mp3', 'transcript.txt', 'summary.md'])
+    expect(canRunRemaining(upToPdf, false)).toBe(true)
   })
 })
 

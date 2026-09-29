@@ -4,7 +4,7 @@ import type { Course } from '@/types'
 import { fetchTree } from '@/services/database'
 import { toast } from '@/services/toaster'
 import { useNotify } from '@/shared/hooks/useNotify'
-import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
+import { useNewestRequest } from '@/shared/hooks/useLatestRequest'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { sortLectures } from '@/features/lectures/utils/lectureSort'
 import { announcePdfWarnings } from '@/features/lectures/utils/pdfWarnings'
@@ -20,7 +20,7 @@ const CourseTreeContext = createContext<CourseTreeValue | null>(null)
 export function CourseTreeProvider({ children }: { children: ReactNode }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [loaded, setLoaded] = useState(false)
-  const latest = useLatestRequest()
+  const newest = useNewestRequest()
 
   // PDF render warnings ride the tree, so they are announced here rather than from /status.
   const warningReports = useReportOnce((msg) => toast('warning', msg))
@@ -28,9 +28,11 @@ export function CourseTreeProvider({ children }: { children: ReactNode }) {
 
   async function refreshCourses() {
     try {
-      const c = await latest(fetchTree())
-      // Superseded: a newer request still owns `loaded`, and flipping it here would expose the
-      // empty tree — routes would flash "not found" before the real tree lands.
+      // Any tree newer than the one shown lands, even with a newer fetch in flight: a notify stream
+      // would otherwise drop every answer until it pauses.
+      const c = await newest(fetchTree())
+      // Overtaken, or a failure a newer fetch owns: flipping `loaded` here would expose the empty
+      // tree — routes would flash "not found" before the real tree lands.
       if (!c) return
       setCourses(c)
       announcePdfWarnings(c, warningReports, primed.current)

@@ -12,18 +12,26 @@
   color: var(--text-3);
 }
 
+/* Wraps only in a pane too narrow for a readable title column beside the actions: they then drop to
+   a line of their own rather than squeezing the title to a word per line. */
 .page-header-main {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-7);
+  gap: var(--space-5) var(--space-7);
 }
 
 .page-header-text {
+  flex: 1 1 160px;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
+/* Shrink-wrapped, so a title in the other script's direction still sits at the column's start
+   rather than across the width the column grows to. */
 .page-header-title {
+  width: fit-content;
   margin-bottom: var(--space-3);
   font-size: var(--fs-title);
   font-weight: 700;

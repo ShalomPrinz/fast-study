@@ -20,7 +20,8 @@ relabels it "Continue transcription".
 ## The lecture view
 
 `MainView` is a `PageHeader` (course eyebrow, lecture title, running step or `Complete`, video duration
-when the MP4 header yields one, material count, the single primary `Run Remaining`) over one
+when the MP4 header yields one, material count, the single primary `Run Remaining`, offered only when
+`canRunRemaining` says the backend's `next_step` exists and can start) over one
 `.pipeline-card` holding all stages as rows parted by inset rules. The per-file actions — edit summary,
 open PDF, open in Drive, each once its file exists — sit on a second header row, keeping them off a title
 column with no width floor. Below 960px `useCompactHeaderActions` (one `matchMedia` on window width; the
@@ -37,7 +38,7 @@ user's PDF app) toasts and stops before the step, which would only hit the same 
 re-export and a material delete share the guard.
 
 Rate limiting is not an error: with `sleepingUntil` set, the view shows a countdown with the chunk
-progress instead of a failure.
+progress instead of a failure, and the row drops its ETA bar.
 
 ## Materials
 
@@ -101,7 +102,7 @@ page) while the tree still has it, else `/`.
 lecture row can prompt. An expanded course opens with an Overview row; the course header only toggles.
 
 `utils/lectureProgress.ts`: `isLectureComplete` (the last pipeline output exists, mirroring the backend's
-`final_output()`) colours each lecture's dot; `courseProgress` gives the header's `N/M`, `0/0` for an
+`final_output()`, whatever earlier file is gone) colours each lecture's dot and reads `Complete` on its page; `courseProgress` gives the header's `N/M`, `0/0` for an
 archived course so the badge stays off.
 
 - `CourseTreeContext` owns `courses`, `loaded` and `refreshCourses`, refreshes on notify and sorts through

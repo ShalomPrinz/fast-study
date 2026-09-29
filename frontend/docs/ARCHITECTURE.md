@@ -37,7 +37,8 @@ connect, since the stream itself is memoryless.
 
 A fetcher that a notify burst can re-trigger wraps its promise in `useLatestRequest()`, which settles only
 the newest call (superseded ones resolve `undefined`, even on failure) so a late answer cannot overwrite a
-fresher one.
+fresher one. The unkeyed tree uses `useNewestRequest()` instead: any answer newer than the one shown lands,
+since under a steady notify stream every answer is overtaken before it arrives and latest-only never settles.
 
 ## Routes
 

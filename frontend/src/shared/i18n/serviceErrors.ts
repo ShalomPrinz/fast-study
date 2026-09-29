@@ -26,8 +26,10 @@ export interface ResolvedFailure {
 // The messages are written as raw ICU so the params bind at resolve time, not at module load.
 const MESSAGES: Record<string, MessageDescriptor> = {
   // Shared across services
+  // `download` is the one prerequisite no pipeline step produces: the video comes from a download.
   missing_prerequisite: msg({
-    message: 'This step needs {file}, which is not there yet. Run the step before it first.',
+    message:
+      '{step, select, download {This step needs {file}, which is not there yet. Download the lecture video first.} other {This step needs {file}, which is not there yet. Run the step before it first.}}',
   }),
   course_not_found: msg({ message: 'The course "{course}" was not found.' }),
   lecture_not_found: msg({

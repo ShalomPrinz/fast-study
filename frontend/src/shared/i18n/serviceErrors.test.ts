@@ -50,6 +50,15 @@ describe('resolveServiceError', () => {
     expect(of('course')).not.toBe(of('ref'))
   })
 
+  it('never advises running a step for a missing video, which only a download produces', () => {
+    const of = (file: string, step: string) =>
+      resolveServiceError({ message: 'x', code: 'missing_prerequisite', params: { file, step } })
+        .headline
+
+    expect(of('video.mp4', 'download')).not.toBe(of('video.mp4', 'audio'))
+    expect(of('video.mp4', 'download')).toContain('video.mp4')
+  })
+
   it('fills a named param into the sentence', () => {
     const { headline } = resolveServiceError({
       message: 'boom',
