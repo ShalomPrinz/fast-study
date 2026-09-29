@@ -88,7 +88,7 @@ def rename_course(old: str, new: str) -> None:
     _rename_dir(course_dir(old), course_dir(new), old, new)
 
 
-def _check_not_reserved(name: str) -> None:
+def check_not_reserved(name: str) -> None:
     """Refuse a lecture/recitation name that sanitizes onto a reserved course-level folder."""
 
     # A lecture dir named like one would be hidden from the tree and merged into that folder.
@@ -99,7 +99,7 @@ def _check_not_reserved(name: str) -> None:
 def create_lecture(course: str, name: str, kind: str) -> None:
     """Create a lecture or recitation directory, creating the Recitations parent on demand."""
 
-    _check_not_reserved(name)
+    check_not_reserved(name)
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
     _mkdir_new(lecture_dir(course, name, kind), name)
@@ -108,7 +108,7 @@ def create_lecture(course: str, name: str, kind: str) -> None:
 def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
     """Rename a lecture or recitation directory in place."""
 
-    _check_not_reserved(new)
+    check_not_reserved(new)
     _rename_dir(
         lecture_dir(course, old, kind), lecture_dir(course, new, kind), old, new
     )
@@ -117,8 +117,9 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
 def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
     """Save video.mp4 for the lecture, wiping all derived artifacts so they get regenerated from the new source."""
 
+    # The downloader uploads here for brand-new lectures, so the create path's name check applies.
+    check_not_reserved(lecture)
     d = lecture_dir(course, lecture, kind)
-    # The downloader uploads here for brand-new lectures, so create the dir if missing.
     d.mkdir(parents=True, exist_ok=True)
     # Materials stay: they are attached by hand or by the downloader, not derived from the video.
     # The summary snapshot goes, or "Restore original" would bring back the old video's summary.

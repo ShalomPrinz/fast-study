@@ -29,8 +29,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   file route; see the trust model.
 - `409` `name_taken` `{name}` refuses a create or rename onto a course/lecture that already exists;
   a case-only rename (the same dir on NTFS) is not a collision.
-- `409` `name_reserved` `{name}` refuses a lecture/recitation create or rename whose sanitized name is
-  `overview` or `Recitations`, in any case ([LAYOUT.md](LAYOUT.md#names)).
+- `409` `name_reserved` `{name}` refuses a lecture/recitation create, rename, `PUT /…/video` or
+  `POST /…/materials` whose sanitized name is `overview` or `Recitations`, in any case
+  ([LAYOUT.md](LAYOUT.md#names)); the last two create the dir on demand, so they check too.
 - `404` `lecture_not_found` `{course, lecture}` answers a neutral write (`PUT /…/files/{name}`,
   `PUT /…/summary`) to a lecture dir that does not exist; nothing is written.
 - A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.

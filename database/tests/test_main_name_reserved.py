@@ -1,4 +1,4 @@
-"""Create and rename refuse a lecture/recitation name that lands on a reserved course folder."""
+"""Create, rename and the two uploads that create a dir refuse a lecture/recitation name that lands on a reserved course folder."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -54,6 +54,34 @@ def test_rename_refuses_a_reserved_name(client, data_root, name):
     _assert_reserved(r, name)
     assert (data_root / "Algo" / "L1" / "material.pdf").exists()
     assert not (data_root / "Algo" / "overview").exists()
+
+
+@pytest.mark.parametrize("kind", ["lecture", "recitation"])
+@pytest.mark.parametrize("name", RESERVED)
+@pytest.mark.parametrize("method, route", [("put", "video"), ("post", "materials")])
+def test_uploads_refuse_a_reserved_name(client, data_root, kind, name, method, route):
+    (data_root / "Algo").mkdir()
+
+    r = client.request(
+        method.upper(),
+        f"/courses/Algo/lectures/{name}/{route}?kind={kind}",
+        content=b"x",
+    )
+
+    _assert_reserved(r, name)
+    assert [p.name for p in (data_root / "Algo").iterdir()] == []
+
+
+@pytest.mark.parametrize("method, route", [("put", "video"), ("post", "materials")])
+def test_uploads_still_create_a_new_lecture(client, data_root, method, route):
+    (data_root / "Algo").mkdir()
+
+    r = client.request(
+        method.upper(), f"/courses/Algo/lectures/New/{route}", content=b"x"
+    )
+
+    assert r.status_code in (200, 204)
+    assert (data_root / "Algo" / "New").is_dir()
 
 
 def test_a_name_merely_containing_a_reserved_word_is_fine(client, data_root):

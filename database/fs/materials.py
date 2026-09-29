@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from .crud import check_not_reserved
 from .paths import lecture_dir, material_index, material_name
 
 
@@ -48,8 +49,9 @@ def _next_index(d: Path) -> int:
 def write_material(course: str, lecture: str, kind: str, data: bytes) -> str:
     """Save a new material PDF under the next free index and return its filename."""
 
+    # The downloader uploads to brand-new lectures, so the create path's name check applies.
+    check_not_reserved(lecture)
     d = lecture_dir(course, lecture, kind)
-    # The downloader uploads to brand-new lectures, so create the dir if missing.
     d.mkdir(parents=True, exist_ok=True)
     # No await between scan and write is what makes allocation lock-free — see docs/LAYOUT.md.
     name = material_name(_next_index(d))
