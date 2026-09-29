@@ -269,7 +269,7 @@ async function handle(req, res) {
     });
   }
 
-  // Where a seeded drive_url.txt points: "Open in Drive" lands here, never off the machine.
+  // Where a seeded or uploaded drive_url.txt points: "Open in Drive" lands here, never off the machine.
   if (route.startsWith('/drive/view/')) {
     res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
     return res.end(

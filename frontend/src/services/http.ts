@@ -45,7 +45,7 @@ export class ConnectionError extends Error {
     public baseUrl: string,
     public cause?: unknown,
   ) {
-    super(t`Can't reach ${serviceName} at ${baseUrl}. Make sure it's running.`)
+    super(t`Part of Fast Study isn't responding. Restart the app.`)
     this.name = 'ConnectionError'
   }
 }

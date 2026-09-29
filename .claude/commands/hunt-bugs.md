@@ -14,6 +14,14 @@ services, the SPA, ffmpeg/pandoc/tectonic, the disk layout, SSE, the jobs — ru
 `.claude/harness/` is the app harness that arranges all of that, and `.claude/hunt-bugs/` adds the
 wave's brief and findings merge on top. **You do not build a harness; you use this one.**
 
+**You orchestrate; subagents do the work.** You start the harness, spawn one flow agent per flow and
+one merge agent, relay the summary table and tear down. You never drive a flow, triage an anomaly or
+read a fragment or the merged file: each of those lands in a subagent's context, so yours holds this
+command, one line per flow agent, the `/health` lines and the final table.
+
+Flow agents read this file too. What is theirs is labelled **Flow agents:**, and the hard rules bind
+everyone; everything else is the orchestrator's.
+
 **If arguments were passed** (e.g. `/hunt-bugs the downloads page`), restrict Step 2's sweep to that
 area. Start the whole harness anyway — a service you do not drive still has to boot.
 
@@ -21,10 +29,9 @@ area. Start the whole harness anyway — a service you do not drive still has to
 
 ## Step 0 — Ground yourself
 
-Read the root `CLAUDE.md`, the `CLAUDE.md` of every service you will drive, and
-[`.claude/harness/README.md`](../harness/README.md) — which lists what is faked, how, and the
-blind spots those fakes leave. Skim the `docs/` page for each flow you plan to take, so you know
-what the app is *supposed* to do before you judge what it does.
+Flow agents ground themselves — their brief names the `CLAUDE.md` files, the harness README and the
+`docs/` pages to read. You need only this command; do not read service `CLAUDE.md` files, `docs/`
+or the harness README beyond what a failed start sends you to.
 
 Never read the repo-root `.env`. It is permission-denied, it holds real keys, and the harness needs
 nothing from it.
@@ -39,8 +46,21 @@ node .claude/harness/setup.mjs --harness <your scratchpad>/hunt --browsers setti
 
 `--browsers` names the flows that get a browser session, each on a port of its own.
 
-Run it in the background and leave it running; it holds the stack up, and Ctrl-C or
-`setup.mjs --harness <same dir> --down` takes everything down. It builds the fixtures, fakes and scratch `.env`, launches
+Run it in the background with stdout and stderr redirected to `<your scratchpad>/hunt.log`, and
+leave it running: it holds the stack up until
+`node .claude/harness/setup.mjs --harness <same dir> --down`. Never read that log whole. Wait (up to
+3 minutes) until the log shows `harness ready`, or `harness failed:` / `harness stopped:`, or the
+setup process has exited; then pull only what you need with `grep`:
+
+```bash
+grep -E '^  (backend|downloader server|auto-downloader): |^harness (ready|failed|stopped)' <your scratchpad>/hunt.log
+```
+
+Before spawning any flow, read the `/health` line the script printed for each service. A tool
+reported `missing` explains failures later — name it in each affected flow agent's prompt rather
+than let it surface as a "bug".
+
+It builds the fixtures, fakes and scratch `.env`, launches
 `database → backend → downloader server → auto-downloader → dev server`, seeds the scratch data
 root through `database/`'s routes, and then **proves itself** — the escape alarm refuses a real
 outbound request, the fake site still serves a redirected `https://lemida.biu.ac.il`, both Python
@@ -49,9 +69,9 @@ headless chromium lists the courses and reaches every service from its origin, a
 `transcribe` runs green. A failed proof aborts the run.
 
 When it aborts, fix the harness before going further — a half-working shim produces findings about
-nothing. A **self-check failure** names the assumption that broke.
+nothing. A **self-check failure** prints as `harness failed: <the assumption that broke>`.
 
-It prints where everything is. What you will use most:
+**Flow agents:** the rest of this step is what the stack gives you. What you will use most:
 
 - Every port is this harness's own: `hb.mjs --harness <same dir> url` lists them all, `url <name>`
   prints one.
@@ -64,7 +84,7 @@ It prints where everything is. What you will use most:
   command caused, and every non-GET request is kept in `evidence/<tag>-mutations.jsonl` with its
   body and answer: quote both as evidence.
 - `<harness>/logs/*.log` — one per service, plus `network.log`, which lists every redirected and
-  refused connection. These are your primary evidence. `hb refused --since <wave start>` prints
+  refused connection. These are your primary evidence. `hb refused --since <time>` prints
   only real escapes: the self-check's deliberate probes log as `selfcheck` and are left out.
 - `<harness>/drive/ops.jsonl` — what "upload to Drive" actually did.
 - The fake course URL it prints, for the downloads page.
@@ -99,19 +119,32 @@ Step 2's flows map onto them as: management → `hb-mgmt`, downloads → `hb-dl`
 overview → `hb-pipeline`, failure surfacing → `hb-fail`, editor and PDF → `hb-edit`, search,
 materials and navigation → `hb-nav`.
 
-Before driving anything, read the `/health` line the script printed for each service. A tool
-reported `missing` explains failures later — know it now rather than discovering it as a "bug".
-
 ---
 
 ## Step 2 — Take the flows
 
-Run each flow as its own agent, side by side. Hand each one its brief verbatim:
-`hunt.mjs brief <tag> [focus…]` prints [`brief.md`](../hunt-bugs/brief.md) filled in for this harness
-and tag (`settings`, `mgmt`, `dl`, `pipeline`, `fail`, `edit`, `nav`). The brief holds the flow's
-sweep items, course, browser session, the rules below and Step 3. It also defines the fragment
-format. Each agent writes its findings to `<harness>/fragments/<tag>.md`. A flow you take yourself
-writes the same fragment.
+Note the wave start (`date -u +%Y-%m-%dT%H:%M:%SZ`), then turn automatic runs off once:
+
+```bash
+node .claude/harness/hb.mjs --harness <same dir> set AUTO_RUN=off
+```
+
+Then spawn every flow agent in one message: Agent tool, `subagent_type: "general-purpose"`,
+`run_in_background: true`, one per tag (`settings`, `mgmt`, `dl`, `pipeline`, `fail`, `edit`, `nav`,
+or the ones an argument narrows to). Each prompt is only, with the harness as an absolute path:
+
+```
+Run `node .claude/hunt-bugs/hunt.mjs --harness <absolute harness dir> brief <tag> [focus…]` and follow the brief it prints.
+```
+
+plus a line for any tool `/health` reported `missing`. Never run `brief` yourself: it prints
+[`brief.md`](../hunt-bugs/brief.md) filled in for this harness and tag — the flow's sweep items,
+course, browser session, the rules below, Step 3 and the fragment format — and that belongs in the
+agent's context, not yours. Each agent writes `<harness>/fragments/<tag>.md` and replies with one
+line. Wait for the completion notices; do not poll fragments, logs or browser sessions meanwhile.
+Note each tag whose agent failed or replied without a fragment path.
+
+**Flow agents:** the rest of this step and Step 3 are yours.
 
 Work through the app as a user, not as a test matrix. Stay in your flow's course (Settings and
 Liveness touch whatever they need). Each flow: do it, watch what the UI says,
@@ -144,10 +177,10 @@ was passed):
    appears after a manual refresh is a bug, not a nuance.
 
 Settings are global. Automatic runs queue a pipeline run for every downloaded video, and each run
-reaches the Drive step — when flows run side by side, set `hb set AUTO_RUN=off` once for the wave
-and leave auto-run itself to the pipeline flow, which turns it back on (`AUTO_RUN=full`) alone. A
-flow that changes a shared setting or an untargeted fake mode says so and puts it back; a provider
-failure aimed with `match` at the flow's own course needs no such care.
+reaches the Drive step — so the wave runs with `AUTO_RUN=off`. Only the pipeline flow turns it back
+to `full`, for its auto-run test alone, and puts `off` back straight after. A flow that changes a
+shared setting or an untargeted fake mode says so and puts it back; a provider failure aimed with
+`match` at the flow's own course needs no such care.
 
 Push the edges you would push on your own machine: the empty lecture, the very long name, a name
 with a quote or a slash, a double-click on a run button, two tabs on the same lecture.
@@ -155,6 +188,8 @@ with a quote or a slash, a double-click on a run button, two tabs on the same le
 ---
 
 ## Step 3 — Triage before you write anything down
+
+**Flow agents:** you do this inside your own flow; the orchestrator never triages.
 
 For every anomaly, in this order:
 
@@ -174,54 +209,70 @@ separate **Unconfirmed** section — never mixed with what you saw happen.
 
 ## Step 4 — Merge the findings
 
+When every flow agent has reported, spawn one merge agent (`subagent_type: "general-purpose"`) with
+only:
+
+```
+Do the merge agent's job in Step 4 of .claude/commands/hunt-bugs.md for harness <absolute harness dir>,
+area <area-or-sweep>, date <YYYY-MM-DD>, wave start <wave start>. <The /health lines.>
+<Each flow skipped, failed or with no fragment, and why.>
+```
+
+Print what it returns. Do not open the merged file.
+
+### The merge agent's job
+
 Each flow's findings are in `<harness>/fragments/<tag>.md`, in the format `brief.md` defines:
 `## Flow:`, **Driven** and **Not covered**, then `### Confirmed` (one `####` per bug carrying
 Severity, Owner, Flow, Observed, Expected, Evidence, Lands in and Harness ruled out by),
 `### Unconfirmed / flaky` and `### Harness gaps`.
 
-When every flow agent has reported:
-
 ```bash
+node .claude/harness/hb.mjs --harness <same dir> refused --since <wave start>
 node .claude/harness/hb.mjs --harness <same dir> state
 node .claude/hunt-bugs/hunt.mjs --harness <same dir> findings <area-or-sweep> <YYYY-MM-DD>
 ```
 
-`hb state` saves what the wave left changed. `hunt.mjs findings` writes
-`findings-<area-or-sweep>-<YYYY-MM-DD>.md` at the project root. That is the only file you write into
-the repo, unless you fixed a fake. The merged file holds the Run line with the state diff, the flows
-with no fragment, a summary table numbered by severity (severity, owner, symptom, flow), the
-**Overlaps across flows** list and every fragment verbatim, its findings numbered to match.
+`hb refused` covers the whole wave, whatever each flow checked; put its verdict on the Run line.
 
-A malformed fragment makes `hunt.mjs findings` write nothing and name each bad `file:line`. Send the
-fragment back to its agent, or fix its shape yourself without changing what it says. Then run
-`hunt.mjs findings` again. It refuses to overwrite a merged file, so delete that file first.
+`hb state` saves what the wave left changed. `hunt.mjs findings` writes
+`findings-<area-or-sweep>-<YYYY-MM-DD>.md` at the project root. That is the only file the wave
+writes into the repo, unless a flow fixed a fake. The merged file holds the Run line with the state
+diff, the flows with no fragment, a summary table numbered by severity (severity, owner, symptom,
+flow), the **Overlaps across flows** list and every fragment verbatim, its findings numbered to match.
+With no fragment at all it writes nothing and says `no fragments in …`: reply with that and the
+flows the orchestrator named, and stop.
+
+A malformed fragment makes `hunt.mjs findings` write nothing and name each bad `file:line`. Fix its
+shape without changing what it says, then run `hunt.mjs findings` again. It refuses to overwrite a
+merged file, so delete that file first.
 
 Then finish the merged file by hand:
 
-- **Run:** add what the self-checks proved and the `/health` tool lines.
+- **Run:** add what the self-checks proved and the `/health` tool lines the orchestrator passed.
 - **Not covered:** say why each missing flow was skipped, and which of the README's blind spots
   affected this sweep.
 - **Overlaps:** each entry is a probable duplicate at the same `path:line`. Where it is one bug,
   keep the fuller write-up, list every flow in its table row, and delete the other row and section.
 - Add a closing **What's left to hunt** section.
 
-Then print the summary table.
+Reply with only the final summary table, the `hb refused` verdict, and one line naming every flow
+with no fragment and why.
 
 ---
 
 ## Step 5 — Tear down
 
-Stop the harness (Ctrl-C, or `node .claude/harness/setup.mjs --harness <same dir> --down`) and
-say so. That also stops every browser session it or `hb browser` started. Do not stop them
-yourself. Leave the harness directory in place, because the findings file points into it. The next
+Stop the harness with `node .claude/harness/setup.mjs --harness <same dir> --down` and say so.
+That also stops every browser session it or `hb browser` started. Do not stop them yourself. Leave the harness directory in place, because the findings file points into it. The next
 session starts from what the findings file's state diff names, and `hb reseed` puts all of it back.
 
 ---
 
 ## Hard rules
 
-- **No network off loopback.** If `hb refused --since <wave start>` prints anything, stop:
-  something wanted the real internet. Fix the fake, re-run the flow, then judge the finding.
+- **No network off loopback.** If `hb refused --since <wave start>` prints anything but
+  `no escapes`, stop: something wanted the real internet. Fix the fake, re-run the flow, then judge the finding.
 - **No production code edits.** This command reports; it does not fix. Do not write prompt files or
   branches either — the user decides what gets fixed and routes it to the owning service subagent.
   Editing `.claude/harness/` to correct or extend a fake is allowed and expected.

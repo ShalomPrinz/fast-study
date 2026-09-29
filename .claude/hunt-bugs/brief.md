@@ -6,14 +6,14 @@ Every hb command below is run as `node .claude/harness/hb.mjs --harness {{harnes
 
 ## Ground yourself
 
-Read `.claude/commands/hunt-bugs.md` (Steps 2 and 3 and the hard rules are your job),
-`.claude/harness/README.md` (what is faked, and its blind spots), the root `CLAUDE.md`, the
-`CLAUDE.md` of each service your flow touches, and the `docs/` page for your flow. Never read the
-repo-root `.env`.
+Read `.claude/commands/hunt-bugs.md` (the parts labelled **Flow agents:** and the hard rules are
+your job; the rest is the orchestrator's), `.claude/harness/README.md` (what is faked, and its blind
+spots), the root `CLAUDE.md`, the `CLAUDE.md` of each service your flow touches, and the `docs/`
+page for your flow. Never read the repo-root `.env`.
 
 ## Your flow
 
-- **Sweep:** item(s) {{sweep}} of the skill's Step 2, plus item 9 (Liveness) wherever your flow
+- **Sweep:** item(s) {{sweep}} of the command's Step 2, plus item 9 (Liveness) wherever your flow
   shows progress.{{focus}}
 - **Course:** {{course}}
 - **Browser:** your session is `http://127.0.0.1:{{port}}` (tag `{{tag}}`). If it is not up, start
@@ -22,12 +22,14 @@ repo-root `.env`.
   Every non-GET request the page sends is in `{{harness}}/evidence/{{tag}}-mutations.jsonl`.
 - **Logs:** `{{harness}}/logs/*.log`, and `{{harness}}/drive/ops.jsonl` for Drive.
 - **Escapes:** `hb refused --since {{since}}` must print `no escapes` before you finish. If it
-  prints anything, stop and report it.
+  prints anything else, stop and report it.
 
 Other flows run at the same time. Settings and untargeted fake modes are shared, so leave
-`AUTO_RUN` as the wave set it. Aim a provider failure at your own course with `match`, and put back
-anything global you change. A screen that changes for no reason may be another flow's work. Rule
-that out before you call it a bug.
+`AUTO_RUN` at the wave's `off`. The Pipeline flow alone sets `hb set AUTO_RUN=full` for its
+auto-run test and `hb set AUTO_RUN=off` straight after it: while it is `full`, every other flow's
+download queues a pipeline run too. Aim a provider failure at your own course with `match`, and
+put back anything global you change. A screen that changes for no reason may be another flow's
+work. Rule that out before you call it a bug.
 
 ## Triage
 
@@ -78,3 +80,4 @@ to this shape:
   probable duplicate.
 
 When you finish, reply with one line: the fragment's path and how many Confirmed findings it holds.
+That line is all the orchestrator reads, so everything worth keeping goes in the fragment.

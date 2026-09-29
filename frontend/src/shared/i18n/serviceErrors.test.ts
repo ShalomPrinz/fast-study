@@ -40,6 +40,16 @@ describe('resolveServiceError', () => {
     expect(headline.length).toBeGreaterThan(0)
   })
 
+  it('tells a user-typed name apart from a caller bug in the same invalid_request code', () => {
+    const prose = 'course and name with a legal character are required'
+    const of = (field: string) =>
+      resolveServiceError({ message: prose, code: 'invalid_request', params: { field } }).headline
+
+    expect(of('name')).not.toBe(prose)
+    expect(of('name')).not.toBe(of('ref'))
+    expect(of('course')).not.toBe(of('ref'))
+  })
+
   it('fills a named param into the sentence', () => {
     const { headline } = resolveServiceError({
       message: 'boom',

@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
-import { EditorState } from '@codemirror/state'
+import { EditorState, Transaction } from '@codemirror/state'
 import type { Range, Text } from '@codemirror/state'
-import { EditorView, ViewPlugin, Decoration } from '@codemirror/view'
+import { EditorView, ViewPlugin, Decoration, keymap } from '@codemirror/view'
 import type { DecorationSet, ViewUpdate } from '@codemirror/view'
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { markdown } from '@codemirror/lang-markdown'
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import { tags } from '@lezer/highlight'
 import { scanCallouts, scanCodeFences, scanMath } from '@/features/lectures/utils/mdDecorations'
 import type { CalloutClass } from '@/features/lectures/utils/mdDecorations'
@@ -112,6 +113,9 @@ export default function MarkdownEditor({ value, onChange }: Props) {
         doc: value,
         extensions: [
           markdown(),
+          // Unbound, keys fall to contenteditable, whose Ctrl+Home/End only reach the rendered lines.
+          history(),
+          keymap.of([...defaultKeymap, ...historyKeymap]),
           syntaxHighlighting(summaryHighlight),
           dialectDecorations,
           editorTheme,
@@ -138,7 +142,11 @@ export default function MarkdownEditor({ value, onChange }: Props) {
     // CodeMirror owns the buffer, so only a value that did not come from it is pushed in — without
     // this guard the editor's own edits echo back through `value` and reset the selection.
     if (value === view.state.doc.toString()) return
-    view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: value } })
+    // Kept out of undo history: a pushed value is a reload or Restore, which Ctrl+Z must not reverse.
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: value },
+      annotations: Transaction.addToHistory.of(false),
+    })
   }, [value])
 
   return <div className="markdown-editor" ref={hostRef} />

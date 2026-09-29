@@ -158,8 +158,15 @@ class LLMClient:
         """Send contents to the model and return its stripped text."""
 
         try:
+            # We pass no tools, but AFC defaults on and the SDK warns about it on generate_content.
             response = self.client.models.generate_content(
-                model=self.model, contents=contents
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(
+                        disable=True
+                    )
+                ),
             )
         except Exception as e:
             body = _extract_gemini_body(e)

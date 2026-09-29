@@ -4,16 +4,19 @@
 
 ## Layout
 
-A toolbar — back, the lecture name (`dir="auto"`), the stale/warning PDF chip ([LECTURES.md](LECTURES.md)
-§summary.pdf badges), a demoted `Restore original` a gap away from the primary `Save & update PDF` — over
+A toolbar — back (to the lecture page, never history, so a fresh tab stays in the app), the lecture name
+(`dir="auto"`), the stale/warning PDF chip ([LECTURES.md](LECTURES.md) §summary.pdf badges), a demoted `Restore original` a gap away from the primary `Save & update PDF` — over
 two panes: `PdfViewer` (zoom, current page, pop-out) and `MarkdownEditor`, headed by an amber
 `Unsaved changes` dot whenever the buffer differs from what was last read or written.
+Leaving the editor discards unsaved changes, with no confirm or `beforeunload`: an in-app guard needs
+`useBlocker`, which only works under a data router, and moving off `<BrowserRouter>` is not worth it yet.
 
 ## Saving
 
 `Save & update PDF` is the only write path — a saved summary whose PDF still shows the old text is never
 what the user wanted. It runs save → tree refresh (the stale chip reads the tree's mtimes) → delete
-`summary.pdf` → run `pdf`, then waits for SSE. It is enabled for a dirty buffer, a stale PDF or no PDF.
+`summary.pdf` → run `pdf`, then waits for SSE. It is enabled for a dirty buffer, a stale PDF or no PDF —
+stale by the mtime rule (`pdfNeedsUpdate`), not the chip, which a render warning outranks.
 `Restore original` discards every edit and deletes the snapshot, so it is confirm-gated.
 
 The effect watching `files`/`lectureError` runs on every refresh, so `pdfFiredRef` limits it to the run
@@ -34,7 +37,10 @@ restored from each page's `onRenderSuccess`; with nothing captured it snaps to t
 ## `MarkdownEditor`
 
 CodeMirror 6 composed extension by extension — no `basicSetup`, so no autocomplete, search, lint or line
-numbers. It is rich-styled _source_: markers stay in the buffer and the document is never re-serialized.
+numbers. It does install `history()` and `defaultKeymap` + `historyKeymap` (`@codemirror/commands`):
+unbound, keys fall to contenteditable, whose Ctrl+Home/End only reach the lines CodeMirror has rendered.
+A pushed `value` (load, Restore) stays out of undo history, so Ctrl+Z never brings discarded text back.
+It is rich-styled _source_: markers stay in the buffer and the document is never re-serialized.
 A `HighlightStyle` sizes headings, dims the markers to `--text-4`, and draws `---` as a chip, since exactly
 two of them carry the document's structure.
 

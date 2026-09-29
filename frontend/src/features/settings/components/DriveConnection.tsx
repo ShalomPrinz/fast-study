@@ -89,7 +89,7 @@ export default function DriveConnection() {
       <p className="settings-hint">
         <Trans>
           Summaries upload to this account's Drive. Connecting opens a Google sign-in page in your
-          browser, and you can do it later — nothing else needs it.
+          browser, and you can do it later.
         </Trans>
       </p>
       <div className="drive-connection-control">

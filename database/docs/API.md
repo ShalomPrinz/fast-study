@@ -68,6 +68,9 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /events`                                           | SSE stream of `notify` events                                             |
 | `POST   /notify`                                           | broadcast a `notify` event                                                |
 
+Course create/rename/archive, lecture create/rename and a `POST /config` carrying `data_root` broadcast
+a `notify` on success so every open tree refetches ([EVENTS.md](EVENTS.md)).
+
 ## Write semantics
 
 The two file-write paths differ on purpose, and confusing them destroys data:

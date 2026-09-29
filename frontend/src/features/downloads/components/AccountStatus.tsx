@@ -102,7 +102,7 @@ export default function AccountStatus() {
         {confirmDisconnect && (
           <ConfirmModal
             message={t`Disconnect the BIU account?`}
-            warning={t`Connecting again needs a full login in a browser window, including MFA.`}
+            warning={t`Connecting again needs a full login in a browser window, including two-step verification.`}
             onConfirm={handleDisconnect}
             onCancel={() => setConfirmDisconnect(false)}
           />

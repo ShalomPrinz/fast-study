@@ -94,7 +94,7 @@ function RateLimitPanel({
       {progress && (
         <p className="rate-limit-progress">
           <Trans>
-            {progress.completed}/{progress.total} chunks transcribed so far
+            {progress.completed}/{progress.total} parts transcribed so far
           </Trans>
         </p>
       )}
@@ -331,7 +331,7 @@ export default function MainView() {
               const size = files[file].size
               const subtitle =
                 isRunning && chunks
-                  ? t`${chunks.completed} of ${chunks.total} chunks`
+                  ? t`${chunks.completed} of ${chunks.total} parts`
                   : exists && size !== null
                     ? formatBytes(size)
                     : null

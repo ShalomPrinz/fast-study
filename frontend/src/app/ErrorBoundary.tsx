@@ -100,7 +100,7 @@ class Boundary extends Component<BoundaryProps, BoundaryState> {
         </h1>
         <p className="error-hint">
           <Trans>
-            Sorry about it. Go home to keep working, or copy the details below to report it.
+            Sorry about that. Go home to keep working, or copy the details below to report it.
           </Trans>
         </p>
         <div className="error-actions">

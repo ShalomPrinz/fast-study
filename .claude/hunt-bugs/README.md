@@ -32,4 +32,4 @@ so no finding is dropped silently. The output holds:
   two or more flows;
 - each fragment verbatim, its `####` headings numbered to match the table.
 
-Overlaps are only flagged, never merged. Deciding what counts as one bug is left to the orchestrator.
+Overlaps are only flagged, never merged. Deciding what counts as one bug is left to the wave's merge agent.

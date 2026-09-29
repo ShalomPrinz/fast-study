@@ -20,7 +20,7 @@ env:
   # backend/assets/templates/pandoc_template.tex only ever move together.
   TECTONIC_VERSION: '0.17.0'
   PANDOC_VERSION: '2.9.2.1'
-  FFMPEG_VERSION: '8.0'
+  FFMPEG_VERSION: '9.0.2'
   STAGE: delivery/stage
 
 jobs:
@@ -73,7 +73,7 @@ jobs:
 
       # Every external tool the app spawns, by absolute path out of FASTSTUDY_BIN_DIR at runtime.
       # curl is the one exception and ships with Windows, so it is not here. Nothing spawns
-      # ffprobe, so the ffmpeg zip's second binary — 98MB unpacked, 26MB of the installer — stays
+      # ffprobe, so the ffmpeg zip's second binary — 105MB unpacked — stays
       # behind.
       # The msvc tectonic build, never gnu: the gnu binary imports six MinGW DLLs its own zip does
       # not contain.

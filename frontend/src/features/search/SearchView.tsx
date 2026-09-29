@@ -143,9 +143,7 @@ export default function SearchView() {
         title={t`Search summaries`}
         meta={
           <span>
-            <Trans>
-              Searches the generated summaries of one course — the one picked in the field
-            </Trans>
+            <Trans>Searches the summaries of the course picked in the field</Trans>
           </span>
         }
       />

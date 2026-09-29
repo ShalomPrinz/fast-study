@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, FileInfo, FileStatus, Lecture, MaterialInfo } from '@/types'
 import type { Media, ResolvedMedia } from '../services/autoDownloader'
-import { existingNames, hasResource, materialsOf, targetLanded } from './existingItems'
+import {
+  existingNames,
+  hasResource,
+  materialsOf,
+  overwritesVideo,
+  targetLanded,
+} from './existingItems'
 
 const EMPTY: FileInfo = { exists: false, size: null, mtime: null }
 const PRESENT: FileInfo = { exists: true, size: 10, mtime: 1 }
@@ -113,6 +119,36 @@ describe('hasResource', () => {
     expect(
       hasResource(row('unknown', 'unsupported'), 'Lecture 1', 'lecture', courses, 'Algebra'),
     ).toBe(false)
+  })
+})
+
+describe('overwritesVideo', () => {
+  const courses = tree([
+    node('Lecture 1', { video: true, materials: ['material.pdf'] }),
+    node('Lecture 2', { materials: ['material.pdf'] }),
+  ])
+  const row = (media: Media, resolvedMedia?: ResolvedMedia) => ({ media, resolvedMedia })
+  const overwrites = (r: ReturnType<typeof row>, name: string) =>
+    overwritesVideo(r, name, 'lecture', courses, 'Algebra')
+
+  it('is true for an unprobed unknown row whose target holds video.mp4 — it may be a video', () => {
+    expect(overwrites(row('unknown'), 'Lecture 1')).toBe(true)
+  })
+
+  it('is true for a video row, resolved or not, whose target holds video.mp4', () => {
+    expect(overwrites(row('video'), 'Lecture 1')).toBe(true)
+    expect(overwrites(row('unknown', 'video'), 'Lecture 1')).toBe(true)
+  })
+
+  it('is false when the target holds no video.mp4 or does not exist', () => {
+    expect(overwrites(row('unknown'), 'Lecture 2')).toBe(false)
+    expect(overwrites(row('unknown'), 'Lecture 9')).toBe(false)
+  })
+
+  it('is false for a material or unsupported row, which never replaces a video', () => {
+    expect(overwrites(row('material'), 'Lecture 1')).toBe(false)
+    expect(overwrites(row('unknown', 'material'), 'Lecture 1')).toBe(false)
+    expect(overwrites(row('unknown', 'unsupported'), 'Lecture 1')).toBe(false)
   })
 })
 

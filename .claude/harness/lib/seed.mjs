@@ -15,8 +15,8 @@ const LONG_LECTURE =
   'שיעור 11 — מבוא ארוך במיוחד שנועד לבדוק גלישת טקסט בכותרת, בתפריט הצד וברשימת הקבצים';
 
 // Where the seeded "Open in Drive" link goes: a loopback page the fake providers serve, so a
-// browser following it never leaves the machine.
-const DRIVE_URL = `${PROVIDERS}/drive/view/hunt-seeded`;
+// browser following it never leaves the machine. A function: `PROVIDERS` is bound after import.
+const driveUrl = () => `${PROVIDERS}/drive/view/hunt-seeded`;
 
 // Per course: `[lecture, files, kind]`, files being fixture names in upload order. `material` adds
 // the handout as a material PDF; `summary.pdf` is the handout too, so a lecture can look finished
@@ -93,7 +93,7 @@ export async function seed(paths) {
     'transcript.txt': fixture('transcript.txt'),
     'summary.md': fixture('summary.md'),
     'summary.pdf': fixture('handout.pdf'),
-    'drive_url.txt': Buffer.from(DRIVE_URL),
+    'drive_url.txt': Buffer.from(driveUrl()),
     material: fixture('handout.pdf'),
   };
   let lectures = 0;

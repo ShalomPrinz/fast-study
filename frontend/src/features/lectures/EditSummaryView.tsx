@@ -20,12 +20,13 @@ import { failureOf } from '@/shared/utils/failure'
 import ServiceError, { serviceErrorNode } from '@/shared/components/ServiceError'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { lectureNotFound } from '@/shared/utils/notFound'
+import { lectureRoute } from '@/shared/utils/url'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import MarkdownEditor from '@/features/lectures/components/MarkdownEditor'
-import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+import { pdfBadge, pdfNeedsUpdate } from '@/features/lectures/utils/pdfBadge'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
@@ -170,12 +171,13 @@ export default function EditSummaryView() {
   const badge = files && pdfBadge(files)
   const dirty = !loading && content !== savedContent
   // A stale or absent PDF is work to do even on a clean buffer: the press rebuilds it from disk.
-  const canUpdate = dirty || badge?.kind === 'stale' || !files?.['summary.pdf'].exists
+  const canUpdate = dirty || pdfNeedsUpdate(files)
 
   return (
     <div className="edit-view">
       <div className="edit-toolbar">
-        <button className="edit-back" onClick={() => navigate(-1)}>
+        {/* The lecture, not history: the editor is often reached from a fresh tab or another page. */}
+        <button className="edit-back" onClick={() => navigate(lectureRoute(course, lecture, kind))}>
           <Icon icon="chevron-start" />
           <Trans>Back</Trans>
         </button>

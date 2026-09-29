@@ -33,7 +33,7 @@ back to those overrides, then the dev ports — see
 | [BULK.md](docs/BULK.md)                    | a section's "Download all": the reflected run, derived outcome, passcode          |
 | [SETTINGS.md](docs/SETTINGS.md)            | the settings, the store, the first-run wall, prerequisites, accounts, Drive consent |
 | [SEARCH.md](docs/SEARCH.md)                | client-side corpus, find → group → build, snippets, paging                        |
-| [I18N.md](docs/I18N.md)                    | translated chrome vs. untranslated data, the extract loop, RTL                    |
+| [I18N.md](docs/I18N.md)                    | translated chrome vs. untranslated data, Hebrew voice and vocabulary, extract, RTL |
 | [TESTING.md](docs/TESTING.md)              | vitest conventions, verifying layout with Playwright, stable selectors            |
 
 There are no sub-services under `frontend/` — this is the only CLAUDE.md.
