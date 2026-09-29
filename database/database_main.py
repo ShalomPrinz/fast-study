@@ -328,6 +328,8 @@ async def put_summary(
     try:
         content = (await request.body()).decode("utf-8")
         summary_fs.write_summary(course, lecture, kind, content, fresh)
+        # An editor open on this summary in another window reloads or warns off this.
+        broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 500, "summary_io_failed")
@@ -339,6 +341,7 @@ def delete_summary(course: str, lecture: str, kind: str = Query("lecture")):
 
     try:
         summary_fs.revert_summary(course, lecture, kind)
+        broadcast_notify()
         return Response(status_code=204)
     except Exception as e:
         return _failure(e, 500, "summary_io_failed")

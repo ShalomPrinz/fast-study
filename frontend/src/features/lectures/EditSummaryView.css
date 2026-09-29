@@ -92,6 +92,23 @@
   color: var(--text);
 }
 
+/* An attention state, not an error: nothing failed, but the next save needs a decision first. */
+.edit-conflict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-7);
+  color: var(--warn);
+  font-size: var(--fs-body);
+  background: var(--warn-soft);
+  flex-shrink: 0;
+}
+
+.edit-conflict > span {
+  flex: 1;
+  min-width: 0;
+}
+
 .edit-error {
   padding: var(--space-3) var(--space-7);
   color: var(--danger);

@@ -272,6 +272,32 @@ class TestHebrewInCodeBlockRenders:
     not (_tectonic_available() and _pandoc_available() and _pymupdf_available()),
     reason="needs tectonic + pandoc + pymupdf to render and inspect a real PDF",
 )
+class TestTypedCharactersRender:
+    def _render(self, md: str) -> tuple[str, str | None]:
+        import fitz
+
+        with tempfile.TemporaryDirectory() as d:
+            md_path = os.path.join(d, "s.md")
+            with open(md_path, "w", encoding="utf-8") as f:
+                f.write(md)
+            pdf_path, warning = convert_to_pdf(md_path)
+            return fitz.open(pdf_path).load_page(0).get_text(), warning
+
+    def test_curly_quotes_render_as_typed(self):
+        text, warning = self._render('המרצה אמר \u201cזה חשוב\u201d בסוף. ד"ר\n')
+        assert "\u201c" in text and "\u201d" in text
+        assert "``" not in text and "''" not in text
+        assert warning is None
+
+    def test_a_glyph_the_font_lacks_warns(self):
+        _, warning = self._render("מיון מהיר \u2192 מיון מיזוג\n")
+        assert warning and "U+2192" in warning
+
+
+@pytest.mark.skipif(
+    not (_tectonic_available() and _pandoc_available() and _pymupdf_available()),
+    reason="needs tectonic + pandoc + pymupdf to render and inspect a real PDF",
+)
 class TestBidiOrderingRenders:
     # The canonical bidi verification for the five overview→PDF ordering bugs.
     # We read glyphs in TRUE visual (x-coordinate) order (see docs/PDF.md): RTL
@@ -503,6 +529,8 @@ class TestInvocation:
             convert_to_pdf(md_path)
         cmd = fake.pandoc_cmd
         assert "--from=markdown-smart" in cmd
+        # The writer's smart off: typed curly quotes reach the .tex as themselves, not ``…''.
+        assert "--to=latex-smart" in cmd
         assert "--standalone" in cmd
         assert any(a.startswith("--template=") for a in cmd)
         assert any(a.startswith("--include-in-header=") for a in cmd)
@@ -729,6 +757,46 @@ class TestRenderRecovery:
                 convert_to_pdf(md_path)
         assert len(str(exc.value)) < 10_000
         assert str(exc.value).count("x") == 2000
+
+
+MISSING_CHAR_LOG = (
+    "Missing character: There is no \u2192 (U+2192) in font [./NotoSansHebrew-Regular.ttf\n"
+    "]/OT:script=hebr;language=dflt;!\n"
+    "Missing character: There is no \u2264 (U+2264) in font [./NotoSansHebrew-Regular.ttf\n"
+    "Missing character: There is no \u2192 (U+2192) in font [./NotoSansHebrew-Regular.ttf\n"
+)
+
+
+class TestMissingCharactersWarn:
+    """A glyph the loaded font lacks is drawn as an empty box while the run exits 0, so only the
+    log says the page shows the wrong content."""
+
+    def test_each_missing_character_is_named_once(self):
+        fake = FakeRun(tectonic_rc=0, log_text=MISSING_CHAR_LOG)
+        with _render(fake) as md_path:
+            pdf_path, warning = convert_to_pdf(md_path)
+            assert Path(pdf_path).exists()
+        assert warning == (
+            "characters the font lacks render as empty boxes: "
+            "\u2192 (U+2192), \u2264 (U+2264)"
+        )
+
+    def test_a_long_list_is_capped(self):
+        log = "".join(
+            f"Missing character: There is no {chr(c)} (U+{c:04X}) in font [x]\n"
+            for c in range(0x2190, 0x2198)
+        )
+        fake = FakeRun(tectonic_rc=0, log_text=log)
+        with _render(fake) as md_path:
+            _, warning = convert_to_pdf(md_path)
+        assert warning.endswith("(U+2194) and 3 more")
+
+    def test_it_rides_beside_a_latex_error(self):
+        fake = FakeRun(tectonic_rc=0, log_text=ERROR_LOG + MISSING_CHAR_LOG)
+        with _render(fake) as md_path:
+            _, warning = convert_to_pdf(md_path)
+        assert warning.startswith("LaTeX error: Undefined control sequence")
+        assert "U+2264" in warning
 
 
 class TestMissingFontIsFatal:

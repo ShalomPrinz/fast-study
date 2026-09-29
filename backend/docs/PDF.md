@@ -8,7 +8,7 @@ Tectonic is a self-contained XeTeX: same engine and output — verified glyph-fo
 
 `convert_to_pdf(md_path) -> (pdf_path, warning|None)` runs the two tools itself rather than letting pandoc drive the engine:
 
-1. **pandoc → `build.tex`** (no `--pdf-engine`), so the generated LaTeX is a file we own. This is `build_tex(markdown, build)`, a seam a second caller can reuse; it takes **pandoc-ready** markdown — preprocessing is the caller's.
+1. **pandoc → `build.tex`** (no `--pdf-engine`), so the generated LaTeX is a file we own. This is `build_tex(markdown, build)`, a seam a second caller can reuse; it takes **pandoc-ready** markdown — preprocessing is the caller's. It writes `--to=latex-smart`: with the writer's `smart` on, pandoc turns a typed `“…”` into `` ``…'' ``, which only a `Ligatures=TeX` font curls — and the Hebrew/English families have none, because TeX ligatures would also curl every ASCII `'` and `"`, i.e. Hebrew geresh and gershayim (`ג'`, `ד"ר`). Off, the quotes reach the font as themselves.
 2. **`tectonic --keep-logs -Z continue-on-errors build.tex`, once** — tectonic reruns TeX to convergence itself, so there is no second pass to drive.
 
 Both run in one tempdir as cwd, so no aux file leaks beside the markdown; `build.pdf` is moved onto the output path at the end.
@@ -35,10 +35,13 @@ pandoc is bounded at 60s. The render is bounded at 60s **when the cache is froze
 | a `! Font …` in the log                   | `PdfRenderError` — never a warning, see below                   |
 | any other `! …`, PDF exists and non-empty | accepted, returned with the classified warning                  |
 | no `! …` but non-zero exit                | accepted, warned with tectonic's own `error:` lines             |
+| a `Missing character` in the log          | accepted, warned with each distinct character (first five)      |
 | no PDF, or a 0-byte PDF                   | `PdfRenderError`; `_require_nonempty` agrees                    |
 | either tool times out                     | `PdfRenderError`, carrying the `.tex` if pandoc produced one    |
 
 A damaged region renders wrong or blank while the rest is fine — far more robust than guessing which source line to excise.
+
+A missing character warning joins any other warning with `; `. It is a glyph a *loaded* font lacks (`→`, `≤`, emoji, CJK), drawn as an empty box: the damage is visible on the page, so unlike a missing font it warns rather than refuses. The fix is a font covering it, which costs installer size, so none ships.
 
 ### A missing font is a hard failure
 

@@ -10,7 +10,7 @@ The event carries **no payload** — the body of `/notify` is drained and discar
 keeps the channel a single event type. Producers are the backend (each meaningful pipeline and
 course-overview state change, via `services/db_client.notify`), the downloader server (after a
 successful upload), and this service itself after a successful course create, rename or archive,
-lecture create or rename, and a `POST /config` that applies a new `data_root` — so every open tree
+lecture create or rename, a summary write or restore (so an editor open in another window sees it), and a `POST /config` that applies a new `data_root` — so every open tree
 refetches, not just the window that acted.
 
 Delivery is fire-and-forget: per-queue failures are swallowed, and producers neither wait nor

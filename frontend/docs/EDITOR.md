@@ -14,15 +14,27 @@ Leaving the editor discards unsaved changes, with no confirm or `beforeunload`: 
 ## Saving
 
 `Save & update PDF` is the only write path — a saved summary whose PDF still shows the old text is never
-what the user wanted. It runs save → tree refresh (the stale chip reads the tree's mtimes) → delete
-`summary.pdf` → run `pdf`, then waits for SSE. It is enabled for a dirty buffer, a stale PDF or no PDF —
-stale by the mtime rule (`pdfNeedsUpdate`), not the chip, which a render warning outranks.
-`Restore original` discards every edit and deletes the snapshot, so it is confirm-gated.
+what the user wanted. It runs save → delete `summary.pdf` → run `pdf`, then waits for SSE; the database
+notifies on every summary write, so the stale chip's mtimes arrive the same way. It is enabled for a
+dirty buffer, a stale PDF or no PDF — stale by the mtime rule (`pdfNeedsUpdate`), not the chip, which a
+render warning outranks — and never for a blank buffer (`canUpdatePdf`), whose save would leave an empty
+`summary.md` and delete a PDF the render cannot replace.
+`Restore original` discards every edit and deletes the snapshot, so it is confirm-gated; a failure
+(`summary.md` held open elsewhere) reports like a failed save, in the toolbar and as a toast.
 
 The effect watching `files`/`lectureError` runs on every refresh, so `pdfFiredRef` limits it to the run
 this view started: otherwise a sibling file change or another lecture's error would clear the generating
 state, and the self-inflicted missing PDF would flash the "no PDF yet" placeholder. `PdfViewer`'s
 `generating` wins over both, so one spinner covers the cycle.
+
+## Changes from elsewhere
+
+Another window's save, a restore or a re-summarize changes `summary.md`'s mtime on the SSE-refreshed tree,
+and the editor re-reads the file. `diskChange` decides what that means: text equal to what the buffer was
+read from is our own write echoing back; a clean buffer silently takes the new text; an edited one keeps
+its text and raises a banner — load the new version, or keep the edits and save over it. `Save & update
+PDF` is disabled until one is picked, so a buffer gone stale is never written over another writer's text
+unasked.
 
 ## `PdfViewer`
 

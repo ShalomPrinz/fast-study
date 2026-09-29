@@ -26,7 +26,8 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import MarkdownEditor from '@/features/lectures/components/MarkdownEditor'
-import { pdfBadge, pdfNeedsUpdate } from '@/features/lectures/utils/pdfBadge'
+import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
+import { canUpdatePdf, diskChange } from '@/features/lectures/utils/summaryBuffer'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
@@ -39,7 +40,7 @@ export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
   const { getError } = useRunnerStatus()
-  const { courses, loaded: treeLoaded, refreshCourses } = useCourseTreeContext()
+  const { courses, loaded: treeLoaded } = useCourseTreeContext()
   const lectureError: ServiceFailure | null = getError(course, lecture, kind)
 
   const [content, setContent] = useState('')
@@ -51,10 +52,16 @@ export default function EditSummaryView() {
   const [error, setError] = useState<ServiceFailure | null>(null)
   const [showPdf, setShowPdf] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
+  // summary.md changed on disk under an edited buffer; saving waits until the user picks a version.
+  const [diskConflict, setDiskConflict] = useState(false)
 
   // True only while waiting for the pdf step this view started.
   const pdfFiredRef = useRef(false)
   const latest = useLatestRequest()
+  // The buffer as of the last render, for a disk read that resolves after later keystrokes.
+  const bufferRef = useRef({ content, savedContent })
+  bufferRef.current = { content, savedContent }
+  const summaryMtime = files?.['summary.md'].mtime ?? null
 
   // Runs on every refresh; the ref limits it to the generate this view started, whose missing PDF
   // is our own delete — see docs/EDITOR.md.
@@ -82,6 +89,11 @@ export default function EditSummaryView() {
     if (course && lecture) loadContent()
   }, [course, lecture, kind])
 
+  // Another window's save or a re-summarize reaches us as a new summary.md mtime on the SSE-refreshed tree.
+  useEffect(() => {
+    if (!loading) syncFromDisk()
+  }, [summaryMtime, loading])
+
   async function loadContent() {
     setLoading(true)
     const data = await latest(fetchSummaryContent(course, lecture, kind))
@@ -89,7 +101,27 @@ export default function EditSummaryView() {
     setContent(data.content)
     setSavedContent(data.content)
     setHasOriginal(data.hasOriginal)
+    setDiskConflict(false)
     setLoading(false)
+  }
+
+  // Re-reads summary.md: a clean buffer takes the new text, an edited one raises the conflict banner.
+  async function syncFromDisk() {
+    let data
+    try {
+      data = await latest(fetchSummaryContent(course, lecture, kind))
+    } catch {
+      // A background re-read; the next notify retries, and connection errors are toasted centrally.
+      return
+    }
+    if (!data) return
+    const { content: current, savedContent: saved } = bufferRef.current
+    const change = diskChange(current, saved, data.content)
+    setHasOriginal(data.hasOriginal)
+    if (change === 'none') return
+    setSavedContent(data.content)
+    if (change === 'reload') setContent(data.content)
+    else setDiskConflict(true)
   }
 
   // Shows a failed write in the toolbar and as a toast; connection errors are toasted centrally.
@@ -115,11 +147,13 @@ export default function EditSummaryView() {
   async function handleRestore() {
     setConfirmRestore(false)
     setError(null)
-    await revertSummary(course, lecture, kind)
+    try {
+      await revertSummary(course, lecture, kind)
+    } catch (e) {
+      reportFailure(e, t`Failed to restore the original summary`)
+      return
+    }
     await loadContent()
-    // Restore rewrites summary.md with no SSE notify behind it, so the tree's mtimes — and the
-    // stale-PDF badge that reads them — only update if we ask for them.
-    refreshCourses()
   }
 
   // One action rather than two: a saved summary whose PDF still shows the old text is never what
@@ -131,8 +165,6 @@ export default function EditSummaryView() {
       setGenerating(false)
       return
     }
-    // The write lands before the PDF does, and the chip comparing their mtimes reads the tree.
-    refreshCourses()
     // A pdf we cannot delete — a viewer still holding it open — is one the step could not write
     // either, so the failure is reported here rather than pushed into a doomed run.
     try {
@@ -171,7 +203,8 @@ export default function EditSummaryView() {
   const badge = files && pdfBadge(files)
   const dirty = !loading && content !== savedContent
   // A stale or absent PDF is work to do even on a clean buffer: the press rebuilds it from disk.
-  const canUpdate = dirty || pdfNeedsUpdate(files)
+  const canUpdate = canUpdatePdf(content, dirty, files)
+  const blank = !loading && !content.trim()
 
   return (
     <div className="edit-view">
@@ -205,13 +238,36 @@ export default function EditSummaryView() {
           <button
             className="btn btn--primary"
             onClick={handleSaveAndUpdatePdf}
-            disabled={!canUpdate || generating || loading}
-            title={canUpdate ? undefined : t`Already up to date`}
+            disabled={!canUpdate || generating || loading || diskConflict}
+            title={blank ? t`The summary is empty` : canUpdate ? undefined : t`Already up to date`}
           >
             {generating ? t`Updating PDF…` : t`Save & update PDF`}
           </button>
         </div>
       </div>
+
+      {diskConflict && (
+        <div className="edit-conflict" role="alert">
+          <span>
+            <Trans>
+              This summary changed in another window or was regenerated. Load the new version, or
+              keep your edits and save over it.
+            </Trans>
+          </span>
+          <button
+            className="btn btn--ghost"
+            onClick={() => {
+              setContent(savedContent)
+              setDiskConflict(false)
+            }}
+          >
+            <Trans>Load new version</Trans>
+          </button>
+          <button className="btn btn--ghost" onClick={() => setDiskConflict(false)}>
+            <Trans>Keep my edits</Trans>
+          </button>
+        </div>
+      )}
 
       {error && (
         <p className="edit-error">

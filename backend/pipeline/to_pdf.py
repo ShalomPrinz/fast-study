@@ -99,6 +99,12 @@ _FORMAT_RACE_MARKER = "failed to persist temporary file"
 # plausible PDF with characters silently absent. TeX reports it as `! Font …`.
 _FONT_ERROR_PREFIX = "Font "
 
+# A glyph a loaded font lacks is logged once per occurrence, and the PDF draws an empty box instead.
+_MISSING_CHAR_RE = re.compile(
+    r"^Missing character: There is no .*?\(U\+([0-9A-F]+)\)", re.MULTILINE
+)
+_MISSING_CHARS_SHOWN = 5
+
 # A render is seconds against a complete cache, so a minute is already wedged. Bounded because the
 # caller holds a per-lecture lock across it — a hang would leave that lecture permanently `busy`.
 _TOOL_TIMEOUT_SECONDS = 60
@@ -177,6 +183,20 @@ def _tectonic_errors(stderr: str) -> str:
     return "\n".join(m.group(0) for m in _TECTONIC_ERROR_RE.finditer(stderr))
 
 
+def _missing_characters(log: str) -> str | None:
+    """One warning line naming each distinct character the fonts lack, or None when none is."""
+
+    codes = list(dict.fromkeys(m.group(1) for m in _MISSING_CHAR_RE.finditer(log)))
+    if not codes:
+        return None
+    shown = ", ".join(
+        f"{chr(int(c, 16))} (U+{c})" for c in codes[:_MISSING_CHARS_SHOWN]
+    )
+    rest = len(codes) - _MISSING_CHARS_SHOWN
+    more = f" and {rest} more" if rest > 0 else ""
+    return f"characters the font lacks render as empty boxes: {shown}{more}"
+
+
 def _render(build: Path, tex_source: str):
     """Render build.tex to build.pdf, retrying once if this machine lost the format-build race."""
 
@@ -242,6 +262,8 @@ def build_tex(markdown: str, build: Path) -> str:
         "-o",
         f"{BUILD_STEM}.tex",
         "--from=markdown-smart",
+        # Without it pandoc rewrites curly quotes as ``…'', which only Ligatures=TeX fonts curl.
+        "--to=latex-smart",
         f"--template={template_path}",
         "-V",
         "geometry:margin=2.5cm",
@@ -324,13 +346,17 @@ def convert_to_pdf(md_path: str) -> tuple[str, str | None]:
 
         shutil.move(str(built_pdf), str(output_path))
 
+        warnings = []
         if errors:
             # -Z continue-on-errors exits 0 on an errored run, so only the log says a page came
             # out damaged.
-            return str(output_path), format_tex_errors(errors)
-        if run.returncode != 0:
-            return str(output_path), (
+            warnings.append(format_tex_errors(errors))
+        elif run.returncode != 0:
+            warnings.append(
                 engine_errors
                 or f"tectonic exited {run.returncode} with no reported error"
             )
-        return str(output_path), None
+        missing = _missing_characters(log)
+        if missing:
+            warnings.append(missing)
+        return str(output_path), "; ".join(warnings) or None

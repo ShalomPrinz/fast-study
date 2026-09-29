@@ -84,3 +84,24 @@ def test_config_rejected_data_root_does_not_notify(client, notifies):
     r = client.post("/config", json={"data_root": "relative/path"})
     assert r.status_code == 400
     assert notifies == []
+
+
+def test_summary_write_notifies_once(client, seeded, notifies):
+    r = client.put("/courses/Algo/lectures/L1/summary", content="# x".encode())
+    assert r.status_code == 204
+    assert len(notifies) == 1
+
+
+def test_summary_revert_notifies_once(client, seeded, notifies):
+    client.put("/courses/Algo/lectures/L1/summary", content=b"# a")
+    client.put("/courses/Algo/lectures/L1/summary", content=b"# b")
+    notifies.clear()
+    r = client.delete("/courses/Algo/lectures/L1/summary")
+    assert r.status_code == 204
+    assert len(notifies) == 1
+
+
+def test_failed_summary_write_does_not_notify(client, seeded, notifies):
+    r = client.put("/courses/Algo/lectures/Missing/summary", content=b"# x")
+    assert r.status_code >= 400
+    assert notifies == []
