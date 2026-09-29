@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { harnessPaths } from '../harness/lib/env.mjs';
 import { diff } from '../harness/lib/state.mjs';
 
 const HUNT_ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -19,7 +20,7 @@ export const FLOWS = {
   nav: { title: 'Search, materials, other links, navigation', sweep: '8', course: 'hb-nav' },
 };
 
-/** Where each flow agent writes its `<tag>.md`, inside the harness root the wave runs on. */
+/** Where a flow agent writes its `<tag>.md`, inside its own harness root. */
 export const fragmentsDir = (paths) => path.join(paths.root, 'fragments');
 
 const SECTIONS = ['Confirmed', 'Unconfirmed / flaky', 'Harness gaps'];
@@ -161,26 +162,54 @@ export function parseFragment(file, text) {
 }
 
 // Known flows in FLOWS order, then any other tag alphabetically.
-function fragmentFiles(dir) {
-  const names = fs.existsSync(dir) ? fs.readdirSync(dir).filter((n) => n.endsWith('.md')) : [];
+const byFlow = (key) => (a, b) => {
   const order = Object.keys(FLOWS);
-  const rank = (name) => {
-    const at = order.indexOf(name.slice(0, -3));
-    return at === -1 ? order.length : at;
-  };
-  return names.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+  const rank = (tag) => (order.includes(tag) ? order.indexOf(tag) : order.length);
+  return rank(key(a)) - rank(key(b)) || key(a).localeCompare(key(b));
+};
+
+/** A wave's flow stacks: each `<wave>/<tag>/` holding a `fragments/` dir. */
+function waveStacks(wave) {
+  if (!fs.existsSync(wave)) throw new Error(`no wave root at ${wave}`);
+  return fs
+    .readdirSync(wave, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => ({ tag: entry.name, paths: harnessPaths(path.join(wave, entry.name)) }))
+    .filter((stack) => fs.existsSync(fragmentsDir(stack.paths)))
+    .sort(byFlow((stack) => stack.tag));
+}
+
+// One stack's `state-seed.json` → `state.json` diff, to follow its flow's label directly.
+function stateDiff(paths) {
+  if (!fs.existsSync(paths.snapshot) || !fs.existsSync(paths.seedSnapshot)) {
+    return ' no `state.json`: the flow never ran `hb state`.';
+  }
+  const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+  const lines = diff(read(paths.seedSnapshot), read(paths.snapshot));
+  return lines.length ? `\n\n\`\`\`\n${lines.join('\n')}\n\`\`\`` : ' unchanged since the seed.';
 }
 
 const cell = (text) => text.replace(/\|/g, '\\|').replace(/\s*\n\s*/g, ' ');
 
-/** The merged findings file's text; throws with every malformed fragment line at once. */
-export function mergeFindings(paths, area, date) {
-  const files = fragmentFiles(fragmentsDir(paths));
-  if (!files.length) throw new Error(`no fragments in ${fragmentsDir(paths)}`);
-  const flows = files.map((name) => {
-    const file = path.join(fragmentsDir(paths), name);
-    return { tag: name.slice(0, -3), ...parseFragment(file, fs.readFileSync(file, 'utf8')) };
-  });
+/** The merged findings file's text for a wave root; throws with every malformed fragment line at once. */
+export function mergeFindings(wave, area, date) {
+  const stacks = waveStacks(wave);
+  const files = stacks
+    .flatMap((stack) =>
+      fs
+        .readdirSync(fragmentsDir(stack.paths))
+        .filter((name) => name.endsWith('.md'))
+        .map((name) => ({
+          tag: name.slice(0, -3),
+          file: path.join(fragmentsDir(stack.paths), name),
+        })),
+    )
+    .sort(byFlow((fragment) => fragment.tag));
+  if (!files.length) throw new Error(`no fragments in ${wave}/*/fragments`);
+  const flows = files.map(({ tag, file }) => ({
+    tag,
+    ...parseFragment(file, fs.readFileSync(file, 'utf8')),
+  }));
   const errors = flows.flatMap((flow) => flow.errors.map((error) => error.text));
   if (errors.length) {
     throw new Error(`${errors.length} problem(s), nothing written:\n  ${errors.join('\n  ')}`);
@@ -206,12 +235,11 @@ export function mergeFindings(paths, area, date) {
   }
   const overlaps = [...groups].map(([key, locations]) => `${key}: ${locations.join(', ')}`);
 
-  let state = 'no `state.json`: run `hb state` first.';
-  if (fs.existsSync(paths.snapshot) && fs.existsSync(paths.seedSnapshot)) {
-    const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
-    const lines = diff(read(paths.seedSnapshot), read(paths.snapshot));
-    state = lines.length ? `\n\n\`\`\`\n${lines.join('\n')}\n\`\`\`` : 'unchanged since the seed.';
-  }
+  // A paragraph per flow, not a list item, so a diff's code fence renders under it.
+  const states = stacks.flatMap((stack) => [
+    `*${FLOWS[stack.tag]?.title ?? stack.tag}:*${stateDiff(stack.paths)}`,
+    '',
+  ]);
   const missing = Object.keys(FLOWS).filter((tag) => !flows.some((flow) => flow.tag === tag));
 
   const number = (flow) => {
@@ -223,10 +251,11 @@ export function mergeFindings(paths, area, date) {
   return [
     `# Findings — ${area}, ${date}`,
     '',
-    `**Run:** harness root \`${paths.root}\`. Flows: ${flows.map((f) => f.title).join(', ')}.`,
+    `**Run:** wave root \`${wave}\`, one stack per flow: ${stacks.map((s) => `\`${s.paths.root}\``).join(', ')}. Flows: ${flows.map((f) => f.title).join(', ')}.`,
     '',
-    `**Left changed since the seed** (\`hb state\`): ${state}`,
+    "**Left changed since the seed** (each flow's `hb state`):",
     '',
+    ...states,
     `**Not covered:** ${missing.length ? `no fragment from ${missing.join(', ')}.` : 'every flow reported.'}`,
     '',
     '## Summary',

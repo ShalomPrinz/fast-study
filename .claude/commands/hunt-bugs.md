@@ -14,16 +14,19 @@ services, the SPA, ffmpeg/pandoc/tectonic, the disk layout, SSE, the jobs — ru
 `.claude/harness/` is the app harness that arranges all of that, and `.claude/hunt-bugs/` adds the
 wave's brief and findings merge on top. **You do not build a harness; you use this one.**
 
-**You orchestrate; subagents do the work.** You start the harness, spawn one flow agent per flow and
-one merge agent, relay the summary table and tear down. You never drive a flow, triage an anomaly or
-read a fragment or the merged file: each of those lands in a subagent's context, so yours holds this
-command, one line per flow agent, the `/health` lines and the final table.
+**You orchestrate; subagents do the work.** Each flow runs on a stack of its own, three at a time:
+you start a flow's stack and spawn its agent, tear the stack down when the agent reports and start
+the next flow, then spawn one merge agent and relay its summary table. You never drive a flow,
+triage an anomaly or read a fragment, a `/health` line or the merged file: each of those lands in a
+subagent's context, so yours holds this command, one line per flow agent, any failed boot's line
+and the final table.
 
 Flow agents read this file too. What is theirs is labelled **Flow agents:**, and the hard rules bind
 everyone; everything else is the orchestrator's.
 
-**If arguments were passed** (e.g. `/hunt-bugs the downloads page`), restrict Step 2's sweep to that
-area. Start the whole harness anyway — a service you do not drive still has to boot.
+**If arguments were passed** (e.g. `/hunt-bugs the downloads page`), run only the flows that area
+touches, each with the words as its focus. Each stack still boots every service — a service you do
+not drive still has to boot.
 
 ---
 
@@ -38,47 +41,53 @@ nothing from it.
 
 ---
 
-## Step 1 — Start the harness
+## Step 1 — Start a flow's stack
+
+The wave root is `<your scratchpad>/hunt`, or `hunt-2`, `hunt-3`… when an earlier wave left that
+one: every flow starts on a root that does not exist yet, since a warm root reuses the last run's
+dirty data. Each flow's harness root is `<wave>/<tag>`:
 
 ```bash
-node .claude/harness/setup.mjs --harness <your scratchpad>/hunt --browsers settings,mgmt,dl,pipeline,fail,edit,nav
+node .claude/harness/setup.mjs --harness <wave>/<tag> --browsers <tag>
 ```
 
-`--browsers` names the flows that get a browser session, each on a port of its own.
+`--browsers <tag>` gives the flow its browser session. Stacks pick their own ports, so several run
+side by side; each takes about 1 GB and 10–14 s to boot.
 
-Run it in the background with stdout and stderr redirected to `<your scratchpad>/hunt.log`, and
-leave it running: it holds the stack up until
-`node .claude/harness/setup.mjs --harness <same dir> --down`. Never read that log whole. Wait (up to
-3 minutes) until the log shows `harness ready`, or `harness failed:` / `harness stopped:`, or the
-setup process has exited; then pull only what you need with `grep`:
+Run it in the background with stdout and stderr redirected to `<wave>-<tag>.log` beside the wave
+root, and leave it running: it holds the stack up until
+`node .claude/harness/setup.mjs --harness <wave>/<tag> --down`. Never read that log whole. Wait (up
+to 3 minutes) until the log shows `harness ready`, or `harness failed:` / `harness stopped:`, or the
+setup process has exited; then pull only the verdict with `grep`:
 
 ```bash
-grep -E '^  (backend|downloader server|auto-downloader): |^harness (ready|failed|stopped)' <your scratchpad>/hunt.log
+grep -E '^harness (ready|failed|stopped)' <wave>-<tag>.log
 ```
 
-Before spawning any flow, read the `/health` line the script printed for each service. A tool
-reported `missing` explains failures later — name it in each affected flow agent's prompt rather
-than let it surface as a "bug".
+A stack that is not `ready` gets no flow agent. `--down` it and relay its `harness failed:` line to
+the user as it stands. A **self-check failure** means the harness itself broke, and a half-working
+shim produces findings about nothing: start no further flows, let the running ones finish, and
+pass the line to the merge agent. The flow agent reads its own stack's `/health` tool lines; you
+do not.
 
-It builds the fixtures, fakes and scratch `.env`, launches
+Each stack builds the fixtures, fakes and scratch `.env`, launches
 `database → backend → downloader server → auto-downloader → dev server`, seeds the scratch data
 root through `database/`'s routes, and then **proves itself** — the escape alarm refuses a real
 outbound request, the fake site still serves a redirected `https://lemida.biu.ac.il`, both Python
 services are running on the fake keys, a settings save misses the real `.env`, the app loaded in
 headless chromium lists the courses and reaches every service from its origin, and `audio` →
-`transcribe` runs green. A failed proof aborts the run.
+`transcribe` runs green. A failed proof aborts the run and prints as
+`harness failed: <the assumption that broke>`.
 
-When it aborts, fix the harness before going further — a half-working shim produces findings about
-nothing. A **self-check failure** prints as `harness failed: <the assumption that broke>`.
+**Flow agents:** the rest of this step is what your stack gives you. It is yours alone — no other
+flow reaches its settings, fakes, data or services — so reseed it, restart a service, raise the
+wall or switch a fake's mode whenever your flow needs to. What you will use most:
 
-**Flow agents:** the rest of this step is what the stack gives you. What you will use most:
-
-- Every port is this harness's own: `hb.mjs --harness <same dir> url` lists them all, `url <name>`
+- Every port is this harness's own: `hb.mjs --harness <your harness> url` lists them all, `url <name>`
   prints one.
 - The app, at `url frontend` (localhost, not 127.0.0.1: dev CORS takes only localhost). Drive it
   only through a `browser.mjs` session — never write your own Playwright driver. Each flow owns one
-  session, at `url browser-<tag>`; one not started with `--browsers` comes from
-  `hb.mjs --harness <same dir> browser <tag>`. Over curl: `goto`, `click`, `fill`, `text`,
+  session, at `url browser-<tag>`; another comes from `hb.mjs --harness <your harness> browser <tag>`. Over curl: `goto`, `click`, `fill`, `text`,
   `screenshot` (lands as `evidence/<tag>-<name>.png`), `eval`, `log`, `mutations` — the README has
   the exact calls. Every answer ends with the console errors and failed or 4xx/5xx requests the
   command caused, and every non-GET request is kept in `evidence/<tag>-mutations.jsonl` with its
@@ -93,28 +102,27 @@ nothing. A **self-check failure** prints as `harness failed: <the assumption tha
   a rejected Gemini key, bot-protection challenge and a dead Moodle token, on demand;
   `-d '{"downloadMs":60000}'` on the site makes the next downloads take a minute, with no restart.
   A provider failure can target one lecture and the next N calls —
-  `-d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'` — so it hits your flow's
-  lecture and nobody else's. The README lists every mode.
-- `node .claude/harness/setup.mjs --harness <same dir> --restart <service> [ENV=val…]` — restart
+  `-d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'` — so it hits that lecture
+  and leaves the rest of the course working. The README lists every mode.
+- `node .claude/harness/setup.mjs --harness <your harness> --restart <service> [ENV=val…]` — restart
   one service mid-flow with its exact recorded environment, plus any overrides; the README lists
   the service names.
-- `node .claude/harness/hb.mjs --harness <same dir> <command>` — `set NAME=value…` (a setting,
+- `node .claude/harness/hb.mjs --harness <your harness> <command>` — `set NAME=value…` (a setting,
   saved as the settings screen saves it), `reseed` (baseline + flow courses on the live stack),
   `state` (save `state.json`, diff against the seed), `wall` / `unwall` (the first-run screen),
   `add-material <course> <lecture> [file]` (a material PDF, with the notify the downloader sends),
   `rm-lecture <course> <lecture>` (the folder deleted on disk, mid-run if you like),
   `lock <glob>` / `unlock` (the database fails that file as Windows does one open in a viewer —
   `423 file_locked`) and `refused`. `hb.mjs help` lists them all.
-- `node .claude/hunt-bugs/hunt.mjs --harness <same dir> <command>` — `brief <tag>` (a flow agent's
-  brief, Step 2) and `findings` (the merge, Step 4).
+- `node .claude/hunt-bugs/hunt.mjs --harness <your harness> brief <tag>` — a flow agent's brief
+  (Step 2); `--wave <wave> findings` is the merge (Step 4).
 - PDFs: no `pdftotext`/`pdftoppm` here — read and render them with PyMuPDF through
   `cd backend && uv run python`; the README has the two one-liners.
 
 The stack starts from a known baseline: fake keys, Drive **connected**, Moodle connected, both fakes
-`ok`, `AUTO_RUN=full`. Each flow has its own seeded course — `hb-mgmt`, `hb-dl`, `hb-edit`,
-`hb-nav`, `hb-pipeline`, `hb-fail` (the README's table says what each holds); `hb-selfcheck` is
-nobody's. A flow works in its own course and creates any new course with its own prefix, so flows
-run side by side without damaging each other's data.
+`ok`, `AUTO_RUN=full`. Every stack seeds every flow's course — `hb-mgmt`, `hb-dl`, `hb-edit`,
+`hb-nav`, `hb-pipeline`, `hb-fail` (the README's table says what each holds); `hb-selfcheck` is the
+self-check's. A flow works in the course seeded for it.
 Step 2's flows map onto them as: management → `hb-mgmt`, downloads → `hb-dl`, pipeline and course
 overview → `hb-pipeline`, failure surfacing → `hb-fail`, editor and PDF → `hb-edit`, search,
 materials and navigation → `hb-nav`.
@@ -123,30 +131,31 @@ materials and navigation → `hb-nav`.
 
 ## Step 2 — Take the flows
 
-Note the wave start (`date -u +%Y-%m-%dT%H:%M:%SZ`), then turn automatic runs off once:
+Note the wave start (`date -u +%Y-%m-%dT%H:%M:%SZ`) before the first stack boots. The flows are
+`settings`, `mgmt`, `dl`, `pipeline`, `fail`, `edit` and `nav` (or the ones an argument narrows to),
+run as a rolling window of three:
 
-```bash
-node .claude/harness/hb.mjs --harness <same dir> set AUTO_RUN=off
-```
+1. Start the first three flows' stacks (Step 1) together.
+2. As each stack reports `harness ready`, spawn its flow agent: Agent tool,
+   `subagent_type: "general-purpose"`, `run_in_background: true`, with only this prompt, the
+   harness as an absolute path:
 
-Then spawn every flow agent in one message: Agent tool, `subagent_type: "general-purpose"`,
-`run_in_background: true`, one per tag (`settings`, `mgmt`, `dl`, `pipeline`, `fail`, `edit`, `nav`,
-or the ones an argument narrows to). Each prompt is only, with the harness as an absolute path:
+   ```
+   Run `node .claude/hunt-bugs/hunt.mjs --harness <absolute wave>/<tag> brief <tag> [focus…]` and follow the brief it prints.
+   ```
 
-```
-Run `node .claude/hunt-bugs/hunt.mjs --harness <absolute harness dir> brief <tag> [focus…]` and follow the brief it prints.
-```
+3. When a flow agent reports back, `--down` its stack and start the next flow's.
 
-plus a line for any tool `/health` reported `missing`. Never run `brief` yourself: it prints
-[`brief.md`](../hunt-bugs/brief.md) filled in for this harness and tag — the flow's sweep items,
-course, browser session, the rules below, Step 3 and the fragment format — and that belongs in the
-agent's context, not yours. Each agent writes `<harness>/fragments/<tag>.md` and replies with one
-line. Wait for the completion notices; do not poll fragments, logs or browser sessions meanwhile.
-Note each tag whose agent failed or replied without a fragment path.
+Never run `brief` yourself: it prints [`brief.md`](../hunt-bugs/brief.md) filled in for that stack
+and tag — the flow's first setup steps, sweep items, course, browser session, the rules below,
+Step 3 and the fragment format — and that belongs in the agent's context, not yours. Each agent
+writes `<wave>/<tag>/fragments/<tag>.md` and replies with one line. Wait for the completion
+notices; do not poll fragments, logs or browser sessions meanwhile. Note each tag whose agent
+failed or replied without a fragment path.
 
 **Flow agents:** the rest of this step and Step 3 are yours.
 
-Work through the app as a user, not as a test matrix. Stay in your flow's course (Settings and
+Work through the app as a user, not as a test matrix. Work in your flow's course (Settings and
 Liveness touch whatever they need). Each flow: do it, watch what the UI says,
 watch what the logs say, check what landed on disk. Minimum sweep (narrow to the argument if one
 was passed):
@@ -176,11 +185,9 @@ was passed):
 9. **Liveness** — every progress update must arrive by SSE without a reload. A state that only
    appears after a manual refresh is a bug, not a nuance.
 
-Settings are global. Automatic runs queue a pipeline run for every downloaded video, and each run
-reaches the Drive step — so the wave runs with `AUTO_RUN=off`. Only the pipeline flow turns it back
-to `full`, for its auto-run test alone, and puts `off` back straight after. A flow that changes a
-shared setting or an untargeted fake mode says so and puts it back; a provider failure aimed with
-`match` at the flow's own course needs no such care.
+Automatic runs queue a pipeline run for every downloaded video, and each run reaches the Drive
+step — so every flow turns `AUTO_RUN` off before it starts, and only the pipeline flow turns it back
+to `full`, for its auto-run test.
 
 Push the edges you would push on your own machine: the empty lecture, the very long name, a name
 with a quote or a slash, a double-click on a run button, two tabs on the same lecture.
@@ -213,8 +220,8 @@ When every flow agent has reported, spawn one merge agent (`subagent_type: "gene
 only:
 
 ```
-Do the merge agent's job in Step 4 of .claude/commands/hunt-bugs.md for harness <absolute harness dir>,
-area <area-or-sweep>, date <YYYY-MM-DD>, wave start <wave start>. <The /health lines.>
+Do the merge agent's job in Step 4 of .claude/commands/hunt-bugs.md for wave <absolute wave dir>,
+area <area-or-sweep>, date <YYYY-MM-DD>, wave start <wave start>. <Each failed boot's line.>
 <Each flow skipped, failed or with no fragment, and why.>
 ```
 
@@ -222,23 +229,24 @@ Print what it returns. Do not open the merged file.
 
 ### The merge agent's job
 
-Each flow's findings are in `<harness>/fragments/<tag>.md`, in the format `brief.md` defines:
+Each flow ran on its own stack `<wave>/<tag>`, now down, and its findings are in
+`<wave>/<tag>/fragments/<tag>.md`, in the format `brief.md` defines:
 `## Flow:`, **Driven** and **Not covered**, then `### Confirmed` (one `####` per bug carrying
 Severity, Owner, Flow, Observed, Expected, Evidence, Lands in and Harness ruled out by),
 `### Unconfirmed / flaky` and `### Harness gaps`.
 
 ```bash
-node .claude/harness/hb.mjs --harness <same dir> refused --since <wave start>
-node .claude/harness/hb.mjs --harness <same dir> state
-node .claude/hunt-bugs/hunt.mjs --harness <same dir> findings <area-or-sweep> <YYYY-MM-DD>
+for root in <wave>/*/; do echo "$root"; node .claude/harness/hb.mjs --harness "$root" refused --since <wave start>; done
+node .claude/hunt-bugs/hunt.mjs --wave <wave> findings <area-or-sweep> <YYYY-MM-DD>
 ```
 
-`hb refused` covers the whole wave, whatever each flow checked; put its verdict on the Run line.
+`hb refused` reads each stack's `network.log`, so it covers the whole wave whatever each flow
+checked; put its verdict on the Run line.
 
-`hb state` saves what the wave left changed. `hunt.mjs findings` writes
-`findings-<area-or-sweep>-<YYYY-MM-DD>.md` at the project root. That is the only file the wave
-writes into the repo, unless a flow fixed a fake. The merged file holds the Run line with the state
-diff, the flows with no fragment, a summary table numbered by severity (severity, owner, symptom,
+`hunt.mjs findings` writes `findings-<area-or-sweep>-<YYYY-MM-DD>.md` at the project root. That is
+the only file the wave writes into the repo, unless a flow fixed a fake. The merged file holds the
+Run line naming every stack root, each flow's state diff from the `hb state` it ran before
+replying, the flows with no fragment, a summary table numbered by severity (severity, owner, symptom,
 flow), the **Overlaps across flows** list and every fragment verbatim, its findings numbered to match.
 With no fragment at all it writes nothing and says `no fragments in …`: reply with that and the
 flows the orchestrator named, and stop.
@@ -249,7 +257,7 @@ merged file, so delete that file first.
 
 Then finish the merged file by hand:
 
-- **Run:** add what the self-checks proved and the `/health` tool lines the orchestrator passed.
+- **Run:** add what the self-checks proved and any failed boot the orchestrator passed.
 - **Not covered:** say why each missing flow was skipped, and which of the README's blind spots
   affected this sweep.
 - **Overlaps:** each entry is a probable duplicate at the same `path:line`. Where it is one bug,
@@ -263,9 +271,10 @@ with no fragment and why.
 
 ## Step 5 — Tear down
 
-Stop the harness with `node .claude/harness/setup.mjs --harness <same dir> --down` and say so.
-That also stops every browser session it or `hb browser` started. Do not stop them yourself. Leave the harness directory in place, because the findings file points into it. The next
-session starts from what the findings file's state diff names, and `hb reseed` puts all of it back.
+Sweep the wave: run `node .claude/harness/setup.mjs --harness <wave>/<tag> --down` for every flow
+whose stack may still be up, and say so. That also stops every browser session it or `hb browser`
+started. Do not stop them yourself. Leave the wave root in place, because the findings file points
+into it; the next wave starts on a fresh one.
 
 ---
 

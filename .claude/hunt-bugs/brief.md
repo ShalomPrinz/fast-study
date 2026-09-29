@@ -1,8 +1,11 @@
 You are the **{{title}}** flow of a `/hunt-bugs` wave. You find bugs by using the running app as a
-user does. Read code only to explain a symptom you have already reproduced. The harness is already
-up at `{{harness}}`. Do not start it, stop it or reseed it.
+user does. Read code only to explain a symptom you have already reproduced. The harness at
+`{{harness}}` is already up and is your flow's own stack: no other flow reaches its data, settings,
+fakes or services. `hb reseed`, `setup.mjs --restart`, `hb wall` and any fake mode are yours to use.
+Do not stop it or start a second setup on it; the orchestrator tears it down after you reply.
 
 Every hb command below is run as `node .claude/harness/hb.mjs --harness {{harness}} <command>`.
+Put any helper script you write under `{{harness}}/work/`.
 
 ## Ground yourself
 
@@ -10,6 +13,15 @@ Read `.claude/commands/hunt-bugs.md` (the parts labelled **Flow agents:** and th
 your job; the rest is the orchestrator's), `.claude/harness/README.md` (what is faked, and its blind
 spots), the root `CLAUDE.md`, the `CLAUDE.md` of each service your flow touches, and the `docs/`
 page for your flow. Never read the repo-root `.env`.
+
+## Before you start
+
+1. `hb set AUTO_RUN=off`. The stack boots with `AUTO_RUN=full`, which queues a pipeline run for
+   every downloaded video, each reaching the Drive step. Turn it back to `full` only for an
+   auto-run test.
+2. Read the tools each service found: `curl -s "$(hb url backend)/health"`, then `server` and
+   `auto` the same way. A tool reported `missing` explains a failure later; name it under
+   **Not covered** rather than report it as a bug.
 
 ## Your flow
 
@@ -21,15 +33,10 @@ page for your flow. Never read the repo-root `.env`.
   driver. Name screenshots `{"name":"…"}`: they land as `{{harness}}/evidence/{{tag}}-<name>.png`.
   Every non-GET request the page sends is in `{{harness}}/evidence/{{tag}}-mutations.jsonl`.
 - **Logs:** `{{harness}}/logs/*.log`, and `{{harness}}/drive/ops.jsonl` for Drive.
-- **Escapes:** `hb refused --since {{since}}` must print `no escapes` before you finish. If it
-  prints anything else, stop and report it.
-
-Other flows run at the same time. Settings and untargeted fake modes are shared, so leave
-`AUTO_RUN` at the wave's `off`. The Pipeline flow alone sets `hb set AUTO_RUN=full` for its
-auto-run test and `hb set AUTO_RUN=off` straight after it: while it is `full`, every other flow's
-download queues a pipeline run too. Aim a provider failure at your own course with `match`, and
-put back anything global you change. A screen that changes for no reason may be another flow's
-work. Rule that out before you call it a bug.
+- **Before you reply:** `hb refused --since {{since}}` must print `no escapes`; if it prints
+  anything else, stop and report it. Then run `hb state`, which diffs the stack against its seed,
+  and quote in a finding's Evidence only the diff lines that bear on it. The merge prints the
+  whole diff for your flow.
 
 ## Triage
 

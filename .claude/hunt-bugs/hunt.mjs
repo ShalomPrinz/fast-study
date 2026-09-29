@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// The /hunt-bugs wave's own helpers, on top of a harness started by `.claude/harness/setup.mjs`.
+// The /hunt-bugs wave's own helpers, on top of the per-flow stacks `.claude/harness/setup.mjs` starts.
 //
-//   node .claude/hunt-bugs/hunt.mjs [--harness DIR] <brief|findings> [args…]   (or HARNESS_DIR=DIR)
+//   node .claude/hunt-bugs/hunt.mjs --harness DIR brief <tag> [focus…]   (or HARNESS_DIR=DIR)
+//   node .claude/hunt-bugs/hunt.mjs --wave DIR findings <area> <YYYY-MM-DD> [--out FILE]
 import fs from 'node:fs';
 import path from 'node:path';
 import { REPO_ROOT, harnessPaths, readPorts } from '../harness/lib/env.mjs';
@@ -9,9 +10,11 @@ import { FLOWS, fragmentsDir, mergeFindings, renderBrief } from './findings.mjs'
 
 const COMMANDS = {
   brief: {
-    usage: 'brief <tag> [focus…]',
+    root: '--harness',
+    usage: '--harness DIR brief <tag> [focus…]',
     summary: "print a flow agent's brief: brief.md filled in for this harness and flow tag",
-    async run(paths, [tag, ...focus]) {
+    async run(root, [tag, ...focus]) {
+      const paths = harnessPaths(root);
       const flow = FLOWS[tag];
       if (!flow)
         throw new Error(`usage: brief <tag> [focus…] (tags: ${Object.keys(FLOWS).join(', ')})`);
@@ -29,8 +32,8 @@ const COMMANDS = {
           sweep: flow.sweep,
           focus: focus.length ? ` Narrowed to: ${focus.join(' ')}.` : '',
           course: flow.course
-            ? `\`${flow.course}\`. Stay in it, and give any course you create the prefix \`${flow.course}-\`.`
-            : 'none of your own. Settings are global, so put back everything you change.',
+            ? `\`${flow.course}\`, seeded for your flow (the harness README's table says what it holds).`
+            : 'none of your own.',
           port: String(port),
           harness: paths.root,
           since: new Date().toISOString().slice(0, 19) + 'Z',
@@ -40,10 +43,11 @@ const COMMANDS = {
     },
   },
   findings: {
-    usage: 'findings <area> <YYYY-MM-DD> [--out FILE]',
+    root: '--wave',
+    usage: '--wave DIR findings <area> <YYYY-MM-DD> [--out FILE]',
     summary:
-      'join fragments/*.md into findings-<area>-<date>.md at the repo root: summary table, duplicate locations',
-    async run(paths, args) {
+      "join every <wave>/<tag>/fragments/*.md into findings-<area>-<date>.md at the repo root: summary table, duplicate locations, each flow's state diff",
+    async run(wave, args) {
       const at = args.indexOf('--out');
       const out = at === -1 ? null : args.splice(at, 2)[1];
       const [area, date] = args;
@@ -54,7 +58,7 @@ const COMMANDS = {
       }
       const file = out ? path.resolve(out) : path.join(REPO_ROOT, `findings-${area}-${date}.md`);
       if (fs.existsSync(file)) throw new Error(`${file} exists; delete it to merge again`);
-      fs.writeFileSync(file, mergeFindings(paths, area, date));
+      fs.writeFileSync(file, mergeFindings(wave, area, date));
       console.log(`wrote ${file}`);
     },
   },
@@ -62,16 +66,23 @@ const COMMANDS = {
 
 async function main() {
   const args = process.argv.slice(2);
-  const at = args.indexOf('--harness');
-  const root = at === -1 ? process.env.HARNESS_DIR : args.splice(at, 2)[1];
+  const take = (flag) => {
+    const at = args.indexOf(flag);
+    return at === -1 ? undefined : args.splice(at, 2)[1];
+  };
+  const roots = {
+    '--harness': take('--harness') ?? process.env.HARNESS_DIR,
+    '--wave': take('--wave'),
+  };
   const [name, ...rest] = args;
   if (!COMMANDS[name]) {
     for (const { usage, summary } of Object.values(COMMANDS)) console.log(`  ${usage}  ${summary}`);
     if (name && name !== 'help') throw new Error(`unknown command "${name}"`);
     return;
   }
-  if (!root) throw new Error('which harness? pass --harness DIR or set HARNESS_DIR');
-  await COMMANDS[name].run(harnessPaths(path.resolve(root)), rest);
+  const { root } = COMMANDS[name];
+  if (!roots[root]) throw new Error(`${name} needs ${root} DIR`);
+  await COMMANDS[name].run(path.resolve(roots[root]), rest);
 }
 
 main().catch((error) => {
