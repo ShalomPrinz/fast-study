@@ -9,6 +9,9 @@ import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import { toastFailure } from '@/shared/utils/failure'
+import { toast } from '@/services/toaster'
+import { serviceErrorNode } from '@/shared/components/ServiceError'
+import { loginFailure } from '@/features/downloads/utils/downloadErrors'
 import '@/styles/chip.css'
 import '@/styles/button.css'
 
@@ -45,8 +48,11 @@ export default function AccountStatus() {
       await completeAuth()
       await refresh()
     } catch (err) {
-      // The service says why (timed out, window closed, nothing pending), so its code is the toast.
-      toastFailure(err)
+      // The service says why (timed out, window closed, nothing pending, a site it refuses).
+      const failure = loginFailure(err)
+      if (typeof failure === 'string') toast('error', failure)
+      else if (failure) toast('error', serviceErrorNode(failure))
+      else toastFailure(err)
     }
     setPhase('idle')
   }
@@ -81,6 +87,15 @@ export default function AccountStatus() {
           {phase === 'completing' ? t`finishing…` : t`Done`}
         </button>
       </>
+    )
+  }
+
+  // Nothing to connect to: the chip says what is missing, and Settings is where it is chosen.
+  if (status?.unconfigured) {
+    return (
+      <span className="chip chip--neutral">
+        <Trans>no university chosen</Trans>
+      </span>
     )
   }
 

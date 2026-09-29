@@ -142,6 +142,24 @@ describe('probeMoodleSite', () => {
     expect(probe.failure?.params).toEqual({ site: 'https://example.com', reason: 'not_moodle' })
   })
 
+  it('keeps an unverified answer uncoded, with the site it names', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        ok({
+          status: 'unverified',
+          site: 'https://x.ac.il',
+          params: { site: 'https://x.ac.il', detail: 'site_blocked' },
+        }),
+      ),
+    )
+    expect(await probeMoodleSite('https://x.ac.il/course/view.php?id=1')).toEqual({
+      status: 'unverified',
+      site: 'https://x.ac.il',
+      failure: null,
+    })
+  })
+
   it('reads a failed request as unverified, never unsupported', async () => {
     vi.stubGlobal(
       'fetch',

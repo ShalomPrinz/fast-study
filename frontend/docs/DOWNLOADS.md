@@ -39,6 +39,11 @@ the component, not the never-remounting provider. A `BlockedError` (the site's b
 a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
 `blockedMessage()` and leaves the chip alone.
 
+`/auth/status`'s 409 `moodle_site_not_configured` is an answer, not a failure: `fetchAuthStatus` maps it to
+`unconfigured`, and the chip reads "no university chosen" with no Connect. A login the site's post-login
+check refuses answers `/auth/complete` with 422 `moodle_site_unsupported`, which `loginFailure` toasts in
+its `reason`'s sentence.
+
 `Load recordings` disables only on `connected: false`; unknown leaves it enabled, since guessing
 "disconnected" from an unanswered probe would lock a working session out.
 

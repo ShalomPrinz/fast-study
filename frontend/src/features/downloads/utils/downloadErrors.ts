@@ -53,3 +53,11 @@ export function toastJobError(name: string, failure: ServiceFailure | null): voi
   }
   toast('error', serviceErrorNode(failure, name))
 }
+
+// A failed login's failure in the words the user reads: a refused site (`moodle_site_unsupported`)
+// in the service's reason, a bot challenge as the wait; null leaves it to the generic funnel.
+export function loginFailure(err: unknown): ServiceFailure | string | null {
+  if (isUnsupportedError(err)) return err
+  if (isBlockedError(err)) return blockedMessage()
+  return null
+}
