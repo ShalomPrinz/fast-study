@@ -33,7 +33,9 @@ import {
   useSectionOpen,
 } from '@/features/downloads/contexts/SectionCollapseContext'
 import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
+import { toast } from '@/services/toaster'
 import {
+  collidingNames,
   notStartedCount,
   runningCount,
   summarize,
@@ -152,6 +154,16 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
     if (!id) return
     const targets = buildTargets()
     if (!targets.length) return
+    // Refused rather than deduped: which row should own the name is the user's call.
+    const clashes = collidingNames(targets)
+    if (clashes.length) {
+      const names = clashes.join(', ')
+      toast(
+        'error',
+        t`Several rows would download into the same lecture (${names}). Rename them, then run again.`,
+      )
+      return
+    }
     try {
       const renames = await startSectionRun({ sectionId: id, course, targets })
       applyRenames(renames, targets, setName)

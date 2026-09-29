@@ -73,22 +73,22 @@ msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
 #. placeholder {0}: count('skipped')
-#: src/features/downloads/utils/runStatus.ts:81
+#: src/features/downloads/utils/runStatus.ts:104
 msgid "{0, plural, other {# already there}}"
 msgstr "{0, plural, other {# already there}}"
 
 #. placeholder {0}: count('downloaded')
-#: src/features/downloads/utils/runStatus.ts:78
+#: src/features/downloads/utils/runStatus.ts:101
 msgid "{0, plural, other {# downloaded}}"
 msgstr "{0, plural, other {# downloaded}}"
 
 #. placeholder {0}: count('failed')
-#: src/features/downloads/utils/runStatus.ts:79
+#: src/features/downloads/utils/runStatus.ts:102
 msgid "{0, plural, other {# failed}}"
 msgstr "{0, plural, other {# failed}}"
 
 #. placeholder {0}: count('unsupported')
-#: src/features/downloads/utils/runStatus.ts:80
+#: src/features/downloads/utils/runStatus.ts:103
 msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, other {# unsupported}}"
 
@@ -214,7 +214,7 @@ msgstr "{file} was not found."
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
-#: src/features/downloads/components/SectionGroup.tsx:242
+#: src/features/downloads/components/SectionGroup.tsx:254
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
@@ -246,7 +246,7 @@ msgstr "{name} was used"
 msgid "{name} will be used"
 msgstr "{name} will be used"
 
-#: src/features/downloads/components/SectionGroup.tsx:277
+#: src/features/downloads/components/SectionGroup.tsx:289
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 
@@ -302,7 +302,7 @@ msgstr "{stage} · step {stepNumber} of {stageCount}"
 #~ msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 #~ msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:286
+#: src/features/downloads/components/SectionGroup.tsx:298
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 
@@ -394,7 +394,7 @@ msgstr "Add recitation"
 msgid "All caught up — every lecture is finished."
 msgstr "All caught up — every lecture is finished."
 
-#: src/features/lectures/EditSummaryView.tsx:312
+#: src/features/lectures/EditSummaryView.tsx:332
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "All edits will be discarded and the original AI summary restored."
 
@@ -406,7 +406,7 @@ msgstr "All Generated"
 msgid "Already generated."
 msgstr "Already generated."
 
-#: src/features/lectures/EditSummaryView.tsx:243
+#: src/features/lectures/EditSummaryView.tsx:264
 msgid "Already up to date"
 msgstr "Already up to date"
 
@@ -462,7 +462,7 @@ msgstr "Auto-run: off"
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
-#: src/features/lectures/EditSummaryView.tsx:215
+#: src/features/lectures/EditSummaryView.tsx:237
 msgid "Back"
 msgstr "Back"
 
@@ -742,7 +742,7 @@ msgstr "Data folder"
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:234
+#: src/features/lectures/EditSummaryView.tsx:256
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
@@ -777,7 +777,7 @@ msgstr "Download"
 msgid "Download again"
 msgstr "Download again"
 
-#: src/features/downloads/components/SectionGroup.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:280
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
@@ -792,11 +792,11 @@ msgstr "Downloading"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:246
+#: src/features/downloads/components/SectionGroup.tsx:258
 msgid "Downloading {0}/{1}…"
 msgstr "Downloading {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:253
+#: src/features/downloads/components/SectionGroup.tsx:265
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
@@ -809,7 +809,7 @@ msgid "Downloading recordings (optional)"
 msgstr "Downloading recordings (optional)"
 
 #: src/features/downloads/components/RecordingRow.tsx:268
-#: src/features/downloads/components/SectionGroup.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:280
 msgid "Downloading…"
 msgstr "Downloading…"
 
@@ -866,7 +866,7 @@ msgstr "Everything stays on this computer. Fast Study has no servers of its own 
 msgid "Expand"
 msgstr "Expand"
 
-#: src/features/downloads/components/SectionGroup.tsx:266
+#: src/features/downloads/components/SectionGroup.tsx:278
 msgid "Expand every playlist in this section first"
 msgstr "Expand every playlist in this section first"
 
@@ -908,16 +908,16 @@ msgstr "Failed ✗"
 #~ msgid "Failed to delete file"
 #~ msgstr "Failed to delete file"
 
-#: src/features/lectures/EditSummaryView.tsx:173
-#: src/features/lectures/EditSummaryView.tsx:185
+#: src/features/lectures/EditSummaryView.tsx:195
+#: src/features/lectures/EditSummaryView.tsx:207
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
-#: src/features/lectures/EditSummaryView.tsx:153
+#: src/features/lectures/EditSummaryView.tsx:175
 msgid "Failed to restore the original summary"
 msgstr "Failed to restore the original summary"
 
-#: src/features/lectures/EditSummaryView.tsx:139
+#: src/features/lectures/EditSummaryView.tsx:158
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
@@ -1059,7 +1059,7 @@ msgstr "Just one thing is needed to get started: a folder to keep everything in.
 msgid "just this lecture"
 msgstr "just this lecture"
 
-#: src/features/lectures/EditSummaryView.tsx:269
+#: src/features/lectures/EditSummaryView.tsx:289
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
@@ -1121,7 +1121,7 @@ msgstr "Lectures {0}-{1}"
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
-#: src/features/lectures/EditSummaryView.tsx:266
+#: src/features/lectures/EditSummaryView.tsx:286
 msgid "Load new version"
 msgstr "Load new version"
 
@@ -1222,7 +1222,7 @@ msgstr "no material found"
 msgid "No materials found."
 msgstr "No materials found."
 
-#: src/features/lectures/EditSummaryView.tsx:234
+#: src/features/lectures/EditSummaryView.tsx:256
 msgid "No original saved"
 msgstr "No original saved"
 
@@ -1366,7 +1366,7 @@ msgstr "Open the sign-in page"
 msgid "Other"
 msgstr "Other"
 
-#: src/features/downloads/components/SectionGroup.tsx:80
+#: src/features/downloads/components/SectionGroup.tsx:82
 msgid "Other links"
 msgstr "Other links"
 
@@ -1409,11 +1409,11 @@ msgstr "PDF"
 #~ msgid "PDF export failed"
 #~ msgstr "PDF export failed"
 
-#: src/features/lectures/EditSummaryView.tsx:225
+#: src/features/lectures/EditSummaryView.tsx:247
 msgid "PDF is older than this summary"
 msgstr "PDF is older than this summary"
 
-#: src/features/lectures/EditSummaryView.tsx:226
+#: src/features/lectures/EditSummaryView.tsx:248
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
@@ -1545,7 +1545,7 @@ msgstr "Replace the existing video in \"{0}\"?"
 msgid "Required"
 msgstr "Required"
 
-#: src/features/lectures/EditSummaryView.tsx:236
+#: src/features/lectures/EditSummaryView.tsx:258
 msgid "Restore original"
 msgstr "Restore original"
 
@@ -1621,7 +1621,7 @@ msgstr "Running pipelines"
 msgid "Save"
 msgstr "Save"
 
-#: src/features/lectures/EditSummaryView.tsx:246
+#: src/features/lectures/EditSummaryView.tsx:266
 msgid "Save & update PDF"
 msgstr "Save & update PDF"
 
@@ -1680,6 +1680,10 @@ msgstr "Settings"
 msgid "Settings saved"
 msgstr "Settings saved"
 
+#: src/features/downloads/components/SectionGroup.tsx:163
+msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
+msgstr "Several rows would download into the same lecture ({names}). Rename them, then run again."
+
 #: src/features/search/SearchView.tsx:278
 msgid "Show more"
 msgstr "Show more"
@@ -1718,7 +1722,7 @@ msgstr "Start using Fast Study"
 msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:180
+#: src/features/lectures/EditSummaryView.tsx:202
 #: src/features/lectures/MainView.tsx:155
 msgid "Step already running"
 msgstr "Step already running"
@@ -1829,7 +1833,7 @@ msgstr "That step is turned off in settings."
 #~ msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 #~ msgstr "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 
-#: src/features/downloads/components/SectionGroup.tsx:219
+#: src/features/downloads/components/SectionGroup.tsx:231
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "the BIU session expired. Reconnect, then run the section again."
 
@@ -1922,7 +1926,7 @@ msgstr "The PDF could not be created."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
 
-#: src/features/downloads/components/SectionGroup.tsx:222
+#: src/features/downloads/components/SectionGroup.tsx:234
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
@@ -1930,7 +1934,7 @@ msgstr "the run stopped early. Run the section again to pick them up."
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:221
+#: src/features/downloads/components/SectionGroup.tsx:233
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
@@ -1946,7 +1950,7 @@ msgstr "the runner takes these in order"
 #~ msgid "The storage service is not answering. Make sure it's running."
 #~ msgstr "The storage service is not answering. Make sure it's running."
 
-#: src/features/lectures/EditSummaryView.tsx:243
+#: src/features/lectures/EditSummaryView.tsx:264
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
@@ -1976,7 +1980,7 @@ msgstr "These won't start until you run them, or until the daily run does."
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 
-#: src/features/lectures/EditSummaryView.tsx:313
+#: src/features/lectures/EditSummaryView.tsx:333
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
@@ -2030,7 +2034,7 @@ msgstr "This source can't be downloaded automatically."
 msgid "This step needs {file}, which is not there yet. Run the step before it first."
 msgstr "This step needs {file}, which is not there yet. Run the step before it first."
 
-#: src/features/lectures/EditSummaryView.tsx:254
+#: src/features/lectures/EditSummaryView.tsx:274
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 
@@ -2066,7 +2070,7 @@ msgstr "Unarchive course"
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/features/lectures/EditSummaryView.tsx:296
+#: src/features/lectures/EditSummaryView.tsx:316
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -2074,7 +2078,7 @@ msgstr "Unsaved changes"
 msgid "Unsupported"
 msgstr "Unsupported"
 
-#: src/features/lectures/EditSummaryView.tsx:246
+#: src/features/lectures/EditSummaryView.tsx:266
 msgid "Updating PDF…"
 msgstr "Updating PDF…"
 

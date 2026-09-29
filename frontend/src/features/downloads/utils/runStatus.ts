@@ -21,6 +21,20 @@ function jobsForTarget(
   return jobsForRef(jobsByRef, course, target.ref).filter((j) => names.has(j.title))
 }
 
+// Names two or more about-to-download video targets share. They would race into one lecture, the
+// later PUT replacing the earlier, so a run holding any is refused. A material appends, so it never collides.
+export function collidingNames(targets: readonly RunTarget[]): string[] {
+  const seen = new Set<string>()
+  const clashes = new Set<string>()
+  for (const t of targets) {
+    if (t.disposition !== 'pending' || t.media === 'material') continue
+    const key = `${t.kind}\0${t.name}`
+    if (seen.has(key)) clashes.add(t.name)
+    else seen.add(key)
+  }
+  return [...clashes]
+}
+
 // One target's outcome, derived on every render: running job, then tree, then `error` job, else
 // still going. The order's reasoning is in docs/BULK.md §Deriving the outcome.
 export function targetStatus(

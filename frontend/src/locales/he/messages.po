@@ -73,22 +73,22 @@ msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {תוצאה אחת} two {# תוצאות} other {# תוצאות}}"
 
 #. placeholder {0}: count('skipped')
-#: src/features/downloads/utils/runStatus.ts:81
+#: src/features/downloads/utils/runStatus.ts:104
 msgid "{0, plural, other {# already there}}"
 msgstr "{0, plural, one {כבר קיימות: #} two {כבר קיימות: #} other {כבר קיימות: #}}"
 
 #. placeholder {0}: count('downloaded')
-#: src/features/downloads/utils/runStatus.ts:78
+#: src/features/downloads/utils/runStatus.ts:101
 msgid "{0, plural, other {# downloaded}}"
 msgstr "{0, plural, one {הורדו: #} two {הורדו: #} other {הורדו: #}}"
 
 #. placeholder {0}: count('failed')
-#: src/features/downloads/utils/runStatus.ts:79
+#: src/features/downloads/utils/runStatus.ts:102
 msgid "{0, plural, other {# failed}}"
 msgstr "{0, plural, one {נכשלו: #} two {נכשלו: #} other {נכשלו: #}}"
 
 #. placeholder {0}: count('unsupported')
-#: src/features/downloads/utils/runStatus.ts:80
+#: src/features/downloads/utils/runStatus.ts:103
 msgid "{0, plural, other {# unsupported}}"
 msgstr "{0, plural, one {לא נתמכות: #} two {לא נתמכות: #} other {לא נתמכות: #}}"
 
@@ -214,7 +214,7 @@ msgstr "{file} לא נמצא."
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
-#: src/features/downloads/components/SectionGroup.tsx:242
+#: src/features/downloads/components/SectionGroup.tsx:254
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
@@ -246,7 +246,7 @@ msgstr "{name} שימש"
 msgid "{name} will be used"
 msgstr "{name} ישמש"
 
-#: src/features/downloads/components/SectionGroup.tsx:277
+#: src/features/downloads/components/SectionGroup.tsx:289
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {ההורדה של הקלטה אחת לא התחילה — {stoppedBecause}} two {ההורדה של # הקלטות לא התחילה — {stoppedBecause}} other {ההורדה של # הקלטות לא התחילה — {stoppedBecause}}}"
 
@@ -302,7 +302,7 @@ msgstr "{stage} · שלב {stepNumber} מתוך {stageCount}"
 #~ msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 #~ msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או שונתה מאז, או שהקובץ נשמר בשם אחר.}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:286
+#: src/features/downloads/components/SectionGroup.tsx:298
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} two {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.} other {לא ניתן לאמת # הורדות — ייתכן שההרצאה נמחקה או ששמה שונה, או שהקובץ נשמר בשם אחר.}}"
 
@@ -394,7 +394,7 @@ msgstr "הוספת תרגול"
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
-#: src/features/lectures/EditSummaryView.tsx:312
+#: src/features/lectures/EditSummaryView.tsx:332
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-AI ישוחזר."
 
@@ -406,7 +406,7 @@ msgstr "הכול נוצר"
 msgid "Already generated."
 msgstr "כבר נוצר."
 
-#: src/features/lectures/EditSummaryView.tsx:243
+#: src/features/lectures/EditSummaryView.tsx:264
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
@@ -462,7 +462,7 @@ msgstr "הרצה אוטומטית: כבויה"
 msgid "Auto-run: the whole pipeline"
 msgstr "הרצה אוטומטית: כל השלבים"
 
-#: src/features/lectures/EditSummaryView.tsx:215
+#: src/features/lectures/EditSummaryView.tsx:237
 msgid "Back"
 msgstr "חזרה"
 
@@ -742,7 +742,7 @@ msgstr "תיקיית נתונים"
 msgid "Delete {0}"
 msgstr "מחיקת {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:234
+#: src/features/lectures/EditSummaryView.tsx:256
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
@@ -777,7 +777,7 @@ msgstr "הורדה"
 msgid "Download again"
 msgstr "הורדה מחדש"
 
-#: src/features/downloads/components/SectionGroup.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:280
 msgid "Download all {leaves}"
 msgstr "הורדת הכול ({leaves})"
 
@@ -792,11 +792,11 @@ msgstr "מוריד"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:246
+#: src/features/downloads/components/SectionGroup.tsx:258
 msgid "Downloading {0}/{1}…"
 msgstr "מוריד {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:253
+#: src/features/downloads/components/SectionGroup.tsx:265
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
@@ -809,7 +809,7 @@ msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (לא חובה)"
 
 #: src/features/downloads/components/RecordingRow.tsx:268
-#: src/features/downloads/components/SectionGroup.tsx:268
+#: src/features/downloads/components/SectionGroup.tsx:280
 msgid "Downloading…"
 msgstr "מוריד…"
 
@@ -866,7 +866,7 @@ msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים מ�
 msgid "Expand"
 msgstr "טעינת פלייליסט"
 
-#: src/features/downloads/components/SectionGroup.tsx:266
+#: src/features/downloads/components/SectionGroup.tsx:278
 msgid "Expand every playlist in this section first"
 msgstr "טען קודם כל פלייליסט ביחידה הזו"
 
@@ -908,16 +908,16 @@ msgstr "נכשל ✗"
 #~ msgid "Failed to delete file"
 #~ msgstr "מחיקת הקובץ נכשלה"
 
-#: src/features/lectures/EditSummaryView.tsx:173
-#: src/features/lectures/EditSummaryView.tsx:185
+#: src/features/lectures/EditSummaryView.tsx:195
+#: src/features/lectures/EditSummaryView.tsx:207
 msgid "Failed to generate PDF"
 msgstr "יצירת ה-PDF נכשלה"
 
-#: src/features/lectures/EditSummaryView.tsx:153
+#: src/features/lectures/EditSummaryView.tsx:175
 msgid "Failed to restore the original summary"
 msgstr "שחזור הסיכום המקורי נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:139
+#: src/features/lectures/EditSummaryView.tsx:158
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
@@ -1059,7 +1059,7 @@ msgstr "רק דבר אחד נדרש כדי להתחיל: תיקייה שבה י�
 msgid "just this lecture"
 msgstr "רק להרצאה הזו"
 
-#: src/features/lectures/EditSummaryView.tsx:269
+#: src/features/lectures/EditSummaryView.tsx:289
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
@@ -1121,7 +1121,7 @@ msgstr "הרצאות {0}-{1}"
 msgid "Let's set things up"
 msgstr "בוא נגדיר את הכול"
 
-#: src/features/lectures/EditSummaryView.tsx:266
+#: src/features/lectures/EditSummaryView.tsx:286
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
 
@@ -1222,7 +1222,7 @@ msgstr "לא נמצא חומר"
 msgid "No materials found."
 msgstr "לא נמצאו חומרים."
 
-#: src/features/lectures/EditSummaryView.tsx:234
+#: src/features/lectures/EditSummaryView.tsx:256
 msgid "No original saved"
 msgstr "אין גרסה מקורית שמורה"
 
@@ -1366,7 +1366,7 @@ msgstr "פתיחת דף ההתחברות"
 msgid "Other"
 msgstr "אחר"
 
-#: src/features/downloads/components/SectionGroup.tsx:80
+#: src/features/downloads/components/SectionGroup.tsx:82
 msgid "Other links"
 msgstr "קישורים אחרים"
 
@@ -1409,11 +1409,11 @@ msgstr "PDF"
 #~ msgid "PDF export failed"
 #~ msgstr "ייצוא ה-PDF נכשל"
 
-#: src/features/lectures/EditSummaryView.tsx:225
+#: src/features/lectures/EditSummaryView.tsx:247
 msgid "PDF is older than this summary"
 msgstr "ה-PDF ישן יותר מהסיכום הזה"
 
-#: src/features/lectures/EditSummaryView.tsx:226
+#: src/features/lectures/EditSummaryView.tsx:248
 msgid "PDF rendered with warnings"
 msgstr "ה-PDF נוצר עם אזהרות"
 
@@ -1545,7 +1545,7 @@ msgstr "להחליף את הווידאו הקיים ב\"{0}\"?"
 msgid "Required"
 msgstr "חובה"
 
-#: src/features/lectures/EditSummaryView.tsx:236
+#: src/features/lectures/EditSummaryView.tsx:258
 msgid "Restore original"
 msgstr "שחזור המקור"
 
@@ -1621,7 +1621,7 @@ msgstr "הרצאות בעיבוד"
 msgid "Save"
 msgstr "שמירה"
 
-#: src/features/lectures/EditSummaryView.tsx:246
+#: src/features/lectures/EditSummaryView.tsx:266
 msgid "Save & update PDF"
 msgstr "שמירה ועדכון PDF"
 
@@ -1680,6 +1680,10 @@ msgstr "הגדרות"
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
+#: src/features/downloads/components/SectionGroup.tsx:163
+msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
+msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה את השמות והרץ שוב."
+
 #: src/features/search/SearchView.tsx:278
 msgid "Show more"
 msgstr "הצג עוד"
@@ -1718,7 +1722,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:180
+#: src/features/lectures/EditSummaryView.tsx:202
 #: src/features/lectures/MainView.tsx:155
 msgid "Step already running"
 msgstr "השלב כבר רץ"
@@ -1829,7 +1833,7 @@ msgstr "השלב הזה כבוי בהגדרות."
 #~ msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 #~ msgstr "הכפתור \"הרץ צינורות לא שלמים\" ורשימת ההרצאות שבעבודה."
 
-#: src/features/downloads/components/SectionGroup.tsx:219
+#: src/features/downloads/components/SectionGroup.tsx:231
 msgid "the BIU session expired. Reconnect, then run the section again."
 msgstr "תוקף החיבור לבר-אילן פג. התחבר מחדש והרץ את היחידה שוב."
 
@@ -1922,7 +1926,7 @@ msgstr "לא ניתן ליצור את ה-PDF."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "ה-PDF ישן יותר מהסיכום. יש ליצור אותו מחדש."
 
-#: src/features/downloads/components/SectionGroup.tsx:222
+#: src/features/downloads/components/SectionGroup.tsx:234
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -1930,7 +1934,7 @@ msgstr "תהליך ההורדה נעצר מוקדם. הרץ את היחידה ש
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:221
+#: src/features/downloads/components/SectionGroup.tsx:233
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
@@ -1946,7 +1950,7 @@ msgstr "ההרצות מתבצעות לפי הסדר"
 #~ msgid "The storage service is not answering. Make sure it's running."
 #~ msgstr "שירות האחסון לא מגיב. ודא שהוא פועל."
 
-#: src/features/lectures/EditSummaryView.tsx:243
+#: src/features/lectures/EditSummaryView.tsx:264
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
@@ -1976,7 +1980,7 @@ msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה ה
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
-#: src/features/lectures/EditSummaryView.tsx:313
+#: src/features/lectures/EditSummaryView.tsx:333
 msgid "This cannot be undone."
 msgstr "לא ניתן לבטל את הפעולה."
 
@@ -2030,7 +2034,7 @@ msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 msgid "This step needs {file}, which is not there yet. Run the step before it first."
 msgstr "השלב הזה זקוק ל-{file}, שעדיין לא קיים. הרץ קודם את השלב שלפניו."
 
-#: src/features/lectures/EditSummaryView.tsx:254
+#: src/features/lectures/EditSummaryView.tsx:274
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
 
@@ -2066,7 +2070,7 @@ msgstr "הוצאת קורס מהארכיון"
 msgid "Unknown"
 msgstr "לא ידוע"
 
-#: src/features/lectures/EditSummaryView.tsx:296
+#: src/features/lectures/EditSummaryView.tsx:316
 msgid "Unsaved changes"
 msgstr "שינויים שלא נשמרו"
 
@@ -2074,7 +2078,7 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
-#: src/features/lectures/EditSummaryView.tsx:246
+#: src/features/lectures/EditSummaryView.tsx:266
 msgid "Updating PDF…"
 msgstr "מעדכן PDF…"
 

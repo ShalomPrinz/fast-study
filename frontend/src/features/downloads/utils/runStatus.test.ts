@@ -3,6 +3,7 @@ import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
 import type { DownloadJob, RunTarget } from '../services/downloadServer'
 import { groupJobsByRef } from '../contexts/DownloadJobsContext'
 import {
+  collidingNames,
   notStartedCount,
   runningCount,
   summarize,
@@ -156,6 +157,28 @@ describe('runningCount', () => {
       job({ id: 'b', lecture: 'Lecture 1.2' }),
     ])
     expect(runningCount([target()], 'Algebra', jobs)).toBe(1)
+  })
+})
+
+describe('collidingNames', () => {
+  it('names a lecture two about-to-download rows share', () => {
+    const targets = [
+      target({ ref: 'r1', name: 'Lecture 50', disposition: 'pending' }),
+      target({ ref: 'r2', name: 'Lecture 50', disposition: 'pending', media: 'unknown' }),
+      target({ ref: 'r3', name: 'Lecture 3', disposition: 'pending' }),
+    ]
+    expect(collidingNames(targets)).toEqual(['Lecture 50'])
+  })
+
+  it('lets the same name through across kinds, for materials, and for rows the run skips', () => {
+    const targets = [
+      target({ ref: 'r1', disposition: 'pending' }),
+      target({ ref: 'r2', disposition: 'pending', kind: 'recitation' }),
+      target({ ref: 'r3', disposition: 'pending', media: 'material' }),
+      target({ ref: 'r4', disposition: 'skipped' }),
+      target({ ref: 'r5', disposition: 'unsupported', media: 'unsupported' }),
+    ]
+    expect(collidingNames(targets)).toEqual([])
   })
 })
 
