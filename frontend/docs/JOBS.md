@@ -33,8 +33,9 @@ The server guarantees **one job per target**: `createJob` evicts any prior termi
 `(course, lecture, kind, ref)`, so the client trusts the snapshot with no dedupe. A `done` job is evicted
 after a short bridge until the tree SSE arrives; an `error` is evicted only by a retry.
 
-Each snapshot is grouped once into `Map<ref, JobProgress[]>`, read through `useSyncExternalStore`.
-`useRowJobs(ref)` subscribes a row to its own ref, so rows with no jobs read the shared frozen
+Each snapshot is grouped once into a map keyed by course **and** `ref`, read through `useSyncExternalStore`
+— a ref names a Moodle item, so two courses listing the same page share refs and must not see or retry
+each other's jobs. `useRowJobs(course, ref)` subscribes a row to its own bucket, so rows with no jobs read the shared frozen
 `EMPTY_JOBS` and bail out of every ping; `useJobsByRef()` hands `SectionGroup` the whole map for the bulk
 summary. The context exists only to fail loudly outside the provider.
 

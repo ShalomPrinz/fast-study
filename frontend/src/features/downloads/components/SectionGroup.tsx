@@ -203,7 +203,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
 
   // Downloads outlast the queue, so the header keeps counting rows with a running job — a signal that
   // cannot outlive the work, so the section always frees itself.
-  const active = runningCount(targets, jobsByRef)
+  const active = runningCount(targets, course, jobsByRef)
   // The queue is the server's, so `busy` is its status — still OR'd with the live jobs, which
   // outlive the queue itself.
   const queueing = run?.status === 'running' || run?.status === 'paused'

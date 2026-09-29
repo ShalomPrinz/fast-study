@@ -126,6 +126,11 @@ describe('targetStatus', () => {
     expect(status(target({ disposition: 'pending' }), tree([]), jobs)).toBe('pending')
   })
 
+  it("ignores another course's jobs under the same ref", () => {
+    const jobs = groupJobsByRef([job({ id: 'a', course: 'Logic', status: 'error' })])
+    expect(status(target(), tree([]), jobs)).toBe('in-flight')
+  })
+
   it('never claims an unprobed unknown row landed', () => {
     expect(status(target({ media: 'unknown' }), tree([node('Lecture 1', true)]))).toBe('in-flight')
   })
@@ -138,11 +143,11 @@ describe('runningCount', () => {
       job({ id: 'a', status: 'running' }),
       job({ id: 'b', ref: 'r2', lecture: 'Lecture 2', status: 'done' }),
     ])
-    expect(runningCount(targets, jobs)).toBe(1)
+    expect(runningCount(targets, 'Algebra', jobs)).toBe(1)
   })
 
   it('counts a row with no evidence nowhere — that is the fallback that used to wedge', () => {
-    expect(runningCount([target()], NO_JOBS)).toBe(0)
+    expect(runningCount([target()], 'Algebra', NO_JOBS)).toBe(0)
   })
 
   it('counts a split row once, however many of its clips are running', () => {
@@ -150,7 +155,14 @@ describe('runningCount', () => {
       job({ id: 'a', lecture: 'Lecture 1.1' }),
       job({ id: 'b', lecture: 'Lecture 1.2' }),
     ])
-    expect(runningCount([target()], jobs)).toBe(1)
+    expect(runningCount([target()], 'Algebra', jobs)).toBe(1)
+  })
+})
+
+describe('runningCount scope', () => {
+  it("counts no row running on another course's job", () => {
+    const jobs = groupJobsByRef([job({ id: 'a', course: 'Logic' })])
+    expect(runningCount([target()], 'Algebra', jobs)).toBe(0)
   })
 })
 

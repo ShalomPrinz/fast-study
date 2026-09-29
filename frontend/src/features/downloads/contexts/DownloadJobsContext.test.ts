@@ -25,9 +25,18 @@ describe('groupJobsByRef', () => {
       job({ id: 'b', ref: 'r2' }),
       job({ id: 'c', ref: 'r1' }),
     ])
-    expect([...byRef.keys()].sort()).toEqual(['r1', 'r2'])
-    expect(byRef.get('r1')?.map((j) => j.id)).toEqual(['a', 'c'])
-    expect(byRef.get('r2')?.map((j) => j.id)).toEqual(['b'])
+    expect(jobsForRef(byRef, 'Algo', 'r1')?.map((j) => j.id)).toEqual(['a', 'c'])
+    expect(jobsForRef(byRef, 'Algo', 'r2')?.map((j) => j.id)).toEqual(['b'])
+  })
+
+  it("keeps one course's jobs out of another course's row with the same ref", () => {
+    const byRef = groupJobsByRef([
+      job({ id: 'a', course: 'Algo', ref: 'r1' }),
+      job({ id: 'b', course: 'Logic', ref: 'r1', status: 'error' }),
+    ])
+    expect(jobsForRef(byRef, 'Algo', 'r1').map((j) => j.id)).toEqual(['a'])
+    expect(jobsForRef(byRef, 'Logic', 'r1').map((j) => j.id)).toEqual(['b'])
+    expect(jobsForRef(byRef, 'Fresh', 'r1')).toHaveLength(0)
   })
 
   it('sorts a bucket by lecture, then by id', () => {
@@ -36,13 +45,13 @@ describe('groupJobsByRef', () => {
       job({ id: 'b', lecture: 'lecture 1.1' }),
       job({ id: 'a', lecture: 'lecture 1.2' }),
     ])
-    expect(byRef.get('r1')?.map((j) => j.id)).toEqual(['b', 'a', 'z'])
+    expect(jobsForRef(byRef, 'Algo', 'r1')?.map((j) => j.id)).toEqual(['b', 'a', 'z'])
   })
 
   it('excludes jobs with no ref — the extension started them, so no row owns them', () => {
     const byRef = groupJobsByRef([job({ id: 'a', ref: null }), job({ id: 'b', ref: 'r1' })])
-    expect([...byRef.keys()]).toEqual(['r1'])
-    expect(byRef.get('r1')?.map((j) => j.id)).toEqual(['b'])
+    expect(byRef.size).toBe(1)
+    expect(jobsForRef(byRef, 'Algo', 'r1')?.map((j) => j.id)).toEqual(['b'])
   })
 
   it('maps a job to its display atom, collapsing queued into running', () => {
@@ -51,7 +60,7 @@ describe('groupJobsByRef', () => {
       job({ id: 'b', status: 'done', ref: 'r2' }),
       job({ id: 'c', status: 'error', ref: 'r3' }),
     ])
-    expect(byRef.get('r1')?.[0]).toEqual({
+    expect(jobsForRef(byRef, 'Algo', 'r1')?.[0]).toEqual({
       id: 'a',
       title: 'L1',
       ref: 'r1',
@@ -62,8 +71,8 @@ describe('groupJobsByRef', () => {
       expectedBytes: null,
       operation: null,
     })
-    expect(byRef.get('r2')?.[0].status).toBe('done')
-    expect(byRef.get('r3')?.[0].status).toBe('error')
+    expect(jobsForRef(byRef, 'Algo', 'r2')?.[0].status).toBe('done')
+    expect(jobsForRef(byRef, 'Algo', 'r3')?.[0].status).toBe('error')
   })
 })
 
@@ -72,13 +81,14 @@ describe('jobsForRef', () => {
   it('returns one shared empty array for every miss, across rebuilds', () => {
     const first = groupJobsByRef([job({ id: 'a', ref: 'r1' })])
     const second = groupJobsByRef([job({ id: 'b', ref: 'r2' })])
-    expect(jobsForRef(first, 'missing')).toBe(jobsForRef(first, 'other'))
-    expect(jobsForRef(first, 'missing')).toBe(jobsForRef(second, 'r1'))
-    expect(jobsForRef(first, 'missing')).toHaveLength(0)
+    expect(jobsForRef(first, 'Algo', 'missing')).toBe(jobsForRef(first, 'Algo', 'other'))
+    expect(jobsForRef(first, 'Algo', 'missing')).toBe(jobsForRef(second, 'Algo', 'r1'))
+    expect(jobsForRef(first, 'Algo', 'missing')).toHaveLength(0)
   })
 
-  it('returns the ref bucket on a hit', () => {
+  it('returns the same bucket on every hit', () => {
     const byRef = groupJobsByRef([job({ id: 'a', ref: 'r1' })])
-    expect(jobsForRef(byRef, 'r1')).toBe(byRef.get('r1'))
+    expect(jobsForRef(byRef, 'Algo', 'r1')).toBe(jobsForRef(byRef, 'Algo', 'r1'))
+    expect(jobsForRef(byRef, 'Algo', 'r1')).toHaveLength(1)
   })
 })

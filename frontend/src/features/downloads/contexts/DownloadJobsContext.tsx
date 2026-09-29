@@ -40,11 +40,17 @@ export function rowStatus(jobs: readonly JobProgress[]): 'running' | 'done' | 'e
   return 'done'
 }
 
-// Shared identity for "this ref has no jobs". `useSyncExternalStore` compares snapshots by
+// Shared identity for "this row has no jobs". `useSyncExternalStore` compares snapshots by
 // reference, so a fresh `[]` per read would re-render forever.
 const EMPTY_JOBS: readonly JobProgress[] = Object.freeze([])
 
 export type JobsByRef = ReadonlyMap<string, readonly JobProgress[]>
+
+// A row's bucket key. Course-qualified because a ref names a Moodle item, not a course: two courses
+// listing the same page share every ref, and must never see or retry each other's jobs.
+function rowKey(course: string, ref: string): string {
+  return `${course}\0${ref}`
+}
 
 // Groups a `/jobs` snapshot into the per-row buckets the UI reads, once per snapshot rather than
 // once per row. Sorted by lecture so a zoom pair's two bars never reorder.
@@ -66,9 +72,10 @@ export function groupJobsByRef(snapshot: DownloadJob[]): JobsByRef {
       expectedBytes: j.expectedBytes,
       operation: j.operation,
     }
-    const bucket = byRef.get(j.ref)
+    const key = rowKey(j.course, j.ref)
+    const bucket = byRef.get(key)
     if (bucket) bucket.push(progress)
-    else byRef.set(j.ref, [progress])
+    else byRef.set(key, [progress])
   }
   for (const bucket of byRef.values())
     bucket.sort((a, b) => a.title.localeCompare(b.title) || a.id.localeCompare(b.id))
@@ -77,8 +84,8 @@ export function groupJobsByRef(snapshot: DownloadJob[]): JobsByRef {
 
 // The miss case must be the shared `EMPTY_JOBS`, never a fresh array — see the constant.
 // `readonly` is load-bearing: the hit case hands out the store's own bucket, which several rows read.
-export function jobsForRef(byRef: JobsByRef, ref: string): readonly JobProgress[] {
-  return byRef.get(ref) ?? EMPTY_JOBS
+export function jobsForRef(byRef: JobsByRef, course: string, ref: string): readonly JobProgress[] {
+  return byRef.get(rowKey(course, ref)) ?? EMPTY_JOBS
 }
 
 // Module store of the grouped snapshot with per-ref subscriptions; it outlives the provider, which
@@ -104,13 +111,13 @@ function useProviderGuard() {
   if (!mounted) throw new Error('download job hooks must be used inside <DownloadJobsProvider>')
 }
 
-// One row's jobs by `ref`. A row with none reads the shared `EMPTY_JOBS` and never re-renders on a
+// One row's jobs, by course and `ref`. A row with none reads the shared `EMPTY_JOBS` and never re-renders on a
 // ping; a row with jobs gets a fresh bucket every snapshot.
-export function useRowJobs(ref: string): readonly JobProgress[] {
+export function useRowJobs(course: string, ref: string): readonly JobProgress[] {
   useProviderGuard()
   return useSyncExternalStore(
     subscribe,
-    useCallback(() => jobsForRef(jobsByRef, ref), [ref]),
+    useCallback(() => jobsForRef(jobsByRef, course, ref), [course, ref]),
   )
 }
 
