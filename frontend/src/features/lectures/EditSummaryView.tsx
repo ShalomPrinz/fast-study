@@ -61,6 +61,10 @@ export default function EditSummaryView() {
   // The buffer as of the last render, for a disk read that resolves after later keystrokes.
   const bufferRef = useRef({ content, savedContent })
   bufferRef.current = { content, savedContent }
+  // A re-read during our own save would compare the new disk text against the pre-save one and flag our
+  // own write as a conflict, so it waits for the save and runs once after it.
+  const savingRef = useRef(false)
+  const rereadOwedRef = useRef(false)
   const summaryMtime = files?.['summary.md'].mtime ?? null
 
   // Runs on every refresh; the ref limits it to the generate this view started, whose missing PDF
@@ -107,6 +111,10 @@ export default function EditSummaryView() {
 
   // Re-reads summary.md: a clean buffer takes the new text, an edited one raises the conflict banner.
   async function syncFromDisk() {
+    if (savingRef.current) {
+      rereadOwedRef.current = true
+      return
+    }
     let data
     try {
       data = await latest(fetchSummaryContent(course, lecture, kind))
@@ -115,6 +123,11 @@ export default function EditSummaryView() {
       return
     }
     if (!data) return
+    // Started before our save and may have read its text; the owed re-read replaces it.
+    if (savingRef.current) {
+      rereadOwedRef.current = true
+      return
+    }
     const { content: current, savedContent: saved } = bufferRef.current
     const change = diskChange(current, saved, data.content)
     setHasOriginal(data.hasOriginal)
@@ -133,15 +146,24 @@ export default function EditSummaryView() {
 
   // Writes the editor buffer to summary.md; false means it failed and was already reported.
   async function persist(): Promise<boolean> {
+    savingRef.current = true
     try {
       await saveSummaryContent(course, lecture, content, kind)
+      // The owed re-read runs before this state commits, so it must already compare against the saved text.
+      bufferRef.current.savedContent = content
+      setSavedContent(content)
+      setHasOriginal(true)
+      return true
     } catch (e) {
       reportFailure(e, t`Failed to save summary`)
       return false
+    } finally {
+      savingRef.current = false
+      if (rereadOwedRef.current) {
+        rereadOwedRef.current = false
+        void syncFromDisk()
+      }
     }
-    setSavedContent(content)
-    setHasOriginal(true)
-    return true
   }
 
   async function handleRestore() {

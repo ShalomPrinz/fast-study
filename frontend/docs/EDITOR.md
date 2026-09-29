@@ -35,6 +35,8 @@ read from is our own write echoing back; a clean buffer silently takes the new t
 its text and raises a banner — load the new version, or keep the edits and save over it. `Save & update
 PDF` is disabled until one is picked, so a buffer gone stale is never written over another writer's text
 unasked.
+Re-reads pause while our own save is in flight and run once after it: a notify can beat the PUT's
+response, and comparing the new text against the pre-save one would flag our own write as a conflict.
 
 ## `PdfViewer`
 
