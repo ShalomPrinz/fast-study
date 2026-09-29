@@ -11,10 +11,11 @@ import path from 'node:path';
 // never the developer's own. Set before the first import that resolves a state path.
 const STATE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'autodl-codes-'));
 process.env.FASTSTUDY_STATE_DIR = STATE_DIR;
-const TOKEN_FILE = path.join(STATE_DIR, 'auth', 'biu-token.json');
+const TOKEN_FILE = path.join(STATE_DIR, 'auth', 'moodle-token.json');
 process.on('exit', () => fs.rmSync(STATE_DIR, { recursive: true, force: true }));
 import { CodedError, PasscodeError, UnsupportedError, failureOf } from '../src/lib/errors.js';
-import { resolveUniversity } from '../src/core/registry.js';
+import { siteAuthFor } from '../src/core/registry.js';
+import { setCurrentSite } from '../src/moodle/site.js';
 import { courseIdFrom, getCourseContents, pluginfileUrl } from '../src/moodle/wsClient.js';
 import { resolveDirectUrl } from '../src/core/core.js';
 import { probeDriveFile } from '../src/extractors/GoogleDriveExtractor.js';
@@ -28,6 +29,9 @@ import {
   sendUnsupported,
 } from '../src/http/server.js';
 import { encodeRef } from '../src/lib/ref.js';
+
+// Imports are hoisted past any env write, so the configured site is set through its module.
+setCurrentSite('https://lemida.biu.ac.il');
 
 // What was thrown, never what was returned — every site here fails by throwing.
 const thrown = async (fn) =>
@@ -100,9 +104,9 @@ test('the two typed throws carry the code their refusal answers with', () => {
 // ── course URLs and the Moodle WS ───────────────────────────────────────────
 
 test('a course URL from an unhandled site, and one with no id', () => {
-  assert.deepEqual(codeOf(thrownSync(() => resolveUniversity('https://moodle.other.ac.il/x'))), {
+  assert.deepEqual(codeOf(thrownSync(() => siteAuthFor('https://moodle.other.ac.il/x'))), {
     code: 'course_url_unsupported_site',
-    params: { url: 'https://moodle.other.ac.il/x' },
+    params: { url: 'https://moodle.other.ac.il/x', site: 'https://lemida.biu.ac.il' },
   });
   assert.deepEqual(
     codeOf(thrownSync(() => courseIdFrom('https://lemida.biu.ac.il/course/view.php'))),
@@ -128,20 +132,26 @@ test("a WS fault carries Moodle's errorcode, a challenge the shape it served", a
     headers: { get: () => 'application/json' },
     json: async () => ({ exception: 'moodle_exception', errorcode: 'invalidtoken', message: 'x' }),
   }));
-  assert.deepEqual(codeOf(await thrown(() => getCourseContents('tok', '1'))), {
-    code: 'moodle_ws_error',
-    params: { errorcode: 'invalidtoken', detail: 'x' },
-  });
+  assert.deepEqual(
+    codeOf(await thrown(() => getCourseContents('https://lemida.biu.ac.il', 'tok', '1'))),
+    {
+      code: 'moodle_ws_error',
+      params: { errorcode: 'invalidtoken', detail: 'x' },
+    },
+  );
 
   globalThis.fetch = async () => ({
     status: 200,
     headers: { get: () => 'text/html; charset=utf-8' },
     json: async () => null,
   });
-  assert.deepEqual(codeOf(await thrown(() => getCourseContents('tok', '1'))), {
-    code: 'site_blocked',
-    params: { detail: 'HTTP 200, text/html; charset=utf-8' },
-  });
+  assert.deepEqual(
+    codeOf(await thrown(() => getCourseContents('https://lemida.biu.ac.il', 'tok', '1'))),
+    {
+      code: 'site_blocked',
+      params: { detail: 'HTTP 200, text/html; charset=utf-8' },
+    },
+  );
 });
 
 test('a pluginfile that serves JSON instead of the file', async (t) => {
@@ -322,7 +332,10 @@ test('401 steers to Reconnect and says so in a code', async () => {
 
 test('503 carries what the site served instead of an answer', async (t) => {
   fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
-  fs.writeFileSync(TOKEN_FILE, JSON.stringify({ wstoken: 'tok', privatetoken: 'p' }));
+  fs.writeFileSync(
+    TOKEN_FILE,
+    JSON.stringify({ site: 'https://lemida.biu.ac.il', wstoken: 'tok', privatetoken: 'p' }),
+  );
   t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
   stubFetch(t, async () => ({
     status: 200,

@@ -10,6 +10,8 @@ import { checkTools } from '@faststudy/tools';
 import { closeAllSessions } from './src/browser/browserSession.js';
 import {
   sendUnsupported,
+  handleConfig,
+  handleSiteProbe,
   handleAuthStatus,
   handleAuthConnect,
   handleAuthComplete,
@@ -47,6 +49,8 @@ let toolStatus = {};
 app.get('/health', (req, res) => res.json({ status: 'ok', tools: toolStatus }));
 
 app.get('/prereqs/browser', handleBrowserPrereq);
+app.post('/config', handleConfig);
+app.post('/site/probe', handleSiteProbe);
 app.get('/auth/status', handleAuthStatus);
 app.post('/auth/connect', handleAuthConnect);
 app.post('/auth/complete', handleAuthComplete);

@@ -1,12 +1,63 @@
 # MOODLE.md — the Moodle Web-Services API and how this package speaks it
 
-BIU runs Moodle. The service authenticates **once** to Moodle's mobile web service, receives a
+The user's university runs Moodle — one site at a time, configured as `moodle_site` (below). The
+service authenticates **once** to Moodle's mobile web service, receives a
 long-lived **web-service token**, and thereafter drives the REST API over plain stateless HTTP — no
 browser, no cookies, no re-MFA. It is the Google-Drive-refresh-token model, native to Moodle: MFA
 drops from "every few hours" to about once per token lifetime (Moodle default: 12 weeks).
 
 `src/moodle/wsClient.js` is the stateless REST client; `src/auth/moodleToken.js` is the one-time
 headed grab + persistence ([AUTH.md](AUTH.md)).
+
+## The configured site
+
+`src/moodle/site.js` holds the site: an origin plus an optional path prefix (Moodle can live under
+`/moodle`), no trailing slash — `{site}` below. It is seeded from `MOODLE_SITE` at boot and replaced
+by `POST /config {moodle_site}`; unset, every `/auth/*`, `/list` and `/resolve` answers
+`409 moodle_site_not_configured`. A course or file URL outside it (`underSite`: same origin, path at
+or below the prefix) is `course_url_unsupported_site {url, site}`, which also keeps the token from
+ever reaching another host. The frontend stores the `wwwroot` the probe below returned, never the
+text the user typed.
+
+## Checking a site, before and after login
+
+The mobile flow needs three things a Moodle can switch off, so a site is checked twice.
+
+**Before login — `POST /site/probe {url}`** (`src/moodle/probe.js`), on the settings field's blur.
+From whatever was pasted, `candidateRoots` derives the origin, then each path prefix before
+`/course/`, `/login/`, `/my/`, `/admin/` or `/mod/` (or the pasted path itself when it has none).
+Each root in turn is asked the mobile app's own first question, which needs no account:
+
+```
+POST {root}/lib/ajax/service-nologin.php?info=tool_mobile_get_public_config
+     [{"index":0,"methodname":"tool_mobile_get_public_config","args":{}}]
+  → [{ "error": false, "data": { wwwroot, enablemobilewebservice, maintenanceenabled, … } }]
+```
+
+The function is `loginrequired => false` and `ajax => true` in `admin/tool/mobile/db/services.php`;
+`enablemobilewebservice` and `maintenanceenabled` are `PARAM_INT` (`0`/`1`), `wwwroot` `PARAM_RAW`.
+The first root that answers as Moodle decides: `supported` with `site` = its `wwwroot`, or
+`unsupported` (`moodle_site_unsupported`) with `reason` `mobile_service_off` (the flag is `0`, or the
+call came back as a Moodle exception envelope) or `maintenance` (retry later). `not_moodle` needs
+_every_ root to have answered without Moodle JSON — a `404`/`405`/`410` page, or JSON of another
+shape. A bot wall (a `200` HTML page, a redirect, a `403`), a timeout or a network failure on any
+root makes that unprovable, so the answer is `unverified` with `params.detail` `site_blocked`,
+`timeout` or `network`: a challenge must never read as "not Moodle". A non-Moodle server that answers
+every path with a `200` HTML page therefore also reads `unverified`, and the post-login check is its
+backstop.
+
+**After login — `MoodleToken.complete()`**, before anything is persisted, reads
+`core_webservice_get_site_info` with the new token. `functions[]` lacking `core_course_get_contents`
+refuses the login as `moodle_site_unsupported` `reason:'missing_function'` (`params.function`), and
+`downloadfiles` other than `1` (it is `VALUE_OPTIONAL`, so absent counts) as `downloads_disabled` —
+both `422 {status:'unsupported'}` from `/auth/complete`. Lacking only `tool_mobile_get_autologin_key`
+still connects: discovery and PDFs work, and a `videostream` resolve fails later with its own error.
+
+**Telemetry.** `siteReport.js` sends one Sentry warning, `moodle_site_unsupported`, tagged
+`moodle_host` / `moodle_stage` (`probe`|`login`) / `moodle_reason` with the site's `release` as
+extra, per `(host, reason)` per process — the probe runs on every blur. It fires on a definitive
+`unsupported` and on `autologin_unavailable`, never on `unverified` and never on `maintenance`, which
+says nothing about support. Without `FASTSTUDY_SENTRY_DSN` (every dev run) it is a no-op.
 
 ## Token acquisition (the one headed step)
 
@@ -19,8 +70,8 @@ GET {site}/admin/tool/mobile/launch.php?service=moodle_mobile_app&passport=<rand
   → 302  Location: moodlemobile://token=<base64>
 ```
 
-- `service=moodle_mobile_app` is Moodle's built-in mobile service, which on BIU enables
-  `core_course_get_contents` with `downloadfiles=1`.
+- `service=moodle_mobile_app` is Moodle's built-in mobile service; whether it carries
+  `core_course_get_contents` and `downloadfiles=1` is per site, hence the post-login check above.
 - `passport` is a client nonce, only used app-side to verify the site id — a throwaway here.
 
 **Capturing the token.** Chromium can't _follow_ `moodlemobile://`, so the token never lands as a page
@@ -30,8 +81,9 @@ navigation to the scheme) and `page.on('framenavigated')`.
 
 **Decoding.** Base64; if the result lacks `:::`, retry after `decodeURIComponent` (something on the
 path can percent-encode `+ / =`). The payload is `md5(wwwroot + passport) ::: wstoken ::: privatetoken`
-(`privatetoken` may be absent). We persist `{ wstoken, privatetoken, savedAt }`; `wstoken`
-authenticates every REST call, `privatetoken` only autologin.
+(`privatetoken` may be absent). We persist `{ site, wstoken, privatetoken, userid, savedAt }`;
+`wstoken` authenticates every REST call, `privatetoken` and `userid` (from the post-login site info)
+only autologin.
 
 ## The REST API
 
@@ -45,7 +97,8 @@ GET with params in the query — except `tool_mobile_get_autologin_key` (below).
 `errorcode`; `invalidToken(err)` keys on `errorcode ∈ { invalidtoken, accessexception }`, the
 "Reconnect" signal. Any other errorcode is a real fault.
 
-**Bot protection.** `lemida.biu.ac.il` sits behind Radware Bot Manager. When it decides a client is
+**Bot protection.** A site may sit behind a bot manager; BIU's `lemida.biu.ac.il` is behind Radware
+Bot Manager, and the rest of this paragraph is its behaviour. When it decides a client is
 automated — a burst of calls is enough — `server.php` stops speaking the WS protocol for minutes: it
 serves a captcha page (**HTTP 200, `text/html`**, ~15 KB, `__uzma`…`__uzmd` cookies) or a **302** to
 one, for any client and any UA. So `callWs` checks status and content-type _before_ parsing and throws
@@ -54,12 +107,13 @@ naming the symptom and hiding the cause. `/list` and `/resolve` map it to `503 {
 code `site_blocked` with the shape it served as `detail` —
 no retry and no throttling: the wait is minutes long, and retrying is what deepens the block. It never
 marks the token expired, so the UI must not steer to Reconnect on it. This is also why no change is
-ever verified by a live request to the site.
+ever verified by a live request to any university's site.
 
 ### `core_webservice_get_site_info`
 
-Identity + capability probe: `userid` (needed for autologin), `functions[]`, `downloadfiles`
-(`1` = pluginfile downloads permitted; could be disabled per site), `release` (`4.5.10` on BIU).
+Identity + capability probe, read once, by the post-login check: `userid` (stored for autologin),
+`functions[]` (`{ name, version }`), `downloadfiles` (`1` = pluginfile downloads permitted),
+`release` (`4.5.10` on BIU).
 
 ### `core_course_get_contents(courseid)`
 

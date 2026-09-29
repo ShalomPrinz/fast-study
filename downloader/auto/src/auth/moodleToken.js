@@ -2,14 +2,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { AuthProvider } from './AuthProvider.js';
 import { launchBrowser } from '../browser/browserLaunch.js';
-import { DEFAULT_SITE } from '../moodle/wsClient.js';
-import { CodedError } from '../lib/errors.js';
+import { getSiteInfo } from '../moodle/wsClient.js';
+import { CodedError, UnsupportedError } from '../lib/errors.js';
+import { reportUnsupportedSite } from '../../siteReport.js';
 
 const SERVICE = 'moodle_mobile_app';
 const URLSCHEME = 'moodlemobile';
 const TOKEN_PREFIX = `${URLSCHEME}://token=`;
 // Bounded wait for the user to finish MFA in the headed window, matching the probe.
 const CAPTURE_TIMEOUT_MS = 180_000;
+// What discovery and PDFs need from the token's service; videostream capture also needs autologin.
+const REQUIRED_FUNCTION = 'core_course_get_contents';
+const AUTOLOGIN_FUNCTION = 'tool_mobile_get_autologin_key';
 
 // The apptoken arrives as raw base64 in a moodlemobile://token=<b64> redirect.
 // Decode it to Moodle's ':::'-joined payload.
@@ -30,15 +34,15 @@ function safeURIDecode(s) {
 }
 
 /**
- * Moodle Web-Services token auth for BIU: one headed launch.php grab (MFA by hand), then a
- * persisted { wstoken, privatetoken } for the stateless WS API. See docs/AUTH.md, docs/MOODLE.md.
+ * Moodle Web-Services token auth for one site: one headed launch.php grab (MFA by hand), then a
+ * persisted { site, wstoken, privatetoken, userid } for the stateless WS API. See docs/AUTH.md.
  */
 export class MoodleToken extends AuthProvider {
   /**
-   * @param {{ tokenPath: string, site?: string, launch?: typeof launchBrowser }} opts  absolute token
+   * @param {{ tokenPath: string, site: string, launch?: typeof launchBrowser }} opts  absolute token
    *   file path (core/registry.js owns where it lives); `launch` is injectable so tests need no browser.
    */
-  constructor({ tokenPath, site = DEFAULT_SITE, launch = launchBrowser }) {
+  constructor({ tokenPath, site, launch = launchBrowser }) {
     super();
     this.tokenPath = tokenPath;
     this.site = site;
@@ -56,11 +60,16 @@ export class MoodleToken extends AuthProvider {
     this._invalidated = true;
   }
 
-  /** @returns {{ wstoken: string, privatetoken: string|null, savedAt: string }|null} */
+  /**
+   * The stored token, or null when there is none or it was minted for another site — a token is
+   * only good on the site that issued it, so a leftover from before a site switch reads as absent.
+   * @returns {{ site: string, wstoken: string, privatetoken: string|null, userid: number, savedAt: string }|null}
+   */
   loadToken() {
     try {
       if (!fs.existsSync(this.tokenPath)) return null;
-      return JSON.parse(fs.readFileSync(this.tokenPath, 'utf8'));
+      const tok = JSON.parse(fs.readFileSync(this.tokenPath, 'utf8'));
+      return tok?.site === this.site ? tok : null;
     } catch {
       return null;
     }
@@ -167,10 +176,10 @@ export class MoodleToken extends AuthProvider {
   }
 
   /**
-   * UI-triggered login, step 2: wait (bounded) for the captured apptoken, decode it, persist
-   * { wstoken, privatetoken }, and close the headed browser. Throws if no login is pending, the
-   * window is closed first, or no token was captured before the timeout.
-   * @returns {Promise<{ wstoken: string, privatetoken: string|null, savedAt: string }>}
+   * UI-triggered login, step 2: wait (bounded) for the captured apptoken, decode it, check the site
+   * serves what we need (site info), persist, and close the headed browser. Throws if no login is
+   * pending, the window is closed first, no token was captured in time, or the site is unsupported.
+   * @returns {Promise<{ site: string, wstoken: string, privatetoken: string|null, userid: number, savedAt: string }>}
    */
   async complete() {
     if (!this._pending) {
@@ -189,9 +198,14 @@ export class MoodleToken extends AuthProvider {
       const apptoken = await Promise.race([tokenPromise, abandoned, timeout]);
 
       const parts = decodeApptoken(apptoken).split(':::');
+      const wstoken = parts[1];
+      const info = await getSiteInfo(this.site, wstoken);
+      this._checkSiteInfo(info);
       const record = {
-        wstoken: parts[1],
+        site: this.site,
+        wstoken,
         privatetoken: parts[2] ?? null,
+        userid: info.userid,
         savedAt: new Date().toISOString(),
       };
       fs.mkdirSync(path.dirname(this.tokenPath), { recursive: true });
@@ -201,6 +215,32 @@ export class MoodleToken extends AuthProvider {
     } finally {
       clearTimeout(timer);
       await browser.close().catch(() => {});
+    }
+  }
+
+  // The post-login check: refuse a site whose token service can't list a course or serve its
+  // files; a missing autologin only costs videostream capture, so it connects and is reported.
+  _checkSiteInfo(info) {
+    const functions = new Set((info?.functions ?? []).map((f) => f.name));
+    const refuse = (reason, extra = {}) => {
+      reportUnsupportedSite({ site: this.site, stage: 'login', reason, release: info?.release });
+      return new UnsupportedError(
+        'moodle_site_unsupported',
+        { site: this.site, reason, ...extra },
+        `${this.site} cannot be used: ${reason}`,
+      );
+    };
+    if (!functions.has(REQUIRED_FUNCTION)) {
+      throw refuse('missing_function', { function: REQUIRED_FUNCTION });
+    }
+    if (Number(info?.downloadfiles) !== 1) throw refuse('downloads_disabled');
+    if (!functions.has(AUTOLOGIN_FUNCTION)) {
+      reportUnsupportedSite({
+        site: this.site,
+        stage: 'login',
+        reason: 'autologin_unavailable',
+        release: info?.release,
+      });
     }
   }
 }

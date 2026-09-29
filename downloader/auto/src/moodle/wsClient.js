@@ -2,9 +2,6 @@
 // no browser, no cookies. Protocol reference: docs/MOODLE.md.
 import { CodedError } from '../lib/errors.js';
 
-// Default Moodle site; kept a parameter (not hardcoded in URL building) so callers can inject.
-export const DEFAULT_SITE = 'https://lemida.biu.ac.il';
-
 /** A Moodle WS exception body ({ exception, errorcode, message }) surfaced as an Error. */
 export class WsError extends CodedError {
   constructor(errorcode, message) {
@@ -16,9 +13,9 @@ export class WsError extends CodedError {
 
 /**
  * The site answered with a bot-protection challenge instead of what was asked for — an HTML
- * page or a redirect where a WS body or a file was due. `lemida.biu.ac.il` sits behind Radware
- * Bot Manager, which serves one (HTTP 200, text/html) to a client it reads as automated, so this
- * is a distinct failure from a WS fault and never a JSON parse bug.
+ * page or a redirect where a WS body or a file was due. A site behind a bot manager (BIU's Radware)
+ * serves one (HTTP 200, text/html) to a client it reads as automated, so this is a distinct failure
+ * from a WS fault and never a JSON parse bug.
  */
 export class WsBlockedError extends CodedError {
   constructor(detail) {
@@ -50,9 +47,20 @@ export function invalidToken(err) {
 // on `MoodleMobile` in the UA.
 const APP_USER_AGENT = 'MoodleMobile 4.4.0 (44000)';
 
-// One WS call. With `post`, the extra params move to a form-encoded body. An `.exception` body
-// (under HTTP 200) throws WsError; a non-JSON answer is the challenge → WsBlockedError.
-async function callWs(token, fn, params = {}, { site = DEFAULT_SITE, post = false } = {}) {
+// A challenge answers 302 or 200 text/html; parsing either as JSON would only report a
+// SyntaxError, hiding the real cause. Check before touching the body.
+async function jsonOrBlocked(res) {
+  if (res.status >= 300 && res.status < 400)
+    throw new WsBlockedError(`HTTP ${res.status} redirect`);
+  const type = res.headers.get('content-type') ?? '';
+  if (!type.includes('json'))
+    throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`);
+  return res.json();
+}
+
+// One WS call against `site`. With `post`, the extra params move to a form-encoded body. An
+// `.exception` body (under HTTP 200) throws WsError; a non-JSON answer is the challenge → WsBlockedError.
+async function callWs(site, token, fn, params = {}, { post = false } = {}) {
   const url = new URL(`${site}/webservice/rest/server.php`);
   url.searchParams.set('wstoken', token);
   url.searchParams.set('moodlewsrestformat', 'json');
@@ -69,34 +77,69 @@ async function callWs(token, fn, params = {}, { site = DEFAULT_SITE, post = fals
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
   }
 
-  const res = await fetch(url, init);
-  // A challenge answers 302 or 200 text/html; parsing either as JSON would only report a
-  // SyntaxError, hiding the real cause. Check before touching the body.
-  if (res.status >= 300 && res.status < 400)
-    throw new WsBlockedError(`HTTP ${res.status} redirect`);
-  const type = res.headers.get('content-type') ?? '';
-  if (!type.includes('json'))
-    throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`);
-  const body = await res.json();
+  const body = await jsonOrBlocked(await fetch(url, init));
   if (body && body.exception) throw new WsError(body.errorcode, body.message);
   return body;
 }
 
+/** The root answered, but not as Moodle: the path does not exist there, or its JSON is not Moodle's. */
+export class NotMoodleError extends Error {
+  constructor(detail) {
+    super(`not a Moodle answer (${detail})`);
+    this.name = 'NotMoodleError';
+  }
+}
+
+// A server with no such script answers these; a bot wall answers 200 or a redirect, or 403 (Cloudflare).
+const NO_SUCH_PATH = new Set([404, 405, 410]);
+
+/**
+ * tool_mobile_get_public_config on a candidate root, through the no-login AJAX endpoint the mobile
+ * app itself asks first → its data ({ wwwroot, enablemobilewebservice, maintenanceenabled, … }).
+ * Throws NotMoodleError, WsError (a Moodle exception envelope) or WsBlockedError.
+ */
+export async function getPublicConfig(root, { timeoutMs = 10_000 } = {}) {
+  const methodname = 'tool_mobile_get_public_config';
+  const res = await fetch(`${root}/lib/ajax/service-nologin.php?info=${methodname}`, {
+    method: 'POST',
+    headers: { 'User-Agent': APP_USER_AGENT, 'Content-Type': 'application/json' },
+    body: JSON.stringify([{ index: 0, methodname, args: {} }]),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  const type = res.headers.get('content-type') ?? '';
+  if (NO_SUCH_PATH.has(res.status) && !type.includes('json')) {
+    throw new NotMoodleError(`HTTP ${res.status}`);
+  }
+  const body = await jsonOrBlocked(res).catch((e) => {
+    if (e instanceof SyntaxError) throw new NotMoodleError('unparseable JSON');
+    throw e;
+  });
+  // Per call: [{ error:false, data }] or [{ error:true, exception }]; a failure before any call
+  // (bad request, site-level refusal) is one bare { error, errorcode } object.
+  const [first] = Array.isArray(body) ? body : [];
+  if (first?.error === false && first.data && typeof first.data === 'object') return first.data;
+  const exception = first?.error === true ? first.exception : body;
+  if (exception && typeof exception === 'object' && typeof exception.errorcode === 'string') {
+    throw new WsError(exception.errorcode, exception.message);
+  }
+  throw new NotMoodleError('JSON, not a Moodle envelope');
+}
+
 /** core_webservice_get_site_info → parsed JSON (identity, functions, downloadfiles, release). */
-export function getSiteInfo(token, { site = DEFAULT_SITE } = {}) {
-  return callWs(token, 'core_webservice_get_site_info', {}, { site });
+export function getSiteInfo(site, token) {
+  return callWs(site, token, 'core_webservice_get_site_info');
 }
 
 /** core_course_get_contents(courseId) → the sections array. Throws WsError on a WS exception. */
-export function getCourseContents(token, courseId, { site = DEFAULT_SITE } = {}) {
-  return callWs(token, 'core_course_get_contents', { courseid: courseId }, { site });
+export function getCourseContents(site, token, courseId) {
+  return callWs(site, token, 'core_course_get_contents', { courseid: courseId });
 }
 
 // Mint a one-shot no-MFA browser login; rate-limited (~1/user/6 min) and IP-bound. POST only:
 // Moodle rejects the privatetoken in a query string (invalidprivatetoken). See docs/MOODLE.md.
 /** @returns {Promise<{ key: string, autologinurl: string, warnings: unknown[] }>} */
-export function getAutologinKey(wstoken, privatetoken, { site = DEFAULT_SITE } = {}) {
-  return callWs(wstoken, 'tool_mobile_get_autologin_key', { privatetoken }, { site, post: true });
+export function getAutologinKey(site, wstoken, privatetoken) {
+  return callWs(site, wstoken, 'tool_mobile_get_autologin_key', { privatetoken }, { post: true });
 }
 
 // Pluginfile authenticates by a query-string token. Set via the URL API: fileurl may already

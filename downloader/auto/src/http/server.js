@@ -1,8 +1,7 @@
-import {
-  resolveUniversity,
-  defaultUniversity,
-  resolveExtractorForRecording,
-} from '../core/registry.js';
+import { siteAuth, siteAuthFor, setSite, resolveExtractorForRecording } from '../core/registry.js';
+import { normalizeSite } from '../moodle/site.js';
+import { probeSite } from '../moodle/probe.js';
+import { reportUnsupportedSite } from '../../siteReport.js';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import { resolveBrowserChannel } from '../browser/browserChannel.js';
 import {
@@ -22,7 +21,6 @@ import * as passcodes from '../lib/passcodes.js';
 import {
   courseIdFrom,
   getCourseContents,
-  getSiteInfo,
   getAutologinKey,
   invalidToken,
   blocked,
@@ -69,14 +67,6 @@ function toItem(recording) {
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
   };
-}
-
-// One auth instance PER university, reused across requests so connect()/complete()
-// share the same in-memory headed browser. Never evict. Keyed by university id.
-const authInstances = new Map();
-function authFor(uni) {
-  if (!authInstances.has(uni.id)) authInstances.set(uni.id, uni.auth());
-  return authInstances.get(uni.id);
 }
 
 // Autologin is rate-limited (~1/user/6 min), so its cookie is reused for this long — well under
@@ -153,28 +143,97 @@ function isSafeName(name) {
   );
 }
 
+// The configured site's auth, or null after answering 409 moodle_site_not_configured /
+// 400 course_url_unsupported_site — the two ways a request can name no usable site.
+function siteOr(res, url) {
+  try {
+    return url === undefined ? siteAuth() : siteAuthFor(url);
+  } catch (e) {
+    const status = e.code === 'moodle_site_not_configured' ? 409 : 400;
+    send(res, status, failureOf(e));
+    return null;
+  }
+}
+
+// ── Site endpoints ──────────────────────────────────────────────────────────
+
+// Apply settings to the running process; omitted fields are left alone. `moodle_site` is stored
+// as given (the frontend saves the probe's canonical site); a different one resets auth fully.
+export async function handleConfig(req, res) {
+  const body = req.body ?? {};
+  logReq('POST', '/config', Object.keys(body).join(','));
+  const applied = [];
+  if ('moodle_site' in body) {
+    const raw = body.moodle_site;
+    // Blank clears the site, as a blank key does on the backend's /config.
+    const site = raw ? normalizeSite(raw) : null;
+    if ((raw !== null && typeof raw !== 'string') || (raw && !site)) {
+      return send(res, 400, invalid('moodle_site', 'moodle_site must be an http(s) URL or blank'));
+    }
+    if (await setSite(site)) logResult('/config', `moodle site → ${site ?? '(none)'}; auth reset`);
+    applied.push('moodle_site');
+  }
+  send(res, 200, { status: 'ok', applied });
+}
+
+// The pre-login check (docs/MOODLE.md § Checking a site): always 200, the verdict is the answer.
+export async function handleSiteProbe(req, res) {
+  const { url } = req.body ?? {};
+  logReq('POST', '/site/probe', url);
+  const result = typeof url === 'string' ? await probeSite(url) : null;
+  if (!result) return send(res, 400, invalid('url', 'a site URL is required'));
+  logResult(
+    '/site/probe',
+    `${result.status}${result.params?.reason ? ` (${result.params.reason})` : ''}`,
+  );
+  // Maintenance is a Moodle that will be back, not one we cannot serve, so it is not reported.
+  if (result.status === 'unsupported' && result.params.reason !== 'maintenance') {
+    reportUnsupportedSite({ site: result.site, stage: 'probe', reason: result.params.reason });
+  }
+  send(res, 200, result);
+}
+
 // ── Auth endpoints ──────────────────────────────────────────────────────────
 
 export function handleAuthStatus(req, res) {
-  send(res, 200, authFor(defaultUniversity()).status());
+  const found = siteOr(res);
+  if (found) send(res, 200, found.auth.status());
 }
 
 export async function handleAuthConnect(req, res) {
   logReq('POST', '/auth/connect');
+  const found = siteOr(res);
+  if (!found) return;
   // The token module builds its own launch.php URL, so connect takes no entry URL.
-  await authFor(defaultUniversity()).connect();
+  await found.auth.connect();
   send(res, 200, { status: 'pending' });
 }
 
 export async function handleAuthComplete(req, res) {
   logReq('POST', '/auth/complete');
-  await authFor(defaultUniversity()).complete();
+  const found = siteOr(res);
+  if (!found) return;
+  try {
+    await found.auth.complete();
+  } catch (e) {
+    if (e instanceof UnsupportedError) {
+      logResult('/auth/complete', `unsupported (422): ${e.message}`);
+      return sendUnsupported(res, e);
+    }
+    if (blocked(e)) {
+      logResult('/auth/complete', `blocked (503): ${e.message}`);
+      return sendBlocked(res, e);
+    }
+    throw e;
+  }
   send(res, 200, { connected: true });
 }
 
 export async function handleAuthDisconnect(req, res) {
   logReq('POST', '/auth/disconnect');
-  await authFor(defaultUniversity()).disconnect();
+  const found = siteOr(res);
+  if (!found) return;
+  await found.auth.disconnect();
   send(res, 200, { connected: false });
 }
 
@@ -217,14 +276,9 @@ export async function handleList(req, res) {
   if (typeof courseUrl !== 'string' || !/^https?:\/\//.test(courseUrl)) {
     return send(res, 400, invalid('courseUrl', 'valid courseUrl required'));
   }
-  let uni;
-  try {
-    uni = resolveUniversity(courseUrl);
-  } catch (e) {
-    return send(res, 400, failureOf(e));
-  }
-
-  const auth = authFor(uni);
+  const found = siteOr(res, courseUrl);
+  if (!found) return;
+  const { site, auth } = found;
   if (!auth.status().connected) {
     logResult('/list', 'reconnect (401)');
     return sendReconnect(res);
@@ -242,7 +296,7 @@ export async function handleList(req, res) {
   const token = auth.loadToken().wstoken;
   let sections;
   try {
-    sections = await getCourseContents(token, courseId);
+    sections = await getCourseContents(site, token, courseId);
   } catch (e) {
     if (invalidToken(e)) {
       auth.markExpired();
@@ -341,7 +395,9 @@ async function resolveItem(req, res) {
   // moodle-file needs no browser either: the ref carries the Moodle fileurl, and the WS
   // token (query-string auth for pluginfile) makes it a plain fetch for server/.
   if (recording.strategy === 'moodle-file') {
-    const auth = authFor(resolveUniversity(recording.fileurl));
+    const found = siteOr(res, recording.fileurl);
+    if (!found) return;
+    const { auth } = found;
     if (!auth.status().connected) {
       logResult('/resolve', 'reconnect (401)');
       return sendReconnect(res);
@@ -424,7 +480,7 @@ async function resolveItem(req, res) {
   const profile = resolveExtractorForRecording(recording)?.browserProfile ?? 'plain';
   const session = getSession(profile);
 
-  // Zoom shares are gated by a passcode, not BIU SSO — no university and no login; captureVideo
+  // Zoom shares are gated by a passcode, not the Moodle login — no university and no login; captureVideo
   // clears the gate on a blank session. See docs/ZOOM.md.
   if (recording.strategy === 'zoom') {
     // Per-course default with an optional per-lecture override; null → the gate throws
@@ -449,8 +505,9 @@ async function resolveItem(req, res) {
 
   // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
   // autologin (privatetoken → one-shot cookie, no MFA). See docs/MOODLE.md.
-  const uni = resolveUniversity(recording.pageUrl);
-  const auth = authFor(uni);
+  const found = siteOr(res, recording.pageUrl);
+  if (!found) return;
+  const { site, auth } = found;
   if (!auth.status().connected) {
     logResult('/resolve', 'reconnect (401)');
     return sendReconnect(res);
@@ -461,7 +518,7 @@ async function resolveItem(req, res) {
   let targets;
   try {
     targets = await session.withLock(async () => {
-      await ensureAutologin(session, token);
+      await ensureAutologin(session, site, token);
       return resolveRecording(session.page, {
         recording,
         course,
@@ -472,7 +529,7 @@ async function resolveItem(req, res) {
       });
     });
   } catch (e) {
-    // getSiteInfo/getAutologinKey surface a dead token (→ 401) or a challenge (→ 503); other
+    // getAutologinKey surfaces a dead token (→ 401) or a challenge (→ 503); other
     // faults (rate-limit lockout, no .mp4) fall to 500.
     if (invalidToken(e)) {
       auth.markExpired();
@@ -491,7 +548,7 @@ async function resolveItem(req, res) {
 
 // Log the shared plain session into Moodle via a one-shot autologin key, unless a prior cookie is
 // still fresh. MUST run inside the session lock (navigates the shared page).
-async function ensureAutologin(session, token) {
+async function ensureAutologin(session, site, token) {
   if (session.isAuthed()) return;
   if (!token?.privatetoken) {
     throw new CodedError(
@@ -500,8 +557,9 @@ async function ensureAutologin(session, token) {
       'token has no privatetoken; Reconnect to enable videostream capture',
     );
   }
-  const { userid } = await getSiteInfo(token.wstoken);
-  const { key, autologinurl } = await getAutologinKey(token.wstoken, token.privatetoken);
+  // userid was stored at login, from the same site info the post-login check read.
+  const { userid } = token;
+  const { key, autologinurl } = await getAutologinKey(site, token.wstoken, token.privatetoken);
   // autologinurl is a bare endpoint; add userid+key via the URL API (it may already carry a query).
   const u = new URL(autologinurl);
   u.searchParams.set('userid', userid);
