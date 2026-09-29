@@ -79,6 +79,7 @@ HTTP body or a job message.
 ## Conventions
 
 - The Node packages (`server/`, `auto/`) use npm freely; **only the Chrome extension** (`extension/`) must avoid dependencies (MV3 constraint).
+- `stub/sentry-bundler-plugins` is an empty package both Node packages override `@sentry/bundler-plugins` with (a direct `file:` dep plus a `$` override), so `@sentry/node`'s bundler-plugin tree (babel, oxc-parser, the `sentry` CLI) stays out of the installer; it is only reached from the `./vite`/`./rollup`/`./webpack`/`./esbuild` subpaths. On a `@sentry/node` upgrade, re-check its main entry still never imports it.
 - `suggestLectureName` / `suggestRecitationName` in `popup.js` duplicate logic from `frontend/src/features/lectures/utils/nextName.ts`. If the naming convention changes, update both.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
 - Server-specific conventions (argv-array spawn, always `video.mp4`, database-allocated material names, name canonicalization) live in [server/CLAUDE.md](server/CLAUDE.md).

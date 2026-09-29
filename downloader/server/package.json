@@ -12,9 +12,13 @@
     "@faststudy/runtime": "file:../../lib/runtime/js",
     "@faststudy/sentry": "file:../../lib/sentry/js",
     "@faststudy/tools": "file:../../lib/tools/js",
+    "@sentry/bundler-plugins": "file:../stub/sentry-bundler-plugins",
     "@sentry/node": "^11.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"
+  },
+  "overrides": {
+    "@sentry/bundler-plugins": "$@sentry/bundler-plugins"
   }
 }

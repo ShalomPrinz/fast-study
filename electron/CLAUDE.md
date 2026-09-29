@@ -120,7 +120,8 @@ the `build` block in `package.json`.
   output directory, and `assets/`, `docs/`, `tests/` and `package-lock.json` match neither. The trade
   is that a top-level `.js` added here that is _not_ meant to ship would ship. The `file:` dep
   `@faststudy/sentry` is a symlink after a plain `npm ci`, and electron-builder still packs it as
-  real files.
+  real files. The two negations drop `node_modules` source maps and `.d.cts`/`.d.mts`, which the
+  runtime never reads and electron-builder's default ignore (`.d.ts` only) misses.
 - **The packaged Sentry DSN is stamped at build** (`-c.extraMetadata.sentryDsn`), never committed;
   main reads `FASTSTUDY_SENTRY_DSN` first, then `package.json`'s `sentryDsn`, and hands it to every child.
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is

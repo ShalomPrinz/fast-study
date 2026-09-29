@@ -12,6 +12,7 @@
     "@faststudy/runtime": "file:../../lib/runtime/js",
     "@faststudy/sentry": "file:../../lib/sentry/js",
     "@faststudy/tools": "file:../../lib/tools/js",
+    "@sentry/bundler-plugins": "file:../stub/sentry-bundler-plugins",
     "@sentry/node": "^11.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -19,5 +20,8 @@
     "playwright": "^1.48.0",
     "playwright-extra": "^4.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "overrides": {
+    "@sentry/bundler-plugins": "$@sentry/bundler-plugins"
   }
 }

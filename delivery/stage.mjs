@@ -9,6 +9,8 @@ const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 // Dev-only weight that would otherwise ride along in the two Node service trees.
 const SKIP = new Set(['test', 'docs', 'CLAUDE.md', 'README.md', '.gitignore', 'package-lock.json']);
+// Source maps and type declarations, dropped everywhere — `@sentry/*` alone is ~40MB per service.
+const SKIP_EXT = /\.(map|d\.[cm]?ts)$/;
 
 const COPIES = [
   ['backend/dist/services', 'services'],
@@ -20,9 +22,11 @@ const COPIES = [
 function copy(from, to, prune) {
   fs.cpSync(from, to, {
     recursive: true,
-    // node_modules is exempt: a dependency of its own named `docs` or `test` is not ours to drop.
+    // node_modules is exempt from SKIP: a dependency of its own named `docs` or `test` is not ours to drop.
     filter: (src) => {
-      if (!prune || src.includes(`${path.sep}node_modules${path.sep}`)) return true;
+      if (!prune) return true;
+      if (SKIP_EXT.test(src)) return false;
+      if (src.includes(`${path.sep}node_modules${path.sep}`)) return true;
       return !SKIP.has(path.relative(from, src));
     },
   });

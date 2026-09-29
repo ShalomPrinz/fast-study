@@ -23,7 +23,9 @@
     "files": [
       "*.js",
       "*.html",
-      "package.json"
+      "package.json",
+      "!**/*.map",
+      "!**/*.d.{ts,cts,mts}"
     ],
     "extraResources": [
       {
