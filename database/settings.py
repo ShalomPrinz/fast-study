@@ -15,6 +15,7 @@ STRING_FIELDS = {
     "gemini_model": "GEMINI_MODEL",
     "gdrive_root_folder": "GDRIVE_ROOT_FOLDER",
     "auto_run": "AUTO_RUN",
+    "moodle_site": "MOODLE_SITE",
 }
 BOOL_FIELDS = {
     "drive_enabled": "DRIVE_ENABLED",

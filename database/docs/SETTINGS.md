@@ -21,6 +21,7 @@ applies its own defaults, and an absent value has to stay distinguishable from a
 | `gemini_model`                                     | `GEMINI_MODEL`                                    |
 | `drive_enabled`, `gdrive_root_folder`              | `DRIVE_ENABLED`, `GDRIVE_ROOT_FOLDER`             |
 | `auto_run`                                         | `AUTO_RUN`                                        |
+| `moodle_site` (the auto-downloader's)              | `MOODLE_SITE`                                     |
 | `nightly_run` (bool), `nightly_hour` (int)         | `NIGHTLY_RUN`, `NIGHTLY_HOUR`                     |
 
 Fields come in three kinds — `STRING_FIELDS`, `BOOL_FIELDS`, `INT_FIELDS` — which is all the store
@@ -37,8 +38,8 @@ The two API keys are **write-only**: `PUT` accepts `gemini_api_key` / `groq_api_
 path reports only whether each is set, so a stored key never travels back to the client — the same
 rule `safeStorage` follows under Electron.
 
-The list is closed to **credentials, `DATA_ROOT`, and the backend's own pipeline config** — nothing
-else. A purely visual preference (the UI language, the sidebar's lectures/courses mode) is the browser
+The list is closed to **credentials, `DATA_ROOT`, the backend's own pipeline config, and the
+auto-downloader's Moodle site** — nothing else. A purely visual preference (the UI language, the sidebar's lectures/courses mode) is the browser
 profile's, kept in its `localStorage`, and `PUT` rejects it as an unknown setting: routing it through
 a file every service reads would make one machine's cosmetics everyone's configuration.
 
