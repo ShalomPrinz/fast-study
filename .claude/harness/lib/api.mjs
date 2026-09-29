@@ -72,9 +72,10 @@ export async function waitForFile(
 
 /** Save settings the way the settings screen does: the store first, then the owner's live process. */
 export async function saveSettings(patch) {
-  const { data_root: dataRoot, ...rest } = patch;
+  const { data_root: dataRoot, moodle_site: moodleSite, ...rest } = patch;
   const { body } = await json(`${DATABASE}/settings`, 'PUT', patch);
   if (Object.keys(rest).length) await json(`${BACKEND}/config`, 'POST', rest);
   if (dataRoot !== undefined) await json(`${DATABASE}/config`, 'POST', { data_root: dataRoot });
+  if (moodleSite !== undefined) await json(`${AUTO}/config`, 'POST', { moodle_site: moodleSite });
   return body;
 }

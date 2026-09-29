@@ -401,6 +401,8 @@ harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the s
     curl -s 127.0.0.1:${PORTS.providers}/control -d '{"gemini":"ok","groq":"ok"}'
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"blocked"}'       # bot-protection challenge
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"invalidtoken"}'  # the Moodle token died
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"not_moodle"}'    # the site probe: not a Moodle
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"missing_function"}'  # login refused (also mobile_service_off, downloads_disabled)
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"ok"}'
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"downloadMs":60000}'     # slow downloads, live
 
