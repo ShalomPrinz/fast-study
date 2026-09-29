@@ -1,7 +1,7 @@
 # Downloads page
 
-`/downloads` — connect the BIU account, keep each course's source URL, then discover and download
-recordings into the same `DATA_ROOT` courses the pipeline uses. Discovery and auth go to the
+`/downloads` — connect the university account (the site chosen in [SETTINGS.md](SETTINGS.md)), keep each
+course's source URL, then discover and download recordings into the same `DATA_ROOT` courses the pipeline uses. Discovery and auth go to the
 auto-downloader (:3053), downloads and bulk runs to the downloader server (:3052); their clients and
 error classes are in [SERVICES.md](SERVICES.md). A download's progress is [JOBS.md](JOBS.md), a
 section's "Download all" is [BULK.md](BULK.md).

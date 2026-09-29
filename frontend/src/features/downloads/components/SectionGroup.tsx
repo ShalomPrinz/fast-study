@@ -228,7 +228,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   const notStarted = queueing ? 0 : notStartedCount(targets)
   const stoppedBecause =
     run?.status === 'reconnect'
-      ? t`the BIU session expired. Reconnect, then run the section again.`
+      ? t`the university session expired. Reconnect, then run the section again.`
       : run?.status === 'cancelled'
         ? t`the run was cancelled. Run the section again to pick them up.`
         : t`the run stopped early. Run the section again to pick them up.`

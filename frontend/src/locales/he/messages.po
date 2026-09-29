@@ -181,7 +181,7 @@ msgstr "{effectiveName} כבר קיים ב{course}. להוריד שוב ולדר
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} עשוי להתפצל לחלקים שידרסו את {existing} הקיימים ב{course}. להוריד בכל זאת?"
 
-#: src/shared/i18n/serviceErrors.ts:175
+#: src/shared/i18n/serviceErrors.ts:182
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} הוא דף אינטרנט, לא קובץ. פתח אותו בדפדפן והורד ידנית.} other {{url} הוא קובץ {ext}, לא וידאו. פתח אותו בדפדפן והורד ידנית.}}"
 
@@ -286,6 +286,10 @@ msgstr "{provider, select, gemini {מפתח ה-API של Gemini נדחה. בדו�
 msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 msgstr "{reason, select, incorrect {קוד הגישה של Zoom שגוי. הזן אותו שוב.} other {ההקלטה הזו ב-Zoom דורשת קוד גישה.}}"
 
+#: src/shared/i18n/serviceErrors.ts:177
+msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which Fast Study relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so Fast Study can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so Fast Study can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with Fast Study.}}"
+msgstr "{reason, select, not_moodle {הכתובת הזו אינה אתר Moodle. בדוק אותה ונסה שוב.} mobile_service_off {ה-Moodle של האוניברסיטה הזו לא מאפשר התחברות מאפליקציית Moodle, ו-Fast Study נשענת עליה.} maintenance {ה-Moodle של האוניברסיטה הזו בתחזוקה כרגע. נסה שוב מאוחר יותר.} missing_function {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle לקרוא את תוכן הקורסים ({function}), ולכן Fast Study לא יכולה לעבוד איתו.} downloads_disabled {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציית Moodle להוריד קבצים, ולכן Fast Study לא יכולה לעבוד איתו.} autologin_unavailable {ה-Moodle של האוניברסיטה הזו לא מאפשר לאפליקציה לפתוח וידאו שמאוחסן ב-Moodle עצמו. שאר ההקלטות וקובצי הקורס עדיין עובדים.} other {אי אפשר להשתמש ב-Moodle של האוניברסיטה הזו עם Fast Study.}}"
+
 #: src/features/search/components/SearchResult.tsx:64
 msgid "{remaining, plural, one {Show # more} other {Show # more}}"
 msgstr "{remaining, plural, one {הצג עוד אחד} two {הצג עוד #} other {הצג עוד #}}"
@@ -314,7 +318,7 @@ msgstr "{stalled, plural, one {לא ניתן לאמת הורדה אחת — יי
 #~ msgid "{tool} took too long and was stopped after {seconds} seconds."
 #~ msgstr "{tool} לקח יותר מדי זמן ונעצר אחרי {seconds} שניות."
 
-#: src/shared/i18n/serviceErrors.ts:179
+#: src/shared/i18n/serviceErrors.ts:186
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} כבר לא קיים. בדוק בדף הקורס אם יש קישור חדש."
 
@@ -350,6 +354,10 @@ msgstr "+ הוספת כתובת מקור"
 msgid "A course or lecture named \"{name}\" already exists."
 msgstr "כבר קיים קורס או הרצאה בשם \"{name}\"."
 
+#: src/features/settings/InitWall.tsx:153
+msgid "A few things are needed before the first lecture can be turned into a summary. This only happens once."
+msgstr "כמה דברים דרושים לפני שאפשר להפוך את ההרצאה הראשונה לסיכום. צריך לעשות את זה רק פעם אחת."
+
 #: src/shared/i18n/serviceErrors.ts:101
 msgid "A file inside \"{name}\" is open in another program. Close it and try again."
 msgstr "קובץ בתוך \"{name}\" פתוח בתוכנה אחרת. סגור אותו ונסה שוב."
@@ -374,7 +382,7 @@ msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 #~ msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 #~ msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
-#: src/features/settings/SettingsView.tsx:319
+#: src/features/settings/SettingsView.tsx:356
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -414,11 +422,11 @@ msgstr "כבר מעודכן"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:168
+#: src/features/settings/SettingsView.tsx:186
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:247
+#: src/features/settings/SettingsView.tsx:273
 msgid "Appearance and behaviour"
 msgstr "מראה והעדפות"
 
@@ -433,6 +441,10 @@ msgstr "ארכיון ({archivedCount})"
 #: src/features/course-overview/components/StepRow.tsx:74
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
+
+#: src/features/settings/utils/moodleSites.ts:19
+msgid "Ariel University"
+msgstr "אוניברסיטת אריאל"
 
 #: src/features/downloads/components/RecordingRow.tsx:249
 msgid "Attach material to"
@@ -466,21 +478,17 @@ msgstr "הרצה אוטומטית: כל השלבים"
 msgid "Back"
 msgstr "חזרה"
 
-#: src/features/settings/components/MoodleAccountField.tsx:14
-msgid "BIU account"
-msgstr "חשבון בר-אילן"
+#: src/features/settings/utils/moodleSites.ts:13
+msgid "Bar-Ilan University"
+msgstr "אוניברסיטת בר-אילן"
 
-#: src/features/downloads/components/AccountStatus.tsx:93
-msgid "BIU account connected"
-msgstr "חשבון בר-אילן מחובר"
+#: src/features/settings/utils/moodleSites.ts:17
+msgid "Ben-Gurion University"
+msgstr "אוניברסיטת בן-גוריון"
 
 #: src/features/downloads/components/AuthPill.tsx:81
 #~ msgid "BIU account connected ✓"
 #~ msgstr "חשבון בר-אילן מחובר ✓"
-
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:80
-msgid "BIU session expired. Reconnect your account."
-msgstr "תוקף החיבור לבר-אילן פג. חבר מחדש את החשבון."
 
 #: src/features/settings/components/BrowserPrereqField.tsx:79
 msgid "Browser for downloading recordings"
@@ -519,7 +527,7 @@ msgstr "ביטול"
 #~ msgid "Catch up on unfinished lectures overnight"
 #~ msgstr "להשלים הרצאות שלא הסתיימו במהלך הלילה"
 
-#: src/features/settings/SettingsView.tsx:318
+#: src/features/settings/SettingsView.tsx:355
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -541,12 +549,17 @@ msgstr "בודק את Drive…"
 
 #: src/features/settings/components/ApiKeyField.tsx:58
 #: src/features/settings/components/BrowserPrereqField.tsx:58
+#: src/features/settings/components/MoodleSiteField.tsx:61
 msgid "Checking…"
 msgstr "בודק…"
 
 #: src/shared/i18n/serviceErrors.ts:116
 msgid "Choose a data folder."
 msgstr "בחר תיקיית נתונים."
+
+#: src/features/settings/components/MoodleSiteField.tsx:94
+msgid "Choose your university…"
+msgstr "בחר את האוניברסיטה שלך…"
 
 #: src/features/downloads/DownloadsView.tsx:74
 #~ msgid "close"
@@ -582,8 +595,8 @@ msgid "Connect Google Drive now?"
 msgstr "לחבר את Google Drive עכשיו?"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:99
-msgid "Connect your BIU account first"
-msgstr "יש לחבר תחילה את חשבון בר-אילן"
+msgid "Connect your university account first"
+msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
 #: src/features/downloads/components/AccountStatus.tsx:105
 #~ msgid "Connecting again needs a full login in a browser window, including MFA."
@@ -629,7 +642,7 @@ msgstr "לא ניתן למחוק את {file}."
 msgid "Could not extract the audio from the video."
 msgstr "לא ניתן לחלץ את השמע מהווידאו."
 
-#: src/shared/i18n/serviceErrors.ts:193
+#: src/shared/i18n/serviceErrors.ts:200
 msgid "Could not list the playlist."
 msgstr "לא ניתן לטעון את הפלייליסט."
 
@@ -655,7 +668,7 @@ msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 #~ msgid "Could not start {tool}."
 #~ msgstr "לא ניתן להפעיל את {tool}."
 
-#: src/shared/i18n/serviceErrors.ts:182
+#: src/shared/i18n/serviceErrors.ts:189
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
@@ -684,11 +697,11 @@ msgstr "לא ניתן לטעון את הסיכומים של {course}."
 #~ msgid "Couldn't save all settings — check the services are running and try again."
 #~ msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
-#: src/features/settings/SettingsView.tsx:130
+#: src/features/settings/SettingsView.tsx:142
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:202
+#: src/shared/i18n/serviceErrors.ts:209
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
@@ -729,7 +742,7 @@ msgstr "יצירה"
 msgid "Current PDF"
 msgstr "ה-PDF הנוכחי"
 
-#: src/features/settings/SettingsView.tsx:289
+#: src/features/settings/SettingsView.tsx:315
 msgid "Daily run time"
 msgstr "שעת ההרצה היומית"
 
@@ -752,15 +765,15 @@ msgid "Disconnect"
 msgstr "התנתקות"
 
 #: src/features/downloads/components/AccountStatus.tsx:104
-msgid "Disconnect the BIU account?"
-msgstr "לנתק את חשבון בר-אילן?"
+msgid "Disconnect the university account?"
+msgstr "לנתק את חשבון האוניברסיטה?"
 
 #: src/features/downloads/components/AccountStatus.tsx:100
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
-#: src/features/settings/SettingsView.tsx:264
+#: src/features/settings/SettingsView.tsx:290
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
@@ -800,11 +813,11 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/settings/SettingsView.tsx:239
+#: src/features/settings/SettingsView.tsx:257
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
-#: src/features/settings/InitWall.tsx:234
+#: src/features/settings/InitWall.tsx:248
 msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (לא חובה)"
 
@@ -887,7 +900,7 @@ msgstr "חילוץ"
 msgid "Extract Audio"
 msgstr "חילוץ שמע"
 
-#: src/features/settings/SettingsView.tsx:263
+#: src/features/settings/SettingsView.tsx:289
 msgid "Extract the audio only"
 msgstr "לחלץ רק את השמע"
 
@@ -933,19 +946,23 @@ msgstr "Fast Study לא הצליחה לגשת לקבצים שלך. נסה שוב
 #~ msgid "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 #~ msgstr "Fast Study מפעיל את Google Chrome או את Microsoft Edge כדי להביא הקלטות מאתר הקורס. הפיכת סרטון לסיכום לא משתמשת בו כלל."
 
+#: src/features/settings/components/MoodleSiteField.tsx:123
+msgid "Fast Study finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
+msgstr "Fast Study מוצאת את ההקלטות שלך באתר ה-Moodle של האוניברסיטה. אם היא לא ברשימה, בחר \"אחר…\" והדבק את כתובת ה-Moodle שלה."
+
+#: src/features/settings/components/MoodleAccountField.tsx:40
+msgid "Fast Study signs in to <0>{host}</0> with this account to find and fetch recordings. You can connect it later."
+msgstr "Fast Study מתחברת ל-<0>{host}</0> עם החשבון הזה כדי למצוא ולהוריד הקלטות. אפשר לחבר אותו גם מאוחר יותר."
+
 #: src/features/settings/components/MoodleAccountField.tsx:18
 #~ msgid "Fast Study signs in to your course site with this account to find and fetch recordings. Nothing else needs it, and you can connect it later."
 #~ msgstr "Fast Study מתחבר לאתר הקורס עם החשבון הזה כדי למצוא ולהביא הקלטות. שום דבר אחר לא זקוק לו, ואפשר לחבר אותו גם מאוחר יותר."
-
-#: src/features/settings/components/MoodleAccountField.tsx:18
-msgid "Fast Study signs in to your course site with this account to find and fetch recordings. You can connect it later."
-msgstr "Fast Study מתחברת לאתר הקורס עם החשבון הזה כדי למצוא ולהוריד הקלטות. אפשר לחבר אותו גם מאוחר יותר."
 
 #: src/features/settings/components/BrowserPrereqField.tsx:97
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study משתמשת ב-Google Chrome או ב-Microsoft Edge כדי להוריד הקלטות מאתר הקורס. הפיכת וידאו לסיכום לא דורשת דפדפן."
 
-#: src/features/settings/InitWall.tsx:183
+#: src/features/settings/InitWall.tsx:186
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
 
@@ -953,7 +970,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:250
+#: src/features/settings/InitWall.tsx:267
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
@@ -972,6 +989,11 @@ msgstr "יש להשלים את ההתחברות ל-Google בלשונית שנפ�
 #: src/features/downloads/components/AccountStatus.tsx:81
 msgid "finishing…"
 msgstr "מסיים…"
+
+#. placeholder {0}: status.site
+#: src/features/settings/components/MoodleSiteField.tsx:64
+msgid "Found your university's Moodle: <0>{0}</0>"
+msgstr "נמצא ה-Moodle של האוניברסיטה: <0>{0}</0>"
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:106
 msgid "Fully processed lectures"
@@ -1018,11 +1040,11 @@ msgstr "חשבון Google"
 #~ msgid "Google credentials are missing. Put credentials.json at {path}."
 #~ msgstr "חסרים פרטי ההתחברות ל-Google. שים את credentials.json בנתיב {path}."
 
-#: src/features/settings/SettingsView.tsx:226
+#: src/features/settings/SettingsView.tsx:244
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:221
+#: src/features/settings/InitWall.tsx:235
 msgid "Google Drive (optional)"
 msgstr "Google Drive (לא חובה)"
 
@@ -1038,6 +1060,10 @@ msgstr "Google Drive לא מחובר. חבר אותו בהגדרות."
 msgid "Groq rate limit reached"
 msgstr "יותר מדי בקשות ל-Groq"
 
+#: src/features/settings/utils/moodleSites.ts:15
+msgid "Hebrew University"
+msgstr "האוניברסיטה העברית"
+
 #: src/app/ErrorBoundary.tsx:108
 #: src/shared/components/NotFoundPanel.tsx:18
 msgid "Home"
@@ -1050,10 +1076,6 @@ msgstr "כבר בקורס"
 #: src/features/settings/components/BrowserPrereqField.tsx:91
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
-
-#: src/features/settings/InitWall.tsx:155
-msgid "Just one thing is needed to get started: a folder to keep everything in. This only happens once."
-msgstr "רק דבר אחד נדרש כדי להתחיל: תיקייה שבה יישמר הכול. צריך לעשות את זה רק פעם אחת."
 
 #: src/features/downloads/components/PasscodePrompt.tsx:62
 msgid "just this lecture"
@@ -1117,7 +1139,7 @@ msgstr "הרצאות"
 msgid "Lectures {0}-{1}"
 msgstr "הרצאות {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:146
+#: src/features/settings/InitWall.tsx:149
 msgid "Let's set things up"
 msgstr "בוא נגדיר את הכול"
 
@@ -1154,7 +1176,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:211
+#: src/shared/i18n/serviceErrors.ts:218
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1210,7 +1232,7 @@ msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרו
 msgid "No Lectures"
 msgstr "אין הרצאות"
 
-#: src/shared/i18n/serviceErrors.ts:210
+#: src/shared/i18n/serviceErrors.ts:217
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -1258,11 +1280,15 @@ msgstr "אין תרגולים"
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/shared/i18n/serviceErrors.ts:195
+#: src/shared/i18n/serviceErrors.ts:174
+msgid "No university is chosen yet. Choose yours in Settings."
+msgstr "עדיין לא נבחרה אוניברסיטה. בחר אותה בהגדרות."
+
+#: src/shared/i18n/serviceErrors.ts:202
 msgid "No video was captured on that page. Play it once by hand and try again."
 msgstr "לא זוהה וידאו בדף הזה. הפעל אותו פעם אחת ידנית ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:198
+#: src/shared/i18n/serviceErrors.ts:205
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
@@ -1331,11 +1357,11 @@ msgstr "בעיבוד עכשיו"
 msgid "Only .mp4 files are allowed"
 msgstr "מותרים קבצי .mp4 בלבד"
 
-#: src/shared/i18n/serviceErrors.ts:190
+#: src/shared/i18n/serviceErrors.ts:197
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "אפשר לטעון רק פלייליסטים של YouTube, לא של {host}."
 
-#: src/features/settings/InitWall.tsx:43
+#: src/features/settings/InitWall.tsx:44
 msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 msgstr "פתח את Google AI Studio דרך הקישור שלמטה, התחבר עם חשבון Google שלך ולחץ על \"Create API key\". העתק את המפתח שמוצג והדבק אותו בשדה."
 
@@ -1354,7 +1380,7 @@ msgstr "פתיחת החומר"
 msgid "Open PDF"
 msgstr "פתיחת ה-PDF"
 
-#: src/features/settings/InitWall.tsx:53
+#: src/features/settings/InitWall.tsx:54
 msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 msgstr "פתח את לוח הבקרה של Groq דרך הקישור שלמטה, התחבר ולחץ על \"Create API Key\". העתק אותו מיד — Groq מציגה מפתח פעם אחת בלבד — והדבק אותו בשדה."
 
@@ -1373,6 +1399,10 @@ msgstr "קישורים אחרים"
 #: src/features/downloads/components/SectionGroup.tsx:72
 #~ msgid "Other Videos"
 #~ msgstr "סרטונים אחרים"
+
+#: src/features/settings/components/MoodleSiteField.tsx:101
+msgid "Other…"
+msgstr "אחר…"
 
 #: src/features/lectures/sidebar/tree/CourseOverviewRow.tsx:26
 msgid "Overview"
@@ -1587,7 +1617,7 @@ msgstr "יצירה מחדש של {file}"
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
-#: src/features/settings/SettingsView.tsx:262
+#: src/features/settings/SettingsView.tsx:288
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
@@ -1595,7 +1625,7 @@ msgstr "להריץ את כל השלבים"
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
-#: src/features/settings/SettingsView.tsx:283
+#: src/features/settings/SettingsView.tsx:309
 msgid "Run unfinished lectures daily"
 msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 
@@ -1617,7 +1647,7 @@ msgstr "הרצאות בעיבוד"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/settings/SettingsView.tsx:160
+#: src/features/settings/SettingsView.tsx:178
 msgid "Save"
 msgstr "שמירה"
 
@@ -1633,7 +1663,7 @@ msgstr "שמירה בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:259
+#: src/features/settings/InitWall.tsx:276
 msgid "Saving…"
 msgstr "שומר…"
 
@@ -1670,13 +1700,13 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:88
-#: src/features/settings/SettingsView.tsx:153
+#: src/features/settings/SettingsView.tsx:97
+#: src/features/settings/SettingsView.tsx:171
 #: src/shared/sidebar/Sidebar.tsx:90
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:125
+#: src/features/settings/SettingsView.tsx:137
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1712,7 +1742,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
 
-#: src/features/settings/InitWall.tsx:259
+#: src/features/settings/InitWall.tsx:276
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -1727,7 +1757,7 @@ msgstr "שלב {0} מתוך {1}"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:216
+#: src/features/settings/SettingsView.tsx:234
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1775,7 +1805,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 #~ msgid "summary did not use material"
 #~ msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:194
+#: src/features/settings/SettingsView.tsx:212
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1783,23 +1813,35 @@ msgstr "מודל הסיכום"
 #~ msgid "summary.pdf is older than summary.md. Re-generate it."
 #~ msgstr "summary.pdf ישן מ-summary.md. יש לייצר אותו מחדש."
 
+#: src/features/settings/SettingsView.tsx:344
+msgid "Switch to another university?"
+msgstr "לעבור לאוניברסיטה אחרת?"
+
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
 #: src/shared/components/ProgressBar.tsx:55
 msgid "Taking longer than expected · {0} · longest recorded: {1}"
 msgstr "לוקח יותר זמן מהצפוי · {0} · הזמן הארוך ביותר עד כה: {1}"
 
+#: src/features/settings/utils/moodleSites.ts:16
+msgid "Technion"
+msgstr "הטכניון"
+
+#: src/features/settings/utils/moodleSites.ts:14
+msgid "Tel Aviv University"
+msgstr "אוניברסיטת תל אביב"
+
 #: src/shared/i18n/serviceErrors.ts:160
 #~ msgid "That course link carries no course id: {url}."
 #~ msgstr "בקישור הקורס אין מזהה קורס: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:174
+#: src/shared/i18n/serviceErrors.ts:181
 msgid "That course link doesn't point to a specific course: {url}."
 msgstr "קישור הקורס לא מוביל לקורס מסוים: {url}."
 
 #: src/shared/i18n/serviceErrors.ts:171
-msgid "That course link is not from a supported site: {url}."
-msgstr "קישור הקורס אינו מאתר נתמך: {url}."
+msgid "That course link is not from your university's site ({site}): {url}."
+msgstr "קישור הקורס אינו מאתר האוניברסיטה שלך ({site}): {url}."
 
 #: src/shared/i18n/serviceErrors.ts:141
 msgid "That download run is not paused."
@@ -1809,7 +1851,7 @@ msgstr "תהליך ההורדה הזה אינו מושהה."
 msgid "That download run no longer exists."
 msgstr "תהליך ההורדה הזה כבר לא קיים."
 
-#: src/shared/i18n/serviceErrors.ts:189
+#: src/shared/i18n/serviceErrors.ts:196
 msgid "That is not a Google Drive file link: {url}."
 msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 
@@ -1817,7 +1859,7 @@ msgstr "זה אינו קישור לקובץ ב-Google Drive: {url}."
 msgid "That passcode didn't work. Try another one"
 msgstr "קוד הגישה לא עבד. נסה קוד אחר"
 
-#: src/shared/i18n/serviceErrors.ts:194
+#: src/shared/i18n/serviceErrors.ts:201
 msgid "That playlist has no entries."
 msgstr "אין פריטים בפלייליסט הזה."
 
@@ -1833,10 +1875,6 @@ msgstr "השלב הזה כבוי בהגדרות."
 #~ msgid "The \"Run incomplete pipelines\" button and the list of lectures being worked on."
 #~ msgstr "הכפתור \"הרץ צינורות לא שלמים\" ורשימת ההרצאות שבעבודה."
 
-#: src/features/downloads/components/SectionGroup.tsx:231
-msgid "the BIU session expired. Reconnect, then run the section again."
-msgstr "תוקף החיבור לבר-אילן פג. התחבר מחדש והרץ את היחידה שוב."
-
 #: src/features/settings/SettingsView.tsx:240
 #~ msgid "The ceiling on unattended work: it caps a dropped or downloaded video and the nightly 03:00 pass alike, never a run you start from the running pipelines page."
 #~ msgstr "התקרה לעבודה שרצה ללא השגחה: היא חלה גם על וידאו שנגרר או הורד וגם על המעבר הלילי ב-03:00, ולעולם לא על הרצה שהתחלת מדף הצינורות בהרצה."
@@ -1849,7 +1887,7 @@ msgstr "תוקף החיבור לבר-אילן פג. התחבר מחדש והרץ
 msgid "The course \"{course}\" was not found."
 msgstr "הקורס \"{course}\" לא נמצא."
 
-#: src/features/settings/SettingsView.tsx:306
+#: src/features/settings/SettingsView.tsx:332
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "גם ההרצה היומית פועלת לפי ההגדרה שלמעלה: אם היא מוגדרת לא לעשות דבר, גם ההרצה היומית לא תעשה דבר."
 
@@ -1893,11 +1931,11 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייווצרו מחדש:"
 
-#: src/shared/i18n/serviceErrors.ts:207
+#: src/shared/i18n/serviceErrors.ts:214
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:206
+#: src/shared/i18n/serviceErrors.ts:213
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
@@ -1958,6 +1996,10 @@ msgstr "הסיכום ריק"
 #~ msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 #~ msgstr "שני השערים בלתי תלויים: ההגדרה שלמעלה חלה גם על המעבר הלילי, ולכן כשהיא מוגדרת לא לעשות דבר, שום דבר לא ירוץ ללא השגחה בכל שעה שתיבחר."
 
+#: src/features/downloads/components/SectionGroup.tsx:231
+msgid "the university session expired. Reconnect, then run the section again."
+msgstr "תוקף החיבור לאוניברסיטה פג. התחבר מחדש והרץ את היחידה שוב."
+
 #: src/features/downloads/utils/downloadErrors.ts:16
 #: src/shared/i18n/serviceErrors.ts:160
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
@@ -1976,7 +2018,7 @@ msgstr "לאחר מכן {0} ייווצר מחדש."
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה היומית."
 
-#: src/features/settings/SettingsView.tsx:267
+#: src/features/settings/SettingsView.tsx:293
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
@@ -1992,6 +2034,10 @@ msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, 
 msgid "This course has no summaries yet."
 msgstr "אין עדיין סיכומים בקורס הזה."
 
+#: src/features/settings/SettingsView.tsx:345
+msgid "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
+msgstr "החשבון המחובר כעת ינותק. חיבור לאתר החדש דורש התחברות מלאה בחלון דפדפן."
+
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
 #: src/features/settings/components/ApiKeyField.tsx:66
@@ -2006,11 +2052,11 @@ msgstr "לא ניתן היה לדווח על השגיאה הזו אוטומטי�
 msgid "This error was reported automatically. Reference: <0>{eventId}</0>"
 msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 
-#: src/shared/i18n/serviceErrors.ts:185
+#: src/shared/i18n/serviceErrors.ts:192
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:203
+#: src/shared/i18n/serviceErrors.ts:210
 msgid "This Moodle connection can't download these recordings. Reconnect the account."
 msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקלטות האלה. חבר מחדש את החשבון."
 
@@ -2038,10 +2084,6 @@ msgstr "השלב הזה זקוק ל-{file}, שעדיין לא קיים. הרץ �
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
 
-#: src/features/settings/InitWall.tsx:150
-msgid "Three things are needed before the first lecture can be turned into a summary. This only happens once."
-msgstr "שלושה דברים דרושים לפני שאפשר להפוך את ההרצאה הראשונה לסיכום. צריך לעשות את זה רק פעם אחת."
-
 #: src/features/lectures/constants/pipeline.ts:32
 msgid "Transcribe"
 msgstr "תמלול"
@@ -2062,9 +2104,29 @@ msgstr "תמלול"
 #~ msgid "Transcription failed"
 #~ msgstr "התמלול נכשל"
 
+#: src/features/settings/InitWall.tsx:158
+msgid "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
+msgstr "שני דברים דרושים כדי להתחיל: האוניברסיטה שלך ותיקייה שבה יישמר הכול. צריך לעשות את זה רק פעם אחת."
+
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
 msgid "Unarchive course"
 msgstr "הוצאת קורס מהארכיון"
+
+#: src/features/settings/components/MoodleSiteField.tsx:84
+msgid "University"
+msgstr "אוניברסיטה"
+
+#: src/features/settings/components/MoodleAccountField.tsx:30
+msgid "University account"
+msgstr "חשבון האוניברסיטה"
+
+#: src/features/downloads/components/AccountStatus.tsx:93
+msgid "University account connected"
+msgstr "חשבון האוניברסיטה מחובר"
+
+#: src/features/settings/utils/moodleSites.ts:18
+msgid "University of Haifa"
+msgstr "אוניברסיטת חיפה"
 
 #: src/features/downloads/DownloadsView.tsx:40
 msgid "Unknown"
@@ -2123,11 +2185,15 @@ msgstr "לא הצלחנו לבדוק כרגע."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/SettingsView.tsx:253
+#: src/features/settings/components/MoodleSiteField.tsx:71
+msgid "We couldn't check this site right now. You can still save it."
+msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור אותו בכל זאת."
+
+#: src/features/settings/SettingsView.tsx:279
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:209
+#: src/features/settings/InitWall.tsx:212
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -2155,13 +2221,29 @@ msgstr "כן"
 msgid "Yes, store my lectures in this folder"
 msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 
-#: src/features/settings/InitWall.tsx:190
+#: src/features/settings/components/MoodleAccountField.tsx:35
+msgid "You can connect the account once your university is saved."
+msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
+
+#: src/features/settings/InitWall.tsx:193
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
 
-#: src/features/settings/InitWall.tsx:175
+#: src/features/settings/InitWall.tsx:178
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלך"
+
+#: src/features/settings/InitWall.tsx:224
+msgid "Your university"
+msgstr "האוניברסיטה שלך"
+
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:80
+msgid "Your university session expired. Reconnect your account."
+msgstr "תוקף החיבור לאוניברסיטה פג. חבר מחדש את החשבון."
+
+#: src/features/settings/components/MoodleSiteField.tsx:110
+msgid "Your university's Moodle address"
+msgstr "כתובת ה-Moodle של האוניברסיטה"
 
 #: src/features/lectures/components/PdfViewer.tsx:90
 msgid "Zoom in"

@@ -12,6 +12,7 @@ const STORED: Settings = {
   autoRun: null,
   nightlyRun: null,
   nightlyHour: null,
+  moodleSite: 'https://lemida.biu.ac.il',
 }
 
 const UNCHANGED: SettingsForm = {
@@ -24,6 +25,7 @@ const UNCHANGED: SettingsForm = {
   autoRun: 'full',
   nightlyRun: true,
   nightlyHour: 3,
+  moodleSite: 'https://lemida.biu.ac.il',
 }
 
 describe('buildPatch', () => {
@@ -72,5 +74,12 @@ describe('buildPatch', () => {
       STORED,
     )
     expect(patch).toEqual({ dataRoot: '/other', driveEnabled: true, gdriveRootFolder: 'Lectures' })
+  })
+
+  it('sends a newly chosen site and never a blank one, which would unset the university', () => {
+    expect(buildPatch({ ...UNCHANGED, moodleSite: 'https://moodle.tau.ac.il' }, STORED)).toEqual({
+      moodleSite: 'https://moodle.tau.ac.il',
+    })
+    expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, STORED)).toEqual({})
   })
 })

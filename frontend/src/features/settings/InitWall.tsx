@@ -18,6 +18,7 @@ import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
+import MoodleSiteField from './components/MoodleSiteField'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
@@ -78,6 +79,7 @@ export default function InitWall({ stored, onDone }: Props) {
     autoRun: toAutoRun(stored.autoRun),
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
+    moodleSite: stored.moodleSite ?? '',
   })
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -105,6 +107,7 @@ export default function InitWall({ stored, onDone }: Props) {
     dataRootConfirmed: confirmed,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
+    moodleSite: form.moodleSite,
     canStoreApiKeys,
   })
 
@@ -148,13 +151,13 @@ export default function InitWall({ stored, onDone }: Props) {
           <p className="init-wall-lede">
             {canStoreApiKeys ? (
               <Trans>
-                Three things are needed before the first lecture can be turned into a summary. This
+                A few things are needed before the first lecture can be turned into a summary. This
                 only happens once.
               </Trans>
             ) : (
               <Trans>
-                Just one thing is needed to get started: a folder to keep everything in. This only
-                happens once.
+                Two things are needed to get started: your university and a folder to keep
+                everything in. This only happens once.
               </Trans>
             )}
           </p>
@@ -218,6 +221,17 @@ export default function InitWall({ stored, onDone }: Props) {
 
             <section className="settings-section">
               <h2 className="settings-section-title">
+                <Trans>Your university</Trans>
+              </h2>
+              <MoodleSiteField
+                value={form.moodleSite}
+                // Functional: the probe answers after other fields may have changed.
+                onChange={(v) => setForm((f) => ({ ...f, moodleSite: v }))}
+              />
+            </section>
+
+            <section className="settings-section">
+              <h2 className="settings-section-title">
                 <Trans>Google Drive (optional)</Trans>
               </h2>
               <DriveFields
@@ -237,7 +251,10 @@ export default function InitWall({ stored, onDone }: Props) {
               {/* The wall renders outside `Layout`, so it brings its own provider — the account
                   chip is the only consumer that gets this far. */}
               <AuthStatusProvider>
-                <MoodleAccountField />
+                <MoodleAccountField
+                  site={stored.moodleSite}
+                  switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
+                />
               </AuthStatusProvider>
             </section>
           </>

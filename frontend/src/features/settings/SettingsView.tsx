@@ -17,6 +17,7 @@ import { toast } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
+import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ApiKeyField from './components/ApiKeyField'
@@ -25,6 +26,7 @@ import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
+import MoodleSiteField from './components/MoodleSiteField'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
@@ -53,20 +55,27 @@ function initialForm(stored: Settings, options: ConfigOptions): SettingsForm {
     // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
+    moodleSite: stored.moodleSite ?? '',
   }
 }
+
+// A save held back by an advisory guard: a site switch that drops the connected account, or a data
+// root change that would split the runs in flight.
+type Pending =
+  | { guard: 'site'; patch: SettingsPatch }
+  | { guard: 'dataRoot'; patch: SettingsPatch; runs: string[] }
 
 // Every setting the app has, in one place. See docs/SETTINGS.md.
 export default function SettingsView() {
   const { t } = useLingui()
   const { status } = useRunnerStatus()
   const { setSettings } = useSettingsContext()
+  const { status: account, refresh: refreshAccount } = useAuthStatus()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
   const [saving, setSaving] = useState(false)
-  // A save held back by the advisory data-root guard, with the runs it would split.
-  const [pending, setPending] = useState<{ patch: SettingsPatch; runs: string[] } | null>(null)
+  const [pending, setPending] = useState<Pending | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -104,6 +113,7 @@ export default function SettingsView() {
     dataRootConfirmed: true,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
+    moodleSite: form.moodleSite,
     canStoreApiKeys,
   })
 
@@ -122,6 +132,8 @@ export default function SettingsView() {
         geminiApiKey: '',
         groqApiKey: '',
       })
+      // The auto-downloader dropped the old site's account, so every chip needs a fresh answer.
+      if (next.moodleSite !== undefined) void refreshAccount()
       toast('info', t`Settings saved`)
     } catch (err) {
       // The http client already toasts a connection error, but that toast is deduped per service and
@@ -138,8 +150,14 @@ export default function SettingsView() {
 
   function save() {
     const next = patch()
+    if (next.moodleSite !== undefined && account?.connected && !account.expired) {
+      setPending({ guard: 'site', patch: next })
+    } else guardDataRoot(next)
+  }
+
+  function guardDataRoot(next: SettingsPatch) {
     const runs = runsAtRisk(next, status)
-    if (runs) setPending({ patch: next, runs })
+    if (runs) setPending({ guard: 'dataRoot', patch: next, runs })
     else void commit(next)
   }
 
@@ -239,7 +257,15 @@ export default function SettingsView() {
               <Trans>Downloading recordings</Trans>
             </h2>
             <BrowserPrereqField />
-            <MoodleAccountField />
+            <MoodleSiteField
+              value={form.moodleSite}
+              // Functional: the probe answers after other fields may have changed.
+              onChange={(v) => setForm((f) => f && { ...f, moodleSite: v })}
+            />
+            <MoodleAccountField
+              site={stored.moodleSite}
+              switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
+            />
           </section>
 
           <section className="settings-section">
@@ -313,7 +339,18 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {pending && (
+      {pending?.guard === 'site' && (
+        <ConfirmModal
+          message={t`Switch to another university?`}
+          warning={t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`}
+          onConfirm={() => {
+            setPending(null)
+            guardDataRoot(pending.patch)
+          }}
+          onCancel={() => setPending(null)}
+        />
+      )}
+      {pending?.guard === 'dataRoot' && (
         <ConfirmModal
           message={t`Change the data folder while lectures are being processed?`}
           warning={t`A lecture running now would save some files in the old folder and the rest in the new one.`}

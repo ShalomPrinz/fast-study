@@ -4,7 +4,7 @@ import { AUTO_DOWNLOADER_URL } from '@/services/runtime'
 import type { Kind } from '@/types'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
-// Feature-local boundary for the auto-downloader service (persistent-browser BIU capture).
+// Feature-local boundary for the auto-downloader service (Moodle discovery and capture).
 const autoDownloader = createClient(AUTO_DOWNLOADER_URL, 'auto-downloader service')
 
 export interface AuthStatus {
@@ -33,11 +33,11 @@ export interface Item {
   likelyRecording?: boolean
 }
 
-// HTTP 401 { status: 'reconnect' }: the stored BIU session is gone. Distinct type so the UI
+// HTTP 401 { status: 'reconnect' }: the stored Moodle session is gone. Distinct type so the UI
 // steers to the Reconnect pill instead of a generic error toast.
 export class ReconnectError extends Error {
   constructor() {
-    super('BIU session expired — reconnect the account.')
+    super('Moodle session expired — reconnect the account.')
     this.name = 'ReconnectError'
   }
 }

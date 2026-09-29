@@ -16,6 +16,8 @@ export interface SettingsForm {
   autoRun: AutoRun
   nightlyRun: boolean
   nightlyHour: number
+  // `''` while no savable site is chosen; never sent, since a site is cleared by nothing.
+  moodleSite: string
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
@@ -34,5 +36,8 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
   if (form.nightlyRun !== (stored.nightlyRun ?? true)) patch.nightlyRun = form.nightlyRun
   if (form.nightlyHour !== toNightlyHour(stored.nightlyHour)) patch.nightlyHour = form.nightlyHour
+  if (form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')) {
+    patch.moodleSite = form.moodleSite
+  }
   return patch
 }

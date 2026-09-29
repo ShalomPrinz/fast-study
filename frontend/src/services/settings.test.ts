@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { storeBody, ownerBodies, saveSettings, pickBacking } from './settings'
+import { storeBody, ownerBodies, saveSettings, pickBacking, probeMoodleSite } from './settings'
 
 const STORED = {
   data_root: '/data',
@@ -49,8 +49,16 @@ describe('ownerBodies', () => {
     expect(database).toEqual({ data_root: '/d' })
   })
 
+  it('routes the Moodle site to the auto-downloader alone', () => {
+    expect(ownerBodies({ moodleSite: 'https://lemida.biu.ac.il' })).toEqual({
+      backend: null,
+      database: null,
+      auto: { moodle_site: 'https://lemida.biu.ac.il' },
+    })
+  })
+
   it('gives an empty patch no owner at all', () => {
-    expect(ownerBodies({})).toEqual({ backend: null, database: null })
+    expect(ownerBodies({})).toEqual({ backend: null, database: null, auto: null })
   })
 })
 
@@ -92,6 +100,60 @@ describe('saveSettings', () => {
       'PUT http://localhost:8001/settings',
       'POST http://localhost:8001/config',
     ])
+  })
+})
+
+describe('saveSettings with a site', () => {
+  it('pushes the site to the auto-downloader after the store', async () => {
+    const calls: string[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        calls.push(`${init.method} ${url} ${init.body}`)
+        return ok(STORED)
+      }),
+    )
+
+    await saveSettings({ moodleSite: 'https://lemida.biu.ac.il' })
+
+    expect(calls).toEqual([
+      'PUT http://localhost:8001/settings {"moodle_site":"https://lemida.biu.ac.il"}',
+      'POST http://localhost:3053/config {"moodle_site":"https://lemida.biu.ac.il"}',
+    ])
+  })
+})
+
+describe('probeMoodleSite', () => {
+  it('carries an unsupported answer as a coded failure', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        ok({
+          status: 'unsupported',
+          site: 'https://example.com',
+          code: 'moodle_site_unsupported',
+          params: { site: 'https://example.com', reason: 'not_moodle' },
+        }),
+      ),
+    )
+    const probe = await probeMoodleSite('https://example.com')
+    expect(probe.status).toBe('unsupported')
+    expect(probe.failure?.code).toBe('moodle_site_unsupported')
+    expect(probe.failure?.params).toEqual({ site: 'https://example.com', reason: 'not_moodle' })
+  })
+
+  it('reads a failed request as unverified, never unsupported', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('network down')
+      }),
+    )
+    expect(await probeMoodleSite('https://x.ac.il')).toEqual({
+      status: 'unverified',
+      site: null,
+      failure: null,
+    })
   })
 })
 

@@ -14,7 +14,7 @@ import '@/styles/button.css'
 
 type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing' | 'disconnecting'
 
-// The BIU account as a header fact: one chip saying where the session stands, and the one button that
+// The university account as a header fact: one chip saying where the session stands, and the one button that
 // can move it — Connect pops a headed browser for MFA, Done persists the session, Disconnect drops it.
 export default function AccountStatus() {
   const { t } = useLingui()
@@ -90,7 +90,7 @@ export default function AccountStatus() {
       <>
         <span className="chip chip--ok">
           <Icon icon="check" />
-          <Trans>BIU account connected</Trans>
+          <Trans>University account connected</Trans>
         </span>
         <button
           className="btn btn--ghost"
@@ -101,7 +101,7 @@ export default function AccountStatus() {
         </button>
         {confirmDisconnect && (
           <ConfirmModal
-            message={t`Disconnect the BIU account?`}
+            message={t`Disconnect the university account?`}
             warning={t`Connecting again needs a full login in a browser window, including two-step verification.`}
             onConfirm={handleDisconnect}
             onCancel={() => setConfirmDisconnect(false)}

@@ -21,7 +21,7 @@ import '@/styles/pipeline-card.css'
 import '@/styles/segmented.css'
 import './DownloadsView.css'
 
-// Downloads page: BIU account, course source URLs, discovery. See docs/DOWNLOADS.md.
+// Downloads page: university account, course source URLs, discovery. See docs/DOWNLOADS.md.
 export default function DownloadsView() {
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
