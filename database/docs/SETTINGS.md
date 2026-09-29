@@ -52,8 +52,10 @@ blanks nothing — is left alone; `""` clears.
 Values are written single-quoted with every `\` doubled, because python-dotenv (what every reader of
 these keys uses) unescapes `\\` and `\'` inside single quotes — so `\\nas\share` reads back intact.
 A value containing a single quote or a line break is refused, because that quoting cannot represent
-one. A value ending in `\` still does not survive: python-dotenv reads its closing `\'` as an escaped
-quote whenever a later line holds a `'`, losing that value and the next.
+one. Trailing `\` are stripped (`C:\data\` → `C:\data`, `\\srv\share\` → `\\srv\share`), because
+python-dotenv reads a closing `\\'` as an escaped quote whenever a later line holds a `'`, losing that
+value and the next. A bare drive root keeps one (`C:\\` → `C:\`) since `C:` means the current
+directory on drive C, and is written unquoted, which python-dotenv reads literally.
 
 A value an older build wrote undoubled reads back unchanged unless it held `\\`, which reads as one
 `\` and must be re-entered.

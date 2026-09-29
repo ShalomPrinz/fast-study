@@ -42,6 +42,9 @@ _UNQUOTED_COMMENT = re.compile(r"[^\S\r\n]+#")
 
 _TRUTHY = {"1", "true", "yes", "on"}
 
+# `C:` alone means "the current directory on drive C", so a drive root keeps its one backslash.
+_DRIVE_ROOT = re.compile(r"^[A-Za-z]:$")
+
 # Duplicated on purpose: the backend's copy is AUTO_RUN_MODES in backend/services/settings.py.
 AUTO_RUN_MODES = ("off", "audio", "full")
 
@@ -87,14 +90,17 @@ def _comment(rest: str) -> str:
 
 
 def _quote(value: str) -> str:
-    """Single-quote a value for `.env`, doubling backslashes so a Windows or UNC path reads back intact."""
+    """Single-quote a value for `.env` with backslashes doubled; a drive root like `C:\\` goes unquoted."""
 
-    # python-dotenv unescapes `\\` and `\'` inside single quotes; quotes are refused, so `\` is all to escape.
+    # python-dotenv unescapes `\\` and `\'` inside single quotes, yet reads a closing `\\'` as an escaped
+    # quote; unquoted values are read literally, and `_incoming` leaves only a drive root ending in `\`.
+    if value.endswith("\\"):
+        return value
     return "'" + value.replace("\\", "\\\\") + "'"
 
 
 def _incoming(field: str, value) -> str:
-    """Validate one incoming setting value and return the text to store."""
+    """Validate one incoming setting value and return the text to store, trailing `\\` stripped."""
 
     if not isinstance(value, str):
         raise CodedValueError(
@@ -108,7 +114,10 @@ def _incoming(field: str, value) -> str:
             "setting_may_not_contain_quotes",
             field=field,
         )
-    return text
+    stripped = text.rstrip("\\")
+    if stripped != text and _DRIVE_ROOT.match(stripped):
+        return stripped + "\\"
+    return stripped
 
 
 def _incoming_auto_run(value) -> str:

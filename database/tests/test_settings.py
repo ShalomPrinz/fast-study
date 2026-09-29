@@ -4,6 +4,7 @@ import os
 
 import pytest
 import settings
+from dotenv import dotenv_values
 from fastapi.testclient import TestClient
 
 EXISTING_ENV = """# keys
@@ -358,12 +359,33 @@ def test_backslashes_round_trip(env_file, value):
     assert settings.read_settings()["gdrive_root_folder"] == value
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="python-dotenv reads a closing `\\'` as an escaped quote whenever a later `'` exists",
+@pytest.mark.parametrize(
+    ("value", "stored"),
+    [
+        ("C:\\data\\", "C:\\data"),
+        ("C:\\data\\\\\\", "C:\\data"),
+        ("\\\\server\\share\\", "\\\\server\\share"),
+        ("C:\\", "C:\\"),
+        ("d:\\\\", "d:\\"),
+    ],
 )
-def test_a_trailing_backslash_round_trips(env_file):
-    # Appended keys land in order, so the trailing-backslash value is followed by another quoted line.
-    settings.write_settings({"gdrive_root_folder": "C:\\data\\", "auto_run": "off"})
+def test_trailing_backslashes_are_stripped_except_a_drive_root(env_file, value, stored):
+    # A later quoted line is what made python-dotenv swallow a closing `\'`, so one follows the value.
+    settings.write_settings({"gdrive_root_folder": value, "auto_run": "off"})
 
-    assert settings.read_settings()["gdrive_root_folder"] == "C:\\data\\"
+    assert settings.read_settings()["gdrive_root_folder"] == stored
+    assert settings.read_settings()["auto_run"] == "off"
+
+
+def test_a_drive_root_is_written_unquoted_and_read_literally(env_file):
+    # The line after holds a `'` (a comment), the case where a quoted `'C:\\'` would be lost.
+    env_file.write_text(
+        "GDRIVE_ROOT_FOLDER=old # it's here\nAUTO_RUN='off'\n", encoding="utf-8"
+    )
+    settings.write_settings({"gdrive_root_folder": "C:\\"})
+
+    assert (
+        env_file.read_text(encoding="utf-8").splitlines()[0]
+        == "GDRIVE_ROOT_FOLDER=C:\\ # it's here"
+    )
+    assert dotenv_values(env_file) == {"GDRIVE_ROOT_FOLDER": "C:\\", "AUTO_RUN": "off"}
