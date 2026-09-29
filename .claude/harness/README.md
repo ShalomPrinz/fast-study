@@ -45,7 +45,9 @@ A second `setup.mjs` on a root whose setup is still alive refuses to start; use 
 server it wraps — so nothing is found by port or by `pkill -f`. `--restart` takes a service name as
 recorded (`fake-providers`, `fake-site`, `database`, `backend`, `downloader-server`,
 `downloader-auto`, `frontend`), lays any `ENV=val` over its recorded environment, notes the restart
-in that service's log and waits for its health URL. `--down` also ends a setup still holding the
+in that service's log and waits for its health URL. A restarted `backend` or `database` then gets the
+scratch `.env`'s current settings pushed through `POST /config`, since its recorded environment is
+the boot one — so `hb set`, `hb wall` and a reseed survive it, and an `ENV=val` given still wins. `--down` also ends a setup still holding the
 foreground. Both need the same `--harness` (or `HARNESS_DIR`) the stack was started with.
 
 Re-running against the same harness directory keeps the data the last run left, which is usually

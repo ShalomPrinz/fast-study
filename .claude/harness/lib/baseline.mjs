@@ -179,6 +179,34 @@ export async function wall(paths) {
   await json(`${BACKEND}/config`, 'POST', { groq_api_key: '', gemini_api_key: '' });
 }
 
+/** The scratch `.env` as ENV name → text, quotes the store wraps each value in stripped. */
+function readScratchEnv(paths) {
+  const values = {};
+  for (const line of fs.readFileSync(paths.env, 'utf8').split('\n')) {
+    const match = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/.exec(line.trim());
+    if (match) values[match[1]] = match[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+  return values;
+}
+
+/** Push the scratch `.env` into a restarted backend or database, which booted on the env recorded
+ *  at spawn; a key the wall dropped goes as blank, and an `ENV=val` the restart was given still wins. */
+export async function pushSettings(paths, name, overrides) {
+  const stored = readScratchEnv(paths);
+  if (name === 'backend') {
+    const env = {};
+    for (const key of Object.keys(SETTINGS)) {
+      if (key === 'DATA_ROOT' || key in overrides) continue;
+      if (key in stored) env[key] = stored[key];
+      else if (WALLED.includes(key)) env[key] = '';
+    }
+    await json(`${BACKEND}/config`, 'POST', settingsPatch(env));
+  }
+  if (name === 'database' && stored.DATA_ROOT && !('DATA_ROOT' in overrides)) {
+    await json(`${DATABASE}/config`, 'POST', { data_root: stored.DATA_ROOT });
+  }
+}
+
 /** Put the data root and keys the wall blanked back to the baseline, through the settings routes. */
 export async function unwall(paths) {
   const env = baselineEnv(paths);

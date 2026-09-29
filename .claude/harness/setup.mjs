@@ -25,7 +25,13 @@ import {
   nodeEnv,
   pythonEnv,
 } from './lib/env.mjs';
-import { markSeeded, reseed, writeMoodleToken, writeScratchEnv } from './lib/baseline.mjs';
+import {
+  markSeeded,
+  pushSettings,
+  reseed,
+  writeMoodleToken,
+  writeScratchEnv,
+} from './lib/baseline.mjs';
 import { selfCheck } from './lib/selfcheck.mjs';
 import {
   allocatePorts,
@@ -313,6 +319,8 @@ async function main() {
         .map((arg) => [arg.slice(0, arg.indexOf('=')), arg.slice(arg.indexOf('=') + 1)]),
     );
     await restart(paths, name, overrides);
+    bindPorts(paths);
+    await pushSettings(paths, name, overrides);
     say(`harness: restarted ${name}`);
     return;
   }
