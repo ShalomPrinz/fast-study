@@ -197,6 +197,69 @@ describe('buildHit', () => {
 
     expect(hit.snippet).toBe('a bullet with target inside')
   })
+
+  describe('markdown markup', () => {
+    const highlighted = (hit: { snippet: string; ranges: { start: number; end: number }[] }) =>
+      hit.ranges.map((r) => hit.snippet.slice(r.start, r.end))
+
+    it('drops an ordered-list marker and paired bold, keeping math untouched', () => {
+      const doc = lecture('## סיכום\n1. **מיון מיזוג** — $O(n \\log n)$ בכל מקרה\n2. אחר')
+      const [hit] = hitsFor([doc], 'מיזוג')
+
+      expect(hit.snippet).toBe('מיון מיזוג — $O(n \\log n)$ בכל מקרה')
+      expect(highlighted(hit)).toEqual(['מיזוג'])
+    })
+
+    it('drops bold whose opener sits before the sentence delimiter', () => {
+      const doc = lecture('- **הגדרה:** מיון יציב שומר על הסדר')
+      const [hit] = hitsFor([doc], 'יציב')
+
+      expect(hit.snippet).toBe('מיון יציב שומר על הסדר')
+      expect(highlighted(hit)).toEqual(['יציב'])
+    })
+
+    it('drops paired __ but keeps it intraword and inside math or code', () => {
+      const doc = lecture('> __חשוב__ target in snake__case and $a__b$ and `x__y`')
+      const [hit] = hitsFor([doc], 'target')
+
+      expect(hit.snippet).toBe('חשוב target in snake__case and $a__b$ and `x__y`')
+      expect(highlighted(hit)).toEqual(['target'])
+    })
+
+    it('renders a table row as its cells, not pipes, and keeps a pipe inside math', () => {
+      const doc = lecture(
+        '| אלגוריתם | זיכרון | זמן |\n|---|:---:|---|\n| חיפוש לינארי | אין | $O(|n|)$ |',
+      )
+      const [hit] = hitsFor([doc], 'לינארי')
+
+      expect(hit.snippet).toBe('חיפוש לינארי · אין · $O(|n|)$')
+      expect(highlighted(hit)).toEqual(['לינארי'])
+    })
+
+    it('keeps a whole table row as one window, delimiters in cells included', () => {
+      const doc = lecture('| a. **b** target | c: target |')
+      const [hit] = hitsFor([doc], 'target')
+
+      expect(hit.snippet).toBe('a. b target · c: target')
+      expect(highlighted(hit)).toEqual(['target', 'target'])
+    })
+
+    it('finds nothing in a table separator row', () => {
+      const doc = lecture('| a | b |\n|---|---|\n| c - d | e |')
+
+      expect(findMatches([doc], '-').map((m) => m.index)).toEqual([
+        doc.content.indexOf('c - d') + 2,
+      ])
+    })
+
+    it('leaves markup the query itself contains highlighted as typed', () => {
+      const doc = lecture('- **bold** text')
+      const [hit] = hitsFor([doc], '**bold')
+
+      expect(highlighted(hit)).toEqual(['**bold'])
+      expect(hit.snippet).toBe('**bold text')
+    })
+  })
 })
 
 describe('groupMatches', () => {

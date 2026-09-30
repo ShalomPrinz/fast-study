@@ -33,16 +33,17 @@ whole-word hit for `ספר`.
 ## Snippets
 
 A match's window is **the sentence containing it**, delimiter to delimiter (`.` `?` `!` `;` `:` `…` or a
-line break, which ends a markdown heading, bullet or paragraph), with the line's markdown marker stripped.
-There is **no length clamp**: a character cut lands mid-word, and a whole sentence is the smallest unit
+line break, which ends a markdown heading, bullet or paragraph), with the line's block marker (heading,
+quote, bullet, `1.`) stripped; a table row's window is the whole row. Paired `**`/`__` are dropped — paired
+on the whole line, since a window can hold only the closer — a row's pipes become ` · `, a `|---|` row never
+matches, and `$…$` math, code spans and the match's own characters are left as written. There is **no length clamp**: a character cut lands mid-word, and a whole sentence is the smallest unit
 that reads correctly — so a delimiter-less paragraph renders in full, and no ellipsis is ever needed.
 
 Overlapping windows merge into one snippet with several `<mark>`s — with sentence windows, exactly the
 matches sharing a sentence. Merging never crosses a summary and relies on `findMatches` order.
 
-Whitespace collapses in one pass per segment between matches, accumulating offsets. That is correct only
-because the needle is trimmed, so no whitespace run straddles a match boundary. The view slices at the
-offsets and wraps each range in `<mark>` — never `dangerouslySetInnerHTML`.
+One walk over the window applies those edits and collapses whitespace, recording each match's offsets
+where its characters land. The view slices at the offsets and wraps each range in `<mark>` — never `dangerouslySetInnerHTML`.
 
 ## Rendering and paging
 
