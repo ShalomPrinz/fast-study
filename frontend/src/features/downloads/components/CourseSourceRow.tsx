@@ -96,7 +96,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
                 className="btn btn--ghost"
                 onClick={onDiscover}
                 disabled={discovering || disconnected}
-                title={disconnected ? t`Connect your BIU account first` : undefined}
+                title={disconnected ? t`Connect your university account first` : undefined}
               >
                 {discovering ? t`Loading…` : t`Load recordings`}
               </button>

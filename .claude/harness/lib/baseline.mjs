@@ -5,7 +5,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { AUTO, BACKEND, DATABASE, PROVIDERS, SITE, call, json, saveSettings } from './api.mjs';
-import { BANNER, FAKE_KEYS, FAKE_WSTOKEN, SCRATCH_MARKER, isScratchData } from './env.mjs';
+import {
+  BANNER,
+  FAKE_KEYS,
+  FAKE_MOODLE_SITE,
+  FAKE_WSTOKEN,
+  SCRATCH_MARKER,
+  isScratchData,
+} from './env.mjs';
 import { seed } from './seed.mjs';
 import { snapshot } from './state.mjs';
 
@@ -21,6 +28,7 @@ export const SETTINGS = {
   AUTO_RUN: ['auto_run', 'string'],
   NIGHTLY_RUN: ['nightly_run', 'bool'],
   NIGHTLY_HOUR: ['nightly_hour', 'int'],
+  MOODLE_SITE: ['moodle_site', 'string'],
 };
 
 /** The model the running backend offers first — read live, so the baseline never names one it lacks. */
@@ -40,6 +48,8 @@ export function baselineEnv(paths, geminiModel) {
     // Off: a cron firing mid-sweep would attribute its runs to whatever the agent was doing.
     NIGHTLY_RUN: 'false',
     NIGHTLY_HOUR: '3',
+    // Set, or the first-run wall would block every run until a site is picked.
+    MOODLE_SITE: FAKE_MOODLE_SITE,
   };
 }
 
@@ -71,14 +81,17 @@ export function writeScratchEnv(paths, geminiModel) {
 
 // The Moodle WS token, pre-seeded: the real one arrives through a headed login with MFA by hand,
 // which no offline run can produce. Everything downstream of the token is the real code.
+// It names its site, as a real one does — auto/ reads a token for any other site as absent.
 export function writeMoodleToken(paths) {
-  const tokenPath = path.join(paths.state, 'auth', 'biu-token.json');
+  const tokenPath = path.join(paths.state, 'auth', 'moodle-token.json');
   fs.mkdirSync(path.dirname(tokenPath), { recursive: true });
   fs.writeFileSync(
     tokenPath,
     JSON.stringify({
+      site: FAKE_MOODLE_SITE,
       wstoken: FAKE_WSTOKEN,
       privatetoken: 'harness-private',
+      userid: 7,
       savedAt: new Date().toISOString(),
     }),
   );
@@ -101,9 +114,15 @@ export async function restore(paths) {
   const geminiModel = await backendGeminiModel();
   writeScratchEnv(paths, geminiModel);
   // The store is right already; this reaches the processes, which hold what the last save pushed.
-  const { data_root: dataRoot, ...rest } = settingsPatch(baselineEnv(paths, geminiModel));
+  const {
+    data_root: dataRoot,
+    moodle_site: moodleSite,
+    ...rest
+  } = settingsPatch(baselineEnv(paths, geminiModel));
   await json(`${BACKEND}/config`, 'POST', rest);
   await json(`${DATABASE}/config`, 'POST', { data_root: dataRoot });
+  // Before the token is written: switching site deletes it.
+  await json(`${AUTO}/config`, 'POST', { moodle_site: moodleSite });
   // Disconnect first: it is the only thing that clears the auto-downloader's in-memory "expired".
   await call(`${AUTO}/auth/disconnect`, { method: 'POST' });
   writeMoodleToken(paths);
@@ -165,9 +184,9 @@ export async function markSeeded(paths) {
   fs.writeFileSync(paths.seedSnapshot, JSON.stringify(await snapshot(paths), null, 2));
 }
 
-const WALLED = ['DATA_ROOT', 'GROQ_API_KEY', 'GEMINI_API_KEY'];
+const WALLED = ['DATA_ROOT', 'GROQ_API_KEY', 'GEMINI_API_KEY', 'MOODLE_SITE'];
 
-/** Blank the data root and both keys, so the app opens on its first-run screen. */
+/** Blank the data root, both keys and the Moodle site, so the app opens on its first-run screen. */
 export async function wall(paths) {
   // The store refuses an empty data root, so the blank goes into the scratch file directly.
   const text = fs.readFileSync(paths.env, 'utf8');
@@ -175,7 +194,8 @@ export async function wall(paths) {
     .split('\n')
     .filter((line) => !WALLED.some((name) => line.startsWith(`${name}=`)));
   fs.writeFileSync(paths.env, `${kept.join('\n').trimEnd()}\n`);
-  // The backend loses its keys too, as on a first boot; the database keeps its root in memory.
+  // The backend loses its keys too, as on a first boot; the database keeps its root in memory, and
+  // auto/ its site and token, so unwall (the same site again) is a no-op there.
   await json(`${BACKEND}/config`, 'POST', { groq_api_key: '', gemini_api_key: '' });
 }
 
@@ -189,14 +209,14 @@ function readScratchEnv(paths) {
   return values;
 }
 
-/** Push the scratch `.env` into a restarted backend or database, which booted on the env recorded
+/** Push the scratch `.env` into a restarted backend, database or auto, which booted on the env recorded
  *  at spawn; a key the wall dropped goes as blank, and an `ENV=val` the restart was given still wins. */
 export async function pushSettings(paths, name, overrides) {
   const stored = readScratchEnv(paths);
   if (name === 'backend') {
     const env = {};
     for (const key of Object.keys(SETTINGS)) {
-      if (key === 'DATA_ROOT' || key in overrides) continue;
+      if (key === 'DATA_ROOT' || key === 'MOODLE_SITE' || key in overrides) continue;
       if (key in stored) env[key] = stored[key];
       else if (WALLED.includes(key)) env[key] = '';
     }
@@ -204,6 +224,9 @@ export async function pushSettings(paths, name, overrides) {
   }
   if (name === 'database' && stored.DATA_ROOT && !('DATA_ROOT' in overrides)) {
     await json(`${DATABASE}/config`, 'POST', { data_root: stored.DATA_ROOT });
+  }
+  if (name === 'downloader-auto' && !('MOODLE_SITE' in overrides)) {
+    await json(`${AUTO}/config`, 'POST', { moodle_site: stored.MOODLE_SITE ?? '' });
   }
 }
 

@@ -13,6 +13,7 @@ import {
   FAILURE_ROWS,
   FAKE_COURSE_URL,
   FAKE_KEYS,
+  FAKE_MOODLE_SITE,
   FAKE_WSTOKEN,
   PORTS,
   REPO_ROOT,
@@ -141,6 +142,17 @@ async function theFakesAnswer() {
   return 'fake providers and fake lecture site both answering';
 }
 
+// Through auto/'s real probe, over the shim's redirect: the configured site reads as a usable Moodle.
+async function theSiteProbesSupported() {
+  const { body } = await json(`${AUTO}/site/probe`, 'POST', { url: FAKE_COURSE_URL });
+  if (body.status !== 'supported' || body.site !== FAKE_MOODLE_SITE) {
+    throw new Error(`auto/ probed the fake site as ${JSON.stringify(body)}`);
+  }
+  const { body: auth } = await call(`${AUTO}/auth/status`);
+  if (!auth.connected) throw new Error('auto/ does not read the seeded token as connected');
+  return `${FAKE_COURSE_URL} → supported at ${body.site}, seeded token connected`;
+}
+
 // Through auto/'s real listing, so a row the discovery drops fails here, not mid-sweep.
 async function theFailureRowsAreListed() {
   const { body } = await json(`${AUTO}/list`, 'POST', { courseUrl: FAKE_COURSE_URL });
@@ -214,20 +226,35 @@ async function controlModesSwitchAndSwitchBack() {
       `${SITE}/webservice/rest/server.php?wsfunction=core_webservice_get_site_info&wstoken=${FAKE_WSTOKEN}`,
     );
     if (typeof body === 'string') return body.includes('Bot check') ? 'blocked' : body;
-    return body.errorcode ?? (body.sitename ? 'ok' : JSON.stringify(body));
+    if (body.errorcode) return body.errorcode;
+    if (!body.functions?.some((f) => f.name === 'core_course_get_contents'))
+      return 'missing_function';
+    if (body.downloadfiles !== 1) return 'downloads_disabled';
+    return body.sitename ? 'ok' : JSON.stringify(body);
   };
-  for (const mode of ['blocked', 'invalidtoken']) {
+  for (const mode of ['blocked', 'invalidtoken', 'missing_function', 'downloads_disabled']) {
     await control(SITE, { mode });
     expect(`site ${mode}`, await site(), mode);
     await control(SITE, { mode: 'ok' });
     expect(`site back from ${mode}`, await site(), 'ok');
+  }
+  // The pre-login modes, read through auto/'s own probe, so its verdict is what is proved.
+  const probe = async () => {
+    const { body } = await json(`${AUTO}/site/probe`, 'POST', { url: FAKE_COURSE_URL });
+    return body.status === 'unsupported' ? body.params.reason : body.status;
+  };
+  for (const mode of ['not_moodle', 'mobile_service_off']) {
+    await control(SITE, { mode });
+    expect(`probe ${mode}`, await probe(), mode);
+    await control(SITE, { mode: 'ok' });
+    expect(`probe back from ${mode}`, await probe(), 'supported');
   }
   const toolMs = async () => (await call(`${SITE}/tool?url=selfcheck`)).body.downloadMs;
   await control(SITE, { downloadMs: 1234 });
   expect('site downloadMs', await toolMs(), 1234);
   await control(SITE, { downloadMs: DEFAULT_DOWNLOAD_MS });
   expect('site downloadMs back', await toolMs(), DEFAULT_DOWNLOAD_MS);
-  return 'groq 429|500|empty, gemini 429|500|empty|invalidkey, both slow, a targeted next-1, site blocked|invalidtoken|downloadMs — each on and back off';
+  return 'groq 429|500|empty, gemini 429|500|empty|invalidkey, both slow, a targeted next-1, site blocked|invalidtoken|missing_function|downloads_disabled|not_moodle|mobile_service_off|downloadMs — each on and back off';
 }
 
 // Through the backend's routes and the shim's fake consent, ending connected as the baseline has it.
@@ -286,6 +313,7 @@ async function theAppLoadsFromItsOrigin(paths) {
 const CHECKS = [
   ['fakes up', theFakesAnswer],
   ['fake modes switch and switch back', controlModesSwitchAndSwitchBack],
+  ['the site probes supported', theSiteProbesSupported],
   ['failure rows listed', theFailureRowsAreListed],
   ['escape alarm (python)', pythonEscapeRefused],
   ['escape alarm + site redirect (node)', nodeEscapeRefusedAndSiteRedirected],

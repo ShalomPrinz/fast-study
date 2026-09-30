@@ -1,6 +1,14 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { isConnectionError, RequestError } from '@/services/http'
-import { listRecordings, isBlockedError, isReconnectError } from './autoDownloader'
+import {
+  completeAuth,
+  fetchAuthStatus,
+  listRecordings,
+  isBlockedError,
+  isReconnectError,
+  isUnsupportedError,
+} from './autoDownloader'
+import { loginFailure } from '../utils/downloadErrors'
 
 const { toastConnectionError } = vi.hoisted(() => ({ toastConnectionError: vi.fn() }))
 vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError }))
@@ -83,5 +91,54 @@ describe('any other refusal', () => {
 
     expect(isReconnectError(err)).toBe(false)
     expect(err.code).toBe('internal_error')
+  })
+})
+
+describe('the account with no university configured', () => {
+  it('reads a 409 moodle_site_not_configured as an unconfigured answer, not a failure', async () => {
+    stubFetch(
+      withBody(409, {
+        error: 'No Moodle site is configured.',
+        code: 'moodle_site_not_configured',
+        params: {},
+      }),
+    )
+    expect(await fetchAuthStatus()).toEqual({
+      connected: false,
+      expired: false,
+      unconfigured: true,
+    })
+  })
+
+  it('still throws any other refusal', async () => {
+    stubFetch(withBody(500, { error: 'boom', code: 'internal_error', params: {} }))
+    expect(await fetchAuthStatus().catch((e) => e)).toBeInstanceOf(RequestError)
+  })
+})
+
+describe('a login the site refuses', () => {
+  it('carries moodle_site_unsupported and its reason out of a 422 /auth/complete', async () => {
+    const params = {
+      site: 'https://lemida.example',
+      reason: 'missing_function',
+      function: 'core_course_get_contents',
+    }
+    stubFetch(
+      withBody(422, {
+        status: 'unsupported',
+        message: 'missing function',
+        code: 'moodle_site_unsupported',
+        params,
+      }),
+    )
+    const err = await completeAuth().catch((e) => e)
+    expect(isUnsupportedError(err)).toBe(true)
+    expect(loginFailure(err)).toMatchObject({ code: 'moodle_site_unsupported', params })
+  })
+
+  it('reports a bot challenge during login as the wait, and leaves the rest to the generic path', async () => {
+    stubFetch(withBody(503, { status: 'blocked', message: 'challenge' }))
+    expect(typeof loginFailure(await completeAuth().catch((e) => e))).toBe('string')
+    expect(loginFailure(new RequestError('timed out', 'moodle_login_timeout'))).toBeNull()
   })
 })

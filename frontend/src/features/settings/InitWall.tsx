@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusContext'
 import { failureNode } from '@/shared/utils/failure'
@@ -18,6 +18,7 @@ import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
+import MoodleSiteField from './components/MoodleSiteField'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
@@ -62,8 +63,11 @@ function KeyGuide({ id }: { id: string }) {
 
 // The wall in front of the app: until the required entries are filled there is no sidebar, no route
 // and no way past. See docs/SETTINGS.md.
-export default function InitWall({ stored, onDone }: Props) {
+export default function InitWall({ stored: initial, onDone }: Props) {
   const { t } = useLingui()
+  // The store as this wall last wrote it: a confirmed site is saved ahead of the rest of the form.
+  const [stored, setStored] = useState(initial)
+  const siteSaves = useRef(Promise.resolve())
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<FormState>({
     geminiApiKey: '',
@@ -78,6 +82,7 @@ export default function InitWall({ stored, onDone }: Props) {
     autoRun: toAutoRun(stored.autoRun),
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
+    moodleSite: stored.moodleSite ?? '',
   })
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -105,6 +110,7 @@ export default function InitWall({ stored, onDone }: Props) {
     dataRootConfirmed: confirmed,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
+    moodleSite: form.moodleSite,
     canStoreApiKeys,
   })
 
@@ -112,6 +118,8 @@ export default function InitWall({ stored, onDone }: Props) {
     setSaving(true)
     setFailure(null)
     try {
+      // A site save still in flight lands first; resending the same site is a no-op for its owner.
+      await siteSaves.current
       onDone(await saveSettings(buildPatch(form, stored)))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
@@ -119,6 +127,18 @@ export default function InitWall({ stored, onDone }: Props) {
     } finally {
       setSaving(false)
     }
+  }
+
+  // A site the probe confirms is written at once, so the account can be connected on the wall. Saves
+  // are chained, so a quick second pick can never land before the first and leave it stored.
+  function saveSite(site: string) {
+    siteSaves.current = siteSaves.current.then(async () => {
+      try {
+        setStored(await saveSettings({ moodleSite: site }))
+      } catch (err) {
+        setFailure(failureNode(err))
+      }
+    })
   }
 
   function keyField(provider: Provider | undefined, field: 'geminiApiKey' | 'groqApiKey') {
@@ -148,13 +168,13 @@ export default function InitWall({ stored, onDone }: Props) {
           <p className="init-wall-lede">
             {canStoreApiKeys ? (
               <Trans>
-                Three things are needed before the first lecture can be turned into a summary. This
+                A few things are needed before the first lecture can be turned into a summary. This
                 only happens once.
               </Trans>
             ) : (
               <Trans>
-                Just one thing is needed to get started: a folder to keep everything in. This only
-                happens once.
+                Two things are needed to get started: your university and a folder to keep
+                everything in. This only happens once.
               </Trans>
             )}
           </p>
@@ -218,6 +238,18 @@ export default function InitWall({ stored, onDone }: Props) {
 
             <section className="settings-section">
               <h2 className="settings-section-title">
+                <Trans>Your university</Trans>
+              </h2>
+              <MoodleSiteField
+                value={form.moodleSite}
+                // Functional: the probe answers after other fields may have changed.
+                onChange={(v) => setForm((f) => ({ ...f, moodleSite: v }))}
+                onSupported={saveSite}
+              />
+            </section>
+
+            <section className="settings-section">
+              <h2 className="settings-section-title">
                 <Trans>Google Drive (optional)</Trans>
               </h2>
               <DriveFields
@@ -237,7 +269,10 @@ export default function InitWall({ stored, onDone }: Props) {
               {/* The wall renders outside `Layout`, so it brings its own provider — the account
                   chip is the only consumer that gets this far. */}
               <AuthStatusProvider>
-                <MoodleAccountField />
+                <MoodleAccountField
+                  site={stored.moodleSite}
+                  switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
+                />
               </AuthStatusProvider>
             </section>
           </>

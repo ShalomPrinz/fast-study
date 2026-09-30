@@ -67,9 +67,9 @@ const RecordingRow = memo(function RecordingRow({
     setName,
     setKind,
   } = useRowEdit(item, edit, course)
-  // The actual downloads (one bar each) grouped by this row's `ref`; a running download re-attaches
-  // for free after a reload. Subscribed per ref, so another row's job change doesn't re-render this one.
-  const jobs = useRowJobs(item.ref)
+  // The actual downloads (one bar each) of this row's `ref` in this course; a running download
+  // re-attaches after a reload. Subscribed per row, so another row's job change doesn't re-render this one.
+  const jobs = useRowJobs(course, item.ref)
   // Subscribed per ref, so expanding one playlist leaves every other row alone. The state itself is
   // SectionGroup's — the bulk queue needs the same children cache.
   const expand = useRowExpansion(item.ref)

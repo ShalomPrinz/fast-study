@@ -25,11 +25,12 @@ function stubFetch(t, { status = 200, contentType = 'application/json', body = n
   });
 }
 
+const SITE = 'https://moodle.test';
 const CAPTCHA_HTML = '<!DOCTYPE html><html><head><title>Radware Captcha Page</title></head></html>';
 
 test('an HTML challenge page under HTTP 200 is blocked, not a parse error', async (t) => {
   stubFetch(t, { contentType: 'text/html; charset=utf-8', body: CAPTCHA_HTML });
-  const err = await getCourseContents('tok', '108980').then(
+  const err = await getCourseContents(SITE, 'tok', '108980').then(
     () => null,
     (e) => e,
   );
@@ -42,7 +43,7 @@ test('an HTML challenge page under HTTP 200 is blocked, not a parse error', asyn
 
 test('a redirect to an HTML page is blocked', async (t) => {
   stubFetch(t, { status: 302, contentType: 'text/html' });
-  const err = await getCourseContents('tok', '108980').then(
+  const err = await getCourseContents(SITE, 'tok', '108980').then(
     () => null,
     (e) => e,
   );
@@ -52,7 +53,7 @@ test('a redirect to an HTML page is blocked', async (t) => {
 
 test('a missing content-type is blocked and says so', async (t) => {
   stubFetch(t, { contentType: null, body: '{}' });
-  const err = await getCourseContents('tok', '108980').then(
+  const err = await getCourseContents(SITE, 'tok', '108980').then(
     () => null,
     (e) => e,
   );
@@ -62,7 +63,7 @@ test('a missing content-type is blocked and says so', async (t) => {
 
 test('a JSON answer still parses', async (t) => {
   stubFetch(t, { body: JSON.stringify([{ section: 1, modules: [] }]) });
-  assert.deepEqual(await getCourseContents('tok', '108980'), [{ section: 1, modules: [] }]);
+  assert.deepEqual(await getCourseContents(SITE, 'tok', '108980'), [{ section: 1, modules: [] }]);
 });
 
 test('a WS exception body still throws WsError, unaffected by the JSON gate', async (t) => {
@@ -73,7 +74,7 @@ test('a WS exception body still throws WsError, unaffected by the JSON gate', as
       message: 'x',
     }),
   });
-  const err = await getCourseContents('dead', '108980').then(
+  const err = await getCourseContents(SITE, 'dead', '108980').then(
     () => null,
     (e) => e,
   );

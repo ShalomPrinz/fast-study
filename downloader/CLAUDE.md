@@ -43,7 +43,7 @@ The extension has two pieces; the server they hand off to is covered separately 
 | Package   | Port | What it is                                                                                                   | Docs                                   |
 | --------- | ---- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
 | `server/` | 3052 | express helper: runs every download as a job (curl replay, yt-dlp, plain fetch), owns section bulk runs, forwards files to the database | [server/CLAUDE.md](server/CLAUDE.md) |
-| `auto/`   | 3053 | Playwright service: Moodle WS token auth, course discovery, and resolving a row into download targets — a separate package so Playwright never leaks into `server/` | [auto/CLAUDE.md](auto/CLAUDE.md) |
+| `auto/`   | 3053 | Playwright service: the configured Moodle site's checks and WS token auth, course discovery, and resolving a row into download targets — a separate package so Playwright never leaks into `server/` | [auto/CLAUDE.md](auto/CLAUDE.md) |
 
 ## Service edges
 
@@ -84,5 +84,5 @@ HTTP body or a job message.
 - Per-page isolation is by **exact URL match** (full URL including query and hash), not by domain or path prefix — navigating anywhere else in the same tab hides prior captures.
 - Server-specific conventions (argv-array spawn, always `video.mp4`, database-allocated material names, name canonicalization) live in [server/CLAUDE.md](server/CLAUDE.md).
 - Only pure logic is unit-tested (`npm --prefix downloader/auto test`, `npm --prefix downloader/server test`, node's built-in runner, no deps); the download paths depend on live tokens, Referer/Origin checks, and yt-dlp behavior no diff review can predict — exercise the real _endpoint_, but never against real _data_.
-- **Never make a live request to `lemida.biu.ac.il` (or any university host) to verify a change.** Exercise the code against fixtures and a stubbed `globalThis.fetch` in `auto/test/*.test.js`, plus curls against the local services. Traffic that looks automated trips the Radware block for minutes, which then breaks the user's own real downloads ([MOODLE.md](auto/docs/MOODLE.md)).
+- **Never make a live request to a university host (`lemida.biu.ac.il` or any configured site) to verify a change** — the site probe included. Exercise the code against fixtures and a stubbed `globalThis.fetch` in `auto/test/*.test.js`, plus curls against the local services. Traffic that looks automated trips a bot manager (BIU's Radware) for minutes, which then breaks the user's own real downloads ([MOODLE.md](auto/docs/MOODLE.md)).
 - A transient upstream refusal — bot-protection challenge, rate limit, temporary block — gets a typed error and a distinct HTTP status, never a retry loop, backoff or client-side throttling. `WsBlockedError` → `503 {status:'blocked', message}` is the shape to reuse: waiting out a block inside a request only holds the connection open, and throttling every normal call to avoid a rare one is the wrong trade.

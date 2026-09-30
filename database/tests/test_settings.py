@@ -389,3 +389,10 @@ def test_a_drive_root_is_written_unquoted_and_read_literally(env_file):
         == "GDRIVE_ROOT_FOLDER=C:\\ # it's here"
     )
     assert dotenv_values(env_file) == {"GDRIVE_ROOT_FOLDER": "C:\\", "AUTO_RUN": "off"}
+
+
+def test_moodle_site_round_trips_to_its_env_key(env_file):
+    settings.write_settings({"moodle_site": "https://x.ac.il/moodle"})
+
+    assert dotenv_values(env_file)["MOODLE_SITE"] == "https://x.ac.il/moodle"
+    assert settings.read_settings()["moodle_site"] == "https://x.ac.il/moodle"

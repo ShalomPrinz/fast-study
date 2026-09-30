@@ -3,6 +3,7 @@ import type { Course, FileInfo, FileStatus, Lecture } from '@/types'
 import type { DownloadJob, RunTarget } from '../services/downloadServer'
 import { groupJobsByRef } from '../contexts/DownloadJobsContext'
 import {
+  collidingNames,
   notStartedCount,
   runningCount,
   summarize,
@@ -126,6 +127,11 @@ describe('targetStatus', () => {
     expect(status(target({ disposition: 'pending' }), tree([]), jobs)).toBe('pending')
   })
 
+  it("ignores another course's jobs under the same ref", () => {
+    const jobs = groupJobsByRef([job({ id: 'a', course: 'Logic', status: 'error' })])
+    expect(status(target(), tree([]), jobs)).toBe('in-flight')
+  })
+
   it('never claims an unprobed unknown row landed', () => {
     expect(status(target({ media: 'unknown' }), tree([node('Lecture 1', true)]))).toBe('in-flight')
   })
@@ -138,11 +144,11 @@ describe('runningCount', () => {
       job({ id: 'a', status: 'running' }),
       job({ id: 'b', ref: 'r2', lecture: 'Lecture 2', status: 'done' }),
     ])
-    expect(runningCount(targets, jobs)).toBe(1)
+    expect(runningCount(targets, 'Algebra', jobs)).toBe(1)
   })
 
   it('counts a row with no evidence nowhere — that is the fallback that used to wedge', () => {
-    expect(runningCount([target()], NO_JOBS)).toBe(0)
+    expect(runningCount([target()], 'Algebra', NO_JOBS)).toBe(0)
   })
 
   it('counts a split row once, however many of its clips are running', () => {
@@ -150,7 +156,36 @@ describe('runningCount', () => {
       job({ id: 'a', lecture: 'Lecture 1.1' }),
       job({ id: 'b', lecture: 'Lecture 1.2' }),
     ])
-    expect(runningCount([target()], jobs)).toBe(1)
+    expect(runningCount([target()], 'Algebra', jobs)).toBe(1)
+  })
+})
+
+describe('collidingNames', () => {
+  it('names a lecture two about-to-download rows share', () => {
+    const targets = [
+      target({ ref: 'r1', name: 'Lecture 50', disposition: 'pending' }),
+      target({ ref: 'r2', name: 'Lecture 50', disposition: 'pending', media: 'unknown' }),
+      target({ ref: 'r3', name: 'Lecture 3', disposition: 'pending' }),
+    ]
+    expect(collidingNames(targets)).toEqual(['Lecture 50'])
+  })
+
+  it('lets the same name through across kinds, for materials, and for rows the run skips', () => {
+    const targets = [
+      target({ ref: 'r1', disposition: 'pending' }),
+      target({ ref: 'r2', disposition: 'pending', kind: 'recitation' }),
+      target({ ref: 'r3', disposition: 'pending', media: 'material' }),
+      target({ ref: 'r4', disposition: 'skipped' }),
+      target({ ref: 'r5', disposition: 'unsupported', media: 'unsupported' }),
+    ]
+    expect(collidingNames(targets)).toEqual([])
+  })
+})
+
+describe('runningCount scope', () => {
+  it("counts no row running on another course's job", () => {
+    const jobs = groupJobsByRef([job({ id: 'a', course: 'Logic' })])
+    expect(runningCount([target()], 'Algebra', jobs)).toBe(0)
   })
 })
 

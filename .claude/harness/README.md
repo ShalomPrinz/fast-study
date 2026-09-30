@@ -46,8 +46,8 @@ server it wraps — so nothing is found by port or by `pkill -f`. `--restart` ta
 recorded (`fake-providers`, `fake-site`, `database`, `backend`, `downloader-server`,
 `downloader-auto`, `frontend`), lays any `ENV=val` over its recorded environment, notes the restart
 in that service's log and waits for its health URL. A restarted `backend` or `database` then gets the
-scratch `.env`'s current settings pushed through `POST /config`, since its recorded environment is
-the boot one — so `hb set`, `hb wall` and a reseed survive it, and an `ENV=val` given still wins. `--down` also ends a setup still holding the
+scratch `.env`'s current settings pushed through `POST /config` (`downloader-auto` too, for
+`MOODLE_SITE`), since its recorded environment is the boot one — so `hb set`, `hb wall` and a reseed survive it, and an `ENV=val` given still wins. `--down` also ends a setup still holding the
 foreground. Both need the same `--harness` (or `HARNESS_DIR`) the stack was started with.
 
 Re-running against the same harness directory keeps the data the last run left, which is usually
@@ -57,8 +57,9 @@ baseline again.
 ## The baseline, and one course per flow
 
 A seed wipes both scratch roots and restores everything a flow can change: the scratch `.env` (fake
-keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, nightly off at hour 3) pushed
-to the running backend and database through `POST /config`, the Moodle token (after
+keys, the backend's first `/config/options` model, Drive on under `Harness`, `AUTO_RUN=full`, nightly off at hour 3,
+`MOODLE_SITE=https://lemida.biu.ac.il`) pushed to the running backend, database and auto-downloader through
+`POST /config`, the Moodle token (after
 `/auth/disconnect`, the only thing that clears the auto-downloader's in-memory "expired"), both
 fakes' modes, the fake Drive store, and Drive **connected**. It then seeds, through `database/`'s
 routes, one course per flow so parallel agents on one stack never share data. The courses are
@@ -90,7 +91,7 @@ node .claude/harness/hb.mjs url [name]        # this stack's URLs, or one of the
 node .claude/harness/hb.mjs set AUTO_RUN=off  # save settings by .env name, as the settings screen does
 node .claude/harness/hb.mjs reseed            # the baseline and the flow courses, stack left running
 node .claude/harness/hb.mjs state             # save <harness>/state.json, print what moved since the seed
-node .claude/harness/hb.mjs wall              # blank DATA_ROOT and both keys: reload shows the first-run screen
+node .claude/harness/hb.mjs wall              # blank DATA_ROOT, both keys and MOODLE_SITE: reload shows the first-run screen
 node .claude/harness/hb.mjs unwall            # put them back to the baseline
 node .claude/harness/hb.mjs add-material hb-nav 'שיעור 3' [file.pdf]  # attach a material, notify
 node .claude/harness/hb.mjs rm-lecture hb-pipeline 'שיעור 4'          # delete its folder, notify
@@ -133,8 +134,9 @@ is appended across setup runs on one harness directory, so pass `--since` with t
 work started. Both shims write it: `<time> <service> REFUSED host:port` for a refusal and, from Node,
 `REDIRECT` for a connection sent to the fake site.
 
-`set` writes the store with `PUT /settings`, then the owner's `POST /config`, so the running service
-applies it at once. Settings are global: `AUTO_RUN=off` (`off | audio | full`) stops every video
+`set` writes the store with `PUT /settings`, then the owner's `POST /config` (`MOODLE_SITE` goes to
+the auto-downloader, which forgets its token when the site changes), so the running service applies
+it at once. Settings are global: `AUTO_RUN=off` (`off | audio | full`) stops every video
 arrival from queuing a run, for every agent on this stack, so an agent sharing a stack sets it once
 for everyone rather than for itself.
 
@@ -143,9 +145,10 @@ a setup run): fake modes, stored settings (keys as set/unset only), Drive and Mo
 `hb lock` globs, and
 each course's lectures with the files they hold.
 
-`wall` edits the scratch `.env` directly for `DATA_ROOT`, because the store refuses an empty root,
-and posts blank keys to the backend. The database keeps serving its root in memory, which a real
-first boot would not have.
+`wall` edits the scratch `.env` directly for `DATA_ROOT` and `MOODLE_SITE`, because the store refuses
+an empty root, and posts blank keys to the backend. The database keeps serving its root in memory and
+the auto-downloader its site and token, which a real first boot would not have — so `unwall` puts
+the same site back without a reconnect.
 
 A new helper is one entry in `COMMANDS` in `hb.mjs`, with its logic in `lib/`.
 
@@ -215,7 +218,7 @@ site or real data cannot be drawn from here.
 | Drive OAuth consent | a pending → connected flow with no browser and no account            | `services.google_auth`, four functions replaced |
 | The lecture site    | `fakes/site.mjs` — Moodle WS, pluginfile PDFs, media, over http + TLS | every non-loopback socket, redirected          |
 | `curl`, `yt-dlp`    | `fakes/tool.mjs` — writes the fixture the URL names (PDF or video) in slices, asking the fake site only for its live settings | first on `PATH`, where `toolPath()` looks      |
-| The Moodle login    | a pre-seeded WS token in the state root                               | `state/auth/biu-token.json`                    |
+| The Moodle login    | a pre-seeded WS token for the fake site, naming it as its `site`      | `state/auth/moodle-token.json`                 |
 
 The two shims (`shim/sitecustomize.py` on `PYTHONPATH`, `shim/node.mjs` through `NODE_OPTIONS`)
 patch imported modules from outside. **No production file is edited, and none may be** — a mock
@@ -230,7 +233,8 @@ friends as ESM named bindings, which a module-object patch cannot reach.
 `setup.mjs` aborts unless all of these hold, because a silently broken shim costs more than no
 harness: the fakes answer; a Python process and a Node process are both refused off loopback, the
 Python refusal logged in `network.log`, while
-the fake site still serves a redirected `https://lemida.biu.ac.il`; both services log the harness
+the fake site still serves a redirected `https://lemida.biu.ac.il`, and auto/'s `POST /site/probe`
+reads it as `supported` with the seeded token connected; both services log the harness
 keys (the repo `.env` lost the `load_dotenv` race); a settings save lands in the scratch `.env` and
 leaves the real one untouched; every `/control` mode of both fakes, a targeted rule and a draining
 one each change the answer they should and switch back; Drive disconnects and reconnects through
@@ -254,10 +258,17 @@ curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
 curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
-curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | invalidtoken
+curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
 curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, every /die/ re-armed
 ```
+
+The site's last four modes are a site auto/ must refuse. `not_moodle` answers the probe's
+`service-nologin.php` with a 404 page and `mobile_service_off` with `enablemobilewebservice: 0` — the
+pre-login probe (the settings field) says `unsupported`. `missing_function` drops
+`core_course_get_contents` from site info and `downloads_disabled` sets `downloadfiles: 0`, which only
+the post-login check reads — and the headed login is a blind spot here, so those two are proved by
+auto/'s unit tests, not a click. An unknown mode is answered 400.
 
 A provider's rule is `{mode, match, times}`; a bare string is `{mode}`, every call. Nothing the
 SDKs send names the lecture, so the shim stamps each call a pipeline step or an overview makes with

@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import { DEFAULT_DOWNLOAD_MS, FAILURE_ROWS } from '../lib/env.mjs';
+import { DEFAULT_DOWNLOAD_MS, FAILURE_ROWS, FAKE_MOODLE_SITE } from '../lib/env.mjs';
 
 const HARNESS = process.env.HARNESS_DIR;
 const PORT = Number(process.env.HARNESS_SITE_PORT);
@@ -16,15 +16,25 @@ const TOKEN = process.env.HARNESS_WSTOKEN;
 const VIDEO = path.join(HARNESS, 'fixtures', 'video.mp4');
 const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
 
-// 'ok' | 'blocked' (bot-protection challenge) | 'invalidtoken' — the two upstream refusals the
-// downloader has typed errors for, on tap.
+// 'blocked' (bot-protection challenge) and 'invalidtoken' are the two upstream refusals the
+// downloader has typed errors for; the other four are a site it must refuse — `not_moodle` and
+// `mobile_service_off` at the pre-login probe, `missing_function` and `downloads_disabled` at login.
+const MODES = [
+  'ok',
+  'blocked',
+  'invalidtoken',
+  'not_moodle',
+  'mobile_service_off',
+  'missing_function',
+  'downloads_disabled',
+];
 let mode = 'ok';
 // The fake tool's live settings live here, beside the URLs they fake, so `/control` changes a
 // download's speed without restarting the downloader; `died` makes each /die/ URL fail only once.
 let downloadMs = DEFAULT_DOWNLOAD_MS;
 const died = new Set();
 
-const SITE = 'https://lemida.biu.ac.il';
+const SITE = FAKE_MOODLE_SITE;
 
 // One course, shaped exactly like core_course_get_contents: sections of modules, names as HTML.
 // It carries a row per path the downloader can take — direct mp4, YouTube, PDF resource, a plain
@@ -163,7 +173,11 @@ function handle(req, res) {
         downloadMs = DEFAULT_DOWNLOAD_MS;
         died.clear();
       }
-      if (body.mode) mode = body.mode;
+      if (body.mode) {
+        if (!MODES.includes(body.mode))
+          return json(res, { error: `mode: one of ${MODES.join(' | ')}` }, 400);
+        mode = body.mode;
+      }
       if (body.downloadMs !== undefined) {
         const ms = Number(body.downloadMs);
         if (!Number.isFinite(ms) || ms < 0) return json(res, { error: 'downloadMs: ms ≥ 0' }, 400);
@@ -183,6 +197,53 @@ function handle(req, res) {
 
   if (mode === 'blocked') return challenge(res);
 
+  // The no-login AJAX endpoint the pre-login probe asks; `not_moodle` is a web server with no such
+  // script, answering the 404 page any non-Moodle site would.
+  if (route === '/lib/ajax/service-nologin.php') {
+    if (mode === 'not_moodle') {
+      const body = '<!doctype html><title>404</title><p>harness: not a Moodle site.';
+      res.writeHead(404, {
+        'content-type': 'text/html; charset=utf-8',
+        'content-length': Buffer.byteLength(body),
+      });
+      return res.end(body);
+    }
+    const parts = [];
+    req.on('data', (part) => parts.push(part));
+    return req.on('end', () => {
+      let calls;
+      try {
+        calls = JSON.parse(Buffer.concat(parts).toString('utf8'));
+      } catch {
+        calls = [];
+      }
+      json(
+        res,
+        (Array.isArray(calls) ? calls : []).map((call) =>
+          call?.methodname === 'tool_mobile_get_public_config'
+            ? {
+                error: false,
+                data: {
+                  wwwroot: SITE,
+                  sitename: 'harness Moodle',
+                  enablemobilewebservice: mode === 'mobile_service_off' ? 0 : 1,
+                  maintenanceenabled: 0,
+                  launchurl: `${SITE}/admin/tool/mobile/launch.php`,
+                  warnings: [],
+                },
+              }
+            : {
+                error: true,
+                exception: {
+                  errorcode: 'servicerequireslogin',
+                  message: `harness fake site has no public ${call?.methodname}`,
+                },
+              },
+        ),
+      );
+    });
+  }
+
   if (route === '/webservice/rest/server.php') {
     const fn = url.searchParams.get('wsfunction');
     const token = url.searchParams.get('wstoken');
@@ -194,13 +255,19 @@ function handle(req, res) {
       });
     }
     if (fn === 'core_webservice_get_site_info') {
+      const functions = [
+        'core_webservice_get_site_info',
+        'core_course_get_contents',
+        'tool_mobile_get_autologin_key',
+      ].filter((name) => mode !== 'missing_function' || name !== 'core_course_get_contents');
       return json(res, {
         sitename: 'harness Moodle',
+        siteurl: SITE,
         username: 'student',
         userid: 7,
-        downloadfiles: 1,
+        downloadfiles: mode === 'downloads_disabled' ? 0 : 1,
         release: '4.4 (Build: harness)',
-        functions: [],
+        functions: functions.map((name) => ({ name, version: '2024042200' })),
       });
     }
     if (fn === 'core_course_get_contents') return json(res, courseContents());

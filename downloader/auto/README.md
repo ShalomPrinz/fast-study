@@ -44,8 +44,10 @@ inside the opaque `ref` (base64url of the internal `Recording`, see `src/lib/ref
 Login involves MFA, which can't be automated — but you only do it once:
 
 - **First run / expired token:** a **headed** browser opens so you complete the
-  Microsoft login + MFA by hand **once**; the Moodle Web-Services token is saved
-  to `auth/biu-token.json` under the state root.
+  university login + MFA by hand **once**; the Moodle Web-Services token is saved
+  to `auth/moodle-token.json` under the state root. The university's Moodle site
+  is a setting (`MOODLE_SITE`, pushed live through `POST /config`); changing it
+  forgets the token.
 - **Every run after:** that token drives Moodle's stateless REST API with no
   browser and no re-MFA (Moodle default lifetime: 12 weeks). When it expires the
   UI shows Reconnect and one more MFA re-grabs it.

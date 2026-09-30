@@ -9,12 +9,15 @@ import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import { toastFailure } from '@/shared/utils/failure'
+import { toast } from '@/services/toaster'
+import { serviceErrorNode } from '@/shared/components/ServiceError'
+import { loginFailure } from '@/features/downloads/utils/downloadErrors'
 import '@/styles/chip.css'
 import '@/styles/button.css'
 
 type Phase = 'loading' | 'idle' | 'connecting' | 'pending' | 'completing' | 'disconnecting'
 
-// The BIU account as a header fact: one chip saying where the session stands, and the one button that
+// The university account as a header fact: one chip saying where the session stands, and the one button that
 // can move it — Connect pops a headed browser for MFA, Done persists the session, Disconnect drops it.
 export default function AccountStatus() {
   const { t } = useLingui()
@@ -45,8 +48,11 @@ export default function AccountStatus() {
       await completeAuth()
       await refresh()
     } catch (err) {
-      // The service says why (timed out, window closed, nothing pending), so its code is the toast.
-      toastFailure(err)
+      // The service says why (timed out, window closed, nothing pending, a site it refuses).
+      const failure = loginFailure(err)
+      if (typeof failure === 'string') toast('error', failure)
+      else if (failure) toast('error', serviceErrorNode(failure))
+      else toastFailure(err)
     }
     setPhase('idle')
   }
@@ -84,13 +90,22 @@ export default function AccountStatus() {
     )
   }
 
+  // Nothing to connect to: the chip says what is missing, and Settings is where it is chosen.
+  if (status?.unconfigured) {
+    return (
+      <span className="chip chip--neutral">
+        <Trans>no university chosen</Trans>
+      </span>
+    )
+  }
+
   const expired = status?.expired
   if (status?.connected && !expired) {
     return (
       <>
         <span className="chip chip--ok">
           <Icon icon="check" />
-          <Trans>BIU account connected</Trans>
+          <Trans>University account connected</Trans>
         </span>
         <button
           className="btn btn--ghost"
@@ -101,7 +116,7 @@ export default function AccountStatus() {
         </button>
         {confirmDisconnect && (
           <ConfirmModal
-            message={t`Disconnect the BIU account?`}
+            message={t`Disconnect the university account?`}
             warning={t`Connecting again needs a full login in a browser window, including two-step verification.`}
             onConfirm={handleDisconnect}
             onCancel={() => setConfirmDisconnect(false)}

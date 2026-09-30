@@ -13,7 +13,7 @@ function endsWithMp4(url) {
 const MP4_WAIT_MS = 20000;
 
 /**
- * BIU Moodle `videostream` module: an in-site recorded lecture behind its own view.php page.
+ * Moodle `videostream` plugin module: an in-site recorded lecture behind its own view.php page.
  * Listing is metadata-only; the .mp4 is sniffed fresh at download time (tokens are short-lived).
  */
 export class VideostreamExtractor extends VideoExtractor {

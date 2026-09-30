@@ -8,7 +8,7 @@ request. Model in `src/browser/browserSession.js`.
   timer; an extractor's `browserProfile` picks the profile (`'plain'` default, `ZoomExtractor` →
   `'zoom'`).
 - **No cookies are injected.** The `'plain'` profile authenticates on demand via Moodle autologin
-  ([AUTH.md](AUTH.md)); the `'zoom'` profile is passcode-gated, never BIU-auth.
+  ([AUTH.md](AUTH.md)); the `'zoom'` profile is passcode-gated, never Moodle-auth.
 - **`withLock(fn)`** serializes only the quick navigate+sniff, so one call's navigation can't abort
   another's; the heavy download runs afterward in `server/`, so downloads still overlap. `open()` is
   deliberately outside the lock — a no-op once open, and a shared lock risks deadlock.

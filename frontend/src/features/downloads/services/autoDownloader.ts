@@ -1,15 +1,17 @@
 import type { Client } from '@/services/http'
-import { createClient, failureError } from '@/services/http'
+import { createClient, failureError, RequestError } from '@/services/http'
 import { AUTO_DOWNLOADER_URL } from '@/services/runtime'
 import type { Kind } from '@/types'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
-// Feature-local boundary for the auto-downloader service (persistent-browser BIU capture).
+// Feature-local boundary for the auto-downloader service (Moodle discovery and capture).
 const autoDownloader = createClient(AUTO_DOWNLOADER_URL, 'auto-downloader service')
 
 export interface AuthStatus {
   connected: boolean
   expired: boolean
+  // No university is configured in the auto-downloader, so there is no account to connect.
+  unconfigured?: boolean
 }
 
 // Which file the item lands on disk as; the destination is derived server-side from `ref`.
@@ -33,11 +35,11 @@ export interface Item {
   likelyRecording?: boolean
 }
 
-// HTTP 401 { status: 'reconnect' }: the stored BIU session is gone. Distinct type so the UI
+// HTTP 401 { status: 'reconnect' }: the stored Moodle session is gone. Distinct type so the UI
 // steers to the Reconnect pill instead of a generic error toast.
 export class ReconnectError extends Error {
   constructor() {
-    super('BIU session expired — reconnect the account.')
+    super('Moodle session expired — reconnect the account.')
     this.name = 'ReconnectError'
   }
 }
@@ -154,8 +156,16 @@ export async function saveZoomPasscode({
   })
 }
 
+// A 409 `moodle_site_not_configured` is an answer, not a failure: there is simply no site yet.
 export async function fetchAuthStatus(): Promise<AuthStatus> {
-  return autoDownloader.get<AuthStatus>('/auth/status')
+  try {
+    return await autoDownloader.get<AuthStatus>('/auth/status')
+  } catch (err) {
+    if (err instanceof RequestError && err.code === 'moodle_site_not_configured') {
+      return { connected: false, expired: false, unconfigured: true }
+    }
+    throw err
+  }
 }
 
 // Launches a headed browser on the host for MFA; returns immediately.
@@ -163,9 +173,10 @@ export async function connectAuth(): Promise<{ status: string }> {
   return autoDownloader.post<{ status: string }>('/auth/connect')
 }
 
-// Persists the storageState and closes the headed browser once the user finishes login.
+// Persists the token once the user finishes login. A site the post-login check refuses throws an
+// `UnsupportedError` carrying `moodle_site_unsupported`, a bot challenge a `BlockedError`.
 export async function completeAuth(): Promise<{ connected: boolean }> {
-  return autoDownloader.post<{ connected: boolean }>('/auth/complete')
+  return postReconnectAware<{ connected: boolean }>(autoDownloader, '/auth/complete', {})
 }
 
 // Deletes the stored session locally; reconnecting costs a full headed MFA round-trip. Idempotent.

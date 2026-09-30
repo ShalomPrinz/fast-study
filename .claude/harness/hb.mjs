@@ -72,18 +72,19 @@ const COMMANDS = {
   },
   wall: {
     usage: 'wall',
-    summary: 'blank the data root and both keys, so a reload shows the first-run screen',
+    summary:
+      'blank the data root, both keys and the Moodle site, so a reload shows the first-run screen',
     async run(paths) {
       await wall(paths);
-      console.log('walled: DATA_ROOT, GROQ_API_KEY and GEMINI_API_KEY are blank — reload the app');
+      console.log('walled: DATA_ROOT, both keys and MOODLE_SITE are blank — reload the app');
     },
   },
   unwall: {
     usage: 'unwall',
-    summary: 'put the data root and keys back to the baseline',
+    summary: 'put the data root, keys and Moodle site back to the baseline',
     async run(paths) {
       await unwall(paths);
-      console.log('unwalled: DATA_ROOT and both keys back to the baseline');
+      console.log('unwalled: DATA_ROOT, both keys and MOODLE_SITE back to the baseline');
     },
   },
   'add-material': {
@@ -125,7 +126,8 @@ const COMMANDS = {
   },
   'forget-probes': {
     usage: 'forget-probes',
-    summary: "restart downloader-auto so every link it probed or captured reads unprobed ('?') again",
+    summary:
+      "restart downloader-auto so every link it probed or captured reads unprobed ('?') again",
     async run(paths) {
       // Both caches are in-memory only, and nothing else — reseed included — empties them.
       await restart(paths, 'downloader-auto', {});

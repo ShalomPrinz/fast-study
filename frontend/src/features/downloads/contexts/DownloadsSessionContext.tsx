@@ -77,7 +77,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   }, [])
 
   const reconnectHint = useCallback(() => {
-    sendUpdateRef.current?.('error', t`BIU session expired. Reconnect your account.`)
+    sendUpdateRef.current?.('error', t`Your university session expired. Reconnect your account.`)
     setReconnectKey((k) => k + 1)
   }, [])
 

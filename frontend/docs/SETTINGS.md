@@ -5,18 +5,19 @@ edits them all, and the prerequisites and accounts both screens show.
 
 ## The entries
 
-| Setting           | Default                                   | Alternatives          | Owner       |
-| ----------------- | ----------------------------------------- | --------------------- | ----------- |
-| Gemini API key    | none                                      | user-supplied         | `backend/`  |
-| Groq API key      | none                                      | user-supplied         | `backend/`  |
-| Data folder       | prefilled, confirmed on first run         | any directory         | `database/` |
-| UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend    |
-| Drive upload      | off                                       | on                    | `backend/`  |
-| Drive root folder | none — required once Drive is on          | any folder name       | `backend/`  |
-| Summary model     | the first curated entry                   | the curated dropdown  | `backend/`  |
-| Auto-run          | the whole pipeline                        | audio only, off       | `backend/`  |
-| Daily run         | on                                        | off                   | `backend/`  |
-| Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`  |
+| Setting           | Default                                   | Alternatives          | Owner             |
+| ----------------- | ----------------------------------------- | --------------------- | ----------------- |
+| Gemini API key    | none                                      | user-supplied         | `backend/`        |
+| Groq API key      | none                                      | user-supplied         | `backend/`        |
+| Data folder       | prefilled, confirmed on first run         | any directory         | `database/`       |
+| University        | none — required, nothing preselected      | a preset, or any URL  | `downloader/auto` |
+| UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend          |
+| Drive upload      | off                                       | on                    | `backend/`        |
+| Drive root folder | none — required once Drive is on          | any folder name       | `backend/`        |
+| Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
+| Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
+| Daily run         | on                                        | off                   | `backend/`        |
+| Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`        |
 
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
@@ -35,7 +36,6 @@ The list is closed on purpose; each of these looks like a field and deliberately
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
 | Whisper model, `he` transcript language                   | The corpus is Hebrew lectures; no user has a reason to change either                        |
 | The summary length budget                                 | A prompt-shaped tuning knob, not a preference                                               |
-| The Moodle site                                           | One university, one site — and one field fewer on first run                                 |
 | Service ports, `BACKEND_URL` / `DATABASE_URL`             | Wiring: the frontend takes its URLs from the runtime bridge                                 |
 | `FRONTEND_URL`, `DOWNLOADER_EXTENSION_ID`                 | Dev-only CORS and extension wiring the packaged app never uses                              |
 | The last opened lecture, the search view's course         | Per-view memory in `localStorage`; nothing else has to agree on it                          |
@@ -53,7 +53,8 @@ carries them, the read view only reports `…ApiKeySet`, so a stored key never r
 no adapter, and both stay permanent so browser-only dev remains a first-class loop.
 
 `saveSettings` is **two phases, in order**: the store first (it is what a fresh boot reads), then each
-changed field to its owner's `POST /config`. Nothing restarts. The UI language has no owner: it lives only
+changed field to its owner's `POST /config` — backend, database, or the auto-downloader for the university
+(`ownerBodies`). Nothing restarts. The UI language has no owner: it lives only
 in `localStorage` ([I18N.md](I18N.md)).
 
 ## `/settings`
@@ -65,8 +66,8 @@ A failure after the store write leaves the service behind until a retry, so the 
 A saved key shows an "a key is saved" placeholder; a blank key field is never sent, since empty would
 clear the stored key. The language applies the moment it is picked and reaches no save.
 
-**Only the data folder is guarded**: `utils/dataRootGuard.ts` reads the SSE-fed `RunnerStatusContext` and
-raises a `ConfirmModal` naming runs in flight, since a mid-run change splits a lecture across two roots.
+**The data folder and the university are guarded** (the university below). For the folder,
+`utils/dataRootGuard.ts` reads the SSE-fed `RunnerStatusContext` and raises a `ConfirmModal` naming runs in flight, since a mid-run change splits a lecture across two roots.
 Advisory only; the route also warns that a change re-points and never moves data. A key or a model cannot
 corrupt anything, so nothing else is checked.
 
@@ -74,7 +75,9 @@ corrupt anything, so nothing else is checked.
 
 `app/InitGate.tsx` reads the store once at boot and shows either `features/settings/InitWall.tsx` or the
 app — no sidebar, no route, no way past. `isInitialized` (`utils/required.ts`) is the whole gate: both keys
-stored (where they can be, below) and a data folder chosen. An unreachable store shows the app anyway: a
+stored (where they can be, below), a data folder and a university chosen. The university is required
+because the account and every course link belong to it; nothing is preselected, since a wrong guess
+would sign a student in to someone else's Moodle. An unreachable store shows the app anyway: a
 downed service is not an unconfigured install.
 
 The wall also offers the language (so the rest reads in it) and the Drive toggle (so the account is
@@ -108,6 +111,27 @@ on new text, and the last-probed value, so retyping a rejected key asks again.
 The key-prefix mismatch is an instant offline warning in the same slot, overwritten by any probe result;
 prefixes are convention, not contract, so it never blocks.
 
+## The university — `components/MoodleSiteField.tsx`
+
+A `<select>` of presets (`utils/moodleSites.ts`, frontend-only) plus "Other…", which reveals a URL input.
+Picking a preset or blurring the input calls `probeMoodleSite` (`POST /site/probe` on the auto-downloader),
+with `ApiKeyField`'s sequence-number and last-probed-value discipline (`utils/siteStatus.ts`). The status
+slot reads `supported` (the canonical site), `unsupported` (the `moodle_site_unsupported` sentence for its
+`reason`) or `unverified` ("couldn't check").
+
+**The save rule is the opposite of a key's.** A key the provider rejects might still be right; a site that
+definitively isn't a usable Moodle can never work. So `unsupported` saves nothing — the field hands the form
+`''`, which `missingEntries` counts as missing — and so does a probe in flight. `unverified` saves, since a
+bot wall or a dropped connection says nothing about the site; the post-login check in the auto-downloader
+is the backstop. What is saved is always the probe's canonical root, never the typed text.
+
+**The wall saves a confirmed site at once**: a `supported` answer writes `moodle_site` alone through
+`saveSettings` (store, then auto's `/config`), chained so a quicker second pick never lands first, which
+makes Connect live on the wall; the rest of the form saves on submit as before.
+
+**Switching sites drops the account.** The auto-downloader resets auth on a new site, so `/settings` raises
+an advisory `ConfirmModal` first while an account is connected, and re-probes the chip after the save.
+
 ## Prerequisites and accounts
 
 Three controls share one field vocabulary (a chip or status slot, a link, one action), and **none
@@ -119,10 +143,13 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   costs auto-download and Zoom capture only, and the copy says a hand-added video still becomes a summary.
   Only success is cached server-side, so **Check again** re-probes. The link is Chrome's: Edge ships with
   Windows, so only a machine missing both sees it. `detail` is English fine print, `dir="ltr"`.
-- **BIU account** (`MoodleAccountField`) — the downloads page's `AccountStatus` ([DOWNLOADS.md](DOWNLOADS.md)),
-  with `--danger` retoned to neutral: red belongs on the page the session actually blocks. It is what makes
-  a settings screen call `/auth/status`; the wall, outside `Layout`, brings its own `AuthStatusProvider`.
-  A down auto-downloader shows one toast, deduped with the browser check's.
+- **University account** (`MoodleAccountField`) — the downloads page's `AccountStatus`
+  ([DOWNLOADS.md](DOWNLOADS.md)), with `--danger` retoned to neutral: red belongs on the page the session
+  actually blocks. The hint names the saved site's host. It belongs to the saved site only, so with none
+  saved — or another one chosen but unsaved — it shows a "save first" hint instead of a Connect that would
+  sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall, outside
+  `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the
+  browser check's.
 - **Google account** (`DriveConnection`, over `services/drive.ts`) — rendered only while Drive is on.
   States `unknown` / `disconnected` / `pending` / `connected`. `POST /config/drive/connect` opens the
   browser on the backend's side and answers the URL, so **Connect** opens nothing itself; the pending
@@ -131,7 +158,8 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   by its caller. Failures fill the status slot, since the wall renders outside the toast container. A
   lecture with no token still finishes as a local PDF.
 
-Stable hooks: `#browser-prereq` / `.browser-prereq--{state}` / `#browser-prereq-status`, `#moodle-account`,
+Stable hooks: `#moodle-site` / `.moodle-site--{status}`, `#browser-prereq` / `.browser-prereq--{state}` /
+`#browser-prereq-status`, `#moodle-account`,
 `#drive-connection` / `.drive-connection--{state}`.
 
 ## Asking for consent mid-run — `app/DriveConsentPrompt.tsx`

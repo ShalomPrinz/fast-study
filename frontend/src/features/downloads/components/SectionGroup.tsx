@@ -33,7 +33,9 @@ import {
   useSectionOpen,
 } from '@/features/downloads/contexts/SectionCollapseContext'
 import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
+import { toast } from '@/services/toaster'
 import {
+  collidingNames,
   notStartedCount,
   runningCount,
   summarize,
@@ -152,6 +154,16 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
     if (!id) return
     const targets = buildTargets()
     if (!targets.length) return
+    // Refused rather than deduped: which row should own the name is the user's call.
+    const clashes = collidingNames(targets)
+    if (clashes.length) {
+      const names = clashes.join(', ')
+      toast(
+        'error',
+        t`Several rows would download into the same lecture (${names}). Rename them, then run again.`,
+      )
+      return
+    }
     try {
       const renames = await startSectionRun({ sectionId: id, course, targets })
       applyRenames(renames, targets, setName)
@@ -203,7 +215,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
 
   // Downloads outlast the queue, so the header keeps counting rows with a running job — a signal that
   // cannot outlive the work, so the section always frees itself.
-  const active = runningCount(targets, jobsByRef)
+  const active = runningCount(targets, course, jobsByRef)
   // The queue is the server's, so `busy` is its status — still OR'd with the live jobs, which
   // outlive the queue itself.
   const queueing = run?.status === 'running' || run?.status === 'paused'
@@ -216,7 +228,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   const notStarted = queueing ? 0 : notStartedCount(targets)
   const stoppedBecause =
     run?.status === 'reconnect'
-      ? t`the BIU session expired. Reconnect, then run the section again.`
+      ? t`the university session expired. Reconnect, then run the section again.`
       : run?.status === 'cancelled'
         ? t`the run was cancelled. Run the section again to pick them up.`
         : t`the run stopped early. Run the section again to pick them up.`

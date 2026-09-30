@@ -1,5 +1,6 @@
 import { createClient } from './http'
 import { AUTO_DOWNLOADER_URL, BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
+import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 // The settings concern, spanning three services by design: a setting's owner is a property of the
 // setting, not of the screen editing it — see docs/SETTINGS.md.
@@ -37,6 +38,8 @@ export interface Settings {
   autoRun: string | null
   nightlyRun: boolean | null
   nightlyHour: number | null
+  // The university's Moodle root, always the canonical `wwwroot` the site probe answered.
+  moodleSite: string | null
 }
 
 // A partial save; omitted fields are left alone. The two keys are write-only — they go out here
@@ -52,6 +55,7 @@ export interface SettingsPatch {
   nightlyRun?: boolean
   // A number, never the raw string a `<select>` hands back: the store rejects a JSON string.
   nightlyHour?: number
+  moodleSite?: string
 }
 
 export type SettingsField = keyof SettingsPatch
@@ -66,10 +70,11 @@ const WIRE: Record<SettingsField, string> = {
   autoRun: 'auto_run',
   nightlyRun: 'nightly_run',
   nightlyHour: 'nightly_hour',
+  moodleSite: 'moodle_site',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
-// never both. Every field the store holds is named in one of them.
+// never another. Every field the store holds is named in one of them.
 const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
@@ -81,6 +86,7 @@ const BACKEND_FIELDS: SettingsField[] = [
   'nightlyHour',
 ]
 const DATABASE_FIELDS: SettingsField[] = ['dataRoot']
+const AUTO_FIELDS: SettingsField[] = ['moodleSite']
 
 interface RawSettings {
   data_root: string | null
@@ -92,6 +98,7 @@ interface RawSettings {
   auto_run: string | null
   nightly_run: boolean | null
   nightly_hour: number | null
+  moodle_site: string | null
 }
 
 function normalize(raw: RawSettings): Settings {
@@ -105,6 +112,7 @@ function normalize(raw: RawSettings): Settings {
     autoRun: raw.auto_run,
     nightlyRun: raw.nightly_run,
     nightlyHour: raw.nightly_hour,
+    moodleSite: raw.moodle_site ?? null,
   }
 }
 
@@ -121,6 +129,7 @@ export function storeBody(patch: SettingsPatch): Record<string, unknown> {
 export function ownerBodies(patch: SettingsPatch): {
   backend: Record<string, unknown> | null
   database: Record<string, unknown> | null
+  auto: Record<string, unknown> | null
 } {
   const pick = (fields: SettingsField[]) => {
     const body: Record<string, unknown> = {}
@@ -130,7 +139,11 @@ export function ownerBodies(patch: SettingsPatch): {
     }
     return Object.keys(body).length ? body : null
   }
-  return { backend: pick(BACKEND_FIELDS), database: pick(DATABASE_FIELDS) }
+  return {
+    backend: pick(BACKEND_FIELDS),
+    database: pick(DATABASE_FIELDS),
+    auto: pick(AUTO_FIELDS),
+  }
 }
 
 /** Reads and writes the settings store. Two backings are permanent, neither is scaffolding: the
@@ -163,6 +176,7 @@ export async function saveSettings(patch: SettingsPatch): Promise<Settings> {
   const owners = ownerBodies(patch)
   if (owners.backend) await backend.post('/config', { json: owners.backend })
   if (owners.database) await database.post('/config', { json: owners.database })
+  if (owners.auto) await autoDownloader.post('/config', { json: owners.auto })
   return stored
 }
 
@@ -226,4 +240,40 @@ export interface BrowserPrereq {
  *  server-side, so re-checking after the user installs one genuinely re-probes. */
 export async function fetchBrowserPrereq(): Promise<BrowserPrereq> {
   return autoDownloader.get<BrowserPrereq>('/prereqs/browser')
+}
+
+// The pre-login check of a pasted address: `supported` carries the canonical root to store,
+// `unsupported` a coded reason, `unverified` anything short of a verdict (network, bot wall).
+export interface SiteProbe {
+  status: 'supported' | 'unsupported' | 'unverified'
+  site: string | null
+  failure: ServiceFailure | null
+}
+
+/** Asks the auto-downloader whether `url` is a Moodle site Fast Study can use. A failed request is
+ *  `unverified`, never `unsupported` — only the site itself may say it can't work. */
+export async function probeMoodleSite(url: string): Promise<SiteProbe> {
+  try {
+    const raw = await autoDownloader.post<{
+      status?: SiteProbe['status']
+      site?: string | null
+      message?: string
+      code?: string
+      params?: ErrorParams
+    }>('/site/probe', { json: { url } })
+    const status = raw.status ?? 'unverified'
+    return {
+      status,
+      site: raw.site || null,
+      failure: raw.code
+        ? {
+            message: raw.message ?? 'This Moodle site cannot be used.',
+            code: raw.code,
+            params: raw.params ?? null,
+          }
+        : null,
+    }
+  } catch {
+    return { status: 'unverified', site: null, failure: null }
+  }
 }

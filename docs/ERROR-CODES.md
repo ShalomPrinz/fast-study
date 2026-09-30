@@ -272,7 +272,9 @@ emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.
 | `moodle/wsClient.js`            | `site_blocked`                | `detail`                 | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |
-| `core/registry.js`              | `course_url_unsupported_site` | `url`                    | user  |
+| `core/registry.js`              | `course_url_unsupported_site` | `url`, `site`            | user  |
+| `core/registry.js`              | `moodle_site_not_configured`  | —                        | user  |
+| `moodle/probe.js`, `auth/moodleToken.js` | `moodle_site_unsupported` | `site`, `reason`, `function` | user |
 | `moodle/wsClient.js`            | `course_url_no_id`            | `url`                    | user  |
 | `core/core.js`                  | `link_not_a_video`            | `source`, `url`, `ext`   | user  |
 | `core/core.js`                  | `link_dead`                   | `url`                    | user  |
@@ -303,6 +305,12 @@ a protocol code.
 
 `browser_missing` reaches the SPA through two different responses — the 200 `{available:false}` body
 of `/prereqs/browser` and the 500 backstop — and is one code in both.
+
+`moodle_site_unsupported` is one code whose `reason` picks the sentence: `not_moodle`,
+`mobile_service_off` and `maintenance` come from `POST /site/probe` (a 200 verdict, not an error body;
+`maintenance` is retry-later), `missing_function` (with `function`) and `downloads_disabled` from
+`/auth/complete`'s 422. An `unverified` probe carries no code — only `params.detail` (`site_blocked`,
+`timeout`, `network`).
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

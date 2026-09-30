@@ -33,9 +33,12 @@ export const FAKE_KEYS = {
 // connected without the headed MFA grab that only a human can finish.
 export const FAKE_WSTOKEN = 'harnesswstoken00000000000000000';
 
-// The one course URL the fake site answers for. A biu.ac.il host on purpose: auto/'s registry
-// routes auth by hostname, so a loopback URL would find no university at all.
-export const FAKE_COURSE_URL = 'https://lemida.biu.ac.il/course/view.php?id=101';
+// The Moodle site the fake answers as, and the baseline's configured site. A real university host on
+// purpose: auto/ only lets its token reach URLs under the configured site, and the shim redirects it.
+export const FAKE_MOODLE_SITE = 'https://lemida.biu.ac.il';
+
+// The one course URL the fake site answers for.
+export const FAKE_COURSE_URL = `${FAKE_MOODLE_SITE}/course/view.php?id=101`;
 
 // The fake course's failure rows, by URL switch → title: the site lists them, the self-check
 // proves each one is in the real listing. /deny/ and /die/ list as recordings and fail in the tool.
@@ -111,6 +114,8 @@ function baseEnv(paths) {
     FRONTEND_URL: `http://localhost:${PORTS.frontend}`,
     GDRIVE_ROOT_FOLDER: 'Harness',
     DRIVE_ENABLED: 'true',
+    // auto/ reads it at boot; set here so the repo-root .env's own never wins the dotenv race.
+    MOODLE_SITE: FAKE_MOODLE_SITE,
     // Off by default: a cron firing mid-sweep would attribute its runs to whatever the agent
     // happened to be doing. The agent turns it on deliberately when testing the nightly pass.
     NIGHTLY_RUN: 'false',

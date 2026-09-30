@@ -1,7 +1,7 @@
 # Downloads page
 
-`/downloads` — connect the BIU account, keep each course's source URL, then discover and download
-recordings into the same `DATA_ROOT` courses the pipeline uses. Discovery and auth go to the
+`/downloads` — connect the university account (the site chosen in [SETTINGS.md](SETTINGS.md)), keep each
+course's source URL, then discover and download recordings into the same `DATA_ROOT` courses the pipeline uses. Discovery and auth go to the
 auto-downloader (:3053), downloads and bulk runs to the downloader server (:3052); their clients and
 error classes are in [SERVICES.md](SERVICES.md). A download's progress is [JOBS.md](JOBS.md), a
 section's "Download all" is [BULK.md](BULK.md).
@@ -38,6 +38,11 @@ remounting re-runs the probe, since the cached status predates the 401. That is 
 the component, not the never-remounting provider. A `BlockedError` (the site's bot protection answering
 a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
 `blockedMessage()` and leaves the chip alone.
+
+`/auth/status`'s 409 `moodle_site_not_configured` is an answer, not a failure: `fetchAuthStatus` maps it to
+`unconfigured`, and the chip reads "no university chosen" with no Connect. A login the site's post-login
+check refuses answers `/auth/complete` with 422 `moodle_site_unsupported`, which `loginFailure` toasts in
+its `reason`'s sentence.
 
 `Load recordings` disables only on `connected: false`; unknown leaves it enabled, since guessing
 "disconnected" from an unanswered probe would lock a working session out.

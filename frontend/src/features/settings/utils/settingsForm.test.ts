@@ -13,6 +13,7 @@ const FILLED: RequiredInput = {
   dataRootConfirmed: true,
   driveEnabled: false,
   gdriveRootFolder: '',
+  moodleSite: 'https://lemida.biu.ac.il',
   canStoreApiKeys: true,
 }
 
@@ -65,6 +66,7 @@ const STORE: Settings = {
   autoRun: null,
   nightlyRun: null,
   nightlyHour: null,
+  moodleSite: 'https://lemida.biu.ac.il',
 }
 
 describe('toNightlyHour', () => {

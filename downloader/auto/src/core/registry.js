@@ -1,8 +1,10 @@
-// Two concerns, matched at different granularities: auth per university (host), extraction per
-// activity (modType + target).
+// Two concerns, matched at different granularities: auth for the one configured Moodle site,
+// extraction per activity (modType + target).
 import { statePath } from '@faststudy/runtime';
 import { CodedError } from '../lib/errors.js';
 import { MoodleToken } from '../auth/moodleToken.js';
+import { currentSite, setCurrentSite, underSite } from '../moodle/site.js';
+import { getSession } from '../browser/browserSession.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
 import { GoogleDriveExtractor } from '../extractors/GoogleDriveExtractor.js';
@@ -10,15 +12,66 @@ import { ZoomExtractor } from '../extractors/ZoomExtractor.js';
 import { MoodleFileExtractor } from '../extractors/MoodleFileExtractor.js';
 import { DirectUrlExtractor } from '../extractors/DirectUrlExtractor.js';
 
-// Universities own AUTH (per host). The one-time headed token grab yields a long-lived
-// Moodle WS token; the token authenticates the stateless REST API thereafter.
-const UNIVERSITIES = [
-  {
-    id: 'biu',
-    matches: (u) => /(^|\.)biu\.ac\.il$/.test(new URL(u).hostname),
-    auth: () => new MoodleToken({ tokenPath: statePath('auth', 'biu-token.json') }),
-  },
-];
+// One token file whatever the site: the record names its site, and one for another reads as absent.
+const TOKEN_PATH = () => statePath('auth', 'moodle-token.json');
+
+// The configured site's auth, reused across requests so connect()/complete() share one headed
+// browser. Rebuilt only when the site changes (setSite).
+let cached = null;
+
+/**
+ * The configured site and its token auth; throws moodle_site_not_configured when there is none.
+ * @returns {{ site: string, auth: MoodleToken }}
+ */
+export function siteAuth() {
+  const site = currentSite();
+  if (!site) {
+    throw new CodedError(
+      'moodle_site_not_configured',
+      {},
+      'no Moodle site is configured — set moodle_site through POST /config',
+    );
+  }
+  if (cached?.site !== site)
+    cached = { site, auth: new MoodleToken({ tokenPath: TOKEN_PATH(), site }) };
+  return cached;
+}
+
+/**
+ * siteAuth(), for a URL that must live under the configured site — the token never leaves it.
+ * @returns {{ site: string, auth: MoodleToken }}
+ */
+export function siteAuthFor(url) {
+  const found = siteAuth();
+  if (!underSite(url, found.site)) {
+    throw new CodedError(
+      'course_url_unsupported_site',
+      { url, site: found.site },
+      `${url} is not on the configured Moodle site ${found.site}`,
+    );
+  }
+  return found;
+}
+
+/**
+ * Switch to another site (null clears it): forget the old site's token and pending login, and close
+ * the plain browser so its autologin cookie cannot carry across. The same site is a no-op.
+ * @returns {Promise<boolean>}  whether anything changed
+ */
+export async function setSite(site) {
+  const old = currentSite();
+  if ((site || null) === old) return false;
+  const auth =
+    cached?.auth ?? (old ? new MoodleToken({ tokenPath: TOKEN_PATH(), site: old }) : null);
+  cached = null;
+  setCurrentSite(site);
+  if (auth) await auth.disconnect();
+  // Stale leftovers (a token from a site set before this process) go too; loadToken ignores them anyway.
+  else await new MoodleToken({ tokenPath: TOKEN_PATH(), site: site ?? '' }).disconnect();
+  const session = getSession('plain');
+  await session.withLock(() => session.close());
+  return true;
+}
 
 // Ordered; the first canHandle(activity) wins, and an activity no extractor claims is skipped.
 const EXTRACTORS = [
@@ -29,30 +82,6 @@ const EXTRACTORS = [
   new MoodleFileExtractor(), // modType 'resource'     → course-hosted PDF → lecture material
   new DirectUrlExtractor(), // modType 'url' (last)    → any other off-site link → probed on download
 ];
-
-/**
- * @param {string} courseUrl
- * @returns {{ id: string, auth: () => import('../auth/AuthProvider.js').AuthProvider }}
- */
-export function resolveUniversity(courseUrl) {
-  const uni = UNIVERSITIES.find((u) => u.matches(courseUrl));
-  if (!uni)
-    throw new CodedError(
-      'course_url_unsupported_site',
-      { url: courseUrl },
-      `No university/auth handler for ${courseUrl}`,
-    );
-  return uni;
-}
-
-/**
- * The default university for auth endpoints that carry no course URL
- * (/auth/status, /auth/connect). Single-university for now (BIU).
- * @returns {(typeof UNIVERSITIES)[number]}
- */
-export function defaultUniversity() {
-  return UNIVERSITIES[0];
-}
 
 /**
  * Route a recording echoed back from the frontend to its extractor by strategy

@@ -1,6 +1,6 @@
 # CLAUDE.md — auto (auto-downloader)
 
-A Playwright HTTP service that, given a **course URL**, authenticates to Moodle's Web-Services API (one headed token grab, then a long-lived stateless token), discovers the course's recordings and PDF handouts, and resolves any of them into download targets (`POST /resolve`) that `server/` fetches and turns into jobs. A **separate package** with its own `node_modules` so Playwright and its browsers never leak into `server/`'s lighter dependency set. User-facing setup: [README.md](README.md).
+A Playwright HTTP service that, given a **course URL** on the one configured Moodle site (`MOODLE_SITE`, live-updated by `POST /config`), authenticates to Moodle's Web-Services API (one headed token grab, then a long-lived stateless token), discovers the course's recordings and PDF handouts, and resolves any of them into download targets (`POST /resolve`) that `server/` fetches and turns into jobs. A **separate package** with its own `node_modules` so Playwright and its browsers never leak into `server/`'s lighter dependency set. User-facing setup: [README.md](README.md).
 
 ## Run
 
@@ -14,7 +14,7 @@ Port **3053** (`AUTODL_PORT` in the repo-root `.env`; `FASTSTUDY_PORT` in the en
 
 Launch contract — the `FASTSTUDY_SECRET` check (`requireSecret`, every route but `GET /health`) and the state root (`statePath`, under which the Moodle token, the zoom passcode store and the yt-dlp cache live) — comes from [`@faststudy/runtime`](../../lib/runtime/CLAUDE.md). `yt-dlp` resolves through [`@faststudy/tools`](../../lib/tools/CLAUDE.md) and is reported on `/health` as `tools`. It only runs `--flat-playlist`, which never touches YouTube's player script, so it carries none of `server/`'s JS-runtime flags.
 
-Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `instrument.js`, app.js's first import, inits with [`@faststudy/sentry`](../../lib/sentry/CLAUDE.md)'s scrubbing options, and Sentry's express handler sits before the backstop. An extractor fault that reaches the 500 backstop is an event, its stack naming the extractor; the typed 401/409/422/503 answers are not.
+Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `instrument.js`, app.js's first import, inits with [`@faststudy/sentry`](../../lib/sentry/CLAUDE.md)'s scrubbing options, and Sentry's express handler sits before the backstop. An extractor fault that reaches the 500 backstop is an event, its stack naming the extractor; the typed 401/409/422/503 answers are not. The one deliberate message is `siteReport.js`'s `moodle_site_unsupported` warning, once per `(host, reason)` ([MOODLE.md](docs/MOODLE.md#checking-a-site-before-and-after-login)).
 
 ## HTTP surface
 
@@ -24,9 +24,11 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose down
 | ----------------------- | --------------------------------------------------- | --------------------------------------------------------------------------- |
 | `GET /health`           | —                                                   | `{ status:'ok', tools }` — what the launcher waits on                       |
 | `GET /prereqs/browser`  | —                                                   | `{ available, channel, browser, detail }` — always 200                      |
+| `POST /config`          | `{ moodle_site? }`                                  | `{ status:'ok', applied }` — a different site resets auth ([AUTH.md](docs/AUTH.md)); blank clears it |
+| `POST /site/probe`      | `{ url }`                                           | `{ status:'supported'\|'unsupported'\|'unverified', site, code?, params? }` — always 200 ([MOODLE.md](docs/MOODLE.md)) |
 | `GET /auth/status`      | —                                                   | `{ connected, expired }`                                                    |
 | `POST /auth/connect`    | `{}`                                                | `{ status:'pending' }` (headed token grab opens)                            |
-| `POST /auth/complete`   | —                                                   | `{ connected:true }` (persists the Moodle WS token)                         |
+| `POST /auth/complete`   | —                                                   | `{ connected:true }` (checks site info, then persists the Moodle WS token)  |
 | `POST /auth/disconnect` | —                                                   | `{ connected:false }` (deletes the local token; no server-side revoke)      |
 | `POST /list`            | `{ courseUrl }`                                     | `{ items }`                                                                 |
 | `POST /list/expand`     | `{ ref }`                                           | `{ items }` (one expandable item → children)                                |
@@ -46,6 +48,8 @@ beside the fields below, as every non-2xx body here does ([downloader CLAUDE.md]
 - `422 {status:'unsupported', message}` — the source can never be handled here (a link that probes as a non-video, non-PDF file, a web page, a dead link, an unshared Drive file). The code is the thrower's own (`link_not_a_video`, `link_dead`, `drive_not_shared`, `drive_link_malformed`, `expand_unsupported_host`), never one flat "unsupported". Memoized per probe key, so `/list` stamps `resolvedMedia:'unsupported'` ([BROWSING.md](docs/BROWSING.md)).
 - `503 {status:'blocked', message}`, `site_blocked {detail}` — the Moodle site served a bot-protection challenge; transient, unrelated to the token, never retried here ([MOODLE.md](docs/MOODLE.md)).
 
+Two more site refusals carry no `status`: `409 moodle_site_not_configured` from `/auth/*`, `/list` and `/resolve` when no site is set, and `400 course_url_unsupported_site {url, site}` for a URL outside it. `/auth/complete` refuses a site the post-login check rejects as `422 {status:'unsupported'}`, `moodle_site_unsupported {site, reason}`.
+
 A throw carries its code up to the route through `CodedError` (`src/lib/errors.js`), which
 `UnsupportedError` and `PasscodeError` extend; anything untyped reaching `app.js`'s backstop is
 `internal_error {detail}`.
@@ -58,6 +62,6 @@ A throw carries its code up to the route through `CodedError` (`src/lib/errors.j
 | [ZOOM.md](docs/ZOOM.md)              | why zoom needs a headed, stealthed, hidden Chrome/Edge; passcode gate; before/after-break split |
 | [BROWSING.md](docs/BROWSING.md)      | listing (parsers, routing, `Item`/`ref` contract), expansion, and the per-strategy resolve + probes |
 | [AUTH.md](docs/AUTH.md)              | how the token provider is wired into the endpoints; expiry; on-demand autologin               |
-| [MOODLE.md](docs/MOODLE.md)          | the Moodle WS protocol: token grab, REST calls, error shapes, bot protection, pluginfile, autologin |
+| [MOODLE.md](docs/MOODLE.md)          | the configured site, its pre- and post-login checks, and the Moodle WS protocol: token grab, REST calls, error shapes, bot protection, pluginfile, autologin |
 
 Dev stack: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

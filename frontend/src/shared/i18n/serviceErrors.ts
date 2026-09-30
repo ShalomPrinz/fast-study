@@ -169,7 +169,14 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message: 'No Chrome or Edge was found on this computer. Install Chrome and try again.',
   }),
   course_url_unsupported_site: msg({
-    message: 'That course link is not from a supported site: {url}.',
+    message: "That course link is not from your university's site ({site}): {url}.",
+  }),
+  moodle_site_not_configured: msg({
+    message: 'No university is chosen yet. Choose yours in Settings.',
+  }),
+  moodle_site_unsupported: msg({
+    message:
+      "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which Fast Study relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so Fast Study can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so Fast Study can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with Fast Study.}}",
   }),
   course_url_no_id: msg({ message: "That course link doesn't point to a specific course: {url}." }),
   link_not_a_video: msg({

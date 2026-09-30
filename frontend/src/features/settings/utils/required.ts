@@ -1,6 +1,7 @@
 import type { Settings } from '@/services/settings'
 
-export type RequiredField = 'geminiApiKey' | 'groqApiKey' | 'dataRoot' | 'gdriveRootFolder'
+export type RequiredField =
+  'geminiApiKey' | 'groqApiKey' | 'dataRoot' | 'moodleSite' | 'gdriveRootFolder'
 
 export interface RequiredInput {
   geminiKey: string
@@ -11,6 +12,8 @@ export interface RequiredInput {
   dataRootConfirmed: boolean
   driveEnabled: boolean
   gdriveRootFolder: string
+  // The site the form would save, `''` while none is chosen, in flight or unsupported.
+  moodleSite: string
   // Passed in rather than read from `services/runtime`, so both functions here stay pure.
   canStoreApiKeys: boolean
 }
@@ -28,14 +31,16 @@ export function missingEntries(input: RequiredInput): RequiredField[] {
   }
   // The root is prefilled but never silently accepted, so an unconfirmed one counts as missing.
   if (!input.dataRoot.trim() || !input.dataRootConfirmed) missing.push('dataRoot')
+  // Nothing is preselected, and a site the probe calls unsupported reaches here as blank.
+  if (!input.moodleSite) missing.push('moodleSite')
   // Drive's folder has no default on purpose: turning Drive on reveals an empty required field.
   if (input.driveEnabled && !input.gdriveRootFolder.trim()) missing.push('gdriveRootFolder')
   return missing
 }
 
-/** The init wall's gate: both keys stored (where they can be) and a data root chosen. Language and
- *  Drive are asked on the wall but never required. */
+/** The init wall's gate: both keys stored (where they can be), a data root and a university chosen.
+ *  Language and Drive are asked on the wall but never required. */
 export function isInitialized(settings: Settings, canStoreApiKeys: boolean): boolean {
-  if (!settings.dataRoot) return false
+  if (!settings.dataRoot || !settings.moodleSite) return false
   return !canStoreApiKeys || (settings.geminiApiKeySet && settings.groqApiKeySet)
 }

@@ -69,7 +69,7 @@ Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, 
 (`app.getVersion()`, each Sentry init's release), `SENTRY_ENVIRONMENT` (`production` packaged, else
 `development`, main's own too), `FASTSTUDY_SENTRY_DSN` when main resolved one,
 the peers already running, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
-`GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
+`GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `MOODLE_SITE`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
 
 The environment is read **once, at boot**. A settings change while the app runs reaches each service
