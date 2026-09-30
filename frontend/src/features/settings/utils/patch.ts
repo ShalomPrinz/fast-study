@@ -2,6 +2,7 @@ import {
   toAutoRun,
   toNightlyHour,
   type AutoRun,
+  type ConfigOptions,
   type Settings,
   type SettingsPatch,
 } from '@/services/settings'
@@ -18,6 +19,26 @@ export interface SettingsForm {
   nightlyHour: number
   // `''` while no savable site is chosen; never sent, since a site is cleared by nothing.
   moodleSite: string
+}
+
+/** The form as the store answers it, used on load and after every save so a later save diffs only
+ *  what this page edited. A model the options no longer list reads as the first one, so Save sends it. */
+export function formFromStore(stored: Settings, options: ConfigOptions): SettingsForm {
+  const models = options.geminiModels
+  const model = stored.geminiModel
+  return {
+    geminiApiKey: '',
+    groqApiKey: '',
+    dataRoot: stored.dataRoot ?? '',
+    driveEnabled: stored.driveEnabled ?? false,
+    gdriveRootFolder: stored.gdriveRootFolder ?? '',
+    geminiModel: model !== null && models.includes(model) ? model : (models[0] ?? ''),
+    autoRun: toAutoRun(stored.autoRun),
+    // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
+    nightlyRun: stored.nightlyRun ?? true,
+    nightlyHour: toNightlyHour(stored.nightlyHour),
+    moodleSite: stored.moodleSite ?? '',
+  }
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore

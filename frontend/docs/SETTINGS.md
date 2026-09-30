@@ -60,6 +60,8 @@ in `localStorage` ([I18N.md](I18N.md)).
 ## `/settings`
 
 Loads the store and options once, edits a local form, saves changed fields in one `saveSettings` call.
+The form is read from the store (`formFromStore`) on load and again from each save's answer, so a later
+save never reverts another writer's change; a stored model the options no longer list reads as the first.
 **Every save answers**, failure included — a connection error's own toast is deduped and reads as noise.
 A failure after the store write leaves the service behind until a retry, so the toast asks for one.
 

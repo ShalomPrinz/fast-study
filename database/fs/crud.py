@@ -85,10 +85,12 @@ def set_course_archived(name: str, archived: bool) -> None:
         marker.unlink()
 
 
-def rename_course(old: str, new: str) -> None:
-    """Rename a course directory in place."""
+def rename_course(old: str, new: str) -> str:
+    """Rename a course directory in place and return the folder name actually created."""
 
-    _rename_dir(course_dir(old), course_dir(new), old, new)
+    target = course_dir(new)
+    _rename_dir(course_dir(old), target, old, new)
+    return target.name
 
 
 def check_not_reserved(name: str) -> None:
@@ -108,13 +110,13 @@ def create_lecture(course: str, name: str, kind: str) -> None:
     _mkdir_new(lecture_dir(course, name, kind), name)
 
 
-def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
-    """Rename a lecture or recitation directory in place."""
+def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
+    """Rename a lecture or recitation directory in place and return the folder name actually created."""
 
     check_not_reserved(new)
-    _rename_dir(
-        lecture_dir(course, old, kind), lecture_dir(course, new, kind), old, new
-    )
+    target = lecture_dir(course, new, kind)
+    _rename_dir(lecture_dir(course, old, kind), target, old, new)
+    return target.name
 
 
 def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:

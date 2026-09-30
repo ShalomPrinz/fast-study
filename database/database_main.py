@@ -153,15 +153,15 @@ async def post_course(request: Request):
 
 @app.patch("/courses/{course}")
 async def patch_course(course: str, request: Request):
-    """Rename a course directory."""
+    """Rename a course directory, answering the sanitized folder name actually created."""
 
     name = None
     try:
         body = await request.json()
         name = body["name"]
-        crud.rename_course(course, name)
+        effective = crud.rename_course(course, name)
         broadcast_notify()
-        return Response(status_code=204)
+        return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "rename_failed", {"from": course, "to": name})
 
@@ -210,15 +210,15 @@ async def post_lecture(course: str, request: Request, kind: str = Query("lecture
 async def patch_lecture(
     course: str, lecture: str, request: Request, kind: str = Query("lecture")
 ):
-    """Rename a lecture or recitation."""
+    """Rename a lecture or recitation, answering the sanitized folder name actually created."""
 
     name = None
     try:
         body = await request.json()
         name = body["name"]
-        crud.rename_lecture(course, lecture, name, kind)
+        effective = crud.rename_lecture(course, lecture, name, kind)
         broadcast_notify()
-        return Response(status_code=204)
+        return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "rename_failed", {"from": lecture, "to": name})
 

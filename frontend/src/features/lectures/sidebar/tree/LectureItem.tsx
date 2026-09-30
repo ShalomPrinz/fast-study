@@ -53,13 +53,15 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     renameEdit.setValue('')
     // A run may have started while the input was open.
     if (!name || name === lecture.name || renameLocked) return
+    let effective: string
     try {
-      await renameLecture(course.name, lecture.name, name, kind)
+      effective = await renameLecture(course.name, lecture.name, name, kind)
     } catch (e) {
       toastFailure(e)
       return
     }
-    if (isSelected) onSelect(course.name, name, kind)
+    // The database may sanitize the typed name, so the page follows the folder it answers with.
+    if (isSelected) onSelect(course.name, effective, kind)
     refreshCourses()
   }
 

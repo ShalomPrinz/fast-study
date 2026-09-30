@@ -119,7 +119,8 @@ archived course so the badge stays off.
 
 Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. A running
 or queued lecture, and a course holding one, refuse the rename (`utils/renameLock.ts`): the runner writes
-by the name it was given, so a mid-run rename splits the lecture in two. `useShiftHeld`
+by the name it was given, so a mid-run rename splits the lecture in two. An open page follows the name the rename
+answers, since the database may sanitize the typed one. `useShiftHeld`
 resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
 `nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second
