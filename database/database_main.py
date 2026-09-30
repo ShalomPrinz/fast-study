@@ -20,6 +20,7 @@ from fs.paths import (
     ARCHIVED_MARKER,
     SOURCE_URL_MARKER,
     CodedError,
+    CourseNotFound,
     DataRootNotConfigured,
     FileLocked,
     FolderInUse,
@@ -111,7 +112,7 @@ def _failure(exc: Exception, status: int, code: str, params: dict | None = None)
         return _error(str(exc), 423, exc.code, exc.params)
     if isinstance(exc, (NameTaken, NameReserved)):
         return _error(str(exc), 409, exc.code, exc.params)
-    if isinstance(exc, LectureNotFound):
+    if isinstance(exc, (LectureNotFound, CourseNotFound)):
         return _error(str(exc), 404, exc.code, exc.params)
     if isinstance(exc, CodedError):
         return _error(str(exc), status, exc.code, exc.params)

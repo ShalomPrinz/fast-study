@@ -37,6 +37,10 @@ msgstr "\"{name}\" has no characters that can be used in a folder name."
 msgid "\"{name}\" is reserved for the course's own folders. Choose another name for the lecture."
 msgstr "\"{name}\" is reserved for the course's own folders. Choose another name for the lecture."
 
+#: src/shared/components/LectureLead.tsx:7
+msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
+msgstr "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
+
 #. placeholder {0}: pending.length
 #: src/features/runner/RunnerView.tsx:325
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
@@ -396,7 +400,7 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:127
 msgid "Add lecture"
 msgstr "Add lecture"
 
@@ -436,7 +440,7 @@ msgstr "API keys"
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
 msgid "Archive course"
 msgstr "Archive course"
 
@@ -516,7 +520,7 @@ msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:89
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:94
 msgid "Can't rename while one of its lectures is being processed or waiting in line"
 msgstr "Can't rename while one of its lectures is being processed or waiting in line"
 
@@ -997,7 +1001,7 @@ msgstr "finishing…"
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:106
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
 msgid "Fully processed lectures"
 msgstr "Fully processed lectures"
 
@@ -1343,11 +1347,11 @@ msgstr "Nothing matched this search"
 msgid "Nothing running"
 msgstr "Nothing running"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:92
+#: src/shared/contexts/RunnerStatusContext.tsx:98
 msgid "Nothing to run - All pipelines complete"
 msgstr "Nothing to run - All pipelines complete"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:96
+#: src/shared/contexts/RunnerStatusContext.tsx:102
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "Nothing to run - All remaining pipelines already running"
 
@@ -2111,7 +2115,7 @@ msgstr "Transcript"
 msgid "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 msgstr "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
 msgid "Unarchive course"
 msgstr "Unarchive course"
 

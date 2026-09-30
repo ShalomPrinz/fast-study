@@ -66,7 +66,12 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
 
   async function toggleArchived(e: React.MouseEvent) {
     e.stopPropagation()
-    await setCourseArchived(course.name, !course.archived)
+    try {
+      await setCourseArchived(course.name, !course.archived)
+    } catch (err) {
+      toastFailure(err)
+      return
+    }
     refreshCourses()
   }
 

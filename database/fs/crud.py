@@ -10,6 +10,7 @@ from .paths import (
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
+    CourseNotFound,
     FolderInUse,
     LectureNotFound,
     NameReserved,
@@ -73,8 +74,10 @@ def set_course_source_url(name: str, source_url: str | None) -> None:
 
 
 def set_course_archived(name: str, archived: bool) -> None:
-    """Create or remove the .archived marker inside a course dir (idempotent)."""
+    """Create or remove the .archived marker inside a course dir (idempotent); CourseNotFound if the dir is gone."""
 
+    if not course_dir(name).is_dir():
+        raise CourseNotFound(f"course not found: {name}", course=name)
     marker = course_dir(name) / ARCHIVED_MARKER
     if archived:
         marker.touch(exist_ok=True)

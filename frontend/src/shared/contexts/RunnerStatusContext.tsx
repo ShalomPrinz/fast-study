@@ -3,10 +3,11 @@ import { t } from '@lingui/core/macro'
 import type { RunnerStatus, InFlightEntry, Kind, RunError } from '@/types'
 import { runAll, fetchRunnerStatus } from '@/services/backend'
 import { isConnectionError } from '@/services/http'
-import { inFlightKey } from '@/shared/utils/inFlightKey'
+import { inFlightKey, parseInFlightKey } from '@/shared/utils/inFlightKey'
 import { isGeminiQuota } from '@/shared/utils/runError'
 import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
+import LectureLead from '@/shared/components/LectureLead'
 import { failureNode } from '@/shared/utils/failure'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useNotify } from '@/shared/hooks/useNotify'
@@ -59,10 +60,15 @@ export function RunnerStatusProvider({ sendUpdate, children }: ProviderProps) {
       const validKeys = new Set(Object.keys(s.errors))
       validKeys.add('runner-crash')
       pruneErrors(validKeys)
+      // A toast shows on any page, so it names the lecture its key holds; the runner crash names its own.
+      const lectureLead = (key: string) => {
+        const parsed = parseInFlightKey(key)
+        return parsed ? <LectureLead course={parsed.course} lecture={parsed.lecture} /> : undefined
+      }
       // Seeded before the first status is applied, so failures predating page load stay quiet.
       const announce = (key: string, failure: ServiceFailure) =>
         primed.current
-          ? reportError(key, failureId(failure), serviceErrorNode(failure))
+          ? reportError(key, failureId(failure), serviceErrorNode(failure, lectureLead(key)))
           : seedError(key, failureId(failure))
       if (!s.runner.running && s.runner.lastError) {
         announce('runner-crash', s.runner.lastError)

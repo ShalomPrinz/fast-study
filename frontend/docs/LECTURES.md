@@ -62,7 +62,8 @@ leaves; `runner.lastError` is an exception that aborted a sweep, distinct from p
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
 
 `errors` maps each key to `{ step, message, code, params, provider, blocked }`. The "Last error" box and
-the toast both render it through `ServiceError` ([I18N.md](I18N.md)); `isGeminiQuota` (`utils/runError.ts`)
+the toast both render it through `ServiceError` ([I18N.md](I18N.md)), the toast led by `LectureLead`, the lecture and course
+`parseInFlightKey` reads off the key, since it shows on any page; `isGeminiQuota` (`utils/runError.ts`)
 tests the two quota codes `backend/pipeline/runner.py` spells, which is also what marks the row's glyph.
 
 Error toasts go through `useReportOnce`, which dedupes `(key, failureId)` across refreshes; `prune` lets a
