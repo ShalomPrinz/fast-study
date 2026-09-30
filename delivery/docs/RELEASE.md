@@ -28,7 +28,11 @@ Two workflows, neither taking an input.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It takes the
   `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
   `latest.yml`, refuses if Release or tag `v<version>` exists, checks all three files are there and
-  creates Release `v<version>`, published and targeted at that commit.
+  creates Release `v<version>`, published and targeted at that commit. It ends by dispatching
+  `pages.yml` to refresh the landing page's version line: a `release: published` trigger cannot, as
+  an event `GITHUB_TOKEN` raises starts no workflow except a dispatch
+  ([docs](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow)).
+  A failed dispatch fails the run with the Release already out; run `gh workflow run pages.yml --ref main`.
 
 Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what their updater reads —
 the launcher's side is [`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.md). An expired
