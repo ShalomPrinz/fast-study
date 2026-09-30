@@ -48,7 +48,7 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "shortcutName": "FastStudy",
-      "artifactName": "FastStudy-Setup-${version}.${ext}"
+      "artifactName": "FastStudy-Setup.${ext}"
     }
   },
   "dependencies": {
