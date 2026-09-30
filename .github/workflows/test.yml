@@ -134,9 +134,9 @@ jobs:
       - name: Run tests
         run: npm test
 
-  # One job for all five lib packages: they are small, and a break in any of them is live in four
-  # services at once, so they fail as a unit.
-  lib-tests:
+  # The repo's internal tooling: the shared lib packages, which fail as a unit because a break in any
+  # of them is live in four services at once, then the app harness's unit tests.
+  internal-tests:
     runs-on: ubuntu-latest
     env:
       # No .python-version under lib/ either — see database-tests.
@@ -177,3 +177,10 @@ jobs:
 
       - name: Run runtime, tools and sentry (js) tests
         run: npm test --workspaces
+
+      # The harness's own logic, no stack: its tests import only node: builtins and harness files.
+      - name: Run harness (js) tests
+        run: node --test '.claude/harness/tests/*.test.mjs'
+
+      - name: Run harness shim (py) tests
+        run: uvx pytest .claude/harness/tests -q
