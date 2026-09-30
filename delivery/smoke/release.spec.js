@@ -5,12 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, expect, test } from '@playwright/test';
 import { abandon, bridge, launch, quit, readLaunchLog, readyPorts, waitForApp } from './lib/app.js';
-import {
-  completeInitWall,
-  pickUniversity,
-  PLACEHOLDER_KEYS,
-  submitInitWall,
-} from './lib/firstRun.js';
+import { completeInitWall, PLACEHOLDER_KEYS } from './lib/firstRun.js';
 import { toneVideo } from './lib/media.js';
 import { proveOfflineEnforcement } from './lib/offline.js';
 import * as paths from './lib/paths.js';
@@ -718,15 +713,6 @@ test('13. an in-place update', async () => {
     expect(readLaunchLog().split('\n')[0], 'launch.log names the wrong version').toContain(
       `FastStudy ${candidate.version} `,
     );
-    // The previous version stored no university, so the wall is back. It passes with the key fields
-    // left blank only while both keys read as stored, and those stay the only keys summarize can use.
-    await expect(page.getByTestId('init-wall')).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByTestId('data-root-input')).toHaveValue(paths.dataRoot('data-update'), {
-      timeout: 60_000,
-    });
-    await pickUniversity(page);
-    await submitInitWall(page);
-
     // Settings is a route like any other, and only the wall carries the data-root confirmation.
     await page.goto('app://bundle/settings');
     await expect(page.getByTestId('data-root-input')).toBeVisible();

@@ -27,26 +27,12 @@ export async function completeInitWall(page, dataRoot) {
     );
   }
   await page.getByTestId('data-root-input').fill(dataRoot);
-  // The previous-version installer update runs through predates the field; the keys above prove the
-  // wall's form has rendered, so its absence here is that version, not a slow render.
-  if (await page.locator(SITE_FIELD).count()) await pickUniversity(page);
-  await submitInitWall(page);
-}
-
-const SITE_FIELD = '#moodle-site';
-
-/** Pick the first preset university and wait for its probe, which the firewall leaves unverified. */
-export async function pickUniversity(page) {
   await page.locator('#moodle-site-select').selectOption('biu');
   // `supported` or `unsupported` would mean the probe reached the site through the firewall.
-  await expect(page.locator(SITE_FIELD), 'the university probe did not end unverified').toHaveClass(
-    /(^|\s)moodle-site--unverified(\s|$)/,
-    { timeout: 60_000 },
-  );
-}
-
-/** Confirm the data root the wall shows, submit, and wait for the wall to go. */
-export async function submitInitWall(page) {
+  await expect(
+    page.locator('#moodle-site'),
+    'the university probe did not end unverified',
+  ).toHaveClass(/(^|\s)moodle-site--unverified(\s|$)/, { timeout: 60_000 });
   await page.getByTestId('data-root-confirm').check();
   const submit = page.getByTestId('init-wall-submit');
   await expect(submit).toBeEnabled();
