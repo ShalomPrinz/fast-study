@@ -46,14 +46,16 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     renameEdit.setValue('')
     // A run may have started while the input was open.
     if (!name || name === course.name || renameLocked) return
+    let effective: string
     try {
-      await renameCourse(course.name, name)
+      effective = await renameCourse(course.name, name)
     } catch (e) {
       toastFailure(e)
       return
     }
+    // The database may sanitize the typed name, so the page follows the folder it answers with.
     if (selected?.course === course.name) {
-      onSelect(name, selected.lecture, selected.kind)
+      onSelect(effective, selected.lecture, selected.kind)
     }
     refreshCourses()
   }
@@ -66,7 +68,12 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
 
   async function toggleArchived(e: React.MouseEvent) {
     e.stopPropagation()
-    await setCourseArchived(course.name, !course.archived)
+    try {
+      await setCourseArchived(course.name, !course.archived)
+    } catch (err) {
+      toastFailure(err)
+      return
+    }
     refreshCourses()
   }
 

@@ -37,8 +37,12 @@ msgstr "ב\"{name}\" אין תווים שאפשר להשתמש בהם בשם ת�
 msgid "\"{name}\" is reserved for the course's own folders. Choose another name for the lecture."
 msgstr "השם \"{name}\" שמור לתיקיות של הקורס עצמו. בחר שם אחר להרצאה."
 
+#: src/shared/components/LectureLead.tsx:7
+msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
+msgstr "\"<0>{lecture}</0>\" ב\"<1>{course}</1>\""
+
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:314
+#: src/features/runner/RunnerView.tsx:325
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאות לא הושלמו} other {# הרצאות לא הושלמו}}"
 
@@ -47,8 +51,10 @@ msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאו�
 #~ msgid "{0, plural, one {# lecture in flight} other {# lectures in flight}}"
 #~ msgstr "{0, plural, one {הרצאה אחת בעבודה} two {# הרצאות בעבודה} other {# הרצאות בעבודה}}"
 
+#. placeholder {0}: header.count
 #. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:221
+#: src/features/runner/RunnerView.tsx:185
+#: src/features/runner/RunnerView.tsx:225
 msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {הרצאה אחת בעיבוד} two {# הרצאות בעיבוד} other {# הרצאות בעיבוד}}"
 
@@ -126,7 +132,7 @@ msgstr "{0} מותקן — אפשר להוריד הקלטות."
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
 #: src/features/lectures/MainView.tsx:336
-#: src/features/runner/RunnerView.tsx:130
+#: src/features/runner/RunnerView.tsx:131
 msgid "{0} of {1} parts"
 msgstr "{0} מתוך {1} חלקים"
 
@@ -394,7 +400,7 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A section is waiting for a passcode"
 msgstr "יחידה ממתינה לקוד גישה"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:127
 msgid "Add lecture"
 msgstr "הוספת הרצאה"
 
@@ -402,7 +408,7 @@ msgstr "הוספת הרצאה"
 msgid "Add recitation"
 msgstr "הוספת תרגול"
 
-#: src/features/runner/RunnerView.tsx:209
+#: src/features/runner/RunnerView.tsx:213
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
@@ -434,7 +440,7 @@ msgstr "מפתחות API"
 msgid "Appearance and behaviour"
 msgstr "מראה והעדפות"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
 msgid "Archive course"
 msgstr "העברת קורס לארכיון"
 
@@ -458,7 +464,7 @@ msgstr "שמע"
 #~ msgid "Audio extraction failed"
 #~ msgstr "חילוץ האודיו נכשל"
 
-#: src/features/runner/RunnerView.tsx:292
+#: src/features/runner/RunnerView.tsx:303
 msgid "Audio only"
 msgstr "שמע בלבד"
 
@@ -514,7 +520,7 @@ msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "אי אפשר לשנות את השם בזמן עיבוד או המתנה בתור"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:89
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:94
 msgid "Can't rename while one of its lectures is being processed or waiting in line"
 msgstr "אי אפשר לשנות את שם הקורס כשאחת ההרצאות בו בעיבוד או ממתינה בתור"
 
@@ -995,7 +1001,7 @@ msgstr "מסיים…"
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "נמצא ה-Moodle של האוניברסיטה: <0>{0}</0>"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:106
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
 msgid "Fully processed lectures"
 msgstr "הרצאות שהושלמו במלואן"
 
@@ -1188,7 +1194,7 @@ msgstr "פעולות נוספות"
 msgid "New course"
 msgstr "קורס חדש"
 
-#: src/features/runner/RunnerView.tsx:288
+#: src/features/runner/RunnerView.tsx:299
 msgid "Next"
 msgstr "הבאה"
 
@@ -1296,7 +1302,7 @@ msgstr "לא זוהה וידאו בדף הזה. הפעל אותו פעם אחת 
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
-#: src/features/runner/RunnerView.tsx:168
+#: src/features/runner/RunnerView.tsx:170
 msgid "None"
 msgstr "אין"
 
@@ -1317,7 +1323,7 @@ msgstr "אין מספיק נתונים להערכה"
 msgid "not provided"
 msgstr "חסר"
 
-#: src/features/runner/RunnerView.tsx:309
+#: src/features/runner/RunnerView.tsx:320
 msgid "Not queued"
 msgstr "לא בתור"
 
@@ -1337,15 +1343,15 @@ msgstr "שים לב: הפעולה הזו תמחק את כל הקבצים בהר�
 msgid "Nothing matched this search"
 msgstr "לא נמצאו תוצאות לחיפוש הזה"
 
-#: src/features/runner/RunnerView.tsx:186
+#: src/features/runner/RunnerView.tsx:190
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:92
+#: src/shared/contexts/RunnerStatusContext.tsx:98
 msgid "Nothing to run - All pipelines complete"
 msgstr "אין מה להריץ - כל ההרצאות הושלמו"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:96
+#: src/shared/contexts/RunnerStatusContext.tsx:102
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בעיבוד"
 
@@ -1353,7 +1359,7 @@ msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בע�
 msgid "Nothing was found to analyze in this course."
 msgstr "לא נמצא חומר לניתוח בקורס הזה."
 
-#: src/features/runner/RunnerView.tsx:217
+#: src/features/runner/RunnerView.tsx:221
 msgid "Now running"
 msgstr "בעיבוד עכשיו"
 
@@ -1463,17 +1469,17 @@ msgstr "ההרצאה כבר בעיבוד"
 #~ msgid "Pipeline failed to start"
 #~ msgstr "הצינור נכשל בהפעלה"
 
-#: src/features/runner/RunnerView.tsx:267
+#: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
 msgstr "בתור"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:248
+#: src/features/runner/RunnerView.tsx:254
 msgid "Quota · resumes {0}"
 msgstr "המכסה נוצלה · ממשיך ב-{0}"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:135
+#: src/features/runner/RunnerView.tsx:136
 msgid "Rate limited — resumes at {0}"
 msgstr "יותר מדי בקשות — ממשיך ב-{0}"
 
@@ -1502,7 +1508,7 @@ msgstr "יצירה מחדש משלב {stepLabel}"
 msgid "Ready to retry"
 msgstr "מוכן לניסיון חוזר"
 
-#: src/features/runner/RunnerView.tsx:61
+#: src/features/runner/RunnerView.tsx:62
 #: src/features/search/components/SearchResult.tsx:45
 msgid "recitation"
 msgstr "תרגול"
@@ -1625,7 +1631,7 @@ msgstr "הרצת השלבים הנותרים"
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
-#: src/features/runner/RunnerView.tsx:321
+#: src/features/runner/RunnerView.tsx:332
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
@@ -1637,12 +1643,13 @@ msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 #~ msgid "Run unfinished lectures when the app starts"
 #~ msgstr "להריץ הרצאות שלא הושלמו כשהאפליקציה נפתחת"
 
-#. placeholder {0}: status!.runner.total
-#: src/features/runner/RunnerView.tsx:182
-msgid "Running · lecture {current} of {0}"
-msgstr "בעיבוד · הרצאה {current} מתוך {0}"
+#. placeholder {0}: header.current
+#. placeholder {1}: header.total
+#: src/features/runner/RunnerView.tsx:183
+msgid "Running · lecture {0} of {1}"
+msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
-#: src/features/runner/RunnerView.tsx:195
+#: src/features/runner/RunnerView.tsx:199
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "הרצאות בעיבוד"
@@ -1752,7 +1759,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: steps.length
-#: src/features/runner/RunnerView.tsx:104
+#: src/features/runner/RunnerView.tsx:105
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
@@ -1976,7 +1983,7 @@ msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{l
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
-#: src/features/runner/RunnerView.tsx:271
+#: src/features/runner/RunnerView.tsx:282
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
 
@@ -2014,9 +2021,13 @@ msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומט�
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
-#: src/features/runner/RunnerView.tsx:341
+#: src/features/runner/RunnerView.tsx:353
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה היומית."
+
+#: src/features/runner/RunnerView.tsx:357
+msgid "These won't start until you run them."
+msgstr "הן לא יתחילו עד שתריץ אותן."
 
 #: src/features/settings/SettingsView.tsx:293
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
@@ -2104,7 +2115,7 @@ msgstr "תמלול"
 msgid "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 msgstr "שני דברים דרושים כדי להתחיל: האוניברסיטה שלך ותיקייה שבה יישמר הכול. צריך לעשות את זה רק פעם אחת."
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
 msgid "Unarchive course"
 msgstr "הוצאת קורס מהארכיון"
 

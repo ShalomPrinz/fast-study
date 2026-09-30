@@ -10,6 +10,7 @@ from .paths import (
     PREDEFINED_FILES,
     RECITATIONS_DIR,
     SOURCE_URL_MARKER,
+    CourseNotFound,
     FolderInUse,
     LectureNotFound,
     NameReserved,
@@ -73,8 +74,10 @@ def set_course_source_url(name: str, source_url: str | None) -> None:
 
 
 def set_course_archived(name: str, archived: bool) -> None:
-    """Create or remove the .archived marker inside a course dir (idempotent)."""
+    """Create or remove the .archived marker inside a course dir (idempotent); CourseNotFound if the dir is gone."""
 
+    if not course_dir(name).is_dir():
+        raise CourseNotFound(f"course not found: {name}", course=name)
     marker = course_dir(name) / ARCHIVED_MARKER
     if archived:
         marker.touch(exist_ok=True)
@@ -82,10 +85,12 @@ def set_course_archived(name: str, archived: bool) -> None:
         marker.unlink()
 
 
-def rename_course(old: str, new: str) -> None:
-    """Rename a course directory in place."""
+def rename_course(old: str, new: str) -> str:
+    """Rename a course directory in place and return the folder name actually created."""
 
-    _rename_dir(course_dir(old), course_dir(new), old, new)
+    target = course_dir(new)
+    _rename_dir(course_dir(old), target, old, new)
+    return target.name
 
 
 def check_not_reserved(name: str) -> None:
@@ -105,13 +110,13 @@ def create_lecture(course: str, name: str, kind: str) -> None:
     _mkdir_new(lecture_dir(course, name, kind), name)
 
 
-def rename_lecture(course: str, old: str, new: str, kind: str) -> None:
-    """Rename a lecture or recitation directory in place."""
+def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
+    """Rename a lecture or recitation directory in place and return the folder name actually created."""
 
     check_not_reserved(new)
-    _rename_dir(
-        lecture_dir(course, old, kind), lecture_dir(course, new, kind), old, new
-    )
+    target = lecture_dir(course, new, kind)
+    _rename_dir(lecture_dir(course, old, kind), target, old, new)
+    return target.name
 
 
 def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:

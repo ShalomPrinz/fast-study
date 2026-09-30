@@ -192,7 +192,7 @@ for the code whichever view chooses to show it.
 | `fs/crud.py`          | `name_taken`                    | `name`            | user      |
 | `fs/crud.py`          | `name_reserved`                 | `name`            | user      |
 | `fs/crud.py`, `fs/summary.py` | `lecture_not_found`     | `course`, `lecture` | user    |
-| `fs/overview.py`, `fs/summaries.py` | `course_not_found`  | `course`          | user      |
+| `fs/overview.py`, `fs/summaries.py`, `fs/crud.py` | `course_not_found` | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
 | `settings.py`         | `setting_must_be_boolean`       | `field`           | dev       |
 | `settings.py`         | `setting_must_be_integer`       | `field`           | dev       |

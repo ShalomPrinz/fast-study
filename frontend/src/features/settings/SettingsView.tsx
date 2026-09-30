@@ -4,8 +4,6 @@ import {
   fetchConfigOptions,
   fetchSettings,
   saveSettings,
-  toAutoRun,
-  toNightlyHour,
   type AutoRun,
   type ConfigOptions,
   type Settings,
@@ -28,7 +26,7 @@ import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import SecureStorageNotice from './components/SecureStorageNotice'
-import { buildPatch, type SettingsForm } from './utils/patch'
+import { buildPatch, formFromStore, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
 import '@/styles/panel.css'
@@ -40,24 +38,6 @@ import './SettingsView.css'
 // The hours the nightly pass can be set to. The value stays a number all the way to the wire — the
 // store rejects a JSON string — while the label is a clock time, which reads the same in every locale.
 const NIGHTLY_HOURS = Array.from({ length: 24 }, (_, hour) => hour)
-
-// The language is not in here: it applies the moment it is picked and lives in `localStorage`, so
-// it never reaches a save.
-function initialForm(stored: Settings, options: ConfigOptions): SettingsForm {
-  return {
-    geminiApiKey: '',
-    groqApiKey: '',
-    dataRoot: stored.dataRoot ?? '',
-    driveEnabled: stored.driveEnabled ?? false,
-    gdriveRootFolder: stored.gdriveRootFolder ?? '',
-    geminiModel: stored.geminiModel ?? options.geminiModels[0] ?? '',
-    autoRun: toAutoRun(stored.autoRun),
-    // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
-    nightlyRun: stored.nightlyRun ?? true,
-    nightlyHour: toNightlyHour(stored.nightlyHour),
-    moodleSite: stored.moodleSite ?? '',
-  }
-}
 
 // A save held back by an advisory guard: a site switch that drops the connected account, or a data
 // root change that would split the runs in flight.
@@ -83,7 +63,7 @@ export default function SettingsView() {
         const [next, opts] = await Promise.all([fetchSettings(), fetchConfigOptions()])
         setStored(next)
         setOptions(opts)
-        setForm(initialForm(next, opts))
+        setForm(formFromStore(next, opts))
       } catch {
         // A downed service is already toasted centrally by the http client.
       }
@@ -101,6 +81,7 @@ export default function SettingsView() {
 
   // Aliased so the async save below keeps the non-null narrowing the early return established.
   const current = form
+  const currentOptions = options
   const patch = () => buildPatch(current, stored)
 
   const missing = missingEntries({
@@ -124,14 +105,9 @@ export default function SettingsView() {
       const saved = await saveSettings(next)
       setStored(saved)
       setSettings(saved)
-      // Key fields return to their placeholder; the data root takes the store's normalized spelling,
-      // else the next save diffs against the raw text and re-raises the guard.
-      setForm({
-        ...current,
-        dataRoot: saved.dataRoot ?? '',
-        geminiApiKey: '',
-        groqApiKey: '',
-      })
+      // The whole form takes the store's answer: keys return to their placeholder, the data root to its
+      // normalized spelling, and a field another writer changed since load stops reading as an edit.
+      setForm(formFromStore(saved, currentOptions))
       // The auto-downloader dropped the old site's account, so every chip needs a fresh answer.
       if (next.moodleSite !== undefined) void refreshAccount()
       toast('info', t`Settings saved`)

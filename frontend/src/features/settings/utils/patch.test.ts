@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { storeBody, type Settings } from '@/services/settings'
-import { buildPatch, type SettingsForm } from './patch'
+import { storeBody, type ConfigOptions, type Settings } from '@/services/settings'
+import { buildPatch, formFromStore, type SettingsForm } from './patch'
 
 const STORED: Settings = {
   dataRoot: '/data',
@@ -81,5 +81,36 @@ describe('buildPatch', () => {
       moodleSite: 'https://moodle.tau.ac.il',
     })
     expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, STORED)).toEqual({})
+  })
+})
+
+const OPTIONS: ConfigOptions = {
+  providers: [],
+  geminiModels: ['gemini-3.5-flash', 'gemini-3.5-pro'],
+}
+
+describe('formFromStore', () => {
+  it('reads the store as an unchanged form', () => {
+    expect(formFromStore(STORED, OPTIONS)).toEqual(UNCHANGED)
+  })
+
+  it('reads a model the options no longer list as the first one, so Save replaces it', () => {
+    const retired = { ...STORED, geminiModel: 'gemini-2.0-flash-retired' }
+    const form = formFromStore(retired, OPTIONS)
+    expect(form.geminiModel).toBe('gemini-3.5-flash')
+    expect(buildPatch(form, retired)).toEqual({ geminiModel: 'gemini-3.5-flash' })
+  })
+
+  it('keeps a listed model that is not the first', () => {
+    const form = formFromStore({ ...STORED, geminiModel: 'gemini-3.5-pro' }, OPTIONS)
+    expect(form.geminiModel).toBe('gemini-3.5-pro')
+  })
+
+  // After a save the page re-reads the form from the store's fresh answer, which already holds
+  // another writer's change, so the next save carries only what this page edits.
+  it('never reverts a field another writer changed once the form is re-read after a save', () => {
+    const fresh = { ...STORED, gdriveRootFolder: 'Harness-B', nightlyRun: true }
+    const next = { ...formFromStore(fresh, OPTIONS), nightlyRun: false }
+    expect(buildPatch(next, fresh)).toEqual({ nightlyRun: false })
   })
 })

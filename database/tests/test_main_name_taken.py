@@ -82,7 +82,8 @@ def test_rename_course_case_only_works(client, data_root):
 
     r = client.patch("/courses/algo", json={"name": "Algo"})
 
-    assert r.status_code == 204
+    assert r.status_code == 200
+    assert r.json() == {"name": "Algo"}
     assert [p.name for p in data_root.iterdir()] == ["Algo"]
 
 
@@ -92,8 +93,35 @@ def test_rename_to_the_same_dir_is_not_refused(client, data_root):
 
     r = client.patch("/courses/Algo/lectures/L1", json={"name": "L1"})
 
-    assert r.status_code == 204
+    assert r.status_code == 200
+    assert r.json() == {"name": "L1"}
     assert (data_root / "Algo" / "L1").is_dir()
+
+
+@pytest.mark.parametrize(
+    "kind,parent", [("lecture", ""), ("recitation", "Recitations")]
+)
+def test_rename_lecture_answers_the_sanitized_name(client, data_root, kind, parent):
+    # The caller must learn the folder name actually created, or it keeps addressing the unsanitized one.
+    (data_root / "Algo" / parent / "L1").mkdir(parents=True)
+
+    r = client.patch(
+        f"/courses/Algo/lectures/L1?kind={kind}", json={"name": "Week: 1?. "}
+    )
+
+    assert r.status_code == 200
+    assert r.json() == {"name": "Week 1"}
+    assert (data_root / "Algo" / parent / "Week 1").is_dir()
+
+
+def test_rename_course_answers_the_sanitized_name(client, data_root):
+    (data_root / "Algo").mkdir()
+
+    r = client.patch("/courses/Algo", json={"name": "CON"})
+
+    assert r.status_code == 200
+    assert r.json() == {"name": "CON_"}
+    assert (data_root / "CON_").is_dir()
 
 
 def _deny_rename(monkeypatch, platform, winerror):

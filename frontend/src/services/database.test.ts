@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { uploadVideo, deleteFile } from './database'
+import { uploadVideo, deleteFile, renameCourse, renameLecture } from './database'
 import type { RequestError } from './http'
 
 // Minimal stand-ins for the parts of Response the http client touches.
@@ -97,5 +97,25 @@ describe('deleteFile', () => {
     const err = (await deleteFile('C', 'L', 'summary.pdf').catch((e) => e)) as RequestError
 
     expect(err.code).toBe('file_locked')
+  })
+})
+
+function answered(body: unknown): Response {
+  return {
+    ok: true,
+    status: 200,
+    headers: { get: () => null },
+    json: async () => body,
+  } as unknown as Response
+}
+
+// The page follows the folder the database created, never the typed name it may have sanitized.
+describe('renameLecture and renameCourse', () => {
+  it('answer the effective name the database reports', async () => {
+    stubFetch(() => answered({ name: 'שיעור 1 מבוא' }))
+    await expect(renameLecture('C', 'L', 'שיעור 1: מבוא?')).resolves.toBe('שיעור 1 מבוא')
+
+    stubFetch(() => answered({ name: 'x two' }))
+    await expect(renameCourse('C', 'x: two')).resolves.toBe('x two')
   })
 })

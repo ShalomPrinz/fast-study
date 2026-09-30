@@ -25,7 +25,7 @@ typed in and fail minutes later mid-pipeline.
 **Auto-run is a ceiling on unattended work, not a schedule.** It caps a dropped or downloaded video and
 the nightly pass; it never caps a run the user starts. **The nightly pass has two gates**: its own switch
 decides whether the cron runs and when, auto-run still caps what it does. Every unset value reads as the
-backend's own fallback (`useAutoRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
+backend's own fallback (`useAutoRun`, `useNightlyRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
 a number on the wire, never the `<select>`'s string, which the store rejects.
 
 ## What is not a setting
@@ -60,6 +60,8 @@ in `localStorage` ([I18N.md](I18N.md)).
 ## `/settings`
 
 Loads the store and options once, edits a local form, saves changed fields in one `saveSettings` call.
+The form is read from the store (`formFromStore`) on load and again from each save's answer, so a later
+save never reverts another writer's change; a stored model the options no longer list reads as the first.
 **Every save answers**, failure included — a connection error's own toast is deduped and reads as noise.
 A failure after the store write leaves the service behind until a retry, so the toast asks for one.
 

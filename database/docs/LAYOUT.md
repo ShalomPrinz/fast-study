@@ -55,8 +55,8 @@ The rule is idempotent, which is what the arrangement rests on: a name read back
 resolves to itself, so renames and tree round-trips are stable. `read_course` takes its name
 straight from the `iterdir()` walk and is the one place that deliberately skips sanitizing.
 
-Sanitization is silent — create and rename still return `204`. The effective name reaches the
-user through the tree, which lists real directory names and refreshes over SSE immediately.
+Sanitization is silent on create, which returns `204`; the tree, listing real directory names over
+SSE, shows the result. Rename answers `200 {name}` with the effective name, so a caller keeps addressing the real folder.
 
 Two cases are knowingly unhandled: two names in one course that sanitize identically merge into
 one directory, and no Unicode normalization happens, so a name could round-trip differently

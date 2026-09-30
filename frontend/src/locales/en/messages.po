@@ -37,8 +37,12 @@ msgstr "\"{name}\" has no characters that can be used in a folder name."
 msgid "\"{name}\" is reserved for the course's own folders. Choose another name for the lecture."
 msgstr "\"{name}\" is reserved for the course's own folders. Choose another name for the lecture."
 
+#: src/shared/components/LectureLead.tsx:7
+msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
+msgstr "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
+
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:314
+#: src/features/runner/RunnerView.tsx:325
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 
@@ -47,8 +51,10 @@ msgstr "{0, plural, one {# lecture has work left} other {# lectures have work le
 #~ msgid "{0, plural, one {# lecture in flight} other {# lectures in flight}}"
 #~ msgstr "{0, plural, one {# lecture in flight} other {# lectures in flight}}"
 
+#. placeholder {0}: header.count
 #. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:221
+#: src/features/runner/RunnerView.tsx:185
+#: src/features/runner/RunnerView.tsx:225
 msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {# lecture running} other {# lectures running}}"
 
@@ -126,7 +132,7 @@ msgstr "{0} is installed — downloading is ready to use."
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
 #: src/features/lectures/MainView.tsx:336
-#: src/features/runner/RunnerView.tsx:130
+#: src/features/runner/RunnerView.tsx:131
 msgid "{0} of {1} parts"
 msgstr "{0} of {1} parts"
 
@@ -394,7 +400,7 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:127
 msgid "Add lecture"
 msgstr "Add lecture"
 
@@ -402,7 +408,7 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
-#: src/features/runner/RunnerView.tsx:209
+#: src/features/runner/RunnerView.tsx:213
 msgid "All caught up — every lecture is finished."
 msgstr "All caught up — every lecture is finished."
 
@@ -434,7 +440,7 @@ msgstr "API keys"
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
 msgid "Archive course"
 msgstr "Archive course"
 
@@ -458,7 +464,7 @@ msgstr "Audio"
 #~ msgid "Audio extraction failed"
 #~ msgstr "Audio extraction failed"
 
-#: src/features/runner/RunnerView.tsx:292
+#: src/features/runner/RunnerView.tsx:303
 msgid "Audio only"
 msgstr "Audio only"
 
@@ -514,7 +520,7 @@ msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgid "Can't rename while it's being processed or waiting in line"
 msgstr "Can't rename while it's being processed or waiting in line"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:89
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:94
 msgid "Can't rename while one of its lectures is being processed or waiting in line"
 msgstr "Can't rename while one of its lectures is being processed or waiting in line"
 
@@ -995,7 +1001,7 @@ msgstr "finishing…"
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:106
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:111
 msgid "Fully processed lectures"
 msgstr "Fully processed lectures"
 
@@ -1188,7 +1194,7 @@ msgstr "More actions"
 msgid "New course"
 msgstr "New course"
 
-#: src/features/runner/RunnerView.tsx:288
+#: src/features/runner/RunnerView.tsx:299
 msgid "Next"
 msgstr "Next"
 
@@ -1296,7 +1302,7 @@ msgstr "No video was captured on that page. Play it once by hand and try again."
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 
-#: src/features/runner/RunnerView.tsx:168
+#: src/features/runner/RunnerView.tsx:170
 msgid "None"
 msgstr "None"
 
@@ -1317,7 +1323,7 @@ msgstr "Not enough data to estimate"
 msgid "not provided"
 msgstr "not provided"
 
-#: src/features/runner/RunnerView.tsx:309
+#: src/features/runner/RunnerView.tsx:320
 msgid "Not queued"
 msgstr "Not queued"
 
@@ -1337,15 +1343,15 @@ msgstr "Note: This will delete all files in this lecture."
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
-#: src/features/runner/RunnerView.tsx:186
+#: src/features/runner/RunnerView.tsx:190
 msgid "Nothing running"
 msgstr "Nothing running"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:92
+#: src/shared/contexts/RunnerStatusContext.tsx:98
 msgid "Nothing to run - All pipelines complete"
 msgstr "Nothing to run - All pipelines complete"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:96
+#: src/shared/contexts/RunnerStatusContext.tsx:102
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "Nothing to run - All remaining pipelines already running"
 
@@ -1353,7 +1359,7 @@ msgstr "Nothing to run - All remaining pipelines already running"
 msgid "Nothing was found to analyze in this course."
 msgstr "Nothing was found to analyze in this course."
 
-#: src/features/runner/RunnerView.tsx:217
+#: src/features/runner/RunnerView.tsx:221
 msgid "Now running"
 msgstr "Now running"
 
@@ -1463,17 +1469,17 @@ msgstr "Pipeline already running"
 #~ msgid "Pipeline failed to start"
 #~ msgstr "Pipeline failed to start"
 
-#: src/features/runner/RunnerView.tsx:267
+#: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
 msgstr "Queued"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:248
+#: src/features/runner/RunnerView.tsx:254
 msgid "Quota · resumes {0}"
 msgstr "Quota · resumes {0}"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:135
+#: src/features/runner/RunnerView.tsx:136
 msgid "Rate limited — resumes at {0}"
 msgstr "Rate limited — resumes at {0}"
 
@@ -1502,7 +1508,7 @@ msgstr "Re-generate from {stepLabel}"
 msgid "Ready to retry"
 msgstr "Ready to retry"
 
-#: src/features/runner/RunnerView.tsx:61
+#: src/features/runner/RunnerView.tsx:62
 #: src/features/search/components/SearchResult.tsx:45
 msgid "recitation"
 msgstr "recitation"
@@ -1625,7 +1631,7 @@ msgstr "Run Remaining"
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
-#: src/features/runner/RunnerView.tsx:321
+#: src/features/runner/RunnerView.tsx:332
 msgid "Run these now"
 msgstr "Run these now"
 
@@ -1637,12 +1643,13 @@ msgstr "Run unfinished lectures daily"
 #~ msgid "Run unfinished lectures when the app starts"
 #~ msgstr "Run unfinished lectures when the app starts"
 
-#. placeholder {0}: status!.runner.total
-#: src/features/runner/RunnerView.tsx:182
-msgid "Running · lecture {current} of {0}"
-msgstr "Running · lecture {current} of {0}"
+#. placeholder {0}: header.current
+#. placeholder {1}: header.total
+#: src/features/runner/RunnerView.tsx:183
+msgid "Running · lecture {0} of {1}"
+msgstr "Running · lecture {0} of {1}"
 
-#: src/features/runner/RunnerView.tsx:195
+#: src/features/runner/RunnerView.tsx:199
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "Running pipelines"
@@ -1752,7 +1759,7 @@ msgstr "Start using Fast Study"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: steps.length
-#: src/features/runner/RunnerView.tsx:104
+#: src/features/runner/RunnerView.tsx:105
 msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
@@ -1976,7 +1983,7 @@ msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
-#: src/features/runner/RunnerView.tsx:271
+#: src/features/runner/RunnerView.tsx:282
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
 
@@ -2014,9 +2021,13 @@ msgstr "The university site is temporarily refusing automated requests. Wait a f
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
-#: src/features/runner/RunnerView.tsx:341
+#: src/features/runner/RunnerView.tsx:353
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "These won't start until you run them, or until the daily run does."
+
+#: src/features/runner/RunnerView.tsx:357
+msgid "These won't start until you run them."
+msgstr "These won't start until you run them."
 
 #: src/features/settings/SettingsView.tsx:293
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
@@ -2104,7 +2115,7 @@ msgstr "Transcript"
 msgid "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 msgstr "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:117
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
 msgid "Unarchive course"
 msgstr "Unarchive course"
 

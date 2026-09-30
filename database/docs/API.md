@@ -34,6 +34,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   ([LAYOUT.md](LAYOUT.md#names)); the last two create the dir on demand, so they check too.
 - `404` `lecture_not_found` `{course, lecture}` answers a neutral write (`PUT /…/files/{name}`,
   `PUT /…/summary`) to a lecture dir that does not exist; nothing is written.
+- `404` `course_not_found` `{course}` answers a course route whose dir is gone (renamed outside the app).
 - A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.
   `HEAD` answers a bodyless `404` instead: absence is its normal answer, not a failure.
 
@@ -44,11 +45,11 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `GET    /health`                                           | launcher liveness; `200 {status: ok}` even with no data root configured   |
 | `GET    /tree`                                             | full course tree; `video.mp4` entries carry `duration` (seconds; omitted when unknown) |
 | `POST   /courses`                                          | create course (`{name}`, optional `{source_url}`)                         |
-| `PATCH  /courses/{course}`                                 | rename course (`{name}`); `423` if a file under it is open elsewhere      |
+| `PATCH  /courses/{course}`                                 | rename course (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file under it is open elsewhere |
 | `PATCH  /courses/{course}/source_url`                      | set/clear source_url; empty or null clears                                |
-| `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`)                                          |
+| `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`); 404 if the course is missing           |
 | `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`)                                      |
-| `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `423` if a file in it is open elsewhere |
+| `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file in it is open elsewhere |
 | `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |
 | `POST   /courses/{course}/lectures/{lecture}/materials`    | add a material pdf; returns `{name}` with the allocated filename          |

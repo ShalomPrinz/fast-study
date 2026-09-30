@@ -62,7 +62,8 @@ leaves; `runner.lastError` is an exception that aborted a sweep, distinct from p
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
 
 `errors` maps each key to `{ step, message, code, params, provider, blocked }`. The "Last error" box and
-the toast both render it through `ServiceError` ([I18N.md](I18N.md)); `isGeminiQuota` (`utils/runError.ts`)
+the toast both render it through `ServiceError` ([I18N.md](I18N.md)), the toast led by `LectureLead`, the lecture and course
+`parseInFlightKey` reads off the key, since it shows on any page; `isGeminiQuota` (`utils/runError.ts`)
 tests the two quota codes `backend/pipeline/runner.py` spells, which is also what marks the row's glyph.
 
 Error toasts go through `useReportOnce`, which dedupes `(key, failureId)` across refreshes; `prune` lets a
@@ -118,7 +119,8 @@ archived course so the badge stays off.
 
 Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. A running
 or queued lecture, and a course holding one, refuse the rename (`utils/renameLock.ts`): the runner writes
-by the name it was given, so a mid-run rename splits the lecture in two. `useShiftHeld`
+by the name it was given, so a mid-run rename splits the lecture in two. An open page follows the name the rename
+answers, since the database may sanitize the typed one. `useShiftHeld`
 resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
 `nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second

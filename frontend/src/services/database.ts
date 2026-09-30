@@ -49,8 +49,12 @@ export async function setCourseSourceUrl(course: string, source_url: string | nu
   })
 }
 
-export async function renameCourse(oldName: string, newName: string): Promise<void> {
-  await database.patch(path`/courses/${oldName}`, { json: { name: newName } })
+/** Answers the folder name the rename created, which the database may have sanitized. */
+export async function renameCourse(oldName: string, newName: string): Promise<string> {
+  const { name } = await database.patch<{ name: string }>(path`/courses/${oldName}`, {
+    json: { name: newName },
+  })
+  return name
 }
 
 export async function setCourseArchived(course: string, archived: boolean): Promise<void> {
@@ -80,15 +84,18 @@ export async function uploadVideo(
   }
 }
 
+/** Answers the folder name the rename created, which the database may have sanitized. */
 export async function renameLecture(
   course: string,
   oldName: string,
   newName: string,
   kind?: Kind,
-): Promise<void> {
-  await database.patch(`${lectureBase(course, oldName)}${kindQuery(kind)}`, {
-    json: { name: newName },
-  })
+): Promise<string> {
+  const { name } = await database.patch<{ name: string }>(
+    `${lectureBase(course, oldName)}${kindQuery(kind)}`,
+    { json: { name: newName } },
+  )
+  return name
 }
 
 export async function deleteFile(
