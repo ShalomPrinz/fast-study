@@ -25,7 +25,7 @@ typed in and fail minutes later mid-pipeline.
 **Auto-run is a ceiling on unattended work, not a schedule.** It caps a dropped or downloaded video and
 the nightly pass; it never caps a run the user starts. **The nightly pass has two gates**: its own switch
 decides whether the cron runs and when, auto-run still caps what it does. Every unset value reads as the
-backend's own fallback (`useAutoRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
+backend's own fallback (`useAutoRun`, `useNightlyRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
 a number on the wire, never the `<select>`'s string, which the store rejects.
 
 ## What is not a setting

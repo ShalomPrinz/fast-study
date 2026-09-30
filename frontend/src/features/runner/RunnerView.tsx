@@ -4,15 +4,16 @@ import { Link } from 'react-router-dom'
 import type { InFlightEntry, Kind, Lecture } from '@/types'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
-import { useAutoRun, useDriveEnabled } from '@/shared/contexts/SettingsContext'
+import { useAutoRun, useDriveEnabled, useNightlyRun } from '@/shared/contexts/SettingsContext'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
-import { visiblePipeline } from '@/features/lectures/constants/pipeline'
+import { PIPELINE, visiblePipeline } from '@/features/lectures/constants/pipeline'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
 import { formatClockTime } from '@/shared/utils/format'
 import { lectureRoute } from '@/shared/utils/url'
 import { notQueued } from './utils/notQueued'
+import { headerState, nightlyPicksUp } from './utils/runnerState'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -156,8 +157,9 @@ export default function RunnerView() {
   const { courses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const autoRun = useAutoRun()
+  const nightlyRun = useNightlyRun()
 
-  const running = status?.runner.running ?? false
+  const header = headerState(status)
   const inFlight = status?.inFlight ?? []
   const queue = status?.queue ?? []
   const pending = notQueued(courses, queue, inFlight, driveEnabled)
@@ -166,8 +168,6 @@ export default function RunnerView() {
   // One line for a page with nothing in any section; a lone empty section keeps only its title.
   const allEmpty = inFlight.length === 0 && queue.length === 0 && pending.length === 0
   const none = t`None`
-  // `done` counts finished lectures; display the 1-indexed current one, capped at total.
-  const current = status ? Math.min(status.runner.done + 1, status.runner.total) : 0
 
   const autoRunLabel = {
     full: t`Auto-run: the whole pipeline`,
@@ -176,10 +176,14 @@ export default function RunnerView() {
   }[autoRun]
 
   const meta: ReactNode[] = [
-    running ? (
+    header.kind !== 'idle' ? (
       <span className="page-header-state page-header-state--running">
         <span className="page-header-state-dot" />
-        {t`Running · lecture ${current} of ${status!.runner.total}`}
+        {header.kind === 'sweep' ? (
+          t`Running · lecture ${header.current} of ${header.total}`
+        ) : (
+          <Plural value={header.count} one="# lecture running" other="# lectures running" />
+        )}
       </span>
     ) : (
       <span>
@@ -235,24 +239,31 @@ export default function RunnerView() {
                       />
                       {alsoRunning.length > 0 && (
                         <div className="pipeline-card runner-also">
-                          {alsoRunning.map((entry) => (
-                            <LectureRow
-                              key={`${entry.course}||${entry.lecture}||${entry.kind}`}
-                              course={entry.course}
-                              lecture={entry.lecture}
-                              kind={entry.kind}
-                              state={entry.sleepingUntil ? 'paused' : 'running'}
-                              chip={
-                                entry.sleepingUntil ? (
-                                  <span className="chip chip--warn">
-                                    {t`Quota · resumes ${formatClockTime(entry.sleepingUntil)}`}
-                                  </span>
-                                ) : (
-                                  <span className="chip chip--accent">{entry.step}</span>
-                                )
-                              }
-                            />
-                          ))}
+                          {alsoRunning.map((entry) => {
+                            const stage = PIPELINE.find((p) => p.step === entry.step)
+                            return (
+                              <LectureRow
+                                key={`${entry.course}||${entry.lecture}||${entry.kind}`}
+                                course={entry.course}
+                                lecture={entry.lecture}
+                                kind={entry.kind}
+                                state={entry.sleepingUntil ? 'paused' : 'running'}
+                                chip={
+                                  entry.sleepingUntil ? (
+                                    <span className="chip chip--warn">
+                                      {t`Quota · resumes ${formatClockTime(entry.sleepingUntil)}`}
+                                    </span>
+                                  ) : (
+                                    <span className="chip chip--accent">
+                                      {stage
+                                        ? t(stage.runningLabel ?? stage.stageLabel)
+                                        : entry.step}
+                                    </span>
+                                  )
+                                }
+                              />
+                            )
+                          })}
                         </div>
                       )}
                     </>
@@ -338,9 +349,13 @@ export default function RunnerView() {
                         ))}
                       </div>
                       <p className="queue-note">
-                        <Trans>
-                          These won't start until you run them, or until the daily run does.
-                        </Trans>
+                        {nightlyPicksUp(nightlyRun, autoRun) ? (
+                          <Trans>
+                            These won't start until you run them, or until the daily run does.
+                          </Trans>
+                        ) : (
+                          <Trans>These won't start until you run them.</Trans>
+                        )}
                       </p>
                     </>
                   ) : (

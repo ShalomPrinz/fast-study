@@ -38,7 +38,7 @@ msgid "\"{name}\" is reserved for the course's own folders. Choose another name 
 msgstr "השם \"{name}\" שמור לתיקיות של הקורס עצמו. בחר שם אחר להרצאה."
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:314
+#: src/features/runner/RunnerView.tsx:325
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאות לא הושלמו} other {# הרצאות לא הושלמו}}"
 
@@ -47,8 +47,10 @@ msgstr "{0, plural, one {הרצאה אחת לא הושלמה} two {# הרצאו�
 #~ msgid "{0, plural, one {# lecture in flight} other {# lectures in flight}}"
 #~ msgstr "{0, plural, one {הרצאה אחת בעבודה} two {# הרצאות בעבודה} other {# הרצאות בעבודה}}"
 
+#. placeholder {0}: header.count
 #. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:221
+#: src/features/runner/RunnerView.tsx:185
+#: src/features/runner/RunnerView.tsx:225
 msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {הרצאה אחת בעיבוד} two {# הרצאות בעיבוד} other {# הרצאות בעיבוד}}"
 
@@ -126,7 +128,7 @@ msgstr "{0} מותקן — אפשר להוריד הקלטות."
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
 #: src/features/lectures/MainView.tsx:336
-#: src/features/runner/RunnerView.tsx:130
+#: src/features/runner/RunnerView.tsx:131
 msgid "{0} of {1} parts"
 msgstr "{0} מתוך {1} חלקים"
 
@@ -402,7 +404,7 @@ msgstr "הוספת הרצאה"
 msgid "Add recitation"
 msgstr "הוספת תרגול"
 
-#: src/features/runner/RunnerView.tsx:209
+#: src/features/runner/RunnerView.tsx:213
 msgid "All caught up — every lecture is finished."
 msgstr "הכול מעודכן — כל ההרצאות הושלמו."
 
@@ -458,7 +460,7 @@ msgstr "שמע"
 #~ msgid "Audio extraction failed"
 #~ msgstr "חילוץ האודיו נכשל"
 
-#: src/features/runner/RunnerView.tsx:292
+#: src/features/runner/RunnerView.tsx:303
 msgid "Audio only"
 msgstr "שמע בלבד"
 
@@ -1188,7 +1190,7 @@ msgstr "פעולות נוספות"
 msgid "New course"
 msgstr "קורס חדש"
 
-#: src/features/runner/RunnerView.tsx:288
+#: src/features/runner/RunnerView.tsx:299
 msgid "Next"
 msgstr "הבאה"
 
@@ -1296,7 +1298,7 @@ msgstr "לא זוהה וידאו בדף הזה. הפעל אותו פעם אחת 
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "לא זוהה וידאו בדף ה-Zoom הזה. ייתכן שצריך להזין קוד גישה או להפעיל את הנגן ידנית."
 
-#: src/features/runner/RunnerView.tsx:168
+#: src/features/runner/RunnerView.tsx:170
 msgid "None"
 msgstr "אין"
 
@@ -1317,7 +1319,7 @@ msgstr "אין מספיק נתונים להערכה"
 msgid "not provided"
 msgstr "חסר"
 
-#: src/features/runner/RunnerView.tsx:309
+#: src/features/runner/RunnerView.tsx:320
 msgid "Not queued"
 msgstr "לא בתור"
 
@@ -1337,7 +1339,7 @@ msgstr "שים לב: הפעולה הזו תמחק את כל הקבצים בהר�
 msgid "Nothing matched this search"
 msgstr "לא נמצאו תוצאות לחיפוש הזה"
 
-#: src/features/runner/RunnerView.tsx:186
+#: src/features/runner/RunnerView.tsx:190
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
@@ -1353,7 +1355,7 @@ msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בע�
 msgid "Nothing was found to analyze in this course."
 msgstr "לא נמצא חומר לניתוח בקורס הזה."
 
-#: src/features/runner/RunnerView.tsx:217
+#: src/features/runner/RunnerView.tsx:221
 msgid "Now running"
 msgstr "בעיבוד עכשיו"
 
@@ -1463,17 +1465,17 @@ msgstr "ההרצאה כבר בעיבוד"
 #~ msgid "Pipeline failed to start"
 #~ msgstr "הצינור נכשל בהפעלה"
 
-#: src/features/runner/RunnerView.tsx:267
+#: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
 msgstr "בתור"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:248
+#: src/features/runner/RunnerView.tsx:254
 msgid "Quota · resumes {0}"
 msgstr "המכסה נוצלה · ממשיך ב-{0}"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:135
+#: src/features/runner/RunnerView.tsx:136
 msgid "Rate limited — resumes at {0}"
 msgstr "יותר מדי בקשות — ממשיך ב-{0}"
 
@@ -1502,7 +1504,7 @@ msgstr "יצירה מחדש משלב {stepLabel}"
 msgid "Ready to retry"
 msgstr "מוכן לניסיון חוזר"
 
-#: src/features/runner/RunnerView.tsx:61
+#: src/features/runner/RunnerView.tsx:62
 #: src/features/search/components/SearchResult.tsx:45
 msgid "recitation"
 msgstr "תרגול"
@@ -1625,7 +1627,7 @@ msgstr "הרצת השלבים הנותרים"
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
-#: src/features/runner/RunnerView.tsx:321
+#: src/features/runner/RunnerView.tsx:332
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
@@ -1637,12 +1639,13 @@ msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 #~ msgid "Run unfinished lectures when the app starts"
 #~ msgstr "להריץ הרצאות שלא הושלמו כשהאפליקציה נפתחת"
 
-#. placeholder {0}: status!.runner.total
-#: src/features/runner/RunnerView.tsx:182
-msgid "Running · lecture {current} of {0}"
-msgstr "בעיבוד · הרצאה {current} מתוך {0}"
+#. placeholder {0}: header.current
+#. placeholder {1}: header.total
+#: src/features/runner/RunnerView.tsx:183
+msgid "Running · lecture {0} of {1}"
+msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
-#: src/features/runner/RunnerView.tsx:195
+#: src/features/runner/RunnerView.tsx:199
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "הרצאות בעיבוד"
@@ -1752,7 +1755,7 @@ msgstr "להתחיל להשתמש ב-Fast Study"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: steps.length
-#: src/features/runner/RunnerView.tsx:104
+#: src/features/runner/RunnerView.tsx:105
 msgid "Step {0} of {1}"
 msgstr "שלב {0} מתוך {1}"
 
@@ -1976,7 +1979,7 @@ msgstr "ההרצה נעצרה באופן בלתי צפוי ב\"{course}\" / \"{l
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "תהליך ההורדה בוטל. הרץ את היחידה שוב כדי להשלים אותן."
 
-#: src/features/runner/RunnerView.tsx:271
+#: src/features/runner/RunnerView.tsx:282
 msgid "the runner takes these in order"
 msgstr "ההרצות מתבצעות לפי הסדר"
 
@@ -2014,9 +2017,13 @@ msgstr "אתר האוניברסיטה חוסם כרגע בקשות אוטומט�
 msgid "Then {0} will be regenerated."
 msgstr "לאחר מכן {0} ייווצר מחדש."
 
-#: src/features/runner/RunnerView.tsx:341
+#: src/features/runner/RunnerView.tsx:353
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה היומית."
+
+#: src/features/runner/RunnerView.tsx:357
+msgid "These won't start until you run them."
+msgstr "הן לא יתחילו עד שתריץ אותן."
 
 #: src/features/settings/SettingsView.tsx:293
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."

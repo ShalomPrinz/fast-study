@@ -38,3 +38,9 @@ export function useDriveEnabled(): boolean {
 export function useAutoRun(): AutoRun {
   return toAutoRun(useSettingsContext().settings?.autoRun ?? null)
 }
+
+/** Whether the nightly pass is scheduled. Unset means on, the same fallback as the backend's
+ *  `settings.nightly_run()`. */
+export function useNightlyRun(): boolean {
+  return useSettingsContext().settings?.nightlyRun ?? true
+}
