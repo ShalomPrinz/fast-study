@@ -533,6 +533,9 @@ def enqueue(entry: QueueEntry) -> bool:
         # of arrivals in one callback would otherwise each start a drain of their own.
         _runner_status["running"] = True
         asyncio.create_task(run_all())
+    else:
+        # Counted now, so "lecture N of M" grows the moment a lecture joins a live run.
+        _runner_status["total"] += 1
     return True
 
 
@@ -764,7 +767,7 @@ async def run_all() -> dict:
     # can reorder and overwrite the fresher snapshot. Same for the per-lecture done below.
     try:
         while _queue:
-            # Recomputed before the pop, so a queue that grew mid-run reports its new size.
+            # Recomputed before the pop, so a lecture a manual run pulled out stops being counted.
             _runner_status["total"] = _runner_status["done"] + len(_queue)
             entry = _queue.pop(0)
             course, lecture, kind = entry.course, entry.lecture, entry.kind

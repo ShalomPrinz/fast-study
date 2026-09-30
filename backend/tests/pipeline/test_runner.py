@@ -1037,10 +1037,14 @@ class TestQueueDrain:
     def test_a_lecture_enqueued_mid_run_joins_the_same_run(self, clean_queue):
         ran: list[str] = []
 
+        totals: list[int] = []
+
         async def fake_entry(entry):
             ran.append(entry.lecture)
             if entry.lecture == "L1":
                 runner.enqueue(_entry("L3"))
+                # Counted on arrival, not only once the running lecture finishes.
+                totals.append(runner._runner_status["total"])
             return False
 
         async def go():
@@ -1053,7 +1057,7 @@ class TestQueueDrain:
 
         asyncio.run(go())
         assert ran == ["L1", "L2", "L3"]
-        # total is recomputed each iteration, so the late arrival is counted rather than ignored.
+        assert totals == [3]
         assert runner._runner_status["total"] == 3
         assert runner._runner_status["done"] == 3
 
