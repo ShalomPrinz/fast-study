@@ -271,6 +271,23 @@ and `audio` (real ffmpeg) → `transcribe` (fake Groq) runs green.
 `DATA_ROOT` is a tree the harness made, marked with `.harness-scratch`; it refuses to run against
 a data root without that marker.
 
+## Tests
+
+```bash
+npm run test:harness     # from the repo root: node:test, then pytest — seconds, no stack
+```
+
+`tests/` unit-tests the harness's own logic: the providers' rule parsing, whole-segment `match`
+and `times` draining, the site's `/control` and one-time `/die/` drop, the fake tool's argv and
+failure table, `hb state`'s diff, the env and baseline helpers, and port reuse. Each fake keeps
+that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mjs`,
+`tool-args.mjs`) so a test imports it without a port or a fixture. `test_shim.py` runs the real
+Python shim in a child interpreter per case, since its patches are process-wide: lock globs as tail
+matches, the Windows `winerror` 32 and 5 refusals, and `fs.crud` reading `win32`.
+
+They run in CI's `internal-tests` job beside the lib tests. The self-check above stays the
+end-to-end proof and runs only on `setup.mjs`, not in CI.
+
 ## Driving failures
 
 The fakes take a mode, so the quota and outage flows need no real quota:
