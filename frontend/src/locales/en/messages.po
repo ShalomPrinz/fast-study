@@ -442,10 +442,6 @@ msgstr "Archived ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
-#: src/features/settings/utils/moodleSites.ts:19
-msgid "Ariel University"
-msgstr "Ariel University"
-
 #: src/features/downloads/components/RecordingRow.tsx:249
 msgid "Attach material to"
 msgstr "Attach material to"
@@ -482,7 +478,7 @@ msgstr "Back"
 msgid "Bar-Ilan University"
 msgstr "Bar-Ilan University"
 
-#: src/features/settings/utils/moodleSites.ts:17
+#: src/features/settings/utils/moodleSites.ts:18
 msgid "Ben-Gurion University"
 msgstr "Ben-Gurion University"
 
@@ -1831,10 +1827,6 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "Technion"
 msgstr "Technion"
 
-#: src/features/settings/utils/moodleSites.ts:14
-msgid "Tel Aviv University"
-msgstr "Tel Aviv University"
-
 #: src/shared/i18n/serviceErrors.ts:160
 #~ msgid "That course link carries no course id: {url}."
 #~ msgstr "That course link carries no course id: {url}."
@@ -2127,10 +2119,6 @@ msgstr "University account"
 #: src/features/downloads/components/AccountStatus.tsx:108
 msgid "University account connected"
 msgstr "University account connected"
-
-#: src/features/settings/utils/moodleSites.ts:18
-msgid "University of Haifa"
-msgstr "University of Haifa"
 
 #: src/features/downloads/DownloadsView.tsx:40
 msgid "Unknown"

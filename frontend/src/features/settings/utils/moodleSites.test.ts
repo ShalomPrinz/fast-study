@@ -9,6 +9,7 @@ describe('choiceForSite', () => {
   it('opens a stored preset root on its preset', () => {
     expect(choiceForSite('https://lemida.biu.ac.il')).toBe('biu')
     expect(choiceForSite('https://lemida.biu.ac.il/')).toBe('biu')
+    expect(choiceForSite('https://moodle.bgu.ac.il/moodle/')).toBe('bgu')
   })
 
   it('opens any other root on "Other…"', () => {

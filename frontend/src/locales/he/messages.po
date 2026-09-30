@@ -442,10 +442,6 @@ msgstr "ארכיון ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "בטוח שאתה רוצה ליצור מחדש?"
 
-#: src/features/settings/utils/moodleSites.ts:19
-msgid "Ariel University"
-msgstr "אוניברסיטת אריאל"
-
 #: src/features/downloads/components/RecordingRow.tsx:249
 msgid "Attach material to"
 msgstr "צירוף חומר אל"
@@ -482,7 +478,7 @@ msgstr "חזרה"
 msgid "Bar-Ilan University"
 msgstr "אוניברסיטת בר-אילן"
 
-#: src/features/settings/utils/moodleSites.ts:17
+#: src/features/settings/utils/moodleSites.ts:18
 msgid "Ben-Gurion University"
 msgstr "אוניברסיטת בן-גוריון"
 
@@ -1831,10 +1827,6 @@ msgstr "לוקח יותר זמן מהצפוי · {0} · הזמן הארוך בי
 msgid "Technion"
 msgstr "הטכניון"
 
-#: src/features/settings/utils/moodleSites.ts:14
-msgid "Tel Aviv University"
-msgstr "אוניברסיטת תל אביב"
-
 #: src/shared/i18n/serviceErrors.ts:160
 #~ msgid "That course link carries no course id: {url}."
 #~ msgstr "בקישור הקורס אין מזהה קורס: {url}."
@@ -2127,10 +2119,6 @@ msgstr "חשבון האוניברסיטה"
 #: src/features/downloads/components/AccountStatus.tsx:108
 msgid "University account connected"
 msgstr "חשבון האוניברסיטה מחובר"
-
-#: src/features/settings/utils/moodleSites.ts:18
-msgid "University of Haifa"
-msgstr "אוניברסיטת חיפה"
 
 #: src/features/downloads/DownloadsView.tsx:40
 msgid "Unknown"

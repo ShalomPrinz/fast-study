@@ -11,12 +11,11 @@ export interface MoodleSitePreset {
 // only a starting point — the probe answers the canonical root, and that is what gets stored.
 export const MOODLE_SITE_PRESETS: MoodleSitePreset[] = [
   { id: 'biu', name: msg`Bar-Ilan University`, url: 'https://lemida.biu.ac.il' },
-  { id: 'tau', name: msg`Tel Aviv University`, url: 'https://moodle.tau.ac.il' }, // unverified
-  { id: 'huji', name: msg`Hebrew University`, url: 'https://moodle4.cs.huji.ac.il' }, // unverified
-  { id: 'technion', name: msg`Technion`, url: 'https://moodle24.technion.ac.il' }, // unverified
-  { id: 'bgu', name: msg`Ben-Gurion University`, url: 'https://moodle.bgu.ac.il' }, // unverified
-  { id: 'haifa', name: msg`University of Haifa`, url: 'https://moodle.haifa.ac.il' }, // unverified
-  { id: 'ariel', name: msg`Ariel University`, url: 'https://moodle.ariel.ac.il' }, // unverified
+  // HUJI and the Technion put the academic year in the URL (path, host), so these go stale yearly.
+  { id: 'huji', name: msg`Hebrew University`, url: 'https://moodle.huji.ac.il/2026-27' },
+  { id: 'technion', name: msg`Technion`, url: 'https://moodle26.technion.ac.il' },
+  // The bare host answers 404; Moodle lives under /moodle.
+  { id: 'bgu', name: msg`Ben-Gurion University`, url: 'https://moodle.bgu.ac.il/moodle' },
 ]
 
 export const OTHER_SITE = 'other'
