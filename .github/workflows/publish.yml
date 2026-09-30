@@ -58,7 +58,8 @@ jobs:
             exit 1
           fi
 
-          files=("installer/FastStudy-Setup-$version.exe" "installer/FastStudy-Setup-$version.exe.blockmap" installer/latest.yml)
+          # The file name is fixed so releases/latest/download/FastStudy-Setup.exe stays a stable link.
+          files=(installer/FastStudy-Setup.exe installer/FastStudy-Setup.exe.blockmap installer/latest.yml)
           for file in "${files[@]}"; do
             [ -f "$file" ] || { echo "::error::build.yml run $run's installer artifact has no ${file#installer/}"; ls -l installer; exit 1; }
           done

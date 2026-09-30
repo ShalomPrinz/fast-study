@@ -15,6 +15,8 @@ function env(name) {
 }
 
 export const PRODUCT = 'FastStudy';
+// electron/package.json's artifactName: version-less, so releases/latest/download/ links it stably.
+const INSTALLER = `${PRODUCT}-Setup.exe`;
 
 // A one-click NSIS install names its directory after package.json's `name`; the files inside keep `productName`.
 export const installDir = () => path.join(env('LOCALAPPDATA'), 'Programs', PRODUCT.toLowerCase());
@@ -26,15 +28,10 @@ export const servicesExe = () => path.join(resourcesDir(), 'services', 'services
 export const formatsDir = () => path.join(resourcesDir(), 'latex', 'formats');
 export const appUpdateYml = () => path.join(resourcesDir(), 'app-update.yml');
 
-/** Where electron-updater parks a downloaded installer until the app quits; the cache is named
- *  after electron/package.json's `name`, not its `productName`. */
-export const pendingInstaller = (version) =>
-  path.join(
-    env('LOCALAPPDATA'),
-    `${PRODUCT.toLowerCase()}-updater`,
-    'pending',
-    `${PRODUCT}-Setup-${version}.exe`,
-  );
+/** Where electron-updater parks a downloaded installer until the app quits, named after the feed
+ *  URL's file name; the cache is named after electron/package.json's `name`, not its `productName`. */
+export const pendingInstaller = () =>
+  path.join(env('LOCALAPPDATA'), `${PRODUCT.toLowerCase()}-updater`, 'pending', INSTALLER);
 
 export const stateRoot = () => path.join(env('LOCALAPPDATA'), PRODUCT);
 export const launchLog = () => path.join(stateRoot(), 'logs', 'launch.log');
@@ -50,21 +47,16 @@ export const dataRoot = (name) => path.join(workDir(), name);
  *  and everything else as `smoke-logs`, so fetching the text does not drag the traces along. */
 export const resultsDir = () => path.resolve('test-results');
 
-/** The installer the build job produced, and the version its `latest.yml` names. */
-export function candidate() {
-  const dir = env('SMOKE_CANDIDATE_DIR');
-  const latest = fs.readFileSync(path.join(dir, 'latest.yml'), 'utf8');
-  const version = /^version:\s*(\S+)\s*$/m.exec(latest)?.[1];
-  if (!version) throw new Error(`no version line in ${path.join(dir, 'latest.yml')}`);
-  const installer = path.join(dir, `${PRODUCT}-Setup-${version}.exe`);
-  return { dir, version, installer };
+/** An installer dir as build.yml uploads it: the installer and the `latest.yml` naming its version. */
+function installerIn(dir) {
+  const yml = path.join(dir, 'latest.yml');
+  const version = /^version:\s*(\S+)\s*$/m.exec(fs.readFileSync(yml, 'utf8'))?.[1];
+  if (!version) throw new Error(`no version line in ${yml}`);
+  return { dir, version, installer: path.join(dir, INSTALLER) };
 }
 
+/** The installer the build job produced. */
+export const candidate = () => installerIn(env('SMOKE_CANDIDATE_DIR'));
+
 /** The lower-version build of the same staged tree, which exists only for the update check. */
-export function previous() {
-  const dir = env('SMOKE_PREVIOUS_DIR');
-  const pattern = new RegExp(`^${PRODUCT}-Setup-(.+)\\.exe$`);
-  const matches = fs.readdirSync(dir).filter((name) => pattern.test(name));
-  if (matches.length !== 1) throw new Error(`expected one installer in ${dir}, found ${matches}`);
-  return { dir, version: pattern.exec(matches[0])[1], installer: path.join(dir, matches[0]) };
-}
+export const previous = () => installerIn(env('SMOKE_PREVIOUS_DIR'));
