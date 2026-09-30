@@ -195,9 +195,9 @@ function semverOf(version) {
 
 /** What an update that never installed leaves behind, ending with the decisive probe: running the
  *  pending installer here separates a failing installer from a quit-time spawn that never ran. */
-async function installForensics(installerSeen, version) {
+async function installForensics(installerSeen) {
   const exe = paths.appExe();
-  const pending = paths.pendingInstaller(version);
+  const pending = paths.pendingInstaller();
   const lines = [
     `a process snapshot ${installerSeen ? 'caught an installer while waiting' : 'never caught an installer, which is the usual case'}`,
     `${exe} reports ProductVersion ${await productVersion(exe).catch((error) => `unreadable: ${error.message}`)}`,
@@ -693,7 +693,7 @@ test('13. an in-place update', async () => {
         );
       } catch (error) {
         throw new Error(
-          `${error.message}\n${await installForensics(installerSeen, candidate.version)}`,
+          `${error.message}\n${await installForensics(installerSeen)}`,
         );
       }
       // A quit-time install must not start the app; one that did would hold the single-instance lock.

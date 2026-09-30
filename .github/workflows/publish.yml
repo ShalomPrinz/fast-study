@@ -11,7 +11,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      actions: read
+      actions: write
       contents: write
     # Two dispatches would race between the existence check and the create.
     concurrency:
@@ -58,10 +58,20 @@ jobs:
             exit 1
           fi
 
-          files=("installer/FastStudy-Setup-$version.exe" "installer/FastStudy-Setup-$version.exe.blockmap" installer/latest.yml)
+          # The file name is fixed so releases/latest/download/FastStudy-Setup.exe stays a stable link.
+          files=(installer/FastStudy-Setup.exe installer/FastStudy-Setup.exe.blockmap installer/latest.yml)
           for file in "${files[@]}"; do
             [ -f "$file" ] || { echo "::error::build.yml run $run's installer artifact has no ${file#installer/}"; ls -l installer; exit 1; }
           done
 
           gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "$tag" --notes "" --latest
           echo "published $tag at $GITHUB_SHA from build.yml run $run"
+
+      # A release event raised by GITHUB_TOKEN starts no workflow, so the landing page's version line
+      # is refreshed by dispatch — the one event that token may raise.
+      - name: Refresh the landing page
+        run: |
+          if ! gh workflow run pages.yml --ref main; then
+            echo "::error::the Release is published; run pages.yml by hand: gh workflow run pages.yml --ref main, or from the Actions tab"
+            exit 1
+          fi

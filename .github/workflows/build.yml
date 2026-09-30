@@ -189,8 +189,8 @@ jobs:
         with:
           name: installer
           path: |
-            electron/dist/FastStudy-Setup-${{ steps.version.outputs.version }}.exe
-            electron/dist/FastStudy-Setup-${{ steps.version.outputs.version }}.exe.blockmap
+            electron/dist/FastStudy-Setup.exe
+            electron/dist/FastStudy-Setup.exe.blockmap
             electron/dist/latest.yml
           if-no-files-found: error
           # The public-repo maximum: publish.yml can release this commit until then, and a dispatch
@@ -200,7 +200,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: installer-previous
-          path: electron/dist/previous/FastStudy-Setup-${{ steps.version.outputs.previous }}.exe
+          # Two files in one dir upload flat, so the smoke suite reads its latest.yml as it does the candidate's.
+          path: |
+            electron/dist/previous/FastStudy-Setup.exe
+            electron/dist/previous/latest.yml
           if-no-files-found: error
 
   # A fresh runner, so the install is a first install. It installs and tests the uploaded artifact,

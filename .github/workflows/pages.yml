@@ -1,0 +1,53 @@
+name: pages
+
+# Deploys site/ to GitHub Pages with the latest release's version stamped in. publish.yml dispatches
+# this after every release, since a release event raised by GITHUB_TOKEN starts no workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A release-time dispatch and a push deploy queue rather than race; the later one wins.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/configure-pages@v5
+
+      - name: Stage and stamp the version line
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p _site
+          cp -r site/. _site/
+          rm _site/stamp.sh _site/capture.mjs _site/CLAUDE.md
+          if gh api "repos/${{ github.repository }}/releases/latest" > release.json; then
+            bash site/stamp.sh _site release.json
+          else
+            echo "no latest release ($(jq -r '.message // "unknown"' release.json 2>/dev/null))"
+            bash site/stamp.sh _site
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -18,17 +18,21 @@ Two workflows, neither taking an input.
 
 - **`build.yml`** runs on every push to `main` — a superseded run is cancelled — and on dispatch. It
   builds with `--publish never` and uploads the installer, its `.blockmap` and `latest.yml` as the
-  `installer` artifact (90 days), plus `installer-previous`, the same staged tree at a lower version,
-  which exists only for the smoke suite's update check and never leaves Actions. It fails if the
-  shipped `app-update.yml` does not name this repo's GitHub Releases — the smoke job rewrites that
-  file, so it cannot check it. The smoke job installs the artifact on a fresh runner and runs
+  `installer` artifact (90 days), plus `installer-previous`, the same staged tree at a lower version
+  with its own `latest.yml`, which exists only for the smoke suite's update check and never leaves
+  Actions. It fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
+  smoke job rewrites that file, so it cannot check it. The smoke job installs the artifact on a fresh runner and runs
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
   failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB). The run is
   green only when both jobs pass. It writes nothing to Releases.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It takes the
   `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
   `latest.yml`, refuses if Release or tag `v<version>` exists, checks all three files are there and
-  creates Release `v<version>`, published and targeted at that commit.
+  creates Release `v<version>`, published and targeted at that commit. It ends by dispatching
+  `pages.yml` to refresh the landing page's version line: a `release: published` trigger cannot, as
+  an event `GITHUB_TOKEN` raises starts no workflow except a dispatch
+  ([docs](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow)).
+  A failed dispatch fails the run with the Release already out; run `gh workflow run pages.yml --ref main`.
 
 Nothing reaches installed copies until `publish.yml` runs; `latest.yml` is what their updater reads —
 the launcher's side is [`electron/docs/UPDATES.md`](../../electron/docs/UPDATES.md). An expired
@@ -42,9 +46,12 @@ and smoke-tests a fresh one.
 
 `build.yml` computes the version: major and minor from `electron/package.json` (its patch is
 ignored), patch one past the highest non-draft Release `v<major>.<minor>.<n>`, else 0 — so bumping
-the minor starts a new series. It is injected with `-c.extraMetadata.version` and becomes the tag, the
-installer's file name and `app.getVersion()`. Two builds before a publish compute the same version,
-so publishing the second refuses on the existing Release; re-dispatch `build.yml` for a fresh one.
+the minor starts a new series. It is injected with `-c.extraMetadata.version` and becomes the tag,
+`latest.yml`'s version and `app.getVersion()`. The installer is always `FastStudy-Setup.exe`, so
+`releases/latest/download/FastStudy-Setup.exe` is a stable link; a differential update still needs
+the tag to be `v<version>`, since electron-updater finds the old blockmap by swapping the version in
+its download URL. Two builds before a publish compute the same version, so publishing the second
+refuses on the existing Release; re-dispatch `build.yml` for a fresh one.
 
 ## Error reporting
 

@@ -6,6 +6,8 @@ Top-level guidance for Claude Code in this repo. Service-specific docs live next
 
 A four-service app that turns a Hebrew video lecture into a structured written summary (and uploads it to Google Drive). The video → audio → transcript → summary → PDF → Drive pipeline lives in `backend/`; a web UI for driving it lives in `frontend/`; a Chrome extension + helper server for grabbing source videos (and PDFs) off lecture sites lives in `downloader/`; and all filesystem reads/writes under `DATA_ROOT` (plus the cross-service SSE notify channel) are owned by `database/`.
 
+`site/` is the public download page on GitHub Pages — static, no build, deployed by `.github/workflows/pages.yml` with the latest release's version stamped in ([`site/CLAUDE.md`](site/CLAUDE.md)).
+
 ## Shared data layout
 
 All services read the same `.env` at the repo root and share one on-disk layout under `DATA_ROOT`:
@@ -97,6 +99,8 @@ when the doc calls a code user-reachable and no catalog row says it.
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
 
 `lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
+
+`site-dev` owns `site/` and `.github/workflows/pages.yml` under the same rule: the page describes what `electron/`, `delivery/` and the services own, so a claim or a name that needs changing there is reported, not edited.
 
 ## Running Python
 
