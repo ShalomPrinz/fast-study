@@ -6,38 +6,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { FAILURES, fixtureFor, urlArg, valueAfter } from './tool-args.mjs';
 
 const [tool, ...args] = process.argv.slice(2);
-const HARNESS = process.env.HARNESS_DIR;
-const VIDEO = path.join(HARNESS, 'fixtures', 'video.mp4');
-const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
+const FIXTURES = path.join(process.env.HARNESS_DIR, 'fixtures');
 const SLICES = 12;
-
-function valueAfter(...flags) {
-  for (const flag of flags) {
-    const at = args.indexOf(flag);
-    if (at !== -1 && args[at + 1]) return args[at + 1];
-  }
-  return null;
-}
-
-const urlArg = [...args].reverse().find((arg) => /^https?:\/\//.test(arg)) ?? '';
-
-// What each real tool prints for the same failure, so a job's verbatim `detail` reads true.
-const FAILURES = {
-  404: {
-    curl: [22, 'curl: (22) The requested URL returned error: 404'],
-    'yt-dlp': [1, 'ERROR: unable to download video data: HTTP Error 404: Not Found'],
-  },
-  403: {
-    curl: [22, 'curl: (22) The requested URL returned error: 403'],
-    'yt-dlp': [1, 'ERROR: unable to download video data: HTTP Error 403: Forbidden'],
-  },
-  drop: {
-    curl: [18, 'curl: (18) transfer closed with outstanding read data remaining'],
-    'yt-dlp': [1, 'ERROR: unable to download video data: Connection reset by peer'],
-  },
-};
+const url = urlArg(args);
 
 function fail(kind) {
   const [code, message] = FAILURES[kind][tool];
@@ -45,25 +19,14 @@ function fail(kind) {
   process.exit(code);
 }
 
-// A PDF URL gets the PDF fixture, anything else the video — what a real fetch of it would bring.
-function fixtureFor(url) {
-  try {
-    return new URL(url).pathname.toLowerCase().endsWith('.pdf') ? PDF : VIDEO;
-  } catch {
-    return VIDEO;
-  }
-}
-
 async function download(outputName) {
   const name = (outputName ?? 'video.mp4').replace('%(ext)s', 'mp4');
-  if (urlArg.includes('/gone/')) fail(404);
-  if (urlArg.includes('/deny/')) fail(403);
+  if (url.includes('/gone/')) fail(404);
+  if (url.includes('/deny/')) fail(403);
   // Speed and the one-time drop are the fake site's live settings, changed through its /control.
-  const response = await fetch(
-    `${process.env.HARNESS_SITE}/tool?url=${encodeURIComponent(urlArg)}`,
-  );
+  const response = await fetch(`${process.env.HARNESS_SITE}/tool?url=${encodeURIComponent(url)}`);
   const { downloadMs, die } = await response.json();
-  const source = fs.readFileSync(fixtureFor(urlArg));
+  const source = fs.readFileSync(fixtureFor(url, FIXTURES));
   const target = path.resolve(process.cwd(), name);
   const handle = fs.openSync(target, 'w');
   try {
@@ -93,7 +56,7 @@ if (args.includes('--version')) {
     ].join('\n') + '\n',
   );
 } else if (args.includes('--skip-download')) {
-  process.stdout.write(`${fs.statSync(fixtureFor(urlArg)).size}\n`);
+  process.stdout.write(`${fs.statSync(fixtureFor(url, FIXTURES)).size}\n`);
 } else {
-  await download(valueAfter('--output', '-o'));
+  await download(valueAfter(args, '--output', '-o'));
 }
