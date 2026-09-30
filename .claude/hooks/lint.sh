@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Stop/SubagentStop hook: lints changed files — ruff for backend/ + database/ + lib/,
-# eslint for frontend/ + downloader/ + lib/. Blocks the turn on failure. See README.md.
+# eslint for frontend/ + downloader/ + lib/ + site/. Blocks the turn on failure. See README.md.
 set -uo pipefail
 
 payload="$(cat)"
@@ -29,7 +29,7 @@ for f in "${changed[@]}"; do
   [ -f "$f" ] || continue
   case "$f" in
     backend/*.py|database/*.py|lib/*.py)                          py+=("$f") ;;
-    frontend/*.ts|frontend/*.tsx|downloader/*.js|lib/*.js)        jsts+=("$f") ;;
+    frontend/*.ts|frontend/*.tsx|downloader/*.js|lib/*.js|site/*.js|site/*.mjs) jsts+=("$f") ;;
   esac
 done
 

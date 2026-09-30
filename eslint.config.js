@@ -105,6 +105,28 @@ export default [
     rules: baseline,
   },
 
+  // The download landing page: one classic script, no bundler, on GitHub Pages.
+  {
+    files: ['site/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'script',
+      globals: { ...globals.browser },
+    },
+    rules: baseline,
+  },
+
+  // Its screenshot capture: ESM on Node, driving the app harness.
+  {
+    files: ['site/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node, ...globals.browser },
+    },
+    rules: baseline,
+  },
+
   // Frontend: tsc owns undefined names and types, so eslint only carries the
   // unused-symbol and obvious-mistake rules.
   ...tseslint.configs.recommended.map((c) => ({
