@@ -2,6 +2,8 @@
 
 Turns a Hebrew video lecture into a structured written summary and uploads it to Google Drive.
 
+**Download for Windows:** [shalomprinz.github.io/fast-study](https://shalomprinz.github.io/fast-study/)
+
 **Pipeline:** video → audio → transcript → summary (Markdown) → PDF → Google Drive
 
 ## Architecture

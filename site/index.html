@@ -1,0 +1,627 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>FastStudy · מהרצאה מוקלטת לסיכום כתוב</title>
+    <meta
+      name="description"
+      content="FastStudy turns a recorded Hebrew lecture into a structured written summary. Free, for Windows."
+    />
+    <link rel="icon" href="img/icon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <a class="logo" href="#top">
+          <img src="img/icon.svg" alt="" width="26" height="26" />FastStudy
+        </a>
+        <nav class="nav-links">
+          <a href="#how"><span class="he">איך זה עובד</span><span class="en">How it works</span></a>
+          <a href="#features"><span class="he">מה יש בה</span><span class="en">Features</span></a>
+          <a href="#privacy"><span class="he">פרטיות</span><span class="en">Privacy</span></a>
+          <a href="#install"><span class="he">התקנה</span><span class="en">Installation</span></a>
+          <a href="#faq"><span class="he">שאלות נפוצות</span><span class="en">FAQ</span></a>
+        </nav>
+        <button type="button" class="lang-toggle" id="lang-toggle">
+          <span class="he" lang="en">English</span><span class="en" lang="he">עברית</span>
+        </button>
+        <a
+          class="btn btn--small"
+          href="https://github.com/ShalomPrinz/fast-study/releases/latest/download/FastStudy-Setup.exe"
+        >
+          <span class="he">הורדה</span><span class="en">Download</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="wrap hero-inner">
+          <div class="hero-copy">
+            <h1>
+              <span class="he">מהרצאה מוקלטת <mark>לסיכום כתוב</mark> ומסודר</span>
+              <span class="en"
+                >From a recorded lecture to a <mark>clean written summary</mark></span
+              >
+            </h1>
+            <p class="lead">
+              <span class="he"
+                >FastStudy הופכת הרצאה מוקלטת בעברית לסיכום כתוב ומובנה בקובץ PDF. אם רוצים, היא גם
+                מעלה אותו ל־Google Drive.</span
+              >
+              <span class="en"
+                >FastStudy turns a recorded Hebrew lecture into a structured written summary as a
+                PDF. If you want, it uploads it to your Google Drive too.</span
+              >
+            </p>
+            <div class="download">
+              <a
+                class="btn btn--large"
+                href="https://github.com/ShalomPrinz/fast-study/releases/latest/download/FastStudy-Setup.exe"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+                </svg>
+                <span class="he">הורדה ל־Windows</span><span class="en">Download for Windows</span>
+              </a>
+              <p class="download-os">
+                Windows 10/11 · <span class="he">חינם</span><span class="en">Free</span>
+              </p>
+              <p class="version" hidden data-stamp>
+                <span class="he">גרסה __VERSION__ · __SIZE__ MB</span>
+                <span class="en">Version __VERSION__ · __SIZE__ MB</span>
+              </p>
+            </div>
+          </div>
+          <figure class="shot shot--hero">
+            <div class="shot-bar" aria-hidden="true"><i></i><i></i><i></i></div>
+            <img
+              src="img/hero.jpg"
+              width="1280"
+              height="800"
+              alt="מסך הרצאה ב־FastStudy עם סיכום מוכן"
+              data-alt-en="A lecture in FastStudy with its summary ready"
+            />
+          </figure>
+        </div>
+      </section>
+
+      <section class="band" id="how">
+        <div class="wrap">
+          <h2><span class="he">איך זה עובד</span><span class="en">How it works</span></h2>
+          <ol class="steps steps--four">
+            <li>
+              <b>1</b>
+              <div>
+                <h3>
+                  <span class="he">מחברים את הקורס</span><span class="en">Connect your course</span>
+                </h3>
+                <p>
+                  <span class="he">בוחרים את האוניברסיטה ומתחברים לאתר הקורסים.</span
+                  ><span class="en">Pick your university and sign in to its course site.</span>
+                </p>
+              </div>
+            </li>
+            <li>
+              <b>2</b>
+              <div>
+                <h3>
+                  <span class="he">ההקלטות יורדות</span><span class="en">Recordings download</span>
+                </h3>
+                <p>
+                  <span class="he">ההרצאות והתרגולים של הקורס מגיעים למחשב.</span
+                  ><span class="en"
+                    >The course's lectures and recitations land on your computer.</span
+                  >
+                </p>
+              </div>
+            </li>
+            <li>
+              <b>3</b>
+              <div>
+                <h3>
+                  <span class="he">תמלול וסיכום</span><span class="en">Transcript and summary</span>
+                </h3>
+                <p>
+                  <span class="he">כל הרצאה מתומללת ומסוכמת לקובץ PDF.</span
+                  ><span class="en">Each lecture is transcribed and summarised into a PDF.</span>
+                </p>
+              </div>
+            </li>
+            <li>
+              <b>4</b>
+              <div>
+                <h3>
+                  <span class="he">ה־PDF ב־Drive שלכם</span
+                  ><span class="en">The PDF in your Drive</span>
+                </h3>
+                <p>
+                  <span class="he">אם מפעילים העלאה ל־Drive. אחרת הוא נשאר במחשב.</span
+                  ><span class="en"
+                    >When Drive upload is on. Otherwise it stays on your computer.</span
+                  >
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="features">
+        <div class="wrap">
+          <h2><span class="he">מה יש בה</span><span class="en">What it does</span></h2>
+          <div class="features">
+            <article class="feature">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16" /></svg>
+              </div>
+              <h3>
+                <span class="he">הורדה אוטומטית מאתר הקורס</span
+                ><span class="en">Auto-download from the course site</span>
+              </h3>
+              <p>
+                <span class="he"
+                  >הקלטות של הרצאות ותרגולים, כולל Zoom, וקובצי ה־PDF של הקורס. אחת אחת, או כולן יחד
+                  בלחיצה על "הורדת הכול".</span
+                >
+                <span class="en"
+                  >Lecture and recitation recordings, Zoom included, and the course's PDF handouts.
+                  One at a time, or all at once with "Download all".</span
+                >
+              </p>
+              <img
+                src="img/feature-download.jpg"
+                width="1280"
+                height="800"
+                loading="lazy"
+                alt="עמוד ההורדות של קורס"
+                data-alt-en="A course's downloads page"
+              />
+            </article>
+            <article class="feature">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6zM9 10h7M9 14h7M9 18h4" /></svg>
+              </div>
+              <h3>
+                <span class="he">סיכום מובנה בעברית</span
+                ><span class="en">A structured Hebrew summary</span>
+              </h3>
+              <p>
+                <span class="he">כותרות, הגדרות ונוסחאות, בקובץ PDF נקי שמוכן לקריאה ולהדפסה.</span>
+                <span class="en"
+                  >Headings, definitions and formulas, exported as a clean PDF ready to read or
+                  print.</span
+                >
+              </p>
+              <img
+                src="img/feature-summary.jpg"
+                width="1280"
+                height="800"
+                loading="lazy"
+                alt="סיכום PDF של הרצאה"
+                data-alt-en="A lecture's summary PDF"
+              />
+            </article>
+            <article class="feature">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 5h16M4 12h16M4 19h10M18 17l2 2 3-4" /></svg>
+              </div>
+              <h3><span class="he">סקירת קורס</span><span class="en">Course overview</span></h3>
+              <p>
+                <span class="he"
+                  >רמזים למבחן, שאלות ותשובות של סטודנטים, טעויות נפוצות ורשימת נושאים, וגם כל
+                  ההרצאות בקובץ אחד.</span
+                >
+                <span class="en"
+                  >Exam hints, student Q&amp;A, common pitfalls and a topic list, plus every lecture
+                  in one file.</span
+                >
+              </p>
+              <img
+                src="img/feature-overview.jpg"
+                width="1280"
+                height="800"
+                loading="lazy"
+                alt="סקירת הקורס"
+                data-alt-en="The course overview"
+              />
+            </article>
+            <article class="feature">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" /></svg>
+              </div>
+              <h3><span class="he">עורך</span><span class="en">Editor</span></h3>
+              <p>
+                <span class="he"
+                  >מתקנים את הטקסט של הסיכום כשה־PDF פתוח לידו. בשמירה ה־PDF מתעדכן.</span
+                >
+                <span class="en"
+                  >Fix the summary's text with the PDF shown beside it. Saving updates the
+                  PDF.</span
+                >
+              </p>
+              <img
+                src="img/feature-editor.jpg"
+                width="1280"
+                height="800"
+                loading="lazy"
+                alt="עורך הסיכום לצד ה־PDF"
+                data-alt-en="The summary editor beside its PDF"
+              />
+            </article>
+            <article class="feature">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="10.5" cy="10.5" r="6.5" />
+                  <path d="M15.5 15.5 21 21" />
+                </svg>
+              </div>
+              <h3><span class="he">חיפוש</span><span class="en">Search</span></h3>
+              <p>
+                <span class="he">מחפשים בכל הסיכומים של קורס, קורס אחד בכל פעם.</span>
+                <span class="en"
+                  >Search across all of a course's summaries, one course at a time.</span
+                >
+              </p>
+              <img
+                src="img/feature-search.jpg"
+                width="1280"
+                height="800"
+                loading="lazy"
+                alt="תוצאות חיפוש בסיכומים"
+                data-alt-en="Search results across summaries"
+              />
+            </article>
+            <article class="feature">
+              <div class="icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" />
+                </svg>
+              </div>
+              <h3><span class="he">עובדת לבד</span><span class="en">Runs on its own</span></h3>
+              <p>
+                <span class="he"
+                  >כל לילה (ב־03:00, או בכל שעה שבוחרים) היא מעבדת את מה שחדש, עד כמה שההגדרה
+                  "כשמגיע וידאו חדש" מאפשרת: כל השלבים, רק חילוץ השמע, או כלום. ההעלאה ל־Drive
+                  אופציונלית וכבויה מראש.</span
+                >
+                <span class="en"
+                  >Every night (at 03:00, or any hour you choose) it processes whatever is new, as
+                  far as the "When a new video arrives" setting allows: the whole pipeline, audio
+                  only, or nothing. Drive upload is optional and off by default.</span
+                >
+              </p>
+              <img
+                src="img/feature-auto.jpg"
+                width="1280"
+                height="800"
+                loading="lazy"
+                alt="הגדרת ההרצה האוטומטית"
+                data-alt-en="The auto-run setting"
+              />
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--split" id="universities">
+        <div class="wrap split">
+          <div>
+            <h2>
+              <span class="he">אוניברסיטאות</span><span class="en">Supported universities</span>
+            </h2>
+            <ul class="chips">
+              <li>
+                <span class="he">אוניברסיטת בר־אילן</span
+                ><span class="en">Bar-Ilan University</span>
+              </li>
+              <li>
+                <span class="he">האוניברסיטה העברית</span><span class="en">Hebrew University</span>
+              </li>
+              <li><span class="he">הטכניון</span><span class="en">Technion</span></li>
+              <li>
+                <span class="he">אוניברסיטת בן־גוריון</span
+                ><span class="en">Ben-Gurion University</span>
+              </li>
+            </ul>
+            <p class="muted">
+              <span class="he"
+                >אתר קורסים אחר שמבוסס על Moodle? אפשר לנסות אותו דרך "אחר…" בהגדרות
+                האפליקציה.</span
+              >
+              <span class="en"
+                >Another Moodle course site? Try it through "Other…" in the app's settings.</span
+              >
+            </p>
+          </div>
+          <div id="needs">
+            <h2><span class="he">מה צריך</span><span class="en">What you'll need</span></h2>
+            <ul class="checklist">
+              <li>
+                <span class="he">Windows 10 או 11.</span><span class="en">Windows 10 or 11.</span>
+              </li>
+              <li>
+                <span class="he">מפתח Gemini (כותב את הסיכום) ומפתח Groq (מתמלל את השמע).</span>
+                <span class="en"
+                  >A Gemini key (writes the summary) and a Groq key (transcribes the audio).</span
+                >
+              </li>
+              <li>
+                <span class="he">שם המשתמש והסיסמה לאתר הקורסים של האוניברסיטה.</span
+                ><span class="en">Your university login.</span>
+              </li>
+              <li>
+                <span class="he">חשבון Google, רק אם רוצים העלאה ל־Drive.</span
+                ><span class="en">A Google account, only if you want Drive upload.</span>
+              </li>
+              <li>
+                <span class="he">Chrome או Edge, רק בשביל ההורדה האוטומטית.</span
+                ><span class="en">Chrome or Edge, for auto-download only.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="privacy">
+        <div class="wrap narrow">
+          <h2>
+            <span class="he">פרטיות: לאן הקבצים הולכים</span
+            ><span class="en">Privacy: where your files go</span>
+          </h2>
+          <ul class="privacy">
+            <li>
+              <b><span class="he">במחשב שלכם</span><span class="en">On your computer</span></b>
+              <span class="he">ההקלטות, התמלילים והסיכומים נשמרים בתיקייה שבוחרים.</span>
+              <span class="en"
+                >Recordings, transcripts and summaries stay in a folder you choose.</span
+              >
+            </li>
+            <li>
+              <b>Groq</b>
+              <span class="he">מקבל את השמע של ההרצאה, כדי לתמלל אותו.</span>
+              <span class="en">Receives the lecture audio, to transcribe it.</span>
+            </li>
+            <li>
+              <b>Gemini</b>
+              <span class="he"
+                >מקבל את התמליל, יחד עם קובצי ה־PDF של הקורס שמצורפים להרצאה, כדי לכתוב את הסיכום.
+                הוא לא מקבל את השמע.</span
+              >
+              <span class="en"
+                >Receives the transcript, plus any course PDF handouts attached to the lecture, to
+                write the summary. It never receives the audio.</span
+              >
+            </li>
+            <li>
+              <b>Google Drive</b>
+              <span class="he">ה־PDF עולה ל־Drive שלכם, רק אם ההעלאה מופעלת.</span>
+              <span class="en">The PDF goes to your own Drive, only if Drive upload is on.</span>
+            </li>
+            <li>
+              <b><span class="he">מפתחות API</span><span class="en">API keys</span></b>
+              <span class="he">נשמרים במחשב, מוצפנים על ידי Windows.</span>
+              <span class="en">Stored on your computer, encrypted by Windows.</span>
+            </li>
+            <li>
+              <b><span class="he">דוחות שגיאה</span><span class="en">Error reports</span></b>
+              <span class="he"
+                >כשמשהו נכשל, האפליקציה שולחת דוח שגיאה עם פרטים טכניים. לפני השליחה מוסרים ממנו
+                נתיבי קבצים, טקסט בעברית, שמות ומפתחות. אין הגדרה שמכבה את הדוחות, ואין שום מעקב
+                אחרי השימוש.</span
+              >
+              <span class="en"
+                >When something fails, the app sends an error report with technical details. File
+                paths, Hebrew text, names and keys are removed before it's sent. There is no setting
+                to turn reports off, and there is no usage analytics.</span
+              >
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="band" id="install">
+        <div class="wrap">
+          <h2>
+            <span class="he">ההתקנה: "Windows הגן על המחשב שלך"</span
+            ><span class="en">Installing: "Windows protected your PC"</span>
+          </h2>
+          <p class="muted">
+            <span class="he"
+              >בהפעלה הראשונה Windows מציג אזהרה, כי התוכנה לא חתומה בתעודה בתשלום, ולא כי היא לא
+              בטוחה.</span
+            >
+            <span class="en"
+              >On first run Windows shows a warning because the app isn't signed with a paid
+              certificate, not because it's unsafe.</span
+            >
+            <span class="safe"
+              ><span class="he">זה צפוי, ועושים את זה פעם אחת בלבד.</span
+              ><span class="en">This is expected, and you only do it once.</span></span
+            >
+          </p>
+          <ol class="steps steps--three">
+            <li>
+              <b>1</b>
+              <div>
+                <p>
+                  <span class="he"
+                    >פותחים את <code>FastStudy-Setup.exe</code>. מופיע המסך "Windows הגן על המחשב
+                    שלך" (Windows protected your PC), עם כפתור אחד בלבד: "אל תפעיל" (Don't
+                    run).</span
+                  >
+                  <span class="en"
+                    >Open <code>FastStudy-Setup.exe</code>. The "Windows protected your PC" screen
+                    appears, with only one button: <em>Don't run</em>.</span
+                  >
+                </p>
+                <img
+                  class="step-shot"
+                  src="img/smartscreen-1.svg"
+                  width="640"
+                  height="400"
+                  loading="lazy"
+                  alt="מקום לצילום מסך: חלון האזהרה של Windows"
+                  data-alt-en="Placeholder: the Windows warning dialog"
+                />
+              </div>
+            </li>
+            <li>
+              <b>2</b>
+              <div>
+                <p>
+                  <span class="he"
+                    >לוחצים על "מידע נוסף" (More info), ואז על "הפעל בכל זאת" (Run anyway).</span
+                  >
+                  <span class="en">Click <em>More info</em>, then <em>Run anyway</em>.</span>
+                </p>
+                <img
+                  class="step-shot"
+                  src="img/smartscreen-2.svg"
+                  width="640"
+                  height="400"
+                  loading="lazy"
+                  alt="מקום לצילום מסך: הכפתור הפעל בכל זאת"
+                  data-alt-en="Placeholder: the Run anyway button"
+                />
+              </div>
+            </li>
+            <li>
+              <b>3</b>
+              <div>
+                <p>
+                  <span class="he"
+                    >ההתקנה רצה לבד, בלי שאלות, ו־FastStudy נפתחת. על שולחן העבודה מופיע קיצור דרך
+                    בשם FastStudy.</span
+                  >
+                  <span class="en"
+                    >The installer runs on its own, with no questions, and FastStudy opens. A
+                    "FastStudy" shortcut appears on your desktop.</span
+                  >
+                </p>
+                <img
+                  class="step-shot"
+                  src="img/smartscreen-3.svg"
+                  width="640"
+                  height="400"
+                  loading="lazy"
+                  alt="מקום לצילום מסך: FastStudy נפתחת"
+                  data-alt-en="Placeholder: FastStudy opening"
+                />
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="section" id="faq">
+        <div class="wrap narrow">
+          <h2><span class="he">שאלות נפוצות</span><span class="en">FAQ</span></h2>
+          <details>
+            <summary>
+              <span class="he">כמה זה עולה?</span><span class="en">What does it cost?</span>
+            </summary>
+            <p>
+              <span class="he"
+                >FastStudy חינמית. גם המפתחות של Gemini ו־Groq חינמיים, אבל לשכבה החינמית של כל ספק
+                יש מגבלות שימוש. כדאי לבדוק אותן כשיוצרים את המפתחות, כדי שסמסטר עמוס לא יגיע אליהן
+                בהפתעה.</span
+              >
+              <span class="en"
+                >FastStudy is free. The Gemini and Groq keys are free too, but each provider's free
+                tier has usage limits. Check them when you create the keys, so a busy semester
+                doesn't hit one by surprise.</span
+              >
+            </p>
+          </details>
+          <details>
+            <summary>
+              <span class="he">יש גרסה ל־Mac?</span><span class="en">Is there a Mac version?</span>
+            </summary>
+            <p>
+              <span class="he">לא, FastStudy עובדת רק על Windows.</span
+              ><span class="en">No, FastStudy runs on Windows only.</span>
+            </p>
+          </details>
+          <details>
+            <summary>
+              <span class="he">איך מקבלים עדכונים?</span
+              ><span class="en">How do updates work?</span>
+            </summary>
+            <p>
+              <span class="he"
+                >עדכונים יורדים ברקע ומותקנים בשקט כשסוגרים את האפליקציה. לא צריך לעשות כלום.</span
+              >
+              <span class="en"
+                >Updates download in the background and install silently when you close the app.
+                There's nothing to do.</span
+              >
+            </p>
+          </details>
+          <details>
+            <summary>
+              <span class="he">איפה היא מותקנת?</span><span class="en">Where does it install?</span>
+            </summary>
+            <p>
+              <span class="he"
+                >בתיקייה <code dir="ltr">%LOCALAPPDATA%\Programs\faststudy</code>. לא צריך הרשאות
+                מנהל.</span
+              >
+              <span class="en"
+                >In <code>%LOCALAPPDATA%\Programs\faststudy</code>. No admin rights needed.</span
+              >
+            </p>
+          </details>
+          <details>
+            <summary>
+              <span class="he">איך מסירים אותה?</span><span class="en">How do I uninstall it?</span>
+            </summary>
+            <p>
+              <span class="he"
+                >בהגדרות של Windows ← אפליקציות, בוחרים את FastStudy ולוחצים "הסר התקנה".</span
+              >
+              <span class="en"
+                >In Windows Settings → Apps, pick FastStudy and choose Uninstall.</span
+              >
+            </p>
+          </details>
+          <details>
+            <summary>
+              <span class="he">כמה זמן לוקחת הרצאה?</span
+              ><span class="en">How long does a lecture take?</span>
+            </summary>
+            <p>
+              <span class="he"
+                >זה תלוי באורך ההרצאה. האפליקציה מציגה הערכת זמן לכל שלב בזמן שהוא רץ.</span
+              >
+              <span class="en"
+                >It depends on the lecture's length. The app shows an estimate for every step while
+                it runs.</span
+              >
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <span>FastStudy</span>
+        <a href="https://github.com/ShalomPrinz/fast-study"
+          ><span class="he">קוד פתוח ב־GitHub</span><span class="en">Open source on GitHub</span></a
+        >
+      </div>
+    </footer>
+
+    <script src="main.js"></script>
+  </body>
+</html>
