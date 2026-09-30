@@ -90,22 +90,48 @@ export class NotMoodleError extends Error {
   }
 }
 
+/** A 3xx where a WS body was due; `location` is the absolute http(s) target, or null when there is none. */
+export class WsRedirectError extends WsBlockedError {
+  constructor(status, location) {
+    super(`HTTP ${status} redirect`);
+    this.name = 'WsRedirectError';
+    this.location = location;
+  }
+}
+
+// `location` resolved against the request URL, or null when absent, unparseable or not http(s).
+function redirectTarget(location, requestUrl) {
+  if (!location) return null;
+  try {
+    const u = new URL(location, requestUrl);
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null;
+  } catch {
+    return null;
+  }
+}
+
 // A server with no such script answers these; a bot wall answers 200 or a redirect, or 403 (Cloudflare).
 const NO_SUCH_PATH = new Set([404, 405, 410]);
 
 /**
  * tool_mobile_get_public_config on a candidate root, through the no-login AJAX endpoint the mobile
  * app itself asks first → its data ({ wwwroot, enablemobilewebservice, maintenanceenabled, … }).
- * Throws NotMoodleError, WsError (a Moodle exception envelope) or WsBlockedError.
+ * Throws NotMoodleError, WsError (a Moodle exception envelope), WsRedirectError or WsBlockedError.
  */
 export async function getPublicConfig(root, { timeoutMs = 10_000 } = {}) {
   const methodname = 'tool_mobile_get_public_config';
-  const res = await fetch(`${root}/lib/ajax/service-nologin.php?info=${methodname}`, {
+  const url = `${root}/lib/ajax/service-nologin.php?info=${methodname}`;
+  // Manual, so the caller sees the redirect: a POST fetch follows would arrive as a GET.
+  const res = await fetch(url, {
     method: 'POST',
+    redirect: 'manual',
     headers: { 'User-Agent': APP_USER_AGENT, 'Content-Type': 'application/json' },
     body: JSON.stringify([{ index: 0, methodname, args: {} }]),
     signal: AbortSignal.timeout(timeoutMs),
   });
+  if (res.status >= 300 && res.status < 400) {
+    throw new WsRedirectError(res.status, redirectTarget(res.headers.get('location'), url));
+  }
   const type = res.headers.get('content-type') ?? '';
   if (NO_SUCH_PATH.has(res.status) && !type.includes('json')) {
     throw new NotMoodleError(`HTTP ${res.status}`);

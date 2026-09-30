@@ -40,11 +40,19 @@ The first root that answers as Moodle decides: `supported` with `site` = its `ww
 `unsupported` (`moodle_site_unsupported`) with `reason` `mobile_service_off` (the flag is `0`, or the
 call came back as a Moodle exception envelope) or `maintenance` (retry later). `not_moodle` needs
 _every_ root to have answered without Moodle JSON — a `404`/`405`/`410` page, or JSON of another
-shape. A bot wall (a `200` HTML page, a redirect, a `403`), a timeout or a network failure on any
+shape. A bot wall (a `200` HTML page, a `403`), a timeout or a network failure on any
 root makes that unprovable, so the answer is `unverified` with `params.detail` `site_blocked`,
 `timeout` or `network`: a challenge must never read as "not Moodle". A non-Moodle server that answers
 every path with a `200` HTML page therefore also reads `unverified`, and the post-login check is its
 backstop.
+
+A `3xx` is followed **once**, since a university's stable address may redirect to a per-year host
+(`moodle.technion.ac.il` → `moodle26.technion.ac.il`, `moodle.ariel.ac.il` →
+`moodlearn.ariel.ac.il/moodlestandalone`). The same POST goes to the Location's root — the part before
+`/lib/ajax/service-nologin.php` when it points there, else the Location itself — and that answer
+decides as a direct one would, `site` being the target's `wwwroot`. A second redirect or a non-Moodle
+target stays `unverified` `site_blocked`; a wall never answers Moodle JSON, so following is safe.
+Every authenticated call still treats a redirect as the bot wall.
 
 **After login — `MoodleToken.complete()`**, before anything is persisted, reads
 `core_webservice_get_site_info` with the new token. `functions[]` lacking `core_course_get_contents`

@@ -174,6 +174,74 @@ test('a network failure or a timeout is unverified with what failed', async (t) 
   assert.equal((await probeSite('https://x.ac.il')).params.detail, 'timeout');
 });
 
+// A 3xx carrying `location` and `type`, with `body` as its JSON (Ariel's 302 carries Moodle's own).
+const redirect = (status, location, type = 'text/html', body = null) => ({
+  status,
+  headers: {
+    get: (h) => ({ 'content-type': type, location })[h.toLowerCase()] ?? null,
+  },
+  json: async () => body,
+});
+
+test('a redirect to a Moodle is followed once, and the target decides', async (t) => {
+  // Technion's shape: a 301 off the stable address to the per-year host's endpoint.
+  const asked = stubFetch(t, (root) =>
+    root === 'https://moodle.technion.ac.il'
+      ? redirect(
+          301,
+          'https://moodle26.technion.ac.il/lib/ajax/service-nologin.php?info=tool_mobile_get_public_config',
+        )
+      : config({ ...MOODLE, wwwroot: 'https://moodle26.technion.ac.il' }),
+  );
+  assert.deepEqual(await probeSite('https://moodle.technion.ac.il'), {
+    status: 'supported',
+    site: 'https://moodle26.technion.ac.il',
+  });
+  assert.deepEqual(asked, ['https://moodle.technion.ac.il', 'https://moodle26.technion.ac.il']);
+
+  // Ariel's shape: a 302 whose body is Moodle's own error JSON, to a prefixed site with mobile off.
+  const target = 'https://moodlearn.ariel.ac.il/moodlestandalone';
+  globalThis.fetch = async (url) =>
+    String(url).startsWith(target)
+      ? config({ ...MOODLE, wwwroot: target, enablemobilewebservice: 0 })
+      : redirect(302, `${target}/`, 'application/json', {
+          error: 'x',
+          errorcode: 'redirecterrordetected',
+        });
+  assert.deepEqual(await probeSite('https://moodle.ariel.ac.il'), {
+    status: 'unsupported',
+    site: target,
+    code: 'moodle_site_unsupported',
+    params: { site: target, reason: 'mobile_service_off' },
+  });
+});
+
+test('a redirect to a relative Location resolves against the request', async (t) => {
+  const asked = stubFetch(t, (root) =>
+    root === 'https://x.ac.il' ? redirect(302, '/moodle/') : config(MOODLE),
+  );
+  assert.equal((await probeSite('https://x.ac.il')).site, 'https://x.ac.il/moodle');
+  assert.deepEqual(asked, ['https://x.ac.il', 'https://x.ac.il/moodle']);
+});
+
+test('a second redirect, or a redirect to HTML, stays unverified', async (t) => {
+  const asked = stubFetch(t, (root) => redirect(302, `${root}/next`));
+  assert.deepEqual(await probeSite('https://x.ac.il'), {
+    status: 'unverified',
+    site: 'https://x.ac.il',
+    params: { site: 'https://x.ac.il', detail: 'site_blocked' },
+  });
+  assert.deepEqual(asked, ['https://x.ac.il', 'https://x.ac.il/next']);
+
+  globalThis.fetch = async (url) =>
+    String(url).startsWith('https://x.ac.il/') ? redirect(302, 'https://wall.example/') : BOT_WALL;
+  assert.equal((await probeSite('https://x.ac.il')).params.detail, 'site_blocked');
+  // A redirect's target that answers 404 is no proof either: the redirect itself was the answer.
+  globalThis.fetch = async (url) =>
+    String(url).startsWith('https://x.ac.il/') ? redirect(302, 'https://y.ac.il/') : NOT_FOUND;
+  assert.equal((await probeSite('https://x.ac.il')).status, 'unverified');
+});
+
 test('POST /site/probe answers the verdict, and 400 without a URL', async (t) => {
   stubFetch(t, () => config({ ...MOODLE, wwwroot: 'https://x.ac.il/moodle/' }));
   const res = fakeRes();

@@ -1,6 +1,12 @@
 // The pre-login check: does a pasted link lead to a Moodle that serves the mobile web service?
 // Asked of the no-login public config, so it needs no account. See docs/MOODLE.md § Checking a site.
-import { NotMoodleError, WsBlockedError, WsError, getPublicConfig } from './wsClient.js';
+import {
+  NotMoodleError,
+  WsBlockedError,
+  WsError,
+  WsRedirectError,
+  getPublicConfig,
+} from './wsClient.js';
 import { candidateRoots, normalizeSite } from './site.js';
 
 const unsupported = (site, reason) => ({
@@ -17,6 +23,37 @@ function failureDetail(err) {
   return 'network';
 }
 
+// The Moodle root a redirect points at: the AJAX endpoint's own root, else the target as a pasted root.
+function redirectRoot(location) {
+  if (!location) return null;
+  const u = new URL(location);
+  const at = u.pathname.indexOf('/lib/ajax/service-nologin.php');
+  if (at >= 0) return normalizeSite(`${u.origin}${u.pathname.slice(0, at)}`);
+  return normalizeSite(location);
+}
+
+// → { root, config } or { root, refused }, `root` being the host that answered after at most one redirect.
+// A second redirect, or a non-Moodle target, stays the bot wall: a wall never answers Moodle JSON.
+async function askRoot(root, timeoutMs) {
+  const ask = (at) =>
+    getPublicConfig(at, { timeoutMs }).then(
+      (config) => ({ root: at, config }),
+      (err) => {
+        if (err instanceof WsError) return { root: at, refused: true };
+        throw err;
+      },
+    );
+  try {
+    return await ask(root);
+  } catch (err) {
+    const target = err instanceof WsRedirectError && redirectRoot(err.location);
+    if (!target) throw err;
+    return ask(target).catch((e) => {
+      throw e instanceof NotMoodleError || e instanceof WsBlockedError ? err : e;
+    });
+  }
+}
+
 /**
  * Probe each candidate root of `url` in turn; the first one that answers as Moodle decides.
  * → { status:'supported'|'unsupported'|'unverified', site, code?, params? }, or null for a non-URL.
@@ -26,17 +63,18 @@ export async function probeSite(url, { timeoutMs } = {}) {
   const roots = candidateRoots(url);
   if (!roots.length) return null;
   let unreachable = null;
-  for (const root of roots) {
-    let config;
+  for (const candidate of roots) {
+    let answer;
     try {
-      config = await getPublicConfig(root, { timeoutMs });
+      answer = await askRoot(candidate, timeoutMs);
     } catch (err) {
       if (err instanceof NotMoodleError) continue;
-      // Moodle answered, but refused the mobile app's own first question.
-      if (err instanceof WsError) return unsupported(root, 'mobile_service_off');
       unreachable ??= failureDetail(err);
       continue;
     }
+    const { root, config, refused } = answer;
+    // Moodle answered, but refused the mobile app's own first question.
+    if (refused) return unsupported(root, 'mobile_service_off');
     const site = normalizeSite(config.wwwroot ?? '') ?? root;
     if (!Number(config.enablemobilewebservice)) return unsupported(site, 'mobile_service_off');
     if (Number(config.maintenanceenabled)) return unsupported(site, 'maintenance');
