@@ -131,8 +131,8 @@ page keeps the verdict it was handed until it re-lists, so reload it.
 `refused` prints the `REFUSED` lines in `logs/network.log` and exits 1 when there are any. It leaves
 out the self-check's two deliberate probes, which log under the service name `selfcheck`. The log
 is appended across setup runs on one harness directory, so pass `--since` with the time your
-work started. Both shims write it: `<time> <service> REFUSED host:port` for a refusal and, from Node,
-`REDIRECT` for a connection sent to the fake site.
+work started. Both shims write it: `<time> <service> REFUSED host:port` for a refusal (`… (browser)` from one of
+auto/'s browsers) and, from Node, `REDIRECT` for a connection sent to the fake site.
 
 `set` writes the store with `PUT /settings`, then the owner's `POST /config` (`MOODLE_SITE` goes to
 the auto-downloader, which forgets its token when the site changes), so the running service applies
@@ -218,7 +218,7 @@ site or real data cannot be drawn from here.
 | Drive OAuth consent | a pending → connected flow with no browser and no account            | `services.google_auth`, four functions replaced |
 | The lecture site    | `fakes/site.mjs` — Moodle WS, pluginfile PDFs, media, over http + TLS | every non-loopback socket, redirected          |
 | `curl`, `yt-dlp`    | `fakes/tool.mjs` — writes the fixture the URL names (PDF or video) in slices, asking the fake site only for its live settings | first on `PATH`, where `toolPath()` looks      |
-| The Moodle login    | a pre-seeded WS token for the fake site, naming it as its `site`      | `state/auth/moodle-token.json`                 |
+| The Moodle login    | a pre-seeded WS token for the fake site, naming it as its `site`; Connect mints the same one from the fake `launch.php` | `state/auth/moodle-token.json`; auto/'s browsers, below |
 
 The two shims (`shim/sitecustomize.py` on `PYTHONPATH`, `shim/node.mjs` through `NODE_OPTIONS`)
 patch imported modules from outside. **No production file is edited, and none may be** — a mock
@@ -228,6 +228,29 @@ to avoid.
 The Node shim works at the socket, not at `fetch`: the services import `spawn`, `request` and
 friends as ESM named bindings, which a module-object patch cannot reach.
 
+### auto/'s browsers
+
+The browsers `downloader-auto` launches are processes of their own, out of the socket patch's reach,
+so in that service alone the shim also patches `BrowserType.launch` in auto/'s `playwright-core`.
+That one prototype covers every launch — `launchBrowser` (the login and videostream capture), the
+channel probe, the zoom launcher — and rewrites each: always headless, always the chromium
+`browser.mjs` picks (`channel` dropped, so the run does not depend on the box's Chrome),
+`--ignore-certificate-errors` for the fake's self-signed cert, and `--host-resolver-rules` mapping
+every host the fake site serves to its TLS port and every other name to `NOTFOUND`. Chromium honours
+the port in a `MAP` rule, so no proxy is needed; the cost is that a plain `http://` URL to a served
+host lands on the TLS port and fails `ERR_EMPTY_RESPONSE` — every fixture URL is https. A browser
+cannot write `network.log`, so each context it opens logs an http(s) request that failed
+`ERR_NAME_NOT_RESOLVED` as `downloader-auto REFUSED host:port (browser)`.
+
+So Connect runs auto/'s real login: the fake site answers `launch.php` with a 302 to
+`moodlemobile://token=…` carrying `FAKE_WSTOKEN`, auto/ captures it, and Done calls site info
+through the Node shim, where the site's `/control` modes apply unchanged. There is no window to
+finish; press Done any time after Connect.
+
+Videostream capture launches through the same patch, so its browser is offline, but it has nothing
+to run against: the fake course lists no `videostream` activity, and the site serves neither
+`autologin.php` nor a `view.php` page whose `<video>` requests an `.mp4`. Those three are what adding it takes.
+
 ## The guarantees, each proved before handover
 
 `setup.mjs` aborts unless all of these hold, because a silently broken shim costs more than no
@@ -236,7 +259,8 @@ Python refusal logged in `network.log`, while
 the fake site still serves a redirected `https://lemida.biu.ac.il`, and auto/'s `POST /site/probe`
 reads it as `supported` with the seeded token connected; both services log the harness
 keys (the repo `.env` lost the `load_dotenv` race); a settings save lands in the scratch `.env` and
-leaves the real one untouched; every `/control` mode of both fakes, a targeted rule and a draining
+leaves the real one untouched; Connect → Done through auto/'s real login and browser saves the fake
+token, `missing_function` refuses it with `422 missing_function`, and no browser escapes; every `/control` mode of both fakes, a targeted rule and a draining
 one each change the answer they should and switch back; Drive disconnects and reconnects through
 the backend's routes, left connected; the app, loaded in headless chromium from this stack's
 frontend, lists every non-archived course and reaches each service's `/health` from that origin, so
@@ -267,8 +291,7 @@ The site's last four modes are a site auto/ must refuse. `not_moodle` answers th
 `service-nologin.php` with a 404 page and `mobile_service_off` with `enablemobilewebservice: 0` — the
 pre-login probe (the settings field) says `unsupported`. `missing_function` drops
 `core_course_get_contents` from site info and `downloads_disabled` sets `downloadfiles: 0`, which only
-the post-login check reads — and the headed login is a blind spot here, so those two are proved by
-auto/'s unit tests, not a click. An unknown mode is answered 400.
+the post-login check reads — Settings → University account → Connect → Done shows its refusal. An unknown mode is answered 400.
 
 A provider's rule is `{mode, match, times}`; a bare string is `{mode}`, every call. Nothing the
 SDKs send names the lecture, so the shim stamps each call a pipeline step or an overview makes with
@@ -318,5 +341,5 @@ Open the PNG to check the Hebrew RTL layout by eye; `get_text()` returns the log
 ## Blind spots
 
 The Electron shell and the installer (this is the dev stack), real provider behaviour and real
-quota accounting, the headed Moodle and zoom logins with MFA, zoom capture (it needs a real
-browser), and Google Drive's own semantics beyond create/update.
+quota accounting, a real site's SSO and MFA pages (the fake `launch.php` redirects at once), the
+zoom login, zoom capture (it needs a real browser), videostream capture (see below), and Google Drive's own semantics beyond create/update.

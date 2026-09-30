@@ -29,8 +29,8 @@ export const FAKE_KEYS = {
   GEMINI_API_KEY: 'AIzaHarnessFAKEkeyNeverReal00000000000',
 };
 
-// The Moodle WS token the fake site accepts; seeded into the state root so /auth/status reads
-// connected without the headed MFA grab that only a human can finish.
+// The Moodle WS token the fake site accepts and its launch.php hands out; seeded into the state
+// root so /auth/status reads connected before anyone presses Connect.
 export const FAKE_WSTOKEN = 'harnesswstoken00000000000000000';
 
 // The Moodle site the fake answers as, and the baseline's configured site. A real university host on

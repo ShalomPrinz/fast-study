@@ -153,6 +153,48 @@ async function theSiteProbesSupported() {
   return `${FAKE_COURSE_URL} → supported at ${body.site}, seeded token connected`;
 }
 
+// Connect → Done through auto/'s real login: its browser, launched through the shim's patch, gets
+// the token from the fake launch.php, and a site missing a function refuses the login with its code.
+async function theMoodleLoginRunsOffline(paths) {
+  const started = new Date();
+  const login = async () => {
+    await call(`${AUTO}/auth/connect`, { method: 'POST' });
+    return call(`${AUTO}/auth/complete`, { method: 'POST', expect: false });
+  };
+  await call(`${AUTO}/auth/disconnect`, { method: 'POST' });
+  const ok = await login();
+  if (ok.status !== 200 || !ok.body.connected) {
+    throw new Error(`the login did not connect: HTTP ${ok.status} ${JSON.stringify(ok.body)}`);
+  }
+  const token = JSON.parse(
+    fs.readFileSync(path.join(paths.state, 'auth', 'moodle-token.json'), 'utf8'),
+  );
+  if (token.wstoken !== FAKE_WSTOKEN) throw new Error(`the login saved ${JSON.stringify(token)}`);
+
+  await json(`${SITE}/control`, 'POST', { mode: 'missing_function' });
+  let refused;
+  try {
+    refused = await login();
+  } finally {
+    await json(`${SITE}/control`, 'POST', { mode: 'ok' });
+  }
+  if (refused.status !== 422 || refused.body.params?.reason !== 'missing_function') {
+    throw new Error(
+      `missing_function did not refuse the login: HTTP ${refused.status} ${JSON.stringify(refused.body)}`,
+    );
+  }
+  if (!(await call(`${AUTO}/auth/status`)).body.connected) {
+    throw new Error('a refused login dropped the token it did not replace');
+  }
+
+  const log = fs.existsSync(paths.network) ? fs.readFileSync(paths.network, 'utf8') : '';
+  const escapes = log
+    .split('\n')
+    .filter((line) => line.includes(' REFUSED ') && new Date(line.split(' ')[0]) >= started);
+  if (escapes.length) throw new Error(`the login escaped:\n${escapes.join('\n')}`);
+  return 'Connect → Done saved the fake token; missing_function → 422 missing_function; no escape';
+}
+
 // Through auto/'s real listing, so a row the discovery drops fails here, not mid-sweep.
 async function theFailureRowsAreListed() {
   const { body } = await json(`${AUTO}/list`, 'POST', { courseUrl: FAKE_COURSE_URL });
@@ -314,6 +356,7 @@ const CHECKS = [
   ['fakes up', theFakesAnswer],
   ['fake modes switch and switch back', controlModesSwitchAndSwitchBack],
   ['the site probes supported', theSiteProbesSupported],
+  ['the Moodle login runs offline', theMoodleLoginRunsOffline],
   ['failure rows listed', theFailureRowsAreListed],
   ['escape alarm (python)', pythonEscapeRefused],
   ['escape alarm + site redirect (node)', nodeEscapeRefusedAndSiteRedirected],

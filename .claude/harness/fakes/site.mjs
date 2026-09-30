@@ -2,6 +2,7 @@
 // The node shim redirects every request for a university host here, so `auto/`'s token check, WS
 // parsing, discovery, extractors and probes all run for real against Moodle-shaped answers.
 // Listens twice — plain for :80, TLS for :443 — because the URLs in the fixtures are https.
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
@@ -242,6 +243,16 @@ function handle(req, res) {
         ),
       );
     });
+  }
+
+  // The mobile-app login, already past SSO and MFA: straight to the moodlemobile:// redirect auto/
+  // captures, carrying the seeded token as Moodle's `md5(wwwroot + passport):::wstoken:::privatetoken`.
+  if (route === '/admin/tool/mobile/launch.php') {
+    const passport = url.searchParams.get('passport') ?? '';
+    const hash = crypto.createHash('md5').update(`${SITE}${passport}`).digest('hex');
+    const apptoken = Buffer.from(`${hash}:::${TOKEN}:::harness-private`).toString('base64');
+    res.writeHead(302, { location: `moodlemobile://token=${apptoken}` });
+    return res.end();
   }
 
   if (route === '/webservice/rest/server.php') {

@@ -402,12 +402,12 @@ harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the s
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"blocked"}'       # bot-protection challenge
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"invalidtoken"}'  # the Moodle token died
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"not_moodle"}'    # the site probe: not a Moodle
-    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"missing_function"}'  # login refused (also mobile_service_off, downloads_disabled)
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"missing_function"}'  # Connect → Done refused (also mobile_service_off, downloads_disabled)
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"ok"}'
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"downloadMs":60000}'     # slow downloads, live
 
   not covered by this harness: the Electron shell, the installer, real provider behaviour,
-  the headed Moodle/zoom logins and MFA, and zoom capture (it needs a real browser).
+  a real site's SSO and MFA pages, the zoom login, and zoom capture (it needs a real browser).
 
 Ctrl-C stops every service and fake.`);
   return keepRunning();

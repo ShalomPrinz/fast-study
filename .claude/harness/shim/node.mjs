@@ -14,15 +14,25 @@ if (HARNESS) {
   const SITE_TLS = new URL(process.env.HARNESS_SITE_TLS);
   const LOG = path.join(HARNESS, 'logs', 'network.log');
 
-  // Hosts the fake site answers for. Everything else off loopback is an escape: a real request
-  // the harness did not model, and a finding made after one would be about the internet.
+  // Hosts the fake site answers for, as Chromium host globs. Everything else off loopback is an
+  // escape: a real request the harness did not model, and a finding made after one would be about the internet.
   const SERVED = [
-    /(^|\.)biu\.ac\.il$/i,
-    /(^|\.)youtube\.com$/i,
-    /^youtu\.be$/i,
-    /(^|\.)zoom\.us$/i,
-    /^(drive|docs)\.google\.com$/i,
+    'biu.ac.il',
+    '*.biu.ac.il',
+    'youtube.com',
+    '*.youtube.com',
+    'youtu.be',
+    'zoom.us',
+    '*.zoom.us',
+    'drive.google.com',
+    'docs.google.com',
   ];
+  const isServed = (host) => {
+    const name = String(host).toLowerCase();
+    return SERVED.some((glob) =>
+      glob.startsWith('*.') ? name.endsWith(glob.slice(1)) : name === glob,
+    );
+  };
 
   const isLocal = (host) =>
     host === undefined ||
@@ -61,7 +71,7 @@ if (HARNESS) {
 
     if (isLocal(host)) return originalConnect.apply(this, args);
 
-    if (!SERVED.some((re) => re.test(String(host)))) {
+    if (!isServed(host)) {
       const message =
         `harness is offline — refused a connection to ${host}:${port}. ` +
         'Nothing outside the fakes may be reached; a finding recorded after this is suspect.';
@@ -86,6 +96,53 @@ if (HARNESS) {
       ...args.slice(typeof args[1] === 'string' ? 2 : 1),
     ]);
   };
+
+  // auto/'s browsers are processes of their own, out of the socket patch's reach, so every launch is
+  // rewritten: headless, the harness's chromium, served hosts mapped to the fake site's TLS port
+  // and every other name unresolvable. One prototype patch covers the plain, probe and zoom launches.
+  if (process.env.HARNESS_SERVICE === 'downloader-auto') {
+    const { createRequire } = await import('node:module');
+    const { installedChromium } = await import('../lib/browser.mjs');
+    const { REPO_ROOT } = await import('../lib/env.mjs');
+    const { chromium } = createRequire(path.join(REPO_ROOT, 'downloader', 'auto', 'package.json'))(
+      'playwright-core',
+    );
+    const rules = [
+      ...SERVED.map((glob) => `MAP ${glob} ${SITE_TLS.host}`),
+      'MAP * ~NOTFOUND',
+      'EXCLUDE localhost',
+      'EXCLUDE 127.0.0.1',
+    ].join(', ');
+    const browserType = Object.getPrototypeOf(chromium);
+    const originalLaunch = browserType.launch;
+    browserType.launch = async function launch({ channel: _channel, ...options } = {}) {
+      const browser = await originalLaunch.call(this, {
+        ...options,
+        headless: true,
+        executablePath: installedChromium(),
+        args: [
+          ...(options.args ?? []),
+          `--host-resolver-rules=${rules}`,
+          '--ignore-certificate-errors',
+        ],
+      });
+      // The browser cannot write network.log, so a name it failed to resolve is logged from here.
+      // moodlemobile:// fails by design — it is how the login token arrives.
+      const originalNewContext = browser.newContext;
+      browser.newContext = async function newContext(...args) {
+        const context = await originalNewContext.apply(this, args);
+        context.on('requestfailed', (request) => {
+          const url = new URL(request.url());
+          if (!/^https?:$/.test(url.protocol)) return;
+          if (request.failure()?.errorText !== 'net::ERR_NAME_NOT_RESOLVED') return;
+          const port = url.port || (url.protocol === 'https:' ? 443 : 80);
+          note(`REFUSED ${url.hostname}:${port} (browser)`);
+        });
+        return context;
+      };
+      return browser;
+    };
+  }
 
   process.stderr.write(
     `harness shim: live (site ${SITE.host}, tls ${SITE_TLS.host}, bin ${path.join(HARNESS, 'bin')})\n`,

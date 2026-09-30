@@ -23,7 +23,7 @@ export const appServices = () => ({
 
 // The newest installed build, not the pinned one: the cache often lags the Playwright version.
 // Headless shell first, the full chromium as a fallback — both run headless.
-function installedChromium() {
+export function installedChromium() {
   const cache =
     process.env.PLAYWRIGHT_BROWSERS_PATH || path.join(os.homedir(), '.cache', 'ms-playwright');
   const entries = fs.existsSync(cache) ? fs.readdirSync(cache) : [];
