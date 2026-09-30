@@ -3,7 +3,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 const { spawn } = require('node:child_process');
-const { app, BrowserWindow, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
 // An ES module, loaded by require(esm) — synchronous, which an init that must beat `ready` needs.
 const sentryPolicy = require('@faststudy/sentry');
 const { runStartupChecks } = require('./checks');
@@ -416,6 +416,8 @@ function logTail() {
 /** The one window of the app: it opens on the launch screen and later navigates to the frontend.
  *  Created before anything is spawned, so the four process starts have something on screen. */
 function createWindow(checks) {
+  // Drops the default File/Edit/View bar, and with it its Ctrl+R / Ctrl+Shift+I / zoom accelerators.
+  Menu.setApplicationMenu(null);
   mainWindow = new BrowserWindow({
     width: 1400,
     height: 900,
