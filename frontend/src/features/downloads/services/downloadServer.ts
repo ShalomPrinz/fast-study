@@ -32,6 +32,23 @@ export async function downloadItem(args: {
   )
 }
 
+// The manual-entry form's request: any http(s) link through yt-dlp, with no credentials. A 400 is
+// `invalid_request` naming its `field`; `target` is `course/lecture` in the stored spelling.
+export interface UrlDownload {
+  url: string
+  course: string
+  lecture: string
+  kind: Kind
+}
+
+export async function downloadUrl(
+  args: UrlDownload,
+): Promise<{ status: string; target: string; jobId: string }> {
+  return downloadServer.post<{ status: string; target: string; jobId: string }>('/download-url', {
+    json: args,
+  })
+}
+
 // Which downloader ran it — the backend keeps a timing bucket per tool. Null before the child
 // spawns and the real one is known.
 export type DownloadTool = 'curl' | 'yt-dlp' | null

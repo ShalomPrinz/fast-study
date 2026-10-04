@@ -5,7 +5,7 @@ import {
   UnsupportedError,
 } from '@/features/downloads/services/autoDownloader'
 import { ConnectionError, RequestError } from '@/services/http'
-import { expandErrorText, toastDownloadError } from './downloadErrors'
+import { expandErrorText, manualFailureHeadline, toastDownloadError } from './downloadErrors'
 
 // The toaster is the boundary under observation: what reaches it is the whole assertion.
 // `vi.hoisted` because the mock factory is lifted above the imports it feeds.
@@ -90,5 +90,17 @@ describe('expandErrorText', () => {
 
   it('keeps the generic line for a codeless refusal', () => {
     expect(expandErrorText(new RequestError('500 Internal Server Error'))).toBe(GENERIC)
+  })
+})
+
+describe('manualFailureHeadline', () => {
+  it('rewords only a refused-login failure, leaving every other code to the catalog', () => {
+    const detail = { tool: 'yt-dlp', exit_code: 1, detail: 'HTTP Error 403' }
+    expect(
+      manualFailureHeadline({ message: 'x', code: 'download_auth_failed', params: detail }),
+    ).toBeTypeOf('string')
+    expect(
+      manualFailureHeadline({ message: 'x', code: 'download_tool_failed', params: detail }),
+    ).toBeUndefined()
   })
 })

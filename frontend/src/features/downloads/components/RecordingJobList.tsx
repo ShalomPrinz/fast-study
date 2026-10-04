@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
 import { useTimingStats } from '@/shared/hooks/useTimingStats'
 import ProgressBar from '@/shared/components/ProgressBar'
-import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
+import type { JobProgress, JobState } from '@/features/downloads/contexts/DownloadJobsContext'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
 import '@/shared/components/ProgressBar.css'
@@ -12,13 +12,13 @@ import './RecordingJobList.css'
 const NO_ESTIMATE: TimingStats = { message: 'not-enough-data' }
 
 // One job's row: an ETA bar while running, else (only when `retry` is supplied) a per-clip
-// retry/re-download button. Owns its own `useTimingStats` call.
-function JobProgressBar({
+// retry/re-download button. Owns its own `useTimingStats` call; the manual form renders it too.
+export function JobProgressBar({
   job,
   showTitle,
   retry,
 }: {
-  job: JobProgress
+  job: JobState
   showTitle: boolean
   retry?: { onRetry: () => void; busy: boolean }
 }) {

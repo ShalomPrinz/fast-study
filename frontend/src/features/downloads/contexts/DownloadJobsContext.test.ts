@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import type { DownloadJob } from '../services/downloadServer'
-import { coursesWithActiveJobs, groupJobsByRef, jobsForRef } from './DownloadJobsContext'
+import {
+  coursesWithActiveJobs,
+  groupJobsByRef,
+  indexJobsById,
+  jobsForRef,
+} from './DownloadJobsContext'
 
 function job(over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>): DownloadJob {
   return {
@@ -102,5 +107,15 @@ describe('coursesWithActiveJobs', () => {
       job({ id: 'd', course: 'Failed', status: 'error' }),
     ])
     expect([...active].sort()).toEqual(['Algo', 'Logic'])
+  })
+})
+
+describe('indexJobsById', () => {
+  it('keeps the jobs no discovery row owns, which grouping by ref drops', () => {
+    const snapshot = [job({ id: 'a', ref: null }), job({ id: 'b', ref: 'r1' })]
+    const byId = indexJobsById(snapshot)
+    expect(byId.get('a')?.ref).toBeNull()
+    expect(byId.get('b')?.ref).toBe('r1')
+    expect(groupJobsByRef(snapshot).size).toBe(1)
   })
 })

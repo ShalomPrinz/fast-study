@@ -11,15 +11,14 @@ import type { DownloadOperation, Kind } from '@/types'
 import type { DownloadJob } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
+import { isManualJob } from './ManualDownloadsContext'
 import { sequencedRefresh } from '../utils/sequencedRefresh'
 import { useCourseRunActive } from './SectionRunsContext'
 
-// One download job as the display atom for a titled ETA bar. Carries the fields a per-job retry
-// needs to re-issue `/download-item` (ref/course/title=lecture/kind).
-export interface JobProgress {
+// One download job as the display atom for a titled ETA bar, whatever started it.
+export interface JobState {
   id: string
   title: string
-  ref: string
   course: string
   kind: Kind
   status: 'running' | 'done' | 'error'
@@ -28,8 +27,30 @@ export interface JobProgress {
   operation: DownloadOperation | null
 }
 
+// A discovery row's job: adds the `ref` a per-job retry needs to re-issue `/download-item`
+// (ref/course/title=lecture/kind).
+export interface JobProgress extends JobState {
+  ref: string
+}
+
 function isTerminal(job: DownloadJob): boolean {
   return job.status === 'done' || job.status === 'error'
+}
+
+// A snapshot job as a bar's display state; queued reads as running, with no start time yet.
+// Note: `startedAt` is the server's epoch ms and the bar measures elapsed against the browser's
+// `Date.now()` — this assumes both clocks agree; skew renders as an overflowed bar.
+export function jobState(j: DownloadJob): JobState {
+  return {
+    id: j.id,
+    title: j.lecture,
+    course: j.course,
+    kind: j.kind,
+    status: isTerminal(j) ? (j.status as 'done' | 'error') : 'running',
+    startedAt: j.startedAt,
+    expectedBytes: j.expectedBytes,
+    operation: j.operation,
+  }
 }
 
 // The whole-row aggregate the Download/Retry button and the section summary share: running if any
@@ -60,19 +81,7 @@ export function groupJobsByRef(snapshot: DownloadJob[]): JobsByRef {
   for (const j of snapshot) {
     // A null ref means the Chrome extension started the job, so it belongs to no discovery row.
     if (j.ref === null) continue
-    // Note: `startedAt` is the server's epoch ms and the bar measures elapsed against the browser's
-    // `Date.now()` — this assumes both clocks agree; skew renders as an overflowed bar.
-    const progress: JobProgress = {
-      id: j.id,
-      title: j.lecture,
-      ref: j.ref,
-      course: j.course,
-      kind: j.kind,
-      status: isTerminal(j) ? (j.status as 'done' | 'error') : 'running',
-      startedAt: j.startedAt,
-      expectedBytes: j.expectedBytes,
-      operation: j.operation,
-    }
+    const progress: JobProgress = { ...jobState(j), ref: j.ref }
     const key = rowKey(j.course, j.ref)
     const bucket = byRef.get(key)
     if (bucket) bucket.push(progress)
@@ -95,10 +104,19 @@ export function coursesWithActiveJobs(snapshot: DownloadJob[]): ReadonlySet<stri
   return new Set(snapshot.filter((j) => !isTerminal(j)).map((j) => j.course))
 }
 
+export type JobsById = ReadonlyMap<string, DownloadJob>
+
+// Every job by id — the lookup for jobs no discovery row owns (the manual form's, `ref: null`),
+// which `groupJobsByRef` drops.
+export function indexJobsById(snapshot: DownloadJob[]): JobsById {
+  return new Map(snapshot.map((j) => [j.id, j]))
+}
+
 // Module store of the grouped snapshot with per-ref subscriptions; it outlives the provider, which
 // clears it on unmount so no phantom jobs survive.
 let jobsByRef: JobsByRef = new Map()
 let activeCourses: ReadonlySet<string> = new Set()
+let jobsById: JobsById = new Map()
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void): () => void {
@@ -109,6 +127,7 @@ function subscribe(listener: () => void): () => void {
 function publish(snapshot: DownloadJob[]) {
   jobsByRef = groupJobsByRef(snapshot)
   activeCourses = coursesWithActiveJobs(snapshot)
+  jobsById = indexJobsById(snapshot)
   for (const listener of listeners) listener()
 }
 
@@ -146,6 +165,16 @@ export function useCourseDownloading(course: string): boolean {
   return jobActive || runActive
 }
 
+// One job by id, or null while it is not (or no longer) on `/jobs` — a `done` job is evicted after a
+// short bridge. The snapshot's own object, so it changes identity only when a refetch lands.
+export function useJobById(id: string): DownloadJob | null {
+  useProviderGuard()
+  return useSyncExternalStore(
+    subscribe,
+    useCallback(() => jobsById.get(id) ?? null, [id]),
+  )
+}
+
 // Reflects the downloader server's jobs: each contentless `job:change` ping refetches `GET /jobs`,
 // trusted as-is. See docs/JOBS.md.
 export function DownloadJobsProvider({ children }: { children: ReactNode }) {
@@ -166,7 +195,7 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
           const failure = job.message
             ? { message: job.message, code: job.code, params: job.params }
             : null
-          toastJobError(job.lecture || 'recording', failure)
+          toastJobError(job.lecture || 'recording', failure, isManualJob(job.id))
           toastedIds.current.add(job.id)
         }
       }

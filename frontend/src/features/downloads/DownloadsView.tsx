@@ -11,6 +11,7 @@ import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { ROUTES } from '@/shared/utils/routes'
 import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
 import AddCourseRow from '@/features/downloads/components/AddCourseRow'
+import ManualDownload from '@/features/downloads/components/ManualDownload'
 import SectionGroup from '@/features/downloads/components/SectionGroup'
 import PausedRunsBanner from '@/features/downloads/components/PausedRunsBanner'
 import { groupSections, sectionId } from '@/features/downloads/utils/sections'
@@ -77,6 +78,8 @@ export default function DownloadsView() {
                 </Trans>
               </p>
             )}
+
+            <ManualDownload />
 
             <div className="section-head">
               <h2 className="section-title">

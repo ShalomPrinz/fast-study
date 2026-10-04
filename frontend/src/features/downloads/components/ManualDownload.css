@@ -1,0 +1,100 @@
+/* The manual-link section sits above the course sources and keeps their caption look; only its
+   body adds anything. */
+.manual-download {
+  margin-bottom: var(--space-7);
+}
+
+/* The caption itself is the toggle: it keeps `.section-title`'s type, so only the caret, cursor and
+   focus ring say it is a button. */
+.manual-download-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0;
+  border: none;
+  border-radius: var(--r-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.manual-download-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.manual-download-caret {
+  font-size: var(--fs-fine);
+  color: var(--text-4);
+}
+
+.manual-download-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* `hidden` must win over the flex display above. */
+.manual-download-body[hidden] {
+  display: none;
+}
+
+.manual-download-warning {
+  margin: 0;
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--surface-sunken);
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}
+
+/* Link, course, kind, name, action — one row that wraps on a narrow window, the link taking the
+   most room. */
+.manual-download-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.manual-download-url {
+  flex: 3 1 220px;
+}
+
+.manual-download-course {
+  flex: 1 1 120px;
+}
+
+.manual-download-name {
+  flex: 1 1 120px;
+}
+
+.manual-download-jobs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.manual-download-meta {
+  flex-shrink: 0;
+  font-size: var(--fs-fine);
+  color: var(--text-3);
+}
+
+.manual-download-url-line {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-fine);
+  color: var(--text-4);
+  text-align: start;
+}
+
+.manual-download-error {
+  font-size: var(--fs-meta);
+  color: var(--danger);
+}

@@ -27,7 +27,7 @@ module-level, so the provider clears it on unmount.
 
 Every job carries the discovery-row `ref` it belongs to — a zoom before/after-break pair lands as
 `<name>.1`/`<name>.2`, both under the parent's `ref` — so the row-to-job link is server-side: no client id
-map, and a reload re-attaches for free. A null `ref` is a Chrome-extension job and is dropped from the
+map, and a reload re-attaches for free. A null `ref` is a Chrome-extension or manual-form job and is dropped from the
 rows, but still counts for `useCourseDownloading`, the course-rename lock.
 
 The server guarantees **one job per target**: `createJob` evicts any prior terminal job for the same
@@ -57,6 +57,16 @@ button.
 
 `RecordingRow` integrates the display and owns the overwrite confirm; `useRecordingDownload` is the
 download effect only; `RecordingJobList` is presentational.
+
+## Manual jobs
+
+The manual form's jobs carry `ref: null`, so nothing server-side ties them to the form:
+`ManualDownloadsContext` keeps this app session's `{request, jobId, target}` entries and each card reads
+its job through `useJobById` (`indexJobsById`, the same snapshot). A job off `/jobs` is queued until the
+first refetch, or done once its video is in the tree — a `done` job is evicted after the bridge
+(`manualStatus`). Retry re-posts the same body and swaps in the new job id. A manual
+`download_auth_failed` reads "this link needs a login" instead of "reconnect the account"
+(`manualFailureHeadline`, through `ServiceError`'s `headline`), in the card and the toast alike.
 
 ## Failure toasts
 

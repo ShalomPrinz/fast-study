@@ -51,12 +51,24 @@ export function expandErrorText(err: unknown): string | null {
 
 // A background job's failure — invisible without this, since the POST already returned 200. A job
 // with no code falls back to the tool's own English, which is the only thing identifying it.
-export function toastJobError(name: string, failure: ServiceFailure | null): void {
+// `manual` marks a job the manual form started, whose refusals read differently.
+export function toastJobError(name: string, failure: ServiceFailure | null, manual = false): void {
   if (!failure) {
     toast('error', t`Couldn't download "${name}". Try again.`)
     return
   }
-  toast('error', serviceErrorNode(failure, name))
+  toast(
+    'error',
+    serviceErrorNode(failure, name, manual ? manualFailureHeadline(failure) : undefined),
+  )
+}
+
+// A manual job's headline where the shared sentence would mislead, else undefined: a link answering
+// 401/403 needs a login the form never sends — no account to reconnect.
+export function manualFailureHeadline(failure: ServiceFailure): string | undefined {
+  return failure.code === 'download_auth_failed'
+    ? t`The site refused the download. This link needs a login, so it can't be downloaded here.`
+    : undefined
 }
 
 // A failed login's failure in the words the user reads: a refused site (`moodle_site_unsupported`)

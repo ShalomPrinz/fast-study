@@ -1,0 +1,315 @@
+import { useId, useState } from 'react'
+import { Trans, useLingui } from '@lingui/react/macro'
+import type { Kind } from '@/types'
+import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import Chevron from '@/shared/components/Chevron'
+import ConfirmModal from '@/shared/components/ConfirmModal'
+import ServiceError from '@/shared/components/ServiceError'
+import { downloadUrl } from '@/features/downloads/services/downloadServer'
+import type { UrlDownload } from '@/features/downloads/services/downloadServer'
+import { jobState, useJobById } from '@/features/downloads/contexts/DownloadJobsContext'
+import type { ManualEntry } from '@/features/downloads/contexts/ManualDownloadsContext'
+import {
+  addManualEntry,
+  retargetManualEntry,
+  useManualEntries,
+} from '@/features/downloads/contexts/ManualDownloadsContext'
+import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
+import {
+  manualStatus,
+  parseTarget,
+  suggestManualName,
+} from '@/features/downloads/utils/manualDownload'
+import {
+  manualFailureHeadline,
+  toastDownloadError,
+} from '@/features/downloads/utils/downloadErrors'
+import { JobProgressBar } from './RecordingJobList'
+import '@/styles/pipeline-card.css'
+import '@/styles/source-row.css'
+import '@/styles/button.css'
+import '@/styles/chip.css'
+import '@/styles/segmented.css'
+import './RecordingRow.css'
+import './RecordingJobList.css'
+import './ManualDownload.css'
+
+const OPEN_STORAGE_KEY = 'fastStudyDownloadsManualOpen'
+
+// Stored like the page's media segment; access throws with site data blocked, which reads as closed.
+function readOpen(): boolean {
+  try {
+    return localStorage.getItem(OPEN_STORAGE_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function writeOpen(open: boolean) {
+  try {
+    localStorage.setItem(OPEN_STORAGE_KEY, open ? '1' : '0')
+  } catch {
+    // Not remembered this time; the toggle itself still works.
+  }
+}
+
+// Posts one manual download; the stored spelling comes back in `target`, the typed one otherwise.
+async function start(request: UrlDownload) {
+  const { jobId, target } = await downloadUrl(request)
+  return {
+    jobId,
+    target: parseTarget(target) ?? { course: request.course, lecture: request.lecture },
+  }
+}
+
+// A collapsible "paste a link" form: any video URL reachable without credentials, through yt-dlp,
+// with no university account involved. See docs/DOWNLOADS.md.
+export default function ManualDownload() {
+  const [open, setOpen] = useState(readOpen)
+  const bodyId = useId()
+
+  function toggle() {
+    setOpen(!open)
+    writeOpen(!open)
+  }
+
+  return (
+    <section className="manual-download">
+      <div className="section-head">
+        <h2 className="section-title">
+          <button
+            type="button"
+            className="manual-download-toggle"
+            aria-expanded={open}
+            aria-controls={bodyId}
+            onClick={toggle}
+          >
+            <span className="manual-download-caret" aria-hidden="true">
+              <Chevron open={open} />
+            </span>
+            <Trans>Manual download</Trans>
+          </button>
+        </h2>
+      </div>
+
+      {/* Hidden, not unmounted: a half-typed link survives a collapse. */}
+      <div id={bodyId} className="manual-download-body" hidden={!open}>
+        <p className="manual-download-warning">
+          <Trans>Works only for video links, and only if they open without signing in.</Trans>
+        </p>
+        <ManualForm />
+        <ManualJobList />
+      </div>
+    </section>
+  )
+}
+
+function ManualForm() {
+  const { t } = useLingui()
+  const { courses } = useCourseTreeContext()
+  const entries = useManualEntries()
+  const active = courses.filter((c) => !c.archived)
+  const [url, setUrl] = useState('')
+  const [picked, setPicked] = useState<string | null>(null)
+  const [kind, setKind] = useState<Kind>('lecture')
+  // Null tracks the suggestion, so an untouched name follows the course and kind.
+  const [name, setName] = useState<string | null>(null)
+  const [pending, setPending] = useState(false)
+  const [confirm, setConfirm] = useState(false)
+
+  // A picked course that was archived or deleted falls back to the first active one.
+  const course = active.some((c) => c.name === picked) ? picked! : (active[0]?.name ?? '')
+  const claimed = entries.map((e) => ({ ...e.target, kind: e.request.kind }))
+  const lecture = name ?? (course ? suggestManualName(courses, course, kind, claimed) : '')
+  const ready = !!url.trim() && !!course && !!lecture.trim() && !pending
+
+  async function submit() {
+    const request = { url: url.trim(), course, lecture: lecture.trim(), kind }
+    setPending(true)
+    try {
+      const { jobId, target } = await start(request)
+      addManualEntry(request, jobId, target)
+      setUrl('')
+      setName(null)
+    } catch (err) {
+      toastDownloadError(request.lecture, err)
+    }
+    setPending(false)
+  }
+
+  // A video PUT wipes the lecture's transcript and summary, so replacing one confirms first.
+  function onDownload() {
+    if (!ready) return
+    if (overwritesVideo({ media: 'video' }, lecture.trim(), kind, courses, course)) setConfirm(true)
+    else void submit()
+  }
+
+  return (
+    <div className="manual-download-form">
+      <input
+        className="source-row-input manual-download-url"
+        value={url}
+        onChange={(e) => setUrl(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') onDownload()
+        }}
+        placeholder={t`Video link…`}
+        aria-label={t`Video link`}
+        dir="auto"
+      />
+      <select
+        className="source-row-input manual-download-course"
+        value={course}
+        onChange={(e) => setPicked(e.target.value)}
+        aria-label={t`Course`}
+        disabled={!active.length}
+        dir="auto"
+      >
+        {active.map((c) => (
+          <option key={c.name} value={c.name}>
+            {c.name}
+          </option>
+        ))}
+      </select>
+      <div className="mode-toggle mode-toggle--light">
+        <button
+          className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+          onClick={() => setKind('lecture')}
+        >
+          <Trans>Lecture</Trans>
+        </button>
+        <button
+          className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+          onClick={() => setKind('recitation')}
+        >
+          <Trans>Recitation</Trans>
+        </button>
+      </div>
+      <input
+        className="source-row-input manual-download-name"
+        value={lecture}
+        onChange={(e) => setName(e.target.value)}
+        aria-label={t`Lecture name`}
+        dir="auto"
+      />
+      <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>
+        {pending ? <span className="recording-spinner" /> : t`Download`}
+      </button>
+
+      {confirm && (
+        <ConfirmModal
+          message={t`${lecture} already exists in ${course}. Download again and overwrite?`}
+          onConfirm={() => {
+            setConfirm(false)
+            void submit()
+          }}
+          onCancel={() => setConfirm(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+function ManualJobList() {
+  const entries = useManualEntries()
+  if (!entries.length) return null
+  return (
+    <div className="manual-download-jobs">
+      {entries.map((entry) => (
+        <ManualJobRow key={entry.key} entry={entry} />
+      ))}
+    </div>
+  )
+}
+
+// One manual download, rendered like a discovery card: a bar while running, the outcome after.
+function ManualJobRow({ entry }: { entry: ManualEntry }) {
+  const { t } = useLingui()
+  const { courses } = useCourseTreeContext()
+  const job = useJobById(entry.jobId)
+  const [retrying, setRetrying] = useState(false)
+  const { course, lecture } = entry.target
+  const kind = entry.request.kind
+  const landed = hasResource({ media: 'video' }, lecture, kind, courses, course)
+  const status = manualStatus(job, landed)
+  const failure =
+    job?.status === 'error' && job.message
+      ? { message: job.message, code: job.code, params: job.params }
+      : null
+
+  // Re-posts the same body; the server supersedes the failed job with a new one.
+  async function retry() {
+    setRetrying(true)
+    try {
+      const next = await start(entry.request)
+      retargetManualEntry(entry.key, next.jobId, next.target)
+    } catch (err) {
+      toastDownloadError(lecture, err)
+    }
+    setRetrying(false)
+  }
+
+  return (
+    <div
+      className={[
+        'recording-card',
+        status === 'running' && 'recording-card--downloading',
+        status === 'done' && 'recording-card--downloaded',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className="recording-card-line">
+        <span className="recording-title" dir="auto" title={lecture}>
+          {lecture}
+        </span>
+        <span className="manual-download-meta" dir="auto">
+          {course}
+        </span>
+        {status === 'queued' && (
+          <span className="chip chip--neutral">
+            <Trans>Queued</Trans>
+          </span>
+        )}
+        {status === 'running' && (
+          <span className="chip chip--accent">
+            <Trans>Downloading</Trans>
+          </span>
+        )}
+        {status === 'done' && (
+          <span className="chip chip--ok">
+            <Trans>Downloaded ✓</Trans>
+          </span>
+        )}
+        {status === 'error' && (
+          <button
+            className="btn btn--ghost recording-download-btn"
+            onClick={() => void retry()}
+            disabled={retrying}
+          >
+            {retrying ? <span className="recording-spinner" /> : t`Retry ✗`}
+          </button>
+        )}
+      </div>
+      <div className="manual-download-url-line" dir="ltr" title={entry.request.url}>
+        {entry.request.url}
+      </div>
+
+      {status === 'running' && job && (
+        <div className="recording-progress-list">
+          <JobProgressBar job={jobState(job)} showTitle={false} />
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="manual-download-error">
+          {failure ? (
+            <ServiceError failure={failure} headline={manualFailureHeadline(failure)} />
+          ) : (
+            t`Couldn't download "${lecture}". Try again.`
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

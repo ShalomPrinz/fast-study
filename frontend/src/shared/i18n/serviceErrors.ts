@@ -136,7 +136,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   // Only `name`/`course` are reachable by the user (a typed row name); any other field is a caller bug.
   invalid_request: msg({
     message:
-      "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} other {Something went wrong.}}",
+      "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} lecture {That lecture name can't be used as a folder name.} url {That link isn't valid. Paste a full address starting with http:// or https://.} other {Something went wrong.}}",
   }),
   autodl_unreachable: msg({
     message: "The part of Fast Study that downloads recordings isn't responding. Restart the app.",
