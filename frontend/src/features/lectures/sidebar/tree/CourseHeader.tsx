@@ -13,6 +13,7 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
@@ -27,8 +28,9 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const driveEnabled = useDriveEnabled()
   const shiftHeld = useShiftHeld()
   const { status } = useRunnerStatus()
-  // A course rename moves every lecture folder, so one running or queued lecture locks it.
-  const renameLocked = isCourseRenameLocked(status, course.name)
+  const downloading = useCourseDownloading(course.name)
+  // A course rename moves every lecture folder, so anything writing into it by name locks it.
+  const renameLocked = isCourseRenameLocked(status, course.name) || downloading
 
   const [renaming, setRenaming] = useState(false)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
@@ -93,7 +95,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           className="course-toggle"
           title={
             renameLocked
-              ? t`Can't rename while one of its lectures is being processed or waiting in line`
+              ? t`Can't rename while something in this course is being processed, downloaded or generated`
               : undefined
           }
           onClick={(e) => {

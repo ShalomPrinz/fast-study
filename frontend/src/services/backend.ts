@@ -73,6 +73,7 @@ interface RawRunnerStatus {
   runner: { running: boolean; total: number; done: number; last_error: ServiceFailure | null }
   in_flight?: RawInFlightEntry[]
   queue?: QueueEntry[]
+  overview_running?: string[]
   errors?: Record<string, Pick<RunError, 'step' | 'message'> & Partial<RunError>>
 }
 
@@ -94,6 +95,7 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
       progress: e.progress,
     })),
     queue: raw.queue ?? [],
+    overviewRunning: raw.overview_running ?? [],
     errors: Object.fromEntries(
       Object.entries(raw.errors ?? {}).map(([key, e]) => [
         key,

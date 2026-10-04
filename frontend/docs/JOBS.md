@@ -27,7 +27,8 @@ module-level, so the provider clears it on unmount.
 
 Every job carries the discovery-row `ref` it belongs to — a zoom before/after-break pair lands as
 `<name>.1`/`<name>.2`, both under the parent's `ref` — so the row-to-job link is server-side: no client id
-map, and a reload re-attaches for free. A null `ref` is a Chrome-extension job and is dropped.
+map, and a reload re-attaches for free. A null `ref` is a Chrome-extension job and is dropped from the
+rows, but still counts for `useCourseDownloading`, the course-rename lock.
 
 The server guarantees **one job per target**: `createJob` evicts any prior terminal job for the same
 `(course, lecture, kind, ref)`, so the client trusts the snapshot with no dedupe. A `done` job is evicted

@@ -88,9 +88,16 @@ export function jobsForRef(byRef: JobsByRef, course: string, ref: string): reado
   return byRef.get(rowKey(course, ref)) ?? EMPTY_JOBS
 }
 
+// Courses a non-terminal job is writing into — extension-started (null ref) jobs included, since they
+// land in the course just the same.
+export function coursesWithActiveJobs(snapshot: DownloadJob[]): ReadonlySet<string> {
+  return new Set(snapshot.filter((j) => !isTerminal(j)).map((j) => j.course))
+}
+
 // Module store of the grouped snapshot with per-ref subscriptions; it outlives the provider, which
 // clears it on unmount so no phantom jobs survive.
 let jobsByRef: JobsByRef = new Map()
+let activeCourses: ReadonlySet<string> = new Set()
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void): () => void {
@@ -100,6 +107,7 @@ function subscribe(listener: () => void): () => void {
 
 function publish(snapshot: DownloadJob[]) {
   jobsByRef = groupJobsByRef(snapshot)
+  activeCourses = coursesWithActiveJobs(snapshot)
   for (const listener of listeners) listener()
 }
 
@@ -126,6 +134,13 @@ export function useRowJobs(course: string, ref: string): readonly JobProgress[] 
 export function useJobsByRef(): JobsByRef {
   useProviderGuard()
   return useSyncExternalStore(subscribe, () => jobsByRef)
+}
+
+// Whether a download is still writing into this course; a boolean snapshot, so a ping re-renders
+// only the courses whose answer flipped.
+export function useCourseDownloading(course: string): boolean {
+  useProviderGuard()
+  return useSyncExternalStore(subscribe, () => activeCourses.has(course))
 }
 
 // Reflects the downloader server's jobs: each contentless `job:change` ping refetches `GET /jobs`,
