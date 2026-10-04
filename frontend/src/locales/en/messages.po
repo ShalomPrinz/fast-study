@@ -372,10 +372,6 @@ msgstr "+ add source URL"
 msgid "A course or lecture named \"{name}\" already exists."
 msgstr "A course or lecture named \"{name}\" already exists."
 
-#: src/features/settings/InitWall.tsx:141
-msgid "A few things are needed before the first lecture can be turned into a summary. This only happens once."
-msgstr "A few things are needed before the first lecture can be turned into a summary. This only happens once."
-
 #: src/shared/i18n/serviceErrors.ts:106
 msgid "A file inside \"{name}\" is open in another program. Close it and try again."
 msgstr "A file inside \"{name}\" is open in another program. Close it and try again."
@@ -888,7 +884,7 @@ msgstr "Downloading {active} more…"
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
-#: src/features/settings/InitWall.tsx:238
+#: src/features/settings/InitWall.tsx:234
 msgid "Downloading recordings (optional)"
 msgstr "Downloading recordings (optional)"
 
@@ -1033,7 +1029,7 @@ msgstr "Fast Study signs in to <0>{host}</0> with this account to find and fetch
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 
-#: src/features/settings/InitWall.tsx:174
+#: src/features/settings/InitWall.tsx:170
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
@@ -1041,7 +1037,7 @@ msgstr "Fast Study uses two free services: one turns the recording into text, th
 msgid "File type"
 msgstr "File type"
 
-#: src/features/settings/InitWall.tsx:257
+#: src/features/settings/InitWall.tsx:253
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
@@ -1115,7 +1111,7 @@ msgstr "Google account"
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:225
+#: src/features/settings/InitWall.tsx:221
 msgid "Google Drive (optional)"
 msgstr "Google Drive (optional)"
 
@@ -1744,7 +1740,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:266
+#: src/features/settings/InitWall.tsx:262
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -1823,7 +1819,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:266
+#: src/features/settings/InitWall.tsx:262
 msgid "Start using Fast Study"
 msgstr "Start using Fast Study"
 
@@ -2149,6 +2145,10 @@ msgstr "This Moodle connection can't download these recordings. Reconnect the ac
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
+#: src/features/settings/InitWall.tsx:140
+msgid "This only needs to be done once."
+msgstr "This only needs to be done once."
+
 #: src/shared/i18n/serviceErrors.ts:155
 msgid "This recording needs a passcode."
 msgstr "This recording needs a passcode."
@@ -2180,10 +2180,6 @@ msgstr "Transcript"
 #: src/features/lectures/constants/pipeline.ts:88
 #~ msgid "Transcription failed"
 #~ msgstr "Transcription failed"
-
-#: src/features/settings/InitWall.tsx:146
-msgid "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
-msgstr "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
 msgid "Unarchive course"
@@ -2274,7 +2270,7 @@ msgstr "We couldn't check this site right now. You can still save it."
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
-#: src/features/settings/InitWall.tsx:200
+#: src/features/settings/InitWall.tsx:196
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
@@ -2298,6 +2294,10 @@ msgstr "Without one, Fast Study can't fetch recordings from your course site and
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "Works only for video links, and only if they open without signing in."
 
+#: src/features/settings/InitWall.tsx:145
+msgid "Written in the masculine form, but addressed to everyone."
+msgstr "Written in the masculine form, but addressed to everyone."
+
 #: src/shared/components/ConfirmModal.tsx:42
 msgid "Yes"
 msgstr "Yes"
@@ -2310,15 +2310,15 @@ msgstr "Yes, store my lectures in this folder"
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
 
-#: src/features/settings/InitWall.tsx:181
+#: src/features/settings/InitWall.tsx:177
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 
-#: src/features/settings/InitWall.tsx:166
+#: src/features/settings/InitWall.tsx:162
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/settings/InitWall.tsx:212
+#: src/features/settings/InitWall.tsx:208
 msgid "Your university (optional)"
 msgstr "Your university (optional)"
 

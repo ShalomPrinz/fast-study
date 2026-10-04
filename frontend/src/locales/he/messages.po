@@ -372,10 +372,6 @@ msgstr "+ הוספת כתובת מקור"
 msgid "A course or lecture named \"{name}\" already exists."
 msgstr "כבר קיים קורס או הרצאה בשם \"{name}\"."
 
-#: src/features/settings/InitWall.tsx:141
-msgid "A few things are needed before the first lecture can be turned into a summary. This only happens once."
-msgstr "כמה דברים דרושים לפני שאפשר להפוך את ההרצאה הראשונה לסיכום. צריך לעשות את זה רק פעם אחת."
-
 #: src/shared/i18n/serviceErrors.ts:106
 msgid "A file inside \"{name}\" is open in another program. Close it and try again."
 msgstr "קובץ בתוך \"{name}\" פתוח בתוכנה אחרת. סגור אותו ונסה שוב."
@@ -888,7 +884,7 @@ msgstr "מוריד עוד {active}…"
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
-#: src/features/settings/InitWall.tsx:238
+#: src/features/settings/InitWall.tsx:234
 msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (לא חובה)"
 
@@ -1033,7 +1029,7 @@ msgstr "Fast Study מתחברת ל-<0>{host}</0> עם החשבון הזה כדי
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study משתמשת ב-Google Chrome או ב-Microsoft Edge כדי להוריד הקלטות מאתר הקורס. הפיכת וידאו לסיכום לא דורשת דפדפן."
 
-#: src/features/settings/InitWall.tsx:174
+#: src/features/settings/InitWall.tsx:170
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
 
@@ -1041,7 +1037,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:257
+#: src/features/settings/InitWall.tsx:253
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
@@ -1115,7 +1111,7 @@ msgstr "חשבון Google"
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:225
+#: src/features/settings/InitWall.tsx:221
 msgid "Google Drive (optional)"
 msgstr "Google Drive (לא חובה)"
 
@@ -1218,7 +1214,7 @@ msgstr "הרצאות {0}-{1}"
 
 #: src/features/settings/InitWall.tsx:137
 msgid "Let's set things up"
-msgstr "בוא נגדיר את הכול"
+msgstr "בוא נגדיר כמה דברים"
 
 #: src/features/lectures/EditSummaryView.tsx:286
 msgid "Load new version"
@@ -1744,7 +1740,7 @@ msgstr "שמירה בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:266
+#: src/features/settings/InitWall.tsx:262
 msgid "Saving…"
 msgstr "שומר…"
 
@@ -1823,7 +1819,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
 
-#: src/features/settings/InitWall.tsx:266
+#: src/features/settings/InitWall.tsx:262
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -2149,6 +2145,10 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
+#: src/features/settings/InitWall.tsx:140
+msgid "This only needs to be done once."
+msgstr "צריך לעשות את זה רק פעם אחת."
+
 #: src/shared/i18n/serviceErrors.ts:155
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
@@ -2180,10 +2180,6 @@ msgstr "תמלול"
 #: src/features/lectures/constants/pipeline.ts:88
 #~ msgid "Transcription failed"
 #~ msgstr "התמלול נכשל"
-
-#: src/features/settings/InitWall.tsx:146
-msgid "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
-msgstr "שני דברים דרושים כדי להתחיל: האוניברסיטה שלך ותיקייה שבה יישמר הכול. צריך לעשות את זה רק פעם אחת."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
 msgid "Unarchive course"
@@ -2274,7 +2270,7 @@ msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:200
+#: src/features/settings/InitWall.tsx:196
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -2298,6 +2294,10 @@ msgstr "בלי אחד מהם, Fast Study לא תוכל להוריד הקלטות
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "עובד רק עבור קישורי וידאו, ורק אם הם נגישים ללא פרטי התחברות."
 
+#: src/features/settings/InitWall.tsx:145
+msgid "Written in the masculine form, but addressed to everyone."
+msgstr "כתוב בלשון זכר אך פונה לשני המינים"
+
 #: src/shared/components/ConfirmModal.tsx:42
 msgid "Yes"
 msgstr "כן"
@@ -2310,15 +2310,15 @@ msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
 
-#: src/features/settings/InitWall.tsx:181
+#: src/features/settings/InitWall.tsx:177
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
 
-#: src/features/settings/InitWall.tsx:166
+#: src/features/settings/InitWall.tsx:162
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלך"
 
-#: src/features/settings/InitWall.tsx:212
+#: src/features/settings/InitWall.tsx:208
 msgid "Your university (optional)"
 msgstr "האוניברסיטה שלך (לא חובה)"
 

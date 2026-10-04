@@ -38,7 +38,7 @@ type FormState = SettingsForm
 // The wall in front of the app: until the required entries are filled there is no sidebar, no route
 // and no way past. See docs/SETTINGS.md.
 export default function InitWall({ stored: initial, onDone }: Props) {
-  const { t } = useLingui()
+  const { t, i18n } = useLingui()
   // The store as this wall last wrote it: a confirmed site is saved ahead of the rest of the form.
   const [stored, setStored] = useState(initial)
   const siteSaves = useRef(Promise.resolve())
@@ -137,18 +137,14 @@ export default function InitWall({ stored: initial, onDone }: Props) {
             <Trans>Let's set things up</Trans>
           </h1>
           <p className="init-wall-lede">
-            {canStoreApiKeys ? (
-              <Trans>
-                A few things are needed before the first lecture can be turned into a summary. This
-                only happens once.
-              </Trans>
-            ) : (
-              <Trans>
-                Two things are needed to get started: your university and a folder to keep
-                everything in. This only happens once.
-              </Trans>
-            )}
+            <Trans>This only needs to be done once.</Trans>
           </p>
+          {/* A note on Hebrew grammar, so it has nothing to say in a language without gendered address. */}
+          {i18n.locale === 'he' && (
+            <p className="init-wall-lede">
+              <Trans>Written in the masculine form, but addressed to everyone.</Trans>
+            </p>
+          )}
         </header>
 
         <section className="settings-section">
