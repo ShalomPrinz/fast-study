@@ -24,6 +24,8 @@ declare global {
       locale?: string
       // The packaged data folder the init wall starts from (`%LOCALAPPDATA%\FastStudy\data`).
       defaultDataRoot?: string
+      // Whether error reporting is on for this launch; a change in Settings waits for the next one.
+      errorReports?: boolean
       // Not optional: the bridge's absence is the browser-dev test. Identifiers only — `database/`
       // resolves the path; a `target` without `lecture` is a course-level `overview/` file.
       open: {
@@ -61,6 +63,10 @@ export const AUTO_DOWNLOADER_URL =
 // Whether this machine can keep the API keys. No bridge is browser dev, where keys go to `.env`, so
 // a missing answer means a working machine — see docs/SETTINGS.md.
 export const canStoreApiKeys = runtimeBridge()?.checks?.secureStorage ?? true
+
+// Whether the launcher can switch error reporting. No field is browser dev, where nothing reports
+// and the store has no such setting, so the switch is hidden there.
+export const canSetErrorReports = typeof runtimeBridge()?.errorReports === 'boolean'
 
 // The launch secret the services check on every request. Undefined in browser dev, where the
 // services see no `FASTSTUDY_SECRET` and install no check at all — the supported dev state.

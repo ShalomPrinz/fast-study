@@ -5,11 +5,12 @@ import { runtimeBridge } from './runtime'
 // The renderer SDK sends over IPC to Electron main, which scrubs and ships every event — see
 // docs/SERVICES.md §sentry.ts. Browser dev has no main to send through, so nothing inits there.
 
-/** Init the renderer SDK before the first render; a no-op without the bridge or a baked DSN. */
+/** Init the renderer SDK before the first render; a no-op without the bridge or a baked DSN, or
+ *  when the user switched error reports off for this launch. */
 export function initSentry(): void {
   const bridge = runtimeBridge()
   const dsn = import.meta.env.VITE_SENTRY_DSN
-  if (!bridge || !enabled(dsn)) return
+  if (!bridge || bridge.errorReports === false || !enabled(dsn)) return
   // The renderer SDK drops `initialScope`, so the `service=frontend` tag main keeps is set directly.
   const { initialScope, ...rest } = options('frontend', { dsn, version: bridge.version })
   Sentry.init(rest)

@@ -13,6 +13,7 @@ const STORED: Settings = {
   nightlyRun: null,
   nightlyHour: null,
   moodleSite: 'https://lemida.biu.ac.il',
+  errorReports: null,
 }
 
 const UNCHANGED: SettingsForm = {
@@ -26,6 +27,7 @@ const UNCHANGED: SettingsForm = {
   nightlyRun: true,
   nightlyHour: 3,
   moodleSite: 'https://lemida.biu.ac.il',
+  errorReports: true,
 }
 
 describe('buildPatch', () => {
@@ -97,6 +99,16 @@ describe('buildPatch', () => {
     expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, { ...STORED, moodleSite: null })).toEqual(
       {},
     )
+  })
+
+  it('treats unset error reports as on, so only switching them off is stored', () => {
+    expect(buildPatch(UNCHANGED, STORED)).toEqual({})
+    expect(buildPatch({ ...UNCHANGED, errorReports: false }, STORED)).toEqual({
+      errorReports: false,
+    })
+    expect(buildPatch(UNCHANGED, { ...STORED, errorReports: false })).toEqual({
+      errorReports: true,
+    })
   })
 })
 

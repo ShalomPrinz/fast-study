@@ -18,6 +18,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Daily run         | on                                        | off                   | `backend/`        |
 | Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`        |
+| Error reports     | on                                        | off                   | `electron/`, at boot |
 
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
@@ -27,6 +28,11 @@ the nightly pass; it never caps a run the user starts. **The nightly pass has tw
 decides whether the cron runs and when, auto-run still caps what it does. Every unset value reads as the
 backend's own fallback (`useAutoRun`, `useNightlyRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
 a number on the wire, never the `<select>`'s string, which the store rejects.
+
+**Error reports apply on the next launch** — the launcher reads the stored switch at boot, and the bridge's
+`errorReports` is that launch's value, which `initSentry` obeys; `/settings` says so under the switch.
+It reaches no `POST /config`, and it is Electron-only (`canSetErrorReports`): browser dev's `.env` store has no
+such field and reports nothing anyway, so both screens hide it. Its hint claims only what `lib/sentry` scrubs.
 
 ## What is not a setting
 
@@ -93,7 +99,7 @@ browser dev an already-filled `.env` passes the wall instantly; blank the values
 
 Each section heading but the language's carries a mark at its inline end, derived from `missingEntries`
 (`sectionMark`): the keys and the data folder read red `Required` until complete, then green `Done`; the
-university, Drive and downloading read gray `Optional`.
+university, Drive, downloading and error reports read gray `Optional`.
 
 Each provider's key field, here and on `/settings`, carries a short how-to-get-a-key guide, always open
 and keyed by provider id; its first step is the console link itself. A step may have a collapsed screenshot,

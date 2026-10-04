@@ -34,6 +34,20 @@ describe('initSentry', () => {
     expect(sdk.init).not.toHaveBeenCalled()
   })
 
+  it('stays off for a launch the user switched error reports off for', () => {
+    vi.stubEnv('VITE_SENTRY_DSN', 'https://k@o1.ingest.de.sentry.io/1')
+    vi.stubGlobal('window', { faststudy: { version: '1.2.3', errorReports: false } })
+    initSentry()
+    expect(sdk.init).not.toHaveBeenCalled()
+  })
+
+  it('inits for a launch with error reports on', () => {
+    vi.stubEnv('VITE_SENTRY_DSN', 'https://k@o1.ingest.de.sentry.io/1')
+    vi.stubGlobal('window', { faststudy: { version: '1.2.3', errorReports: true } })
+    initSentry()
+    expect(sdk.init).toHaveBeenCalled()
+  })
+
   it('inits from the policy with the installed version and tags the scope frontend', () => {
     vi.stubEnv('VITE_SENTRY_DSN', 'https://k@o1.ingest.de.sentry.io/1')
     vi.stubGlobal('window', { faststudy: { version: '1.2.3' } })

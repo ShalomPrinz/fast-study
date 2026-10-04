@@ -57,6 +57,15 @@ describe('ownerBodies', () => {
     })
   })
 
+  // Only the launcher reads it, at boot, so no running service has anything to apply.
+  it('gives error reports no owner', () => {
+    expect(ownerBodies({ errorReports: false })).toEqual({
+      backend: null,
+      database: null,
+      auto: null,
+    })
+  })
+
   it('gives an empty patch no owner at all', () => {
     expect(ownerBodies({})).toEqual({ backend: null, database: null, auto: null })
   })

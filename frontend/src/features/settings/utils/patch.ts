@@ -20,6 +20,7 @@ export interface SettingsForm {
   // `''` is "no university", which clears a stored site; `null` while a site is chosen but not yet
   // savable (in flight, unsupported), which leaves the stored one alone.
   moodleSite: string | null
+  errorReports: boolean
 }
 
 /** The form as the store answers it, used on load and after every save so a later save diffs only
@@ -39,6 +40,7 @@ export function formFromStore(stored: Settings, options: ConfigOptions): Setting
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
     moodleSite: stored.moodleSite ?? '',
+    errorReports: stored.errorReports ?? true,
   }
 }
 
@@ -62,5 +64,7 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   if (form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')) {
     patch.moodleSite = form.moodleSite
   }
+  // Unset means on, as the launcher reads it, so leaving the default stores nothing.
+  if (form.errorReports !== (stored.errorReports ?? true)) patch.errorReports = form.errorReports
   return patch
 }

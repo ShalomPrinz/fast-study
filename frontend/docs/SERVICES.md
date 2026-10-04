@@ -73,7 +73,8 @@ screens. Both are covered in [SETTINGS.md](SETTINGS.md).
 
 ## `sentry.ts` — error reporting
 
-`initSentry()` runs first in `main.tsx`, and only with the bridge and a baked `VITE_SENTRY_DSN`: the
+`initSentry()` runs first in `main.tsx`, and only with the bridge, a baked `VITE_SENTRY_DSN` and the
+bridge's `errorReports` not `false` (the user's switch, fixed for the launch): the
 renderer SDK (`@sentry/electron/renderer`) sends over IPC to Electron main, which scrubs — `DATA_ROOT`
 included, which the renderer does not know — and attaches the launch log
 (`electron/docs/RENDERER.md` §Error reporting). Options come from `lib/sentry`'s `options('frontend')`,

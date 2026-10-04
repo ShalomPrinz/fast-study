@@ -40,6 +40,8 @@ export interface Settings {
   nightlyHour: number | null
   // The university's Moodle root, always the canonical `wwwroot` the site probe answered.
   moodleSite: string | null
+  // Read by the launcher at boot, so a change applies on the next launch. Unset means on.
+  errorReports: boolean | null
 }
 
 // A partial save; omitted fields are left alone. The two keys are write-only — they go out here
@@ -56,6 +58,7 @@ export interface SettingsPatch {
   // A number, never the raw string a `<select>` hands back: the store rejects a JSON string.
   nightlyHour?: number
   moodleSite?: string
+  errorReports?: boolean
 }
 
 export type SettingsField = keyof SettingsPatch
@@ -71,10 +74,12 @@ const WIRE: Record<SettingsField, string> = {
   nightlyRun: 'nightly_run',
   nightlyHour: 'nightly_hour',
   moodleSite: 'moodle_site',
+  errorReports: 'error_reports',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
-// never another. Every field the store holds is named in one of them.
+// never another. Every field the store holds is named in one of them, bar `errorReports`, which only
+// the launcher reads, at boot.
 const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
@@ -113,6 +118,8 @@ function normalize(raw: RawSettings): Settings {
     nightlyRun: raw.nightly_run,
     nightlyHour: raw.nightly_hour,
     moodleSite: raw.moodle_site ?? null,
+    // The browser-dev store has no such setting; the switch is Electron-only.
+    errorReports: null,
   }
 }
 

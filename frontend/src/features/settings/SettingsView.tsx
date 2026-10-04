@@ -10,7 +10,7 @@ import {
   type SettingsPatch,
 } from '@/services/settings'
 import { isConnectionError } from '@/services/http'
-import { canStoreApiKeys } from '@/services/runtime'
+import { canSetErrorReports, canStoreApiKeys } from '@/services/runtime'
 import { toast } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
@@ -23,6 +23,7 @@ import BrowserPrereqField from './components/BrowserPrereqField'
 import { useBrowserPrereq } from './hooks/useBrowserPrereq'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
+import ErrorReportsField from './components/ErrorReportsField'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
@@ -315,6 +316,19 @@ export default function SettingsView() {
               </span>
             </div>
           </section>
+
+          {canSetErrorReports && (
+            <section className="settings-section">
+              <h2 className="settings-section-title">
+                <Trans>Error reports</Trans>
+              </h2>
+              <ErrorReportsField
+                value={form.errorReports}
+                onChange={(v) => setForm({ ...form, errorReports: v })}
+                restartNote
+              />
+            </section>
+          )}
         </div>
       </div>
 

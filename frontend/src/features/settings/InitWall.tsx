@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusContext'
 import { failureNode } from '@/shared/utils/failure'
-import { canStoreApiKeys, runtimeBridge } from '@/services/runtime'
+import { canSetErrorReports, canStoreApiKeys, runtimeBridge } from '@/services/runtime'
 import {
   toAutoRun,
   toNightlyHour,
@@ -17,6 +17,7 @@ import BrowserPrereqField from './components/BrowserPrereqField'
 import { useBrowserPrereq } from './hooks/useBrowserPrereq'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
+import ErrorReportsField from './components/ErrorReportsField'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
@@ -88,6 +89,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
     moodleSite: stored.moodleSite ?? '',
+    errorReports: stored.errorReports ?? true,
   })
   const [dataRootUnusable, setDataRootUnusable] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -267,6 +269,19 @@ export default function InitWall({ stored: initial, onDone }: Props) {
                 folderMissing={missing.includes('gdriveRootFolder')}
               />
             </section>
+
+            {canSetErrorReports && (
+              <section className="settings-section">
+                <SectionTitle mark="optional">
+                  <Trans>Error reports</Trans>
+                </SectionTitle>
+                <ErrorReportsField
+                  value={form.errorReports}
+                  onChange={(v) => setForm({ ...form, errorReports: v })}
+                  restartNote={false}
+                />
+              </section>
+            )}
 
             {/* A first run has nothing to say about a browser that is there: the section appears only
                 once a check finds none, and then stays so a re-check can answer in place. */}
