@@ -8,7 +8,8 @@ export interface RequiredInput {
   groqKey: string
   groqKeyStored: boolean
   dataRoot: string
-  dataRootConfirmed: boolean
+  // The database's probe called the folder unusable; an unknown verdict is not unusable.
+  dataRootUnusable: boolean
   driveEnabled: boolean
   gdriveRootFolder: string
   // Passed in rather than read from `services/runtime`, so both functions here stay pure.
@@ -26,8 +27,7 @@ export function missingEntries(input: RequiredInput): RequiredField[] {
     if (!input.geminiKey.trim() && !input.geminiKeyStored) missing.push('geminiApiKey')
     if (!input.groqKey.trim() && !input.groqKeyStored) missing.push('groqApiKey')
   }
-  // The root is prefilled but never silently accepted, so an unconfirmed one counts as missing.
-  if (!input.dataRoot.trim() || !input.dataRootConfirmed) missing.push('dataRoot')
+  if (!input.dataRoot.trim() || input.dataRootUnusable) missing.push('dataRoot')
   // Drive's folder has no default on purpose: turning Drive on reveals an empty required field.
   if (input.driveEnabled && !input.gdriveRootFolder.trim()) missing.push('gdriveRootFolder')
   return missing
@@ -38,4 +38,12 @@ export function missingEntries(input: RequiredInput): RequiredField[] {
 export function isInitialized(settings: Settings, canStoreApiKeys: boolean): boolean {
   if (!settings.dataRoot) return false
   return !canStoreApiKeys || (settings.geminiApiKeySet && settings.groqApiKeySet)
+}
+
+/** A required section's mark on the init wall: `required` while any of its entries is missing. */
+export function sectionMark(
+  missing: RequiredField[],
+  fields: RequiredField[],
+): 'required' | 'done' {
+  return fields.some((f) => missing.includes(f)) ? 'required' : 'done'
 }

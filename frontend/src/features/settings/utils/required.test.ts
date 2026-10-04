@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Settings } from '@/services/settings'
-import { missingEntries, isInitialized, type RequiredInput } from './required'
+import { missingEntries, isInitialized, sectionMark, type RequiredInput } from './required'
 
 const FILLED: RequiredInput = {
   geminiKey: 'g',
@@ -8,7 +8,7 @@ const FILLED: RequiredInput = {
   groqKey: 'q',
   groqKeyStored: false,
   dataRoot: '/data',
-  dataRootConfirmed: true,
+  dataRootUnusable: false,
   driveEnabled: false,
   gdriveRootFolder: '',
   canStoreApiKeys: true,
@@ -46,8 +46,8 @@ describe('missingEntries', () => {
     ).toEqual([])
   })
 
-  it('requires the data root to be confirmed, not just prefilled', () => {
-    expect(missingEntries({ ...FILLED, dataRootConfirmed: false })).toEqual(['dataRoot'])
+  it('counts a data root the probe called unusable as missing', () => {
+    expect(missingEntries({ ...FILLED, dataRootUnusable: true })).toEqual(['dataRoot'])
   })
 
   it('requires the Drive folder only while Drive is on', () => {
@@ -81,5 +81,16 @@ describe('isInitialized', () => {
   it('ignores the keys where they cannot be stored', () => {
     const noKeys = { ...SETTINGS, geminiApiKeySet: false, groqApiKeySet: false }
     expect(isInitialized(noKeys, false)).toBe(true)
+  })
+})
+
+describe('sectionMark', () => {
+  it('stays required while any of its entries is missing', () => {
+    expect(sectionMark(['groqApiKey'], ['geminiApiKey', 'groqApiKey'])).toBe('required')
+  })
+
+  it('is done once none of its entries is missing, whatever else is', () => {
+    expect(sectionMark(['dataRoot'], ['geminiApiKey', 'groqApiKey'])).toBe('done')
+    expect(sectionMark([], ['dataRoot'])).toBe('done')
   })
 })

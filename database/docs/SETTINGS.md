@@ -68,6 +68,12 @@ relative root would resolve against each service's own cwd), it is created if mi
 file is written and deleted to prove the location is writable — otherwise an unwritable root
 surfaces as a pipeline failure minutes later.
 
+`POST /settings/data-root/probe` runs the same shape checks for the first-run wall but creates and
+writes nothing: a missing root passes when its nearest existing ancestor is a writable directory.
+Writability there is `os.access`, which reads permission bits only (on Windows just the read-only
+flag), so the probe is advisory and the save's real write stays authoritative. A rejection is a
+`200` `{ok: false, error, code, params}` verdict carrying the same four codes, not a failure.
+
 ## Where the root lives, and the unconfigured state
 
 `fs/paths.py` holds the root as module state (`_data_root`), written only by `set_data_root()`.

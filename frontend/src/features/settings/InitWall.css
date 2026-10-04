@@ -1,6 +1,9 @@
 /* The wall stands in place of the whole app, so it owns the viewport and scrolls itself — there is
    no `.layout` around it and nothing else on screen. */
 .init-wall {
+  /* The wall alone reads larger than the app behind it; `zoom` (not `transform`) re-lays it out, so
+     the scroll box still fills the viewport and the 620px card stays clear of a 1280px window. */
+  zoom: 1.25;
   height: 100%;
   overflow-y: auto;
   background: var(--bg);
@@ -53,4 +56,12 @@
   align-items: flex-start;
   gap: var(--space-4);
   padding-block-end: var(--space-8);
+}
+
+/* Flex follows the document direction, so the mark sits at the inline end in either language. */
+.init-wall-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
 }

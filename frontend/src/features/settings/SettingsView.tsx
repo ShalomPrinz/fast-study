@@ -20,6 +20,7 @@ import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ApiKeyField from './components/ApiKeyField'
 import BrowserPrereqField from './components/BrowserPrereqField'
+import { useBrowserPrereq } from './hooks/useBrowserPrereq'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
@@ -51,6 +52,7 @@ export default function SettingsView() {
   const { status } = useRunnerStatus()
   const { setSettings } = useSettingsContext()
   const { status: account, refresh: refreshAccount } = useAuthStatus()
+  const browser = useBrowserPrereq()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
@@ -92,7 +94,7 @@ export default function SettingsView() {
     groqKeyStored: stored.groqApiKeySet,
     dataRoot: form.dataRoot,
     // Confirming a prefilled root belongs to the init wall; here the field is simply edited.
-    dataRootConfirmed: true,
+    dataRootUnusable: false,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
     canStoreApiKeys,
@@ -232,7 +234,7 @@ export default function SettingsView() {
             <h2 className="settings-section-title">
               <Trans>Downloading recordings</Trans>
             </h2>
-            <BrowserPrereqField />
+            <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
             <MoodleSiteField
               value={form.moodleSite}
               // Functional: the probe answers after other fields may have changed.
@@ -241,7 +243,7 @@ export default function SettingsView() {
             />
             <MoodleAccountField
               site={stored.moodleSite}
-              switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
+              switching={form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')}
             />
           </section>
 
@@ -318,8 +320,15 @@ export default function SettingsView() {
 
       {pending?.guard === 'site' && (
         <ConfirmModal
-          message={t`Switch to another university?`}
-          warning={t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`}
+          // A blank site is "no university": it drops the account just the same, with nothing to connect to.
+          message={
+            pending.patch.moodleSite ? t`Switch to another university?` : t`Remove your university?`
+          }
+          warning={
+            pending.patch.moodleSite
+              ? t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`
+              : t`This disconnects your current account, and recordings can no longer be found on its Moodle site.`
+          }
           onConfirm={() => {
             setPending(null)
             guardDataRoot(pending.patch)

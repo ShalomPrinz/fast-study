@@ -21,9 +21,14 @@ export const MOODLE_SITE_PRESETS: MoodleSitePreset[] = [
 export const OTHER_SITE = 'other'
 
 /** The `<select>` value a stored site opens on: its preset, "Other…" for any other root, or the
- *  empty placeholder when nothing is stored — the wall preselects no university. */
+ *  empty "no university" entry when nothing is stored — the wall preselects no university. */
 export function choiceForSite(site: string | null): string {
   if (!site) return ''
   const bare = site.replace(/\/+$/, '')
   return MOODLE_SITE_PRESETS.find((p) => p.url === bare)?.id ?? OTHER_SITE
+}
+
+/** Whether the picker means "no university": its placeholder, or "Other…" with no address typed. */
+export function choosesNoSite(choice: string, typed: string): boolean {
+  return choice === '' || (choice === OTHER_SITE && !typed.trim())
 }

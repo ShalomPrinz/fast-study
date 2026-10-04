@@ -28,6 +28,7 @@ already had.
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
 | Tool probe      | `tools[name]` — `"ok"`, or `{state, params}`                                | `lib/tools/`, reported on each service's `/health`           |
+| Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
 
 Every field is additive. `error`/`message` keep today's text and today's meaning, so a consumer that
 never learned about `code` keeps working — which is what makes the fallback below honest rather than

@@ -1,9 +1,17 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { openExternalUrl } from '@/services/open'
 import { probeKey, type Provider } from '@/services/settings'
 import Icon from '@/shared/components/Icon'
 import { prefixStatus, shouldProbe, type KeyStatus } from '../utils/keyStatus'
+import gemini2 from '@/assets/key-steps/gemini-2.png'
+import gemini3 from '@/assets/key-steps/gemini-3.png'
+import gemini4 from '@/assets/key-steps/gemini-4.png'
+import gemini5 from '@/assets/key-steps/gemini-5.png'
+import gemini6 from '@/assets/key-steps/gemini-6.png'
+import groq2 from '@/assets/key-steps/groq-2.png'
+import groq3 from '@/assets/key-steps/groq-3.png'
+import groq4 from '@/assets/key-steps/groq-4.png'
 import '@/styles/settings-form.css'
 
 interface Props {
@@ -21,55 +29,67 @@ const TONE: Record<string, string> = {
   unverified: 'settings-status--warn',
 }
 
+// The provider's key page, opened outside the app; it reads as a link inside a sentence of the steps.
+function ConsoleLink({ url, children }: { url: string; children: ReactNode }) {
+  return (
+    <a
+      className="settings-link"
+      href={url}
+      onClick={(e) => {
+        e.preventDefault()
+        void openExternalUrl(url)
+      }}
+    >
+      {children}
+      <Icon icon="external-link" />
+    </a>
+  )
+}
+
 // Click-by-click steps for a first-time user, keyed by provider id; the button names stay English in
-// every locale because the provider consoles are English. A provider without steps shows no disclosure.
-function keySteps(id: string) {
-  if (id === 'gemini') {
-    return (
-      <ol className="settings-steps">
-        <li>
-          <Trans>Click "Get a key" above and sign in with your Google account.</Trans>
-        </li>
-        <li>
-          <Trans>
-            Click "Create API key". If you're asked to pick a project, choose any one or let it
-            create a new one.
-          </Trans>
-        </li>
-        <li>
-          <Trans>Click the copy icon next to the new key, then paste it here.</Trans>
-        </li>
-      </ol>
-    )
+// every locale because the provider consoles are English. A provider without steps shows no guide.
+function keySteps(provider: Provider): ReactNode[] | null {
+  const url = provider.consoleUrl
+  if (provider.id === 'gemini') {
+    return [
+      <Trans>
+        Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with your Google account.
+      </Trans>,
+      <Trans>Click "Create API key".</Trans>,
+      <Trans>In the project list, choose "Create project".</Trans>,
+      <Trans>Give the project any name and click "Create project".</Trans>,
+      <Trans>Back in the key window, click "Create key".</Trans>,
+      <Trans>Click "Copy key" and paste the key here.</Trans>,
+    ]
   }
-  if (id === 'groq') {
-    return (
-      <ol className="settings-steps">
-        <li>
-          <Trans>Click "Get a key" above and sign in with Google or your email.</Trans>
-        </li>
-        <li>
-          <Trans>
-            Click "Create API Key", type any name (for example FastStudy) and click "Submit".
-          </Trans>
-        </li>
-        <li>
-          <Trans>
-            Click "Copy" and paste the key here. Groq shows the key only once, so copy it before you
-            close the window.
-          </Trans>
-        </li>
-      </ol>
-    )
+  if (provider.id === 'groq') {
+    return [
+      <Trans>
+        Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with Google or your email.
+      </Trans>,
+      <Trans>Click "Create API Key".</Trans>,
+      <Trans>Type any name (for example FastStudy) and click "Submit".</Trans>,
+      <Trans>
+        Click "Copy" and paste the key here. Groq shows the key only once, so copy it before you
+        close the window.
+      </Trans>,
+    ]
   }
   return null
+}
+
+// A screenshot per step, in step order, or `null` for a step without one (it shows no toggle);
+// swapping a file in `assets/key-steps/` is all an update takes.
+const SHOTS: Record<string, (string | null)[]> = {
+  gemini: [null, gemini2, gemini3, gemini4, gemini5, gemini6],
+  groq: [null, groq2, groq3, groq4],
 }
 
 // One write-only key field: the value goes out and never comes back, and the field carries a single
 // status slot that the prefix hint fills first and any probe result then overwrites.
 export default function ApiKeyField({ provider, value, onChange, storedKeyExists }: Props) {
   const { t } = useLingui()
-  const steps = keySteps(provider.id)
+  const steps = keySteps(provider)
   const [status, setStatus] = useState<KeyStatus>(null)
   const probed = useRef<string | null>(null)
   // The probe reads the value at fire time, which for a paste is one tick after the event.
@@ -116,40 +136,45 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
 
   return (
     <div className="settings-field">
-      {/* Not a `<label>` wrapper: the console link inside one would activate the input instead. */}
       <div className="settings-label">
         <label htmlFor={`key-${provider.id}`}>
           <Trans>{provider.displayName} API key</Trans>
         </label>
-        <a
-          className="settings-link"
-          href={provider.consoleUrl}
-          onClick={(e) => {
-            e.preventDefault()
-            void openExternalUrl(provider.consoleUrl)
-          }}
-        >
-          <Trans>Get a key</Trans>
-          <Icon icon="external-link" />
-        </a>
       </div>
+      {/* Always open: the steps are the whole help a first-time user has, and step 1 holds the link. */}
       {steps && (
-        <details
-          className="settings-disclosure"
-          data-testid="api-key-help"
-          data-provider={provider.id}
-        >
-          <summary>
+        <div className="settings-guide" data-testid="api-key-help" data-provider={provider.id}>
+          <p className="settings-guide-title">
             <Trans>How do I get a key?</Trans>
-          </summary>
-          {steps}
-        </details>
+          </p>
+          <ol className="settings-steps">
+            {steps.map((text, i) => {
+              const shot = SHOTS[provider.id]?.[i]
+              const step = i + 1
+              const name = provider.displayName
+              return (
+                <li key={step}>
+                  {text}
+                  {/* Collapsed by default: the steps read on their own, the picture is for a user stuck. */}
+                  {shot && (
+                    <details className="settings-shot">
+                      <summary>
+                        <Trans>Show screenshot</Trans>
+                      </summary>
+                      <img src={shot} alt={t`Screenshot of ${name}, step ${step}`} loading="lazy" />
+                    </details>
+                  )}
+                </li>
+              )
+            })}
+          </ol>
+        </div>
       )}
       <input
         id={`key-${provider.id}`}
         data-testid="api-key-input"
         data-provider={provider.id}
-        className="settings-input settings-input--code"
+        className={`settings-input settings-input--code ${storedKeyExists ? 'settings-input--prose-placeholder' : ''}`}
         type="password"
         autoComplete="off"
         spellCheck={false}

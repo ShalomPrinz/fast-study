@@ -76,11 +76,27 @@ describe('buildPatch', () => {
     expect(patch).toEqual({ dataRoot: '/other', driveEnabled: true, gdriveRootFolder: 'Lectures' })
   })
 
-  it('sends a newly chosen site and never a blank one, which would unset the university', () => {
+  it('sends a default Drive folder nobody typed once Drive is on, and no folder while it is off', () => {
+    const defaulted = { ...UNCHANGED, gdriveRootFolder: 'Fast Study' }
+    expect(buildPatch({ ...defaulted, driveEnabled: true }, STORED)).toEqual({
+      driveEnabled: true,
+      gdriveRootFolder: 'Fast Study',
+    })
+    expect(buildPatch(defaulted, STORED)).toEqual({})
+  })
+
+  it('sends a newly chosen site', () => {
     expect(buildPatch({ ...UNCHANGED, moodleSite: 'https://moodle.tau.ac.il' }, STORED)).toEqual({
       moodleSite: 'https://moodle.tau.ac.il',
     })
-    expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, STORED)).toEqual({})
+  })
+
+  it('clears a stored site when no university is chosen, and leaves it while a choice is unsavable', () => {
+    expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, STORED)).toEqual({ moodleSite: '' })
+    expect(buildPatch({ ...UNCHANGED, moodleSite: null }, STORED)).toEqual({})
+    expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, { ...STORED, moodleSite: null })).toEqual(
+      {},
+    )
   })
 })
 

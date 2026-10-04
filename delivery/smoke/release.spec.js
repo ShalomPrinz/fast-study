@@ -692,9 +692,7 @@ test('13. an in-place update', async () => {
           },
         );
       } catch (error) {
-        throw new Error(
-          `${error.message}\n${await installForensics(installerSeen)}`,
-        );
+        throw new Error(`${error.message}\n${await installForensics(installerSeen)}`);
       }
       // A quit-time install must not start the app; one that did would hold the single-instance lock.
       const running = await strayAfter([paths.installDir()], 30_000);
@@ -713,10 +711,9 @@ test('13. an in-place update', async () => {
     expect(readLaunchLog().split('\n')[0], 'launch.log names the wrong version').toContain(
       `FastStudy ${candidate.version} `,
     );
-    // Settings is a route like any other, and only the wall carries the data-root confirmation.
+    // Settings is a route like any other once the wall has been passed.
     await page.goto('app://bundle/settings');
     await expect(page.getByTestId('data-root-input')).toBeVisible();
-    await expect(page.getByTestId('data-root-confirm')).toHaveCount(0);
     await expect(page.getByTestId('init-wall')).toHaveCount(0);
 
     // The wall reads only whether a key is stored; a network failure, rather than "not set in the

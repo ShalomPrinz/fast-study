@@ -56,17 +56,22 @@ describe('toSiteStatus', () => {
 
 describe('savableSite', () => {
   it('blocks the save on an unsupported site, unlike a rejected key', () => {
-    expect(savableSite({ kind: 'unsupported', failure: NOT_MOODLE.failure! })).toBe('')
+    expect(savableSite({ kind: 'unsupported', failure: NOT_MOODLE.failure! })).toBeNull()
   })
 
   it('blocks the save while a probe is in flight or nothing was probed', () => {
-    expect(savableSite({ kind: 'checking' })).toBe('')
-    expect(savableSite(null)).toBe('')
+    expect(savableSite({ kind: 'checking' })).toBeNull()
+    expect(savableSite(null)).toBeNull()
   })
 
   it('lets a supported or unverified site be saved', () => {
     expect(savableSite({ kind: 'supported', site: 'https://a' })).toBe('https://a')
     expect(savableSite({ kind: 'unverified', site: 'https://b' })).toBe('https://b')
+  })
+
+  // `''` is the form's "no university", which clears the stored site — never what a probe means.
+  it('holds the save on an unverified answer with no address to keep', () => {
+    expect(savableSite({ kind: 'unverified', site: '' })).toBeNull()
   })
 })
 

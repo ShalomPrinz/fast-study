@@ -72,6 +72,13 @@
   text-align: start;
 }
 
+/* A code field whose placeholder is a sentence rather than a sample value: while it shows, the field
+   takes the page's direction and font, so translated prose is not laid out as an LTR token. */
+.settings-input--code.settings-input--prose-placeholder:placeholder-shown {
+  font-family: inherit;
+  direction: inherit;
+}
+
 /* Keep below `.settings-input`: an invalid field recolours the same border at equal specificity. */
 .settings-input.settings-input--invalid {
   border-color: var(--danger);
@@ -157,21 +164,34 @@
   color: var(--danger);
 }
 
-/* The collapsed how-to under a key field's label; logical padding so the list indents on either side. */
-.settings-disclosure {
+/* The how-to under a key field's label; logical padding so the list indents on either side. */
+.settings-guide {
   font-size: var(--fs-meta);
   line-height: 1.6;
   color: var(--text-2);
 }
 
-.settings-disclosure > summary {
+.settings-guide-title {
+  font-weight: 500;
+}
+
+.settings-steps {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-6);
+}
+
+.settings-shot > summary {
   width: fit-content;
   color: var(--accent-ink);
   font-weight: 500;
   cursor: pointer;
 }
 
-.settings-steps {
-  margin: var(--space-2) 0 0;
-  padding-inline-start: var(--space-6);
+.settings-shot > img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-block: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
 }

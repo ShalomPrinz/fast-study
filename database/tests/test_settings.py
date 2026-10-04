@@ -396,3 +396,85 @@ def test_moodle_site_round_trips_to_its_env_key(env_file):
 
     assert dotenv_values(env_file)["MOODLE_SITE"] == "https://x.ac.il/moodle"
     assert settings.read_settings()["moodle_site"] == "https://x.ac.il/moodle"
+
+
+def _probe(client, data_root) -> dict:
+    """POST a candidate data root to the probe and return its 200 verdict body."""
+
+    r = client.post("/settings/data-root/probe", json={"data_root": data_root})
+    assert r.status_code == 200
+    return r.json()
+
+
+def test_probe_approves_a_missing_folder_under_a_writable_parent(client, tmp_path):
+    target = tmp_path / "not" / "yet"
+    before = sorted(tmp_path.iterdir())
+
+    assert _probe(client, str(target)) == {"ok": True, "path": str(target)}
+    assert sorted(tmp_path.iterdir()) == before
+
+
+def test_probe_leaves_an_existing_folder_untouched(client, tmp_path):
+    target = tmp_path / "root"
+    target.mkdir()
+
+    assert _probe(client, str(target))["ok"] is True
+    assert list(target.iterdir()) == []
+
+
+def test_probe_rejects_an_existing_file(client, tmp_path):
+    blocker = tmp_path / "afile"
+    blocker.write_text("x", encoding="utf-8")
+
+    body = _probe(client, str(blocker))
+
+    assert body["ok"] is False
+    assert body["code"] == "data_root_not_a_directory"
+    assert body["params"] == {"path": str(blocker)}
+    assert body["error"]
+
+
+def test_probe_rejects_a_folder_under_a_file(client, tmp_path):
+    blocker = tmp_path / "afile"
+    blocker.write_text("x", encoding="utf-8")
+
+    body = _probe(client, str(blocker / "sub"))
+
+    assert body["code"] == "data_root_not_writable"
+    assert body["params"]["path"] == str(blocker / "sub")
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores permission bits")
+def test_probe_rejects_an_unwritable_parent(client, tmp_path):
+    locked = tmp_path / "locked"
+    locked.mkdir()
+    locked.chmod(0o500)
+    try:
+        body = _probe(client, str(locked / "sub"))
+    finally:
+        locked.chmod(0o700)
+
+    assert body["code"] == "data_root_not_writable"
+    assert not (locked / "sub").exists()
+
+
+def test_probe_rejects_a_relative_path(client):
+    assert _probe(client, "relative/data") == {
+        "ok": False,
+        "code": "data_root_not_absolute",
+        "params": {"path": "relative/data"},
+        "error": "data root must be an absolute path: relative/data",
+    }
+
+
+def test_probe_rejects_an_empty_path(client):
+    body = _probe(client, "  ")
+
+    assert (body["ok"], body["code"], body["params"]) == (False, "data_root_empty", {})
+
+
+def test_probe_answers_400_on_a_body_without_data_root(client):
+    r = client.post("/settings/data-root/probe", json={})
+
+    assert r.status_code == 400
+    assert r.json()["code"] == "bad_request_body"

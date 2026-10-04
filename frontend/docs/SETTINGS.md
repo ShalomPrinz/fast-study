@@ -9,11 +9,11 @@ edits them all, and the prerequisites and accounts both screens show.
 | ----------------- | ----------------------------------------- | --------------------- | ----------------- |
 | Gemini API key    | none                                      | user-supplied         | `backend/`        |
 | Groq API key      | none                                      | user-supplied         | `backend/`        |
-| Data folder       | prefilled, confirmed on first run         | any directory         | `database/`       |
+| Data folder       | prefilled, probed on first run            | any directory         | `database/`       |
 | University        | none — optional, nothing preselected      | a preset, or any URL  | `downloader/auto` |
 | UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend          |
 | Drive upload      | off                                       | on                    | `backend/`        |
-| Drive root folder | none — required once Drive is on          | any folder name       | `backend/`        |
+| Drive root folder | `Fast Study`, sent only once Drive is on  | any folder name       | `backend/`        |
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Daily run         | on                                        | off                   | `backend/`        |
@@ -84,11 +84,22 @@ unreachable store shows the app anyway: a downed service is not an unconfigured 
 
 The wall also offers the language (so the rest reads in it) and the Drive toggle (so the account is
 connected now, not mid-run); neither blocks, and Drive's folder is required only while it is on. Auto-run
-and the nightly pass keep their defaults. The data folder is **prefilled but confirmed** by a checkbox. In
+and the nightly pass keep their defaults. The data folder is **prefilled and taken as is** — the stored one, else the bridge's `defaultDataRoot`,
+else empty, which in browser dev reads red — but
+probed as it is typed (`probeDataRoot`, the database's read-only `POST /settings/data-root/probe`, debounced
+and latest-wins): an unusable verdict renders its coded reason under the field and blocks the wall, while an
+unreachable probe is unknown and blocks nothing, since the save validates again. In
 browser dev an already-filled `.env` passes the wall instantly; blank the values to exercise it.
 
-Each provider carries a short how-to-get-a-key guide beside its console link, in the Lingui catalogs keyed
-by provider id. A save failure shows in place — a rejected data folder is the one thing in the way.
+Each section heading but the language's carries a mark at its inline end, derived from `missingEntries`
+(`sectionMark`): the keys and the data folder read red `Required` until complete, then green `Done`; the
+university, Drive and downloading read gray `Optional`.
+
+Each provider's key field, here and on `/settings`, carries a short how-to-get-a-key guide, always open
+and keyed by provider id; its first step is the console link itself. A step may have a collapsed screenshot,
+`src/assets/key-steps/{provider}-{step}.png` (step numbers 1-based), imported
+through Vite and listed in `SHOTS`, so replacing a file is the whole update; a real key in one must be
+blurred out before it is committed. A save failure shows in place — a rejected data folder is the one thing in the way.
 
 ## When the computer can't store a key
 
@@ -96,9 +107,9 @@ The packaged app keeps the keys encrypted by the OS keystore; a machine with non
 keyring) cannot store them. `runtime.ts` resolves the launcher's report once as `canStoreApiKeys`;
 no bridge means browser dev, where keys go to `.env`, so a missing answer means a machine that is fine.
 
-Degraded, not fatal: both screens drop the key fields — and on `/settings` the summary model — leaving
-`SecureStorageNotice` under the section heading, since a field that can never be filled invites a user to
-try. The keys stop counting in `missingEntries` and `isInitialized` (which take the flag as an argument,
+Degraded, not fatal: a field that can never be filled invites a user to try, so the wall drops the whole
+keys section, and `/settings` drops the key fields and the summary model, leaving `SecureStorageNotice`
+under the section heading. The keys stop counting in `missingEntries` and `isInitialized` (which take the flag as an argument,
 staying pure), or the wall would have no way past. A save stays safe: a blank key is never sent, and an
 unrendered model select still holds the stored or default id.
 
@@ -123,12 +134,16 @@ slot reads `supported` (the canonical site), `unsupported` (the `moodle_site_uns
 
 **The save rule is the opposite of a key's.** A key the provider rejects might still be right; a site that
 definitively isn't a usable Moodle can never work. So `unsupported` saves nothing — the field hands the form
-`''`, which `buildPatch` never sends, so the stored site stays. A probe in flight holds Save on both screens
+`null`, which `buildPatch` never sends, so the stored site stays. A probe in flight holds Save on both screens
 (`onChecking`), so a click can't outrun the answer and drop the choice; a blank site never blocks. `unverified` saves, since a
 bot wall or a dropped connection says nothing about the site; the post-login check in the auto-downloader
 is the backstop. What is saved is always the probe's canonical root, never the typed text.
 
-**The wall saves a confirmed site at once**: a `supported` answer writes `moodle_site` alone through
+**No university is a choice too.** The "Choose your university…" entry, or "Other…" with no address
+(`choosesNoSite`), hands the form `''`, which `buildPatch` sends and every store and auto's `/config`
+read as cleared — the wall at once, `/settings` on Save behind the same confirm as a switch.
+
+**The wall saves a confirmed site at once**: a `supported` answer, or no university, writes `moodle_site` alone through
 `saveSettings` (store, then auto's `/config`), chained so a quicker second pick never lands first, which
 makes Connect live on the wall; the rest of the form saves on submit as before.
 
@@ -146,12 +161,14 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   costs auto-download and Zoom capture only, and the copy says a hand-added video still becomes a summary.
   Only success is cached server-side, so **Check again** re-probes. The link is Chrome's: Edge ships with
   Windows, so only a machine missing both sees it. `detail` is English fine print, `dir="ltr"`.
+  The check lives in `hooks/useBrowserPrereq.ts`, so the wall can show its section only once a check
+  says missing (then keeps it, so **Check again** answers in place); `/settings` always shows it.
 - **University account** (`MoodleAccountField`) — the downloads page's `AccountStatus`
   ([DOWNLOADS.md](DOWNLOADS.md)), with `--danger` retoned to neutral: red belongs on the page the session
   actually blocks. The hint names the saved site's host. It belongs to the saved site only, so with none
   saved — or another one chosen but unsaved — it shows a "save first" hint instead of a Connect that would
-  sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall, outside
-  `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the
+  sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall shows it
+  under the university picker and, outside `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the
   browser check's.
 - **Google account** (`DriveConnection`, over `services/drive.ts`) — rendered only while Drive is on.
   States `unknown` / `disconnected` / `pending` / `connected`. `POST /config/drive/connect` opens the

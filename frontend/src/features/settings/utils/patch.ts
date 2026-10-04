@@ -17,8 +17,9 @@ export interface SettingsForm {
   autoRun: AutoRun
   nightlyRun: boolean
   nightlyHour: number
-  // `''` while no savable site is chosen; never sent, since a site is cleared by nothing.
-  moodleSite: string
+  // `''` is "no university", which clears a stored site; `null` while a site is chosen but not yet
+  // savable (in flight, unsupported), which leaves the stored one alone.
+  moodleSite: string | null
 }
 
 /** The form as the store answers it, used on load and after every save so a later save diffs only
@@ -50,14 +51,15 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   if (form.dataRoot.trim() !== (stored.dataRoot ?? '')) patch.dataRoot = form.dataRoot.trim()
   if (form.geminiModel !== (stored.geminiModel ?? '')) patch.geminiModel = form.geminiModel
   if (form.driveEnabled !== (stored.driveEnabled ?? false)) patch.driveEnabled = form.driveEnabled
-  if (form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {
+  // Only while Drive is on, where the field shows: the wall's untouched default is no choice to store.
+  if (form.driveEnabled && form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
   }
   if (form.autoRun !== toAutoRun(stored.autoRun)) patch.autoRun = form.autoRun
   // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
   if (form.nightlyRun !== (stored.nightlyRun ?? true)) patch.nightlyRun = form.nightlyRun
   if (form.nightlyHour !== toNightlyHour(stored.nightlyHour)) patch.nightlyHour = form.nightlyHour
-  if (form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')) {
+  if (form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')) {
     patch.moodleSite = form.moodleSite
   }
   return patch

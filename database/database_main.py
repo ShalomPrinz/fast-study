@@ -483,6 +483,22 @@ async def put_settings(request: Request):
         return _failure(e, 400, "settings_store_io_failed")
 
 
+@app.post("/settings/data-root/probe")
+async def probe_data_root(request: Request):
+    """Judge a candidate {data_root} for the first-run wall without creating or writing anything."""
+
+    try:
+        body = await request.json()
+        candidate = body["data_root"]
+    except Exception as e:
+        return _failure(e, 400, "bad_request_body")
+    # A verdict is data, not a failed request, so a rejection answers 200 like an approval.
+    try:
+        return {"ok": True, "path": settings.probe_data_root(candidate)}
+    except CodedError as e:
+        return {"ok": False, "code": e.code, "params": e.params, "error": str(e)}
+
+
 @app.post("/config")
 async def post_config(request: Request):
     """Apply {data_root} to the running process, so a settings change needs no restart."""

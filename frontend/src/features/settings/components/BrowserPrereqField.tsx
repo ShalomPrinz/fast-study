@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { openExternalUrl } from '@/services/open'
-import { fetchBrowserPrereq } from '@/services/settings'
 import Icon from '@/shared/components/Icon'
+import type { BrowserPrereqState } from '../hooks/useBrowserPrereq'
 import '@/styles/button.css'
 import '@/styles/settings-form.css'
 import './BrowserPrereqField.css'
@@ -11,46 +10,22 @@ import './BrowserPrereqField.css'
 // only machine that reaches this link is one where neither is installed, and Chrome is the fix.
 const CHROME_DOWNLOAD_URL = 'https://www.google.com/chrome/'
 
-type State =
-  | { kind: 'checking' }
-  | { kind: 'available'; browser: string; channel: string | null }
-  | { kind: 'missing'; detail: string }
-  // The service was unreachable, which is an unknown answer and never "no browser" — the same rule
-  // the API key probe follows for an unreachable provider.
-  | { kind: 'unknown' }
-
-const TONE: Record<State['kind'], string> = {
+const TONE: Record<BrowserPrereqState['kind'], string> = {
   checking: '',
   available: 'settings-status--ok',
   missing: 'settings-status--warn',
   unknown: 'settings-status--warn',
 }
 
+interface Props {
+  state: BrowserPrereqState
+  onRecheck: () => void
+}
+
 // A browser is a prerequisite of the download surface alone, so this field reads as a sibling of the
 // two API keys while never blocking: nothing here reaches `missingEntries`. See docs/SETTINGS.md.
-export default function BrowserPrereqField() {
+export default function BrowserPrereqField({ state, onRecheck }: Props) {
   const { t } = useLingui()
-  const [state, setState] = useState<State>({ kind: 'checking' })
-
-  const check = useCallback(async () => {
-    setState({ kind: 'checking' })
-    try {
-      const prereq = await fetchBrowserPrereq()
-      setState(
-        prereq.available && prereq.browser
-          ? { kind: 'available', browser: prereq.browser, channel: prereq.channel }
-          : { kind: 'missing', detail: prereq.detail },
-      )
-    } catch {
-      // A downed service is already toasted centrally by the http client; the field only stops
-      // claiming anything about this machine.
-      setState({ kind: 'unknown' })
-    }
-  }, [])
-
-  useEffect(() => {
-    void check()
-  }, [check])
 
   const message = () => {
     switch (state.kind) {
@@ -119,7 +94,7 @@ export default function BrowserPrereqField() {
         </>
       )}
       {(state.kind === 'missing' || state.kind === 'unknown') && (
-        <button className="btn btn--ghost browser-prereq-recheck" onClick={() => void check()}>
+        <button className="btn btn--ghost browser-prereq-recheck" onClick={onRecheck}>
           <Trans>Check again</Trans>
         </button>
       )}
