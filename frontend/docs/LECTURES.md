@@ -119,7 +119,8 @@ archived course so the badge stays off.
 
 Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. A running
 or queued lecture, and a course holding one, a generating overview (`/status`'s `overview_running`) or a
-non-terminal download job (`useCourseDownloading`, extension jobs included), refuse the rename
+non-terminal download job or a `running`/`paused` section run (`useCourseDownloading`, extension jobs
+included), refuse the rename
 (`utils/renameLock.ts`): each writes by the name it was given, so a mid-run rename splits the lecture in two.
 A running or queued lecture refuses a video drop too, checked again on the replace confirm: the upload wipes
 the folder under a run that would finish from the old video. An open page — lecture or overview — follows the

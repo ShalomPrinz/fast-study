@@ -12,6 +12,7 @@ import type { DownloadJob } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
 import { sequencedRefresh } from '../utils/sequencedRefresh'
+import { useCourseRunActive } from './SectionRunsContext'
 
 // One download job as the display atom for a titled ETA bar. Carries the fields a per-job retry
 // needs to re-issue `/download-item` (ref/course/title=lecture/kind).
@@ -136,11 +137,13 @@ export function useJobsByRef(): JobsByRef {
   return useSyncExternalStore(subscribe, () => jobsByRef)
 }
 
-// Whether a download is still writing into this course; a boolean snapshot, so a ping re-renders
-// only the courses whose answer flipped.
+// Whether a download is still writing into this course — a non-terminal job, or a section run still
+// walking it. Boolean snapshots, so a ping re-renders only the courses whose answer flipped.
 export function useCourseDownloading(course: string): boolean {
   useProviderGuard()
-  return useSyncExternalStore(subscribe, () => activeCourses.has(course))
+  const jobActive = useSyncExternalStore(subscribe, () => activeCourses.has(course))
+  const runActive = useCourseRunActive(course)
+  return jobActive || runActive
 }
 
 // Reflects the downloader server's jobs: each contentless `job:change` ping refetches `GET /jobs`,
