@@ -67,8 +67,10 @@ export async function uploadVideo(tempDir, course, lecture, kind, tool) {
     reportVideoArrived(course, lecture, kind);
     return null;
   } catch (err) {
-    emitError(`❌ ${tool} upload to database failed: ${err.message}`);
-    return storeFailed(err.message);
+    // undici's message is a bare "fetch failed"; the cause (a missing file, a reset) is the reason.
+    const reason = err.cause?.message ?? err.message;
+    emitError(`❌ ${tool} upload to database failed: ${reason}`);
+    return storeFailed(reason);
   } finally {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
@@ -102,8 +104,10 @@ export async function uploadMaterial(tempDir, course, lecture, kind, tool) {
     notifyFrontend();
     return null;
   } catch (err) {
-    emitError(`❌ ${tool} upload to database failed: ${err.message}`);
-    return storeFailed(err.message);
+    // undici's message is a bare "fetch failed"; the cause (a missing file, a reset) is the reason.
+    const reason = err.cause?.message ?? err.message;
+    emitError(`❌ ${tool} upload to database failed: ${reason}`);
+    return storeFailed(reason);
   } finally {
     try {
       fs.rmSync(tempDir, { recursive: true, force: true });
