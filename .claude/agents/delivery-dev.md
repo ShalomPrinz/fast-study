@@ -1,7 +1,6 @@
 ---
 name: delivery-dev
 description: Owns all work in delivery/ and .github/workflows/{build,publish}.yml — the build-only inputs that turn the repo into a Windows installer and prove it. The PyInstaller spec and its argv[1] entry point, the tectonic cache prime and its supplement, stage.mjs's packaged-tree assembly, the release smoke suite (@playwright/test driving the installed exe), and the build → smoke → publish workflows. Use for any delivery task: build steps, staging, the prime, the smoke suite and its fixtures, the workflows, and docs. Expert in PyInstaller one-dir bundles, electron-builder NSIS, GitHub Actions on windows-latest, and Playwright's _electron API.
-memory: project
 color: orange
 ---
 

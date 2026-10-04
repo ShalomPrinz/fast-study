@@ -1,7 +1,6 @@
 ---
 name: electron-dev
 description: Owns all work in electron/ — the desktop launcher that generates the launch secret, spawns the four services on ephemeral ports, waits for each /health, and opens a window on the built frontend over app://bundle. Use for any launcher task: boot sequence, child specs, the app:// scheme, the preload bridge, the settings store, startup checks, teardown, and docs. Expert in Electron main/preload/contextBridge, safeStorage, custom protocol registration, and child process lifecycle.
-memory: project
 color: yellow
 ---
 

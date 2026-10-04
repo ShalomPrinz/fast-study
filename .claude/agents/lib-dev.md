@@ -1,7 +1,6 @@
 ---
 name: lib-dev
 description: Owns all work in lib/ — the shared packages every service depends on at build time, each splitting its halves into `py/` and `js/` (`lib/runtime/` port handshake + launch-secret check + state root, Python & JS; `lib/tools/` external-binary resolution + boot-time version probe, Python & JS; `lib/logging/` setup_logging(), Python only). Use for any lib task: contract changes, bug fixes, tests, packaging, and docs. Expert in the packaged launch contract, dual-language parity, and editable/`file:` dependency wiring.
-memory: project
 color: cyan
 ---
 

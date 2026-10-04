@@ -1,7 +1,6 @@
 ---
 name: site-dev
 description: Owns all work in site/ and .github/workflows/pages.yml — the public download landing page on GitHub Pages (plain HTML/CSS/JS, Hebrew RTL with an English toggle) and the workflow that stamps the latest release's version and size into it and deploys it. Use for any landing-page task: copy in both languages, layout, screenshots, the language toggle, the stamping step, and the Pages deploy. Expert in dependency-free static pages, logical CSS for RTL/LTR, and GitHub Actions Pages deploys.
-memory: project
 color: green
 ---
 
