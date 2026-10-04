@@ -881,7 +881,7 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/settings/InitWall.tsx:264
+#: src/features/settings/InitWall.tsx:265
 #: src/features/settings/SettingsView.tsx:235
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
@@ -904,7 +904,7 @@ msgstr "Drive"
 msgid "Drive connected"
 msgstr "Drive מחובר"
 
-#: src/features/settings/components/DriveFields.tsx:47
+#: src/features/settings/components/DriveFields.tsx:45
 msgid "Drive folder name"
 msgstr "שם התיקייה ב-Drive"
 
@@ -999,10 +999,6 @@ msgstr "שחזור הסיכום המקורי נכשל"
 msgid "Failed to save summary"
 msgstr "שמירת הסיכום נכשלה"
 
-#: src/features/settings/components/DriveFields.tsx:59
-msgid "Fast Study"
-msgstr "Fast Study"
-
 #: src/shared/i18n/serviceErrors.ts:43
 msgid "Fast Study couldn't reach your files. Try again."
 msgstr "Fast Study לא הצליחה לגשת לקבצים שלך. נסה שוב."
@@ -1027,7 +1023,7 @@ msgstr "Fast Study מתחברת ל-<0>{host}</0> עם החשבון הזה כדי
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study משתמשת ב-Google Chrome או ב-Microsoft Edge כדי להוריד הקלטות מאתר הקורס. הפיכת וידאו לסיכום לא דורשת דפדפן."
 
-#: src/features/settings/InitWall.tsx:191
+#: src/features/settings/InitWall.tsx:192
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
 
@@ -1035,7 +1031,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:276
+#: src/features/settings/InitWall.tsx:277
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
@@ -1101,7 +1097,7 @@ msgstr "חשבון Google"
 #~ msgid "Google credentials are missing. Put credentials.json at {path}."
 #~ msgstr "חסרים פרטי ההתחברות ל-Google. שים את credentials.json בנתיב {path}."
 
-#: src/features/settings/InitWall.tsx:248
+#: src/features/settings/InitWall.tsx:249
 #: src/features/settings/SettingsView.tsx:222
 msgid "Google Drive"
 msgstr "Google Drive"
@@ -1203,7 +1199,7 @@ msgstr "הרצאות"
 msgid "Lectures {0}-{1}"
 msgstr "הרצאות {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:166
+#: src/features/settings/InitWall.tsx:167
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
@@ -1642,7 +1638,7 @@ msgstr "השם שונה ל-\"{name}\" — יש תווים שאי אפשר להש
 msgid "Replace the existing video in \"{0}\"?"
 msgstr "להחליף את הווידאו הקיים ב\"{0}\"?"
 
-#: src/features/settings/components/DriveFields.tsx:51
+#: src/features/settings/components/DriveFields.tsx:49
 msgid "Required"
 msgstr "חובה"
 
@@ -1741,7 +1737,7 @@ msgstr "שמירה בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:285
+#: src/features/settings/InitWall.tsx:286
 msgid "Saving…"
 msgstr "שומר…"
 
@@ -1828,7 +1824,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
 
-#: src/features/settings/InitWall.tsx:285
+#: src/features/settings/InitWall.tsx:286
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -1997,7 +1993,7 @@ msgstr "לא ניתן לשמור את הקובץ שהורד."
 msgid "The downloader can't fetch this file"
 msgstr "אי אפשר להוריד את הקובץ הזה"
 
-#: src/features/settings/components/DriveFields.tsx:63
+#: src/features/settings/components/DriveFields.tsx:60
 msgid "The folder in your Drive that summaries are uploaded into. It is created if it does not exist yet."
 msgstr "התיקייה ב-Drive שאליה מועלים הסיכומים. היא נוצרת אם אינה קיימת."
 
@@ -2154,7 +2150,7 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
-#: src/features/settings/InitWall.tsx:169
+#: src/features/settings/InitWall.tsx:170
 msgid "This only needs to be done once."
 msgstr "צריך לעשות את זה רק פעם אחת."
 
@@ -2226,7 +2222,7 @@ msgstr "מעדכן PDF…"
 #~ msgid "Upload failed"
 #~ msgstr "ההעלאה נכשלה"
 
-#: src/features/settings/components/DriveFields.tsx:31
+#: src/features/settings/components/DriveFields.tsx:29
 msgid "Upload finished summaries to Google Drive"
 msgstr "העלאת סיכומים מוכנים ל-Google Drive"
 
@@ -2279,7 +2275,7 @@ msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:215
+#: src/features/settings/InitWall.tsx:216
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -2287,7 +2283,7 @@ msgstr "איפה לשמור הכול"
 msgid "Whole word only"
 msgstr "מילה שלמה בלבד"
 
-#: src/features/settings/components/DriveFields.tsx:34
+#: src/features/settings/components/DriveFields.tsx:32
 msgid "With this off, a lecture is done once its PDF is ready. If you turn it back on, every lecture that finished meanwhile counts as unfinished, and all of them will upload."
 msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע שה-PDF שלה מוכן. אם תפעיל אותה מחדש, כל הרצאה שהסתיימה בינתיים תיחשב לא מוכנה, וכולן יועלו."
 
@@ -2311,15 +2307,15 @@ msgstr "כן"
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
 
-#: src/features/settings/InitWall.tsx:197
+#: src/features/settings/InitWall.tsx:198
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
 
-#: src/features/settings/InitWall.tsx:188
+#: src/features/settings/InitWall.tsx:189
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלך"
 
-#: src/features/settings/InitWall.tsx:226
+#: src/features/settings/InitWall.tsx:227
 msgid "Your university"
 msgstr "האוניברסיטה שלך"
 

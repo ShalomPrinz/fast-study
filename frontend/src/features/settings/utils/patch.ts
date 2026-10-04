@@ -50,7 +50,8 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   if (form.dataRoot.trim() !== (stored.dataRoot ?? '')) patch.dataRoot = form.dataRoot.trim()
   if (form.geminiModel !== (stored.geminiModel ?? '')) patch.geminiModel = form.geminiModel
   if (form.driveEnabled !== (stored.driveEnabled ?? false)) patch.driveEnabled = form.driveEnabled
-  if (form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {
+  // Only while Drive is on, where the field shows: the wall's untouched default is no choice to store.
+  if (form.driveEnabled && form.gdriveRootFolder.trim() !== (stored.gdriveRootFolder ?? '')) {
     patch.gdriveRootFolder = form.gdriveRootFolder.trim()
   }
   if (form.autoRun !== toAutoRun(stored.autoRun)) patch.autoRun = form.autoRun

@@ -77,7 +77,8 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     // Packaged, the launcher's default fills the field; browser dev has none, so it starts empty.
     dataRoot: stored.dataRoot ?? runtimeBridge()?.defaultDataRoot ?? '',
     driveEnabled: stored.driveEnabled ?? false,
-    gdriveRootFolder: stored.gdriveRootFolder ?? '',
+    // The brand, not copy: the folder lands in the user's Drive under the same name in every locale.
+    gdriveRootFolder: stored.gdriveRootFolder ?? 'Fast Study',
     geminiModel: stored.geminiModel ?? '',
     // Not asked about here — carried through so the wall's save leaves the defaults alone. A first
     // install has nothing to catch up on, so the cron's switch and hour belong on `/settings` only.

@@ -1,4 +1,4 @@
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Trans } from '@lingui/react/macro'
 import DriveConnection from './DriveConnection'
 import '@/styles/settings-form.css'
 
@@ -16,8 +16,6 @@ interface Props {
 // The Drive toggle, the Google account it uploads to and the folder it lands in. The consequence of
 // turning Drive back on is stated where it is flipped, not discovered when the backlog uploads.
 export default function DriveFields({ value, onChange, folderMissing }: Props) {
-  const { t } = useLingui()
-
   return (
     <div className="settings-field">
       <label className="settings-check">
@@ -56,7 +54,6 @@ export default function DriveFields({ value, onChange, folderMissing }: Props) {
             id="gdrive-folder"
             className={`settings-input${folderMissing ? ' settings-input--invalid' : ''}`}
             value={value.folder}
-            placeholder={t`Fast Study`}
             onChange={(e) => onChange({ ...value, folder: e.target.value })}
           />
           <p className="settings-hint">
