@@ -16,7 +16,7 @@ everything on quit.
 | `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
 | `updater.js`  | The update check — electron-updater against GitHub Releases, silent            |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
-| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, open |
+| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, open |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
@@ -123,7 +123,8 @@ the `build` block in `package.json`.
   real files. The two negations drop `node_modules` source maps and `.d.cts`/`.d.mts`, which the
   runtime never reads and electron-builder's default ignore (`.d.ts` only) misses.
 - **The packaged Sentry DSN is stamped at build** (`-c.extraMetadata.sentryDsn`), never committed;
-  main reads `FASTSTUDY_SENTRY_DSN` first, then `package.json`'s `sentryDsn`, and hands it to every child.
+  main reads `FASTSTUDY_SENTRY_DSN` first, then `package.json`'s `sentryDsn`, and hands it to every child — unless the
+  user's `error_reports` switch is off ([`RENDERER.md`](docs/RENDERER.md#error-reporting-sentry)).
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
 - **Updates are silent and packaged-only**, and replace `resources/` wholesale — see

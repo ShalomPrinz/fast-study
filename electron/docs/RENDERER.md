@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, open, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, open, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -38,6 +38,8 @@ disk with no build-time coupling to `electron/package.json`. `locale` is `app.ge
 frontend's initial language when the profile holds no pick ([`I18N.md`](../../frontend/docs/I18N.md)).
 `defaultDataRoot` is `data` under the state root (`%LOCALAPPDATA%\FastStudy\data` packaged,
 `.state/data` in dev) — only the init wall's prefill: main creates nothing, the database does on save.
+`errorReports` is the boolean in force for this launch — read at startup, so a later write does not
+change it ([error reporting](#error-reporting-sentry)).
 
 `boot` belongs to the launch screen alone, which loads in the same window and so through the same
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
@@ -76,7 +78,13 @@ logged. Nothing guards navigation or checks an IPC sender, so the window must ne
 Main inits `@sentry/electron/main` from `lib/sentry`'s policy (`options('electron')`), before
 `registerScheme()` and before `ready`, which the SDK requires. The DSN is `FASTSTUDY_SENTRY_DSN` from
 main's env, else `package.json`'s `sentryDsn`, which only the release build stamps
-(`-c.extraMetadata.sentryDsn`); neither set means the SDK is never loaded: no DSN, no report. The
+(`-c.extraMetadata.sentryDsn`); neither set means the SDK is never loaded: no DSN, no report.
+
+**The user can switch it off.** The store's `error_reports` (`errorReports`; unset reads `null` and
+means on) is read once, before the init, and applies from the next launch. Off, the DSN is empty:
+main never loads the SDK, every child gets `FASTSTUDY_SENTRY_DSN=` so `enabled()` is false in all four,
+and `window.faststudy.errorReports` is `false`, which the renderer — whose DSN is baked at build — must
+honour itself. The
 environment is `production` packaged, else `development`: one constant, also every child's `SENTRY_ENVIRONMENT`.
 
 **A renderer's event travels renderer SDK → IPC → main → Sentry.** The SDK registers its own preload
@@ -145,5 +153,7 @@ written from both processes would put two writers on one file.
   renderer adopts `write()`'s return value as its state and sends its `POST /config` calls only
   after it resolves, so a partial write would leave the file, the running services and the screen
   each holding a different answer. `database/settings.py` builds its updates the same way.
+- **`error_reports` is the launcher's own field**: main reads it at startup and no service is handed
+  it as an env var.
 - **In a packaged app `database/settings.py`'s `.env` store goes unused.** The services read the env
   vars main sets; nothing migrates between the two stores, and Electron never reads `.env`.

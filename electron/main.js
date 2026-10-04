@@ -20,9 +20,13 @@ const PORT_LINE = /^FASTSTUDY_PORT=(\d+)$/;
 const HEALTH_TIMEOUT_MS = 60_000;
 // Longer than a service's own Sentry shutdown flush (~2s), so a clean exit is never cut short.
 const KILL_GRACE_MS = 3000;
+// The user's switch, read once before Sentry inits: a change applies on the next launch. Unset is on.
+const ERROR_REPORTS = store.read().errorReports !== false;
 // Env wins so dev and tests can point elsewhere; the packaged value is stamped into package.json at
-// build. Neither set means no DSN anywhere: main and every child report nothing.
-const SENTRY_DSN = process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || '';
+// build. Neither set, or the switch off, means no DSN anywhere: main and every child report nothing.
+const SENTRY_DSN = ERROR_REPORTS
+  ? process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || ''
+  : '';
 // One value for main and every child, so all five processes report under the same environment.
 const SENTRY_ENVIRONMENT = app.isPackaged ? 'production' : 'development';
 
@@ -205,7 +209,8 @@ function sharedEnv() {
     // What each service's Sentry init reads; `release` is `faststudy@<version>` in all five processes.
     FASTSTUDY_VERSION: app.getVersion(),
     SENTRY_ENVIRONMENT,
-    ...(SENTRY_DSN ? { FASTSTUDY_SENTRY_DSN: SENTRY_DSN } : {}),
+    // Always set, empty when off, so a DSN in main's own env is not inherited past the switch.
+    FASTSTUDY_SENTRY_DSN: SENTRY_DSN,
     ...packaged,
     ...store.serviceEnv(),
   };
@@ -465,6 +470,7 @@ function createWindow(checks) {
       version: app.getVersion(),
       locale: app.getLocale(),
       defaultDataRoot: DEFAULT_DATA_ROOT,
+      errorReports: ERROR_REPORTS,
     };
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
@@ -522,6 +528,7 @@ if (!app.requestSingleInstanceLock()) {
     const checks = runStartupChecks();
     const took = Number(process.hrtime.bigint() - started) / 1e6;
     log('main', `startup checks in ${took.toFixed(2)}ms — ${JSON.stringify(checks)}`);
+    log('main', `error reports ${ERROR_REPORTS ? 'on' : 'off'} for this launch`);
     createWindow(checks);
     // The frontend loads only once all four are healthy: it builds its service clients at module
     // scope, against URLs that do not exist until then.

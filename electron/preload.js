@@ -15,6 +15,8 @@ contextBridge.exposeInMainWorld('faststudy', {
   locale: config.locale,
   // The init wall's prefilled data folder, `data` under the state root; never created here.
   defaultDataRoot: config.defaultDataRoot,
+  // Whether error reporting is on for this launch — the value main read at startup, not the stored one.
+  errorReports: config.errorReports,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
   // `read()` reports the two keys as set/unset flags only.
   settings: {

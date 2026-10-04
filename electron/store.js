@@ -14,6 +14,8 @@ const STRING_FIELDS = {
 // Mirrors AUTO_RUN_MODES in backend/services/settings.py, which reads an unknown value as 'full'.
 const AUTO_RUN_MODES = ['off', 'audio', 'full'];
 const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED' };
+// Booleans main reads itself and no service is handed: `error_reports` gates Sentry at launch.
+const LAUNCHER_BOOL_FIELDS = ['error_reports'];
 // Write-only: these are held as safeStorage ciphertext and reported to the renderer as set/unset.
 const SECRET_FIELDS = { gemini_api_key: 'GEMINI_API_KEY', groq_api_key: 'GROQ_API_KEY' };
 
@@ -26,6 +28,7 @@ const FIELDS = {
   autoRun: 'auto_run',
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
+  errorReports: 'error_reports',
   geminiApiKey: 'gemini_api_key',
   groqApiKey: 'groq_api_key',
 };
@@ -55,6 +58,10 @@ function text(value) {
   return typeof value === 'string' && value.trim() ? value.trim() : null;
 }
 
+function bool(value) {
+  return typeof value === 'boolean' ? value : null;
+}
+
 function encrypt(value) {
   if (!safeStorage.isEncryptionAvailable()) {
     throw new Error(
@@ -81,10 +88,11 @@ function read() {
     geminiApiKeySet: Boolean(text(stored.gemini_api_key)),
     groqApiKeySet: Boolean(text(stored.groq_api_key)),
     geminiModel: text(stored.gemini_model),
-    driveEnabled: typeof stored.drive_enabled === 'boolean' ? stored.drive_enabled : null,
+    driveEnabled: bool(stored.drive_enabled),
     gdriveRootFolder: text(stored.gdrive_root_folder),
     autoRun: text(stored.auto_run),
     moodleSite: text(stored.moodle_site),
+    errorReports: bool(stored.error_reports),
   };
 }
 
@@ -98,7 +106,7 @@ function write(patch) {
     if (!field) throw new Error(`unknown setting: ${key}`);
     // Null means "leave it alone", so echoing back a read (all-null when unset) blanks nothing.
     if (value === null || value === undefined) continue;
-    if (field in BOOL_FIELDS) {
+    if (field in BOOL_FIELDS || LAUNCHER_BOOL_FIELDS.includes(field)) {
       // A bare truth test would let the string "false" store `true`, silently flipping the setting on.
       if (typeof value !== 'boolean') throw new Error(`${key} must be a boolean`);
       updates[field] = value;

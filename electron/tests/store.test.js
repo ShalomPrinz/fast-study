@@ -15,6 +15,7 @@ const full = {
   autoRun: 'audio',
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
+  errorReports: false,
   geminiApiKey: 'gemini-secret',
   groqApiKey: 'groq-secret',
 };
@@ -85,6 +86,7 @@ test('echoing a read back blanks nothing', () => {
     gdriveRootFolder: written.gdriveRootFolder,
     autoRun: written.autoRun,
     moodleSite: written.moodleSite,
+    errorReports: written.errorReports,
   };
 
   assert.deepEqual(store.write(echo), written);
@@ -116,7 +118,20 @@ test('an unset store reads as all-null', () => {
     gdriveRootFolder: null,
     autoRun: null,
     moodleSite: null,
+    errorReports: null,
   });
+});
+
+test('errorReports round-trips as a boolean and never reaches a child env', () => {
+  assert.equal(store.write({ errorReports: false }).errorReports, false);
+  assert.equal(store.read().errorReports, false);
+  assert.deepEqual(store.serviceEnv(), {});
+  assert.equal(store.write({ errorReports: true }).errorReports, true);
+});
+
+test('the string "false" cannot store errorReports', () => {
+  assert.throws(() => store.write({ errorReports: 'false' }), /errorReports must be a boolean/);
+  assert.equal(fs.existsSync(store.file()), false);
 });
 
 test('serviceEnv maps every field onto its service env var', () => {

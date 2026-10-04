@@ -74,7 +74,8 @@ dead child.
 
 Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_VERSION`
 (`app.getVersion()`, each Sentry init's release), `SENTRY_ENVIRONMENT` (`production` packaged, else
-`development`, main's own too), `FASTSTUDY_SENTRY_DSN` when main resolved one,
+`development`, main's own too), `FASTSTUDY_SENTRY_DSN` (main's resolved DSN, empty when there is none or error reports are off —
+always set, so a DSN in main's own env is never inherited past the switch),
 the peers already running, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
 `GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `MOODLE_SITE`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
