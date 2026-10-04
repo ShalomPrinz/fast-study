@@ -124,6 +124,10 @@ def write_video(course: str, lecture: str, kind: str, data: bytes) -> None:
 
     # The downloader uploads here for brand-new lectures, so the create path's name check applies.
     check_not_reserved(lecture)
+    # The lecture dir is made on demand, the course never: an upload still in flight when its course
+    # was renamed would otherwise recreate the old name as a ghost course.
+    if not course_dir(course).is_dir():
+        raise CourseNotFound(f"course not found: {course}", course=course)
     d = lecture_dir(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)
     # Materials stay: they are attached by hand or by the downloader, not derived from the video.
