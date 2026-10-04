@@ -10,26 +10,31 @@ import {
 import { downloadItem } from '@/features/downloads/services/downloadServer'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { PasscodePromptProps } from '@/features/downloads/components/PasscodePrompt'
-import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
+import { toastDownloadError, toastLectureBusy } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import { useRowEditsDispatch } from '@/features/downloads/contexts/RowEditsContext'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 
 type Result = 'fail' | null
 
 // The download effect only — whole-row download, per-clip retry and their own state; display and
-// the overwrite confirm live in the row. `name` is the row's resolved name.
+// the overwrite confirm live in the row. `name` is the row's resolved name; `siblings` the split
+// siblings a whole-row download could land on, which the pipeline lock covers too.
 export function useRecordingDownload({
   item,
   course,
   name: effectiveName,
   kind,
+  siblings,
   onReconnect,
 }: {
   item: Item
   course: string
   name: string
   kind: Kind
+  siblings: readonly string[]
   onReconnect: () => void
 }) {
   // What this download proves the file to be — one of the two moments an 'unknown' row learns its
@@ -37,6 +42,10 @@ export function useRecordingDownload({
   const resolveMedia = useResolveMedia()
   // The server's canonical spelling replaces the row's name, so the row compares against disk.
   const { setName } = useRowEditsDispatch()
+  // Latest runner status by ref: a confirm or passcode replay runs a closure from an earlier render.
+  const { status } = useRunnerStatus()
+  const statusRef = useRef(status)
+  statusRef.current = status
   const [pending, setPending] = useState(false)
   const [retryingId, setRetryingId] = useState<string | null>(null)
   const [result, setResult] = useState<Result>(null)
@@ -51,12 +60,20 @@ export function useRecordingDownload({
   const passcodeResume = useRef<{ name: string; run: () => Promise<void> } | null>(null)
 
   // Shared trigger behind the reconnect/passcode gates. Success is the jobs' to report; only a
-  // failure to queue surfaces here. `resume` re-runs the intent after a passcode.
+  // failure to queue surfaces here. `resume` re-runs the intent after a passcode. `lands` is every
+  // lecture the download may write.
   async function runIntent(
     args: { ref: string; course: string; name: string; kind: Kind; only?: boolean },
     name: string,
+    lands: readonly string[],
     resume: () => Promise<void>,
   ) {
+    // The arriving file would wipe the lecture under a run that keeps writing the old video's outputs.
+    const busy = lands.find((n) => isLectureRenameLocked(statusRef.current, args.course, n, args.kind))
+    if (busy !== undefined) {
+      toastLectureBusy(busy)
+      return
+    }
     try {
       const { media, renames } = await downloadItem(args)
       resolveMedia(args.ref, media)
@@ -80,7 +97,12 @@ export function useRecordingDownload({
   async function download() {
     setPending(true)
     setResult(null)
-    await runIntent({ ref: item.ref, course, name: effectiveName, kind }, effectiveName, download)
+    await runIntent(
+      { ref: item.ref, course, name: effectiveName, kind },
+      effectiveName,
+      [effectiveName, ...siblings],
+      download,
+    )
     setPending(false)
   }
 
@@ -91,6 +113,7 @@ export function useRecordingDownload({
     await runIntent(
       { ref: job.ref, course: job.course, name: job.title, kind: job.kind, only: true },
       job.title,
+      [job.title],
       () => retryClip(job),
     )
     setRetryingId(null)

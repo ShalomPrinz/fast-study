@@ -1,7 +1,7 @@
 import type { Kind, RunnerStatus } from '@/types'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
 
-type RunSnapshot = Pick<RunnerStatus, 'inFlight' | 'queue'> | null
+type RunSnapshot = Pick<RunnerStatus, 'inFlight' | 'queue' | 'overviewRunning'> | null
 
 // Queued counts too: the runner takes a queue entry by the name it was queued under, so a rename
 // before it starts sends the run to a folder that no longer exists.
@@ -20,7 +20,9 @@ export function isLectureRenameLocked(
   return spokenFor(status).some((e) => inFlightKey(e.course, e.lecture, e.kind) === key)
 }
 
-/** Whether renaming this course must wait: any of its lectures is running or queued. */
+/** Whether renaming this course must wait: any of its lectures, or its overview, is running or queued. */
 export function isCourseRenameLocked(status: RunSnapshot, course: string): boolean {
-  return spokenFor(status).some((e) => e.course === course)
+  return (
+    !!status?.overviewRunning.includes(course) || spokenFor(status).some((e) => e.course === course)
+  )
 }

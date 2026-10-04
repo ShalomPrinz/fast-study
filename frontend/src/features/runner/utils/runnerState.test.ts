@@ -13,7 +13,13 @@ const entry: InFlightEntry = {
 }
 
 function status(running: boolean, inFlight: InFlightEntry[], done = 0, total = 0): RunnerStatus {
-  return { runner: { running, done, total, lastError: null }, inFlight, queue: [], errors: {} }
+  return {
+    runner: { running, done, total, lastError: null },
+    inFlight,
+    queue: [],
+    overviewRunning: [],
+    errors: {},
+  }
 }
 
 describe('headerState', () => {

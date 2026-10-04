@@ -14,14 +14,16 @@ def client():
 
 
 def test_put_video_writes_bytes(client, data_root):
+    (data_root / "Algo").mkdir()
     r = client.put("/courses/Algo/lectures/Lecture 1/video", content=b"\x00mp4")
     assert r.status_code == 204
     assert (data_root / "Algo" / "Lecture 1" / "video.mp4").read_bytes() == b"\x00mp4"
 
 
 def test_put_video_reports_a_failed_write(client, data_root):
-    # A course that is a plain file makes the lecture dir uncreatable, so the write raises.
-    (data_root / "Algo").write_bytes(b"not a dir")
+    # A lecture that is a plain file makes the lecture dir uncreatable, so the write raises.
+    (data_root / "Algo").mkdir()
+    (data_root / "Algo" / "Lecture 1").write_bytes(b"not a dir")
 
     r = client.put("/courses/Algo/lectures/Lecture 1/video", content=b"\x00mp4")
     assert r.status_code == 400
@@ -43,3 +45,34 @@ def test_put_video_wipes_derived_files_and_the_summary_snapshot(client, data_roo
     assert r.status_code == 204
     # The snapshot belonged to the old video's summary, so "Restore original" must not bring it back.
     assert sorted(p.name for p in d.iterdir()) == ["material.pdf", "video.mp4"]
+
+
+def test_put_video_on_a_missing_course_is_404_and_creates_nothing(client, data_root):
+    # A download still in flight when its course was renamed must not recreate the old name.
+    r = client.put("/courses/Algo/lectures/Lecture 1/video", content=b"\x00mp4")
+
+    assert r.status_code == 404
+    assert r.json() == {
+        "error": "course not found: Algo",
+        "code": "course_not_found",
+        "params": {"course": "Algo"},
+    }
+    assert list(data_root.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "kind,rel", [("lecture", "Lecture 1"), ("recitation", "Recitations/Lecture 1")]
+)
+def test_put_video_creates_a_missing_lecture_in_an_existing_course(
+    client, data_root, kind, rel
+):
+    (data_root / "Algo").mkdir()
+
+    r = client.put(
+        "/courses/Algo/lectures/Lecture 1/video",
+        params={"kind": kind},
+        content=b"\x00mp4",
+    )
+
+    assert r.status_code == 204
+    assert (data_root / "Algo" / rel / "video.mp4").read_bytes() == b"\x00mp4"

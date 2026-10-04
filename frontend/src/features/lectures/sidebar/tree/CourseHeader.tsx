@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useMatch, useNavigate } from 'react-router-dom'
 import { useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
 import { renameCourse, setCourseArchived } from '@/services/database'
@@ -13,6 +14,9 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
+import { ROUTES } from '@/shared/utils/routes'
+import { courseRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
@@ -27,8 +31,11 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const driveEnabled = useDriveEnabled()
   const shiftHeld = useShiftHeld()
   const { status } = useRunnerStatus()
-  // A course rename moves every lecture folder, so one running or queued lecture locks it.
-  const renameLocked = isCourseRenameLocked(status, course.name)
+  const downloading = useCourseDownloading(course.name)
+  const navigate = useNavigate()
+  const overviewOpen = useMatch(ROUTES.overview)?.params.course === course.name
+  // A course rename moves every lecture folder, so anything writing into it by name locks it.
+  const renameLocked = isCourseRenameLocked(status, course.name) || downloading
 
   const [renaming, setRenaming] = useState(false)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
@@ -56,6 +63,8 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     // The database may sanitize the typed name, so the page follows the folder it answers with.
     if (selected?.course === course.name) {
       onSelect(effective, selected.lecture, selected.kind)
+    } else if (overviewOpen) {
+      navigate(courseRoute(effective))
     }
     refreshCourses()
   }
@@ -93,7 +102,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           className="course-toggle"
           title={
             renameLocked
-              ? t`Can't rename while one of its lectures is being processed or waiting in line`
+              ? t`Can't rename while something in this course is being processed, downloaded or generated`
               : undefined
           }
           onClick={(e) => {

@@ -99,7 +99,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   no_summaries_found: msg({ message: 'This course has no summaries yet.' }),
 
   // database
-  file_locked: msg({ message: 'The file is open in another program. Close it and try again.' }),
+  file_locked: msg({
+    message:
+      '{file, select, undefined {The file is open in another program. Close it and try again.} other {"{file}" is open in another program. Close it and try again.}}',
+  }),
   folder_in_use: msg({
     message: 'A file inside "{name}" is open in another program. Close it and try again.',
   }),

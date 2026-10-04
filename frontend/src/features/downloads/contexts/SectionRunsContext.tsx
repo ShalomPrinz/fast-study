@@ -16,6 +16,7 @@ import { useDownloadsActions } from './DownloadsSessionContext'
 // which clears it on unmount.
 let runsBySection: ReadonlyMap<string, SectionRun> = new Map()
 let pausedRuns: readonly SectionRun[] = []
+let activeCourses: ReadonlySet<string> = new Set()
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void): () => void {
@@ -23,8 +24,17 @@ function subscribe(listener: () => void): () => void {
   return () => listeners.delete(listener)
 }
 
+// Courses a section run is still walking — resolving a target before its job exists, or parked at a
+// passcode gate, both of which no job reflects yet.
+export function coursesWithActiveRuns(snapshot: readonly SectionRun[]): ReadonlySet<string> {
+  return new Set(
+    snapshot.filter((r) => r.status === 'running' || r.status === 'paused').map((r) => r.course),
+  )
+}
+
 function publish(snapshot: SectionRun[]) {
   runsBySection = new Map(snapshot.map((run) => [run.sectionId, run]))
+  activeCourses = coursesWithActiveRuns(snapshot)
   const paused = snapshot.filter((run) => run.status === 'paused')
   // Same parked ids keep the previous array, or every ping would re-render the banner. Keyed by id
   // alone: a consumer reading a mutable field must widen this comparison first.
@@ -56,6 +66,14 @@ export function usePausedRuns(): readonly SectionRun[] {
   if (!useContext(SectionRunsContext))
     throw new Error('usePausedRuns must be used inside <SectionRunsProvider>')
   return useSyncExternalStore(subscribe, () => pausedRuns)
+}
+
+// Whether a section run is still walking this course; read through `useCourseDownloading`, the one
+// "something is downloading into this course" answer.
+export function useCourseRunActive(course: string): boolean {
+  if (!useContext(SectionRunsContext))
+    throw new Error('useCourseRunActive must be used inside <SectionRunsProvider>')
+  return useSyncExternalStore(subscribe, () => activeCourses.has(course))
 }
 
 // Reflects the downloader server's section runs, as `RunnerStatusContext` does the pipeline runner.

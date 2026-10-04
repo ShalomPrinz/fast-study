@@ -125,6 +125,8 @@ export interface RunnerStatus {
   // What the runner has left to take, in the order it will take them. In-memory server-side, so a
   // backend restart empties it and those lectures become "not queued".
   queue: QueueEntry[]
+  // Courses with an overview generation pending or running.
+  overviewRunning: string[]
   // Expected step-level failures per lecture, from any trigger; persists after the run ends.
   errors: Record<string, RunError>
 }

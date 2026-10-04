@@ -32,7 +32,13 @@ import {
   toggleSection,
   useSectionOpen,
 } from '@/features/downloads/contexts/SectionCollapseContext'
-import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
+import {
+  hasResource,
+  overwritesVideo,
+  splitSiblings,
+} from '@/features/downloads/utils/existingItems'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { toast } from '@/services/toaster'
 import {
   collidingNames,
@@ -68,6 +74,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   const { t } = useLingui()
   const { courses } = useCourseTreeContext()
   const jobsByRef = useJobsByRef()
+  const { status: runner } = useRunnerStatus()
   const resolveMedia = useResolveMedia()
   const edits = useRowEdits()
   // The server's canonical spelling replaces each renamed row's name, so the skip rule and the run's
@@ -132,18 +139,22 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
     return items.flatMap((item) => (item.expandable ? (stateOf(item.ref).children ?? []) : [item]))
   }
 
-  // The queue, resolved once at submit, with the two verdicts only the page can give because they
-  // read the live tree: already on disk, and already known unsupported.
+  // The queue, resolved once at submit, with the verdicts only the page can give because they read
+  // the live tree or the runner: already on disk, already known unsupported, and pipeline-locked.
   function buildTargets(): RunTarget[] {
     return buildQueue().map((item) => {
       const { name, kind } = resolveRow(item, edits[item.ref], courses, course)
       const media = item.resolvedMedia ?? item.media
       const target = { ref: item.ref, name, kind, media }
       if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
-      // A run never overwrites, so a target that would replace a stored video is skipped too.
+      // The lectures this target may write — a video's split siblings too, as the row's own lock.
+      const lands = media === 'material' ? [name] : [name, ...splitSiblings(name, kind, courses, course)]
+      // A run never overwrites, so a target that would replace a stored video is skipped too — and so
+      // is one whose lecture the pipeline is running or queued on, as a single row refuses it.
       if (
         hasResource(item, name, kind, courses, course) ||
-        overwritesVideo(item, name, kind, courses, course)
+        overwritesVideo(item, name, kind, courses, course) ||
+        lands.some((n) => isLectureRenameLocked(runner, course, n, kind))
       )
         return { ...target, disposition: 'skipped' }
       return { ...target, disposition: 'pending' }

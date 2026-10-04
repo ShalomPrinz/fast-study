@@ -43,6 +43,7 @@ def test_allocation_after_a_gap_never_backfills(lecture):
 
 
 def test_creates_missing_lecture_dir(data_root):
+    (data_root / "Algo").mkdir()
     assert write_material("Algo", "New", "lecture", b"a") == "material.pdf"
     assert (data_root / "Algo" / "New" / "material.pdf").exists()
 
@@ -52,6 +53,37 @@ def test_post_endpoint_returns_allocated_name(client, lecture):
     assert r.status_code == 200 and r.json() == {"name": "material.pdf"}
     r = client.post("/courses/Algo/lectures/Lecture 1/materials", content=b"b")
     assert r.json() == {"name": "material.2.pdf"}
+
+
+def test_post_on_a_missing_course_is_404_and_creates_nothing(client, data_root):
+    # A PDF download still in flight when its course was renamed must not recreate the old name.
+    r = client.post("/courses/Algo/lectures/Lecture 1/materials", content=b"%PDF")
+
+    assert r.status_code == 404
+    assert r.json() == {
+        "error": "course not found: Algo",
+        "code": "course_not_found",
+        "params": {"course": "Algo"},
+    }
+    assert list(data_root.iterdir()) == []
+
+
+@pytest.mark.parametrize(
+    "kind,rel", [("lecture", "Lecture 1"), ("recitation", "Recitations/Lecture 1")]
+)
+def test_post_creates_a_missing_lecture_in_an_existing_course(
+    client, data_root, kind, rel
+):
+    (data_root / "Algo").mkdir()
+
+    r = client.post(
+        "/courses/Algo/lectures/Lecture 1/materials",
+        params={"kind": kind},
+        content=b"%PDF",
+    )
+
+    assert r.status_code == 200 and r.json() == {"name": "material.pdf"}
+    assert (data_root / "Algo" / rel / "material.pdf").read_bytes() == b"%PDF"
 
 
 def test_get_endpoint_empty_for_missing_or_bare_lecture(client, lecture):
@@ -74,6 +106,7 @@ def test_get_endpoint_lists_materials(client, lecture):
 
 
 def test_get_endpoint_resolves_recitations(client, data_root):
+    (data_root / "Algo").mkdir()
     write_material("Algo", "Rec 1", "recitation", b"a")
     r = client.get("/courses/Algo/lectures/Rec 1/materials?kind=recitation")
     assert [e["name"] for e in r.json()["materials"]] == ["material.pdf"]
@@ -134,5 +167,6 @@ def test_write_video_keeps_every_material(lecture):
 
 
 def test_recitation_materials_resolve_under_recitations(data_root):
+    (data_root / "Algo").mkdir()
     write_material("Algo", "Rec 1", "recitation", b"a")
     assert (lecture_dir("Algo", "Rec 1", "recitation") / "material.pdf").exists()

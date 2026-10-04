@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import NamedTuple, Optional
 
+from course import runner as course_runner
 from services import db_client, google_auth, settings
 from services.errors import CodedError
 from services.llm_client import GeminiRateLimitError
@@ -144,6 +145,7 @@ def get_status() -> dict:
         "in_flight": list(_in_flight.values()),
         "errors": dict(_errors),
         "queue": [entry._asdict() for entry in _queue],
+        "overview_running": course_runner.active_courses(),
     }
 
 

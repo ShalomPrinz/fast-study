@@ -34,7 +34,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   ([LAYOUT.md](LAYOUT.md#names)); the last two create the dir on demand, so they check too.
 - `404` `lecture_not_found` `{course, lecture}` answers a neutral write (`PUT /…/files/{name}`,
   `PUT /…/summary`) to a lecture dir that does not exist; nothing is written.
-- `404` `course_not_found` `{course}` answers a course route whose dir is gone (renamed outside the app).
+- `404` `course_not_found` `{course}` answers a course route, `PUT /…/video` or `POST /…/materials`, whose course dir is gone (renamed away).
 - A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.
   `HEAD` answers a bodyless `404` instead: absence is its normal answer, not a failure.
 
@@ -85,9 +85,9 @@ The two file-write paths differ on purpose, and confusing them destroys data:
   `original_summary.md`, the partial-transcript meta, and both pdf dotfiles — they all belong to
   the _old_ video. Materials stay: they are attached, not derived. The wipe is all-or-nothing: the whole set is probed for locks first, so one
   file open in a viewer answers `423` with the lecture untouched rather than half-wiped.
-  It creates the lecture dir on demand — the downloader uploads to brand-new lectures.
+  It creates the lecture dir on demand (the downloader uploads to brand-new lectures) but never the course: a missing one is `404` `course_not_found`.
 - **`POST /…/materials`** appends an attached PDF, allocating its name server-side (see
-  [LAYOUT.md](LAYOUT.md#materials)) and returning it. Also creates the lecture dir on demand. Callers that already know
+  [LAYOUT.md](LAYOUT.md#materials)) and returning it. Like the video upload, it creates the lecture dir on demand, never the course. Callers that already know
   the exact filename keep using `PUT /…/files/{name}`; delete/get/head go through the files
   routes unchanged. `GET /…/materials` returns the same entries the tree inlines, so a caller
   needing one lecture's materials doesn't pull the whole tree; a missing lecture yields `[]`

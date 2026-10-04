@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { DownloadJob } from '../services/downloadServer'
-import { groupJobsByRef, jobsForRef } from './DownloadJobsContext'
+import { coursesWithActiveJobs, groupJobsByRef, jobsForRef } from './DownloadJobsContext'
 
 function job(over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>): DownloadJob {
   return {
@@ -90,5 +90,17 @@ describe('jobsForRef', () => {
     const byRef = groupJobsByRef([job({ id: 'a', ref: 'r1' })])
     expect(jobsForRef(byRef, 'Algo', 'r1')).toBe(jobsForRef(byRef, 'Algo', 'r1'))
     expect(jobsForRef(byRef, 'Algo', 'r1')).toHaveLength(1)
+  })
+})
+
+describe('coursesWithActiveJobs', () => {
+  it('names every course a queued or running job writes into, extension jobs included', () => {
+    const active = coursesWithActiveJobs([
+      job({ id: 'a', course: 'Algo', status: 'running' }),
+      job({ id: 'b', course: 'Logic', status: 'queued', ref: null }),
+      job({ id: 'c', course: 'Done', status: 'done' }),
+      job({ id: 'd', course: 'Failed', status: 'error' }),
+    ])
+    expect([...active].sort()).toEqual(['Algo', 'Logic'])
   })
 })

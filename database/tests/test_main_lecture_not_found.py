@@ -64,6 +64,8 @@ def test_put_summary_on_a_deleted_lecture_is_404(client, data_root, fresh):
 
 
 def test_put_video_still_creates_a_brand_new_lecture(client, data_root):
+    (data_root / "Algo").mkdir()
+
     r = client.put("/courses/Algo/lectures/L1/video", content=b"\x00mp4")
 
     assert r.status_code == 204

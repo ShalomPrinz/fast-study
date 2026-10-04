@@ -16,6 +16,11 @@ export function blockedMessage(): string {
   return t`The university site is temporarily refusing automated requests. Wait a few minutes and try again.`
 }
 
+// A download refused before it starts: the pipeline is running or queued on the lecture it would replace.
+export function toastLectureBusy(name: string): void {
+  toast('error', t`Can't download ${name} while it's being processed or waiting in line`)
+}
+
 // A coded failure says why in the service's words; `blocked` gets its own copy and a codeless
 // failure the generic one. A ConnectionError was already toasted by the client.
 export function toastDownloadError(name: string, err?: unknown): void {

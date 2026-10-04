@@ -118,9 +118,13 @@ archived course so the badge stays off.
   `AddLectureInput` renders only in the list being added to.
 
 Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. A running
-or queued lecture, and a course holding one, refuse the rename (`utils/renameLock.ts`): the runner writes
-by the name it was given, so a mid-run rename splits the lecture in two. An open page follows the name the rename
-answers, since the database may sanitize the typed one. `useShiftHeld`
+or queued lecture, and a course holding one, a generating overview (`/status`'s `overview_running`) or a
+non-terminal download job or a `running`/`paused` section run (`useCourseDownloading`, extension jobs
+included), refuse the rename
+(`utils/renameLock.ts`): each writes by the name it was given, so a mid-run rename splits the lecture in two.
+A running or queued lecture refuses a video drop too, checked again on the replace confirm: the upload wipes
+the folder under a run that would finish from the old video. An open page — lecture or overview — follows the
+name the rename answers, since the database may sanitize the typed one. `useShiftHeld`
 resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
 `nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second

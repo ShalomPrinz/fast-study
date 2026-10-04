@@ -1,7 +1,13 @@
 from pathlib import Path
 
 from .crud import check_not_reserved
-from .paths import lecture_dir, material_index, material_name
+from .paths import (
+    CourseNotFound,
+    course_dir,
+    lecture_dir,
+    material_index,
+    material_name,
+)
 
 
 def _indexed_materials(d: Path) -> list[tuple[int, str]]:
@@ -51,6 +57,10 @@ def write_material(course: str, lecture: str, kind: str, data: bytes) -> str:
 
     # The downloader uploads to brand-new lectures, so the create path's name check applies.
     check_not_reserved(lecture)
+    # The lecture dir is made on demand, the course never: a PDF download finishing after its course
+    # was renamed would otherwise recreate the old name as a ghost course.
+    if not course_dir(course).is_dir():
+        raise CourseNotFound(f"course not found: {course}", course=course)
     d = lecture_dir(course, lecture, kind)
     d.mkdir(parents=True, exist_ok=True)
     # No await between scan and write is what makes allocation lock-free — see docs/LAYOUT.md.
