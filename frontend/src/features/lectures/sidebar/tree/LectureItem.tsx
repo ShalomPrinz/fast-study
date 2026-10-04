@@ -70,6 +70,11 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     setDragOver(false)
     const file = e.dataTransfer.files[0]
     if (!file) return
+    // Same lock as rename: a run on this lecture would finish from the old video over the new one.
+    if (renameLocked) {
+      toast('error', t`Can't replace the video while it's being processed or waiting in line`)
+      return
+    }
     if (!file.name.toLowerCase().endsWith('.mp4') && file.type !== 'video/mp4') {
       toast('error', t`Only .mp4 files are allowed`)
       return

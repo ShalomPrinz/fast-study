@@ -10,10 +10,12 @@ import {
 import { downloadItem } from '@/features/downloads/services/downloadServer'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { PasscodePromptProps } from '@/features/downloads/components/PasscodePrompt'
-import { toastDownloadError } from '@/features/downloads/utils/downloadErrors'
+import { toastDownloadError, toastLectureBusy } from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import { useRowEditsDispatch } from '@/features/downloads/contexts/RowEditsContext'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 
 type Result = 'fail' | null
 
@@ -37,6 +39,10 @@ export function useRecordingDownload({
   const resolveMedia = useResolveMedia()
   // The server's canonical spelling replaces the row's name, so the row compares against disk.
   const { setName } = useRowEditsDispatch()
+  // Latest runner status by ref: a confirm or passcode replay runs a closure from an earlier render.
+  const { status } = useRunnerStatus()
+  const statusRef = useRef(status)
+  statusRef.current = status
   const [pending, setPending] = useState(false)
   const [retryingId, setRetryingId] = useState<string | null>(null)
   const [result, setResult] = useState<Result>(null)
@@ -57,6 +63,11 @@ export function useRecordingDownload({
     name: string,
     resume: () => Promise<void>,
   ) {
+    // The arriving file would wipe the lecture under a run that keeps writing the old video's outputs.
+    if (isLectureRenameLocked(statusRef.current, args.course, args.name, args.kind)) {
+      toastLectureBusy(name)
+      return
+    }
     try {
       const { media, renames } = await downloadItem(args)
       resolveMedia(args.ref, media)

@@ -3,6 +3,8 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { msg } from '@lingui/core/macro'
 import type { MessageDescriptor } from '@lingui/core'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
+import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
+import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import type { Item, ResolvedMedia } from '@/features/downloads/services/autoDownloader'
 import PasscodePrompt from './PasscodePrompt'
@@ -114,6 +116,10 @@ const RecordingRow = memo(function RecordingRow({
   const downloading = status === 'running'
   const failed = queueFailed || status === 'error'
   const action = rowAction({ pending, unsupported, failed, done: status === 'done' })
+  // The pipeline is running or queued on the lecture this row would write; the hook re-checks on start.
+  const { status: runner } = useRunnerStatus()
+  const inPipeline = isLectureRenameLocked(runner, course, effectiveName, kind)
+  const busyTitle = t`Can't download while this lecture is being processed or waiting in line`
 
   // Pending overwrite confirm: `message` is what the modal shows, `run` is what a Yes replays
   // (the whole-row download or one clip's retry). Null means no modal.
@@ -283,9 +289,9 @@ const RecordingRow = memo(function RecordingRow({
             <button
               className="pipeline-icon-btn"
               onClick={onDownloadClick}
-              disabled={pending}
+              disabled={pending || inPipeline}
               aria-label={t`Download again`}
-              title={t`Download again`}
+              title={inPipeline ? busyTitle : t`Download again`}
             >
               <Icon icon="rotate" />
             </button>
@@ -294,8 +300,14 @@ const RecordingRow = memo(function RecordingRow({
           <button
             className="btn btn--ghost recording-download-btn"
             onClick={onDownloadClick}
-            disabled={pending || unsupported}
-            title={unsupported ? t`The downloader can't fetch this file` : undefined}
+            disabled={pending || unsupported || inPipeline}
+            title={
+              unsupported
+                ? t`The downloader can't fetch this file`
+                : inPipeline
+                  ? busyTitle
+                  : undefined
+            }
           >
             {action === 'pending' ? (
               <span className="recording-spinner" />

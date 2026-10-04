@@ -13,18 +13,28 @@ import { ResolvedMediaContext } from '@/features/downloads/contexts/ResolvedMedi
 import { RowEditsDispatchContext } from '@/features/downloads/contexts/RowEditsContext'
 import { useRecordingDownload } from './useRecordingDownload'
 
-const { downloadItem, saveZoomPasscode, toastDownloadError } = vi.hoisted(() => ({
-  downloadItem: vi.fn(),
-  saveZoomPasscode: vi.fn(),
-  toastDownloadError: vi.fn(),
-}))
+const { downloadItem, saveZoomPasscode, toastDownloadError, toastLectureBusy, runner } = vi.hoisted(
+  () => ({
+    downloadItem: vi.fn(),
+    saveZoomPasscode: vi.fn(),
+    toastDownloadError: vi.fn(),
+    toastLectureBusy: vi.fn(),
+    runner: { status: null as unknown },
+  }),
+)
 vi.mock('@/features/downloads/services/downloadServer', () => ({ downloadItem }))
 // Partial: the hook's `is*` guards are `instanceof` checks, so the real error classes must stay.
 vi.mock('@/features/downloads/services/autoDownloader', async (importOriginal) => ({
   ...(await importOriginal<object>()),
   saveZoomPasscode,
 }))
-vi.mock('@/features/downloads/utils/downloadErrors', () => ({ toastDownloadError }))
+vi.mock('@/features/downloads/utils/downloadErrors', () => ({
+  toastDownloadError,
+  toastLectureBusy,
+}))
+vi.mock('@/shared/contexts/RunnerStatusContext', () => ({
+  useRunnerStatus: () => ({ status: runner.status }),
+}))
 vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError: vi.fn() }))
 
 const resolveMedia = vi.fn()
@@ -66,9 +76,26 @@ function render() {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  runner.status = null
 })
 
 describe('useRecordingDownload', () => {
+  it('refuses to start while the pipeline runs or queues the target lecture', async () => {
+    runner.status = {
+      inFlight: [],
+      queue: [{ course: 'Algebra', lecture: 'Lecture 3', kind: 'lecture', depth: 'full' }],
+      overviewRunning: [],
+    }
+    const { result } = render()
+
+    await act(() => result.current.download())
+
+    expect(downloadItem).not.toHaveBeenCalled()
+    expect(toastLectureBusy).toHaveBeenCalledWith('Lecture 3')
+    expect(result.current.failed).toBe(false)
+    expect(result.current.pending).toBe(false)
+  })
+
   it('resolves the row and adopts the server rename on success', async () => {
     let finish!: (v: unknown) => void
     downloadItem.mockReturnValueOnce(new Promise((res) => (finish = res)))
