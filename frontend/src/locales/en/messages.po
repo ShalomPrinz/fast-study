@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:77
+#: src/features/settings/components/ApiKeyField.tsx:122
 msgid "{0} API key"
 msgstr "{0} API key"
 
@@ -137,7 +137,7 @@ msgid "{0} of {1} parts"
 msgstr "{0} of {1} parts"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:62
+#: src/features/settings/components/ApiKeyField.tsx:107
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} rejected this key. Generate a new one in its console."
 
@@ -368,7 +368,7 @@ msgstr "+ add source URL"
 msgid "A course or lecture named \"{name}\" already exists."
 msgstr "A course or lecture named \"{name}\" already exists."
 
-#: src/features/settings/InitWall.tsx:170
+#: src/features/settings/InitWall.tsx:141
 msgid "A few things are needed before the first lecture can be turned into a summary. This only happens once."
 msgstr "A few things are needed before the first lecture can be turned into a summary. This only happens once."
 
@@ -388,7 +388,7 @@ msgstr "A finished summary is waiting to upload, and Fast Study has no permissio
 msgid "A font the PDF needs is missing."
 msgstr "A font the PDF needs is missing."
 
-#: src/features/settings/components/ApiKeyField.tsx:100
+#: src/features/settings/components/ApiKeyField.tsx:157
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
@@ -404,7 +404,7 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:138
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:129
 msgid "Add lecture"
 msgstr "Add lecture"
 
@@ -444,7 +444,7 @@ msgstr "API keys"
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:124
 msgid "Archive course"
 msgstr "Archive course"
 
@@ -574,7 +574,7 @@ msgstr "checking account…"
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
-#: src/features/settings/components/ApiKeyField.tsx:58
+#: src/features/settings/components/ApiKeyField.tsx:103
 #: src/features/settings/components/BrowserPrereqField.tsx:58
 #: src/features/settings/components/MoodleSiteField.tsx:64
 msgid "Checking…"
@@ -587,6 +587,30 @@ msgstr "Choose a data folder."
 #: src/features/settings/components/MoodleSiteField.tsx:97
 msgid "Choose your university…"
 msgstr "Choose your university…"
+
+#: src/features/settings/components/ApiKeyField.tsx:57
+msgid "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
+msgstr "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
+
+#: src/features/settings/components/ApiKeyField.tsx:52
+msgid "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
+msgstr "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
+
+#: src/features/settings/components/ApiKeyField.tsx:34
+msgid "Click \"Create API key\". If you're asked to pick a project, choose any one or let it create a new one."
+msgstr "Click \"Create API key\". If you're asked to pick a project, choose any one or let it create a new one."
+
+#: src/features/settings/components/ApiKeyField.tsx:49
+msgid "Click \"Get a key\" above and sign in with Google or your email."
+msgstr "Click \"Get a key\" above and sign in with Google or your email."
+
+#: src/features/settings/components/ApiKeyField.tsx:31
+msgid "Click \"Get a key\" above and sign in with your Google account."
+msgstr "Click \"Get a key\" above and sign in with your Google account."
+
+#: src/features/settings/components/ApiKeyField.tsx:40
+msgid "Click the copy icon next to the new key, then paste it here."
+msgstr "Click the copy icon next to the new key, then paste it here."
 
 #: src/features/downloads/DownloadsView.tsx:74
 #~ msgid "close"
@@ -844,7 +868,7 @@ msgstr "Downloading {active} more…"
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
-#: src/features/settings/InitWall.tsx:266
+#: src/features/settings/InitWall.tsx:237
 msgid "Downloading recordings (optional)"
 msgstr "Downloading recordings (optional)"
 
@@ -989,7 +1013,7 @@ msgstr "Fast Study signs in to <0>{host}</0> with this account to find and fetch
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 
-#: src/features/settings/InitWall.tsx:203
+#: src/features/settings/InitWall.tsx:174
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
@@ -997,7 +1021,7 @@ msgstr "Fast Study uses two free services: one turns the recording into text, th
 msgid "File type"
 msgstr "File type"
 
-#: src/features/settings/InitWall.tsx:285
+#: src/features/settings/InitWall.tsx:256
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
@@ -1022,7 +1046,7 @@ msgstr "finishing…"
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:122
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:113
 msgid "Fully processed lectures"
 msgstr "Fully processed lectures"
 
@@ -1055,7 +1079,7 @@ msgstr "Generating from {stepLabel} step will rebuild:"
 msgid "Generating…"
 msgstr "Generating…"
 
-#: src/features/settings/components/ApiKeyField.tsx:87
+#: src/features/settings/components/ApiKeyField.tsx:132
 msgid "Get a key"
 msgstr "Get a key"
 
@@ -1071,7 +1095,7 @@ msgstr "Google account"
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:253
+#: src/features/settings/InitWall.tsx:224
 msgid "Google Drive (optional)"
 msgstr "Google Drive (optional)"
 
@@ -1096,7 +1120,11 @@ msgstr "Hebrew University"
 msgid "Home"
 msgstr "Home"
 
-#: src/features/downloads/components/RecordingRow.tsx:287
+#: src/features/settings/components/ApiKeyField.tsx:143
+msgid "How do I get a key?"
+msgstr "How do I get a key?"
+
+#: src/features/downloads/components/RecordingRow.tsx:281
 msgid "In course"
 msgstr "In course"
 
@@ -1112,7 +1140,7 @@ msgstr "just this lecture"
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
-#: src/features/settings/components/ApiKeyField.tsx:60
+#: src/features/settings/components/ApiKeyField.tsx:105
 msgid "Key verified"
 msgstr "Key verified"
 
@@ -1166,7 +1194,7 @@ msgstr "Lectures"
 msgid "Lectures {0}-{1}"
 msgstr "Lectures {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:166
+#: src/features/settings/InitWall.tsx:137
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
@@ -1384,17 +1412,13 @@ msgstr "Nothing was found to analyze in this course."
 msgid "Now running"
 msgstr "Now running"
 
-#: src/features/lectures/sidebar/tree/LectureItem.tsx:79
+#: src/features/lectures/sidebar/tree/LectureItem.tsx:74
 msgid "Only .mp4 files are allowed"
 msgstr "Only .mp4 files are allowed"
 
 #: src/shared/i18n/serviceErrors.ts:202
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "Only YouTube playlists can be opened up; {host} cannot."
-
-#: src/features/settings/InitWall.tsx:44
-msgid "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
-msgstr "Open Google AI Studio using the link below, sign in with your Google account, and press \"Create API key\". Copy the key it shows you and paste it into the field."
 
 #: src/features/lectures/MainView.tsx:262
 msgid "Open in Drive"
@@ -1410,10 +1434,6 @@ msgstr "Open material"
 #: src/features/search/components/SearchResult.tsx:33
 msgid "Open PDF"
 msgstr "Open PDF"
-
-#: src/features/settings/InitWall.tsx:54
-msgid "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
-msgstr "Open the Groq console using the link below, sign in, and press \"Create API Key\". Copy it right away — Groq shows a key only once — and paste it into the field."
 
 #: src/features/settings/components/DriveConnection.tsx:107
 msgid "Open the sign-in page"
@@ -1695,7 +1715,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:294
+#: src/features/settings/InitWall.tsx:265
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -1774,7 +1794,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:294
+#: src/features/settings/InitWall.tsx:265
 msgid "Start using Fast Study"
 msgstr "Start using Fast Study"
 
@@ -2068,7 +2088,7 @@ msgstr "This disconnects your current account. Connecting to the new site needs 
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:66
+#: src/features/settings/components/ApiKeyField.tsx:111
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
@@ -2128,11 +2148,11 @@ msgstr "Transcript"
 #~ msgid "Transcription failed"
 #~ msgstr "Transcription failed"
 
-#: src/features/settings/InitWall.tsx:175
+#: src/features/settings/InitWall.tsx:146
 msgid "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 msgstr "Two things are needed to get started: your university and a folder to keep everything in. This only happens once."
 
-#: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
+#: src/features/lectures/sidebar/tree/CourseHeader.tsx:124
 msgid "Unarchive course"
 msgstr "Unarchive course"
 
@@ -2201,7 +2221,7 @@ msgstr "Videos"
 msgid "We couldn't check right now."
 msgstr "We couldn't check right now."
 
-#: src/features/settings/components/ApiKeyField.tsx:64
+#: src/features/settings/components/ApiKeyField.tsx:109
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 
@@ -2213,7 +2233,7 @@ msgstr "We couldn't check this site right now. You can still save it."
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
-#: src/features/settings/InitWall.tsx:229
+#: src/features/settings/InitWall.tsx:200
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
@@ -2245,15 +2265,15 @@ msgstr "Yes, store my lectures in this folder"
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
 
-#: src/features/settings/InitWall.tsx:210
+#: src/features/settings/InitWall.tsx:181
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 
-#: src/features/settings/InitWall.tsx:195
+#: src/features/settings/InitWall.tsx:166
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/settings/InitWall.tsx:241
+#: src/features/settings/InitWall.tsx:212
 msgid "Your university"
 msgstr "Your university"
 

@@ -41,13 +41,6 @@
   color: var(--text-2);
 }
 
-/* Guide prose and its field read as one block, parted from the next provider. */
-.init-wall-key {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
 .init-wall-loading {
   display: flex;
   justify-content: center;

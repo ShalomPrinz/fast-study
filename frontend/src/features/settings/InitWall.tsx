@@ -35,32 +35,6 @@ interface Props {
 
 type FormState = SettingsForm
 
-// How to get each key, in the words of someone who has never seen a developer console. Provider
-// prose, so it is keyed by provider id; a provider without an entry simply shows the link alone.
-function KeyGuide({ id }: { id: string }) {
-  if (id === 'gemini') {
-    return (
-      <p className="settings-hint">
-        <Trans>
-          Open Google AI Studio using the link below, sign in with your Google account, and press
-          "Create API key". Copy the key it shows you and paste it into the field.
-        </Trans>
-      </p>
-    )
-  }
-  if (id === 'groq') {
-    return (
-      <p className="settings-hint">
-        <Trans>
-          Open the Groq console using the link below, sign in, and press "Create API Key". Copy it
-          right away — Groq shows a key only once — and paste it into the field.
-        </Trans>
-      </p>
-    )
-  }
-  return null
-}
-
 // The wall in front of the app: until the required entries are filled there is no sidebar, no route
 // and no way past. See docs/SETTINGS.md.
 export default function InitWall({ stored: initial, onDone }: Props) {
@@ -144,15 +118,12 @@ export default function InitWall({ stored: initial, onDone }: Props) {
   function keyField(provider: Provider | undefined, field: 'geminiApiKey' | 'groqApiKey') {
     if (!provider) return null
     return (
-      <div className="init-wall-key">
-        <KeyGuide id={provider.id} />
-        <ApiKeyField
-          provider={provider}
-          value={form[field]}
-          onChange={(v) => setForm({ ...form, [field]: v })}
-          storedKeyExists={field === 'geminiApiKey' ? stored.geminiApiKeySet : stored.groqApiKeySet}
-        />
-      </div>
+      <ApiKeyField
+        provider={provider}
+        value={form[field]}
+        onChange={(v) => setForm({ ...form, [field]: v })}
+        storedKeyExists={field === 'geminiApiKey' ? stored.geminiApiKeySet : stored.groqApiKeySet}
+      />
     )
   }
 

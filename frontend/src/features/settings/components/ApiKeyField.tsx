@@ -21,10 +21,55 @@ const TONE: Record<string, string> = {
   unverified: 'settings-status--warn',
 }
 
+// Click-by-click steps for a first-time user, keyed by provider id; the button names stay English in
+// every locale because the provider consoles are English. A provider without steps shows no disclosure.
+function keySteps(id: string) {
+  if (id === 'gemini') {
+    return (
+      <ol className="settings-steps">
+        <li>
+          <Trans>Click "Get a key" above and sign in with your Google account.</Trans>
+        </li>
+        <li>
+          <Trans>
+            Click "Create API key". If you're asked to pick a project, choose any one or let it
+            create a new one.
+          </Trans>
+        </li>
+        <li>
+          <Trans>Click the copy icon next to the new key, then paste it here.</Trans>
+        </li>
+      </ol>
+    )
+  }
+  if (id === 'groq') {
+    return (
+      <ol className="settings-steps">
+        <li>
+          <Trans>Click "Get a key" above and sign in with Google or your email.</Trans>
+        </li>
+        <li>
+          <Trans>
+            Click "Create API Key", type any name (for example FastStudy) and click "Submit".
+          </Trans>
+        </li>
+        <li>
+          <Trans>
+            Click "Copy" and paste the key here. Groq shows the key only once, so copy it before you
+            close the window.
+          </Trans>
+        </li>
+      </ol>
+    )
+  }
+  return null
+}
+
 // One write-only key field: the value goes out and never comes back, and the field carries a single
 // status slot that the prefix hint fills first and any probe result then overwrites.
 export default function ApiKeyField({ provider, value, onChange, storedKeyExists }: Props) {
   const { t } = useLingui()
+  const steps = keySteps(provider.id)
   const [status, setStatus] = useState<KeyStatus>(null)
   const probed = useRef<string | null>(null)
   // The probe reads the value at fire time, which for a paste is one tick after the event.
@@ -88,6 +133,18 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
           <Icon icon="external-link" />
         </a>
       </div>
+      {steps && (
+        <details
+          className="settings-disclosure"
+          data-testid="api-key-help"
+          data-provider={provider.id}
+        >
+          <summary>
+            <Trans>How do I get a key?</Trans>
+          </summary>
+          {steps}
+        </details>
+      )}
       <input
         id={`key-${provider.id}`}
         data-testid="api-key-input"

@@ -156,3 +156,22 @@
   font-weight: 500;
   color: var(--danger);
 }
+
+/* The collapsed how-to under a key field's label; logical padding so the list indents on either side. */
+.settings-disclosure {
+  font-size: var(--fs-meta);
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+.settings-disclosure > summary {
+  width: fit-content;
+  color: var(--accent-ink);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.settings-steps {
+  margin: var(--space-2) 0 0;
+  padding-inline-start: var(--space-6);
+}
