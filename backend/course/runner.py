@@ -136,6 +136,17 @@ class OverviewRun:
         """Walk the selected slugs in declaration order, running each one's phase chain under its
         own lock. One slug's error or skip stops only its own remaining phases."""
 
+        try:
+            await self._walk_slugs()
+        except Exception as e:
+            # Anything raised outside a phase worker would strand seeded entries at "pending".
+            sentry_sdk.capture_exception(e)
+            self._fail_pending(e)
+        db_client.notify()
+
+    async def _walk_slugs(self) -> None:
+        """The slug-by-slug walk `execute` guards."""
+
         # Snapshot the overview dir once at run start (continue mode reads only this snapshot).
         existing = self._existing_outputs() if self.skip_existing else set()
         for slug in self.slugs:
@@ -159,7 +170,20 @@ class OverviewRun:
 
                     if await asyncio.to_thread(self._run_slug_phase, slug, phase):
                         break  # dead end: stop this slug's chain, the other slugs go on
-        db_client.notify()
+
+    def _fail_pending(self, e: Exception) -> None:
+        """Mark this run's still-pending slugs as errored, as a phase failure would."""
+
+        code, params = error_fields(e, "internal_error")
+        entries = _status.setdefault(self.course, {})
+        for slug in self.slugs:
+            if entries.get(slug, {}).get("status") == "pending":
+                entries[slug] = {
+                    "status": "error",
+                    "message": str(e),
+                    "code": code,
+                    "params": params,
+                }
 
     def _existing_outputs(self) -> set[str]:
         """Snapshot the course's overview output filenames."""

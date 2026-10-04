@@ -1320,6 +1320,24 @@ class TestStatusAndListing:
         course_runner._status["ב"] = entries
         assert course_runner.active_courses() == ["א", "ב"]
 
+    def test_failure_before_slug_walk_marks_pending_slugs_failed(self, db, monkeypatch):
+        def boom(course):
+            raise DbClientError("listing down")
+
+        monkeypatch.setattr(db_client, "list_overview_files", boom)
+
+        async def go():
+            course_runner.try_run_generate(
+                COURSE, _course_node(), ["exam-hints", "topics"], skip_existing=True
+            )
+            return await _wait_done()
+
+        status = asyncio.run(go())
+        for slug in ("exam-hints", "topics"):
+            assert status["extractors"][slug]["status"] == "error"
+            assert status["extractors"][slug]["message"] == "listing down"
+        assert course_runner.active_courses() == []
+
     def test_status_snapshot_lists_course_for_whole_generation(self, db, monkeypatch):
         from pipeline import runner as pipeline_runner
 
