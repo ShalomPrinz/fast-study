@@ -33,6 +33,19 @@ def get_status(course: str) -> dict:
     }
 
 
+def active_courses() -> list[str]:
+    """Courses with an overview slug pending or holding its lock — a run that a course rename
+    would break. The lock covers the gap between phases, when the entry briefly reads "done"."""
+
+    held = {c for (c, _slug), lock in _locks.items() if lock.locked()}
+    seeded = {
+        c
+        for c, entries in _status.items()
+        if any(e.get("status") in ("pending", "running") for e in entries.values())
+    }
+    return sorted(held | seeded)
+
+
 def resolve_slugs(csv: str | None) -> tuple[list[str], dict | None]:
     """Parse the optional `extractors` CSV into extractor slugs (default: all). The second
     element is a ready-to-serve {error, code, params} body, or None when the CSV parsed."""
@@ -85,6 +98,7 @@ def try_run_generate(
         return "busy"  # all requested slugs already in flight
     run = OverviewRun(course, course_node, slugs, from_phase, skip_existing)
     asyncio.create_task(run.execute())
+    db_client.notify()  # the seeded pending entries put the course in `/status` overview_running
     return "started"
 
 

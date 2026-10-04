@@ -230,7 +230,7 @@ class TestGenerateAll:
         assert db.overview_store["exam-hints.pdf"] == b"%PDF-1.4 stub"
 
     def test_notify_fires_per_slug_phase_plus_run_end(self, db):
-        # One ping per (slug, phase) work unit + one at run end (no separate phase-boundary pings).
+        # One ping at seed, one per (slug, phase) work unit, one at run end (no phase-boundary pings).
         # All 5 extractors (3 pattern + topics + all-lectures); tree has transcripts but no summaries, so:
         # A skip stops its slug's chain, so skipped slugs ping once:
         #   exam-hints : extract done + analyze done + to_pdf done      → 3
@@ -238,14 +238,14 @@ class TestGenerateAll:
         #   pitfalls   : extract skip                                   → 1
         #   topics     : topics skip                                    → 1
         #   all-lectures: compile skip                                   → 1
-        #   run end                                                     → 1
+        #   seed + run end                                              → 2
         async def go():
             slugs, _ = course_runner.resolve_slugs(None)
             course_runner.try_run_generate(COURSE, _course_node(), slugs)
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 8
+        assert db.notifies == 9
 
 
 class TestGenerateSubset:
@@ -278,8 +278,8 @@ class TestGenerateSubset:
         # Extract finds nothing → skipped, and the chain stops there.
         assert status["extractors"]["student-qa"]["status"] == "skipped"
         assert db.puts == []
-        # 1 ping for extract, plus run end = 2.
-        assert db.notifies == 2
+        # Seed, 1 ping for extract, plus run end = 3.
+        assert db.notifies == 3
 
     def test_unknown_extractor_is_error(self):
         # Route glue answers this pair's second element as a 400 body, verbatim.
@@ -1223,7 +1223,7 @@ class TestPhaseFiltering:
 
     def test_topics_only_notify_cadence_skips_empty_phases(self, db):
         # topics never enters extract/analyze, so its only work units are its own phases:
-        #   topics done + to_pdf done = 2, plus run end = 3.
+        #   seed + topics done + to_pdf done + run end = 4.
         async def go():
             course_runner.try_run_generate(
                 COURSE, self._node_with_summary(), ["topics"]
@@ -1231,7 +1231,7 @@ class TestPhaseFiltering:
             await _wait_done()
 
         asyncio.run(go())
-        assert db.notifies == 3
+        assert db.notifies == 4
 
     def test_pattern_only_run_never_enters_topics(self, db, monkeypatch):
         monkeypatch.setattr(
@@ -1284,6 +1284,52 @@ class TestStatusAndListing:
             "running": False,
             "extractors": {},
         }
+
+    def test_active_courses_counts_pending_running_and_held_lock(self):
+        course_runner._status.update(
+            {
+                "א": {"topics": {"status": "pending"}},
+                "ב": {"topics": {"status": "running", "phase": "topics"}},
+                "ג": {"topics": {"status": "done"}, "pitfalls": {"status": "error"}},
+                "ד": {"topics": {"status": "done"}},  # between phases: lock still held
+            }
+        )
+
+        async def go():
+            lock = course_runner._locks.setdefault(("ד", "topics"), asyncio.Lock())
+            async with lock:
+                return course_runner.active_courses()
+
+        assert asyncio.run(go()) == ["א", "ב", "ד"]
+
+    def test_status_snapshot_lists_course_for_whole_generation(self, db, monkeypatch):
+        from pipeline import runner as pipeline_runner
+
+        release = threading.Event()
+
+        def slow_analyze(ext, report, course):
+            release.wait(timeout=5)
+            return "ניתוח"
+
+        monkeypatch.setattr(course_analyze, "analyze", slow_analyze)
+
+        async def go():
+            course_runner.try_run_generate(COURSE, _course_node(), ["exam-hints"])
+            # Seeded synchronously and announced over SSE, before the task has run at all.
+            assert pipeline_runner.get_status()["overview_running"] == [COURSE]
+            assert db.notifies == 1
+            try:
+                for _ in range(500):
+                    if _entry(COURSE, "exam-hints").get("phase") == "analyze":
+                        break
+                    await asyncio.sleep(0.01)
+                assert pipeline_runner.get_status()["overview_running"] == [COURSE]
+            finally:
+                release.set()
+            await _wait_done()
+            return pipeline_runner.get_status()["overview_running"]
+
+        assert asyncio.run(go()) == []
 
     def test_extractors_listing_in_declaration_order(self):
         listing = backend_main.overview_extractors()["extractors"]
