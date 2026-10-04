@@ -55,6 +55,7 @@ Sentry's express handler sits before ours. What reaches it: uncaught exceptions,
 | `POST /download`                          | curl header-replay capture; 200 at once with a `jobId`, runs in the background                                    |
 | `POST /download-file`                     | plain-URL capture added to the lecture's materials; 200 at once with a `jobId`                                    |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); 200 at once with a `jobId`                             |
+| `POST /download-url`                      | plain yt-dlp on any http(s) URL (the Downloads page's manual entry); no credentials, no fallback; 200 with a `jobId` |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim) |
 | `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives or joins that section's bulk run                      |
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                 |

@@ -39,6 +39,10 @@ the remux covers a lone `.webm`/`.mkv` that needs no merge, which would otherwis
 own extension and fail the upload; `--no-progress --quiet` keeps it silent; `--cache-dir
 <state>/ytdlp-cache` because the default home may be read-only.
 
+`/download-youtube` gates on `YTDLP_HOST_RE`; `/download-url` runs the same descriptor on any
+http(s) URL with no cookies or headers. yt-dlp's generic extractor rarely knows a size, so the probe
+usually reports unknown, and a host's 401/403 lands as `download_auth_failed` like any other source.
+
 ### The JS runtime
 
 Recent yt-dlp needs a JS runtime to evaluate YouTube's player script and extract formats. Both spawn

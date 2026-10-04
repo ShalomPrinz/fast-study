@@ -4,7 +4,7 @@ import { statePath } from '@faststudy/runtime';
 import { NO_WINDOW, toolPath } from '@faststudy/tools';
 
 // Hosts /download-youtube accepts: YouTube plus Google Drive single-file links, both of
-// which yt-dlp resolves without a login.
+// which yt-dlp resolves without a login. /download-url takes any http(s) URL instead.
 export const YTDLP_HOST_RE =
   /(^|\.)youtube\.com$|^youtu\.be$|^drive\.google\.com$|^docs\.google\.com$/i;
 

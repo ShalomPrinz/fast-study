@@ -43,7 +43,7 @@ function namesError(course, _lecture) {
   );
 }
 
-// The extension reads `status`/`target` verbatim, so the three public routes keep answering
+// The extension reads `status`/`target` verbatim, so the public routes keep answering
 // with them alongside the job id.
 function startAndAnswer(res, downloader, input, { course, lecture, kind }) {
   const jobId = startJob(downloader, input, { course, lecture, kind });
@@ -91,6 +91,23 @@ router.post('/download-youtube', (req, res) => {
     return res
       .status(400)
       .json(invalidRequest('url', 'valid youtube or google drive url required'));
+  }
+  const names = storedNames(course, lecture);
+  if (!names) {
+    return res.status(400).json(namesError(course, lecture));
+  }
+  const kindErr = validateKind(kind);
+  if (kindErr) return res.status(400).json(kindErr);
+
+  startAndAnswer(res, downloaders.ytdlp, { url }, { ...names, kind });
+});
+
+// Any http(s) URL through plain yt-dlp — the Downloads page's manual entry. No credentials or
+// headers ride along, and a failure is the job's error, never a fallback to another downloader.
+router.post('/download-url', (req, res) => {
+  const { url, course, lecture, kind = 'lecture' } = req.body ?? {};
+  if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
+    return res.status(400).json(invalidRequest('url', 'valid url required'));
   }
   const names = storedNames(course, lecture);
   if (!names) {
