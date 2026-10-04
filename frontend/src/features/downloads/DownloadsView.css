@@ -1,3 +1,19 @@
+/* No university chosen: the one thing standing between the page and Moodle, with the way to fix it. */
+.downloads-site-nudge {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-sm);
+  background: var(--accent-soft);
+  font-size: var(--fs-meta);
+  color: var(--accent-ink);
+}
+
+.downloads-site-nudge a {
+  color: inherit;
+  font-weight: 500;
+}
+
 /* Course source-URL list, parted from the recordings caption that follows it. */
 .source-list {
   display: flex;

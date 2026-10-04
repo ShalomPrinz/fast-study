@@ -60,6 +60,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
   })
   const [confirmed, setConfirmed] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [siteChecking, setSiteChecking] = useState(false)
   const [failure, setFailure] = useState<ReactNode>(null)
 
   useEffect(() => {
@@ -84,7 +85,6 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     dataRootConfirmed: confirmed,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
-    moodleSite: form.moodleSite,
     canStoreApiKeys,
   })
 
@@ -209,13 +209,14 @@ export default function InitWall({ stored: initial, onDone }: Props) {
 
             <section className="settings-section">
               <h2 className="settings-section-title">
-                <Trans>Your university</Trans>
+                <Trans>Your university (optional)</Trans>
               </h2>
               <MoodleSiteField
                 value={form.moodleSite}
                 // Functional: the probe answers after other fields may have changed.
                 onChange={(v) => setForm((f) => ({ ...f, moodleSite: v }))}
                 onSupported={saveSite}
+                onChecking={setSiteChecking}
               />
             </section>
 
@@ -259,7 +260,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
           <button
             className="btn btn--primary"
             data-testid="init-wall-submit"
-            disabled={saving || !options || missing.length > 0}
+            disabled={saving || siteChecking || !options || missing.length > 0}
             onClick={() => void finish()}
           >
             {saving ? t`Saving…` : t`Start using Fast Study`}

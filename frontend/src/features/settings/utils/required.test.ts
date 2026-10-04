@@ -11,7 +11,6 @@ const FILLED: RequiredInput = {
   dataRootConfirmed: true,
   driveEnabled: false,
   gdriveRootFolder: '',
-  moodleSite: 'https://lemida.biu.ac.il',
   canStoreApiKeys: true,
 }
 
@@ -51,22 +50,6 @@ describe('missingEntries', () => {
     expect(missingEntries({ ...FILLED, dataRootConfirmed: false })).toEqual(['dataRoot'])
   })
 
-  it('requires a university, which nothing preselects', () => {
-    expect(missingEntries({ ...FILLED, moodleSite: '' })).toEqual(['moodleSite'])
-  })
-
-  it('keeps the university required where no key can be stored', () => {
-    expect(
-      missingEntries({
-        ...FILLED,
-        geminiKey: '',
-        groqKey: '',
-        moodleSite: '',
-        canStoreApiKeys: false,
-      }),
-    ).toEqual(['moodleSite'])
-  })
-
   it('requires the Drive folder only while Drive is on', () => {
     expect(missingEntries({ ...FILLED, driveEnabled: false, gdriveRootFolder: '' })).toEqual([])
     expect(missingEntries({ ...FILLED, driveEnabled: true, gdriveRootFolder: '' })).toEqual([
@@ -81,9 +64,9 @@ describe('isInitialized', () => {
     expect(isInitialized({ ...SETTINGS, dataRoot: null }, false)).toBe(false)
   })
 
-  it('is false without a university, keys or no keys', () => {
-    expect(isInitialized({ ...SETTINGS, moodleSite: null }, true)).toBe(false)
-    expect(isInitialized({ ...SETTINGS, moodleSite: null }, false)).toBe(false)
+  it('never requires a university, which a user without Moodle cannot choose', () => {
+    expect(isInitialized({ ...SETTINGS, moodleSite: null }, true)).toBe(true)
+    expect(isInitialized({ ...SETTINGS, moodleSite: null }, false)).toBe(true)
   })
 
   it('is true with a data root and both keys', () => {

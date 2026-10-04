@@ -55,6 +55,7 @@ export default function SettingsView() {
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
   const [saving, setSaving] = useState(false)
+  const [siteChecking, setSiteChecking] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
 
   useEffect(() => {
@@ -94,7 +95,6 @@ export default function SettingsView() {
     dataRootConfirmed: true,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
-    moodleSite: form.moodleSite,
     canStoreApiKeys,
   })
 
@@ -148,7 +148,7 @@ export default function SettingsView() {
         actions={
           <button
             className="btn btn--primary"
-            disabled={saving || missing.length > 0}
+            disabled={saving || siteChecking || missing.length > 0}
             onClick={save}
           >
             <Trans>Save</Trans>
@@ -237,6 +237,7 @@ export default function SettingsView() {
               value={form.moodleSite}
               // Functional: the probe answers after other fields may have changed.
               onChange={(v) => setForm((f) => f && { ...f, moodleSite: v })}
+              onChecking={setSiteChecking}
             />
             <MoodleAccountField
               site={stored.moodleSite}

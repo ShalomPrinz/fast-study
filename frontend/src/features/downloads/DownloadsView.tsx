@@ -1,4 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro'
+import { Link } from 'react-router-dom'
 import { ResolvedMediaContext } from './contexts/ResolvedMediaContext'
 import ModeToggle from '@/shared/components/ModeToggle'
 import type { ModeConfig } from '@/shared/components/ModeToggle'
@@ -6,6 +7,8 @@ import type { Media } from './services/autoDownloader'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import AccountStatus from '@/features/downloads/components/AccountStatus'
+import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
+import { ROUTES } from '@/shared/utils/routes'
 import CourseSourceRow from '@/features/downloads/components/CourseSourceRow'
 import AddCourseRow from '@/features/downloads/components/AddCourseRow'
 import SectionGroup from '@/features/downloads/components/SectionGroup'
@@ -30,6 +33,8 @@ export default function DownloadsView() {
 
   const { selected, pending, items, edits, reconnectKey } = useDownloadsSession()
   const { discover, close, reconnectHint, resolveMedia, rowEdits } = useDownloadsActions()
+  // The university is optional on the init wall, so a user without one lands here with nothing to sign in to.
+  const unconfigured = useAuthStatus().status?.unconfigured
 
   const countOf = (media: Media) => items.filter((i) => i.media === media).length
 
@@ -64,6 +69,15 @@ export default function DownloadsView() {
 
         <div className="page-body">
           <div className="page-column">
+            {unconfigured && (
+              <p className="downloads-site-nudge">
+                <Trans>
+                  Choose your university in <Link to={ROUTES.settings}>Settings</Link> to download
+                  from Moodle.
+                </Trans>
+              </p>
+            )}
+
             <div className="section-head">
               <h2 className="section-title">
                 <Trans>Course sources</Trans>

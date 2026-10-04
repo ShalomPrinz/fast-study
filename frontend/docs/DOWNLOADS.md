@@ -40,7 +40,8 @@ a burst with a captcha) is deliberately not that path: it says nothing about the
 `blockedMessage()` and leaves the chip alone.
 
 `/auth/status`'s 409 `moodle_site_not_configured` is an answer, not a failure: `fetchAuthStatus` maps it to
-`unconfigured`, and the chip reads "no university chosen" with no Connect. A login the site's post-login
+`unconfigured`: the chip reads "no university chosen" with no Connect, the page leads with a nudge linking to
+Settings, and Load recordings is disabled with a tooltip saying why — the init wall lets a user in without one. A login the site's post-login
 check refuses answers `/auth/complete` with 422 `moodle_site_unsupported`, which `loginFailure` toasts in
 its `reason`'s sentence.
 

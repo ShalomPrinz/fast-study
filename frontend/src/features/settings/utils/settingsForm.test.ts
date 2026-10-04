@@ -13,7 +13,6 @@ const FILLED: RequiredInput = {
   dataRootConfirmed: true,
   driveEnabled: false,
   gdriveRootFolder: '',
-  moodleSite: 'https://lemida.biu.ac.il',
   canStoreApiKeys: true,
 }
 

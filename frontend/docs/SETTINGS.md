@@ -10,7 +10,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Gemini API key    | none                                      | user-supplied         | `backend/`        |
 | Groq API key      | none                                      | user-supplied         | `backend/`        |
 | Data folder       | prefilled, confirmed on first run         | any directory         | `database/`       |
-| University        | none — required, nothing preselected      | a preset, or any URL  | `downloader/auto` |
+| University        | none — optional, nothing preselected      | a preset, or any URL  | `downloader/auto` |
 | UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend          |
 | Drive upload      | off                                       | on                    | `backend/`        |
 | Drive root folder | none — required once Drive is on          | any folder name       | `backend/`        |
@@ -77,10 +77,10 @@ corrupt anything, so nothing else is checked.
 
 `app/InitGate.tsx` reads the store once at boot and shows either `features/settings/InitWall.tsx` or the
 app — no sidebar, no route, no way past. `isInitialized` (`utils/required.ts`) is the whole gate: both keys
-stored (where they can be, below), a data folder and a university chosen. The university is required
-because the account and every course link belong to it; nothing is preselected, since a wrong guess
-would sign a student in to someone else's Moodle. An unreachable store shows the app anyway: a
-downed service is not an unconfigured install.
+stored (where they can be, below) and a data folder. The university is asked but optional, so a user
+without a Moodle account still gets in; the downloads page nudges toward it instead ([DOWNLOADS.md](DOWNLOADS.md)).
+Nothing is preselected, since a wrong guess would sign a student in to someone else's Moodle. An
+unreachable store shows the app anyway: a downed service is not an unconfigured install.
 
 The wall also offers the language (so the rest reads in it) and the Drive toggle (so the account is
 connected now, not mid-run); neither blocks, and Drive's folder is required only while it is on. Auto-run
@@ -123,7 +123,8 @@ slot reads `supported` (the canonical site), `unsupported` (the `moodle_site_uns
 
 **The save rule is the opposite of a key's.** A key the provider rejects might still be right; a site that
 definitively isn't a usable Moodle can never work. So `unsupported` saves nothing — the field hands the form
-`''`, which `missingEntries` counts as missing — and so does a probe in flight. `unverified` saves, since a
+`''`, which `buildPatch` never sends, so the stored site stays. A probe in flight holds Save on both screens
+(`onChecking`), so a click can't outrun the answer and drop the choice; a blank site never blocks. `unverified` saves, since a
 bot wall or a dropped connection says nothing about the site; the post-login check in the auto-downloader
 is the backstop. What is saved is always the probe's canonical root, never the typed text.
 
