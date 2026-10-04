@@ -40,6 +40,16 @@ describe('resolveServiceError', () => {
     expect(headline.length).toBeGreaterThan(0)
   })
 
+  it('names the locked file, and still says something when the file is not given', () => {
+    const of = (params: Record<string, string | null>) =>
+      resolveServiceError({ message: 'x', code: 'file_locked', params }).headline
+
+    expect(of({ file: 'summary.md' })).toContain('summary.md')
+    expect(of({ file: 'summary.md' })).not.toBe(of({ file: 'summary.pdf' }))
+    expect(of({})).not.toContain('{file}')
+    expect(of({ file: null })).toBe(of({}))
+  })
+
   it('tells a user-typed name apart from a caller bug in the same invalid_request code', () => {
     const prose = 'course and name with a legal character are required'
     const of = (field: string) =>

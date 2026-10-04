@@ -229,9 +229,7 @@ crosses several frames before a route sees it — and `_failure` always emits a 
 
 `file_locked` is the 423. It replaces the status-based special case the frontend used to carry: the
 backend forwards the body into a pipeline error and loses the status, so only a code survives that
-hop. It carries `file` although today's sentence does not name the file — the wording is unchanged
-from before this protocol, and the param is what lets it gain the filename later without a contract
-change.
+hop. Its sentence names `file`, so the user knows which program to close.
 
 The four `Response("Not found", 404)` sites now answer a JSON `{error, code, params}` body like every
 other failure; they previously fell through to the bare status line.
