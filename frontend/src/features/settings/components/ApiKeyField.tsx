@@ -4,6 +4,12 @@ import { openExternalUrl } from '@/services/open'
 import { probeKey, type Provider } from '@/services/settings'
 import Icon from '@/shared/components/Icon'
 import { prefixStatus, shouldProbe, type KeyStatus } from '../utils/keyStatus'
+import gemini1 from '@/assets/key-steps/gemini-1.png'
+import gemini2 from '@/assets/key-steps/gemini-2.png'
+import gemini3 from '@/assets/key-steps/gemini-3.png'
+import groq1 from '@/assets/key-steps/groq-1.png'
+import groq2 from '@/assets/key-steps/groq-2.png'
+import groq3 from '@/assets/key-steps/groq-3.png'
 import '@/styles/settings-form.css'
 
 interface Props {
@@ -40,53 +46,41 @@ function ConsoleLink({ url, children }: { url: string; children: ReactNode }) {
 
 // Click-by-click steps for a first-time user, keyed by provider id; the button names stay English in
 // every locale because the provider consoles are English. A provider without steps shows no guide.
-function keySteps(provider: Provider) {
+function keySteps(provider: Provider): ReactNode[] | null {
   const url = provider.consoleUrl
   if (provider.id === 'gemini') {
-    return (
-      <ol className="settings-steps">
-        <li>
-          <Trans>
-            Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with your Google
-            account.
-          </Trans>
-        </li>
-        <li>
-          <Trans>
-            Click "Create API key". If you're asked to pick a project, choose any one or let it
-            create a new one.
-          </Trans>
-        </li>
-        <li>
-          <Trans>Click the copy icon next to the new key, then paste it here.</Trans>
-        </li>
-      </ol>
-    )
+    return [
+      <Trans>
+        Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with your Google account.
+      </Trans>,
+      <Trans>
+        Click "Create API key". If you're asked to pick a project, choose any one or let it create a
+        new one.
+      </Trans>,
+      <Trans>Click the copy icon next to the new key, then paste it here.</Trans>,
+    ]
   }
   if (provider.id === 'groq') {
-    return (
-      <ol className="settings-steps">
-        <li>
-          <Trans>
-            Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with Google or your
-            email.
-          </Trans>
-        </li>
-        <li>
-          <Trans>
-            Click "Create API Key", type any name (for example FastStudy) and click "Submit".
-          </Trans>
-        </li>
-        <li>
-          <Trans>
-            Click "Copy" and paste the key here. Groq shows the key only once, so copy it before you
-            close the window.
-          </Trans>
-        </li>
-      </ol>
-    )
+    return [
+      <Trans>
+        Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with Google or your email.
+      </Trans>,
+      <Trans>
+        Click "Create API Key", type any name (for example FastStudy) and click "Submit".
+      </Trans>,
+      <Trans>
+        Click "Copy" and paste the key here. Groq shows the key only once, so copy it before you
+        close the window.
+      </Trans>,
+    ]
   }
   return null
+}
+
+// One screenshot per step, in step order; swapping a file in `assets/key-steps/` is all an update takes.
+const SHOTS: Record<string, string[]> = {
+  gemini: [gemini1, gemini2, gemini3],
+  groq: [groq1, groq2, groq3],
 }
 
 // One write-only key field: the value goes out and never comes back, and the field carries a single
@@ -151,7 +145,27 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
           <p className="settings-guide-title">
             <Trans>How do I get a key?</Trans>
           </p>
-          {steps}
+          <ol className="settings-steps">
+            {steps.map((text, i) => {
+              const shot = SHOTS[provider.id]?.[i]
+              const step = i + 1
+              const name = provider.displayName
+              return (
+                <li key={step}>
+                  {text}
+                  {/* Collapsed by default: the steps read on their own, the picture is for a user stuck. */}
+                  {shot && (
+                    <details className="settings-shot">
+                      <summary>
+                        <Trans>Show screenshot</Trans>
+                      </summary>
+                      <img src={shot} alt={t`Screenshot of ${name}, step ${step}`} loading="lazy" />
+                    </details>
+                  )}
+                </li>
+              )
+            })}
+          </ol>
         </div>
       )}
       <input

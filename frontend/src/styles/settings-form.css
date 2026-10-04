@@ -179,3 +179,19 @@
   margin: var(--space-2) 0 0;
   padding-inline-start: var(--space-6);
 }
+
+.settings-shot > summary {
+  width: fit-content;
+  color: var(--accent-ink);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.settings-shot > img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-block: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+}

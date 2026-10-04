@@ -95,7 +95,9 @@ Each section heading but the language's carries a mark at its inline end, derive
 university, Drive and downloading read gray `Optional`.
 
 Each provider's key field, here and on `/settings`, carries a short how-to-get-a-key guide, always open
-and keyed by provider id; its first step is the console link itself. A save failure shows in place — a rejected data folder is the one thing in the way.
+and keyed by provider id; its first step is the console link itself. Each step has a collapsed screenshot,
+`src/assets/key-steps/{provider}-{step}.png`, imported through Vite so replacing a file is the whole update;
+a real key in one must be blurred out before it is committed. A save failure shows in place — a rejected data folder is the one thing in the way.
 
 ## When the computer can't store a key
 
