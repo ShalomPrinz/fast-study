@@ -90,6 +90,10 @@ and latest-wins): an unusable verdict renders its coded reason under the field a
 unreachable probe is unknown and blocks nothing, since the save validates again. In
 browser dev an already-filled `.env` passes the wall instantly; blank the values to exercise it.
 
+Each section heading but the language's carries a mark at its inline end, derived from `missingEntries`
+(`sectionMark`): the keys and the data folder read red `Required` until complete, then green `Done`; the
+university, Drive and downloading read gray `Optional`; keys the machine cannot store carry none.
+
 Each provider carries a short how-to-get-a-key guide beside its console link, in the Lingui catalogs keyed
 by provider id. A save failure shows in place — a rejected data folder is the one thing in the way.
 

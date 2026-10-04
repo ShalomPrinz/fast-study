@@ -39,3 +39,11 @@ export function isInitialized(settings: Settings, canStoreApiKeys: boolean): boo
   if (!settings.dataRoot) return false
   return !canStoreApiKeys || (settings.geminiApiKeySet && settings.groqApiKeySet)
 }
+
+/** A required section's mark on the init wall: `required` while any of its entries is missing. */
+export function sectionMark(
+  missing: RequiredField[],
+  fields: RequiredField[],
+): 'required' | 'done' {
+  return fields.some((f) => missing.includes(f)) ? 'required' : 'done'
+}

@@ -21,8 +21,9 @@ import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
-import { missingEntries } from './utils/required'
+import { missingEntries, sectionMark } from './utils/required'
 import '@/styles/button.css'
+import '@/styles/chip.css'
 import '@/styles/spinner.css'
 import '@/styles/settings-form.css'
 import './InitWall.css'
@@ -34,6 +35,33 @@ interface Props {
 }
 
 type FormState = SettingsForm
+
+type Mark = 'required' | 'done' | 'optional'
+
+// A section heading with its mark at the row's inline end: red until a required section is complete,
+// green once it is, gray for one that never blocks.
+function SectionTitle({ mark, children }: { mark?: Mark; children: ReactNode }) {
+  return (
+    <div className="init-wall-section-head">
+      <h2 className="settings-section-title">{children}</h2>
+      {mark === 'required' && (
+        <span className="chip chip--danger init-wall-mark" data-mark="required">
+          <Trans context="section mark">Required</Trans>
+        </span>
+      )}
+      {mark === 'done' && (
+        <span className="chip chip--ok init-wall-mark" data-mark="done">
+          <Trans context="section mark">Done</Trans>
+        </span>
+      )}
+      {mark === 'optional' && (
+        <span className="chip chip--neutral init-wall-mark" data-mark="optional">
+          <Trans context="section mark">Optional</Trans>
+        </span>
+      )}
+    </div>
+  )
+}
 
 // The wall in front of the app: until the required entries are filled there is no sidebar, no route
 // and no way past. See docs/SETTINGS.md.
@@ -158,9 +186,15 @@ export default function InitWall({ stored: initial, onDone }: Props) {
         ) : (
           <>
             <section className="settings-section">
-              <h2 className="settings-section-title">
+              {/* Keys the machine cannot store are never required, and an optional mark would invite
+                  filling a section that has no fields. */}
+              <SectionTitle
+                mark={
+                  canStoreApiKeys ? sectionMark(missing, ['geminiApiKey', 'groqApiKey']) : undefined
+                }
+              >
                 <Trans>Your two API keys</Trans>
-              </h2>
+              </SectionTitle>
               {/* The note stands in for the whole section body: on a first-run gate a field that
                   cannot be filled is noise, so only the heading survives beside it. */}
               <SecureStorageNotice />
@@ -192,9 +226,9 @@ export default function InitWall({ stored: initial, onDone }: Props) {
             </section>
 
             <section className="settings-section">
-              <h2 className="settings-section-title">
+              <SectionTitle mark={sectionMark(missing, ['dataRoot'])}>
                 <Trans>Where to keep everything</Trans>
-              </h2>
+              </SectionTitle>
               <DataRootField
                 value={form.dataRoot}
                 onChange={(v) => setForm({ ...form, dataRoot: v })}
@@ -203,9 +237,9 @@ export default function InitWall({ stored: initial, onDone }: Props) {
             </section>
 
             <section className="settings-section">
-              <h2 className="settings-section-title">
-                <Trans>Your university (optional)</Trans>
-              </h2>
+              <SectionTitle mark="optional">
+                <Trans>Your university</Trans>
+              </SectionTitle>
               <MoodleSiteField
                 value={form.moodleSite}
                 // Functional: the probe answers after other fields may have changed.
@@ -216,9 +250,10 @@ export default function InitWall({ stored: initial, onDone }: Props) {
             </section>
 
             <section className="settings-section">
-              <h2 className="settings-section-title">
-                <Trans>Google Drive (optional)</Trans>
-              </h2>
+              {/* Optional even with Drive on and no folder: that gap is the field's own error. */}
+              <SectionTitle mark="optional">
+                <Trans>Google Drive</Trans>
+              </SectionTitle>
               <DriveFields
                 value={{ enabled: form.driveEnabled, folder: form.gdriveRootFolder }}
                 onChange={(v) =>
@@ -229,9 +264,9 @@ export default function InitWall({ stored: initial, onDone }: Props) {
             </section>
 
             <section className="settings-section">
-              <h2 className="settings-section-title">
-                <Trans>Downloading recordings (optional)</Trans>
-              </h2>
+              <SectionTitle mark="optional">
+                <Trans>Downloading recordings</Trans>
+              </SectionTitle>
               <BrowserPrereqField />
               {/* The wall renders outside `Layout`, so it brings its own provider — the account
                   chip is the only consumer that gets this far. */}

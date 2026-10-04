@@ -54,3 +54,11 @@
   gap: var(--space-4);
   padding-block-end: var(--space-8);
 }
+
+/* Flex follows the document direction, so the mark sits at the inline end in either language. */
+.init-wall-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
