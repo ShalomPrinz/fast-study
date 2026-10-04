@@ -98,7 +98,8 @@ closed on the last, consumed only through `useNotify`.
 a helper here. `ToastContainer` is mounted in `App` above the init gate, since a toast with no mounted
 container is queued, not shown. `toastInitResult` only reports `'busy'` — `'started'` arrives over SSE and
 a refused run rejects, which the caller reports with `toastFailure`.
-Every toast dismisses on a click; `toastPromise` re-states `closeOnClick` because a loading toast opts out.
+Every toast dismisses on a click; `toastPending` re-states `closeOnClick` because a loading toast opts out,
+and its caller dismisses it to report a failure through `toastFailure`.
 
 ## URL building — `shared/utils/url.ts`
 

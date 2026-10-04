@@ -22,13 +22,25 @@ export function toastConnectionError(err: ConnectionError): void {
   toast.error(err.message, { toastId: `conn:${err.baseUrl}` })
 }
 
-// Pass-through for the toastify promise lifecycle. Returns the original promise.
-// closeOnClick is re-stated because the pending toast is a `loading` toast, which opts out by default.
-export function toastPromise<T>(
-  promise: Promise<T>,
-  messages: { pending: string; success: string; error: string },
-): Promise<T> {
-  return toast.promise(promise, messages, { closeOnClick: true })
+// A loading toast its caller settles: `succeed` turns it into a success toast, `dismiss` drops it so
+// the caller can report the failure its own way. The nulls fall back to the container's defaults.
+export function toastPending(message: string): {
+  succeed: (message: string) => void
+  dismiss: () => void
+} {
+  const id = toast.loading(message, { closeOnClick: true })
+  return {
+    succeed: (message) =>
+      toast.update(id, {
+        render: message,
+        type: 'success',
+        isLoading: false,
+        autoClose: null,
+        closeButton: null,
+        draggable: null,
+      }),
+    dismiss: () => toast.dismiss(id),
+  }
 }
 
 // A refused run rejects instead (the backend answers 4xx with its own prose), so `busy` — the one
