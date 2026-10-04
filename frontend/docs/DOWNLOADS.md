@@ -125,9 +125,10 @@ video and a video PUT wipes the transcript and summary — confirms when its tar
 overwrite" confirm. **A material row never confirms** — it appends, and shows the target's material
 count instead.
 
-A row whose target lecture the pipeline is running or queued on is disabled with a tooltip, and
-`useRecordingDownload` re-checks at start (a confirm replays an older render): a video PUT would wipe the
-folder under a run that keeps writing the old video's outputs, and a material would race the summary.
+A row whose target lecture — or, for a video row, a `splitSiblings` name — the pipeline is running or
+queued on is disabled with a tooltip, and `useRecordingDownload` re-checks at start (a confirm replays an
+older render): a video PUT would wipe the folder under a run that keeps writing the old video's outputs,
+and a material would race the summary.
 
 ## Material rows and name suggestion
 

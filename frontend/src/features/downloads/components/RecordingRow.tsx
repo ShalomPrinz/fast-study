@@ -81,6 +81,12 @@ const RecordingRow = memo(function RecordingRow({
   // Only an 'unknown' (Google Drive) row has a type worth showing; elsewhere it restates the segment.
   const unknown = item.media === 'unknown'
   const unsupported = unknown && resolved === 'unsupported'
+  // A material row attaches a PDF to an existing lecture instead of creating one from a video —
+  // including an 'unknown' row the probe resolved to a PDF.
+  const material = item.media === 'material' || (unknown && resolved === 'material')
+  // The split siblings on disk a video row could overwrite (a zoom recording lands as `${name}.1`/`.2`),
+  // so both the overwrite confirm and the pipeline lock cover them.
+  const siblings = material ? [] : splitSiblings(effectiveName, kind, courses, course)
   const {
     download,
     retryClip,
@@ -93,12 +99,10 @@ const RecordingRow = memo(function RecordingRow({
     course,
     name: effectiveName,
     kind,
+    siblings,
     onReconnect,
   })
 
-  // A material row attaches a PDF to an existing lecture instead of creating one from a video —
-  // including an 'unknown' row the probe resolved to a PDF.
-  const material = item.media === 'material' || (unknown && resolved === 'material')
   const listId = useId()
   // Non-blocking state note: a material download appends, so the count is shown rather than confirmed.
   const materialCount = material ? materialsOf(effectiveName, kind, courses, course).length : 0
@@ -116,9 +120,11 @@ const RecordingRow = memo(function RecordingRow({
   const downloading = status === 'running'
   const failed = queueFailed || status === 'error'
   const action = rowAction({ pending, unsupported, failed, done: status === 'done' })
-  // The pipeline is running or queued on the lecture this row would write; the hook re-checks on start.
+  // The pipeline is running or queued on a lecture this row would write; the hook re-checks on start.
   const { status: runner } = useRunnerStatus()
-  const inPipeline = isLectureRenameLocked(runner, course, effectiveName, kind)
+  const inPipeline = [effectiveName, ...siblings].some((n) =>
+    isLectureRenameLocked(runner, course, n, kind),
+  )
   const busyTitle = t`Can't download while this lecture is being processed or waiting in line`
 
   // Pending overwrite confirm: `message` is what the modal shows, `run` is what a Yes replays
@@ -149,7 +155,6 @@ const RecordingRow = memo(function RecordingRow({
       })
       return
     }
-    const siblings = splitSiblings(effectiveName, kind, courses, course)
     if (siblings.length) {
       const existing = siblings.join(', ')
       setConfirm({

@@ -20,18 +20,21 @@ import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 type Result = 'fail' | null
 
 // The download effect only — whole-row download, per-clip retry and their own state; display and
-// the overwrite confirm live in the row. `name` is the row's resolved name.
+// the overwrite confirm live in the row. `name` is the row's resolved name; `siblings` the split
+// siblings a whole-row download could land on, which the pipeline lock covers too.
 export function useRecordingDownload({
   item,
   course,
   name: effectiveName,
   kind,
+  siblings,
   onReconnect,
 }: {
   item: Item
   course: string
   name: string
   kind: Kind
+  siblings: readonly string[]
   onReconnect: () => void
 }) {
   // What this download proves the file to be — one of the two moments an 'unknown' row learns its
@@ -57,15 +60,18 @@ export function useRecordingDownload({
   const passcodeResume = useRef<{ name: string; run: () => Promise<void> } | null>(null)
 
   // Shared trigger behind the reconnect/passcode gates. Success is the jobs' to report; only a
-  // failure to queue surfaces here. `resume` re-runs the intent after a passcode.
+  // failure to queue surfaces here. `resume` re-runs the intent after a passcode. `lands` is every
+  // lecture the download may write.
   async function runIntent(
     args: { ref: string; course: string; name: string; kind: Kind; only?: boolean },
     name: string,
+    lands: readonly string[],
     resume: () => Promise<void>,
   ) {
     // The arriving file would wipe the lecture under a run that keeps writing the old video's outputs.
-    if (isLectureRenameLocked(statusRef.current, args.course, args.name, args.kind)) {
-      toastLectureBusy(name)
+    const busy = lands.find((n) => isLectureRenameLocked(statusRef.current, args.course, n, args.kind))
+    if (busy !== undefined) {
+      toastLectureBusy(busy)
       return
     }
     try {
@@ -91,7 +97,12 @@ export function useRecordingDownload({
   async function download() {
     setPending(true)
     setResult(null)
-    await runIntent({ ref: item.ref, course, name: effectiveName, kind }, effectiveName, download)
+    await runIntent(
+      { ref: item.ref, course, name: effectiveName, kind },
+      effectiveName,
+      [effectiveName, ...siblings],
+      download,
+    )
     setPending(false)
   }
 
@@ -102,6 +113,7 @@ export function useRecordingDownload({
     await runIntent(
       { ref: job.ref, course: job.course, name: job.title, kind: job.kind, only: true },
       job.title,
+      [job.title],
       () => retryClip(job),
     )
     setRetryingId(null)
