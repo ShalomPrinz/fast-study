@@ -37,7 +37,9 @@ YouTube serves DASH-segmented streams — separate audio and video behind signed
 muxes them. `-o video.%(ext)s --merge-output-format mp4 --remux-video mp4` lands `video.mp4` —
 the remux covers a lone `.webm`/`.mkv` that needs no merge, which would otherwise land under its
 own extension and fail the upload; `--no-progress --quiet` keeps it silent; `--cache-dir
-<state>/ytdlp-cache` because the default home may be read-only.
+<state>/ytdlp-cache` because the default home may be read-only. Packaged, `--ffmpeg-location` names
+the bundled ffmpeg, which is not on PATH: without it yt-dlp skips the merge yet exits 0, leaving
+only `video.fNNN.*` and no `video.mp4` to upload.
 
 `/download-youtube` gates on `YTDLP_HOST_RE`; `/download-url` runs the same descriptor on any
 http(s) URL with no cookies or headers. yt-dlp's generic extractor rarely knows a size, so the probe

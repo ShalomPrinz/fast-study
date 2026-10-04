@@ -20,6 +20,10 @@ const YT_PLAYER_JS_ENV = { ELECTRON_RUN_AS_NODE: '1' };
 // the per-user state root rather than the default under a possibly read-only installed home.
 const CACHE_DIR_FLAGS = ['--cache-dir', statePath('ytdlp-cache')];
 
+// Packaged, the bundled ffmpeg is off PATH, and yt-dlp without one exits 0 having skipped the
+// merge, leaving no video.mp4. Dev keeps PATH's: a bare `ffmpeg` here would read as missing.
+const FFMPEG_FLAGS = process.env.FASTSTUDY_BIN_DIR ? ['--ffmpeg-location', toolPath('ffmpeg')] : [];
+
 // Sum the printed filesizes for the download's own `bv*+ba/b` selection — the merged mp4's size.
 // Needs YT_PLAYER_JS_FLAGS, or it resolves null even though the download would succeed.
 function probeYoutubeSize(url) {
@@ -33,6 +37,7 @@ function probeYoutubeSize(url) {
         '--skip-download',
         ...YT_PLAYER_JS_FLAGS,
         ...CACHE_DIR_FLAGS,
+        ...FFMPEG_FLAGS,
         '-f',
         'bv*+ba/b',
         '--print',
@@ -64,6 +69,7 @@ function buildYtdlpArgs(url) {
     'mp4',
     ...YT_PLAYER_JS_FLAGS,
     ...CACHE_DIR_FLAGS,
+    ...FFMPEG_FLAGS,
     '--quiet',
     '--no-warnings',
     '--no-progress',
