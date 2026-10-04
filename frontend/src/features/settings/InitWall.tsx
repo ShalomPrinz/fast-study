@@ -20,7 +20,6 @@ import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
-import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, type SettingsForm } from './utils/patch'
 import { missingEntries, sectionMark } from './utils/required'
 import '@/styles/button.css'
@@ -181,45 +180,35 @@ export default function InitWall({ stored: initial, onDone }: Props) {
           </div>
         ) : (
           <>
-            <section className="settings-section">
-              {/* Keys the machine cannot store are never required, and an optional mark would invite
-                  filling a section that has no fields. */}
-              <SectionTitle
-                mark={
-                  canStoreApiKeys ? sectionMark(missing, ['geminiApiKey', 'groqApiKey']) : undefined
-                }
-              >
-                <Trans>Your two API keys</Trans>
-              </SectionTitle>
-              {/* The note stands in for the whole section body: on a first-run gate a field that
-                  cannot be filled is noise, so only the heading survives beside it. */}
-              <SecureStorageNotice />
-              {canStoreApiKeys && (
-                <>
-                  <p className="settings-hint">
-                    <Trans>
-                      Fast Study uses two free services: one turns the recording into text, the
-                      other writes the summary. Both need a key of your own, and both are free to
-                      create.
-                    </Trans>
-                  </p>
-                  <p className="settings-note">
-                    <Trans>
-                      Your keys are kept only on this computer, encrypted by Windows. Fast Study has
-                      no servers of its own — each key is sent only to the service it belongs to.
-                    </Trans>
-                  </p>
-                  {keyField(
-                    options.providers.find((p) => p.id === 'gemini'),
-                    'geminiApiKey',
-                  )}
-                  {keyField(
-                    options.providers.find((p) => p.id === 'groq'),
-                    'groqApiKey',
-                  )}
-                </>
-              )}
-            </section>
+            {/* A machine that cannot store keys gets no keys section at all: on a first-run gate a
+                field that can never be filled is noise, and the keys stop counting toward the gate. */}
+            {canStoreApiKeys && (
+              <section className="settings-section">
+                <SectionTitle mark={sectionMark(missing, ['geminiApiKey', 'groqApiKey'])}>
+                  <Trans>Your two API keys</Trans>
+                </SectionTitle>
+                <p className="settings-hint">
+                  <Trans>
+                    Fast Study uses two free services: one turns the recording into text, the other
+                    writes the summary. Both need a key of your own, and both are free to create.
+                  </Trans>
+                </p>
+                <p className="settings-note">
+                  <Trans>
+                    Your keys are kept only on this computer, encrypted by Windows. Fast Study has
+                    no servers of its own — each key is sent only to the service it belongs to.
+                  </Trans>
+                </p>
+                {keyField(
+                  options.providers.find((p) => p.id === 'gemini'),
+                  'geminiApiKey',
+                )}
+                {keyField(
+                  options.providers.find((p) => p.id === 'groq'),
+                  'groqApiKey',
+                )}
+              </section>
+            )}
 
             <section className="settings-section">
               <SectionTitle mark={sectionMark(missing, ['dataRoot'])}>

@@ -92,7 +92,7 @@ browser dev an already-filled `.env` passes the wall instantly; blank the values
 
 Each section heading but the language's carries a mark at its inline end, derived from `missingEntries`
 (`sectionMark`): the keys and the data folder read red `Required` until complete, then green `Done`; the
-university, Drive and downloading read gray `Optional`; keys the machine cannot store carry none.
+university, Drive and downloading read gray `Optional`.
 
 Each provider carries a short how-to-get-a-key guide beside its console link, in the Lingui catalogs keyed
 by provider id. A save failure shows in place — a rejected data folder is the one thing in the way.
@@ -103,9 +103,9 @@ The packaged app keeps the keys encrypted by the OS keystore; a machine with non
 keyring) cannot store them. `runtime.ts` resolves the launcher's report once as `canStoreApiKeys`;
 no bridge means browser dev, where keys go to `.env`, so a missing answer means a machine that is fine.
 
-Degraded, not fatal: both screens drop the key fields — and on `/settings` the summary model — leaving
-`SecureStorageNotice` under the section heading, since a field that can never be filled invites a user to
-try. The keys stop counting in `missingEntries` and `isInitialized` (which take the flag as an argument,
+Degraded, not fatal: a field that can never be filled invites a user to try, so the wall drops the whole
+keys section, and `/settings` drops the key fields and the summary model, leaving `SecureStorageNotice`
+under the section heading. The keys stop counting in `missingEntries` and `isInitialized` (which take the flag as an argument,
 staying pure), or the wall would have no way past. A save stays safe: a blank key is never sent, and an
 unrendered model select still holds the stored or default id.
 

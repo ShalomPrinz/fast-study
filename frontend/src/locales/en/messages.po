@@ -845,7 +845,7 @@ msgstr "Do nothing — I'll start runs myself"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/settings/InitWall.tsx:55
+#: src/features/settings/InitWall.tsx:54
 msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
@@ -885,7 +885,7 @@ msgstr "Downloading {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
-#: src/features/settings/InitWall.tsx:275
+#: src/features/settings/InitWall.tsx:264
 #: src/features/settings/SettingsView.tsx:235
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
@@ -1031,7 +1031,7 @@ msgstr "Fast Study signs in to <0>{host}</0> with this account to find and fetch
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 
-#: src/features/settings/InitWall.tsx:200
+#: src/features/settings/InitWall.tsx:191
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
@@ -1039,7 +1039,7 @@ msgstr "Fast Study uses two free services: one turns the recording into text, th
 msgid "File type"
 msgstr "File type"
 
-#: src/features/settings/InitWall.tsx:287
+#: src/features/settings/InitWall.tsx:276
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
@@ -1109,7 +1109,7 @@ msgstr "Google account"
 #~ msgid "Google credentials are missing. Put credentials.json at {path}."
 #~ msgstr "Google credentials are missing. Put credentials.json at {path}."
 
-#: src/features/settings/InitWall.tsx:259
+#: src/features/settings/InitWall.tsx:248
 #: src/features/settings/SettingsView.tsx:222
 msgid "Google Drive"
 msgstr "Google Drive"
@@ -1211,7 +1211,7 @@ msgstr "Lectures"
 msgid "Lectures {0}-{1}"
 msgstr "Lectures {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:167
+#: src/features/settings/InitWall.tsx:166
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
@@ -1460,7 +1460,7 @@ msgstr "Open PDF"
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
 
-#: src/features/settings/InitWall.tsx:60
+#: src/features/settings/InitWall.tsx:59
 msgctxt "section mark"
 msgid "Optional"
 msgstr "Optional"
@@ -1654,7 +1654,7 @@ msgstr "Replace the existing video in \"{0}\"?"
 msgid "Required"
 msgstr "Required"
 
-#: src/features/settings/InitWall.tsx:50
+#: src/features/settings/InitWall.tsx:49
 msgctxt "section mark"
 msgid "Required"
 msgstr "Required"
@@ -1749,7 +1749,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:296
+#: src/features/settings/InitWall.tsx:285
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -1828,7 +1828,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:296
+#: src/features/settings/InitWall.tsx:285
 msgid "Start using Fast Study"
 msgstr "Start using Fast Study"
 
@@ -2154,7 +2154,7 @@ msgstr "This Moodle connection can't download these recordings. Reconnect the ac
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
-#: src/features/settings/InitWall.tsx:170
+#: src/features/settings/InitWall.tsx:169
 msgid "This only needs to be done once."
 msgstr "This only needs to be done once."
 
@@ -2279,7 +2279,7 @@ msgstr "We couldn't check this site right now. You can still save it."
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
-#: src/features/settings/InitWall.tsx:226
+#: src/features/settings/InitWall.tsx:215
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
@@ -2311,15 +2311,15 @@ msgstr "Yes"
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
 
-#: src/features/settings/InitWall.tsx:207
+#: src/features/settings/InitWall.tsx:197
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 
-#: src/features/settings/InitWall.tsx:192
+#: src/features/settings/InitWall.tsx:188
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/settings/InitWall.tsx:237
+#: src/features/settings/InitWall.tsx:226
 msgid "Your university"
 msgstr "Your university"
 
