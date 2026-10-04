@@ -9,9 +9,9 @@ import gemini3 from '@/assets/key-steps/gemini-3.png'
 import gemini4 from '@/assets/key-steps/gemini-4.png'
 import gemini5 from '@/assets/key-steps/gemini-5.png'
 import gemini6 from '@/assets/key-steps/gemini-6.png'
-import groq1 from '@/assets/key-steps/groq-1.png'
 import groq2 from '@/assets/key-steps/groq-2.png'
 import groq3 from '@/assets/key-steps/groq-3.png'
+import groq4 from '@/assets/key-steps/groq-4.png'
 import '@/styles/settings-form.css'
 
 interface Props {
@@ -67,9 +67,8 @@ function keySteps(provider: Provider): ReactNode[] | null {
       <Trans>
         Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with Google or your email.
       </Trans>,
-      <Trans>
-        Click "Create API Key", type any name (for example FastStudy) and click "Submit".
-      </Trans>,
+      <Trans>Click "Create API Key".</Trans>,
+      <Trans>Type any name (for example FastStudy) and click "Submit".</Trans>,
       <Trans>
         Click "Copy" and paste the key here. Groq shows the key only once, so copy it before you
         close the window.
@@ -83,7 +82,7 @@ function keySteps(provider: Provider): ReactNode[] | null {
 // swapping a file in `assets/key-steps/` is all an update takes.
 const SHOTS: Record<string, (string | null)[]> = {
   gemini: [null, gemini2, gemini3, gemini4, gemini5, gemini6],
-  groq: [groq1, groq2, groq3],
+  groq: [null, groq2, groq3, groq4],
 }
 
 // One write-only key field: the value goes out and never comes back, and the field carries a single

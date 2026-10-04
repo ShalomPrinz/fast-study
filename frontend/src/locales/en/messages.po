@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:142
+#: src/features/settings/components/ApiKeyField.tsx:141
 msgid "{0} API key"
 msgstr "{0} API key"
 
@@ -137,7 +137,7 @@ msgid "{0} of {1} parts"
 msgstr "{0} of {1} parts"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:128
+#: src/features/settings/components/ApiKeyField.tsx:127
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} rejected this key. Generate a new one in its console."
 
@@ -388,7 +388,7 @@ msgstr "A finished summary is waiting to upload, and Fast Study has no permissio
 msgid "A font the PDF needs is missing."
 msgstr "A font the PDF needs is missing."
 
-#: src/features/settings/components/ApiKeyField.tsx:183
+#: src/features/settings/components/ApiKeyField.tsx:182
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
@@ -574,7 +574,7 @@ msgstr "checking account…"
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
-#: src/features/settings/components/ApiKeyField.tsx:124
+#: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:70
 msgid "Checking…"
@@ -600,17 +600,17 @@ msgstr "Choose your university…"
 msgid "Click \"Copy key\" and paste the key here."
 msgstr "Click \"Copy key\" and paste the key here."
 
-#: src/features/settings/components/ApiKeyField.tsx:73
+#: src/features/settings/components/ApiKeyField.tsx:72
 msgid "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 msgstr "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
-
-#: src/features/settings/components/ApiKeyField.tsx:70
-msgid "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
-msgstr "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
 
 #: src/features/settings/components/ApiKeyField.tsx:58
 msgid "Click \"Create API key\"."
 msgstr "Click \"Create API key\"."
+
+#: src/features/settings/components/ApiKeyField.tsx:70
+msgid "Click \"Create API Key\"."
+msgstr "Click \"Create API Key\"."
 
 #: src/features/settings/components/ApiKeyField.tsx:67
 msgid "Click <0>Get a key</0> and sign in with Google or your email."
@@ -1131,7 +1131,7 @@ msgstr "Hebrew University"
 msgid "Home"
 msgstr "Home"
 
-#: src/features/settings/components/ApiKeyField.tsx:149
+#: src/features/settings/components/ApiKeyField.tsx:148
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
@@ -1155,7 +1155,7 @@ msgstr "just this lecture"
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
-#: src/features/settings/components/ApiKeyField.tsx:126
+#: src/features/settings/components/ApiKeyField.tsx:125
 msgid "Key verified"
 msgstr "Key verified"
 
@@ -1757,7 +1757,7 @@ msgstr "Saved to {lecture}"
 msgid "Saving…"
 msgstr "Saving…"
 
-#: src/features/settings/components/ApiKeyField.tsx:165
+#: src/features/settings/components/ApiKeyField.tsx:164
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
@@ -1812,7 +1812,7 @@ msgstr "Several rows would download into the same lecture ({names}). Rename them
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/settings/components/ApiKeyField.tsx:163
+#: src/features/settings/components/ApiKeyField.tsx:162
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
@@ -2142,7 +2142,7 @@ msgstr "This disconnects your current account. Connecting to the new site needs 
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:132
+#: src/features/settings/components/ApiKeyField.tsx:131
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
@@ -2205,6 +2205,10 @@ msgstr "Transcript"
 #: src/features/lectures/constants/pipeline.ts:88
 #~ msgid "Transcription failed"
 #~ msgstr "Transcription failed"
+
+#: src/features/settings/components/ApiKeyField.tsx:71
+msgid "Type any name (for example FastStudy) and click \"Submit\"."
+msgstr "Type any name (for example FastStudy) and click \"Submit\"."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
 msgid "Unarchive course"
@@ -2283,7 +2287,7 @@ msgstr "Videos"
 msgid "We couldn't check right now."
 msgstr "We couldn't check right now."
 
-#: src/features/settings/components/ApiKeyField.tsx:130
+#: src/features/settings/components/ApiKeyField.tsx:129
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 

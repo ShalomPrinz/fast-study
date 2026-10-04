@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:142
+#: src/features/settings/components/ApiKeyField.tsx:141
 msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
@@ -137,7 +137,7 @@ msgid "{0} of {1} parts"
 msgstr "{0} מתוך {1} חלקים"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:128
+#: src/features/settings/components/ApiKeyField.tsx:127
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "המפתח נדחה. צור מפתח חדש בלוח הבקרה של {0}."
 
@@ -388,7 +388,7 @@ msgstr "סיכום מוכן ממתין להעלאה, ול-Fast Study עדיין 
 msgid "A font the PDF needs is missing."
 msgstr "חסר גופן שה-PDF זקוק לו."
 
-#: src/features/settings/components/ApiKeyField.tsx:183
+#: src/features/settings/components/ApiKeyField.tsx:182
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 
@@ -574,7 +574,7 @@ msgstr "בודק חשבון…"
 msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
-#: src/features/settings/components/ApiKeyField.tsx:124
+#: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:70
 msgid "Checking…"
@@ -600,17 +600,17 @@ msgstr "בחר את האוניברסיטה שלך…"
 msgid "Click \"Copy key\" and paste the key here."
 msgstr "לחץ על \"Copy key\" והדבק את המפתח כאן."
 
-#: src/features/settings/components/ApiKeyField.tsx:73
+#: src/features/settings/components/ApiKeyField.tsx:72
 msgid "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 msgstr "לחץ על \"Copy\" והדבק את המפתח כאן. Groq מציגה את המפתח פעם אחת בלבד, אז העתק אותו לפני שתסגור את החלון."
-
-#: src/features/settings/components/ApiKeyField.tsx:70
-msgid "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
-msgstr "לחץ על \"Create API Key\", הקלד שם כלשהו (למשל FastStudy) ולחץ על \"Submit\"."
 
 #: src/features/settings/components/ApiKeyField.tsx:58
 msgid "Click \"Create API key\"."
 msgstr "לחץ על \"Create API key\"."
+
+#: src/features/settings/components/ApiKeyField.tsx:70
+msgid "Click \"Create API Key\"."
+msgstr "לחץ על \"Create API Key\"."
 
 #: src/features/settings/components/ApiKeyField.tsx:67
 msgid "Click <0>Get a key</0> and sign in with Google or your email."
@@ -1131,7 +1131,7 @@ msgstr "האוניברסיטה העברית"
 msgid "Home"
 msgstr "דף הבית"
 
-#: src/features/settings/components/ApiKeyField.tsx:149
+#: src/features/settings/components/ApiKeyField.tsx:148
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
 
@@ -1155,7 +1155,7 @@ msgstr "רק להרצאה הזו"
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
-#: src/features/settings/components/ApiKeyField.tsx:126
+#: src/features/settings/components/ApiKeyField.tsx:125
 msgid "Key verified"
 msgstr "המפתח אומת"
 
@@ -1757,7 +1757,7 @@ msgstr "נשמר ב{lecture}"
 msgid "Saving…"
 msgstr "שומר…"
 
-#: src/features/settings/components/ApiKeyField.tsx:165
+#: src/features/settings/components/ApiKeyField.tsx:164
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
@@ -1812,7 +1812,7 @@ msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה �
 msgid "Show more"
 msgstr "הצג עוד"
 
-#: src/features/settings/components/ApiKeyField.tsx:163
+#: src/features/settings/components/ApiKeyField.tsx:162
 msgid "Show screenshot"
 msgstr "הצג צילום מסך"
 
@@ -2142,7 +2142,7 @@ msgstr "החשבון המחובר כעת ינותק. חיבור לאתר החד�
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:132
+#: src/features/settings/components/ApiKeyField.tsx:131
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
@@ -2205,6 +2205,10 @@ msgstr "תמלול"
 #: src/features/lectures/constants/pipeline.ts:88
 #~ msgid "Transcription failed"
 #~ msgstr "התמלול נכשל"
+
+#: src/features/settings/components/ApiKeyField.tsx:71
+msgid "Type any name (for example FastStudy) and click \"Submit\"."
+msgstr "הקלד שם כלשהו (למשל FastStudy) ולחץ על \"Submit\"."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:133
 msgid "Unarchive course"
@@ -2283,7 +2287,7 @@ msgstr "וידאו"
 msgid "We couldn't check right now."
 msgstr "לא הצלחנו לבדוק כרגע."
 
-#: src/features/settings/components/ApiKeyField.tsx:130
+#: src/features/settings/components/ApiKeyField.tsx:129
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 
