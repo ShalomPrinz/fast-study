@@ -49,10 +49,12 @@ for _name, _state in tool_status.items():
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Run the nightly catch-up cron for the lifetime of the app; NIGHTLY_RUN and
-    NIGHTLY_HOUR decide whether it is scheduled and when."""
+    """Run the nightly cron (NIGHTLY_RUN/NIGHTLY_HOUR) for the app's lifetime, and notify once at boot
+    so a page still showing a step a previous process was running refetches the now-empty /status."""
 
     schedule.start()
+    # Not awaited: lifespan startup gates the bind, and a down database would stall it for the timeout.
+    asyncio.get_running_loop().run_in_executor(None, db_client.notify)
     try:
         yield
     finally:
