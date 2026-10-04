@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusContext'
 import { failureNode } from '@/shared/utils/failure'
-import { canStoreApiKeys } from '@/services/runtime'
+import { canStoreApiKeys, runtimeBridge } from '@/services/runtime'
 import {
   toAutoRun,
   toNightlyHour,
@@ -74,8 +74,8 @@ export default function InitWall({ stored: initial, onDone }: Props) {
   const [form, setForm] = useState<FormState>({
     geminiApiKey: '',
     groqApiKey: '',
-    // In browser dev the prefill is whatever the store already holds.
-    dataRoot: stored.dataRoot ?? '',
+    // Packaged, the launcher's default fills the field; browser dev has none, so it starts empty.
+    dataRoot: stored.dataRoot ?? runtimeBridge()?.defaultDataRoot ?? '',
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
     geminiModel: stored.geminiModel ?? '',

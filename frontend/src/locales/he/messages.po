@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:137
+#: src/features/settings/components/ApiKeyField.tsx:139
 msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
@@ -137,7 +137,7 @@ msgid "{0} of {1} parts"
 msgstr "{0} מתוך {1} חלקים"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:123
+#: src/features/settings/components/ApiKeyField.tsx:125
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "המפתח נדחה. צור מפתח חדש בלוח הבקרה של {0}."
 
@@ -388,7 +388,7 @@ msgstr "סיכום מוכן ממתין להעלאה, ול-Fast Study עדיין 
 msgid "A font the PDF needs is missing."
 msgstr "חסר גופן שה-PDF זקוק לו."
 
-#: src/features/settings/components/ApiKeyField.tsx:182
+#: src/features/settings/components/ApiKeyField.tsx:180
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 
@@ -508,10 +508,6 @@ msgstr "דפדפן להורדת הקלטות"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "בניית ה-PDF נמשכה יותר מדי זמן ונעצרה אחרי {seconds} שניות."
 
-#: src/features/settings/components/DataRootField.tsx:58
-msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
-msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
-
 #: src/features/downloads/utils/downloadErrors.ts:21
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "אי אפשר להוריד את {name} בזמן עיבוד או המתנה בתור"
@@ -574,7 +570,7 @@ msgstr "בודק חשבון…"
 msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
-#: src/features/settings/components/ApiKeyField.tsx:119
+#: src/features/settings/components/ApiKeyField.tsx:121
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:68
 msgid "Checking…"
@@ -596,7 +592,7 @@ msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 msgid "Choose your university…"
 msgstr "בחר את האוניברסיטה שלך…"
 
-#: src/features/settings/components/ApiKeyField.tsx:69
+#: src/features/settings/components/ApiKeyField.tsx:71
 msgid "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 msgstr "לחץ על \"Copy\" והדבק את המפתח כאן. Groq מציגה את המפתח פעם אחת בלבד, אז העתק אותו לפני שתסגור את החלון."
 
@@ -810,7 +806,7 @@ msgstr "ה-PDF הנוכחי"
 msgid "Daily run time"
 msgstr "שעת ההרצה היומית"
 
-#: src/features/settings/components/DataRootField.tsx:43
+#: src/features/settings/components/DataRootField.tsx:42
 msgid "Data folder"
 msgstr "תיקיית נתונים"
 
@@ -932,7 +928,7 @@ msgstr "הזן את קוד הגישה של Zoom להקלטה הזו"
 msgid "Estimating…"
 msgstr "מחשב זמן משוער…"
 
-#: src/features/settings/components/DataRootField.tsx:47
+#: src/features/settings/components/DataRootField.tsx:46
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. בחר תיקייה במחשב הזה שאינה מסונכרנת לענן."
 
@@ -940,7 +936,7 @@ msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. 
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "כל הרצאה שטרם הושלמה נאספת בהפעלה הבאה."
 
-#: src/features/settings/components/DataRootField.tsx:69
+#: src/features/settings/components/DataRootField.tsx:67
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלך."
 
@@ -1131,7 +1127,7 @@ msgstr "האוניברסיטה העברית"
 msgid "Home"
 msgstr "דף הבית"
 
-#: src/features/settings/components/ApiKeyField.tsx:144
+#: src/features/settings/components/ApiKeyField.tsx:146
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
 
@@ -1151,7 +1147,7 @@ msgstr "רק להרצאה הזו"
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
-#: src/features/settings/components/ApiKeyField.tsx:121
+#: src/features/settings/components/ApiKeyField.tsx:123
 msgid "Key verified"
 msgstr "המפתח אומת"
 
@@ -1804,7 +1800,7 @@ msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה �
 msgid "Show more"
 msgstr "הצג עוד"
 
-#: src/features/settings/components/ApiKeyField.tsx:158
+#: src/features/settings/components/ApiKeyField.tsx:160
 msgid "Show screenshot"
 msgstr "הצג צילום מסך"
 
@@ -2130,7 +2126,7 @@ msgstr "החשבון המחובר כעת ינותק. חיבור לאתר החד�
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:127
+#: src/features/settings/components/ApiKeyField.tsx:129
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
@@ -2154,7 +2150,7 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 #~ msgid "This Moodle session cannot capture videostream recordings. Reconnect the account."
 #~ msgstr "החיבור הזה ל-Moodle לא יכול ללכוד הקלטות videostream. חבר מחדש את החשבון."
 
-#: src/features/settings/components/DataRootField.tsx:76
+#: src/features/settings/components/DataRootField.tsx:74
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
@@ -2271,7 +2267,7 @@ msgstr "וידאו"
 msgid "We couldn't check right now."
 msgstr "לא הצלחנו לבדוק כרגע."
 
-#: src/features/settings/components/ApiKeyField.tsx:125
+#: src/features/settings/components/ApiKeyField.tsx:127
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 

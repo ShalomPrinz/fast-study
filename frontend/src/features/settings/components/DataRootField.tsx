@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Trans, useLingui } from '@lingui/react/macro'
+import { Trans } from '@lingui/react/macro'
 import { probeDataRoot, type DataRootProbe } from '@/services/settings'
 import ServiceError from '@/shared/components/ServiceError'
 import '@/styles/settings-form.css'
@@ -16,7 +16,6 @@ const PROBE_DELAY_MS = 400
 
 // Where every course, lecture, video and summary is kept on this machine.
 export default function DataRootField({ value, onChange, onUnusableChange }: Props) {
-  const { t } = useLingui()
   const [probe, setProbe] = useState<DataRootProbe>({ kind: 'unknown' })
   const seq = useRef(0)
 
@@ -55,7 +54,6 @@ export default function DataRootField({ value, onChange, onUnusableChange }: Pro
         className={`settings-input settings-input--code ${invalid ? 'settings-input--invalid' : ''}`}
         value={value}
         spellCheck={false}
-        placeholder={t`C:\\Users\\you\\AppData\\Local\\FastStudy\\data`}
         onChange={(e) => onChange(e.target.value)}
       />
       {probe.kind === 'unusable' && (

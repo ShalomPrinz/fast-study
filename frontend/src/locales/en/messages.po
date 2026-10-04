@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:137
+#: src/features/settings/components/ApiKeyField.tsx:139
 msgid "{0} API key"
 msgstr "{0} API key"
 
@@ -137,7 +137,7 @@ msgid "{0} of {1} parts"
 msgstr "{0} of {1} parts"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:123
+#: src/features/settings/components/ApiKeyField.tsx:125
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} rejected this key. Generate a new one in its console."
 
@@ -388,7 +388,7 @@ msgstr "A finished summary is waiting to upload, and Fast Study has no permissio
 msgid "A font the PDF needs is missing."
 msgstr "A font the PDF needs is missing."
 
-#: src/features/settings/components/ApiKeyField.tsx:182
+#: src/features/settings/components/ApiKeyField.tsx:180
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
@@ -508,10 +508,6 @@ msgstr "Browser for downloading recordings"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "Building the PDF took too long and was stopped after {seconds} seconds."
 
-#: src/features/settings/components/DataRootField.tsx:58
-msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
-msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
-
 #: src/features/downloads/utils/downloadErrors.ts:21
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "Can't download {name} while it's being processed or waiting in line"
@@ -574,7 +570,7 @@ msgstr "checking account…"
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
-#: src/features/settings/components/ApiKeyField.tsx:119
+#: src/features/settings/components/ApiKeyField.tsx:121
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:68
 msgid "Checking…"
@@ -596,7 +592,7 @@ msgstr "Choose your university in Settings first"
 msgid "Choose your university…"
 msgstr "Choose your university…"
 
-#: src/features/settings/components/ApiKeyField.tsx:69
+#: src/features/settings/components/ApiKeyField.tsx:71
 msgid "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 msgstr "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 
@@ -810,7 +806,7 @@ msgstr "Current PDF"
 msgid "Daily run time"
 msgstr "Daily run time"
 
-#: src/features/settings/components/DataRootField.tsx:43
+#: src/features/settings/components/DataRootField.tsx:42
 msgid "Data folder"
 msgstr "Data folder"
 
@@ -932,7 +928,7 @@ msgstr "Enter the zoom passcode for this recording"
 msgid "Estimating…"
 msgstr "Estimating…"
 
-#: src/features/settings/components/DataRootField.tsx:47
+#: src/features/settings/components/DataRootField.tsx:46
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 
@@ -940,7 +936,7 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "Every lecture that is not finished yet is picked up on the next start."
 
-#: src/features/settings/components/DataRootField.tsx:69
+#: src/features/settings/components/DataRootField.tsx:67
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 
@@ -1131,7 +1127,7 @@ msgstr "Hebrew University"
 msgid "Home"
 msgstr "Home"
 
-#: src/features/settings/components/ApiKeyField.tsx:144
+#: src/features/settings/components/ApiKeyField.tsx:146
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
@@ -1151,7 +1147,7 @@ msgstr "just this lecture"
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
-#: src/features/settings/components/ApiKeyField.tsx:121
+#: src/features/settings/components/ApiKeyField.tsx:123
 msgid "Key verified"
 msgstr "Key verified"
 
@@ -1804,7 +1800,7 @@ msgstr "Several rows would download into the same lecture ({names}). Rename them
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/settings/components/ApiKeyField.tsx:158
+#: src/features/settings/components/ApiKeyField.tsx:160
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
@@ -2130,7 +2126,7 @@ msgstr "This disconnects your current account. Connecting to the new site needs 
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:127
+#: src/features/settings/components/ApiKeyField.tsx:129
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
@@ -2154,7 +2150,7 @@ msgstr "This Moodle connection can't download these recordings. Reconnect the ac
 #~ msgid "This Moodle session cannot capture videostream recordings. Reconnect the account."
 #~ msgstr "This Moodle session cannot capture videostream recordings. Reconnect the account."
 
-#: src/features/settings/components/DataRootField.tsx:76
+#: src/features/settings/components/DataRootField.tsx:74
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
@@ -2271,7 +2267,7 @@ msgstr "Videos"
 msgid "We couldn't check right now."
 msgstr "We couldn't check right now."
 
-#: src/features/settings/components/ApiKeyField.tsx:125
+#: src/features/settings/components/ApiKeyField.tsx:127
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 

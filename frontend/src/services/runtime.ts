@@ -22,6 +22,8 @@ declare global {
       // The installed app version and the OS language, straight from `app.getVersion()`/`getLocale()`.
       version?: string
       locale?: string
+      // The packaged data folder the init wall starts from (`%LOCALAPPDATA%\FastStudy\data`).
+      defaultDataRoot?: string
       // Not optional: the bridge's absence is the browser-dev test. Identifiers only — `database/`
       // resolves the path; a `target` without `lecture` is a course-level `overview/` file.
       open: {

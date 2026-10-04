@@ -84,7 +84,8 @@ unreachable store shows the app anyway: a downed service is not an unconfigured 
 
 The wall also offers the language (so the rest reads in it) and the Drive toggle (so the account is
 connected now, not mid-run); neither blocks, and Drive's folder is required only while it is on. Auto-run
-and the nightly pass keep their defaults. The data folder is **prefilled and taken as is**, but
+and the nightly pass keep their defaults. The data folder is **prefilled and taken as is** — the stored one, else the bridge's `defaultDataRoot`,
+else empty, which in browser dev reads red — but
 probed as it is typed (`probeDataRoot`, the database's read-only `POST /settings/data-root/probe`, debounced
 and latest-wins): an unusable verdict renders its coded reason under the field and blocks the wall, while an
 unreachable probe is unknown and blocks nothing, since the save validates again. In
