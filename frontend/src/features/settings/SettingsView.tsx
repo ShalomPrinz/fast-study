@@ -20,6 +20,7 @@ import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ApiKeyField from './components/ApiKeyField'
 import BrowserPrereqField from './components/BrowserPrereqField'
+import { useBrowserPrereq } from './hooks/useBrowserPrereq'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
@@ -51,6 +52,7 @@ export default function SettingsView() {
   const { status } = useRunnerStatus()
   const { setSettings } = useSettingsContext()
   const { status: account, refresh: refreshAccount } = useAuthStatus()
+  const browser = useBrowserPrereq()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<SettingsForm | null>(null)
@@ -232,7 +234,7 @@ export default function SettingsView() {
             <h2 className="settings-section-title">
               <Trans>Downloading recordings</Trans>
             </h2>
-            <BrowserPrereqField />
+            <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
             <MoodleSiteField
               value={form.moodleSite}
               // Functional: the probe answers after other fields may have changed.

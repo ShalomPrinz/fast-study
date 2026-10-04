@@ -153,6 +153,8 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   costs auto-download and Zoom capture only, and the copy says a hand-added video still becomes a summary.
   Only success is cached server-side, so **Check again** re-probes. The link is Chrome's: Edge ships with
   Windows, so only a machine missing both sees it. `detail` is English fine print, `dir="ltr"`.
+  The check lives in `hooks/useBrowserPrereq.ts`, so the wall can show its section only once a check
+  says missing (then keeps it, so **Check again** answers in place); `/settings` always shows it.
 - **University account** (`MoodleAccountField`) — the downloads page's `AccountStatus`
   ([DOWNLOADS.md](DOWNLOADS.md)), with `--danger` retoned to neutral: red belongs on the page the session
   actually blocks. The hint names the saved site's host. It belongs to the saved site only, so with none

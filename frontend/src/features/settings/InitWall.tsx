@@ -14,6 +14,7 @@ import {
 } from '@/services/settings'
 import ApiKeyField from './components/ApiKeyField'
 import BrowserPrereqField from './components/BrowserPrereqField'
+import { useBrowserPrereq } from './hooks/useBrowserPrereq'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import LanguageField from './components/LanguageField'
@@ -90,6 +91,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
   const [saving, setSaving] = useState(false)
   const [siteChecking, setSiteChecking] = useState(false)
   const [failure, setFailure] = useState<ReactNode>(null)
+  const browser = useBrowserPrereq()
 
   useEffect(() => {
     async function load() {
@@ -271,12 +273,16 @@ export default function InitWall({ stored: initial, onDone }: Props) {
               />
             </section>
 
-            <section className="settings-section">
-              <SectionTitle mark="optional">
-                <Trans>Downloading recordings</Trans>
-              </SectionTitle>
-              <BrowserPrereqField />
-            </section>
+            {/* A first run has nothing to say about a browser that is there: the section appears only
+                once a check finds none, and then stays so a re-check can answer in place. */}
+            {browser.missingSeen && (
+              <section className="settings-section">
+                <SectionTitle mark="optional">
+                  <Trans>Downloading recordings</Trans>
+                </SectionTitle>
+                <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
+              </section>
+            )}
           </>
         )}
 
