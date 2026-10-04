@@ -157,8 +157,8 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   ([DOWNLOADS.md](DOWNLOADS.md)), with `--danger` retoned to neutral: red belongs on the page the session
   actually blocks. The hint names the saved site's host. It belongs to the saved site only, so with none
   saved — or another one chosen but unsaved — it shows a "save first" hint instead of a Connect that would
-  sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall, outside
-  `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the
+  sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall shows it
+  under the university picker and, outside `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the
   browser check's.
 - **Google account** (`DriveConnection`, over `services/drive.ts`) — rendered only while Drive is on.
   States `unknown` / `disconnected` / `pending` / `connected`. `POST /config/drive/connect` opens the

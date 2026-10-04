@@ -247,6 +247,14 @@ export default function InitWall({ stored: initial, onDone }: Props) {
                 onSupported={saveSite}
                 onChecking={setSiteChecking}
               />
+              {/* The wall renders outside `Layout`, so it brings its own provider — the account
+                  chip is the only consumer that gets this far. */}
+              <AuthStatusProvider>
+                <MoodleAccountField
+                  site={stored.moodleSite}
+                  switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
+                />
+              </AuthStatusProvider>
             </section>
 
             <section className="settings-section">
@@ -268,14 +276,6 @@ export default function InitWall({ stored: initial, onDone }: Props) {
                 <Trans>Downloading recordings</Trans>
               </SectionTitle>
               <BrowserPrereqField />
-              {/* The wall renders outside `Layout`, so it brings its own provider — the account
-                  chip is the only consumer that gets this far. */}
-              <AuthStatusProvider>
-                <MoodleAccountField
-                  site={stored.moodleSite}
-                  switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
-                />
-              </AuthStatusProvider>
             </section>
           </>
         )}
