@@ -44,7 +44,8 @@ def _canned(request: httpx.Request) -> httpx.Response:
 
     url = str(request.url)
     if "audio/transcriptions" in url:
-        return httpx.Response(200, text="שלום", request=request)
+        body = {"text": "שלום", "segments": [{"start": 0, "end": 2, "text": "שלום"}]}
+        return httpx.Response(200, json=body, request=request)
     if url == UPLOAD_URL:
         return httpx.Response(
             200,
@@ -83,8 +84,8 @@ class TestGroq:
         monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
         monkeypatch.setattr(transcribe, "get_duration", lambda _path: 60.0)
 
-        def one_chunk(_audio, tmpdir, index, _seconds):
-            path = tmp_path / f"chunk_{index}.mp3"
+        def one_chunk(_audio, tmpdir, _start, _length):
+            path = tmp_path / "chunk.mp3"
             path.write_bytes(b"ID3")
             return str(path)
 

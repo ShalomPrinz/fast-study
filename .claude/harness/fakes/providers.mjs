@@ -41,13 +41,10 @@ function json(res, status, body, headers = {}) {
   res.end(payload);
 }
 
-function text(res, status, body) {
-  const payload = Buffer.from(body, 'utf8');
-  res.writeHead(status, {
-    'content-type': 'text/plain; charset=utf-8',
-    'content-length': payload.length,
-  });
-  res.end(payload);
+// A verbose_json reply; the segment sits mid-chunk so the backend's overlap trim keeps it.
+function transcription(res, line) {
+  const segments = line ? [{ id: 0, start: 10, end: 20, text: line }] : [];
+  return json(res, 200, { text: line, segments });
 }
 
 function readBody(req) {
@@ -159,9 +156,9 @@ async function handle(req, res) {
     const fail = await failure('groq', req, ['429', '500', 'empty', 'slow']);
     if (fail === '429') return groqRateLimit(res);
     if (fail === '500') return json(res, 500, { error: { message: 'fake groq is down' } });
-    if (fail === 'empty') return text(res, 200, '');
+    if (fail === 'empty') return transcription(res, '');
     const line = TRANSCRIPT[chunk++ % TRANSCRIPT.length];
-    return text(res, 200, line);
+    return transcription(res, line);
   }
 
   // Gemini: models for the probe, generateContent for both summarize and the course overview,

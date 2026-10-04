@@ -16,7 +16,9 @@ from timing import timed_pipeline
 
 log = logging.getLogger("transcribe")
 
-CHUNK_MINUTES = 10
+CHUNK_SECONDS = 600
+# Each chunk starts this much before the previous one ends, so no word is lost to a hard cut.
+OVERLAP_SECONDS = 10
 PARTIAL_TXT = "transcript.partial.txt"
 PARTIAL_META = "transcript.partial.meta.json"
 
@@ -42,28 +44,48 @@ def get_duration(audio_path: str) -> float:
     return duration
 
 
-def split_one_chunk(
-    audio_path: str, tmpdir: str, index: int, chunk_seconds: int
-) -> str:
-    """Copy one fixed-length chunk's mp3 frames out of the audio without re-encoding; Groq
-caps a request at 25 MB."""
+def chunk_count(duration: float) -> int:
+    """How many overlapping chunks cover `duration`; the last one may run short."""
 
-    chunk_path = os.path.join(tmpdir, f"chunk_{index:04d}.mp3")
+    step = CHUNK_SECONDS - OVERLAP_SECONDS
+    return max(1, math.ceil((duration - OVERLAP_SECONDS) / step))
+
+
+def split_one_chunk(audio_path: str, tmpdir: str, start: float, length: float) -> str:
+    """Copy one mp3 chunk's frames out of the audio without re-encoding; Groq caps a
+    request at 25 MB."""
+
+    chunk_path = os.path.join(tmpdir, "chunk.mp3")
     run_ffmpeg(
         [
             "-y",
             "-ss",
-            str(index * chunk_seconds),
+            str(start),
             "-i",
             audio_path,
             "-t",
-            str(chunk_seconds),
+            str(length),
             "-c",
             "copy",
             chunk_path,
         ]
     )
     return chunk_path
+
+
+def keep_chunk_text(segments: list, index: int, total: int) -> str:
+    """The text of chunk `index`'s segments whose midpoint falls in its own share of the
+    audio — overlaps are split at their middle, so each boundary segment is kept once."""
+
+    step = CHUNK_SECONDS - OVERLAP_SECONDS
+    lo = index * step + OVERLAP_SECONDS / 2 if index > 0 else -math.inf
+    hi = (index + 1) * step + OVERLAP_SECONDS / 2 if index < total - 1 else math.inf
+    kept = []
+    for seg in segments:
+        mid = index * step + (seg["start"] + seg["end"]) / 2
+        if lo <= mid < hi:
+            kept.append(seg["text"].strip())
+    return " ".join(t for t in kept if t)
 
 
 def parse_rate_limit_message(msg: str) -> dict:
@@ -116,9 +138,7 @@ def _load_resume_state(audio_path: str) -> dict:
     partial_path = lecture_dir / PARTIAL_TXT
 
     stat = os.stat(audio_path)
-    chunk_seconds = CHUNK_MINUTES * 60
-    duration = get_duration(audio_path)
-    total_chunks = math.ceil(duration / chunk_seconds)
+    total_chunks = chunk_count(get_duration(audio_path))
 
     if meta_path.exists():
         try:
@@ -126,7 +146,8 @@ def _load_resume_state(audio_path: str) -> dict:
             if (
                 meta.get("audio_size") == stat.st_size
                 and meta.get("audio_mtime") == stat.st_mtime
-                and meta.get("chunk_seconds") == chunk_seconds
+                and meta.get("chunk_seconds") == CHUNK_SECONDS
+                and meta.get("overlap_seconds") == OVERLAP_SECONDS
                 and meta.get("total_chunks") == total_chunks
                 and isinstance(meta.get("completed_chunks"), int)
                 and 0 <= meta["completed_chunks"] <= total_chunks
@@ -134,7 +155,6 @@ def _load_resume_state(audio_path: str) -> dict:
                 return {
                     "completed_chunks": meta["completed_chunks"],
                     "total_chunks": total_chunks,
-                    "chunk_seconds": chunk_seconds,
                     "fresh": False,
                 }
         except (json.JSONDecodeError, OSError):
@@ -145,7 +165,6 @@ def _load_resume_state(audio_path: str) -> dict:
     return {
         "completed_chunks": 0,
         "total_chunks": total_chunks,
-        "chunk_seconds": chunk_seconds,
         "fresh": True,
     }
 
@@ -178,7 +197,6 @@ def transcribe_audio(audio_path: str) -> str:
     state = _load_resume_state(audio_path)
     completed = state["completed_chunks"]
     total = state["total_chunks"]
-    chunk_seconds = state["chunk_seconds"]
 
     if state["fresh"]:
         partial_path.write_text("", encoding="utf-8")
@@ -187,7 +205,8 @@ def transcribe_audio(audio_path: str) -> str:
             {
                 "audio_size": stat.st_size,
                 "audio_mtime": stat.st_mtime,
-                "chunk_seconds": chunk_seconds,
+                "chunk_seconds": CHUNK_SECONDS,
+                "overlap_seconds": OVERLAP_SECONDS,
                 "completed_chunks": 0,
                 "total_chunks": total,
             },
@@ -203,13 +222,14 @@ def transcribe_audio(audio_path: str) -> str:
         for i in range(completed, total):
             log.info(f"chunk {i + 1}/{total}")
             try:
-                chunk_path = split_one_chunk(audio_path, tmpdir, i, chunk_seconds)
+                start = i * (CHUNK_SECONDS - OVERLAP_SECONDS)
+                chunk_path = split_one_chunk(audio_path, tmpdir, start, CHUNK_SECONDS)
                 with open(chunk_path, "rb") as f:
                     response = client.audio.transcriptions.create(
                         model="whisper-large-v3",
                         file=f,
                         language="he",
-                        response_format="text",
+                        response_format="verbose_json",
                     )
             except groq.RateLimitError as e:
                 msg = _extract_groq_message(e)
@@ -224,8 +244,9 @@ def transcribe_audio(audio_path: str) -> str:
             except Exception as e:
                 raise CodedError(str(e), "transcription_failed", detail=str(e)) from e
 
-            text = (
-                response.strip() if isinstance(response, str) else str(response).strip()
+            # Segments ride as an extra field the SDK's Transcription model doesn't declare.
+            text = keep_chunk_text(
+                response.model_dump().get("segments") or [], i, total
             )
             with open(partial_path, "a", encoding="utf-8") as f:
                 f.write(text + "\n\n")
@@ -237,7 +258,8 @@ def transcribe_audio(audio_path: str) -> str:
                 {
                     "audio_size": stat.st_size,
                     "audio_mtime": stat.st_mtime,
-                    "chunk_seconds": chunk_seconds,
+                    "chunk_seconds": CHUNK_SECONDS,
+                    "overlap_seconds": OVERLAP_SECONDS,
                     "completed_chunks": i + 1,
                     "total_chunks": total,
                 },

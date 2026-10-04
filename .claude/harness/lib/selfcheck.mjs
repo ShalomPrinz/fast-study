@@ -221,7 +221,7 @@ async function controlModesSwitchAndSwitchBack() {
       method: 'POST',
       expect: false,
     });
-    return status === 200 && !body ? 'empty' : String(status);
+    return status === 200 && !body?.text ? 'empty' : String(status);
   };
   const gemini = async (lecture) => {
     const { status, body } = await call(
