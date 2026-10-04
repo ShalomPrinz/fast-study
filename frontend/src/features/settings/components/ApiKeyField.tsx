@@ -8,6 +8,7 @@ import gemini2 from '@/assets/key-steps/gemini-2.png'
 import gemini3 from '@/assets/key-steps/gemini-3.png'
 import gemini4 from '@/assets/key-steps/gemini-4.png'
 import gemini5 from '@/assets/key-steps/gemini-5.png'
+import gemini6 from '@/assets/key-steps/gemini-6.png'
 import groq1 from '@/assets/key-steps/groq-1.png'
 import groq2 from '@/assets/key-steps/groq-2.png'
 import groq3 from '@/assets/key-steps/groq-3.png'
@@ -58,7 +59,7 @@ function keySteps(provider: Provider): ReactNode[] | null {
       <Trans>In the project list, choose "Create project".</Trans>,
       <Trans>Give the project any name and click "Create project".</Trans>,
       <Trans>Back in the key window, click "Create key".</Trans>,
-      <Trans>Copy the new key and paste it here.</Trans>,
+      <Trans>Click "Copy key" and paste the key here.</Trans>,
     ]
   }
   if (provider.id === 'groq') {
@@ -81,7 +82,7 @@ function keySteps(provider: Provider): ReactNode[] | null {
 // A screenshot per step, in step order, or `null` for a step without one (it shows no toggle);
 // swapping a file in `assets/key-steps/` is all an update takes.
 const SHOTS: Record<string, (string | null)[]> = {
-  gemini: [null, gemini2, gemini3, gemini4, gemini5, null],
+  gemini: [null, gemini2, gemini3, gemini4, gemini5, gemini6],
   groq: [groq1, groq2, groq3],
 }
 
