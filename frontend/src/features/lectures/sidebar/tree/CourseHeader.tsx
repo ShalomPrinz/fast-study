@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useMatch, useNavigate } from 'react-router-dom'
 import { useLingui } from '@lingui/react/macro'
 import type { ExpandHandle } from '@/types'
 import { renameCourse, setCourseArchived } from '@/services/database'
@@ -14,6 +15,8 @@ import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
+import { ROUTES } from '@/shared/utils/routes'
+import { courseRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
 import './CourseHeader.css'
@@ -29,6 +32,8 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const shiftHeld = useShiftHeld()
   const { status } = useRunnerStatus()
   const downloading = useCourseDownloading(course.name)
+  const navigate = useNavigate()
+  const overviewOpen = useMatch(ROUTES.overview)?.params.course === course.name
   // A course rename moves every lecture folder, so anything writing into it by name locks it.
   const renameLocked = isCourseRenameLocked(status, course.name) || downloading
 
@@ -58,6 +63,8 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     // The database may sanitize the typed name, so the page follows the folder it answers with.
     if (selected?.course === course.name) {
       onSelect(effective, selected.lecture, selected.kind)
+    } else if (overviewOpen) {
+      navigate(courseRoute(effective))
     }
     refreshCourses()
   }
