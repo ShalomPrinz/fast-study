@@ -4,9 +4,10 @@ import { openExternalUrl } from '@/services/open'
 import { probeKey, type Provider } from '@/services/settings'
 import Icon from '@/shared/components/Icon'
 import { prefixStatus, shouldProbe, type KeyStatus } from '../utils/keyStatus'
-import gemini1 from '@/assets/key-steps/gemini-1.png'
 import gemini2 from '@/assets/key-steps/gemini-2.png'
 import gemini3 from '@/assets/key-steps/gemini-3.png'
+import gemini4 from '@/assets/key-steps/gemini-4.png'
+import gemini5 from '@/assets/key-steps/gemini-5.png'
 import groq1 from '@/assets/key-steps/groq-1.png'
 import groq2 from '@/assets/key-steps/groq-2.png'
 import groq3 from '@/assets/key-steps/groq-3.png'
@@ -53,11 +54,11 @@ function keySteps(provider: Provider): ReactNode[] | null {
       <Trans>
         Click <ConsoleLink url={url}>Get a key</ConsoleLink> and sign in with your Google account.
       </Trans>,
-      <Trans>
-        Click "Create API key". If you're asked to pick a project, choose any one or let it create a
-        new one.
-      </Trans>,
-      <Trans>Click the copy icon next to the new key, then paste it here.</Trans>,
+      <Trans>Click "Create API key".</Trans>,
+      <Trans>In the project list, choose "Create project".</Trans>,
+      <Trans>Give the project any name and click "Create project".</Trans>,
+      <Trans>Back in the key window, click "Create key".</Trans>,
+      <Trans>Copy the new key and paste it here.</Trans>,
     ]
   }
   if (provider.id === 'groq') {
@@ -77,9 +78,10 @@ function keySteps(provider: Provider): ReactNode[] | null {
   return null
 }
 
-// One screenshot per step, in step order; swapping a file in `assets/key-steps/` is all an update takes.
-const SHOTS: Record<string, string[]> = {
-  gemini: [gemini1, gemini2, gemini3],
+// A screenshot per step, in step order, or `null` for a step without one (it shows no toggle);
+// swapping a file in `assets/key-steps/` is all an update takes.
+const SHOTS: Record<string, (string | null)[]> = {
+  gemini: [null, gemini2, gemini3, gemini4, gemini5, null],
   groq: [groq1, groq2, groq3],
 }
 
