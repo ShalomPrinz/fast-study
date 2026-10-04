@@ -1302,6 +1302,24 @@ class TestStatusAndListing:
 
         assert asyncio.run(go()) == ["א", "ב", "ד"]
 
+    def test_active_courses_survives_concurrent_inserts(self):
+        # Simulates the event loop inserting keys mid-iteration (the route runs on a threadpool).
+        class InsertingLock:
+            def locked(self):
+                course_runner._locks[("new", str(len(course_runner._locks)))] = None
+                return True
+
+        class InsertingEntry(dict):
+            def get(self, key, default=None):
+                course_runner._status[f"new{len(course_runner._status)}"] = {}
+                entries[f"s{len(entries)}"] = {}
+                return super().get(key, default)
+
+        entries = {"topics": InsertingEntry(status="pending")}
+        course_runner._locks[("א", "topics")] = InsertingLock()
+        course_runner._status["ב"] = entries
+        assert course_runner.active_courses() == ["א", "ב"]
+
     def test_status_snapshot_lists_course_for_whole_generation(self, db, monkeypatch):
         from pipeline import runner as pipeline_runner
 

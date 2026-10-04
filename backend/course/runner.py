@@ -37,11 +37,14 @@ def active_courses() -> list[str]:
     """Courses with an overview slug pending or holding its lock — a run that a course rename
     would break. The lock covers the gap between phases, when the entry briefly reads "done"."""
 
-    held = {c for (c, _slug), lock in _locks.items() if lock.locked()}
+    # Snapshot each dict: this runs on a threadpool thread while the loop may insert keys.
+    held = {c for (c, _slug), lock in list(_locks.items()) if lock.locked()}
     seeded = {
         c
-        for c, entries in _status.items()
-        if any(e.get("status") in ("pending", "running") for e in entries.values())
+        for c, entries in list(_status.items())
+        if any(
+            e.get("status") in ("pending", "running") for e in list(entries.values())
+        )
     }
     return sorted(held | seeded)
 
