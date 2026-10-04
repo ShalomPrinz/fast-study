@@ -29,7 +29,9 @@ so "Download all" is disabled until every playlist is expanded and never auto-ex
 header's are those leaves (`leafCount`; an unexpanded playlist counts as one until its children are known). Each leaf becomes a
 `RunTarget` **at submit**: the row's resolved name and kind, plus the two verdicts only the page can give
 because they read the live tree — `skipped` (`hasResource`, the rule that tints the row green, or
-`overwritesVideo`, so an unprobed `unknown` never replaces a stored video — a run has no confirm) and
+`overwritesVideo`, so an unprobed `unknown` never replaces a stored video — a run has no confirm — or the
+pipeline running or queued on the target or a video's split sibling, which a single row refuses; the
+header counts it among "already there") and
 `unsupported` (a probe already condemned it; skipping it saves a probe round-trip per run). Everything
 else goes as `pending`. A submit where two `pending` non-material targets share a kind and name
 (`collidingNames`) is refused with a toast: they would race into one lecture and the later PUT would

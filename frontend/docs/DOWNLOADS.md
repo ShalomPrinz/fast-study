@@ -128,7 +128,7 @@ count instead.
 A row whose target lecture — or, for a video row, a `splitSiblings` name — the pipeline is running or
 queued on is disabled with a tooltip, and `useRecordingDownload` re-checks at start (a confirm replays an
 older render): a video PUT would wipe the folder under a run that keeps writing the old video's outputs,
-and a material would race the summary.
+and a material would race the summary. "Download all" skips such targets instead (see `BULK.md`).
 
 ## Material rows and name suggestion
 
