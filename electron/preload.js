@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('faststudy', {
   // initial locale when nothing is stored.
   version: config.version,
   locale: config.locale,
+  // The init wall's prefilled data folder, `data` under the state root; never created here.
+  defaultDataRoot: config.defaultDataRoot,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
   // `read()` reports the two keys as set/unset flags only.
   settings: {

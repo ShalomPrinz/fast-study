@@ -33,6 +33,8 @@ const STATE_DIR = app.isPackaged
   : path.join(REPO_ROOT, '.state');
 
 const LOG_FILE = path.join(STATE_DIR, 'logs', 'launch.log');
+// The init wall's prefilled data folder: a suggestion only — nothing creates it until the user saves.
+const DEFAULT_DATA_ROOT = path.join(STATE_DIR, 'data');
 
 const LOG_TAIL_BYTES = 200_000;
 // The values the scrub reads from env that main holds elsewhere: the secret in a constant, the
@@ -437,6 +439,7 @@ function createWindow(checks) {
       checks,
       version: app.getVersion(),
       locale: app.getLocale(),
+      defaultDataRoot: DEFAULT_DATA_ROOT,
     };
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));

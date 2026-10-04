@@ -29,13 +29,15 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, open, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, open, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
 `version` is `app.getVersion()` rather than a Vite `define`, so it is what the installer put on
 disk with no build-time coupling to `electron/package.json`. `locale` is `app.getLocale()`, the
 frontend's initial language when the profile holds no pick ([`I18N.md`](../../frontend/docs/I18N.md)).
+`defaultDataRoot` is `data` under the state root (`%LOCALAPPDATA%\FastStudy\data` packaged,
+`.state/data` in dev) — only the init wall's prefill: main creates nothing, the database does on save.
 
 `boot` belongs to the launch screen alone, which loads in the same window and so through the same
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
