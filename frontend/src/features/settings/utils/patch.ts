@@ -17,8 +17,9 @@ export interface SettingsForm {
   autoRun: AutoRun
   nightlyRun: boolean
   nightlyHour: number
-  // `''` while no savable site is chosen; never sent, since a site is cleared by nothing.
-  moodleSite: string
+  // `''` is "no university", which clears a stored site; `null` while a site is chosen but not yet
+  // savable (in flight, unsupported), which leaves the stored one alone.
+  moodleSite: string | null
 }
 
 /** The form as the store answers it, used on load and after every save so a later save diffs only
@@ -58,7 +59,7 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
   if (form.nightlyRun !== (stored.nightlyRun ?? true)) patch.nightlyRun = form.nightlyRun
   if (form.nightlyHour !== toNightlyHour(stored.nightlyHour)) patch.nightlyHour = form.nightlyHour
-  if (form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')) {
+  if (form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')) {
     patch.moodleSite = form.moodleSite
   }
   return patch

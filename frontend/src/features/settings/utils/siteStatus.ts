@@ -33,10 +33,11 @@ function originOf(url: string): string {
   }
 }
 
-/** The value the form may save for a status, `''` when none. Unlike a key, a definitive
+/** The value the form may save for a status, `null` when none. Unlike a key, a definitive
  *  "unsupported" can never work, so it saves nothing; neither does an answer still in flight. */
-export function savableSite(status: SiteStatus): string {
-  return status?.kind === 'supported' || status?.kind === 'unverified' ? status.site : ''
+export function savableSite(status: SiteStatus): string | null {
+  if (status?.kind !== 'supported' && status?.kind !== 'unverified') return null
+  return status.site || null
 }
 
 /** Runs site probes in order: a value already probed is skipped, and a slower earlier answer never

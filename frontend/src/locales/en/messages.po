@@ -396,7 +396,7 @@ msgstr "A key is saved — type to replace it"
 #~ msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 #~ msgstr "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 
-#: src/features/settings/SettingsView.tsx:335
+#: src/features/settings/SettingsView.tsx:342
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "A lecture running now would save some files in the old folder and the rest in the new one."
 
@@ -550,7 +550,7 @@ msgstr "Cancel"
 #~ msgid "Catch up on unfinished lectures overnight"
 #~ msgstr "Catch up on unfinished lectures overnight"
 
-#: src/features/settings/SettingsView.tsx:334
+#: src/features/settings/SettingsView.tsx:341
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -572,7 +572,7 @@ msgstr "checking Drive…"
 
 #: src/features/settings/components/ApiKeyField.tsx:121
 #: src/features/settings/components/BrowserPrereqField.tsx:33
-#: src/features/settings/components/MoodleSiteField.tsx:68
+#: src/features/settings/components/MoodleSiteField.tsx:70
 msgid "Checking…"
 msgstr "Checking…"
 
@@ -588,7 +588,7 @@ msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 msgid "Choose your university in Settings first"
 msgstr "Choose your university in Settings first"
 
-#: src/features/settings/components/MoodleSiteField.tsx:101
+#: src/features/settings/components/MoodleSiteField.tsx:103
 msgid "Choose your university…"
 msgstr "Choose your university…"
 
@@ -881,7 +881,7 @@ msgstr "Downloading {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
-#: src/features/settings/InitWall.tsx:265
+#: src/features/settings/InitWall.tsx:276
 #: src/features/settings/SettingsView.tsx:235
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
@@ -1007,7 +1007,7 @@ msgstr "Fast Study couldn't reach your files. Try again."
 #~ msgid "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 #~ msgstr "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 
-#: src/features/settings/components/MoodleSiteField.tsx:130
+#: src/features/settings/components/MoodleSiteField.tsx:131
 msgid "Fast Study finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "Fast Study finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 
@@ -1023,7 +1023,7 @@ msgstr "Fast Study signs in to <0>{host}</0> with this account to find and fetch
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 
-#: src/features/settings/InitWall.tsx:192
+#: src/features/settings/InitWall.tsx:198
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
@@ -1031,7 +1031,7 @@ msgstr "Fast Study uses two free services: one turns the recording into text, th
 msgid "File type"
 msgstr "File type"
 
-#: src/features/settings/InitWall.tsx:277
+#: src/features/settings/InitWall.tsx:288
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
@@ -1052,7 +1052,7 @@ msgid "finishing…"
 msgstr "finishing…"
 
 #. placeholder {0}: status.site
-#: src/features/settings/components/MoodleSiteField.tsx:71
+#: src/features/settings/components/MoodleSiteField.tsx:73
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
@@ -1097,7 +1097,7 @@ msgstr "Google account"
 #~ msgid "Google credentials are missing. Put credentials.json at {path}."
 #~ msgstr "Google credentials are missing. Put credentials.json at {path}."
 
-#: src/features/settings/InitWall.tsx:249
+#: src/features/settings/InitWall.tsx:260
 #: src/features/settings/SettingsView.tsx:222
 msgid "Google Drive"
 msgstr "Google Drive"
@@ -1199,7 +1199,7 @@ msgstr "Lectures"
 msgid "Lectures {0}-{1}"
 msgstr "Lectures {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:167
+#: src/features/settings/InitWall.tsx:173
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
@@ -1465,7 +1465,7 @@ msgstr "Other links"
 #~ msgid "Other Videos"
 #~ msgstr "Other Videos"
 
-#: src/features/settings/components/MoodleSiteField.tsx:108
+#: src/features/settings/components/MoodleSiteField.tsx:109
 msgid "Other…"
 msgstr "Other…"
 
@@ -1616,6 +1616,10 @@ msgstr "Recordings · {selected}"
 msgid "Reload"
 msgstr "Reload"
 
+#: src/features/settings/SettingsView.tsx:325
+msgid "Remove your university?"
+msgstr "Remove your university?"
+
 #: src/features/downloads/utils/renames.ts:30
 msgid "Renamed \"{before}\" to \"{name}\" — some characters can't be used in a folder name."
 msgstr "Renamed \"{before}\" to \"{name}\" — some characters can't be used in a folder name."
@@ -1737,7 +1741,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:286
+#: src/features/settings/InitWall.tsx:297
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -1824,7 +1828,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:286
+#: src/features/settings/InitWall.tsx:297
 msgid "Start using Fast Study"
 msgstr "Start using Fast Study"
 
@@ -1895,7 +1899,7 @@ msgstr "Summary model"
 #~ msgid "summary.pdf is older than summary.md. Re-generate it."
 #~ msgstr "summary.pdf is older than summary.md. Re-generate it."
 
-#: src/features/settings/SettingsView.tsx:323
+#: src/features/settings/SettingsView.tsx:325
 msgid "Switch to another university?"
 msgstr "Switch to another university?"
 
@@ -2116,7 +2120,11 @@ msgstr "This computer can't keep API keys safely, so they can't be saved here. E
 msgid "This course has no summaries yet."
 msgstr "This course has no summaries yet."
 
-#: src/features/settings/SettingsView.tsx:324
+#: src/features/settings/SettingsView.tsx:330
+msgid "This disconnects your current account, and recordings can no longer be found on its Moodle site."
+msgstr "This disconnects your current account, and recordings can no longer be found on its Moodle site."
+
+#: src/features/settings/SettingsView.tsx:329
 msgid "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
 msgstr "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
 
@@ -2150,7 +2158,7 @@ msgstr "This Moodle connection can't download these recordings. Reconnect the ac
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
-#: src/features/settings/InitWall.tsx:170
+#: src/features/settings/InitWall.tsx:176
 msgid "This only needs to be done once."
 msgstr "This only needs to be done once."
 
@@ -2190,7 +2198,7 @@ msgstr "Transcript"
 msgid "Unarchive course"
 msgstr "Unarchive course"
 
-#: src/features/settings/components/MoodleSiteField.tsx:91
+#: src/features/settings/components/MoodleSiteField.tsx:93
 msgid "University"
 msgstr "University"
 
@@ -2267,7 +2275,7 @@ msgstr "We couldn't check right now."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 
-#: src/features/settings/components/MoodleSiteField.tsx:78
+#: src/features/settings/components/MoodleSiteField.tsx:80
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "We couldn't check this site right now. You can still save it."
 
@@ -2275,7 +2283,7 @@ msgstr "We couldn't check this site right now. You can still save it."
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
-#: src/features/settings/InitWall.tsx:216
+#: src/features/settings/InitWall.tsx:222
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
@@ -2307,15 +2315,15 @@ msgstr "Yes"
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
 
-#: src/features/settings/InitWall.tsx:198
+#: src/features/settings/InitWall.tsx:204
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 
-#: src/features/settings/InitWall.tsx:189
+#: src/features/settings/InitWall.tsx:195
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/settings/InitWall.tsx:227
+#: src/features/settings/InitWall.tsx:233
 msgid "Your university"
 msgstr "Your university"
 
@@ -2323,7 +2331,7 @@ msgstr "Your university"
 msgid "Your university session expired. Reconnect your account."
 msgstr "Your university session expired. Reconnect your account."
 
-#: src/features/settings/components/MoodleSiteField.tsx:117
+#: src/features/settings/components/MoodleSiteField.tsx:118
 msgid "Your university's Moodle address"
 msgstr "Your university's Moodle address"
 

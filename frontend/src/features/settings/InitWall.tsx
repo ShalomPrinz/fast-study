@@ -70,6 +70,8 @@ export default function InitWall({ stored: initial, onDone }: Props) {
   // The store as this wall last wrote it: a confirmed site is saved ahead of the rest of the form.
   const [stored, setStored] = useState(initial)
   const siteSaves = useRef(Promise.resolve())
+  // The site the store holds once every queued site save has landed, so a repeat is never resent.
+  const savedSite = useRef(initial.moodleSite ?? '')
   const [options, setOptions] = useState<ConfigOptions | null>(null)
   const [form, setForm] = useState<FormState>({
     geminiApiKey: '',
@@ -133,12 +135,16 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     }
   }
 
-  // A site the probe confirms is written at once, so the account can be connected on the wall. Saves
-  // are chained, so a quick second pick can never land before the first and leave it stored.
+  // A site the probe confirms, or `''` for no university, is written at once, so the account can be
+  // connected on the wall and never outlives its site. Saves are chained, so a quick second pick can
+  // never land before the first and leave it stored.
   function saveSite(site: string) {
     siteSaves.current = siteSaves.current.then(async () => {
+      if (site === savedSite.current) return
       try {
-        setStored(await saveSettings({ moodleSite: site }))
+        const saved = await saveSettings({ moodleSite: site })
+        savedSite.current = saved.moodleSite ?? ''
+        setStored(saved)
       } catch (err) {
         setFailure(failureNode(err))
       }
@@ -229,7 +235,10 @@ export default function InitWall({ stored: initial, onDone }: Props) {
               <MoodleSiteField
                 value={form.moodleSite}
                 // Functional: the probe answers after other fields may have changed.
-                onChange={(v) => setForm((f) => ({ ...f, moodleSite: v }))}
+                onChange={(v) => {
+                  setForm((f) => ({ ...f, moodleSite: v }))
+                  if (v === '') saveSite('')
+                }}
                 onSupported={saveSite}
                 onChecking={setSiteChecking}
               />
@@ -238,7 +247,9 @@ export default function InitWall({ stored: initial, onDone }: Props) {
               <AuthStatusProvider>
                 <MoodleAccountField
                   site={stored.moodleSite}
-                  switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
+                  switching={
+                    form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')
+                  }
                 />
               </AuthStatusProvider>
             </section>

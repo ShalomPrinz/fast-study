@@ -85,11 +85,18 @@ describe('buildPatch', () => {
     expect(buildPatch(defaulted, STORED)).toEqual({})
   })
 
-  it('sends a newly chosen site and never a blank one, which would unset the university', () => {
+  it('sends a newly chosen site', () => {
     expect(buildPatch({ ...UNCHANGED, moodleSite: 'https://moodle.tau.ac.il' }, STORED)).toEqual({
       moodleSite: 'https://moodle.tau.ac.il',
     })
-    expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, STORED)).toEqual({})
+  })
+
+  it('clears a stored site when no university is chosen, and leaves it while a choice is unsavable', () => {
+    expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, STORED)).toEqual({ moodleSite: '' })
+    expect(buildPatch({ ...UNCHANGED, moodleSite: null }, STORED)).toEqual({})
+    expect(buildPatch({ ...UNCHANGED, moodleSite: '' }, { ...STORED, moodleSite: null })).toEqual(
+      {},
+    )
   })
 })
 

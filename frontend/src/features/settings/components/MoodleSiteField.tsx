@@ -2,15 +2,16 @@ import { useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { probeMoodleSite } from '@/services/settings'
 import ServiceError from '@/shared/components/ServiceError'
-import { choiceForSite, MOODLE_SITE_PRESETS, OTHER_SITE } from '../utils/moodleSites'
+import { choiceForSite, choosesNoSite, MOODLE_SITE_PRESETS, OTHER_SITE } from '../utils/moodleSites'
 import { savableSite, siteProber, type SiteStatus } from '../utils/siteStatus'
 import '@/styles/settings-form.css'
 
 interface Props {
   // The site the form would save: the stored one until an edit, then whatever the probe allows.
-  value: string
-  // Called with `''` while nothing savable is chosen, which is what holds the save back.
-  onChange: (site: string) => void
+  value: string | null
+  // A savable site, `''` for no university (which clears a stored one), or `null` while the choice is
+  // not yet savable, which holds the save back.
+  onChange: (site: string | null) => void
   // Told of each site the probe confirms, before any save — the wall stores it right away.
   onSupported?: (site: string) => void
   // Told when a probe starts and stops: an answer still in flight holds the save, a blank site never does.
@@ -28,7 +29,7 @@ const TONE: Record<string, string> = {
 export default function MoodleSiteField({ value, onChange, onSupported, onChecking }: Props) {
   const { t } = useLingui()
   const [choice, setChoice] = useState(() => choiceForSite(value || null))
-  const [typed, setTyped] = useState(() => (choice === OTHER_SITE ? value : ''))
+  const [typed, setTyped] = useState(() => (choice === OTHER_SITE ? (value ?? '') : ''))
   const [status, setStatus] = useState<SiteStatus>(null)
   // The probe lands after renders the parent's callback may have been replaced in.
   const report = useRef({ onChange, onSupported, onChecking })
@@ -46,18 +47,19 @@ export default function MoodleSiteField({ value, onChange, onSupported, onChecki
     [],
   )
 
-  // Any edit forgets the last answer and holds the save until a new one lands.
-  function forget() {
+  // Any edit forgets the last answer; a choice that means no university says so at once, any other
+  // holds the save until a new answer lands.
+  function forget(nextChoice: string, nextTyped: string) {
     prober.reset()
     setStatus(null)
     onChecking(false)
-    onChange('')
+    onChange(choosesNoSite(nextChoice, nextTyped) ? '' : null)
   }
 
   function pick(next: string) {
     setChoice(next)
     setTyped('')
-    forget()
+    forget(next, '')
     const preset = MOODLE_SITE_PRESETS.find((p) => p.id === next)
     if (preset) void prober.probe(preset.url)
   }
@@ -97,9 +99,8 @@ export default function MoodleSiteField({ value, onChange, onSupported, onChecki
         value={choice}
         onChange={(e) => pick(e.target.value)}
       >
-        <option value="" disabled>
-          {t`Choose your university…`}
-        </option>
+        {/* Selectable: it is how a user without a Moodle site, or one who picked by mistake, says none. */}
+        <option value="">{t`Choose your university…`}</option>
         {MOODLE_SITE_PRESETS.map((preset) => (
           <option key={preset.id} value={preset.id}>
             {t(preset.name)}
@@ -119,7 +120,7 @@ export default function MoodleSiteField({ value, onChange, onSupported, onChecki
           value={typed}
           onChange={(e) => {
             setTyped(e.target.value)
-            forget()
+            forget(OTHER_SITE, e.target.value)
           }}
           onBlur={() => void prober.probe(latest.current)}
           // The change event carrying the pasted text fires after `paste`, so probe on the next tick.

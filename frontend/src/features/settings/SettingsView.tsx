@@ -243,7 +243,7 @@ export default function SettingsView() {
             />
             <MoodleAccountField
               site={stored.moodleSite}
-              switching={!!form.moodleSite && form.moodleSite !== (stored.moodleSite ?? '')}
+              switching={form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')}
             />
           </section>
 
@@ -320,8 +320,15 @@ export default function SettingsView() {
 
       {pending?.guard === 'site' && (
         <ConfirmModal
-          message={t`Switch to another university?`}
-          warning={t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`}
+          // A blank site is "no university": it drops the account just the same, with nothing to connect to.
+          message={
+            pending.patch.moodleSite ? t`Switch to another university?` : t`Remove your university?`
+          }
+          warning={
+            pending.patch.moodleSite
+              ? t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`
+              : t`This disconnects your current account, and recordings can no longer be found on its Moodle site.`
+          }
           onConfirm={() => {
             setPending(null)
             guardDataRoot(pending.patch)

@@ -396,7 +396,7 @@ msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 #~ msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 #~ msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
-#: src/features/settings/SettingsView.tsx:335
+#: src/features/settings/SettingsView.tsx:342
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -550,7 +550,7 @@ msgstr "ביטול"
 #~ msgid "Catch up on unfinished lectures overnight"
 #~ msgstr "להשלים הרצאות שלא הסתיימו במהלך הלילה"
 
-#: src/features/settings/SettingsView.tsx:334
+#: src/features/settings/SettingsView.tsx:341
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -572,7 +572,7 @@ msgstr "בודק את Drive…"
 
 #: src/features/settings/components/ApiKeyField.tsx:121
 #: src/features/settings/components/BrowserPrereqField.tsx:33
-#: src/features/settings/components/MoodleSiteField.tsx:68
+#: src/features/settings/components/MoodleSiteField.tsx:70
 msgid "Checking…"
 msgstr "בודק…"
 
@@ -588,7 +588,7 @@ msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי �
 msgid "Choose your university in Settings first"
 msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 
-#: src/features/settings/components/MoodleSiteField.tsx:101
+#: src/features/settings/components/MoodleSiteField.tsx:103
 msgid "Choose your university…"
 msgstr "בחר את האוניברסיטה שלך…"
 
@@ -881,7 +881,7 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/settings/InitWall.tsx:265
+#: src/features/settings/InitWall.tsx:276
 #: src/features/settings/SettingsView.tsx:235
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
@@ -1007,7 +1007,7 @@ msgstr "Fast Study לא הצליחה לגשת לקבצים שלך. נסה שוב
 #~ msgid "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 #~ msgstr "Fast Study מפעיל את Google Chrome או את Microsoft Edge כדי להביא הקלטות מאתר הקורס. הפיכת סרטון לסיכום לא משתמשת בו כלל."
 
-#: src/features/settings/components/MoodleSiteField.tsx:130
+#: src/features/settings/components/MoodleSiteField.tsx:131
 msgid "Fast Study finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "Fast Study מוצאת את ההקלטות שלך באתר ה-Moodle של האוניברסיטה. אם היא לא ברשימה, בחר \"אחר…\" והדבק את כתובת ה-Moodle שלה."
 
@@ -1023,7 +1023,7 @@ msgstr "Fast Study מתחברת ל-<0>{host}</0> עם החשבון הזה כדי
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study משתמשת ב-Google Chrome או ב-Microsoft Edge כדי להוריד הקלטות מאתר הקורס. הפיכת וידאו לסיכום לא דורשת דפדפן."
 
-#: src/features/settings/InitWall.tsx:192
+#: src/features/settings/InitWall.tsx:198
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
 
@@ -1031,7 +1031,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:277
+#: src/features/settings/InitWall.tsx:288
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
@@ -1052,7 +1052,7 @@ msgid "finishing…"
 msgstr "מסיים…"
 
 #. placeholder {0}: status.site
-#: src/features/settings/components/MoodleSiteField.tsx:71
+#: src/features/settings/components/MoodleSiteField.tsx:73
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "נמצא ה-Moodle של האוניברסיטה: <0>{0}</0>"
 
@@ -1097,7 +1097,7 @@ msgstr "חשבון Google"
 #~ msgid "Google credentials are missing. Put credentials.json at {path}."
 #~ msgstr "חסרים פרטי ההתחברות ל-Google. שים את credentials.json בנתיב {path}."
 
-#: src/features/settings/InitWall.tsx:249
+#: src/features/settings/InitWall.tsx:260
 #: src/features/settings/SettingsView.tsx:222
 msgid "Google Drive"
 msgstr "Google Drive"
@@ -1199,7 +1199,7 @@ msgstr "הרצאות"
 msgid "Lectures {0}-{1}"
 msgstr "הרצאות {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:167
+#: src/features/settings/InitWall.tsx:173
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
@@ -1465,7 +1465,7 @@ msgstr "קישורים אחרים"
 #~ msgid "Other Videos"
 #~ msgstr "סרטונים אחרים"
 
-#: src/features/settings/components/MoodleSiteField.tsx:108
+#: src/features/settings/components/MoodleSiteField.tsx:109
 msgid "Other…"
 msgstr "אחר…"
 
@@ -1616,6 +1616,10 @@ msgstr "הקלטות · {selected}"
 msgid "Reload"
 msgstr "רענון"
 
+#: src/features/settings/SettingsView.tsx:325
+msgid "Remove your university?"
+msgstr "להסיר את האוניברסיטה?"
+
 #: src/features/downloads/utils/renames.ts:30
 msgid "Renamed \"{before}\" to \"{name}\" — some characters can't be used in a folder name."
 msgstr "השם שונה מ-\"{before}\" ל-\"{name}\" — יש תווים שאי אפשר להשתמש בהם בשם תיקייה."
@@ -1737,7 +1741,7 @@ msgstr "שמירה בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:286
+#: src/features/settings/InitWall.tsx:297
 msgid "Saving…"
 msgstr "שומר…"
 
@@ -1824,7 +1828,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
 
-#: src/features/settings/InitWall.tsx:286
+#: src/features/settings/InitWall.tsx:297
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -1895,7 +1899,7 @@ msgstr "מודל הסיכום"
 #~ msgid "summary.pdf is older than summary.md. Re-generate it."
 #~ msgstr "summary.pdf ישן מ-summary.md. יש לייצר אותו מחדש."
 
-#: src/features/settings/SettingsView.tsx:323
+#: src/features/settings/SettingsView.tsx:325
 msgid "Switch to another university?"
 msgstr "לעבור לאוניברסיטה אחרת?"
 
@@ -2116,7 +2120,11 @@ msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, 
 msgid "This course has no summaries yet."
 msgstr "אין עדיין סיכומים בקורס הזה."
 
-#: src/features/settings/SettingsView.tsx:324
+#: src/features/settings/SettingsView.tsx:330
+msgid "This disconnects your current account, and recordings can no longer be found on its Moodle site."
+msgstr "החשבון המחובר כעת ינותק, ולא יהיה אפשר עוד למצוא הקלטות באתר ה-Moodle שלה."
+
+#: src/features/settings/SettingsView.tsx:329
 msgid "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
 msgstr "החשבון המחובר כעת ינותק. חיבור לאתר החדש דורש התחברות מלאה בחלון דפדפן."
 
@@ -2150,7 +2158,7 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
-#: src/features/settings/InitWall.tsx:170
+#: src/features/settings/InitWall.tsx:176
 msgid "This only needs to be done once."
 msgstr "צריך לעשות את זה רק פעם אחת."
 
@@ -2190,7 +2198,7 @@ msgstr "תמלול"
 msgid "Unarchive course"
 msgstr "הוצאת קורס מהארכיון"
 
-#: src/features/settings/components/MoodleSiteField.tsx:91
+#: src/features/settings/components/MoodleSiteField.tsx:93
 msgid "University"
 msgstr "אוניברסיטה"
 
@@ -2267,7 +2275,7 @@ msgstr "לא הצלחנו לבדוק כרגע."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/components/MoodleSiteField.tsx:78
+#: src/features/settings/components/MoodleSiteField.tsx:80
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור אותו בכל זאת."
 
@@ -2275,7 +2283,7 @@ msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:216
+#: src/features/settings/InitWall.tsx:222
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -2307,15 +2315,15 @@ msgstr "כן"
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
 
-#: src/features/settings/InitWall.tsx:198
+#: src/features/settings/InitWall.tsx:204
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
 
-#: src/features/settings/InitWall.tsx:189
+#: src/features/settings/InitWall.tsx:195
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלך"
 
-#: src/features/settings/InitWall.tsx:227
+#: src/features/settings/InitWall.tsx:233
 msgid "Your university"
 msgstr "האוניברסיטה שלך"
 
@@ -2323,7 +2331,7 @@ msgstr "האוניברסיטה שלך"
 msgid "Your university session expired. Reconnect your account."
 msgstr "תוקף החיבור לאוניברסיטה פג. חבר מחדש את החשבון."
 
-#: src/features/settings/components/MoodleSiteField.tsx:117
+#: src/features/settings/components/MoodleSiteField.tsx:118
 msgid "Your university's Moodle address"
 msgstr "כתובת ה-Moodle של האוניברסיטה"
 

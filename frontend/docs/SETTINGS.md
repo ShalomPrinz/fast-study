@@ -133,12 +133,16 @@ slot reads `supported` (the canonical site), `unsupported` (the `moodle_site_uns
 
 **The save rule is the opposite of a key's.** A key the provider rejects might still be right; a site that
 definitively isn't a usable Moodle can never work. So `unsupported` saves nothing — the field hands the form
-`''`, which `buildPatch` never sends, so the stored site stays. A probe in flight holds Save on both screens
+`null`, which `buildPatch` never sends, so the stored site stays. A probe in flight holds Save on both screens
 (`onChecking`), so a click can't outrun the answer and drop the choice; a blank site never blocks. `unverified` saves, since a
 bot wall or a dropped connection says nothing about the site; the post-login check in the auto-downloader
 is the backstop. What is saved is always the probe's canonical root, never the typed text.
 
-**The wall saves a confirmed site at once**: a `supported` answer writes `moodle_site` alone through
+**No university is a choice too.** The "Choose your university…" entry, or "Other…" with no address
+(`choosesNoSite`), hands the form `''`, which `buildPatch` sends and every store and auto's `/config`
+read as cleared — the wall at once, `/settings` on Save behind the same confirm as a switch.
+
+**The wall saves a confirmed site at once**: a `supported` answer, or no university, writes `moodle_site` alone through
 `saveSettings` (store, then auto's `/config`), chained so a quicker second pick never lands first, which
 makes Connect live on the wall; the rest of the form saves on submit as before.
 
