@@ -39,6 +39,13 @@ still reads ready and a retry cannot leave a second copy of a service holding a 
 re-runs the whole boot from a clean slate — a probed-once startup check aside, nothing from the
 failed attempt is carried — and **Quit** ends the app.
 
+A spawn that fails — whether Node emits `'error'` or throws synchronously, as it does for `UNKNOWN` —
+takes the same path. Packaged on Windows, a binary under `resources/` failing with `ENOENT`,
+`UNKNOWN`, `EPERM` or `EACCES` is almost always antivirus quarantining or still scanning the unsigned
+`services.exe`, so the message names that and the restore-from-Protection-history fix instead of the
+raw error, which stays in the log. Like the rest of the page it is English and carries no error code:
+nothing would resolve one ([ERROR-CODES.md](../../docs/ERROR-CODES.md)).
+
 The page's test ids are a contract held for `delivery/smoke/`: each row's `data-testid="boot-row"` with
 `data-service` and `data-state` (main's raw values), and `boot-error`, `boot-log`, `boot-retry`.
 

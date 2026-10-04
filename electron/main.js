@@ -225,17 +225,44 @@ function setService(name, patch) {
   publishBoot();
 }
 
+// How a bundled binary fails to spawn once antivirus has quarantined it (gone) or is still scanning it.
+const QUARANTINE_CODES = new Set(['ENOENT', 'UNKNOWN', 'EPERM', 'EACCES']);
+
+/** The launch screen's error for a child that could not be spawned; the raw error goes to the log. */
+function spawnFailure(spec, error) {
+  log(spec.name, `spawn failed: ${error.stack ?? error.message}`);
+  const bundled =
+    app.isPackaged &&
+    process.platform === 'win32' &&
+    spec.command.startsWith(process.resourcesPath + path.sep) &&
+    QUARANTINE_CODES.has(error.code);
+  if (!bundled) return new Error(`${spec.name} could not start: ${error.message}`);
+  const file = path.basename(spec.command);
+  return new Error(
+    `Your antivirus probably quarantined FastStudy's ${file}, so the app cannot start.\n\n` +
+      `Open Windows Security → Virus & threat protection → Protection history, find ${file}, ` +
+      `and choose Restore or Allow. Then click Try again.\n\n` +
+      `If it is not listed there, reinstall FastStudy.`,
+  );
+}
+
 /** Spawn one child and resolve the port it reports on stdout. */
 function startChild(spec, env) {
-  const child = spawn(spec.command, spec.args, {
-    cwd: spec.cwd,
-    env: { ...process.env, ...env, ...spec.env },
-    stdio: ['ignore', 'pipe', 'pipe'],
-    // Its own process group, so the kill on quit reaches the tools it spawned (ffmpeg, chrome)
-    // and not just the service. Windows has no groups; `taskkill /T` is the equivalent there.
-    detached: process.platform !== 'win32',
-    windowsHide: true,
-  });
+  let child;
+  try {
+    child = spawn(spec.command, spec.args, {
+      cwd: spec.cwd,
+      env: { ...process.env, ...env, ...spec.env },
+      stdio: ['ignore', 'pipe', 'pipe'],
+      // Its own process group, so the kill on quit reaches the tools it spawned (ffmpeg, chrome)
+      // and not just the service. Windows has no groups; `taskkill /T` is the equivalent there.
+      detached: process.platform !== 'win32',
+      windowsHide: true,
+    });
+  } catch (error) {
+    // Node throws, rather than emitting 'error', for spawn codes outside a short list — UNKNOWN among them.
+    return Promise.reject(spawnFailure(spec, error));
+  }
   children.push(child);
   return new Promise((resolve, reject) => {
     readline.createInterface({ input: child.stdout }).on('line', (line) => {
@@ -245,9 +272,7 @@ function startChild(spec, env) {
       if (match) resolve(Number(match[1]));
     });
     readline.createInterface({ input: child.stderr }).on('line', (line) => log(spec.name, line));
-    child.on('error', (error) =>
-      reject(new Error(`${spec.name} could not start: ${error.message}`)),
-    );
+    child.on('error', (error) => reject(spawnFailure(spec, error)));
     child.on('exit', (code, signal) => {
       log(spec.name, `exited (${code ?? signal})`);
       // Ignored once the port has arrived — a resolved promise cannot reject.
