@@ -33,7 +33,6 @@ export async function completeInitWall(page, dataRoot) {
     page.locator('#moodle-site'),
     'the university probe did not end unverified',
   ).toHaveClass(/(^|\s)moodle-site--unverified(\s|$)/, { timeout: 60_000 });
-  await page.getByTestId('data-root-confirm').check();
   const submit = page.getByTestId('init-wall-submit');
   await expect(submit).toBeEnabled();
   await submit.click();
