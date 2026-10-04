@@ -1731,7 +1731,7 @@ msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 #: src/features/runner/RunnerView.tsx:199
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
-msgstr "הרצאות בעיבוד"
+msgstr "עיבוד הרצאות"
 
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:68
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
