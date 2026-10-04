@@ -80,6 +80,10 @@ moving one re-opens that measurement, so surface it rather than bump it:
   ([`backend/docs/BIDI.md`](../../backend/docs/BIDI.md#the-direction-filter)), so the binary and
   `backend/assets/templates/pandoc_template.tex` only ever move together.
 - **ffmpeg 9.0.2** — pinned only so a build is reproducible; bump it for upstream security fixes.
+- **PyInstaller 6.22.3** — installed from its sdist with the bootloader compiled by MSVC on the
+  runner, because Defender quarantines the stock prebuilt one, which malware shares. The sdist
+  still carries the stock `run.exe`, so the freeze step fails if ours hashes equal to the
+  win_amd64 wheel's.
 - **yt-dlp is deliberately unpinned** — it rots as YouTube changes signatures, so a build ships the
   newest.
 

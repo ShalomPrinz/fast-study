@@ -21,6 +21,8 @@ env:
   TECTONIC_VERSION: '0.17.0'
   PANDOC_VERSION: '2.9.2.1'
   FFMPEG_VERSION: '9.0.2'
+  # Pinned so the bootloader check below compares against the same version's stock wheel.
+  PYINSTALLER_VERSION: '6.22.3'
   STAGE: delivery/stage
 
 jobs:
@@ -110,9 +112,22 @@ jobs:
       # One one-dir bundle holding both Python services, selected by argv[1]. Built out of
       # backend/'s environment, which works only because database/'s dependencies are a strict
       # subset of backend/'s.
+      # PyInstaller installs from its sdist with the bootloader compiled here by MSVC: the stock
+      # prebuilt one is shared with malware and Defender quarantines it. The sdist also carries the
+      # stock run.exe, used unless PYINSTALLER_COMPILE_BOOTLOADER is set — hence the check after.
       - name: Freeze backend and database
         working-directory: backend
-        run: uv run --with pyinstaller pyinstaller ../delivery/services.spec
+        env:
+          PYINSTALLER_COMPILE_BOOTLOADER: '1'
+        run: |
+          pyi=(--with "pyinstaller==$PYINSTALLER_VERSION" --no-binary-package pyinstaller)
+          uv run "${pyi[@]}" pyinstaller ../delivery/services.spec
+          ours=$(uv run "${pyi[@]}" python -c "import PyInstaller, hashlib, pathlib; print(hashlib.sha256((pathlib.Path(PyInstaller.__file__).parent / 'bootloader/Windows-64bit-intel/run.exe').read_bytes()).hexdigest())")
+          wheel=$(curl -fsSL "https://pypi.org/pypi/pyinstaller/$PYINSTALLER_VERSION/json" | node -e 'console.log(JSON.parse(require("fs").readFileSync(0)).urls.find((u) => u.filename.endsWith("-win_amd64.whl")).url)')
+          curl -fsSL -o "$RUNNER_TEMP/pyinstaller.whl" "$wheel"
+          stock=$(7z e -so "$RUNNER_TEMP/pyinstaller.whl" PyInstaller/bootloader/Windows-64bit-intel/run.exe | sha256sum | cut -d' ' -f1)
+          echo "bootloader run.exe: ours $ours, stock $stock"
+          [ "$ours" != "$stock" ] || { echo "::error::services.exe would carry PyInstaller's stock bootloader"; exit 1; }
 
       # With the token, vite uploads hidden source maps to release faststudy@<version> and deletes
       # them; without it (a fork) no plugin loads and no DSN is baked, so the renderer reports nothing.
