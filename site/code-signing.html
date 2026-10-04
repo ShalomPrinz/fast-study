@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title data-en="FastStudy · Code signing policy">FastStudy · מדיניות חתימת קוד</title>
+    <meta
+      name="description"
+      content="FastStudy's code signing policy: who signs its Windows releases, and what the app sends where."
+    />
+    <link rel="icon" href="img/icon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <div class="wrap nav-inner">
+        <a class="logo" href="./">
+          <img src="img/icon.svg" alt="" width="26" height="26" />FastStudy
+        </a>
+        <button type="button" class="lang-toggle" id="lang-toggle">
+          <span class="he" lang="en">English</span><span class="en" lang="he">עברית</span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="section">
+        <div class="wrap narrow">
+          <h1 class="policy-title">
+            <span class="he">מדיניות חתימת קוד (<bdi lang="en">Code signing policy</bdi>)</span
+            ><span class="en">Code signing policy</span>
+          </h1>
+          <p class="signpath" lang="en" dir="ltr">
+            Free code signing provided by <a href="https://about.signpath.io">SignPath.io</a>,
+            certificate by <a href="https://signpath.org">SignPath Foundation</a>
+          </p>
+          <p class="muted">
+            <span class="he"
+              >קובץ ההתקנה של FastStudy ל־Windows נחתם בחתימה דיגיטלית, כדי שאפשר יהיה לוודא שהוא
+              נבנה מהקוד הפתוח ב־GitHub ולא שונה מאז.</span
+            >
+            <span class="en"
+              >FastStudy's Windows installer is digitally signed, so you can check it was built from
+              the open source code on GitHub and hasn't changed since.</span
+            >
+          </p>
+
+          <h2><span class="he">צוות</span><span class="en">Team</span></h2>
+          <ul class="privacy">
+            <li>
+              <b lang="en">Committers and reviewers</b>
+              <a href="https://github.com/ShalomPrinz">Shalom Prinz</a>
+            </li>
+            <li>
+              <b lang="en">Approvers</b>
+              <a href="https://github.com/ShalomPrinz">Shalom Prinz</a>
+            </li>
+          </ul>
+
+          <h2><span class="he">פרטיות</span><span class="en">Privacy</span></h2>
+          <p class="muted">
+            <span class="he"
+              >FastStudy שולחת מידע רק למקומות שמפורטים כאן. מעבר להם היא לא מעבירה שום מידע למערכות
+              אחרות ברשת, אלא אם מבקשים ממנה.</span
+            >
+            <span class="en"
+              >FastStudy sends information only to the places listed here. Beyond them, it transfers
+              no information to other networked systems unless you ask it to.</span
+            >
+          </p>
+          <ul class="privacy">
+            <li>
+              <b>Groq</b>
+              <span class="he"
+                >מקבל את האודיו של ההרצאה כדי לתמלל אותו, עם מפתח ה־API שלכם.
+                <a href="https://groq.com/privacy-policy">מדיניות הפרטיות של Groq</a></span
+              >
+              <span class="en"
+                >Receives the lecture's audio to transcribe it, using your own API key.
+                <a href="https://groq.com/privacy-policy">Groq's privacy policy</a></span
+              >
+            </li>
+            <li>
+              <b>Gemini</b>
+              <span class="he"
+                >מקבל את התמליל, קובצי PDF שבחרתם להוסיף, ולסקירת הקורס קטעים מההרצאות, כדי לכתוב
+                סיכומים, עם מפתח ה־API שלכם.
+                <a href="https://ai.google.dev/gemini-api/terms">תנאי Gemini API</a></span
+              >
+              <span class="en"
+                >Receives the transcript, any PDF files you chose to add and, for a course overview,
+                excerpts of its lectures, to write summaries, using your own API key.
+                <a href="https://ai.google.dev/gemini-api/terms">Gemini API terms</a></span
+              >
+            </li>
+            <li>
+              <b>Google Drive</b>
+              <span class="he"
+                >ה־PDF של הסיכום עולה ל־Drive שלכם, רק אם הפעלתם העלאה ל־Drive.
+                <a href="https://policies.google.com/privacy">מדיניות הפרטיות של Google</a></span
+              >
+              <span class="en"
+                >The summary PDF is uploaded to your own Drive, only if you turned Drive upload on.
+                <a href="https://policies.google.com/privacy">Google's privacy policy</a></span
+              >
+            </li>
+            <li>
+              <b><span class="he">דוחות שגיאה</span><span class="en">Error reports</span></b>
+              <span class="he"
+                >כשמשהו נכשל, נשלח ל־Sentry דוח עם הודעת השגיאה, מיקומה בקוד, הגרסה, מערכת ההפעלה
+                וסוף יומן ההפעלה של האפליקציה. לפני השליחה מוסרים ממנו נתיבי תיקיות, טקסט בעברית, שם
+                המשתמש והמחשב ומפתחות API. הדוחות פועלים כברירת מחדל, ואפשר לכבות אותם במסך הפתיחה
+                הראשון ובהגדרות; השינוי חל אחרי הפעלה מחדש.
+                <a href="https://sentry.io/privacy/">מדיניות הפרטיות של Sentry</a></span
+              >
+              <span class="en"
+                >When something fails, a report goes to Sentry with the error message, where in the
+                code it happened, the app version, the operating system and the end of the app's
+                launch log. Folder paths, Hebrew text, your user and computer names and API keys are
+                removed before it's sent. Reports are on by default, and you can turn them off on
+                the first-run screen and in Settings; the change applies after a restart.
+                <a href="https://sentry.io/privacy/">Sentry's privacy policy</a></span
+              >
+            </li>
+            <li>
+              <b><span class="he">עדכונים</span><span class="en">Updates</span></b>
+              <span class="he"
+                >בכל הפעלה האפליקציה בודקת ב־GitHub Releases אם יש גרסה חדשה, ואם יש, מורידה אותה
+                ברקע ומתקינה כשסוגרים את האפליקציה.
+                <a
+                  href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+                  >מדיניות הפרטיות של GitHub</a
+                ></span
+              >
+              <span class="en"
+                >Each time it starts, the app checks GitHub Releases for a new version, downloads it
+                in the background if there is one, and installs it when you close the app.
+                <a
+                  href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
+                  >GitHub's privacy statement</a
+                ></span
+              >
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="wrap footer-inner">
+        <a href="./">FastStudy</a>
+        <a href="https://github.com/ShalomPrinz/fast-study"
+          ><span class="he">קוד פתוח ב־GitHub</span><span class="en">Open source on GitHub</span></a
+        >
+      </div>
+    </footer>
+
+    <script src="main.js"></script>
+  </body>
+</html>

@@ -2,10 +2,8 @@
 // markup, so this only flips the root's lang/dir, the title and the image alts.
 (function () {
   const KEY = 'faststudy-site:lang';
-  const TITLES = {
-    he: 'FastStudy · מהרצאה מוקלטת לסיכום כתוב',
-    en: 'FastStudy · From a recorded lecture to a written summary',
-  };
+  // Each page carries its own English title on <title data-en>, so one script serves every page.
+  const TITLES = { he: document.title, en: document.querySelector('title').dataset.en };
   const root = document.documentElement;
   const images = document.querySelectorAll('img[data-alt-en]');
   images.forEach((img) => (img.dataset.altHe = img.alt));
