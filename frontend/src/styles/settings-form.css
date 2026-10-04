@@ -72,6 +72,13 @@
   text-align: start;
 }
 
+/* A code field whose placeholder is a sentence rather than a sample value: while it shows, the field
+   takes the page's direction and font, so translated prose is not laid out as an LTR token. */
+.settings-input--code.settings-input--prose-placeholder:placeholder-shown {
+  font-family: inherit;
+  direction: inherit;
+}
+
 /* Keep below `.settings-input`: an invalid field recolours the same border at equal specificity. */
 .settings-input.settings-input--invalid {
   border-color: var(--danger);

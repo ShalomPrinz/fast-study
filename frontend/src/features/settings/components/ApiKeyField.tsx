@@ -149,7 +149,7 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
         id={`key-${provider.id}`}
         data-testid="api-key-input"
         data-provider={provider.id}
-        className="settings-input settings-input--code"
+        className={`settings-input settings-input--code ${storedKeyExists ? 'settings-input--prose-placeholder' : ''}`}
         type="password"
         autoComplete="off"
         spellCheck={false}
