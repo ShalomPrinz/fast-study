@@ -164,18 +164,15 @@
   color: var(--danger);
 }
 
-/* The collapsed how-to under a key field's label; logical padding so the list indents on either side. */
-.settings-disclosure {
+/* The how-to under a key field's label; logical padding so the list indents on either side. */
+.settings-guide {
   font-size: var(--fs-meta);
   line-height: 1.6;
   color: var(--text-2);
 }
 
-.settings-disclosure > summary {
-  width: fit-content;
-  color: var(--accent-ink);
+.settings-guide-title {
   font-weight: 500;
-  cursor: pointer;
 }
 
 .settings-steps {

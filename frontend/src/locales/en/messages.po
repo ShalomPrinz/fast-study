@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:122
+#: src/features/settings/components/ApiKeyField.tsx:145
 msgid "{0} API key"
 msgstr "{0} API key"
 
@@ -137,7 +137,7 @@ msgid "{0} of {1} parts"
 msgstr "{0} of {1} parts"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:107
+#: src/features/settings/components/ApiKeyField.tsx:131
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} rejected this key. Generate a new one in its console."
 
@@ -388,7 +388,7 @@ msgstr "A finished summary is waiting to upload, and Fast Study has no permissio
 msgid "A font the PDF needs is missing."
 msgstr "A font the PDF needs is missing."
 
-#: src/features/settings/components/ApiKeyField.tsx:157
+#: src/features/settings/components/ApiKeyField.tsx:166
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
@@ -574,7 +574,7 @@ msgstr "checking account…"
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
-#: src/features/settings/components/ApiKeyField.tsx:103
+#: src/features/settings/components/ApiKeyField.tsx:127
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:68
 msgid "Checking…"
@@ -596,27 +596,27 @@ msgstr "Choose your university in Settings first"
 msgid "Choose your university…"
 msgstr "Choose your university…"
 
-#: src/features/settings/components/ApiKeyField.tsx:57
+#: src/features/settings/components/ApiKeyField.tsx:81
 msgid "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 msgstr "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 
-#: src/features/settings/components/ApiKeyField.tsx:52
+#: src/features/settings/components/ApiKeyField.tsx:76
 msgid "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
 msgstr "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
 
-#: src/features/settings/components/ApiKeyField.tsx:34
+#: src/features/settings/components/ApiKeyField.tsx:55
 msgid "Click \"Create API key\". If you're asked to pick a project, choose any one or let it create a new one."
 msgstr "Click \"Create API key\". If you're asked to pick a project, choose any one or let it create a new one."
 
+#: src/features/settings/components/ApiKeyField.tsx:70
+msgid "Click <0>Get a key</0> and sign in with Google or your email."
+msgstr "Click <0>Get a key</0> and sign in with Google or your email."
+
 #: src/features/settings/components/ApiKeyField.tsx:49
-msgid "Click \"Get a key\" above and sign in with Google or your email."
-msgstr "Click \"Get a key\" above and sign in with Google or your email."
+msgid "Click <0>Get a key</0> and sign in with your Google account."
+msgstr "Click <0>Get a key</0> and sign in with your Google account."
 
-#: src/features/settings/components/ApiKeyField.tsx:31
-msgid "Click \"Get a key\" above and sign in with your Google account."
-msgstr "Click \"Get a key\" above and sign in with your Google account."
-
-#: src/features/settings/components/ApiKeyField.tsx:40
+#: src/features/settings/components/ApiKeyField.tsx:61
 msgid "Click the copy icon next to the new key, then paste it here."
 msgstr "Click the copy icon next to the new key, then paste it here."
 
@@ -1097,10 +1097,6 @@ msgstr "Generating from {stepLabel} step will rebuild:"
 msgid "Generating…"
 msgstr "Generating…"
 
-#: src/features/settings/components/ApiKeyField.tsx:132
-msgid "Get a key"
-msgstr "Get a key"
-
 #: src/features/settings/components/DriveConnection.tsx:86
 msgid "Google account"
 msgstr "Google account"
@@ -1135,7 +1131,7 @@ msgstr "Hebrew University"
 msgid "Home"
 msgstr "Home"
 
-#: src/features/settings/components/ApiKeyField.tsx:143
+#: src/features/settings/components/ApiKeyField.tsx:152
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
@@ -1155,7 +1151,7 @@ msgstr "just this lecture"
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
-#: src/features/settings/components/ApiKeyField.tsx:105
+#: src/features/settings/components/ApiKeyField.tsx:129
 msgid "Key verified"
 msgstr "Key verified"
 
@@ -2126,7 +2122,7 @@ msgstr "This disconnects your current account. Connecting to the new site needs 
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:111
+#: src/features/settings/components/ApiKeyField.tsx:135
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "This doesn't look like a {0} key — those start with {1}. You can still save it."
 
@@ -2267,7 +2263,7 @@ msgstr "Videos"
 msgid "We couldn't check right now."
 msgstr "We couldn't check right now."
 
-#: src/features/settings/components/ApiKeyField.tsx:109
+#: src/features/settings/components/ApiKeyField.tsx:133
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 

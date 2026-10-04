@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:122
+#: src/features/settings/components/ApiKeyField.tsx:145
 msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
@@ -137,7 +137,7 @@ msgid "{0} of {1} parts"
 msgstr "{0} מתוך {1} חלקים"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:107
+#: src/features/settings/components/ApiKeyField.tsx:131
 msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "המפתח נדחה. צור מפתח חדש בלוח הבקרה של {0}."
 
@@ -388,7 +388,7 @@ msgstr "סיכום מוכן ממתין להעלאה, ול-Fast Study עדיין 
 msgid "A font the PDF needs is missing."
 msgstr "חסר גופן שה-PDF זקוק לו."
 
-#: src/features/settings/components/ApiKeyField.tsx:157
+#: src/features/settings/components/ApiKeyField.tsx:166
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 
@@ -574,7 +574,7 @@ msgstr "בודק חשבון…"
 msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
-#: src/features/settings/components/ApiKeyField.tsx:103
+#: src/features/settings/components/ApiKeyField.tsx:127
 #: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:68
 msgid "Checking…"
@@ -596,27 +596,27 @@ msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 msgid "Choose your university…"
 msgstr "בחר את האוניברסיטה שלך…"
 
-#: src/features/settings/components/ApiKeyField.tsx:57
+#: src/features/settings/components/ApiKeyField.tsx:81
 msgid "Click \"Copy\" and paste the key here. Groq shows the key only once, so copy it before you close the window."
 msgstr "לחץ על \"Copy\" והדבק את המפתח כאן. Groq מציגה את המפתח פעם אחת בלבד, אז העתק אותו לפני שתסגור את החלון."
 
-#: src/features/settings/components/ApiKeyField.tsx:52
+#: src/features/settings/components/ApiKeyField.tsx:76
 msgid "Click \"Create API Key\", type any name (for example FastStudy) and click \"Submit\"."
 msgstr "לחץ על \"Create API Key\", הקלד שם כלשהו (למשל FastStudy) ולחץ על \"Submit\"."
 
-#: src/features/settings/components/ApiKeyField.tsx:34
+#: src/features/settings/components/ApiKeyField.tsx:55
 msgid "Click \"Create API key\". If you're asked to pick a project, choose any one or let it create a new one."
 msgstr "לחץ על \"Create API key\". אם מבקשים ממך לבחור פרויקט, בחר פרויקט כלשהו או תן לאתר ליצור פרויקט חדש."
 
+#: src/features/settings/components/ApiKeyField.tsx:70
+msgid "Click <0>Get a key</0> and sign in with Google or your email."
+msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם Google או עם כתובת האימייל שלך."
+
 #: src/features/settings/components/ApiKeyField.tsx:49
-msgid "Click \"Get a key\" above and sign in with Google or your email."
-msgstr "לחץ על \"קבלת מפתח\" למעלה והתחבר עם Google או עם כתובת האימייל שלך."
+msgid "Click <0>Get a key</0> and sign in with your Google account."
+msgstr "לחץ על <0>קבלת מפתח</0> והתחבר עם חשבון Google שלך."
 
-#: src/features/settings/components/ApiKeyField.tsx:31
-msgid "Click \"Get a key\" above and sign in with your Google account."
-msgstr "לחץ על \"קבלת מפתח\" למעלה והתחבר עם חשבון Google שלך."
-
-#: src/features/settings/components/ApiKeyField.tsx:40
+#: src/features/settings/components/ApiKeyField.tsx:61
 msgid "Click the copy icon next to the new key, then paste it here."
 msgstr "לחץ על סמל ההעתקה שליד המפתח החדש, ואז הדבק אותו כאן."
 
@@ -1097,10 +1097,6 @@ msgstr "יצירה משלב {stepLabel} תבנה מחדש את:"
 msgid "Generating…"
 msgstr "יוצר…"
 
-#: src/features/settings/components/ApiKeyField.tsx:132
-msgid "Get a key"
-msgstr "קבלת מפתח"
-
 #: src/features/settings/components/DriveConnection.tsx:86
 msgid "Google account"
 msgstr "חשבון Google"
@@ -1135,7 +1131,7 @@ msgstr "האוניברסיטה העברית"
 msgid "Home"
 msgstr "דף הבית"
 
-#: src/features/settings/components/ApiKeyField.tsx:143
+#: src/features/settings/components/ApiKeyField.tsx:152
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
 
@@ -1155,7 +1151,7 @@ msgstr "רק להרצאה הזו"
 msgid "Keep my edits"
 msgstr "שמירה על השינויים שלי"
 
-#: src/features/settings/components/ApiKeyField.tsx:105
+#: src/features/settings/components/ApiKeyField.tsx:129
 msgid "Key verified"
 msgstr "המפתח אומת"
 
@@ -2126,7 +2122,7 @@ msgstr "החשבון המחובר כעת ינותק. חיבור לאתר החד�
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
-#: src/features/settings/components/ApiKeyField.tsx:111
+#: src/features/settings/components/ApiKeyField.tsx:135
 msgid "This doesn't look like a {0} key — those start with {1}. You can still save it."
 msgstr "זה לא נראה כמו מפתח של {0} — מפתחות כאלה מתחילים ב-{1}. אפשר לשמור בכל זאת."
 
@@ -2267,7 +2263,7 @@ msgstr "וידאו"
 msgid "We couldn't check right now."
 msgstr "לא הצלחנו לבדוק כרגע."
 
-#: src/features/settings/components/ApiKeyField.tsx:109
+#: src/features/settings/components/ApiKeyField.tsx:133
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמור אותו בכל זאת."
 

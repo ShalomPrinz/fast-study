@@ -94,8 +94,8 @@ Each section heading but the language's carries a mark at its inline end, derive
 (`sectionMark`): the keys and the data folder read red `Required` until complete, then green `Done`; the
 university, Drive and downloading read gray `Optional`.
 
-Each provider carries a short how-to-get-a-key guide beside its console link, in the Lingui catalogs keyed
-by provider id. A save failure shows in place — a rejected data folder is the one thing in the way.
+Each provider's key field, here and on `/settings`, carries a short how-to-get-a-key guide, always open
+and keyed by provider id; its first step is the console link itself. A save failure shows in place — a rejected data folder is the one thing in the way.
 
 ## When the computer can't store a key
 
