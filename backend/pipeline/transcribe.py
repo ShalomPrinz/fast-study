@@ -45,24 +45,21 @@ def get_duration(audio_path: str) -> float:
 def split_one_chunk(
     audio_path: str, tmpdir: str, index: int, chunk_seconds: int
 ) -> str:
-    """Cut one fixed-length mp3 chunk out of the audio; Groq caps a request at 25 MB."""
+    """Copy one fixed-length chunk's mp3 frames out of the audio without re-encoding; Groq
+caps a request at 25 MB."""
 
     chunk_path = os.path.join(tmpdir, f"chunk_{index:04d}.mp3")
     run_ffmpeg(
         [
             "-y",
-            "-i",
-            audio_path,
             "-ss",
             str(index * chunk_seconds),
+            "-i",
+            audio_path,
             "-t",
             str(chunk_seconds),
-            "-ar",
-            "16000",
-            "-ac",
-            "1",
-            "-b:a",
-            "32k",
+            "-c",
+            "copy",
             chunk_path,
         ]
     )
