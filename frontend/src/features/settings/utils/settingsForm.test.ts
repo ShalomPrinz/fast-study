@@ -10,7 +10,7 @@ const FILLED: RequiredInput = {
   groqKey: 'gsk_abc',
   groqKeyStored: false,
   dataRoot: '/data',
-  dataRootConfirmed: true,
+  dataRootUnusable: false,
   driveEnabled: false,
   gdriveRootFolder: '',
   canStoreApiKeys: true,
@@ -28,8 +28,9 @@ describe('missingEntries', () => {
     ])
   })
 
-  it('holds a prefilled data root back until it is confirmed', () => {
-    expect(missingEntries({ ...FILLED, dataRootConfirmed: false })).toEqual(['dataRoot'])
+  it('takes a prefilled data root as is, unless the probe called it unusable', () => {
+    expect(missingEntries(FILLED)).toEqual([])
+    expect(missingEntries({ ...FILLED, dataRootUnusable: true })).toEqual(['dataRoot'])
   })
 
   it('requires the Drive folder only while Drive is on', () => {

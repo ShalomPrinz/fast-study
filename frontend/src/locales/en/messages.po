@@ -508,7 +508,7 @@ msgstr "Browser for downloading recordings"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "Building the PDF took too long and was stopped after {seconds} seconds."
 
-#: src/features/settings/components/DataRootField.tsx:35
+#: src/features/settings/components/DataRootField.tsx:58
 msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 
@@ -810,7 +810,7 @@ msgstr "Current PDF"
 msgid "Daily run time"
 msgstr "Daily run time"
 
-#: src/features/settings/components/DataRootField.tsx:20
+#: src/features/settings/components/DataRootField.tsx:43
 msgid "Data folder"
 msgstr "Data folder"
 
@@ -884,7 +884,7 @@ msgstr "Downloading {active} more…"
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
-#: src/features/settings/InitWall.tsx:234
+#: src/features/settings/InitWall.tsx:233
 msgid "Downloading recordings (optional)"
 msgstr "Downloading recordings (optional)"
 
@@ -930,7 +930,7 @@ msgstr "Enter the zoom passcode for this recording"
 msgid "Estimating…"
 msgstr "Estimating…"
 
-#: src/features/settings/components/DataRootField.tsx:24
+#: src/features/settings/components/DataRootField.tsx:47
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 
@@ -938,7 +938,7 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "Every lecture that is not finished yet is picked up on the next start."
 
-#: src/features/settings/components/DataRootField.tsx:41
+#: src/features/settings/components/DataRootField.tsx:69
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 
@@ -1037,7 +1037,7 @@ msgstr "Fast Study uses two free services: one turns the recording into text, th
 msgid "File type"
 msgstr "File type"
 
-#: src/features/settings/InitWall.tsx:253
+#: src/features/settings/InitWall.tsx:252
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
@@ -1111,7 +1111,7 @@ msgstr "Google account"
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:221
+#: src/features/settings/InitWall.tsx:220
 msgid "Google Drive (optional)"
 msgstr "Google Drive (optional)"
 
@@ -1740,7 +1740,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:262
+#: src/features/settings/InitWall.tsx:261
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -1819,7 +1819,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:262
+#: src/features/settings/InitWall.tsx:261
 msgid "Start using Fast Study"
 msgstr "Start using Fast Study"
 
@@ -2141,7 +2141,7 @@ msgstr "This Moodle connection can't download these recordings. Reconnect the ac
 #~ msgid "This Moodle session cannot capture videostream recordings. Reconnect the account."
 #~ msgstr "This Moodle session cannot capture videostream recordings. Reconnect the account."
 
-#: src/features/settings/components/DataRootField.tsx:48
+#: src/features/settings/components/DataRootField.tsx:76
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
@@ -2302,10 +2302,6 @@ msgstr "Written in the masculine form, but addressed to everyone."
 msgid "Yes"
 msgstr "Yes"
 
-#: src/features/settings/components/DataRootField.tsx:63
-msgid "Yes, store my lectures in this folder"
-msgstr "Yes, store my lectures in this folder"
-
 #: src/features/settings/components/MoodleAccountField.tsx:35
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
@@ -2318,7 +2314,7 @@ msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Stu
 msgid "Your two API keys"
 msgstr "Your two API keys"
 
-#: src/features/settings/InitWall.tsx:208
+#: src/features/settings/InitWall.tsx:207
 msgid "Your university (optional)"
 msgstr "Your university (optional)"
 

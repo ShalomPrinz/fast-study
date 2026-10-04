@@ -58,7 +58,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     nightlyHour: toNightlyHour(stored.nightlyHour),
     moodleSite: stored.moodleSite ?? '',
   })
-  const [confirmed, setConfirmed] = useState(false)
+  const [dataRootUnusable, setDataRootUnusable] = useState(false)
   const [saving, setSaving] = useState(false)
   const [siteChecking, setSiteChecking] = useState(false)
   const [failure, setFailure] = useState<ReactNode>(null)
@@ -82,7 +82,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     groqKey: form.groqApiKey,
     groqKeyStored: stored.groqApiKeySet,
     dataRoot: form.dataRoot,
-    dataRootConfirmed: confirmed,
+    dataRootUnusable,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
     canStoreApiKeys,
@@ -198,8 +198,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
               <DataRootField
                 value={form.dataRoot}
                 onChange={(v) => setForm({ ...form, dataRoot: v })}
-                confirmed={confirmed}
-                onConfirmedChange={setConfirmed}
+                onUnusableChange={setDataRootUnusable}
               />
             </section>
 

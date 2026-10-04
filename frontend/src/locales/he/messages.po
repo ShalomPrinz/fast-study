@@ -508,7 +508,7 @@ msgstr "דפדפן להורדת הקלטות"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "בניית ה-PDF נמשכה יותר מדי זמן ונעצרה אחרי {seconds} שניות."
 
-#: src/features/settings/components/DataRootField.tsx:35
+#: src/features/settings/components/DataRootField.tsx:58
 msgid "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 msgstr "C:\\Users\\you\\AppData\\Local\\FastStudy\\data"
 
@@ -810,7 +810,7 @@ msgstr "ה-PDF הנוכחי"
 msgid "Daily run time"
 msgstr "שעת ההרצה היומית"
 
-#: src/features/settings/components/DataRootField.tsx:20
+#: src/features/settings/components/DataRootField.tsx:43
 msgid "Data folder"
 msgstr "תיקיית נתונים"
 
@@ -884,7 +884,7 @@ msgstr "מוריד עוד {active}…"
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
-#: src/features/settings/InitWall.tsx:234
+#: src/features/settings/InitWall.tsx:233
 msgid "Downloading recordings (optional)"
 msgstr "הורדת הקלטות (לא חובה)"
 
@@ -930,7 +930,7 @@ msgstr "הזן את קוד הגישה של Zoom להקלטה הזו"
 msgid "Estimating…"
 msgstr "מחשב זמן משוער…"
 
-#: src/features/settings/components/DataRootField.tsx:24
+#: src/features/settings/components/DataRootField.tsx:47
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. בחר תיקייה במחשב הזה שאינה מסונכרנת לענן."
 
@@ -938,7 +938,7 @@ msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. 
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "כל הרצאה שטרם הושלמה נאספת בהפעלה הבאה."
 
-#: src/features/settings/components/DataRootField.tsx:41
+#: src/features/settings/components/DataRootField.tsx:69
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלך."
 
@@ -1037,7 +1037,7 @@ msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד �
 msgid "File type"
 msgstr "סוג קובץ"
 
-#: src/features/settings/InitWall.tsx:253
+#: src/features/settings/InitWall.tsx:252
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
@@ -1111,7 +1111,7 @@ msgstr "חשבון Google"
 msgid "Google Drive"
 msgstr "Google Drive"
 
-#: src/features/settings/InitWall.tsx:221
+#: src/features/settings/InitWall.tsx:220
 msgid "Google Drive (optional)"
 msgstr "Google Drive (לא חובה)"
 
@@ -1740,7 +1740,7 @@ msgstr "שמירה בשם"
 msgid "Saved to {lecture}"
 msgstr "נשמר ב{lecture}"
 
-#: src/features/settings/InitWall.tsx:262
+#: src/features/settings/InitWall.tsx:261
 msgid "Saving…"
 msgstr "שומר…"
 
@@ -1819,7 +1819,7 @@ msgstr "מצטערים. חזור לדף הבית כדי להמשיך לעבוד,
 msgid "Source URL (optional)…"
 msgstr "כתובת מקור (לא חובה)…"
 
-#: src/features/settings/InitWall.tsx:262
+#: src/features/settings/InitWall.tsx:261
 msgid "Start using Fast Study"
 msgstr "להתחיל להשתמש ב-Fast Study"
 
@@ -2141,7 +2141,7 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 #~ msgid "This Moodle session cannot capture videostream recordings. Reconnect the account."
 #~ msgstr "החיבור הזה ל-Moodle לא יכול ללכוד הקלטות videostream. חבר מחדש את החשבון."
 
-#: src/features/settings/components/DataRootField.tsx:48
+#: src/features/settings/components/DataRootField.tsx:76
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
@@ -2302,10 +2302,6 @@ msgstr "כתוב בלשון זכר אך פונה לשני המינים"
 msgid "Yes"
 msgstr "כן"
 
-#: src/features/settings/components/DataRootField.tsx:63
-msgid "Yes, store my lectures in this folder"
-msgstr "כן, לשמור את ההרצאות שלי בתיקייה הזו"
-
 #: src/features/settings/components/MoodleAccountField.tsx:35
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
@@ -2318,7 +2314,7 @@ msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפני�
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלך"
 
-#: src/features/settings/InitWall.tsx:208
+#: src/features/settings/InitWall.tsx:207
 msgid "Your university (optional)"
 msgstr "האוניברסיטה שלך (לא חובה)"
 

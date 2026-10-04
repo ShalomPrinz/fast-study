@@ -9,7 +9,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | ----------------- | ----------------------------------------- | --------------------- | ----------------- |
 | Gemini API key    | none                                      | user-supplied         | `backend/`        |
 | Groq API key      | none                                      | user-supplied         | `backend/`        |
-| Data folder       | prefilled, confirmed on first run         | any directory         | `database/`       |
+| Data folder       | prefilled, probed on first run            | any directory         | `database/`       |
 | University        | none — optional, nothing preselected      | a preset, or any URL  | `downloader/auto` |
 | UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend          |
 | Drive upload      | off                                       | on                    | `backend/`        |
@@ -84,7 +84,10 @@ unreachable store shows the app anyway: a downed service is not an unconfigured 
 
 The wall also offers the language (so the rest reads in it) and the Drive toggle (so the account is
 connected now, not mid-run); neither blocks, and Drive's folder is required only while it is on. Auto-run
-and the nightly pass keep their defaults. The data folder is **prefilled but confirmed** by a checkbox. In
+and the nightly pass keep their defaults. The data folder is **prefilled and taken as is**, but
+probed as it is typed (`probeDataRoot`, the database's read-only `POST /settings/data-root/probe`, debounced
+and latest-wins): an unusable verdict renders its coded reason under the field and blocks the wall, while an
+unreachable probe is unknown and blocks nothing, since the save validates again. In
 browser dev an already-filled `.env` passes the wall instantly; blank the values to exercise it.
 
 Each provider carries a short how-to-get-a-key guide beside its console link, in the Lingui catalogs keyed

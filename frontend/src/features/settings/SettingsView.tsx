@@ -92,7 +92,7 @@ export default function SettingsView() {
     groqKeyStored: stored.groqApiKeySet,
     dataRoot: form.dataRoot,
     // Confirming a prefilled root belongs to the init wall; here the field is simply edited.
-    dataRootConfirmed: true,
+    dataRootUnusable: false,
     driveEnabled: form.driveEnabled,
     gdriveRootFolder: form.gdriveRootFolder,
     canStoreApiKeys,

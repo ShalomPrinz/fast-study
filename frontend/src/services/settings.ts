@@ -180,6 +180,36 @@ export async function saveSettings(patch: SettingsPatch): Promise<Settings> {
   return stored
 }
 
+// The first-run wall's read-only check of a candidate data folder; `unknown` is anything short of a
+// verdict, which never blocks — the save validates the folder again.
+export type DataRootProbe =
+  { kind: 'usable' } | { kind: 'unusable'; failure: ServiceFailure } | { kind: 'unknown' }
+
+/** Asks the database whether `path` can hold the data. It answers 200 both ways, so only a request
+ *  that never got a verdict lands in the catch. */
+export async function probeDataRoot(path: string): Promise<DataRootProbe> {
+  try {
+    const raw = await database.post<{
+      ok?: boolean
+      error?: string
+      code?: string
+      params?: ErrorParams
+    }>('/settings/data-root/probe', { json: { data_root: path } })
+    if (raw.ok) return { kind: 'usable' }
+    if (!raw.code) return { kind: 'unknown' }
+    return {
+      kind: 'unusable',
+      failure: {
+        message: raw.error ?? 'This folder cannot hold the data.',
+        code: raw.code,
+        params: raw.params ?? null,
+      },
+    }
+  } catch {
+    return { kind: 'unknown' }
+  }
+}
+
 export interface Provider {
   id: string
   displayName: string
