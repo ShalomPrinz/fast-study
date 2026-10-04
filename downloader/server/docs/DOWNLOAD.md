@@ -34,8 +34,10 @@ authenticates by its own query-string token.
 
 YouTube serves DASH-segmented streams — separate audio and video behind signed URLs — so the
 `.mp4`-capture flow gets nothing usable; yt-dlp resolves the manifest, downloads both tracks and
-muxes them. `-o video.%(ext)s --merge-output-format mp4` lands `video.mp4`; `--no-progress --quiet`
-keeps it silent; `--cache-dir <state>/ytdlp-cache` because the default home may be read-only.
+muxes them. `-o video.%(ext)s --merge-output-format mp4 --remux-video mp4` lands `video.mp4` —
+the remux covers a lone `.webm`/`.mkv` that needs no merge, which would otherwise land under its
+own extension and fail the upload; `--no-progress --quiet` keeps it silent; `--cache-dir
+<state>/ytdlp-cache` because the default home may be read-only.
 
 ### The JS runtime
 

@@ -53,12 +53,14 @@ function probeYoutubeSize(url) {
   });
 }
 
-// YouTube DASH streams. -o video.%(ext)s + --merge-output-format mp4 -> video.mp4.
-// Silent (--no-progress) so the server owns progress rendering. See docs/DOWNLOAD.md.
+// -o video.%(ext)s + merge/remux to mp4 -> always video.mp4, even for a lone .webm/.mkv that
+// needs no merge. Silent (--no-progress) so the server owns progress rendering. See docs/DOWNLOAD.md.
 function buildYtdlpArgs(url) {
   return [
     '--no-playlist',
     '--merge-output-format',
+    'mp4',
+    '--remux-video',
     'mp4',
     ...YT_PLAYER_JS_FLAGS,
     ...CACHE_DIR_FLAGS,
