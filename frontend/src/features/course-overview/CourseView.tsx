@@ -16,7 +16,7 @@ import {
   CourseOverviewProvider,
   useCourseOverview,
 } from '@/features/course-overview/contexts/CourseOverviewContext'
-import { branchStatus } from '@/features/course-overview/constants/overview'
+import { branchStatus, extractorTitle } from '@/features/course-overview/constants/overview'
 import GenerateAllButton from '@/features/course-overview/components/GenerateAllButton'
 import ExtractorRow from '@/features/course-overview/components/ExtractorRow'
 import '@/styles/spinner.css'
@@ -35,7 +35,7 @@ function CourseOverviewBody() {
   // Toast each extractor error once per (course, slug, failure).
   useEffect(() => {
     if (!status) return
-    const titleBySlug = new Map(extractors?.map((e) => [e.slug, e.title]))
+    const titleBySlug = new Map(extractors?.map((e) => [e.slug, extractorTitle(e)]))
     const valid = new Set<string>()
     for (const [slug, st] of Object.entries(status.extractors)) {
       if (st.status !== 'error') continue
@@ -61,7 +61,8 @@ function CourseOverviewBody() {
   const runningSlug = Object.entries(status?.extractors ?? {}).find(
     ([, st]) => st.status === 'running',
   )?.[0]
-  const runningTitle = extractors?.find((e) => e.slug === runningSlug)?.title
+  const runningExtractor = extractors?.find((e) => e.slug === runningSlug)
+  const runningTitle = runningExtractor ? extractorTitle(runningExtractor) : undefined
   const generated = (extractors ?? []).filter(
     (e) => branchStatus(status, files, e.slug, e.phases).done,
   ).length

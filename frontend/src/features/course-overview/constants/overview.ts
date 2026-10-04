@@ -1,4 +1,5 @@
 import { msg, t } from '@lingui/core/macro'
+import { i18n } from '@lingui/core'
 import type { MessageDescriptor } from '@lingui/core'
 import type { CoursePhase, CourseStatus, CourseExtractorState, CourseFile } from '@/types'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
@@ -17,6 +18,21 @@ export const OVERVIEW_STEPS: readonly OverviewStep[] = [
   { phase: 'compile', suffix: '.md', label: msg`Compile` },
   { phase: 'to_pdf', suffix: '.pdf', label: msg`Export PDF` },
 ]
+
+// The backend's extractor titles are English developer copy; the UI names each slug itself.
+const EXTRACTOR_TITLES: Record<string, MessageDescriptor> = {
+  'exam-hints': msg`Exam Hints`,
+  'student-qa': msg`Student QA`,
+  pitfalls: msg`Pitfalls`,
+  topics: msg`Topics`,
+  'all-lectures': msg`All Lectures`,
+}
+
+// An unknown slug falls back to the backend's own title, so a new extractor still renders.
+export function extractorTitle(extractor: { slug: string; title: string }): string {
+  const descriptor = EXTRACTOR_TITLES[extractor.slug]
+  return descriptor ? i18n._(descriptor) : extractor.title
+}
 
 export function stepsFor(phases: CoursePhase[]): OverviewStep[] {
   return OVERVIEW_STEPS.filter((s) => phases.includes(s.phase))

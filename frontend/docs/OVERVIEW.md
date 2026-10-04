@@ -7,7 +7,8 @@
 `GET /overview/extractors` returns `{ slug, title, phases[] }`. `OVERVIEW_STEPS` maps each phase to its
 output file (`{slug}.txt` / `.md` / `.pdf`) and label, and `stepsFor(phases)` picks one extractor's subset.
 Everything derived (`generatedFiles`, `lastGeneratedFile`, `startedSlug`, `branchStatus`) goes through
-`stepsFor`, so a new phase is a one-table change.
+`stepsFor`, so a new phase is a one-table change. The backend's `title` is English developer copy:
+`extractorTitle` names each slug from the catalog and falls back to `title` only for a slug it does not know.
 
 `CourseOverviewContext` is data-only: extractors, the `overview/` listing, meta and status, each behind
 its own `useLatestRequest` and refreshed on every notify. `generate(names?, fromPhase?, skipExisting?)`

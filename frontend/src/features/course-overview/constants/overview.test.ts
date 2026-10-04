@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { CourseExtractorState, CourseFile, CoursePhase, CourseStatus } from '@/types'
-import { branchStatus } from './overview'
+import { branchStatus, extractorTitle } from './overview'
 
 const PHASES: CoursePhase[] = ['extract', 'analyze', 'to_pdf']
 const SLUG = 'exams'
@@ -96,5 +96,15 @@ describe('branchStatus', () => {
     const bs = branchStatus(st, [file('exams.pdf', { warning: WARNING })], SLUG, PHASES)
 
     expect(bs.warning).not.toBe(WARNING)
+  })
+})
+
+describe('extractorTitle', () => {
+  it('falls back to the backend title for a slug the UI does not name', () => {
+    expect(extractorTitle({ slug: 'new-one', title: 'New One' })).toBe('New One')
+  })
+
+  it('names a known slug from the catalog rather than the backend title', () => {
+    expect(extractorTitle({ slug: 'topics', title: 'backend copy' })).not.toBe('backend copy')
   })
 })

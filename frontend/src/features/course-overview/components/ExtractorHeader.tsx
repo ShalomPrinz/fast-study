@@ -9,6 +9,7 @@ import {
   lastGeneratedFile,
   branchStatus,
   stepsFor,
+  extractorTitle,
 } from '@/features/course-overview/constants/overview'
 import Icon from '@/shared/components/Icon'
 import StatusNode from '@/shared/components/StatusNode'
@@ -43,7 +44,8 @@ export default function ExtractorHeader() {
   const { t } = useLingui()
   const { course, files, meta, status, generate } = useCourseOverview()
   const { extractor, expanded, toggleExpanded, confirmRegenerate } = useExtractor()
-  const { slug, title, phases } = extractor
+  const { slug, phases } = extractor
+  const title = extractorTitle(extractor)
   const bs = branchStatus(status, files, slug, phases)
   const entry = meta[slug]
 

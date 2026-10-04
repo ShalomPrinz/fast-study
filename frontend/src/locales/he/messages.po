@@ -59,7 +59,7 @@ msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {הרצאה אחת בעיבוד} two {# הרצאות בעיבוד} other {# הרצאות בעיבוד}}"
 
 #. placeholder {0}: lectures.length
-#: src/features/course-overview/CourseView.tsx:77
+#: src/features/course-overview/CourseView.tsx:78
 msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {הרצאה אחת} two {# הרצאות} other {# הרצאות}}"
 
@@ -69,7 +69,7 @@ msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {חומר אחד} two {# חומרים} other {# חומרים}}"
 
 #. placeholder {0}: recitations.length
-#: src/features/course-overview/CourseView.tsx:80
+#: src/features/course-overview/CourseView.tsx:81
 msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {תרגול אחד} two {# תרגולים} other {# תרגולים}}"
 
@@ -220,7 +220,7 @@ msgid "{file} was not found."
 msgstr "{file} לא נמצא."
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:105
+#: src/features/course-overview/CourseView.tsx:106
 msgid "{generated} of {0} generated"
 msgstr "{generated} מתוך {0} נוצרו"
 
@@ -276,11 +276,11 @@ msgstr "לא ניתן לכתוב אל {path}."
 msgid "{path} exists but is not a folder."
 msgstr "{path} קיים אבל אינו תיקייה."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:98
+#: src/features/course-overview/components/ExtractorHeader.tsx:100
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
-#: src/features/course-overview/CourseView.tsx:82
+#: src/features/course-overview/CourseView.tsx:83
 msgid "{processed} fully processed"
 msgstr "{processed} עובדו במלואן"
 
@@ -428,6 +428,10 @@ msgstr "כל השינויים יבוטלו והסיכום המקורי של ה-A
 msgid "All Generated"
 msgstr "הכול נוצר"
 
+#: src/features/course-overview/constants/overview.ts:28
+msgid "All Lectures"
+msgstr "כל ההרצאות"
+
 #: src/shared/i18n/serviceErrors.ts:93
 msgid "Already generated."
 msgstr "כבר נוצר."
@@ -436,7 +440,7 @@ msgstr "כבר נוצר."
 msgid "Already up to date"
 msgstr "כבר מעודכן"
 
-#: src/features/course-overview/constants/overview.ts:15
+#: src/features/course-overview/constants/overview.ts:16
 msgid "Analyze"
 msgstr "ניתוח"
 
@@ -636,11 +640,11 @@ msgstr "סגירה"
 msgid "Collapse"
 msgstr "כיווץ פלייליסט"
 
-#: src/features/course-overview/constants/overview.ts:16
+#: src/features/course-overview/constants/overview.ts:17
 msgid "Collect"
 msgstr "איסוף"
 
-#: src/features/course-overview/constants/overview.ts:17
+#: src/features/course-overview/constants/overview.ts:18
 msgid "Compile"
 msgstr "הרכבה"
 
@@ -794,7 +798,7 @@ msgstr "הקורס \"{course}\" לא קיים."
 msgid "Course name…"
 msgstr "שם הקורס…"
 
-#: src/features/course-overview/CourseView.tsx:102
+#: src/features/course-overview/CourseView.tsx:103
 msgid "Course overview"
 msgstr "סקירת קורס"
 
@@ -946,6 +950,10 @@ msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. 
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלך."
 
+#: src/features/course-overview/constants/overview.ts:24
+msgid "Exam Hints"
+msgstr "רמזים למבחן"
+
 #: src/features/downloads/components/RecordingRow.tsx:183
 msgid "Expand"
 msgstr "טעינת פלייליסט"
@@ -954,7 +962,7 @@ msgstr "טעינת פלייליסט"
 msgid "Expand every playlist in this section first"
 msgstr "טען קודם כל פלייליסט ביחידה הזו"
 
-#: src/features/course-overview/constants/overview.ts:18
+#: src/features/course-overview/constants/overview.ts:19
 #: src/features/lectures/constants/pipeline.ts:48
 msgid "Export PDF"
 msgstr "ייצוא PDF"
@@ -963,7 +971,7 @@ msgstr "ייצוא PDF"
 msgid "Exporting PDF"
 msgstr "מייצא PDF"
 
-#: src/features/course-overview/constants/overview.ts:14
+#: src/features/course-overview/constants/overview.ts:15
 msgid "Extract"
 msgstr "חילוץ"
 
@@ -979,7 +987,7 @@ msgstr "לחלץ רק את השמע"
 msgid "Extracting audio"
 msgstr "מחלץ שמע"
 
-#: src/features/course-overview/constants/overview.ts:88
+#: src/features/course-overview/constants/overview.ts:104
 #: src/features/course-overview/CourseView.tsx:44
 msgid "failed"
 msgstr "נכשל"
@@ -1074,7 +1082,7 @@ msgstr "הרצאות שהושלמו במלואן"
 msgid "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgstr "המכסה היומית של Gemini נוצלה. היא מתאפסת בחצות לפי שעון החוף המערבי בארה״ב."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:123
+#: src/features/course-overview/components/ExtractorHeader.tsx:125
 msgid "Generate"
 msgstr "יצירה"
 
@@ -1086,7 +1094,7 @@ msgstr "יצירת הכול"
 #~ msgid "Generate PDF"
 #~ msgstr "ייצר PDF"
 
-#: src/features/course-overview/CourseView.tsx:73
+#: src/features/course-overview/CourseView.tsx:74
 msgid "Generating · {runningTitle}"
 msgstr "יוצר · {runningTitle}"
 
@@ -1094,7 +1102,7 @@ msgstr "יוצר · {runningTitle}"
 msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "יצירה משלב {stepLabel} תבנה מחדש את:"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:98
+#: src/features/course-overview/components/ExtractorHeader.tsx:100
 #: src/features/course-overview/components/GenerateAllButton.tsx:43
 msgid "Generating…"
 msgstr "יוצר…"
@@ -1454,7 +1462,7 @@ msgstr "פתיחה ב-Drive"
 msgid "Open material"
 msgstr "פתיחת החומר"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:107
+#: src/features/course-overview/components/ExtractorHeader.tsx:109
 #: src/features/lectures/components/PdfViewer.tsx:100
 #: src/features/lectures/MainView.tsx:256
 #: src/features/search/components/SearchResult.tsx:33
@@ -1492,7 +1500,7 @@ msgstr "סקירה"
 #~ msgid "Overview failed to start"
 #~ msgstr "הסקירה נכשלה בהפעלה"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:70
+#: src/features/course-overview/components/ExtractorHeader.tsx:72
 #: src/features/course-overview/components/ExtractorRow.tsx:29
 #: src/features/course-overview/components/GenerateAllButton.tsx:28
 #: src/features/course-overview/components/StepRow.tsx:38
@@ -1536,6 +1544,10 @@ msgstr "ההרצאה כבר בעיבוד"
 #~ msgid "Pipeline failed to start"
 #~ msgstr "הצינור נכשל בהפעלה"
 
+#: src/features/course-overview/constants/overview.ts:26
+msgid "Pitfalls"
+msgstr "טעויות נפוצות"
+
 #: src/features/downloads/components/ManualDownload.tsx:271
 #: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
@@ -1564,7 +1576,7 @@ msgstr "הורדה מחדש ↻"
 #~ msgid "Re-export PDF"
 #~ msgstr "ייצוא PDF מחדש"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:116
+#: src/features/course-overview/components/ExtractorHeader.tsx:118
 msgid "Re-generate {title}"
 msgstr "יצירה מחדש של {title}"
 
@@ -1803,7 +1815,7 @@ msgstr "הצג עוד"
 #~ msgid "Show the run controls in the sidebar"
 #~ msgstr "להציג את פקדי ההרצה בסרגל הצד"
 
-#: src/features/course-overview/constants/overview.ts:69
+#: src/features/course-overview/constants/overview.ts:85
 msgid "skipped"
 msgstr "דולג"
 
@@ -1841,6 +1853,10 @@ msgstr "השלב כבר רץ"
 #: src/features/settings/SettingsView.tsx:210
 msgid "Storage"
 msgstr "אחסון"
+
+#: src/features/course-overview/constants/overview.ts:25
+msgid "Student QA"
+msgstr "שאלות סטודנטים"
 
 #: src/features/downloads/components/PasscodePrompt.tsx:69
 msgid "Submit"
@@ -2160,6 +2176,10 @@ msgstr "לא ניתן להוריד את המקור הזה אוטומטית."
 #: src/features/lectures/EditSummaryView.tsx:274
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "הסיכום הזה השתנה בחלון אחר או נוצר מחדש. טען את הגרסה החדשה, או השאר את השינויים שלך ושמור אותם במקומה."
+
+#: src/features/course-overview/constants/overview.ts:27
+msgid "Topics"
+msgstr "נושאים"
 
 #: src/features/lectures/constants/pipeline.ts:32
 msgid "Transcribe"

@@ -59,7 +59,7 @@ msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {# lecture running} other {# lectures running}}"
 
 #. placeholder {0}: lectures.length
-#: src/features/course-overview/CourseView.tsx:77
+#: src/features/course-overview/CourseView.tsx:78
 msgid "{0, plural, one {# lecture} other {# lectures}}"
 msgstr "{0, plural, one {# lecture} other {# lectures}}"
 
@@ -69,7 +69,7 @@ msgid "{0, plural, one {# material} other {# materials}}"
 msgstr "{0, plural, one {# material} other {# materials}}"
 
 #. placeholder {0}: recitations.length
-#: src/features/course-overview/CourseView.tsx:80
+#: src/features/course-overview/CourseView.tsx:81
 msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
@@ -220,7 +220,7 @@ msgid "{file} was not found."
 msgstr "{file} was not found."
 
 #. placeholder {0}: extractors.length
-#: src/features/course-overview/CourseView.tsx:105
+#: src/features/course-overview/CourseView.tsx:106
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
@@ -276,11 +276,11 @@ msgstr "{path} cannot be written to."
 msgid "{path} exists but is not a folder."
 msgstr "{path} exists but is not a folder."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:98
+#: src/features/course-overview/components/ExtractorHeader.tsx:100
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
-#: src/features/course-overview/CourseView.tsx:82
+#: src/features/course-overview/CourseView.tsx:83
 msgid "{processed} fully processed"
 msgstr "{processed} fully processed"
 
@@ -428,6 +428,10 @@ msgstr "All edits will be discarded and the original AI summary restored."
 msgid "All Generated"
 msgstr "All Generated"
 
+#: src/features/course-overview/constants/overview.ts:28
+msgid "All Lectures"
+msgstr "All Lectures"
+
 #: src/shared/i18n/serviceErrors.ts:93
 msgid "Already generated."
 msgstr "Already generated."
@@ -436,7 +440,7 @@ msgstr "Already generated."
 msgid "Already up to date"
 msgstr "Already up to date"
 
-#: src/features/course-overview/constants/overview.ts:15
+#: src/features/course-overview/constants/overview.ts:16
 msgid "Analyze"
 msgstr "Analyze"
 
@@ -636,11 +640,11 @@ msgstr "Close"
 msgid "Collapse"
 msgstr "Collapse"
 
-#: src/features/course-overview/constants/overview.ts:16
+#: src/features/course-overview/constants/overview.ts:17
 msgid "Collect"
 msgstr "Collect"
 
-#: src/features/course-overview/constants/overview.ts:17
+#: src/features/course-overview/constants/overview.ts:18
 msgid "Compile"
 msgstr "Compile"
 
@@ -794,7 +798,7 @@ msgstr "Course \"{course}\" doesn't exist."
 msgid "Course name…"
 msgstr "Course name…"
 
-#: src/features/course-overview/CourseView.tsx:102
+#: src/features/course-overview/CourseView.tsx:103
 msgid "Course overview"
 msgstr "Course overview"
 
@@ -946,6 +950,10 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 
+#: src/features/course-overview/constants/overview.ts:24
+msgid "Exam Hints"
+msgstr "Exam Hints"
+
 #: src/features/downloads/components/RecordingRow.tsx:183
 msgid "Expand"
 msgstr "Expand"
@@ -954,7 +962,7 @@ msgstr "Expand"
 msgid "Expand every playlist in this section first"
 msgstr "Expand every playlist in this section first"
 
-#: src/features/course-overview/constants/overview.ts:18
+#: src/features/course-overview/constants/overview.ts:19
 #: src/features/lectures/constants/pipeline.ts:48
 msgid "Export PDF"
 msgstr "Export PDF"
@@ -963,7 +971,7 @@ msgstr "Export PDF"
 msgid "Exporting PDF"
 msgstr "Exporting PDF"
 
-#: src/features/course-overview/constants/overview.ts:14
+#: src/features/course-overview/constants/overview.ts:15
 msgid "Extract"
 msgstr "Extract"
 
@@ -979,7 +987,7 @@ msgstr "Extract the audio only"
 msgid "Extracting audio"
 msgstr "Extracting audio"
 
-#: src/features/course-overview/constants/overview.ts:88
+#: src/features/course-overview/constants/overview.ts:104
 #: src/features/course-overview/CourseView.tsx:44
 msgid "failed"
 msgstr "failed"
@@ -1074,7 +1082,7 @@ msgstr "Fully processed lectures"
 msgid "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgstr "Gemini's daily quota is used up. It resets at midnight Pacific time."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:123
+#: src/features/course-overview/components/ExtractorHeader.tsx:125
 msgid "Generate"
 msgstr "Generate"
 
@@ -1086,7 +1094,7 @@ msgstr "Generate All"
 #~ msgid "Generate PDF"
 #~ msgstr "Generate PDF"
 
-#: src/features/course-overview/CourseView.tsx:73
+#: src/features/course-overview/CourseView.tsx:74
 msgid "Generating · {runningTitle}"
 msgstr "Generating · {runningTitle}"
 
@@ -1094,7 +1102,7 @@ msgstr "Generating · {runningTitle}"
 msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "Generating from {stepLabel} step will rebuild:"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:98
+#: src/features/course-overview/components/ExtractorHeader.tsx:100
 #: src/features/course-overview/components/GenerateAllButton.tsx:43
 msgid "Generating…"
 msgstr "Generating…"
@@ -1454,7 +1462,7 @@ msgstr "Open in Drive"
 msgid "Open material"
 msgstr "Open material"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:107
+#: src/features/course-overview/components/ExtractorHeader.tsx:109
 #: src/features/lectures/components/PdfViewer.tsx:100
 #: src/features/lectures/MainView.tsx:256
 #: src/features/search/components/SearchResult.tsx:33
@@ -1492,7 +1500,7 @@ msgstr "Overview"
 #~ msgid "Overview failed to start"
 #~ msgstr "Overview failed to start"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:70
+#: src/features/course-overview/components/ExtractorHeader.tsx:72
 #: src/features/course-overview/components/ExtractorRow.tsx:29
 #: src/features/course-overview/components/GenerateAllButton.tsx:28
 #: src/features/course-overview/components/StepRow.tsx:38
@@ -1536,6 +1544,10 @@ msgstr "Pipeline already running"
 #~ msgid "Pipeline failed to start"
 #~ msgstr "Pipeline failed to start"
 
+#: src/features/course-overview/constants/overview.ts:26
+msgid "Pitfalls"
+msgstr "Pitfalls"
+
 #: src/features/downloads/components/ManualDownload.tsx:271
 #: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
@@ -1564,7 +1576,7 @@ msgstr "Re-download ↻"
 #~ msgid "Re-export PDF"
 #~ msgstr "Re-export PDF"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:116
+#: src/features/course-overview/components/ExtractorHeader.tsx:118
 msgid "Re-generate {title}"
 msgstr "Re-generate {title}"
 
@@ -1803,7 +1815,7 @@ msgstr "Show more"
 #~ msgid "Show the run controls in the sidebar"
 #~ msgstr "Show the run controls in the sidebar"
 
-#: src/features/course-overview/constants/overview.ts:69
+#: src/features/course-overview/constants/overview.ts:85
 msgid "skipped"
 msgstr "skipped"
 
@@ -1841,6 +1853,10 @@ msgstr "Step already running"
 #: src/features/settings/SettingsView.tsx:210
 msgid "Storage"
 msgstr "Storage"
+
+#: src/features/course-overview/constants/overview.ts:25
+msgid "Student QA"
+msgstr "Student QA"
 
 #: src/features/downloads/components/PasscodePrompt.tsx:69
 msgid "Submit"
@@ -2160,6 +2176,10 @@ msgstr "This source can't be downloaded automatically."
 #: src/features/lectures/EditSummaryView.tsx:274
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
+
+#: src/features/course-overview/constants/overview.ts:27
+msgid "Topics"
+msgstr "Topics"
 
 #: src/features/lectures/constants/pipeline.ts:32
 msgid "Transcribe"
