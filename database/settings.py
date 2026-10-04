@@ -1,5 +1,6 @@
 """The browser-dev settings store: the repo-root `.env`, read and merged in place."""
 
+import os
 import re
 from pathlib import Path
 
@@ -158,8 +159,8 @@ def _incoming_int(field: str, value) -> str:
     return str(value)
 
 
-def prepare_data_root(value) -> str:
-    """Create the data root if missing and prove it is writable, returning the path to store."""
+def _check_data_root(value) -> Path:
+    """Apply the data root's shape rules (non-empty, absolute, not a file) without touching disk."""
 
     text = _incoming("data_root", value)
     if not text:
@@ -178,6 +179,24 @@ def prepare_data_root(value) -> str:
             "data_root_not_a_directory",
             path=text,
         )
+    return path
+
+
+def _not_writable(path: Path, detail: str) -> CodedValueError:
+    """Build the one `data_root_not_writable` error both the save and the probe raise."""
+
+    return CodedValueError(
+        f"data root is not writable: {path} ({detail})",
+        "data_root_not_writable",
+        path=str(path),
+        detail=detail,
+    )
+
+
+def prepare_data_root(value) -> str:
+    """Create the data root if missing and prove it is writable, returning the path to store."""
+
+    path = _check_data_root(value)
     try:
         path.mkdir(parents=True, exist_ok=True)
         # A probe write turns an unwritable root into a fixable error now, not a pipeline failure later.
@@ -185,12 +204,24 @@ def prepare_data_root(value) -> str:
         probe.write_bytes(b"")
         probe.unlink()
     except OSError as e:
-        raise CodedValueError(
-            f"data root is not writable: {text} ({e})",
-            "data_root_not_writable",
-            path=text,
-            detail=str(e),
-        ) from e
+        raise _not_writable(path, str(e)) from e
+    return str(path)
+
+
+def probe_data_root(value) -> str:
+    """Judge whether saving this data root would succeed, creating and writing nothing."""
+
+    path = _check_data_root(value)
+    # A missing root is fine when saving could create it, so judge its nearest existing ancestor.
+    target = path
+    while not target.exists() and target != target.parent:
+        target = target.parent
+    if not target.is_dir():
+        raise _not_writable(path, f"{target} is not a directory")
+    # os.access reads permission bits only (on Windows just the read-only flag), so the save's real
+    # write stays authoritative; it is the one check that leaves nothing behind.
+    if not os.access(target, os.W_OK | os.X_OK):
+        raise _not_writable(path, f"permission denied: {target}")
     return str(path)
 
 
