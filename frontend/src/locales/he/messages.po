@@ -114,7 +114,7 @@ msgid "{0} found"
 msgstr "נמצאו {0}"
 
 #. placeholder {0}: state.browser
-#: src/features/settings/components/BrowserPrereqField.tsx:60
+#: src/features/settings/components/BrowserPrereqField.tsx:35
 msgid "{0} is installed — downloading is ready to use."
 msgstr "{0} מותקן — אפשר להוריד הקלטות."
 
@@ -396,7 +396,7 @@ msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 #~ msgid "A lecture running now would have its earlier files in the old folder and the rest in the new one."
 #~ msgstr "הרצאה שרצה עכשיו תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
-#: src/features/settings/SettingsView.tsx:333
+#: src/features/settings/SettingsView.tsx:335
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -436,11 +436,11 @@ msgstr "כבר מעודכן"
 msgid "Analyze"
 msgstr "ניתוח"
 
-#: src/features/settings/SettingsView.tsx:162
+#: src/features/settings/SettingsView.tsx:164
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:250
+#: src/features/settings/SettingsView.tsx:252
 msgid "Appearance and behaviour"
 msgstr "מראה והעדפות"
 
@@ -500,7 +500,7 @@ msgstr "אוניברסיטת בן-גוריון"
 #~ msgid "BIU account connected ✓"
 #~ msgstr "חשבון בר-אילן מחובר ✓"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:79
+#: src/features/settings/components/BrowserPrereqField.tsx:54
 msgid "Browser for downloading recordings"
 msgstr "דפדפן להורדת הקלטות"
 
@@ -554,7 +554,7 @@ msgstr "ביטול"
 #~ msgid "Catch up on unfinished lectures overnight"
 #~ msgstr "להשלים הרצאות שלא הסתיימו במהלך הלילה"
 
-#: src/features/settings/SettingsView.tsx:332
+#: src/features/settings/SettingsView.tsx:334
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -562,7 +562,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 #~ msgid "Changing this re-points the app only — it never moves anything. The old folder stays exactly as it is, and pointing back here brings it all back."
 #~ msgstr "השינוי רק מפנה את האפליקציה לתיקייה אחרת — שום דבר לא זז. התיקייה הישנה נשארת בדיוק כפי שהיא, וחזרה אליה כאן מחזירה את הכול."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:123
+#: src/features/settings/components/BrowserPrereqField.tsx:98
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
@@ -575,7 +575,7 @@ msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
 #: src/features/settings/components/ApiKeyField.tsx:103
-#: src/features/settings/components/BrowserPrereqField.tsx:58
+#: src/features/settings/components/BrowserPrereqField.tsx:33
 #: src/features/settings/components/MoodleSiteField.tsx:68
 msgid "Checking…"
 msgstr "בודק…"
@@ -760,7 +760,7 @@ msgstr "לא ניתן לטעון את הסיכומים של {course}."
 #~ msgid "Couldn't save all settings — check the services are running and try again."
 #~ msgstr "לא ניתן לשמור את כל ההגדרות — ודא שהשירותים פועלים ונסה שוב."
 
-#: src/features/settings/SettingsView.tsx:118
+#: src/features/settings/SettingsView.tsx:120
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
@@ -806,7 +806,7 @@ msgstr "יצירה"
 msgid "Current PDF"
 msgstr "ה-PDF הנוכחי"
 
-#: src/features/settings/SettingsView.tsx:292
+#: src/features/settings/SettingsView.tsx:294
 msgid "Daily run time"
 msgstr "שעת ההרצה היומית"
 
@@ -837,7 +837,7 @@ msgstr "לנתק את חשבון האוניברסיטה?"
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
-#: src/features/settings/SettingsView.tsx:267
+#: src/features/settings/SettingsView.tsx:269
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
@@ -845,7 +845,7 @@ msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 msgid "Done"
 msgstr "סיום"
 
-#: src/features/settings/InitWall.tsx:54
+#: src/features/settings/InitWall.tsx:55
 msgctxt "section mark"
 msgid "Done"
 msgstr "הושלם"
@@ -885,8 +885,8 @@ msgstr "מוריד {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
-#: src/features/settings/InitWall.tsx:268
-#: src/features/settings/SettingsView.tsx:233
+#: src/features/settings/InitWall.tsx:275
+#: src/features/settings/SettingsView.tsx:235
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
@@ -969,7 +969,7 @@ msgstr "חילוץ"
 msgid "Extract Audio"
 msgstr "חילוץ שמע"
 
-#: src/features/settings/SettingsView.tsx:266
+#: src/features/settings/SettingsView.tsx:268
 msgid "Extract the audio only"
 msgstr "לחלץ רק את השמע"
 
@@ -1027,11 +1027,11 @@ msgstr "Fast Study מתחברת ל-<0>{host}</0> עם החשבון הזה כדי
 #~ msgid "Fast Study signs in to your course site with this account to find and fetch recordings. Nothing else needs it, and you can connect it later."
 #~ msgstr "Fast Study מתחבר לאתר הקורס עם החשבון הזה כדי למצוא ולהביא הקלטות. שום דבר אחר לא זקוק לו, ואפשר לחבר אותו גם מאוחר יותר."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:97
+#: src/features/settings/components/BrowserPrereqField.tsx:72
 msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
 msgstr "Fast Study משתמשת ב-Google Chrome או ב-Microsoft Edge כדי להוריד הקלטות מאתר הקורס. הפיכת וידאו לסיכום לא דורשת דפדפן."
 
-#: src/features/settings/InitWall.tsx:204
+#: src/features/settings/InitWall.tsx:200
 msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "Fast Study משתמשת בשני שירותים חינמיים: אחד הופך את ההקלטה לטקסט, והשני כותב את הסיכום. לשניהם צריך מפתח משלך, ואפשר ליצור את שניהם בחינם."
 
@@ -1109,8 +1109,8 @@ msgstr "חשבון Google"
 #~ msgid "Google credentials are missing. Put credentials.json at {path}."
 #~ msgstr "חסרים פרטי ההתחברות ל-Google. שים את credentials.json בנתיב {path}."
 
-#: src/features/settings/InitWall.tsx:255
-#: src/features/settings/SettingsView.tsx:220
+#: src/features/settings/InitWall.tsx:259
+#: src/features/settings/SettingsView.tsx:222
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -1143,7 +1143,7 @@ msgstr "איך משיגים מפתח?"
 msgid "In course"
 msgstr "כבר בקורס"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:91
+#: src/features/settings/components/BrowserPrereqField.tsx:66
 msgid "Install Chrome"
 msgstr "התקנת Chrome"
 
@@ -1211,7 +1211,7 @@ msgstr "הרצאות"
 msgid "Lectures {0}-{1}"
 msgstr "הרצאות {0}-{1}"
 
-#: src/features/settings/InitWall.tsx:165
+#: src/features/settings/InitWall.tsx:167
 msgid "Let's set things up"
 msgstr "בוא נגדיר כמה דברים"
 
@@ -1280,7 +1280,7 @@ msgstr "לא"
 msgid "No archived courses"
 msgstr "אין קורסים בארכיון"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:62
+#: src/features/settings/components/BrowserPrereqField.tsx:37
 msgid "No Chrome or Edge found on this computer."
 msgstr "לא נמצא Chrome או Edge במחשב הזה."
 
@@ -1460,7 +1460,7 @@ msgstr "פתיחת ה-PDF"
 msgid "Open the sign-in page"
 msgstr "פתיחת דף ההתחברות"
 
-#: src/features/settings/InitWall.tsx:59
+#: src/features/settings/InitWall.tsx:60
 msgctxt "section mark"
 msgid "Optional"
 msgstr "לא חובה"
@@ -1654,7 +1654,7 @@ msgstr "להחליף את הווידאו הקיים ב\"{0}\"?"
 msgid "Required"
 msgstr "חובה"
 
-#: src/features/settings/InitWall.tsx:49
+#: src/features/settings/InitWall.tsx:50
 msgctxt "section mark"
 msgid "Required"
 msgstr "חובה"
@@ -1702,7 +1702,7 @@ msgstr "יצירה מחדש של {file}"
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
-#: src/features/settings/SettingsView.tsx:265
+#: src/features/settings/SettingsView.tsx:267
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
@@ -1710,7 +1710,7 @@ msgstr "להריץ את כל השלבים"
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
-#: src/features/settings/SettingsView.tsx:286
+#: src/features/settings/SettingsView.tsx:288
 msgid "Run unfinished lectures daily"
 msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 
@@ -1733,7 +1733,7 @@ msgstr "הרצאות בעיבוד"
 #~ msgid "Running pipelines… ({runnerCurrent}/{runnerTotal})"
 #~ msgstr "מריץ צינורות… ({runnerCurrent}/{runnerTotal})"
 
-#: src/features/settings/SettingsView.tsx:154
+#: src/features/settings/SettingsView.tsx:156
 msgid "Save"
 msgstr "שמירה"
 
@@ -1786,13 +1786,13 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:78
-#: src/features/settings/SettingsView.tsx:147
+#: src/features/settings/SettingsView.tsx:80
+#: src/features/settings/SettingsView.tsx:149
 #: src/shared/sidebar/Sidebar.tsx:90
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:113
+#: src/features/settings/SettingsView.tsx:115
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1843,7 +1843,7 @@ msgstr "שלב {0} מתוך {1}"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:210
+#: src/features/settings/SettingsView.tsx:212
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1891,7 +1891,7 @@ msgstr "הסיכום לא השתמש באף חומר"
 #~ msgid "summary did not use material"
 #~ msgstr "הסיכום לא השתמש בחומר"
 
-#: src/features/settings/SettingsView.tsx:188
+#: src/features/settings/SettingsView.tsx:190
 msgid "Summary model"
 msgstr "מודל הסיכום"
 
@@ -1899,7 +1899,7 @@ msgstr "מודל הסיכום"
 #~ msgid "summary.pdf is older than summary.md. Re-generate it."
 #~ msgstr "summary.pdf ישן מ-summary.md. יש לייצר אותו מחדש."
 
-#: src/features/settings/SettingsView.tsx:321
+#: src/features/settings/SettingsView.tsx:323
 msgid "Switch to another university?"
 msgstr "לעבור לאוניברסיטה אחרת?"
 
@@ -1969,7 +1969,7 @@ msgstr "השלב הזה כבוי בהגדרות."
 msgid "The course \"{course}\" was not found."
 msgstr "הקורס \"{course}\" לא נמצא."
 
-#: src/features/settings/SettingsView.tsx:309
+#: src/features/settings/SettingsView.tsx:311
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "גם ההרצה היומית פועלת לפי ההגדרה שלמעלה: אם היא מוגדרת לא לעשות דבר, גם ההרצה היומית לא תעשה דבר."
 
@@ -2104,7 +2104,7 @@ msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה ה
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 
-#: src/features/settings/SettingsView.tsx:270
+#: src/features/settings/SettingsView.tsx:272
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
@@ -2120,7 +2120,7 @@ msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, 
 msgid "This course has no summaries yet."
 msgstr "אין עדיין סיכומים בקורס הזה."
 
-#: src/features/settings/SettingsView.tsx:322
+#: src/features/settings/SettingsView.tsx:324
 msgid "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
 msgstr "החשבון המחובר כעת ינותק. חיבור לאתר החדש דורש התחברות מלאה בחלון דפדפן."
 
@@ -2154,7 +2154,7 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
-#: src/features/settings/InitWall.tsx:168
+#: src/features/settings/InitWall.tsx:170
 msgid "This only needs to be done once."
 msgstr "צריך לעשות את זה רק פעם אחת."
 
@@ -2263,7 +2263,7 @@ msgstr "קישור לווידאו…"
 msgid "Videos"
 msgstr "וידאו"
 
-#: src/features/settings/components/BrowserPrereqField.tsx:64
+#: src/features/settings/components/BrowserPrereqField.tsx:39
 msgid "We couldn't check right now."
 msgstr "לא הצלחנו לבדוק כרגע."
 
@@ -2275,11 +2275,11 @@ msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמו
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/SettingsView.tsx:256
+#: src/features/settings/SettingsView.tsx:258
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/InitWall.tsx:230
+#: src/features/settings/InitWall.tsx:226
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
@@ -2295,17 +2295,13 @@ msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע �
 #~ msgid "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 #~ msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע שה-PDF שלה מוכן. הפעלה מחדש מסמנת כל הרצאה שהסתיימה בינתיים כלא מוכנה, וכולן יועלו."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:108
+#: src/features/settings/components/BrowserPrereqField.tsx:83
 msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "בלי אחד מהם, Fast Study לא תוכל להוריד הקלטות מאתר הקורס ולא תוכל להוריד הקלטת Zoom. כל השאר פועל כרגיל — הוסף וידאו בעצמך והוא עדיין יהפוך לסיכום. התקן את Chrome דרך הקישור שלמעלה ואז בדוק שוב."
 
 #: src/features/downloads/components/ManualDownload.tsx:98
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "עובד רק עבור קישורי וידאו, ורק אם הם נגישים ללא פרטי התחברות."
-
-#: src/features/settings/InitWall.tsx:173
-msgid "Written in the masculine form, but addressed to everyone."
-msgstr "כתוב בלשון זכר אך פונה לשני המינים"
 
 #: src/shared/components/ConfirmModal.tsx:42
 msgid "Yes"
@@ -2315,15 +2311,15 @@ msgstr "כן"
 msgid "You can connect the account once your university is saved."
 msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברסיטה."
 
-#: src/features/settings/InitWall.tsx:211
+#: src/features/settings/InitWall.tsx:207
 msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
 msgstr "המפתחות שלך נשמרים רק במחשב הזה, מוצפנים על ידי Windows. ל-Fast Study אין שרתים משלה — כל מפתח נשלח רק לשירות שהוא שייך אליו."
 
-#: src/features/settings/InitWall.tsx:196
+#: src/features/settings/InitWall.tsx:192
 msgid "Your two API keys"
 msgstr "שני מפתחות ה-API שלך"
 
-#: src/features/settings/InitWall.tsx:241
+#: src/features/settings/InitWall.tsx:237
 msgid "Your university"
 msgstr "האוניברסיטה שלך"
 
