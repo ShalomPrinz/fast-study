@@ -34,12 +34,15 @@ authenticates by its own query-string token.
 
 YouTube serves DASH-segmented streams — separate audio and video behind signed URLs — so the
 `.mp4`-capture flow gets nothing usable; yt-dlp resolves the manifest, downloads both tracks and
-muxes them. `-o video.%(ext)s --merge-output-format mp4 --remux-video mp4` lands `video.mp4` —
-the remux covers a lone `.webm`/`.mkv` that needs no merge, which would otherwise land under its
-own extension and fail the upload; `--no-progress --quiet` keeps it silent; `--cache-dir
-<state>/ytdlp-cache` because the default home may be read-only. Packaged, `--ffmpeg-location` names
-the bundled ffmpeg, which is not on PATH: without it yt-dlp skips the merge yet exits 0, leaving
-only `video.fNNN.*` and no `video.mp4` to upload.
+muxes them. `-f bv*[height<=720]+ba/b[height<=720]/b` caps the video at 720p — the pipeline keeps
+only the audio and nothing plays the video, so a higher resolution is pure size; the trailing `/b`
+keeps Drive and generic URLs, whose formats often carry no height. `-o video.%(ext)s
+--merge-output-format mp4 --remux-video mp4` lands `video.mp4` — the remux covers a lone
+`.webm`/`.mkv` that needs no merge, which would otherwise land under its own extension and fail
+the upload; `--no-progress --quiet` keeps it silent; `--cache-dir <state>/ytdlp-cache` because the
+default home may be read-only. Packaged, `--ffmpeg-location` names the bundled ffmpeg, which is not
+on PATH: without it yt-dlp skips the merge yet exits 0, leaving only `video.fNNN.*` and no
+`video.mp4` to upload.
 
 `/download-youtube` gates on `YTDLP_HOST_RE`; `/download-url` runs the same descriptor on any
 http(s) URL with no cookies or headers. yt-dlp's generic extractor rarely knows a size, so the probe
@@ -109,5 +112,5 @@ few hundred bytes reported as the video would wreck the ETA — and it drops `Co
 on a cross-origin hop, as captured credentials belong to the lecture site. The ranged GET's body is
 cancelled, not drained: a server that ignores `Range` answers 200 with the whole file.
 
-yt-dlp path: `--skip-download --print %(filesize,filesize_approx)s` over the same `bv*+ba/b`
-selection the download uses, summed. It needs the JS-runtime flags too, or it resolves "unknown".
+yt-dlp path: `--skip-download --print %(filesize,filesize_approx)s` over the same 720p-capped
+`-f` selection the download uses, summed. It needs the JS-runtime flags too, or it resolves "unknown".

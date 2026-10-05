@@ -24,7 +24,11 @@ const CACHE_DIR_FLAGS = ['--cache-dir', statePath('ytdlp-cache')];
 // merge, leaving no video.mp4. Dev keeps PATH's: a bare `ffmpeg` here would read as missing.
 const FFMPEG_FLAGS = process.env.FASTSTUDY_BIN_DIR ? ['--ffmpeg-location', toolPath('ffmpeg')] : [];
 
-// Sum the printed filesizes for the download's own `bv*+ba/b` selection — the merged mp4's size.
+// Video capped at 720p: the pipeline keeps only the audio track and nothing plays the video, so more
+// is pure size. The trailing /b keeps Drive and generic URLs, whose formats often carry no height.
+const FORMAT_FLAGS = ['-f', 'bv*[height<=720]+ba/b[height<=720]/b'];
+
+// Sum the printed filesizes for the download's own FORMAT_FLAGS selection — the merged mp4's size.
 // Needs YT_PLAYER_JS_FLAGS, or it resolves null even though the download would succeed.
 function probeYoutubeSize(url) {
   return new Promise((resolve) => {
@@ -38,8 +42,7 @@ function probeYoutubeSize(url) {
         ...YT_PLAYER_JS_FLAGS,
         ...CACHE_DIR_FLAGS,
         ...FFMPEG_FLAGS,
-        '-f',
-        'bv*+ba/b',
+        ...FORMAT_FLAGS,
         '--print',
         '%(filesize,filesize_approx)s',
         url,
@@ -70,6 +73,7 @@ function buildYtdlpArgs(url) {
     ...YT_PLAYER_JS_FLAGS,
     ...CACHE_DIR_FLAGS,
     ...FFMPEG_FLAGS,
+    ...FORMAT_FLAGS,
     '--quiet',
     '--no-warnings',
     '--no-progress',
