@@ -13,12 +13,18 @@ def _get_service():
     return build("drive", "v3", credentials=creds)
 
 
+def _quoted(name: str) -> str:
+    """`name` as a Drive query string literal; a geresh as in "אינפי א'" would end it early."""
+
+    return "'" + name.replace("\\", "\\\\").replace("'", "\\'") + "'"
+
+
 def _find_folder(service, name: str, parent_id: str | None = None) -> str | None:
     parent_clause = (
         f"and '{parent_id}' in parents" if parent_id else "and 'root' in parents"
     )
     q = (
-        f"name='{name}' and mimeType='application/vnd.google-apps.folder' "
+        f"name={_quoted(name)} and mimeType='application/vnd.google-apps.folder' "
         f"{parent_clause} and trashed=false"
     )
     results = service.files().list(q=q, fields="files(id)", pageSize=1).execute()
@@ -37,10 +43,8 @@ def _create_folder(service, name: str, parent_id: str) -> str:
 
 
 def _find_file(service, name: str, parent_id: str) -> str | None:
-    # Escape single quotes so a name like "ת'רגול" doesn't break the query string.
-    safe_name = name.replace("'", "\\'")
     q = (
-        f"name='{safe_name}' and mimeType!='application/vnd.google-apps.folder' "
+        f"name={_quoted(name)} and mimeType!='application/vnd.google-apps.folder' "
         f"and '{parent_id}' in parents and trashed=false"
     )
     results = service.files().list(q=q, fields="files(id)", pageSize=1).execute()

@@ -1,3 +1,4 @@
+import re
 import socket
 from unittest.mock import patch
 
@@ -40,7 +41,9 @@ class FakeFiles:
         # honouring name, folder-vs-file, and the "'<parent>' in parents" scope.
         q = self.store.pop("pending_list")
         is_folder_query = "mimeType='application/vnd.google-apps.folder'" in q
-        name = q.split("name='", 1)[1].split("'", 1)[0]
+        # Read the name literal the way Drive does: \\ and \' are escapes, a bare ' ends it.
+        literal = re.search(r"name='((?:[^'\\]|\\.)*)'", q).group(1)
+        name = re.sub(r"\\(.)", r"\1", literal)
         parent = q.split(" in parents", 1)[0].rsplit("'", 2)[1]
         matches = [
             f
@@ -125,6 +128,20 @@ def test_subfolder_file_lookup_is_scoped_to_subfolder(tmp_path, store):
     pdfs = [f for f in store["files"] if f["name"] == "t.pdf"]
     assert len(pdfs) == 2  # one in course root, one in Recitations
     assert len(store["update_calls"]) == 1  # only the second Recitations upload updated
+
+
+@pytest.mark.parametrize("course", ["אינפי א'", "a\\b"])
+def test_course_folder_with_a_quote_or_backslash_is_found_again(
+    tmp_path, store, course
+):
+    # An unescaped geresh ends Drive's name literal early, so the folder is never
+    # found and every upload made another one.
+    with patch.object(drive_mod, "_get_service", return_value=FakeService(store)):
+        upload_to_drive(_pdf(tmp_path), course, file_name="L.pdf")
+        upload_to_drive(_pdf(tmp_path), course, file_name="L.pdf")
+
+    assert store["create_calls"].count(course) == 1
+    assert len(store["update_calls"]) == 1
 
 
 def test_drive_client_builds_offline():
