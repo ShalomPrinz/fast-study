@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLingui } from '@lingui/react/macro'
 import type { TimingStats } from '@/types'
 import { formatDuration } from '@/shared/utils/format'
+import { etaProgress } from '@/shared/utils/eta'
 import './ProgressBar.css'
 
 interface Props {
@@ -15,12 +16,14 @@ interface Props {
 // ETA bar: elapsed time against a given estimate, ticking client-side.
 export default function ProgressBar({ stats, startedAt, completedFraction = 0, className }: Props) {
   const { t } = useLingui()
-  const [elapsed, setElapsed] = useState(() => (Date.now() - startedAt) / 1000)
+  // The tick stores the clock, not the elapsed time, so a changed `startedAt` (a queued job's 0
+  // becoming its real start) is measured at once instead of showing the old start until the next tick.
+  const [now, setNow] = useState(Date.now)
 
   useEffect(() => {
-    const id = setInterval(() => setElapsed((Date.now() - startedAt) / 1000), 500)
+    const id = setInterval(() => setNow(Date.now()), 500)
     return () => clearInterval(id)
-  }, [startedAt])
+  }, [])
 
   const extra = className ? ` ${className}` : ''
 
@@ -36,11 +39,13 @@ export default function ProgressBar({ stats, startedAt, completedFraction = 0, c
     )
   }
 
-  const { estimated, longest } = stats
-  const effectiveElapsed = completedFraction * estimated + elapsed
-  const fillPct = Math.min((effectiveElapsed / estimated) * 100, 100)
-  const remaining = Math.max(estimated - effectiveElapsed, 0)
-  const overflowing = effectiveElapsed >= estimated
+  const { longest } = stats
+  const { elapsed, fillPct, remaining, overflowing } = etaProgress(
+    stats.estimated,
+    startedAt,
+    now,
+    completedFraction,
+  )
 
   return (
     <div className={`progress-wrap${extra}`}>
