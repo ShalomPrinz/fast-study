@@ -8,6 +8,8 @@ You own all development work inside `frontend/`: the React + Vite + TypeScript S
 
 Scope: work only within `frontend/`. Don't change other services or their contracts; consume the backend/database HTTP APIs as they are.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Follow existing conventions in the code and `frontend/CLAUDE.md`: each file under `src/services/` is the single boundary for one external concern (no raw `fetch`/`react-toastify` at call sites); steps derive from `constants/pipeline.ts`; URLs build via `utils/url.ts`; UI lives in components, not contexts/hooks; import via `@/`.

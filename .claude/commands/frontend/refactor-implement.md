@@ -116,7 +116,4 @@ Apply these standards as you implement each step:
 
 # When You Finish a Step
 
-After marking the step `[x]` in `.refactor-plan.md`, tell the user:
-
-1. What you did in one sentence
-2. A ready-to-use git commit message — one line, conventional commit format, specific to what actually changed. Example: `refactor: extract shared Button and Input components to src/components/shared`
+After marking the step `[x]` in `.refactor-plan.md`, commit the step with the `git-commit` skill — one `frontend: ` line specific to what changed — and tell the user what you did in one sentence.

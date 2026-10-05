@@ -96,7 +96,9 @@ when the doc calls a code user-reachable and no catalog row says it.
 
 ## Service subagents
 
-Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent.
+Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent. Subagents never commit; the main session commits what they report.
+
+`reviewer` is the exception: read-only, owning nothing, it reviews a task's uncommitted diff before the main session commits it.
 
 `lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
 
@@ -137,7 +139,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 - For non-trivial changes: ground yourself in the actual code first, present 2-3 options with tradeoffs, and wait for a decision before implementing. Don't start editing on an ambiguous request.
 - When a workaround fails twice, stop implementing and research the root cause — official docs, the API surface, community threads — instead of trying a third variant.
 - Before surfacing an incidental finding — git history, branch state, earlier attempts, side effects — ask whether the user would decide or act differently knowing it. If yes, say it in one line with what it changes; if not, drop it, from replies and prompt files alike.
-- User owns every version-control write. Never run `add`/`commit`/`stash`/`checkout`.
+- Commit as you go, one commit per concern, following the [`git-commit`](.claude/skills/git-commit/SKILL.md) skill — no need to be asked. Only the main session commits, after the `reviewer` subagent has seen the task's diff; never `push`/`stash`/`checkout`/`reset`/merge/rebase.
 - Verify empirically — start the service, curl it, kill it, quote the exact output — rather than asserting it works. For anything a user would see, run it on the `app-harness` skill's private offline stack ([`.claude/harness/`](.claude/harness/README.md)).
 - WSL interop is off, so no `.exe` runs from this shell — but the user has a Windows machine with PowerShell and Claude Code. When something needs verifying on Windows, ask them to run it there: give exact PowerShell commands or a self-contained prompt for that Claude Code, rather than leaving the Windows behavior unproven. That Claude Code is allowed to access this repo too, so when a check needs the code on the Windows side, tell the user it should work from the repo.
 

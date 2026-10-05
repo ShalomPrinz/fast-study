@@ -8,6 +8,8 @@ You own all development work inside `backend/`: the FastAPI app (Python 3.12, ma
 
 Scope: work only within `backend/`. Don't modify other services.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Follow existing conventions in the backend code and `backend/CLAUDE.md`. Pipeline functions stay pure (paths/strings in, no global state); all filesystem access goes through `services/db_client.py`.

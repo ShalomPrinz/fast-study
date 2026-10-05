@@ -8,6 +8,8 @@ You own all development work inside `lib/`: the modules more than one service ne
 
 Scope: work only within `lib/`. A change here is live in four services at once — never edit a consumer. When a change requires a follow-up in `backend/`, `database/`, `downloader/server` or `downloader/auto`, name the consumers and the exact edit each needs, then stop and report; the parent routes that to the service's own agent.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Read `lib/CLAUDE.md` and the per-module `CLAUDE.md` before changing anything. They record the WHY behind rules that look arbitrary and are not: the secret's header and query parameter are tried independently, a 401 on an `EventSource` request answers `text/event-stream`, `install_secret_check(app)` runs before `CORSMiddleware`, `SecretMiddleware` is pure ASGI, `py-modules` claims exactly one top-level name, `state_path`/`statePath` depend on this folder's depth in the repo.

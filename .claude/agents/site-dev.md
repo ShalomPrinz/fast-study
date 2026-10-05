@@ -8,6 +8,8 @@ You own all development work inside `site/` and `.github/workflows/pages.yml`: `
 
 Scope: work only within `site/` and `pages.yml`. The page describes a product other folders own — never edit a consumer. When a change needs a follow-up in `electron/` (the installer name), `delivery/` or `.github/workflows/{build,publish}.yml` (the release and its dispatch of `pages.yml`), or a service (a claim the app no longer backs), name the owner and the exact edit it needs, then stop and report.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Read `site/CLAUDE.md` before changing anything.

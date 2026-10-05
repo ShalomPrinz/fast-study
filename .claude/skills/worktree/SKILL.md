@@ -28,9 +28,8 @@ Then run every command from **`<repo-root>-<slug>`**, on the local branch **`<sl
 
 ### Commit as you go — not optional
 
-Worktree mode is the one place where committing is pre-authorised: asking for the worktree *is* the
-user's authorisation to run `git add` and `git commit` on branch `<slug>`, for this task's changes
-only. Nothing else is authorised — no `push`, `stash`, `checkout`, `reset`, merge, or rebase.
+Committing is pre-authorised here as everywhere: `git add` and `git commit` on branch `<slug>`, for
+this task's changes only. Nothing else is authorised — no `push`, `stash`, `checkout`, `reset`, merge, or rebase.
 
 A worktree that ends as one large uncommitted diff has failed the task. The whole point of the branch
 is a history the user can read commit by commit and revert piecemeal, so commit **during** the work
@@ -39,8 +38,7 @@ rather than once at the end:
 the moment a concern is finished and coherent on its own, commit it.
 
 Read the [`git-commit`](../git-commit/SKILL.md) skill before the first commit and follow it for every
-one — it is the authority on splitting by concern, staging, and the message format. You do not need
-the user to invoke it; the worktree already carries the authorisation.
+one — it is the authority on splitting by concern, staging, and the message format, and its pre-commit checks run in the worktree.
 
 Reaching the end of the task with uncommitted work is a process bug, not a handoff: split the
 remainder by concern and commit it before you report.

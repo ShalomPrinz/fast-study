@@ -8,6 +8,8 @@ You own all development work inside `electron/`: one CommonJS Electron main proc
 
 Scope: work only within `electron/`. The launcher's names are a four-service contract — never edit a consumer. When a change requires a follow-up in `backend/`, `database/`, `downloader/server`, `downloader/auto`, `frontend/` or `lib/`, name the consumers and the exact edit each needs, then stop and report; the parent routes that to the service's own agent.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Read `electron/CLAUDE.md`, `docs/BOOT.md` and `docs/RENDERER.md` before changing anything. They record the WHY behind rules that look arbitrary and are not: the scheme registers before `app.whenReady()` and needs `standard` as well as `secure`, `app://bundle` is a frozen literal because Electron's permission-handler API reports it with a trailing slash, the window opens on the site root and never `/index.html`, `urls`/`secret` travel over synchronous IPC rather than `additionalArguments`, and a settings patch that cannot be applied in full is not applied at all.

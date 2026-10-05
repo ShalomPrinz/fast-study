@@ -8,6 +8,8 @@ You own all development work inside `downloader/`: a Chrome Manifest V3 extensio
 
 Scope: work only within `downloader/`.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Follow existing conventions in the code and `downloader/CLAUDE.md`: ESM only (`import`, never `require`); `server/` and `auto/` use npm freely, only `extension/` must avoid dependencies (MV3 constraint); use `execFile`/`spawn` with argv arrays, never `exec`; saved files are `video.mp4` and materials whose names the database allocates (`material.pdf`, `material.2.pdf`, …). Keep `suggestLectureName` logic in sync with `frontend/src/features/lectures/utils/nextName.ts`.

@@ -8,6 +8,8 @@ You own all development work inside `delivery/` and `.github/workflows/{build,pu
 
 Scope: work only within `delivery/` and those two workflow files. Nothing here ships or runs at runtime, and every name it reads is owned by a consumer — never edit one. When a change requires a follow-up in `backend/`, `database/`, `downloader/server`, `downloader/auto`, `frontend/`, `electron/` or `lib/` — a `data-testid`, a spec-visible module, a packaged path — name the consumer and the exact edit it needs, then stop and report; the parent routes that to the service's own agent.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Read `delivery/CLAUDE.md` and its `docs/` and `electron/docs/BOOT.md` before changing anything. `BOOT.md`'s packaged tree is the contract `stage.mjs` builds and the smoke suite asserts; the spec's rules — no top-level module name in both services, `database/`'s deps a strict subset of `backend/`'s, every shipped read-only file through `resource_path()` — bind `backend/` and `database/` and are not this folder's to relax.

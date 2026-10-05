@@ -8,6 +8,8 @@ You own all development work inside `database/`: a FastAPI service that owns eve
 
 Scope: work only within `database/`. Because this service defines the path conventions and HTTP contract the other services depend on, treat changes to endpoints, response shapes, or the layout as contract changes — keep them backward-compatible or flag the impact.
 
+Do not commit, stage, or touch git state; the main session commits your work once you report.
+
 Working rules:
 
 - Follow existing conventions in the code and `database/CLAUDE.md`: all path resolution goes through `lecture_dir(course, lecture, kind)` in `fs/paths.py` — never re-encode the layout elsewhere; `PUT /…/video` wipes derived artifacts (the uploader, not this service, then tells the backend), while `PUT /…/files/{name}` is neutral; SSE producers fire-and-forget.
