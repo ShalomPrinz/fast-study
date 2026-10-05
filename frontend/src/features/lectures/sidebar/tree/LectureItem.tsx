@@ -12,6 +12,7 @@ import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
 import { findLecture } from '@/features/lectures/utils/courseTree'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
+import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { usePendingUpload } from '@/features/lectures/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
@@ -29,6 +30,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const upload = usePendingUpload()
 
   const [renaming, setRenaming] = useState(false)
+  const [pendingName, setPendingName] = useState<string | null>(null)
   const [dragOver, setDragOver] = useState(false)
   const renameEdit = useInlineEdit(renaming ? lecture.name : null)
 
@@ -53,16 +55,20 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
     renameEdit.setValue('')
     // A run may have started while the input was open.
     if (!name || name === lecture.name || renameLocked) return
-    let effective: string
     try {
-      effective = await renameLecture(course.name, lecture.name, name, kind)
+      await renameAndFollow({
+        typed: name,
+        rename: () => renameLecture(course.name, lecture.name, name, kind),
+        refresh: refreshCourses,
+        // The database may sanitize the typed name, so the page follows the folder it answers with.
+        follow: (effective) => {
+          if (isSelected) onSelect(course.name, effective, kind)
+        },
+        show: setPendingName,
+      })
     } catch (e) {
       toastFailure(e)
-      return
     }
-    // The database may sanitize the typed name, so the page follows the folder it answers with.
-    if (isSelected) onSelect(course.name, effective, kind)
-    refreshCourses()
   }
 
   function handleDrop(e: React.DragEvent) {
@@ -128,7 +134,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
       >
         <span className={`lecture-dot${dotState ? ` lecture-dot--${dotState}` : ''}`} />
         <span className="lecture-name" dir="auto">
-          {lecture.name}
+          {pendingName ?? lecture.name}
         </span>
       </button>
     </li>

@@ -114,10 +114,10 @@ archived course so the badge stays off.
   or outlet context.
 - `CourseGroup` owns `expanded` and `recExpanded`, so the recitations sub-group survives collapsing the
   course. It auto-expands when one of its lectures or its overview is the open route (deep links).
-- The pane unmounts on other routes; only each course's expansion (a module map in `CourseGroup.tsx`) and
-  the nav's scroll position survive, the latter saved on each scroll because a detached nav reads 0. The
-  auto-expand re-runs on remount: keeping the open page's course visible deliberately beats restoring an
-  explicit collapse.
+- The pane unmounts on other routes; only each course's expansion (a module map in
+  `utils/courseExpansion.ts`, moved to the new name on a course rename) and the nav's scroll position
+  survive, the latter saved on each scroll because a detached nav reads 0. The auto-expand re-runs on
+  remount: keeping the open page's course visible deliberately beats restoring an explicit collapse.
 - `CourseGroupContext` and `LectureListContext` reach the recursive rows without prop-drilling;
   `AddLectureInput` renders only in the list being added to.
 
@@ -128,7 +128,8 @@ included), refuse the rename
 (`utils/renameLock.ts`): each writes by the name it was given, so a mid-run rename splits the lecture in two.
 A running or queued lecture refuses a video drop too, checked again on the replace confirm: the upload wipes
 the folder under a run that would finish from the old video. An open page — lecture or overview — follows the
-name the rename answers, since the database may sanitize the typed one. `useShiftHeld`
+name the rename answers, since the database may sanitize the typed one, and only once the refreshed tree has
+landed; the row shows the new name from Enter until then (`utils/renameFlow.ts`). `useShiftHeld`
 resets on window blur, because an alt-tab mid-hold never delivers `keyup`.
 
 `nextName.ts` suggests `<prefix> N+1`, except a trailing `N.1` suggests `N.2` (a split session's second

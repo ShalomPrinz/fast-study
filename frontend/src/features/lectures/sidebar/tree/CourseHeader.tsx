@@ -13,6 +13,8 @@ import Icon from '@/shared/components/Icon'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
+import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
+import { moveSavedExpansion } from '@/features/lectures/utils/courseExpansion'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
 import { ROUTES } from '@/shared/utils/routes'
@@ -38,6 +40,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const renameLocked = isCourseRenameLocked(status, course.name) || downloading
 
   const [renaming, setRenaming] = useState(false)
+  const [pendingName, setPendingName] = useState<string | null>(null)
   const renameEdit = useInlineEdit(renaming ? course.name : null)
   const progress = courseProgress(course, driveEnabled)
 
@@ -53,20 +56,29 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
     renameEdit.setValue('')
     // A run may have started while the input was open.
     if (!name || name === course.name || renameLocked) return
-    let effective: string
     try {
-      effective = await renameCourse(course.name, name)
+      await renameAndFollow({
+        typed: name,
+        rename: async () => {
+          const effective = await renameCourse(course.name, name)
+          // Before the refreshed tree remounts the group under its new name.
+          moveSavedExpansion(course.name, effective)
+          return effective
+        },
+        refresh: refreshCourses,
+        // The database may sanitize the typed name, so the page follows the folder it answers with.
+        follow: (effective) => {
+          if (selected?.course === course.name) {
+            onSelect(effective, selected.lecture, selected.kind)
+          } else if (overviewOpen) {
+            navigate(courseRoute(effective))
+          }
+        },
+        show: setPendingName,
+      })
     } catch (e) {
       toastFailure(e)
-      return
     }
-    // The database may sanitize the typed name, so the page follows the folder it answers with.
-    if (selected?.course === course.name) {
-      onSelect(effective, selected.lecture, selected.kind)
-    } else if (overviewOpen) {
-      navigate(courseRoute(effective))
-    }
-    refreshCourses()
   }
 
   function startAdding(e: React.MouseEvent) {
@@ -116,7 +128,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
             <Chevron open={expand.isOpen} />
           </span>
           <span className="course-name" dir="auto">
-            {course.name}
+            {pendingName ?? course.name}
           </span>
           {progress.total > 0 && (
             <span className="course-count" title={t`Fully processed lectures`}>
