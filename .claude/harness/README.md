@@ -100,6 +100,7 @@ node .claude/harness/hb.mjs unlock            # every lock off (or name the glob
 node .claude/harness/hb.mjs forget-probes     # every probed link back to unprobed ('?')
 node .claude/harness/hb.mjs refused --since 2026-09-25T09:00Z        # real escapes only
 node .claude/harness/hb.mjs browser dl        # one more browser session, stopped by --down
+node .claude/harness/hb.mjs kill database     # take one service down; setup.mjs --restart brings it back
 ```
 
 A lecture argument is its folder name, or `Recitations/<name>` for a recitation.
@@ -127,6 +128,10 @@ the database's `fs.crud` alone that it runs on `win32`, so that becomes its real
 memory, so a row it classified — the `/gone/` link as "Unsupported" — lists unprobed again and can
 be driven through its first probe once more; `hb reseed` leaves both caches alone. The Downloads
 page keeps the verdict it was handed until it re-lists, so reload it.
+
+`kill` ends one service's whole recorded process group, the server with the `uv`/`npm` parent
+wrapping it, so the port stops answering; a bare `kill` of the recorded pid can leave the server up.
+Use it to see what the app does while a peer is down, then `setup.mjs --restart` it.
 
 `refused` prints the `REFUSED` lines in `logs/network.log` and exits 1 when there are any. It leaves
 out the self-check's two deliberate probes, which log under the service name `selfcheck`. The log

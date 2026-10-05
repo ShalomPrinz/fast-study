@@ -8,7 +8,7 @@ import path from 'node:path';
 import { DATABASE, bindPorts, bytes, call, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
 import { SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
-import { restart, startBrowser } from './lib/stack.mjs';
+import { kill, restart, startBrowser } from './lib/stack.mjs';
 import { diff, readLocks, snapshot } from './lib/state.mjs';
 
 // A lecture argument: `name`, or `Recitations/name` for a recitation, as the on-disk path reads.
@@ -132,6 +132,15 @@ const COMMANDS = {
       // Both caches are in-memory only, and nothing else — reseed included — empties them.
       await restart(paths, 'downloader-auto', {});
       console.log('forgot: probes and captures — reload the Downloads page so it re-lists');
+    },
+  },
+  kill: {
+    usage: 'kill <service>',
+    summary: 'kill one recorded service (as --restart names it) and leave it down',
+    async run(paths, [name]) {
+      if (!name) throw new Error('name a service, e.g. kill database');
+      await kill(paths, name);
+      console.log(`killed: ${name} — bring it back with setup.mjs --restart ${name}`);
     },
   },
   url: {

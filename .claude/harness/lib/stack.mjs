@@ -148,14 +148,25 @@ export async function down(paths) {
   return Object.keys(services);
 }
 
-/** Kill one recorded service and start it again from its exact spec, `overrides` on top of its env. */
-export async function restart(paths, name, overrides) {
+function recordedSpec(paths, name) {
   const { services } = readStack(paths);
   const spec = services[name];
   if (!spec) {
     const known = Object.keys(services).join(', ') || 'none';
     throw new Error(`no service "${name}" recorded under ${paths.root} (recorded: ${known})`);
   }
+  return spec;
+}
+
+/** Kill one recorded service's whole group and leave it down; `restart` brings it back. */
+export async function kill(paths, name) {
+  await killGroup(recordedSpec(paths, name).pid);
+  fs.appendFileSync(logOf(paths, name), `\n# harness: killed ${new Date().toISOString()}\n`);
+}
+
+/** Kill one recorded service and start it again from its exact spec, `overrides` on top of its env. */
+export async function restart(paths, name, overrides) {
+  const spec = recordedSpec(paths, name);
   await killGroup(spec.pid);
   const extra = Object.entries(overrides)
     .map(([key, item]) => ` ${key}=${item}`)
