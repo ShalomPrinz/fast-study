@@ -48,7 +48,9 @@ GEMINI_MINUTE_QUOTA_SLEEP_SECONDS = 60
 _locks: dict[
     tuple[str, str, str], asyncio.Lock
 ] = {}  # per-lecture; created lazily via setdefault
-_in_flight: dict[str, dict] = {}  # skey → entry; cleared on step completion or error
+_in_flight: dict[
+    str, dict
+] = {}  # skey → entry; a pipeline clears it at its end, a lone step at its end
 _errors: dict[
     str, dict
 ] = {}  # skey → last error record (see _error_record); survives after _in_flight clears
@@ -591,9 +593,11 @@ async def _call_step(course: str, lecture: str, kind: str, step: str) -> dict:
     return await asyncio.to_thread(_EXECUTORS[step], course, lecture, kind)
 
 
-async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) -> None:
-    """Drive one step to a terminal outcome, retrying after rate-limit sleeps.
-    Unsafe: the caller must hold this lecture's lock."""
+async def _run_step_unlocked(
+    course: str, lecture: str, kind: str, step: str, *, keep_in_flight: bool = False
+) -> None:
+    """Drive one step to a terminal outcome, retrying after rate-limit sleeps. Unsafe: the
+    caller must hold this lecture's lock; keep_in_flight leaves the end-of-step clear to it."""
 
     global _summarize_block
     skey = _skey(course, lecture, kind)
@@ -622,8 +626,9 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
         result = await _call_step(course, lecture, kind, step)
 
         if result["status"] == "done":
-            _in_flight.pop(skey, None)
-            db_client.notify()
+            if not keep_in_flight:
+                _in_flight.pop(skey, None)
+                db_client.notify()
             return
         elif result["status"] == "rate_limited":
             sleep_seconds = result.get("retry_after") or RATE_LIMIT_SLEEP_SECONDS
@@ -637,7 +642,6 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
             db_client.notify()
             # loop → retry same step
         else:  # error
-            _in_flight.pop(skey, None)
             msg = result.get("message") or result.get("status") or "unknown error"
             params = result.get("params") or {}
             if result.get("daily_quota"):
@@ -646,7 +650,9 @@ async def _run_step_unlocked(course: str, lecture: str, kind: str, step: str) ->
                 step, msg, code=result.get("code"), params=params
             )
             log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
-            db_client.notify()
+            if not keep_in_flight:
+                _in_flight.pop(skey, None)
+                db_client.notify()
             return
 
 
@@ -656,31 +662,40 @@ async def _run_pipeline_unlocked(
     """Advance a lecture through its remaining steps; True iff it stopped early on the
     run-scoped summarize block. Unsafe: the caller must hold this lecture's lock."""
 
-    while True:
-        files = await _fetch_files(course, lecture, kind)
-        step = next_step(files)
-        if step is None:
-            return False
-        if step == "summarize" and honor_block and _summarize_block is not None:
-            # Same record as the lecture that hit the quota, so this one doesn't look pending.
-            _errors[_skey(course, lecture, kind)] = _error_record(
-                "summarize",
-                _summarize_block["message"],
-                code="gemini_quota_blocked",
-                params=_summarize_block["params"],
-                blocked=True,
-            )
+    skey = _skey(course, lecture, kind)
+    # The lecture stays in _in_flight from its first step to here, so /status never shows
+    # it idle between steps; this finally is the one place a pipeline clears it.
+    try:
+        while True:
+            files = await _fetch_files(course, lecture, kind)
+            step = next_step(files)
+            if step is None:
+                return False
+            if step == "summarize" and honor_block and _summarize_block is not None:
+                # Same record as the lecture that hit the quota, so this one doesn't look pending.
+                _errors[skey] = _error_record(
+                    "summarize",
+                    _summarize_block["message"],
+                    code="gemini_quota_blocked",
+                    params=_summarize_block["params"],
+                    blocked=True,
+                )
+                _in_flight.pop(skey, None)
+                db_client.notify()
+                log.info(
+                    "%s/%s (%s): summarize blocked (Gemini daily quota), stopping here",
+                    course,
+                    lecture,
+                    kind,
+                )
+                return True
+            await _run_step_unlocked(course, lecture, kind, step, keep_in_flight=True)
+            if skey in _errors:
+                return False  # a step error halts the whole pipeline for this lecture
+    finally:
+        # No notify when nothing ran: run_all's per-lecture pings must not burst (PIPELINE.md).
+        if _in_flight.pop(skey, None) is not None:
             db_client.notify()
-            log.info(
-                "%s/%s (%s): summarize blocked (Gemini daily quota), stopping here",
-                course,
-                lecture,
-                kind,
-            )
-            return True
-        await _run_step_unlocked(course, lecture, kind, step)
-        if _skey(course, lecture, kind) in _errors:
-            return False  # a step error halts the whole pipeline for this lecture
 
 
 async def run_step(course: str, lecture: str, kind: str, step: str) -> None:

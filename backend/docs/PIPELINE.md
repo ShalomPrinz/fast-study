@@ -41,7 +41,7 @@ Material PDFs are the exception: they are user-supplied optional inputs with no 
 Outcomes of the fire-and-forget endpoints live in runner state, read via `GET /status`. State in `pipeline/runner.py`:
 
 - `_locks[(course, lecture, kind)]` — one `asyncio.Lock` per lecture, serializing concurrent triggers.
-- `_in_flight[skey]` — all in-flight entries regardless of trigger (runner / `/pipeline` / single `/run/{step}` all populate the same map, so the frontend doesn't care which path queued them). `skey` is the string `"course||lecture||kind"` and appears verbatim in `/status`.
+- `_in_flight[skey]` — all in-flight entries regardless of trigger (runner / `/pipeline` / single `/run/{step}` all populate the same map, so the frontend doesn't care which path queued them). `skey` is the string `"course||lecture||kind"` and appears verbatim in `/status`. A pipeline keeps its lecture in the map from the first step's start until it ends — success, early stop, error or exception — and each step start only rewrites `step`, so `/status` never shows it idle between steps; a lone `/run/{step}` clears it when that step ends.
 - `_errors[skey]` — last error as `{step, message, code, params, provider, blocked}`, survives after `_in_flight` clears; cleared when that lecture next starts a step. A summarize start from any trigger also drops every record whose `code` is in `_GEMINI_QUOTA_CODES` and lifts `_summarize_block`, since it re-tests the quota. The sweep tests membership of that set: a code it does not cover would strand every lecture the run stopped, whose record no later attempt would clear.
 - `_summarize_block` — the `{message, params}` of the Gemini daily quota that stops `run_all` from summarizing further lectures; each one it stops gets `gemini_quota_blocked` with those same params in `_errors`, with `blocked: true`. Reset at every run's start and end, and by any summarize start.
 - `_runner_status` — `{running, total, done, last_error}` for `run_all`; `last_error` is a crashed lecture as `{message, code, params}` (`run_crashed`), or `null`.
@@ -49,7 +49,7 @@ Outcomes of the fire-and-forget endpoints live in runner state, read via `GET /s
 
 `next_step` is pure file-existence over `enabled_steps()`: the first step whose output is missing. That makes every trigger resumable with no stored progress.
 
-`db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
+`db_client.notify()` fires an SSE ping on each meaningful state change (step start, rate-limit start/wake, error, pipeline end, a lone `run_step`'s step done, run start/complete) so the frontend reacts without polling; inside a pipeline a finished step pings only through the next step's start or the pipeline's end. It is deliberately NOT fired at `run_all` start or at the end of a lecture where no step ran: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 
 The backend also notifies once at startup, so a page still showing a step a restarted process was running refetches the now-empty `in_flight`.
 

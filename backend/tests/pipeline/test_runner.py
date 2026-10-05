@@ -535,6 +535,110 @@ def test_a_lecture_deleted_mid_step_stops_its_run_with_lecture_not_found():
     delete_file.assert_not_called()
 
 
+# ---- in-flight across a pipeline's steps ----
+
+_SKEY = runner._skey("C1", "L1", "lecture")
+_STATES = [
+    _files(video=True),
+    _files(video=True, audio=True),
+    _files(video=True, audio=True, transcript=True),
+    _files(video=True, audio=True, transcript=True, summary=True, pdf=True, drive=True),
+]
+
+
+def _run_pipeline_observed(results, *, honor_block=False):
+    """Run a pipeline over _STATES; return the in-flight step each fetch saw, and notifies."""
+
+    seen: list[str | None] = []
+
+    async def fake_fetch(course, lecture, kind):
+        entry = runner._in_flight.get(_SKEY)
+        seen.append(entry and entry["step"])
+        return _STATES[len(seen) - 1]
+
+    async def fake_call(course, lecture, kind, step):
+        result = results.pop(0)
+        if isinstance(result, BaseException):
+            raise result
+        return result
+
+    with (
+        patch.object(runner, "_fetch_files", fake_fetch),
+        patch.object(runner, "_call_step", fake_call),
+        patch.object(runner.db_client, "notify") as notify,
+    ):
+        try:
+            asyncio.run(
+                runner.run_pipeline_for("C1", "L1", "lecture", honor_block=honor_block)
+            )
+        except RuntimeError:
+            pass
+        # The last call clears the entry: nothing notifies with it still present after.
+        assert _SKEY not in runner._in_flight
+    return seen, notify.call_count
+
+
+def test_a_pipeline_stays_in_flight_between_steps_and_clears_on_success():
+    """The step-end gap where /status read empty is gone: the entry spans every step."""
+    done = {"status": "done"}
+    seen, _ = _run_pipeline_observed([done, done, done])
+    # First fetch precedes any step; every later one sees the previous step still in flight.
+    assert seen == [None, "audio", "transcribe", "summarize"]
+
+
+def test_a_failed_step_clears_in_flight_and_keeps_its_error():
+    try:
+        seen, _ = _run_pipeline_observed(
+            [{"status": "done"}, {"status": "error", "message": "boom"}]
+        )
+        assert seen == [None, "audio"]
+        assert runner._errors[_SKEY]["message"] == "boom"
+    finally:
+        runner._errors.pop(_SKEY, None)
+
+
+def test_an_exception_mid_step_still_clears_in_flight():
+    seen, _ = _run_pipeline_observed([{"status": "done"}, RuntimeError("db down")])
+    assert seen == [None, "audio"]
+
+
+def test_an_early_stop_on_the_quota_block_clears_in_flight():
+    runner._summarize_block = {"message": "q", "params": {}}
+    try:
+        seen, _ = _run_pipeline_observed(
+            [{"status": "done"}, {"status": "done"}], honor_block=True
+        )
+        assert seen == [None, "audio", "transcribe"]
+        assert runner._errors[_SKEY]["code"] == "gemini_quota_blocked"
+    finally:
+        runner._summarize_block = None
+        runner._errors.pop(_SKEY, None)
+
+
+def test_a_pipeline_with_nothing_to_do_does_not_notify():
+    """run_all's per-lecture end stays silent when no step ran (no notify burst)."""
+    with (
+        patch.object(runner, "_fetch_files", AsyncMock(return_value=_STATES[-1])),
+        patch.object(runner.db_client, "notify") as notify,
+    ):
+        asyncio.run(runner.run_pipeline_for("C1", "L1", "lecture"))
+    notify.assert_not_called()
+
+
+def test_a_lone_step_clears_in_flight_when_it_ends():
+    async def fake_call(course, lecture, kind, step):
+        assert runner._in_flight[_SKEY]["step"] == "audio"
+        return {"status": "done"}
+
+    with (
+        patch.object(runner, "_call_step", fake_call),
+        patch.object(runner.db_client, "notify") as notify,
+    ):
+        asyncio.run(runner.run_step("C1", "L1", "lecture", "audio"))
+    assert _SKEY not in runner._in_flight
+    assert notify.call_count == 2  # start, then the clear
+
+
 # ---- rate-limit branch ----
 
 
