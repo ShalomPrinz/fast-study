@@ -158,3 +158,48 @@ describe('one side failing', () => {
     expect(seen.at(-1)).toBe('1/v2/true')
   })
 })
+
+describe('refreshUntil', () => {
+  // Booted on tree v1, with a notify's refetch and refreshUntil's own refetch both pending.
+  async function waitingFor(name: string) {
+    fetchRunnerStatus.mockResolvedValue(status(1))
+    fetchTree.mockResolvedValueOnce(tree(1))
+    const wrapper = ({ children }: { children: ReactNode }) =>
+      createElement(SnapshotProvider, { children })
+    const { result } = renderHook(() => useCourseTreeContext(), { wrapper })
+    await act(async () => {})
+    const fromNotify = deferred<Course[]>()
+    const own = deferred<Course[]>()
+    fetchTree.mockReturnValueOnce(fromNotify.promise).mockReturnValueOnce(own.promise)
+    act(() => {
+      notify.cb()
+    })
+    let settled = false
+    act(() => {
+      void result.current
+        .refreshUntil((courses) => courses.some((c) => c.name === name))
+        .then(() => (settled = true))
+    })
+    return { fromNotify, own, settled: () => settled }
+  }
+
+  it('settles at the first applied tree holding the name, though its own refetch is still out', async () => {
+    const { fromNotify, settled } = await waitingFor('v2')
+    await act(async () => fromNotify.resolve(tree(2)))
+    expect(settled()).toBe(true)
+  })
+
+  it('keeps waiting past a tree without the name, and settles when its own refetch does', async () => {
+    const { fromNotify, own, settled } = await waitingFor('v9')
+    await act(async () => fromNotify.resolve(tree(2)))
+    expect(settled()).toBe(false)
+    await act(async () => own.resolve(tree(3)))
+    expect(settled()).toBe(true)
+  })
+
+  it('settles when its own refetch fails', async () => {
+    const { own, settled } = await waitingFor('v9')
+    await act(async () => own.reject(new Error('database down')))
+    expect(settled()).toBe(true)
+  })
+})

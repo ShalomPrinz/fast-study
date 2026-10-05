@@ -14,6 +14,7 @@ import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { courseProgress } from '@/features/lectures/utils/lectureProgress'
 import { isCourseRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
+import { courseNotFound } from '@/shared/utils/notFound'
 import { moveSavedExpansion } from '@/features/lectures/utils/courseExpansion'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
@@ -29,7 +30,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { t } = useLingui()
   const { course, add } = useCourseGroup()
   const { selected, onSelect } = useSelection()
-  const { refreshCourses } = useCourseTreeContext()
+  const { refreshCourses, refreshUntil } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const shiftHeld = useShiftHeld()
   const { status } = useRunnerStatus()
@@ -65,7 +66,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
           moveSavedExpansion(course.name, effective)
           return effective
         },
-        refresh: refreshCourses,
+        refresh: (effective) => refreshUntil((tree) => !courseNotFound(tree, effective)),
         // The database may sanitize the typed name, so the page follows the folder it answers with.
         follow: (effective) => {
           if (selected?.course === course.name) {

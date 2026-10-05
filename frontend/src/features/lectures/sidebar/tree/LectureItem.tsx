@@ -13,6 +13,7 @@ import { findLecture } from '@/features/lectures/utils/courseTree'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 import { renameAndFollow } from '@/features/lectures/utils/renameFlow'
+import { lectureNotFound } from '@/shared/utils/notFound'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import { usePendingUpload } from '@/features/lectures/sidebar/PendingUploadModal'
 import { useCourseGroup } from './CourseGroupContext'
@@ -24,7 +25,7 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
   const { course } = useCourseGroup()
   const kind = useLectureListKind()
   const { selected, onSelect } = useSelection()
-  const { courses, refreshCourses } = useCourseTreeContext()
+  const { courses, refreshUntil } = useCourseTreeContext()
   const { status, isInFlight } = useRunnerStatus()
   const driveEnabled = useDriveEnabled()
   const upload = usePendingUpload()
@@ -59,7 +60,8 @@ export default function LectureItem({ lecture }: { lecture: Lecture }) {
       await renameAndFollow({
         typed: name,
         rename: () => renameLecture(course.name, lecture.name, name, kind),
-        refresh: refreshCourses,
+        refresh: (effective) =>
+          refreshUntil((tree) => !lectureNotFound(tree, course.name, effective, kind)),
         // The database may sanitize the typed name, so the page follows the folder it answers with.
         follow: (effective) => {
           if (isSelected) onSelect(course.name, effective, kind)

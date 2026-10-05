@@ -50,6 +50,8 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   // The first applied status and tree carry errors and warnings from before load: seed-and-suppress them.
   const statusPrimed = useRef(false)
   const treePrimed = useRef(false)
+  // `refreshUntil` callers, each told of every applied tree; one returns true once it is satisfied.
+  const treeWaiters = useRef(new Set<(courses: Course[]) => boolean>())
 
   function applyStatus(s: RunnerStatus) {
     setStatus(s)
@@ -88,6 +90,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     if (s.status === 'fulfilled') applyStatus(s.value)
     if (c.status === 'fulfilled') {
       setCourses(c.value)
+      for (const w of treeWaiters.current) if (w(c.value)) treeWaiters.current.delete(w)
       announcePdfWarnings(c.value, warningReports, treePrimed.current)
       treePrimed.current = true
       setLoaded(true)
@@ -101,6 +104,25 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   useEffect(() => {
     refresh()
   }, [])
+
+  // Settling in the same task as `setCourses` lets the caller's navigation commit in that tree's render,
+  // even when a notify's refetch lands it first; the refetch's own settling ends the wait regardless.
+  async function refreshUntil(has: (courses: Course[]) => boolean) {
+    let waiter!: (courses: Course[]) => boolean
+    const landed = new Promise<void>((resolve) => {
+      waiter = (courses) => {
+        if (!has(courses)) return false
+        resolve()
+        return true
+      }
+    })
+    treeWaiters.current.add(waiter)
+    try {
+      await Promise.race([landed, refresh()])
+    } finally {
+      treeWaiters.current.delete(waiter)
+    }
+  }
 
   useNotify(refresh)
 
@@ -147,7 +169,9 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   )
 
   return (
-    <CourseTreeContext.Provider value={{ courses: sortedCourses, loaded, refreshCourses: refresh }}>
+    <CourseTreeContext.Provider
+      value={{ courses: sortedCourses, loaded, refreshCourses: refresh, refreshUntil }}
+    >
       <RunnerStatusContext.Provider value={{ status, trigger, isInFlight, getInFlight, getError }}>
         {children}
       </RunnerStatusContext.Provider>

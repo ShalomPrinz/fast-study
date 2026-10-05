@@ -31,7 +31,8 @@ try {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <I18nProvider i18n={i18n}>
-      <BrowserRouter>
+      {/* Synchronous navigation, so a route change commits with the tree update beside it — docs/ARCHITECTURE.md §Routes. */}
+      <BrowserRouter useTransitions={false}>
         <ErrorBoundary>
           <App />
         </ErrorBoundary>

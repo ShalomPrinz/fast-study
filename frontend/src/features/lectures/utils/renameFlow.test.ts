@@ -9,9 +9,9 @@ function recorder(rename: () => Promise<string>) {
       events.push('rename')
       return rename()
     },
-    refresh: async () => {
+    refresh: async (effective: string) => {
       await Promise.resolve()
-      events.push('refresh landed')
+      events.push(`tree holding ${effective} landed`)
     },
     follow: (effective: string) => events.push(`follow ${effective}`),
     show: (label: string | null) => events.push(`show ${label}`),
@@ -20,14 +20,14 @@ function recorder(rename: () => Promise<string>) {
 }
 
 describe('renameAndFollow', () => {
-  it('shows the new name until the tree lands, and follows the answered name only after it', async () => {
+  it('shows the new name until a tree holding the answered name lands, and follows it only then', async () => {
     const { events, flow } = recorder(async () => 'Sanitized')
     await renameAndFollow(flow)
     expect(events).toEqual([
       'show Typed',
       'rename',
       'show Sanitized',
-      'refresh landed',
+      'tree holding Sanitized landed',
       'follow Sanitized',
       'show null',
     ])

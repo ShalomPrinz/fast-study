@@ -66,6 +66,11 @@ every answer is overtaken before it arrives and latest-only never settles.
 | `/:course/:lecture/edit`   | `EditSummaryView` |
 | `*`                        | redirect to `/`   |
 
+`BrowserRouter` runs with `useTransitions={false}`, so a navigation is an ordinary update that commits in
+the same render as any state set beside it. As a transition it would commit after them, so a page following a
+rename would render the refreshed tree under its old route for a frame — "not found". Nothing here suspends
+(no `Suspense`, `lazy` or data router), so a transition bought nothing to give up.
+
 `kind` is the query param `?kind=recitation`, propagated everywhere, never a segment. The static segments
 outrank `/:course/:lecture` in v7 ranking, and a pathless layout adds no segment. The overview is three
 segments rather than `/course/:course`, which would outrank `/:course/:lecture` and hide every lecture of a

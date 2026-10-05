@@ -6,6 +6,8 @@ interface CourseTreeValue {
   courses: Course[]
   loaded: boolean
   refreshCourses: () => Promise<void>
+  // Refetches, settling at the first applied tree `has` accepts or once that refetch settles.
+  refreshUntil: (has: (courses: Course[]) => boolean) => Promise<void>
 }
 
 export const CourseTreeContext = createContext<CourseTreeValue | null>(null)
