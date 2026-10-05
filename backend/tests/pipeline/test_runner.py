@@ -452,6 +452,35 @@ def test_exec_transcribe_persists_partial_on_rate_limit():
     assert result["status"] == "rate_limited"
     assert result["progress"] == {"completed": 1, "total": 9}
     assert runner.PARTIAL_TXT in puts and runner.PARTIAL_META in puts
+    assert (
+        result["retry_after"] is None
+    )  # no stated delay → the runner's 3600s fallback
+
+
+def test_exec_transcribe_passes_groq_retry_after():
+    """Groq's parsed "try again in" delay rides the result, so the runner sleeps that long."""
+    err = runner.TranscribeRateLimitError(
+        {"retry_after_seconds": 750.0, "completed_chunks": 0, "total_chunks": 1}
+    )
+
+    with (
+        patch.object(
+            runner.db_client,
+            "file_exists",
+            side_effect=lambda c, l, k, n: n == "audio.mp3",
+        ),
+        patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"),
+        patch.object(runner.db_client, "put_file_bytes"),
+        patch.object(
+            runner,
+            "transcribe_audio",
+            side_effect=_fake_transcribe_writing_partial(err),
+        ),
+    ):
+        result = runner._exec_transcribe("C1", "L1", "lecture")
+
+    assert result["status"] == "rate_limited"
+    assert result["retry_after"] == 750.0
 
 
 # ---- error is logged, not just stored ----
@@ -772,7 +801,7 @@ def test_rate_limit_sleeps_then_retries_same_step():
 
 def test_rate_limit_honors_per_result_retry_after():
     """A rate_limited result may carry its own retry_after; the 3600s constant is
-    only the fallback, which is what transcribe uses."""
+    only the fallback for a Groq 429 that states no delay."""
     sleep_log: list[float] = []
     calls = {"n": 0}
 

@@ -89,7 +89,7 @@ The uploading service reports the arrival as a fact and holds no step names — 
 
 ## Rate limits
 
-**Groq / transcribe.** `transcribe_audio` raises `TranscribeRateLimitError` carrying `{limit, used, requested, completed_chunks, total_chunks}` and leaves `transcript.partial.txt` + `.meta.json` on disk. The runner sleeps `RATE_LIMIT_SLEEP_SECONDS` (3600s — Groq's hourly ASR window) and retries the same step.
+**Groq / transcribe.** `transcribe_audio` raises `TranscribeRateLimitError` carrying `{limit, used, requested, retry_after_seconds, completed_chunks, total_chunks}` and leaves `transcript.partial.txt` + `.meta.json` on disk. The runner sleeps for the delay Groq's message states ("try again in 12m30s"), or `RATE_LIMIT_SLEEP_SECONDS` (3600s — Groq's hourly ASR window) when it states none or one the parser can't read, and retries the same step.
 
 Resume validates the meta against `audio.mp3`'s size AND mtime. Re-downloading audio gives it a fresh mtime, so the transcribe executor restores the mtime recorded in the partial meta — otherwise every resume silently falls back to a full restart.
 

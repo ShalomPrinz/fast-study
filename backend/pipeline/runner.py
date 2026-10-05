@@ -278,6 +278,7 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
                 _persist_transcribe_partial(course, lecture, kind, Path(tmp))
                 return {
                     "status": "rate_limited",
+                    "retry_after": e.info.get("retry_after_seconds"),
                     "progress": {
                         "completed": e.info["completed_chunks"],
                         "total": e.info["total_chunks"],
