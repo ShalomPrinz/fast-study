@@ -12,11 +12,16 @@ PROMPT_DIR = resource_path("assets", "instructions", "overview")
 
 
 def analyze(extractor: Extractor, report: str, course: str) -> str:
-    """Send one extractor's report to an LLM with its prompt. Raises RuntimeError on API failure."""
+    """Send one extractor's report to an LLM with its prompt. Raises CodedError on API failure."""
 
     prompt = (PROMPT_DIR / extractor.prompt_file).read_text(encoding="utf-8")
-    client = LLMClient()
-    return client.generate([prompt, f"Course: {course}", report])
+    try:
+        client = LLMClient()
+        return client.generate([prompt, f"Course: {course}", report])
+    except CodedError:
+        raise  # a quota hit or a missing/rejected key already names itself
+    except Exception as e:
+        raise CodedError(str(e), "analysis_failed", detail=str(e)) from e
 
 
 def run_analyze(course: str, extractor: Extractor) -> dict:

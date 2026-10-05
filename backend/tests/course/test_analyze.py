@@ -7,6 +7,7 @@ import pytest
 from course import analyze as ca
 from course import overview as ep
 from course.overview import PatternExtractor
+from services.llm_client import GeminiRateLimitError
 
 
 class TestPromptFiles:
@@ -41,9 +42,24 @@ class TestAnalyze:
         assert contents[2] == "REPORT TEXT"
         assert result == "ניתוח"
 
-    def test_raises_runtime_error_on_api_failure(self):
+    def test_an_api_failure_names_itself_with_the_providers_text_as_detail(self):
         fake = MagicMock()
-        fake.generate.side_effect = RuntimeError("boom")
+        fake.generate.side_effect = RuntimeError("500 fake gemini is down")
         with patch.object(ca, "LLMClient", return_value=fake):
-            with pytest.raises(RuntimeError, match="boom"):
+            with pytest.raises(RuntimeError, match="fake gemini is down") as e:
                 ca.analyze(ep.EXTRACTORS[0], "report", "קורס")
+        assert (e.value.code, e.value.params) == (
+            "analysis_failed",
+            {"detail": "500 fake gemini is down"},
+        )
+
+    def test_a_quota_hit_keeps_its_own_code(self):
+        quota = GeminiRateLimitError(
+            {"message": "quota", "is_daily": True, "quota_id": None, "model": "m"}
+        )
+        fake = MagicMock()
+        fake.generate.side_effect = quota
+        with patch.object(ca, "LLMClient", return_value=fake):
+            with pytest.raises(GeminiRateLimitError) as e:
+                ca.analyze(ep.EXTRACTORS[0], "report", "קורס")
+        assert e.value.code == "gemini_quota_exhausted"

@@ -92,6 +92,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   // backend — course overview
   already_generated: msg({ message: 'Already generated.' }),
   no_snippets_found: msg({ message: 'Nothing was found to analyze in this course.' }),
+  analysis_failed: msg({ message: 'Analyzing the collected passages failed.' }),
   empty_model_output: msg({
     message:
       '{provider, select, gemini {Gemini returned nothing. Try again.} other {The model returned nothing. Try again.}}',

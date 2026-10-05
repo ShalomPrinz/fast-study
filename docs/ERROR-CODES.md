@@ -165,6 +165,7 @@ with one string, and `provider` and `blocked` stay on the record — the fronten
 | `course/analyze.py`      | `missing_prerequisite`   | `file`, `step`    | user  |
 | `course/to_pdf.py`       | `missing_prerequisite`   | `file`, `step`    | user  |
 | `course/analyze.py`      | `empty_model_output`     | `provider`        | user  |
+| `course/analyze.py`      | `analysis_failed`        | `detail`          | user  |
 | `course/merge.py`        | `no_summaries_found`     | —                 | user  |
 | `course/collect.py`      | `no_summaries_found`     | —                 | user  |
 | `course/runner.py`       | `internal_unknown_phase` | `phase`           | dev   |
