@@ -173,7 +173,12 @@ def _check_data_root(value) -> Path:
             "data_root_not_absolute",
             path=text,
         )
-    if path.exists() and not path.is_dir():
+    try:
+        is_file = path.exists() and not path.is_dir()
+    except OSError as e:
+        # Python 3.12's exists() re-raises EACCES when a parent denies traversal, so that is unwritable too.
+        raise _not_writable(path, str(e)) from e
+    if is_file:
         raise CodedValueError(
             f"data root exists but is not a directory: {text}",
             "data_root_not_a_directory",

@@ -445,6 +445,26 @@ def test_probe_rejects_a_folder_under_a_file(client, tmp_path):
 
 
 @pytest.mark.skipif(os.geteuid() == 0, reason="root ignores permission bits")
+@pytest.mark.parametrize("method,route", [("put", "/settings"), ("post", "/config")])
+def test_a_root_under_an_untraversable_parent_is_not_writable(
+    client, env_file, tmp_path, method, route
+):
+    # Python 3.12's exists() raises EACCES here, which must not surface as a settings-store failure.
+    locked = tmp_path / "locked"
+    locked.mkdir()
+    locked.chmod(0o000)
+    try:
+        r = getattr(client, method)(route, json={"data_root": str(locked / "sub")})
+    finally:
+        locked.chmod(0o700)
+
+    assert r.status_code == 400
+    assert r.json()["code"] == "data_root_not_writable"
+    assert r.json()["params"]["path"] == str(locked / "sub")
+    assert "Permission denied" in r.json()["params"]["detail"]
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores permission bits")
 def test_probe_rejects_an_unwritable_parent(client, tmp_path):
     locked = tmp_path / "locked"
     locked.mkdir()

@@ -66,7 +66,8 @@ A value an older build wrote undoubled reads back unchanged unless it held `\\`,
 Validated before it is stored, by `PUT /settings` and `POST /config` alike: it must be absolute (a
 relative root would resolve against each service's own cwd), it is created if missing, and a probe
 file is written and deleted to prove the location is writable — otherwise an unwritable root
-surfaces as a pipeline failure minutes later.
+surfaces as a pipeline failure minutes later. A root the OS will not even stat (a parent denies
+traversal) is `data_root_not_writable` too.
 
 `POST /settings/data-root/probe` runs the same shape checks for the first-run wall but creates and
 writes nothing: a missing root passes when its nearest existing ancestor is a writable directory.
