@@ -96,7 +96,7 @@ when the doc calls a code user-reachable and no catalog row says it.
 
 ## Service subagents
 
-Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent. Subagents never commit; the main session commits what they report.
+Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent, with a brief written by the [`delegate`](.claude/skills/delegate/SKILL.md) skill; `.claude/ownership.json` says which agent owns which path. Subagents never commit; the main session commits what they report.
 
 `reviewer` is the exception: read-only, owning nothing, it reviews a task's uncommitted diff before the main session commits it.
 
