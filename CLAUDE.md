@@ -98,6 +98,8 @@ when the doc calls a code user-reachable and no catalog row says it.
 
 Each service has a dedicated dev subagent (in `.claude/agents/`) that owns all work within that service's directory — code, bug fixes, features, refactors, tests, config, and keeping that service's README/CLAUDE.md current. Route any work touching a service through its subagent, with a brief written by the [`delegate`](.claude/skills/delegate/SKILL.md) skill; `.claude/ownership.json` says which agent owns which path. Subagents never commit; the main session commits what they report.
 
+A service agent reports in 300 words or fewer: files changed, docs updated and why, test and lint results, deviations and decisions made, follow-ups another owner needs, and anything left open. A brief or an agent file may ask for more; `reviewer` has its own format.
+
 `reviewer` is the exception: read-only, owning nothing, it reviews a task's uncommitted diff before the main session commits it.
 
 `lib-dev` owns `lib/`, `electron-dev` owns `electron/` and `delivery-dev` owns `delivery/` plus `.github/workflows/{build,publish}.yml`, all under the same one difference: none edits a consumer. `lib/`'s packages are live in all four services at once, the launcher spells the same launch contract from the other side, and `delivery/` builds and smoke-tests a tree whose every name a service or the launcher owns — so each reports the follow-up a service needs and that follow-up goes to that service's subagent.
