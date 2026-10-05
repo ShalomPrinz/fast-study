@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import type { Kind } from '@/types'
 import type { UrlDownload } from '@/features/downloads/services/downloadServer'
 import type { StoredTarget } from '@/features/downloads/utils/manualDownload'
 
@@ -48,4 +49,34 @@ export function manualEntries(): readonly ManualEntry[] {
 
 export function useManualEntries(): readonly ManualEntry[] {
   return useSyncExternalStore(subscribe, manualEntries)
+}
+
+// The form's half-typed fields for this app session, so leaving the page and coming back restores
+// them. Null course/name follow the first active course and the suggestion, untouched until edited.
+export interface ManualDraft {
+  url: string
+  course: string | null
+  kind: Kind
+  name: string | null
+}
+
+let draft: ManualDraft = { url: '', course: null, kind: 'lecture', name: null }
+const draftListeners = new Set<() => void>()
+
+function subscribeDraft(listener: () => void): () => void {
+  draftListeners.add(listener)
+  return () => draftListeners.delete(listener)
+}
+
+export function updateManualDraft(patch: Partial<ManualDraft>) {
+  draft = { ...draft, ...patch }
+  for (const listener of draftListeners) listener()
+}
+
+export function manualDraft(): ManualDraft {
+  return draft
+}
+
+export function useManualDraft(): ManualDraft {
+  return useSyncExternalStore(subscribeDraft, manualDraft)
 }

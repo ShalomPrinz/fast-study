@@ -32,6 +32,7 @@ never gates on the account or the university. Collapsed by default, its open sta
 this session's manual downloads already claimed (`suggestManualName`), since an in-flight one is not in
 the tree yet; replacing a stored video confirms first. The link is never cleared for the user, whether
 the download starts, lands or fails. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
+The whole draft (link, course, kind, name) is a module store, so it survives leaving the page but not an app restart.
 Its title takes the accent while the account is known to be not connected (`status.connected === false`).
 
 ## Auth

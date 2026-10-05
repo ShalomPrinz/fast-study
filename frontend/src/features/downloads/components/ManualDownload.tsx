@@ -1,6 +1,5 @@
 import { useId, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import type { Kind } from '@/types'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import Chevron from '@/shared/components/Chevron'
 import ConfirmModal from '@/shared/components/ConfirmModal'
@@ -14,6 +13,8 @@ import type { ManualEntry } from '@/features/downloads/contexts/ManualDownloadsC
 import {
   addManualEntry,
   retargetManualEntry,
+  updateManualDraft,
+  useManualDraft,
   useManualEntries,
 } from '@/features/downloads/contexts/ManualDownloadsContext'
 import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
@@ -120,12 +121,8 @@ function ManualForm() {
   const { courses } = useCourseTreeContext()
   const entries = useManualEntries()
   const active = courses.filter((c) => !c.archived)
-  const [url, setUrl] = useState('')
-  // Null until edited, so the field opens on the first active course.
-  const [typed, setTyped] = useState<string | null>(null)
-  const [kind, setKind] = useState<Kind>('lecture')
-  // Null tracks the suggestion, so an untouched name follows the course and kind.
-  const [name, setName] = useState<string | null>(null)
+  // In the module store, so a trip to another page keeps what was typed; null fields follow defaults.
+  const { url, course: typed, kind, name } = useManualDraft()
   const [pending, setPending] = useState(false)
   const [confirm, setConfirm] = useState(false)
 
@@ -153,7 +150,7 @@ function ManualForm() {
       const { jobId, target } = await start(request)
       addManualEntry(request, jobId, target)
       // The link stays whatever happens: it is cleared only by the user.
-      setName(null)
+      updateManualDraft({ name: null })
     } catch (err) {
       toastDownloadError(request.lecture, err)
     }
@@ -177,7 +174,7 @@ function ManualForm() {
           id={`${id}-url`}
           className="source-row-input"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => updateManualDraft({ url: e.target.value })}
           onKeyDown={(e) => {
             if (e.key === 'Enter') onDownload()
           }}
@@ -193,7 +190,7 @@ function ManualForm() {
           id={`${id}-course`}
           className="source-row-input"
           value={courseText}
-          onChange={(e) => setTyped(e.target.value)}
+          onChange={(e) => updateManualDraft({ course: e.target.value })}
           list={`${id}-courses`}
           dir="auto"
         />
@@ -211,13 +208,13 @@ function ManualForm() {
         <div className="mode-toggle mode-toggle--light">
           <button
             className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-            onClick={() => setKind('lecture')}
+            onClick={() => updateManualDraft({ kind: 'lecture' })}
           >
             <Trans>Lecture</Trans>
           </button>
           <button
             className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-            onClick={() => setKind('recitation')}
+            onClick={() => updateManualDraft({ kind: 'recitation' })}
           >
             <Trans>Recitation</Trans>
           </button>
@@ -231,7 +228,7 @@ function ManualForm() {
           id={`${id}-name`}
           className="source-row-input"
           value={lecture}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => updateManualDraft({ name: e.target.value })}
           dir="auto"
         />
       </div>

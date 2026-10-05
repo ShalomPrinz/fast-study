@@ -2,8 +2,10 @@ import { describe, it, expect } from 'vitest'
 import {
   addManualEntry,
   isManualJob,
+  manualDraft,
   manualEntries,
   retargetManualEntry,
+  updateManualDraft,
 } from './ManualDownloadsContext'
 
 const request = {
@@ -25,5 +27,20 @@ describe('the manual downloads store', () => {
     expect(manualEntries()[1]).toMatchObject({ key, jobId: 'j3', request })
     expect(isManualJob('j3')).toBe(true)
     expect(isManualJob('j1')).toBe(false)
+  })
+})
+
+describe('the manual form draft', () => {
+  it('starts empty and merges each edit, leaving the other fields as they were', () => {
+    expect(manualDraft()).toEqual({ url: '', course: null, kind: 'lecture', name: null })
+    updateManualDraft({ url: 'https://x.test/v', course: 'New course' })
+    updateManualDraft({ kind: 'recitation', name: 'Recitation 2' })
+    updateManualDraft({ name: null })
+    expect(manualDraft()).toEqual({
+      url: 'https://x.test/v',
+      course: 'New course',
+      kind: 'recitation',
+      name: null,
+    })
   })
 })
