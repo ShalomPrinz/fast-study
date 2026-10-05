@@ -27,21 +27,22 @@ from .paths import (
 _RESERVED_LECTURE_NAMES = {OVERVIEW_DIR.casefold(), RECITATIONS_DIR.casefold()}
 
 
-def _mkdir_new(d: Path, name: str) -> None:
+def _mkdir_new(d: Path) -> None:
     """Create a directory, refusing one that already exists; the mkdir itself is the atomic check."""
 
     try:
         d.mkdir(parents=True)
     except FileExistsError:
-        raise NameTaken(f"'{name}' already exists", name=name) from None
+        # The sanitized folder name, not the typed one: that is what the user will find in the tree.
+        raise NameTaken(f"'{d.name}' already exists", name=d.name) from None
 
 
-def _rename_dir(old: Path, new: Path, old_name: str, new_name: str) -> None:
+def _rename_dir(old: Path, new: Path, old_name: str) -> None:
     """Rename a directory, refusing an existing target unless it is the same dir under another case."""
 
     # Path.rename silently replaces an empty target on POSIX; samefile lets a case-only rename through on NTFS.
     if new.exists() and not (old.exists() and os.path.samefile(old, new)):
-        raise NameTaken(f"'{new_name}' already exists", name=new_name)
+        raise NameTaken(f"'{new.name}' already exists", name=new.name)
     try:
         old.rename(new)
     except PermissionError as e:
@@ -57,7 +58,7 @@ def _rename_dir(old: Path, new: Path, old_name: str, new_name: str) -> None:
 def create_course(name: str, source_url: str | None = None) -> None:
     """Create a new course directory under DATA_ROOT, optionally seeding its source_url."""
 
-    _mkdir_new(course_dir(name), name)
+    _mkdir_new(course_dir(name))
     if source_url:
         set_course_source_url(name, source_url)
 
@@ -89,7 +90,7 @@ def rename_course(old: str, new: str) -> str:
     """Rename a course directory in place and return the folder name actually created."""
 
     target = course_dir(new)
-    _rename_dir(course_dir(old), target, old, new)
+    _rename_dir(course_dir(old), target, old)
     return target.name
 
 
@@ -107,7 +108,7 @@ def create_lecture(course: str, name: str, kind: str) -> None:
     check_not_reserved(name)
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
-    _mkdir_new(lecture_dir(course, name, kind), name)
+    _mkdir_new(lecture_dir(course, name, kind))
 
 
 def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
@@ -115,7 +116,7 @@ def rename_lecture(course: str, old: str, new: str, kind: str) -> str:
 
     check_not_reserved(new)
     target = lecture_dir(course, new, kind)
-    _rename_dir(lecture_dir(course, old, kind), target, old, new)
+    _rename_dir(lecture_dir(course, old, kind), target, old)
     return target.name
 
 

@@ -47,6 +47,39 @@ def test_create_lecture_refuses_existing(client, data_root, kind, parent):
     _assert_taken(r, "L1")
 
 
+def test_create_course_names_the_sanitized_folder_that_collided(client, data_root):
+    (data_root / "Lecture 34 intro").mkdir()
+
+    r = client.post("/courses", json={"name": "Lecture 34: intro?"})
+
+    _assert_taken(r, "Lecture 34 intro")
+
+
+@pytest.mark.parametrize(
+    "kind,parent", [("lecture", ""), ("recitation", "Recitations")]
+)
+def test_create_lecture_names_the_sanitized_folder_that_collided(
+    client, data_root, kind, parent
+):
+    # Sanitizing is silent on create, so the error must name the folder the user can find in the tree.
+    (data_root / "Algo" / parent / "Lecture 34 intro").mkdir(parents=True)
+
+    r = client.post(
+        f"/courses/Algo/lectures?kind={kind}", json={"name": "Lecture 34: intro?"}
+    )
+
+    _assert_taken(r, "Lecture 34 intro")
+
+
+def test_rename_names_the_sanitized_folder_that_collided(client, data_root):
+    (data_root / "Algo" / "L1").mkdir(parents=True)
+    (data_root / "Algo" / "Week 1").mkdir()
+
+    r = client.patch("/courses/Algo/lectures/L1", json={"name": "Week: 1?"})
+
+    _assert_taken(r, "Week 1")
+
+
 def test_create_recitation_with_existing_recitations_dir_works(client, data_root):
     (data_root / "Algo" / "Recitations" / "R1").mkdir(parents=True)
 

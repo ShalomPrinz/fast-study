@@ -27,7 +27,8 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   semantics.
 - `400` `unsafe_path_segment` `{segment}` covers a `{name}` that could escape its directory, on every
   file route; see the trust model.
-- `409` `name_taken` `{name}` refuses a create or rename onto a course/lecture that already exists;
+- `409` `name_taken` `{name}` refuses a create or rename onto a course/lecture that already exists,
+  `name` being the sanitized folder that collided, not the typed name;
   a case-only rename (the same dir on NTFS) is not a collision.
 - `409` `name_reserved` `{name}` refuses a lecture/recitation create, rename, `PUT /…/video` or
   `POST /…/materials` whose sanitized name is `overview` or `Recitations`, in any case
