@@ -42,7 +42,7 @@ msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 msgstr "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""
 
 #. placeholder {0}: pending.length
-#: src/features/runner/RunnerView.tsx:325
+#: src/features/runner/RunnerView.tsx:390
 msgid "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 msgstr "{0, plural, one {# lecture has work left} other {# lectures have work left}}"
 
@@ -53,8 +53,8 @@ msgstr "{0, plural, one {# lecture has work left} other {# lectures have work le
 
 #. placeholder {0}: header.count
 #. placeholder {0}: inFlight.length
-#: src/features/runner/RunnerView.tsx:185
-#: src/features/runner/RunnerView.tsx:225
+#: src/features/runner/RunnerView.tsx:245
+#: src/features/runner/RunnerView.tsx:285
 msgid "{0, plural, one {# lecture running} other {# lectures running}}"
 msgstr "{0, plural, one {# lecture running} other {# lectures running}}"
 
@@ -132,7 +132,7 @@ msgstr "{0} is installed — downloading is ready to use."
 #. placeholder {1}: chunks.total
 #. placeholder {1}: remote.progress.total
 #: src/features/lectures/MainView.tsx:336
-#: src/features/runner/RunnerView.tsx:131
+#: src/features/runner/RunnerView.tsx:170
 msgid "{0} of {1} parts"
 msgstr "{0} of {1} parts"
 
@@ -142,7 +142,7 @@ msgid "{0} rejected this key. Generate a new one in its console."
 msgstr "{0} rejected this key. Generate a new one in its console."
 
 #. placeholder {0}: formatDuration(remaining)
-#: src/shared/components/ProgressBar.tsx:56
+#: src/shared/components/ProgressBar.tsx:61
 msgid "{0} remaining"
 msgstr "{0} remaining"
 
@@ -228,7 +228,7 @@ msgstr "{generated} of {0} generated"
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:244
+#: src/features/downloads/components/ManualDownload.tsx:241
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
@@ -416,7 +416,7 @@ msgstr "Add lecture"
 msgid "Add recitation"
 msgstr "Add recitation"
 
-#: src/features/runner/RunnerView.tsx:213
+#: src/features/runner/RunnerView.tsx:273
 msgid "All caught up — every lecture is finished."
 msgstr "All caught up — every lecture is finished."
 
@@ -480,19 +480,19 @@ msgstr "Audio"
 #~ msgid "Audio extraction failed"
 #~ msgstr "Audio extraction failed"
 
-#: src/features/runner/RunnerView.tsx:303
+#: src/features/runner/RunnerView.tsx:368
 msgid "Audio only"
 msgstr "Audio only"
 
-#: src/features/runner/RunnerView.tsx:174
+#: src/features/runner/RunnerView.tsx:234
 msgid "Auto-run: audio only"
 msgstr "Auto-run: audio only"
 
-#: src/features/runner/RunnerView.tsx:175
+#: src/features/runner/RunnerView.tsx:235
 msgid "Auto-run: off"
 msgstr "Auto-run: off"
 
-#: src/features/runner/RunnerView.tsx:173
+#: src/features/runner/RunnerView.tsx:233
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
@@ -748,7 +748,7 @@ msgstr "Could not rename \"{from}\" to \"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "Could not tell what {url} is — the site didn't answer usefully."
 
-#: src/features/downloads/components/ManualDownload.tsx:352
+#: src/features/downloads/components/ManualDownload.tsx:349
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
@@ -793,7 +793,7 @@ msgstr "Couldn't start capturing the Zoom recording. Try again."
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:189
+#: src/features/downloads/components/ManualDownload.tsx:186
 #: src/features/search/SearchView.tsx:175
 msgid "Course"
 msgstr "Course"
@@ -867,7 +867,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/ManualDownload.tsx:239
+#: src/features/downloads/components/ManualDownload.tsx:236
 #: src/features/downloads/components/RecordingRow.tsx:324
 msgid "Download"
 msgstr "Download"
@@ -881,13 +881,13 @@ msgstr "Download again"
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
-#: src/features/downloads/components/ManualDownload.tsx:324
+#: src/features/downloads/components/ManualDownload.tsx:321
 #: src/features/downloads/components/RecordingRow.tsx:279
 #: src/features/downloads/components/RecordingRow.tsx:322
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:319
+#: src/features/downloads/components/ManualDownload.tsx:316
 #: src/features/downloads/components/RecordingRow.tsx:284
 msgid "Downloading"
 msgstr "Downloading"
@@ -950,7 +950,7 @@ msgstr "Enter the zoom passcode for this recording"
 msgid "Error reports"
 msgstr "Error reports"
 
-#: src/shared/components/ProgressBar.tsx:28
+#: src/shared/components/ProgressBar.tsx:31
 msgid "Estimating…"
 msgstr "Estimating…"
 
@@ -1198,7 +1198,7 @@ msgstr "Last error:"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/ManualDownload.tsx:216
+#: src/features/downloads/components/ManualDownload.tsx:213
 #: src/features/downloads/components/RecordingRow.tsx:242
 msgid "Lecture"
 msgstr "Lecture"
@@ -1260,7 +1260,7 @@ msgstr "Loading summaries…"
 msgid "Loading…"
 msgstr "Loading…"
 
-#: src/features/downloads/components/ManualDownload.tsx:100
+#: src/features/downloads/components/ManualDownload.tsx:101
 msgid "Manual download"
 msgstr "Manual download"
 
@@ -1285,7 +1285,7 @@ msgstr "Moodle refused the request."
 msgid "More actions"
 msgstr "More actions"
 
-#: src/features/downloads/components/ManualDownload.tsx:228
+#: src/features/downloads/components/ManualDownload.tsx:225
 msgid "Name in the course"
 msgstr "Name in the course"
 
@@ -1293,7 +1293,7 @@ msgstr "Name in the course"
 msgid "New course"
 msgstr "New course"
 
-#: src/features/runner/RunnerView.tsx:299
+#: src/features/runner/RunnerView.tsx:364
 msgid "Next"
 msgstr "Next"
 
@@ -1401,7 +1401,7 @@ msgstr "No video was captured on that page. Play it once by hand and try again."
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 
-#: src/features/runner/RunnerView.tsx:170
+#: src/features/runner/RunnerView.tsx:209
 msgid "None"
 msgstr "None"
 
@@ -1414,7 +1414,7 @@ msgstr "None"
 msgid "not connected"
 msgstr "not connected"
 
-#: src/shared/components/ProgressBar.tsx:35
+#: src/shared/components/ProgressBar.tsx:38
 msgid "Not enough data to estimate"
 msgstr "Not enough data to estimate"
 
@@ -1422,7 +1422,7 @@ msgstr "Not enough data to estimate"
 msgid "not provided"
 msgstr "not provided"
 
-#: src/features/runner/RunnerView.tsx:320
+#: src/features/runner/RunnerView.tsx:385
 msgid "Not queued"
 msgstr "Not queued"
 
@@ -1442,7 +1442,7 @@ msgstr "Note: This will delete all files in this lecture."
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
-#: src/features/runner/RunnerView.tsx:190
+#: src/features/runner/RunnerView.tsx:250
 msgid "Nothing running"
 msgstr "Nothing running"
 
@@ -1458,7 +1458,7 @@ msgstr "Nothing to run - All remaining pipelines already running"
 msgid "Nothing was found to analyze in this course."
 msgstr "Nothing was found to analyze in this course."
 
-#: src/features/runner/RunnerView.tsx:221
+#: src/features/runner/RunnerView.tsx:281
 msgid "Now running"
 msgstr "Now running"
 
@@ -1473,6 +1473,11 @@ msgstr "Only YouTube playlists can be opened up; {host} cannot."
 #: src/features/lectures/MainView.tsx:262
 msgid "Open in Drive"
 msgstr "Open in Drive"
+
+#: src/features/runner/RunnerView.tsx:102
+#: src/features/runner/RunnerView.tsx:103
+msgid "Open lecture"
+msgstr "Open lecture"
 
 #: src/features/lectures/MainView.tsx:429
 msgid "Open material"
@@ -1558,6 +1563,7 @@ msgid "Pipeline"
 msgstr "Pipeline"
 
 #: src/features/lectures/MainView.tsx:181
+#: src/features/runner/RunnerView.tsx:215
 msgid "Pipeline already running"
 msgstr "Pipeline already running"
 
@@ -1569,18 +1575,18 @@ msgstr "Pipeline already running"
 msgid "Pitfalls"
 msgstr "Pitfalls"
 
-#: src/features/downloads/components/ManualDownload.tsx:314
-#: src/features/runner/RunnerView.tsx:278
+#: src/features/downloads/components/ManualDownload.tsx:311
+#: src/features/runner/RunnerView.tsx:338
 msgid "Queued"
 msgstr "Queued"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:254
+#: src/features/runner/RunnerView.tsx:314
 msgid "Quota · resumes {0}"
 msgstr "Quota · resumes {0}"
 
 #. placeholder {0}: formatClockTime(entry.sleepingUntil)
-#: src/features/runner/RunnerView.tsx:136
+#: src/features/runner/RunnerView.tsx:175
 msgid "Rate limited — resumes at {0}"
 msgstr "Rate limited — resumes at {0}"
 
@@ -1609,12 +1615,12 @@ msgstr "Re-generate from {stepLabel}"
 msgid "Ready to retry"
 msgstr "Ready to retry"
 
-#: src/features/runner/RunnerView.tsx:62
+#: src/features/runner/RunnerView.tsx:61
 #: src/features/search/components/SearchResult.tsx:45
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/ManualDownload.tsx:222
+#: src/features/downloads/components/ManualDownload.tsx:219
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "Recitation"
 msgstr "Recitation"
@@ -1708,7 +1714,7 @@ msgstr "Restore original"
 msgid "Results"
 msgstr "Results"
 
-#: src/features/downloads/components/ManualDownload.tsx:333
+#: src/features/downloads/components/ManualDownload.tsx:330
 #: src/features/downloads/components/RecordingJobList.tsx:48
 #: src/features/downloads/components/RecordingRow.tsx:320
 msgid "Retry ✗"
@@ -1743,7 +1749,7 @@ msgstr "Run Remaining"
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
-#: src/features/runner/RunnerView.tsx:332
+#: src/features/runner/RunnerView.tsx:397
 msgid "Run these now"
 msgstr "Run these now"
 
@@ -1757,11 +1763,11 @@ msgstr "Run unfinished lectures daily"
 
 #. placeholder {0}: header.current
 #. placeholder {1}: header.total
-#: src/features/runner/RunnerView.tsx:183
+#: src/features/runner/RunnerView.tsx:243
 msgid "Running · lecture {0} of {1}"
 msgstr "Running · lecture {0} of {1}"
 
-#: src/features/runner/RunnerView.tsx:199
+#: src/features/runner/RunnerView.tsx:259
 #: src/shared/sidebar/Sidebar.tsx:81
 msgid "Running pipelines"
 msgstr "Running pipelines"
@@ -1883,7 +1889,7 @@ msgstr "Start using Fast Study"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: steps.length
-#: src/features/runner/RunnerView.tsx:105
+#: src/features/runner/RunnerView.tsx:144
 msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
@@ -1958,7 +1964,7 @@ msgstr "Switch to another university?"
 
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
-#: src/shared/components/ProgressBar.tsx:55
+#: src/shared/components/ProgressBar.tsx:60
 msgid "Taking longer than expected · {0} · longest recorded: {1}"
 msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 
@@ -1989,6 +1995,10 @@ msgstr "That download run no longer exists."
 #: src/shared/i18n/serviceErrors.ts:201
 msgid "That is not a Google Drive file link: {url}."
 msgstr "That is not a Google Drive file link: {url}."
+
+#: src/features/runner/RunnerView.tsx:226
+msgid "That lecture is no longer queued"
+msgstr "That lecture is no longer queued"
 
 #: src/features/downloads/components/PasscodePrompt.tsx:34
 msgid "That passcode didn't work. Try another one"
@@ -2107,7 +2117,7 @@ msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
-#: src/features/runner/RunnerView.tsx:282
+#: src/features/runner/RunnerView.tsx:342
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
 
@@ -2149,11 +2159,11 @@ msgstr "The university site is temporarily refusing automated requests. Wait a f
 msgid "Then {0} will be regenerated."
 msgstr "Then {0} will be regenerated."
 
-#: src/features/runner/RunnerView.tsx:353
+#: src/features/runner/RunnerView.tsx:419
 msgid "These won't start until you run them, or until the daily run does."
 msgstr "These won't start until you run them, or until the daily run does."
 
-#: src/features/runner/RunnerView.tsx:357
+#: src/features/runner/RunnerView.tsx:423
 msgid "These won't start until you run them."
 msgstr "These won't start until you run them."
 
@@ -2251,7 +2261,7 @@ msgstr "Transcript"
 #~ msgid "Transcription failed"
 #~ msgstr "Transcription failed"
 
-#: src/features/downloads/components/ManualDownload.tsx:209
+#: src/features/downloads/components/ManualDownload.tsx:206
 msgid "Type"
 msgstr "Type"
 
@@ -2320,7 +2330,7 @@ msgstr "Uploading video…"
 msgid "Video"
 msgstr "Video"
 
-#: src/features/downloads/components/ManualDownload.tsx:174
+#: src/features/downloads/components/ManualDownload.tsx:171
 msgid "Video link"
 msgstr "Video link"
 
@@ -2364,7 +2374,7 @@ msgstr "With this off, a lecture is done once its PDF is ready. If you turn it b
 msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 
-#: src/features/downloads/components/ManualDownload.tsx:108
+#: src/features/downloads/components/ManualDownload.tsx:109
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "Works only for video links, and only if they open without signing in."
 

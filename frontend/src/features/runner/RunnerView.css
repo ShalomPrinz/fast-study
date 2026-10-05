@@ -67,6 +67,49 @@
   background: var(--surface-sunken);
 }
 
+/* A waiting row: the text area carries the padding and the hover, so the separator and the open
+   icon sit outside its target. */
+.pipeline-card .pipeline-row.runner-row--split {
+  gap: var(--space-3);
+  padding: 0;
+  padding-inline-end: var(--space-4);
+}
+
+.pipeline-card .pipeline-row.runner-row--split:hover {
+  background: none;
+}
+
+.runner-row-main {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-6);
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  transition: background 0.12s;
+}
+
+button.runner-row-main {
+  cursor: pointer;
+}
+
+button.runner-row-main:hover {
+  background: var(--surface-sunken);
+}
+
+.runner-row-sep {
+  flex-shrink: 0;
+  align-self: stretch;
+  width: 1px;
+  margin-block: var(--space-3);
+  background: var(--line);
+}
+
 .row-title {
   font-size: var(--fs-row);
   font-weight: 600;

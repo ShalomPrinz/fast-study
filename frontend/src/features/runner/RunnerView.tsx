@@ -10,10 +10,14 @@ import { PIPELINE, visiblePipeline } from '@/features/lectures/constants/pipelin
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
+import Icon from '@/shared/components/Icon'
+import { moveToFront, runPipeline } from '@/services/backend'
+import { toast, toastInitResult } from '@/services/toaster'
+import { toastFailure } from '@/shared/utils/failure'
 import { formatClockTime } from '@/shared/utils/format'
 import { lectureRoute } from '@/shared/utils/url'
 import { notQueued } from './utils/notQueued'
-import { headerState, nightlyPicksUp } from './utils/runnerState'
+import { canMoveToFront, headerState, nightlyPicksUp } from './utils/runnerState'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -32,23 +36,18 @@ function findLecture(
   return list.find((l) => l.name === lecture) ?? null
 }
 
-/** One lecture as a compact row. The whole row is the link to it, so every listing here reaches
- *  the lecture the same way. */
-function LectureRow({
-  course,
-  lecture,
-  kind,
-  state,
-  chip,
-}: {
+interface RowProps {
   course: string
   lecture: string
   kind: Kind
   state: StatusNodeState
   chip?: ReactNode
-}) {
+}
+
+// The status node, title, course and chip every row here shows, whatever acts on it.
+function RowContent({ course, lecture, kind, state, chip }: RowProps) {
   return (
-    <Link className="pipeline-row runner-row" to={lectureRoute(course, lecture, kind)}>
+    <>
       <StatusNode state={state} />
       <div className="pipeline-row-body">
         <div className="row-title" dir="auto">
@@ -65,7 +64,47 @@ function LectureRow({
         </div>
       </div>
       {chip}
+    </>
+  )
+}
+
+/** An in-flight lecture as a compact row; the whole row is the link to it. */
+function LectureRow(props: RowProps) {
+  return (
+    <Link
+      className="pipeline-row runner-row"
+      to={lectureRoute(props.course, props.lecture, props.kind)}
+    >
+      <RowContent {...props} />
     </Link>
+  )
+}
+
+/** A waiting lecture: its text runs `onActivate` (inert when absent), and only the trailing icon
+ *  opens the lecture, so acting on a row never navigates by accident. */
+function ActionRow({ onActivate, ...props }: RowProps & { onActivate?: () => void }) {
+  const { t } = useLingui()
+  return (
+    <div className="pipeline-row runner-row runner-row--split">
+      {onActivate ? (
+        <button type="button" className="runner-row-main" onClick={onActivate}>
+          <RowContent {...props} />
+        </button>
+      ) : (
+        <div className="runner-row-main">
+          <RowContent {...props} />
+        </div>
+      )}
+      <span className="runner-row-sep" aria-hidden="true" />
+      <Link
+        className="pipeline-icon-btn"
+        to={lectureRoute(props.course, props.lecture, props.kind)}
+        title={t`Open lecture`}
+        aria-label={t`Open lecture`}
+      >
+        <Icon icon="external-link" />
+      </Link>
+    </div>
   )
 }
 
@@ -168,6 +207,27 @@ export default function RunnerView() {
   // One line for a page with nothing in any section; a lone empty section keeps only its title.
   const allEmpty = inFlight.length === 0 && queue.length === 0 && pending.length === 0
   const none = t`None`
+
+  // Runs beside the runner, not through its queue — the same call as a lecture's "run remaining".
+  async function runNow(course: string, lecture: string, kind: Kind) {
+    try {
+      toastInitResult(await runPipeline(course, lecture, kind), {
+        busy: t`Pipeline already running`,
+      })
+    } catch (e) {
+      toastFailure(e)
+    }
+  }
+
+  // A real move reorders the list over SSE; `not_queued` means it started or left meanwhile.
+  async function bumpToFront(course: string, lecture: string, kind: Kind) {
+    try {
+      const result = await moveToFront(course, lecture, kind)
+      if (result.status === 'not_queued') toast('info', t`That lecture is no longer queued`)
+    } catch (e) {
+      toastFailure(e)
+    }
+  }
 
   const autoRunLabel = {
     full: t`Auto-run: the whole pipeline`,
@@ -287,12 +347,17 @@ export default function RunnerView() {
                   {queue.length > 0 ? (
                     <div className="pipeline-card">
                       {queue.map((entry, i) => (
-                        <LectureRow
+                        <ActionRow
                           key={`${entry.course}||${entry.lecture}||${entry.kind}`}
                           course={entry.course}
                           lecture={entry.lecture}
                           kind={entry.kind}
                           state="pending"
+                          onActivate={
+                            canMoveToFront(i)
+                              ? () => void bumpToFront(entry.course, entry.lecture, entry.kind)
+                              : undefined
+                          }
                           chip={
                             i === 0 ? (
                               <span className="chip">
@@ -339,12 +404,13 @@ export default function RunnerView() {
                     <>
                       <div className="pipeline-card">
                         {pending.map((item) => (
-                          <LectureRow
+                          <ActionRow
                             key={`${item.course}||${item.lecture}||${item.kind}`}
                             course={item.course}
                             lecture={item.lecture}
                             kind={item.kind}
                             state="pending"
+                            onActivate={() => void runNow(item.course, item.lecture, item.kind)}
                           />
                         ))}
                       </div>

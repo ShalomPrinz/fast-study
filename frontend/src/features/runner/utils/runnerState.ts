@@ -22,3 +22,8 @@ export function headerState(status: RunnerStatus | null): HeaderState {
 export function nightlyPicksUp(nightlyRun: boolean, autoRun: AutoRun): boolean {
   return nightlyRun && autoRun !== 'off'
 }
+
+// The queue's head is next regardless, so only a later row can be moved in front of it.
+export function canMoveToFront(queueIndex: number): boolean {
+  return queueIndex > 0
+}

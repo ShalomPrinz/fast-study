@@ -1,6 +1,7 @@
 import type {
   Step,
   RunInitResult,
+  MoveToFrontResult,
   TimingStats,
   TimingOperation,
   Kind,
@@ -41,6 +42,17 @@ export async function runPipeline(
   kind?: Kind,
 ): Promise<RunInitResult> {
   return backend.post<RunInitResult>(`${lectureBase(course, lecture)}/pipeline${kindQuery(kind)}`)
+}
+
+// Moves a queued lecture to the head of the runner's queue; a real move arrives over SSE.
+export async function moveToFront(
+  course: string,
+  lecture: string,
+  kind?: Kind,
+): Promise<MoveToFrontResult> {
+  return backend.post<MoveToFrontResult>(
+    `${lectureBase(course, lecture)}/queue/front${kindQuery(kind)}`,
+  )
 }
 
 // Tells the backend a video landed on disk; auto-run policy (AUTO_RUN) decides what happens next.

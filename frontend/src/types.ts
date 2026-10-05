@@ -92,6 +92,9 @@ export interface RateLimitProgress {
 
 export type RunInitResult = { status: 'started' } | { status: 'busy' }
 
+// `not_queued`: the lecture started or left the queue before the move landed.
+export type MoveToFrontResult = { status: 'moved' } | { status: 'not_queued' }
+
 export interface Selected {
   course: string
   lecture: string

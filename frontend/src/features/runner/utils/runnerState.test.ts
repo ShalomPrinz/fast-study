@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { InFlightEntry, RunnerStatus } from '@/types'
-import { headerState, nightlyPicksUp } from './runnerState'
+import { canMoveToFront, headerState, nightlyPicksUp } from './runnerState'
 
 const entry: InFlightEntry = {
   course: 'c',
@@ -48,5 +48,13 @@ describe('nightlyPicksUp', () => {
     expect(nightlyPicksUp(true, 'audio')).toBe(true)
     expect(nightlyPicksUp(true, 'off')).toBe(false)
     expect(nightlyPicksUp(false, 'full')).toBe(false)
+  })
+})
+
+describe('canMoveToFront', () => {
+  it('leaves the head of the queue inert and lets every later row move', () => {
+    expect(canMoveToFront(0)).toBe(false)
+    expect(canMoveToFront(1)).toBe(true)
+    expect(canMoveToFront(5)).toBe(true)
   })
 })

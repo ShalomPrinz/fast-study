@@ -60,6 +60,9 @@ leaves; `runner.lastError` is an exception that aborted a sweep, distinct from p
 `course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror `_skey` in
 `backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
+On `/running` an in-flight row is one link to its lecture. A waiting row's text acts instead, and only its
+trailing icon opens the lecture. A not-queued row runs its pipeline beside the runner, and a queued one
+moves to the front (the head row's text is inert). Either way the reorder arrives over SSE.
 
 `errors` maps each key to `{ step, message, code, params, provider, blocked }`. The "Last error" box and
 the toast both render it through `ServiceError` ([I18N.md](I18N.md)), the toast led by `LectureLead`, the lecture and course
