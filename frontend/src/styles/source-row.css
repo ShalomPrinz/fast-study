@@ -24,3 +24,8 @@
   margin-bottom: var(--space-4);
   letter-spacing: 2px;
 }
+
+/* The typed passcode stays LTR, but the translated placeholder follows the page while it shows. */
+.passcode-input:placeholder-shown {
+  direction: inherit;
+}

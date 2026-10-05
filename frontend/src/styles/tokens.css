@@ -93,3 +93,9 @@ body,
 #root {
   height: 100%;
 }
+
+/* An empty `dir="auto"` input resolves LTR (the placeholder is ignored), so it follows the page
+   while the placeholder shows and switches to the typed text's direction after. */
+input[dir='auto']:placeholder-shown {
+  direction: inherit;
+}
