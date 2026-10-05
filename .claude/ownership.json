@@ -1,0 +1,23 @@
+{
+  "agents": {
+    "backend-dev": ["backend/"],
+    "database-dev": ["database/"],
+    "frontend-dev": ["frontend/"],
+    "downloader-dev": ["downloader/"],
+    "lib-dev": ["lib/"],
+    "electron-dev": ["electron/"],
+    "delivery-dev": ["delivery/", ".github/workflows/build.yml", ".github/workflows/publish.yml"],
+    "site-dev": ["site/", ".github/workflows/pages.yml"],
+    "reviewer": []
+  },
+  "packages": [
+    "backend/",
+    "database/",
+    "frontend/",
+    "downloader/",
+    "lib/",
+    "electron/",
+    "delivery/",
+    "site/"
+  ]
+}

@@ -14,12 +14,16 @@ Review **only the brief's paths** in the uncommitted diff of the tree the brief 
 
 Lint, format, typecheck and the services' tests are already verified; do not rerun them.
 
+## First step: the change preview
+
+Before any check, run `python3 <tree>/.claude/scripts/review_preview.py <paths>` ([.claude/scripts/README.md](../scripts/README.md)). It prints the change set (including untracked files), the owning agent and docs per path, and flags for stale references, changed values, contract surfaces, the invariants trigger and doc hygiene. Its flags are leads: confirm each against the diff before reporting it, and do not report a flag you have not confirmed. Its invariants trigger line tells you whether check 4 applies.
+
 ## Checks
 
 1. **Contracts preserved.** Unless the brief says the change is intended, nothing a peer depends on may change: an HTTP route, its request or response shape; an SSE event name or payload on the database's `/events`; the `DATA_ROOT` layout `database/` owns; a launch-contract name or rule (root `CLAUDE.md` table); an error `code` or its `params` (`docs/ERROR-CODES.md`). Compare the minus and plus sides, and `git grep` the consumers of anything that changed.
 2. **Docs match the code.** The service `CLAUDE.md` or `docs/` that owns a changed behaviour is updated in the same diff and agrees with it; a newly emitted error code has its `docs/ERROR-CODES.md` row. No stale references to names the diff removes (a targeted `git grep` for each is enough).
 3. **Doc hygiene, per the root `CLAUDE.md`.** No `@path` link in any `CLAUDE.md`; no plan, phase or "was TODO / now done" narrative in docs or comments; comments at most two lines; no documentation inside a data string (LaTeX, SQL, shell, template literal).
-4. **Structural invariants — only when the diff touches them.** `database/` makes no outbound call to a peer (the call graph stays acyclic); a rule in a `lib/` module changes in its `py/` and `js/` halves together; the frozen bundle's invariants hold for `backend/` and `database/` dependency or module-name changes (`delivery/CLAUDE.md`); a new external binary is resolved through `tool_path`/`toolPath` and probed on `/health`.
+4. **Structural invariants — only when the preview's invariants trigger says so.** `database/` makes no outbound call to a peer (the call graph stays acyclic); a rule in a `lib/` module changes in its `py/` and `js/` halves together; the frozen bundle's invariants hold for `backend/` and `database/` dependency or module-name changes (`delivery/CLAUDE.md`); a new external binary is resolved through `tool_path`/`toolPath` and probed on `/health`.
 
 Skip test quality, style, formatting and simplification ideas.
 
