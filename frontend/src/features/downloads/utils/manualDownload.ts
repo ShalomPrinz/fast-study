@@ -16,6 +16,13 @@ export function parseTarget(target: string): StoredTarget | null {
   return { course: target.slice(0, at), lecture: target.slice(at + 1) }
 }
 
+// The active course a typed name means, in its stored spelling; null makes it a new course. Case is
+// ignored because NTFS folds it, so the database would refuse the new folder as taken.
+export function matchCourse(active: readonly Course[], typed: string): string | null {
+  const key = typed.trim().toLowerCase()
+  return active.find((c) => c.name.toLowerCase() === key)?.name ?? null
+}
+
 export type ManualStatus = 'queued' | 'running' | 'done' | 'error'
 
 // A manual job's state. Off `/jobs` it is either not refetched yet or a `done` job past its eviction
@@ -28,17 +35,24 @@ export function manualStatus(job: DownloadJob | null, landed: boolean): ManualSt
 
 // The tree's next free name, also skipping names this session's manual downloads already claimed —
 // an in-flight one isn't in the tree yet, so two downloads in a row would otherwise share a name.
+// A course the tree lacks is a new one the download will create, so it starts empty.
 export function suggestManualName(
   courses: Course[],
   course: string,
   kind: Kind,
   claimed: readonly (StoredTarget & { kind: Kind })[],
 ): string {
+  const tree = courses.some((c) => c.name === course)
+    ? courses
+    : [
+        ...courses,
+        { name: course, archived: false, source_url: null, lectures: [], recitations: [] },
+      ]
   const extra = claimed
     .filter((c) => c.course === course && c.kind === kind)
     .map((c) => ({ name: c.lecture }) as Lecture)
-  if (!extra.length) return suggestName(courses, course, kind)
-  const augmented = courses.map((c) => {
+  if (!extra.length) return suggestName(tree, course, kind)
+  const augmented = tree.map((c) => {
     if (c.name !== course) return c
     return kind === 'recitation'
       ? { ...c, recitations: [...(c.recitations ?? []), ...extra] }

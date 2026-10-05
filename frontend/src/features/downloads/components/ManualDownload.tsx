@@ -5,6 +5,7 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import Chevron from '@/shared/components/Chevron'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ServiceError from '@/shared/components/ServiceError'
+import { createCourse } from '@/services/database'
 import { downloadUrl } from '@/features/downloads/services/downloadServer'
 import type { UrlDownload } from '@/features/downloads/services/downloadServer'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
@@ -18,6 +19,7 @@ import {
 import { hasResource, overwritesVideo } from '@/features/downloads/utils/existingItems'
 import {
   manualStatus,
+  matchCourse,
   parseTarget,
   suggestManualName,
 } from '@/features/downloads/utils/manualDownload'
@@ -119,15 +121,17 @@ function ManualForm() {
   const entries = useManualEntries()
   const active = courses.filter((c) => !c.archived)
   const [url, setUrl] = useState('')
-  const [picked, setPicked] = useState<string | null>(null)
+  // Null until edited, so the field opens on the first active course.
+  const [typed, setTyped] = useState<string | null>(null)
   const [kind, setKind] = useState<Kind>('lecture')
   // Null tracks the suggestion, so an untouched name follows the course and kind.
   const [name, setName] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
   const [confirm, setConfirm] = useState(false)
 
-  // A picked course that was archived or deleted falls back to the first active one.
-  const course = active.some((c) => c.name === picked) ? picked! : (active[0]?.name ?? '')
+  const courseText = typed ?? active[0]?.name ?? ''
+  const existing = matchCourse(active, courseText)
+  const course = existing ?? courseText.trim()
   const claimed = entries.map((e) => ({ ...e.target, kind: e.request.kind }))
   const lecture = name ?? (course ? suggestManualName(courses, course, kind, claimed) : '')
   const ready = !!url.trim() && !!course && !!lecture.trim() && !pending
@@ -135,6 +139,16 @@ function ManualForm() {
   async function submit() {
     const request = { url: url.trim(), course, lecture: lecture.trim(), kind }
     setPending(true)
+    // A name no active course has is a new course; an archived one answers `name_taken`.
+    if (!existing) {
+      try {
+        await createCourse(course)
+      } catch (err) {
+        toastDownloadError(course, err)
+        setPending(false)
+        return
+      }
+    }
     try {
       const { jobId, target } = await start(request)
       addManualEntry(request, jobId, target)
@@ -174,20 +188,20 @@ function ManualForm() {
         <label className="manual-download-label" htmlFor={`${id}-course`}>
           <Trans>Course</Trans>
         </label>
-        <select
+        {/* Free text with the active courses as suggestions: a name none of them has is a new course. */}
+        <input
           id={`${id}-course`}
           className="source-row-input"
-          value={course}
-          onChange={(e) => setPicked(e.target.value)}
-          disabled={!active.length}
+          value={courseText}
+          onChange={(e) => setTyped(e.target.value)}
+          list={`${id}-courses`}
           dir="auto"
-        >
+        />
+        <datalist id={`${id}-courses`}>
           {active.map((c) => (
-            <option key={c.name} value={c.name}>
-              {c.name}
-            </option>
+            <option key={c.name} value={c.name} />
           ))}
-        </select>
+        </datalist>
       </div>
       {/* Buttons, not an input, so the caption names the group rather than a control. */}
       <div className="manual-download-field" role="group" aria-labelledby={`${id}-kind`}>

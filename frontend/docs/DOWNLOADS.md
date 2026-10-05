@@ -24,8 +24,9 @@ touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
 ## Manual download
 
-A collapsible section above the course sources (`ManualDownload`): paste a video link, pick an active
-course, kind and name, and `POST /download-url` queues it through yt-dlp with no credentials — so it
+A collapsible section above the course sources (`ManualDownload`): paste a video link, type a course
+(the active ones are suggestions; any other name is created first, an archived one answers `name_taken`),
+kind and name, and `POST /download-url` queues it through yt-dlp with no credentials — so it
 never gates on the account or the university. Collapsed by default, its open state is per-viewer
 `localStorage` like the media segment. The name is `suggestName`'s next free one, also skipping names
 this session's manual downloads already claimed (`suggestManualName`), since an in-flight one is not in

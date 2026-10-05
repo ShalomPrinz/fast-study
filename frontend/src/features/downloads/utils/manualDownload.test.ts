@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, Lecture } from '@/types'
 import type { DownloadJob } from '@/features/downloads/services/downloadServer'
-import { manualStatus, parseTarget, suggestManualName } from './manualDownload'
+import { manualStatus, matchCourse, parseTarget, suggestManualName } from './manualDownload'
 
 function job(status: DownloadJob['status']): DownloadJob {
   return {
@@ -75,5 +75,23 @@ describe('suggestManualName', () => {
     ]
     expect(suggestManualName(courses, 'Algo', 'lecture', claimed)).toBe('Lecture 3')
     expect(suggestManualName(courses, 'Algo', 'recitation', claimed)).toBe('Recitation 6')
+  })
+
+  it('starts a course the tree lacks from the first name, since the download creates it', () => {
+    expect(suggestManualName(courses, 'New', 'lecture', [])).toBe('Lecture 1')
+    expect(suggestManualName(courses, 'New', 'recitation', [])).toBe('Recitation 1')
+  })
+})
+
+describe('matchCourse', () => {
+  const active = [{ name: 'Algo', lectures: [] }] as unknown as Course[]
+
+  it('answers the stored spelling of a course typed in another case or padded', () => {
+    expect(matchCourse(active, '  aLGO ')).toBe('Algo')
+  })
+
+  it('answers null for a name no active course has, which makes it a new course', () => {
+    expect(matchCourse(active, 'Algo 2')).toBeNull()
+    expect(matchCourse([], 'Algo')).toBeNull()
   })
 })
