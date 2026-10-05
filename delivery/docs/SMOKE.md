@@ -36,6 +36,10 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   tone video only as separate video and audio streams, so `video.mp4` with both lands only if yt-dlp
   found the bundled ffmpeg. The state root's yt-dlp copy must exist first: it is what `toolPath` spawns.
   `AUTO_RUN` is `off` in-process, so the arrival queues nothing and its `launch.log` line proves it was reported.
+- **The data folder is picked, never typed.** `data-root-input` is read-only, so first run stubs
+  main's `dialog.showOpenDialog` with queued answers, clicks the real field, and restores it before
+  leaving the wall; test 4 first proves a cancel keeps the launcher's default and each click opens one
+  `openDirectory` dialog at the field's value.
 - **One step at a time, through the backend.** A provider failure and a locked `summary.pdf` run
   alone via backend `run/{step}`, so the error is that step's. A provider's untranslated text must
   appear in `lecture-error-message` — the one text read — and its `step-status` reads `failed`; the

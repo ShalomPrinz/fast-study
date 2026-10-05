@@ -366,7 +366,7 @@ test('3. boot', async () => {
 
 test('4. first run', async () => {
   const root = paths.dataRoot('data');
-  await completeInitWall(session.page, root);
+  await completeInitWall(session, root, { cancelFirst: true });
 
   const text = fs.readFileSync(paths.settingsFile(), 'utf8');
   const stored = JSON.parse(text);
@@ -684,7 +684,7 @@ test('14. an in-place update', async () => {
     expect(code, `the installer exited ${code}: ${output}`).toBe(0);
     await start();
     expect(readLaunchLog().split('\n')[0]).toContain(`FastStudy ${previous.version} `);
-    await completeInitWall(session.page, paths.dataRoot('data-update'));
+    await completeInitWall(session, paths.dataRoot('data-update'));
     await waitFor(() => fs.existsSync(paths.ytdlpCopy()), {
       timeoutMs: 60_000,
       message: `the server never seeded ${paths.ytdlpCopy()}`,
