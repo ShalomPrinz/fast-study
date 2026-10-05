@@ -13,7 +13,13 @@ export const NOT_A_NETWORK_FAILURE =
   /traceback|no module named|modulenotfounderror|importerror|cannot import|attributeerror|dll load failed|is not set in the environment|is required/i;
 
 /** HTTP to one service as the app's renderer reaches it: the bridge's URL and launch secret. */
-async function call(base, secret, method, route, { json, bytes, accept = [200, 204] } = {}) {
+async function call(
+  base,
+  secret,
+  method,
+  route,
+  { json, bytes, accept = [200, 204], signal } = {},
+) {
   const headers = { 'X-FastStudy-Secret': secret };
   let body;
   if (json !== undefined) {
@@ -22,7 +28,7 @@ async function call(base, secret, method, route, { json, bytes, accept = [200, 2
   } else if (bytes !== undefined) {
     body = bytes;
   }
-  const response = await fetch(`${base}${route}`, { method, headers, body });
+  const response = await fetch(`${base}${route}`, { method, headers, body, signal });
   if (!accept.includes(response.status)) {
     throw new Error(`${method} ${route} answered ${response.status}: ${await response.text()}`);
   }
@@ -115,6 +121,59 @@ export function backend({ urls, secret }) {
     },
     runPipeline: async (course, name) =>
       (await at('POST', `${lecture(course, name)}/pipeline`)).json(),
+  };
+}
+
+/** `downloader/server`'s download routes and its job registry. */
+export function downloader({ urls, secret }) {
+  const at = (method, route, options) => call(urls.downloadServer, secret, method, route, options);
+  const jobs = async () => (await (await at('GET', '/jobs')).json()).jobs;
+  return {
+    /** Start a plain yt-dlp download of `url` into a lecture; answers the job id. */
+    async downloadUrl(course, lecture, url) {
+      const { jobId } = await (
+        await at('POST', '/download-url', { json: { url, course, lecture } })
+      ).json();
+      return jobId;
+    },
+    /** Follow `/events` until job `id` is `done` or `error`, re-reading `/jobs` on each frame, since
+     *  a frame carries no content. Answers the job's last snapshot. */
+    async waitForJob(id, { timeoutMs }) {
+      const terminal = async () => {
+        const job = (await jobs()).find((j) => j.id === id);
+        return job && (job.status === 'done' || job.status === 'error') ? job : null;
+      };
+      const abort = new AbortController();
+      const timer = setTimeout(() => abort.abort(), timeoutMs);
+      try {
+        const events = await at('GET', '/events', { signal: abort.signal });
+        // Subscribed first, then read once: a job that ended before the stream opened still lingers on /jobs.
+        const found = await terminal();
+        if (found) return found;
+        const decoder = new TextDecoder();
+        let buffered = '';
+        for await (const chunk of events.body) {
+          buffered += decoder.decode(chunk, { stream: true });
+          const frames = buffered.split('\n\n');
+          buffered = frames.pop();
+          if (!frames.some((frame) => frame.includes('event: job:change'))) continue;
+          const job = await terminal();
+          if (job) return job;
+        }
+        throw new Error(`the downloader closed /events before job ${id} ended`);
+      } catch (error) {
+        if (abort.signal.aborted) {
+          const last = (await jobs()).find((j) => j.id === id);
+          throw new Error(
+            `download job ${id} did not end within ${timeoutMs / 1000}s; last seen ${JSON.stringify(last ?? null)}`,
+          );
+        }
+        throw error;
+      } finally {
+        clearTimeout(timer);
+        abort.abort();
+      }
+    },
   };
 }
 

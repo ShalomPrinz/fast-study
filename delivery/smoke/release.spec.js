@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { chromium, expect, test } from '@playwright/test';
 import { abandon, bridge, launch, quit, readLaunchLog, readyPorts, waitForApp } from './lib/app.js';
 import { completeInitWall, PLACEHOLDER_KEYS } from './lib/firstRun.js';
-import { toneVideo } from './lib/media.js';
+import { dashFixture, streamKinds, toneVideo } from './lib/media.js';
+import { serveFiles } from './lib/fileServer.js';
 import { proveOfflineEnforcement } from './lib/offline.js';
 import * as paths from './lib/paths.js';
 import { unresolvedImports } from './lib/pe.js';
@@ -14,11 +15,12 @@ import { carriesPhrase, pdfText } from './lib/pdf.js';
 import {
   backend,
   database,
+  downloader,
   healthOf,
   NETWORK_FAILURE,
   NOT_A_NETWORK_FAILURE,
 } from './lib/services.js';
-import { pointUpdaterAt, serveUpdateFeed } from './lib/updateServer.js';
+import { pointUpdaterAt } from './lib/updateServer.js';
 import { delay, waitFor } from './lib/wait.js';
 import {
   blockOutbound,
@@ -40,6 +42,7 @@ const LECTURE = 'Tone Lecture';
 const LIVE_LECTURE = 'Live Update Lecture';
 const SECOND_LECTURE = 'No Browser Lecture';
 const TEMP_LECTURE = 'Hebrew Temp Lecture';
+const DOWNLOADED_LECTURE = 'Downloaded Lecture';
 const UPDATE_COURSE = 'Update Course';
 // A line of fixtures/summary.md: Hebrew only, so a missing Hebrew font cannot drop it unnoticed.
 const PDF_PHRASE = 'רדיוס ההתכנסות נתון על ידי נוסחת קושי הדמר';
@@ -81,7 +84,12 @@ async function start(env) {
   session = await launch(env);
   await waitForApp(session);
   const reached = await bridge(session.page);
-  services = { urls: reached.urls, db: database(reached), api: backend(reached) };
+  services = {
+    urls: reached.urls,
+    db: database(reached),
+    api: backend(reached),
+    dl: downloader(reached),
+  };
   return session;
 }
 
@@ -502,7 +510,39 @@ test('9. opening a PDF', async () => {
   });
 });
 
-test('10. quit, no orphans', async () => {
+test('10. a yt-dlp download merges its streams with the bundled ffmpeg', async () => {
+  const { db, dl } = services;
+  const noMerge =
+    'yt-dlp most likely skipped merging the video-only and audio-only streams because it could not ' +
+    'find ffmpeg: packaged, ffmpeg is off PATH, so the downloader must pass --ffmpeg-location';
+  // toolPath prefers the state root's seeded copy whenever it exists, so that is what the job spawns.
+  expect(fs.existsSync(paths.ytdlpCopy()), `the server never seeded ${paths.ytdlpCopy()}`).toBe(
+    true,
+  );
+
+  const served = await serveFiles(await dashFixture());
+  try {
+    const id = await dl.downloadUrl(COURSE, DOWNLOADED_LECTURE, `${served.url}manifest.mpd`);
+    const job = await dl.waitForJob(id, { timeoutMs: 5 * 60_000 });
+    expect(
+      job.status,
+      `the download failed with ${job.code}: ${job.message}\n${noMerge}\n` +
+        `the loopback fixture saw: ${served.requests.join(', ') || 'nothing'}`,
+    ).toBe('done');
+  } finally {
+    await served.close();
+  }
+  expect(await db.exists(COURSE, DOWNLOADED_LECTURE, 'video.mp4'), `no video.mp4: ${noMerge}`).toBe(
+    true,
+  );
+  const kinds = await streamKinds(await db.path(COURSE, DOWNLOADED_LECTURE, 'video.mp4'));
+  expect(kinds.sort(), `video.mp4 is not both streams merged: ${noMerge}`).toEqual([
+    'audio',
+    'video',
+  ]);
+});
+
+test('11. quit, no orphans', async () => {
   const ports = readyPorts(readLaunchLog());
   expect(ports).toHaveLength(4);
   await stop();
@@ -521,7 +561,7 @@ test('10. quit, no orphans', async () => {
   });
 });
 
-test('11. the tools run under a Hebrew temp path', async () => {
+test('12. the tools run under a Hebrew temp path', async () => {
   await stop();
   // Hebrew and a space in the dir every service spawns its tools in, as a Windows username can put in %TEMP%.
   const folder = 'טמפ עברי';
@@ -569,7 +609,7 @@ test('11. the tools run under a Hebrew temp path', async () => {
   await stop();
 });
 
-test('12. the browser chain, both ends', async () => {
+test('13. the browser chain, both ends', async () => {
   await stop();
   try {
     await test.step('with Chrome gone the prerequisite resolves Edge', async () => {
@@ -603,7 +643,7 @@ test('12. the browser chain, both ends', async () => {
   }
 });
 
-test('13. an in-place update', async () => {
+test('14. an in-place update', async () => {
   const candidate = paths.candidate();
   const previous = paths.previous();
   await stop();
@@ -641,7 +681,8 @@ test('13. an in-place update', async () => {
   });
   const seeded = fingerprint(paths.ytdlpCopy());
 
-  const feed = await serveUpdateFeed(candidate.dir);
+  // The candidate's latest.yml, installer and blockmap, as a generic-provider feed.
+  const feed = await serveFiles(candidate.dir);
   try {
     await test.step(`${previous.version} downloads ${candidate.version} from a loopback feed`, async () => {
       fs.writeFileSync(path.join(paths.resourcesDir(), MARKER), 'left by the previous install\n');

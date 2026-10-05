@@ -3,7 +3,7 @@
 `smoke/` is `@playwright/test` driving the installed exe through `_electron`, run by `build.yml`'s
 smoke job against the uploaded installer ([RELEASE.md](RELEASE.md#build-test-publish)). One ordered
 file on one worker, since each check builds on the machine state the last one left: install, the
-installed tree's DLL imports, boot, first run, the pipeline, quit, the tools under a Hebrew temp
+installed tree's DLL imports, boot, first run, the pipeline, a yt-dlp download, quit, the tools under a Hebrew temp
 path, the browser chain, an in-place update. It needs an installed Windows build, so off the runner
 only `npx playwright test --list` works — it is never "passed" from WSL.
 
@@ -32,6 +32,9 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   [`frontend/docs/ARCHITECTURE.md`](../../frontend/docs/ARCHITECTURE.md#smoke-suite-test-ids) and
   [`electron/docs/BOOT.md`](../../electron/docs/BOOT.md#the-launch-screen). A missing id is a
   follow-up for that consumer, never a text selector.
+- **A yt-dlp download must merge.** `/download-url` fetches a loopback DASH manifest that offers the
+  tone video only as separate video and audio streams, so `video.mp4` with both lands only if yt-dlp
+  found the bundled ffmpeg. The state root's yt-dlp copy must exist first: it is what `toolPath` spawns.
 - **One step at a time, through the backend.** A provider failure and a locked `summary.pdf` run
   alone via backend `run/{step}`, so the error is that step's. A provider's untranslated text must
   appear in `lecture-error-message` — the one text read — and its `step-status` reads `failed`; the
@@ -56,5 +59,5 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
 ## Unproven until a Windows run
 
 Each assumption only the runner can prove — the silent per-user install, Playwright attaching to the
-packaged exe, the loopback exemption, a renamed browser dir reading as uninstalled, an unsigned
+packaged exe, the loopback exemption, a renamed browser dir reading as uninstalled, the blocked yt-dlp copy reaching a loopback server, an unsigned
 update from a generic feed replacing `resources/` wholesale — fails with a message naming it.
