@@ -30,6 +30,9 @@ Unknown step → 404. Validates that the step's prerequisite file exists (`_STEP
 `POST /courses/{course}/lectures/{lecture}/pipeline?kind=...`
 Advances the lecture through every remaining step. → `{"status": "started"|"busy"}`. Both this and `run/{step}` pull a lecture waiting in the runner queue out of it when they start it.
 
+`POST /courses/{course}/lectures/{lecture}/queue/front?kind=...`
+Makes a lecture waiting in the runner queue the next one it takes, keeping its `depth`; it only reorders, so nothing starts and the run's total is unchanged. → `{"status": "moved"|"not_queued"}` — `moved` also when it was already first, `not_queued` when it is not in `queue` (in flight included). A real move pushes one SSE notify.
+
 `POST /courses/{course}/lectures/{lecture}/video-arrived?kind=...`
 A new `video.mp4` landed on disk, reported by whichever service uploaded it — the downloader helper server or the frontend — once the upload succeeded. A fact, not a command: `AUTO_RUN` decides the depth and the lecture is queued rather than run inline. → `{"status": "queued"|"busy"|"off"}` — `off` when `AUTO_RUN` forbids automatic work, `busy` when the lecture is already queued, in flight, or owned by another trigger.
 

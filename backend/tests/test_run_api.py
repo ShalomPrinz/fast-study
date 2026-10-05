@@ -57,6 +57,17 @@ class TestRunStep:
         assert "detail" in response.json()
 
 
+class TestQueueFront:
+    def test_returns_the_runner_status_for_the_kind_asked(self):
+        with patch.object(
+            backend_main.runner, "move_to_front", return_value="moved"
+        ) as move:
+            response = client.post("/courses/C/lectures/L/queue/front?kind=recitation")
+        assert response.status_code == 200
+        assert response.json() == {"status": "moved"}
+        move.assert_called_once_with("C", "L", "recitation")
+
+
 class TestOverviewGenerate:
     def test_unknown_from_phase_is_a_400(self):
         response = client.post("/courses/C/overview/generate?from_phase=zzz")

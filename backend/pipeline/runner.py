@@ -562,6 +562,21 @@ def enqueue_arrival(course: str, lecture: str, kind: str) -> str:
     return "queued"
 
 
+def move_to_front(course: str, lecture: str, kind: str) -> str:
+    """Make a queued lecture the runner's next one, keeping its entry and depth. Returns 'moved',
+    or 'not_queued' when it is not waiting in the queue (in flight counts as not queued)."""
+
+    index = next(
+        (i for i, q in enumerate(_queue) if q[:3] == (course, lecture, kind)), None
+    )
+    if index is None:
+        return "not_queued"
+    if index > 0:
+        _queue.insert(0, _queue.pop(index))
+        db_client.notify()
+    return "moved"
+
+
 async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
     """Build a {filename: {exists}} mapping for one lecture via parallel HEAD calls."""
 

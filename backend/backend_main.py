@@ -169,6 +169,11 @@ async def run_pipeline(course: str, lecture: str, kind: Kind = Query("lecture"))
     return {"status": runner.try_run_pipeline(course, lecture, kind)}
 
 
+@app.post("/courses/{course}/lectures/{lecture}/queue/front")
+async def queue_front(course: str, lecture: str, kind: Kind = Query("lecture")):
+    return {"status": runner.move_to_front(course, lecture, kind)}
+
+
 @app.post("/courses/{course}/lectures/{lecture}/video-arrived")
 async def video_arrived(course: str, lecture: str, kind: Kind = Query("lecture")):
     """A new video.mp4 landed on disk. The database reports the fact; AUTO_RUN decides how much

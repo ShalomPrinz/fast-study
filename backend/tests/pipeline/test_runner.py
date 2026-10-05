@@ -1134,6 +1134,35 @@ def test_a_manual_run_pulls_its_lecture_out_of_the_queue(clean_queue, start):
     assert runner._queue == [_entry("L1"), _entry("L3")]
 
 
+class TestMoveToFront:
+    """Reordering only: the entry keeps its depth, the queue its length, and only a real move
+    pushes a notify."""
+
+    def test_moves_a_queued_lecture_to_index_zero(self, clean_queue):
+        runner._queue[:] = [_entry("L1"), _entry("L2"), _entry("L3", "audio")]
+        with patch.object(runner.db_client, "notify") as notify:
+            assert runner.move_to_front("C1", "L3", "lecture") == "moved"
+        assert runner._queue == [_entry("L3", "audio"), _entry("L1"), _entry("L2")]
+        notify.assert_called_once()
+
+    def test_the_first_entry_is_a_silent_no_op(self, clean_queue):
+        runner._queue[:] = [_entry("L1"), _entry("L2")]
+        with patch.object(runner.db_client, "notify") as notify:
+            assert runner.move_to_front("C1", "L1", "lecture") == "moved"
+        assert runner._queue == [_entry("L1"), _entry("L2")]
+        notify.assert_not_called()
+
+    def test_a_lecture_not_in_the_queue_is_not_queued(self, clean_queue):
+        runner._queue[:] = [_entry("L1")]
+        runner._in_flight[runner._skey("C1", "L2", "lecture")] = {"step": "audio"}
+        with patch.object(runner.db_client, "notify") as notify:
+            assert runner.move_to_front("C1", "L2", "lecture") == "not_queued"
+            # Same lecture name, other kind: a different queue entry.
+            assert runner.move_to_front("C1", "L1", "recitation") == "not_queued"
+        assert runner._queue == [_entry("L1")]
+        notify.assert_not_called()
+
+
 class TestQueueDrain:
     """run_all owns the queue rather than a caller's list, so the run absorbs whatever
     arrives while it is going."""
