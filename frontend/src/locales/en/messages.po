@@ -228,7 +228,7 @@ msgstr "{generated} of {0} generated"
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:222
+#: src/features/downloads/components/ManualDownload.tsx:244
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
@@ -596,6 +596,11 @@ msgstr "Checking…"
 msgid "Choose a data folder."
 msgstr "Choose a data folder."
 
+#: src/features/settings/components/DataRootField.tsx:80
+#: src/features/settings/components/DataRootField.tsx:81
+msgid "Choose folder"
+msgstr "Choose folder"
+
 #: src/features/downloads/DownloadsView.tsx:75
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
@@ -743,7 +748,7 @@ msgstr "Could not rename \"{from}\" to \"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "Could not tell what {url} is — the site didn't answer usefully."
 
-#: src/features/downloads/components/ManualDownload.tsx:330
+#: src/features/downloads/components/ManualDownload.tsx:352
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
@@ -788,7 +793,7 @@ msgstr "Couldn't start capturing the Zoom recording. Try again."
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:167
+#: src/features/downloads/components/ManualDownload.tsx:189
 #: src/features/search/SearchView.tsx:175
 msgid "Course"
 msgstr "Course"
@@ -822,7 +827,7 @@ msgstr "Current PDF"
 msgid "Daily run time"
 msgstr "Daily run time"
 
-#: src/features/settings/components/DataRootField.tsx:42
+#: src/features/settings/components/DataRootField.tsx:51
 msgid "Data folder"
 msgstr "Data folder"
 
@@ -862,7 +867,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/ManualDownload.tsx:217
+#: src/features/downloads/components/ManualDownload.tsx:239
 #: src/features/downloads/components/RecordingRow.tsx:324
 msgid "Download"
 msgstr "Download"
@@ -876,13 +881,13 @@ msgstr "Download again"
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
-#: src/features/downloads/components/ManualDownload.tsx:302
+#: src/features/downloads/components/ManualDownload.tsx:324
 #: src/features/downloads/components/RecordingRow.tsx:279
 #: src/features/downloads/components/RecordingRow.tsx:322
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:297
+#: src/features/downloads/components/ManualDownload.tsx:319
 #: src/features/downloads/components/RecordingRow.tsx:284
 msgid "Downloading"
 msgstr "Downloading"
@@ -949,7 +954,7 @@ msgstr "Error reports"
 msgid "Estimating…"
 msgstr "Estimating…"
 
-#: src/features/settings/components/DataRootField.tsx:46
+#: src/features/settings/components/DataRootField.tsx:55
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 
@@ -957,7 +962,7 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "Every lecture that is not finished yet is picked up on the next start."
 
-#: src/features/settings/components/DataRootField.tsx:67
+#: src/features/settings/components/DataRootField.tsx:96
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 
@@ -1193,7 +1198,7 @@ msgstr "Last error:"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/ManualDownload.tsx:194
+#: src/features/downloads/components/ManualDownload.tsx:216
 #: src/features/downloads/components/RecordingRow.tsx:242
 msgid "Lecture"
 msgstr "Lecture"
@@ -1255,7 +1260,7 @@ msgstr "Loading summaries…"
 msgid "Loading…"
 msgstr "Loading…"
 
-#: src/features/downloads/components/ManualDownload.tsx:90
+#: src/features/downloads/components/ManualDownload.tsx:100
 msgid "Manual download"
 msgstr "Manual download"
 
@@ -1280,7 +1285,7 @@ msgstr "Moodle refused the request."
 msgid "More actions"
 msgstr "More actions"
 
-#: src/features/downloads/components/ManualDownload.tsx:206
+#: src/features/downloads/components/ManualDownload.tsx:228
 msgid "Name in the course"
 msgstr "Name in the course"
 
@@ -1564,7 +1569,7 @@ msgstr "Pipeline already running"
 msgid "Pitfalls"
 msgstr "Pitfalls"
 
-#: src/features/downloads/components/ManualDownload.tsx:292
+#: src/features/downloads/components/ManualDownload.tsx:314
 #: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
 msgstr "Queued"
@@ -1609,7 +1614,7 @@ msgstr "Ready to retry"
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/ManualDownload.tsx:200
+#: src/features/downloads/components/ManualDownload.tsx:222
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "Recitation"
 msgstr "Recitation"
@@ -1703,7 +1708,7 @@ msgstr "Restore original"
 msgid "Results"
 msgstr "Results"
 
-#: src/features/downloads/components/ManualDownload.tsx:311
+#: src/features/downloads/components/ManualDownload.tsx:333
 #: src/features/downloads/components/RecordingJobList.tsx:48
 #: src/features/downloads/components/RecordingRow.tsx:320
 msgid "Retry ✗"
@@ -2202,7 +2207,7 @@ msgstr "This Moodle connection can't download these recordings. Reconnect the ac
 #~ msgid "This Moodle session cannot capture videostream recordings. Reconnect the account."
 #~ msgstr "This Moodle session cannot capture videostream recordings. Reconnect the account."
 
-#: src/features/settings/components/DataRootField.tsx:74
+#: src/features/settings/components/DataRootField.tsx:103
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 
@@ -2246,7 +2251,7 @@ msgstr "Transcript"
 #~ msgid "Transcription failed"
 #~ msgstr "Transcription failed"
 
-#: src/features/downloads/components/ManualDownload.tsx:187
+#: src/features/downloads/components/ManualDownload.tsx:209
 msgid "Type"
 msgstr "Type"
 
@@ -2315,7 +2320,7 @@ msgstr "Uploading video…"
 msgid "Video"
 msgstr "Video"
 
-#: src/features/downloads/components/ManualDownload.tsx:152
+#: src/features/downloads/components/ManualDownload.tsx:174
 msgid "Video link"
 msgstr "Video link"
 
@@ -2359,7 +2364,7 @@ msgstr "With this off, a lecture is done once its PDF is ready. If you turn it b
 msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 
-#: src/features/downloads/components/ManualDownload.tsx:98
+#: src/features/downloads/components/ManualDownload.tsx:108
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "Works only for video links, and only if they open without signing in."
 

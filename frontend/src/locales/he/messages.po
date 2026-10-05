@@ -228,7 +228,7 @@ msgstr "{generated} מתוך {0} נוצרו"
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {פריט אחד} two {# פריטים} other {# פריטים}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:222
+#: src/features/downloads/components/ManualDownload.tsx:244
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
@@ -596,6 +596,11 @@ msgstr "בודק…"
 msgid "Choose a data folder."
 msgstr "בחר תיקיית נתונים."
 
+#: src/features/settings/components/DataRootField.tsx:80
+#: src/features/settings/components/DataRootField.tsx:81
+msgid "Choose folder"
+msgstr "בחירת תיקייה"
+
 #: src/features/downloads/DownloadsView.tsx:75
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
@@ -743,7 +748,7 @@ msgstr "לא ניתן לשנות את השם מ\"{from}\" ל\"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "לא ניתן לזהות מה יש ב-{url} — האתר לא החזיר תשובה ברורה."
 
-#: src/features/downloads/components/ManualDownload.tsx:330
+#: src/features/downloads/components/ManualDownload.tsx:352
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "לא ניתן להוריד את \"{lecture}\". נסה שוב."
 
@@ -788,7 +793,7 @@ msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נס�
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:167
+#: src/features/downloads/components/ManualDownload.tsx:189
 #: src/features/search/SearchView.tsx:175
 msgid "Course"
 msgstr "קורס"
@@ -822,7 +827,7 @@ msgstr "ה-PDF הנוכחי"
 msgid "Daily run time"
 msgstr "שעת ההרצה היומית"
 
-#: src/features/settings/components/DataRootField.tsx:42
+#: src/features/settings/components/DataRootField.tsx:51
 msgid "Data folder"
 msgstr "תיקיית נתונים"
 
@@ -862,7 +867,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "הושלם"
 
-#: src/features/downloads/components/ManualDownload.tsx:217
+#: src/features/downloads/components/ManualDownload.tsx:239
 #: src/features/downloads/components/RecordingRow.tsx:324
 msgid "Download"
 msgstr "הורדה"
@@ -876,13 +881,13 @@ msgstr "הורדה מחדש"
 msgid "Download all {leaves}"
 msgstr "הורדת הכול ({leaves})"
 
-#: src/features/downloads/components/ManualDownload.tsx:302
+#: src/features/downloads/components/ManualDownload.tsx:324
 #: src/features/downloads/components/RecordingRow.tsx:279
 #: src/features/downloads/components/RecordingRow.tsx:322
 msgid "Downloaded ✓"
 msgstr "הורד ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:297
+#: src/features/downloads/components/ManualDownload.tsx:319
 #: src/features/downloads/components/RecordingRow.tsx:284
 msgid "Downloading"
 msgstr "מוריד"
@@ -949,7 +954,7 @@ msgstr "דיווחי שגיאות"
 msgid "Estimating…"
 msgstr "מחשב זמן משוער…"
 
-#: src/features/settings/components/DataRootField.tsx:46
+#: src/features/settings/components/DataRootField.tsx:55
 msgid "Every course, lecture, video and summary is stored here. Use a folder on this computer that is not synced to the cloud."
 msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. בחר תיקייה במחשב הזה שאינה מסונכרנת לענן."
 
@@ -957,7 +962,7 @@ msgstr "כל קורס, הרצאה, וידאו וסיכום נשמרים כאן. 
 #~ msgid "Every lecture that is not finished yet is picked up on the next start."
 #~ msgstr "כל הרצאה שטרם הושלמה נאספת בהפעלה הבאה."
 
-#: src/features/settings/components/DataRootField.tsx:67
+#: src/features/settings/components/DataRootField.tsx:96
 msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
 msgstr "הכול נשאר במחשב הזה. ל-Fast Study אין שרתים משלה, והיא לא שומרת עותק של ההרצאות או הסיכומים שלך."
 
@@ -1193,7 +1198,7 @@ msgstr "השגיאה האחרונה:"
 msgid "lecture"
 msgstr "הרצאה"
 
-#: src/features/downloads/components/ManualDownload.tsx:194
+#: src/features/downloads/components/ManualDownload.tsx:216
 #: src/features/downloads/components/RecordingRow.tsx:242
 msgid "Lecture"
 msgstr "הרצאה"
@@ -1255,7 +1260,7 @@ msgstr "טוען סיכומים…"
 msgid "Loading…"
 msgstr "טוען…"
 
-#: src/features/downloads/components/ManualDownload.tsx:90
+#: src/features/downloads/components/ManualDownload.tsx:100
 msgid "Manual download"
 msgstr "הורדה ידנית"
 
@@ -1280,7 +1285,7 @@ msgstr "Moodle דחה את הבקשה."
 msgid "More actions"
 msgstr "פעולות נוספות"
 
-#: src/features/downloads/components/ManualDownload.tsx:206
+#: src/features/downloads/components/ManualDownload.tsx:228
 msgid "Name in the course"
 msgstr "השם בקורס"
 
@@ -1564,7 +1569,7 @@ msgstr "ההרצאה כבר בעיבוד"
 msgid "Pitfalls"
 msgstr "טעויות נפוצות"
 
-#: src/features/downloads/components/ManualDownload.tsx:292
+#: src/features/downloads/components/ManualDownload.tsx:314
 #: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
 msgstr "בתור"
@@ -1609,7 +1614,7 @@ msgstr "מוכן לניסיון חוזר"
 msgid "recitation"
 msgstr "תרגול"
 
-#: src/features/downloads/components/ManualDownload.tsx:200
+#: src/features/downloads/components/ManualDownload.tsx:222
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "Recitation"
 msgstr "תרגול"
@@ -1703,7 +1708,7 @@ msgstr "שחזור המקור"
 msgid "Results"
 msgstr "תוצאות"
 
-#: src/features/downloads/components/ManualDownload.tsx:311
+#: src/features/downloads/components/ManualDownload.tsx:333
 #: src/features/downloads/components/RecordingJobList.tsx:48
 #: src/features/downloads/components/RecordingRow.tsx:320
 msgid "Retry ✗"
@@ -2202,7 +2207,7 @@ msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקל
 #~ msgid "This Moodle session cannot capture videostream recordings. Reconnect the account."
 #~ msgstr "החיבור הזה ל-Moodle לא יכול ללכוד הקלטות videostream. חבר מחדש את החשבון."
 
-#: src/features/settings/components/DataRootField.tsx:74
+#: src/features/settings/components/DataRootField.tsx:103
 msgid "This only changes where the app looks — it never moves your files. The old folder stays as it is, and choosing it again brings everything back."
 msgstr "השינוי קובע רק איפה האפליקציה מחפשת את הקבצים — הוא לא מזיז אותם. התיקייה הישנה נשארת כפי שהיא, ובחירה בה שוב מחזירה את הכול."
 
@@ -2246,7 +2251,7 @@ msgstr "תמלול"
 #~ msgid "Transcription failed"
 #~ msgstr "התמלול נכשל"
 
-#: src/features/downloads/components/ManualDownload.tsx:187
+#: src/features/downloads/components/ManualDownload.tsx:209
 msgid "Type"
 msgstr "סוג"
 
@@ -2315,7 +2320,7 @@ msgstr "מעלה וידאו…"
 msgid "Video"
 msgstr "וידאו"
 
-#: src/features/downloads/components/ManualDownload.tsx:152
+#: src/features/downloads/components/ManualDownload.tsx:174
 msgid "Video link"
 msgstr "קישור לווידאו"
 
@@ -2359,7 +2364,7 @@ msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע �
 msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "בלי אחד מהם, Fast Study לא תוכל להוריד הקלטות מאתר הקורס ולא תוכל להוריד הקלטת Zoom. כל השאר פועל כרגיל — הוסף וידאו בעצמך והוא עדיין יהפוך לסיכום. התקן את Chrome דרך הקישור שלמעלה ואז בדוק שוב."
 
-#: src/features/downloads/components/ManualDownload.tsx:98
+#: src/features/downloads/components/ManualDownload.tsx:108
 msgid "Works only for video links, and only if they open without signing in."
 msgstr "עובד רק עבור קישורי וידאו, ורק אם הם נגישים ללא פרטי התחברות."
 

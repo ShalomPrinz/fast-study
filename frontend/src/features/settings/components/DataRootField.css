@@ -1,0 +1,14 @@
+/* The path box and its folder-picker button on one line; the box takes the room the button leaves. */
+.data-root-row {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.data-root-row .settings-input[readonly] {
+  cursor: pointer;
+}
+
+.data-root-row .data-root-browse {
+  align-self: stretch;
+  padding-inline: var(--space-4);
+}

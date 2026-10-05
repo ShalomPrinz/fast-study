@@ -94,7 +94,9 @@ and the nightly pass keep their defaults. The data folder is **prefilled and tak
 else empty, which in browser dev reads red — but
 probed as it is typed (`probeDataRoot`, the database's read-only `POST /settings/data-root/probe`, debounced
 and latest-wins): an unusable verdict renders its coded reason under the field and blocks the wall, while an
-unreachable probe is unknown and blocks nothing, since the save validates again. In
+unreachable probe is unknown and blocks nothing, since the save validates again. Packaged, the field is read-only and
+a click, Enter/Space or its folder button opens the bridge's native `pickFolder` dialog (one at a time;
+cancel keeps the value), so a non-technical user never types a path; browser dev keeps the typed input. In
 browser dev an already-filled `.env` passes the wall instantly; blank the values to exercise it.
 
 Each section heading but the language's carries a mark at its inline end, derived from `missingEntries`

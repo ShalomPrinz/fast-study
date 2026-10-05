@@ -49,7 +49,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
   `EventSource`s, which cannot set a header. The header keeps the secret out of access logs. Both add
   nothing in browser dev, where no service enforces a secret.
 - **`open`** — non-optional: the whole bridge's absence is the browser-dev test.
-- **`canStoreApiKeys`** and `defaultDataRoot` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
+- **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
 
 ## `open.ts` — opening a file or a link outside the app

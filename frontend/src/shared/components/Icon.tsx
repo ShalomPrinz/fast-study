@@ -23,6 +23,7 @@ export type IconName =
   | 'chevron-down'
   | 'warning'
   | 'check'
+  | 'folder'
 
 const ExternalLinkIcon = () => (
   <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -341,6 +342,19 @@ const CheckIcon = () => (
   </svg>
 )
 
+// A folder — the data-folder field's picker button.
+const FolderIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      d="M1.8 4a1 1 0 0 1 1-1h3.4l1.5 1.6h5.5a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1V4z"
+      stroke="currentColor"
+      strokeWidth="1.3"
+      strokeLinejoin="round"
+    />
+    <path d="M1.8 7h12.4" stroke="currentColor" strokeWidth="1.3" />
+  </svg>
+)
+
 const icons: Record<IconName, () => JSX.Element> = {
   'external-link': ExternalLinkIcon,
   edit: EditIcon,
@@ -366,6 +380,7 @@ const icons: Record<IconName, () => JSX.Element> = {
   'chevron-down': ChevronDownIcon,
   warning: WarningIcon,
   check: CheckIcon,
+  folder: FolderIcon,
 }
 
 export default function Icon({ icon }: { icon: IconName }) {

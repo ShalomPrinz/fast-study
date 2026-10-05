@@ -1,8 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
+import { pickFolder } from '@/services/runtime'
 import { probeDataRoot, type DataRootProbe } from '@/services/settings'
+import Icon from '@/shared/components/Icon'
 import ServiceError from '@/shared/components/ServiceError'
+import { createFolderPick } from '../utils/folderPick'
+import '@/styles/button.css'
 import '@/styles/settings-form.css'
+import './DataRootField.css'
 
 interface Props {
   value: string
@@ -16,8 +21,12 @@ const PROBE_DELAY_MS = 400
 
 // Where every course, lecture, video and summary is kept on this machine.
 export default function DataRootField({ value, onChange, onUnusableChange }: Props) {
+  const { t } = useLingui()
   const [probe, setProbe] = useState<DataRootProbe>({ kind: 'unknown' })
   const seq = useRef(0)
+  // With the native dialog the path is only ever chosen, never typed — see docs/SETTINGS.md.
+  const [openPicker] = useState(() => pickFolder && createFolderPick(pickFolder))
+  const browse = () => void openPicker?.(value, onChange)
 
   // On load and on each change: the last verdict stands until a newer one lands, and a slower
   // earlier probe never overwrites a newer one's.
@@ -48,14 +57,34 @@ export default function DataRootField({ value, onChange, onUnusableChange }: Pro
           that is not synced to the cloud.
         </Trans>
       </p>
-      <input
-        id="data-root"
-        data-testid="data-root-input"
-        className={`settings-input settings-input--code ${invalid ? 'settings-input--invalid' : ''}`}
-        value={value}
-        spellCheck={false}
-        onChange={(e) => onChange(e.target.value)}
-      />
+      <div className="data-root-row">
+        <input
+          id="data-root"
+          data-testid="data-root-input"
+          className={`settings-input settings-input--code ${invalid ? 'settings-input--invalid' : ''}`}
+          value={value}
+          spellCheck={false}
+          readOnly={!!openPicker}
+          onClick={openPicker && browse}
+          onKeyDown={(e) => {
+            if (!openPicker || (e.key !== 'Enter' && e.key !== ' ')) return
+            e.preventDefault()
+            browse()
+          }}
+          onChange={(e) => !openPicker && onChange(e.target.value)}
+        />
+        {openPicker && (
+          <button
+            type="button"
+            className="btn btn--ghost data-root-browse"
+            aria-label={t`Choose folder`}
+            title={t`Choose folder`}
+            onClick={browse}
+          >
+            <Icon icon="folder" />
+          </button>
+        )}
+      </div>
       {probe.kind === 'unusable' && (
         <p className="settings-status settings-status--danger" id="data-root-status">
           <ServiceError failure={probe.failure} />
