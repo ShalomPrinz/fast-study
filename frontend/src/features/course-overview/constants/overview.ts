@@ -1,7 +1,7 @@
 import { msg, t } from '@lingui/core/macro'
 import { i18n } from '@lingui/core'
 import type { MessageDescriptor } from '@lingui/core'
-import type { CoursePhase, CourseStatus, CourseExtractorState, CourseFile } from '@/types'
+import type { CoursePhase, CourseStatus, CourseExtractorState, CourseFile, PdfBadge } from '@/types'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 
 export interface OverviewStep {
@@ -106,4 +106,30 @@ export function branchStatus(
     // The skip is about this run; a render warning may be left over from an older one.
     warning: skipReason(st) ?? last?.warning ?? null,
   }
+}
+
+// A getter, not a constant: the copy has to resolve against whichever locale is active now.
+export const staleBranchTitle = (): string =>
+  t`The PDF is older than an earlier step's output. Re-generate it.`
+
+// The PDF is stale once any earlier output is newer — what a failed analyze/to_pdf leaves behind,
+// over a meta range that already moved. A missing PDF never is: the branch reads as not done instead.
+export function isBranchStale(files: CourseFile[], slug: string, phases: CoursePhase[]): boolean {
+  const names = generatedFiles(slug, phases)
+  const byName = new Map(files.map((f) => [f.name, f]))
+  const pdf = byName.get(names[names.length - 1])
+  if (!pdf) return false
+  return names.slice(0, -1).some((n) => (byName.get(n)?.mtime ?? -Infinity) > pdf.mtime)
+}
+
+// One badge per row, as in the lectures' pdfBadge: the neutral warning outranks staleness.
+export function branchBadge(
+  bs: BranchStatus,
+  files: CourseFile[],
+  slug: string,
+  phases: CoursePhase[],
+): PdfBadge | null {
+  if (bs.warning) return { kind: 'warning', title: bs.warning }
+  if (isBranchStale(files, slug, phases)) return { kind: 'stale', title: staleBranchTitle() }
+  return null
 }

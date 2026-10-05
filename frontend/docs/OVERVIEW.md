@@ -49,7 +49,9 @@ extractor's _last_ file exists, and `warning` is the neutral channel — a skipp
 `PdfWarningBadge` and no toast. A skip is not a failure, so `no_snippets_found`, `no_summaries_found` and
 the overview's `missing_prerequisite` read through `serviceErrors.ts` onto that badge rather than an error
 toast; `already_generated` is suppressed, since the row already reads as done and every "Generate All"
-pass re-stamps it. Errors toast once per `(course, slug, failure)` through `useReportOnce`, pruned only
+pass re-stamps it. With no warning, `branchBadge` shows the ≠ stale badge when an earlier output is newer than
+`{slug}.pdf` — a failed analyze/to_pdf over an already-moved meta range, which survives a backend restart.
+Errors toast once per `(course, slug, failure)` through `useReportOnce`, pruned only
 within the current course so switching back does not re-toast.
 
 `overview/meta` gives per-slug lecture/recitation ranges and `generatedAt`, rendered by `formatRange`

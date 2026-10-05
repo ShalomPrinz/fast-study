@@ -8,6 +8,7 @@ import { toastFailure } from '@/shared/utils/failure'
 import {
   lastGeneratedFile,
   branchStatus,
+  branchBadge,
   stepsFor,
   extractorTitle,
 } from '@/features/course-overview/constants/overview'
@@ -102,7 +103,7 @@ export default function ExtractorHeader() {
         </span>
       ) : (
         <span className="overview-branch-actions">
-          <PdfWarningBadge badge={bs.warning ? { kind: 'warning', title: bs.warning } : null} />
+          <PdfWarningBadge badge={branchBadge(bs, files, slug, phases)} />
           {bs.done && (
             <button
               className="pipeline-icon-btn"

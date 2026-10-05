@@ -276,7 +276,7 @@ msgstr "לא ניתן לכתוב אל {path}."
 msgid "{path} exists but is not a folder."
 msgstr "{path} קיים אבל אינו תיקייה."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:100
+#: src/features/course-overview/components/ExtractorHeader.tsx:101
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
@@ -1098,7 +1098,7 @@ msgstr "הרצאות שהושלמו במלואן"
 msgid "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgstr "המכסה היומית של Gemini נוצלה. היא מתאפסת בחצות לפי שעון החוף המערבי בארה״ב."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:125
+#: src/features/course-overview/components/ExtractorHeader.tsx:126
 msgid "Generate"
 msgstr "יצירה"
 
@@ -1118,7 +1118,7 @@ msgstr "יוצר · {runningTitle}"
 msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "יצירה משלב {stepLabel} תבנה מחדש את:"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:100
+#: src/features/course-overview/components/ExtractorHeader.tsx:101
 #: src/features/course-overview/components/GenerateAllButton.tsx:43
 msgid "Generating…"
 msgstr "יוצר…"
@@ -1450,11 +1450,11 @@ msgstr "לא נמצאו תוצאות לחיפוש הזה"
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:98
+#: src/shared/contexts/SnapshotProvider.tsx:111
 msgid "Nothing to run - All pipelines complete"
 msgstr "אין מה להריץ - כל ההרצאות הושלמו"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:102
+#: src/shared/contexts/SnapshotProvider.tsx:115
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בעיבוד"
 
@@ -1487,7 +1487,7 @@ msgstr "פתיחת ההרצאה"
 msgid "Open material"
 msgstr "פתיחת החומר"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:109
+#: src/features/course-overview/components/ExtractorHeader.tsx:110
 #: src/features/lectures/components/PdfViewer.tsx:100
 #: src/features/lectures/MainView.tsx:256
 #: src/features/search/components/SearchResult.tsx:33
@@ -1530,7 +1530,7 @@ msgstr "סקירה"
 #~ msgid "Overview failed to start"
 #~ msgstr "הסקירה נכשלה בהפעלה"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:72
+#: src/features/course-overview/components/ExtractorHeader.tsx:73
 #: src/features/course-overview/components/ExtractorRow.tsx:29
 #: src/features/course-overview/components/GenerateAllButton.tsx:28
 #: src/features/course-overview/components/StepRow.tsx:38
@@ -1607,7 +1607,7 @@ msgstr "הורדה מחדש ↻"
 #~ msgid "Re-export PDF"
 #~ msgstr "ייצוא PDF מחדש"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:118
+#: src/features/course-overview/components/ExtractorHeader.tsx:119
 msgid "Re-generate {title}"
 msgstr "יצירה מחדש של {title}"
 
@@ -2104,6 +2104,10 @@ msgstr "לא ניתן ליצור את ה-PDF."
 #: src/shared/i18n/serviceErrors.ts:71
 #~ msgid "The PDF engine produced no file."
 #~ msgstr "מנוע ה-PDF לא יצר קובץ."
+
+#: src/features/course-overview/constants/overview.ts:113
+msgid "The PDF is older than an earlier step's output. Re-generate it."
+msgstr "ה-PDF ישן יותר מהפלט של שלב קודם. יש ליצור אותו מחדש."
 
 #: src/features/lectures/utils/pdfBadge.ts:5
 msgid "The PDF is older than the summary. Re-generate it."

@@ -36,7 +36,7 @@ Each worker is pure work returning a `"done"`/`"skipped"` status dict, raising o
 
 ## meta.json
 
-`overview/meta.json` holds a per-slug snapshot of the source lecture/recitation ranges + `generated_at`. It is patched only when a slug's **extract**, **topics** or **compile** phase produces output — never on skip, never on a later-phase re-run — so re-rendering a PDF leaves the snapshot describing the sources it was actually built from. The merge is server-side and atomic, so parallel per-slug PATCHes of the same course can't clobber each other.
+`overview/meta.json` holds a per-slug snapshot of the source lecture/recitation ranges + `generated_at`. It is patched only when a slug's **extract**, **topics** or **compile** phase produces output — never on skip, never on a later-phase re-run — so the range is set by the first phase that ran, and later phases only build on its output. When a later phase then fails, the snapshot already names the new range while the PDF on disk is still the old one; this is accepted. While the backend runs, the mismatch shows as that slug's failure; after a restart, the frontend shows it as the stale-PDF badge. Retrying the failed phase brings the PDF in line. The merge is server-side and atomic, so parallel per-slug PATCHes of the same course can't clobber each other.
 
 ## Run model
 

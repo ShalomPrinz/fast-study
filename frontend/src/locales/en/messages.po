@@ -276,7 +276,7 @@ msgstr "{path} cannot be written to."
 msgid "{path} exists but is not a folder."
 msgstr "{path} exists but is not a folder."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:100
+#: src/features/course-overview/components/ExtractorHeader.tsx:101
 msgid "{phaseLabel}…"
 msgstr "{phaseLabel}…"
 
@@ -1098,7 +1098,7 @@ msgstr "Fully processed lectures"
 msgid "Gemini's daily quota is used up. It resets at midnight Pacific time."
 msgstr "Gemini's daily quota is used up. It resets at midnight Pacific time."
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:125
+#: src/features/course-overview/components/ExtractorHeader.tsx:126
 msgid "Generate"
 msgstr "Generate"
 
@@ -1118,7 +1118,7 @@ msgstr "Generating · {runningTitle}"
 msgid "Generating from {stepLabel} step will rebuild:"
 msgstr "Generating from {stepLabel} step will rebuild:"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:100
+#: src/features/course-overview/components/ExtractorHeader.tsx:101
 #: src/features/course-overview/components/GenerateAllButton.tsx:43
 msgid "Generating…"
 msgstr "Generating…"
@@ -1450,11 +1450,11 @@ msgstr "Nothing matched this search"
 msgid "Nothing running"
 msgstr "Nothing running"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:98
+#: src/shared/contexts/SnapshotProvider.tsx:111
 msgid "Nothing to run - All pipelines complete"
 msgstr "Nothing to run - All pipelines complete"
 
-#: src/shared/contexts/RunnerStatusContext.tsx:102
+#: src/shared/contexts/SnapshotProvider.tsx:115
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "Nothing to run - All remaining pipelines already running"
 
@@ -1487,7 +1487,7 @@ msgstr "Open lecture"
 msgid "Open material"
 msgstr "Open material"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:109
+#: src/features/course-overview/components/ExtractorHeader.tsx:110
 #: src/features/lectures/components/PdfViewer.tsx:100
 #: src/features/lectures/MainView.tsx:256
 #: src/features/search/components/SearchResult.tsx:33
@@ -1530,7 +1530,7 @@ msgstr "Overview"
 #~ msgid "Overview failed to start"
 #~ msgstr "Overview failed to start"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:72
+#: src/features/course-overview/components/ExtractorHeader.tsx:73
 #: src/features/course-overview/components/ExtractorRow.tsx:29
 #: src/features/course-overview/components/GenerateAllButton.tsx:28
 #: src/features/course-overview/components/StepRow.tsx:38
@@ -1607,7 +1607,7 @@ msgstr "Re-download ↻"
 #~ msgid "Re-export PDF"
 #~ msgstr "Re-export PDF"
 
-#: src/features/course-overview/components/ExtractorHeader.tsx:118
+#: src/features/course-overview/components/ExtractorHeader.tsx:119
 msgid "Re-generate {title}"
 msgstr "Re-generate {title}"
 
@@ -2104,6 +2104,10 @@ msgstr "The PDF could not be created."
 #: src/shared/i18n/serviceErrors.ts:71
 #~ msgid "The PDF engine produced no file."
 #~ msgstr "The PDF engine produced no file."
+
+#: src/features/course-overview/constants/overview.ts:113
+msgid "The PDF is older than an earlier step's output. Re-generate it."
+msgstr "The PDF is older than an earlier step's output. Re-generate it."
 
 #: src/features/lectures/utils/pdfBadge.ts:5
 msgid "The PDF is older than the summary. Re-generate it."

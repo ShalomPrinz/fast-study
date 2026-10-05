@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { CourseExtractorState, CourseFile, CoursePhase, CourseStatus } from '@/types'
-import { branchStatus, extractorTitle } from './overview'
+import { branchBadge, branchStatus, extractorTitle, isBranchStale } from './overview'
 
 const PHASES: CoursePhase[] = ['extract', 'analyze', 'to_pdf']
 const SLUG = 'exams'
@@ -106,5 +106,49 @@ describe('extractorTitle', () => {
 
   it('names a known slug from the catalog rather than the backend title', () => {
     expect(extractorTitle({ slug: 'topics', title: 'backend copy' })).not.toBe('backend copy')
+  })
+})
+
+describe('isBranchStale', () => {
+  it('is fresh when the PDF is the newest output', () => {
+    const files = [file('exams.txt'), file('exams.md'), file('exams.pdf', { mtime: 200 })]
+    expect(isBranchStale(files, SLUG, PHASES)).toBe(false)
+  })
+
+  it('is stale after an analyze failure left a newer .txt', () => {
+    const files = [
+      file('exams.txt', { mtime: 300 }),
+      file('exams.md'),
+      file('exams.pdf', { mtime: 200 }),
+    ]
+    expect(isBranchStale(files, SLUG, PHASES)).toBe(true)
+  })
+
+  it('is stale after a to_pdf failure left a newer .md', () => {
+    const files = [
+      file('exams.txt'),
+      file('exams.md', { mtime: 300 }),
+      file('exams.pdf', { mtime: 200 }),
+    ]
+    expect(isBranchStale(files, SLUG, PHASES)).toBe(true)
+  })
+
+  it('is never stale without a PDF', () => {
+    expect(isBranchStale([file('exams.txt', { mtime: 300 })], SLUG, PHASES)).toBe(false)
+  })
+})
+
+describe('branchBadge', () => {
+  const stale = [file('exams.txt', { mtime: 300 }), file('exams.pdf', { mtime: 200 })]
+
+  it('shows stale when no warning', () => {
+    const bs = branchStatus(null, stale, SLUG, PHASES)
+    expect(branchBadge(bs, stale, SLUG, PHASES)?.kind).toBe('stale')
+  })
+
+  it('lets a render warning outrank staleness', () => {
+    const files = [stale[0], file('exams.pdf', { mtime: 200, warning: WARNING })]
+    const bs = branchStatus(null, files, SLUG, PHASES)
+    expect(branchBadge(bs, files, SLUG, PHASES)).toEqual({ kind: 'warning', title: WARNING })
   })
 })
