@@ -50,7 +50,10 @@ _locks: dict[
 ] = {}  # per-lecture; created lazily via setdefault
 _in_flight: dict[
     str, dict
-] = {}  # skey → entry; a pipeline clears it at its end, a lone step at its end
+] = {}  # skey → entry; cleared at a pipeline's end (run_all: at the handover) or a lone step's
+# run_all's finished lecture, left in _in_flight so /status never reads empty between lectures;
+# the next step start replaces it in the same update, and run_all clears it when nothing does.
+_handover: str | None = None
 _errors: dict[
     str, dict
 ] = {}  # skey → last error record (see _error_record); survives after _in_flight clears
@@ -602,6 +605,14 @@ async def _fetch_files(course: str, lecture: str, kind: str) -> dict:
 # ---- Async step/pipeline runners ----
 
 
+def _drop_handover() -> bool:
+    """Clear run_all's held finished lecture out of _in_flight; True iff an entry was removed."""
+
+    global _handover
+    key, _handover = _handover, None
+    return key is not None and _in_flight.pop(key, None) is not None
+
+
 async def _call_step(course: str, lecture: str, kind: str, step: str) -> dict:
     """Run one executor in a worker thread so the event loop stays free during blocking I/O."""
 
@@ -618,6 +629,7 @@ async def _run_step_unlocked(
     skey = _skey(course, lecture, kind)
     # Each iteration = one attempt; rate_limited cycles back, done/error exits.
     while True:
+        _drop_handover()  # the held lecture leaves in the same notify this one arrives in
         _in_flight[skey] = {
             "course": course,
             "lecture": lecture,
@@ -672,19 +684,29 @@ async def _run_step_unlocked(
 
 
 async def _run_pipeline_unlocked(
-    course: str, lecture: str, kind: str, *, honor_block: bool = False
+    course: str,
+    lecture: str,
+    kind: str,
+    *,
+    honor_block: bool = False,
+    hand_over: bool = False,
 ) -> bool:
     """Advance a lecture through its remaining steps; True iff it stopped early on the
     run-scoped summarize block. Unsafe: the caller must hold this lecture's lock."""
 
+    global _handover
     skey = _skey(course, lecture, kind)
+    held = False
     # The lecture stays in _in_flight from its first step to here, so /status never shows
-    # it idle between steps; this finally is the one place a pipeline clears it.
+    # it idle between steps; this finally clears it unless hand_over leaves it to the next one.
     try:
         while True:
             files = await _fetch_files(course, lecture, kind)
             step = next_step(files)
             if step is None:
+                held = hand_over and skey in _in_flight
+                if held:
+                    _handover = skey
                 return False
             if step == "summarize" and honor_block and _summarize_block is not None:
                 # Same record as the lecture that hit the quota, so this one doesn't look pending.
@@ -695,6 +717,7 @@ async def _run_pipeline_unlocked(
                     params=_summarize_block["params"],
                     blocked=True,
                 )
+                _drop_handover()
                 _in_flight.pop(skey, None)
                 db_client.notify()
                 log.info(
@@ -709,7 +732,7 @@ async def _run_pipeline_unlocked(
                 return False  # a step error halts the whole pipeline for this lecture
     finally:
         # No notify when nothing ran: run_all's per-lecture pings must not burst (PIPELINE.md).
-        if _in_flight.pop(skey, None) is not None:
+        if not held and _in_flight.pop(skey, None) is not None:
             db_client.notify()
 
 
@@ -721,14 +744,19 @@ async def run_step(course: str, lecture: str, kind: str, step: str) -> None:
 
 
 async def run_pipeline_for(
-    course: str, lecture: str, kind: str, *, honor_block: bool = False
+    course: str,
+    lecture: str,
+    kind: str,
+    *,
+    honor_block: bool = False,
+    hand_over: bool = False,
 ) -> bool:
     """Acquire the per-lecture lock, then advance the lecture through all remaining steps.
     Returns True iff it stopped early on the run-scoped summarize block (run_all only)."""
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
         return await _run_pipeline_unlocked(
-            course, lecture, kind, honor_block=honor_block
+            course, lecture, kind, honor_block=honor_block, hand_over=hand_over
         )
 
 
@@ -775,7 +803,7 @@ async def _run_entry(entry: QueueEntry) -> bool:
             await run_step(entry.course, entry.lecture, entry.kind, "audio")
         return False
     return await run_pipeline_for(
-        entry.course, entry.lecture, entry.kind, honor_block=True
+        entry.course, entry.lecture, entry.kind, honor_block=True, hand_over=True
     )
 
 
@@ -821,6 +849,7 @@ async def run_all() -> dict:
                     lecture,
                     kind,
                 )
+                _drop_handover()
                 _runner_status["done"] += 1
                 db_client.notify()
                 continue
@@ -839,6 +868,9 @@ async def run_all() -> dict:
                     },
                 }
             _runner_status["done"] += 1
+            # An entry that started no step left the previous lecture held: clear it now.
+            if _handover != _skey(course, lecture, kind) and _drop_handover():
+                db_client.notify()
         blocked = (
             f", summarize skipped for {blocked_count} (Gemini daily quota)"
             if blocked_count
@@ -855,6 +887,7 @@ async def run_all() -> dict:
     finally:
         _runner_status["running"] = False
         _summarize_block = None
+        _drop_handover()
         db_client.notify()
 
 

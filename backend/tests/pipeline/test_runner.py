@@ -639,6 +639,89 @@ def test_a_lone_step_clears_in_flight_when_it_ends():
     assert notify.call_count == 2  # start, then the clear
 
 
+# ---- run_all hands in_flight from one lecture to the next ----
+
+
+def _run_all_observed(plans: dict, *, fetch_error: str | None = None):
+    """Run run_all over `plans` (lecture → step results; [] = nothing to do); return the
+    lectures in_flight held at each notify."""
+
+    snapshots: list[list[str]] = []
+    totals = {lecture: len(results) for lecture, results in plans.items()}
+
+    async def fake_fetch(course, lecture, kind):
+        if lecture == fetch_error:
+            raise RuntimeError("db down")
+        if not plans[lecture]:
+            return _STATES[
+                -1
+            ]  # every planned step ran, or a step error cleared the plan
+        return _STATES[totals[lecture] - len(plans[lecture])]
+
+    async def fake_call(course, lecture, kind, step):
+        result = plans[lecture].pop(0)
+        if result["status"] == "error":
+            plans[lecture].clear()
+        return result
+
+    def record():
+        snapshots.append(sorted(e["lecture"] for e in runner._in_flight.values()))
+
+    async def go():
+        runner._queue[:] = [_entry(lecture) for lecture in plans]
+        with (
+            patch.object(runner, "_fetch_files", fake_fetch),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify", record),
+        ):
+            await runner.run_all()
+
+    asyncio.run(go())
+    assert runner._in_flight == {} and runner._handover is None
+    return snapshots
+
+
+class TestRunAllHandover:
+    """Between two lectures /status shows the finished one until the next one's first step
+    start replaces it in one notify, so in_flight never reads empty mid-run."""
+
+    @pytest.fixture(autouse=True)
+    def _clean(self, clean_queue):
+        yield
+        runner._errors.clear()
+        runner._handover = None
+
+    def test_in_flight_is_never_empty_between_lectures(self):
+        done = {"status": "done"}
+        snaps = _run_all_observed(
+            {"L1": [done, done], "L2": [done], "L3": [done, done]}
+        )
+        # Every notify but the run's last carries a lecture; each handover swaps in one update.
+        assert snaps == [["L1"], ["L1"], ["L2"], ["L3"], ["L3"], []]
+
+    def test_a_no_op_entry_clears_the_held_lecture_once(self):
+        done = {"status": "done"}
+        snaps = _run_all_observed({"L1": [done], "L2": [], "L3": [], "L4": [done]})
+        assert snaps == [["L1"], [], ["L4"], []]
+
+    def test_a_step_error_clears_the_lecture_and_notifies(self):
+        done, err = {"status": "done"}, {"status": "error", "message": "boom"}
+        snaps = _run_all_observed({"L1": [done], "L2": [err], "L3": [done]})
+        assert snaps == [["L1"], ["L2"], [], ["L3"], []]
+        assert runner._errors[runner._skey("C1", "L2", "lecture")]["message"] == "boom"
+
+    def test_an_exception_clears_the_held_lecture(self):
+        done = {"status": "done"}
+        snaps = _run_all_observed({"L1": [done], "L2": [done]}, fetch_error="L2")
+        assert snaps == [["L1"], [], []]
+        assert runner._runner_status["last_error"]["code"] == "run_crashed"
+        runner._runner_status["last_error"] = None
+
+    def test_the_last_lecture_is_cleared_at_run_end(self):
+        snaps = _run_all_observed({"L1": [{"status": "done"}]})
+        assert snaps == [["L1"], []]
+
+
 # ---- rate-limit branch ----
 
 
