@@ -10,10 +10,12 @@ Everything derived (`generatedFiles`, `lastGeneratedFile`, `startedSlug`, `branc
 `stepsFor`, so a new phase is a one-table change. The backend's `title` is English developer copy:
 `extractorTitle` names each slug from the catalog and falls back to `title` only for a slug it does not know.
 
-`CourseOverviewContext` is data-only: extractors, the `overview/` listing, meta and status, each behind
-its own `useLatestRequest` and refreshed on every notify. `generate(names?, fromPhase?, skipExisting?)`
-triggers and refreshes — refused or not — but never toasts; the caller toasts a `busy` `RunInitResult`
-and the rejection a refused run throws.
+`CourseOverviewContext` is data-only: extractors, the `overview/` listing, meta and status. On every notify
+it refetches the listing, meta and status as one triple behind `useNewestRequest` and applies them in one
+render, so a finished extractor's status never lands beside its stale listing and shows "Generate" again; a
+side that fails alone keeps its last value, and a triple fetched before a course switch is dropped.
+`generate(names?, fromPhase?, skipExisting?)` triggers and refreshes — refused or not — but never toasts;
+the caller toasts a `busy` `RunInitResult` and the rejection a refused run throws.
 
 ## The view
 

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type {
   OverviewExtractor,
@@ -11,7 +11,7 @@ import type {
 import { fetchOverviewExtractors, fetchCourseStatus, runOverview } from '@/services/backend'
 import { fetchCourseFiles, fetchCourseMeta } from '@/services/database'
 import { useNotify } from '@/shared/hooks/useNotify'
-import { useLatestRequest } from '@/shared/hooks/useLatestRequest'
+import { useNewestRequest } from '@/shared/hooks/useLatestRequest'
 
 // Data-only store for one course's overview — consumers toast, this never does.
 export interface CourseOverviewValue {
@@ -46,9 +46,10 @@ export function CourseOverviewProvider({
   const [files, setFiles] = useState<CourseFile[]>([])
   const [meta, setMeta] = useState<OverviewMeta>({})
   const [status, setStatus] = useState<CourseStatus | null>(null)
-  const latestFiles = useLatestRequest()
-  const latestMeta = useLatestRequest()
-  const latestStatus = useLatestRequest()
+  // Any triple newer than the one shown lands, even with a newer fetch in flight: a notify stream
+  // would otherwise drop every answer until it pauses.
+  const newest = useNewestRequest()
+  const shownCourse = useRef(course)
 
   useEffect(() => {
     fetchOverviewExtractors()
@@ -56,22 +57,26 @@ export function CourseOverviewProvider({
       .catch(() => {}) // connection errors are toasted centrally by the http client
   }, [])
 
+  // Files, meta and status apply together, or a finished extractor's status lands beside its stale
+  // files and shows "Generate" again. A side that fails alone keeps its last value; the http client toasted it.
   async function refresh() {
-    try {
-      const [f, m, s] = await Promise.all([
-        latestFiles(fetchCourseFiles(course)),
-        latestMeta(fetchCourseMeta(course)),
-        latestStatus(fetchCourseStatus(course)),
-      ])
-      if (f) setFiles(f)
-      if (m) setMeta(m)
-      if (s) setStatus(s)
-    } catch {
-      // connection errors are toasted centrally; SSE fires again on the next transition
-    }
+    const triple = await newest(
+      Promise.allSettled([
+        fetchCourseFiles(course),
+        fetchCourseMeta(course),
+        fetchCourseStatus(course),
+      ]),
+    )
+    // Overtaken by a triple already shown, or fetched for the course before a switch.
+    if (!triple || course !== shownCourse.current) return
+    const [f, m, s] = triple
+    if (f.status === 'fulfilled') setFiles(f.value)
+    if (m.status === 'fulfilled') setMeta(m.value)
+    if (s.status === 'fulfilled') setStatus(s.value)
   }
 
   useEffect(() => {
+    shownCourse.current = course
     setFiles([])
     setMeta({})
     setStatus(null)
