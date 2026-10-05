@@ -152,7 +152,7 @@ function ManualForm() {
     try {
       const { jobId, target } = await start(request)
       addManualEntry(request, jobId, target)
-      setUrl('')
+      // The link stays whatever happens: it is cleared only by the user.
       setName(null)
     } catch (err) {
       toastDownloadError(request.lecture, err)

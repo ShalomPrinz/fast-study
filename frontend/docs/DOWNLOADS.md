@@ -30,7 +30,8 @@ kind and name, and `POST /download-url` queues it through yt-dlp with no credent
 never gates on the account or the university. Collapsed by default, its open state is per-viewer
 `localStorage` like the media segment. The name is `suggestName`'s next free one, also skipping names
 this session's manual downloads already claimed (`suggestManualName`), since an in-flight one is not in
-the tree yet; replacing a stored video confirms first. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
+the tree yet; replacing a stored video confirms first. The link is never cleared for the user, whether
+the download starts, lands or fails. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
 Its title takes the accent while the account is known to be not connected (`status.connected === false`).
 
 ## Auth
