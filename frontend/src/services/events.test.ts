@@ -55,6 +55,20 @@ describe('subscribeNotify', () => {
     expect(b).toHaveBeenCalledTimes(1)
   })
 
+  it('makes every subscriber refetch on each open, so a reconnect resyncs missed notifies', async () => {
+    const { subscribeNotify } = await importEvents()
+    const a = vi.fn()
+    const b = vi.fn()
+    subscribeNotify(a)
+    subscribeNotify(b)
+
+    const es = FakeEventSource.instances[0]
+    es.fire('open')
+    es.fire('open')
+    expect(a).toHaveBeenCalledTimes(2)
+    expect(b).toHaveBeenCalledTimes(2)
+  })
+
   it('stays open while any subscriber remains', async () => {
     const { subscribeNotify } = await importEvents()
     const offA = subscribeNotify(vi.fn())
@@ -76,6 +90,7 @@ describe('subscribeNotify', () => {
     off()
     expect(first.closed).toBe(true)
     expect(first.listeners.get('notify')?.size ?? 0).toBe(0)
+    expect(first.listeners.get('open')?.size ?? 0).toBe(0)
 
     subscribeNotify(vi.fn())
     expect(FakeEventSource.instances).toHaveLength(2)

@@ -27,7 +27,8 @@ modal (`PendingUploadProvider`) renders it itself.
 ## SSE-driven refresh
 
 The database service owns one notify channel. `services/events.ts` opens a single `EventSource` on the
-first subscriber and closes it on the last; `useNotify(cb)` is the only interface. `CourseTreeContext`,
+first subscriber and closes it on the last, and every open — reconnects included — fires each subscriber,
+so notifies lost while the database was down resync; `useNotify(cb)` is the only interface. `CourseTreeContext`,
 `RunnerStatusContext` and `CourseOverviewContext` refresh on notify — nothing polls. The backend notifies
 on every meaningful state change, and the downloader after a download.
 

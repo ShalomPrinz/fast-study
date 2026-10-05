@@ -51,6 +51,8 @@ Outcomes of the fire-and-forget endpoints live in runner state, read via `GET /s
 
 `db_client.notify()` fires an SSE ping on each meaningful state change (step start/done, rate-limit start/wake, error, run start/complete) so the frontend reacts without polling. It is deliberately NOT fired at `run_all` start or per-lecture completion: with `_in_flight` still empty those pings burst, and their parallel refreshes can reorder and overwrite the fresher snapshot.
 
+The backend also notifies once at startup, so a page still showing a step a restarted process was running refetches the now-empty `in_flight`.
+
 `enabled_steps()` is `STEP_ORDER` minus the steps a setting switches off — only `drive`, on `DRIVE_ENABLED`. It is read per call, so `POST /config` flips the step without a restart. With Drive off a lecture is complete at `final_output()` = `summary.pdf`; completion stays pure file existence rather than gaining a marker file, and the cost is that turning Drive back on re-pends every lecture that finished while it was off.
 
 ## One queue

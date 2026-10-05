@@ -1,4 +1,5 @@
 // One EventSource for all subscribers: opened on the first, closed on the last.
+// Every open (first connect and each reconnect) also dispatches, so notifies missed while down are resynced.
 import { databaseUrl } from './database'
 import { withSecretParam } from './runtime'
 
@@ -17,12 +18,14 @@ export function subscribeNotify(cb: Callback): () => void {
   if (!es) {
     es = new EventSource(withSecretParam(`${databaseUrl}/events`))
     es.addEventListener('notify', dispatch)
+    es.addEventListener('open', dispatch)
   }
 
   return () => {
     subscribers.delete(cb)
     if (subscribers.size === 0 && es) {
       es.removeEventListener('notify', dispatch)
+      es.removeEventListener('open', dispatch)
       es.close()
       es = null
     }

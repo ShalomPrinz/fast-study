@@ -92,7 +92,7 @@ it fails the build rather than upload to the wrong release. An org token routes 
 ## `events.ts` and `toaster.ts`
 
 `events.ts` is a module-level singleton over `${databaseUrl}/events`, opened on the first subscriber and
-closed on the last, consumed only through `useNotify`.
+closed on the last, consumed only through `useNotify`. Every `open` dispatches like a notify, so a reconnect resyncs.
 
 `toaster.ts` is the one `react-toastify` import (its CSS too) and hosts every toast shape — new shapes get
 a helper here. `ToastContainer` is mounted in `App` above the init gate, since a toast with no mounted
