@@ -29,7 +29,7 @@ to `app://bundle/assets/...` from any route depth.
 
 ## `window.faststudy`
 
-The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, open, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
+The preload script exposes exactly `{ urls, secret, settings, checks, version, locale, defaultDataRoot, errorReports, open, pickFolder, boot }` through `contextBridge`, in a sandboxed, context-isolated renderer.
 `frontend/src/services/runtime.ts` is the consumer and fixes the shape; `urls` is
 `{ backend, database, downloadServer, autoDownloader }`.
 
@@ -66,6 +66,10 @@ it is two calls:
 **The renderer sends identifiers, never a path.** `database/` stays the single owner of the
 `{course}/{lecture}` layout, and a compromised renderer gets no open-any-file primitive out of the
 bridge. Both answer `{ ok, error }` — main does not toast; the frontend does.
+
+**`pickFolder(defaultPath?)`** opens the OS folder dialog for the data-folder field and resolves to the
+chosen absolute path, or `null` on cancel. It is the one path the renderer gets back from main, and main
+neither creates nor validates it — the folder is only a proposal until `database/` accepts it on save.
 
 **Every `window.open` is denied** (`setWindowOpenHandler`). Electron would otherwise create the
 child window itself with this window's security `webPreferences` — the preload, and so the launch

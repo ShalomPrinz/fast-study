@@ -28,6 +28,8 @@ contextBridge.exposeInMainWorld('faststudy', {
     file: (target) => ipcRenderer.invoke('faststudy:open-file', target),
     external: (url) => ipcRenderer.invoke('faststudy:open-external', url),
   },
+  // The OS folder dialog for the data-folder field; resolves to an absolute path, or `null` on cancel.
+  pickFolder: (defaultPath) => ipcRenderer.invoke('faststudy:pick-folder', defaultPath),
   // The launch screen only: a snapshot first, since main's first push can beat the listener.
   boot: {
     snapshot: () => ipcRenderer.invoke('faststudy:boot-state'),

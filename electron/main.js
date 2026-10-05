@@ -3,7 +3,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { randomBytes } = require('node:crypto');
 const { spawn } = require('node:child_process');
-const { app, BrowserWindow, Menu, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 // An ES module, loaded by require(esm) — synchronous, which an init that must beat `ready` needs.
 const sentryPolicy = require('@faststudy/sentry');
 const { runStartupChecks } = require('./checks');
@@ -445,6 +445,18 @@ function logTail() {
   }
 }
 
+/** The OS folder dialog for the data-folder field: the chosen absolute path, or `null` if canceled.
+ *  Creates and validates nothing — the frontend and `database/` guard the path on save. */
+async function pickFolder(sender, defaultPath) {
+  const options = { properties: ['openDirectory', 'createDirectory'] };
+  if (typeof defaultPath === 'string' && defaultPath !== '') options.defaultPath = defaultPath;
+  const { canceled, filePaths } = await dialog.showOpenDialog(
+    BrowserWindow.fromWebContents(sender),
+    options,
+  );
+  return canceled || filePaths.length === 0 ? null : filePaths[0];
+}
+
 /** The one window of the app: it opens on the launch screen and later navigates to the frontend.
  *  Created before anything is spawned, so the four process starts have something on screen. */
 function createWindow(checks) {
@@ -475,6 +487,9 @@ function createWindow(checks) {
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
   ipcMain.handle('faststudy:open-external', (event, url) => openExternalUrl(url));
+  ipcMain.handle('faststudy:pick-folder', (event, defaultPath) =>
+    pickFolder(event.sender, defaultPath),
+  );
   ipcMain.handle('faststudy:settings-read', () => store.read());
   ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
   ipcMain.handle('faststudy:boot-state', () => bootState);
