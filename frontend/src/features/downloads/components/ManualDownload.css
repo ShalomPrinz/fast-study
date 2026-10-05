@@ -52,13 +52,30 @@
   color: var(--text-3);
 }
 
-/* Link, course, kind, name, action — one row that wraps on a narrow window, the link taking the
-   most room. */
+/* Link, course, kind, name, action — one row of captioned fields that wraps on a narrow window, the
+   link taking the most room. Fields stretch to the line's height and keep their caption on top and
+   their control at the bottom, so captions and controls each line up despite the shorter toggle. */
 .manual-download-form {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
   gap: var(--space-3);
+}
+
+.manual-download-form > .btn {
+  align-self: flex-end;
+}
+
+.manual-download-field {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.manual-download-label {
+  font-size: var(--fs-meta);
+  color: var(--text-3);
 }
 
 .manual-download-url {

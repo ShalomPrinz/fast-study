@@ -228,7 +228,7 @@ msgstr "{generated} of {0} generated"
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
-#: src/features/downloads/components/ManualDownload.tsx:201
+#: src/features/downloads/components/ManualDownload.tsx:222
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
@@ -743,7 +743,7 @@ msgstr "Could not rename \"{from}\" to \"{to}\"."
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "Could not tell what {url} is — the site didn't answer usefully."
 
-#: src/features/downloads/components/ManualDownload.tsx:309
+#: src/features/downloads/components/ManualDownload.tsx:330
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
@@ -788,7 +788,7 @@ msgstr "Couldn't start capturing the Zoom recording. Try again."
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
-#: src/features/downloads/components/ManualDownload.tsx:164
+#: src/features/downloads/components/ManualDownload.tsx:167
 #: src/features/search/SearchView.tsx:175
 msgid "Course"
 msgstr "Course"
@@ -862,7 +862,7 @@ msgctxt "section mark"
 msgid "Done"
 msgstr "Done"
 
-#: src/features/downloads/components/ManualDownload.tsx:196
+#: src/features/downloads/components/ManualDownload.tsx:217
 #: src/features/downloads/components/RecordingRow.tsx:324
 msgid "Download"
 msgstr "Download"
@@ -876,13 +876,13 @@ msgstr "Download again"
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
-#: src/features/downloads/components/ManualDownload.tsx:281
+#: src/features/downloads/components/ManualDownload.tsx:302
 #: src/features/downloads/components/RecordingRow.tsx:279
 #: src/features/downloads/components/RecordingRow.tsx:322
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
-#: src/features/downloads/components/ManualDownload.tsx:276
+#: src/features/downloads/components/ManualDownload.tsx:297
 #: src/features/downloads/components/RecordingRow.tsx:284
 msgid "Downloading"
 msgstr "Downloading"
@@ -1193,7 +1193,7 @@ msgstr "Last error:"
 msgid "lecture"
 msgstr "lecture"
 
-#: src/features/downloads/components/ManualDownload.tsx:179
+#: src/features/downloads/components/ManualDownload.tsx:194
 #: src/features/downloads/components/RecordingRow.tsx:242
 msgid "Lecture"
 msgstr "Lecture"
@@ -1212,7 +1212,6 @@ msgstr "Lecture {0}"
 #~ msgid "Lecture 1"
 #~ msgstr "Lecture 1"
 
-#: src/features/downloads/components/ManualDownload.tsx:192
 #: src/features/downloads/components/RecordingRow.tsx:260
 msgid "Lecture name"
 msgstr "Lecture name"
@@ -1280,6 +1279,10 @@ msgstr "Moodle refused the request."
 #: src/features/lectures/components/LectureActionsMenu.tsx:45
 msgid "More actions"
 msgstr "More actions"
+
+#: src/features/downloads/components/ManualDownload.tsx:206
+msgid "Name in the course"
+msgstr "Name in the course"
 
 #: src/features/lectures/sidebar/NewCourseRow.tsx:50
 msgid "New course"
@@ -1561,7 +1564,7 @@ msgstr "Pipeline already running"
 msgid "Pitfalls"
 msgstr "Pitfalls"
 
-#: src/features/downloads/components/ManualDownload.tsx:271
+#: src/features/downloads/components/ManualDownload.tsx:292
 #: src/features/runner/RunnerView.tsx:278
 msgid "Queued"
 msgstr "Queued"
@@ -1606,7 +1609,7 @@ msgstr "Ready to retry"
 msgid "recitation"
 msgstr "recitation"
 
-#: src/features/downloads/components/ManualDownload.tsx:185
+#: src/features/downloads/components/ManualDownload.tsx:200
 #: src/features/downloads/components/RecordingRow.tsx:248
 msgid "Recitation"
 msgstr "Recitation"
@@ -1700,7 +1703,7 @@ msgstr "Restore original"
 msgid "Results"
 msgstr "Results"
 
-#: src/features/downloads/components/ManualDownload.tsx:290
+#: src/features/downloads/components/ManualDownload.tsx:311
 #: src/features/downloads/components/RecordingJobList.tsx:48
 #: src/features/downloads/components/RecordingRow.tsx:320
 msgid "Retry ✗"
@@ -2243,6 +2246,10 @@ msgstr "Transcript"
 #~ msgid "Transcription failed"
 #~ msgstr "Transcription failed"
 
+#: src/features/downloads/components/ManualDownload.tsx:187
+msgid "Type"
+msgstr "Type"
+
 #: src/features/settings/components/ApiKeyField.tsx:71
 msgid "Type any name (for example FastStudy) and click \"Submit\"."
 msgstr "Type any name (for example FastStudy) and click \"Submit\"."
@@ -2308,13 +2315,9 @@ msgstr "Uploading video…"
 msgid "Video"
 msgstr "Video"
 
-#: src/features/downloads/components/ManualDownload.tsx:157
+#: src/features/downloads/components/ManualDownload.tsx:152
 msgid "Video link"
 msgstr "Video link"
-
-#: src/features/downloads/components/ManualDownload.tsx:156
-msgid "Video link…"
-msgstr "Video link…"
 
 #: src/features/downloads/DownloadsView.tsx:44
 msgid "Videos"

@@ -106,6 +106,7 @@ export default function ManualDownload() {
 
 function ManualForm() {
   const { t } = useLingui()
+  const id = useId()
   const { courses } = useCourseTreeContext()
   const entries = useManualEntries()
   const active = courses.filter((c) => !c.archived)
@@ -146,52 +147,72 @@ function ManualForm() {
 
   return (
     <div className="manual-download-form">
-      <input
-        className="source-row-input manual-download-url"
-        value={url}
-        onChange={(e) => setUrl(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') onDownload()
-        }}
-        placeholder={t`Video link…`}
-        aria-label={t`Video link`}
-        dir="auto"
-      />
-      <select
-        className="source-row-input manual-download-course"
-        value={course}
-        onChange={(e) => setPicked(e.target.value)}
-        aria-label={t`Course`}
-        disabled={!active.length}
-        dir="auto"
-      >
-        {active.map((c) => (
-          <option key={c.name} value={c.name}>
-            {c.name}
-          </option>
-        ))}
-      </select>
-      <div className="mode-toggle mode-toggle--light">
-        <button
-          className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-          onClick={() => setKind('lecture')}
-        >
-          <Trans>Lecture</Trans>
-        </button>
-        <button
-          className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
-          onClick={() => setKind('recitation')}
-        >
-          <Trans>Recitation</Trans>
-        </button>
+      <div className="manual-download-field manual-download-url">
+        <label className="manual-download-label" htmlFor={`${id}-url`}>
+          <Trans>Video link</Trans>
+        </label>
+        <input
+          id={`${id}-url`}
+          className="source-row-input"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') onDownload()
+          }}
+          dir="auto"
+        />
       </div>
-      <input
-        className="source-row-input manual-download-name"
-        value={lecture}
-        onChange={(e) => setName(e.target.value)}
-        aria-label={t`Lecture name`}
-        dir="auto"
-      />
+      <div className="manual-download-field manual-download-course">
+        <label className="manual-download-label" htmlFor={`${id}-course`}>
+          <Trans>Course</Trans>
+        </label>
+        <select
+          id={`${id}-course`}
+          className="source-row-input"
+          value={course}
+          onChange={(e) => setPicked(e.target.value)}
+          disabled={!active.length}
+          dir="auto"
+        >
+          {active.map((c) => (
+            <option key={c.name} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      {/* Buttons, not an input, so the caption names the group rather than a control. */}
+      <div className="manual-download-field" role="group" aria-labelledby={`${id}-kind`}>
+        <span className="manual-download-label" id={`${id}-kind`}>
+          <Trans>Type</Trans>
+        </span>
+        <div className="mode-toggle mode-toggle--light">
+          <button
+            className={kind === 'lecture' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+            onClick={() => setKind('lecture')}
+          >
+            <Trans>Lecture</Trans>
+          </button>
+          <button
+            className={kind === 'recitation' ? 'mode-toggle-btn active' : 'mode-toggle-btn'}
+            onClick={() => setKind('recitation')}
+          >
+            <Trans>Recitation</Trans>
+          </button>
+        </div>
+      </div>
+      <div className="manual-download-field manual-download-name">
+        <label className="manual-download-label" htmlFor={`${id}-name`}>
+          <Trans>Name in the course</Trans>
+        </label>
+        <input
+          id={`${id}-name`}
+          className="source-row-input"
+          value={lecture}
+          onChange={(e) => setName(e.target.value)}
+          dir="auto"
+        />
+      </div>
       <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>
         {pending ? <span className="recording-spinner" /> : t`Download`}
       </button>
