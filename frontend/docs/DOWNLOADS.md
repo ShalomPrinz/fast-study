@@ -30,6 +30,7 @@ never gates on the account or the university. Collapsed by default, its open sta
 `localStorage` like the media segment. The name is `suggestName`'s next free one, also skipping names
 this session's manual downloads already claimed (`suggestManualName`), since an in-flight one is not in
 the tree yet; replacing a stored video confirms first. Its jobs are [JOBS.md](JOBS.md) §Manual jobs.
+Its title takes the accent while the account is known to be not connected (`status.connected === false`).
 
 ## Auth
 

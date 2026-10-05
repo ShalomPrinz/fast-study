@@ -7,6 +7,7 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import ServiceError from '@/shared/components/ServiceError'
 import { downloadUrl } from '@/features/downloads/services/downloadServer'
 import type { UrlDownload } from '@/features/downloads/services/downloadServer'
+import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { jobState, useJobById } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { ManualEntry } from '@/features/downloads/contexts/ManualDownloadsContext'
 import {
@@ -67,6 +68,9 @@ async function start(request: UrlDownload) {
 export default function ManualDownload() {
   const [open, setOpen] = useState(readOpen)
   const bodyId = useId()
+  // Without the account this is the only way in, so its title draws the eye; unknown stays plain.
+  const { status } = useAuthStatus()
+  const offline = status !== null && !status.connected
 
   function toggle() {
     setOpen(!open)
@@ -79,7 +83,11 @@ export default function ManualDownload() {
         <h2 className="section-title">
           <button
             type="button"
-            className="manual-download-toggle"
+            className={
+              offline
+                ? 'manual-download-toggle manual-download-toggle--offline'
+                : 'manual-download-toggle'
+            }
             aria-expanded={open}
             aria-controls={bodyId}
             onClick={toggle}

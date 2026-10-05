@@ -31,6 +31,12 @@
   color: var(--text-4);
 }
 
+/* The university account is not connected: the caption and its caret take the accent. */
+.manual-download-toggle--offline,
+.manual-download-toggle--offline .manual-download-caret {
+  color: var(--accent-ink);
+}
+
 .manual-download-body {
   display: flex;
   flex-direction: column;
