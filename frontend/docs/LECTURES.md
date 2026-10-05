@@ -54,9 +54,9 @@ backend to persist each run's inputs.
 
 ## Runner status and in-flight state
 
-`RunnerStatusContext` (in `Layout`) holds `GET /status`, refreshed on mount and every notify, never
-polled. `inFlight` covers active steps from any trigger; `errors` keeps a lecture's last failure after it
-leaves; `runner.lastError` is an exception that aborted a sweep, distinct from per-step failures. Keys are
+`RunnerStatusContext` holds `GET /status`, refreshed by `SnapshotProvider` (in `Layout`) on mount and
+every notify together with the tree, never polled. `inFlight` covers active steps from any trigger;
+`errors` keeps a lecture's last failure after it leaves; `runner.lastError` is an exception that aborted a sweep, distinct from per-step failures. Keys are
 `course||lecture||kind` (`shared/utils/inFlightKey.ts`) and **must mirror `_skey` in
 `backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
@@ -85,7 +85,7 @@ the editor toolbar spells it out as a chip. A **missing** PDF is never stale —
 `summary.pdf` first, which keeps a pending re-render quiet — and equal mtimes don't warn.
 
 A render warning is the database service's `.pdf_warning` inlined onto the tree's `FileInfo`. It lives on
-the tree, not `/status`, so `CourseTreeContext` announces it (`announcePdfWarnings`): the first tree only
+the tree, not `/status`, so it is announced as each tree applies (`announcePdfWarnings`): the first tree only
 seeds, and a vanished warning is pruned so it can fire again. Deleting `summary.pdf` drops the dotfile
 server-side, so no frontend path clears it.
 
@@ -109,8 +109,9 @@ lecture row can prompt. An expanded course opens with an Overview row; the cours
 `final_output()`, whatever earlier file is gone) colours each lecture's dot and reads `Complete` on its page; `courseProgress` gives the header's `N/M`, `0/0` for an
 archived course so the badge stays off.
 
-- `CourseTreeContext` owns `courses`, `loaded` and `refreshCourses`, refreshes on notify and sorts through
-  `sortLectures`; everything reads it directly, no props or outlet context.
+- `CourseTreeContext` exposes `courses`, `loaded` and `refreshCourses`; `SnapshotProvider` fills it, refreshing
+  on notify together with `/status`, and sorts through `sortLectures`. Everything reads it directly, no props
+  or outlet context.
 - `CourseGroup` owns `expanded` and `recExpanded`, so the recitations sub-group survives collapsing the
   course. It auto-expands when one of its lectures or its overview is the open route (deep links).
 - The pane unmounts on other routes; only each course's expansion (a module map in `CourseGroup.tsx`) and

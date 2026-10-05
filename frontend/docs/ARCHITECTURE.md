@@ -28,9 +28,15 @@ modal (`PendingUploadProvider`) renders it itself.
 
 The database service owns one notify channel. `services/events.ts` opens a single `EventSource` on the
 first subscriber and closes it on the last, and every open — reconnects included — fires each subscriber,
-so notifies lost while the database was down resync; `useNotify(cb)` is the only interface. `CourseTreeContext`,
-`RunnerStatusContext` and `CourseOverviewContext` refresh on notify — nothing polls. The backend notifies
-on every meaningful state change, and the downloader after a download.
+so notifies lost while the database was down resync; `useNotify(cb)` is the only interface. `SnapshotProvider`
+(behind `CourseTreeContext` and `RunnerStatusContext`) and `CourseOverviewContext` refresh on notify — nothing
+polls. The backend notifies on every meaningful state change, and the downloader after a download.
+
+`SnapshotProvider` fetches `/status` and `/tree` as one pair and applies both in one render, since pages
+combine them — a step's button, the lecture header's state, `/running`'s not-queued list — and the faster
+`/status` landing alone would show a finished step as pending again for a frame. On mount, every notify and
+every `refreshCourses()` it refetches both. If one side fails the other still applies; a failed `/tree`
+settles `loaded` only when no newer fetch is in flight.
 
 The downloader server has its own stream, reflected by `DownloadJobsProvider` and `SectionRunsProvider`
 ([JOBS.md](JOBS.md), [BULK.md](BULK.md)): a contentless ping plus one snapshot fetch per ping and per
@@ -38,8 +44,9 @@ connect, since the stream itself is memoryless.
 
 A fetcher that a notify burst can re-trigger wraps its promise in `useLatestRequest()`, which settles only
 the newest call (superseded ones resolve `undefined`, even on failure) so a late answer cannot overwrite a
-fresher one. The unkeyed tree uses `useNewestRequest()` instead: any answer newer than the one shown lands,
-since under a steady notify stream every answer is overtaken before it arrives and latest-only never settles.
+fresher one. The unkeyed status-and-tree pair uses `useNewestRequest()` instead: any answer newer than the one
+shown lands, since under a steady notify stream every answer is overtaken before it arrives and latest-only
+never settles.
 
 ## Routes
 

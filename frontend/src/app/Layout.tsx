@@ -1,6 +1,5 @@
 import { Outlet } from 'react-router-dom'
-import { RunnerStatusProvider } from '@/shared/contexts/RunnerStatusContext'
-import { CourseTreeProvider } from '@/shared/contexts/CourseTreeContext'
+import { SnapshotProvider } from '@/shared/contexts/SnapshotProvider'
 import { DownloadJobsProvider } from '@/features/downloads/contexts/DownloadJobsContext'
 import { AuthStatusProvider } from '@/features/downloads/contexts/AuthStatusContext'
 import { DownloadsSessionProvider } from '@/features/downloads/contexts/DownloadsSessionContext'
@@ -12,24 +11,22 @@ import './Layout.css'
 
 export default function Layout() {
   return (
-    <CourseTreeProvider>
-      <RunnerStatusProvider sendUpdate={toast}>
-        <DownloadJobsProvider>
-          <AuthStatusProvider>
-            <DownloadsSessionProvider sendUpdate={toast}>
-              <SectionRunsProvider>
-                <div className="layout">
-                  <Sidebar />
-                  <Outlet />
-                  {/* Route-independent by design: the run that needs consent is not the screen the
+    <SnapshotProvider sendUpdate={toast}>
+      <DownloadJobsProvider>
+        <AuthStatusProvider>
+          <DownloadsSessionProvider sendUpdate={toast}>
+            <SectionRunsProvider>
+              <div className="layout">
+                <Sidebar />
+                <Outlet />
+                {/* Route-independent by design: the run that needs consent is not the screen the
                       user is on. */}
-                  <DriveConsentPrompt />
-                </div>
-              </SectionRunsProvider>
-            </DownloadsSessionProvider>
-          </AuthStatusProvider>
-        </DownloadJobsProvider>
-      </RunnerStatusProvider>
-    </CourseTreeProvider>
+                <DriveConsentPrompt />
+              </div>
+            </SectionRunsProvider>
+          </DownloadsSessionProvider>
+        </AuthStatusProvider>
+      </DownloadJobsProvider>
+    </SnapshotProvider>
   )
 }
