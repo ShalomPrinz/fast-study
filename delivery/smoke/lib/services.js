@@ -96,6 +96,8 @@ export function backend({ urls, secret }) {
     async health() {
       return (await fetch(`${urls.backend}/health`)).json();
     },
+    /** Move settings into the running backend's environment only; answers `{status, applied}`. */
+    config: async (fields) => (await at('POST', '/config', { json: fields })).json(),
     /** Start one step and wait for that run to end; answers the error entry it left, or null. */
     async runStep(course, name, step, { timeoutMs = 300_000 } = {}) {
       const started = await (await at('POST', `${lecture(course, name)}/run/${step}`)).json();

@@ -511,7 +511,7 @@ test('9. opening a PDF', async () => {
 });
 
 test('10. a yt-dlp download merges its streams with the bundled ffmpeg', async () => {
-  const { db, dl } = services;
+  const { db, api, dl } = services;
   const noMerge =
     'yt-dlp most likely skipped merging the video-only and audio-only streams because it could not ' +
     'find ffmpeg: packaged, ffmpeg is off PATH, so the downloader must pass --ffmpeg-location';
@@ -519,6 +519,11 @@ test('10. a yt-dlp download merges its streams with the bundled ffmpeg', async (
   expect(fs.existsSync(paths.ytdlpCopy()), `the server never seeded ${paths.ytdlpCopy()}`).toBe(
     true,
   );
+
+  // Off for this process only (the relaunch in 11 is back to `full`), so the arrival queues no
+  // pipeline and leaves a launch.log line proving the downloader reported it.
+  const { applied } = await api.config({ auto_run: 'off' });
+  expect(applied, 'the backend did not apply auto_run').toContain('auto_run');
 
   const served = await serveFiles(await dashFixture());
   try {
@@ -540,6 +545,13 @@ test('10. a yt-dlp download merges its streams with the bundled ffmpeg', async (
     'audio',
     'video',
   ]);
+
+  const arrived = `video arrived for ${COURSE}/${DOWNLOADED_LECTURE} (lecture): AUTO_RUN=off, queuing nothing`;
+  // The downloader reports the arrival fire-and-forget after its upload, so the line can lag the job.
+  await waitFor(() => readLaunchLog().includes(arrived), {
+    timeoutMs: 30_000,
+    message: `no "${arrived}" in launch.log: the downloader never reported the video to the backend (/video-arrived)`,
+  });
 });
 
 test('11. quit, no orphans', async () => {
