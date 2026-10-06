@@ -148,7 +148,8 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
       const target = { ref: item.ref, name, kind, media }
       if (item.resolvedMedia === 'unsupported') return { ...target, disposition: 'unsupported' }
       // The lectures this target may write — a video's split siblings too, as the row's own lock.
-      const lands = media === 'material' ? [name] : [name, ...splitSiblings(name, kind, courses, course)]
+      const lands =
+        media === 'material' ? [name] : [name, ...splitSiblings(name, kind, courses, course)]
       // A run never overwrites, so a target that would replace a stored video is skipped too — and so
       // is one whose lecture the pipeline is running or queued on, as a single row refuses it.
       if (

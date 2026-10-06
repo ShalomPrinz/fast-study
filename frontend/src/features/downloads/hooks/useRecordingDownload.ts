@@ -69,7 +69,9 @@ export function useRecordingDownload({
     resume: () => Promise<void>,
   ) {
     // The arriving file would wipe the lecture under a run that keeps writing the old video's outputs.
-    const busy = lands.find((n) => isLectureRenameLocked(statusRef.current, args.course, n, args.kind))
+    const busy = lands.find((n) =>
+      isLectureRenameLocked(statusRef.current, args.course, n, args.kind),
+    )
     if (busy !== undefined) {
       toastLectureBusy(busy)
       return
