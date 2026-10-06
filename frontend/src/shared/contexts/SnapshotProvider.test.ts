@@ -203,3 +203,23 @@ describe('refreshUntil', () => {
     expect(settled()).toBe(true)
   })
 })
+
+describe('the course tree', () => {
+  it('orders courses by name, whatever order the database lists them in', async () => {
+    fetchRunnerStatus.mockResolvedValueOnce(status(1))
+    const names = ['Physics', 'אלגברה', 'Calculus', 'archived', 'בדידה']
+    fetchTree.mockResolvedValueOnce(
+      names.map((name) => ({ name, lectures: [], recitations: [] })) as unknown as Course[],
+    )
+    const { result } = render()
+    await act(async () => {})
+    // Case-insensitive, Latin before Hebrew: a plain code-unit sort would put `archived` after `Physics`.
+    expect(result.current.courses.map((c) => c.name)).toEqual([
+      'archived',
+      'Calculus',
+      'Physics',
+      'אלגברה',
+      'בדידה',
+    ])
+  })
+})

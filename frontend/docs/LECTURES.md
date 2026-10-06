@@ -110,7 +110,8 @@ lecture row can prompt. An expanded course opens with an Overview row; the cours
 archived course so the badge stays off.
 
 - `CourseTreeContext` exposes `courses`, `loaded` and `refreshCourses`; `SnapshotProvider` fills it, refreshing
-  on notify together with `/status`, and sorts through `sortLectures`. Everything reads it directly, no props
+  on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
+  `sortLectures`. Everything reads it directly, no props
   or outlet context.
 - `CourseGroup` owns `expanded` and `recExpanded`, so the recitations sub-group survives collapsing the
   course. It auto-expands when one of its lectures or its overview is the open route (deep links).

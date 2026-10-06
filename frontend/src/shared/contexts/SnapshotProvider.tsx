@@ -158,13 +158,16 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     return status?.errors[inFlightKey(course, lecture, kind)] ?? null
   }
 
+  // The database lists courses in raw directory order, so every consumer gets them by name here.
   const sortedCourses = useMemo(
     () =>
-      courses.map((c) => ({
-        ...c,
-        lectures: sortLectures(c.lectures),
-        recitations: sortLectures(c.recitations),
-      })),
+      courses
+        .map((c) => ({
+          ...c,
+          lectures: sortLectures(c.lectures),
+          recitations: sortLectures(c.recitations),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     [courses],
   )
 
