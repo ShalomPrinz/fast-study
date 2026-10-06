@@ -71,6 +71,23 @@ def test_create_lecture_names_the_sanitized_folder_that_collided(
     _assert_taken(r, "Lecture 34 intro")
 
 
+@pytest.mark.parametrize(
+    "kind,parent", [("lecture", ""), ("recitation", "Recitations")]
+)
+def test_create_lecture_answers_the_sanitized_folder_name(
+    client, data_root, kind, parent
+):
+    (data_root / "Algo").mkdir()
+
+    r = client.post(
+        f"/courses/Algo/lectures?kind={kind}", json={"name": "Lecture 34: intro?"}
+    )
+
+    assert r.status_code == 200
+    assert r.json() == {"name": "Lecture 34 intro"}
+    assert (data_root / "Algo" / parent / "Lecture 34 intro").is_dir()
+
+
 def test_rename_names_the_sanitized_folder_that_collided(client, data_root):
     (data_root / "Algo" / "L1").mkdir(parents=True)
     (data_root / "Algo" / "Week 1").mkdir()
@@ -85,7 +102,7 @@ def test_create_recitation_with_existing_recitations_dir_works(client, data_root
 
     r = client.post("/courses/Algo/lectures?kind=recitation", json={"name": "R2"})
 
-    assert r.status_code == 204
+    assert r.status_code == 200
     assert (data_root / "Algo" / "Recitations" / "R2").is_dir()
 
 

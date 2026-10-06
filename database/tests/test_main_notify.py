@@ -47,7 +47,7 @@ def seeded(data_root):
 )
 def test_tree_mutation_notifies_once(client, seeded, notifies, method, url, body):
     r = getattr(client, method)(url, json=body)
-    assert r.is_success  # renames answer 200 {name}, the rest 204
+    assert r.is_success  # renames and lecture creates answer 200 {name}, the rest 204
     assert len(notifies) == 1
 
 

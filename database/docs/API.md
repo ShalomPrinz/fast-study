@@ -49,7 +49,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
 | `PATCH  /courses/{course}`                                 | rename course (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file under it is open elsewhere |
 | `PATCH  /courses/{course}/source_url`                      | set/clear source_url; empty or null clears                                |
 | `PATCH  /courses/{course}/archived`                        | archive/unarchive (`{archived}`); 404 if the course is missing           |
-| `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`)                                      |
+| `POST   /courses/{course}/lectures`                        | create lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name |
 | `PATCH  /courses/{course}/lectures/{lecture}`              | rename lecture/recitation (`{name}`); `200 {name}` with the sanitized folder name; `423` if a file in it is open elsewhere |
 | `PUT    /courses/{course}/lectures/{lecture}/video`        | upload `video.mp4`; wipes derived artifacts, keeps materials; `423` if one is open elsewhere |
 | `GET    /courses/{course}/lectures/{lecture}/materials`    | `{materials: [...]}`, index-ordered; `[]` for an empty or missing lecture |

@@ -199,15 +199,15 @@ async def patch_course_archived(course: str, request: Request):
 
 @app.post("/courses/{course}/lectures")
 async def post_lecture(course: str, request: Request, kind: str = Query("lecture")):
-    """Create a lecture or recitation under the given course."""
+    """Create a lecture or recitation, answering the sanitized folder name actually created."""
 
     name = None
     try:
         body = await request.json()
         name = body["name"]
-        crud.create_lecture(course, name, kind)
+        effective = crud.create_lecture(course, name, kind)
         broadcast_notify()
-        return Response(status_code=204)
+        return {"name": effective}
     except Exception as e:
         return _failure(e, 400, "create_dir_failed", {"path": name})
 

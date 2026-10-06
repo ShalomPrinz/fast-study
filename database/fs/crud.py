@@ -102,13 +102,15 @@ def check_not_reserved(name: str) -> None:
         raise NameReserved(f"'{name}' is a reserved folder name", name=name)
 
 
-def create_lecture(course: str, name: str, kind: str) -> None:
-    """Create a lecture or recitation directory, creating the Recitations parent on demand."""
+def create_lecture(course: str, name: str, kind: str) -> str:
+    """Create a lecture or recitation directory (Recitations parent on demand) and return the folder name actually created."""
 
     check_not_reserved(name)
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
-    _mkdir_new(lecture_dir(course, name, kind))
+    target = lecture_dir(course, name, kind)
+    _mkdir_new(target)
+    return target.name
 
 
 def rename_lecture(course: str, old: str, new: str, kind: str) -> str:

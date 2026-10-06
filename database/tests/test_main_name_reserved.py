@@ -89,7 +89,7 @@ def test_a_name_merely_containing_a_reserved_word_is_fine(client, data_root):
 
     r = client.post("/courses/Algo/lectures", json={"name": "overview 2"})
 
-    assert r.status_code == 204
+    assert r.status_code == 200
     assert (data_root / "Algo" / "overview 2").is_dir()
 
 

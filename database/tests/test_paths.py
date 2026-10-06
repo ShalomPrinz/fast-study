@@ -31,8 +31,7 @@ class TestSafeName:
 
 class TestSanitizedResolution:
     def test_create_lecture_writes_the_sanitized_dir(self, data_root):
-        crud.create_lecture("Algo", "שיעור 3: מבוא", "lecture")
-
+        assert crud.create_lecture("Algo", "שיעור 3: מבוא", "lecture") == "שיעור 3 מבוא"
         assert (data_root / "Algo" / "שיעור 3 מבוא").is_dir()
 
     def test_the_raw_name_still_resolves_to_that_dir(self, data_root):
