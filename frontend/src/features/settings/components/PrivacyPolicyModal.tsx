@@ -87,7 +87,7 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
           </p>
 
           <h3 className="privacy-heading">
-            <Trans>Services you connect</Trans>
+            <Trans>Third-party services</Trans>
           </h3>
           <p>
             <Trans>FastStudy sends data only to services you set up yourself:</Trans>
@@ -105,7 +105,10 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
               </Trans>
             </li>
             <li>
-              <Trans>Lecture sites are contacted only when you download from them.</Trans>
+              <Trans>
+                <strong>University website</strong> — access is limited to the content of the
+                courses you chose, and is read-only.
+              </Trans>
             </li>
           </ul>
           <p>
@@ -122,10 +125,15 @@ export default function PrivacyPolicyModal({ onAnswer, onClose }: Props) {
             <Trans>
               When something fails, FastStudy sends a report to Sentry. It contains the error, where
               in the code it happened, the app version, your operating system and the end of the
-              app's log. Folder paths, Hebrew text, your user and computer names and API keys are
-              removed before it's sent. Reports are used only to fix bugs, and Sentry keeps them for
-              a limited time. You can turn them off at any time in Settings, and nothing more is
-              sent from that moment on.
+              app's log.{' '}
+              <span className="privacy-redaction">
+                Folder paths, Hebrew text, your user and computer names and API keys are removed
+                before it's sent. Your API keys always stay encrypted on your computer, are sent
+                only to the service that issued them, and are never sent to any other external
+                service.
+              </span>{' '}
+              Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can
+              turn them off at any time in Settings, and nothing more is sent from that moment on.
             </Trans>
           </p>
 

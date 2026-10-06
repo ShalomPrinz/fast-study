@@ -360,6 +360,10 @@ msgstr "+ add source URL"
 #~ msgid "+ New Course"
 #~ msgstr "+ New Course"
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:108
+msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
+msgstr "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
+
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:14
 #~ msgid "⟳ Run incomplete pipelines"
 #~ msgstr "⟳ Run incomplete pipelines"
@@ -657,7 +661,7 @@ msgstr "Compile"
 msgid "Complete"
 msgstr "Complete"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:172
+#: src/features/settings/components/PrivacyPolicyModal.tsx:180
 msgctxt "privacy policy"
 msgid "Confirm"
 msgstr "Confirm"
@@ -692,7 +696,7 @@ msgstr "Connecting again needs a full login in a browser window, including two-s
 msgid "connecting…"
 msgstr "connecting…"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:140
+#: src/features/settings/components/PrivacyPolicyModal.tsx:148
 msgid "Contact"
 msgstr "Contact"
 
@@ -845,7 +849,7 @@ msgstr "Daily run time"
 msgid "Data folder"
 msgstr "Data folder"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:175
+#: src/features/settings/components/PrivacyPolicyModal.tsx:183
 msgctxt "privacy policy"
 msgid "Decline"
 msgstr "Decline"
@@ -952,11 +956,11 @@ msgstr "Drive folder name"
 #~ msgid "Drive upload failed"
 #~ msgstr "Drive upload failed"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:112
+#: src/features/settings/components/PrivacyPolicyModal.tsx:115
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 msgstr "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:136
+#: src/features/settings/components/PrivacyPolicyModal.tsx:144
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "Each time it starts, FastStudy checks GitHub for a new version."
 
@@ -972,7 +976,7 @@ msgstr "Edit summary"
 msgid "Enter the zoom passcode for this recording"
 msgstr "Enter the zoom passcode for this recording"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:119
+#: src/features/settings/components/PrivacyPolicyModal.tsx:122
 #: src/features/settings/InitWall.tsx:290
 #: src/features/settings/SettingsView.tsx:366
 msgid "Error reports"
@@ -1284,10 +1288,6 @@ msgstr "Lecture name"
 #: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
 msgid "Lecture name…"
 msgstr "Lecture name…"
-
-#: src/features/settings/components/PrivacyPolicyModal.tsx:108
-msgid "Lecture sites are contacted only when you download from them."
-msgstr "Lecture sites are contacted only when you download from them."
 
 #: src/features/search/SearchView.tsx:196
 #: src/shared/sidebar/Sidebar.tsx:73
@@ -1656,7 +1656,7 @@ msgstr "Pitfalls"
 msgid "Privacy policy"
 msgstr "Privacy policy"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:143
+#: src/features/settings/components/PrivacyPolicyModal.tsx:151
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
@@ -1889,7 +1889,7 @@ msgstr "Saving…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:163
+#: src/features/settings/components/PrivacyPolicyModal.tsx:171
 msgid "Scroll to the end to confirm."
 msgstr "Scroll to the end to confirm."
 
@@ -1925,10 +1925,6 @@ msgstr "Select a lecture to get started"
 #: src/features/settings/components/ErrorReportsField.tsx:33
 msgid "Send error reports"
 msgstr "Send error reports"
-
-#: src/features/settings/components/PrivacyPolicyModal.tsx:90
-msgid "Services you connect"
-msgstr "Services you connect"
 
 #: src/features/downloads/components/AccountStatus.tsx:132
 msgid "session expired"
@@ -2272,6 +2268,10 @@ msgstr "These won't start until you run them, or until the daily run does."
 msgid "These won't start until you run them."
 msgstr "These won't start until you run them."
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:90
+msgid "Third-party services"
+msgstr "Third-party services"
+
 #: src/features/settings/SettingsView.tsx:316
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
@@ -2402,7 +2402,7 @@ msgstr "Unsaved changes"
 msgid "Unsupported"
 msgstr "Unsupported"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:133
+#: src/features/settings/components/PrivacyPolicyModal.tsx:141
 msgid "Updates"
 msgstr "Updates"
 
@@ -2463,9 +2463,9 @@ msgstr "We couldn't check this site right now. You can still save it."
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:122
-msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
-msgstr "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
+#: src/features/settings/components/PrivacyPolicyModal.tsx:125
+msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
+msgstr "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
 
 #: src/features/settings/InitWall.tsx:238
 msgid "Where to keep everything"

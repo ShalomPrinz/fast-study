@@ -61,3 +61,8 @@
   font-size: var(--fs-meta);
   color: var(--text-3);
 }
+
+/* The redaction promise, set apart in the danger tone so it is read rather than skimmed. */
+.privacy-redaction {
+  color: var(--danger);
+}

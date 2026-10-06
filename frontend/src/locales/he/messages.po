@@ -360,6 +360,10 @@ msgstr "+ הוספת כתובת מקור"
 #~ msgid "+ New Course"
 #~ msgstr "+ קורס חדש"
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:108
+msgid "<0>University website</0> — access is limited to the content of the courses you chose, and is read-only."
+msgstr "<0>אתר האוניברסיטה</0> — גישה לתוכן הקורסים שנבחרו בלבד, והגישה מוגבלת לקריאת תוכן בלבד."
+
 #: src/features/lectures/sidebar/RunnerPipelineRow.tsx:14
 #~ msgid "⟳ Run incomplete pipelines"
 #~ msgstr "⟳ הרץ צינורות לא שלמים"
@@ -657,7 +661,7 @@ msgstr "הרכבה"
 msgid "Complete"
 msgstr "הושלם"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:172
+#: src/features/settings/components/PrivacyPolicyModal.tsx:180
 msgctxt "privacy policy"
 msgid "Confirm"
 msgstr "אישור"
@@ -692,7 +696,7 @@ msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפ
 msgid "connecting…"
 msgstr "מתחבר…"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:140
+#: src/features/settings/components/PrivacyPolicyModal.tsx:148
 msgid "Contact"
 msgstr "יצירת קשר"
 
@@ -845,7 +849,7 @@ msgstr "שעת ההרצה היומית"
 msgid "Data folder"
 msgstr "תיקיית נתונים"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:175
+#: src/features/settings/components/PrivacyPolicyModal.tsx:183
 msgctxt "privacy policy"
 msgid "Decline"
 msgstr "סירוב"
@@ -952,11 +956,11 @@ msgstr "שם התיקייה ב-Drive"
 #~ msgid "Drive upload failed"
 #~ msgstr "ההעלאה ל-Drive נכשלה"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:112
+#: src/features/settings/components/PrivacyPolicyModal.tsx:115
 msgid "Each service handles the data under its own privacy policy, and your API keys are stored encrypted on this computer."
 msgstr "כל שירות מטפל במידע לפי מדיניות הפרטיות שלו, ומפתחות ה-API שלך נשמרים מוצפנים במחשב הזה."
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:136
+#: src/features/settings/components/PrivacyPolicyModal.tsx:144
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
@@ -972,7 +976,7 @@ msgstr "עריכת סיכום"
 msgid "Enter the zoom passcode for this recording"
 msgstr "הזן את קוד הגישה של Zoom להקלטה הזו"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:119
+#: src/features/settings/components/PrivacyPolicyModal.tsx:122
 #: src/features/settings/InitWall.tsx:290
 #: src/features/settings/SettingsView.tsx:366
 msgid "Error reports"
@@ -1284,10 +1288,6 @@ msgstr "שם ההרצאה"
 #: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
 msgid "Lecture name…"
 msgstr "שם ההרצאה…"
-
-#: src/features/settings/components/PrivacyPolicyModal.tsx:108
-msgid "Lecture sites are contacted only when you download from them."
-msgstr "פונים לאתרי ההרצאות רק כשאתה מוריד מהם."
 
 #: src/features/search/SearchView.tsx:196
 #: src/shared/sidebar/Sidebar.tsx:73
@@ -1656,7 +1656,7 @@ msgstr "טעויות נפוצות"
 msgid "Privacy policy"
 msgstr "מדיניות פרטיות"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:143
+#: src/features/settings/components/PrivacyPolicyModal.tsx:151
 msgid "Questions go to the project's GitHub issues page: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 msgstr "שאלות אפשר לשלוח לדף ה-issues של הפרויקט ב-GitHub: <0>github.com/ShalomPrinz/fast-study/issues</0>"
 
@@ -1889,7 +1889,7 @@ msgstr "שומר…"
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:163
+#: src/features/settings/components/PrivacyPolicyModal.tsx:171
 msgid "Scroll to the end to confirm."
 msgstr "גלול עד הסוף כדי לאשר."
 
@@ -1925,10 +1925,6 @@ msgstr "בחר הרצאה כדי להתחיל"
 #: src/features/settings/components/ErrorReportsField.tsx:33
 msgid "Send error reports"
 msgstr "שליחת דיווחי שגיאות"
-
-#: src/features/settings/components/PrivacyPolicyModal.tsx:90
-msgid "Services you connect"
-msgstr "שירותים שאתה מחבר"
 
 #: src/features/downloads/components/AccountStatus.tsx:132
 msgid "session expired"
@@ -2272,6 +2268,10 @@ msgstr "הן לא יתחילו עד שתריץ אותן, או עד ההרצה ה
 msgid "These won't start until you run them."
 msgstr "הן לא יתחילו עד שתריץ אותן."
 
+#: src/features/settings/components/PrivacyPolicyModal.tsx:90
+msgid "Third-party services"
+msgstr "שירותי צד שלישי"
+
 #: src/features/settings/SettingsView.tsx:316
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
@@ -2402,7 +2402,7 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:133
+#: src/features/settings/components/PrivacyPolicyModal.tsx:141
 msgid "Updates"
 msgstr "עדכונים"
 
@@ -2463,9 +2463,9 @@ msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 
-#: src/features/settings/components/PrivacyPolicyModal.tsx:122
-msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
-msgstr "כשמשהו נכשל, FastStudy שולחת דיווח ל-Sentry. הוא כולל את השגיאה, את המקום בקוד שבו היא קרתה, את גרסת האפליקציה, את מערכת ההפעלה שלך ואת סוף היומן של האפליקציה. נתיבי תיקיות, טקסט בעברית, שמות המשתמש והמחשב שלך ומפתחות API מוסרים לפני השליחה. הדיווחים משמשים רק לתיקון באגים, ו-Sentry שומרת אותם לזמן מוגבל. אפשר לכבות אותם בכל עת בהגדרות, ומאותו רגע לא נשלח דבר נוסף."
+#: src/features/settings/components/PrivacyPolicyModal.tsx:125
+msgid "When something fails, FastStudy sends a report to Sentry. It contains the error, where in the code it happened, the app version, your operating system and the end of the app's log. <0>Folder paths, Hebrew text, your user and computer names and API keys are removed before it's sent. Your API keys always stay encrypted on your computer, are sent only to the service that issued them, and are never sent to any other external service.</0> Reports are used only to fix bugs, and Sentry keeps them for a limited time. You can turn them off at any time in Settings, and nothing more is sent from that moment on."
+msgstr "כשמשהו נכשל, FastStudy שולחת דיווח ל-Sentry. הוא כולל את השגיאה, את המקום בקוד שבו היא קרתה, את גרסת האפליקציה, את מערכת ההפעלה שלך ואת סוף היומן של האפליקציה. <0>נתיבי תיקיות, טקסט בעברית, שמות המשתמש והמחשב ומפתחות API מוסרים לפני השליחה. מפתחות ה־API נשארים כל הזמן מוצפנים במחשב שלכם, נשלחים רק לשירות שהנפיק אותם, ולעולם לא נשלחים לאף שירות חיצוני אחר.</0> הדיווחים משמשים רק לתיקון באגים, ו-Sentry שומרת אותם לזמן מוגבל. אפשר לכבות אותם בכל עת בהגדרות, ומאותו רגע לא נשלח דבר נוסף."
 
 #: src/features/settings/InitWall.tsx:238
 msgid "Where to keep everything"
