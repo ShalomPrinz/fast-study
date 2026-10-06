@@ -27,7 +27,7 @@ import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import MarkdownEditor from '@/features/lectures/components/MarkdownEditor'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
-import { canUpdatePdf, diskChange } from '@/features/lectures/utils/summaryBuffer'
+import { canUpdatePdf, diskChange, pdfGenerating } from '@/features/lectures/utils/summaryBuffer'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
@@ -39,7 +39,7 @@ export default function EditSummaryView() {
   const { t } = useLingui()
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
-  const { getError } = useRunnerStatus()
+  const { getError, getInFlight } = useRunnerStatus()
   const { courses, loaded: treeLoaded } = useCourseTreeContext()
   const lectureError: ServiceFailure | null = getError(course, lecture, kind)
 
@@ -48,7 +48,8 @@ export default function EditSummaryView() {
   const [savedContent, setSavedContent] = useState('')
   const [hasOriginal, setHasOriginal] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [generating, setGenerating] = useState(false)
+  // The save cycle this view started; `generating` below also covers a render still running after a reload.
+  const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<ServiceFailure | null>(null)
   const [showPdf, setShowPdf] = useState(false)
   const [confirmRestore, setConfirmRestore] = useState(false)
@@ -78,13 +79,13 @@ export default function EditSummaryView() {
     }
     if (lectureError) {
       pdfFiredRef.current = false
-      setGenerating(false)
+      setUpdating(false)
       setShowPdf(pdfExists)
       setError(lectureError)
       toast('error', serviceErrorNode(lectureError))
     } else if (pdfExists) {
       pdfFiredRef.current = false
-      setGenerating(false)
+      setUpdating(false)
       setShowPdf(true)
     }
   }, [files, lectureError])
@@ -181,10 +182,10 @@ export default function EditSummaryView() {
   // One action rather than two: a saved summary whose PDF still shows the old text is never what
   // the editor wanted, so the buffer and the PDF always move together.
   async function handleSaveAndUpdatePdf() {
-    setGenerating(true)
+    setUpdating(true)
     setError(null)
     if (!(await persist())) {
-      setGenerating(false)
+      setUpdating(false)
       return
     }
     // A pdf we cannot delete — a viewer still holding it open — is one the step could not write
@@ -193,19 +194,19 @@ export default function EditSummaryView() {
       await deleteFile(course, lecture, 'summary.pdf', kind)
     } catch (e) {
       reportFailure(e, t`Failed to generate PDF`)
-      setGenerating(false)
+      setUpdating(false)
       return
     }
     try {
       const initResult = await runStep(course, lecture, 'pdf', kind)
       if (initResult.status !== 'started') {
         toastInitResult(initResult, { busy: t`Step already running` })
-        setGenerating(false)
+        setUpdating(false)
         return
       }
     } catch (e) {
       reportFailure(e, t`Failed to generate PDF`)
-      setGenerating(false)
+      setUpdating(false)
       return
     }
     pdfFiredRef.current = true
@@ -227,6 +228,7 @@ export default function EditSummaryView() {
   // A stale or absent PDF is work to do even on a clean buffer: the press rebuilds it from disk.
   const canUpdate = canUpdatePdf(content, dirty, files)
   const blank = !loading && !content.trim()
+  const generating = pdfGenerating(updating, getInFlight(course, lecture, kind))
 
   return (
     <div className="edit-view">

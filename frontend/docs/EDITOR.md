@@ -26,6 +26,8 @@ The effect watching `files`/`lectureError` runs on every refresh, so `pdfFiredRe
 this view started: otherwise a sibling file change or another lecture's error would clear the generating
 state, and the self-inflicted missing PDF would flash the "no PDF yet" placeholder. `PdfViewer`'s
 `generating` wins over both, so one spinner covers the cycle.
+`generating` is that local cycle or the runner reporting this lecture's `pdf` step (`pdfGenerating`), so a
+reload mid-render keeps the spinner and the disabled Save; other steps in flight do not count.
 
 ## Changes from elsewhere
 

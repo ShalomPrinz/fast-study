@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import type { FileStatus, FileInfo } from '@/types'
-import { canUpdatePdf, diskChange } from './summaryBuffer'
+import type { FileStatus, FileInfo, InFlightEntry } from '@/types'
+import { canUpdatePdf, diskChange, pdfGenerating } from './summaryBuffer'
 
 const info = (over: Partial<FileInfo> = {}): FileInfo => ({
   exists: false,
@@ -60,5 +60,33 @@ describe('canUpdatePdf', () => {
 
   it('has nothing to do for a clean buffer with a current PDF', () => {
     expect(canUpdatePdf('# x', false, current)).toBe(false)
+  })
+})
+
+describe('pdfGenerating', () => {
+  const entry = (step: string): InFlightEntry => ({
+    course: 'c',
+    lecture: 'l',
+    kind: 'lecture',
+    step,
+    startedAt: '2026-01-01T00:00:00Z',
+    sleepingUntil: null,
+    progress: null,
+  })
+
+  it('is generating while the view runs its own save cycle', () => {
+    expect(pdfGenerating(true, null)).toBe(true)
+  })
+
+  it('is generating when the runner reports the pdf step — a reload mid-render', () => {
+    expect(pdfGenerating(false, entry('pdf'))).toBe(true)
+  })
+
+  it('ignores other steps in flight on the lecture', () => {
+    expect(pdfGenerating(false, entry('summarize'))).toBe(false)
+  })
+
+  it('is idle with nothing running', () => {
+    expect(pdfGenerating(false, null)).toBe(false)
   })
 })

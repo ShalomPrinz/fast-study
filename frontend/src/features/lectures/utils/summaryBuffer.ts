@@ -1,4 +1,4 @@
-import type { FileStatus } from '@/types'
+import type { FileStatus, InFlightEntry } from '@/types'
 import { pdfNeedsUpdate } from './pdfBadge'
 
 export type DiskChange = 'none' | 'reload' | 'conflict'
@@ -16,4 +16,10 @@ export function diskChange(content: string, saved: string, disk: string): DiskCh
 export function canUpdatePdf(content: string, dirty: boolean, files: FileStatus | null): boolean {
   if (!content.trim()) return false
   return dirty || pdfNeedsUpdate(files)
+}
+
+// The editor is generating while its own save cycle runs or the runner reports this lecture's `pdf` step,
+// so a reload mid-render keeps the spinner; other steps in flight do not count.
+export function pdfGenerating(localCycle: boolean, inFlight: InFlightEntry | null): boolean {
+  return localCycle || inFlight?.step === 'pdf'
 }
