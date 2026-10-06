@@ -224,7 +224,7 @@ msgstr "{file} was not found."
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
-#: src/features/downloads/components/SectionGroup.tsx:265
+#: src/features/downloads/components/SectionGroup.tsx:266
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
@@ -260,7 +260,7 @@ msgstr "{name} was used"
 msgid "{name} will be used"
 msgstr "{name} will be used"
 
-#: src/features/downloads/components/SectionGroup.tsx:300
+#: src/features/downloads/components/SectionGroup.tsx:301
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 
@@ -320,7 +320,7 @@ msgstr "{stage} · step {stepNumber} of {stepCount}"
 #~ msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 #~ msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed since, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed since, or the file saved under a different name.}}"
 
-#: src/features/downloads/components/SectionGroup.tsx:309
+#: src/features/downloads/components/SectionGroup.tsx:310
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 
@@ -407,6 +407,10 @@ msgstr "A lecture running now would save some files in the old folder and the re
 #: src/features/downloads/components/PausedRunsBanner.tsx:26
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
+
+#: src/features/downloads/components/AccountStatus.tsx:194
+msgid "A window opened on the university site. Confirm there that you are not a bot, then press Done again."
+msgstr "A window opened on the university site. Confirm there that you are not a bot, then press Done again."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:151
 msgid "Add lecture"
@@ -578,13 +582,17 @@ msgstr "Change the data folder while lectures are being processed?"
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:75
+#: src/features/downloads/components/AccountStatus.tsx:108
 msgid "checking account…"
 msgstr "checking account…"
 
 #: src/features/settings/components/DriveConnection.tsx:98
 msgid "checking Drive…"
 msgstr "checking Drive…"
+
+#: src/features/downloads/components/AccountStatus.tsx:139
+msgid "checking the connection"
+msgstr "checking the connection"
 
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
@@ -671,7 +679,7 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "Confirmed ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:135
+#: src/features/downloads/components/AccountStatus.tsx:179
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
@@ -688,7 +696,7 @@ msgstr "Connect your university account first"
 #~ msgid "Connecting again needs a full login in a browser window, including MFA."
 #~ msgstr "Connecting again needs a full login in a browser window, including MFA."
 
-#: src/features/downloads/components/AccountStatus.tsx:120
+#: src/features/downloads/components/AccountStatus.tsx:97
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "Connecting again needs a full login in a browser window, including two-step verification."
 
@@ -863,16 +871,17 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:115
+#: src/features/downloads/components/AccountStatus.tsx:145
+#: src/features/downloads/components/AccountStatus.tsx:166
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:96
 msgid "Disconnect the university account?"
 msgstr "Disconnect the university account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:115
+#: src/features/downloads/components/AccountStatus.tsx:166
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -881,7 +890,8 @@ msgstr "disconnecting…"
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
-#: src/features/downloads/components/AccountStatus.tsx:87
+#: src/features/downloads/components/AccountStatus.tsx:120
+#: src/features/downloads/components/AccountStatus.tsx:142
 msgid "Done"
 msgstr "Done"
 
@@ -900,7 +910,7 @@ msgstr "Download"
 msgid "Download again"
 msgstr "Download again"
 
-#: src/features/downloads/components/SectionGroup.tsx:291
+#: src/features/downloads/components/SectionGroup.tsx:292
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
@@ -917,11 +927,11 @@ msgstr "Downloading"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:269
+#: src/features/downloads/components/SectionGroup.tsx:270
 msgid "Downloading {0}/{1}…"
 msgstr "Downloading {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:276
+#: src/features/downloads/components/SectionGroup.tsx:277
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
@@ -931,7 +941,7 @@ msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
 #: src/features/downloads/components/RecordingRow.tsx:279
-#: src/features/downloads/components/SectionGroup.tsx:291
+#: src/features/downloads/components/SectionGroup.tsx:292
 msgid "Downloading…"
 msgstr "Downloading…"
 
@@ -1014,7 +1024,7 @@ msgstr "Exam Hints"
 msgid "Expand"
 msgstr "Expand"
 
-#: src/features/downloads/components/SectionGroup.tsx:289
+#: src/features/downloads/components/SectionGroup.tsx:290
 msgid "Expand every playlist in this section first"
 msgstr "Expand every playlist in this section first"
 
@@ -1117,7 +1127,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:84
+#: src/features/downloads/components/AccountStatus.tsx:117
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -1129,7 +1139,7 @@ msgstr "finish signing in to Google"
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
 
-#: src/features/downloads/components/AccountStatus.tsx:87
+#: src/features/downloads/components/AccountStatus.tsx:120
 msgid "finishing…"
 msgstr "finishing…"
 
@@ -1449,7 +1459,7 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/components/AccountStatus.tsx:97
+#: src/features/downloads/components/AccountStatus.tsx:130
 msgid "no university chosen"
 msgstr "no university chosen"
 
@@ -1478,7 +1488,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "Not confirmed yet"
 
-#: src/features/downloads/components/AccountStatus.tsx:132
+#: src/features/downloads/components/AccountStatus.tsx:176
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1566,6 +1576,10 @@ msgstr "Open PDF"
 #: src/features/settings/components/DriveConnection.tsx:107
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
+
+#: src/features/downloads/components/AccountStatus.tsx:200
+msgid "Open the university site in your browser and confirm there that you are not a bot, then press Done again."
+msgstr "Open the university site in your browser and confirm there that you are not a bot, then press Done again."
 
 #: src/features/settings/components/MoodleSiteField.tsx:114
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
@@ -1740,7 +1754,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:135
+#: src/features/downloads/components/AccountStatus.tsx:179
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1926,7 +1940,7 @@ msgstr "Select a lecture to get started"
 msgid "Send error reports"
 msgstr "Send error reports"
 
-#: src/features/downloads/components/AccountStatus.tsx:132
+#: src/features/downloads/components/AccountStatus.tsx:176
 msgid "session expired"
 msgstr "session expired"
 
@@ -1940,7 +1954,7 @@ msgstr "Settings"
 msgid "Settings saved"
 msgstr "Settings saved"
 
-#: src/features/downloads/components/SectionGroup.tsx:174
+#: src/features/downloads/components/SectionGroup.tsx:175
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "Several rows would download into the same lecture ({names}). Rename them, then run again."
 
@@ -2169,6 +2183,10 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
+#: src/features/downloads/components/AccountStatus.tsx:68
+msgid "The login didn't finish. Press Connect and sign in again."
+msgstr "The login didn't finish. Press Connect and sign in again."
+
 #: src/shared/i18n/serviceErrors.ts:220
 msgid "The login window was closed before login finished. Connect again."
 msgstr "The login window was closed before login finished. Connect again."
@@ -2206,7 +2224,7 @@ msgstr "The PDF is older than an earlier step's output. Re-generate it."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
 
-#: src/features/downloads/components/SectionGroup.tsx:245
+#: src/features/downloads/components/SectionGroup.tsx:246
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
@@ -2214,7 +2232,7 @@ msgstr "the run stopped early. Run the section again to pick them up."
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:244
+#: src/features/downloads/components/SectionGroup.tsx:245
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
@@ -2242,7 +2260,11 @@ msgstr "The summary is empty"
 #~ msgid "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 #~ msgstr "The two gates are independent: the nightly pass is capped by the setting above as well, so with that set to do nothing, nothing runs unattended whatever the hour."
 
-#: src/features/downloads/components/SectionGroup.tsx:242
+#: src/features/downloads/components/AccountStatus.tsx:190
+msgid "The university is checking the connection."
+msgstr "The university is checking the connection."
+
+#: src/features/downloads/components/SectionGroup.tsx:243
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "the university session expired. Reconnect, then run the section again."
 
@@ -2386,7 +2408,7 @@ msgstr "University"
 msgid "University account"
 msgstr "University account"
 
-#: src/features/downloads/components/AccountStatus.tsx:108
+#: src/features/downloads/components/AccountStatus.tsx:159
 msgid "University account connected"
 msgstr "University account connected"
 
@@ -2433,6 +2455,10 @@ msgstr "Uploading to Google Drive failed."
 #: src/features/lectures/sidebar/PendingUploadModal.tsx:42
 msgid "Uploading video…"
 msgstr "Uploading video…"
+
+#: src/features/downloads/components/AccountStatus.tsx:206
+msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press Done again."
+msgstr "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press Done again."
 
 #: src/features/downloads/components/RecordingRow.tsx:47
 #: src/features/lectures/constants/pipeline.ts:18

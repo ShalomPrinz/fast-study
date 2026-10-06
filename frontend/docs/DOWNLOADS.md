@@ -52,6 +52,16 @@ the component, not the never-remounting provider. A `BlockedError` (the site's b
 a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
 `blockedMessage()` and leaves the chip alone.
 
+**Unverified is its own state.** `/auth/status` `unverified: true` (a token kept after a bot challenge blocked
+the post-login check) is neither connected nor not: `accountView` (`utils/accountView.ts`, the one decision of
+chip and panel) gives it a `data-account="unverified"` warn chip with Done and Disconnect, and an inline
+`.account-panel` saying the university is checking, what to confirm and to press Done again. A refused Done
+(`BlockedError`, carrying the 503's `challengeWindow`) toasts and re-probes; the panel reads "a window opened"
+for `true`, "open the site in your browser" for `false`, and a hedged line when nothing says (a status read
+after a reload). No polling: the status is re-read after the action. A 401 `reconnect` from `/auth/complete`
+means no login was captured, so it toasts "sign in again" and leaves the chip on not connected rather than
+expired. The same component serves the first-run wall ([SETTINGS.md](SETTINGS.md)).
+
 `/auth/status`'s 409 `moodle_site_not_configured` is an answer, not a failure: `fetchAuthStatus` maps it to
 `unconfigured`: the chip reads "no university chosen" with no Connect, the page leads with a nudge linking to
 Settings, and Load recordings is disabled with a tooltip saying why — the init wall lets a user in without one. A login the site's post-login

@@ -1,0 +1,17 @@
+/* A block under the chip row: the header's meta and the settings control both wrap, so it claims its own line. */
+.account-panel {
+  flex-basis: 100%;
+  max-inline-size: 60ch;
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--warn);
+  border-radius: var(--r-sm);
+  background: var(--warn-soft);
+  color: var(--text);
+  font-size: var(--fs-fine);
+  line-height: 1.5;
+  white-space: normal;
+}
+
+.account-panel p {
+  margin: 0;
+}

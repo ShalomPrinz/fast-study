@@ -46,6 +46,20 @@ describe('the blocked discriminator', () => {
     expect(isReconnectError(err)).toBe(false)
   })
 
+  it('carries whether a challenge window opened on a refused completion', async () => {
+    stubFetch(
+      withBody(503, {
+        status: 'blocked',
+        code: 'site_blocked',
+        params: { challengeWindow: false },
+      }),
+    )
+
+    const err = await completeAuth().catch((e) => e)
+
+    expect(isBlockedError(err) && err.challengeWindow).toBe(false)
+  })
+
   it('leaves a 503 that is not the blocked body as a generic failure', async () => {
     stubFetch(withBody(503, { error: 'service unavailable' }))
 

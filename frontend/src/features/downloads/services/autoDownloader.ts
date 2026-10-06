@@ -12,6 +12,8 @@ export interface AuthStatus {
   expired: boolean
   // No university is configured in the auto-downloader, so there is no account to connect.
   unconfigured?: boolean
+  // A token kept after a bot challenge blocked the post-login check: connected, site not yet verified.
+  unverified?: boolean
 }
 
 // Which file the item lands on disk as; the destination is derived server-side from `ref`.
@@ -67,8 +69,9 @@ export function isUnsupportedError(err: unknown): err is UnsupportedError {
 
 // 503 `blocked`: a transient bot-protection challenge, never a reconnect. The body's `message` is a
 // log line, so the UI writes its own copy (`utils/downloadErrors`).
+// `challengeWindow` is only on a refused `/auth/complete`: a browser is open on the site to solve it in.
 export class BlockedError extends Error {
-  constructor() {
+  constructor(public challengeWindow: boolean | null = null) {
     super('The site is refusing automated requests — bot-protection challenge.')
     this.name = 'BlockedError'
   }
@@ -116,7 +119,10 @@ export async function postReconnectAware<T>(
         data.params ?? null,
       )
     }
-    if (res.status === 503 && data?.status === 'blocked') throw new BlockedError()
+    if (res.status === 503 && data?.status === 'blocked')
+      throw new BlockedError(
+        typeof data.params?.challengeWindow === 'boolean' ? data.params.challengeWindow : null,
+      )
     if (res.status === 409 && data?.status === 'passcode') {
       throw new PasscodeError(data.reason, { course: data.course, lecture: data.name })
     }
