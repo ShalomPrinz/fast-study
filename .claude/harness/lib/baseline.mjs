@@ -79,7 +79,7 @@ export function writeScratchEnv(paths, geminiModel) {
   fs.writeFileSync(paths.env, `# ${BANNER}\n${lines.join('\n')}\n`);
 }
 
-// The Moodle WS token, pre-seeded, so a flow starts connected; Connect → Done mints the same one
+// The Moodle WS token, pre-seeded, so a flow starts connected; Connect mints the same one
 // from the fake launch.php. Everything downstream of the token is the real code.
 // It names its site, as a real one does — auto/ reads a token for any other site as absent.
 export function writeMoodleToken(paths) {

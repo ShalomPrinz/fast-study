@@ -285,9 +285,11 @@ cannot write `network.log`, so each context it opens logs an http(s) request tha
 `ERR_NAME_NOT_RESOLVED` as `downloader-auto REFUSED host:port (browser)`.
 
 So Connect runs auto/'s real login: the fake site answers `launch.php` with a 302 to
-`moodlemobile://token=…` carrying `FAKE_WSTOKEN`, auto/ captures it, and Done calls site info
-through the Node shim, where the site's `/control` modes apply unchanged. There is no window to
-finish; press Done any time after Connect.
+`moodlemobile://token=…` carrying `FAKE_WSTOKEN`, auto/ captures it and finishes the login by itself,
+calling site info through the Node shim, where the site's `/control` modes apply unchanged. There is
+no window to finish and no button to press; the outcome arrives on `/auth/events`. With the site in
+`blocked`, the token is kept unverified and a second window opens on the site root; switch the site
+back to `ok` and press the unverified state's button to verify.
 
 Videostream capture launches through the same patch, so its browser is offline, but it has nothing
 to run against: the fake course lists no `videostream` activity, and the site serves neither
@@ -301,8 +303,8 @@ Python refusal logged in `network.log`, while
 the fake site still serves a redirected `https://lemida.biu.ac.il`, and auto/'s `POST /site/probe`
 reads it as `supported` with the seeded token connected; both services log the harness
 keys (the repo `.env` lost the `load_dotenv` race); a settings save lands in the scratch `.env` and
-leaves the real one untouched; Connect → Done through auto/'s real login and browser saves the fake
-token, `missing_function` refuses it with `422 missing_function`, and no browser escapes; every `/control` mode of both fakes, a targeted rule and a draining
+leaves the real one untouched; Connect through auto/'s real login and browser saves the fake
+token by itself, `missing_function` refuses it with `moodle_site_unsupported`, and no browser escapes; every `/control` mode of both fakes, a targeted rule and a draining
 one each change the answer they should and switch back; Drive disconnects and reconnects through
 the backend's routes, left connected; the app, loaded in headless chromium from this stack's
 frontend, lists every non-archived course and reaches each service's `/health` from that origin, so
@@ -352,7 +354,7 @@ The site's last four modes are a site auto/ must refuse. `not_moodle` answers th
 `service-nologin.php` with a 404 page and `mobile_service_off` with `enablemobilewebservice: 0` — the
 pre-login probe (the settings field) says `unsupported`. `missing_function` drops
 `core_course_get_contents` from site info and `downloads_disabled` sets `downloadfiles: 0`, which only
-the post-login check reads — Settings → University account → Connect → Done shows its refusal. An unknown mode is answered 400.
+the post-login check reads — Settings → University account → Connect shows its refusal. An unknown mode is answered 400.
 
 A provider's rule is `{mode, match, times}`; a bare string is `{mode}`, every call. Nothing the
 SDKs send names the lecture, so the shim stamps each call a pipeline step or an overview makes with

@@ -153,18 +153,41 @@ async function theSiteProbesSupported() {
   return `${FAKE_COURSE_URL} → supported at ${body.site}, seeded token connected`;
 }
 
-// Connect → Done through auto/'s real login: its browser, launched through the shim's patch, gets
-// the token from the fake launch.php, and a site missing a function refuses the login with its code.
+// The first state auto/ pushes on /auth/events that is not `pending`: how a login it drives itself ended.
+async function loginOutcome() {
+  const response = await fetch(`${AUTO}/auth/events`, { signal: AbortSignal.timeout(60_000) });
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) throw new Error('/auth/events closed before the login settled');
+      buffer += decoder.decode(value, { stream: true });
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop();
+      for (const frame of frames) {
+        const state = JSON.parse(frame.replace(/^data: /, ''));
+        if (state.phase !== 'pending') return state;
+      }
+    }
+  } finally {
+    await reader.cancel().catch(() => {});
+  }
+}
+
+// Connect through auto/'s real login: its browser, launched through the shim's patch, gets the token
+// from the fake launch.php and auto/ finishes it alone; a site missing a function refuses it with its code.
 async function theMoodleLoginRunsOffline(paths) {
   const started = new Date();
   const login = async () => {
     await call(`${AUTO}/auth/connect`, { method: 'POST' });
-    return call(`${AUTO}/auth/complete`, { method: 'POST', expect: false });
+    return loginOutcome();
   };
   await call(`${AUTO}/auth/disconnect`, { method: 'POST' });
   const ok = await login();
-  if (ok.status !== 200 || !ok.body.connected) {
-    throw new Error(`the login did not connect: HTTP ${ok.status} ${JSON.stringify(ok.body)}`);
+  if (ok.phase !== 'connected') {
+    throw new Error(`the login did not connect: ${JSON.stringify(ok)}`);
   }
   const token = JSON.parse(
     fs.readFileSync(path.join(paths.state, 'auth', 'moodle-token.json'), 'utf8'),
@@ -178,13 +201,11 @@ async function theMoodleLoginRunsOffline(paths) {
   } finally {
     await json(`${SITE}/control`, 'POST', { mode: 'ok' });
   }
-  if (refused.status !== 422 || refused.body.params?.reason !== 'missing_function') {
-    throw new Error(
-      `missing_function did not refuse the login: HTTP ${refused.status} ${JSON.stringify(refused.body)}`,
-    );
-  }
-  if (!(await call(`${AUTO}/auth/status`)).body.connected) {
-    throw new Error('a refused login dropped the token it did not replace');
+  if (
+    refused.error?.code !== 'moodle_site_unsupported' ||
+    refused.error.params?.reason !== 'missing_function'
+  ) {
+    throw new Error(`missing_function did not refuse the login: ${JSON.stringify(refused)}`);
   }
 
   const log = fs.existsSync(paths.network) ? fs.readFileSync(paths.network, 'utf8') : '';
@@ -192,7 +213,7 @@ async function theMoodleLoginRunsOffline(paths) {
     .split('\n')
     .filter((line) => line.includes(' REFUSED ') && new Date(line.split(' ')[0]) >= started);
   if (escapes.length) throw new Error(`the login escaped:\n${escapes.join('\n')}`);
-  return 'Connect → Done saved the fake token; missing_function → 422 missing_function; no escape';
+  return 'Connect saved the fake token on its own; missing_function → moodle_site_unsupported missing_function; no escape';
 }
 
 // Through auto/'s real listing, so a row the discovery drops fails here, not mid-sweep.
