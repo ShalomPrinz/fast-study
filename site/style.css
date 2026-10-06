@@ -591,6 +591,10 @@ details p {
   font-weight: 600;
 }
 
+.policy .danger {
+  color: var(--danger);
+}
+
 @media (max-width: 900px) {
   .hero-inner,
   .split {
@@ -619,10 +623,6 @@ details p {
   .features,
   .steps--four {
     grid-template-columns: 1fr;
-.policy .danger {
-  color: var(--danger);
-}
-
   }
   .privacy li {
     grid-template-columns: 1fr;
