@@ -11,6 +11,8 @@ Never hard-code a step name, its output file or its prerequisite elsewhere.
 
 `visiblePipeline(driveEnabled, files)` drops the Drive stage with Drive off, matching the backend, which
 rejects `run/drive` then; a lecture uploaded while Drive was on keeps the row so its link stays reachable.
+`stepPosition` numbers a step among the visible _steps_ — `video.mp4` is the input, not a step — so the
+lecture header's "step 2 of 5" and the runner rail's chip agree.
 
 Three `msg` label sets: `stageLabel` names the stage pending or done, `runningLabel` replaces it only in
 flight, `actionLabel` is the button. There is deliberately no past-tense form. A step's button needs its

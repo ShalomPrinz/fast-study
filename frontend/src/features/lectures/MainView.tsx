@@ -14,7 +14,7 @@ import { useLectureRoute } from '@/features/lectures/hooks/useLectureRoute'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
-import { visiblePipeline, STEP_FILE } from '@/features/lectures/constants/pipeline'
+import { visiblePipeline, stepPosition, STEP_FILE } from '@/features/lectures/constants/pipeline'
 import { kindQuery } from '@/shared/utils/url'
 import { formatBytes, formatDuration } from '@/shared/utils/format'
 import { toastInitResult } from '@/services/toaster'
@@ -214,8 +214,10 @@ export default function MainView() {
 
   function runningStateText(entry: (typeof stages)[number]): string {
     const stage = t(entry.runningLabel ?? entry.stageLabel)
-    const stepNumber = stages.indexOf(entry) + 1
-    return t`${stage} · step ${stepNumber} of ${stageCount}`
+    const position = entry.step && stepPosition(stages, entry.step)
+    if (!position) return stage
+    const { number: stepNumber, count: stepCount } = position
+    return t`${stage} · step ${stepNumber} of ${stepCount}`
   }
 
   // The header's state line covers the two states worth calling out — running, and finished. An

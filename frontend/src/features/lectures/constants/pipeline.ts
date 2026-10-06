@@ -82,3 +82,14 @@ export const STEP_FILE: Partial<Record<Step, FileName>> = STEP_FILE_MUT
 export const STEP_INPUT_FILE: Partial<Record<Step, FileName>> = STEP_INPUT_FILE_MUT
 export const STEP_LABEL: Partial<Record<Step, MessageDescriptor>> = STEP_LABEL_MUT
 export const STEP_SET: Set<string> = STEP_SET_MUT
+
+// A step's 1-based place among the steps of `stages`, and their count — `video.mp4` is the input, not a
+// step, so the lecture header and the runner rail number the same step alike.
+export function stepPosition(
+  stages: typeof PIPELINE,
+  step: string,
+): { number: number; count: number } | null {
+  const steps = stages.filter((p) => p.step)
+  const index = steps.findIndex((p) => p.step === step)
+  return index < 0 ? null : { number: index + 1, count: steps.length }
+}

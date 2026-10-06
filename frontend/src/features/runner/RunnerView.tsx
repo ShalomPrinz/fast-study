@@ -6,7 +6,7 @@ import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useAutoRun, useDriveEnabled, useNightlyRun } from '@/shared/contexts/SettingsContext'
 import { useRemoteInflightState } from '@/features/lectures/hooks/useRemoteInflightState'
-import { PIPELINE, visiblePipeline } from '@/features/lectures/constants/pipeline'
+import { PIPELINE, stepPosition, visiblePipeline } from '@/features/lectures/constants/pipeline'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
 import ProgressBar from '@/shared/components/ProgressBar'
 import StatusNode, { type StatusNodeState } from '@/shared/components/StatusNode'
@@ -126,7 +126,7 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
 
   // The rail is the steps only — `video.mp4` is the input, not a stage the runner walks.
   const steps = (files ? visiblePipeline(driveEnabled, files) : []).filter((p) => p.step)
-  const currentIndex = steps.findIndex((p) => p.step === entry.step)
+  const position = stepPosition(steps, entry.step)
 
   return (
     <div className="focus-card">
@@ -139,9 +139,9 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
             {entry.lecture}
           </div>
         </div>
-        {currentIndex >= 0 && (
+        {position && (
           <span className="chip chip--accent">
-            {t`Step ${currentIndex + 1} of ${steps.length}`}
+            {t`Step ${position.number} of ${position.count}`}
           </span>
         )}
       </div>
