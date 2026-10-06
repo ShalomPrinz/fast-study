@@ -1,5 +1,7 @@
+import importlib
 import json
 import time
+from datetime import datetime, timezone
 
 import pytest
 import sentry_policy
@@ -29,9 +31,12 @@ def clean_env(monkeypatch):
         "FASTSTUDY_SENTRY_DSN",
         "FASTSTUDY_VERSION",
         "SENTRY_ENVIRONMENT",
+        "FASTSTUDY_ERROR_REPORTS",
     ):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("HOME", "/home/shalom")
+    # The scrubbing tests run with reports on; the gate tests below set their own state.
+    sentry_policy.set_reporting(True)
 
 
 def leaks(event):
@@ -398,6 +403,7 @@ def test_options_with_dsn_packaged(monkeypatch):
         "environment": "production",
         "sample_rate": 1.0,
         "send_default_pii": False,
+        "send_client_reports": False,
         "shutdown_timeout": 2,
         "before_send": scrub,
         "before_breadcrumb": scrub_breadcrumb,
@@ -429,3 +435,117 @@ def test_environment_precedence(monkeypatch):
 def test_options_unknown_service_raises():
     with pytest.raises(ValueError):
         options("nope")
+
+
+class FakeTransport:
+    """Stands in for the SDK's HttpTransport: capture_envelope queues, _send_envelope sends."""
+
+    def __init__(self):
+        self.queued, self.sent = [], []
+
+    def capture_envelope(self, envelope):
+        self.queued.append(envelope)
+
+    def drain(self):
+        while self.queued:
+            self._send_envelope(self.queued.pop(0))
+
+    def _send_envelope(self, envelope):
+        self.sent.append(envelope)
+
+
+def capture(transport, *envelopes):
+    for envelope in envelopes:
+        transport.capture_envelope(envelope)
+    transport.drain()
+
+
+class Item:
+    def __init__(self, type):
+        self.type = type
+
+
+class Envelope:
+    """The shape of the SDK's Envelope that the gate reads: `headers`, `items`, each with a `type`."""
+
+    def __init__(self, headers=None, items=None):
+        self.headers, self.items = headers or {}, list(items or [])
+
+
+def env(*types):
+    return Envelope(items=[Item(t) for t in types])
+
+
+def sent_types(transport):
+    return [[item.type for item in e.items] for e in transport.sent]
+
+
+@pytest.mark.parametrize("value", [None, "", "0", "true", "yes", "on"])
+def test_reports_start_off_unless_env_is_1(monkeypatch, value):
+    if value is not None:
+        monkeypatch.setenv("FASTSTUDY_ERROR_REPORTS", value)
+    assert importlib.reload(sentry_policy).reporting() is False
+    monkeypatch.setenv("FASTSTUDY_ERROR_REPORTS", "1")
+    assert importlib.reload(sentry_policy).reporting() is True
+
+
+def test_off_at_start_sends_nothing(monkeypatch):
+    importlib.reload(sentry_policy)
+    transport = sentry_policy.gated(FakeTransport)()
+    capture(transport, env("event"), env("transaction"))
+    assert transport.sent == []
+
+
+def test_on_sends_everything_but_sessions():
+    transport = sentry_policy.gated(FakeTransport)()
+    capture(transport, env("event", "attachment"), env("transaction"))
+    assert sent_types(transport) == [["event", "attachment"], ["transaction"]]
+
+
+def test_session_items_are_never_sent():
+    transport = sentry_policy.gated(FakeTransport)()
+    capture(transport, env("session"), env("sessions"), env("event", "session"))
+    assert sent_types(transport) == [["event"]]
+    transport._send_envelope(env("sessions"))
+    assert sent_types(transport) == [["event"]]
+
+
+def test_switching_off_drops_later_and_already_queued_envelopes():
+    transport = sentry_policy.gated(FakeTransport)()
+    capture(transport, env("event"))
+    transport.capture_envelope(env("transaction"))
+    sentry_policy.set_reporting(False)
+    capture(transport, env("check_in"))
+    assert sent_types(transport) == [["event"]]
+
+
+def test_switching_back_on_resumes():
+    transport = sentry_policy.gated(FakeTransport)()
+    sentry_policy.set_reporting(False)
+    capture(transport, env("transaction"))
+    sentry_policy.set_reporting(True)
+    capture(transport, env("event"))
+    assert sent_types(transport) == [["event"]]
+
+
+def test_event_captured_while_off_is_dropped_after_the_switch():
+    sentry_policy.set_reporting(False)
+    captured_off = datetime.now(timezone.utc)
+    sentry_policy.set_reporting(True)
+    assert scrub({"message": "boom", "timestamp": captured_off}) is None
+    assert scrub({"message": "boom", "timestamp": captured_off.timestamp()}) is None
+    later = {"message": "boom", "timestamp": time.time() + 1}
+    assert scrub(later) == later
+
+
+def test_gated_is_a_subclass_of_the_sdk_transport():
+    cls = sentry_policy.gated(FakeTransport)
+    assert issubclass(cls, FakeTransport) and cls.__name__ == "GatedFakeTransport"
+
+
+def test_scrubbers_drop_everything_while_off():
+    sentry_policy.set_reporting(False)
+    assert scrub({"message": "boom"}) is None
+    assert scrub_breadcrumb({"message": "crumb"}) is None
+    sentry_policy.set_reporting(True)
+    assert scrub({"message": "boom"}) == {"message": "boom"}

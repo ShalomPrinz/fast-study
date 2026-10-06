@@ -1,6 +1,8 @@
 import os
 import re
 import sys
+import time
+from datetime import datetime
 
 SERVICES = frozenset({"backend", "database", "server", "auto", "electron", "frontend"})
 
@@ -42,6 +44,62 @@ _ABS_PATH = re.compile(
 )
 # Frame fields that name our own code files: their folders are what makes a stack trace readable.
 _FRAME_PATHS = frozenset({"filename", "abs_path", "module"})
+
+
+# The user's error-reports switch, process-wide: FASTSTUDY_ERROR_REPORTS=1 at launch, then
+# set_reporting(). Unset is off, so nothing leaves before the first-run answer.
+_reporting = os.environ.get("FASTSTUDY_ERROR_REPORTS") == "1"
+# When reports last went on, in epoch seconds: an event stamped no later was captured while off.
+_on_since = 0.0
+# Release health: the SDK aggregates request counts into these across the off period.
+_SESSION_ITEMS = frozenset({"session", "sessions"})
+
+
+def set_reporting(on):
+    global _reporting, _on_since
+    if on and not _reporting:
+        _on_since = time.time()
+    _reporting = bool(on)
+
+
+def reporting():
+    return _reporting
+
+
+def _captured_while_off(event):
+    stamp = event.get("timestamp")
+    if isinstance(stamp, datetime):
+        stamp = stamp.timestamp()
+    return isinstance(stamp, (int, float)) and stamp <= _on_since
+
+
+def gated(transport_cls):
+    """A subclass of an SDK sync HTTP transport that sends nothing while reports are off, and no sessions."""
+
+    # Events and sessions all enter by capture_envelope; _send_envelope runs on the worker, so it also
+    # drops what was queued before the switch.
+    class Gated(transport_cls):
+        def capture_envelope(self, envelope):
+            envelope = _without_sessions(envelope)
+            if _reporting and envelope:
+                super().capture_envelope(envelope)
+
+        def _send_envelope(self, envelope):
+            envelope = _without_sessions(envelope)
+            if _reporting and envelope:
+                super()._send_envelope(envelope)
+
+    Gated.__name__ = Gated.__qualname__ = f"Gated{transport_cls.__name__}"
+    return Gated
+
+
+def _without_sessions(envelope):
+    """The envelope minus its session items, or None when nothing else is left."""
+
+    items = [i for i in envelope.items if i.type not in _SESSION_ITEMS]
+    if len(items) == len(envelope.items):
+        return envelope
+    return type(envelope)(headers=envelope.headers, items=items) if items else None
 
 
 def _root_pattern(root):
@@ -102,8 +160,10 @@ def _walk(value, frames=False):
 
 
 def scrub(event, _hint=None):
-    """`before_send`: every string in the event redacted, and the host name and user dropped."""
+    """`before_send`: None while off or for an event captured while off; else redacted, host and user dropped."""
 
+    if not _reporting or _captured_while_off(event):
+        return None
     # Drop on failure: an unscrubbed event is the leak this exists to prevent, a lost one is not.
     try:
         event = _walk(event)
@@ -115,8 +175,10 @@ def scrub(event, _hint=None):
 
 
 def scrub_breadcrumb(crumb, _hint=None):
-    """`before_breadcrumb`: the same redaction applied to one breadcrumb, dropped on failure."""
+    """`before_breadcrumb`: the same redaction on one crumb, dropped while off or on failure."""
 
+    if not _reporting:
+        return None
     try:
         return _walk(crumb)
     except Exception:
@@ -161,6 +223,8 @@ def options(service, *, dsn=None, version=None, environment=None):
         # No traces_sample_rate: even 0.0 turns tracing on and propagates trace headers.
         "sample_rate": 1.0,
         "send_default_pii": False,
+        # Client reports count what was dropped, so they would tell Sentry about the off period later.
+        "send_client_reports": False,
         "shutdown_timeout": SHUTDOWN_TIMEOUT_S,
         "before_send": scrub,
         "before_breadcrumb": scrub_breadcrumb,

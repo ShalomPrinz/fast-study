@@ -25,6 +25,22 @@ and guards every `process` read.
   `FASTSTUDY_SECRET` values, `gsk_…`/`AIza…` shapes and `secret=` query values → `<key>`.
   `server_name` (the hostname) and `user` are deleted.
 - `scrub_breadcrumb` / `scrubBreadcrumb` — `before_breadcrumb`, the same walk on one crumb.
+- `reporting()` / `set_reporting(on)` / `setReporting(on)` — the user's error-reports switch, one flag
+  per process: `FASTSTUDY_ERROR_REPORTS=1` at start means on, anything else or unset means off; each
+  service flips it from `POST /config` `{"error_reports": bool}`; the renderer has no env, so it starts
+  off until it calls `setReporting`. While off both scrubbers return
+  `None`/`null`, so the off period leaves no event or breadcrumb behind. `scrub` also drops an event
+  whose `timestamp` is at or before the last switch-on: JS runs `beforeSend` after async event
+  processors, so an event captured while off could otherwise reach it with the flag already on (one
+  captured within the switch's own millisecond is dropped too).
+- `gated(transport_cls)` (py) / `gate(makeTransport)` (js) — wraps the SDK's own transport so nothing
+  is sent while off: Python subclasses a sync HTTP transport (`capture_envelope` and the worker's
+  `_send_envelope`, so an envelope queued before the switch is dropped too); JS wraps the factory and
+  resolves `{}` from `send`, a success, so Electron's offline queue discards a stored envelope rather
+  than retrying it once reports are back on. Each caller passes it as `transport=`/`transport:`.
+  The gate also strips every `session`/`sessions` item, on or off, so there is no release health:
+  a session spans the off period, JS counts request-session errors before `beforeSend`, and both
+  SDKs aggregate off-period request counts into the next flush.
 - `tags(service)` — `{service, platform}`; `service` is one of `backend database server auto electron
 frontend`, anything else throws. `platform` is `win32`/`linux`/`darwin` in both languages.
 - `enabled(dsn?)` — false with no DSN; the caller then skips init entirely.
@@ -32,7 +48,8 @@ frontend`, anything else throws. `platform` is `win32`/`linux`/`darwin` in both 
   `faststudy@<FASTSTUDY_VERSION>`, `environment` (the explicit arg, else `SENTRY_ENVIRONMENT` —
   which the launcher sets from `app.isPackaged` — else `development`; not `FASTSTUDY_SECRET`, which
   dev launches set too),
-  sample rate 1, no default PII, the shutdown flush bound, both scrubbers. The traces rate is left unset, not `0`: `0` still
+  sample rate 1, no default PII, no client reports (their drop counts would describe the off period
+  once reports are back on), the shutdown flush bound, both scrubbers. The traces rate is left unset, not `0`: `0` still
   switches tracing on and propagates trace headers onto cross-origin calls to the services. `dsn`,
   `version` and `environment` can be passed explicitly — the renderer bakes `VITE_SENTRY_DSN`, electron main passes `app.getVersion()`.
   JS adds `initialScope: {tags}`; Python's `init` has no such option, so call
@@ -40,16 +57,20 @@ frontend`, anything else throws. `platform` is `win32`/`linux`/`darwin` in both 
 
 ## Rules
 
+- **Off is a transport gate, never an SDK teardown.** Each runtime with a DSN inits fully at launch
+  and wraps its transport in the gate; it never calls `close()`+`init()` or toggles `enabled`.
+  Re-init throws in Electron main, is a no-op in the renderer and stacks Node's process handlers;
+  `close()` flushes the queue first in both SDKs; `enabled: false` skips integration setup.
 - **A scrub failure drops the event** (returns `None`/`null`): an unscrubbed event is the leak this
   exists to prevent, a lost one is not.
-- **Env is read per call**, not at import, so a `DATA_ROOT` or key changed in Settings is scrubbed
+- **Env is read per call**, not at import (`FASTSTUDY_ERROR_REPORTS` alone is read at import, then set), so a `DATA_ROOT` or key changed in Settings is scrubbed
   from the next event on. A value only in `.env` and never in `os.environ` is not seen; the
   shape-based rules (Hebrew, home, key patterns) still cover it.
 - **An exit never waits on Sentry beyond 2 s** — the host may be down. `SHUTDOWN_TIMEOUT_S`/`_MS`
   pins it as `shutdown_timeout` (Python's atexit flush) and `shutdownTimeout` (the Node/Electron
   crash-exit flush); electron main's `KILL_GRACE_MS` must stay above it.
-- **No fallback DSN anywhere.** Dev has none, so dev sends nothing; packaged, the launcher sets it.
-  That is the claim on both run paths.
+- **No fallback DSN anywhere.** Dev has none, so dev sends nothing; packaged, the launcher sets it
+  whether reports are on or off. With a DSN, nothing is sent unless the switch is on — on both run paths.
 - **A lone 200 from ingest is not proof of delivery** — Relay can accept the first envelope before
   loading the project config, then drop it. Send two events, or curl a minimal envelope to
   `/api/<project>/envelope/?sentry_key=<key>`; `403 … with_reason: ProjectId` means the key does not
