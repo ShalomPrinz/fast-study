@@ -106,6 +106,9 @@ def create_lecture(course: str, name: str, kind: str) -> str:
     """Create a lecture or recitation directory (Recitations parent on demand) and return the folder name actually created."""
 
     check_not_reserved(name)
+    # The course is never made on demand: mkdir(parents=True) below would turn a typo into a ghost course.
+    if not course_dir(course).is_dir():
+        raise CourseNotFound(f"course not found: {course}", course=course)
     if kind == "recitation":
         (course_dir(course) / RECITATIONS_DIR).mkdir(parents=True, exist_ok=True)
     target = lecture_dir(course, name, kind)

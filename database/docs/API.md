@@ -35,7 +35,7 @@ cross-service contract: keep changes backward-compatible or flag the impact.
   ([LAYOUT.md](LAYOUT.md#names)); the last two create the dir on demand, so they check too.
 - `404` `lecture_not_found` `{course, lecture}` answers a neutral write (`PUT /…/files/{name}`,
   `PUT /…/summary`) to a lecture dir that does not exist; nothing is written.
-- `404` `course_not_found` `{course}` answers a course route, `PUT /…/video` or `POST /…/materials`, whose course dir is gone (renamed away).
+- `404` `course_not_found` `{course}` answers a course route, a lecture/recitation create, `PUT /…/video` or `POST /…/materials`, whose course dir is gone (renamed away).
 - A file that is not there answers `404` `file_not_found` `{file}` on the stream and `/path` routes.
   `HEAD` answers a bodyless `404` instead: absence is its normal answer, not a failure.
 

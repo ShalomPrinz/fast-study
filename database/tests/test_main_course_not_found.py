@@ -35,3 +35,29 @@ def test_archive_toggle_on_an_existing_course_still_writes(client, data_root):
 
     assert r.status_code == 204
     assert (data_root / "Algo" / ".archived").is_file()
+
+
+@pytest.mark.parametrize("kind", ["lecture", "recitation"])
+def test_lecture_create_under_a_missing_course_is_404_and_creates_nothing(
+    client, data_root, kind
+):
+    r = client.post(f"/courses/Ghost/lectures?kind={kind}", json={"name": "L 1"})
+
+    assert r.status_code == 404
+    assert r.json() == {
+        "error": "course not found: Ghost",
+        "code": "course_not_found",
+        "params": {"course": "Ghost"},
+    }
+    assert list(data_root.iterdir()) == []
+
+
+def test_recitation_create_makes_the_recitations_folder_under_an_existing_course(
+    client, data_root
+):
+    (data_root / "Algo").mkdir()
+
+    r = client.post("/courses/Algo/lectures?kind=recitation", json={"name": "R 1"})
+
+    assert r.status_code == 200
+    assert (data_root / "Algo" / "Recitations" / r.json()["name"]).is_dir()
