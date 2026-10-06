@@ -11,22 +11,13 @@
   border-inline-end: 1px solid var(--sidebar-line);
 }
 
-.sidebar-header {
-  padding-block: var(--space-6) var(--space-5);
-  padding-inline: var(--space-6);
-  font-size: var(--fs-row);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: var(--surface);
-  flex-shrink: 0;
-}
-
 /* The five destinations, each a route with its own active state. */
 .sidebar-nav-block {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 0 var(--space-4) var(--space-5);
+  /* Top matches the tree pane's first course row, so the two columns start on one line. */
+  padding: var(--space-6) var(--space-4) var(--space-5);
   border-bottom: 1px solid var(--sidebar-line);
   flex-shrink: 0;
 }

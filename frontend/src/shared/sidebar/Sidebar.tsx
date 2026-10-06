@@ -65,11 +65,6 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-header">
-        {/* The product name is a brand, not copy — it reads the same in every locale. */}
-        <span>FastStudy</span>
-      </div>
-
       <nav className="sidebar-nav-block">
         <button
           className={rowClass(onLectures)}
