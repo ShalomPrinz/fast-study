@@ -249,6 +249,34 @@ p {
   margin-block-start: 2px;
 }
 
+/* A soft pointer to the SmartScreen steps; the link keeps the line's colour and is told apart by its underline. */
+.install-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-block-start: 10px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+
+.install-hint svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.install-hint a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 /* A screenshot in a light window frame. */
 .shot {
   margin: 0;
