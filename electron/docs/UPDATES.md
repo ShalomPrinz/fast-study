@@ -24,7 +24,7 @@ never demotes `downloaded`). `boot.js` renders them in English:
 | `downloading` | spinner + "Installing update…" (the download; NSIS runs when the app quits) |
 | `none`        | "There is no update to install. Please contact us and report this issue." |
 | `downloaded`  | check mark + green "Update complete. Please close the app and open it again." |
-| `error`       | "Could not check for updates. Check your internet connection and try again; if it keeps failing, please contact us and report this issue." |
+| `error`       | "Could not check for updates. Check your internet connection, then close and reopen the app. If it keeps failing, please contact us and report this issue." |
 
 The `started` guard still makes it one check per launch: Try again and a second failure only attach
 a listener and replay the current phase, never a second check or download. The listener ignores

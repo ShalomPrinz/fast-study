@@ -43,7 +43,7 @@ const UPDATE_ROWS = {
     done: true,
   },
   error: {
-    text: 'Could not check for updates. Check your internet connection and try again; if it keeps failing, please contact us and report this issue.',
+    text: 'Could not check for updates. Check your internet connection, then close and reopen the app. If it keeps failing, please contact us and report this issue.',
   },
 };
 
