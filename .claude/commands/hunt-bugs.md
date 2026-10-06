@@ -87,9 +87,10 @@ wall or switch a fake's mode whenever your flow needs to. What you will use most
   prints one.
 - The app, at `url frontend` (localhost, not 127.0.0.1: dev CORS takes only localhost). Drive it
   only through a `browser.mjs` session — never write your own Playwright driver. Each flow owns one
-  session, at `url browser-<tag>`; another comes from `hb.mjs --harness <your harness> browser <tag>`. Over curl: `goto`, `click`, `fill`, `text`,
-  `screenshot` (lands as `evidence/<tag>-<name>.png`), `eval`, `log`, `mutations` — the README has
-  the exact calls. Every answer ends with the console errors and failed or 4xx/5xx requests the
+  session, at `url browser-<tag>`; another comes from `hb.mjs --harness <your harness> browser <tag>`. `hb goto`, `click`, `fill`,
+  `press` and `eval` drive it with plain arguments (`--browser <tag>`, `--shot <name>`); over curl
+  also `text`, `screenshot` (lands as `evidence/<tag>-<name>.png`), `log`, `mutations` — the README
+  has the exact calls. Every answer ends with the console errors and failed or 4xx/5xx requests the
   command caused, and every non-GET request is kept in `evidence/<tag>-mutations.jsonl` with its
   body and answer: quote both as evidence.
 - `<harness>/logs/*.log` — one per service, plus `network.log`, which lists every redirected and
@@ -114,7 +115,7 @@ wall or switch a fake's mode whenever your flow needs to. What you will use most
   `add-material <course> <lecture> [file]` (a material PDF, with the notify the downloader sends),
   `rm-lecture <course> <lecture>` (the folder deleted on disk, mid-run if you like),
   `lock <glob>` / `unlock` (the database fails that file as Windows does one open in a viewer —
-  `423 file_locked`) and `refused`. `hb.mjs help` lists them all.
+  `423 file_locked`), `refused`, and the browser actions above. `hb.mjs help` lists them all.
 - `node .claude/hunt-bugs/hunt.mjs --harness <your harness> brief <tag>` — a flow agent's brief
   (Step 2); `--wave <wave> findings` is the merge (Step 4).
 - PDFs: no `pdftotext`/`pdftoppm` here — read and render them with PyMuPDF through

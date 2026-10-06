@@ -172,12 +172,24 @@ node .claude/harness/hb.mjs --harness DIR browser other               # later, o
 A tag is any name. Each session takes a free port, recorded in `ports.json` as `browser-<tag>` (and
 in `stack.json`), and logs every event to `logs/browser-<tag>.log`.
 
+The common actions have a plain-argument form in `hb` (`node .claude/harness/hb.mjs --harness DIR`), which builds the request itself — so a
+selector or value with quotes, Hebrew or newlines is typed as-is. Each goes to the `main` session
+unless `--browser TAG` names another, prints the session's answer, and exits 1 when it failed:
+
+```bash
+hb goto /course/hb-mgmt/overview                    # a path on the app (a lecture is /<course>/<lecture>), or a full URL
+hb click 'text=New course'                          # any Playwright selector
+hb fill 'input[placeholder="Course name…"]' hb-mgmt-x
+hb press Enter --shot created                       # on the focus, or `hb press <key> <selector>`
+hb eval 'await page.waitForTimeout(3000); return page.url()'   # or the JS on stdin: `hb eval <<'JS'`
+hb fill input -- --shot                             # `--` ends the flags, for a value that reads like one
+```
+
+Every route, those included, is also plain HTTP on the session's port:
+
 ```bash
 B=$(node .claude/harness/hb.mjs --harness DIR url browser-main)
-curl -s $B/goto -d '{"url":"/course/hb-mgmt/overview"}'   # a path on the app (a lecture is /<course>/<lecture>), or a full URL
-curl -s $B/click -d '{"selector":"text=New course"}'      # any Playwright selector
-curl -s $B/fill -d '{"selector":"input[placeholder=\"Course name…\"]","value":"hb-mgmt-x"}'
-curl -s $B/press -d '{"key":"Enter","screenshot":"created"}'   # on the focus, or {"selector":…}
+curl -s $B/fill -d '{"selector":"input","value":"hb-mgmt-x","screenshot":"filled"}'
 curl -s $B/text                                           # body innerText; or {"selector":…}
 curl -s $B/screenshot -d '{"name":"new-course"}'          # → evidence/mgmt-new-course.png ({"full":true})
 curl -s $B/eval --data-binary 'await page.waitForTimeout(3000); return page.url()'
@@ -310,7 +322,8 @@ npm run test:harness     # from the repo root: node:test, then pytest — second
 `tests/` unit-tests the harness's own logic: the providers' rule parsing, whole-segment `match`
 and `times` draining, the site's `/control` and one-time `/die/` drop, the fake tool's argv and
 failure table, `hb state`'s diff, the env and baseline helpers, port reuse, and the DOM timeline's retention,
-change and flicker logic (its recorder and replay run in a browser, so the live stack proves them). Each fake keeps
+change and flicker logic (its recorder and replay run in a browser, so the live stack proves them), and `hb`'s
+browser actions — real `hb.mjs` argv against a stand-in session, so what it receives is exactly what was typed. Each fake keeps
 that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mjs`,
 `tool-args.mjs`) so a test imports it without a port or a fixture. `test_shim.py` runs the real
 Python shim in a child interpreter per case, since its patches are process-wide: lock globs as tail

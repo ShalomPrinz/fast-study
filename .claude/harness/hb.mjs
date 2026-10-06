@@ -5,6 +5,7 @@
 //   node .claude/harness/hb.mjs [--harness DIR] <command> [args…]   (or HARNESS_DIR=DIR)
 import fs from 'node:fs';
 import path from 'node:path';
+import { ACTIONS, actionRequest } from './lib/act.mjs';
 import { DATABASE, bindPorts, bytes, call, saveSettings } from './lib/api.mjs';
 import { markSeeded, removeLecture, reseed, settingsPatch, unwall, wall } from './lib/baseline.mjs';
 import { SELFCHECK_TAG, harnessPaths, readPorts } from './lib/env.mjs';
@@ -192,6 +193,30 @@ const COMMANDS = {
   },
 };
 
+// One browser action per entry, sent to the session `--browser` names; a failed action exits 1.
+for (const name of Object.keys(ACTIONS)) {
+  COMMANDS[name] = {
+    usage: ACTIONS[name].usage,
+    summary:
+      name === 'eval'
+        ? "run JS (an async function body given page, context) in a session; stdin when no arg or '-'"
+        : `/${name} on a browser session (default main), arguments as typed — no JSON to escape`,
+    async run(paths, args) {
+      const {
+        tag,
+        path: route,
+        body,
+      } = actionRequest(name, args, () => fs.readFileSync(0, 'utf8'));
+      const port = readPorts(paths)[`browser-${tag}`];
+      if (!port)
+        throw new Error(`no browser session "${tag}" — start one with \`hb browser ${tag}\``);
+      const response = await fetch(`http://127.0.0.1:${port}${route}`, { method: 'POST', body });
+      process.stdout.write(await response.text());
+      if (!response.ok) process.exitCode = 1;
+    },
+  };
+}
+
 function help() {
   const width = Math.max(...Object.values(COMMANDS).map((command) => command.usage.length));
   console.log('usage: hb.mjs [--harness DIR] <command> [args…]\n');
@@ -202,8 +227,8 @@ function help() {
 
 async function main() {
   const args = process.argv.slice(2);
-  const at = args.indexOf('--harness');
-  const root = at === -1 ? process.env.HARNESS_DIR : args.splice(at, 2)[1];
+  // Only ahead of the command, so a fill value that reads `--harness` stays a value.
+  const root = args[0] === '--harness' ? args.splice(0, 2)[1] : process.env.HARNESS_DIR;
   const [name, ...rest] = args;
   if (!name || name === 'help' || !COMMANDS[name]) {
     help();

@@ -31,10 +31,14 @@ It runs the code of the checkout it lives in, so in a worktree run the worktree'
 export HARNESS_DIR=<scratchpad>/harness
 hb() { node .claude/harness/hb.mjs "$@"; }
 hb url                                   # every URL of this stack; `hb url <name>` prints one
-B=$(hb url browser-main)
-curl -s $B/goto -d '{"url":"/course/hb-edit/overview"}'
-curl -s $B/click -d '{"selector":"text=…"}'
-curl -s $B/press -d '{"key":"Enter","screenshot":"saved"}'   # /click, /fill, /press take a screenshot name
+hb goto /course/hb-edit/overview         # actions take plain arguments, no JSON to escape
+hb click 'text=…'
+hb fill 'input[placeholder="Course name…"]' 'קורס'
+hb press Enter --shot saved              # click, fill and press take --shot NAME; all take --browser TAG
+hb eval <<'JS'                           # JS on stdin (or as one argument), given page and context
+return page.url()
+JS
+B=$(hb url browser-main)                 # every other route over curl; a failed hb action exits 1
 curl -s $B/text
 curl -s $B/screenshot -d '{"name":"after-save"}' # → $HARNESS_DIR/evidence/main-after-save.png
 curl -s $B/dom -d '{"selector":".toast","since":"-10000"}'  # always-on DOM timeline: what it matched over time
