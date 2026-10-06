@@ -319,6 +319,25 @@ class TestWrapEnglishPhrases:
         assert r"\LR{4KB}" in result
         assert r"\LR{64KB}" in result
 
+    def test_decimal_glued_to_unit_wrapped(self):
+        # Regression: only the integer part joined, so "0.5ms" printed as "5ms.0".
+        result = wrap_english_phrases("זמן התגובה הממוצע היה 0.5ms בשרת")
+        assert r"\LR{0.5ms}" in result
+
+    def test_decimal_unit_after_vav_hyphen(self):
+        result = wrap_english_phrases("בשרת, ו-2.5GB זיכרון.")
+        assert r"ו-\LR{2.5GB}" in result
+
+    def test_decimal_unit_in_table_cell(self):
+        result = wrap_english_phrases("| השהיה | 0.25s |")
+        assert r"\LR{0.25s}" in result
+
+    def test_comma_decimal_glued_to_unit(self):
+        assert r"\LR{2,5GB}" in wrap_english_phrases("נפח 2,5GB כאן")
+
+    def test_bare_decimal_before_hebrew_not_wrapped(self):
+        assert r"\LR" not in wrap_english_phrases("ההשהיה היא 0.5 שניות, או 2,5 שקלים.")
+
     def test_spaced_number_before_hebrew_not_glued(self):
         # A number with a SPACE before the word stays RTL (not glued to a unit).
         result = wrap_english_phrases("עולה 4 שקלים")

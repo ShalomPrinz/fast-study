@@ -69,7 +69,7 @@ Math **and** code compose into one splitter, `_PROTECTED_RE`, each alternative d
 Wraps Latin runs in `\LR{}` (LaTeX-escaped — `x86_64` carries special chars) so they don't reorder inside the RTL paragraph. The regex is deliberately fussy:
 
 - **Latin includes accented forms** (Latin-1 Supplement + Extended-A/B, minus `×`/`÷`), else "Scheffé" orphans its `é`.
-- **A numeric prefix glued to a letter joins the run** (`4KB`, `3-way`); "4 שקלים", with a space, does not.
+- **A numeric prefix glued to a letter joins the run** (`4KB`, `0.5ms`, `3-way`); "4 שקלים", with a space, does not.
 - **A number alone is a continuation, never an anchor** — "Software 1.0" is one run, "5 שקלים" stays untouched.
 - **Separators (space, `, `, `-`, abbreviation `. `) glue only when another Latin token follows**, so a sentence-final period or a dash before Hebrew stays RTL.
 - **Trailing separators are excluded**, so they don't jump to the run's far edge. A possessive apostrophe stays inside ("Tukey's"), and after a sibilant (`s`/`x`/`z`) glues across the following space ("Bayes' Rule") — the sibilant restriction keeps a closing quote ("’word’ here") outside.

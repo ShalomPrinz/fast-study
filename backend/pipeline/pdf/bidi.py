@@ -19,7 +19,7 @@ _POSSESSIVE = r"(?<=[sxzSXZ])['’](?=[ \t]+[" + _LATIN + r"])"
 # One Latin token: optional numeric prefix / leading slash glued to a letter, then word chars
 # with separators only when more follow. Why each piece is shaped so: docs/BIDI.md.
 _WORD = (
-    r"(?:[0-9]+-?)?(?:(?<![" + _HEBREW + r"])/)?[" + _LATIN + r"]"
+    r"(?:[0-9]+(?:[.,][0-9]+)*-?)?(?:(?<![" + _HEBREW + r"])/)?[" + _LATIN + r"]"
     r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r"0-9])|" + _POSSESSIVE + r")*"
 )
 # A number joins a phrase as a CONTINUATION only, never an anchor — so a lone
