@@ -38,8 +38,8 @@ disk with no build-time coupling to `electron/package.json`. `locale` is `app.ge
 frontend's initial language when the profile holds no pick ([`I18N.md`](../../frontend/docs/I18N.md)).
 `defaultDataRoot` is `data` under the state root (`%LOCALAPPDATA%\FastStudy\data` packaged,
 `.state/data` in dev) — only the init wall's prefill: main creates nothing, the database does on save.
-`errorReports` is the boolean in force for this launch — read at startup, so a later write does not
-change it ([error reporting](#error-reporting-sentry)).
+`errorReports` is the stored switch as the page loaded, `false` when unset; after a save, the write's
+result is current ([error reporting](#error-reporting-sentry)).
 
 `boot` belongs to the launch screen alone, which loads in the same window and so through the same
 preload. The frontend ignores it, and the launch screen ignores everything else — while it renders
@@ -82,14 +82,25 @@ logged. Nothing guards navigation or checks an IPC sender, so the window must ne
 Main inits `@sentry/electron/main` from `lib/sentry`'s policy (`options('electron')`), before
 `registerScheme()` and before `ready`, which the SDK requires. The DSN is `FASTSTUDY_SENTRY_DSN` from
 main's env, else `package.json`'s `sentryDsn`, which only the release build stamps
-(`-c.extraMetadata.sentryDsn`); neither set means the SDK is never loaded: no DSN, no report.
-
-**The user can switch it off.** The store's `error_reports` (`errorReports`; unset reads `null` and
-means on) is read once, before the init, and applies from the next launch. Off, the DSN is empty:
-main never loads the SDK, every child gets `FASTSTUDY_SENTRY_DSN=` so `enabled()` is false in all four,
-and `window.faststudy.errorReports` is `false`, which the renderer — whose DSN is baked at build — must
-honour itself. The
+(`-c.extraMetadata.sentryDsn`); neither set means the SDK is never loaded: no DSN, no report. The
 environment is `production` packaged, else `development`: one constant, also every child's `SENTRY_ENVIRONMENT`.
+
+**The user's switch is live, and off until answered.** The store's `error_reports` (`errorReports`)
+is on only when it is `true` — unset is off, so nothing leaves before the first-run screen is
+answered. With a DSN, main inits the SDK either way and off is `lib/sentry`'s transport gate
+(`transport: makeElectronOfflineTransport(gate(makeElectronTransport))`), set from the store before
+the init: a second `init()` throws in `@sentry/electron` main, so the SDK is never closed, re-inited
+or toggled through `enabled`. The gate sits under the offline queue because that queue re-sends
+envelopes saved by an earlier launch ~5s after init, past the client's own checks; while off it
+drains them unsent. Every child gets the DSN plus `FASTSTUDY_ERROR_REPORTS` ([`BOOT.md`](BOOT.md#the-child-environment)).
+
+A `settings.write` carrying `errorReports` flips main's flag, then POSTs `{"error_reports": bool}`
+with the secret to all four services' `/config` in parallel, 2s each. A service that is down, slow or
+refuses never fails the save: the result carries `errorReportsRestartNeeded: true` (and the log
+names the service), and the frontend tells the user the switch is whole only after a restart, when
+the child env carries it. Writes are serialised, so two quick toggles land in order. The renderer's
+own SDK holds its own flag; its events still reach Sentry only through main, so main's gate and
+`beforeSend` cover them either way.
 
 **A renderer's event travels renderer SDK → IPC → main → Sentry.** The SDK registers its own preload
 on the default session (`registerPreloadScript`); it requires only `electron`, so it runs in the
@@ -131,10 +142,11 @@ missing bridge must never render as an unsupported machine. Why each check must 
 ## The settings store
 
 `settings` implements the frontend's `SettingsBacking` — `read()` and `write(patch)`, both answering
-the camelCase `Settings` shape — so the packaged app needs no adapter and browser dev keeps using
-the database service's `.env` store unchanged. The renderer still sends its own `POST /config` calls
-after a write, exactly as it does in dev; main does not, and stays out of the settings-owner rules
-that `frontend/src/services/settings.ts` holds.
+the camelCase `Settings` shape, `write` adding `errorReportsRestartNeeded` — so the packaged app
+needs no adapter and browser dev keeps using the database service's `.env` store unchanged. The
+renderer still sends its own `POST /config` calls after a write, exactly as it does in dev; main
+sends only the error-reports switch's, and stays out of the settings-owner rules that
+`frontend/src/services/settings.ts` holds.
 
 Main owns the store end to end, which is forced: `safeStorage` is a main-process API, and a store
 written from both processes would put two writers on one file.
@@ -157,7 +169,9 @@ written from both processes would put two writers on one file.
   renderer adopts `write()`'s return value as its state and sends its `POST /config` calls only
   after it resolves, so a partial write would leave the file, the running services and the screen
   each holding a different answer. `database/settings.py` builds its updates the same way.
-- **`error_reports` is the launcher's own field**: main reads it at startup and no service is handed
-  it as an env var.
+- **`error_reports` and `privacy_confirmed` are the launcher's own fields**, in no service's settings
+  env. Main turns `error_reports` into each process's Sentry flag itself; `privacy_confirmed`
+  (`privacyConfirmed`, unset reads `false`) is the renderer's record that the privacy notice was
+  answered, and main only stores it.
 - **In a packaged app `database/settings.py`'s `.env` store goes unused.** The services read the env
   vars main sets; nothing migrates between the two stores, and Electron never reads `.env`.

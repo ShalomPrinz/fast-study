@@ -13,6 +13,7 @@ everything on quit.
 | `main.js`     | The launch: secret, child specs, ports, health, window, teardown, log, Sentry  |
 | `protocol.js` | The `app://bundle` scheme and serving `frontend/dist` over it                   |
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
+| `reports.js`  | The error-reports switch — the child env, the settings write that applies it live |
 | `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
 | `updater.js`  | The update check — electron-updater against GitHub Releases, silent            |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
@@ -68,7 +69,8 @@ hits that are not orphans; tell them apart by `/proc/<pid>/cwd` rather than read
 failure.
 
 **The pure logic has a test suite** — `npm --prefix electron test`, `node --test` with no dependency,
-covering `resolveWithin`'s path containment, the store's tables and refusal rules, and the teardown's
+covering `resolveWithin`'s path containment, the store's tables and refusal rules, the error-reports
+switch's env and its push to each service's `/config` (against local HTTP stubs), and the teardown's
 SIGTERM→SIGKILL escalation against real `sh` process groups. It runs under plain `node` with no display: `tests/stubElectron.js` puts a fake
 `electron` in the module cache before the module under test is required, which is also how the
 unavailable-keystore and failed-decrypt paths are reached. Nothing that spawns a service is in it.
@@ -123,8 +125,9 @@ the `build` block in `package.json`.
   real files. The two negations drop `node_modules` source maps and `.d.cts`/`.d.mts`, which the
   runtime never reads and electron-builder's default ignore (`.d.ts` only) misses.
 - **The packaged Sentry DSN is stamped at build** (`-c.extraMetadata.sentryDsn`), never committed;
-  main reads `FASTSTUDY_SENTRY_DSN` first, then `package.json`'s `sentryDsn`, and hands it to every child — unless the
-  user's `error_reports` switch is off ([`RENDERER.md`](docs/RENDERER.md#error-reporting-sentry)).
+  main reads `FASTSTUDY_SENTRY_DSN` first, then `package.json`'s `sentryDsn`, and hands it to every child
+  whether the user's `error_reports` switch is on or off — off is a transport gate, not a missing DSN
+  ([`RENDERER.md`](docs/RENDERER.md#error-reporting-sentry)).
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
 - **Updates are silent and packaged-only**, and replace `resources/` wholesale — see

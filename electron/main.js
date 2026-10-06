@@ -8,6 +8,7 @@ const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron')
 const sentryPolicy = require('@faststudy/sentry');
 const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
+const { reportsOn, sentryEnv, writeSettings } = require('./reports');
 const store = require('./store');
 const { startUpdater } = require('./updater');
 const { reapChildren, signalChildren } = require('./teardown');
@@ -20,13 +21,10 @@ const PORT_LINE = /^FASTSTUDY_PORT=(\d+)$/;
 const HEALTH_TIMEOUT_MS = 60_000;
 // Longer than a service's own Sentry shutdown flush (~2s), so a clean exit is never cut short.
 const KILL_GRACE_MS = 3000;
-// The user's switch, read once before Sentry inits: a change applies on the next launch. Unset is on.
-const ERROR_REPORTS = store.read().errorReports !== false;
 // Env wins so dev and tests can point elsewhere; the packaged value is stamped into package.json at
-// build. Neither set, or the switch off, means no DSN anywhere: main and every child report nothing.
-const SENTRY_DSN = ERROR_REPORTS
-  ? process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || ''
-  : '';
+// build. Neither set means no DSN anywhere: main and every child report nothing. The user's switch
+// does not blank it — it gates each process's transport, so it can flip without a restart.
+const SENTRY_DSN = process.env.FASTSTUDY_SENTRY_DSN || require('./package.json').sentryDsn || '';
 // One value for main and every child, so all five processes report under the same environment.
 const SENTRY_ENVIRONMENT = app.isPackaged ? 'production' : 'development';
 
@@ -57,12 +55,15 @@ let serviceUrls = {};
 // The main-process SDK, loaded only when a DSN is set; null otherwise, and everything here no-ops.
 let sentry = null;
 
+// The policy read its flag from main's env at import; the store's answer is the one that counts.
+sentryPolicy.setReporting(reportsOn());
 // Sentry must init before the app is ready; it runs first so an exception anywhere below is caught.
 initSentry();
 // Must run before the app is ready, or the scheme is registered too late to be privileged.
 registerScheme();
 
-/** Init the main-process SDK from the shared policy, or do nothing when no DSN is set. */
+/** Init the main-process SDK from the shared policy, or do nothing when no DSN is set. Inits whether
+ *  reports are on or off: off is the policy's transport gate, since a second init throws here. */
 function initSentry() {
   if (!sentryPolicy.enabled(SENTRY_DSN)) return;
   sentry = require('@sentry/electron/main');
@@ -73,6 +74,9 @@ function initSentry() {
       environment: SENTRY_ENVIRONMENT,
     }),
     beforeSend,
+    // The gate sits under the offline queue: that queue re-sends saved envelopes ~5s after init,
+    // past the client's own checks, and the gate drains them unsent while off.
+    transport: sentry.makeElectronOfflineTransport(sentryPolicy.gate(sentry.makeElectronTransport)),
     // Renderers reach main over the SDK's own preload, which it registers on the session and which
     // runs sandboxed. No `sentry-ipc://` fallback: its privileged-scheme registration wraps `app://`'s.
     ipcMode: sentry.IPCMode.Classic,
@@ -192,8 +196,8 @@ function childSpecs() {
   ];
 }
 
-/** The environment every child shares: the launch contract plus the stored settings. Read once, at
- *  boot — a later change reaches a running service through its own `POST /config`. */
+/** The environment every child shares: the launch contract plus the stored settings, read from the
+ *  store at each boot — a later change reaches a running service through its own `POST /config`. */
 function sharedEnv() {
   const packaged = app.isPackaged
     ? {
@@ -209,8 +213,7 @@ function sharedEnv() {
     // What each service's Sentry init reads; `release` is `faststudy@<version>` in all five processes.
     FASTSTUDY_VERSION: app.getVersion(),
     SENTRY_ENVIRONMENT,
-    // Always set, empty when off, so a DSN in main's own env is not inherited past the switch.
-    FASTSTUDY_SENTRY_DSN: SENTRY_DSN,
+    ...sentryEnv(SENTRY_DSN),
     ...packaged,
     ...store.serviceEnv(),
   };
@@ -482,7 +485,7 @@ function createWindow(checks) {
       version: app.getVersion(),
       locale: app.getLocale(),
       defaultDataRoot: DEFAULT_DATA_ROOT,
-      errorReports: ERROR_REPORTS,
+      errorReports: reportsOn(),
     };
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
@@ -491,7 +494,14 @@ function createWindow(checks) {
     pickFolder(event.sender, defaultPath),
   );
   ipcMain.handle('faststudy:settings-read', () => store.read());
-  ipcMain.handle('faststudy:settings-write', (event, patch) => store.write(patch));
+  ipcMain.handle('faststudy:settings-write', (event, patch) =>
+    writeSettings(patch, {
+      urls: serviceUrls,
+      secret: SECRET,
+      setReporting: sentryPolicy.setReporting,
+      log,
+    }),
+  );
   ipcMain.handle('faststudy:boot-state', () => bootState);
   ipcMain.on('faststudy:boot-retry', () => runBoot());
   ipcMain.on('faststudy:boot-quit', () => app.quit());
@@ -543,7 +553,7 @@ if (!app.requestSingleInstanceLock()) {
     const checks = runStartupChecks();
     const took = Number(process.hrtime.bigint() - started) / 1e6;
     log('main', `startup checks in ${took.toFixed(2)}ms — ${JSON.stringify(checks)}`);
-    log('main', `error reports ${ERROR_REPORTS ? 'on' : 'off'} for this launch`);
+    log('main', `error reports ${reportsOn() ? 'on' : 'off'} at launch`);
     createWindow(checks);
     // The frontend loads only once all four are healthy: it builds its service clients at module
     // scope, against URLs that do not exist until then.

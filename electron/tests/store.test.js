@@ -16,6 +16,7 @@ const full = {
   moodleSite: 'https://lemida.biu.ac.il',
   driveEnabled: true,
   errorReports: false,
+  privacyConfirmed: true,
   geminiApiKey: 'gemini-secret',
   groqApiKey: 'groq-secret',
 };
@@ -87,6 +88,7 @@ test('echoing a read back blanks nothing', () => {
     autoRun: written.autoRun,
     moodleSite: written.moodleSite,
     errorReports: written.errorReports,
+    privacyConfirmed: written.privacyConfirmed,
   };
 
   assert.deepEqual(store.write(echo), written);
@@ -108,7 +110,7 @@ test('the read view trims, and a blank string reads as unset', () => {
   assert.equal(view.geminiModel, null);
 });
 
-test('an unset store reads as all-null', () => {
+test('an unset store reads as all-null, bar privacyConfirmed, which reads false', () => {
   assert.deepEqual(store.read(), {
     dataRoot: null,
     geminiApiKeySet: false,
@@ -119,6 +121,7 @@ test('an unset store reads as all-null', () => {
     autoRun: null,
     moodleSite: null,
     errorReports: null,
+    privacyConfirmed: false,
   });
 });
 
@@ -127,6 +130,18 @@ test('errorReports round-trips as a boolean and never reaches a child env', () =
   assert.equal(store.read().errorReports, false);
   assert.deepEqual(store.serviceEnv(), {});
   assert.equal(store.write({ errorReports: true }).errorReports, true);
+});
+
+test('privacyConfirmed round-trips as a boolean and never reaches a child env', () => {
+  assert.equal(store.write({ privacyConfirmed: true }).privacyConfirmed, true);
+  assert.equal(store.read().privacyConfirmed, true);
+  assert.deepEqual(store.serviceEnv(), {});
+  assert.equal(store.write({ privacyConfirmed: false }).privacyConfirmed, false);
+  assert.throws(
+    () => store.write({ privacyConfirmed: 'true' }),
+    /privacyConfirmed must be a boolean/,
+  );
+  assert.equal(store.read().privacyConfirmed, false);
 });
 
 test('the string "false" cannot store errorReports', () => {

@@ -14,8 +14,9 @@ const STRING_FIELDS = {
 // Mirrors AUTO_RUN_MODES in backend/services/settings.py, which reads an unknown value as 'full'.
 const AUTO_RUN_MODES = ['off', 'audio', 'full'];
 const BOOL_FIELDS = { drive_enabled: 'DRIVE_ENABLED' };
-// Booleans main reads itself and no service is handed: `error_reports` gates Sentry at launch.
-const LAUNCHER_BOOL_FIELDS = ['error_reports'];
+// Booleans no service gets as a settings env var: `error_reports` main turns into each process's
+// Sentry flag itself; `privacy_confirmed` is the renderer's record that the privacy notice was answered.
+const LAUNCHER_BOOL_FIELDS = ['error_reports', 'privacy_confirmed'];
 // Write-only: these are held as safeStorage ciphertext and reported to the renderer as set/unset.
 const SECRET_FIELDS = { gemini_api_key: 'GEMINI_API_KEY', groq_api_key: 'GROQ_API_KEY' };
 
@@ -29,6 +30,7 @@ const FIELDS = {
   moodleSite: 'moodle_site',
   driveEnabled: 'drive_enabled',
   errorReports: 'error_reports',
+  privacyConfirmed: 'privacy_confirmed',
   geminiApiKey: 'gemini_api_key',
   groqApiKey: 'groq_api_key',
 };
@@ -93,6 +95,8 @@ function read() {
     autoRun: text(stored.auto_run),
     moodleSite: text(stored.moodle_site),
     errorReports: bool(stored.error_reports),
+    // Unset reads false: nothing was confirmed until the renderer says so.
+    privacyConfirmed: stored.privacy_confirmed === true,
   };
 }
 

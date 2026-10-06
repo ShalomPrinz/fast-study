@@ -74,15 +74,17 @@ dead child.
 
 Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_VERSION`
 (`app.getVersion()`, each Sentry init's release), `SENTRY_ENVIRONMENT` (`production` packaged, else
-`development`, main's own too), `FASTSTUDY_SENTRY_DSN` (main's resolved DSN, empty when there is none or error reports are off —
-always set, so a DSN in main's own env is never inherited past the switch),
+`development`, main's own too), `FASTSTUDY_SENTRY_DSN` (main's resolved DSN, empty when there is none),
+`FASTSTUDY_ERROR_REPORTS` (`1` when the stored switch is on, else `0` — never absent, so a value in
+main's own env is not inherited past the switch),
 the peers already running, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
 `GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `MOODLE_SITE`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
 
-The environment is read **once, at boot**. A settings change while the app runs reaches each service
-through its own `POST /config`, which the renderer sends after the store write, so main never
-re-spawns a child.
+The environment is read from the store **at each boot**, a Try again included. A settings change
+while the app runs reaches each service through its own `POST /config` — the renderer sends those
+after the store write, except the error-reports switch, which main sends itself
+([`RENDERER.md`](RENDERER.md#error-reporting-sentry)) — so main never re-spawns a child.
 
 The state root is `.state/` at the repo root in dev and `%LOCALAPPDATA%\FastStudy` packaged, and it
 is always passed explicitly rather than left to each service's fallback, so main's own log lands
