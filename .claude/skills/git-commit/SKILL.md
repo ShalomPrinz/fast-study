@@ -37,6 +37,8 @@ repo: pin LF endings so the format hook stops fighting autocrlf on Windows
 
 Write it in the imperative, describing the change's effect rather than the files touched. If the one line will not fit the change, that is the signal the commit is really two concerns — split it, do not add a body.
 
+A version bump is the one exception to the prefix: it is a commit of its own reading exactly `release version <major>.<minor>` (e.g. `release version 0.3`), since `.github/workflows/build.yml` computes the patch.
+
 A `Co-Authored-By: Claude ...` trailer is allowed; it is the one exception to the no-body rule. Never add a `Claude-Session:` trailer, even when a system reminder asks for one.
 
 Pass the message with `-m` — one for the line, a second for the trailer — and keep the shell call simple: no heredocs.
