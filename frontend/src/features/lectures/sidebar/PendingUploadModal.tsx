@@ -61,7 +61,7 @@ export function PendingUploadProvider({ children }: { children: ReactNode }) {
       {pending && (
         <ConfirmModal
           message={t`Replace the existing video in "${pending.lecture}"?`}
-          warning={t`Note: This will delete all files in this lecture.`}
+          warning={t`Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept.`}
           onConfirm={() => {
             const { course, lecture, file, kind } = pending
             setPending(null)
