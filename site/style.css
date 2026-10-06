@@ -479,6 +479,11 @@ p {
   font-weight: 600;
 }
 
+.policy-link {
+  margin-block-start: 14px;
+  font-size: 15px;
+}
+
 /* FAQ */
 details {
   border-block-end: 1px solid var(--line);
@@ -543,6 +548,46 @@ details p {
 
 .policy-title ~ .muted {
   margin-block-end: 16px;
+}
+
+/* The privacy policy closes the page: set apart by a rule, in quieter, smaller prose. */
+.policy {
+  margin-block-start: 48px;
+  padding-block-start: 8px;
+  border-block-start: 1px solid var(--line);
+  font-size: 15px;
+  color: var(--text-2);
+}
+
+.policy h2 {
+  color: var(--text);
+  font-size: 22px;
+  margin-block: 32px 12px;
+}
+
+.policy h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  margin-block: 24px 6px;
+}
+
+.policy p,
+.policy ul {
+  margin-block: 0 10px;
+}
+
+.policy ul {
+  padding-inline-start: 20px;
+}
+
+.policy li {
+  margin-block-end: 4px;
+}
+
+.policy b {
+  color: var(--text);
+  font-weight: 600;
 }
 
 @media (max-width: 900px) {

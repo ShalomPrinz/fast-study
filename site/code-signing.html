@@ -7,7 +7,7 @@
     <title data-en="FastStudy · Code signing policy">FastStudy · מדיניות חתימת קוד</title>
     <meta
       name="description"
-      content="FastStudy's code signing policy: who signs its Windows releases, and what the app sends where."
+      content="FastStudy's code signing policy and privacy policy: who signs its Windows releases, and what the app sends where."
     />
     <link rel="icon" href="img/icon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -64,91 +64,129 @@
             </li>
           </ul>
 
-          <h2><span class="he">פרטיות</span><span class="en">Privacy</span></h2>
-          <p class="muted">
-            <span class="he"
-              >FastStudy שולחת מידע רק למקומות שמפורטים כאן. מעבר להם היא לא מעבירה שום מידע למערכות
-              אחרות ברשת, אלא אם מבקשים ממנה.</span
-            >
-            <span class="en"
-              >FastStudy sends information only to the places listed here. Beyond them, it transfers
-              no information to other networked systems unless you ask it to.</span
-            >
-          </p>
-          <ul class="privacy">
-            <li>
-              <b>Groq</b>
+          <section class="policy" id="privacy">
+            <h2><span class="he">מדיניות פרטיות</span><span class="en">Privacy policy</span></h2>
+            <p>
               <span class="he"
-                >מקבל את האודיו של ההרצאה כדי לתמלל אותו, עם מפתח ה־API שלכם.
-                <a href="https://groq.com/privacy-policy">מדיניות הפרטיות של Groq</a></span
+                >FastStudy רצה על המחשב שלכם. ההרצאות, התמלילים והסיכומים נשארים בתיקייה שבחרתם. אין
+                חשבונות, פרסומות או מעקב אחרי השימוש, ושום מידע לא נמכר.</span
               >
               <span class="en"
-                >Receives the lecture's audio to transcribe it, using your own API key.
-                <a href="https://groq.com/privacy-policy">Groq's privacy policy</a></span
+                >FastStudy runs on your computer. Your lectures, transcripts and summaries stay in
+                the folder you chose. There are no accounts, ads or usage tracking, and nothing is
+                sold.</span
               >
-            </li>
-            <li>
-              <b>Gemini</b>
+            </p>
+
+            <h3>
+              <span class="he">שירותים שמחברים</span><span class="en">Services you connect</span>
+            </h3>
+            <p>
+              <span class="he">FastStudy שולחת מידע רק לשירותים שהגדרתם בעצמכם:</span>
+              <span class="en">FastStudy sends data only to services you set up yourself:</span>
+            </p>
+            <ul>
+              <li>
+                <span class="he"
+                  ><b>Groq</b> מקבל את האודיו של הרצאה כדי לתמלל אותה.
+                  <a href="https://groq.com/privacy-policy">מדיניות הפרטיות של Groq</a></span
+                >
+                <span class="en"
+                  ><b>Groq</b> gets a lecture's audio to transcribe it.
+                  <a href="https://groq.com/privacy-policy">Groq's privacy policy</a></span
+                >
+              </li>
+              <li>
+                <span class="he"
+                  ><b>Gemini</b> מקבל את התמליל וכל קובץ PDF שמוסיפים, כדי לכתוב את הסיכום.
+                  <a href="https://ai.google.dev/gemini-api/terms">תנאי Gemini API</a></span
+                >
+                <span class="en"
+                  ><b>Gemini</b> gets the transcript and any PDFs you add, to write the summary.
+                  <a href="https://ai.google.dev/gemini-api/terms">Gemini API terms</a></span
+                >
+              </li>
+              <li>
+                <span class="he"
+                  ><b>Google Drive</b> מקבל את ה־PDF של הסיכום, ורק אם הפעלתם העלאה ל־Drive.
+                  <a href="https://policies.google.com/privacy">מדיניות הפרטיות של Google</a></span
+                >
+                <span class="en"
+                  ><b>Google Drive</b> gets the summary PDF, and only if you turned Drive upload on.
+                  <a href="https://policies.google.com/privacy">Google's privacy policy</a></span
+                >
+              </li>
+              <li>
+                <span class="he"><b>אתרי הרצאות</b> — פונים אליהם רק כשמורידים מהם.</span>
+                <span class="en"
+                  ><b>Lecture sites</b> are contacted only when you download from them.</span
+                >
+              </li>
+            </ul>
+            <p>
               <span class="he"
-                >מקבל את התמליל, קובצי PDF שבחרתם להוסיף, ולסקירת הקורס קטעים מההרצאות, כדי לכתוב
-                סיכומים, עם מפתח ה־API שלכם.
-                <a href="https://ai.google.dev/gemini-api/terms">תנאי Gemini API</a></span
+                >כל שירות מטפל במידע לפי מדיניות הפרטיות שלו, ומפתחות ה־API שלכם נשמרים מוצפנים
+                במחשב הזה.</span
               >
               <span class="en"
-                >Receives the transcript, any PDF files you chose to add and, for a course overview,
-                excerpts of its lectures, to write summaries, using your own API key.
-                <a href="https://ai.google.dev/gemini-api/terms">Gemini API terms</a></span
+                >Each service handles the data under its own privacy policy, and your API keys are
+                stored encrypted on this computer.</span
               >
-            </li>
-            <li>
-              <b>Google Drive</b>
+            </p>
+
+            <h3><span class="he">דוחות שגיאה</span><span class="en">Error reports</span></h3>
+            <p>
               <span class="he"
-                >ה־PDF של הסיכום עולה ל־Drive שלכם, רק אם הפעלתם העלאה ל־Drive.
-                <a href="https://policies.google.com/privacy">מדיניות הפרטיות של Google</a></span
-              >
-              <span class="en"
-                >The summary PDF is uploaded to your own Drive, only if you turned Drive upload on.
-                <a href="https://policies.google.com/privacy">Google's privacy policy</a></span
-              >
-            </li>
-            <li>
-              <b><span class="he">דוחות שגיאה</span><span class="en">Error reports</span></b>
-              <span class="he"
-                >כשמשהו נכשל, נשלח ל־Sentry דוח עם הודעת השגיאה, מיקומה בקוד, הגרסה, מערכת ההפעלה
-                וסוף יומן ההפעלה של האפליקציה. לפני השליחה מוסרים ממנו נתיבי תיקיות, טקסט בעברית, שם
-                המשתמש והמחשב ומפתחות API. הדוחות פועלים כברירת מחדל, ואפשר לכבות אותם במסך הפתיחה
-                הראשון ובהגדרות; השינוי חל אחרי הפעלה מחדש.
+                >כשמשהו נכשל, FastStudy שולחת דוח ל־Sentry. הוא כולל את השגיאה, את המקום בקוד שבו
+                היא קרתה, את גרסת האפליקציה, את מערכת ההפעלה ואת סוף יומן האפליקציה. נתיבי תיקיות,
+                טקסט בעברית, שמות המשתמש והמחשב ומפתחות API מוסרים לפני השליחה. הדוחות משמשים רק
+                לתיקון באגים, ו־Sentry שומרת אותם לזמן מוגבל. אפשר לכבות אותם בכל רגע בהגדרות,
+                ומאותו רגע לא נשלח שום דבר נוסף.
                 <a href="https://sentry.io/privacy/">מדיניות הפרטיות של Sentry</a></span
               >
               <span class="en"
-                >When something fails, a report goes to Sentry with the error message, where in the
-                code it happened, the app version, the operating system and the end of the app's
-                launch log. Folder paths, Hebrew text, your user and computer names and API keys are
-                removed before it's sent. Reports are on by default, and you can turn them off on
-                the first-run screen and in Settings; the change applies after a restart.
+                >When something fails, FastStudy sends a report to Sentry. It contains the error,
+                where in the code it happened, the app version, your operating system and the end of
+                the app's log. Folder paths, Hebrew text, your user and computer names and API keys
+                are removed before it's sent. Reports are used only to fix bugs, and Sentry keeps
+                them for a limited time. You can turn them off at any time in Settings, and nothing
+                more is sent from that moment on.
                 <a href="https://sentry.io/privacy/">Sentry's privacy policy</a></span
               >
-            </li>
-            <li>
-              <b><span class="he">עדכונים</span><span class="en">Updates</span></b>
+            </p>
+
+            <h3><span class="he">עדכונים</span><span class="en">Updates</span></h3>
+            <p>
               <span class="he"
-                >בכל הפעלה האפליקציה בודקת ב־GitHub Releases אם יש גרסה חדשה, ואם יש, מורידה אותה
-                ברקע ומתקינה כשסוגרים את האפליקציה.
+                >בכל הפעלה FastStudy בודקת ב־GitHub אם יש גרסה חדשה.
                 <a
                   href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
                   >מדיניות הפרטיות של GitHub</a
                 ></span
               >
               <span class="en"
-                >Each time it starts, the app checks GitHub Releases for a new version, downloads it
-                in the background if there is one, and installs it when you close the app.
+                >Each time it starts, FastStudy checks GitHub for a new version.
                 <a
                   href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement"
                   >GitHub's privacy statement</a
                 ></span
               >
-            </li>
-          </ul>
+            </p>
+
+            <h3><span class="he">יצירת קשר</span><span class="en">Contact</span></h3>
+            <p>
+              <span class="he"
+                >שאלות שולחים ב<a href="https://github.com/ShalomPrinz/fast-study/issues"
+                  >עמוד ה־issues של הפרויקט ב־GitHub</a
+                >.</span
+              >
+              <span class="en"
+                >Questions go to the project's
+                <a href="https://github.com/ShalomPrinz/fast-study/issues">GitHub issues page</a
+                >.</span
+              >
+            </p>
+          </section>
         </div>
       </section>
     </main>

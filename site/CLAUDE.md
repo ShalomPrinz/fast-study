@@ -7,7 +7,7 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | File          | What it is                                                                       |
 | ------------- | -------------------------------------------------------------------------------- |
 | `index.html`  | Every section, both languages' copy side by side as `.he` / `.en` spans          |
-| `code-signing.html` | The code signing policy SignPath Foundation requires: its credit line, team roles, privacy |
+| `code-signing.html` | The code signing policy SignPath Foundation requires: its credit line and team roles on top, the full privacy policy as the last section (`#privacy`) |
 | `style.css`   | The app's own tokens, light only, logical properties for both directions        |
 | `main.js`     | The language toggle for every page: `?lang=`, then `localStorage`, then Hebrew; English title from `<title data-en>` |
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
@@ -20,7 +20,8 @@ Hero, how it works, six features, universities, what you'll need, privacy (error
 the SmartScreen install steps and a short FAQ. The footer links `code-signing.html`, whose credit
 sentence, role names (Committers and reviewers, Approvers) and the term "Code signing policy" — shown
 in English in the Hebrew view too — follow [SignPath's conditions](https://signpath.org/terms.html) verbatim. Every claim is the app's current behaviour, checked
-against the owning service's docs; the page has no contact channel by design.
+against the owning service's docs. `index.html`'s privacy section is the short version and links the
+full policy, whose text mirrors the app's in-app policy; its one contact channel is the repo's GitHub issues.
 
 ## The download link is frozen
 
