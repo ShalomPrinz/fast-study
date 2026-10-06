@@ -187,7 +187,7 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   says missing (then keeps it, so **Check again** answers in place); `/settings` always shows it.
 - **University account** (`MoodleAccountField`) — the downloads page's `AccountStatus`
   ([DOWNLOADS.md](DOWNLOADS.md)), with `--danger` retoned to neutral: red belongs on the page the session
-  actually blocks; its unverified state and panel (bot challenge after login) show here too, the control row wrapping for it. The hint names the saved site's host. It belongs to the saved site only, so with none
+  actually blocks; the login finishes by itself with no button (the chip follows the pushed state); its unverified state, panel and retry button (bot challenge after login) show here too, the control row wrapping for it. The hint names the saved site's host. It belongs to the saved site only, so with none
   saved — or another one chosen but unsaved — it shows a "save first" hint instead of a Connect that would
   sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall shows it
   under the university picker and, outside `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the

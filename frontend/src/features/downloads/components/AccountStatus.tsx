@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import {
   connectAuth,
   completeAuth,
   disconnectAuth,
+  isReconnectError,
 } from '@/features/downloads/services/autoDownloader'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import ConfirmModal from '@/shared/components/ConfirmModal'
@@ -11,26 +12,26 @@ import Icon from '@/shared/components/Icon'
 import { toastFailure } from '@/shared/utils/failure'
 import { toast } from '@/services/toaster'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
-import { loginFailure } from '@/features/downloads/utils/downloadErrors'
-import { isBlockedError, isReconnectError } from '@/features/downloads/services/autoDownloader'
+import { blockedMessage, loginFailure } from '@/features/downloads/utils/downloadErrors'
 import {
   accountView,
+  loginToast,
   type AccountPanel,
-  type BlockedLogin,
   type LoginPhase,
+  type LoginToast,
 } from '@/features/downloads/utils/accountView'
 import './AccountStatus.css'
 import '@/styles/chip.css'
 import '@/styles/button.css'
 
 // The university account as a header fact: one chip saying where the session stands, and the one button that
-// can move it — Connect pops a headed browser for MFA, Done persists the session, Disconnect drops it.
+// can move it — Connect starts the login on the host and the chip follows the service's pushed state, Disconnect
+// drops it.
 export default function AccountStatus() {
   const { t } = useLingui()
   const { status, refresh } = useAuthStatus()
   const [phase, setPhase] = useState<LoginPhase>('loading')
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
-  const [blocked, setBlocked] = useState<BlockedLogin | null>(null)
 
   // Probing from here rather than from the provider is what keeps the `reconnectKey` remount
   // meaningful: it re-runs this effect, and the shared status is replaced by a fresh answer.
@@ -38,42 +39,45 @@ export default function AccountStatus() {
     refresh().then(() => setPhase('idle'))
   }, [refresh])
 
-  async function handleConnect() {
-    setPhase('connecting')
-    setBlocked(null)
-    try {
-      await connectAuth()
-      setPhase('pending')
-    } catch (err) {
-      toastFailure(err)
-      setPhase('idle')
-    }
-  }
-
-  async function handleComplete() {
-    setPhase('completing')
-    try {
-      await completeAuth()
-      setBlocked(null)
-      await refresh()
-    } catch (err) {
-      if (isBlockedError(err)) {
-        // The token was kept: the status now reads unverified, and the panel says what to do.
-        setBlocked({ challengeWindow: err.challengeWindow })
-        await refresh()
-      } else if (isReconnectError(err)) {
-        // No login was captured, which is not an expired session: log in again.
-        setBlocked(null)
-        await refresh()
-        toast('error', t`The login didn't finish. Press Connect and sign in again.`)
-        setPhase('idle')
-        return
-      }
-      // The service says why (timed out, window closed, nothing pending, a site it refuses).
+  // The service says why (timed out, window closed, a site it refuses, a bot check).
+  function toastLogin(toastKind: LoginToast | null, err?: unknown) {
+    if (toastKind?.kind === 'reconnect') {
+      toast('error', t`The login didn't finish. Press Connect and sign in again.`)
+    } else if (toastKind?.kind === 'blocked') {
+      toast('error', blockedMessage())
+    } else if (toastKind) {
+      toast('error', serviceErrorNode(toastKind.failure))
+    } else if (err !== undefined) {
       const failure = loginFailure(err)
       if (typeof failure === 'string') toast('error', failure)
       else if (failure) toast('error', serviceErrorNode(failure))
+      else if (isReconnectError(err)) toastLogin({ kind: 'reconnect' })
       else toastFailure(err)
+    }
+  }
+
+  const seen = useRef(status)
+  useEffect(() => {
+    toastLogin(loginToast(seen.current, status))
+    seen.current = status
+  }, [status])
+
+  async function handleConnect() {
+    setPhase('connecting')
+    try {
+      await connectAuth()
+    } catch (err) {
+      toastFailure(err)
+    }
+    setPhase('idle')
+  }
+
+  async function handleVerify() {
+    setPhase('verifying')
+    try {
+      await completeAuth()
+    } catch (err) {
+      toastLogin(null, err)
     }
     setPhase('idle')
   }
@@ -83,8 +87,6 @@ export default function AccountStatus() {
     setPhase('disconnecting')
     try {
       await disconnectAuth()
-      setBlocked(null)
-      await refresh()
     } catch (err) {
       toastFailure(err)
     }
@@ -100,7 +102,7 @@ export default function AccountStatus() {
     />
   )
 
-  const view = accountView(phase, status, blocked)
+  const view = accountView(phase, status)
 
   if (view.chip === 'checking') {
     return (
@@ -112,14 +114,9 @@ export default function AccountStatus() {
 
   if (view.chip === 'finishing') {
     return (
-      <>
-        <span className="chip chip--warn">
-          <Trans>finish login in the browser window</Trans>
-        </span>
-        <button className="btn btn--ghost" onClick={handleComplete} disabled={phase !== 'pending'}>
-          {phase === 'completing' ? t`finishing…` : t`Done`}
-        </button>
-      </>
+      <span className="chip chip--warn">
+        <Trans>finish login in the browser window</Trans>
+      </span>
     )
   }
 
@@ -138,8 +135,8 @@ export default function AccountStatus() {
         <span className="chip chip--warn" data-account="unverified">
           <Trans>checking the connection</Trans>
         </span>
-        <button className="btn btn--ghost" onClick={handleComplete}>
-          <Trans>Done</Trans>
+        <button className="btn btn--ghost" onClick={handleVerify} disabled={phase === 'verifying'}>
+          <Trans>I confirmed, try again</Trans>
         </button>
         <button className="btn btn--ghost" onClick={() => setConfirmDisconnect(true)}>
           <Trans>Disconnect</Trans>
@@ -193,19 +190,19 @@ function BlockedPanel({ panel }: { panel: AccountPanel }) {
         {panel === 'window' && (
           <Trans>
             A window opened on the university site. Confirm there that you are not a bot, then press
-            Done again.
+            “I confirmed, try again”.
           </Trans>
         )}
         {panel === 'own-browser' && (
           <Trans>
             Open the university site in your browser and confirm there that you are not a bot, then
-            press Done again.
+            press “I confirmed, try again”.
           </Trans>
         )}
         {panel === 'unknown' && (
           <Trans>
             Use the window that opened on the university site, or open the site in your browser, and
-            confirm there that you are not a bot. Then press Done again.
+            confirm there that you are not a bot. Then press “I confirmed, try again”.
           </Trans>
         )}
       </p>

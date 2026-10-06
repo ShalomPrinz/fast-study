@@ -45,7 +45,7 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **Base URLs** — the four services from `urls` on the bridge, else `VITE_{BACKEND,DATABASE,DOWNLOAD_SERVER,AUTO_DOWNLOADER}_URL`
   (set by a harness running parallel stacks), else the dev ports; resolved synchronously
   at import, since every client is built at module scope and packaged ports are chosen at boot.
-- **Launch secret** — `secretHeaders()` for requests; `withSecretParam(url)` only for the two
+- **Launch secret** — `secretHeaders()` for requests; `withSecretParam(url)` only for the
   `EventSource`s, which cannot set a header. The header keeps the secret out of access logs. Both add
   nothing in browser dev, where no service enforces a secret.
 - **`open`** — non-optional: the whole bridge's absence is the browser-dev test.
@@ -129,6 +129,10 @@ already-toasted `ConnectionError`, so its callers stay silent on it.
 `BlockedError` drops the body's `message`, an English log line, and writes its own copy. `PasscodeError` maps `name` to `lecture`
 because `name` collides with `Error.name`. The helper takes a `Client` because the downloader server's
 `/download-item` forwards the same four bodies verbatim.
+
+`subscribeAuth` wraps `GET /auth/events` — unnamed `data:` frames carrying the login state, current on every
+(re)subscribe — with its own `EventSource` and no toast; its one consumer is `AuthStatusProvider`
+([DOWNLOADS.md](DOWNLOADS.md) §Auth).
 
 ## `features/downloads/services/downloadServer.ts` → downloader server (:3052)
 

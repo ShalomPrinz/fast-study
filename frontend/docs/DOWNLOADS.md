@@ -37,14 +37,22 @@ Its title takes the accent while the account is known to be not connected (`stat
 
 ## Auth
 
-`AuthStatusProvider` sits in `Layout` so the header chip and every course row read one `/auth/status`
-answer. It probes nothing on mount — `AccountStatus` asks wherever it renders — so a route with no
-account control never toasts the auto-downloader as down. `status: null` is "unknown".
+`AuthStatusProvider` sits in `Layout` so the header chip and every course row read one state: the
+auto-downloader's `GET /auth/events` stream (`subscribeAuth`, the current state on subscribe and on every
+change), opened on mount. It never toasts, so a route with no account control never reports the service
+as down. The stream cannot say "no university configured" (it reads as idle), so `AccountStatus` also
+asks `/auth/status` once per mount (`refresh`), and the provider adds `unconfigured` while the pushed
+phase is idle. `status: null` is "unknown".
 
-Connect pops a headed browser on the host for MFA and returns at once; Done calls `/auth/complete` and
-re-probes. Disconnect sits behind a `ConfirmModal`, since getting the token back is another MFA
-round-trip. Both settings screens reuse `AccountStatus` with the `--danger` tone retoned
-([SETTINGS.md](SETTINGS.md)) — only this page is blocked by a missing session.
+Connect only posts `/auth/connect`, which returns at once: the service runs the whole login itself and
+pushes `phase: 'pending'` from window open through verification, so the chip reads "finish login in the
+browser window" (no button) from the stream, and a reload mid-login shows it again from the subscribe frame.
+Success arrives as `connected`. A failed attempt arrives as the state's `error`; `loginToast` toasts it
+once, on the frame that ends a run this tab watched (previous frame `pending`, this one not), so a replayed
+state after a resubscribe or reload never re-toasts the leftover error. Disconnect sits behind a
+`ConfirmModal`, since getting the token back is another MFA round-trip. Both settings screens reuse
+`AccountStatus` with the `--danger` tone retoned ([SETTINGS.md](SETTINGS.md)) — only this page is blocked
+by a missing session.
 
 A `ReconnectError` anywhere toasts a hint and bumps `reconnectKey`, the `key` on `<AccountStatus>`:
 remounting re-runs the probe, since the cached status predates the 401. That is why the probe lives in
@@ -52,20 +60,21 @@ the component, not the never-remounting provider. A `BlockedError` (the site's b
 a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
 `blockedMessage()` and leaves the chip alone.
 
-**Unverified is its own state.** `/auth/status` `unverified: true` (a token kept after a bot challenge blocked
-the post-login check) is neither connected nor not: `accountView` (`utils/accountView.ts`, the one decision of
-chip and panel) gives it a `data-account="unverified"` warn chip with Done and Disconnect, and an inline
-`.account-panel` saying the university is checking, what to confirm and to press Done again. A refused Done
-(`BlockedError`, carrying the 503's `challengeWindow`) toasts and re-probes; the panel reads "a window opened"
-for `true`, "open the site in your browser" for `false`, and a hedged line when nothing says (a status read
-after a reload). No polling: the status is re-read after the action. A 401 `reconnect` from `/auth/complete`
-means no login was captured, so it toasts "sign in again" and leaves the chip on not connected rather than
-expired. The same component serves the first-run wall ([SETTINGS.md](SETTINGS.md)).
+**Unverified is its own state.** `unverified: true` (a token kept after a bot challenge blocked the
+post-login check) is neither connected nor not: `accountView` (`utils/accountView.ts`, the one decision of
+chip and panel) gives it a `data-account="unverified"` warn chip with "I confirmed, try again" (the only
+button that finishes a login; it calls `/auth/complete`, which re-verifies the stored token) and
+Disconnect, and an inline `.account-panel` saying the university is checking, what to confirm and to press
+that button. The panel reads "a window opened" or "open the site in your browser" from the state's
+`site_blocked` error (`params.challengeWindow`), and a hedged line when it carries none. A refused
+`/auth/complete` toasts from its own rejection (`BlockedError`, `UnsupportedError`; a 401 `reconnect` means
+the token is gone, so "sign in again"), and the outcome also arrives on the stream. The same component
+serves the first-run wall ([SETTINGS.md](SETTINGS.md)).
 
 `/auth/status`'s 409 `moodle_site_not_configured` is an answer, not a failure: `fetchAuthStatus` maps it to
 `unconfigured`: the chip reads "no university chosen" with no Connect, the page leads with a nudge linking to
 Settings, and Load recordings is disabled with a tooltip saying why — the init wall lets a user in without one. A login the site's post-login
-check refuses answers `/auth/complete` with 422 `moodle_site_unsupported`, which `loginFailure` toasts in
+check refuses answers with 422 (a rejected `/auth/complete`, or the state's error) `moodle_site_unsupported`, which `loginFailure` toasts in
 its `reason`'s sentence.
 
 `Load recordings` disables only on `connected: false`; unknown leaves it enabled, since guessing

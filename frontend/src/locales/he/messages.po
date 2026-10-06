@@ -348,9 +348,9 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A section is waiting for a passcode"
 msgstr "יחידה ממתינה לקוד גישה"
 
-#: src/features/downloads/components/AccountStatus.tsx:194
-msgid "A window opened on the university site. Confirm there that you are not a bot, then press Done again."
-msgstr "נפתח חלון באתר האוניברסיטה. אשר שם שאינך רובוט, ואז לחץ שוב על \"סיום\"."
+#: src/features/downloads/components/AccountStatus.tsx:192
+msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
+msgstr "נפתח חלון באתר האוניברסיטה. אשר שם שאינך רובוט, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:151
 msgid "Add lecture"
@@ -494,7 +494,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
-#: src/features/downloads/components/AccountStatus.tsx:108
+#: src/features/downloads/components/AccountStatus.tsx:111
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -502,7 +502,7 @@ msgstr "בודק חשבון…"
 msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
-#: src/features/downloads/components/AccountStatus.tsx:139
+#: src/features/downloads/components/AccountStatus.tsx:137
 msgid "checking the connection"
 msgstr "החיבור בבדיקה"
 
@@ -587,7 +587,7 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "אושרה ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:179
+#: src/features/downloads/components/AccountStatus.tsx:177
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחברות"
@@ -600,7 +600,7 @@ msgstr "לחבר את Google Drive עכשיו?"
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:97
+#: src/features/downloads/components/AccountStatus.tsx:100
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -759,17 +759,17 @@ msgstr "מחיקת {0}"
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
-#: src/features/downloads/components/AccountStatus.tsx:145
-#: src/features/downloads/components/AccountStatus.tsx:166
+#: src/features/downloads/components/AccountStatus.tsx:143
+#: src/features/downloads/components/AccountStatus.tsx:164
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתקות"
 
-#: src/features/downloads/components/AccountStatus.tsx:96
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "Disconnect the university account?"
 msgstr "לנתק את חשבון האוניברסיטה?"
 
-#: src/features/downloads/components/AccountStatus.tsx:166
+#: src/features/downloads/components/AccountStatus.tsx:164
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
@@ -777,11 +777,6 @@ msgstr "מתנתק…"
 #: src/features/settings/SettingsView.tsx:313
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
-
-#: src/features/downloads/components/AccountStatus.tsx:120
-#: src/features/downloads/components/AccountStatus.tsx:142
-msgid "Done"
-msgstr "סיום"
 
 #: src/features/settings/InitWall.tsx:57
 msgctxt "section mark"
@@ -995,7 +990,7 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:117
+#: src/features/downloads/components/AccountStatus.tsx:119
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
@@ -1006,10 +1001,6 @@ msgstr "יש להשלים את ההתחברות ל-Google"
 #: src/app/DriveConsentPrompt.tsx:42
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "יש להשלים את ההתחברות ל-Google בלשונית שנפתחה בדפדפן."
-
-#: src/features/downloads/components/AccountStatus.tsx:120
-msgid "finishing…"
-msgstr "מסיים…"
 
 #. placeholder {0}: status.site
 #: src/features/settings/components/MoodleSiteField.tsx:73
@@ -1094,6 +1085,10 @@ msgstr "דף הבית"
 #: src/features/settings/components/ApiKeyField.tsx:137
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
+
+#: src/features/downloads/components/AccountStatus.tsx:140
+msgid "I confirmed, try again"
+msgstr "אישרתי, לנסות שוב"
 
 #: src/features/downloads/components/RecordingRow.tsx:292
 msgid "In course"
@@ -1295,7 +1290,7 @@ msgstr "אין תרגולים"
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/features/downloads/components/AccountStatus.tsx:130
+#: src/features/downloads/components/AccountStatus.tsx:128
 msgid "no university chosen"
 msgstr "לא נבחרה אוניברסיטה"
 
@@ -1320,7 +1315,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "עוד לא אושרה"
 
-#: src/features/downloads/components/AccountStatus.tsx:176
+#: src/features/downloads/components/AccountStatus.tsx:174
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
@@ -1401,9 +1396,9 @@ msgstr "פתיחת ה-PDF"
 msgid "Open the sign-in page"
 msgstr "פתיחת דף ההתחברות"
 
-#: src/features/downloads/components/AccountStatus.tsx:200
-msgid "Open the university site in your browser and confirm there that you are not a bot, then press Done again."
-msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ואשר שם שאינך רובוט, ואז לחץ שוב על \"סיום\"."
+#: src/features/downloads/components/AccountStatus.tsx:198
+msgid "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
+msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ואשר שם שאינך רובוט, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
 #: src/features/settings/components/MoodleSiteField.tsx:114
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
@@ -1545,7 +1540,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:179
+#: src/features/downloads/components/AccountStatus.tsx:177
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
@@ -1698,7 +1693,7 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "Send error reports"
 msgstr "שליחת דיווחי שגיאות"
 
-#: src/features/downloads/components/AccountStatus.tsx:176
+#: src/features/downloads/components/AccountStatus.tsx:174
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
@@ -1905,7 +1900,7 @@ msgstr "הקבצים הבאים יימחקו:"
 msgid "The following files will be re-generated:"
 msgstr "הקבצים הבאים ייווצרו מחדש:"
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:45
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
@@ -1966,7 +1961,7 @@ msgstr "האתר סירב להורדה. הקישור הזה דורש התחבר�
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
-#: src/features/downloads/components/AccountStatus.tsx:190
+#: src/features/downloads/components/AccountStatus.tsx:188
 msgid "The university is checking the connection."
 msgstr "האוניברסיטה בודקת את החיבור."
 
@@ -2102,7 +2097,7 @@ msgstr "אוניברסיטה"
 msgid "University account"
 msgstr "חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:159
+#: src/features/downloads/components/AccountStatus.tsx:157
 msgid "University account connected"
 msgstr "חשבון האוניברסיטה מחובר"
 
@@ -2146,9 +2141,9 @@ msgstr "ההעלאה ל-Google Drive נכשלה."
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/AccountStatus.tsx:206
-msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press Done again."
-msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ואשר שם שאינך רובוט. ואז לחץ שוב על \"סיום\"."
+#: src/features/downloads/components/AccountStatus.tsx:204
+msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
+msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ואשר שם שאינך רובוט. ואז לחץ על \"אישרתי, לנסות שוב\"."
 
 #: src/features/downloads/components/RecordingRow.tsx:47
 #: src/features/lectures/constants/pipeline.ts:18

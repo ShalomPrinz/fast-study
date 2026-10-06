@@ -1,15 +1,27 @@
 import type { Client } from '@/services/http'
 import { createClient, failureError, RequestError } from '@/services/http'
-import { AUTO_DOWNLOADER_URL } from '@/services/runtime'
+import { AUTO_DOWNLOADER_URL, withSecretParam } from '@/services/runtime'
 import type { Kind } from '@/types'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 // Feature-local boundary for the auto-downloader service (Moodle discovery and capture).
 const autoDownloader = createClient(AUTO_DOWNLOADER_URL, 'auto-downloader service')
 
+// Where a login stands, as the service pushes it: `pending` is the whole run, window open through verification.
+export type AuthPhase = 'idle' | 'pending' | 'connected' | 'unverified'
+
+// The last failed login attempt, cleared by the next connect or disconnect.
+export interface AuthError {
+  code: string
+  params?: ErrorParams | null
+}
+
 export interface AuthStatus {
   connected: boolean
   expired: boolean
+  // Only on a pushed state; a `/auth/status` read carries neither.
+  phase?: AuthPhase
+  error?: AuthError
   // No university is configured in the auto-downloader, so there is no account to connect.
   unconfigured?: boolean
   // A token kept after a bot challenge blocked the post-login check: connected, site not yet verified.
@@ -174,13 +186,29 @@ export async function fetchAuthStatus(): Promise<AuthStatus> {
   }
 }
 
-// Launches a headed browser on the host for MFA; returns immediately.
+// The service's current login state on subscribe and again on every change (unnamed frames; no replay, so
+// a reconnect is answered by the fresh current state). Its own EventSource per subscriber, never toasting:
+// a downed service just keeps the native retry going.
+export function subscribeAuth(onState: (state: AuthStatus) => void): () => void {
+  const es = new EventSource(withSecretParam(autoDownloader.url('/auth/events')))
+  es.onmessage = (e) => {
+    try {
+      onState(JSON.parse(e.data) as AuthStatus)
+    } catch {
+      // A frame that is not JSON carries no state.
+    }
+  }
+  return () => es.close()
+}
+
+// Starts the login on the host (a headed browser for MFA) and returns at once; the outcome arrives on
+// `subscribeAuth`.
 export async function connectAuth(): Promise<{ status: string }> {
   return autoDownloader.post<{ status: string }>('/auth/connect')
 }
 
-// Persists the token once the user finishes login. A site the post-login check refuses throws an
-// `UnsupportedError` carrying `moodle_site_unsupported`, a bot challenge a `BlockedError`.
+// Re-verifies the stored unverified token. A site the check refuses throws an `UnsupportedError`
+// carrying `moodle_site_unsupported`, a bot challenge a `BlockedError`, a vanished token a `ReconnectError`.
 export async function completeAuth(): Promise<{ connected: boolean }> {
   return postReconnectAware<{ connected: boolean }>(autoDownloader, '/auth/complete', {})
 }

@@ -83,7 +83,7 @@ export function secretHeaders(): Record<string, string> {
   return SECRET ? { 'X-FastStudy-Secret': SECRET } : {}
 }
 
-/** Native `EventSource` cannot set a header, so the two SSE routes — and only they — take the
+/** Native `EventSource` cannot set a header, so the SSE routes — and only they — take the
  *  secret as a query parameter, which also survives EventSource's own reconnects. */
 export function withSecretParam(url: string): string {
   return SECRET ? `${url}?secret=${encodeURIComponent(SECRET)}` : url

@@ -348,9 +348,9 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/downloads/components/AccountStatus.tsx:194
-msgid "A window opened on the university site. Confirm there that you are not a bot, then press Done again."
-msgstr "A window opened on the university site. Confirm there that you are not a bot, then press Done again."
+#: src/features/downloads/components/AccountStatus.tsx:192
+msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
+msgstr "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:151
 msgid "Add lecture"
@@ -494,7 +494,7 @@ msgstr "Change the data folder while lectures are being processed?"
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:108
+#: src/features/downloads/components/AccountStatus.tsx:111
 msgid "checking account…"
 msgstr "checking account…"
 
@@ -502,7 +502,7 @@ msgstr "checking account…"
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
-#: src/features/downloads/components/AccountStatus.tsx:139
+#: src/features/downloads/components/AccountStatus.tsx:137
 msgid "checking the connection"
 msgstr "checking the connection"
 
@@ -587,7 +587,7 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "Confirmed ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:179
+#: src/features/downloads/components/AccountStatus.tsx:177
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
@@ -600,7 +600,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:97
+#: src/features/downloads/components/AccountStatus.tsx:100
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "Connecting again needs a full login in a browser window, including two-step verification."
 
@@ -759,17 +759,17 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:145
-#: src/features/downloads/components/AccountStatus.tsx:166
+#: src/features/downloads/components/AccountStatus.tsx:143
+#: src/features/downloads/components/AccountStatus.tsx:164
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:96
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "Disconnect the university account?"
 msgstr "Disconnect the university account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:166
+#: src/features/downloads/components/AccountStatus.tsx:164
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -777,11 +777,6 @@ msgstr "disconnecting…"
 #: src/features/settings/SettingsView.tsx:313
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
-
-#: src/features/downloads/components/AccountStatus.tsx:120
-#: src/features/downloads/components/AccountStatus.tsx:142
-msgid "Done"
-msgstr "Done"
 
 #: src/features/settings/InitWall.tsx:57
 msgctxt "section mark"
@@ -995,7 +990,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:117
+#: src/features/downloads/components/AccountStatus.tsx:119
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -1006,10 +1001,6 @@ msgstr "finish signing in to Google"
 #: src/app/DriveConsentPrompt.tsx:42
 msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
-
-#: src/features/downloads/components/AccountStatus.tsx:120
-msgid "finishing…"
-msgstr "finishing…"
 
 #. placeholder {0}: status.site
 #: src/features/settings/components/MoodleSiteField.tsx:73
@@ -1094,6 +1085,10 @@ msgstr "Home"
 #: src/features/settings/components/ApiKeyField.tsx:137
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
+
+#: src/features/downloads/components/AccountStatus.tsx:140
+msgid "I confirmed, try again"
+msgstr "I confirmed, try again"
 
 #: src/features/downloads/components/RecordingRow.tsx:292
 msgid "In course"
@@ -1295,7 +1290,7 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/components/AccountStatus.tsx:130
+#: src/features/downloads/components/AccountStatus.tsx:128
 msgid "no university chosen"
 msgstr "no university chosen"
 
@@ -1320,7 +1315,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "Not confirmed yet"
 
-#: src/features/downloads/components/AccountStatus.tsx:176
+#: src/features/downloads/components/AccountStatus.tsx:174
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1401,9 +1396,9 @@ msgstr "Open PDF"
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
 
-#: src/features/downloads/components/AccountStatus.tsx:200
-msgid "Open the university site in your browser and confirm there that you are not a bot, then press Done again."
-msgstr "Open the university site in your browser and confirm there that you are not a bot, then press Done again."
+#: src/features/downloads/components/AccountStatus.tsx:198
+msgid "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
+msgstr "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 
 #: src/features/settings/components/MoodleSiteField.tsx:114
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
@@ -1545,7 +1540,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:179
+#: src/features/downloads/components/AccountStatus.tsx:177
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1698,7 +1693,7 @@ msgstr "Select a lecture to get started"
 msgid "Send error reports"
 msgstr "Send error reports"
 
-#: src/features/downloads/components/AccountStatus.tsx:176
+#: src/features/downloads/components/AccountStatus.tsx:174
 msgid "session expired"
 msgstr "session expired"
 
@@ -1905,7 +1900,7 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
-#: src/features/downloads/components/AccountStatus.tsx:68
+#: src/features/downloads/components/AccountStatus.tsx:45
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
@@ -1966,7 +1961,7 @@ msgstr "The site refused the download. This link needs a login, so it can't be d
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
-#: src/features/downloads/components/AccountStatus.tsx:190
+#: src/features/downloads/components/AccountStatus.tsx:188
 msgid "The university is checking the connection."
 msgstr "The university is checking the connection."
 
@@ -2102,7 +2097,7 @@ msgstr "University"
 msgid "University account"
 msgstr "University account"
 
-#: src/features/downloads/components/AccountStatus.tsx:159
+#: src/features/downloads/components/AccountStatus.tsx:157
 msgid "University account connected"
 msgstr "University account connected"
 
@@ -2146,9 +2141,9 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/AccountStatus.tsx:206
-msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press Done again."
-msgstr "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press Done again."
+#: src/features/downloads/components/AccountStatus.tsx:204
+msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
+msgstr "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
 
 #: src/features/downloads/components/RecordingRow.tsx:47
 #: src/features/lectures/constants/pipeline.ts:18

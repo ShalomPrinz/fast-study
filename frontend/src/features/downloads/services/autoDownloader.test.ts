@@ -156,3 +156,29 @@ describe('a login the site refuses', () => {
     expect(loginFailure(new RequestError('timed out', 'moodle_login_timeout'))).toBeNull()
   })
 })
+
+describe('subscribeAuth', () => {
+  it('hands each unnamed frame on as the state, skips junk, and closes with the unsubscribe', async () => {
+    const es: { onmessage?: (e: { data: string }) => void; close: () => void; url?: string } = {
+      close: vi.fn(),
+    }
+    vi.stubGlobal(
+      'EventSource',
+      vi.fn(function (url: string) {
+        es.url = url
+        return es
+      }),
+    )
+    const { subscribeAuth } = await import('./autoDownloader')
+    const seen: unknown[] = []
+    const stop = subscribeAuth((s) => seen.push(s))
+
+    es.onmessage?.({ data: '{"phase":"pending","connected":false,"expired":false}' })
+    es.onmessage?.({ data: 'not json' })
+    stop()
+
+    expect(es.url).toContain('/auth/events')
+    expect(seen).toEqual([{ phase: 'pending', connected: false, expired: false }])
+    expect(es.close).toHaveBeenCalled()
+  })
+})
