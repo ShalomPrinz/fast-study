@@ -95,7 +95,7 @@ node .claude/harness/hb.mjs wall              # blank DATA_ROOT, both keys and M
 node .claude/harness/hb.mjs unwall            # put them back to the baseline
 node .claude/harness/hb.mjs add-material hb-nav 'שיעור 3' [file.pdf]  # attach a material, notify
 node .claude/harness/hb.mjs rm-lecture hb-pipeline 'שיעור 4'          # delete its folder, notify
-node .claude/harness/hb.mjs lock 'hb-fail/שיעור 3/summary.pdf'       # held open, Windows-style
+node .claude/harness/hb.mjs lock 'hb-nav/שיעור 1/summary.pdf'        # held open, Windows-style
 node .claude/harness/hb.mjs unlock            # every lock off (or name the globs to drop)
 node .claude/harness/hb.mjs forget-probes     # every probed link back to unprobed ('?')
 node .claude/harness/hb.mjs refused --since 2026-09-25T09:00Z        # real escapes only
@@ -117,11 +117,12 @@ see what a pipeline step, the editor or an open page does when its lecture vanis
 Inside the database process the shim fails every write-mode open, delete and rename of a path
 matching a glob with the `PermissionError` Windows raises (`winerror` 32), so the database's own
 classifier turns it into its real `423 file_locked`, and the backend's pipeline error carries that
-code. A glob matches the tail of the path — `hb-fail/שיעור 3/summary.pdf`, or `*/summary.pdf` for
-every lecture. Reads still succeed, as they do past a viewer's lock. Renaming any folder with a
-matching path at any depth beneath it — the lecture or its course — fails as Windows fails it,
+code. A glob matches the tail of the path — `hb-nav/שיעור 1/summary.pdf`, or `*/summary.pdf` for
+every lecture. Reads still succeed, as they do past a viewer's lock. Renaming any folder holding a
+matching file that exists at any depth beneath it — the lecture or its course — fails as Windows fails it,
 `PermissionError` `winerror` 5 `[WinError 5] Access is denied: 'old' -> 'new'`, and the shim tells
-the database's `fs.crud` alone that it runs on `win32`, so that becomes its real `423 folder_in_use`. The globs live in
+the database's `fs.crud` alone that it runs on `win32`, so that becomes its real `423 folder_in_use`; a glob naming a file not on disk refuses that file's writes and no rename, since
+Windows cannot hold open a missing file. The globs live in
 `<harness>/locks.json`, are read on each call, show in `hb state`, and `hb reseed` clears them.
 
 `forget-probes` restarts `downloader-auto`, whose probe verdicts and replayed captures live only in

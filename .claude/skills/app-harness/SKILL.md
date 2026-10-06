@@ -46,7 +46,7 @@ with the console errors and failed requests the command caused. Service logs are
 The seeded `hb-*` courses are ready-made fixtures (the README's table says what each holds). Force a
 failure with `curl -s $(hb url providers)/control …` or `$(hb url site)/control …`, or with
 `hb lock` (the file refuses writes with `423 file_locked`, its lecture and course folders refuse a
-rename with `423 folder_in_use`) / `hb rm-lecture`. Restart one service after a code change with
+rename with `423 folder_in_use` while that file exists on disk) / `hb rm-lecture`. Restart one service after a code change with
 `node .claude/harness/setup.mjs --harness $HARNESS_DIR --restart <service>`. Put the baseline back
 with `hb reseed`.
 

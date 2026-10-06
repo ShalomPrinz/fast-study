@@ -155,7 +155,12 @@ def test_directory_rename_with_a_locked_descendant(child, summary):
     assert summary.exists()
 
 
-def test_directory_rename_without_a_locked_descendant_passes(child, summary):
+def test_lock_on_a_missing_file_refuses_its_write_but_not_its_folder_rename(
+    child, summary
+):
+    # Windows only refuses the folder rename while a file under it is open, and a missing file cannot be open.
+    missing = summary.with_name("transcript.txt")
+    assert child(write_attempt(missing), locks=["transcript.txt"])["winerror"] == 32
     lecture = summary.parent
     code = f"print(json.dumps(attempt(os.rename, {str(lecture)!r}, {str(lecture) + '2'!r})))"
     assert child(code, locks=["transcript.txt"]) == {"ok": True}
