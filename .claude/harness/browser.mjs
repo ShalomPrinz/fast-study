@@ -195,8 +195,10 @@ http
   .createServer(async (request, response) => {
     const url = new URL(request.url, 'http://browser');
     const command = COMMANDS[url.pathname];
-    let raw = '';
-    for await (const chunk of request) raw += chunk;
+    // Decoded once whole: a multi-byte character can straddle two chunks.
+    const chunks = [];
+    for await (const chunk of request) chunks.push(chunk);
+    const raw = Buffer.concat(chunks).toString('utf8');
     if (!command) {
       response
         .writeHead(404)
