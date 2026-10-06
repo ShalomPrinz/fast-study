@@ -3,14 +3,14 @@ import { AuthProvider } from './AuthProvider.js';
 import { launchBrowser } from '../browser/browserLaunch.js';
 import { getSiteInfo, blocked, invalidToken } from '../moodle/wsClient.js';
 import { readTokenFile, writeTokenFile } from './tokenStore.js';
-import { CodedError, UnsupportedError } from '../lib/errors.js';
+import { CodedError, UnsupportedError, failureOf } from '../lib/errors.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
 
 const SERVICE = 'moodle_mobile_app';
 const URLSCHEME = 'moodlemobile';
 const TOKEN_PREFIX = `${URLSCHEME}://token=`;
-// Bounded wait for the user to finish MFA in the headed window, matching the probe.
-const CAPTURE_TIMEOUT_MS = 180_000;
+// Bounded wait from Connect for the user to finish a first Microsoft login plus SMS in the headed window.
+export const CAPTURE_TIMEOUT_MS = 600_000;
 // What discovery and PDFs need from the token's service; videostream capture also needs autologin.
 const REQUIRED_FUNCTION = 'core_course_get_contents';
 const AUTOLOGIN_FUNCTION = 'tool_mobile_get_autologin_key';
@@ -23,6 +23,13 @@ export function decodeApptoken(raw) {
     if (decoded.includes(':::')) return decoded;
   }
   return Buffer.from(raw, 'base64').toString('utf8'); // best effort
+}
+
+// A dead token is the same reconnect signal here as on the 401 the WS routes answer.
+function failureOfAttempt(err) {
+  return invalidToken(err)
+    ? { error: err.message, code: 'moodle_reconnect_required', params: {} }
+    : failureOf(err);
 }
 
 function safeURIDecode(s) {
@@ -39,17 +46,23 @@ function safeURIDecode(s) {
  */
 export class MoodleToken extends AuthProvider {
   /**
-   * @param {{ tokenPath: string, site: string, launch?: typeof launchBrowser }} opts  absolute token
-   *   file path (core/registry.js owns where it lives); `launch` is injectable so tests need no browser.
+   * @param {{ tokenPath: string, site: string, launch?: typeof launchBrowser, onChange?: () => void }} opts
+   *   absolute token file path (core/registry.js owns where it lives); `launch` is injectable so tests
+   *   need no browser; `onChange` fires whenever `state()` may have changed.
    */
-  constructor({ tokenPath, site, launch = launchBrowser }) {
+  constructor({ tokenPath, site, launch = launchBrowser, onChange = () => {} }) {
     super();
     this.tokenPath = tokenPath;
     this.site = site;
     this._launch = launch;
-    // Headed login in progress; held on the instance so connect() and complete() (two HTTP
-    // calls) share the same live headed browser + its capture promise. Null when none pending.
+    this._onChange = onChange;
+    // The headed window of the login in flight, so disconnect() can close it. Null once captured.
     this._pending = null;
+    // A background login (capture → persist → verify) is running; `_gen` bumps on disconnect so a
+    // superseded run ends quietly. `_error` is the last failed attempt, cleared by the next connect.
+    this._driving = false;
+    this._gen = 0;
+    this._error = null;
     // Runtime "known invalid" flag: set by a caller when wsClient.invalidToken fires (a
     // server-side token kill the token file can't reveal), cleared by the next complete().
     this._invalidated = false;
@@ -62,6 +75,7 @@ export class MoodleToken extends AuthProvider {
   /** Mark this instance's token dead after a runtime invalidToken WS response. */
   markExpired() {
     this._invalidated = true;
+    this._onChange();
   }
 
   /**
@@ -92,6 +106,24 @@ export class MoodleToken extends AuthProvider {
   }
 
   /**
+   * What the frontend renders: `status()` plus the login `phase` and the last attempt's failure.
+   * `pending` covers the whole background login, including its verification.
+   * @returns {{ phase: 'idle'|'pending'|'connected'|'unverified', connected: boolean, expired: boolean, unverified: boolean, error?: { code: string, params: object } }}
+   */
+  state() {
+    const status = this.status();
+    const phase = this._driving
+      ? 'pending'
+      : status.unverified
+        ? 'unverified'
+        : status.connected
+          ? 'connected'
+          : 'idle';
+    const error = this._error ? { code: this._error.code, params: this._error.params } : null;
+    return { phase, ...status, ...(error ? { error } : {}) };
+  }
+
+  /**
    * Forget the token locally: delete the file (ENOENT is success — already disconnected), clear the
    * runtime invalidated flag so a reconnect starts clean, and close any headed login left in flight.
    * Deliberately no server-side revoke: it could fail after the local delete and desync the two.
@@ -99,40 +131,64 @@ export class MoodleToken extends AuthProvider {
   async disconnect() {
     fs.rmSync(this.tokenPath, { force: true });
     this._invalidated = false;
+    this._gen++; // the run in flight ends quietly: its abandoned/failed outcome is not reported
+    this._driving = false;
+    this._error = null;
     await this._closeChallenge();
     const pending = this._pending;
-    // Null before closing: the browser's 'disconnected' handler treats a live _pending as an
-    // abandoned login and would fire onCancel, which this is not.
     this._pending = null;
     if (pending) await pending.browser.close().catch(() => {});
+    this._onChange();
   }
 
   /**
-   * UI-triggered login, step 1: open the headed launch.php and start capturing the token
-   * redirect. Returns immediately (user finishes MFA by hand). Idempotent while pending.
-   * @param {{ onCancel?: () => void }} [opts]  onCancel fires if the headed browser closes
-   *   BEFORE complete() consumes it (user abandoned the login).
+   * UI-triggered login: open the headed launch.php and return; the login then runs to its end in the
+   * background (see `_drive`) whatever happens to the caller's request. Idempotent while one runs.
+   * Only a failure to open the window throws; every later outcome shows up in `state()`.
    */
-  async connect({ onCancel } = {}) {
-    if (this._pending) return;
+  async connect() {
+    if (this._driving) return;
+    const gen = ++this._gen;
+    this._driving = true;
+    this._error = null;
     await this._closeChallenge();
+    let pending;
+    try {
+      pending = await this._openLogin();
+    } catch (err) {
+      if (gen === this._gen) this._driving = false;
+      this._onChange();
+      throw err;
+    }
+    // A disconnect or site switch during the launch superseded this login: nothing owns the window yet.
+    if (gen !== this._gen) {
+      await pending.browser.close().catch(() => {});
+      return;
+    }
+    this._pending = pending;
+    this._onChange();
+    void this._drive(pending, gen);
+  }
+
+  // Opens the headed window and starts watching it; resolves once launch.php is requested.
+  async _openLogin() {
     const browser = await this._launch({ headless: false });
     try {
       const context = await browser.newContext();
 
       // Chromium can't follow moodlemobile://, so watch all three signals the token can surface
-      // on, and close the window on capture — complete() needs no live browser. See docs/MOODLE.md.
+      // on, and close the window on capture. See docs/MOODLE.md.
       let apptoken = null;
       let resolveToken;
       const tokenPromise = new Promise((resolve) => {
         resolveToken = resolve;
       });
-      // Rejected when the login is abandoned, so a complete() already waiting fails at once.
+      // Rejected when the login is abandoned.
       let abandon;
       const abandoned = new Promise((_, reject) => {
         abandon = reject;
       });
-      abandoned.catch(() => {}); // nobody may be racing it yet
+      abandoned.catch(() => {}); // _drive may not be racing it yet
       const grab = (url) => {
         if (url && url.startsWith(TOKEN_PREFIX) && !apptoken) {
           apptoken = url.slice(TOKEN_PREFIX.length);
@@ -152,9 +208,8 @@ export class MoodleToken extends AuthProvider {
       const page = await context.newPage();
       page.on('framenavigated', (f) => grab(f.url()));
 
-      this._pending = { browser, context, tokenPromise, abandoned };
-      // The browser closing before a token is captured = login abandoned. Our own post-capture
-      // close is a success, so guard on apptoken or complete() would find no pending login.
+      // The browser closing before a token is captured = login abandoned; our own post-capture
+      // close is a success, so it is guarded on apptoken.
       browser.on('disconnected', () => {
         if (apptoken) return;
         abandon(
@@ -164,10 +219,6 @@ export class MoodleToken extends AuthProvider {
             'login window closed before a token was captured',
           ),
         );
-        if (this._pending && this._pending.browser === browser) {
-          this._pending = null;
-          onCancel?.();
-        }
       });
 
       const passport = String(Date.now()) + String(Math.floor(Math.random() * 1e6));
@@ -175,28 +226,17 @@ export class MoodleToken extends AuthProvider {
         `${this.site}/admin/tool/mobile/launch.php` +
         `?service=${SERVICE}&passport=${passport}&urlscheme=${URLSCHEME}`;
       await page.goto(launchUrl, { waitUntil: 'load' }).catch(() => {});
+      return { browser, tokenPromise, abandoned };
     } catch (err) {
       await browser.close().catch(() => {});
       throw err;
     }
   }
 
-  /**
-   * UI-triggered login, step 2. With a login pending: wait (bounded) for the captured apptoken,
-   * persist it, and verify it. With none pending but a stored unverified token (a block on the
-   * last try, the challenge since solved): just verify it. Verifying is a site-info call plus the
-   * post-login check; a bot-protection block keeps the token and opens the challenge window.
-   * Throws if nothing is pending or stored, the window is closed first, no token arrives in time,
-   * the site is unsupported (token revoked), the token is dead (revoked) or the site is blocked.
-   * @returns {Promise<object>}  the verified token record
-   */
-  async complete() {
-    if (!this._pending) {
-      if (this.status().unverified) return this._verify();
-      throw new CodedError('moodle_login_not_pending', {}, 'no pending login (call connect first)');
-    }
-    const { browser, tokenPromise, abandoned } = this._pending;
-    this._pending = null;
+  // The login's background run: wait (bounded) for the apptoken, verify it, and only then let it
+  // replace the stored token (see `_verifyOnce`).
+  // Never throws: a failure becomes `_error`. A run superseded by disconnect() (`gen` moved) is silent.
+  async _drive({ browser, tokenPromise, abandoned }, gen) {
     let timer;
     try {
       const timeout = new Promise((_, reject) => {
@@ -204,24 +244,47 @@ export class MoodleToken extends AuthProvider {
           () => reject(new CodedError('moodle_login_timeout', {}, 'no token captured (timed out)')),
           CAPTURE_TIMEOUT_MS,
         );
+        timer.unref?.();
       });
       const apptoken = await Promise.race([tokenPromise, abandoned, timeout]);
+      if (gen !== this._gen) return;
+      this._pending = null;
 
       const parts = decodeApptoken(apptoken).split(':::');
-      writeTokenFile(this.tokenPath, {
+      const candidate = {
         site: this.site,
         wstoken: parts[1],
         privatetoken: parts[2] ?? null,
         userid: null,
         unverified: true,
         savedAt: new Date().toISOString(),
-      });
-      this._invalidated = false; // fresh token persisted — a prior runtime invalidToken is no longer sticky
+      };
+      await browser.close().catch(() => {});
+      await this._verifyOnce(candidate, gen);
+      if (gen === this._gen) this._error = null;
+    } catch (err) {
+      if (gen === this._gen) this._error = failureOfAttempt(err);
     } finally {
       clearTimeout(timer);
       await browser.close().catch(() => {});
+      if (gen === this._gen) {
+        if (this._pending?.browser === browser) this._pending = null;
+        this._driving = false;
+        this._onChange();
+      }
     }
-    return this._verify();
+  }
+
+  /**
+   * Re-verify the stored unverified token now (a block on the last try, the challenge since solved).
+   * Throws moodle_login_not_pending when none is stored; otherwise as `verifiedToken()`.
+   * @returns {Promise<object>}  the verified token record
+   */
+  async complete() {
+    if (!this.status().unverified) {
+      throw new CodedError('moodle_login_not_pending', {}, 'no unverified token to verify');
+    }
+    return this._verifyReporting();
   }
 
   /**
@@ -230,8 +293,24 @@ export class MoodleToken extends AuthProvider {
    */
   async verifiedToken() {
     const tok = this.loadToken();
-    if (tok?.unverified) return this._verify();
+    if (tok?.unverified) return this._verifyReporting();
     return tok;
+  }
+
+  // A verification called on its own (retry, lazy first use): its outcome becomes state. While a
+  // login runs, _drive reports instead.
+  async _verifyReporting() {
+    const gen = this._gen;
+    try {
+      const record = await this._verify();
+      if (gen === this._gen) this._error = null;
+      return record;
+    } catch (err) {
+      if (gen === this._gen) this._error = failureOfAttempt(err);
+      throw err;
+    } finally {
+      if (!this._driving) this._onChange();
+    }
   }
 
   _verify() {
@@ -241,25 +320,35 @@ export class MoodleToken extends AuthProvider {
     return this._verifying;
   }
 
-  // Revokes (deletes the file) only for a not-good-token answer: invalidtoken or a refused site.
-  // A block, timeout or network failure keeps the token; a block also opens the challenge window.
-  async _verifyOnce() {
-    const tok = this.loadToken();
+  // Verifies the stored token, or a freshly captured `candidate` that is held in memory until its
+  // outcome is known. Deletes the stored file only for a not-good-token answer (invalidtoken or a
+  // refused site) on the stored token: a refused candidate leaves the existing token untouched.
+  // A candidate replaces the file when verified, or unverified on a block, timeout or network
+  // failure (nothing says it is bad, and re-capturing costs an MFA); a block opens the challenge window.
+  async _verifyOnce(candidate = null, gen = this._gen) {
+    const tok = candidate ?? this.loadToken();
     if (!tok) throw new CodedError('moodle_login_not_pending', {}, 'no token to verify');
     let info;
     try {
       info = await getSiteInfo(this.site, tok.wstoken);
       this._checkSiteInfo(info);
     } catch (err) {
-      if (invalidToken(err) || err instanceof UnsupportedError) {
+      const refused = invalidToken(err) || err instanceof UnsupportedError;
+      if (candidate) {
+        if (gen === this._gen && !refused) {
+          writeTokenFile(this.tokenPath, candidate);
+          this._invalidated = false;
+        }
+      } else if (refused) {
         fs.rmSync(this.tokenPath, { force: true });
-      } else if (blocked(err)) {
+      }
+      if (blocked(err) && (!candidate || gen === this._gen)) {
         err.params = { ...err.params, challengeWindow: await this._openChallenge() };
       }
       throw err;
     }
     // A disconnect or a newer login while the call was out wins over this result.
-    if (this.loadToken()?.wstoken !== tok.wstoken) return tok;
+    if (candidate ? gen !== this._gen : this.loadToken()?.wstoken !== tok.wstoken) return tok;
     const record = { ...tok, userid: info.userid };
     delete record.unverified;
     writeTokenFile(this.tokenPath, record);

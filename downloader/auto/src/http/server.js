@@ -1,4 +1,11 @@
-import { siteAuth, siteAuthFor, setSite, resolveExtractorForRecording } from '../core/registry.js';
+import {
+  siteAuth,
+  siteAuthFor,
+  setSite,
+  authEvents,
+  authState,
+  resolveExtractorForRecording,
+} from '../core/registry.js';
 import { normalizeSite } from '../moodle/site.js';
 import { probeSite } from '../moodle/probe.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
@@ -210,11 +217,26 @@ export function handleAuthStatus(req, res) {
   if (found) send(res, 200, found.auth.status());
 }
 
+// SSE: the auth state now, then again on every change. `secret` rides the query string because
+// EventSource cannot set a header; requireSecret already honours it.
+export function handleAuthEvents(req, res) {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
+  });
+  res.flushHeaders();
+  const push = () => res.write(`data: ${JSON.stringify(authState())}\n\n`);
+  authEvents.on('change', push);
+  req.on('close', () => authEvents.off('change', push));
+  push();
+}
+
 export async function handleAuthConnect(req, res) {
   logReq('POST', '/auth/connect');
   const found = siteOr(res);
   if (!found) return;
-  // The token module builds its own launch.php URL, so connect takes no entry URL.
+  // The token module builds its own launch.php URL and drives the login itself from here on.
   await found.auth.connect();
   send(res, 200, { status: 'pending' });
 }

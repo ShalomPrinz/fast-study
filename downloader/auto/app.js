@@ -13,6 +13,7 @@ import {
   handleConfig,
   handleSiteProbe,
   handleAuthStatus,
+  handleAuthEvents,
   handleAuthConnect,
   handleAuthComplete,
   handleAuthDisconnect,
@@ -52,6 +53,7 @@ app.get('/prereqs/browser', handleBrowserPrereq);
 app.post('/config', handleConfig);
 app.post('/site/probe', handleSiteProbe);
 app.get('/auth/status', handleAuthStatus);
+app.get('/auth/events', handleAuthEvents);
 app.post('/auth/connect', handleAuthConnect);
 app.post('/auth/complete', handleAuthComplete);
 app.post('/auth/disconnect', handleAuthDisconnect);

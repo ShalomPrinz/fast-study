@@ -1,19 +1,17 @@
-// Auth provider contract: a two-step headed login (MFA by hand) that persists a
-// long-lived credential, then serves it statelessly. See MoodleToken / docs/AUTH.md.
+// Auth provider contract: a headed login (MFA by hand) that runs to its end in the background,
+// persists a long-lived credential, then serves it statelessly. See MoodleToken / docs/AUTH.md.
 export class AuthProvider {
   /**
    * Start the (headed) login and return once it's up, so the user can finish MFA by
-   * hand. Paired with complete().
-   * @param {{ onCancel?: () => void }} [_opts]  onCancel fires if the login is abandoned.
+   * hand; the provider finishes it itself and reports through its state.
    * @returns {Promise<void>}
    */
-  async connect(_opts) {
+  async connect() {
     throw new Error('not implemented');
   }
 
   /**
-   * Finish the pending login: persist the credential and close the headed browser.
-   * Throws if no login is pending.
+   * Re-verify a stored credential that is not yet verified. Throws if there is none.
    * @returns {Promise<object>}
    */
   async complete() {

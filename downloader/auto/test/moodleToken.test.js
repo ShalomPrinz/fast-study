@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
-import { MoodleToken } from '../src/auth/moodleToken.js';
+import { MoodleToken, CAPTURE_TIMEOUT_MS } from '../src/auth/moodleToken.js';
 import { readTokenFile, writeTokenFile } from '../src/auth/tokenStore.js';
 
 const SITE = 'https://moodle.test';
@@ -68,21 +68,78 @@ function fakeBrowser() {
   return { browser, context, launch: async () => browser };
 }
 
-test('closing the login window before a token cancels the pending login', async () => {
+// Lets the background login run to its end (the fakes resolve on microtasks and immediates).
+async function settle(auth) {
+  while (auth.state().phase === 'pending') await new Promise((r) => setImmediate(r));
+}
+
+// Every state the provider announces, in order.
+function recordStates(opts) {
+  const seen = [];
+  const auth = new MoodleToken({ ...opts, onChange: () => seen.push(auth.state()) });
+  return { auth, seen };
+}
+
+test('closing the login window before a token ends the login as abandoned', async () => {
   const { browser, context, launch } = fakeBrowser();
-  const auth = new MoodleToken({ tokenPath: tokenPathIn('moodle-abandon-'), site: SITE, launch });
-  let cancelled = 0;
-  await auth.connect({ onCancel: () => cancelled++ });
+  const { auth, seen } = recordStates({
+    tokenPath: tokenPathIn('moodle-abandon-'),
+    site: SITE,
+    launch,
+  });
+  await auth.connect();
+  assert.equal(auth.state().phase, 'pending');
 
   context.pages()[0].close();
+  await settle(auth);
 
   assert.equal(browser.connected, false);
-  assert.equal(cancelled, 1);
-  const err = await auth.complete().then(
-    () => null,
-    (e) => e,
+  assert.deepEqual(auth.state(), {
+    phase: 'idle',
+    connected: false,
+    expired: false,
+    unverified: false,
+    error: { code: 'moodle_login_abandoned', params: {} },
+  });
+  assert.deepEqual(
+    seen.map((s) => s.phase),
+    ['pending', 'idle'],
   );
+  const err = await auth.complete().catch((e) => e);
   assert.equal(err.code, 'moodle_login_not_pending');
+});
+
+test('disconnect() during a login ends it with no error and no later event', async () => {
+  const { browser, launch } = fakeBrowser();
+  const { auth, seen } = recordStates({
+    tokenPath: tokenPathIn('moodle-quiet-'),
+    site: SITE,
+    launch,
+  });
+  await auth.connect();
+  await auth.disconnect();
+  await new Promise((r) => setImmediate(r));
+
+  assert.equal(browser.connected, false);
+  assert.equal(auth.state().error, undefined);
+  assert.equal(auth.state().phase, 'idle');
+  assert.equal(seen.at(-1).phase, 'idle');
+  assert.equal(
+    seen.some((s) => s.error),
+    false,
+  );
+});
+
+test('a new connect() clears the last failure', async () => {
+  const { context, launch } = fakeBrowser();
+  const auth = new MoodleToken({ tokenPath: tokenPathIn('moodle-clear-'), site: SITE, launch });
+  await auth.connect();
+  context.pages()[0].close();
+  await settle(auth);
+  assert.equal(auth.state().error.code, 'moodle_login_abandoned');
+  await auth.connect();
+  assert.equal(auth.state().error, undefined);
+  await auth.disconnect();
 });
 
 test('a login popup keeps the login pending until its last window closes', async () => {
@@ -98,19 +155,21 @@ test('a login popup keeps the login pending until its last window closes', async
   assert.equal(browser.connected, false);
 });
 
-test('closing the window while complete() waits fails it at once', async () => {
-  const { context, launch } = fakeBrowser();
-  const auth = new MoodleToken({ tokenPath: tokenPathIn('moodle-inflight-'), site: SITE, launch });
+test('a login times out after CAPTURE_TIMEOUT_MS with no token and closes the window', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { browser, launch } = fakeBrowser();
+  const auth = new MoodleToken({ tokenPath: tokenPathIn('moodle-timeout-'), site: SITE, launch });
   await auth.connect();
-  const done = auth.complete().then(
-    () => null,
-    (e) => e,
-  );
 
-  context.pages()[0].close();
+  t.mock.timers.tick(CAPTURE_TIMEOUT_MS - 1);
+  await new Promise((r) => setImmediate(r));
+  assert.equal(auth.state().phase, 'pending');
+  t.mock.timers.tick(1);
+  await settle(auth);
 
-  const err = await done;
-  assert.equal(err.code, 'moodle_login_abandoned');
+  assert.equal(auth.state().error.code, 'moodle_login_timeout');
+  assert.equal(auth.state().phase, 'idle');
+  assert.equal(browser.connected, false);
 });
 
 // ── the post-login check ────────────────────────────────────────────────────
@@ -132,27 +191,50 @@ function stubSiteInfo(t, info) {
 const fn = (...names) => names.map((name) => ({ name, version: '2024100700' }));
 const FULL = fn('core_course_get_contents', 'tool_mobile_get_autologin_key');
 
-// A headed login that has captured its token redirect, ready for complete().
+// A headed login whose token redirect was captured and whose background run has finished.
 async function capturedLogin(dir) {
   const { context, launch } = fakeBrowser();
   const tokenPath = tokenPathIn(dir);
   const auth = new MoodleToken({ tokenPath, site: SITE, launch });
   await auth.connect();
   context.pages()[0].emit('framenavigated', { url: () => `moodlemobile://token=${APPTOKEN}` });
+  await settle(auth);
   return { auth, tokenPath };
 }
 
-test('complete() persists the site and userid beside the token', async (t) => {
+test('a login persists the site and userid beside the token', async (t) => {
   stubSiteInfo(t, { userid: 7, downloadfiles: 1, release: '4.5', functions: FULL });
   const { auth, tokenPath } = await capturedLogin('moodle-ok-');
-  await auth.complete();
   const stored = JSON.parse(fs.readFileSync(tokenPath, 'utf8'));
   assert.deepEqual(
     { site: stored.site, wstoken: stored.wstoken, privatetoken: stored.privatetoken },
     { site: SITE, wstoken: 'harness-wstoken', privatetoken: 'harness-private' },
   );
   assert.equal(stored.userid, 7);
-  assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: false });
+  assert.deepEqual(auth.state(), {
+    phase: 'connected',
+    connected: true,
+    expired: false,
+    unverified: false,
+  });
+});
+
+test('a login announces pending then connected', async (t) => {
+  stubSiteInfo(t, { userid: 7, downloadfiles: 1, functions: FULL });
+  const { context, launch } = fakeBrowser();
+  const { auth, seen } = recordStates({
+    tokenPath: tokenPathIn('moodle-seq-'),
+    site: SITE,
+    launch,
+  });
+  await auth.connect();
+  context.pages()[0].emit('framenavigated', { url: () => `moodlemobile://token=${APPTOKEN}` });
+  await settle(auth);
+  assert.deepEqual(
+    seen.map((s) => s.phase),
+    ['pending', 'connected'],
+  );
+  assert.equal(seen.at(-1).error, undefined);
 });
 
 for (const [reason, info, extra] of [
@@ -164,26 +246,21 @@ for (const [reason, info, extra] of [
   ['downloads_disabled', { userid: 7, downloadfiles: 0, functions: FULL }, {}],
   ['downloads_disabled', { userid: 7, functions: FULL }, {}],
 ]) {
-  test(`complete() refuses ${reason} and persists nothing`, async (t) => {
+  test(`a login refuses ${reason} and persists nothing`, async (t) => {
     stubSiteInfo(t, info);
     const { auth, tokenPath } = await capturedLogin(`moodle-${reason}-`);
-    const err = await auth.complete().then(
-      () => null,
-      (e) => e,
-    );
-    assert.deepEqual(
-      { code: err.code, params: err.params },
-      { code: 'moodle_site_unsupported', params: { site: SITE, reason, ...extra } },
-    );
+    assert.deepEqual(auth.state().error, {
+      code: 'moodle_site_unsupported',
+      params: { site: SITE, reason, ...extra },
+    });
     assert.equal(fs.existsSync(tokenPath), false);
     assert.deepEqual(auth.status(), { connected: false, expired: false, unverified: false });
   });
 }
 
-test('complete() connects when only autologin is missing', async (t) => {
+test('a login connects when only autologin is missing', async (t) => {
   stubSiteInfo(t, { userid: 7, downloadfiles: 1, functions: fn('core_course_get_contents') });
   const { auth } = await capturedLogin('moodle-noautologin-');
-  await auth.complete();
   assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: false });
 });
 
@@ -317,8 +394,9 @@ async function captured(t, dir) {
 }
 
 async function loginAndCapture(auth) {
-  const page = auth._pending.context.pages()[0];
+  const page = auth._pending.browser.fake.context.pages()[0];
   page.emit('framenavigated', { url: () => `moodlemobile://token=${APPTOKEN}` });
+  await settle(auth);
 }
 
 test('a block keeps the token unverified, opens the site root; the next complete() verifies it', async (t) => {
@@ -326,12 +404,9 @@ test('a block keeps the token unverified, opens the site root; the next complete
   stubSequence(t, challengeRes(), jsonRes(GOOD));
   const { auth, tokenPath, rec } = await captured(t, 'blk-');
   await loginAndCapture(auth);
-  const err = await auth.complete().then(
-    () => null,
-    (e) => e,
-  );
-  assert.equal(err.code, 'site_blocked');
-  assert.equal(err.params.challengeWindow, true);
+  assert.equal(auth.state().phase, 'unverified');
+  assert.equal(auth.state().error.code, 'site_blocked');
+  assert.equal(auth.state().error.params.challengeWindow, true);
   assert.deepEqual(rec.opened, [SITE]);
   assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: true });
   assert.equal(JSON.parse(fs.readFileSync(tokenPath, 'utf8')).userid, null);
@@ -339,6 +414,8 @@ test('a block keeps the token unverified, opens the site root; the next complete
   const window = auth._challenge;
   const record = await auth.complete();
   assert.equal(record.userid, 7);
+  assert.equal(auth.state().phase, 'connected');
+  assert.equal(auth.state().error, undefined);
   assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: false });
   assert.equal(window.connected, false);
   assert.equal(auth._challenge, null);
@@ -349,7 +426,6 @@ test('a second block reuses the open challenge window', async (t) => {
   stubSequence(t, challengeRes(), challengeRes());
   const { auth, rec } = await captured(t, 'blk2-');
   await loginAndCapture(auth);
-  await auth.complete().catch(() => {});
   await auth.complete().catch(() => {});
   assert.deepEqual(rec.opened, [SITE]);
 });
@@ -367,7 +443,7 @@ test('verifiedToken() verifies an unverified token before first use, once for co
   assert.equal(auth.status().unverified, false);
 });
 
-test('complete() with nothing pending or stored is not_pending', async (t) => {
+test('complete() with no unverified token stored is not_pending', async (t) => {
   withKey(t, undefined);
   const auth = new MoodleToken({ tokenPath: tokenPathIn('none-'), site: SITE });
   const err = await auth.complete().catch((e) => e);
@@ -420,4 +496,93 @@ test('disconnect and a new connect() close the challenge window', async (t) => {
   await auth.connect();
   assert.equal(first.connected, false);
   await auth.disconnect();
+});
+
+test('a dead token during the login ends it as a reconnect', async (t) => {
+  stubSiteInfo(t, { exception: 'x', errorcode: 'invalidtoken', message: 'bad' });
+  const { auth, tokenPath } = await capturedLogin('moodle-dead-');
+  assert.deepEqual(auth.state().error, { code: 'moodle_reconnect_required', params: {} });
+  assert.equal(auth.state().phase, 'idle');
+  assert.equal(fs.existsSync(tokenPath), false);
+});
+
+// ── A fresh capture replaces the stored token only once its outcome is known ─
+
+async function loginOverStored(dir) {
+  const { context, launch } = fakeBrowser();
+  const tokenPath = tokenPathIn(dir);
+  writeTokenFile(tokenPath, { site: SITE, wstoken: 'old', userid: 3 });
+  const auth = new MoodleToken({ tokenPath, site: SITE, launch });
+  await auth.connect();
+  context.pages()[0].emit('framenavigated', { url: () => `moodlemobile://token=${APPTOKEN}` });
+  await settle(auth);
+  return { auth, tokenPath };
+}
+
+test('a refused new login keeps the stored token', async (t) => {
+  withKey(t, undefined);
+  stubSequence(
+    t,
+    jsonRes({ userid: 7, downloadfiles: 1, functions: fn('tool_mobile_get_autologin_key') }),
+  );
+  const { auth, tokenPath } = await loginOverStored('over-refused-');
+  assert.equal(auth.state().error.code, 'moodle_site_unsupported');
+  assert.equal(readTokenFile(tokenPath).wstoken, 'old');
+});
+
+test('an invalidtoken new login keeps the stored token', async (t) => {
+  withKey(t, undefined);
+  stubSequence(t, jsonRes({ exception: 'x', errorcode: 'invalidtoken', message: 'bad' }));
+  const { auth, tokenPath } = await loginOverStored('over-invalid-');
+  assert.equal(auth.state().error.code, 'moodle_reconnect_required');
+  assert.equal(readTokenFile(tokenPath).wstoken, 'old');
+});
+
+test('a blocked new login replaces the stored token with an unverified one', async (t) => {
+  withKey(t, undefined);
+  stubSequence(t, challengeRes());
+  const { auth, tokenPath } = await loginOverStored('over-block-');
+  const stored = readTokenFile(tokenPath);
+  assert.equal(stored.wstoken, 'harness-wstoken');
+  assert.equal(stored.unverified, true);
+  assert.equal(auth.state().phase, 'unverified');
+});
+
+test('a verified new login replaces the stored token', async (t) => {
+  withKey(t, undefined);
+  stubSequence(t, jsonRes(GOOD));
+  const { auth, tokenPath } = await loginOverStored('over-ok-');
+  const stored = readTokenFile(tokenPath);
+  assert.equal(stored.wstoken, 'harness-wstoken');
+  assert.equal(stored.unverified, undefined);
+  assert.equal(auth.state().phase, 'connected');
+});
+
+test('disconnect() while the browser is still launching closes it and starts no login', async () => {
+  const { browser, launch } = fakeBrowser();
+  let release;
+  const held = new Promise((r) => (release = r));
+  const { auth, seen } = recordStates({
+    tokenPath: tokenPathIn('moodle-launchrace-'),
+    site: SITE,
+    launch: async () => {
+      await held;
+      return launch();
+    },
+  });
+  const connecting = auth.connect();
+  await auth.disconnect();
+  const before = seen.length;
+  let drove = false;
+  auth._drive = async () => {
+    drove = true;
+  };
+  release();
+  await connecting;
+
+  assert.equal(browser.connected, false);
+  assert.equal(drove, false);
+  assert.equal(auth._pending, null);
+  assert.equal(auth.state().phase, 'idle');
+  assert.equal(seen.length, before);
 });

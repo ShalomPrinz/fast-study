@@ -1,5 +1,6 @@
 // Two concerns, matched at different granularities: auth for the one configured Moodle site,
 // extraction per activity (modType + target).
+import { EventEmitter } from 'node:events';
 import { statePath } from '@faststudy/runtime';
 import { CodedError } from '../lib/errors.js';
 import { MoodleToken } from '../auth/moodleToken.js';
@@ -19,6 +20,17 @@ const TOKEN_PATH = () => statePath('auth', 'moodle-token.json');
 // browser. Rebuilt only when the site changes (setSite).
 let cached = null;
 
+// One stream of auth-state changes whichever site is configured; /auth/events subscribes here.
+export const authEvents = new EventEmitter();
+const publish = () => authEvents.emit('change');
+
+/** The configured site's auth state, or the idle one when no site is set. */
+export function authState() {
+  const site = currentSite();
+  if (!site) return { phase: 'idle', connected: false, expired: false, unverified: false };
+  return siteAuth().auth.state();
+}
+
 /**
  * The configured site and its token auth; throws moodle_site_not_configured when there is none.
  * @returns {{ site: string, auth: MoodleToken }}
@@ -33,7 +45,7 @@ export function siteAuth() {
     );
   }
   if (cached?.site !== site)
-    cached = { site, auth: new MoodleToken({ tokenPath: TOKEN_PATH(), site }) };
+    cached = { site, auth: new MoodleToken({ tokenPath: TOKEN_PATH(), site, onChange: publish }) };
   return cached;
 }
 
@@ -68,6 +80,7 @@ export async function setSite(site) {
   if (auth) await auth.disconnect();
   // Stale leftovers (a token from a site set before this process) go too; loadToken ignores them anyway.
   else await new MoodleToken({ tokenPath: TOKEN_PATH(), site: site ?? '' }).disconnect();
+  publish();
   const session = getSession('plain');
   await session.withLock(() => session.close());
   return true;

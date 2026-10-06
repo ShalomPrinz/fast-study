@@ -54,11 +54,11 @@ decides as a direct one would, `site` being the target's `wwwroot`. A second red
 target stays `unverified` `site_blocked`; a wall never answers Moodle JSON, so following is safe.
 Every authenticated call still treats a redirect as the bot wall.
 
-**After login — `MoodleToken.complete()`**, before anything is persisted, reads
+**After login — the verification step of `MoodleToken`'s login**, with the captured token still held in memory, reads
 `core_webservice_get_site_info` with the new token. `functions[]` lacking `core_course_get_contents`
 refuses the login as `moodle_site_unsupported` `reason:'missing_function'` (`params.function`), and
 `downloadfiles` other than `1` (it is `VALUE_OPTIONAL`, so absent counts) as `downloads_disabled` —
-both `422 {status:'unsupported'}` from `/auth/complete`. Lacking only `tool_mobile_get_autologin_key`
+both `422 {status:'unsupported'}` from `/auth/complete` (and as the login's `moodle_site_unsupported` error on the stream). Lacking only `tool_mobile_get_autologin_key`
 still connects: discovery and PDFs work, and a `videostream` resolve fails later with its own error.
 
 **Telemetry.** `siteReport.js` sends one Sentry warning, `moodle_site_unsupported`, tagged
@@ -116,7 +116,7 @@ code `site_blocked` with the shape it served as `detail` —
 no retry and no throttling: the wait is minutes long, and retrying is what deepens the block. It never
 marks the token expired or deletes it, so the UI must not steer to Reconnect on it; at login the
 token is kept and a headed window on the site root lets the user solve the challenge
-([AUTH.md](AUTH.md#connect--complete--status--disconnect)). This is also why no change is
+([AUTH.md](AUTH.md#connect--events--complete--status--disconnect)). This is also why no change is
 ever verified by a live request to any university's site.
 
 ### `core_webservice_get_site_info`
