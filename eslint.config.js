@@ -59,6 +59,12 @@ export default [
     rules: baseline,
   },
 
+  // The DOM timeline's recorder and replay run in the browser, as an init script and a `page.evaluate`.
+  {
+    files: ['.claude/harness/lib/dom-timeline.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+
   // Release smoke suite: ESM on Node, with `page.evaluate` callbacks that run in the app's renderer.
   {
     files: ['delivery/smoke/**/*.js'],

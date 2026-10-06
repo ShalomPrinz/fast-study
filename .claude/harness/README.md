@@ -183,6 +183,9 @@ curl -s $B/screenshot -d '{"name":"new-course"}'          # → evidence/mgmt-ne
 curl -s $B/eval --data-binary 'await page.waitForTimeout(3000); return page.url()'
 curl -s "$B/log?since=0"                                  # every recorded event, numbered
 curl -s $B/mutations                                      # every non-GET request, with body and answer
+curl -s $B/dom -d '{"selector":".focus-card","since":"-10000"}'  # what it matched over time
+curl -s $B/dom/flicker -d '{"selector":".focus-card","maxMs":300}' # each state left and back within maxMs
+curl -s $B/dom/at -d '{"t":"2026-10-06T11:42:33.450Z","selector":".toast"}'  # its HTML at that moment
 ```
 
 A modal's buttons sit in `.modal-actions`: confirm is `.modal-actions .btn--primary`, cancel
@@ -201,6 +204,27 @@ happened while the command ran, so a click's fallout arrives with it. `/log` als
 all console output and every API request (fetch, xhr, EventSource, document) with its status.
 Every non-GET request is appended to `evidence/<tag>-mutations.jsonl` with its body (a binary
 upload as its size) and the service's answer, which outlives the session.
+
+Every session records a DOM timeline from its first `/goto`, with nothing to switch on, so a
+change seen only after the fact can still be asked about: a snapshot per document, then each
+MutationObserver batch as id-keyed diffs, plus typed values (a property, never a mutation), pushed
+from the page as they happen (`lib/dom-timeline.mjs`). A query rebuilds the DOM in a scratch page
+and runs a CSS selector after every batch — Playwright's `text=` engines do not apply — so it
+answers about nodes long removed. `/dom` prints one line per change of what the selector matches:
+time, frame, then each match's node id, text (a form field's value) and the `attr` asked for;
+`(remount)` marks the same content on new nodes, as React's keyed replacement leaves it. `since`
+and `t` take ISO, epoch ms, or negative ms back from now. `/dom/flicker` reports each state left
+and returned to within `maxMs`, **painted** if a frame passed while it showed, **never painted** if
+it came and went between two frames, which no user could have seen. A change made and undone with
+no microtask between is never recorded at all. `/dom` alone prints the
+recording's extent.
+
+The timeline is memory only and small: about 20 000 nodes plus ops, and two minutes. The page
+re-snapshots itself past half of either and the oldest whole segment is dropped, so what is kept
+reaches back to the last re-snapshot at least — about a minute, less under a burst of changes; a
+long run keeps none of its start. Not recorded: visibility from a
+stylesheet (a class toggle shows, `display: none` from a rule does not), shadow roots, iframes,
+and script and style text.
 
 After each click the mouse leaves the page, so a tooltip or toast opened under the pointer never
 covers the next target. An unexpected native dialog is logged and dismissed — the app uses none.
@@ -285,7 +309,8 @@ npm run test:harness     # from the repo root: node:test, then pytest — second
 
 `tests/` unit-tests the harness's own logic: the providers' rule parsing, whole-segment `match`
 and `times` draining, the site's `/control` and one-time `/die/` drop, the fake tool's argv and
-failure table, `hb state`'s diff, the env and baseline helpers, and port reuse. Each fake keeps
+failure table, `hb state`'s diff, the env and baseline helpers, port reuse, and the DOM timeline's retention,
+change and flicker logic (its recorder and replay run in a browser, so the live stack proves them). Each fake keeps
 that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mjs`,
 `tool-args.mjs`) so a test imports it without a port or a fixture. `test_shim.py` runs the real
 Python shim in a child interpreter per case, since its patches are process-wide: lock globs as tail

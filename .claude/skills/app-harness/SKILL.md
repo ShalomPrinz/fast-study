@@ -37,6 +37,8 @@ curl -s $B/click -d '{"selector":"text=…"}'
 curl -s $B/press -d '{"key":"Enter","screenshot":"saved"}'   # /click, /fill, /press take a screenshot name
 curl -s $B/text
 curl -s $B/screenshot -d '{"name":"after-save"}' # → $HARNESS_DIR/evidence/main-after-save.png
+curl -s $B/dom -d '{"selector":".toast","since":"-10000"}'  # always-on DOM timeline: what it matched over time
+curl -s $B/dom/flicker -d '{"selector":".focus-card"}'      # content gone and back within 300 ms
 ```
 
 Drive the UI only through a browser session, never your own Playwright script. Every answer ends

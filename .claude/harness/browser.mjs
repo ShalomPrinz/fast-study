@@ -18,6 +18,10 @@
 // /eval <js>                    raw body: an async function body given `page` and `context`
 // /log {"since"}                every recorded event from N on, numbered
 // /mutations                    every non-GET request so far
+// /dom {"selector","attr","since"}   how what a CSS selector matches changed, from the DOM timeline
+//                               every session records (lib/dom-timeline.mjs); no selector: its extent
+// /dom/at {"t","selector"}      the selector's outerHTML at that moment (body by default)
+// /dom/flicker {"selector","maxMs","since"}  each state left and come back to within maxMs (300)
 // /health
 //
 // Each command answers its result, then any console error, page error or failed request that
@@ -28,6 +32,7 @@ import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { bindPorts } from './lib/api.mjs';
 import { appUrl, openBrowser } from './lib/browser.mjs';
+import { recordDom } from './lib/dom-timeline.mjs';
 import { harnessPaths } from './lib/env.mjs';
 
 const args = process.argv.slice(2);
@@ -49,6 +54,7 @@ fs.mkdirSync(paths.evidence, { recursive: true });
 const mutationsFile = path.join(paths.evidence, `${tag}-mutations.jsonl`);
 
 const { browser, context, page } = await openBrowser();
+const timeline = await recordDom(browser, context, page);
 // A throw inside an event handler must cost one record, not the session.
 process.on('unhandledRejection', (error) =>
   console.log(`${new Date().toISOString()} harness ${error}`),
@@ -176,6 +182,12 @@ const COMMANDS = {
       .map((event) => `${event.n} ${event.time} ${event.kind} ${event.text}`)
       .join('\n'),
   '/mutations': async () => mutations.map((entry) => JSON.stringify(entry)).join('\n'),
+  '/dom': async (query) => (query.selector ? timeline.history(query) : timeline.summary()),
+  '/dom/at': async (query) => timeline.at(query),
+  '/dom/flicker': async (query) => {
+    if (!query.selector) throw new Error('/dom/flicker needs a selector');
+    return timeline.flicker(query);
+  },
   '/health': async () => JSON.stringify({ status: 'ok', tag, url: page.url() }),
 };
 
