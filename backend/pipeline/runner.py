@@ -816,7 +816,7 @@ async def run_all() -> dict:
     log.info(
         "run_all starting with %d queued lecture(s): %s",
         len(_queue),
-        [f"\n{e.course}/{e.lecture} ({e.kind}, {e.depth})" for e in _queue],
+        ", ".join(f"{e.course}/{e.lecture} ({e.kind}, {e.depth})" for e in _queue),
     )
     _summarize_block = None
     blocked_count = 0
