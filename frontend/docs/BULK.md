@@ -54,8 +54,8 @@ it → `downloaded`; an `error` job → `failed`; else `in-flight`. `summarize` 
 tree and the jobs are all live reflections a remount simply re-reads.
 
 - A running job outranks the tree because a zoom share lands `name.1` while `name.2` is still going.
-- A target's jobs are course-, `ref`- **and** name-scoped (`name`, `name.1`, `name.2`): jobs are keyed by lecture
-  name, so a row renamed between runs leaves old jobs under the same ref.
+- A target's jobs are course-, `ref`-, name- and kind-scoped (`name`, `name.1`, `name.2`, via `jobsForTarget`,
+  as a single row's are): jobs are keyed by lecture name, so a row renamed between runs leaves old jobs under the same ref.
 - The tree owns "downloaded" (`targetLanded`, which asks `hasResource` about all three names); an
   `error` job is never time-evicted and is superseded by a retry, so it proves the _latest_ attempt
   failed. Absence of evidence reads as "still going", right for the window before `/jobs` catches up.

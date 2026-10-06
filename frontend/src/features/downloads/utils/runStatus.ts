@@ -1,7 +1,7 @@
 import { plural } from '@lingui/core/macro'
 import type { Course } from '@/types'
 import type { JobProgress, JobsByRef } from '../contexts/DownloadJobsContext'
-import { jobsForRef } from '../contexts/DownloadJobsContext'
+import { jobsForRef, jobsForTarget } from '../contexts/DownloadJobsContext'
 import type { RunTarget } from '../services/downloadServer'
 import { targetLanded } from './existingItems'
 
@@ -10,15 +10,13 @@ import { targetLanded } from './existingItems'
 export type TargetStatus =
   'downloaded' | 'failed' | 'unsupported' | 'skipped' | 'in-flight' | 'pending'
 
-// This target's jobs: course-, ref- and name-scoped (`name`, `name.1`, `name.2`), since a row renamed
-// between runs leaves the old name's jobs under the same ref.
-function jobsForTarget(
+// This target's jobs: course-, ref-, name- and kind-scoped.
+function targetJobs(
   jobsByRef: JobsByRef,
   course: string,
   target: RunTarget,
 ): readonly JobProgress[] {
-  const names = new Set([target.name, `${target.name}.1`, `${target.name}.2`])
-  return jobsForRef(jobsByRef, course, target.ref).filter((j) => names.has(j.title))
+  return jobsForTarget(jobsForRef(jobsByRef, course, target.ref), target.name, target.kind)
 }
 
 // Names two or more about-to-download video targets share. They would race into one lecture, the
@@ -47,7 +45,7 @@ export function targetStatus(
   if (target.disposition === 'skipped') return 'skipped'
   if (target.disposition === 'unsupported') return 'unsupported'
   if (target.disposition === 'queue-failed') return 'failed'
-  const jobs = jobsForTarget(jobsByRef, course, target)
+  const jobs = targetJobs(jobsByRef, course, target)
   if (jobs.some((j) => j.status === 'running')) return 'in-flight'
   if (targetLanded(target, courses, course)) return 'downloaded'
   if (jobs.some((j) => j.status === 'error')) return 'failed'
@@ -61,9 +59,8 @@ export function runningCount(
   course: string,
   jobsByRef: JobsByRef,
 ): number {
-  return targets.filter((t) =>
-    jobsForTarget(jobsByRef, course, t).some((j) => j.status === 'running'),
-  ).length
+  return targets.filter((t) => targetJobs(jobsByRef, course, t).some((j) => j.status === 'running'))
+    .length
 }
 
 // Triggered targets with no job and nothing in the tree — causes outside the run. Meaningful only
@@ -77,7 +74,7 @@ export function unverifiedCount(
   return targets.filter(
     (t) =>
       t.disposition === 'queued' &&
-      jobsForTarget(jobsByRef, course, t).length === 0 &&
+      targetJobs(jobsByRef, course, t).length === 0 &&
       !targetLanded(t, courses, course),
   ).length
 }

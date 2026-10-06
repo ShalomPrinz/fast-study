@@ -153,7 +153,7 @@ match — no client-side sanitizing, which would only hide the desync.
 holds `video.mp4` for a video, any material for a material. An unprobed `unknown` or an `unsupported` row
 is always false rather than ever showing a wrong "downloaded". The overwrite guard is the separate
 `overwritesVideo`: any non-material, non-unsupported row — an unprobed `unknown` included, since it may be a
-video and a video PUT wipes the transcript and summary — confirms when its target holds `video.mp4`;
+video and a video PUT wipes the transcript and summary — confirms when its target holds `video.mp4` in the tree — never because of a job;
 `splitSiblings` also catches `${name}.1`/`.2` (a zoom row splits into those) with a "might
 overwrite" confirm. **A material row never confirms** — it appends, and shows the target's material
 count instead.

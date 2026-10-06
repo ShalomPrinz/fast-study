@@ -40,6 +40,11 @@ each other's jobs. `useRowJobs(course, ref)` subscribes a row to its own bucket,
 `EMPTY_JOBS` and bail out of every ping; `useJobsByRef()` hands `SectionGroup` the whole map for the bulk
 summary. The context exists only to fail loudly outside the provider.
 
+A row then narrows its bucket with `jobsForTarget(jobs, name, kind)` to the jobs of its **current** name
+and kind (`name`, `name.1`, `name.2`) — the same scope a bulk target uses. Jobs are keyed by lecture
+name, so a row renamed off a finished download shows the plain Download for the new name, and one renamed
+mid-download drops that download's bars and status until the name comes back.
+
 ## Bars and retry
 
 A ref's jobs are the display atoms, sorted by lecture so a pair's bars never reorder. Each

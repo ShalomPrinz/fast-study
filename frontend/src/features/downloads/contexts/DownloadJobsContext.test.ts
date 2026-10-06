@@ -5,6 +5,8 @@ import {
   groupJobsByRef,
   indexJobsById,
   jobsForRef,
+  jobsForTarget,
+  rowStatus,
 } from './DownloadJobsContext'
 
 function job(over: Partial<DownloadJob> & Pick<DownloadJob, 'id'>): DownloadJob {
@@ -95,6 +97,41 @@ describe('jobsForRef', () => {
     const byRef = groupJobsByRef([job({ id: 'a', ref: 'r1' })])
     expect(jobsForRef(byRef, 'Algo', 'r1')).toBe(jobsForRef(byRef, 'Algo', 'r1'))
     expect(jobsForRef(byRef, 'Algo', 'r1')).toHaveLength(1)
+  })
+})
+
+describe('jobsForTarget', () => {
+  const bucket = jobsForRef(
+    groupJobsByRef([
+      job({ id: 'a', lecture: 'שיעור 3', status: 'done' }),
+      job({ id: 'b', lecture: 'שיעור 4.1' }),
+      job({ id: 'c', lecture: 'שיעור 4.2' }),
+    ]),
+    'Algo',
+    'r1',
+  )
+
+  // A row renamed away from a finished download must not read "Downloaded ✓" for the new name.
+  it('drops a job filed under another name', () => {
+    const jobs = jobsForTarget(bucket, 'שיעור 33', 'lecture')
+    expect(jobs).toHaveLength(0)
+    expect(rowStatus(jobs)).toBeNull()
+  })
+
+  it("keeps the name's own job and its zoom halves", () => {
+    expect(jobsForTarget(bucket, 'שיעור 3', 'lecture').map((j) => j.id)).toEqual(['a'])
+    expect(jobsForTarget(bucket, 'שיעור 4', 'lecture').map((j) => j.id)).toEqual(['b', 'c'])
+  })
+
+  it('drops a job of the other kind', () => {
+    expect(jobsForTarget(bucket, 'שיעור 3', 'recitation')).toHaveLength(0)
+  })
+
+  // Shared identities keep a row's snapshot stable; a miss is the frozen empty array.
+  it('returns the bucket itself when nothing is dropped, and the shared empty on a miss', () => {
+    const one = jobsForRef(groupJobsByRef([job({ id: 'a' })]), 'Algo', 'r1')
+    expect(jobsForTarget(one, 'lecture 1', 'lecture')).toBe(one)
+    expect(jobsForTarget(bucket, 'x', 'lecture')).toBe(jobsForRef(new Map(), 'Algo', 'r1'))
   })
 })
 

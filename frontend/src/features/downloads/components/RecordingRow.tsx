@@ -10,7 +10,11 @@ import type { Item, ResolvedMedia } from '@/features/downloads/services/autoDown
 import PasscodePrompt from './PasscodePrompt'
 import RecordingJobList from './RecordingJobList'
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
-import { rowStatus, useRowJobs } from '@/features/downloads/contexts/DownloadJobsContext'
+import {
+  jobsForTarget,
+  rowStatus,
+  useRowJobs,
+} from '@/features/downloads/contexts/DownloadJobsContext'
 import type { RowEdit } from '@/features/downloads/contexts/RowEditsContext'
 import { useRowEdit, useRowEdits } from '@/features/downloads/contexts/RowEditsContext'
 import { useRowExpansion } from '@/features/downloads/contexts/RowExpansionsContext'
@@ -69,9 +73,10 @@ const RecordingRow = memo(function RecordingRow({
     setName,
     setKind,
   } = useRowEdit(item, edit, course)
-  // The actual downloads (one bar each) of this row's `ref` in this course; a running download
-  // re-attaches after a reload. Subscribed per row, so another row's job change doesn't re-render this one.
-  const jobs = useRowJobs(course, item.ref)
+  // The actual downloads (one bar each) of this row's `ref` in this course, scoped to its current
+  // name and kind; a running download re-attaches after a reload. Subscribed per row, so another
+  // row's job change doesn't re-render this one.
+  const jobs = jobsForTarget(useRowJobs(course, item.ref), effectiveName, kind)
   // Subscribed per ref, so expanding one playlist leaves every other row alone. The state itself is
   // SectionGroup's — the bulk queue needs the same children cache.
   const expand = useRowExpansion(item.ref)
@@ -148,7 +153,7 @@ const RecordingRow = memo(function RecordingRow({
       courses,
       course,
     )
-    if (overwrites || status === 'done') {
+    if (overwrites) {
       setConfirm({
         message: t`${effectiveName} already exists in ${course}. Download again and overwrite?`,
         run: download,
