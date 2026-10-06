@@ -70,7 +70,7 @@ export default function BrowserPrereqField({ state, onRecheck }: Props) {
       </div>
       <p className="settings-hint">
         <Trans>
-          Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site.
+          FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from your course site.
           Turning a video into a summary doesn't need it.
         </Trans>
       </p>
@@ -81,7 +81,7 @@ export default function BrowserPrereqField({ state, onRecheck }: Props) {
         <>
           <p className="settings-note settings-note--warn">
             <Trans>
-              Without one, Fast Study can't fetch recordings from your course site and can't capture
+              Without one, FastStudy can't fetch recordings from your course site and can't capture
               a Zoom recording. Everything else works as usual — add a video yourself and it still
               becomes a summary. Install Chrome with the link above, then check again.
             </Trans>

@@ -301,8 +301,8 @@ msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} 
 msgstr "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 
 #: src/shared/i18n/serviceErrors.ts:183
-msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which Fast Study relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so Fast Study can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so Fast Study can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with Fast Study.}}"
-msgstr "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which Fast Study relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so Fast Study can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so Fast Study can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with Fast Study.}}"
+msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
+msgstr "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
 
 #: src/features/search/components/SearchResult.tsx:64
 msgid "{remaining, plural, one {Show # more} other {Show # more}}"
@@ -381,8 +381,8 @@ msgid "A file the PDF template needs is missing: {asset}."
 msgstr "A file the PDF template needs is missing: {asset}."
 
 #: src/app/DriveConsentPrompt.tsx:58
-msgid "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
-msgstr "A finished summary is waiting to upload, and Fast Study has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
+msgid "A finished summary is waiting to upload, and FastStudy has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
+msgstr "A finished summary is waiting to upload, and FastStudy has no permission to use your Drive yet. Saying yes opens a Google sign-in page in your browser; either way every summary is kept on this computer."
 
 #: src/shared/i18n/serviceErrors.ts:77
 msgid "A font the PDF needs is missing."
@@ -995,8 +995,8 @@ msgstr "Every course, lecture, video and summary is stored here. Use a folder on
 #~ msgstr "Every lecture that is not finished yet is picked up on the next start."
 
 #: src/features/settings/components/DataRootField.tsx:96
-msgid "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
-msgstr "Everything stays on this computer. Fast Study has no servers of its own and keeps no copy of your lectures or summaries."
+msgid "Everything stays on this computer. FastStudy has no servers of its own and keeps no copy of your lectures or summaries."
+msgstr "Everything stays on this computer. FastStudy has no servers of its own and keeps no copy of your lectures or summaries."
 
 #: src/features/course-overview/constants/overview.ts:24
 msgid "Exam Hints"
@@ -1061,33 +1061,21 @@ msgstr "Failed to restore the original summary"
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
-#: src/shared/i18n/serviceErrors.ts:43
-msgid "Fast Study couldn't reach your files. Try again."
-msgstr "Fast Study couldn't reach your files. Try again."
-
 #: src/features/settings/components/BrowserPrereqField.tsx:97
 #~ msgid "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
 #~ msgstr "Fast Study drives Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary never uses it."
-
-#: src/features/settings/components/MoodleSiteField.tsx:131
-msgid "Fast Study finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
-msgstr "Fast Study finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
-
-#: src/features/settings/components/MoodleAccountField.tsx:40
-msgid "Fast Study signs in to <0>{host}</0> with this account to find and fetch recordings. You can connect it later."
-msgstr "Fast Study signs in to <0>{host}</0> with this account to find and fetch recordings. You can connect it later."
 
 #: src/features/settings/components/MoodleAccountField.tsx:18
 #~ msgid "Fast Study signs in to your course site with this account to find and fetch recordings. Nothing else needs it, and you can connect it later."
 #~ msgstr "Fast Study signs in to your course site with this account to find and fetch recordings. Nothing else needs it, and you can connect it later."
 
-#: src/features/settings/components/BrowserPrereqField.tsx:72
-msgid "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
-msgstr "Fast Study uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
+#: src/shared/i18n/serviceErrors.ts:43
+msgid "FastStudy couldn't reach your files. Try again."
+msgstr "FastStudy couldn't reach your files. Try again."
 
-#: src/features/settings/InitWall.tsx:214
-msgid "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
-msgstr "Fast Study uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
+#: src/features/settings/components/MoodleSiteField.tsx:131
+msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
+msgstr "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:80
 msgid "FastStudy privacy policy"
@@ -1100,6 +1088,18 @@ msgstr "FastStudy runs on your computer. Your lectures, transcripts and summarie
 #: src/features/settings/components/PrivacyPolicyModal.tsx:93
 msgid "FastStudy sends data only to services you set up yourself:"
 msgstr "FastStudy sends data only to services you set up yourself:"
+
+#: src/features/settings/components/MoodleAccountField.tsx:40
+msgid "FastStudy signs in to <0>{host}</0> with this account to find and fetch recordings. You can connect it later."
+msgstr "FastStudy signs in to <0>{host}</0> with this account to find and fetch recordings. You can connect it later."
+
+#: src/features/settings/components/BrowserPrereqField.tsx:72
+msgid "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
+msgstr "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from your course site. Turning a video into a summary doesn't need it."
+
+#: src/features/settings/InitWall.tsx:214
+msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
+msgstr "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
 #: src/features/downloads/components/RecordingRow.tsx:226
 msgid "File type"
@@ -1185,8 +1185,8 @@ msgid "Google Drive"
 msgstr "Google Drive"
 
 #: src/shared/i18n/serviceErrors.ts:47
-msgid "Google Drive can't be connected: a file Fast Study needs is missing from {path}."
-msgstr "Google Drive can't be connected: a file Fast Study needs is missing from {path}."
+msgid "Google Drive can't be connected: a file FastStudy needs is missing from {path}."
+msgstr "Google Drive can't be connected: a file FastStudy needs is missing from {path}."
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:103
 msgid "Google Drive gets the summary PDF, and only if you turned Drive upload on."
@@ -1604,8 +1604,8 @@ msgstr "Overview is already running for this course"
 
 #: src/services/http.ts:48
 #: src/shared/i18n/serviceErrors.ts:40
-msgid "Part of Fast Study isn't responding. Restart the app."
-msgstr "Part of Fast Study isn't responding. Restart the app."
+msgid "Part of FastStudy isn't responding. Restart the app."
+msgstr "Part of FastStudy isn't responding. Restart the app."
 
 #: src/features/downloads/components/PasscodePrompt.tsx:52
 msgid "Passcode"
@@ -1969,8 +1969,8 @@ msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
 #: src/features/settings/InitWall.tsx:334
-msgid "Start using Fast Study"
-msgstr "Start using Fast Study"
+msgid "Start using FastStudy"
+msgstr "Start using FastStudy"
 
 #. placeholder {0}: currentIndex + 1
 #. placeholder {1}: steps.length
@@ -2175,8 +2175,8 @@ msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
 #: src/shared/i18n/serviceErrors.ts:142
-msgid "The part of Fast Study that downloads recordings isn't responding. Restart the app."
-msgstr "The part of Fast Study that downloads recordings isn't responding. Restart the app."
+msgid "The part of FastStudy that downloads recordings isn't responding. Restart the app."
+msgstr "The part of FastStudy that downloads recordings isn't responding. Restart the app."
 
 #: src/shared/i18n/serviceErrors.ts:76
 msgid "The PDF could not be created."
@@ -2468,8 +2468,8 @@ msgstr "With this off, a lecture is done once its PDF is ready. If you turn it b
 #~ msgstr "With this off, a lecture is finished once its PDF is ready. Turning it back on marks every lecture that finished meanwhile as unfinished again, and they will all upload."
 
 #: src/features/settings/components/BrowserPrereqField.tsx:83
-msgid "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
-msgstr "Without one, Fast Study can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
+msgid "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
+msgstr "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 
 #: src/features/downloads/components/ManualDownload.tsx:109
 msgid "Works only for video links, and only if they open without signing in."
@@ -2488,8 +2488,8 @@ msgid "You must read the privacy policy before you continue."
 msgstr "You must read the privacy policy before you continue."
 
 #: src/features/settings/InitWall.tsx:220
-msgid "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
-msgstr "Your keys are kept only on this computer, encrypted by Windows. Fast Study has no servers of its own — each key is sent only to the service it belongs to."
+msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
+msgstr "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."
 
 #: src/features/settings/InitWall.tsx:211
 msgid "Your two API keys"

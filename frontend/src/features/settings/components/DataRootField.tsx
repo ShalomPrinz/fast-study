@@ -94,8 +94,8 @@ export default function DataRootField({ value, onChange, onUnusableChange }: Pro
       {onUnusableChange ? (
         <p className="settings-note">
           <Trans>
-            Everything stays on this computer. Fast Study has no servers of its own and keeps no
-            copy of your lectures or summaries.
+            Everything stays on this computer. FastStudy has no servers of its own and keeps no copy
+            of your lectures or summaries.
           </Trans>
         </p>
       ) : (

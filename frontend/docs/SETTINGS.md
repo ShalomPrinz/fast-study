@@ -13,7 +13,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | University        | none — optional, nothing preselected      | a preset, or any URL  | `downloader/auto` |
 | UI language       | OS locale — Hebrew unless it says English | Hebrew, English       | frontend          |
 | Drive upload      | off                                       | on                    | `backend/`        |
-| Drive root folder | `Fast Study`, sent only once Drive is on  | any folder name       | `backend/`        |
+| Drive root folder | `FastStudy`, sent only once Drive is on  | any folder name       | `backend/`        |
 | Summary model     | the first curated entry                   | the curated dropdown  | `backend/`        |
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Daily run         | on                                        | off                   | `backend/`        |

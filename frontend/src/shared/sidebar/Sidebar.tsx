@@ -67,7 +67,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         {/* The product name is a brand, not copy — it reads the same in every locale. */}
-        <span>Fast Study</span>
+        <span>FastStudy</span>
       </div>
 
       <nav className="sidebar-nav-block">

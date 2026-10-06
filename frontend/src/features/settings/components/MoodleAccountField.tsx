@@ -38,7 +38,7 @@ export default function MoodleAccountField({ site, switching }: Props) {
         <>
           <p className="settings-hint">
             <Trans>
-              Fast Study signs in to <bdi dir="ltr">{host}</bdi> with this account to find and fetch
+              FastStudy signs in to <bdi dir="ltr">{host}</bdi> with this account to find and fetch
               recordings. You can connect it later.
             </Trans>
           </p>

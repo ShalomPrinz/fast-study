@@ -83,7 +83,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     dataRoot: stored.dataRoot ?? runtimeBridge()?.defaultDataRoot ?? '',
     driveEnabled: stored.driveEnabled ?? false,
     // The brand, not copy: the folder lands in the user's Drive under the same name in every locale.
-    gdriveRootFolder: stored.gdriveRootFolder ?? 'Fast Study',
+    gdriveRootFolder: stored.gdriveRootFolder ?? 'FastStudy',
     geminiModel: stored.geminiModel ?? '',
     // Not asked about here — carried through so the wall's save leaves the defaults alone. A first
     // install has nothing to catch up on, so the cron's switch and hour belong on `/settings` only.
@@ -184,7 +184,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
       <div className="init-wall-card">
         <header className="init-wall-header">
           {/* The product name is a brand, not copy — it reads the same in every locale. */}
-          <p className="init-wall-brand">Fast Study</p>
+          <p className="init-wall-brand">FastStudy</p>
           <h1 className="init-wall-title">
             <Trans>Let's set things up</Trans>
           </h1>
@@ -212,14 +212,14 @@ export default function InitWall({ stored: initial, onDone }: Props) {
                 </SectionTitle>
                 <p className="settings-hint">
                   <Trans>
-                    Fast Study uses two free services: one turns the recording into text, the other
+                    FastStudy uses two free services: one turns the recording into text, the other
                     writes the summary. Both need a key of your own, and both are free to create.
                   </Trans>
                 </p>
                 <p className="settings-note">
                   <Trans>
-                    Your keys are kept only on this computer, encrypted by Windows. Fast Study has
-                    no servers of its own — each key is sent only to the service it belongs to.
+                    Your keys are kept only on this computer, encrypted by Windows. FastStudy has no
+                    servers of its own — each key is sent only to the service it belongs to.
                   </Trans>
                 </p>
                 {keyField(
@@ -331,7 +331,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
             disabled={saving || siteChecking || !options || missing.length > 0}
             onClick={start}
           >
-            {saving ? t`Saving…` : t`Start using Fast Study`}
+            {saving ? t`Saving…` : t`Start using FastStudy`}
           </button>
           {askingPrivacy && (
             <PrivacyPolicyModal

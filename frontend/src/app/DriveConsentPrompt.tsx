@@ -56,7 +56,7 @@ export default function DriveConsentPrompt() {
           data-testid="drive-consent-modal"
         >
           <Trans>
-            A finished summary is waiting to upload, and Fast Study has no permission to use your
+            A finished summary is waiting to upload, and FastStudy has no permission to use your
             Drive yet. Saying yes opens a Google sign-in page in your browser; either way every
             summary is kept on this computer.
           </Trans>

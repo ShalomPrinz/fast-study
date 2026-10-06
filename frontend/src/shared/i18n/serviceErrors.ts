@@ -38,14 +38,14 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   file_not_found: msg({ message: '{file} was not found.' }),
   internal_error: msg({ message: 'Something went wrong.' }),
   storage_unavailable: msg({
-    message: "Part of Fast Study isn't responding. Restart the app.",
+    message: "Part of FastStudy isn't responding. Restart the app.",
   }),
-  storage_error: msg({ message: "Fast Study couldn't reach your files. Try again." }),
+  storage_error: msg({ message: "FastStudy couldn't reach your files. Try again." }),
 
   // backend — HTTP
   step_disabled: msg({ message: 'That step is turned off in settings.' }),
   google_credentials_missing: msg({
-    message: "Google Drive can't be connected: a file Fast Study needs is missing from {path}.",
+    message: "Google Drive can't be connected: a file FastStudy needs is missing from {path}.",
   }),
 
   // backend — pipeline
@@ -140,7 +140,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
       "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} lecture {That lecture name can't be used as a folder name.} url {That link isn't valid. Paste a full address starting with http:// or https://.} other {Something went wrong.}}",
   }),
   autodl_unreachable: msg({
-    message: "The part of Fast Study that downloads recordings isn't responding. Restart the app.",
+    message: "The part of FastStudy that downloads recordings isn't responding. Restart the app.",
   }),
   database_store_failed: msg({ message: 'The downloaded file could not be stored.' }),
   run_unknown: msg({ message: 'That download run no longer exists.' }),
@@ -182,7 +182,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   moodle_site_unsupported: msg({
     message:
-      "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which Fast Study relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so Fast Study can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so Fast Study can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with Fast Study.}}",
+      "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}",
   }),
   course_url_no_id: msg({ message: "That course link doesn't point to a specific course: {url}." }),
   link_not_a_video: msg({

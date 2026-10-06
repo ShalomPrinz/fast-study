@@ -81,10 +81,10 @@ describe('buildPatch', () => {
   })
 
   it('sends a default Drive folder nobody typed once Drive is on, and no folder while it is off', () => {
-    const defaulted = { ...UNCHANGED, gdriveRootFolder: 'Fast Study' }
+    const defaulted = { ...UNCHANGED, gdriveRootFolder: 'FastStudy' }
     expect(buildPatch({ ...defaulted, driveEnabled: true }, STORED)).toEqual({
       driveEnabled: true,
-      gdriveRootFolder: 'Fast Study',
+      gdriveRootFolder: 'FastStudy',
     })
     expect(buildPatch(defaulted, STORED)).toEqual({})
   })

@@ -129,7 +129,7 @@ export default function MoodleSiteField({ value, onChange, onSupported, onChecki
       )}
       <span className="settings-hint">
         <Trans>
-          Fast Study finds your recordings on your university's Moodle site. If it isn't listed,
+          FastStudy finds your recordings on your university's Moodle site. If it isn't listed,
           choose "Other…" and paste the address of its Moodle.
         </Trans>
       </span>

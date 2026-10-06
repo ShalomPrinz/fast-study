@@ -301,7 +301,7 @@ export interface SiteProbe {
   failure: ServiceFailure | null
 }
 
-/** Asks the auto-downloader whether `url` is a Moodle site Fast Study can use. A failed request is
+/** Asks the auto-downloader whether `url` is a Moodle site FastStudy can use. A failed request is
  *  `unverified`, never `unsupported` — only the site itself may say it can't work. */
 export async function probeMoodleSite(url: string): Promise<SiteProbe> {
   try {

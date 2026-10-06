@@ -1,4 +1,4 @@
-# Fast Study
+# FastStudy
 
 Turns a Hebrew video lecture into a structured written summary and uploads it to Google Drive.
 

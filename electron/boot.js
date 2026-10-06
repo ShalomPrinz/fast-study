@@ -54,7 +54,7 @@ function render(snapshot) {
     }),
   );
   const failed = Boolean(snapshot.error);
-  elements.sub.textContent = failed ? 'Fast Study could not start.' : 'Starting services…';
+  elements.sub.textContent = failed ? 'FastStudy could not start.' : 'Starting services…';
   elements.error.textContent = snapshot.error ?? '';
   elements.error.hidden = !failed;
   elements.log.textContent = failed ? `Details: ${snapshot.logFile}` : '';

@@ -30,7 +30,7 @@ You type the file name you want — that's the only input.
 2. Open Google Chrome and go to: `chrome://extensions`
 3. In the top-right, turn on **Developer mode**.
 4. Click **Load unpacked** (top-left).
-5. Pick the **`downloader\extension\simple`** folder (not the parent `downloader` folder). The extension _Fast Study Downloader (Simple)_ should now appear in the list.
+5. Pick the **`downloader\extension\simple`** folder (not the parent `downloader` folder). The extension _FastStudy Downloader (Simple)_ should now appear in the list.
 6. (Optional) Click the puzzle-piece icon in Chrome's toolbar and pin the extension so its icon stays visible.
 
 That's it. No installs, no terminal, no servers.

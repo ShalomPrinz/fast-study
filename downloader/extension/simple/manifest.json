@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Fast Study Downloader (Simple)",
+  "name": "FastStudy Downloader (Simple)",
   "version": "1.0",
   "description": "Intercepts video streams and saves them to your Downloads folder. No server required.",
   "permissions": ["webRequest", "storage", "activeTab", "downloads"],
