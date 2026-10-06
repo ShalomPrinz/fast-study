@@ -66,13 +66,13 @@ Terminal jobs are kept asymmetrically:
 - **`done`** is redundant with durable state — the database course tree (its own SSE) is what flips
   the frontend row green. So a `done` job lingers only `DONE_BRIDGE_MS` to bridge the gap to that tree
   ping. Eviction is deferred, never synchronous: a client resyncing on the `done` ping must still
-  find it.
+  find it. The eviction itself pings `job:change`, so a live client drops it just as a fresh load would.
 - **`error`** is the ONLY carrier of "this failed" — a failed download leaves no file, so the tree
   can't tell it from never-attempted. It stays with no timeout until a retry supersedes it.
 
 `createJob` evicts **any terminal predecessor** for the same target (course + lecture + kind + ref),
 so `/jobs` holds at most one job per target and the frontend does no client-side dedupe. A pending
-`DONE_BRIDGE_MS` delete for an already-superseded job then no-ops.
+`DONE_BRIDGE_MS` eviction for an already-superseded job then no-ops, without a ping.
 
 ## The `/jobs` shape
 

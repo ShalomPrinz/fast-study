@@ -8,7 +8,7 @@ const jobs = new Map();
 
 // A `done` job lingers only to bridge the sub-second gap until the database tree SSE flips
 // the frontend row green — the tree, not the job, owns the durable "downloaded" state.
-const DONE_BRIDGE_MS = 60 * 1000;
+export const DONE_BRIDGE_MS = 60 * 1000;
 
 // Created SYNCHRONOUSLY by the route, before the async size probe, so a client that
 // resyncs with the id it just received can never miss the job.
@@ -81,7 +81,8 @@ export function finishJob(id, status, message = null, code = null, params = null
   job.params = params;
   broadcastJobs();
   // Only `done` is evicted on a timer; `error` stays until a retry supersedes it (docs/JOBS.md).
-  if (status === 'done') setTimeout(() => jobs.delete(id), DONE_BRIDGE_MS).unref();
+  // Ids are fresh UUIDs, so a late timer for a superseded job finds nothing and stays silent.
+  if (status === 'done') setTimeout(() => evict(id), DONE_BRIDGE_MS).unref();
 }
 
 // Evict any terminal predecessor (`done` or `error`) to guarantee one job per target
