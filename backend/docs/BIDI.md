@@ -73,6 +73,7 @@ Wraps Latin runs in `\LR{}` (LaTeX-escaped — `x86_64` carries special chars) s
 - **A number alone is a continuation, never an anchor** — "Software 1.0" is one run, "5 שקלים" stays untouched.
 - **Separators (space, `, `, `-`, abbreviation `. `) glue only when another Latin token follows**, so a sentence-final period or a dash before Hebrew stays RTL.
 - **Trailing separators are excluded**, so they don't jump to the run's far edge. A possessive apostrophe stays inside ("Tukey's"), and after a sibilant (`s`/`x`/`z`) glues across the following space ("Bayes' Rule") — the sibilant restriction keeps a closing quote ("’word’ here") outside.
+- **A bare URL (`https://…`, `http://…`, `www.…`) is one token**, so its `:`/`?`/`=`/`&` stay inside the run; it stops at whitespace, Hebrew or `()[]<>`, and never ends on `.,;:!?'’`, so sentence punctuation stays outside. A markdown link destination `](…)` and an autolink `<…>` are passed through untouched — wrapped, pandoc no longer reads them as links; the link text is wrapped as prose.
 - **A leading slash is glued only when not right after a Hebrew letter**: `/index.html` is a path, "גרעינים/kernels" is a separator.
 - **A balanced `(…)` / `[…]` group is wrapped whole**, delimiters included; requiring the closer means a lone one on the Hebrew side is never swallowed. The body must still anchor on a Latin word — a bare `(0)` already resolves correctly.
 - **A group directly after a word belongs to it** (`console.log('hi')`, `arr[i]`), else the two islands print backwards.

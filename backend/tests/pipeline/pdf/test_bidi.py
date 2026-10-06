@@ -362,6 +362,49 @@ class TestWrapEnglishPhrases:
         assert "`bar baz`" in result
         assert r"\LR" not in result
 
+    # --- URLs ---
+
+    def test_url_with_query_is_one_run(self):
+        result = wrap_english_phrases("ראו https://example.com/path?a=1&b=2 לפרטים.")
+        assert result == r"ראו \LR{https://example.com/path?a=1\&b=2} לפרטים."
+
+    def test_url_after_hebrew_colon_is_one_run(self):
+        result = wrap_english_phrases(
+            "האתר הרשמי: https://docs.python.org/3/library/os.html לקריאה נוספת."
+        )
+        assert (
+            result
+            == r"האתר הרשמי: \LR{https://docs.python.org/3/library/os.html} לקריאה נוספת."
+        )
+
+    def test_sentence_final_period_after_url_stays_outside(self):
+        result = wrap_english_phrases("ראו https://example.com/a.")
+        assert result == r"ראו \LR{https://example.com/a}\RL{.}"
+
+    def test_closing_paren_after_url_stays_outside(self):
+        result = wrap_english_phrases("(ראו https://x.com/a)")
+        assert result == r"(ראו \LR{https://x.com/a})"
+
+    def test_url_latex_specials_escaped_inside_run(self):
+        result = wrap_english_phrases("ראו https://ex.com/a%20b#sec_1~x כאן")
+        assert r"\LR{https://ex.com/a\%20b\#sec\_1\textasciitilde{}x}" in result
+
+    def test_www_url_is_one_run(self):
+        result = wrap_english_phrases("ראו www.example.com/a?b=1 כאן")
+        assert r"\LR{www.example.com/a?b=1}" in result
+
+    def test_markdown_link_target_untouched(self):
+        md = "ראו [האתר](https://example.com/a_b?x=1&y=2) כאן"
+        assert wrap_english_phrases(md) == md
+
+    def test_markdown_link_latin_text_wrapped_target_untouched(self):
+        result = wrap_english_phrases("ראו [docs site](https://example.com/a) כאן")
+        assert result == r"ראו [\LR{docs site}](https://example.com/a) כאן"
+
+    def test_autolink_untouched(self):
+        md = "ראו <https://example.com/a> כאן"
+        assert wrap_english_phrases(md) == md
+
 
 # ---------------------------------------------------------------------------
 # force_ltr_inline_code

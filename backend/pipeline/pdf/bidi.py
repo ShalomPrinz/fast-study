@@ -22,6 +22,14 @@ _WORD = (
     r"(?:[0-9]+(?:[.,][0-9]+)*-?)?(?:(?<![" + _HEBREW + r"])/)?[" + _LATIN + r"]"
     r"(?:[" + _LATIN + r"0-9_]|[\-/.'’](?=[" + _LATIN + r"0-9])|" + _POSSESSIVE + r")*"
 )
+# A bare URL is one token, so its `:`/`?`/`=`/`&` can't fall out into the RTL run. It stops at
+# whitespace, Hebrew or a markdown/quote delimiter, and never ends on sentence punctuation.
+_URL = (
+    r"(?:https?://|www\.)[^\s<>\[\]()`\"" + _HEBREW + r"]*"
+    r"[^\s<>\[\]()`\"'’.,;:!?" + _HEBREW + r"]"
+)
+# A link destination `](…)` and an autolink `<…>` must reach pandoc untouched, or the href breaks.
+_LINK_TARGET_RE = re.compile(r"(\]\([^)\n]*\)|<(?:https?://|www\.)[^>\s]*>)")
 # A number joins a phrase as a CONTINUATION only, never an anchor — so a lone
 # Hebrew-adjacent number ("5 שקלים") stays untouched in the RTL run.
 _NUM = r"[0-9]+(?:[.,][0-9]+)*"
@@ -35,7 +43,7 @@ _GROUP_BODY = r"['’\"]?" + _WORD + r"['’\"]?(?:" + _SEP + _QUOTED + r")*"
 # reorder. Requiring the matching closer keeps a lone one on the Hebrew side out.
 _GROUP = r"(?:\(" + _GROUP_BODY + r"\)|\[" + _GROUP_BODY + r"\])"
 # A group directly after a word belongs to it — console.log('hi'), arr[i], grep [pattern].
-_ITEM = r"(?:" + _WORD + r"(?:" + _GROUP + r")*|" + _GROUP + r")"
+_ITEM = r"(?:" + _URL + r"|" + _WORD + r"(?:" + _GROUP + r")*|" + _GROUP + r")"
 _CONT = r"(?:" + _ITEM + r"|" + _NUM + r")"
 _MULTI_LATIN_RE = re.compile(r"(" + _ITEM + r"(?:" + _SEP + _CONT + r")*)([.,;:!?]*)")
 _LEADING_PUNCT_RE = re.compile(r"^([.,;:!?]+)")
@@ -76,7 +84,11 @@ def wrap_english_phrases(text: str) -> str:
                 if m:
                     leading = r"\RL{" + m.group(1) + "}"
                     part = part[m.end() :]
-            out.append(leading + _MULTI_LATIN_RE.sub(replace, part))
+            # Odd pieces are link targets, passed through like protected spans.
+            pieces = _LINK_TARGET_RE.split(part)
+            for j in range(0, len(pieces), 2):
+                pieces[j] = _MULTI_LATIN_RE.sub(replace, pieces[j])
+            out.append(leading + "".join(pieces))
     return "".join(out)
 
 

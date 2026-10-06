@@ -371,6 +371,15 @@ class TestBidiOrderingRenders:
         assert "(Bayes' Rule)" in vis
         assert "(Rule 'Bayes)" not in vis
 
+    def test_url_renders_as_one_island(self):
+        # Split into Latin tokens, the URL printed "2=b&1=a?/example.com/path/:https".
+        vis = self._visual_text(
+            "ראו https://example.com/path?a=1&b=2 לפרטים.\n\n"
+            "האתר הרשמי: https://docs.python.org/3/library/os.html לקריאה נוספת.\n"
+        )
+        assert "https://example.com/path?a=1&b=2" in vis
+        assert "https://docs.python.org/3/library/os.html" in vis
+
     # The inline-code paths below pin what force_ltr_inline_code's \LR{\textenglish{\texttt{}}}
     # wrapper buys at render time, so a change to the wrapper is judged here.
 
