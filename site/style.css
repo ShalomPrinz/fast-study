@@ -12,6 +12,7 @@
   --accent-soft: #eef1fd;
   --accent-line: #d5daf7;
   --ok: #2f7d54;
+  --danger: #c0392f;
   --sidebar-bg: #1b1b26;
   --sidebar-fg: #d7d9e6;
   --font-ui: 'Heebo', 'Noto Sans Hebrew', system-ui, sans-serif;
@@ -618,6 +619,10 @@ details p {
   .features,
   .steps--four {
     grid-template-columns: 1fr;
+.policy .danger {
+  color: var(--danger);
+}
+
   }
   .privacy li {
     grid-template-columns: 1fr;
