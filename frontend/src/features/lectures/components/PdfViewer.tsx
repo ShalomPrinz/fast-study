@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { Document, Page, pdfjs } from 'react-pdf'
 import Icon from '@/shared/components/Icon'
 import { secretHeaders } from '@/services/runtime'
+import { shouldCaptureScroll } from '@/features/lectures/utils/pdfScroll'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import '@/styles/spinner.css'
@@ -28,21 +29,21 @@ export default function PdfViewer({ url, show, generating, onPopOut }: Props) {
   const [scale, setScale] = useState(1.2)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const capturedScrollRef = useRef({ top: 0, left: 0 })
-  const prevUrlRef = useRef(url)
+  const prevViewRef = useRef({ url, generating })
 
   // pdf.js fetches the document over XHR, so the secret rides its own headers. Memoized because
   // react-pdf compares `file` by identity — a fresh literal would re-fetch the PDF every render.
   const file = useMemo(() => ({ url, httpHeaders: secretHeaders() }), [url])
 
-  // Capture in the render phase, before React commits the new url: the old pages are still
-  // mounted here, so scrollTop is the real user position.
-  if (prevUrlRef.current !== url) {
+  // Capture in the render phase, before React commits the change: the old pages are still mounted here.
+  // The container ref is null while the spinner shows, which keeps the start-of-generate capture.
+  if (shouldCaptureScroll(prevViewRef.current, { url, generating })) {
     const container = scrollContainerRef.current
     if (container) {
       capturedScrollRef.current = { top: container.scrollTop, left: container.scrollLeft }
     }
-    prevUrlRef.current = url
   }
+  prevViewRef.current = { url, generating }
 
   // Fires per page once its canvas is laid out at real size; idempotent across pages.
   // Restore the captured scroll, or snap to the right edge (RTL) on first load.

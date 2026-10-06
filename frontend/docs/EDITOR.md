@@ -45,8 +45,9 @@ unchanged. react-pdf gets `{ url, httpHeaders }` so pdf.js's own XHR carries the
 on `url` because react-pdf compares `file` by identity. Pop-out is an `onPopOut` callback that opens the
 file through `services/open.ts`, rather than four more identifier props.
 
-Scroll is captured during render, before the new URL commits (the old pages are still mounted), and
-restored from each page's `onRenderSuccess`; with nothing captured it snaps to the right edge for RTL.
+Scroll is captured during render, while the old pages are still mounted — when `generating` starts (its
+spinner unmounts the scroll container before the new URL arrives) or when the URL changes — and restored
+from each page's `onRenderSuccess`; with nothing captured it snaps to the right edge for RTL.
 
 ## `MarkdownEditor`
 
