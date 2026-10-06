@@ -21,6 +21,7 @@
         --line: #e8e9ef;
         --accent: #4f5bd5;
         --ok-dot: #3f9f6a;
+        --ok-text: #1e7a46;
         --warn: #b45309;
         --danger: #c0392f;
         --danger-soft: #fdf1ef;
@@ -131,6 +132,34 @@
         font-size: 12px;
         word-break: break-all;
       }
+      .update {
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-2);
+      }
+      .update.done {
+        color: var(--ok-text);
+      }
+      .spinner {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+        border: 2px solid var(--line);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      .mark {
+        flex-shrink: 0;
+        font-weight: 700;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
       .actions {
         margin-top: 20px;
         display: flex;
@@ -162,6 +191,7 @@
       <ul id="services"></ul>
       <p class="error" id="error" data-testid="boot-error" hidden></p>
       <p class="log" id="log" data-testid="boot-log" hidden></p>
+      <p class="update" id="update" data-testid="boot-update" hidden></p>
       <div class="actions" id="actions" hidden>
         <button class="primary" id="retry" data-testid="boot-retry">Try again</button>
         <button id="quit">Quit</button>

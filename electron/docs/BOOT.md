@@ -46,8 +46,12 @@ takes the same path. Packaged on Windows, a binary under `resources/` failing wi
 raw error, which stays in the log. Like the rest of the page it is English and carries no error code:
 nothing would resolve one ([ERROR-CODES.md](../../docs/ERROR-CODES.md)).
 
+On the failure view only, one more row reports the update check main starts then — a spinner while
+checking or downloading, then the outcome ([`UPDATES.md`](UPDATES.md)). It rides `bootState.update`
+(`null` until the first phase); a successful boot never shows it. Try again does not restart the check.
+
 The page's test ids are a contract held for `delivery/smoke/`: each row's `data-testid="boot-row"` with
-`data-service` and `data-state` (main's raw values), and `boot-error`, `boot-log`, `boot-retry`.
+`data-service` and `data-state` (main's raw values), and `boot-error`, `boot-log`, `boot-update` (with `data-phase`), `boot-retry`.
 
 ## Why each peer is a plain env var
 

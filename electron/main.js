@@ -318,6 +318,7 @@ async function boot() {
   bootState = {
     services: specs.map((spec) => ({ name: spec.name, state: 'pending' })),
     error: null,
+    update: null,
     logFile: LOG_FILE,
   };
   publishBoot();
@@ -363,7 +364,15 @@ async function runBoot() {
       service.tools = null;
     }
     bootState.error = error.message;
+    bootState.update = null;
     publishBoot();
+    // The one visible update surface: a failed boot may be a bad install the next release fixes.
+    // `error` guards the listener from a later successful retry, whose launch must stay silent.
+    startUpdater(log, (phase) => {
+      if (!bootState.error) return;
+      bootState.update = phase;
+      publishBoot();
+    });
   } finally {
     booting = false;
   }

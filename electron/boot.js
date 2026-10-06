@@ -12,6 +12,7 @@ const elements = {
   services: document.getElementById('services'),
   error: document.getElementById('error'),
   log: document.getElementById('log'),
+  update: document.getElementById('update'),
   actions: document.getElementById('actions'),
 };
 
@@ -29,6 +30,37 @@ function detailFor(service) {
   if (service.state !== 'ready') return { text: '' };
   const broken = unusableTools(service.tools);
   return broken.length ? { text: broken.join(', '), warn: true } : { text: 'ready' };
+}
+
+// The failure view's update row; `icon` is a spinner while work is in flight, a mark when done.
+const UPDATE_ROWS = {
+  checking: { text: 'Checking for updates…', icon: 'spinner' },
+  downloading: { text: 'Installing update…', icon: 'spinner' },
+  none: { text: 'There is no update to install. Please contact us and report this issue.' },
+  downloaded: {
+    text: 'Update complete. Please close the app and open it again.',
+    icon: 'mark',
+    done: true,
+  },
+  error: {
+    text: 'Could not check for updates. Check your internet connection and try again; if it keeps failing, please contact us and report this issue.',
+  },
+};
+
+function renderUpdate(phase) {
+  const row = UPDATE_ROWS[phase];
+  elements.update.hidden = !row;
+  elements.update.dataset.phase = phase ?? '';
+  elements.update.classList.toggle('done', Boolean(row?.done));
+  if (!row) return elements.update.replaceChildren();
+  const text = document.createElement('span');
+  text.textContent = row.text;
+  const icon = row.icon && document.createElement('span');
+  if (icon) {
+    icon.className = row.icon;
+    icon.textContent = row.icon === 'mark' ? '✓' : '';
+  }
+  elements.update.replaceChildren(...(icon ? [icon, text] : [text]));
 }
 
 function render(snapshot) {
@@ -59,6 +91,7 @@ function render(snapshot) {
   elements.error.hidden = !failed;
   elements.log.textContent = failed ? `Details: ${snapshot.logFile}` : '';
   elements.log.hidden = !failed;
+  renderUpdate(failed ? snapshot.update : null);
   elements.actions.hidden = !failed;
 }
 
