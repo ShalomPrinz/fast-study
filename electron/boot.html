@@ -100,10 +100,13 @@
       .pending .label {
         color: var(--text-3);
       }
+      /* min-width: 0 lets the flex item shrink below its longest unbroken token, so it wraps. */
       .detail {
+        min-width: 0;
         color: var(--text-3);
         font-size: 12px;
         text-align: right;
+        overflow-wrap: anywhere;
       }
       .failed .detail {
         color: var(--danger);
@@ -120,6 +123,7 @@
         color: var(--danger);
         line-height: 1.5;
         white-space: pre-wrap;
+        overflow-wrap: anywhere;
       }
       .log {
         margin-top: 10px;
