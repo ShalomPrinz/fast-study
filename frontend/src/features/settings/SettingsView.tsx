@@ -16,6 +16,7 @@ import { toastFailure } from '@/shared/utils/failure'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useSettingsContext } from '@/shared/contexts/SettingsContext'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
+import { useNotify } from '@/shared/hooks/useNotify'
 import PageHeader from '@/shared/components/PageHeader'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ApiKeyField from './components/ApiKeyField'
@@ -28,7 +29,7 @@ import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import SecureStorageNotice from './components/SecureStorageNotice'
-import { buildPatch, formFromStore, type SettingsForm } from './utils/patch'
+import { buildPatch, formFromStore, withOptions, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
 import { privacyAnswer, restartNotice } from './utils/privacy'
@@ -63,25 +64,54 @@ export default function SettingsView() {
   const [pending, setPending] = useState<Pending | null>(null)
   // The switch state some part of the app takes only after a restart, from the last save.
   const [reportsRestart, setReportsRestart] = useState<'on' | 'off' | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
+
+  // Fetches whichever of the store and the options is still missing; rerun on notify (docs/SETTINGS.md).
+  async function loadMissing() {
+    if (stored && options) return
+    const [s, o] = await Promise.allSettled([
+      stored ?? fetchSettings(),
+      options ?? fetchConfigOptions(),
+    ])
+    const nextStored = s.status === 'fulfilled' ? s.value : null
+    const nextOptions = o.status === 'fulfilled' ? o.value : null
+    setLoadFailed(!nextStored)
+    if (!nextStored) return
+    setStored((prev) => prev ?? nextStored)
+    if (nextOptions) setOptions((prev) => prev ?? nextOptions)
+    // An existing form keeps its edits; only the model waits on the options.
+    setForm((prev) =>
+      !prev
+        ? formFromStore(nextStored, nextOptions)
+        : nextOptions
+          ? withOptions(prev, nextStored, nextOptions)
+          : prev,
+    )
+  }
 
   useEffect(() => {
-    async function load() {
-      try {
-        const [next, opts] = await Promise.all([fetchSettings(), fetchConfigOptions()])
-        setStored(next)
-        setOptions(opts)
-        setForm(formFromStore(next, opts))
-      } catch {
-        // A downed service is already toasted centrally by the http client.
-      }
-    }
-    void load()
+    void loadMissing()
   }, [])
+  useNotify(() => void loadMissing())
 
-  if (!stored || !options || !form) {
+  if (!stored || !form) {
     return (
       <main className="main-view main-view--page">
         <PageHeader title={t`Settings`} />
+        {loadFailed && (
+          <div className="page-body">
+            <div className="page-column settings-page">
+              <div className="settings-note settings-note--warn settings-load-failed">
+                <span>
+                  <Trans>Couldn't load your settings. Part of FastStudy isn't responding.</Trans>
+                </span>
+                <button className="btn btn--ghost" onClick={() => void loadMissing()}>
+                  <Trans>Retry</Trans>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     )
   }
@@ -145,7 +175,7 @@ export default function SettingsView() {
     else void commit(next)
   }
 
-  const provider = (id: string) => options.providers.find((p) => p.id === id)
+  const provider = (id: string) => options?.providers.find((p) => p.id === id)
   const gemini = provider('gemini')
   const groq = provider('groq')
 
@@ -172,7 +202,15 @@ export default function SettingsView() {
             {/* The note stands in for the whole section: with no key to store, neither a key
                 field nor the model that would consume one has anything to offer. */}
             <SecureStorageNotice />
-            {canStoreApiKeys && (
+            {canStoreApiKeys && !options && (
+              <p className="settings-note" data-settings-options="unavailable">
+                <Trans>
+                  The API keys and the summary model aren't available right now. They'll come back
+                  here on their own.
+                </Trans>
+              </p>
+            )}
+            {canStoreApiKeys && options && (
               <>
                 {gemini && (
                   <ApiKeyField

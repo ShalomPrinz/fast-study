@@ -22,3 +22,11 @@
   color: var(--text-2);
   text-align: start;
 }
+
+/* The store did not answer: the reason and its retry on one line. */
+.settings-load-failed {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}

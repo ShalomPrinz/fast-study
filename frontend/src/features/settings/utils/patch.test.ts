@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { storeBody, type ConfigOptions, type Settings } from '@/services/settings'
-import { buildPatch, formFromStore, type SettingsForm } from './patch'
+import { buildPatch, formFromStore, withOptions, type SettingsForm } from './patch'
 
 const STORED: Settings = {
   dataRoot: '/data',
@@ -154,5 +154,31 @@ describe('formFromStore', () => {
     const fresh = { ...STORED, gdriveRootFolder: 'Harness-B', nightlyRun: true }
     const next = { ...formFromStore(fresh, OPTIONS), nightlyRun: false }
     expect(buildPatch(next, fresh)).toEqual({ nightlyRun: false })
+  })
+})
+
+// The options come from the backend and the store from the database, so the page renders with the
+// store alone while the backend is down and takes the options when it returns.
+describe('the form without options', () => {
+  it('keeps the stored model untouched, so Save never sends one', () => {
+    const retired = { ...STORED, geminiModel: 'gemini-2.0-flash-retired' }
+    const form = formFromStore(retired, null)
+    expect(form.geminiModel).toBe('gemini-2.0-flash-retired')
+    expect(buildPatch({ ...form, dataRoot: '/elsewhere' }, retired)).toEqual({
+      dataRoot: '/elsewhere',
+    })
+    const unset = { ...STORED, geminiModel: null }
+    expect(buildPatch(formFromStore(unset, null), unset)).toEqual({})
+  })
+
+  it('resolves only the model once the options arrive, keeping every edit', () => {
+    const retired = { ...STORED, geminiModel: 'gemini-2.0-flash-retired' }
+    const edited = { ...formFromStore(retired, null), dataRoot: '/elsewhere' }
+    expect(withOptions(edited, retired, OPTIONS)).toEqual({
+      ...edited,
+      geminiModel: 'gemini-3.5-flash',
+    })
+    const listed = formFromStore({ ...STORED, geminiModel: 'gemini-3.5-pro' }, null)
+    expect(withOptions(listed, STORED, OPTIONS)).toBe(listed)
   })
 })

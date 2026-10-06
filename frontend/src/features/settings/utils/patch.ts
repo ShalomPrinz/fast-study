@@ -25,18 +25,25 @@ export interface SettingsForm {
   privacyConfirmed: boolean
 }
 
-/** The form as the store answers it, used on load and after every save so a later save diffs only
- *  what this page edited. A model the options no longer list reads as the first one, so Save sends it. */
-export function formFromStore(stored: Settings, options: ConfigOptions): SettingsForm {
-  const models = options.geminiModels
+// The model the form shows: a stored one the options no longer list reads as the first, so Save sends
+// it; with no options (the backend is down) the stored one stays as is, so Save leaves it alone.
+function formModel(stored: Settings, options: ConfigOptions | null): string {
   const model = stored.geminiModel
+  if (!options) return model ?? ''
+  const models = options.geminiModels
+  return model !== null && models.includes(model) ? model : (models[0] ?? '')
+}
+
+/** The form as the store answers it, used on load and after every save so a later save diffs only
+ *  what this page edited. */
+export function formFromStore(stored: Settings, options: ConfigOptions | null): SettingsForm {
   return {
     geminiApiKey: '',
     groqApiKey: '',
     dataRoot: stored.dataRoot ?? '',
     driveEnabled: stored.driveEnabled ?? false,
     gdriveRootFolder: stored.gdriveRootFolder ?? '',
-    geminiModel: model !== null && models.includes(model) ? model : (models[0] ?? ''),
+    geminiModel: formModel(stored, options),
     autoRun: toAutoRun(stored.autoRun),
     // Unset means on: the cron ran before it was a setting, and the backend defaults the same way.
     nightlyRun: stored.nightlyRun ?? true,
@@ -46,6 +53,17 @@ export function formFromStore(stored: Settings, options: ConfigOptions): Setting
     errorReports: stored.errorReports === true,
     privacyConfirmed: stored.privacyConfirmed,
   }
+}
+
+/** The form once options arrive after it was built without them: every edit kept, and only a model the
+ *  options do not list resolved as `formFromStore` would. */
+export function withOptions(
+  form: SettingsForm,
+  stored: Settings,
+  options: ConfigOptions,
+): SettingsForm {
+  if (options.geminiModels.includes(form.geminiModel)) return form
+  return { ...form, geminiModel: formModel(stored, options) }
 }
 
 /** The save patch: only the fields that actually changed. A key field is write-only and therefore
