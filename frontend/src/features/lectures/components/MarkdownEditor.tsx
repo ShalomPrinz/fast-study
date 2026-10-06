@@ -53,9 +53,20 @@ const calloutLine: Record<CalloutClass, Decoration> = {
   insight: Decoration.line({ class: 'cm-callout cm-callout--insight' }),
 }
 const mathMark = Decoration.mark({ class: 'cm-math' })
-// Per line, not per span: `.cm-content` is `dir="auto"` so a Hebrew summary gives every line an RTL
-// base direction, which no inline isolate on the code text can undo.
+// Per line, not per span: a Hebrew line has an RTL base direction, which no inline isolate on the code
+// text can undo.
 const codeLine = Decoration.line({ class: 'cm-code-line' })
+// Each line with a letter takes its direction from its first one, so an English title never flips the
+// Hebrew paragraphs under it. A line with none (blank, `---`, a table rule) inherits `contentDir`'s.
+const autoDirLine = Decoration.line({ attributes: { dir: 'auto' } })
+const LETTER = /\p{L}/u
+const RTL_LETTER = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/
+
+// Any Hebrew makes the summary an RTL document; one with none (English) reads LTR.
+const contentDir = EditorView.contentAttributes.compute(['doc'], (state) => ({
+  dir: RTL_LETTER.test(state.doc.toString()) ? 'rtl' : 'ltr',
+  spellcheck: 'false',
+}))
 
 // Scanned whole rather than over the viewport: a callout can straddle the viewport edge, and one
 // summary is a few pages of text.
@@ -69,12 +80,19 @@ function buildDecorations(doc: Text): DecorationSet {
       pos = line.to + 1
     }
   }
+  const codeLines = new Set<number>()
   for (const fence of scanCodeFences(text)) {
     for (let pos = fence.from; pos <= fence.to;) {
       const line = doc.lineAt(pos)
       ranges.push(codeLine.range(line.from))
+      codeLines.add(line.from)
       pos = line.to + 1
     }
+  }
+  for (let n = 1; n <= doc.lines; n++) {
+    const line = doc.line(n)
+    if (!codeLines.has(line.from) && LETTER.test(line.text))
+      ranges.push(autoDirLine.range(line.from))
   }
   for (const math of scanMath(text)) ranges.push(mathMark.range(math.from, math.to))
   return Decoration.set(ranges, true)
@@ -120,9 +138,9 @@ export default function MarkdownEditor({ value, onChange }: Props) {
           dialectDecorations,
           editorTheme,
           EditorView.lineWrapping,
-          // `dir="auto"` rather than `rtl`: recitation and English summaries exist, and this is what
-          // the textarea this replaced gave for free.
-          EditorView.contentAttributes.of({ dir: 'auto', spellcheck: 'false' }),
+          // Lines set their own direction (`autoDirLine`); this tells cursor motion to follow each one.
+          EditorView.perLineTextDirection.of(true),
+          contentDir,
           EditorView.updateListener.of((update) => {
             if (update.docChanged) onChangeRef.current(update.state.doc.toString())
           }),

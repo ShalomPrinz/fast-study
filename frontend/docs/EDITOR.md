@@ -65,7 +65,10 @@ renders plain. Math carries `unicode-bidi: isolate`, without which an LTR run sc
 a fenced block gets a line decoration instead, because the RTL base direction of a Hebrew line cannot be
 undone from an inline span.
 
-The text is Hebrew markdown, so it is set in the UI font, never monospace, with `dir="auto"` through
-`EditorView.contentAttributes` rather than a hard-coded `rtl` — English content exists. The view is built
+The text is Hebrew markdown, so it is set in the UI font, never monospace. **Direction is per line**: each
+line with a letter carries `dir="auto"` (a line decoration) with `EditorView.perLineTextDirection` on, so a
+title like `# Big-O בפייתון` reads LTR while the Hebrew lines under it stay RTL. A line with no letter
+(blank, `---`, a table rule) inherits the content's `dir`: `rtl` once the document holds any Hebrew, else
+`ltr`, so an English summary reads LTR throughout. The view is built
 once and an incoming `value` is pushed only when it differs from `view.state.doc`, which stops the
 editor's own edits echoing back.
