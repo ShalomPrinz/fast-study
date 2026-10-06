@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:141
+#: src/features/settings/components/ApiKeyField.tsx:166
 msgid "{0} API key"
 msgstr "מפתח API של {0}"
 
@@ -388,7 +388,7 @@ msgstr "סיכום מוכן ממתין להעלאה, ול-FastStudy עדיין �
 msgid "A font the PDF needs is missing."
 msgstr "חסר גופן שה-PDF זקוק לו."
 
-#: src/features/settings/components/ApiKeyField.tsx:182
+#: src/features/settings/components/ApiKeyField.tsx:196
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 
@@ -928,7 +928,7 @@ msgid "Downloading…"
 msgstr "מוריד…"
 
 #: src/features/downloads/DownloadsView.tsx:59
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:79
 msgid "Downloads"
 msgstr "הורדות"
 
@@ -1213,7 +1213,7 @@ msgstr "האוניברסיטה העברית"
 msgid "Home"
 msgstr "דף הבית"
 
-#: src/features/settings/components/ApiKeyField.tsx:148
+#: src/features/settings/components/ApiKeyField.tsx:137
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
 
@@ -1286,7 +1286,7 @@ msgid "Lecture sites are contacted only when you download from them."
 msgstr "פונים לאתרי ההרצאות רק כשאתה מוריד מהם."
 
 #: src/features/search/SearchView.tsx:196
-#: src/shared/sidebar/Sidebar.tsx:78
+#: src/shared/sidebar/Sidebar.tsx:73
 msgid "Lectures"
 msgstr "הרצאות"
 
@@ -1845,7 +1845,7 @@ msgid "Running · lecture {0} of {1}"
 msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 
 #: src/features/runner/RunnerView.tsx:259
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:76
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
 
@@ -1873,7 +1873,7 @@ msgstr "נשמר ב{lecture}"
 msgid "Saving…"
 msgstr "שומר…"
 
-#: src/features/settings/components/ApiKeyField.tsx:164
+#: src/features/settings/components/ApiKeyField.tsx:153
 msgid "Screenshot of {name}, step {step}"
 msgstr "צילום מסך של {name}, שלב {step}"
 
@@ -1881,7 +1881,7 @@ msgstr "צילום מסך של {name}, שלב {step}"
 msgid "Scroll to the end to confirm."
 msgstr "גלול עד הסוף כדי לאשר."
 
-#: src/shared/sidebar/Sidebar.tsx:87
+#: src/shared/sidebar/Sidebar.tsx:82
 msgid "Search"
 msgstr "חיפוש"
 
@@ -1924,7 +1924,7 @@ msgstr "תוקף החיבור פג"
 
 #: src/features/settings/SettingsView.tsx:84
 #: src/features/settings/SettingsView.tsx:155
-#: src/shared/sidebar/Sidebar.tsx:90
+#: src/shared/sidebar/Sidebar.tsx:85
 msgid "Settings"
 msgstr "הגדרות"
 
@@ -1940,7 +1940,7 @@ msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה �
 msgid "Show more"
 msgstr "הצג עוד"
 
-#: src/features/settings/components/ApiKeyField.tsx:162
+#: src/features/settings/components/ApiKeyField.tsx:151
 msgid "Show screenshot"
 msgstr "הצג צילום מסך"
 

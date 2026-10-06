@@ -134,6 +134,31 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
     }
   }
 
+  const title = <Trans>How do I get a key?</Trans>
+  const list = steps && (
+    <ol className="settings-steps">
+      {steps.map((text, i) => {
+        const shot = SHOTS[provider.id]?.[i]
+        const step = i + 1
+        const name = provider.displayName
+        return (
+          <li key={step}>
+            {text}
+            {/* Collapsed by default: the steps read on their own, the picture is for a user stuck. */}
+            {shot && (
+              <details className="settings-shot">
+                <summary>
+                  <Trans>Show screenshot</Trans>
+                </summary>
+                <img src={shot} alt={t`Screenshot of ${name}, step ${step}`} loading="lazy" />
+              </details>
+            )}
+          </li>
+        )
+      })}
+    </ol>
+  )
+
   return (
     <div className="settings-field">
       <div className="settings-label">
@@ -141,35 +166,24 @@ export default function ApiKeyField({ provider, value, onChange, storedKeyExists
           <Trans>{provider.displayName} API key</Trans>
         </label>
       </div>
-      {/* Always open: the steps are the whole help a first-time user has, and step 1 holds the link. */}
-      {steps && (
-        <div className="settings-guide" data-testid="api-key-help" data-provider={provider.id}>
-          <p className="settings-guide-title">
-            <Trans>How do I get a key?</Trans>
-          </p>
-          <ol className="settings-steps">
-            {steps.map((text, i) => {
-              const shot = SHOTS[provider.id]?.[i]
-              const step = i + 1
-              const name = provider.displayName
-              return (
-                <li key={step}>
-                  {text}
-                  {/* Collapsed by default: the steps read on their own, the picture is for a user stuck. */}
-                  {shot && (
-                    <details className="settings-shot">
-                      <summary>
-                        <Trans>Show screenshot</Trans>
-                      </summary>
-                      <img src={shot} alt={t`Screenshot of ${name}, step ${step}`} loading="lazy" />
-                    </details>
-                  )}
-                </li>
-              )
-            })}
-          </ol>
-        </div>
-      )}
+      {/* Open while no key is saved — the steps are a first-time user's whole help, and step 1 holds
+          the link; once a key is saved the guide collapses behind its title. */}
+      {steps &&
+        (storedKeyExists ? (
+          <details
+            className="settings-guide"
+            data-testid="api-key-help"
+            data-provider={provider.id}
+          >
+            <summary className="settings-guide-title">{title}</summary>
+            {list}
+          </details>
+        ) : (
+          <div className="settings-guide" data-testid="api-key-help" data-provider={provider.id}>
+            <p className="settings-guide-title">{title}</p>
+            {list}
+          </div>
+        ))}
       <input
         id={`key-${provider.id}`}
         data-testid="api-key-input"

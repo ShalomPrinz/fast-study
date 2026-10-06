@@ -112,8 +112,8 @@ Each section heading but the language's carries a mark at its inline end, derive
 (`sectionMark`): the keys and the data folder read red `Required` until complete, then green `Done`; the
 university, Drive, downloading and error reports read gray `Optional`.
 
-Each provider's key field, here and on `/settings`, carries a short how-to-get-a-key guide, always open
-and keyed by provider id; its first step is the console link itself. A step may have a collapsed screenshot,
+Each provider's key field, here and on `/settings`, carries a short how-to-get-a-key guide keyed by provider id,
+open while no key is saved and collapsed behind its title once one is (`storedKeyExists`); its first step is the console link itself. A step may have a collapsed screenshot,
 `src/assets/key-steps/{provider}-{step}.png` (step numbers 1-based), imported
 through Vite and listed in `SHOTS`, so replacing a file is the whole update; a real key in one must be
 blurred out before it is committed. A save failure shows in place — a rejected data folder is the one thing in the way.

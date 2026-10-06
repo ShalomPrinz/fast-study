@@ -104,7 +104,7 @@ msgid "{0} already exists in {course}. Download again and overwrite?"
 msgstr "{0} already exists in {course}. Download again and overwrite?"
 
 #. placeholder {0}: provider.displayName
-#: src/features/settings/components/ApiKeyField.tsx:141
+#: src/features/settings/components/ApiKeyField.tsx:166
 msgid "{0} API key"
 msgstr "{0} API key"
 
@@ -388,7 +388,7 @@ msgstr "A finished summary is waiting to upload, and FastStudy has no permission
 msgid "A font the PDF needs is missing."
 msgstr "A font the PDF needs is missing."
 
-#: src/features/settings/components/ApiKeyField.tsx:182
+#: src/features/settings/components/ApiKeyField.tsx:196
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
@@ -928,7 +928,7 @@ msgid "Downloading…"
 msgstr "Downloading…"
 
 #: src/features/downloads/DownloadsView.tsx:59
-#: src/shared/sidebar/Sidebar.tsx:84
+#: src/shared/sidebar/Sidebar.tsx:79
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -1213,7 +1213,7 @@ msgstr "Hebrew University"
 msgid "Home"
 msgstr "Home"
 
-#: src/features/settings/components/ApiKeyField.tsx:148
+#: src/features/settings/components/ApiKeyField.tsx:137
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
@@ -1286,7 +1286,7 @@ msgid "Lecture sites are contacted only when you download from them."
 msgstr "Lecture sites are contacted only when you download from them."
 
 #: src/features/search/SearchView.tsx:196
-#: src/shared/sidebar/Sidebar.tsx:78
+#: src/shared/sidebar/Sidebar.tsx:73
 msgid "Lectures"
 msgstr "Lectures"
 
@@ -1845,7 +1845,7 @@ msgid "Running · lecture {0} of {1}"
 msgstr "Running · lecture {0} of {1}"
 
 #: src/features/runner/RunnerView.tsx:259
-#: src/shared/sidebar/Sidebar.tsx:81
+#: src/shared/sidebar/Sidebar.tsx:76
 msgid "Running pipelines"
 msgstr "Running pipelines"
 
@@ -1873,7 +1873,7 @@ msgstr "Saved to {lecture}"
 msgid "Saving…"
 msgstr "Saving…"
 
-#: src/features/settings/components/ApiKeyField.tsx:164
+#: src/features/settings/components/ApiKeyField.tsx:153
 msgid "Screenshot of {name}, step {step}"
 msgstr "Screenshot of {name}, step {step}"
 
@@ -1881,7 +1881,7 @@ msgstr "Screenshot of {name}, step {step}"
 msgid "Scroll to the end to confirm."
 msgstr "Scroll to the end to confirm."
 
-#: src/shared/sidebar/Sidebar.tsx:87
+#: src/shared/sidebar/Sidebar.tsx:82
 msgid "Search"
 msgstr "Search"
 
@@ -1924,7 +1924,7 @@ msgstr "session expired"
 
 #: src/features/settings/SettingsView.tsx:84
 #: src/features/settings/SettingsView.tsx:155
-#: src/shared/sidebar/Sidebar.tsx:90
+#: src/shared/sidebar/Sidebar.tsx:85
 msgid "Settings"
 msgstr "Settings"
 
@@ -1940,7 +1940,7 @@ msgstr "Several rows would download into the same lecture ({names}). Rename them
 msgid "Show more"
 msgstr "Show more"
 
-#: src/features/settings/components/ApiKeyField.tsx:162
+#: src/features/settings/components/ApiKeyField.tsx:151
 msgid "Show screenshot"
 msgstr "Show screenshot"
 
