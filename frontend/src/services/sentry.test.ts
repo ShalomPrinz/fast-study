@@ -5,14 +5,17 @@ const sdk = vi.hoisted(() => ({
   setTags: vi.fn(),
   isInitialized: vi.fn(() => false),
   captureException: vi.fn((..._args: unknown[]): string => 'evt-1'),
+  makeRendererTransport: vi.fn(),
 }))
 vi.mock('@sentry/electron/renderer', () => sdk)
 
-import { captureRenderError, initSentry } from './sentry'
+import { reporting, setReporting } from '@faststudy/sentry'
+import { applyErrorReports, captureRenderError, initSentry, isReporting } from './sentry'
 
 beforeEach(() => {
   vi.clearAllMocks()
   sdk.isInitialized.mockReturnValue(false)
+  setReporting(false)
 })
 
 afterEach(() => {
@@ -34,18 +37,24 @@ describe('initSentry', () => {
     expect(sdk.init).not.toHaveBeenCalled()
   })
 
-  it('stays off for a launch the user switched error reports off for', () => {
+  // The switch gates sending, never the init, so turning it on later needs no second init.
+  it('inits with reports off when the stored switch is off or unset', () => {
     vi.stubEnv('VITE_SENTRY_DSN', 'https://k@o1.ingest.de.sentry.io/1')
     vi.stubGlobal('window', { faststudy: { version: '1.2.3', errorReports: false } })
+    setReporting(true)
     initSentry()
-    expect(sdk.init).not.toHaveBeenCalled()
+    expect(sdk.init).toHaveBeenCalledWith(
+      expect.objectContaining({ transport: expect.any(Function) }),
+    )
+    expect(reporting()).toBe(false)
   })
 
-  it('inits for a launch with error reports on', () => {
+  it('inits with reports on only for an explicit yes', () => {
     vi.stubEnv('VITE_SENTRY_DSN', 'https://k@o1.ingest.de.sentry.io/1')
     vi.stubGlobal('window', { faststudy: { version: '1.2.3', errorReports: true } })
     initSentry()
     expect(sdk.init).toHaveBeenCalled()
+    expect(reporting()).toBe(true)
   })
 
   it('inits from the policy with the installed version and tags the scope frontend', () => {
@@ -62,12 +71,23 @@ describe('initSentry', () => {
   })
 })
 
+describe('applyErrorReports', () => {
+  it('follows a saved switch live, reading unset as off', () => {
+    sdk.isInitialized.mockReturnValue(true)
+    applyErrorReports(true)
+    expect(isReporting()).toBe(true)
+    applyErrorReports(null)
+    expect(isReporting()).toBe(false)
+  })
+})
+
 describe('captureRenderError', () => {
   const error = new Error('boom')
   const context = { componentStack: '\n    at Broken', route: '/course/אלגברה' }
 
   it('sends the route and the component stack, and answers the event id', () => {
     sdk.isInitialized.mockReturnValue(true)
+    setReporting(true)
     expect(captureRenderError(error, context)).toBe('evt-1')
     expect(sdk.captureException).toHaveBeenCalledWith(error, {
       contexts: { react: { componentStack: '\n    at Broken' } },
@@ -80,8 +100,15 @@ describe('captureRenderError', () => {
     expect(sdk.captureException).not.toHaveBeenCalled()
   })
 
+  it('answers null while the user has reports switched off', () => {
+    sdk.isInitialized.mockReturnValue(true)
+    expect(captureRenderError(error, context)).toBeNull()
+    expect(sdk.captureException).not.toHaveBeenCalled()
+  })
+
   it('answers null when the capture throws', () => {
     sdk.isInitialized.mockReturnValue(true)
+    setReporting(true)
     sdk.captureException.mockImplementationOnce(() => {
       throw new Error('ipc gone')
     })

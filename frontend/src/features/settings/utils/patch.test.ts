@@ -14,6 +14,7 @@ const STORED: Settings = {
   nightlyHour: null,
   moodleSite: 'https://lemida.biu.ac.il',
   errorReports: null,
+  privacyConfirmed: false,
 }
 
 const UNCHANGED: SettingsForm = {
@@ -27,7 +28,8 @@ const UNCHANGED: SettingsForm = {
   nightlyRun: true,
   nightlyHour: 3,
   moodleSite: 'https://lemida.biu.ac.il',
-  errorReports: true,
+  errorReports: false,
+  privacyConfirmed: false,
 }
 
 describe('buildPatch', () => {
@@ -101,14 +103,21 @@ describe('buildPatch', () => {
     )
   })
 
-  it('treats unset error reports as on, so only switching them off is stored', () => {
+  it('treats unset error reports as off, so only switching them on is stored', () => {
     expect(buildPatch(UNCHANGED, STORED)).toEqual({})
-    expect(buildPatch({ ...UNCHANGED, errorReports: false }, STORED)).toEqual({
-      errorReports: false,
-    })
-    expect(buildPatch(UNCHANGED, { ...STORED, errorReports: false })).toEqual({
+    expect(buildPatch({ ...UNCHANGED, errorReports: true }, STORED)).toEqual({
       errorReports: true,
     })
+    expect(buildPatch(UNCHANGED, { ...STORED, errorReports: true })).toEqual({
+      errorReports: false,
+    })
+  })
+
+  it('stores a newly answered privacy policy, and never unsets an answered one', () => {
+    expect(buildPatch({ ...UNCHANGED, privacyConfirmed: true }, STORED)).toEqual({
+      privacyConfirmed: true,
+    })
+    expect(buildPatch(UNCHANGED, { ...STORED, privacyConfirmed: true })).toEqual({})
   })
 })
 
@@ -120,6 +129,11 @@ const OPTIONS: ConfigOptions = {
 describe('formFromStore', () => {
   it('reads the store as an unchanged form', () => {
     expect(formFromStore(STORED, OPTIONS)).toEqual(UNCHANGED)
+  })
+
+  it('reads unset error reports as off and a stored yes as on', () => {
+    expect(formFromStore(STORED, OPTIONS).errorReports).toBe(false)
+    expect(formFromStore({ ...STORED, errorReports: true }, OPTIONS).errorReports).toBe(true)
   })
 
   it('reads a model the options no longer list as the first one, so Save replaces it', () => {

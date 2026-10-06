@@ -18,10 +18,12 @@ import { useBrowserPrereq } from './hooks/useBrowserPrereq'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import ErrorReportsField from './components/ErrorReportsField'
+import PrivacyPolicyModal from './components/PrivacyPolicyModal'
 import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import { buildPatch, type SettingsForm } from './utils/patch'
+import { privacyAnswer, wallMustAskPrivacy } from './utils/privacy'
 import { missingEntries, sectionMark } from './utils/required'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -89,12 +91,16 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     nightlyRun: stored.nightlyRun ?? true,
     nightlyHour: toNightlyHour(stored.nightlyHour),
     moodleSite: stored.moodleSite ?? '',
+    // Starts checked for a first answer, though unset means off until the wall's save stores it.
     errorReports: stored.errorReports ?? true,
+    privacyConfirmed: stored.privacyConfirmed,
   })
   const [dataRootUnusable, setDataRootUnusable] = useState(false)
   const [saving, setSaving] = useState(false)
   const [siteChecking, setSiteChecking] = useState(false)
   const [failure, setFailure] = useState<ReactNode>(null)
+  // Save was pressed with the policy unanswered: its answer saves at once, so Start is never pressed twice.
+  const [askingPrivacy, setAskingPrivacy] = useState(false)
   const browser = useBrowserPrereq()
 
   useEffect(() => {
@@ -122,13 +128,21 @@ export default function InitWall({ stored: initial, onDone }: Props) {
     canStoreApiKeys,
   })
 
-  async function finish() {
+  function start() {
+    if (wallMustAskPrivacy(form.privacyConfirmed, canSetErrorReports)) setAskingPrivacy(true)
+    else void finish(form)
+  }
+
+  async function finish(answered: FormState) {
     setSaving(true)
     setFailure(null)
     try {
       // A site save still in flight lands first; resending the same site is a no-op for its owner.
       await siteSaves.current
-      onDone(await saveSettings(buildPatch(form, stored)))
+      const patch = buildPatch(answered, stored)
+      // Always explicit here, so the checked default is stored as the user's own yes or no.
+      if (canSetErrorReports) patch.errorReports = answered.errorReports
+      onDone(await saveSettings(patch))
     } catch (err) {
       // Shown in place, not toasted: a rejected data folder is the one thing standing in the way.
       setFailure(failureNode(err))
@@ -277,8 +291,16 @@ export default function InitWall({ stored: initial, onDone }: Props) {
                 </SectionTitle>
                 <ErrorReportsField
                   value={form.errorReports}
+                  confirmed={form.privacyConfirmed}
                   onChange={(v) => setForm({ ...form, errorReports: v })}
-                  restartNote={false}
+                  onAnswer={(confirmed) => setForm({ ...form, ...privacyAnswer(confirmed) })}
+                  notice={
+                    !form.privacyConfirmed && (
+                      <p className="settings-note" data-privacy-required>
+                        <Trans>You must read the privacy policy before you continue.</Trans>
+                      </p>
+                    )
+                  }
                 />
               </section>
             )}
@@ -307,10 +329,21 @@ export default function InitWall({ stored: initial, onDone }: Props) {
             className="btn btn--primary"
             data-testid="init-wall-submit"
             disabled={saving || siteChecking || !options || missing.length > 0}
-            onClick={() => void finish()}
+            onClick={start}
           >
             {saving ? t`Saving…` : t`Start using Fast Study`}
           </button>
+          {askingPrivacy && (
+            <PrivacyPolicyModal
+              onAnswer={(confirmed) => {
+                const answered = { ...form, ...privacyAnswer(confirmed) }
+                setAskingPrivacy(false)
+                setForm(answered)
+                void finish(answered)
+              }}
+              onClose={() => setAskingPrivacy(false)}
+            />
+          )}
         </footer>
       </div>
     </div>

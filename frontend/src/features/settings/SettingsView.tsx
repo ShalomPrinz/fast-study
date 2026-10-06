@@ -31,6 +31,7 @@ import SecureStorageNotice from './components/SecureStorageNotice'
 import { buildPatch, formFromStore, type SettingsForm } from './utils/patch'
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
+import { privacyAnswer, restartNotice } from './utils/privacy'
 import '@/styles/panel.css'
 import '@/styles/button.css'
 import '@/styles/modal.css'
@@ -60,6 +61,8 @@ export default function SettingsView() {
   const [saving, setSaving] = useState(false)
   const [siteChecking, setSiteChecking] = useState(false)
   const [pending, setPending] = useState<Pending | null>(null)
+  // The switch state some part of the app takes only after a restart, from the last save.
+  const [reportsRestart, setReportsRestart] = useState<'on' | 'off' | null>(null)
 
   useEffect(() => {
     async function load() {
@@ -106,6 +109,8 @@ export default function SettingsView() {
     setPending(null)
     try {
       const saved = await saveSettings(next)
+      // Only a save of the switch answers about it; any other save leaves the notice standing.
+      if (next.errorReports !== undefined) setReportsRestart(restartNotice(saved))
       setStored(saved)
       setSettings(saved)
       // The whole form takes the store's answer: keys return to their placeholder, the data root to its
@@ -324,8 +329,29 @@ export default function SettingsView() {
               </h2>
               <ErrorReportsField
                 value={form.errorReports}
+                confirmed={form.privacyConfirmed}
                 onChange={(v) => setForm({ ...form, errorReports: v })}
-                restartNote
+                onAnswer={(confirmed) => setForm({ ...form, ...privacyAnswer(confirmed) })}
+                notice={
+                  reportsRestart && (
+                    <p
+                      className="settings-note settings-note--warn"
+                      data-reports-restart={reportsRestart}
+                    >
+                      {reportsRestart === 'on' ? (
+                        <Trans>
+                          Error reports are now on. Some parts of FastStudy will start sending them
+                          only after you restart the app.
+                        </Trans>
+                      ) : (
+                        <Trans>
+                          Error reports are now off. Some parts of FastStudy will stop sending them
+                          only after you restart the app.
+                        </Trans>
+                      )}
+                    </p>
+                  )
+                }
               />
             </section>
           )}

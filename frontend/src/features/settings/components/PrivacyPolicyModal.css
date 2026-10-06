@@ -1,0 +1,63 @@
+/* Wider than a confirm: the policy is reading, not a yes/no question. */
+.modal.privacy-modal {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-height: 85vh;
+}
+
+/* The scroll box whose end unlocks Confirm; capped so a long policy scrolls inside the dialog. */
+.privacy-body {
+  overflow-y: auto;
+  min-height: 0;
+  padding-inline-end: var(--space-3);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  color: var(--text-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  outline: none;
+}
+
+.privacy-body:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: var(--space-1);
+}
+
+.privacy-title {
+  font-size: var(--fs-section);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.privacy-heading {
+  font-size: var(--fs-row);
+  font-weight: 600;
+  color: var(--text);
+  margin-block-start: var(--space-3);
+}
+
+.privacy-list {
+  padding-inline-start: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.privacy-link {
+  color: var(--accent-ink);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.privacy-actions {
+  align-items: center;
+}
+
+.privacy-scroll-hint {
+  margin-inline-end: auto;
+  font-size: var(--fs-meta);
+  color: var(--text-3);
+}

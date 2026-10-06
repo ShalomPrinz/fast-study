@@ -1,5 +1,6 @@
 import { createClient } from './http'
 import { AUTO_DOWNLOADER_URL, BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
+import { applyErrorReports } from './sentry'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 // The settings concern, spanning three services by design: a setting's owner is a property of the
@@ -40,8 +41,16 @@ export interface Settings {
   nightlyHour: number | null
   // The university's Moodle root, always the canonical `wwwroot` the site probe answered.
   moodleSite: string | null
-  // Read by the launcher at boot, so a change applies on the next launch. Unset means on.
+  // Launcher-only, like `privacyConfirmed`. Unset means off: nothing is sent before an explicit yes.
   errorReports: boolean | null
+  // Whether the user answered the privacy policy, either way.
+  privacyConfirmed: boolean
+}
+
+// A write's answer: the read view, plus whether some service missed the error-reports switch and
+// takes it only after a restart. Browser dev has no switch, so it is always false there.
+export interface SavedSettings extends Settings {
+  errorReportsRestartNeeded: boolean
 }
 
 // A partial save; omitted fields are left alone. The two keys are write-only — they go out here
@@ -59,6 +68,7 @@ export interface SettingsPatch {
   nightlyHour?: number
   moodleSite?: string
   errorReports?: boolean
+  privacyConfirmed?: boolean
 }
 
 export type SettingsField = keyof SettingsPatch
@@ -75,11 +85,12 @@ const WIRE: Record<SettingsField, string> = {
   nightlyHour: 'nightly_hour',
   moodleSite: 'moodle_site',
   errorReports: 'error_reports',
+  privacyConfirmed: 'privacy_confirmed',
 }
 
 // Each setting is owned by exactly one running service, so a save reaches one config endpoint and
-// never another. Every field the store holds is named in one of them, bar `errorReports`, which only
-// the launcher reads, at boot.
+// never another. Every field the store holds is named in one of them, bar the launcher-only
+// `errorReports` and `privacyConfirmed`: the launcher itself pushes the switch to every service.
 const BACKEND_FIELDS: SettingsField[] = [
   'geminiApiKey',
   'groqApiKey',
@@ -120,6 +131,7 @@ function normalize(raw: RawSettings): Settings {
     moodleSite: raw.moodle_site ?? null,
     // The browser-dev store has no such setting; the switch is Electron-only.
     errorReports: null,
+    privacyConfirmed: false,
   }
 }
 
@@ -157,7 +169,7 @@ export function ownerBodies(patch: SettingsPatch): {
  *  Electron preload bridge in the packaged app, the database service in browser dev. */
 export interface SettingsBacking {
   read(): Promise<Settings>
-  write(patch: SettingsPatch): Promise<Settings>
+  write(patch: SettingsPatch): Promise<Settings & { errorReportsRestartNeeded?: boolean }>
 }
 
 const browserBacking: SettingsBacking = {
@@ -178,13 +190,15 @@ export async function fetchSettings(): Promise<Settings> {
 
 /** Saves in two phases: the store first, since it is what a fresh boot reads back, then each
  *  changed field to its one owner's running process — so nothing ever needs a restart. */
-export async function saveSettings(patch: SettingsPatch): Promise<Settings> {
-  const stored = await pickBacking().write(patch)
+export async function saveSettings(patch: SettingsPatch): Promise<SavedSettings> {
+  const { errorReportsRestartNeeded, ...stored } = await pickBacking().write(patch)
+  // The renderer's own reports follow the stored switch at once, whichever field was saved.
+  applyErrorReports(stored.errorReports)
   const owners = ownerBodies(patch)
   if (owners.backend) await backend.post('/config', { json: owners.backend })
   if (owners.database) await database.post('/config', { json: owners.database })
   if (owners.auto) await autoDownloader.post('/config', { json: owners.auto })
-  return stored
+  return { ...stored, errorReportsRestartNeeded: errorReportsRestartNeeded === true }
 }
 
 // The first-run wall's read-only check of a candidate data folder; `unknown` is anything short of a

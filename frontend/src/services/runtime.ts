@@ -24,7 +24,7 @@ declare global {
       locale?: string
       // The packaged data folder the init wall starts from (`%LOCALAPPDATA%\FastStudy\data`).
       defaultDataRoot?: string
-      // Whether error reporting is on for this launch; a change in Settings waits for the next one.
+      // The stored error-reports switch at page load, false when unset; after a save, the write answers.
       errorReports?: boolean
       // The native folder dialog, opened at `defaultPath`; `null` on cancel. Absent on older launchers.
       pickFolder?: (defaultPath?: string) => Promise<string | null>

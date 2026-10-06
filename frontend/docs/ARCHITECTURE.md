@@ -100,7 +100,7 @@ remount clears the error. Malformed escapes like `/a%/b` never reach it — the 
 the component stack, so every render crash lands in Sentry. The outcome renders **in place, never as a
 toast** — the fallback has replaced the `App` that mounts the `ToastContainer`: the event id on success
 (`.error-sent`), or a failure (`.error-sent--failed`) pointing at Copy details. It renders only while
-Sentry is initialized; browser dev and a DSN-less build have nowhere to send, so they say nothing.
+reports are sent (`isReporting()`); browser dev, a DSN-less build and a switched-off launch say nothing.
 
 ## Mode toggles
 

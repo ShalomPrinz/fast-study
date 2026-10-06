@@ -18,7 +18,7 @@ edits them all, and the prerequisites and accounts both screens show.
 | Auto-run          | the whole pipeline                        | audio only, off       | `backend/`        |
 | Daily run         | on                                        | off                   | `backend/`        |
 | Daily run time    | 03:00                                     | any hour, 00:00-23:00 | `backend/`        |
-| Error reports     | on                                        | off                   | `electron/`, at boot |
+| Error reports     | off until answered; the wall starts it on | on                    | `electron/`, live    |
 
 The model list comes from `GET /config/options`, so a model the free tier does not serve can never be
 typed in and fail minutes later mid-pipeline.
@@ -29,10 +29,19 @@ decides whether the cron runs and when, auto-run still caps what it does. Every 
 backend's own fallback (`useAutoRun`, `useNightlyRun`, `toNightlyHour`), so both ends agree on a fresh install; the hour is
 a number on the wire, never the `<select>`'s string, which the store rejects.
 
-**Error reports apply on the next launch** — the launcher reads the stored switch at boot, and the bridge's
-`errorReports` is that launch's value, which `initSentry` obeys; `/settings` says so under the switch.
-It reaches no `POST /config`, and it is Electron-only (`canSetErrorReports`): browser dev's `.env` store has no
-such field and reports nothing anyway, so both screens hide it. Its hint claims only what `lib/sentry` scrubs.
+**Error reports apply live, and unset means off** — nothing is sent before an explicit yes. The launcher
+owns the switch and pushes each saved value to every service itself, so the frontend posts it to no
+`/config`; `saveSettings` only re-gates the renderer's own reports (`applyErrorReports`). A service the push
+misses takes it at the next launch: the write answers `errorReportsRestartNeeded`, and `/settings` then
+says so under the switch (`restartNotice`). The switch is Electron-only (`canSetErrorReports`): browser
+dev's `.env` store has no such field and reports nothing anyway, so both screens hide it.
+
+**The privacy policy** opens from a link under the switch (`PrivacyPolicyModal`); Confirm unlocks only
+once its text is scrolled to the end (`readToEnd`), Confirm turns the switch on and Decline off, and both
+set the launcher-only `privacyConfirmed`, shown as the box's mark. Esc or a click outside answers nothing.
+On `/settings` an answer is a form edit that Save stores. The wall stores `errorReports` explicitly
+on every save, and while the policy is unanswered its Start opens the modal instead, whose answer saves
+and starts in one go (`wallMustAskPrivacy`); closing it saves nothing.
 
 ## What is not a setting
 

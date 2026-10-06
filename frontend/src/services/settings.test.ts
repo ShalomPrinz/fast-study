@@ -57,9 +57,9 @@ describe('ownerBodies', () => {
     })
   })
 
-  // Only the launcher reads it, at boot, so no running service has anything to apply.
-  it('gives error reports no owner', () => {
-    expect(ownerBodies({ errorReports: false })).toEqual({
+  // Launcher-only: the launcher itself pushes the switch to every service.
+  it('gives error reports and the privacy answer no owner', () => {
+    expect(ownerBodies({ errorReports: false, privacyConfirmed: true })).toEqual({
       backend: null,
       database: null,
       auto: null,
@@ -109,6 +109,29 @@ describe('saveSettings', () => {
       'PUT http://localhost:8001/settings',
       'POST http://localhost:8001/config',
     ])
+  })
+})
+
+describe('saveSettings through the launcher', () => {
+  it('passes on a switch some service missed, and posts it to no service itself', async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    const write = vi.fn(async () => ({ errorReports: true, errorReportsRestartNeeded: true }))
+    vi.stubGlobal('window', { faststudy: { settings: { read: vi.fn(), write } } })
+
+    const saved = await saveSettings({ errorReports: true, privacyConfirmed: true })
+
+    expect(write).toHaveBeenCalledWith({ errorReports: true, privacyConfirmed: true })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(saved.errorReportsRestartNeeded).toBe(true)
+  })
+
+  it('reads a write with no answer about the switch as nothing to restart for', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ok(STORED)),
+    )
+    expect((await saveSettings({ dataRoot: '/d' })).errorReportsRestartNeeded).toBe(false)
   })
 })
 

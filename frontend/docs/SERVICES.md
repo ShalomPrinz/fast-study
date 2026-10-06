@@ -73,16 +73,18 @@ screens. Both are covered in [SETTINGS.md](SETTINGS.md).
 
 ## `sentry.ts` — error reporting
 
-`initSentry()` runs first in `main.tsx`, and only with the bridge, a baked `VITE_SENTRY_DSN` and the
-bridge's `errorReports` not `false` (the user's switch, fixed for the launch): the
-renderer SDK (`@sentry/electron/renderer`) sends over IPC to Electron main, which scrubs — `DATA_ROOT`
+`initSentry()` runs first in `main.tsx`, and only with the bridge and a baked `VITE_SENTRY_DSN`. The
+user's switch never decides the init — the SDK is never closed or re-inited — but gates sending through
+`lib/sentry`'s `setReporting` and a `gate()`d transport: set from the bridge's `errorReports` at load, then
+from every settings write (`applyErrorReports`). The renderer SDK (`@sentry/electron/renderer`) sends over IPC to Electron main, which scrubs — `DATA_ROOT`
 included, which the renderer does not know — and attaches the launch log
 (`electron/docs/RENDERER.md` §Error reporting). Options come from `lib/sentry`'s `options('frontend')`,
 release `faststudy@<bridge version>`; the SDK drops `initialScope`, so the `service` tag is set after
 init. No tracing, no replay, and no attachments — main forwards a renderer's attachments unscrubbed.
 
 `captureRenderError` is the error boundary's one call ([ARCHITECTURE.md](ARCHITECTURE.md) §Error
-boundary). It answers `null` when Sentry is off, because the SDK mints an event id even with no client.
+boundary). It answers `null` when nothing is sent (`isReporting()`: initialized and switched on), because the SDK
+mints an event id even with no client.
 
 Source maps upload only from a `vite build` with `SENTRY_AUTH_TOKEN` set (`SENTRY_ORG`, `SENTRY_PROJECT`
 defaulting to `faststudy`); the maps are `hidden` and deleted after upload, so none ship. The release
