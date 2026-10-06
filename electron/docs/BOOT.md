@@ -85,6 +85,16 @@ the peers already running, and the settings store's contents as the env vars eac
 `GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `MOODLE_SITE`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
 
+`auto` alone also gets `FASTSTUDY_TOKEN_KEY`, the 32-byte key it encrypts its Moodle token with
+(standard base64). It is generated once and held as `safeStorage` ciphertext in the settings file's
+`token_key`; one that no longer decrypts is regenerated, orphaning the token it protected. With no key
+store, `auto` is spawned without the var and stores the token unencrypted — `launch.log` says so,
+and never carries the key.
+
+The child env is built from the launcher's own, so a `FASTSTUDY_TOKEN_KEY` already set in the launching shell
+reaches all four services; only `auto` reads it and the launcher's generated key overrides it there. Dev-only: a
+packaged launch has no such shell variable.
+
 The environment is read from the store **at each boot**, a Try again included. A settings change
 while the app runs reaches each service through its own `POST /config` — the renderer sends those
 after the store write, except the error-reports switch, which main sends itself

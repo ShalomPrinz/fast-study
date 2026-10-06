@@ -191,3 +191,41 @@ test('a machine with no key store refuses the write', () => {
   assert.throws(() => store.write({ groqApiKey: 'groq-secret' }), /secure storage is unavailable/);
   assert.equal(fs.existsSync(store.file()), false);
 });
+
+test('the token key is generated once, 32 bytes of base64, and reused', () => {
+  const first = store.tokenKey();
+  assert.equal(Buffer.from(first.key, 'base64').length, 32);
+  assert.equal(first.regenerated, false);
+  assert.deepEqual(store.tokenKey(), first);
+});
+
+test('the token key is stored encrypted, survives a settings write and never reaches read()', () => {
+  const { key } = store.tokenKey();
+  store.write({ dataRoot: '/data/root' });
+  assert.equal(fs.readFileSync(store.file(), 'utf8').includes(key), false);
+  assert.equal(store.tokenKey().key, key);
+  assert.equal(JSON.stringify(store.read()).includes(key), false);
+});
+
+test('an undecryptable token key is regenerated', () => {
+  const { key } = store.tokenKey();
+  const stored = JSON.parse(fs.readFileSync(store.file(), 'utf8'));
+  stored.token_key = Buffer.from('garbage').toString('base64');
+  fs.writeFileSync(store.file(), JSON.stringify(stored));
+
+  const next = store.tokenKey();
+  assert.notEqual(next.key, key);
+  assert.equal(next.regenerated, true);
+  assert.deepEqual(store.tokenKey(), { key: next.key, regenerated: false });
+});
+
+test('with no key store there is no token key and nothing is written', () => {
+  stub.safeStorage.isEncryptionAvailable = () => false;
+  assert.deepEqual(store.tokenKey(), { key: null, regenerated: false });
+  assert.equal(fs.existsSync(store.file()), false);
+});
+
+test('the token key is not a settings env var', () => {
+  store.tokenKey();
+  assert.equal('FASTSTUDY_TOKEN_KEY' in store.serviceEnv(), false);
+});

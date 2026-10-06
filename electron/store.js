@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { randomBytes } = require('node:crypto');
 const { app, safeStorage } = require('electron');
 
 // Stored field → the env var the owning service reads. The field names mirror the settings wire
@@ -150,4 +151,17 @@ function serviceEnv() {
   return env;
 }
 
-module.exports = { file, read, serviceEnv, write };
+/** The 32-byte key `auto` encrypts its Moodle token with, as standard base64, or null with no key
+ *  store. Generated once and kept as safeStorage ciphertext in `token_key`; one that no longer
+ *  decrypts is replaced, which orphans the token it protected. `regenerated` flags that replacement. */
+function tokenKey() {
+  if (!safeStorage.isEncryptionAvailable()) return { key: null, regenerated: false };
+  const stored = load();
+  const existing = text(stored.token_key) && decrypt(stored.token_key);
+  if (existing) return { key: existing, regenerated: false };
+  const key = randomBytes(32).toString('base64');
+  save({ ...stored, token_key: encrypt(key) });
+  return { key, regenerated: Boolean(stored.token_key) };
+}
+
+module.exports = { file, read, serviceEnv, tokenKey, write };

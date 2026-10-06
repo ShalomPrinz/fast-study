@@ -219,6 +219,20 @@ function sharedEnv() {
   };
 }
 
+/** `auto`'s token key, or nothing: with no key store (or a failed key write) it spawns without it
+ *  and stores its token in plaintext. The key is never logged. */
+function tokenKeyEnv() {
+  try {
+    const { key, regenerated } = store.tokenKey();
+    if (regenerated) log('main', 'token key could not be decrypted and was regenerated');
+    if (!key) log('main', 'no token key — auto stores its Moodle token unencrypted');
+    return key ? { FASTSTUDY_TOKEN_KEY: key } : {};
+  } catch (error) {
+    log('main', `token key unavailable: ${error.message}`);
+    return {};
+  }
+}
+
 /** Push the launch screen's state to it. A no-op once the window has navigated to the app, which
  *  is the only other thing that ever loads in this window. */
 function publishBoot() {
@@ -327,7 +341,10 @@ async function boot() {
   const urls = {};
   for (const spec of specs) {
     setService(spec.name, { state: 'starting' });
-    const port = await startChild(spec, { ...shared, ...peers });
+    // Only `auto` gets the token key, so no other service can read the token it protects.
+    const env =
+      spec.name === 'auto' ? { ...shared, ...peers, ...tokenKeyEnv() } : { ...shared, ...peers };
+    const port = await startChild(spec, env);
     const url = `http://127.0.0.1:${port}`;
     const health = await waitForHealth(spec, url);
     log('main', `${spec.name} ready on ${url} — ${JSON.stringify(health)}`);
