@@ -40,6 +40,9 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   main's `dialog.showOpenDialog` with queued answers, clicks the real field, and restores it before
   leaving the wall; test 4 first proves a cancel keeps the launcher's default and each click opens one
   `openDirectory` dialog at the field's value.
+- **First run confirms the privacy policy.** The wall's save opens it; Confirm must be disabled until
+  `.privacy-body` is scrolled to its end, and confirming leaves error reports on for the rest of the
+  run. The in-place update's previous release may predate the policy, so there it is answered only if shown.
 - **One step at a time, through the backend.** A provider failure and a locked `summary.pdf` run
   alone via backend `run/{step}`, so the error is that step's. A provider's untranslated text must
   appear in `lecture-error-message` — the one text read — and its `step-status` reads `failed`; the

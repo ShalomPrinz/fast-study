@@ -684,7 +684,8 @@ test('14. an in-place update', async () => {
     expect(code, `the installer exited ${code}: ${output}`).toBe(0);
     await start();
     expect(readLaunchLog().split('\n')[0]).toContain(`FastStudy ${previous.version} `);
-    await completeInitWall(session, paths.dataRoot('data-update'));
+    // The previous release may predate the privacy policy, so its first save may not ask.
+    await completeInitWall(session, paths.dataRoot('data-update'), { requirePrivacy: false });
     await waitFor(() => fs.existsSync(paths.ytdlpCopy()), {
       timeoutMs: 60_000,
       message: `the server never seeded ${paths.ytdlpCopy()}`,

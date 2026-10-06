@@ -57,10 +57,32 @@ async function clickDataRoot(page, dialog, n, current) {
   );
 }
 
+/** Answer the privacy policy the wall's save opens: Confirm stays locked until `.privacy-body` is
+ *  scrolled to its end, then confirming turns error reports on and lets the save proceed. */
+async function confirmPrivacy(modal) {
+  const confirm = modal.locator('[data-privacy="confirm"]');
+  await expect(modal, 'the policy was read before it scrolled').toHaveAttribute(
+    'data-privacy-read',
+    'false',
+  );
+  await expect(confirm, 'Confirm is enabled before the policy was scrolled').toBeDisabled();
+  await modal
+    .locator('.privacy-body')
+    .evaluate((body) => body.scrollTo({ top: body.scrollHeight, behavior: 'instant' }));
+  await expect(confirm, 'scrolling to the end of the policy did not unlock Confirm').toBeEnabled();
+  await confirm.click();
+  await expect(modal).toHaveCount(0);
+}
+
 /** Fill the init wall — both placeholder keys through their blocked probe, `dataRoot` picked
- *  through the stubbed folder dialog, and the university — and get past it. With `cancelFirst`,
- *  a canceled dialog must first leave the launcher's default in the field. */
-export async function completeInitWall({ app, page }, dataRoot, { cancelFirst = false } = {}) {
+ *  through the stubbed folder dialog, the university, and the privacy policy confirmed — and get
+ *  past it. With `cancelFirst`, a canceled dialog must first leave the launcher's default in the
+ *  field; with `requirePrivacy` off, a release whose wall saves on the first click passes too. */
+export async function completeInitWall(
+  { app, page },
+  dataRoot,
+  { cancelFirst = false, requirePrivacy = true } = {},
+) {
   await expect(page.getByTestId('init-wall')).toBeVisible({ timeout: 60_000 });
   for (const [provider, value] of Object.entries(PLACEHOLDER_KEYS)) {
     const input = key(page, 'api-key-input', provider);
@@ -115,5 +137,19 @@ export async function completeInitWall({ app, page }, dataRoot, { cancelFirst = 
   const submit = page.getByTestId('init-wall-submit');
   await expect(submit).toBeEnabled();
   await submit.click();
-  await expect(page.getByTestId('init-wall')).toHaveCount(0, { timeout: 60_000 });
+  const wall = page.getByTestId('init-wall');
+  const modal = page.locator('[role="dialog"][data-privacy-read]');
+  if (requirePrivacy) {
+    await expect(modal, 'the first save did not ask for the privacy policy').toBeVisible();
+    await confirmPrivacy(modal);
+  } else {
+    // A release from before the policy saves straight away, so either outcome ends this wait.
+    await expect
+      .poll(async () => (await modal.count()) > 0 || (await wall.count()) === 0, {
+        timeout: 60_000,
+      })
+      .toBe(true);
+    if (await modal.count()) await confirmPrivacy(modal);
+  }
+  await expect(wall).toHaveCount(0, { timeout: 60_000 });
 }
