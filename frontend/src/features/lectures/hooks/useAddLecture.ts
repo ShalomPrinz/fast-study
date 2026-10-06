@@ -2,8 +2,10 @@ import { useState } from 'react'
 import type { Course, Kind, InlineEdit } from '@/types'
 import { createLecture } from '@/services/database'
 import { toastFailure } from '@/shared/utils/failure'
+import { lectureNotFound } from '@/shared/utils/notFound'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
+import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { suggestName } from '@/features/lectures/utils/nextName'
 
 export interface AddLecture {
@@ -17,7 +19,8 @@ export interface AddLecture {
 
 // The add-lecture/recitation flow for one course.
 export function useAddLecture(course: Course): AddLecture {
-  const { courses, refreshCourses } = useCourseTreeContext()
+  const { courses, refreshUntil } = useCourseTreeContext()
+  const { onSelect } = useSelection()
   const [target, setTarget] = useState<{ kind: Kind } | null>(null)
   const edit = useInlineEdit(target ? `${course.name}::${target.kind}` : null)
 
@@ -37,13 +40,16 @@ export function useAddLecture(course: Course): AddLecture {
     setTarget(null)
     edit.setValue('')
     if (!name) return
+    let created: string
     try {
-      await createLecture(course.name, name, t.kind)
+      created = await createLecture(course.name, name, t.kind)
     } catch (e) {
       toastFailure(e)
       return
     }
-    refreshCourses()
+    // Opens the name the database created, once a tree holding it has landed, so its row is there to select.
+    await refreshUntil((tree) => !lectureNotFound(tree, course.name, created, t.kind))
+    onSelect(course.name, created, t.kind)
   }
 
   return { target, edit, start, cancel, commit }

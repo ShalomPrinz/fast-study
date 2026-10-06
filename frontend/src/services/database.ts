@@ -61,8 +61,13 @@ export async function setCourseArchived(course: string, archived: boolean): Prom
   await database.patch(path`/courses/${course}/archived`, { json: { archived } })
 }
 
-export async function createLecture(course: string, name: string, kind?: Kind): Promise<void> {
-  await database.post(path`/courses/${course}/lectures` + kindQuery(kind), { json: { name } })
+/** Answers the folder name the create made, which the database may have sanitized. */
+export async function createLecture(course: string, name: string, kind?: Kind): Promise<string> {
+  const { name: created } = await database.post<{ name: string }>(
+    path`/courses/${course}/lectures` + kindQuery(kind),
+    { json: { name } },
+  )
+  return created
 }
 
 export async function uploadVideo(
