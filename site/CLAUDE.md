@@ -13,6 +13,13 @@ on Windows. Plain HTML/CSS/JS with no build step and no dependency, deployed by
 | `stamp.sh`    | Writes the latest release's version and size into a staged `index.html`         |
 | `capture.mjs` | Recaptures the seven app screenshots on a live app-harness stack                 |
 | `img/`        | The screenshots (1280×800 JPEG), the logo, the SmartScreen steps                 |
+| `sitemap.xml` | Both page URLs, for Search Console; a new page gets a `<url>` here               |
+
+`index.html`'s `<head>` carries the `google-site-verification` meta for the Search Console property
+`https://shalomprinz.github.io/fast-study/` — removing or moving it out of `<head>` unverifies the
+property. Each page's `<meta name="description">` is English only, since it is what a search result
+shows; it names what sets the app apart from the other "FastStudy"s. No `robots.txt`: under a project
+page it would sit at `/fast-study/robots.txt`, which crawlers never read.
 
 ## What the page covers
 
