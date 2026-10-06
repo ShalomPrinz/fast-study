@@ -15,6 +15,7 @@ import downloadItemRouter from './routes/downloadItem.js';
 import jobsRouter from './routes/jobs.js';
 import runsRouter from './routes/runs.js';
 import pdfRouter from './routes/pdf.js';
+import configRouter from './routes/config.js';
 
 const app = express();
 
@@ -54,6 +55,7 @@ app.use(downloadItemRouter);
 app.use(jobsRouter);
 app.use(runsRouter);
 app.use(pdfRouter);
+app.use(configRouter);
 
 // Captures a 5xx-bound error, then hands it on unchanged to the handler below; a no-op without a DSN.
 Sentry.setupExpressErrorHandler(app);

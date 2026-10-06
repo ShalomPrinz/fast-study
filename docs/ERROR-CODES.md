@@ -196,7 +196,7 @@ for the code whichever view chooses to show it.
 | `fs/crud.py`, `fs/summary.py` | `lecture_not_found`     | `course`, `lecture` | user    |
 | `fs/overview.py`, `fs/summaries.py`, `fs/crud.py` | `course_not_found` | `course`          | user      |
 | `settings.py`         | `setting_must_be_string`        | `field`           | dev       |
-| `settings.py`         | `setting_must_be_boolean`       | `field`           | dev       |
+| `settings.py`, `database_main.py` | `setting_must_be_boolean` | `field`           | dev       |
 | `settings.py`         | `setting_must_be_integer`       | `field`           | dev       |
 | `settings.py`         | `setting_may_not_contain_quotes`| `field`           | user      |
 | `settings.py`         | `unknown_setting`               | `field`           | dev       |

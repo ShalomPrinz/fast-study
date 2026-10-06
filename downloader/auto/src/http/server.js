@@ -2,6 +2,7 @@ import { siteAuth, siteAuthFor, setSite, resolveExtractorForRecording } from '..
 import { normalizeSite } from '../moodle/site.js';
 import { probeSite } from '../moodle/probe.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
+import { setReporting } from '@faststudy/sentry';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import { resolveBrowserChannel } from '../browser/browserChannel.js';
 import {
@@ -162,6 +163,10 @@ function siteOr(res, url) {
 export async function handleConfig(req, res) {
   const body = req.body ?? {};
   logReq('POST', '/config', Object.keys(body).join(','));
+  // Checked before anything applies, so a bad flag never leaves a half-applied site change.
+  if ('error_reports' in body && typeof body.error_reports !== 'boolean') {
+    return send(res, 400, invalid('error_reports', 'error_reports must be a boolean'));
+  }
   const applied = [];
   if ('moodle_site' in body) {
     const raw = body.moodle_site;
@@ -172,6 +177,11 @@ export async function handleConfig(req, res) {
     }
     if (await setSite(site)) logResult('/config', `moodle site → ${site ?? '(none)'}; auth reset`);
     applied.push('moodle_site');
+  }
+  if ('error_reports' in body) {
+    // Live: the gated transport and scrub read this flag on every send, so no re-init.
+    setReporting(body.error_reports);
+    applied.push('error_reports');
   }
   send(res, 200, { status: 'ok', applied });
 }

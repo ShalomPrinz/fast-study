@@ -44,12 +44,15 @@ Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `src/ins
 first import, inits with [`@faststudy/sentry`](../../lib/sentry/CLAUDE.md)'s scrubbing options, and
 Sentry's express handler sits before ours. What reaches it: uncaught exceptions, unhandled rejections
 (still fatal) and 5xx route errors — a failed download job is a job status, never an event.
+Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` at launch, then
+`POST /config {error_reports}` flips it live through the gated transport — never a re-init.
 
 ## Endpoints
 
 | Method + path                             | Purpose                                                                                                           |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `GET  /health`                            | `{status:'ok', tools}` — what the launcher waits on                                                               |
+| `POST /config`                            | `{error_reports?}` → `{status:'ok', applied}`; 400 `invalid_request` on a non-boolean — the launcher's live switch |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                        |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET)                                                                  |
 | `POST /download`                          | curl header-replay capture; 200 at once with a `jobId`, runs in the background                                    |

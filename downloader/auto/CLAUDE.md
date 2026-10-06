@@ -14,7 +14,7 @@ Port **3053** (`AUTODL_PORT` in the repo-root `.env`; `FASTSTUDY_PORT` in the en
 
 Launch contract — the `FASTSTUDY_SECRET` check (`requireSecret`, every route but `GET /health`) and the state root (`statePath`, under which the Moodle token, the zoom passcode store and the yt-dlp cache live) — comes from [`@faststudy/runtime`](../../lib/runtime/CLAUDE.md). `yt-dlp` resolves through [`@faststudy/tools`](../../lib/tools/CLAUDE.md) and is reported on `/health` as `tools`. It only runs `--flat-playlist`, which never touches YouTube's player script, so it carries none of `server/`'s JS-runtime flags.
 
-Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `instrument.js`, app.js's first import, inits with [`@faststudy/sentry`](../../lib/sentry/CLAUDE.md)'s scrubbing options, and Sentry's express handler sits before the backstop. An extractor fault that reaches the 500 backstop is an event, its stack naming the extractor; the typed 401/409/422/503 answers are not. The one deliberate message is `siteReport.js`'s `moodle_site_unsupported` warning, once per `(host, reason)` ([MOODLE.md](docs/MOODLE.md#checking-a-site-before-and-after-login)).
+Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `instrument.js`, app.js's first import, inits with [`@faststudy/sentry`](../../lib/sentry/CLAUDE.md)'s scrubbing options, and Sentry's express handler sits before the backstop. An extractor fault that reaches the 500 backstop is an event, its stack naming the extractor; the typed 401/409/422/503 answers are not. The one deliberate message is `siteReport.js`'s `moodle_site_unsupported` warning, once per `(host, reason)` ([MOODLE.md](docs/MOODLE.md#checking-a-site-before-and-after-login)). Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` at launch, then `POST /config {error_reports}` flips it live through the gated transport — never a re-init.
 
 ## HTTP surface
 
@@ -24,7 +24,7 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose down
 | ----------------------- | --------------------------------------------------- | --------------------------------------------------------------------------- |
 | `GET /health`           | —                                                   | `{ status:'ok', tools }` — what the launcher waits on                       |
 | `GET /prereqs/browser`  | —                                                   | `{ available, channel, browser, detail }` — always 200                      |
-| `POST /config`          | `{ moodle_site? }`                                  | `{ status:'ok', applied }` — a different site resets auth ([AUTH.md](docs/AUTH.md)); blank clears it |
+| `POST /config`          | `{ moodle_site?, error_reports? }`                  | `{ status:'ok', applied }` — a different site resets auth ([AUTH.md](docs/AUTH.md)); blank clears it; `error_reports` toggles Sentry sending live |
 | `POST /site/probe`      | `{ url }`                                           | `{ status:'supported'\|'unsupported'\|'unverified', site, code?, params? }` — always 200 ([MOODLE.md](docs/MOODLE.md)) |
 | `GET /auth/status`      | —                                                   | `{ connected, expired }`                                                    |
 | `POST /auth/connect`    | `{}`                                                | `{ status:'pending' }` (headed token grab opens)                            |

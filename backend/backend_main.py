@@ -15,6 +15,7 @@ from logging_setup import setup_logging
 from pipeline import runner, schedule
 from pydantic import BaseModel
 from sentry_sdk.integrations.google_genai import GoogleGenAIIntegration
+from sentry_sdk.transport import HttpTransport
 from services import db_client, google_auth, providers, settings
 from services.errors import CodedError, failure
 from timing import get_stats, init_db, record
@@ -29,6 +30,7 @@ if sentry_policy.enabled():
     # Off: it reports every 429 the pipeline retries and duplicates the step-failed log event.
     sentry_sdk.init(
         **sentry_policy.options("backend"),
+        transport=sentry_policy.gated(HttpTransport),
         disabled_integrations=[GoogleGenAIIntegration()],
     )
     sentry_sdk.set_tags(sentry_policy.tags("backend"))
@@ -314,6 +316,7 @@ class ConfigUpdate(BaseModel):
     auto_run: str | None = None
     nightly_run: bool | None = None
     nightly_hour: int | None = None
+    error_reports: bool | None = None
 
 
 class KeyProbe(BaseModel):
@@ -326,7 +329,14 @@ def config_update(update: ConfigUpdate):
     """Apply a partial settings body to the running process; omitted fields are left alone.
     The response names the applied fields only — a key value is never logged or echoed."""
 
-    applied = settings.apply_config(update.model_dump(exclude_unset=True))
+    values = update.model_dump(exclude_unset=True)
+    # Not an env var: the switch is the Sentry transport gate, so it stops sending from this call on.
+    if values.get("error_reports") is not None:
+        sentry_policy.set_reporting(values.pop("error_reports"))
+        applied = ["error_reports"]
+    else:
+        applied = []
+    applied += settings.apply_config(values)
     # Unconditional: apply() is idempotent, so it costs less than tracking which fields moved.
     schedule.apply()
     return {"status": "ok", "applied": applied}

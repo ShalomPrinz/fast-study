@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 process.env.FASTSTUDY_SENTRY_DSN = 'https://public@o0.ingest.de.sentry.io/0';
+process.env.FASTSTUDY_ERROR_REPORTS = '1';
 const Sentry = await import('@sentry/node');
 await import('../instrument.js');
 const { handleSiteProbe } = await import('../src/http/server.js');

@@ -5,10 +5,11 @@ from unittest.mock import patch
 
 import backend_main
 import pytest
+import sentry_policy
 import sentry_sdk
 from fastapi.testclient import TestClient
 from pipeline import runner
-from sentry_sdk.transport import Transport
+from sentry_sdk.transport import HttpTransport, Transport
 
 FAKE_DSN = "https://public@o0.ingest.de.sentry.io/0"
 
@@ -35,16 +36,17 @@ class _Capture(Transport):
 
 @pytest.fixture
 def reload_main(monkeypatch):
-    """Re-run backend_main's import-time init under the test's env, then disarm Sentry again."""
+    """Re-run backend_main's import-time init under the test's env, then disarm Sentry again.
+    Reporting starts off, as with no FASTSTUDY_ERROR_REPORTS; a test that expects events turns it on."""
 
     calls = []
     real_init = sentry_sdk.init
 
     def init(**kwargs):
-        """Record the init and point it at the test's transport."""
+        """Record the init and point it at the test's transport, gated like the real one."""
 
         calls.append(kwargs)
-        return real_init(**kwargs, transport=reload.transport)
+        return real_init(**{**kwargs, "transport": reload.transport})
 
     def reload():
         """Reload the module so its module-level init runs again; boot-time events are dropped."""
@@ -53,9 +55,12 @@ def reload_main(monkeypatch):
         reload.transport.envelopes.clear()
         return calls
 
-    reload.transport = _Capture()
+    reload.transport = sentry_policy.gated(_Capture)()
     monkeypatch.setattr(sentry_sdk, "init", init)
+    was_reporting = sentry_policy.reporting()
+    sentry_policy.set_reporting(False)
     yield reload
+    sentry_policy.set_reporting(was_reporting)
     sentry_sdk.get_client().close()
     sentry_sdk.get_global_scope().set_client(None)
     sentry_sdk.get_isolation_scope().clear()
@@ -82,10 +87,50 @@ def test_google_genai_integration_is_disabled(reload_main, monkeypatch):
     assert client.get_integration("google_genai") is None
 
 
+def test_transport_is_the_gated_http_transport(reload_main, monkeypatch):
+    """Init hands the SDK the policy's gated HttpTransport, so the switch governs real sends."""
+
+    monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", FAKE_DSN)
+    (kwargs,) = reload_main()
+    assert issubclass(kwargs["transport"], HttpTransport)
+    assert kwargs["transport"] is not HttpTransport
+
+
+def _boom_client():
+    """A test client on the app with a /boom route that raises."""
+
+    @backend_main.app.get("/boom")
+    def boom():
+        """Fail on purpose."""
+
+        raise RuntimeError("boom")
+
+    return TestClient(backend_main.app, raise_server_exceptions=False)
+
+
+@pytest.mark.parametrize("on", [False, True])
+def test_config_error_reports_switches_sending_live(reload_main, monkeypatch, on):
+    """POST /config {error_reports} flips the gate on the running process: off sends nothing."""
+
+    monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", FAKE_DSN)
+    sentry_policy.set_reporting(not on)
+    reload_main()
+    client = _boom_client()
+
+    response = client.post("/config", json={"error_reports": on})
+    assert response.status_code == 200
+    assert response.json()["applied"] == ["error_reports"]
+    assert sentry_policy.reporting() is on
+
+    assert client.get("/boom").status_code == 500
+    assert len(reload_main.transport.events()) == (1 if on else 0)
+
+
 def test_unhandled_route_error_reports_scrubbed_event(reload_main, monkeypatch):
     """An exception escaping a route becomes one event tagged backend, its Hebrew path redacted."""
 
     monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", FAKE_DSN)
+    sentry_policy.set_reporting(True)
     assert len(reload_main()) == 1
 
     @backend_main.app.get("/boom")
@@ -113,6 +158,7 @@ def test_pipeline_step_failure_reports_a_log_event(reload_main, monkeypatch):
     """A failed step is caught and stored, and its ERROR log line is what reaches Sentry."""
 
     monkeypatch.setenv("FASTSTUDY_SENTRY_DSN", FAKE_DSN)
+    sentry_policy.set_reporting(True)
     reload_main()
 
     async def fake_call(course, lecture, kind, step):

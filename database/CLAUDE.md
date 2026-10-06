@@ -50,6 +50,8 @@ so both run paths get it, under the shared [`lib/sentry`](../lib/sentry/CLAUDE.m
 SDK. Sentry ingest is an external service, not a peer, so the no-outbound-calls rule is untouched.
 The scrubber's `DATA_ROOT` rule reads `os.environ` per event, so `POST /config` writes the new root
 there too; `PUT /settings` only rewrites `.env`, so it changes neither the live root nor the scrubber.
+Sending obeys the live error-reports switch through the policy's gated transport: the launcher posts
+`POST /config {error_reports}`, which flips the gate and is never written to `os.environ` or `.env`.
 
 ## Running and testing
 

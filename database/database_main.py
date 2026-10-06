@@ -20,6 +20,7 @@ from fs.paths import (
     ARCHIVED_MARKER,
     SOURCE_URL_MARKER,
     CodedError,
+    CodedValueError,
     CourseNotFound,
     DataRootNotConfigured,
     FileLocked,
@@ -30,14 +31,19 @@ from fs.paths import (
     lecture_dir,
 )
 from logging_setup import setup_logging
+from sentry_sdk.transport import HttpTransport
 
 setup_logging()
 log = logging.getLogger("db")
 
 # At import, after `runtime` loaded .env, so the dev uvicorn path and the frozen entry both init
-# before the app exists; no DSN means no SDK at all.
+# before the app exists; no DSN means no SDK at all. The gated transport lets POST /config stop
+# sending live, without closing or re-initing the client.
 if sentry_policy.enabled():
-    sentry_sdk.init(**sentry_policy.options("database"))
+    sentry_sdk.init(
+        **sentry_policy.options("database"),
+        transport=sentry_policy.gated(HttpTransport),
+    )
     sentry_sdk.set_tags(sentry_policy.tags("database"))
 
 # The dev __main__ path and the frozen dispatcher both read the port from here, so there is one default.
@@ -501,10 +507,20 @@ async def probe_data_root(request: Request):
 
 @app.post("/config")
 async def post_config(request: Request):
-    """Apply {data_root} to the running process, so a settings change needs no restart."""
+    """Apply {data_root, error_reports} to the running process, so a settings change needs no restart."""
 
     try:
         body = await request.json()
+        if "error_reports" in body:
+            # A truth test would let the string "false" turn reports on.
+            if not isinstance(body["error_reports"], bool):
+                raise CodedValueError(
+                    "error_reports must be a boolean",
+                    "setting_must_be_boolean",
+                    field="error_reports",
+                )
+            # Not an env var: the switch is the Sentry transport gate, so it stops sending from this call on.
+            sentry_policy.set_reporting(body["error_reports"])
         if "data_root" in body:
             # The setter is the only writer of fs.paths' root state, so this takes effect at once.
             root = settings.prepare_data_root(body["data_root"])
