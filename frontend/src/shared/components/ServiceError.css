@@ -1,5 +1,5 @@
-/* Names what the failure is about — a recording, an overview branch — when one sentence covers
-   several. It is a name off disk, so `dir="auto"` in the markup lays it out by its own script. */
+/* Names what the failure is about. The name sits in an inner `<bdi>`, so this box keeps the page's
+   direction and the gap lands between lead and headline whatever the name's script. */
 .service-error-lead {
   margin-inline-end: var(--space-2);
 }

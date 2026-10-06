@@ -25,8 +25,8 @@ export default function ServiceError({
   return (
     <span>
       {lead && (
-        <strong className="service-error-lead" dir="auto">
-          {lead}
+        <strong className="service-error-lead">
+          <bdi>{lead}</bdi>
         </strong>
       )}
       <span className="service-error-headline">{headline}</span>
