@@ -27,13 +27,29 @@ sent to the wrong host.
   that reports an abandoned login ignores it once a token is held. Closing the last window does not
   end a Playwright-launched browser, so the user closing every login window before a token arrives
   closes the browser itself, which drops the pending login.
-- `complete()` — waits (bounded) for the captured token, decodes it, runs the post-login site check
-  ([MOODLE.md](MOODLE.md#checking-a-site-before-and-after-login)) and only then persists
-  `{ site, wstoken, privatetoken, userid, savedAt }` to `auth/moodle-token.json` under the state
-  root; a refused site persists nothing. Needs no live browser.
-  Fails at once with `moodle_login_abandoned` if the window is closed while it waits, and with
-  `moodle_login_not_pending` if nothing is pending.
-- `status()` — no browser, no API call: `{ connected: a token for this site exists, expired: markExpired flag }`.
+- `complete()` — waits (bounded) for the captured token, decodes it, **persists it at once** as
+  `{ site, wstoken, privatetoken, userid:null, unverified:true, savedAt }`, then verifies: a
+  `core_webservice_get_site_info` call and the post-login site check
+  ([MOODLE.md](MOODLE.md#checking-a-site-before-and-after-login)); success fills `userid`, drops
+  `unverified` and closes any challenge window. With no login pending but a stored unverified
+  token it only verifies (the re-entrant second call). Needs no live browser. Fails at once with
+  `moodle_login_abandoned` if the window is closed while it waits, and with
+  `moodle_login_not_pending` if nothing is pending or stored.
+- Verification outcomes: `invalidtoken` or a refused site (`moodle_site_unsupported`) **delete** the
+  token; a bot-protection block (`site_blocked`), timeout or network failure never do. A block keeps
+  the token, opens one headed browser (`launchBrowser`) on the site root so the user can solve the
+  bot manager's challenge (reused while open) and adds `params.challengeWindow:true` to the 503
+  (`false` if no browser could launch). The window closes on successful verification,
+  `disconnect()` or a new `connect()`. Once a human solves it, Node requests from that IP pass again.
+- Lazy verification: every WS caller (`/list`, both `/resolve` paths) gets its token from
+  `verifiedToken()` (`tokenOr` in `http/server.js`), which verifies an unverified token first
+  (concurrent callers share one call) and maps its failure like any WS error.
+- Token file: when the launcher sets `FASTSTUDY_TOKEN_KEY` (standard base64 of 32 bytes) it is
+  AES-256-GCM, `{ v:1, iv, tag, data }` with a random 12-byte IV per write (`auth/tokenStore.js`);
+  unset is plaintext (dev). A file that cannot be read (wrong key, corrupt, tampered, or encrypted
+  with no key) reads as absent; a legacy plaintext one is read and rewritten encrypted. A
+  malformed key throws on write.
+- `status()` — no browser, no API call: `{ connected: a token for this site exists, expired: markExpired flag, unverified: the token awaits verification }`.
 - `disconnect()` — deletes the token file, clears the flag, closes a headed login still in flight;
   a missing token is success. It never calls Moodle's revoke: a server-side revoke can fail _after_
   the local delete, leaving the two out of sync with no way to reconcile them.

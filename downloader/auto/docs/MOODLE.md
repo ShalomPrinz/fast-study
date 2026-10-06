@@ -114,7 +114,9 @@ one, for any client and any UA. So `callWs` checks status and content-type _befo
 naming the symptom and hiding the cause. `/list` and `/resolve` map it to `503 {status:'blocked'}`,
 code `site_blocked` with the shape it served as `detail` —
 no retry and no throttling: the wait is minutes long, and retrying is what deepens the block. It never
-marks the token expired, so the UI must not steer to Reconnect on it. This is also why no change is
+marks the token expired or deletes it, so the UI must not steer to Reconnect on it; at login the
+token is kept and a headed window on the site root lets the user solve the challenge
+([AUTH.md](AUTH.md#connect--complete--status--disconnect)). This is also why no change is
 ever verified by a live request to any university's site.
 
 ### `core_webservice_get_site_info`

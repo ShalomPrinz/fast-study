@@ -1,8 +1,8 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import { AuthProvider } from './AuthProvider.js';
 import { launchBrowser } from '../browser/browserLaunch.js';
-import { getSiteInfo } from '../moodle/wsClient.js';
+import { getSiteInfo, blocked, invalidToken } from '../moodle/wsClient.js';
+import { readTokenFile, writeTokenFile } from './tokenStore.js';
 import { CodedError, UnsupportedError } from '../lib/errors.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
 
@@ -53,6 +53,10 @@ export class MoodleToken extends AuthProvider {
     // Runtime "known invalid" flag: set by a caller when wsClient.invalidToken fires (a
     // server-side token kill the token file can't reveal), cleared by the next complete().
     this._invalidated = false;
+    // The headed window opened on the site root for the user to solve a bot-protection challenge.
+    this._challenge = null;
+    // The in-flight verification, shared so concurrent callers make one site-info call.
+    this._verifying = null;
   }
 
   /** Mark this instance's token dead after a runtime invalidToken WS response. */
@@ -66,25 +70,25 @@ export class MoodleToken extends AuthProvider {
    * @returns {{ site: string, wstoken: string, privatetoken: string|null, userid: number, savedAt: string }|null}
    */
   loadToken() {
-    try {
-      if (!fs.existsSync(this.tokenPath)) return null;
-      const tok = JSON.parse(fs.readFileSync(this.tokenPath, 'utf8'));
-      return tok?.site === this.site ? tok : null;
-    } catch {
-      return null;
-    }
+    const tok = readTokenFile(this.tokenPath);
+    return tok?.site === this.site ? tok : null;
   }
 
   /**
    * Cheap status for the UI pill — no browser, no API call. `connected` = a token file with a
    * wstoken exists. Token validity is only knowable by hitting the API, so `expired` is purely
    * the runtime markExpired flag (a WS invalidToken response), not a cookie-expiry heuristic.
-   * @returns {{ connected: boolean, expired: boolean }}
+   * `unverified` = persisted after a bot-protection block, its site info not yet checked.
+   * @returns {{ connected: boolean, expired: boolean, unverified: boolean }}
    */
   status() {
     const tok = this.loadToken();
     const connected = !!(tok && tok.wstoken);
-    return { connected, expired: connected && this._invalidated };
+    return {
+      connected,
+      expired: connected && this._invalidated,
+      unverified: connected && tok.unverified === true,
+    };
   }
 
   /**
@@ -95,6 +99,7 @@ export class MoodleToken extends AuthProvider {
   async disconnect() {
     fs.rmSync(this.tokenPath, { force: true });
     this._invalidated = false;
+    await this._closeChallenge();
     const pending = this._pending;
     // Null before closing: the browser's 'disconnected' handler treats a live _pending as an
     // abandoned login and would fire onCancel, which this is not.
@@ -110,6 +115,7 @@ export class MoodleToken extends AuthProvider {
    */
   async connect({ onCancel } = {}) {
     if (this._pending) return;
+    await this._closeChallenge();
     const browser = await this._launch({ headless: false });
     try {
       const context = await browser.newContext();
@@ -176,13 +182,17 @@ export class MoodleToken extends AuthProvider {
   }
 
   /**
-   * UI-triggered login, step 2: wait (bounded) for the captured apptoken, decode it, check the site
-   * serves what we need (site info), persist, and close the headed browser. Throws if no login is
-   * pending, the window is closed first, no token was captured in time, or the site is unsupported.
-   * @returns {Promise<{ site: string, wstoken: string, privatetoken: string|null, userid: number, savedAt: string }>}
+   * UI-triggered login, step 2. With a login pending: wait (bounded) for the captured apptoken,
+   * persist it, and verify it. With none pending but a stored unverified token (a block on the
+   * last try, the challenge since solved): just verify it. Verifying is a site-info call plus the
+   * post-login check; a bot-protection block keeps the token and opens the challenge window.
+   * Throws if nothing is pending or stored, the window is closed first, no token arrives in time,
+   * the site is unsupported (token revoked), the token is dead (revoked) or the site is blocked.
+   * @returns {Promise<object>}  the verified token record
    */
   async complete() {
     if (!this._pending) {
+      if (this.status().unverified) return this._verify();
       throw new CodedError('moodle_login_not_pending', {}, 'no pending login (call connect first)');
     }
     const { browser, tokenPromise, abandoned } = this._pending;
@@ -198,24 +208,91 @@ export class MoodleToken extends AuthProvider {
       const apptoken = await Promise.race([tokenPromise, abandoned, timeout]);
 
       const parts = decodeApptoken(apptoken).split(':::');
-      const wstoken = parts[1];
-      const info = await getSiteInfo(this.site, wstoken);
-      this._checkSiteInfo(info);
-      const record = {
+      writeTokenFile(this.tokenPath, {
         site: this.site,
-        wstoken,
+        wstoken: parts[1],
         privatetoken: parts[2] ?? null,
-        userid: info.userid,
+        userid: null,
+        unverified: true,
         savedAt: new Date().toISOString(),
-      };
-      fs.mkdirSync(path.dirname(this.tokenPath), { recursive: true });
-      fs.writeFileSync(this.tokenPath, JSON.stringify(record));
+      });
       this._invalidated = false; // fresh token persisted — a prior runtime invalidToken is no longer sticky
-      return record;
     } finally {
       clearTimeout(timer);
       await browser.close().catch(() => {});
     }
+    return this._verify();
+  }
+
+  /**
+   * The stored token, verified first when it is still unverified; null when there is none. Every
+   * WS caller goes through this, so an unverified token is checked before its first use.
+   */
+  async verifiedToken() {
+    const tok = this.loadToken();
+    if (tok?.unverified) return this._verify();
+    return tok;
+  }
+
+  _verify() {
+    this._verifying ??= this._verifyOnce().finally(() => {
+      this._verifying = null;
+    });
+    return this._verifying;
+  }
+
+  // Revokes (deletes the file) only for a not-good-token answer: invalidtoken or a refused site.
+  // A block, timeout or network failure keeps the token; a block also opens the challenge window.
+  async _verifyOnce() {
+    const tok = this.loadToken();
+    if (!tok) throw new CodedError('moodle_login_not_pending', {}, 'no token to verify');
+    let info;
+    try {
+      info = await getSiteInfo(this.site, tok.wstoken);
+      this._checkSiteInfo(info);
+    } catch (err) {
+      if (invalidToken(err) || err instanceof UnsupportedError) {
+        fs.rmSync(this.tokenPath, { force: true });
+      } else if (blocked(err)) {
+        err.params = { ...err.params, challengeWindow: await this._openChallenge() };
+      }
+      throw err;
+    }
+    // A disconnect or a newer login while the call was out wins over this result.
+    if (this.loadToken()?.wstoken !== tok.wstoken) return tok;
+    const record = { ...tok, userid: info.userid };
+    delete record.unverified;
+    writeTokenFile(this.tokenPath, record);
+    this._invalidated = false;
+    await this._closeChallenge();
+    return record;
+  }
+
+  // Headed browser on the site root so the bot manager shows its challenge to a human; reused while
+  // open. Returns whether a window is up (false when no browser could be launched).
+  async _openChallenge() {
+    if (this._challenge) return true;
+    let browser;
+    try {
+      browser = await this._launch({ headless: false });
+      const page = await (await browser.newContext()).newPage();
+      this._challenge = browser;
+      browser.on('disconnected', () => {
+        if (this._challenge === browser) this._challenge = null;
+      });
+      await page.goto(this.site, { waitUntil: 'load' }).catch(() => {});
+      return true;
+    } catch {
+      await browser?.close().catch(() => {});
+      this._challenge = null;
+      return false;
+    }
+  }
+
+  async _closeChallenge() {
+    const browser = this._challenge;
+    this._challenge = null;
+    if (browser) await browser.close().catch(() => {});
   }
 
   // The post-login check: refuse a site whose token service can't list a course or serve its

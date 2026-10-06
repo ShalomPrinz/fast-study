@@ -269,7 +269,7 @@ emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.
 | origin                          | code                          | params                   | reach |
 | ------------------------------- | ----------------------------- | ------------------------ | ----- |
 | `http/server.js` `sendReconnect`| `moodle_reconnect_required`   | —                        | user  |
-| `moodle/wsClient.js`            | `site_blocked`                | `detail`                 | user  |
+| `moodle/wsClient.js`            | `site_blocked`                | `detail`, `challengeWindow`? | user  |
 | `http/server.js` `sendPasscode` | `zoom_passcode_required`      | `reason`, `course`, `name` | user |
 | `browser/browserChannel.js`     | `browser_missing`             | `detail`                 | user  |
 | `core/registry.js`              | `course_url_unsupported_site` | `url`, `site`            | user  |

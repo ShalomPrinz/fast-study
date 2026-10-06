@@ -219,6 +219,29 @@ export async function handleAuthConnect(req, res) {
   send(res, 200, { status: 'pending' });
 }
 
+// The verified stored token, or null after answering: 401 reconnect (none, or a dead one), 422 for
+// a refused site, 503 for a bot-protection block. One path for every WS caller.
+async function tokenOr(res, auth, route) {
+  try {
+    const tok = await auth.verifiedToken();
+    if (tok) return tok;
+    logResult(route, 'reconnect (401)');
+    sendReconnect(res);
+  } catch (e) {
+    if (invalidToken(e)) {
+      logResult(route, 'reconnect (401)');
+      sendReconnect(res);
+    } else if (e instanceof UnsupportedError) {
+      logResult(route, `unsupported (422): ${e.message}`);
+      sendUnsupported(res, e);
+    } else if (blocked(e)) {
+      logResult(route, `blocked (503): ${e.message}`);
+      sendBlocked(res, e);
+    } else throw e;
+  }
+  return null;
+}
+
 export async function handleAuthComplete(req, res) {
   logReq('POST', '/auth/complete');
   const found = siteOr(res);
@@ -229,6 +252,10 @@ export async function handleAuthComplete(req, res) {
     if (e instanceof UnsupportedError) {
       logResult('/auth/complete', `unsupported (422): ${e.message}`);
       return sendUnsupported(res, e);
+    }
+    if (invalidToken(e)) {
+      logResult('/auth/complete', 'reconnect (401)');
+      return sendReconnect(res);
     }
     if (blocked(e)) {
       logResult('/auth/complete', `blocked (503): ${e.message}`);
@@ -289,10 +316,8 @@ export async function handleList(req, res) {
   const found = siteOr(res, courseUrl);
   if (!found) return;
   const { site, auth } = found;
-  if (!auth.status().connected) {
-    logResult('/list', 'reconnect (401)');
-    return sendReconnect(res);
-  }
+  const stored = await tokenOr(res, auth, '/list');
+  if (!stored) return;
 
   let courseId;
   try {
@@ -303,7 +328,7 @@ export async function handleList(req, res) {
 
   // Stateless WS: no browser needed. A dead token comes back as an invalidToken
   // WS exception → mark expired + steer to Reconnect; any other WS fault falls to 500.
-  const token = auth.loadToken().wstoken;
+  const token = stored.wstoken;
   let sections;
   try {
     sections = await getCourseContents(site, token, courseId);
@@ -408,10 +433,8 @@ async function resolveItem(req, res) {
     const found = siteOr(res, recording.fileurl);
     if (!found) return;
     const { auth } = found;
-    if (!auth.status().connected) {
-      logResult('/resolve', 'reconnect (401)');
-      return sendReconnect(res);
-    }
+    const stored = await tokenOr(res, auth, '/resolve');
+    if (!stored) return;
     let targets;
     try {
       targets = await resolveMoodleFile({
@@ -419,7 +442,7 @@ async function resolveItem(req, res) {
         course,
         name,
         kind,
-        wstoken: auth.loadToken().wstoken,
+        wstoken: stored.wstoken,
         ref: rowRef,
         forceCapture: opts.forceCapture,
       });
@@ -518,11 +541,8 @@ async function resolveItem(req, res) {
   const found = siteOr(res, recording.pageUrl);
   if (!found) return;
   const { site, auth } = found;
-  if (!auth.status().connected) {
-    logResult('/resolve', 'reconnect (401)');
-    return sendReconnect(res);
-  }
-  const token = auth.loadToken();
+  const token = await tokenOr(res, auth, '/resolve');
+  if (!token) return;
 
   await session.open();
   let targets;

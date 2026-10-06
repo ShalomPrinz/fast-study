@@ -293,7 +293,7 @@ test('the same site is a no-op; another one forgets the token', async () => {
   assert.equal(fs.existsSync(TOKEN_FILE), true);
   const connected = fakeRes();
   handleAuthStatus({}, connected);
-  assert.deepEqual(connected.body, { connected: true, expired: false });
+  assert.deepEqual(connected.body, { connected: true, expired: false, unverified: false });
 
   const other = fakeRes();
   await handleConfig({ body: { moodle_site: 'https://b.ac.il/moodle' } }, other);
@@ -302,7 +302,7 @@ test('the same site is a no-op; another one forgets the token', async () => {
   assert.equal(fs.existsSync(TOKEN_FILE), false);
   const after = fakeRes();
   handleAuthStatus({}, after);
-  assert.deepEqual(after.body, { connected: false, expired: false });
+  assert.deepEqual(after.body, { connected: false, expired: false, unverified: false });
 
   // A course on the old site is now another site's.
   const list = fakeRes();
