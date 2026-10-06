@@ -147,7 +147,8 @@ prefixes are convention, not contract, so it never blocks.
 
 ## The university — `components/MoodleSiteField.tsx`
 
-A `<select>` of presets (`utils/moodleSites.ts`, frontend-only) plus "Other…", which reveals a URL input.
+A `<select>` of presets (`utils/moodleSites.ts`, frontend-only) plus "Other…", which reveals a URL input
+and a plain-words hint on copying the address from the browser.
 Picking a preset or blurring the input calls `probeMoodleSite` (`POST /site/probe` on the auto-downloader),
 with `ApiKeyField`'s sequence-number and last-probed-value discipline (`utils/siteStatus.ts`). The status
 slot reads `supported` (the canonical site), `unsupported` (the `moodle_site_unsupported` sentence for its

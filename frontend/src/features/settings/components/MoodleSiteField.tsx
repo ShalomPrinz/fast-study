@@ -109,23 +109,31 @@ export default function MoodleSiteField({ value, onChange, onSupported, onChecki
         <option value={OTHER_SITE}>{t`Other…`}</option>
       </select>
       {choice === OTHER_SITE && (
-        <input
-          id="moodle-site-url"
-          className="settings-input settings-input--code"
-          type="url"
-          dir="ltr"
-          spellCheck={false}
-          aria-label={t`Your university's Moodle address`}
-          placeholder="https://moodle.example.ac.il"
-          value={typed}
-          onChange={(e) => {
-            setTyped(e.target.value)
-            forget(OTHER_SITE, e.target.value)
-          }}
-          onBlur={() => void prober.probe(latest.current)}
-          // The change event carrying the pasted text fires after `paste`, so probe on the next tick.
-          onPaste={() => setTimeout(() => void prober.probe(latest.current), 0)}
-        />
+        <>
+          <span className="settings-hint">
+            <Trans>
+              Open your university's Moodle (the site with your courses and lecture recordings) in
+              the browser, copy the address from the bar at the top, and paste it here.
+            </Trans>
+          </span>
+          <input
+            id="moodle-site-url"
+            className="settings-input settings-input--code"
+            type="url"
+            dir="ltr"
+            spellCheck={false}
+            aria-label={t`Your university's Moodle address`}
+            placeholder="https://moodle.example.ac.il"
+            value={typed}
+            onChange={(e) => {
+              setTyped(e.target.value)
+              forget(OTHER_SITE, e.target.value)
+            }}
+            onBlur={() => void prober.probe(latest.current)}
+            // The change event carrying the pasted text fires after `paste`, so probe on the next tick.
+            onPaste={() => setTimeout(() => void prober.probe(latest.current), 0)}
+          />
+        </>
       )}
       <span className="settings-hint">
         <Trans>
