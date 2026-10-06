@@ -105,13 +105,13 @@ page) while the tree still has it, else `/`.
 
 `LecturesTreePane` renders beside `/`, the overview and `/:course/:lecture` only. It holds the active
 `CourseGroup`s, `ArchivedSection` and `New course`, inside `PendingUploadProvider` so an mp4 dropped on a
-lecture row can prompt. An expanded course opens with an Overview row; the course header only toggles.
+lecture row can prompt. With no course at all after a successful load (`isTreeEmpty`, archived courses count) the nav shows a centred `.tree-pane-empty` note pointing at Downloads and `New course`; a failed load (`loadFailed`) never shows it. An expanded course opens with an Overview row; the course header only toggles.
 
 `utils/lectureProgress.ts`: `isLectureComplete` (the last pipeline output exists, mirroring the backend's
 `final_output()`, whatever earlier file is gone) colours each lecture's dot and reads `Complete` on its page; `courseProgress` gives the header's `N/M`, `0/0` for an
 archived course so the badge stays off.
 
-- `CourseTreeContext` exposes `courses`, `loaded` and `refreshCourses`; `SnapshotProvider` fills it, refreshing
+- `CourseTreeContext` exposes `courses`, `loaded`, `loadFailed` and `refreshCourses`; `SnapshotProvider` fills it, refreshing
   on notify together with `/status`, and sorts courses by name (`localeCompare`) and their lectures through
   `sortLectures`. Everything reads it directly, no props
   or outlet context.

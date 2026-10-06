@@ -30,6 +30,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
   const [status, setStatus] = useState<RunnerStatus | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [loadFailed, setLoadFailed] = useState(false)
 
   const sendUpdateRef = useRef(sendUpdate)
   useEffect(() => {
@@ -94,10 +95,12 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
       announcePdfWarnings(c.value, warningReports, treePrimed.current)
       treePrimed.current = true
       setLoaded(true)
+      setLoadFailed(false)
     } else if (id === issued.current) {
       // Only the newest fetch's failure settles `loaded`, or routes would flash "not found" before a newer
       // tree lands; settling it beats spinning forever behind a database service that is down.
       setLoaded(true)
+      setLoadFailed(true)
     }
   }
 
@@ -173,7 +176,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
 
   return (
     <CourseTreeContext.Provider
-      value={{ courses: sortedCourses, loaded, refreshCourses: refresh, refreshUntil }}
+      value={{ courses: sortedCourses, loaded, loadFailed, refreshCourses: refresh, refreshUntil }}
     >
       <RunnerStatusContext.Provider value={{ status, trigger, isInFlight, getInFlight, getError }}>
         {children}

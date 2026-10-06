@@ -36,7 +36,7 @@ polls. The backend notifies on every meaningful state change, and the downloader
 combine them — a step's button, the lecture header's state, `/running`'s not-queued list — and the faster
 `/status` landing alone would show a finished step as pending again for a frame. On mount, every notify and
 every `refreshCourses()` it refetches both. If one side fails the other still applies; a failed `/tree`
-settles `loaded` only when no newer fetch is in flight.
+settles `loaded` and sets `loadFailed` only when no newer fetch is in flight; a later success clears `loadFailed`.
 
 The downloader server has its own stream, reflected by `DownloadJobsProvider` and `SectionRunsProvider`
 ([JOBS.md](JOBS.md), [BULK.md](BULK.md)): a contentless ping plus one snapshot fetch per ping and per

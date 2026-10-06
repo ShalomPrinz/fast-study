@@ -348,7 +348,7 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A section is waiting for a passcode"
 msgstr "יחידה ממתינה לקוד גישה"
 
-#: src/features/downloads/components/AccountStatus.tsx:192
+#: src/features/downloads/components/AccountStatus.tsx:191
 msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "נפתח חלון באתר האוניברסיטה. אשר שם שאינך רובוט, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
@@ -494,7 +494,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
-#: src/features/downloads/components/AccountStatus.tsx:111
+#: src/features/downloads/components/AccountStatus.tsx:110
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -502,7 +502,7 @@ msgstr "בודק חשבון…"
 msgid "checking Drive…"
 msgstr "בודק את Drive…"
 
-#: src/features/downloads/components/AccountStatus.tsx:137
+#: src/features/downloads/components/AccountStatus.tsx:136
 msgid "checking the connection"
 msgstr "החיבור בבדיקה"
 
@@ -587,7 +587,7 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "אושרה ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:177
+#: src/features/downloads/components/AccountStatus.tsx:176
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחברות"
@@ -600,7 +600,7 @@ msgstr "לחבר את Google Drive עכשיו?"
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:100
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -759,17 +759,17 @@ msgstr "מחיקת {0}"
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
-#: src/features/downloads/components/AccountStatus.tsx:143
-#: src/features/downloads/components/AccountStatus.tsx:164
+#: src/features/downloads/components/AccountStatus.tsx:142
+#: src/features/downloads/components/AccountStatus.tsx:163
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתקות"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:98
 msgid "Disconnect the university account?"
 msgstr "לנתק את חשבון האוניברסיטה?"
 
-#: src/features/downloads/components/AccountStatus.tsx:164
+#: src/features/downloads/components/AccountStatus.tsx:163
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
@@ -990,7 +990,7 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:118
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
@@ -1086,7 +1086,7 @@ msgstr "דף הבית"
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
 
-#: src/features/downloads/components/AccountStatus.tsx:140
+#: src/features/downloads/components/AccountStatus.tsx:139
 msgid "I confirmed, try again"
 msgstr "אישרתי, לנסות שוב"
 
@@ -1254,6 +1254,10 @@ msgstr "לא נבחרה תיקייה ב-Google Drive. בחר אחת בהגדרו
 msgid "No Lectures"
 msgstr "אין הרצאות"
 
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:44
+msgid "No lectures yet. Add one from Downloads, or add a course manually."
+msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
+
 #: src/shared/i18n/serviceErrors.ts:223
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
@@ -1290,7 +1294,7 @@ msgstr "אין תרגולים"
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/features/downloads/components/AccountStatus.tsx:128
+#: src/features/downloads/components/AccountStatus.tsx:127
 msgid "no university chosen"
 msgstr "לא נבחרה אוניברסיטה"
 
@@ -1315,7 +1319,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "עוד לא אושרה"
 
-#: src/features/downloads/components/AccountStatus.tsx:174
+#: src/features/downloads/components/AccountStatus.tsx:173
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
@@ -1344,11 +1348,11 @@ msgstr "לא נמצאו תוצאות לחיפוש הזה"
 msgid "Nothing running"
 msgstr "אין הרצאות בעיבוד"
 
-#: src/shared/contexts/SnapshotProvider.tsx:133
+#: src/shared/contexts/SnapshotProvider.tsx:136
 msgid "Nothing to run - All pipelines complete"
 msgstr "אין מה להריץ - כל ההרצאות הושלמו"
 
-#: src/shared/contexts/SnapshotProvider.tsx:137
+#: src/shared/contexts/SnapshotProvider.tsx:140
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "אין מה להריץ - כל ההרצאות הנותרות כבר בעיבוד"
 
@@ -1396,7 +1400,7 @@ msgstr "פתיחת ה-PDF"
 msgid "Open the sign-in page"
 msgstr "פתיחת דף ההתחברות"
 
-#: src/features/downloads/components/AccountStatus.tsx:198
+#: src/features/downloads/components/AccountStatus.tsx:197
 msgid "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ואשר שם שאינך רובוט, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
@@ -1540,7 +1544,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:177
+#: src/features/downloads/components/AccountStatus.tsx:176
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
@@ -1693,7 +1697,7 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "Send error reports"
 msgstr "שליחת דיווחי שגיאות"
 
-#: src/features/downloads/components/AccountStatus.tsx:174
+#: src/features/downloads/components/AccountStatus.tsx:173
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
@@ -1961,7 +1965,7 @@ msgstr "האתר סירב להורדה. הקישור הזה דורש התחבר�
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
-#: src/features/downloads/components/AccountStatus.tsx:188
+#: src/features/downloads/components/AccountStatus.tsx:187
 msgid "The university is checking the connection."
 msgstr "האוניברסיטה בודקת את החיבור."
 
@@ -2097,7 +2101,7 @@ msgstr "אוניברסיטה"
 msgid "University account"
 msgstr "חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:157
+#: src/features/downloads/components/AccountStatus.tsx:156
 msgid "University account connected"
 msgstr "חשבון האוניברסיטה מחובר"
 
@@ -2141,7 +2145,7 @@ msgstr "ההעלאה ל-Google Drive נכשלה."
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/AccountStatus.tsx:204
+#: src/features/downloads/components/AccountStatus.tsx:203
 msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
 msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ואשר שם שאינך רובוט. ואז לחץ על \"אישרתי, לנסות שוב\"."
 

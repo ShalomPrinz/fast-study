@@ -348,7 +348,7 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/downloads/components/AccountStatus.tsx:192
+#: src/features/downloads/components/AccountStatus.tsx:191
 msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 
@@ -494,7 +494,7 @@ msgstr "Change the data folder while lectures are being processed?"
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:111
+#: src/features/downloads/components/AccountStatus.tsx:110
 msgid "checking account…"
 msgstr "checking account…"
 
@@ -502,7 +502,7 @@ msgstr "checking account…"
 msgid "checking Drive…"
 msgstr "checking Drive…"
 
-#: src/features/downloads/components/AccountStatus.tsx:137
+#: src/features/downloads/components/AccountStatus.tsx:136
 msgid "checking the connection"
 msgstr "checking the connection"
 
@@ -587,7 +587,7 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "Confirmed ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:177
+#: src/features/downloads/components/AccountStatus.tsx:176
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
@@ -600,7 +600,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:100
+#: src/features/downloads/components/AccountStatus.tsx:99
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "Connecting again needs a full login in a browser window, including two-step verification."
 
@@ -759,17 +759,17 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:143
-#: src/features/downloads/components/AccountStatus.tsx:164
+#: src/features/downloads/components/AccountStatus.tsx:142
+#: src/features/downloads/components/AccountStatus.tsx:163
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:99
+#: src/features/downloads/components/AccountStatus.tsx:98
 msgid "Disconnect the university account?"
 msgstr "Disconnect the university account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:164
+#: src/features/downloads/components/AccountStatus.tsx:163
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -990,7 +990,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:119
+#: src/features/downloads/components/AccountStatus.tsx:118
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -1086,7 +1086,7 @@ msgstr "Home"
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
-#: src/features/downloads/components/AccountStatus.tsx:140
+#: src/features/downloads/components/AccountStatus.tsx:139
 msgid "I confirmed, try again"
 msgstr "I confirmed, try again"
 
@@ -1254,6 +1254,10 @@ msgstr "No Google Drive folder is set. Choose one in Settings."
 msgid "No Lectures"
 msgstr "No Lectures"
 
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:44
+msgid "No lectures yet. Add one from Downloads, or add a course manually."
+msgstr "No lectures yet. Add one from Downloads, or add a course manually."
+
 #: src/shared/i18n/serviceErrors.ts:223
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
@@ -1290,7 +1294,7 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/components/AccountStatus.tsx:128
+#: src/features/downloads/components/AccountStatus.tsx:127
 msgid "no university chosen"
 msgstr "no university chosen"
 
@@ -1315,7 +1319,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "Not confirmed yet"
 
-#: src/features/downloads/components/AccountStatus.tsx:174
+#: src/features/downloads/components/AccountStatus.tsx:173
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1344,11 +1348,11 @@ msgstr "Nothing matched this search"
 msgid "Nothing running"
 msgstr "Nothing running"
 
-#: src/shared/contexts/SnapshotProvider.tsx:133
+#: src/shared/contexts/SnapshotProvider.tsx:136
 msgid "Nothing to run - All pipelines complete"
 msgstr "Nothing to run - All pipelines complete"
 
-#: src/shared/contexts/SnapshotProvider.tsx:137
+#: src/shared/contexts/SnapshotProvider.tsx:140
 msgid "Nothing to run - All remaining pipelines already running"
 msgstr "Nothing to run - All remaining pipelines already running"
 
@@ -1396,7 +1400,7 @@ msgstr "Open PDF"
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
 
-#: src/features/downloads/components/AccountStatus.tsx:198
+#: src/features/downloads/components/AccountStatus.tsx:197
 msgid "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 
@@ -1540,7 +1544,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:177
+#: src/features/downloads/components/AccountStatus.tsx:176
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1693,7 +1697,7 @@ msgstr "Select a lecture to get started"
 msgid "Send error reports"
 msgstr "Send error reports"
 
-#: src/features/downloads/components/AccountStatus.tsx:174
+#: src/features/downloads/components/AccountStatus.tsx:173
 msgid "session expired"
 msgstr "session expired"
 
@@ -1961,7 +1965,7 @@ msgstr "The site refused the download. This link needs a login, so it can't be d
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
-#: src/features/downloads/components/AccountStatus.tsx:188
+#: src/features/downloads/components/AccountStatus.tsx:187
 msgid "The university is checking the connection."
 msgstr "The university is checking the connection."
 
@@ -2097,7 +2101,7 @@ msgstr "University"
 msgid "University account"
 msgstr "University account"
 
-#: src/features/downloads/components/AccountStatus.tsx:157
+#: src/features/downloads/components/AccountStatus.tsx:156
 msgid "University account connected"
 msgstr "University account connected"
 
@@ -2141,7 +2145,7 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/AccountStatus.tsx:204
+#: src/features/downloads/components/AccountStatus.tsx:203
 msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
 msgstr "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
 
