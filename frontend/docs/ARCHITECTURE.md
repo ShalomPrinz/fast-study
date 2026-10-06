@@ -80,6 +80,9 @@ The sidebar's five rows are all routes and exactly one is active per page: the f
 their own, Lectures claims the rest. Leaving `/downloads` unmounts its view, so `Layout` also mounts the
 downloads providers, and discovery, edits, jobs and runs outlive the route ([DOWNLOADS.md](DOWNLOADS.md)).
 
+Every name param is read through `routeParam`: React Router turns a literal `%2F` inside a decoded segment
+into `/`, and a name never holds `/` (the database strips it), so mapping `/` back is exact.
+
 Route params are user-editable, so `MainView`, `EditSummaryView` and `CourseView` resolve them against
 `CourseTreeContext` first: spinner until `loaded`, then `NotFoundPanel` (`shared/utils/notFound.ts`).
 `loaded` exists because an unresolved param and an unfetched tree both look empty, so a typo would spin

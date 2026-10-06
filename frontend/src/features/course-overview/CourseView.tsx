@@ -2,6 +2,7 @@ import { Fragment, useEffect } from 'react'
 import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useParams } from 'react-router-dom'
+import { routeParam } from '@/shared/utils/routes'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
@@ -123,7 +124,7 @@ function CourseOverviewBody() {
 }
 
 export default function CourseView() {
-  const { course = '' } = useParams()
+  const course = routeParam(useParams().course)
   const { courses, loaded } = useCourseTreeContext()
 
   if (!course) return null

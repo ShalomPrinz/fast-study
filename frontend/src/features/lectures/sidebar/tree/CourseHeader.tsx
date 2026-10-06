@@ -18,7 +18,7 @@ import { courseNotFound } from '@/shared/utils/notFound'
 import { moveSavedExpansion } from '@/features/lectures/utils/courseExpansion'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useCourseDownloading } from '@/features/downloads/contexts/DownloadJobsContext'
-import { ROUTES } from '@/shared/utils/routes'
+import { ROUTES, routeParam } from '@/shared/utils/routes'
 import { courseRoute } from '@/shared/utils/url'
 import { useCourseGroup } from './CourseGroupContext'
 import '@/styles/sidebar-tree.css'
@@ -36,7 +36,7 @@ export default function CourseHeader({ expand }: { expand: ExpandHandle }) {
   const { status } = useRunnerStatus()
   const downloading = useCourseDownloading(course.name)
   const navigate = useNavigate()
-  const overviewOpen = useMatch(ROUTES.overview)?.params.course === course.name
+  const overviewOpen = routeParam(useMatch(ROUTES.overview)?.params.course) === course.name
   // A course rename moves every lecture folder, so anything writing into it by name locks it.
   const renameLocked = isCourseRenameLocked(status, course.name) || downloading
 

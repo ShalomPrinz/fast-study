@@ -3,13 +3,14 @@ import { useParams } from 'react-router-dom'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useKindParam } from '@/shared/hooks/useKindParam'
 import { findLecture } from '@/features/lectures/utils/courseTree'
+import { routeParam } from '@/shared/utils/routes'
 
 export function useLectureRoute() {
   const params = useParams<{ course: string; lecture: string }>()
   const kind = useKindParam()
 
-  const course = params.course ?? ''
-  const lecture = params.lecture ?? ''
+  const course = routeParam(params.course)
+  const lecture = routeParam(params.lecture)
 
   const { courses } = useCourseTreeContext()
 

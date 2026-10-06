@@ -8,3 +8,9 @@ export const ROUTES = {
   running: '/running',
   settings: '/settings',
 } as const
+
+// A matched name param as the name it was built from. React Router turns a literal `%2F` in a decoded
+// segment into `/`; a name never holds `/` (the database strips it), so every `/` here was a `%2F`.
+export function routeParam(value: string | undefined): string {
+  return (value ?? '').replace(/\//g, '%2F')
+}

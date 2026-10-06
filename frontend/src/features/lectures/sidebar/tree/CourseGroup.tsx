@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useMatch } from 'react-router-dom'
-import { ROUTES } from '@/shared/utils/routes'
+import { ROUTES, routeParam } from '@/shared/utils/routes'
 import type { Course } from '@/types'
 import { useSelection } from '@/features/lectures/hooks/useSelection'
 import { useAddLecture } from '@/features/lectures/hooks/useAddLecture'
@@ -18,7 +18,8 @@ import './CourseGroup.css'
 
 export default function CourseGroup({ course }: { course: Course }) {
   const { selected } = useSelection()
-  const overviewCourse = useMatch(ROUTES.overview)?.params.course
+  const overviewMatch = useMatch(ROUTES.overview)
+  const overviewCourse = overviewMatch ? routeParam(overviewMatch.params.course) : undefined
   const { refreshCourses } = useCourseTreeContext()
   const add = useAddLecture(course)
 
