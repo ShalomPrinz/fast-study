@@ -167,6 +167,7 @@ function handle(req, res) {
   if (route === '/tool') return json(res, site.tool(url.searchParams.get('url') ?? ''));
 
   if (state.mode === 'blocked') return challenge(res);
+  if (state.mode === 'blocked_ws' && route.startsWith('/webservice/')) return challenge(res);
 
   // The no-login AJAX endpoint the pre-login probe asks; `not_moodle` is a web server with no such
   // script, answering the 404 page any non-Moodle site would.

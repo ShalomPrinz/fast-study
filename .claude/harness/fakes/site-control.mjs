@@ -2,12 +2,14 @@
 // question — apart from the server so the unit tests can drive them without a port or TLS.
 import { DEFAULT_DOWNLOAD_MS } from '../lib/env.mjs';
 
-// 'blocked' (bot-protection challenge) and 'invalidtoken' are the two upstream refusals the
-// downloader has typed errors for; the other four are a site it must refuse — `not_moodle` and
+// 'blocked' (bot-protection challenge on every route), 'blocked_ws' (the same challenge on the
+// web-service API only, so the browser login passes and Node's calls are refused, as for a real
+// user) and 'invalidtoken' are the upstream refusals the downloader has typed errors for; the other four are a site it must refuse — `not_moodle` and
 // `mobile_service_off` at the pre-login probe, `missing_function` and `downloads_disabled` at login.
 export const MODES = [
   'ok',
   'blocked',
+  'blocked_ws',
   'invalidtoken',
   'not_moodle',
   'mobile_service_off',

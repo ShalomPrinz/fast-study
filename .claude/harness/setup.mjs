@@ -399,7 +399,7 @@ harness ready — drive the app at ${appUrl()}  (localhost, not 127.0.0.1: the s
     curl -s 127.0.0.1:${PORTS.providers}/control -d '{"groq":"500"}'      # provider outage
     curl -s 127.0.0.1:${PORTS.providers}/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
     curl -s 127.0.0.1:${PORTS.providers}/control -d '{"gemini":"ok","groq":"ok"}'
-    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"blocked"}'       # bot-protection challenge
+    curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"blocked"}'       # bot-protection challenge (blocked_ws: only the web-service API)
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"invalidtoken"}'  # the Moodle token died
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"not_moodle"}'    # the site probe: not a Moodle
     curl -s 127.0.0.1:${PORTS.site}/control -d '{"mode":"missing_function"}'  # Connect refused (also mobile_service_off, downloads_disabled)

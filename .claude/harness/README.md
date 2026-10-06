@@ -288,7 +288,7 @@ So Connect runs auto/'s real login: the fake site answers `launch.php` with a 30
 `moodlemobile://token=…` carrying `FAKE_WSTOKEN`, auto/ captures it and finishes the login by itself,
 calling site info through the Node shim, where the site's `/control` modes apply unchanged. There is
 no window to finish and no button to press; the outcome arrives on `/auth/events`. With the site in
-`blocked`, the token is kept unverified and a second window opens on the site root; switch the site
+`blocked_ws`, the token is kept unverified and a second window opens on the site root; switch the site
 back to `ok` and press the unverified state's button to verify.
 
 Videostream capture launches through the same patch, so its browser is offline, but it has nothing
@@ -345,7 +345,7 @@ curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
 curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
-curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled
+curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | blocked_ws | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
 curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, every /die/ re-armed
 ```
