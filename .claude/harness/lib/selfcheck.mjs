@@ -15,6 +15,7 @@ import {
   json,
   lectureFile,
   waitForFile,
+  wrapFetchError,
 } from './api.mjs';
 import { backendGeminiModel, connectDrive } from './baseline.mjs';
 import { appServices, appUrl, openBrowser } from './browser.mjs';
@@ -171,7 +172,10 @@ async function theSiteProbesSupported() {
 
 // The first state auto/ pushes on /auth/events that is not `pending`: how a login it drives itself ended.
 async function loginOutcome() {
-  const response = await fetch(`${AUTO}/auth/events`, { signal: AbortSignal.timeout(60_000) });
+  const url = `${AUTO}/auth/events`;
+  const response = await fetch(url, { signal: AbortSignal.timeout(60_000) }).catch((error) => {
+    throw wrapFetchError('GET', url, error);
+  });
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';

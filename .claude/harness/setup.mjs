@@ -281,7 +281,7 @@ function reportTools() {
       ['downloader server', PORTS.server],
       ['auto-downloader', PORTS.auto],
     ].map(async ([name, port]) => {
-      const health = await (await fetch(`http://127.0.0.1:${port}/health`)).json();
+      const { body: health } = await call(`http://127.0.0.1:${port}/health`);
       const tools = Object.entries(health.tools ?? {})
         .map(([tool, state]) => `${tool}=${state}`)
         .join(' ');
