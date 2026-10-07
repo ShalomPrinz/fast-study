@@ -105,5 +105,7 @@ describe('notQueuedState', () => {
     expect(notQueuedState({}, item)).toBe('pending')
     expect(notQueuedState(err('ffmpeg_failed'), item)).toBe('failed')
     expect(notQueuedState(err('gemini_quota_blocked'), item)).toBe('quota')
+    expect(notQueuedState(err('groq_rate_limited'), item)).toBe('quota')
+    expect(notQueuedState(err('groq_rate_limit_blocked'), item)).toBe('quota')
   })
 })

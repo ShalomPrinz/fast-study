@@ -305,3 +305,38 @@ describe('groupMatches', () => {
     expect(groupMatches([])).toEqual([])
   })
 })
+
+describe('findMatches offset mapping', () => {
+  it('maps whole-word matches to raw offsets and skips embedded ones', () => {
+    const summary = lecture('cat concat catalog cat')
+    const matches = findMatches([summary], 'cat', { wholeWord: true })
+
+    expect(matches.map((m) => [m.index, m.end])).toEqual([
+      [0, 3],
+      [19, 22],
+    ])
+  })
+
+  it('maps a match spanning a line break back to the raw span', () => {
+    const summary = lecture('foo\nbar baz')
+    const [m] = findMatches([summary], 'foo bar')
+
+    expect(summary.content.slice(m.index, m.end)).toBe('foo\nbar')
+  })
+
+  it('maps matches after a table separator row to their raw position', () => {
+    const summary = lecture('| a | b |\n|---|---|\n| target | c |')
+    const [m] = findMatches([summary], 'target')
+
+    expect(summary.content.slice(m.index, m.end)).toBe('target')
+    expect(findMatches([summary], '---')).toEqual([])
+  })
+
+  it('serves a repeated call from the cache', () => {
+    const summary = lecture('alpha beta')
+    const first = findMatches([summary], 'alpha')
+    summary.content = 'zzzzzzzzzz'
+
+    expect(findMatches([summary], 'alpha')).toEqual(first)
+  })
+})
