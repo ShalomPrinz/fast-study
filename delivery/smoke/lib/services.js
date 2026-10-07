@@ -111,9 +111,6 @@ export function backend({ urls, secret }) {
         async () => {
           const current = await status();
           const entry = current.in_flight.find((e) => e.course === course && e.lecture === name);
-          if (entry?.sleeping_until) {
-            throw new Error(`${label} is rate-limited and sleeping, so a provider answered`);
-          }
           return entry ? null : current;
         },
         { timeoutMs, intervalMs: 500, message: `${label} on ${course}/${name} never finished` },
