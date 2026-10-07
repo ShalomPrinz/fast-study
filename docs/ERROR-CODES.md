@@ -128,6 +128,8 @@ given, so a refusal the user can act on is caught by the route instead and re-em
 | `pipeline/transcribe.py`, `llm_client.py`| `api_key_rejected`         | `provider`                      | user  |
 | `services/llm_client.py`                | `gemini_quota_exhausted`    | `scope`, `model`, `limit`, `tier`| user |
 | `pipeline/runner.py` blocked record     | `gemini_quota_blocked`      | `scope`, `model`, `limit`, `tier`| user |
+| `pipeline/transcribe.py`                | `groq_rate_limited`         | `limit`, `used`, `requested`, `retry_after_seconds` | user |
+| `pipeline/runner.py` blocked record     | `groq_rate_limit_blocked`   | same as `groq_rate_limited`     | user  |
 | `pipeline/summarize.py`                 | `summarization_failed`      | `detail`                        | user  |
 | `pipeline/to_pdf.py`                    | `pdf_tool_timeout`          | `tool`, `seconds`               | user  |
 | `pipeline/to_pdf.py`                    | `pdf_pandoc_failed`         | `detail`                        | user  |
@@ -155,6 +157,8 @@ HTTP status entirely.
 `gemini_quota_exhausted` and `gemini_quota_blocked` replace the literal `code: "quota"`. The
 run-scoped clearing sweep in `pipeline/runner.py` tests membership of those two rather than equality
 with one string, and `provider` and `blocked` stay on the record — the frontend pins both.
+`groq_rate_limited` and `groq_rate_limit_blocked` mirror that pair for Groq (`provider: "groq"`);
+`retry_after_seconds` is `null` when Groq's message states no delay.
 
 ### `backend/` — course overview
 

@@ -424,11 +424,12 @@ def test_exec_transcribe_persists_partial_on_generic_error():
     )  # a failed run must never write the final transcript
 
 
-def test_exec_transcribe_persists_partial_on_rate_limit():
-    """Regression for the _persist_transcribe_partial refactor: the rate-limit branch
-    still round-trips the partial and reports progress."""
+def test_exec_transcribe_rate_limit_is_a_flagged_error_keeping_the_partial():
+    """A Groq 429 is a coded error flagged groq_limit; the partial still round-trips."""
     puts: list[str] = []
-    err = runner.TranscribeRateLimitError({"completed_chunks": 1, "total_chunks": 9})
+    err = runner.TranscribeRateLimitError(
+        {"message": "slow down", "limit": 7200, "retry_after_seconds": 750.0}
+    )
 
     def _exists(course, lecture, kind, name):
         return name == "audio.mp3"
@@ -449,38 +450,16 @@ def test_exec_transcribe_persists_partial_on_rate_limit():
     ):
         result = runner._exec_transcribe("C1", "L1", "lecture")
 
-    assert result["status"] == "rate_limited"
-    assert result["progress"] == {"completed": 1, "total": 9}
+    assert result["status"] == "error"
+    assert result["groq_limit"] is True
+    assert result["code"] == "groq_rate_limited"
+    assert result["params"] == {
+        "limit": 7200,
+        "used": None,
+        "requested": None,
+        "retry_after_seconds": 750.0,
+    }
     assert runner.PARTIAL_TXT in puts and runner.PARTIAL_META in puts
-    assert (
-        result["retry_after"] is None
-    )  # no stated delay → the runner's 3600s fallback
-
-
-def test_exec_transcribe_passes_groq_retry_after():
-    """Groq's parsed "try again in" delay rides the result, so the runner sleeps that long."""
-    err = runner.TranscribeRateLimitError(
-        {"retry_after_seconds": 750.0, "completed_chunks": 0, "total_chunks": 1}
-    )
-
-    with (
-        patch.object(
-            runner.db_client,
-            "file_exists",
-            side_effect=lambda c, l, k, n: n == "audio.mp3",
-        ),
-        patch.object(runner.db_client, "get_file_bytes", return_value=b"audio-bytes"),
-        patch.object(runner.db_client, "put_file_bytes"),
-        patch.object(
-            runner,
-            "transcribe_audio",
-            side_effect=_fake_transcribe_writing_partial(err),
-        ),
-    ):
-        result = runner._exec_transcribe("C1", "L1", "lecture")
-
-    assert result["status"] == "rate_limited"
-    assert result["retry_after"] == 750.0
 
 
 # ---- error is logged, not just stored ----
@@ -751,81 +730,6 @@ class TestRunAllHandover:
         assert snaps == [["L1"], []]
 
 
-# ---- rate-limit branch ----
-
-
-def test_rate_limit_sleeps_then_retries_same_step():
-    """patch _call_step to return rate_limited then done; patch _fetch_files to
-    show audio present (so next_step → transcribe), then all done after.
-    Assert: same step called twice; asyncio.sleep called with 3600."""
-
-    call_log: list[str] = []
-    sleep_log: list[float] = []
-
-    # In the new architecture _run_step_unlocked retries the same step internally
-    # (without re-fetching files), so _fetch_files is called once per outer pipeline
-    # loop iteration — not once per attempt. Two states suffice: audio-only before
-    # the first outer loop, fully-done after the step completes.
-    file_states = [
-        _files(video=True, audio=True),
-        _files(
-            video=True, audio=True, transcript=True, summary=True, pdf=True, drive=True
-        ),
-    ]
-    state_idx = {"i": 0}
-
-    async def fake_fetch(course, lecture, kind):
-        i = state_idx["i"]
-        state_idx["i"] += 1
-        return file_states[min(i, len(file_states) - 1)]
-
-    async def fake_call(course, lecture, kind, step):
-        call_log.append(step)
-        if len(call_log) == 1:
-            return {"status": "rate_limited", "rateLimit": {}, "progress": {}}
-        return {"status": "done"}
-
-    async def fake_sleep(seconds):
-        sleep_log.append(seconds)
-
-    with (
-        patch.object(runner, "_fetch_files", fake_fetch),
-        patch.object(runner, "_call_step", fake_call),
-        patch.object(runner.asyncio, "sleep", fake_sleep),
-    ):
-        asyncio.run(runner.run_pipeline_for("C1", "L1", "lecture"))
-
-    assert call_log == ["transcribe", "transcribe"]
-    assert sleep_log == [runner.RATE_LIMIT_SLEEP_SECONDS]
-
-
-def test_rate_limit_honors_per_result_retry_after():
-    """A rate_limited result may carry its own retry_after; the 3600s constant is
-    only the fallback for a Groq 429 that states no delay."""
-    sleep_log: list[float] = []
-    calls = {"n": 0}
-
-    async def fake_call(course, lecture, kind, step):
-        calls["n"] += 1
-        if calls["n"] == 1:
-            return {"status": "rate_limited", "retry_after": 42.0}
-        return {"status": "done"}
-
-    async def fake_sleep(seconds):
-        sleep_log.append(seconds)
-
-    async def go():
-        with (
-            patch.object(runner, "_call_step", fake_call),
-            patch.object(runner.db_client, "notify"),
-            patch.object(runner.asyncio, "sleep", fake_sleep),
-        ):
-            await runner._run_step_unlocked("C1", "L1", "lecture", "summarize")
-
-    asyncio.run(go())
-    assert sleep_log == [42.0]
-
-
 # ---- Gemini 429 → step result ----
 
 
@@ -848,11 +752,13 @@ def _run_exec_summarize(info: dict) -> dict:
     return result
 
 
-def test_exec_summarize_per_minute_quota_is_rate_limited():
-    """A per-minute quota waits out its window, not Groq's hour."""
+def test_exec_summarize_per_minute_quota_is_an_unflagged_error():
+    """A per-minute quota stops its lecture like any error but blocks no run."""
     result = _run_exec_summarize({"is_daily": False})
-    assert result["status"] == "rate_limited"
-    assert result["retry_after"] == runner.GEMINI_MINUTE_QUOTA_SLEEP_SECONDS
+    assert result["status"] == "error"
+    assert result["daily_quota"] is False
+    assert result["code"] == "gemini_quota_exhausted"
+    assert result["params"]["scope"] == "per_minute"
 
 
 def test_exec_summarize_daily_quota_is_error_not_retried():
@@ -899,6 +805,112 @@ def test_a_crashed_run_records_a_coded_last_error():
     finally:
         runner._runner_status["last_error"] = None
         runner._queue.clear()
+
+
+# ---- Groq rate-limit block ----
+
+
+GROQ_PARAMS = {
+    "limit": 7200,
+    "used": 7019,
+    "requested": 600,
+    "retry_after_seconds": 209.5,
+}
+
+
+def _groq_error_result():
+    return {
+        "status": "error",
+        "message": "rate limit",
+        "groq_limit": True,
+        "code": "groq_rate_limited",
+        "params": GROQ_PARAMS,
+    }
+
+
+def test_groq_limit_blocks_transcribe_for_later_lectures():
+    """The first lecture hits Groq; the rest stop before transcribing, marked blocked."""
+    steps_run: list[tuple[str, str]] = []
+
+    async def fake_fetch(course, lecture, kind):
+        return _files(video=True, audio=True)
+
+    async def fake_call(course, lecture, kind, step):
+        steps_run.append((lecture, step))
+        return _groq_error_result()
+
+    async def go():
+        with (
+            patch.object(runner, "_fetch_files", fake_fetch),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            runner._queue[:] = [
+                runner.QueueEntry("C1", lecture, "lecture", "full")
+                for lecture in ("L1", "L2")
+            ]
+            await runner.run_all()
+
+    try:
+        asyncio.run(go())
+        assert steps_run == [("L1", "transcribe")]
+        first = runner._errors[runner._skey("C1", "L1", "lecture")]
+        second = runner._errors[runner._skey("C1", "L2", "lecture")]
+        assert (first["code"], first["blocked"], first["provider"]) == (
+            "groq_rate_limited",
+            False,
+            "groq",
+        )
+        assert (second["code"], second["blocked"], second["provider"]) == (
+            "groq_rate_limit_blocked",
+            True,
+            "groq",
+        )
+        assert second["params"] == GROQ_PARAMS and second["step"] == "transcribe"
+        assert runner._transcribe_block is None  # cleared by run_all's finally
+        assert not runner._locks[runner._lkey("C1", "L1", "lecture")].locked()
+    finally:
+        runner._errors.clear()
+        runner._queue.clear()
+        runner._transcribe_block = None
+
+
+def test_transcribe_start_clears_groq_records_and_lifts_block():
+    """Any transcribe attempt drops every Groq record and the run's stop; others stay."""
+    runner._errors.update(
+        {
+            "hit": runner._error_record(
+                "transcribe", "r", code="groq_rate_limited", params=GROQ_PARAMS
+            ),
+            "stopped": runner._error_record(
+                "transcribe",
+                "r",
+                code="groq_rate_limit_blocked",
+                params=GROQ_PARAMS,
+                blocked=True,
+            ),
+            "other": runner._error_record("pdf", "boom", code="pdf_pandoc_failed"),
+        }
+    )
+    runner._transcribe_block = {"message": "r", "params": GROQ_PARAMS}
+
+    async def fake_call(course, lecture, kind, step):
+        return {"status": "done"}
+
+    async def go():
+        with (
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            await runner.run_step("C1", "L9", "lecture", "transcribe")
+
+    try:
+        asyncio.run(go())
+        assert list(runner._errors) == ["other"]
+        assert runner._transcribe_block is None
+    finally:
+        runner._errors.clear()
+        runner._transcribe_block = None
 
 
 # ---- Gemini daily-quota block ----
@@ -1010,7 +1022,7 @@ def test_daily_quota_blocks_summarize_for_later_lectures(caplog):
             for lecture in ("L1", "L2", "L3")
         }
         assert any(
-            "summarize skipped for 2 (Gemini daily quota)" in r.getMessage()
+            "2 stopped on a Gemini daily quota or Groq rate limit" in r.getMessage()
             for r in caplog.records
         )
     finally:

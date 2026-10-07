@@ -23,10 +23,19 @@ PARTIAL_TXT = "transcript.partial.txt"
 PARTIAL_META = "transcript.partial.meta.json"
 
 
-class TranscribeRateLimitError(Exception):
+class TranscribeRateLimitError(CodedError):
+    """A Groq 429; info = {limit, used, requested, retry_after_seconds, message}."""
+
     def __init__(self, info: dict):
         self.info = info
-        super().__init__(info.get("message", ""))
+        super().__init__(
+            info.get("message", ""),
+            "groq_rate_limited",
+            limit=info.get("limit"),
+            used=info.get("used"),
+            requested=info.get("requested"),
+            retry_after_seconds=info.get("retry_after_seconds"),
+        )
 
 
 def get_duration(audio_path: str) -> float:
@@ -180,7 +189,7 @@ def _write_meta_atomic(lecture_dir: Path, meta: dict) -> None:
 @timed_pipeline("transcribe")
 def transcribe_audio(audio_path: str) -> str:
     """Transcribe audio to Hebrew text chunk by chunk, resuming from partial state on disk.
-    Raises TranscribeRateLimitError, leaving the partial files for the next call."""
+    Raises TranscribeRateLimitError on a Groq 429, leaving the partial files for the next call."""
 
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
@@ -234,8 +243,7 @@ def transcribe_audio(audio_path: str) -> str:
             except groq.RateLimitError as e:
                 msg = _extract_groq_message(e)
                 info = parse_rate_limit_message(msg)
-                info["completed_chunks"] = i
-                info["total_chunks"] = total
+                info["message"] = msg
                 raise TranscribeRateLimitError(info) from e
             except (groq.AuthenticationError, groq.PermissionDeniedError) as e:
                 raise CodedError(

@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple, Optional
 
@@ -42,8 +42,6 @@ STEP_OUTPUT = {
 # summary.pdf entry's `warning`), and the generated LaTeX kept only on a hard failure.
 PDF_WARNING_FILE = ".pdf_warning"
 PDF_BUILD_TEX_FILE = ".pdf_build.tex"
-RATE_LIMIT_SLEEP_SECONDS = 3600  # Groq's hourly ASR window; transcribe's fallback
-GEMINI_MINUTE_QUOTA_SLEEP_SECONDS = 60
 
 _locks: dict[
     tuple[str, str, str], asyncio.Lock
@@ -61,10 +59,13 @@ _runner_status: dict = {"running": False, "total": 0, "done": 0, "last_error": N
 # Run-scoped; the {message, params} of Gemini's DAILY quota error that blocked summarize, reset
 # by run_all. Every lecture it then stops carries the same facts as the one that hit the limit.
 _summarize_block: dict | None = None
+# Same shape for Groq's rate limit, which stops run_all before it transcribes further lectures.
+_transcribe_block: dict | None = None
 
 # The two codes a Gemini daily quota produces: the lecture that hit it, and every lecture run_all
 # then stopped. Membership — not equality with one string — is what lifts the block on a retry.
 _GEMINI_QUOTA_CODES = frozenset({"gemini_quota_exhausted", "gemini_quota_blocked"})
+_GROQ_LIMIT_CODES = frozenset({"groq_rate_limited", "groq_rate_limit_blocked"})
 
 
 class QueueEntry(NamedTuple):
@@ -102,8 +103,8 @@ def _error_record(
     blocked: bool = False,
 ) -> dict:
     """One /status error: the failed step, its machine code and named params beside the
-    developer-facing message, `provider` for Gemini's daily quota, and `blocked` when run_all
-    stopped this lecture on another's quota rather than it hitting one."""
+    developer-facing message, `provider` for a Gemini quota or Groq rate limit, and `blocked`
+    when run_all stopped this lecture on another's limit rather than it hitting one."""
 
     code = code or "unknown_error"
     return {
@@ -111,7 +112,11 @@ def _error_record(
         "message": message,
         "code": code,
         "params": params or {},
-        "provider": "gemini" if code in _GEMINI_QUOTA_CODES else None,
+        "provider": "gemini"
+        if code in _GEMINI_QUOTA_CODES
+        else "groq"
+        if code in _GROQ_LIMIT_CODES
+        else None,
         "blocked": blocked,
     }
 
@@ -259,7 +264,7 @@ def _persist_transcribe_partial(
 
 def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
     """Transcribe audio.mp3 → transcript.txt via Groq Whisper, resuming from partial state if present.
-    Returns {status: done|error|rate_limited}; rate_limited carries progress chunk counts."""
+    A Groq 429 is an error flagged `groq_limit`, its partial transcript kept for the next run."""
 
     try:
         if not db_client.file_exists(course, lecture, kind, "audio.mp3"):
@@ -298,14 +303,7 @@ def _exec_transcribe(course: str, lecture: str, kind: str) -> dict:
                 transcript = transcribe_audio(str(audio_path))
             except TranscribeRateLimitError as e:
                 _persist_transcribe_partial(course, lecture, kind, Path(tmp))
-                return {
-                    "status": "rate_limited",
-                    "retry_after": e.info.get("retry_after_seconds"),
-                    "progress": {
-                        "completed": e.info["completed_chunks"],
-                        "total": e.info["total_chunks"],
-                    },
-                }
+                return {**_failed(e), "groq_limit": True}
             except Exception as e:
                 _persist_transcribe_partial(course, lecture, kind, Path(tmp))
                 return _failed(e)
@@ -343,7 +341,7 @@ def _download_materials(course: str, lecture: str, kind: str, dest: Path) -> lis
 
 def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
     """Summarize transcript.txt → summary.md via Gemini, passing every material PDF present.
-    A daily-quota 429 is a plain error (no retry); a per-minute one is rate_limited."""
+    A Gemini 429, daily or per-minute, is a plain error; only the daily one is flagged."""
 
     try:
         if not db_client.file_exists(course, lecture, kind, "transcript.txt"):
@@ -367,13 +365,7 @@ def _exec_summarize(course: str, lecture: str, kind: str) -> dict:
         db_client.put_summary(course, lecture, kind, summary, fresh=True)
         return {"status": "done", "usedMaterial": bool(materials)}
     except GeminiRateLimitError as e:
-        # A daily quota's retryDelay lies: it says 59s while the quotaId says PerDay.
-        if e.info["is_daily"]:
-            return {**_failed(e), "daily_quota": True}
-        return {
-            "status": "rate_limited",
-            "retry_after": GEMINI_MINUTE_QUOTA_SLEEP_SECONDS,
-        }
+        return {**_failed(e), "daily_quota": e.info["is_daily"]}
     except Exception as e:
         return _failed(e)
 
@@ -646,65 +638,53 @@ async def _call_step(course: str, lecture: str, kind: str, step: str) -> dict:
 async def _run_step_unlocked(
     course: str, lecture: str, kind: str, step: str, *, keep_in_flight: bool = False
 ) -> None:
-    """Drive one step to a terminal outcome, retrying after rate-limit sleeps. Unsafe: the
-    caller must hold this lecture's lock; keep_in_flight leaves the end-of-step clear to it."""
+    """Run one step once, to done or a recorded error. Unsafe: the caller must hold this
+    lecture's lock; keep_in_flight leaves the end-of-step clear to it."""
 
-    global _summarize_block
+    global _summarize_block, _transcribe_block
     skey = _skey(course, lecture, kind)
-    # Each iteration = one attempt; rate_limited cycles back, done/error exits.
-    while True:
-        _drop_handover()  # the held lecture leaves in the same notify this one arrives in
-        _in_flight[skey] = {
-            "course": course,
-            "lecture": lecture,
-            "kind": kind,
-            "step": step,
-            "started_at": _now_iso(),
-            "sleeping_until": None,
-            "progress": None,
-        }
-        _errors.pop(skey, None)  # clear any stale error from a previous attempt
-        if step == "summarize":
-            # Any summarize attempt re-tests Gemini's quota: drop every quota record and lift the
-            # run's stop, so lectures still queued retry; a fresh hit re-sets both below.
-            for key in [
-                k for k, e in _errors.items() if e["code"] in _GEMINI_QUOTA_CODES
-            ]:
-                del _errors[key]
-            _summarize_block = None
-        db_client.notify()
+    _drop_handover()  # the held lecture leaves in the same notify this one arrives in
+    _in_flight[skey] = {
+        "course": course,
+        "lecture": lecture,
+        "kind": kind,
+        "step": step,
+        "started_at": _now_iso(),
+    }
+    _errors.pop(skey, None)  # clear any stale error from a previous attempt
+    if step == "summarize":
+        # Any summarize attempt re-tests Gemini's quota: drop every quota record and lift the
+        # run's stop, so lectures still queued retry; a fresh hit re-sets both below.
+        for key in [k for k, e in _errors.items() if e["code"] in _GEMINI_QUOTA_CODES]:
+            del _errors[key]
+        _summarize_block = None
+    elif step == "transcribe":
+        # Likewise for Groq: a transcribe attempt re-tests the rate limit.
+        for key in [k for k, e in _errors.items() if e["code"] in _GROQ_LIMIT_CODES]:
+            del _errors[key]
+        _transcribe_block = None
+    db_client.notify()
 
-        result = await _call_step(course, lecture, kind, step)
+    result = await _call_step(course, lecture, kind, step)
 
-        if result["status"] == "done":
-            if not keep_in_flight:
-                _in_flight.pop(skey, None)
-                db_client.notify()
-            return
-        elif result["status"] == "rate_limited":
-            sleep_seconds = result.get("retry_after") or RATE_LIMIT_SLEEP_SECONDS
-            wake = datetime.now(timezone.utc) + timedelta(seconds=sleep_seconds)
-            _in_flight[skey]["sleeping_until"] = wake.isoformat()
-            _in_flight[skey]["progress"] = result.get("progress")
+    if result["status"] == "done":
+        if not keep_in_flight:
+            _in_flight.pop(skey, None)
             db_client.notify()
-            await asyncio.sleep(sleep_seconds)
-            _in_flight[skey]["sleeping_until"] = None
-            _in_flight[skey]["progress"] = None
+        return
+    else:  # error
+        msg = result.get("message") or result.get("status") or "unknown error"
+        params = result.get("params") or {}
+        if result.get("daily_quota"):
+            _summarize_block = {"message": msg, "params": params}
+        if result.get("groq_limit"):
+            _transcribe_block = {"message": msg, "params": params}
+        _errors[skey] = _error_record(step, msg, code=result.get("code"), params=params)
+        log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
+        if not keep_in_flight:
+            _in_flight.pop(skey, None)
             db_client.notify()
-            # loop → retry same step
-        else:  # error
-            msg = result.get("message") or result.get("status") or "unknown error"
-            params = result.get("params") or {}
-            if result.get("daily_quota"):
-                _summarize_block = {"message": msg, "params": params}
-            _errors[skey] = _error_record(
-                step, msg, code=result.get("code"), params=params
-            )
-            log.error("%s/%s (%s) step %s failed: %s", course, lecture, kind, step, msg)
-            if not keep_in_flight:
-                _in_flight.pop(skey, None)
-                db_client.notify()
-            return
+        return
 
 
 async def _run_pipeline_unlocked(
@@ -716,7 +696,7 @@ async def _run_pipeline_unlocked(
     hand_over: bool = False,
 ) -> bool:
     """Advance a lecture through its remaining steps; True iff it stopped early on the
-    run-scoped summarize block. Unsafe: the caller must hold this lecture's lock."""
+    run-scoped summarize or transcribe block. Unsafe: the caller must hold this lecture's lock."""
 
     global _handover
     skey = _skey(course, lecture, kind)
@@ -732,23 +712,31 @@ async def _run_pipeline_unlocked(
                 if held:
                     _handover = skey
                 return False
-            if step == "summarize" and honor_block and _summarize_block is not None:
-                # Same record as the lecture that hit the quota, so this one doesn't look pending.
+            block = {
+                "summarize": _summarize_block,
+                "transcribe": _transcribe_block,
+            }.get(step)
+            if honor_block and block is not None:
+                # Same record as the lecture that hit the limit, so this one doesn't look pending.
                 _errors[skey] = _error_record(
-                    "summarize",
-                    _summarize_block["message"],
-                    code="gemini_quota_blocked",
-                    params=_summarize_block["params"],
+                    step,
+                    block["message"],
+                    code="gemini_quota_blocked"
+                    if step == "summarize"
+                    else "groq_rate_limit_blocked",
+                    params=block["params"],
                     blocked=True,
                 )
                 _drop_handover()
                 _in_flight.pop(skey, None)
                 db_client.notify()
                 log.info(
-                    "%s/%s (%s): summarize blocked (Gemini daily quota), stopping here",
+                    "%s/%s (%s): %s blocked (%s), stopping here",
                     course,
                     lecture,
                     kind,
+                    step,
+                    "Gemini daily quota" if step == "summarize" else "Groq rate limit",
                 )
                 return True
             await _run_step_unlocked(course, lecture, kind, step, keep_in_flight=True)
@@ -776,7 +764,7 @@ async def run_pipeline_for(
     hand_over: bool = False,
 ) -> bool:
     """Acquire the per-lecture lock, then advance the lecture through all remaining steps.
-    Returns True iff it stopped early on the run-scoped summarize block (run_all only)."""
+    Returns True iff it stopped early on a run-scoped block (run_all only)."""
 
     async with _locks.setdefault(_lkey(course, lecture, kind), asyncio.Lock()):
         return await _run_pipeline_unlocked(
@@ -813,7 +801,7 @@ def try_run_pipeline(course: str, lecture: str, kind: str) -> str:
 
 async def _run_entry(entry: QueueEntry) -> bool:
     """Run one queue entry as far as its depth allows; True iff a full run stopped early on the
-    run-scoped summarize block. An `audio` entry that already has audio.mp3 has nothing left."""
+    run-scoped block. An `audio` entry that already has audio.mp3 has nothing left."""
 
     if entry.depth == "audio":
         done = await asyncio.to_thread(
@@ -835,13 +823,14 @@ async def run_all() -> dict:
     """Drain the runner queue sequentially until it is empty, so a lecture enqueued mid-run joins
     this run instead of racing it. The caller enqueues; this never re-scans."""
 
-    global _summarize_block
+    global _summarize_block, _transcribe_block
     log.info(
         "run_all starting with %d queued lecture(s): %s",
         len(_queue),
         ", ".join(f"{e.course}/{e.lecture} ({e.kind}, {e.depth})" for e in _queue),
     )
     _summarize_block = None
+    _transcribe_block = None
     blocked_count = 0
     _runner_status["running"] = True
     _runner_status["done"] = 0
@@ -896,7 +885,7 @@ async def run_all() -> dict:
             if _handover != _skey(course, lecture, kind) and _drop_handover():
                 db_client.notify()
         blocked = (
-            f", summarize skipped for {blocked_count} (Gemini daily quota)"
+            f", {blocked_count} stopped on a Gemini daily quota or Groq rate limit"
             if blocked_count
             else ""
         )
@@ -911,6 +900,7 @@ async def run_all() -> dict:
     finally:
         _runner_status["running"] = False
         _summarize_block = None
+        _transcribe_block = None
         _drop_handover()
         db_client.notify()
 
