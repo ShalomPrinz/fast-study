@@ -3,14 +3,14 @@
 // Everything it makes lives under one scratch root, ports included, so stacks run side by side;
 // nothing it does touches the real DATA_ROOT, the repo-root .env, or the network.
 //
-//   node .claude/harness/setup.mjs [--harness DIR] [--browsers main,…] [--no-launch] [--skip-pipeline-check]
+//   node .claude/harness/setup.mjs [--harness DIR] [--browsers main,…] [--skip-pipeline-check]
 //   node .claude/harness/setup.mjs --harness DIR --down
 //   node .claude/harness/setup.mjs --harness DIR --restart <service> [ENV=val…]
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { bindPorts } from './lib/api.mjs';
+import { bindPorts, call } from './lib/api.mjs';
 import { appServices, appUrl } from './lib/browser.mjs';
 import {
   BANNER,
@@ -24,6 +24,7 @@ import {
   harnessPaths,
   nodeEnv,
   pythonEnv,
+  readPorts,
 } from './lib/env.mjs';
 import {
   markSeeded,
@@ -34,7 +35,6 @@ import {
 } from './lib/baseline.mjs';
 import { selfCheck } from './lib/selfcheck.mjs';
 import {
-  allocatePorts,
   down,
   liveHolder,
   resetStack,
@@ -172,8 +172,12 @@ async function buildHarness() {
   // screen can never reach the repo-root .env and its real keys.
   writeScratchEnv(paths);
 
-  // The environment each half of the stack runs with, written out so one service can be killed
-  // and restarted mid-sweep without reconstructing it by hand.
+  writeMoodleToken(paths);
+}
+
+// The environment each half of the stack runs with, as of the ports reported so far, so one
+// service can be launched by hand against this stack.
+function writeEnvFiles() {
   for (const [name, env] of [
     ['python', pythonEnv(paths)],
     ['node', nodeEnv(paths)],
@@ -183,87 +187,86 @@ async function buildHarness() {
       .map(([key, item]) => `export ${key}=${JSON.stringify(item)}`);
     fs.writeFileSync(path.join(paths.root, `env-${name}.sh`), `# ${BANNER}\n${lines.join('\n')}\n`);
   }
-
-  writeMoodleToken(paths);
 }
 
-function startFakes() {
+// Each reported port, into `PORTS` for later spawns' env and merged into ports.json, keeping browser-<tag> for reuse.
+function record(ports) {
+  bindPorts(paths, ports);
+  fs.writeFileSync(paths.ports, JSON.stringify({ ...readPorts(paths), ...PORTS }));
+}
+
+// The ports the last run on this root reported, tried first so the links its seed wrote stay valid.
+let previous = {};
+
+async function startFakes() {
   const env = { ...nodeEnv(paths), HARNESS_WSTOKEN: FAKE_WSTOKEN, NODE_OPTIONS: '' };
-  start('fake-providers', process.execPath, [path.join(HARNESS_ROOT, 'fakes', 'providers.mjs')], {
-    cwd: HARNESS_ROOT,
-    env,
-    paths,
-    health: `http://127.0.0.1:${PORTS.providers}/health`,
-  });
-  start('fake-site', process.execPath, [path.join(HARNESS_ROOT, 'fakes', 'site.mjs')], {
-    cwd: HARNESS_ROOT,
-    env,
-    paths,
-    health: `http://127.0.0.1:${PORTS.site}/health`,
-  });
+  const providers = await start(
+    'fake-providers',
+    process.execPath,
+    [path.join(HARNESS_ROOT, 'fakes', 'providers.mjs')],
+    { cwd: HARNESS_ROOT, env, paths, want: { FASTSTUDY_PORT: previous.providers } },
+  );
+  record({ providers: providers.FASTSTUDY_PORT });
+  const site = await start(
+    'fake-site',
+    process.execPath,
+    [path.join(HARNESS_ROOT, 'fakes', 'site.mjs')],
+    {
+      cwd: HARNESS_ROOT,
+      env,
+      paths,
+      want: { FASTSTUDY_PORT: previous.site, HARNESS_SITE_TLS_PORT: previous.siteTls },
+      reports: {
+        FASTSTUDY_PORT: '^FASTSTUDY_PORT=(\\d+)$',
+        HARNESS_SITE_TLS_PORT: '^HARNESS_SITE_TLS_PORT=(\\d+)$',
+      },
+    },
+  );
+  record({ site: site.FASTSTUDY_PORT, siteTls: site.HARNESS_SITE_TLS_PORT });
 }
 
-function startServices() {
-  const py = pythonEnv(paths);
-  const node = nodeEnv(paths);
-  start(
-    'database',
-    'uv',
-    [
-      'run',
-      'uvicorn',
-      'database_main:app',
-      '--host',
-      '127.0.0.1',
-      '--port',
-      String(PORTS.database),
-    ],
-    {
-      cwd: path.join(REPO_ROOT, 'database'),
-      env: py,
+// In dependency order, each one's env built after its peers reported, so it is handed their real URLs.
+async function startServices() {
+  const services = [
+    ['database', 'database', 'uv', ['run', 'python', 'database_main.py'], 'database', pythonEnv],
+    ['backend', 'backend', 'uv', ['run', 'python', 'backend_main.py'], 'backend', pythonEnv],
+    ['downloader-auto', 'auto', 'npm', ['start'], path.join('downloader', 'auto'), nodeEnv],
+    ['downloader-server', 'server', 'npm', ['start'], path.join('downloader', 'server'), nodeEnv],
+  ];
+  for (const [name, key, command, args, dir, envOf] of services) {
+    const { FASTSTUDY_PORT: port } = await start(name, command, args, {
+      cwd: path.join(REPO_ROOT, dir),
+      env: envOf(paths),
       paths,
-      health: `http://127.0.0.1:${PORTS.database}/health`,
+      want: { FASTSTUDY_PORT: previous[key] },
+    });
+    record({ [key]: port });
+  }
+  // No shim on the dev server (README, Ports); vite takes its port only as a flag and reports it
+  // only in its banner, so a shell hands it FASTSTUDY_PORT.
+  const app = appServices();
+  const { FASTSTUDY_PORT: port } = await start(
+    'frontend',
+    'sh',
+    ['-c', 'exec npm run dev -- --port "$FASTSTUDY_PORT" --strictPort'],
+    {
+      cwd: path.join(REPO_ROOT, 'frontend'),
+      env: {
+        ...process.env,
+        DATA_ROOT: paths.data,
+        NO_COLOR: '1',
+        VITE_DATABASE_URL: app.database,
+        VITE_BACKEND_URL: app.backend,
+        VITE_DOWNLOAD_SERVER_URL: app['downloader-server'],
+        VITE_AUTO_DOWNLOADER_URL: app['downloader-auto'],
+      },
+      paths,
+      want: { FASTSTUDY_PORT: previous.frontend },
+      reports: { FASTSTUDY_PORT: 'Local:\\s+http://localhost:(\\d+)/' },
+      healthPath: '/',
     },
   );
-  start(
-    'backend',
-    'uv',
-    ['run', 'uvicorn', 'backend_main:app', '--host', '127.0.0.1', '--port', String(PORTS.backend)],
-    {
-      cwd: path.join(REPO_ROOT, 'backend'),
-      env: py,
-      paths,
-      health: `http://127.0.0.1:${PORTS.backend}/health`,
-    },
-  );
-  start('downloader-server', 'npm', ['start'], {
-    cwd: path.join(REPO_ROOT, 'downloader', 'server'),
-    env: { ...node, FASTSTUDY_PORT: String(PORTS.server) },
-    paths,
-    health: `http://127.0.0.1:${PORTS.server}/health`,
-  });
-  start('downloader-auto', 'npm', ['start'], {
-    cwd: path.join(REPO_ROOT, 'downloader', 'auto'),
-    env: { ...node, FASTSTUDY_PORT: String(PORTS.auto) },
-    paths,
-    health: `http://127.0.0.1:${PORTS.auto}/health`,
-  });
-  // No shim on the dev server: it serves the SPA and talks to nobody, and NODE_OPTIONS would ride
-  // into every tool vite spawns. The VITE_*_URL pair the SPA with this stack's services.
-  const services = appServices();
-  start('frontend', 'npm', ['run', 'dev', '--', '--port', String(PORTS.frontend), '--strictPort'], {
-    cwd: path.join(REPO_ROOT, 'frontend'),
-    env: {
-      ...process.env,
-      DATA_ROOT: paths.data,
-      VITE_DATABASE_URL: services.database,
-      VITE_BACKEND_URL: services.backend,
-      VITE_DOWNLOAD_SERVER_URL: services['downloader-server'],
-      VITE_AUTO_DOWNLOADER_URL: services['downloader-auto'],
-    },
-    paths,
-    health: `http://127.0.0.1:${PORTS.frontend}/`,
-  });
+  record({ frontend: port });
 }
 
 async function waitForEverything() {
@@ -329,29 +332,23 @@ async function main() {
   say(`harness root: ${paths.root}`);
 
   refuseSecondSetup();
-  bindPorts(paths, await allocatePorts(paths));
+  previous = readPorts(paths);
 
   await buildHarness();
   say('  ✓ fixtures, fake binaries, scratch .env and Moodle token written');
 
   resetStack(paths);
   launched = true;
-  startFakes();
+  await startFakes();
   await waitForService(paths, 'fake-providers');
   await waitForService(paths, 'fake-site');
   say(
     `  ✓ fakes up: providers :${PORTS.providers}, lecture site :${PORTS.site} (:${PORTS.siteTls} tls)`,
   );
 
-  if (flag('--no-launch')) {
-    say(`\nLaunch the stack yourself, sourcing the environment it needs:
-  . ${path.join(paths.root, 'env-python.sh')}   # before database/ and backend/
-  . ${path.join(paths.root, 'env-node.sh')}     # before downloader/server and downloader/auto`);
-    return keepRunning();
-  }
-
-  startServices();
+  await startServices();
   await waitForEverything();
+  writeEnvFiles();
   say('  ✓ database, backend, downloader server, auto-downloader and the dev server all answering');
   for (const line of await reportTools()) say(line);
 

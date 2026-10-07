@@ -3,10 +3,9 @@
 // a service spawned too — the uv/npm parent, a uvicorn worker, vite's esbuild, a running download.
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
-import net from 'node:net';
 import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { BANNER, HARNESS_ROOT, PORT_NAMES, readPorts } from './env.mjs';
+import { BANNER, HARNESS_ROOT, readPorts } from './env.mjs';
 
 const stackFile = (paths) => path.join(paths.root, 'stack.json');
 
@@ -46,6 +45,12 @@ export function logOf(paths, name) {
   return path.join(paths.logs, `${name}.log`);
 }
 
+// The child learns the port it should bind from `FASTSTUDY_PORT` and reports the one it bound as
+// `FASTSTUDY_PORT=<n>` alone on a line — the packaged launcher's handshake, so nothing races for it.
+const PORT_LINE = '^FASTSTUDY_PORT=(\\d+)$';
+
+const REPORT_TIMEOUT_MS = 120_000;
+
 function spawnSpec(name, spec, paths) {
   const handle = fs.openSync(logOf(paths, name), 'a');
   const child = spawn(spec.command, spec.args, {
@@ -59,27 +64,80 @@ function spawnSpec(name, spec, paths) {
   const stack = readStack(paths);
   stack.services[name] = { ...spec, pid: child.pid };
   writeStack(paths, stack);
+  return child;
 }
 
-/** Spawn one service in its own process group, logged to `<logs>/<name>.log`, and record it. */
-export function start(name, command, args, { cwd, env, paths, health }) {
+/** Spawn a recorded spec and read every port its `reports` patterns name off its log, or fail naming the service. */
+async function spawnReporting(name, spec, paths) {
+  const log = logOf(paths, name);
+  const from = fs.statSync(log).size;
+  const child = spawnSpec(name, spec, paths);
+  let exited = null;
+  child.once('exit', (code, signal) => (exited = signal ?? `code ${code}`));
+  const deadline = Date.now() + REPORT_TIMEOUT_MS;
+  for (;;) {
+    const text = fs.readFileSync(log, 'utf8').slice(from);
+    const found = Object.entries(spec.reports).map(([key, source]) => [
+      key,
+      new RegExp(source, 'm').exec(text)?.[1],
+    ]);
+    if (found.every(([, port]) => port)) {
+      const ports = Object.fromEntries(found.map(([key, port]) => [key, Number(port)]));
+      const stack = readStack(paths);
+      stack.services[name] = {
+        ...stack.services[name],
+        env: { ...spec.env, ...Object.fromEntries(found) },
+        health: `http://127.0.0.1:${ports.FASTSTUDY_PORT}${spec.healthPath}`,
+      };
+      writeStack(paths, stack);
+      return ports;
+    }
+    if (exited || Date.now() > deadline) {
+      await killGroup(child.pid);
+      const why = exited ? `exited (${exited})` : `timed out after ${REPORT_TIMEOUT_MS / 1000}s`;
+      const tail = text.split('\n').slice(-25).join('\n');
+      throw new Error(`${name} ${why} before reporting its port\n--- ${log} ---\n${tail}`);
+    }
+    await sleep(100);
+  }
+}
+
+/** Spawn one service in its own process group, logged to `<logs>/<name>.log`, and return its reported ports by env var.
+ *  `want` is each env var's port to try first, falling back to 0 when unset or not bindable. */
+export async function start(
+  name,
+  command,
+  args,
+  { cwd, env, paths, want = {}, reports = { FASTSTUDY_PORT: PORT_LINE }, healthPath = '/health' },
+) {
   fs.mkdirSync(paths.logs, { recursive: true });
   fs.writeFileSync(logOf(paths, name), `# ${BANNER}\n# ${command} ${args.join(' ')}\n`);
-  spawnSpec(name, { command, args, cwd, env, health }, paths);
+  const spec = (ports) => ({ command, args, cwd, env: { ...env, ...ports }, reports, healthPath });
+  const asked = Object.fromEntries(
+    Object.keys(reports).map((key) => [key, String(want[key] ?? 0)]),
+  );
+  try {
+    return await spawnReporting(name, spec(asked), paths);
+  } catch (error) {
+    if (Object.values(asked).every((port) => port === '0')) throw error;
+    const any = Object.fromEntries(Object.keys(reports).map((key) => [key, '0']));
+    fs.appendFileSync(logOf(paths, name), `\n# harness: retrying on any free port\n`);
+    return spawnReporting(name, spec(any), paths);
+  }
 }
 
 /** Start a browser.mjs session, recorded as `browser-<tag>` so --down reaps it, and wait for it. */
 export async function startBrowser(paths, tag) {
-  const [port] = await freePorts(1);
-  fs.writeFileSync(paths.ports, JSON.stringify({ ...readPorts(paths), [`browser-${tag}`]: port }));
+  const name = `browser-${tag}`;
   const script = path.join(HARNESS_ROOT, 'browser.mjs');
-  start(`browser-${tag}`, process.execPath, [script, '--port', String(port), '--tag', tag], {
+  const { FASTSTUDY_PORT: port } = await start(name, process.execPath, [script, '--tag', tag], {
     cwd: HARNESS_ROOT,
     env: { ...process.env, HARNESS_DIR: paths.root, NODE_OPTIONS: '' },
     paths,
-    health: `http://127.0.0.1:${port}/health`,
+    want: { FASTSTUDY_PORT: readPorts(paths)[name] },
   });
-  await waitForService(paths, `browser-${tag}`);
+  fs.writeFileSync(paths.ports, JSON.stringify({ ...readPorts(paths), [name]: port }));
+  await waitForService(paths, name);
   return port;
 }
 
@@ -164,7 +222,7 @@ export async function kill(paths, name) {
   fs.appendFileSync(logOf(paths, name), `\n# harness: killed ${new Date().toISOString()}\n`);
 }
 
-/** Kill one recorded service and start it again from its exact spec, `overrides` on top of its env. */
+/** Kill one recorded service and start it again from its exact spec, ports included, `overrides` on top of its env. */
 export async function restart(paths, name, overrides) {
   const spec = recordedSpec(paths, name);
   await killGroup(spec.pid);
@@ -175,45 +233,7 @@ export async function restart(paths, name, overrides) {
     logOf(paths, name),
     `\n# harness: restarted ${new Date().toISOString()}${extra ? ` with${extra}` : ''}\n`,
   );
-  spawnSpec(name, { ...spec, env: { ...spec.env, ...overrides } }, paths);
+  // No fallback to a free port: every peer and the SPA were started pointing at the recorded one.
+  await spawnReporting(name, { ...spec, env: { ...spec.env, ...overrides } }, paths);
   await waitForService(paths, name);
-}
-
-// Listening on all of them at once, so no two come back equal; closed before the caller binds.
-async function freePorts(count) {
-  const servers = await Promise.all(
-    Array.from(
-      { length: count },
-      () =>
-        new Promise((resolve, reject) => {
-          const server = net.createServer().once('error', reject);
-          server.listen(0, '127.0.0.1', () => resolve(server));
-        }),
-    ),
-  );
-  const ports = servers.map((server) => server.address().port);
-  await Promise.all(servers.map((server) => new Promise((resolve) => server.close(resolve))));
-  return ports;
-}
-
-function isFree(port) {
-  return new Promise((resolve) => {
-    const server = net.createServer().once('error', () => resolve(false));
-    server.listen(port, '127.0.0.1', () => server.close(() => resolve(true)));
-  });
-}
-
-/** This stack's ports: the last run's when every one is still free, so seeded links stay valid, else a fresh set. */
-export async function allocatePorts(paths) {
-  const previous = readPorts(paths);
-  const reuse =
-    PORT_NAMES.every((name) => previous[name]) &&
-    (await Promise.all(PORT_NAMES.map((name) => isFree(previous[name])))).every(Boolean);
-  const fresh = reuse ? [] : await freePorts(PORT_NAMES.length);
-  const ports = Object.fromEntries(
-    PORT_NAMES.map((name, index) => [name, reuse ? previous[name] : fresh[index]]),
-  );
-  fs.mkdirSync(paths.root, { recursive: true });
-  fs.writeFileSync(paths.ports, JSON.stringify(ports));
-  return ports;
 }

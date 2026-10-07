@@ -4,7 +4,7 @@
 // messages, page errors, failed and 4xx/5xx requests, every API request, and each non-GET request
 // with its body and answer — the last also appended to `<harness>/evidence/<tag>-mutations.jsonl`.
 //
-//   node .claude/harness/browser.mjs --port N --tag T [--harness DIR]   (or HARNESS_DIR)
+//   FASTSTUDY_PORT=N node .claude/harness/browser.mjs --tag T [--harness DIR]   (or HARNESS_DIR; N=0 for any)
 //
 // Arguments ride as a JSON body or as query parameters, and the method does not matter:
 // /goto {"url"}                 a path on the app, or a full URL
@@ -40,11 +40,12 @@ const value = (name) => {
   const at = args.indexOf(name);
   return at === -1 ? undefined : args[at + 1];
 };
-const port = Number(value('--port'));
 const tag = value('--tag');
 const root = value('--harness') ?? process.env.HARNESS_DIR;
-if (!port || !tag || !root) {
-  console.error('usage: browser.mjs --port N --tag T [--harness DIR]  (or HARNESS_DIR=DIR)');
+if (!tag || !root) {
+  console.error(
+    'usage: FASTSTUDY_PORT=N browser.mjs --tag T [--harness DIR]  (or HARNESS_DIR=DIR)',
+  );
   process.exit(2);
 }
 const paths = harnessPaths(path.resolve(root));
@@ -191,7 +192,7 @@ const COMMANDS = {
   '/health': async () => JSON.stringify({ status: 'ok', tag, url: page.url() }),
 };
 
-http
+const server = http
   .createServer(async (request, response) => {
     const url = new URL(request.url, 'http://browser');
     const command = COMMANDS[url.pathname];
@@ -220,7 +221,11 @@ http
       out += `\n--- console/http ---\n${fallout.map((event) => `${event.kind} ${event.text}`).join('\n')}`;
     response.writeHead(status, { 'content-type': 'text/plain; charset=utf-8' }).end(`${out}\n`);
   })
-  .listen(port, '127.0.0.1', () => console.log(`browser ${tag} on :${port}, app ${APP}`));
+  .listen(Number(process.env.FASTSTUDY_PORT ?? 0), '127.0.0.1', () => {
+    const { port } = server.address();
+    console.log(`FASTSTUDY_PORT=${port}`);
+    console.log(`browser ${tag} on :${port}, app ${APP}`);
+  });
 
 // Closing the browser ourselves: SIGKILL on this process would leave chromium orphaned.
 for (const signal of ['SIGINT', 'SIGTERM']) {

@@ -9,7 +9,8 @@ import { createRules } from './provider-rules.mjs';
 
 // The harness's own copy, not the repo's: everything a run reads or writes lives under one root.
 const FIXTURES = path.join(process.env.HARNESS_DIR, 'fixtures');
-const PORT = Number(process.env.HARNESS_PROVIDERS_PORT);
+// The port it bound, which the upload URLs it hands out carry; set once listening.
+let PORT;
 
 const TRANSCRIPT = fs
   .readFileSync(path.join(FIXTURES, 'transcript.txt'), 'utf8')
@@ -257,8 +258,11 @@ async function handle(req, res) {
   return json(res, 404, { error: { message: `fake provider has no route for ${route}` } });
 }
 
-http
+const server = http
   .createServer((req, res) => {
     handle(req, res).catch((error) => json(res, 500, { error: { message: String(error) } }));
   })
-  .listen(PORT, '127.0.0.1', () => console.log(`fake providers on ${PORT}`));
+  .listen(Number(process.env.FASTSTUDY_PORT ?? 0), '127.0.0.1', () => {
+    PORT = server.address().port;
+    console.log(`FASTSTUDY_PORT=${PORT}`);
+  });

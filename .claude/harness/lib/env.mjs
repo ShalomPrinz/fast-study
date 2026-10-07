@@ -8,18 +8,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const HARNESS_ROOT = path.resolve(fileURLToPath(import.meta.url), '../..');
 export const REPO_ROOT = path.resolve(HARNESS_ROOT, '../..');
 
-// Every port a stack listens on, by name. Each harness takes its own free set, so several stacks
-// run side by side; `PORTS` is filled from `<harness>/ports.json` by `bindPorts` before any use.
-export const PORT_NAMES = [
-  'database',
-  'backend',
-  'server',
-  'auto',
-  'frontend',
-  'providers', // fake Groq + Gemini
-  'site', // fake lecture site, http
-  'siteTls', // the same site over TLS, where the socket redirect sends :443
-];
+// This stack's ports by name (README, Ports): filled by setup as each child reports, elsewhere from
+// `<harness>/ports.json` through `bindPorts`.
 export const PORTS = {};
 
 // Recognisable on sight in a log, a header or an error, and shaped like the real thing so the
@@ -93,6 +83,9 @@ export function defaultRoot() {
   return path.join(os.tmpdir(), 'faststudy-harness', stamp);
 }
 
+// Only a port already reported: a child started before a peer gets no URL for it rather than a dead one.
+const known = (name, entries) => (PORTS[name] ? entries(PORTS[name]) : {});
+
 /** The environment shared by every child: fake keys, scratch roots, and where the fakes listen. */
 function baseEnv(paths) {
   return {
@@ -101,17 +94,23 @@ function baseEnv(paths) {
     DATA_ROOT: paths.data,
     FASTSTUDY_STATE_DIR: paths.state,
     HARNESS_DIR: paths.root,
-    HARNESS_PROVIDERS: `http://127.0.0.1:${PORTS.providers}`,
-    HARNESS_PROVIDERS_PORT: String(PORTS.providers),
-    HARNESS_SITE: `http://127.0.0.1:${PORTS.site}`,
-    HARNESS_SITE_PORT: String(PORTS.site),
-    HARNESS_SITE_TLS: `https://127.0.0.1:${PORTS.siteTls}`,
-    HARNESS_SITE_TLS_PORT: String(PORTS.siteTls),
-    // Where each service finds its peers, since none of them is on its default port.
-    DATABASE_URL: `http://127.0.0.1:${PORTS.database}`,
-    BACKEND_URL: `http://127.0.0.1:${PORTS.backend}`,
-    AUTODL_URL: `http://127.0.0.1:${PORTS.auto}`,
-    FRONTEND_URL: `http://localhost:${PORTS.frontend}`,
+    ...known('providers', (port) => ({
+      HARNESS_PROVIDERS: `http://127.0.0.1:${port}`,
+      HARNESS_PROVIDERS_PORT: String(port),
+    })),
+    ...known('site', (port) => ({
+      HARNESS_SITE: `http://127.0.0.1:${port}`,
+      HARNESS_SITE_PORT: String(port),
+    })),
+    ...known('siteTls', (port) => ({
+      HARNESS_SITE_TLS: `https://127.0.0.1:${port}`,
+      HARNESS_SITE_TLS_PORT: String(port),
+    })),
+    // Where each service finds its peers, since none of them is on its default port. No
+    // FRONTEND_URL: the SPA starts last, and dev CORS takes any localhost port anyway.
+    ...known('database', (port) => ({ DATABASE_URL: `http://127.0.0.1:${port}` })),
+    ...known('backend', (port) => ({ BACKEND_URL: `http://127.0.0.1:${port}` })),
+    ...known('auto', (port) => ({ AUTODL_URL: `http://127.0.0.1:${port}` })),
     GDRIVE_ROOT_FOLDER: 'Harness',
     DRIVE_ENABLED: 'true',
     // auto/ reads it at boot; set here so the repo-root .env's own never wins the dotenv race.

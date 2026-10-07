@@ -13,28 +13,38 @@ node .claude/harness/setup.mjs --browsers main,other   # also one browser sessio
 node .claude/harness/setup.mjs --harness DIR --down                          # stop that stack, exit
 node .claude/harness/setup.mjs --harness DIR --restart <service> [ENV=val…]  # restart one service
 node .claude/harness/setup.mjs --reseed        # start from the baseline and the fixtures again
-node .claude/harness/setup.mjs --no-launch     # fakes + fixtures only, print where the env files are
 node .claude/harness/setup.mjs --skip-pipeline-check   # skip the slowest self-check
 ```
 
 ## Ports
 
-Every service, fake and browser session listens on a port this harness root took for itself,
-recorded in `<harness>/ports.json`; nothing is on a default dev port, so a plain `npm run dev` and
-any number of other harnesses run beside it. A re-run on the same root takes the same ports back
-when all are still free, so links the seed wrote stay valid, and a fresh set otherwise.
+Every service, fake and browser session binds its own port and reports it, the packaged launcher's
+handshake: started with `FASTSTUDY_PORT=0`, it prints `FASTSTUDY_PORT=<n>` alone on a line (the fake
+site's TLS listener adds `HARNESS_SITE_TLS_PORT=<n>`, and vite's banner `Local: http://localhost:<n>/`
+stands in for the dev server's), and `setup.mjs` reads it off the service's log. So no port is ever
+chosen in one process and bound in another, and no other stack can take it in between. They start in
+dependency order — fakes, `database`, `backend`, `downloader-auto`, `downloader-server`, `frontend` —
+each once the ones before it reported, so it is handed their real URLs. The ports land in
+`<harness>/ports.json`; nothing is on a default dev port, so a plain `npm run dev` and any number of
+other harnesses run beside it. A re-run on the same root asks each child for the port it had last
+time, so links the seed wrote stay valid, and a child that cannot bind it (`EADDRINUSE`, noted in its
+log as `# harness: retrying on any free port`) is started again on 0.
 
 ```bash
 node .claude/harness/hb.mjs --harness DIR url             # every name and its URL
 node .claude/harness/hb.mjs --harness DIR url providers   # one, e.g. for curl $(hb url providers)/control
 ```
 
-Names: `database`, `backend`, `server` (downloader), `auto`, `frontend`, `providers`, `site`,
-`siteTls`, and `browser-<tag>` per session. The services learn their own port from
-`FASTSTUDY_PORT` or `--port`, their peers' from `DATABASE_URL`, `BACKEND_URL`, `AUTODL_URL` and
-`FRONTEND_URL`, and the SPA its services' from `VITE_*_URL` — all passed by `setup.mjs`. Open the
-app at `http://localhost:<frontend>`: in dev (`FASTSTUDY_SECRET` unset) every service's CORS takes
-any `http://localhost` port, and `127.0.0.1` is not that origin.
+Names: `database`, `backend`, `server` (downloader), `auto`, `frontend`, `providers` (fake Groq +
+Gemini), `site` and `siteTls` (the fake lecture site over http, and over TLS where a redirected
+`:443` lands), and `browser-<tag>` per session; a session's port is kept across setups and asked
+for again when that tag reopens. The Python services run through their `__main__` entry
+(`uv run python database_main.py`), which binds through `runtime.serve()` as the packaged build does.
+They learn their peers from `DATABASE_URL`, `BACKEND_URL` and `AUTODL_URL`, and the SPA its services'
+from `VITE_*_URL` — all passed by `setup.mjs`. The dev server runs without the Node shim: it serves
+the SPA and talks to nobody, and `NODE_OPTIONS` would ride into every tool vite spawns. No `FRONTEND_URL` is passed, since the SPA starts last:
+open the app at `http://localhost:<frontend>`, which in dev (`FASTSTUDY_SECRET` unset) every
+service's CORS takes on any port, and `127.0.0.1` is not that origin.
 
 A second `setup.mjs` on a root whose setup is still alive refuses to start; use that stack, or
 `--down` it first.
@@ -45,7 +55,9 @@ A second `setup.mjs` on a root whose setup is still alive refuses to start; use 
 server it wraps — so nothing is found by port or by `pkill -f`. `--restart` takes a service name as
 recorded (`fake-providers`, `fake-site`, `database`, `backend`, `downloader-server`,
 `downloader-auto`, `frontend`), lays any `ENV=val` over its recorded environment, notes the restart
-in that service's log and waits for its health URL. A restarted `backend` or `database` then gets the
+in that service's log and waits for its health URL. It binds the port recorded for it, never a new
+one, since its peers and the SPA were started pointing there; a port taken meanwhile fails the
+restart naming the service. A restarted `backend` or `database` then gets the
 scratch `.env`'s current settings pushed through `POST /config` (`downloader-auto` too, for
 `MOODLE_SITE`), since its recorded environment is the boot one — so `hb set`, `hb wall` and a reseed survive it, and an `ENV=val` given still wins. `--down` also ends a setup still holding the
 foreground. Both need the same `--harness` (or `HARNESS_DIR`) the stack was started with.
@@ -169,7 +181,7 @@ node .claude/harness/setup.mjs --harness DIR --browsers main          # at start
 node .claude/harness/hb.mjs --harness DIR browser other               # later, one more
 ```
 
-A tag is any name. Each session takes a free port, recorded in `ports.json` as `browser-<tag>` (and
+A tag is any name. Each session binds a free port of its own and reports it, recorded in `ports.json` as `browser-<tag>` (and
 in `stack.json`), and logs every event to `logs/browser-<tag>.log`.
 
 The common actions have a plain-argument form in `hb` (`node .claude/harness/hb.mjs --harness DIR`), which builds the request itself — so a
@@ -323,7 +335,8 @@ npm run test:harness     # from the repo root: node:test, then pytest — second
 
 `tests/` unit-tests the harness's own logic: the providers' rule parsing, whole-segment `match`
 and `times` draining, the site's `/control` and one-time `/die/` drop, the fake tool's argv and
-failure table, `hb state`'s diff, the env and baseline helpers, port reuse, and the DOM timeline's retention,
+failure table, `hb state`'s diff, the env and baseline helpers, `start`'s port handshake (reuse, the fallback on a held port, a
+child that never reports, a restart that keeps its port), and the DOM timeline's retention,
 change and flicker logic (its recorder and replay run in a browser, so the live stack proves them), and `hb`'s
 browser actions — real `hb.mjs` argv against a stand-in session, so what it receives is exactly what was typed. Each fake keeps
 that logic in a side-effect-free sibling (`provider-rules.mjs`, `site-control.mjs`,

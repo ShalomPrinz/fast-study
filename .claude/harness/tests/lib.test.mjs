@@ -8,13 +8,12 @@ import { SETTINGS, baselineEnv, settingsPatch } from '../lib/baseline.mjs';
 import {
   FAKE_KEYS,
   FAKE_MOODLE_SITE,
-  PORT_NAMES,
   SCRATCH_MARKER,
   harnessPaths,
   isScratchData,
   readPorts,
 } from '../lib/env.mjs';
-import { allocatePorts } from '../lib/stack.mjs';
+import { down, kill, readStack, restart, start, waitForService } from '../lib/stack.mjs';
 import { diff } from '../lib/state.mjs';
 
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'harness-tests-'));
@@ -113,48 +112,79 @@ describe('baseline', () => {
   });
 });
 
-describe('allocatePorts', () => {
+describe('start', () => {
   const hold = (port) =>
     new Promise((resolve, reject) => {
       const server = net.createServer().once('error', reject);
       server.listen(port, '127.0.0.1', () => resolve(server));
     });
   const close = (server) => new Promise((resolve) => server.close(resolve));
+  // A stand-in service: binds what FASTSTUDY_PORT asks, reports the port it got, answers /health.
+  const CHILD =
+    "const s = require('node:http').createServer((q, r) => r.end('ok'))" +
+    ".listen(Number(process.env.FASTSTUDY_PORT), '127.0.0.1'," +
+    " () => console.log('FASTSTUDY_PORT=' + s.address().port));";
+  const launch = (paths, want, script = CHILD) =>
+    start('child', process.execPath, ['-e', script], {
+      cwd: scratch,
+      env: process.env,
+      paths,
+      want,
+    });
+  const recorded = (paths) => readStack(paths).services.child;
 
-  test('a fresh root gets one distinct port per name, written to ports.json', async () => {
-    const paths = freshPaths('alloc-fresh');
-    const ports = await allocatePorts(paths);
-    assert.deepEqual(Object.keys(ports), PORT_NAMES);
-    assert.equal(new Set(Object.values(ports)).size, PORT_NAMES.length);
-    assert.deepEqual(readPorts(paths), ports);
+  test('takes the port the child reports, and records it in its env and health URL', async (t) => {
+    const paths = freshPaths('start-fresh');
+    t.after(() => down(paths));
+    const { FASTSTUDY_PORT: port } = await launch(paths, {});
+    assert.ok(port > 0);
+    assert.equal(recorded(paths).env.FASTSTUDY_PORT, String(port));
+    assert.equal(recorded(paths).health, `http://127.0.0.1:${port}/health`);
+    await waitForService(paths, 'child');
   });
 
-  test('reuses the previous set when every port is still free', async () => {
-    const paths = freshPaths('alloc-reuse');
-    const first = await allocatePorts(paths);
-    assert.deepEqual(await allocatePorts(paths), first);
+  test('binds the wanted port when it is free', async (t) => {
+    const paths = freshPaths('start-reuse');
+    t.after(() => down(paths));
+    const server = await hold(0);
+    const { port: wanted } = server.address();
+    await close(server);
+    const { FASTSTUDY_PORT: port } = await launch(paths, { FASTSTUDY_PORT: wanted });
+    assert.equal(port, wanted);
   });
 
-  test('takes a fresh set when one previous port is held', async () => {
-    const paths = freshPaths('alloc-held');
-    const first = await allocatePorts(paths);
-    const server = await hold(first.backend);
-    try {
-      const second = await allocatePorts(paths);
-      assert.notDeepEqual(second, first);
-      assert.notEqual(second.backend, first.backend);
-      assert.deepEqual(readPorts(paths), second);
-    } finally {
-      await close(server);
-    }
+  test('falls back to any free port when the wanted one is held', async (t) => {
+    const paths = freshPaths('start-held');
+    t.after(() => down(paths));
+    const server = await hold(0);
+    t.after(() => close(server));
+    const { port: held } = server.address();
+    const { FASTSTUDY_PORT: port } = await launch(paths, { FASTSTUDY_PORT: held });
+    assert.notEqual(port, held);
+    assert.match(
+      fs.readFileSync(path.join(paths.logs, 'child.log'), 'utf8'),
+      /retrying on any free port/,
+    );
   });
 
-  test('takes a fresh set when one previous port is missing', async () => {
-    const paths = freshPaths('alloc-missing');
-    const { siteTls: _dropped, ...partial } = await allocatePorts(paths);
-    fs.writeFileSync(paths.ports, JSON.stringify(partial));
-    const second = await allocatePorts(paths);
-    assert.deepEqual(Object.keys(second), PORT_NAMES);
-    assert.notDeepEqual(second, { ...partial, siteTls: second.siteTls });
+  test('a child that exits without reporting fails naming the service', async (t) => {
+    const paths = freshPaths('start-silent');
+    t.after(() => down(paths));
+    await assert.rejects(
+      launch(paths, {}, 'process.exit(4)'),
+      /^Error: child exited \(code 4\) before reporting its port/,
+    );
+  });
+
+  test('restart takes the recorded port back, and fails rather than move when it is held', async (t) => {
+    const paths = freshPaths('start-restart');
+    t.after(() => down(paths));
+    const { FASTSTUDY_PORT: port } = await launch(paths, {});
+    await restart(paths, 'child', {});
+    assert.equal(recorded(paths).env.FASTSTUDY_PORT, String(port));
+    await kill(paths, 'child');
+    const server = await hold(port);
+    t.after(() => close(server));
+    await assert.rejects(restart(paths, 'child', {}), /child exited/);
   });
 });

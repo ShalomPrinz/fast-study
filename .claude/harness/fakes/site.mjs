@@ -11,8 +11,6 @@ import { FAILURE_ROWS, FAKE_MOODLE_SITE } from '../lib/env.mjs';
 import { createSiteControl } from './site-control.mjs';
 
 const HARNESS = process.env.HARNESS_DIR;
-const PORT = Number(process.env.HARNESS_SITE_PORT);
-const TLS_PORT = Number(process.env.HARNESS_SITE_TLS_PORT);
 const TOKEN = process.env.HARNESS_WSTOKEN;
 
 const VIDEO = path.join(HARNESS, 'fixtures', 'video.mp4');
@@ -284,8 +282,13 @@ function handle(req, res) {
   return json(res, { error: `harness fake site has no route for ${route}` }, 404);
 }
 
-http.createServer(handle).listen(PORT, '127.0.0.1', () => console.log(`fake site on ${PORT}`));
-https
+// Each listener reports the port it bound on a line of its own, which setup reads back.
+const plain = http
+  .createServer(handle)
+  .listen(Number(process.env.FASTSTUDY_PORT ?? 0), '127.0.0.1', () =>
+    console.log(`FASTSTUDY_PORT=${plain.address().port}`),
+  );
+const tls = https
   .createServer(
     {
       key: fs.readFileSync(path.join(HARNESS, 'tls', 'key.pem')),
@@ -293,4 +296,6 @@ https
     },
     handle,
   )
-  .listen(TLS_PORT, '127.0.0.1', () => console.log(`fake site (tls) on ${TLS_PORT}`));
+  .listen(Number(process.env.HARNESS_SITE_TLS_PORT ?? 0), '127.0.0.1', () =>
+    console.log(`HARNESS_SITE_TLS_PORT=${tls.address().port}`),
+  );
