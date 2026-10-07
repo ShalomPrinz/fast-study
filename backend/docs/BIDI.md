@@ -28,6 +28,8 @@ Tried and failed: `\begin{LTR}`, `\LTRverbatim`, `\AtBeginEnvironment{Shaded}{\p
 
 **Long lines wrap.** `Verbatim` never warns about an over-long line — it just runs off the margin and is clipped. `fvextra`'s `breaklines` + `breakanywhere` + `breakautoindent` wrap at the original indent and split an unbreakable token (a URL) mid-token. `breaklines` is an fvextra key, not a fancyvrb one. Every break marker is suppressed so the code stays copy-pasteable.
 
+**Known limitation: multi-word Hebrew in a code block.** The block is LTR, so each Hebrew word is shaped RTL but the words lay out left to right — a multi-word Hebrew comment prints with its words in reverse order. Accepted, because syntax highlighting matters more; `summarize.md` tells the LLM not to write Hebrew inside code.
+
 ### Tables
 
 Every `AlignDefault` column becomes `AlignRight`. bidi already reverses column order, but pandoc emits `l` for an unaligned column, leaving cell contents flush left. An explicit alignment (`:---`, `---:`) is the author's and is kept — which is why this is an AST rewrite rather than a global redefinition of `l`.
