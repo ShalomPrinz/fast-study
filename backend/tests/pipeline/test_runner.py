@@ -1598,3 +1598,41 @@ def test_exec_pdf_plain_failure_writes_no_dotfiles():
     result, db = _run_exec_pdf(convert)
     assert result == {"status": "error", "message": "pandoc missing"}
     assert db.stored == {}
+
+
+# ---- prune_stale_errors ----
+
+
+def test_prune_stale_errors_drops_renamed_and_recreated_lectures():
+    """A rename or delete never reaches the runner; the old name's error must not survive it,
+    and an empty lecture recreated under that name must not inherit it."""
+    old = runner._skey("C1", "L1", "lecture")
+    keep = runner._skey("C1", "L2", "lecture")
+    runner._errors[old] = runner._error_record("transcribe", "boom", code="x")
+    runner._errors[keep] = runner._error_record("transcribe", "boom", code="x")
+    renamed = [
+        {
+            "name": "C1",
+            "lectures": [
+                {"name": "L1_renamed", "files": _files(video=True)},
+                {"name": "L2", "files": _files(video=True)},
+            ],
+        }
+    ]
+    recreated = [
+        {
+            "name": "C1",
+            "lectures": [
+                {"name": "L1", "files": _files()},
+                {"name": "L2", "files": _files(video=True)},
+            ],
+        }
+    ]
+    try:
+        for tree in (renamed, recreated):
+            runner._errors[old] = runner._error_record("transcribe", "boom", code="x")
+            with patch.object(runner.db_client, "get_tree", return_value=tree):
+                runner.prune_stale_errors()
+            assert list(runner._errors) == [keep]
+    finally:
+        runner._errors.clear()

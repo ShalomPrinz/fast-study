@@ -276,8 +276,9 @@ async def run_all_endpoint():
 
 @app.get("/status")
 def runner_status_endpoint():
-    """Live status snapshot for the runner. Cheap; polled by the UI."""
+    """Live status snapshot for the runner. Cheap; refetched by the UI on each SSE notify."""
 
+    runner.prune_stale_errors()
     return runner.get_status()
 
 
