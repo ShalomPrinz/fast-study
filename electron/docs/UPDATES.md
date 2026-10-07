@@ -4,14 +4,19 @@
 `ShalomPrinz/fast-study`, one `latest` channel. Its configuration is the `publish` block in
 `package.json`, which is also what writes `app-update.yml` into the package at build time.
 
-## Silent on success, visible on the failure screen
+## The sidebar row and the launch screen's failure view
 
 One check at launch, then one every 4 hours while the app stays open, so a release published
 mid-session is already downloaded when the user closes it. The launch check is fired from `runBoot()`
 right after the window navigates to the frontend — not before, so it never competes with four service
 starts and never sits on the path that decides whether the app comes up. A newer release downloads in
-the background and NSIS installs it the next time the app quits. **Nothing reaches the screen** then:
-no dialog, no notification, no banner.
+the background and NSIS installs it the next time the app quits, or at once on Restart now.
+
+Every check, rechecks included, feeds the app window through `window.faststudy.updates`: only
+`downloading` and `downloaded` cross the bridge, everything else is `null`, and the frontend's
+sidebar shows "Downloading update…" or "Restart now" from them. Main pushes each change on
+`faststudy:update`, and `snapshot()` answers a listener that subscribed late. An unpackaged run never
+starts the updater, so it stays `null`, and `packaged: false` tells the frontend so.
 
 The recheck timer is `unref`'d, skips a tick while a check is still running, and stops for good on
 `update-downloaded` (another check could replace the pending installer). A failed recheck is logged
@@ -33,15 +38,12 @@ never demotes `downloaded`). `boot.js` renders them in English:
 
 The `started` guard makes the updater start once per launch: Try again and a second failure only
 attach a listener and replay the current phase, never a second timer, check or download. The listener ignores
-phases once a retry has succeeded, so a launch that comes up stays silent. The row is hidden in dev,
+phases once a retry has succeeded, so a launch that comes up shows only the sidebar row. The row is hidden in dev,
 where the updater no-ops.
 
 `launch.log` carries the same story, through main's `log('updater', ...)` rather than
 electron-updater's default `console`, which goes nowhere in a package. A failed check is logged and
 dropped — an unreachable GitHub is the ordinary offline case.
-
-The signal that would justify an in-app "update ready" banner on the success path is a user saying
-they had no idea an update happened.
 
 ## Why the kill has to stay on `will-quit`
 
@@ -50,6 +52,18 @@ they had no idea an update happened.
 therefore starts only once all four services are dead and hold nothing under `resources/` open.
 Moving the kill to a later hook would leave a service holding files NSIS is about to replace, and no
 dev run would show it: dev does not update.
+
+**Restart now kills first, then calls `quitAndInstall(true, true)`** (silent, relaunch). Unlike the
+quit-time install, `quitAndInstall` spawns NSIS synchronously and only then calls `app.quit()`, so
+`will-quit` would come too late. `restartToUpdate()` therefore awaits main's own `stopChildren()` —
+the same kill, not a copy — before installing; the later `will-quit` finds no children and is a
+no-op. It answers `{ ok: true }` (the app is quitting), or `{ ok: false, error }` when nothing is
+downloaded (nothing is killed), or when the kill throws or electron-updater reports a synchronous
+install error, which is logged. Either of those puts the window back on the launch screen and re-runs
+`runBoot()`; the page reloads, so the frontend may never see that answer. A failed installer launch
+(EACCES, ENOENT, cancelled elevation) arrives only after the quit is scheduled, so the app quits
+without updating and the user reopens it. The phase stays `downloaded`, so Restart now stays
+offered, and the `started` guard keeps the reboot from starting a second updater.
 
 ## The installer replaces `resources/` wholesale
 

@@ -11,6 +11,10 @@ const RECHECK_MS = 4 * 60 * 60 * 1000;
 let started = false;
 let phase = null;
 const listeners = new Set();
+// The app window's view, which every check updates, rechecks included: only the two phases it shows.
+let shown = null;
+let onShown = () => {};
+let restarting = null;
 
 /** Check GitHub Releases at launch and every 4 hours, download in the background, install on quit. `log` is main's
  *  `log(source, line)`; `onPhase` (optional, may arrive on a later call, replayed with the current
@@ -40,6 +44,11 @@ function startUpdater(log, onPhase) {
   // The launch screen's phases describe the launch check only; once a recheck has run they freeze.
   let rechecked = false;
   const { fail } = wirePhases(autoUpdater, (next) => {
+    const visible = next === 'downloading' || next === 'downloaded' ? next : null;
+    if (visible !== shown) {
+      shown = visible;
+      onShown(shown);
+    }
     if (rechecked) return;
     phase = next;
     for (const listener of listeners) listener(next);
@@ -82,4 +91,41 @@ function startUpdater(log, onPhase) {
   timer.unref();
 }
 
-module.exports = { startUpdater };
+/** The app window's update state, `'downloading' | 'downloaded' | null`, and its one push target. */
+function updateState() {
+  return shown;
+}
+function onUpdateState(listener) {
+  onShown = listener;
+}
+
+/** Kill via `stop()`, then install and relaunch — `quitAndInstall` spawns NSIS before `will-quit`.
+ *  A throwing kill or a synchronous install error calls `recover()`; see docs/UPDATES.md. */
+function restartToUpdate(stop, recover, log) {
+  if (shown !== 'downloaded')
+    return Promise.resolve({ ok: false, error: 'no update is downloaded' });
+  // A second click while the first is still killing joins it rather than installing twice.
+  restarting ??= (async () => {
+    // Only a synchronous `error` event is caught; a failed installer launch arrives after quit is scheduled.
+    let failure = null;
+    const onError = (error) => (failure ??= error);
+    try {
+      await stop();
+      autoUpdater.on('error', onError);
+      autoUpdater.quitAndInstall(true, true);
+    } catch (error) {
+      failure = error;
+    } finally {
+      autoUpdater.off('error', onError);
+    }
+    if (!failure) return { ok: true };
+    restarting = null;
+    log('updater', `restart failed: ${failure.message}`);
+    // The services may already be dead; `shown` stays `downloaded`, so Restart now stays offered.
+    recover();
+    return { ok: false, error: failure.message };
+  })();
+  return restarting;
+}
+
+module.exports = { startUpdater, updateState, onUpdateState, restartToUpdate };

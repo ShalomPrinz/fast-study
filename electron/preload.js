@@ -17,6 +17,8 @@ contextBridge.exposeInMainWorld('faststudy', {
   defaultDataRoot: config.defaultDataRoot,
   // The stored error-reports switch as this page loaded; after a save, the write's result is current.
   errorReports: config.errorReports,
+  // False in an unpackaged run, which never updates; the frontend's version tag reads "dev" then.
+  packaged: config.packaged,
   // The renderer's `SettingsBacking`: main owns the store, so a stored API key never crosses here —
   // `read()` reports the two keys as set/unset flags only.
   settings: {
@@ -30,6 +32,18 @@ contextBridge.exposeInMainWorld('faststudy', {
   },
   // The OS folder dialog for the data-folder field; resolves to an absolute path, or `null` on cancel.
   pickFolder: (defaultPath) => ipcRenderer.invoke('faststudy:pick-folder', defaultPath),
+  // The app's update row: `'downloading' | 'downloaded' | null`, pushed on every check. `restart()`
+  // installs a downloaded update and relaunches, answering `{ ok, error }` — see docs/UPDATES.md.
+  updates: {
+    snapshot: () => ipcRenderer.invoke('faststudy:update-state'),
+    // Returns the unsubscribe, for an effect's cleanup.
+    subscribe: (callback) => {
+      const listener = (_event, state) => callback(state);
+      ipcRenderer.on('faststudy:update', listener);
+      return () => ipcRenderer.removeListener('faststudy:update', listener);
+    },
+    restart: () => ipcRenderer.invoke('faststudy:update-restart'),
+  },
   // The launch screen only: a snapshot first, since main's first push can beat the listener.
   boot: {
     snapshot: () => ipcRenderer.invoke('faststudy:boot-state'),

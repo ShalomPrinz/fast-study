@@ -15,10 +15,10 @@ everything on quit.
 | `store.js`    | The settings store — JSON under `userData`, API keys through `safeStorage`      |
 | `reports.js`  | The error-reports switch — the child env, the settings write that applies it live |
 | `teardown.js` | Stopping the children — SIGTERM, then SIGKILL after the grace (POSIX)           |
-| `updater.js`  | The update check — electron-updater against GitHub Releases; visible only on the launch screen's failure view |
+| `updater.js`  | The update check — electron-updater against GitHub Releases; the app's update state and Restart now |
 | `updatePhases.js` | Mapping updater events to the phases the launch screen shows (pure, tested)   |
 | `checks.js`   | The startup checks — the machine-level facts the app degrades on                |
-| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, open, folder picker |
+| `preload.js`  | `window.faststudy` — URLs, secret, settings backing, checks, default data root, error reports, packaged, updates, open, folder picker |
 | `boot.html`   | The launch screen — what is on screen while the four children start             |
 | `boot.js`     | Its renderer: the snapshot, the pushes, Try again and Quit                      |
 
@@ -131,7 +131,7 @@ the `build` block in `package.json`.
   ([`RENDERER.md`](docs/RENDERER.md#error-reporting-sentry)).
 - **No `asarUnpack`.** Playwright's driver needs a real filesystem path, and `auto/` is
   extraResources — already outside the asar. Nothing that ships inside the asar spawns anything.
-- **Updates are packaged-only and silent unless the boot failed**, and replace `resources/` wholesale — see
+- **Updates are packaged-only, shown as the sidebar's update row (and on a failed boot's screen)**, and replace `resources/` wholesale — see
   [`docs/UPDATES.md`](docs/UPDATES.md).
 - **The icon is `assets/icon.ico`, named explicitly** rather than left to electron-builder's default
   `buildResources` directory: that default is `build/`, and the repo's root `.gitignore` ignores

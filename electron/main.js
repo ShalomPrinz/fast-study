@@ -10,7 +10,7 @@ const { runStartupChecks } = require('./checks');
 const { APP_ORIGIN, registerScheme, serveBundle } = require('./protocol');
 const { reportsOn, sentryEnv, writeSettings } = require('./reports');
 const store = require('./store');
-const { startUpdater } = require('./updater');
+const { startUpdater, updateState, onUpdateState, restartToUpdate } = require('./updater');
 const { reapChildren, signalChildren } = require('./teardown');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
@@ -512,6 +512,7 @@ function createWindow(checks) {
       locale: app.getLocale(),
       defaultDataRoot: DEFAULT_DATA_ROOT,
       errorReports: reportsOn(),
+      packaged: app.isPackaged,
     };
   });
   ipcMain.handle('faststudy:open-file', (event, target) => openDataFile(target));
@@ -529,6 +530,20 @@ function createWindow(checks) {
     }),
   );
   ipcMain.handle('faststudy:boot-state', () => bootState);
+  // The app's update row; a snapshot first, since a push can land before the frontend subscribes.
+  onUpdateState((state) => mainWindow?.webContents.send('faststudy:update', state));
+  ipcMain.handle('faststudy:update-state', () => updateState());
+  // A failed install has already stopped the services: back to the launch screen and boot them again.
+  ipcMain.handle('faststudy:update-restart', () =>
+    restartToUpdate(
+      stopChildren,
+      () => {
+        mainWindow.loadFile(path.join(__dirname, 'boot.html'));
+        runBoot();
+      },
+      log,
+    ),
+  );
   ipcMain.on('faststudy:boot-retry', () => runBoot());
   ipcMain.on('faststudy:boot-quit', () => app.quit());
   // Denied, or the child would inherit the preload and so the secret (docs/RENDERER.md). The log
