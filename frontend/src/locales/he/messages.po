@@ -1576,7 +1576,7 @@ msgstr "חובה"
 
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Restart now"
-msgstr "הפעלה מחדש עכשיו"
+msgstr "הפעלה מחדש"
 
 #: src/features/lectures/EditSummaryView.tsx:267
 msgid "Restore original"
