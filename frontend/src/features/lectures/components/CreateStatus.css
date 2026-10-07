@@ -1,0 +1,10 @@
+.create-status {
+  margin: 1px var(--space-1);
+  padding-inline: var(--space-4);
+  color: var(--sidebar-muted);
+  font-size: var(--fs-body);
+}
+
+.create-status-error {
+  color: var(--danger);
+}

@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import type { ReactElement } from 'react'
 import { act, renderHook } from '@testing-library/react'
 import type { Course } from '@/types'
 import { RequestError } from '@/services/http'
@@ -36,21 +35,20 @@ async function commitName(name: string) {
 }
 
 describe('useAddLecture', () => {
-  it('toasts a taken name with its code and skips the refresh and the navigation', async () => {
+  it('keeps the input open with the typed text and the refusal code, skipping refresh and navigation', async () => {
     createLecture.mockRejectedValue(
       new RequestError('already exists', 'name_taken', { name: 'Lecture 3' }),
     )
 
-    await commitName('Lecture 3')
+    const { result } = renderHook(() => useAddLecture(COURSE))
+    act(() => result.current.start('lecture'))
+    act(() => result.current.edit.setValue('Lecture 3'))
+    await act(() => result.current.commit())
 
-    expect(toast).toHaveBeenCalledTimes(1)
-    const [kind, node] = toast.mock.calls[0]
-    expect(kind).toBe('error')
-    // The code and params reach the toast, so it resolves through the name_taken catalog row.
-    expect((node as ReactElement<{ failure: unknown }>).props.failure).toMatchObject({
-      code: 'name_taken',
-      params: { name: 'Lecture 3' },
-    })
+    expect(result.current.target).toEqual({ kind: 'lecture' })
+    expect(result.current.edit.value).toBe('Lecture 3')
+    expect(result.current.attempt.error).toMatchObject({ code: 'name_taken' })
+    expect(toast).not.toHaveBeenCalled()
     expect(refreshUntil).not.toHaveBeenCalled()
     expect(onSelect).not.toHaveBeenCalled()
   })

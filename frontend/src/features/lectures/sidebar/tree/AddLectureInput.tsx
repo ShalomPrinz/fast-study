@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
+import CreateStatus from '@/features/lectures/components/CreateStatus'
 import { useCourseGroup } from './CourseGroupContext'
 import { useLectureListKind } from './LectureListContext'
 
@@ -18,6 +19,7 @@ export default function AddLectureInput() {
         onCancel={add.cancel}
         placeholder={kind === 'recitation' ? t`Recitation name…` : t`Lecture name…`}
       />
+      <CreateStatus attempt={add.attempt} />
     </li>
   )
 }

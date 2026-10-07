@@ -123,6 +123,8 @@ archived course so the badge stays off.
   remount: keeping the open page's course visible deliberately beats restoring an explicit collapse.
 - `CourseGroupContext` and `LectureListContext` reach the recursive rows without prop-drilling;
   `AddLectureInput` renders only in the list being added to.
+- New course/lecture/recitation inputs stay open with the typed text until the create succeeds
+  (`useCreateAttempt`): `CreateStatus` shows "Creating…" and blocks a second submit, then the refusal in place.
 
 Shift-click renames a row inline; holding shift swaps a course's "+" for archive/unarchive. A running
 or queued lecture, and a course holding one, a generating overview (`/status`'s `overview_running`) or a

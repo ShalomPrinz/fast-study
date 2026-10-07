@@ -349,7 +349,7 @@ msgstr "Add recitation"
 msgid "All caught up — every lecture is finished."
 msgstr "All caught up — every lecture is finished."
 
-#: src/features/lectures/EditSummaryView.tsx:334
+#: src/features/lectures/EditSummaryView.tsx:349
 msgid "All edits will be discarded and the original AI summary restored."
 msgstr "All edits will be discarded and the original AI summary restored."
 
@@ -365,7 +365,7 @@ msgstr "All Lectures"
 msgid "Already generated."
 msgstr "Already generated."
 
-#: src/features/lectures/EditSummaryView.tsx:266
+#: src/features/lectures/EditSummaryView.tsx:280
 msgid "Already up to date"
 msgstr "Already up to date"
 
@@ -421,7 +421,7 @@ msgstr "Auto-run: off"
 msgid "Auto-run: the whole pipeline"
 msgstr "Auto-run: the whole pipeline"
 
-#: src/features/lectures/EditSummaryView.tsx:239
+#: src/features/lectures/EditSummaryView.tsx:246
 msgid "Back"
 msgstr "Back"
 
@@ -702,7 +702,7 @@ msgid "Course \"{course}\" doesn't exist."
 msgstr "Course \"{course}\" doesn't exist."
 
 #: src/features/downloads/components/AddCourseRow.tsx:57
-#: src/features/lectures/sidebar/NewCourseRow.tsx:42
+#: src/features/lectures/sidebar/NewCourseRow.tsx:44
 msgid "Course name…"
 msgstr "Course name…"
 
@@ -717,6 +717,10 @@ msgstr "Course sources"
 #: src/features/downloads/components/AddCourseRow.tsx:73
 msgid "Create"
 msgstr "Create"
+
+#: src/features/lectures/components/CreateStatus.tsx:15
+msgid "Creating…"
+msgstr "Creating…"
 
 #: src/features/lectures/components/PdfViewer.tsx:77
 msgid "Current PDF"
@@ -740,7 +744,7 @@ msgstr "Decline"
 msgid "Delete {0}"
 msgstr "Delete {0}"
 
-#: src/features/lectures/EditSummaryView.tsx:258
+#: src/features/lectures/EditSummaryView.tsx:265
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
@@ -922,16 +926,16 @@ msgstr "failed"
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
-#: src/features/lectures/EditSummaryView.tsx:196
-#: src/features/lectures/EditSummaryView.tsx:208
+#: src/features/lectures/EditSummaryView.tsx:201
+#: src/features/lectures/EditSummaryView.tsx:213
 msgid "Failed to generate PDF"
 msgstr "Failed to generate PDF"
 
-#: src/features/lectures/EditSummaryView.tsx:176
+#: src/features/lectures/EditSummaryView.tsx:181
 msgid "Failed to restore the original summary"
 msgstr "Failed to restore the original summary"
 
-#: src/features/lectures/EditSummaryView.tsx:159
+#: src/features/lectures/EditSummaryView.tsx:164
 msgid "Failed to save summary"
 msgstr "Failed to save summary"
 
@@ -1095,7 +1099,7 @@ msgstr "Install Chrome"
 msgid "just this lecture"
 msgstr "just this lecture"
 
-#: src/features/lectures/EditSummaryView.tsx:291
+#: src/features/lectures/EditSummaryView.tsx:306
 msgid "Keep my edits"
 msgstr "Keep my edits"
 
@@ -1135,7 +1139,7 @@ msgstr "Lecture {0}"
 msgid "Lecture name"
 msgstr "Lecture name"
 
-#: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
+#: src/features/lectures/sidebar/tree/AddLectureInput.tsx:20
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
@@ -1154,7 +1158,7 @@ msgstr "Lectures {0}-{1}"
 msgid "Let's set things up"
 msgstr "Let's set things up"
 
-#: src/features/lectures/EditSummaryView.tsx:288
+#: src/features/lectures/EditSummaryView.tsx:303
 msgid "Load new version"
 msgstr "Load new version"
 
@@ -1203,7 +1207,7 @@ msgstr "More actions"
 msgid "Name in the course"
 msgstr "Name in the course"
 
-#: src/features/lectures/sidebar/NewCourseRow.tsx:50
+#: src/features/lectures/sidebar/NewCourseRow.tsx:54
 msgid "New course"
 msgstr "New course"
 
@@ -1259,7 +1263,7 @@ msgstr "no material found"
 msgid "No materials found."
 msgstr "No materials found."
 
-#: src/features/lectures/EditSummaryView.tsx:258
+#: src/features/lectures/EditSummaryView.tsx:265
 msgid "No original saved"
 msgstr "No original saved"
 
@@ -1438,11 +1442,11 @@ msgstr "Passcode"
 msgid "PDF"
 msgstr "PDF"
 
-#: src/features/lectures/EditSummaryView.tsx:249
+#: src/features/lectures/EditSummaryView.tsx:256
 msgid "PDF is older than this summary"
 msgstr "PDF is older than this summary"
 
-#: src/features/lectures/EditSummaryView.tsx:250
+#: src/features/lectures/EditSummaryView.tsx:257
 msgid "PDF rendered with warnings"
 msgstr "PDF rendered with warnings"
 
@@ -1504,7 +1508,7 @@ msgstr "Recitation"
 msgid "Recitation {0}"
 msgstr "Recitation {0}"
 
-#: src/features/lectures/sidebar/tree/AddLectureInput.tsx:19
+#: src/features/lectures/sidebar/tree/AddLectureInput.tsx:20
 msgid "Recitation name…"
 msgstr "Recitation name…"
 
@@ -1561,7 +1565,7 @@ msgctxt "section mark"
 msgid "Required"
 msgstr "Required"
 
-#: src/features/lectures/EditSummaryView.tsx:260
+#: src/features/lectures/EditSummaryView.tsx:267
 msgid "Restore original"
 msgstr "Restore original"
 
@@ -1614,7 +1618,7 @@ msgstr "Running pipelines"
 msgid "Save"
 msgstr "Save"
 
-#: src/features/lectures/EditSummaryView.tsx:268
+#: src/features/lectures/EditSummaryView.tsx:283
 msgid "Save & update PDF"
 msgstr "Save & update PDF"
 
@@ -1723,7 +1727,8 @@ msgstr "Start using FastStudy"
 msgid "Step {0} of {1}"
 msgstr "Step {0} of {1}"
 
-#: src/features/lectures/EditSummaryView.tsx:203
+#: src/features/lectures/EditSummaryView.tsx:208
+#: src/features/lectures/EditSummaryView.tsx:275
 #: src/features/lectures/MainView.tsx:121
 msgid "Step already running"
 msgstr "Step already running"
@@ -1931,7 +1936,7 @@ msgstr "the runner takes these in order"
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."
 msgstr "The site refused the download. This link needs a login, so it can't be downloaded here."
 
-#: src/features/lectures/EditSummaryView.tsx:266
+#: src/features/lectures/EditSummaryView.tsx:277
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
@@ -1969,7 +1974,7 @@ msgstr "Third-party services"
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 
-#: src/features/lectures/EditSummaryView.tsx:335
+#: src/features/lectures/EditSummaryView.tsx:350
 msgid "This cannot be undone."
 msgstr "This cannot be undone."
 
@@ -2027,7 +2032,7 @@ msgstr "This recording needs a passcode."
 msgid "This source can't be downloaded automatically."
 msgstr "This source can't be downloaded automatically."
 
-#: src/features/lectures/EditSummaryView.tsx:276
+#: src/features/lectures/EditSummaryView.tsx:291
 msgid "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 msgstr "This summary changed in another window or was regenerated. Load the new version, or keep your edits and save over it."
 
@@ -2079,7 +2084,7 @@ msgstr "University account connected"
 msgid "Unknown"
 msgstr "Unknown"
 
-#: src/features/lectures/EditSummaryView.tsx:318
+#: src/features/lectures/EditSummaryView.tsx:333
 msgid "Unsaved changes"
 msgstr "Unsaved changes"
 
@@ -2091,7 +2096,7 @@ msgstr "Unsupported"
 msgid "Updates"
 msgstr "Updates"
 
-#: src/features/lectures/EditSummaryView.tsx:268
+#: src/features/lectures/EditSummaryView.tsx:283
 msgid "Updating PDF…"
 msgstr "Updating PDF…"
 
