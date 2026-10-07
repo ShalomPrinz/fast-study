@@ -14,7 +14,6 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
-UNTRACKED_LINES = 60  # per untracked file shown (tunable)
 GREP_HITS = 5  # per stale name (tunable)
 
 # Contract surfaces a peer depends on, and the doc that owns each (reviewer check 1).
@@ -223,16 +222,16 @@ def change_set(root: Path, untracked: list[str], spec: list[str]) -> list[str]:
         if text is None:
             out += ["", f"Untracked `{rel}`: binary or unreadable."]
             continue
+        if rel.endswith(GENERATED):
+            out += ["", f"Untracked `{rel}`: generated, not shown."]
+            continue
         lines = text.splitlines()
-        more = (
-            f", first {UNTRACKED_LINES} shown" if len(lines) > UNTRACKED_LINES else ""
-        )
         out += [
             "",
-            f"Untracked `{rel}` ({len(lines)} lines{more}):",
+            f"Untracked `{rel}` ({len(lines)} lines):",
             "",
             "````",
-            *lines[:UNTRACKED_LINES],
+            *lines,
             "````",
         ]
     return out

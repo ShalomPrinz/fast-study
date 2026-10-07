@@ -12,7 +12,7 @@ Prints a Markdown preview of the uncommitted change (staged, unstaged and untrac
 
 | Section | What it shows |
 |---|---|
-| Change set | `git status --short`, `git diff --stat -M HEAD`, and the content of each untracked file (first 60 lines, *tunable*), which `git diff` leaves out. |
+| Change set | `git status --short`, `git diff --stat -M HEAD`, and the full content of each untracked file (generated ones like lockfiles are named, not shown), which `git diff` leaves out. |
 | Ownership | Each changed path with its writing agent from [ownership.json](../ownership.json) (or the main session) and its owning docs: every `CLAUDE.md`, `README.md` or `docs/` page that names the full path, or — inside the path's own service — a shorter path or its file name, plus docs cited in its comments. Service code outside tests whose owning docs are all absent from the change is flagged. |
 | Stale references | Names removed on minus lines and not re-added on any plus line, with up to 5 `git grep` hits each (*tunable*) that still use them: `def`/`class` names and `UPPER_CASE` assignments in Python, exported or top-level declarations in JS/TS, and quoted snake-case or upper-case codes (error codes, env names) in both. |
 | Changed values | Paired minus/plus lines (in order, within one change) that keep the same shape but differ in numeric or string literals: old values `->` new values, at the new line number. Lingui catalogs and lockfiles are skipped, since their line references and hashes shift on every unrelated edit. |
