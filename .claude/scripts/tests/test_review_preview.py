@@ -155,6 +155,43 @@ def test_multiline_comments_show_only_changed_two_plus_line_blocks(repo: Path) -
     assert "one line" not in out and "only one" not in out and "priv" not in out
 
 
+def test_triple_quoted_data_strings_are_not_comments(repo: Path) -> None:
+    (repo / "database/fs/tree.py").write_text(
+        '"""Module doc first.\nModule doc second.\n"""\n'
+        'QUERY = (\n    """\n    SELECT a\n    # not a comment\n    FROM b\n    """\n)\n'
+        'run(\n    x,\n    """\n    arg one\n    arg two\n    """,\n)\n'
+        "def g(\n    a: int,\n) -> None:\n"
+        '    """Real doc first.\n\n    Real doc second.\n    """\n'
+        'conn.execute("""\n    # inline one\n    # inline two\n""")\n'
+        'def h():\n    """After inline first.\n    After inline second."""\n'
+    )
+    out = preview(repo)
+    assert "`database/fs/tree.py:1-3` (2 lines): Module doc first." in out
+    assert "`database/fs/tree.py:21-24` (2 lines): Real doc first." in out
+    assert "`database/fs/tree.py:30-31` (2 lines): After inline first." in out
+    assert "SELECT" not in out and "not a comment" not in out and "arg one" not in out
+    assert "inline one" not in out
+
+
+def test_quotes_and_trailing_comments_do_not_desync_data_strings(repo: Path) -> None:
+    (repo / "database/fs/tree.py").write_text(
+        'x = 1  # see """\n# real one\n# real two\n'
+        'def f():  # noqa\n    """Noqa doc first.\n    Noqa doc second."""\n'
+        's = \'"""\' + """\n# s1\n# s2\n"""\n'
+    )
+    out = preview(repo)
+    assert "`database/fs/tree.py:2-3` (2 lines): real one" in out
+    assert "`database/fs/tree.py:5-6` (2 lines): Noqa doc first." in out
+    assert "s1" not in out
+
+
+def test_data_string_open_at_eof_adds_no_block(repo: Path) -> None:
+    (repo / "database/fs/tree.py").write_text('# c1\n# c2\ns = (\n    """\n    tail\n')
+    out = preview(repo)
+    assert "`database/fs/tree.py:1-2` (2 lines): c1" in out
+    assert out.count("database/fs/tree.py:1-") == 1
+
+
 def test_multiline_comment_untouched_by_diff_is_not_shown(repo: Path) -> None:
     (repo / "database/fs/tree.py").write_text("# old\n# block\nx = 1\n")
     git("commit", "-qam", "block", cwd=repo)

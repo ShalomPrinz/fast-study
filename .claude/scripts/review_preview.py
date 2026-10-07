@@ -499,20 +499,44 @@ def doc_hygiene(
     return out
 
 
+def split_code(s: str) -> tuple[str, str]:
+    """A Python line cut before any `#` outside quotes, and the triple quote it leaves open, if any."""
+    i, quote = 0, ""
+    while i < len(s):
+        if quote and s[i] == "\\":
+            i += 2
+        elif quote:
+            i, quote = (
+                (i + len(quote), "") if s.startswith(quote, i) else (i + 1, quote)
+            )
+        elif s[i] == "#":
+            return s[:i].rstrip(), ""
+        elif s[i] in "'\"":
+            quote = s[i] * 3 if s.startswith(s[i] * 3, i) else s[i]
+            i += len(quote)
+        else:
+            i += 1
+    return s, quote if len(quote) == 3 else ""
+
+
 def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
     """Each comment in a file as its first and last line and its non-empty text lines, markers stripped."""
     blocks: list[tuple[int, int, list[str]]] = []
-    start, body, kind, close = 0, [], "", ""
+    start, body, kind, close, code = 0, [], "", "", ""
     python, hashes = rel.endswith(".py"), rel.endswith((".py", ".sh"))
 
     def flush(end: int) -> None:
         nonlocal kind
-        if kind:
+        if kind and kind != "data":
             blocks.append((start, end, [b for b in body if b]))
         kind = ""
 
     for n, line in enumerate(text.splitlines(), 1):
         s = line.strip()
+        if kind == "data":
+            kind = "" if close in s else kind
+            code = s or code
+            continue
         if kind in ("block", "doc"):
             done = close in s
             body.append(
@@ -520,6 +544,7 @@ def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
             )
             if done:
                 flush(n)
+            code = s or code
             continue
         marker = next((m for m in ("#", "//") if s.startswith(m)), "")
         # `#` comments only in Python and shell; in JS it starts a private field.
@@ -530,6 +555,11 @@ def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
             body.append(s.lstrip(marker).strip())
             continue
         flush(n - 1)
+        # A triple-quoted string is a docstring only as the module's first statement or after a `:` header.
+        if python and s.startswith(('"""', "'''")) and code and not code.endswith(":"):
+            close, code = s[:3], s
+            kind = "" if close in s[3:] else "data"
+            continue
         if s.startswith("/*") or (python and s.startswith(('"""', "'''"))):
             close = "*/" if s.startswith("/*") else s[:3]
             rest = s[2:] if close == "*/" else s[3:]
@@ -537,6 +567,10 @@ def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
             body.append(rest.split(close)[0].lstrip("*").strip())
             if close in rest:
                 flush(n)
+        # A string opened mid-line, e.g. `run("""`, is data: skip to its close.
+        elif python and (q := split_code(s)[1]):
+            close, kind = q, "data"
+        code = code if s.startswith("#!") else split_code(s)[0] or code
     flush(len(text.splitlines()))
     return blocks
 
