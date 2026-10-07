@@ -712,3 +712,17 @@ class TestWrapEnglishPhrasesExtended:
         # A real path slash is preceded by a space, not a Hebrew letter.
         result = wrap_english_phrases("נתיב /kernels")
         assert r"\LR{/kernels}" in result
+
+
+class TestRawLatexCommands:
+    def test_command_is_one_literal_run(self):
+        assert wrap_english_phrases(r"\newpage") == r"\LR{\textbackslash{}newpage}"
+
+    def test_command_with_braced_argument(self):
+        assert (
+            wrap_english_phrases(r"\end{document}")
+            == r"\LR{\textbackslash{}end\{document\}}"
+        )
+
+    def test_math_span_untouched(self):
+        assert wrap_english_phrases(r"$\frac{a}{b}$") == r"$\frac{a}{b}$"

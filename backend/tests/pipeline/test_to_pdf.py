@@ -957,3 +957,29 @@ class TestToolTimeout:
                 convert_to_pdf(str(md_path))
         assert all(t is not None for t in timeouts)
         assert len(timeouts) == 2
+
+
+@pytest.mark.skipif(
+    not (_tectonic_available() and _pandoc_available() and _pymupdf_available()),
+    reason="needs tectonic + pandoc + pymupdf to render and inspect a real PDF",
+)
+class TestRawLatexPrintsLiterally:
+    MD = "טקסט פתיחה\n\n\\newpage\n\n\\end{document}\n\nמשוואה $x^2$ בסוף\n"
+
+    def test_commands_print_as_typed_and_math_renders(self):
+        import fitz
+
+        with tempfile.TemporaryDirectory() as d:
+            md_path = os.path.join(d, "raw.md")
+            with open(md_path, "w", encoding="utf-8") as f:
+                f.write(self.MD)
+            pdf_path, warning = convert_to_pdf(md_path)
+            try:
+                doc = fitz.open(pdf_path)
+                text = "".join(p.get_text() for p in doc)
+            finally:
+                os.unlink(pdf_path)
+        assert doc.page_count == 1, f"\\newpage was executed; warning: {warning}"
+        assert "\\newpage" in text
+        assert "\\end{document}" in text
+        assert "x" in text and "משוואה" in text

@@ -43,7 +43,22 @@ _GROUP_BODY = r"['’\"]?" + _WORD + r"['’\"]?(?:" + _SEP + _QUOTED + r")*"
 # reorder. Requiring the matching closer keeps a lone one on the Hebrew side out.
 _GROUP = r"(?:\(" + _GROUP_BODY + r"\)|\[" + _GROUP_BODY + r"\])"
 # A group directly after a word belongs to it — console.log('hi'), arr[i], grep [pattern].
-_ITEM = r"(?:" + _URL + r"|" + _WORD + r"(?:" + _GROUP + r")*|" + _GROUP + r")"
+# A raw LaTeX command (`\newpage`, `\end{document}`) is one token, so its backslash is escaped
+# to a literal inside the \LR run and pandoc never sees a `\command` to treat as raw TeX.
+_CMD = r"\\[" + _LATIN + r"]+\*?(?:\{[^{}\n]*\}|\[[^\]\n]*\])*"
+_ITEM = (
+    r"(?:"
+    + _CMD
+    + r"|"
+    + _URL
+    + r"|"
+    + _WORD
+    + r"(?:"
+    + _GROUP
+    + r")*|"
+    + _GROUP
+    + r")"
+)
 _CONT = r"(?:" + _ITEM + r"|" + _NUM + r")"
 _MULTI_LATIN_RE = re.compile(r"(" + _ITEM + r"(?:" + _SEP + _CONT + r")*)([.,;:!?]*)")
 _LEADING_PUNCT_RE = re.compile(r"^([.,;:!?]+)")
