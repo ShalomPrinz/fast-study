@@ -130,7 +130,7 @@ non-terminal download job or a `running`/`paused` section run (`useCourseDownloa
 included), refuse the rename
 (`utils/renameLock.ts`): each writes by the name it was given, so a mid-run rename splits the lecture in two.
 A running or queued lecture refuses a video drop too, checked again on the replace confirm: the upload wipes
-the folder under a run that would finish from the old video. An open page — lecture or overview — follows the
+the folder under a run that would finish from the old video. The replace confirm lists audio, transcript, summary and PDF and says materials are kept; it leaves out `drive_url.txt`, which the wipe also removes (the Drive file itself is never deleted, so only the local link, and "Open in Drive" with it, goes). An open page — lecture or overview — follows the
 name the rename answers, since the database may sanitize the typed one, in the render of the first tree that
 holds it — usually the database's own notify, which lands before the rename's refetch does — through
 `refreshUntil`, which falls back to that refetch settling. The row shows the new name from Enter until then
