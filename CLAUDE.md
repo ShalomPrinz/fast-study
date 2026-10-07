@@ -139,6 +139,7 @@ I prefer being sure of what's going to happen before you actually do it, so no r
 ## Workflow
 
 - For non-trivial changes: ground yourself in the actual code first, present 2-3 options with tradeoffs, and wait for a decision before implementing. Don't start editing on an ambiguous request.
+- Send no status updates mid-task. Report once, after the main session and every subagent it started have finished.
 - When a workaround fails twice, stop implementing and research the root cause — official docs, the API surface, community threads — instead of trying a third variant.
 - Before surfacing an incidental finding — git history, branch state, earlier attempts, side effects — ask whether the user would decide or act differently knowing it. If yes, say it in one line with what it changes; if not, drop it, from replies and prompt files alike.
 - Commit as you go, one commit per concern, following the [`git-commit`](.claude/skills/git-commit/SKILL.md) skill — no need to be asked. Only the main session commits, after the `reviewer` subagent has seen the task's diff; never `push`/`stash`/`checkout`/`reset`/merge/rebase.
