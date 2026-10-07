@@ -6,7 +6,9 @@ import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { useJobsByRef } from '@/features/downloads/contexts/DownloadJobsContext'
 import { lastLectureRoute, readLastLecture } from '@/features/lectures/utils/lastLecture'
+import { versionTag } from '@/services/runtime'
 import LanguageSwitcher from './LanguageSwitcher'
+import UpdateRow from './UpdateRow'
 import './Sidebar.css'
 
 // How many downloads are running right now, for the Downloads badge.
@@ -87,7 +89,13 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <LanguageSwitcher />
+        <UpdateRow busy={runnerProgress !== undefined || runningDownloads > 0} />
+        <div className="sidebar-footer-row">
+          <LanguageSwitcher />
+          <span className="sidebar-version" dir="ltr">
+            {versionTag()}
+          </span>
+        </div>
       </div>
     </aside>
   )

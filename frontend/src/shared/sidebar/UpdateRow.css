@@ -1,0 +1,52 @@
+.sidebar-update {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-size: var(--fs-meta);
+  color: var(--sidebar-fg);
+}
+
+.sidebar-update--downloading,
+.sidebar-update-line {
+  flex-direction: row;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* The shared spinner's track is drawn for light surfaces; on the sidebar it takes the sidebar line. */
+.sidebar-update .spinner {
+  border-color: var(--sidebar-line);
+  border-top-color: var(--accent);
+}
+
+.sidebar-update-done {
+  display: inline-flex;
+  color: var(--ok-dot);
+  flex-shrink: 0;
+}
+
+.sidebar-update-text {
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.sidebar-update-restart {
+  align-self: flex-start;
+}
+
+/* `--ink` vanishes on the dark sidebar, so the one action here fills with the accent instead. */
+.sidebar-update .sidebar-update-restart:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.sidebar-update .sidebar-update-restart:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* The window-wide gray while Restart now kills the services and installs; nothing behind it is clickable. */
+.update-overlay {
+  cursor: wait;
+}

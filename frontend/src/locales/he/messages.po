@@ -812,6 +812,10 @@ msgstr "מוריד עוד {active}…"
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
+#: src/shared/sidebar/UpdateRow.tsx:25
+msgid "Downloading update…"
+msgstr "מוריד עדכון…"
+
 #: src/features/downloads/components/RecordingRow.tsx:284
 #: src/features/downloads/components/SectionGroup.tsx:292
 msgid "Downloading…"
@@ -1175,6 +1179,7 @@ msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:107
+#: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "טוען…"
 
@@ -1564,6 +1569,10 @@ msgstr "חובה"
 msgctxt "section mark"
 msgid "Required"
 msgstr "חובה"
+
+#: src/shared/sidebar/UpdateRow.tsx:46
+msgid "Restart now"
+msgstr "הפעלה מחדש עכשיו"
 
 #: src/features/lectures/EditSummaryView.tsx:267
 msgid "Restore original"
@@ -2092,6 +2101,10 @@ msgstr "שינויים שלא נשמרו"
 msgid "Unsupported"
 msgstr "לא נתמך"
 
+#: src/shared/sidebar/UpdateRow.tsx:38
+msgid "Updated. Restart to update"
+msgstr "סגור ופתח מחדש את האפליקציה כדי לקבל את העדכון"
+
 #: src/features/settings/components/PrivacyPolicyModal.tsx:141
 msgid "Updates"
 msgstr "עדכונים"
@@ -2172,6 +2185,10 @@ msgstr "כשההעלאה כבויה, הרצאה נחשבת מוכנה ברגע �
 #: src/features/settings/components/BrowserPrereqField.tsx:83
 msgid "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "בלי אחד מהם, FastStudy לא תוכל להוריד הקלטות מאתר הקורס ולא תוכל להוריד הקלטת Zoom. כל השאר פועל כרגיל — הוסף וידאו בעצמך והוא עדיין יהפוך לסיכום. התקן את Chrome דרך הקישור שלמעלה ואז בדוק שוב."
+
+#: src/shared/sidebar/UpdateRow.tsx:50
+msgid "Work in progress will stop. Restart anyway?"
+msgstr "עבודה שבתהליך תיעצר. להפעיל מחדש בכל זאת?"
 
 #: src/features/downloads/components/ManualDownload.tsx:109
 msgid "Works only for video links, and only if they open without signing in."

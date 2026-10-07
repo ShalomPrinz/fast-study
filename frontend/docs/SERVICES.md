@@ -51,6 +51,8 @@ is type-only, so the mutual import with `settings.ts` is erased.
 - **`open`** — non-optional: the whole bridge's absence is the browser-dev test.
 - **`canStoreApiKeys`**, `defaultDataRoot` and `pickFolder` ([SETTINGS.md](SETTINGS.md)), the installed `version`, and
   the OS `locale` ([I18N.md](I18N.md)).
+- **`packaged`** and **`updates`** — `versionTag()` and the sidebar's update row ([LECTURES.md](LECTURES.md) §Sidebar);
+  both optional, so an older launcher degrades to a `dev` tag and no row.
 
 ## `open.ts` — opening a file or a link outside the app
 

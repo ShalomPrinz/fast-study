@@ -74,9 +74,23 @@
 .sidebar-footer {
   margin-top: auto;
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-4);
   padding: var(--space-4);
   border-top: 1px solid var(--sidebar-line);
   flex-shrink: 0;
+}
+
+/* The switcher at the inline start, the version at the inline end — so each flips sides with `dir`. */
+.sidebar-footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.sidebar-version {
+  font-size: var(--fs-fine);
+  color: var(--sidebar-dim);
+  font-variant-numeric: tabular-nums;
 }

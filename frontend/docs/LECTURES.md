@@ -95,8 +95,14 @@ server-side, so no frontend path clears it.
 
 The brand, then five route rows — Lectures, Running pipelines, Downloads, Search, Settings — exactly one
 active per page ([ARCHITECTURE.md](ARCHITECTURE.md) §Routes). Running pipelines shows `current/total`
-while the runner is on; Downloads counts running jobs. The footer holds `LanguageSwitcher`; every glyph is
-inline SVG from `Icon`.
+while the runner is on; Downloads counts running jobs. Every glyph is inline SVG from `Icon`.
+
+The footer is `UpdateRow` above a row with `LanguageSwitcher` at the inline start and the version tag at the
+end — the bridge's `version` when `packaged`, else `dev`. `UpdateRow` follows the launcher's update phase
+(`hooks/useAppUpdate.ts`: a snapshot, then pushes; hidden for `null` and without the bridge):
+`downloading` is a spinner, `downloaded` offers Restart now. That asks first while the runner or a download
+runs, then grays the window until the app quits; a refusal that arrives drops the gray
+([electron/docs/UPDATES.md](../../electron/docs/UPDATES.md)).
 
 Lectures reopens the last lecture page `LecturesLayout` showed (`utils/lastLecture.ts`, never the overview
 page) while the tree still has it, else `/`.

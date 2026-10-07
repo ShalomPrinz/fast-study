@@ -812,6 +812,10 @@ msgstr "Downloading {active} more…"
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
+#: src/shared/sidebar/UpdateRow.tsx:25
+msgid "Downloading update…"
+msgstr "Downloading update…"
+
 #: src/features/downloads/components/RecordingRow.tsx:284
 #: src/features/downloads/components/SectionGroup.tsx:292
 msgid "Downloading…"
@@ -1175,6 +1179,7 @@ msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
 #: src/features/downloads/components/CourseSourceRow.tsx:107
+#: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "Loading…"
 
@@ -1564,6 +1569,10 @@ msgstr "Required"
 msgctxt "section mark"
 msgid "Required"
 msgstr "Required"
+
+#: src/shared/sidebar/UpdateRow.tsx:46
+msgid "Restart now"
+msgstr "Restart now"
 
 #: src/features/lectures/EditSummaryView.tsx:267
 msgid "Restore original"
@@ -2092,6 +2101,10 @@ msgstr "Unsaved changes"
 msgid "Unsupported"
 msgstr "Unsupported"
 
+#: src/shared/sidebar/UpdateRow.tsx:38
+msgid "Updated. Restart to update"
+msgstr "Updated. Restart to update"
+
 #: src/features/settings/components/PrivacyPolicyModal.tsx:141
 msgid "Updates"
 msgstr "Updates"
@@ -2172,6 +2185,10 @@ msgstr "With this off, a lecture is done once its PDF is ready. If you turn it b
 #: src/features/settings/components/BrowserPrereqField.tsx:83
 msgid "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
 msgstr "Without one, FastStudy can't fetch recordings from your course site and can't capture a Zoom recording. Everything else works as usual — add a video yourself and it still becomes a summary. Install Chrome with the link above, then check again."
+
+#: src/shared/sidebar/UpdateRow.tsx:50
+msgid "Work in progress will stop. Restart anyway?"
+msgstr "Work in progress will stop. Restart anyway?"
 
 #: src/features/downloads/components/ManualDownload.tsx:109
 msgid "Works only for video links, and only if they open without signing in."

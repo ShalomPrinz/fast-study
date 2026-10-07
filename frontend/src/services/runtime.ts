@@ -5,6 +5,9 @@ import type { Kind } from '@/types'
 /** What the two `open` calls answer; `error` is English prose from the OS or the database service. */
 export type OpenResult = { ok: boolean; error: string | null }
 
+/** The launcher's update phase; only these two cross the bridge, everything else is `null`. */
+export type UpdateState = 'downloading' | 'downloaded' | null
+
 // The one place `window.faststudy` is declared: two `declare global` blocks for the same property
 // do not compile, so every consumer of the Electron preload bridge reads it from here.
 declare global {
@@ -22,6 +25,15 @@ declare global {
       // The installed app version and the OS language, straight from `app.getVersion()`/`getLocale()`.
       version?: string
       locale?: string
+      // `app.isPackaged`; an unpackaged launcher never updates and its version is not a release.
+      packaged?: boolean
+      // The sidebar's update row. `restart()` never rejects: `ok` means the app is quitting into the
+      // update; a failure after the kill reloads the window, so only a refusal before it may arrive.
+      updates?: {
+        snapshot: () => Promise<UpdateState>
+        subscribe: (callback: (state: UpdateState) => void) => () => void
+        restart: () => Promise<{ ok: boolean; error?: string }>
+      }
       // The packaged data folder the init wall starts from (`%LOCALAPPDATA%\FastStudy\data`).
       defaultDataRoot?: string
       // The stored error-reports switch at page load, false when unset; after a save, the write answers.
@@ -73,6 +85,11 @@ export const canSetErrorReports = typeof runtimeBridge()?.errorReports === 'bool
 // The native folder dialog, or `undefined` in browser dev and on a launcher that predates it — then
 // the data folder stays a typed path.
 export const pickFolder = runtimeBridge()?.pickFolder
+
+/** The sidebar's version tag: the release version when packaged, else "dev" (browser or unpackaged). */
+export function versionTag(bridge = runtimeBridge()): string {
+  return bridge?.packaged && bridge.version ? bridge.version : 'dev'
+}
 
 // The launch secret the services check on every request. Undefined in browser dev, where the
 // services see no `FASTSTUDY_SECRET` and install no check at all — the supported dev state.
