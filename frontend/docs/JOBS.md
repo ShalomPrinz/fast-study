@@ -23,10 +23,12 @@ The provider is mounted in `Layout`, so the connection, the snapshot and the err
 the route — one always-open `EventSource`, the price of following downloads from anywhere. The store is
 module-level, so the provider clears it on unmount.
 
-A non-terminal job that disappears from `/jobs` was lost with the server's in-memory store (a restart),
-since only `done` is ever evicted and only after the bridge. `reconcileVanished` turns it into a codeless
-`error` job (generic "Couldn't download" toast, row shows **Retry ✗**), kept until a new job for the same
-`(course, lecture, kind, ref)` supersedes it; a reload forgets it, as the tracking is per window.
+`GET /jobs` carries a per-process `boot` id, which `reconcileVanished` keeps from the last snapshot (the first
+adopts it; unmount resets it). A non-terminal job that disappears under the same `boot` was a `done` eviction
+or a superseded job and is dropped silently. Under a changed `boot` the server restarted and lost its store,
+so the job becomes a codeless `error` job (generic "Couldn't download" toast, row shows **Retry ✗**), kept
+until a new job for the same `(course, lecture, kind, ref)` supersedes it; a reload forgets it, as the
+tracking is per window. A missing `boot` (older server) is treated as a restart.
 
 ## Grouping by `ref`
 

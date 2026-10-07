@@ -72,13 +72,19 @@ export interface DownloadJob {
   params?: ErrorParams | null
 }
 
-// Every non-evicted job, the source of truth the pings point at. Bypasses the shared client, whose
-// toast per ConnectionError would stack in a reconnect loop.
-export async function fetchJobs(): Promise<DownloadJob[]> {
+export interface JobsSnapshot {
+  boot: string | null
+  jobs: DownloadJob[]
+}
+
+// Every non-evicted job plus the server's per-process `boot` id (null from an older server), the source
+// of truth the pings point at. Bypasses the shared client, whose toast per ConnectionError would stack
+// in a reconnect loop.
+export async function fetchJobs(): Promise<JobsSnapshot> {
   const res = await fetch(downloadServer.url('/jobs'), { headers: secretHeaders() })
   if (!res.ok) throw httpError(res)
-  const data = (await res.json()) as { jobs?: DownloadJob[] }
-  return data.jobs ?? []
+  const data = (await res.json()) as { boot?: string; jobs?: DownloadJob[] }
+  return { boot: data.boot ?? null, jobs: data.jobs ?? [] }
 }
 
 // A contentless ping per job transition; `open` also calls back, for the initial sync and a resync

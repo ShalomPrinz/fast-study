@@ -183,4 +183,34 @@ describe('reconcileVanished', () => {
     expect(retried.jobs.map((j) => j.id)).toEqual(['b'])
     expect(retried.vanished.size).toBe(0)
   })
+
+  it('drops a vanished job silently when the boot id is unchanged (done eviction)', () => {
+    const first = reconcileVanished(empty, [job({ id: 'a' })], 'b1')
+    const second = reconcileVanished(first, [], 'b1')
+    expect(second.jobs).toEqual([])
+    expect(second.vanished.size).toBe(0)
+  })
+
+  it('fails a vanished job when the boot id changed, and adopts the new id', () => {
+    const first = reconcileVanished(empty, [job({ id: 'a' })], 'b1')
+    const second = reconcileVanished(first, [], 'b2')
+    expect(second.jobs).toMatchObject([{ id: 'a', status: 'error', message: null }])
+    expect(second.boot).toBe('b2')
+  })
+
+  it('adopts the id on the first snapshot', () => {
+    expect(reconcileVanished(empty, [job({ id: 'a' })], 'b1').boot).toBe('b1')
+  })
+
+  it('falls back to failing a vanished job when the server sends no boot id', () => {
+    const first = reconcileVanished(empty, [job({ id: 'a' })], 'b1')
+    expect(reconcileVanished(first, [], null).jobs).toMatchObject([{ status: 'error' }])
+  })
+
+  it('still supersedes a failure by a retry under the same boot', () => {
+    const first = reconcileVanished(empty, [job({ id: 'a' })], 'b1')
+    const gone = reconcileVanished(first, [], 'b2')
+    const retried = reconcileVanished(gone, [job({ id: 'b', status: 'queued' })], 'b2')
+    expect(retried.jobs.map((j) => j.id)).toEqual(['b'])
+  })
 })

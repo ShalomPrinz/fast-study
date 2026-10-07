@@ -8,7 +8,7 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import type { DownloadOperation, Kind } from '@/types'
-import type { DownloadJob } from '../services/downloadServer'
+import type { DownloadJob, JobsSnapshot } from '../services/downloadServer'
 import { fetchJobs, subscribeJobs } from '../services/downloadServer'
 import { toastJobError } from '../utils/downloadErrors'
 import { isManualJob } from './ManualDownloadsContext'
@@ -69,24 +69,30 @@ function targetKey(j: DownloadJob): string {
 export interface VanishState {
   active: ReadonlyMap<string, DownloadJob>
   vanished: ReadonlyMap<string, DownloadJob>
+  boot?: string | null
 }
 
-// A non-terminal job that drops off `/jobs` was lost with the server's memory (a restart): it becomes a
-// codeless `error` job, kept until a new job for the same target replaces it, so the row offers a retry.
+// A non-terminal job that drops off `/jobs` under a changed `boot` id was lost with the server's memory
+// (a restart): it becomes a codeless `error` job, kept until a new job for the same target replaces it,
+// so the row offers a retry. Under the same boot it is a `done` eviction and is dropped silently; a
+// missing id (older server) can't tell the two apart and fails it.
 export function reconcileVanished(
   prev: VanishState,
   snapshot: DownloadJob[],
+  boot: string | null = null,
 ): VanishState & { jobs: DownloadJob[] } {
+  const evicted = boot !== null && prev.boot === boot
   const ids = new Set(snapshot.map((j) => j.id))
   const targets = new Set(snapshot.map(targetKey))
   const vanished = new Map<string, DownloadJob>()
   for (const j of prev.active.values())
-    if (!ids.has(j.id)) vanished.set(j.id, { ...j, status: 'error', message: null, code: null })
+    if (!ids.has(j.id) && !evicted)
+      vanished.set(j.id, { ...j, status: 'error', message: null, code: null })
   for (const [id, j] of prev.vanished)
     if (!ids.has(id) && !targets.has(targetKey(j))) vanished.set(id, j)
   for (const [id, j] of vanished) if (targets.has(targetKey(j))) vanished.delete(id)
   const active = new Map(snapshot.filter((j) => !isTerminal(j)).map((j) => [j.id, j]))
-  return { active, vanished, jobs: [...snapshot, ...vanished.values()] }
+  return { active, vanished, boot, jobs: [...snapshot, ...vanished.values()] }
 }
 
 // Shared identity for "this row has no jobs". `useSyncExternalStore` compares snapshots by
@@ -222,13 +228,13 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
   // `primed` guards the first snapshot: its errors are history from before load and must not toast.
   const toastedIds = useRef<Set<string>>(new Set())
   const primed = useRef(false)
-  const vanishState = useRef<VanishState>({ active: new Map(), vanished: new Map() })
+  const vanishState = useRef<VanishState>({ active: new Map(), vanished: new Map(), boot: null })
 
   useEffect(() => {
     let cancelled = false
-    const handleSnapshot = (raw: DownloadJob[]) => {
+    const handleSnapshot = ({ boot, jobs: raw }: JobsSnapshot) => {
       if (cancelled) return
-      const { jobs: snap, ...next } = reconcileVanished(vanishState.current, raw)
+      const { jobs: snap, ...next } = reconcileVanished(vanishState.current, raw, boot)
       vanishState.current = next
       for (const job of snap) {
         if (job.status !== 'error') continue
@@ -256,7 +262,7 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
       close()
       publish([])
       primed.current = false
-      vanishState.current = { active: new Map(), vanished: new Map() }
+      vanishState.current = { active: new Map(), vanished: new Map(), boot: null }
       toastedIds.current.clear()
     }
   }, [])
