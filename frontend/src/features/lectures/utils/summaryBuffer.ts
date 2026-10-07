@@ -23,3 +23,15 @@ export function canUpdatePdf(content: string, dirty: boolean, files: FileStatus 
 export function pdfGenerating(localCycle: boolean, inFlight: InFlightEntry | null): boolean {
   return localCycle || inFlight?.step === 'pdf'
 }
+
+// Whether the `Save & update PDF` button is disabled. Any step in flight blocks it: the run would answer
+// `busy` after the PDF was already deleted, leaving none.
+export function updatePdfDisabled(s: {
+  canUpdate: boolean
+  generating: boolean
+  inflight: boolean
+  loading: boolean
+  diskConflict: boolean
+}): boolean {
+  return !s.canUpdate || s.generating || s.inflight || s.loading || s.diskConflict
+}

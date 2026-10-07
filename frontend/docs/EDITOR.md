@@ -18,7 +18,8 @@ what the user wanted. It runs save → delete `summary.pdf` → run `pdf`, then 
 notifies on every summary write, so the stale chip's mtimes arrive the same way. It is enabled for a
 dirty buffer, a stale PDF or no PDF — stale by the mtime rule (`pdfNeedsUpdate`), not the chip, which a
 render warning outranks — and never for a blank buffer (`canUpdatePdf`), whose save would leave an empty
-`summary.md` and delete a PDF the render cannot replace.
+`summary.md` and delete a PDF the render cannot replace. It is also disabled (title `Step already running`)
+while any step holds the lecture (`isInFlight`): the run would answer `busy` after the PDF was deleted.
 `Restore original` discards every edit and deletes the snapshot, so it is confirm-gated; a failure
 (`summary.md` held open elsewhere) reports like a failed save, in the toolbar and as a toast.
 

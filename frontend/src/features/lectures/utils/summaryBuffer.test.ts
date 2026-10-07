@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { FileStatus, FileInfo, InFlightEntry } from '@/types'
-import { canUpdatePdf, diskChange, pdfGenerating } from './summaryBuffer'
+import { canUpdatePdf, diskChange, pdfGenerating, updatePdfDisabled } from './summaryBuffer'
 
 const info = (over: Partial<FileInfo> = {}): FileInfo => ({
   exists: false,
@@ -86,5 +86,30 @@ describe('pdfGenerating', () => {
 
   it('is idle with nothing running', () => {
     expect(pdfGenerating(false, null)).toBe(false)
+  })
+})
+
+describe('updatePdfDisabled', () => {
+  const ready = {
+    canUpdate: true,
+    generating: false,
+    inflight: false,
+    loading: false,
+    diskConflict: false,
+  }
+
+  it('is enabled when there is work and nothing blocks it', () => {
+    expect(updatePdfDisabled(ready)).toBe(false)
+  })
+
+  it('is disabled while any step holds the lecture', () => {
+    expect(updatePdfDisabled({ ...ready, inflight: true })).toBe(true)
+  })
+
+  it('is disabled with nothing to update, while generating, loading or in conflict', () => {
+    expect(updatePdfDisabled({ ...ready, canUpdate: false })).toBe(true)
+    expect(updatePdfDisabled({ ...ready, generating: true })).toBe(true)
+    expect(updatePdfDisabled({ ...ready, loading: true })).toBe(true)
+    expect(updatePdfDisabled({ ...ready, diskConflict: true })).toBe(true)
   })
 })

@@ -27,7 +27,12 @@ import Icon from '@/shared/components/Icon'
 import PdfViewer from '@/features/lectures/components/PdfViewer'
 import MarkdownEditor from '@/features/lectures/components/MarkdownEditor'
 import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
-import { canUpdatePdf, diskChange, pdfGenerating } from '@/features/lectures/utils/summaryBuffer'
+import {
+  canUpdatePdf,
+  diskChange,
+  pdfGenerating,
+  updatePdfDisabled,
+} from '@/features/lectures/utils/summaryBuffer'
 import { cacheBustedUrl } from '@/features/lectures/utils/pdfUrl'
 import '@/styles/spinner.css'
 import '@/styles/button.css'
@@ -39,7 +44,7 @@ export default function EditSummaryView() {
   const { t } = useLingui()
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
-  const { getError, getInFlight } = useRunnerStatus()
+  const { getError, getInFlight, isInFlight } = useRunnerStatus()
   const { courses, loaded: treeLoaded } = useCourseTreeContext()
   const lectureError: ServiceFailure | null = getError(course, lecture, kind)
 
@@ -229,6 +234,8 @@ export default function EditSummaryView() {
   const canUpdate = canUpdatePdf(content, dirty, files)
   const blank = !loading && !content.trim()
   const generating = pdfGenerating(updating, getInFlight(course, lecture, kind))
+  // A run answers `busy` while any step holds the lecture, after the PDF was already deleted.
+  const inflight = isInFlight(course, lecture, kind)
 
   return (
     <div className="edit-view">
@@ -262,8 +269,16 @@ export default function EditSummaryView() {
           <button
             className="btn btn--primary"
             onClick={handleSaveAndUpdatePdf}
-            disabled={!canUpdate || generating || loading || diskConflict}
-            title={blank ? t`The summary is empty` : canUpdate ? undefined : t`Already up to date`}
+            disabled={updatePdfDisabled({ canUpdate, generating, inflight, loading, diskConflict })}
+            title={
+              inflight
+                ? t`Step already running`
+                : blank
+                  ? t`The summary is empty`
+                  : canUpdate
+                    ? undefined
+                    : t`Already up to date`
+            }
           >
             {generating ? t`Updating PDF…` : t`Save & update PDF`}
           </button>
