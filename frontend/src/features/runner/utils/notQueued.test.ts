@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { Course, FileStatus, InFlightEntry, Lecture, QueueEntry } from '@/types'
-import { notQueued } from './notQueued'
+import type { RunError, Course, FileStatus, InFlightEntry, Lecture, QueueEntry } from '@/types'
+import { inFlightKey } from '@/shared/utils/inFlightKey'
+import { notQueued, notQueuedState } from './notQueued'
 
 function files(...present: string[]): FileStatus {
   const names = [
@@ -93,5 +94,16 @@ describe('notQueued', () => {
   it('leaves an archived course out — the runner never reaches it', () => {
     const tree = [{ ...course('C1', [lecture('L1', 'video.mp4')]), archived: true }]
     expect(notQueued(tree, [], [], false)).toEqual([])
+  })
+})
+
+describe('notQueuedState', () => {
+  const item = { course: 'C1', lecture: 'L1', kind: 'lecture' as const }
+  const err = (code: string) => ({ [inFlightKey('C1', 'L1', 'lecture')]: { code } as RunError })
+
+  it('is pending without an error, failed with one, quota on a provider limit', () => {
+    expect(notQueuedState({}, item)).toBe('pending')
+    expect(notQueuedState(err('ffmpeg_failed'), item)).toBe('failed')
+    expect(notQueuedState(err('gemini_quota_blocked'), item)).toBe('quota')
   })
 })

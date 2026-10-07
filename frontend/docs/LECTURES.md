@@ -63,7 +63,7 @@ every notify together with the tree, never polled. `inFlight` covers active step
 `backend/pipeline/runner.py`**. `/running` is the whole surface for the queue, the in-flight entries and
 the lectures nothing will pick up; the sidebar row reads only `runner` for its badge.
 On `/running` an in-flight row is one link to its lecture. A waiting row's text acts instead, and only its
-trailing icon opens the lecture. A not-queued row runs its pipeline beside the runner, and a queued one
+trailing icon opens the lecture. A not-queued row shows `failed` or `quota` from `errors` (pending otherwise) and runs its pipeline beside the runner, and a queued one
 moves to the front (the head row's text is inert). Either way the reorder arrives over SSE.
 
 `errors` maps each key to `{ step, message, code, params, provider, blocked }`. The "Last error" box and

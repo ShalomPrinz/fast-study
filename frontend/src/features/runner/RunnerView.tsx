@@ -15,7 +15,7 @@ import { moveToFront, runPipeline } from '@/services/backend'
 import { toast, toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
 import { lectureRoute } from '@/shared/utils/url'
-import { notQueued } from './utils/notQueued'
+import { notQueued, notQueuedState } from './utils/notQueued'
 import { canMoveToFront, headerState, nightlyPicksUp } from './utils/runnerState'
 import '@/styles/panel.css'
 import '@/styles/button.css'
@@ -389,7 +389,7 @@ export default function RunnerView() {
                             course={item.course}
                             lecture={item.lecture}
                             kind={item.kind}
-                            state="pending"
+                            state={notQueuedState(status?.errors ?? {}, item)}
                             onActivate={() => void runNow(item.course, item.lecture, item.kind)}
                           />
                         ))}

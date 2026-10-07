@@ -1,4 +1,6 @@
-import type { Course, InFlightEntry, Kind, QueueEntry } from '@/types'
+import type { Course, InFlightEntry, Kind, QueueEntry, RunError } from '@/types'
+import type { StatusNodeState } from '@/shared/components/StatusNode'
+import { isQuotaError } from '@/shared/utils/runError'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import { inFlightKey } from '@/shared/utils/inFlightKey'
 
@@ -37,4 +39,14 @@ export function notQueued(
     }
   }
   return out
+}
+
+/** A not-queued row's glyph: the lecture's last error (failed, or quota on a provider limit), else pending. */
+export function notQueuedState(
+  errors: Record<string, RunError>,
+  item: PendingLecture,
+): StatusNodeState {
+  const error = errors[inFlightKey(item.course, item.lecture, item.kind)]
+  if (!error) return 'pending'
+  return isQuotaError(error.code) ? 'quota' : 'failed'
 }
