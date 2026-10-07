@@ -76,6 +76,10 @@ so `/jobs` holds at most one job per target and the frontend does no client-side
 
 ## The `/jobs` shape
 
+The body is `{ boot, jobs }`. `boot` is an opaque per-process UUID, never persisted: it changes only
+on a restart, so a client whose tracked job is missing from `jobs` fails it only when `boot` differs
+from the one it last saw — a job merely evicted after its `DONE_BRIDGE_MS` bridge keeps the same `boot`.
+Each job is
 `{ id, status, course, lecture, kind, tool, ref, operation, expectedBytes, startedAt, message, code,
 params }`. `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `tool` via
 `services/timing.js`. `ref` (or `null`) is the discovery row that spawned the job; jobs sharing a

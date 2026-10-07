@@ -6,6 +6,9 @@ import { operationForTool } from './services/timing.js';
 // The download registry a consumer outside this process can read (docs/JOBS.md).
 const jobs = new Map();
 
+// Per-process id: a client tells a restart (jobs gone) from an eviction by it changing.
+export const BOOT_ID = randomUUID();
+
 // A `done` job lingers only to bridge the sub-second gap until the database tree SSE flips
 // the frontend row green — the tree, not the job, owns the durable "downloaded" state.
 export const DONE_BRIDGE_MS = 60 * 1000;

@@ -64,7 +64,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                 |
 | `POST /runs/:id/cancel`                   | abandon the rest of a run                                                                                         |
 | `GET  /events`                            | SSE: contentless `job:change` / `run:change` ping per transition                                                  |
-| `GET  /jobs`                              | every live download job — the resync for `job:change`                                                             |
+| `GET  /jobs`                              | `{boot, jobs}` — every live download job plus a per-process boot id; the resync for `job:change`                  |
 | `GET  /runs`                              | every current section run, one per `sectionId` — the resync for `run:change`                                      |
 | `POST /upload-pdf?course=&lecture=&kind=` | forward raw PDF bytes to the database's appending `/materials`                                                    |
 
