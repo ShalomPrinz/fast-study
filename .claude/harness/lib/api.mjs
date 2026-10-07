@@ -17,6 +17,12 @@ export function bindPorts(paths, ports = readPorts(paths)) {
   SITE = `http://127.0.0.1:${PORTS.site}`;
 }
 
+/** A connection failure naming the method, the url and the underlying cause that undici hides behind "fetch failed". */
+export function wrapFetchError(method, url, error) {
+  const cause = error.cause?.message ?? error.cause?.code ?? error.message;
+  return new Error(`${method} ${url} failed: ${error.message} (${cause})`, { cause: error });
+}
+
 /** One request; a non-2xx is an error naming the method, the route and the body it answered. */
 export async function call(url, { method = 'GET', body, headers = {}, expect = true } = {}) {
   const response = await fetch(url, {
@@ -24,6 +30,8 @@ export async function call(url, { method = 'GET', body, headers = {}, expect = t
     headers,
     body,
     signal: AbortSignal.timeout(120_000),
+  }).catch((error) => {
+    throw wrapFetchError(method, url, error);
   });
   const text = await response.text();
   if (expect && !response.ok) {

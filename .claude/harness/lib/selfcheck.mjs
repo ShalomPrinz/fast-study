@@ -5,7 +5,17 @@ import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { promisify } from 'node:util';
-import { AUTO, BACKEND, DATABASE, PROVIDERS, SITE, call, json, waitForFile } from './api.mjs';
+import {
+  AUTO,
+  BACKEND,
+  DATABASE,
+  PROVIDERS,
+  SITE,
+  call,
+  json,
+  lectureFile,
+  waitForFile,
+} from './api.mjs';
 import { backendGeminiModel, connectDrive } from './baseline.mjs';
 import { appServices, appUrl, openBrowser } from './browser.mjs';
 import {
@@ -21,6 +31,7 @@ import {
   pythonEnv,
   nodeEnv,
 } from './env.mjs';
+import { containsFixtureParagraph, fixtureParagraphs } from './fixture.mjs';
 import { SELFCHECK } from './seed.mjs';
 
 const run = promisify(execFile);
@@ -118,6 +129,11 @@ async function settingsWritesMissTheRealEnv(paths) {
 async function aPipelineStepRunsGreen() {
   const { course, lecture } = SELFCHECK;
   const base = `${BACKEND}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}`;
+  // A previous run's files would satisfy waitForFile at once, and any earlier Groq read shifts the paragraph.
+  for (const name of ['transcript.txt', 'audio.mp3']) {
+    await call(lectureFile(course, lecture, name), { method: 'DELETE', expect: false });
+  }
+  await json(`${PROVIDERS}/control`, 'POST', { reset: true });
   await call(`${base}/run/audio`, { method: 'POST' });
   await waitForFile(course, lecture, 'audio.mp3');
   await call(`${base}/run/transcribe`, { method: 'POST' });
@@ -125,7 +141,7 @@ async function aPipelineStepRunsGreen() {
   const { body } = await call(
     `${DATABASE}/courses/${encodeURIComponent(course)}/lectures/${encodeURIComponent(lecture)}/files/transcript.txt`,
   );
-  if (!String(body).includes('סיבוכיות')) {
+  if (!containsFixtureParagraph(String(body), fixtureParagraphs())) {
     throw new Error(`the transcript is not the fixture text (got ${String(body).slice(0, 80)})`);
   }
   return 'audio (real ffmpeg) → transcribe (fake Groq) landed the fixture transcript';
