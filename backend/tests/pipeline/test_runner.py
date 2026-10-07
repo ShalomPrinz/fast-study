@@ -875,6 +875,39 @@ def test_groq_limit_blocks_transcribe_for_later_lectures():
         runner._transcribe_block = None
 
 
+def test_groq_blocked_error_carries_stated_retry_after():
+    """The delay Groq stated reaches the blocked lecture's error params unchanged."""
+    params = {**GROQ_PARAMS, "retry_after_seconds": 61.25}
+
+    async def fake_fetch(course, lecture, kind):
+        return _files(video=True, audio=True)
+
+    async def fake_call(course, lecture, kind, step):
+        return {**_groq_error_result(), "params": params}
+
+    async def go():
+        with (
+            patch.object(runner, "_fetch_files", fake_fetch),
+            patch.object(runner, "_call_step", fake_call),
+            patch.object(runner.db_client, "notify"),
+        ):
+            runner._queue[:] = [
+                runner.QueueEntry("C1", lecture, "lecture", "full")
+                for lecture in ("L1", "L2")
+            ]
+            await runner.run_all()
+
+    try:
+        asyncio.run(go())
+        blocked = runner._errors[runner._skey("C1", "L2", "lecture")]
+        assert blocked["code"] == "groq_rate_limit_blocked"
+        assert blocked["params"]["retry_after_seconds"] == 61.25
+    finally:
+        runner._errors.clear()
+        runner._queue.clear()
+        runner._transcribe_block = None
+
+
 def test_transcribe_start_clears_groq_records_and_lifts_block():
     """Any transcribe attempt drops every Groq record and the run's stop; others stay."""
     runner._errors.update(
