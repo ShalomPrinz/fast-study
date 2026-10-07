@@ -25,7 +25,10 @@ split is for cost: over the largest course a one-letter Hebrew query finds 15k m
 them in ~15ms, while building every snippet took ~1s and froze the tab on the first keystroke. Grouping
 stays eager (the counts need it); strings are built only for the groups on screen.
 
-Case-insensitive substring over a regex-escaped query. Whole-word checks the adjacent characters against
+Case-insensitive substring over a regex-escaped query, matched against the text **as the snippet displays
+it** (markup dropped, pipes as `·`, whitespace collapsed, separator rows blank; cached per summary with
+a displayed-to-raw offset map), so what a user reads is what they can search; the query's whitespace is
+collapsed too. Matches still carry raw offsets, and raw markup like `**bold` no longer matches. Whole-word checks the adjacent characters against
 an explicit letter/digit class including Hebrew letters and niqqud, because JS `\b` doesn't know Hebrew
 letters. Hebrew punctuation (geresh, gershayim, maqaf, sof pasuq) is outside the class: `״ספר״` is a
 whole-word hit for `ספר`.
@@ -35,8 +38,8 @@ whole-word hit for `ספר`.
 A match's window is **the sentence containing it**, delimiter to delimiter (`.` `?` `!` `;` `:` `…` or a
 line break, which ends a markdown heading, bullet or paragraph), with the line's block marker (heading,
 quote, bullet, `1.`) stripped; a table row's window is the whole row. Paired `**`/`__` are dropped — paired
-on the whole line, since a window can hold only the closer — a row's pipes become ` · `, a `|---|` row never
-matches, and `$…$` math, code spans and the match's own characters are left as written. There is **no length clamp**: a character cut lands mid-word, and a whole sentence is the smallest unit
+on the whole line, since a window can hold only the closer — a row's pipes become `·`, a `|---|` row never
+matches, and `$…$` math and code spans are left as written. There is **no length clamp**: a character cut lands mid-word, and a whole sentence is the smallest unit
 that reads correctly — so a delimiter-less paragraph renders in full, and no ellipsis is ever needed.
 
 Overlapping windows merge into one snippet with several `<mark>`s — with sentence windows, exactly the

@@ -252,12 +252,20 @@ describe('buildHit', () => {
       ])
     })
 
-    it('leaves markup the query itself contains highlighted as typed', () => {
-      const doc = lecture('- **bold** text')
-      const [hit] = hitsFor([doc], '**bold')
+    it('finds text as the snippet displays it', () => {
+      const merge = lecture('## סיכום\n1. **מיון מיזוג** — $O(n \\log n)$')
+      const table = lecture('| חיפוש לינארי | אין | $O(n)$ |')
+      const spaced = lecture('alpha   beta\ngamma')
 
-      expect(highlighted(hit)).toEqual(['**bold'])
-      expect(hit.snippet).toBe('**bold text')
+      expect(hitsFor([merge], 'מיון מיזוג —')).toHaveLength(1)
+      expect(highlighted(hitsFor([merge], 'מיון מיזוג —')[0])).toEqual(['מיון מיזוג —'])
+      expect(highlighted(hitsFor([table], 'חיפוש לינארי · אין')[0])).toEqual(['חיפוש לינארי · אין'])
+      expect(highlighted(hitsFor([spaced], 'alpha  beta')[0])).toEqual(['alpha beta'])
+      expect(findMatches([spaced], 'beta gamma')).toHaveLength(1)
+    })
+
+    it('no longer finds raw markup that the snippet does not show', () => {
+      expect(findMatches([lecture('- **bold** text')], '**bold')).toEqual([])
     })
   })
 })

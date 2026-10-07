@@ -66,34 +66,71 @@ function isTableSeparator(content: string, lineStart: number, lineEnd: number): 
   return /^[\s|:-]+$/.test(line) && line.includes('|') && line.includes('-')
 }
 
-/** Every case-insensitive occurrence as a position only — strings are left to `buildHit`, since a
- *  one-letter Hebrew query matches ~15k times. See docs/SEARCH.md. */
+// A summary's text as its snippets display it (markup dropped, pipes as cell separators, whitespace
+// collapsed, separator rows blank), with each character's raw offset. Cached per summary.
+interface Normalized {
+  text: string
+  rawAt: number[]
+}
+const normalizedCache = new WeakMap<CourseSummary, Normalized>()
+
+function normalize(summary: CourseSummary): Normalized {
+  const cached = normalizedCache.get(summary)
+  if (cached) return cached
+  const { content } = summary
+  const rawAt: number[] = []
+  let text = ''
+  const emit = (ch: string, at: number) => {
+    if (/\s/.test(ch)) {
+      if (text && !text.endsWith(' ')) {
+        text += ' '
+        rawAt.push(at)
+      }
+    } else {
+      text += ch
+      rawAt.push(at)
+    }
+  }
+
+  for (let ls = 0; ls <= content.length;) {
+    const le = lineEndOf(content, ls)
+    const edits = new Map<number, string>()
+    if (isTableSeparator(content, ls, le)) emit(' ', ls)
+    else {
+      markupEdits(content, ls, le, edits)
+      for (let i = ls; i < le; i++) for (const ch of edits.get(i) ?? content[i]) emit(ch, i)
+    }
+    emit('\n', le)
+    ls = le + 1
+  }
+
+  const result = { text, rawAt }
+  normalizedCache.set(summary, result)
+  return result
+}
+
+/** Every case-insensitive occurrence of the query in the text as displayed, as a raw position only —
+ *  strings are left to `buildHit`, since a one-letter Hebrew query matches ~15k times. See
+ *  docs/SEARCH.md. */
 export function findMatches(
   summaries: CourseSummary[],
   query: string,
   options: { wholeWord?: boolean } = {},
 ): Match[] {
-  const needle = query.trim()
+  const needle = query.trim().replace(/\s+/g, ' ')
   if (!needle) return []
 
   const re = new RegExp(escapeRegExp(needle), 'gi')
   const matches: Match[] = []
 
   for (const summary of summaries) {
-    const { content } = summary
+    const { text, rawAt } = normalize(summary)
     re.lastIndex = 0
     let m: RegExpExecArray | null
-    while ((m = re.exec(content)) !== null) {
-      const index = m.index
-      const end = index + m[0].length
-      if (options.wholeWord && (isWordChar(content[index - 1]) || isWordChar(content[end])))
-        continue
-      if (
-        /^[\s|:-]+$/.test(m[0]) &&
-        isTableSeparator(content, lineStartOf(content, index), lineEndOf(content, end))
-      )
-        continue
-      matches.push({ summary, index, end })
+    while ((m = re.exec(text)) !== null) {
+      const end = m.index + m[0].length
+      if (options.wholeWord && (isWordChar(text[m.index - 1]) || isWordChar(text[end]))) continue
+      matches.push({ summary, index: rawAt[m.index], end: rawAt[end - 1] + 1 })
     }
   }
 
@@ -212,15 +249,14 @@ export function buildHit(group: MatchGroup): Hit {
   }
 
   // Raw offsets map to snippet offsets as the walk goes, so a range is recorded where it lands. A
-  // match's own characters are never rewritten: a query for literal markup stays highlighted.
+  // match's first character is kept by the normalization, so its start always lands.
   const ranges: { start: number; end: number }[] = []
   let m = 0
   let start = 0
   for (let i = from; i < to; i++) {
     const match = matches[m]
     if (match && i === match.index) start = snippet.length
-    const inMatch = match !== undefined && i >= match.index
-    emit(inMatch ? content[i] : (edits.get(i) ?? content[i]))
+    emit(edits.get(i) ?? content[i])
     if (match && i === match.end - 1) {
       ranges.push({ start, end: snippet.length })
       m++
