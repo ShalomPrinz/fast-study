@@ -8,8 +8,6 @@ export interface RemoteInflight {
   startedAt: number
   timingStats: TimingStats | null
   completedFraction: number
-  sleepingUntil: string | null
-  progress: { completed: number; total: number } | null
 }
 
 interface Args {
@@ -42,9 +40,7 @@ export function useRemoteInflightState({
   const startedAtMs = Date.parse(entry.startedAt)
 
   let completedFraction = 0
-  if (entry.progress && entry.progress.total > 0) {
-    completedFraction = entry.progress.completed / entry.progress.total
-  } else if (
+  if (
     step === 'transcribe' &&
     files?.['transcript.partial.txt'].exists &&
     transcribePartial &&
@@ -58,7 +54,5 @@ export function useRemoteInflightState({
     startedAt: Number.isFinite(startedAtMs) ? startedAtMs : Date.now(),
     timingStats,
     completedFraction,
-    sleepingUntil: entry.sleepingUntil,
-    progress: entry.progress,
   }
 }

@@ -68,6 +68,12 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   gemini_quota_blocked: msg({
     message: "Gemini's daily quota is used up. It resets at midnight Pacific time.",
   }),
+  groq_rate_limited: msg({
+    message: "Groq's rate limit was reached. Try again in a few minutes.",
+  }),
+  groq_rate_limit_blocked: msg({
+    message: "Groq's rate limit was reached, so this step was not attempted.",
+  }),
   summarization_failed: msg({ message: 'Summarizing the transcript failed.' }),
   pdf_tool_timeout: msg({
     message: 'Building the PDF took too long and was stopped after {seconds} seconds.',

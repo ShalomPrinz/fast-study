@@ -38,8 +38,6 @@ const running = (c: string, l: string): InFlightEntry => ({
   kind: 'lecture',
   step: 'transcribe',
   startedAt: '2026-01-01T00:00:00Z',
-  sleepingUntil: null,
-  progress: null,
 })
 
 describe('notQueued', () => {

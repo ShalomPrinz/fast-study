@@ -77,8 +77,6 @@ interface RawInFlightEntry {
   kind: Kind
   step: string
   started_at: string
-  sleeping_until: string | null
-  progress: { completed: number; total: number } | null
 }
 
 interface RawRunnerStatus {
@@ -103,8 +101,6 @@ function normalizeRunner(raw: RawRunnerStatus): RunnerStatus {
       kind: e.kind,
       step: e.step,
       startedAt: e.started_at,
-      sleepingUntil: e.sleeping_until,
-      progress: e.progress,
     })),
     queue: raw.queue ?? [],
     overviewRunning: raw.overview_running ?? [],

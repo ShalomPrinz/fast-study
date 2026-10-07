@@ -70,8 +70,6 @@ describe('pdfGenerating', () => {
     kind: 'lecture',
     step,
     startedAt: '2026-01-01T00:00:00Z',
-    sleepingUntil: null,
-    progress: null,
   })
 
   it('is generating while the view runs its own save cycle', () => {

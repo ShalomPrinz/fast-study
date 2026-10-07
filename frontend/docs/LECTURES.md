@@ -39,8 +39,8 @@ it derives from `PIPELINE` order rather than a per-step list. A refused delete (
 user's PDF app) toasts and stops before the step, which would only hit the same lock; the editor's
 re-export and a material delete share the guard.
 
-Rate limiting is not an error: with `sleepingUntil` set, the view shows a countdown with the chunk
-progress instead of a failure, and the row drops its ETA bar.
+A provider quota or rate limit is an error like any other: `gemini_quota_*` and `groq_rate_limit*` codes
+(`isQuotaError`) mark the step with the quota glyph, and a `blocked` record is not toasted again per lecture.
 
 ## Materials
 
@@ -68,8 +68,8 @@ moves to the front (the head row's text is inert). Either way the reorder arrive
 
 `errors` maps each key to `{ step, message, code, params, provider, blocked }`. The "Last error" box and
 the toast both render it through `ServiceError` ([I18N.md](I18N.md)), the toast led by `LectureLead`, the lecture and course
-`parseInFlightKey` reads off the key, since it shows on any page; `isGeminiQuota` (`utils/runError.ts`)
-tests the two quota codes `backend/pipeline/runner.py` spells, which is also what marks the row's glyph.
+`parseInFlightKey` reads off the key, since it shows on any page; `isQuotaError` (`utils/runError.ts`)
+tests the four quota codes (two Gemini, two Groq) `backend/pipeline/runner.py` spells, which is also what marks the row's glyph.
 
 Error toasts go through `useReportOnce`, which dedupes `(key, failureId)` across refreshes; `prune` lets a
 key fire again if the error recurs. A quota toasts only when not `blocked` — the lecture that hit the limit,

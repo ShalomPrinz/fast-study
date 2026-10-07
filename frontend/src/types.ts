@@ -107,8 +107,6 @@ export interface InFlightEntry {
   kind: Kind
   step: string
   startedAt: string
-  sleepingUntil: string | null
-  progress: { completed: number; total: number } | null
 }
 
 // How far an entry's trigger may take it: `full` is every remaining step, `audio` stops at audio.mp3.

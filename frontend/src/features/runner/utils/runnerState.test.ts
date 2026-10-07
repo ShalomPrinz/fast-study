@@ -8,8 +8,6 @@ const entry: InFlightEntry = {
   kind: 'lecture',
   step: 'pdf',
   startedAt: '2026-09-30T10:00:00Z',
-  sleepingUntil: null,
-  progress: null,
 }
 
 function status(running: boolean, inFlight: InFlightEntry[], done = 0, total = 0): RunnerStatus {

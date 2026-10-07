@@ -14,7 +14,6 @@ import Icon from '@/shared/components/Icon'
 import { moveToFront, runPipeline } from '@/services/backend'
 import { toast, toastInitResult } from '@/services/toaster'
 import { toastFailure } from '@/shared/utils/failure'
-import { formatClockTime } from '@/shared/utils/format'
 import { lectureRoute } from '@/shared/utils/url'
 import { notQueued } from './utils/notQueued'
 import { canMoveToFront, headerState, nightlyPicksUp } from './utils/runnerState'
@@ -165,23 +164,12 @@ function FocusCard({ entry }: { entry: InFlightEntry }) {
       )}
 
       <div>
-        {remote?.progress && (
-          <p className="row-sub">
-            {t`${remote.progress.completed} of ${remote.progress.total} parts`}
-          </p>
-        )}
-        {entry.sleepingUntil ? (
-          <p className="row-sub row-sub--warn">
-            {t`Rate limited — resumes at ${formatClockTime(entry.sleepingUntil)}`}
-          </p>
-        ) : (
-          remote && (
-            <ProgressBar
-              stats={remote.timingStats}
-              startedAt={remote.startedAt}
-              completedFraction={remote.completedFraction}
-            />
-          )
+        {remote && (
+          <ProgressBar
+            stats={remote.timingStats}
+            startedAt={remote.startedAt}
+            completedFraction={remote.completedFraction}
+          />
         )}
       </div>
     </div>
@@ -307,19 +295,11 @@ export default function RunnerView() {
                                 course={entry.course}
                                 lecture={entry.lecture}
                                 kind={entry.kind}
-                                state={entry.sleepingUntil ? 'paused' : 'running'}
+                                state="running"
                                 chip={
-                                  entry.sleepingUntil ? (
-                                    <span className="chip chip--warn">
-                                      {t`Quota · resumes ${formatClockTime(entry.sleepingUntil)}`}
-                                    </span>
-                                  ) : (
-                                    <span className="chip chip--accent">
-                                      {stage
-                                        ? t(stage.runningLabel ?? stage.stageLabel)
-                                        : entry.step}
-                                    </span>
-                                  )
+                                  <span className="chip chip--accent">
+                                    {stage ? t(stage.runningLabel ?? stage.stageLabel) : entry.step}
+                                  </span>
                                 }
                               />
                             )

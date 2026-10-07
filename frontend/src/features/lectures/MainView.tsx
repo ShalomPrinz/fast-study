@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect } from 'react'
+import { Fragment, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useNavigate } from 'react-router-dom'
@@ -68,42 +68,6 @@ function MaterialIndicator({
   if (!indicator) return null
 
   return <span className={`chip material-indicator ${indicator.cls}`}>{indicator.text}</span>
-}
-
-function RateLimitPanel({
-  sleepingUntil,
-  progress,
-}: {
-  sleepingUntil: string
-  progress: { completed: number; total: number } | null
-}) {
-  const { t } = useLingui()
-  const [now, setNow] = useState(() => Date.now())
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 500)
-    return () => clearInterval(id)
-  }, [])
-
-  const remaining = Math.max((new Date(sleepingUntil).getTime() - now) / 1000, 0)
-
-  return (
-    <div className="rate-limit-panel">
-      <h4 className="rate-limit-title">
-        <Trans>Groq rate limit reached</Trans>
-      </h4>
-      {progress && (
-        <p className="rate-limit-progress">
-          <Trans>
-            {progress.completed}/{progress.total} parts transcribed so far
-          </Trans>
-        </p>
-      )}
-      <p className="rate-limit-countdown">
-        {remaining > 0 ? t`Retry in ${formatDuration(remaining)}` : t`Ready to retry`}
-      </p>
-    </div>
-  )
 }
 
 export default function MainView() {
@@ -331,14 +295,8 @@ export default function MainView() {
                 ? t`Continue transcription`
                 : actionLabel && t(actionLabel)
 
-              const chunks = remote?.progress
               const size = files[file].size
-              const subtitle =
-                isRunning && chunks
-                  ? t`${chunks.completed} of ${chunks.total} parts`
-                  : exists && size !== null
-                    ? formatBytes(size)
-                    : null
+              const subtitle = !isRunning && exists && size !== null ? formatBytes(size) : null
 
               return (
                 <div
@@ -376,8 +334,7 @@ export default function MainView() {
                       {file}
                       {subtitle && ` · ${subtitle}`}
                     </p>
-                    {/* A rate-limit sleep is a pause, not a slow step: the panel below counts it down. */}
-                    {isRunning && remote && remote.sleepingUntil == null && (
+                    {isRunning && remote && (
                       <ProgressBar
                         stats={remote.timingStats}
                         startedAt={remote.startedAt}
@@ -457,10 +414,6 @@ export default function MainView() {
                 <ServiceError failure={lectureError} />
               </span>
             </div>
-          )}
-
-          {remote?.sleepingUntil != null && (
-            <RateLimitPanel sleepingUntil={remote.sleepingUntil} progress={remote.progress} />
           )}
         </div>
       </div>

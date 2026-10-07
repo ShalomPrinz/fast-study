@@ -118,8 +118,6 @@ function status(running: boolean, lectures: string[]): RunnerStatus {
       kind: 'lecture' as const,
       step: 'transcribe',
       startedAt: '',
-      sleepingUntil: null,
-      progress: null,
     })),
     errors: {},
   }

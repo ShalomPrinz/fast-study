@@ -6,7 +6,7 @@ import { fetchTree } from '@/services/database'
 import { isConnectionError } from '@/services/http'
 import { toast } from '@/services/toaster'
 import { inFlightKey, parseInFlightKey } from '@/shared/utils/inFlightKey'
-import { isGeminiQuota } from '@/shared/utils/runError'
+import { isQuotaError } from '@/shared/utils/runError'
 import { failureId, type ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import LectureLead from '@/shared/components/LectureLead'
@@ -74,7 +74,7 @@ export function SnapshotProvider({ sendUpdate, children }: ProviderProps) {
     // A quota toasts only on the lecture that hit the limit; the ones run-all then stopped at
     // summarize are `blocked`, or one batch would toast the same sentence once per lecture.
     for (const [key, error] of Object.entries(s.errors)) {
-      if (isGeminiQuota(error.code) && error.blocked) continue
+      if (isQuotaError(error.code) && error.blocked) continue
       announce(key, error)
     }
     statusPrimed.current = true

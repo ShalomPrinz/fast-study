@@ -15,8 +15,6 @@ const running = (course: string, lecture: string, kind: Kind = 'lecture'): InFli
   kind,
   step: 'transcribe',
   startedAt: '2026-01-01T00:00:00Z',
-  sleepingUntil: null,
-  progress: null,
 })
 
 describe('isLectureRenameLocked', () => {
