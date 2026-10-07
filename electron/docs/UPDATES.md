@@ -6,11 +6,16 @@
 
 ## Silent on success, visible on the failure screen
 
-One check per launch. On a successful boot it is fired from `runBoot()` right after the window
-navigates to the frontend — not before, so the check never competes with four service starts and
-never sits on the path that decides whether the app comes up. A newer release downloads in the
-background and NSIS installs it the next time the app quits. **Nothing reaches the screen** then: no
-dialog, no notification, no banner.
+One check at launch, then one every 4 hours while the app stays open, so a release published
+mid-session is already downloaded when the user closes it. The launch check is fired from `runBoot()`
+right after the window navigates to the frontend — not before, so it never competes with four service
+starts and never sits on the path that decides whether the app comes up. A newer release downloads in
+the background and NSIS installs it the next time the app quits. **Nothing reaches the screen** then:
+no dialog, no notification, no banner.
+
+The recheck timer is `unref`'d, skips a tick while a check is still running, and stops for good on
+`update-downloaded` (another check could replace the pending installer). A failed recheck is logged
+and dropped, and once the first recheck runs the launch screen's phases freeze.
 
 The one visible surface is the launch screen's failure view: a failed boot may be a bad install the
 next release fixes, so `runBoot()`'s failure path calls `startUpdater(log, onPhase)` and publishes the
@@ -26,8 +31,8 @@ never demotes `downloaded`). `boot.js` renders them in English:
 | `downloaded`  | check mark + green "Update complete. Please close the app and open it again." |
 | `error`       | "Could not check for updates. Check your internet connection, then close and reopen the app. If it keeps failing, please contact us and report this issue." |
 
-The `started` guard still makes it one check per launch: Try again and a second failure only attach
-a listener and replay the current phase, never a second check or download. The listener ignores
+The `started` guard makes the updater start once per launch: Try again and a second failure only
+attach a listener and replay the current phase, never a second timer, check or download. The listener ignores
 phases once a retry has succeeded, so a launch that comes up stays silent. The row is hidden in dev,
 where the updater no-ops.
 
