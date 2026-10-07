@@ -12,7 +12,9 @@ Start by reading the actual diff (`git status --short`, `git diff`, `git diff --
 - Format: `bash .claude/hooks/format.sh </dev/null` — the format hook otherwise runs only at the end of the turn and would reformat files after they were committed.
 - `npm run lint` passes from the repo root.
 - Each touched service's tests passed — in the subagent's report, or rerun when the main session edited that service itself.
-- Then run the `reviewer` subagent once per task, with a brief naming what the change is meant to do, the tree it lives in (the worktree path in worktree mode), and the paths it covers. Fix its blocking findings, then run it again with a brief naming only the fix and the paths it touched.
+- Then run the `reviewer` subagent on the task's diff before its first commit, with a brief naming what the change is meant to do, the tree it lives in (the worktree path in worktree mode), and the paths it covers.
+- Nothing is committed while a blocking finding is open. Fix it, then run the reviewer again with a brief naming only the fix and the paths it touched — however small the fix — until no blocking finding remains.
+- Fix each should-fix finding, or name it in the final report to the user with why it was left; cosmetic findings are optional.
 - A behaviour change carries its owning `CLAUDE.md`/`docs/` update in the same commit, and a new error code its `docs/ERROR-CODES.md` row.
 - Nothing secret is staged: never `.env`, `backend/credentials.json`, `backend/token*.json`, or anything under `.state/`.
 
