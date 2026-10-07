@@ -340,7 +340,7 @@ The fakes take a mode, so the quota and outage flows need no real quota:
 
 ```bash
 P=$(node .claude/harness/hb.mjs url providers); S=$(node .claude/harness/hb.mjs url site)
-curl -s $P/control -d '{"gemini":"429"}'   # every call; groq: ok | 429 | 500 | empty
+curl -s $P/control -d '{"gemini":"429"}'   # every call; `429min` is Gemini's per-minute quota; groq: ok | 429 | 500 | empty
 curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
 curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok

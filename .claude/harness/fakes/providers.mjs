@@ -76,7 +76,7 @@ function groqRateLimit(res) {
 
 // Gemini's 429: the SDK error carries this body through, and llm_client digs the QuotaFailure and
 // RetryInfo details out of it to build the message the lecture view shows.
-function geminiRateLimit(res) {
+function geminiRateLimit(res, perMinute = false) {
   json(res, 429, {
     error: {
       code: 429,
@@ -88,12 +88,17 @@ function geminiRateLimit(res) {
           violations: [
             {
               quotaMetric: 'generativelanguage.googleapis.com/generate_content_free_tier_requests',
-              quotaId: 'GenerateRequestsPerDayPerProjectPerModel-FreeTier',
+              quotaId: perMinute
+                ? 'GenerateRequestsPerMinutePerProjectPerModel-FreeTier'
+                : 'GenerateRequestsPerDayPerProjectPerModel-FreeTier',
               quotaValue: '50',
             },
           ],
         },
-        { '@type': 'type.googleapis.com/google.rpc.RetryInfo', retryDelay: '41s' },
+        {
+          '@type': 'type.googleapis.com/google.rpc.RetryInfo',
+          retryDelay: perMinute ? '30s' : '41s',
+        },
       ],
     },
   });
@@ -218,8 +223,9 @@ async function handle(req, res) {
   }
   if (route.includes('/v1beta/models/') && route.endsWith(':generateContent')) {
     await readBody(req);
-    const fail = await failure('gemini', req, ['429', '500', 'empty', 'slow']);
+    const fail = await failure('gemini', req, ['429', '429min', '500', 'empty', 'slow']);
     if (fail === '429') return geminiRateLimit(res);
+    if (fail === '429min') return geminiRateLimit(res, true);
     if (fail === '500')
       return json(res, 500, { error: { code: 500, message: 'fake gemini is down' } });
     const body = fail === 'empty' ? '' : SUMMARY;

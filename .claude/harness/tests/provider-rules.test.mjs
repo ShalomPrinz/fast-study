@@ -4,9 +4,13 @@ import { OK, createRules, parseRule } from '../fakes/provider-rules.mjs';
 
 // The header as the shim stamps it: percent-encoded, slashes kept.
 const header = (lecture) => lecture.split('/').map(encodeURIComponent).join('/');
-const ALL = ['429', '500', 'empty', 'slow', 'invalidkey'];
+const ALL = ['429', '429min', '500', 'empty', 'slow', 'invalidkey'];
 
 describe('parseRule', () => {
+  test('429min is Gemini only', () => {
+    assert.equal(parseRule('gemini', '429min').mode, '429min');
+    assert.throws(() => parseRule('groq', '429min'), /groq mode must be one of/);
+  });
   test('a bare string is the untargeted rule', () => {
     assert.deepEqual(parseRule('gemini', '429'), { ...OK, mode: '429' });
   });

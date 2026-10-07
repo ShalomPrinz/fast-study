@@ -4,10 +4,10 @@
 // Each provider's rule: `mode` is what a matching request gets, `match` limits it to the lectures
 // whose `x-harness-lecture` path holds it as whole segments, and `times` drains one per hit, back
 // to 'ok' at zero. 'empty' is the "model returned nothing" branch each step has its own message for;
-// 'slow' holds the call `ms` and then answers as 'ok', so a step stays in flight on demand.
+// '429min' is Gemini's per-minute quota rather than the per-day one; 'slow' holds the call `ms` and then answers as 'ok', so a step stays in flight on demand.
 export const MODES = {
   groq: ['ok', '429', '500', 'empty', 'slow'],
-  gemini: ['ok', '429', '500', 'empty', 'invalidkey', 'slow'],
+  gemini: ['ok', '429', '429min', '500', 'empty', 'invalidkey', 'slow'],
 };
 export const OK = { mode: 'ok', match: null, times: null, ms: null };
 
