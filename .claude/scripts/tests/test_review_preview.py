@@ -92,7 +92,7 @@ def test_untracked_file_content_and_doc_hygiene(
         and "broken link `database/CLAUDE.md`" not in out
     )
     assert "`CLAUDE.md:1`: `@docs/gone.md` inlines a file" in out
-    assert "check 4 not needed" in out
+    assert "check 3 not needed" in out
     assert git("status", "--porcelain", cwd=repo).splitlines() == [
         "?? CLAUDE.md",
         "?? notes.md",
@@ -137,3 +137,26 @@ def test_js_export_stale_reference_and_path_filter(repo: Path) -> None:
         and "frontend/src/App.tsx:" in out
     )
     assert "database/fs/paths.py" not in out
+
+
+def test_multiline_comments_show_only_changed_two_plus_line_blocks(repo: Path) -> None:
+    (repo / "database/fs/tree.py").write_text(
+        "# one line\nx = 1\n# first\n# second\ny = 2\n"
+        'def f():\n    """Doc first.\n\n    Doc second.\n    """\n'
+    )
+    (repo / "frontend/src/api.ts").write_text(
+        "/**\n * only one\n */\nexport function loadTree() {}\n"
+        "// a\n// b\nclass A { #priv = 1 }\n"
+    )
+    out = preview(repo)
+    assert "`database/fs/tree.py:3-4` (2 lines): first" in out
+    assert "`database/fs/tree.py:7-10` (2 lines): Doc first." in out
+    assert "`frontend/src/api.ts:5-6` (2 lines): a" in out
+    assert "one line" not in out and "only one" not in out and "priv" not in out
+
+
+def test_multiline_comment_untouched_by_diff_is_not_shown(repo: Path) -> None:
+    (repo / "database/fs/tree.py").write_text("# old\n# block\nx = 1\n")
+    git("commit", "-qam", "block", cwd=repo)
+    (repo / "database/fs/tree.py").write_text("# old\n# block\nx = 2\n")
+    assert "## Multi-line comments" not in preview(repo)

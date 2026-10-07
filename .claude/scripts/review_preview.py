@@ -70,7 +70,7 @@ CONTRACTS: tuple[tuple[str, str], ...] = (
         "build, smoke, publish and Pages pipeline (delivery/CLAUDE.md, site/CLAUDE.md)",
     ),
 )
-# Reviewer check 4 leads: outbound HTTP from database/, and process spawns that must resolve through tool_path.
+# Reviewer check 3 leads: outbound HTTP from database/, and process spawns that must resolve through tool_path.
 OUTBOUND = re.compile(
     r"\b(httpx|requests|aiohttp|urllib\.request|urlopen|http\.client)\b"
 )
@@ -452,9 +452,9 @@ def invariants(
                 )
     if not out:
         return [
-            "No database/ outbound call, one-sided lib/ change, frozen-bundle or process-spawn change: check 4 not needed."
+            "No database/ outbound call, one-sided lib/ change, frozen-bundle or process-spawn change: check 3 not needed."
         ]
-    return ["Check 4 needed:", *out]
+    return ["Check 3 needed:", *out]
 
 
 def resolve(root: Path, rel: str, cite: str) -> str:
@@ -499,6 +499,65 @@ def doc_hygiene(
     return out
 
 
+def comment_blocks(text: str, rel: str) -> list[tuple[int, int, list[str]]]:
+    """Each comment in a file as its first and last line and its non-empty text lines, markers stripped."""
+    blocks: list[tuple[int, int, list[str]]] = []
+    start, body, kind, close = 0, [], "", ""
+    python, hashes = rel.endswith(".py"), rel.endswith((".py", ".sh"))
+
+    def flush(end: int) -> None:
+        nonlocal kind
+        if kind:
+            blocks.append((start, end, [b for b in body if b]))
+        kind = ""
+
+    for n, line in enumerate(text.splitlines(), 1):
+        s = line.strip()
+        if kind in ("block", "doc"):
+            done = close in s
+            body.append(
+                s.split(close)[0].lstrip("*").strip() if done else s.lstrip("*").strip()
+            )
+            if done:
+                flush(n)
+            continue
+        marker = next((m for m in ("#", "//") if s.startswith(m)), "")
+        # `#` comments only in Python and shell; in JS it starts a private field.
+        if marker == "//" or (marker and hashes and not s.startswith("#!")):
+            if kind != marker:
+                flush(n - 1)
+                start, body, kind = n, [], marker
+            body.append(s.lstrip(marker).strip())
+            continue
+        flush(n - 1)
+        if s.startswith("/*") or (python and s.startswith(('"""', "'''"))):
+            close = "*/" if s.startswith("/*") else s[:3]
+            rest = s[2:] if close == "*/" else s[3:]
+            start, body, kind = n, [], "block" if close == "*/" else "doc"
+            body.append(rest.split(close)[0].lstrip("*").strip())
+            if close in rest:
+                flush(n)
+    flush(len(text.splitlines()))
+    return blocks
+
+
+def multiline_comments(
+    root: Path, diffs: dict[str, FileDiff], untracked: list[str]
+) -> list[str]:
+    """Comments of two or more text lines that touch a changed line; one-line comments never show."""
+    out = []
+    for rel in [*diffs, *untracked]:
+        if not rel.endswith((*CODE, ".css", ".sh")) or not (root / rel).is_file():
+            continue
+        changed = {n for n, _ in changed_lines(root, rel, diffs)}
+        for first, last, body in comment_blocks(read(root, rel) or "", rel):
+            if len(body) >= 2 and changed.intersection(range(first, last + 1)):
+                out.append(
+                    f"- `{rel}:{first}-{last}` ({len(body)} lines): {short(body[0])}"
+                )
+    return out
+
+
 def main() -> None:
     # The tree is the one this copy of the script lives in, so a worktree reviews itself from any cwd.
     top = git(
@@ -537,6 +596,7 @@ def main() -> None:
     out += section("Contract surfaces", contract_surfaces(paths))
     out += section("Invariants trigger", invariants(root, diffs, untracked, packages))
     out += section("Doc hygiene", doc_hygiene(root, diffs, untracked))
+    out += section("Multi-line comments", multiline_comments(root, diffs, untracked))
     print("\n".join(out).rstrip())
 
 
