@@ -561,7 +561,8 @@ def enqueue(entry: QueueEntry) -> bool:
     if not _runner_status["running"]:
         # Flipped here rather than in run_all: the task only starts at the next await, so a burst
         # of arrivals in one callback would otherwise each start a drain of their own.
-        _runner_status["running"] = True
+        # Counters reset here too, so a snapshot taken before the task starts is not last run's.
+        _runner_status.update(running=True, done=0, total=1, last_error=None)
         asyncio.create_task(run_all())
     else:
         # Counted now, so "lecture N of M" grows the moment a lecture joins a live run.

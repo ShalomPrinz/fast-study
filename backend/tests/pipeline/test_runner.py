@@ -1175,6 +1175,19 @@ class TestEnqueue:
         asyncio.run(go())
         assert runner._queue == [_entry("L1"), _entry("L2")]
 
+    def test_an_idle_enqueue_resets_the_previous_runs_counters(self, clean_queue):
+        runner._runner_status.update(done=19, total=19, last_error={"code": "x"})
+
+        async def go():
+            with patch.object(runner, "run_all", new=AsyncMock()):
+                runner.enqueue(_entry("L1"))
+                runner.enqueue(_entry("L2"))
+                return dict(runner._runner_status)
+
+        status = asyncio.run(go())
+        assert (status["running"], status["done"], status["total"]) == (True, 0, 2)
+        assert status["last_error"] is None
+
     def test_a_queued_lecture_is_matched_whatever_its_depth(self, clean_queue):
         async def go():
             runner._runner_status["running"] = True
