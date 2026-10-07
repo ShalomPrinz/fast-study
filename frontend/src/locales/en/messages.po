@@ -34,8 +34,8 @@ msgid "\"{name}\" has no characters that can be used in a folder name."
 msgstr "\"{name}\" has no characters that can be used in a folder name."
 
 #: src/shared/i18n/serviceErrors.ts:120
-msgid "\"{name}\" is reserved for the course's own folders. Choose another name for the lecture."
-msgstr "\"{name}\" is reserved for the course's own folders. Choose another name for the lecture."
+msgid "\"{name}\" is reserved for the course's own folders. Choose another name."
+msgstr "\"{name}\" is reserved for the course's own folders. Choose another name."
 
 #: src/shared/components/LectureLead.tsx:7
 msgid "\"<0>{lecture}</0>\" in \"<1>{course}</1>\""

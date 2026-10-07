@@ -118,8 +118,7 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   }),
   name_taken: msg({ message: 'A course or lecture named "{name}" already exists.' }),
   name_reserved: msg({
-    message:
-      '"{name}" is reserved for the course\'s own folders. Choose another name for the lecture.',
+    message: '"{name}" is reserved for the course\'s own folders. Choose another name.',
   }),
   setting_may_not_contain_quotes: msg({
     message: 'That setting may not contain quotes or line breaks.',
