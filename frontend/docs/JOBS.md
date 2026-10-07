@@ -23,6 +23,11 @@ The provider is mounted in `Layout`, so the connection, the snapshot and the err
 the route — one always-open `EventSource`, the price of following downloads from anywhere. The store is
 module-level, so the provider clears it on unmount.
 
+A non-terminal job that disappears from `/jobs` was lost with the server's in-memory store (a restart),
+since only `done` is ever evicted and only after the bridge. `reconcileVanished` turns it into a codeless
+`error` job (generic "Couldn't download" toast, row shows **Retry ✗**), kept until a new job for the same
+`(course, lecture, kind, ref)` supersedes it; a reload forgets it, as the tracking is per window.
+
 ## Grouping by `ref`
 
 Every job carries the discovery-row `ref` it belongs to — a zoom before/after-break pair lands as

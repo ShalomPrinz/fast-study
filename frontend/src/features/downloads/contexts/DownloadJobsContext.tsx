@@ -62,6 +62,33 @@ export function rowStatus(jobs: readonly JobProgress[]): 'running' | 'done' | 'e
   return 'done'
 }
 
+function targetKey(j: DownloadJob): string {
+  return [j.course, j.lecture, j.kind, j.ref ?? ''].join('\0')
+}
+
+export interface VanishState {
+  active: ReadonlyMap<string, DownloadJob>
+  vanished: ReadonlyMap<string, DownloadJob>
+}
+
+// A non-terminal job that drops off `/jobs` was lost with the server's memory (a restart): it becomes a
+// codeless `error` job, kept until a new job for the same target replaces it, so the row offers a retry.
+export function reconcileVanished(
+  prev: VanishState,
+  snapshot: DownloadJob[],
+): VanishState & { jobs: DownloadJob[] } {
+  const ids = new Set(snapshot.map((j) => j.id))
+  const targets = new Set(snapshot.map(targetKey))
+  const vanished = new Map<string, DownloadJob>()
+  for (const j of prev.active.values())
+    if (!ids.has(j.id)) vanished.set(j.id, { ...j, status: 'error', message: null, code: null })
+  for (const [id, j] of prev.vanished)
+    if (!ids.has(id) && !targets.has(targetKey(j))) vanished.set(id, j)
+  for (const [id, j] of vanished) if (targets.has(targetKey(j))) vanished.delete(id)
+  const active = new Map(snapshot.filter((j) => !isTerminal(j)).map((j) => [j.id, j]))
+  return { active, vanished, jobs: [...snapshot, ...vanished.values()] }
+}
+
 // Shared identity for "this row has no jobs". `useSyncExternalStore` compares snapshots by
 // reference, so a fresh `[]` per read would re-render forever.
 const EMPTY_JOBS: readonly JobProgress[] = Object.freeze([])
@@ -195,11 +222,14 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
   // `primed` guards the first snapshot: its errors are history from before load and must not toast.
   const toastedIds = useRef<Set<string>>(new Set())
   const primed = useRef(false)
+  const vanishState = useRef<VanishState>({ active: new Map(), vanished: new Map() })
 
   useEffect(() => {
     let cancelled = false
-    const handleSnapshot = (snap: DownloadJob[]) => {
+    const handleSnapshot = (raw: DownloadJob[]) => {
       if (cancelled) return
+      const { jobs: snap, ...next } = reconcileVanished(vanishState.current, raw)
+      vanishState.current = next
       for (const job of snap) {
         if (job.status !== 'error') continue
         if (!primed.current) {
@@ -226,6 +256,7 @@ export function DownloadJobsProvider({ children }: { children: ReactNode }) {
       close()
       publish([])
       primed.current = false
+      vanishState.current = { active: new Map(), vanished: new Map() }
       toastedIds.current.clear()
     }
   }, [])

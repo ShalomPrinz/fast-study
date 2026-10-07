@@ -6,6 +6,7 @@ import {
   indexJobsById,
   jobsForRef,
   jobsForTarget,
+  reconcileVanished,
   rowStatus,
 } from './DownloadJobsContext'
 
@@ -154,5 +155,32 @@ describe('indexJobsById', () => {
     expect(byId.get('a')?.ref).toBeNull()
     expect(byId.get('b')?.ref).toBe('r1')
     expect(groupJobsByRef(snapshot).size).toBe(1)
+  })
+})
+
+describe('reconcileVanished', () => {
+  const empty = { active: new Map(), vanished: new Map() }
+
+  it('turns a running job that left the snapshot into a codeless error, and keeps it', () => {
+    const a = job({ id: 'a' })
+    const first = reconcileVanished(empty, [a])
+    expect(first.jobs).toEqual([a])
+    const second = reconcileVanished(first, [])
+    expect(second.jobs).toMatchObject([{ id: 'a', status: 'error', message: null }])
+    expect(reconcileVanished(second, []).jobs.map((j) => j.status)).toEqual(['error'])
+  })
+
+  it('does not flag a job that finished normally or an error that was already there', () => {
+    const first = reconcileVanished(empty, [job({ id: 'a' }), job({ id: 'b', status: 'error' })])
+    const second = reconcileVanished(first, [job({ id: 'a', status: 'done' })])
+    expect(second.jobs.map((j) => j.status)).toEqual(['done'])
+  })
+
+  it('drops the failure once a new job for the same target appears', () => {
+    const first = reconcileVanished(empty, [job({ id: 'a' })])
+    const gone = reconcileVanished(first, [])
+    const retried = reconcileVanished(gone, [job({ id: 'b', status: 'queued' })])
+    expect(retried.jobs.map((j) => j.id)).toEqual(['b'])
+    expect(retried.vanished.size).toBe(0)
   })
 })
