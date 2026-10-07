@@ -152,19 +152,19 @@ msgstr "{effectiveName} already exists in {course}. Download again and overwrite
 msgid "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 msgstr "{effectiveName} may split into parts that overwrite existing {existing} in {course}. Download anyway?"
 
-#: src/shared/i18n/serviceErrors.ts:194
+#: src/shared/i18n/serviceErrors.ts:193
 msgid "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 msgstr "{ext, select, undefined {{url} is a web page, not a file. Open it in a browser and download it yourself.} other {{url} is a {ext} file, not a video. Open it in a browser and download it yourself.}}"
 
-#: src/shared/i18n/serviceErrors.ts:144
+#: src/shared/i18n/serviceErrors.ts:143
 msgid "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} lecture {That lecture name can't be used as a folder name.} url {That link isn't valid. Paste a full address starting with http:// or https://.} other {Something went wrong.}}"
 msgstr "{field, select, name {That name can't be used as a folder name. Use letters or numbers, and no / or \\.} course {That course name can't be used as a folder name.} lecture {That lecture name can't be used as a folder name.} url {That link isn't valid. Paste a full address starting with http:// or https://.} other {Something went wrong.}}"
 
-#: src/shared/i18n/serviceErrors.ts:137
+#: src/shared/i18n/serviceErrors.ts:136
 msgid "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
 msgstr "{file, select, undefined {Could not read the file.} other {Could not read {file}.}}"
 
-#: src/shared/i18n/serviceErrors.ts:134
+#: src/shared/i18n/serviceErrors.ts:133
 msgid "{file, select, undefined {Could not save the file.} other {Could not save {file}.}}"
 msgstr "{file, select, undefined {Could not save the file.} other {Could not save {file}.}}"
 
@@ -225,11 +225,11 @@ msgstr "{name} will be used"
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 
-#: src/shared/i18n/serviceErrors.ts:131
+#: src/shared/i18n/serviceErrors.ts:130
 msgid "{path} cannot be written to."
 msgstr "{path} cannot be written to."
 
-#: src/shared/i18n/serviceErrors.ts:130
+#: src/shared/i18n/serviceErrors.ts:129
 msgid "{path} exists but is not a folder."
 msgstr "{path} exists but is not a folder."
 
@@ -253,11 +253,11 @@ msgstr "{provider, select, gemini {The Gemini API key is not set. Add it in Sett
 msgid "{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}"
 msgstr "{provider, select, gemini {The Gemini API key was rejected. Check it in Settings.} groq {The Groq API key was rejected. Check it in Settings.} other {The {provider} API key was rejected. Check it in Settings.}}"
 
-#: src/shared/i18n/serviceErrors.ts:176
+#: src/shared/i18n/serviceErrors.ts:175
 msgid "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 msgstr "{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}"
 
-#: src/shared/i18n/serviceErrors.ts:189
+#: src/shared/i18n/serviceErrors.ts:188
 msgid "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
 msgstr "{reason, select, not_moodle {This address isn't a Moodle site. Check it and try again.} mobile_service_off {This university's Moodle doesn't allow signing in from the Moodle app, which FastStudy relies on.} maintenance {This university's Moodle is under maintenance right now. Try again later.} missing_function {This university's Moodle doesn't let the Moodle app read course contents ({function}), so FastStudy can't use it.} downloads_disabled {This university's Moodle doesn't let the Moodle app download files, so FastStudy can't use it.} autologin_unavailable {This university's Moodle doesn't let the app open videos hosted on Moodle itself. Other recordings and course files still work.} other {This university's Moodle can't be used with FastStudy.}}"
 
@@ -281,7 +281,7 @@ msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may h
 msgid "{step, select, download {This step needs {file}, which is not there yet. Download the lecture video first.} other {This step needs {file}, which is not there yet. Run the step before it first.}}"
 msgstr "{step, select, download {This step needs {file}, which is not there yet. Download the lecture video first.} other {This step needs {file}, which is not there yet. Run the step before it first.}}"
 
-#: src/shared/i18n/serviceErrors.ts:198
+#: src/shared/i18n/serviceErrors.ts:197
 msgid "{url} no longer exists. Check the course page for a new link."
 msgstr "{url} no longer exists. Check the course page for a new link."
 
@@ -325,7 +325,7 @@ msgstr "A font the PDF needs is missing."
 msgid "A key is saved — type to replace it"
 msgstr "A key is saved — type to replace it"
 
-#: src/features/settings/SettingsView.tsx:420
+#: src/features/settings/SettingsView.tsx:457
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "A lecture running now would save some files in the old folder and the rest in the new one."
 
@@ -377,11 +377,11 @@ msgstr "Analyze"
 msgid "Analyzing the collected passages failed."
 msgstr "Analyzing the collected passages failed."
 
-#: src/features/settings/SettingsView.tsx:200
+#: src/features/settings/SettingsView.tsx:240
 msgid "API keys"
 msgstr "API keys"
 
-#: src/features/settings/SettingsView.tsx:296
+#: src/features/settings/SettingsView.tsx:337
 msgid "Appearance and behaviour"
 msgstr "Appearance and behaviour"
 
@@ -471,7 +471,7 @@ msgstr "Can't replace the video while it's being processed or waiting in line"
 msgid "Cancel"
 msgstr "Cancel"
 
-#: src/features/settings/SettingsView.tsx:419
+#: src/features/settings/SettingsView.tsx:456
 msgid "Change the data folder while lectures are being processed?"
 msgstr "Change the data folder while lectures are being processed?"
 
@@ -493,11 +493,11 @@ msgstr "checking the connection"
 
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
-#: src/features/settings/components/MoodleSiteField.tsx:70
+#: src/features/settings/components/MoodleSiteField.tsx:80
 msgid "Checking…"
 msgstr "Checking…"
 
-#: src/shared/i18n/serviceErrors.ts:128
+#: src/shared/i18n/serviceErrors.ts:127
 msgid "Choose a data folder."
 msgstr "Choose a data folder."
 
@@ -505,6 +505,10 @@ msgstr "Choose a data folder."
 #: src/features/settings/components/DataRootField.tsx:81
 msgid "Choose folder"
 msgstr "Choose folder"
+
+#: src/features/settings/components/MoodleAccountField.tsx:38
+msgid "Choose your university above to connect its account."
+msgstr "Choose your university above to connect its account."
 
 #: src/features/downloads/DownloadsView.tsx:75
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
@@ -514,7 +518,7 @@ msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 msgid "Choose your university in Settings first"
 msgstr "Choose your university in Settings first"
 
-#: src/features/settings/components/MoodleSiteField.tsx:103
+#: src/features/settings/components/MoodleSiteField.tsx:113
 msgid "Choose your university…"
 msgstr "Choose your university…"
 
@@ -617,11 +621,11 @@ msgstr "Copy details"
 msgid "Could not convert the summary for printing."
 msgstr "Could not convert the summary for printing."
 
-#: src/shared/i18n/serviceErrors.ts:132
+#: src/shared/i18n/serviceErrors.ts:131
 msgid "Could not create \"{path}\"."
 msgstr "Could not create \"{path}\"."
 
-#: src/shared/i18n/serviceErrors.ts:140
+#: src/shared/i18n/serviceErrors.ts:139
 msgid "Could not delete {file}."
 msgstr "Could not delete {file}."
 
@@ -629,7 +633,7 @@ msgstr "Could not delete {file}."
 msgid "Could not extract the audio from the video."
 msgstr "Could not extract the audio from the video."
 
-#: src/shared/i18n/serviceErrors.ts:212
+#: src/shared/i18n/serviceErrors.ts:211
 msgid "Could not list the playlist."
 msgstr "Could not list the playlist."
 
@@ -647,11 +651,11 @@ msgstr "Could not open the link: {0}"
 msgid "Could not read the audio in {file}."
 msgstr "Could not read the audio in {file}."
 
-#: src/shared/i18n/serviceErrors.ts:133
+#: src/shared/i18n/serviceErrors.ts:132
 msgid "Could not rename \"{from}\" to \"{to}\"."
 msgstr "Could not rename \"{from}\" to \"{to}\"."
 
-#: src/shared/i18n/serviceErrors.ts:201
+#: src/shared/i18n/serviceErrors.ts:200
 msgid "Could not tell what {url} is — the site didn't answer usefully."
 msgstr "Could not tell what {url} is — the site didn't answer usefully."
 
@@ -676,19 +680,19 @@ msgstr "Couldn't load recordings for \"{name}\". Try again."
 msgid "Couldn't load summaries for {course}."
 msgstr "Couldn't load summaries for {course}."
 
-#: src/features/settings/SettingsView.tsx:106
+#: src/features/settings/SettingsView.tsx:136
 msgid "Couldn't load your settings. Part of FastStudy isn't responding."
 msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 
-#: src/features/settings/SettingsView.tsx:156
+#: src/features/settings/SettingsView.tsx:93
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
-#: src/shared/i18n/serviceErrors.ts:221
+#: src/shared/i18n/serviceErrors.ts:220
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "Couldn't start capturing the Zoom recording. Try again."
 
-#: src/shared/i18n/serviceErrors.ts:164
+#: src/shared/i18n/serviceErrors.ts:163
 msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
@@ -726,7 +730,7 @@ msgstr "Creating…"
 msgid "Current PDF"
 msgstr "Current PDF"
 
-#: src/features/settings/SettingsView.tsx:338
+#: src/features/settings/SettingsView.tsx:379
 msgid "Daily run time"
 msgstr "Daily run time"
 
@@ -763,7 +767,7 @@ msgstr "Disconnect the university account?"
 msgid "disconnecting…"
 msgstr "disconnecting…"
 
-#: src/features/settings/SettingsView.tsx:313
+#: src/features/settings/SettingsView.tsx:354
 msgid "Do nothing — I'll start runs myself"
 msgstr "Do nothing — I'll start runs myself"
 
@@ -807,8 +811,8 @@ msgstr "Downloading {0}/{1}…"
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
-#: src/features/settings/InitWall.tsx:313
-#: src/features/settings/SettingsView.tsx:279
+#: src/features/settings/InitWall.tsx:308
+#: src/features/settings/SettingsView.tsx:319
 msgid "Downloading recordings"
 msgstr "Downloading recordings"
 
@@ -822,7 +826,7 @@ msgid "Downloading…"
 msgstr "Downloading…"
 
 #: src/features/downloads/DownloadsView.tsx:59
-#: src/shared/sidebar/Sidebar.tsx:79
+#: src/shared/sidebar/Sidebar.tsx:81
 msgid "Downloads"
 msgstr "Downloads"
 
@@ -859,16 +863,16 @@ msgid "Enter the zoom passcode for this recording"
 msgstr "Enter the zoom passcode for this recording"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:122
-#: src/features/settings/InitWall.tsx:290
-#: src/features/settings/SettingsView.tsx:366
+#: src/features/settings/InitWall.tsx:285
+#: src/features/settings/SettingsView.tsx:407
 msgid "Error reports"
 msgstr "Error reports"
 
-#: src/features/settings/SettingsView.tsx:385
+#: src/features/settings/SettingsView.tsx:426
 msgid "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 msgstr "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 
-#: src/features/settings/SettingsView.tsx:380
+#: src/features/settings/SettingsView.tsx:421
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 
@@ -913,7 +917,7 @@ msgstr "Extract"
 msgid "Extract Audio"
 msgstr "Extract Audio"
 
-#: src/features/settings/SettingsView.tsx:312
+#: src/features/settings/SettingsView.tsx:353
 msgid "Extract the audio only"
 msgstr "Extract the audio only"
 
@@ -947,7 +951,7 @@ msgstr "Failed to save summary"
 msgid "FastStudy couldn't reach your files. Try again."
 msgstr "FastStudy couldn't reach your files. Try again."
 
-#: src/features/settings/components/MoodleSiteField.tsx:139
+#: src/features/settings/components/MoodleSiteField.tsx:149
 msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 
@@ -963,7 +967,7 @@ msgstr "FastStudy runs on your computer. Your lectures, transcripts and summarie
 msgid "FastStudy sends data only to services you set up yourself:"
 msgstr "FastStudy sends data only to services you set up yourself:"
 
-#: src/features/settings/components/MoodleAccountField.tsx:40
+#: src/features/settings/components/MoodleAccountField.tsx:49
 msgid "FastStudy signs in to <0>{host}</0> with this account to find and fetch recordings. You can connect it later."
 msgstr "FastStudy signs in to <0>{host}</0> with this account to find and fetch recordings. You can connect it later."
 
@@ -979,7 +983,7 @@ msgstr "FastStudy uses two free services: one turns the recording into text, the
 msgid "File type"
 msgstr "File type"
 
-#: src/features/settings/InitWall.tsx:325
+#: src/features/settings/InitWall.tsx:320
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
@@ -996,7 +1000,7 @@ msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
 
 #. placeholder {0}: status.site
-#: src/features/settings/components/MoodleSiteField.tsx:73
+#: src/features/settings/components/MoodleSiteField.tsx:83
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
@@ -1041,8 +1045,8 @@ msgstr "Give the project any name and click \"Create project\"."
 msgid "Google account"
 msgstr "Google account"
 
-#: src/features/settings/InitWall.tsx:276
-#: src/features/settings/SettingsView.tsx:266
+#: src/features/settings/InitWall.tsx:271
+#: src/features/settings/SettingsView.tsx:306
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -1148,7 +1152,7 @@ msgid "Lecture name…"
 msgstr "Lecture name…"
 
 #: src/features/search/SearchView.tsx:196
-#: src/shared/sidebar/Sidebar.tsx:73
+#: src/shared/sidebar/Sidebar.tsx:75
 msgid "Lectures"
 msgstr "Lectures"
 
@@ -1200,7 +1204,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:230
+#: src/shared/i18n/serviceErrors.ts:229
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1232,11 +1236,11 @@ msgstr "No archived courses"
 msgid "No Chrome or Edge found on this computer."
 msgstr "No Chrome or Edge found on this computer."
 
-#: src/shared/i18n/serviceErrors.ts:180
+#: src/shared/i18n/serviceErrors.ts:179
 msgid "No Chrome or Edge was found on this computer. Install Chrome and try again."
 msgstr "No Chrome or Edge was found on this computer. Install Chrome and try again."
 
-#: src/shared/i18n/serviceErrors.ts:127
+#: src/shared/i18n/serviceErrors.ts:126
 msgid "No data folder is set. Choose one in Settings."
 msgstr "No data folder is set. Choose one in Settings."
 
@@ -1256,7 +1260,7 @@ msgstr "No Lectures"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
-#: src/shared/i18n/serviceErrors.ts:229
+#: src/shared/i18n/serviceErrors.ts:228
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
@@ -1296,15 +1300,15 @@ msgstr "No recordings found."
 msgid "no university chosen"
 msgstr "no university chosen"
 
-#: src/shared/i18n/serviceErrors.ts:186
+#: src/shared/i18n/serviceErrors.ts:185
 msgid "No university is chosen yet. Choose yours in Settings."
 msgstr "No university is chosen yet. Choose yours in Settings."
 
-#: src/shared/i18n/serviceErrors.ts:214
+#: src/shared/i18n/serviceErrors.ts:213
 msgid "No video was captured on that page. Play it once by hand and try again."
 msgstr "No video was captured on that page. Play it once by hand and try again."
 
-#: src/shared/i18n/serviceErrors.ts:217
+#: src/shared/i18n/serviceErrors.ts:216
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 
@@ -1370,7 +1374,7 @@ msgstr "Only .mp4 files are allowed"
 msgid "Only technical error details are sent, never your files or keys. It's anonymous, and it helps us improve FastStudy."
 msgstr "Only technical error details are sent, never your files or keys. It's anonymous, and it helps us improve FastStudy."
 
-#: src/shared/i18n/serviceErrors.ts:209
+#: src/shared/i18n/serviceErrors.ts:208
 msgid "Only YouTube playlists can be opened up; {host} cannot."
 msgstr "Only YouTube playlists can be opened up; {host} cannot."
 
@@ -1402,7 +1406,7 @@ msgstr "Open the sign-in page"
 msgid "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 
-#: src/features/settings/components/MoodleSiteField.tsx:114
+#: src/features/settings/components/MoodleSiteField.tsx:124
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 msgstr "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 
@@ -1419,7 +1423,7 @@ msgstr "Other"
 msgid "Other links"
 msgstr "Other links"
 
-#: src/features/settings/components/MoodleSiteField.tsx:109
+#: src/features/settings/components/MoodleSiteField.tsx:119
 msgid "Other…"
 msgstr "Other…"
 
@@ -1540,7 +1544,7 @@ msgstr "Recordings · {selected}"
 msgid "Reload"
 msgstr "Reload"
 
-#: src/features/settings/SettingsView.tsx:403
+#: src/features/settings/SettingsView.tsx:206
 msgid "Remove your university?"
 msgstr "Remove your university?"
 
@@ -1582,7 +1586,7 @@ msgstr "Restore original"
 msgid "Results"
 msgstr "Results"
 
-#: src/features/settings/SettingsView.tsx:109
+#: src/features/settings/SettingsView.tsx:139
 msgid "Retry"
 msgstr "Retry"
 
@@ -1600,7 +1604,7 @@ msgstr "Rotate {file}"
 msgid "Run Remaining"
 msgstr "Run Remaining"
 
-#: src/features/settings/SettingsView.tsx:311
+#: src/features/settings/SettingsView.tsx:352
 msgid "Run the whole pipeline"
 msgstr "Run the whole pipeline"
 
@@ -1608,7 +1612,7 @@ msgstr "Run the whole pipeline"
 msgid "Run these now"
 msgstr "Run these now"
 
-#: src/features/settings/SettingsView.tsx:332
+#: src/features/settings/SettingsView.tsx:373
 msgid "Run unfinished lectures daily"
 msgstr "Run unfinished lectures daily"
 
@@ -1619,11 +1623,11 @@ msgid "Running · lecture {0} of {1}"
 msgstr "Running · lecture {0} of {1}"
 
 #: src/features/runner/RunnerView.tsx:247
-#: src/shared/sidebar/Sidebar.tsx:76
+#: src/shared/sidebar/Sidebar.tsx:78
 msgid "Running pipelines"
 msgstr "Running pipelines"
 
-#: src/features/settings/SettingsView.tsx:192
+#: src/features/settings/SettingsView.tsx:232
 msgid "Save"
 msgstr "Save"
 
@@ -1639,7 +1643,7 @@ msgstr "Save as"
 msgid "Saved to {lecture}"
 msgstr "Saved to {lecture}"
 
-#: src/features/settings/InitWall.tsx:334
+#: src/features/settings/InitWall.tsx:329
 msgid "Saving…"
 msgstr "Saving…"
 
@@ -1651,7 +1655,7 @@ msgstr "Screenshot of {name}, step {step}"
 msgid "Scroll to the end to confirm."
 msgstr "Scroll to the end to confirm."
 
-#: src/shared/sidebar/Sidebar.tsx:82
+#: src/shared/sidebar/Sidebar.tsx:84
 msgid "Search"
 msgstr "Search"
 
@@ -1684,13 +1688,13 @@ msgstr "Send error reports"
 msgid "session expired"
 msgstr "session expired"
 
-#: src/features/settings/SettingsView.tsx:100
-#: src/features/settings/SettingsView.tsx:185
-#: src/shared/sidebar/Sidebar.tsx:85
+#: src/features/settings/SettingsView.tsx:130
+#: src/features/settings/SettingsView.tsx:225
+#: src/shared/sidebar/Sidebar.tsx:87
 msgid "Settings"
 msgstr "Settings"
 
-#: src/features/settings/SettingsView.tsx:151
+#: src/features/settings/SettingsView.tsx:181
 msgid "Settings saved"
 msgstr "Settings saved"
 
@@ -1726,7 +1730,7 @@ msgstr "Sorry about that. Go home to keep working, or copy the details below to 
 msgid "Source URL (optional)…"
 msgstr "Source URL (optional)…"
 
-#: src/features/settings/InitWall.tsx:334
+#: src/features/settings/InitWall.tsx:329
 msgid "Start using FastStudy"
 msgstr "Start using FastStudy"
 
@@ -1742,7 +1746,7 @@ msgstr "Step {0} of {1}"
 msgid "Step already running"
 msgstr "Step already running"
 
-#: src/features/settings/SettingsView.tsx:256
+#: src/features/settings/SettingsView.tsx:296
 msgid "Storage"
 msgstr "Storage"
 
@@ -1782,11 +1786,11 @@ msgstr "summary did not use {name}"
 msgid "summary did not use any material"
 msgstr "summary did not use any material"
 
-#: src/features/settings/SettingsView.tsx:234
+#: src/features/settings/SettingsView.tsx:274
 msgid "Summary model"
 msgstr "Summary model"
 
-#: src/features/settings/SettingsView.tsx:403
+#: src/features/settings/SettingsView.tsx:206
 msgid "Switch to another university?"
 msgstr "Switch to another university?"
 
@@ -1800,23 +1804,23 @@ msgstr "Taking longer than expected · {0} · longest recorded: {1}"
 msgid "Technion"
 msgstr "Technion"
 
-#: src/shared/i18n/serviceErrors.ts:193
+#: src/shared/i18n/serviceErrors.ts:192
 msgid "That course link doesn't point to a specific course: {url}."
 msgstr "That course link doesn't point to a specific course: {url}."
 
-#: src/shared/i18n/serviceErrors.ts:183
+#: src/shared/i18n/serviceErrors.ts:182
 msgid "That course link is not from your university's site ({site}): {url}."
 msgstr "That course link is not from your university's site ({site}): {url}."
 
-#: src/shared/i18n/serviceErrors.ts:153
+#: src/shared/i18n/serviceErrors.ts:152
 msgid "That download run is not paused."
 msgstr "That download run is not paused."
 
-#: src/shared/i18n/serviceErrors.ts:152
+#: src/shared/i18n/serviceErrors.ts:151
 msgid "That download run no longer exists."
 msgstr "That download run no longer exists."
 
-#: src/shared/i18n/serviceErrors.ts:208
+#: src/shared/i18n/serviceErrors.ts:207
 msgid "That is not a Google Drive file link: {url}."
 msgstr "That is not a Google Drive file link: {url}."
 
@@ -1828,11 +1832,11 @@ msgstr "That lecture is no longer queued"
 msgid "That passcode didn't work. Try another one"
 msgstr "That passcode didn't work. Try another one"
 
-#: src/shared/i18n/serviceErrors.ts:213
+#: src/shared/i18n/serviceErrors.ts:212
 msgid "That playlist has no entries."
 msgstr "That playlist has no entries."
 
-#: src/shared/i18n/serviceErrors.ts:124
+#: src/shared/i18n/serviceErrors.ts:123
 msgid "That setting may not contain quotes or line breaks."
 msgstr "That setting may not contain quotes or line breaks."
 
@@ -1840,7 +1844,7 @@ msgstr "That setting may not contain quotes or line breaks."
 msgid "That step is turned off in settings."
 msgstr "That step is turned off in settings."
 
-#: src/features/settings/SettingsView.tsx:207
+#: src/features/settings/SettingsView.tsx:247
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "The API keys and the summary model aren't available right now. They'll come back here on their own."
 
@@ -1848,27 +1852,27 @@ msgstr "The API keys and the summary model aren't available right now. They'll c
 msgid "The course \"{course}\" was not found."
 msgstr "The course \"{course}\" was not found."
 
-#: src/features/settings/SettingsView.tsx:355
+#: src/features/settings/SettingsView.tsx:396
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 
-#: src/shared/i18n/serviceErrors.ts:129
+#: src/shared/i18n/serviceErrors.ts:128
 msgid "The data folder must be a full path: {path}."
 msgstr "The data folder must be a full path: {path}."
 
-#: src/shared/i18n/serviceErrors.ts:154
+#: src/shared/i18n/serviceErrors.ts:153
 msgid "The download couldn't start."
 msgstr "The download couldn't start."
 
-#: src/shared/i18n/serviceErrors.ts:155
+#: src/shared/i18n/serviceErrors.ts:154
 msgid "The download failed."
 msgstr "The download failed."
 
-#: src/shared/i18n/serviceErrors.ts:156
+#: src/shared/i18n/serviceErrors.ts:155
 msgid "The download was refused — the session has expired. Reconnect the account."
 msgstr "The download was refused — the session has expired. Reconnect the account."
 
-#: src/shared/i18n/serviceErrors.ts:151
+#: src/shared/i18n/serviceErrors.ts:150
 msgid "The downloaded file could not be stored."
 msgstr "The downloaded file could not be stored."
 
@@ -1892,16 +1896,16 @@ msgstr "The following files will be re-generated:"
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
-#: src/shared/i18n/serviceErrors.ts:226
+#: src/shared/i18n/serviceErrors.ts:225
 msgid "The login window was closed before login finished. Connect again."
 msgstr "The login window was closed before login finished. Connect again."
 
-#: src/shared/i18n/serviceErrors.ts:225
+#: src/shared/i18n/serviceErrors.ts:224
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
 
-#: src/shared/i18n/serviceErrors.ts:159
-#: src/shared/i18n/serviceErrors.ts:169
+#: src/shared/i18n/serviceErrors.ts:158
+#: src/shared/i18n/serviceErrors.ts:168
 msgid "The Moodle session expired. Reconnect the account and try again."
 msgstr "The Moodle session expired. Reconnect the account and try again."
 
@@ -1909,7 +1913,7 @@ msgstr "The Moodle session expired. Reconnect the account and try again."
 msgid "The other materials keep their names."
 msgstr "The other materials keep their names."
 
-#: src/shared/i18n/serviceErrors.ts:148
+#: src/shared/i18n/serviceErrors.ts:147
 msgid "The part of FastStudy that downloads recordings isn't responding. Restart the app."
 msgstr "The part of FastStudy that downloads recordings isn't responding. Restart the app."
 
@@ -1958,7 +1962,7 @@ msgid "the university session expired. Reconnect, then run the section again."
 msgstr "the university session expired. Reconnect, then run the section again."
 
 #: src/features/downloads/utils/downloadErrors.ts:16
-#: src/shared/i18n/serviceErrors.ts:172
+#: src/shared/i18n/serviceErrors.ts:171
 msgid "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 msgstr "The university site is temporarily refusing automated requests. Wait a few minutes and try again."
 
@@ -1979,7 +1983,7 @@ msgstr "These won't start until you run them."
 msgid "Third-party services"
 msgstr "Third-party services"
 
-#: src/features/settings/SettingsView.tsx:316
+#: src/features/settings/SettingsView.tsx:357
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 
@@ -1995,11 +1999,11 @@ msgstr "This computer can't keep API keys safely, so they can't be saved here. E
 msgid "This course has no summaries yet."
 msgstr "This course has no summaries yet."
 
-#: src/features/settings/SettingsView.tsx:408
+#: src/features/settings/SettingsView.tsx:210
 msgid "This disconnects your current account, and recordings can no longer be found on its Moodle site."
 msgstr "This disconnects your current account, and recordings can no longer be found on its Moodle site."
 
-#: src/features/settings/SettingsView.tsx:407
+#: src/features/settings/SettingsView.tsx:209
 msgid "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
 msgstr "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
 
@@ -2017,11 +2021,11 @@ msgstr "This error could not be reported automatically. Copy the details to repo
 msgid "This error was reported automatically. Reference: <0>{eventId}</0>"
 msgstr "This error was reported automatically. Reference: <0>{eventId}</0>"
 
-#: src/shared/i18n/serviceErrors.ts:204
+#: src/shared/i18n/serviceErrors.ts:203
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 
-#: src/shared/i18n/serviceErrors.ts:222
+#: src/shared/i18n/serviceErrors.ts:221
 msgid "This Moodle connection can't download these recordings. Reconnect the account."
 msgstr "This Moodle connection can't download these recordings. Reconnect the account."
 
@@ -2033,11 +2037,11 @@ msgstr "This only changes where the app looks — it never moves your files. The
 msgid "This only needs to be done once."
 msgstr "This only needs to be done once."
 
-#: src/shared/i18n/serviceErrors.ts:162
+#: src/shared/i18n/serviceErrors.ts:161
 msgid "This recording needs a passcode."
 msgstr "This recording needs a passcode."
 
-#: src/shared/i18n/serviceErrors.ts:163
+#: src/shared/i18n/serviceErrors.ts:162
 msgid "This source can't be downloaded automatically."
 msgstr "This source can't be downloaded automatically."
 
@@ -2077,17 +2081,21 @@ msgstr "Type any name (for example FastStudy) and click \"Submit\"."
 msgid "Unarchive course"
 msgstr "Unarchive course"
 
-#: src/features/settings/components/MoodleSiteField.tsx:93
+#: src/features/settings/components/MoodleSiteField.tsx:103
 msgid "University"
 msgstr "University"
 
-#: src/features/settings/components/MoodleAccountField.tsx:30
+#: src/features/settings/components/MoodleAccountField.tsx:33
 msgid "University account"
 msgstr "University account"
 
 #: src/features/downloads/components/AccountStatus.tsx:156
 msgid "University account connected"
 msgstr "University account connected"
+
+#: src/features/settings/SettingsView.tsx:84
+msgid "University saved"
+msgstr "University saved"
 
 #: src/features/downloads/DownloadsView.tsx:46
 msgid "Unknown"
@@ -2158,11 +2166,11 @@ msgstr "We couldn't check right now."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 
-#: src/features/settings/components/MoodleSiteField.tsx:80
+#: src/features/settings/components/MoodleSiteField.tsx:90
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "We couldn't check this site right now. You can still save it."
 
-#: src/features/settings/SettingsView.tsx:302
+#: src/features/settings/SettingsView.tsx:343
 msgid "When a new video arrives"
 msgstr "When a new video arrives"
 
@@ -2198,11 +2206,11 @@ msgstr "Works only for video links, and only if they open without signing in."
 msgid "Yes"
 msgstr "Yes"
 
-#: src/features/settings/components/MoodleAccountField.tsx:35
+#: src/features/settings/components/MoodleAccountField.tsx:43
 msgid "You can connect the account once your university is saved."
 msgstr "You can connect the account once your university is saved."
 
-#: src/features/settings/InitWall.tsx:300
+#: src/features/settings/InitWall.tsx:295
 msgid "You must read the privacy policy before you continue."
 msgstr "You must read the privacy policy before you continue."
 
@@ -2222,7 +2230,7 @@ msgstr "Your university"
 msgid "Your university session expired. Reconnect your account."
 msgstr "Your university session expired. Reconnect your account."
 
-#: src/features/settings/components/MoodleSiteField.tsx:125
+#: src/features/settings/components/MoodleSiteField.tsx:135
 msgid "Your university's Moodle address"
 msgstr "Your university's Moodle address"
 

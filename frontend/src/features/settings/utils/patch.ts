@@ -91,3 +91,9 @@ export function buildPatch(form: SettingsForm, stored: Settings): SettingsPatch 
   if (form.privacyConfirmed && !stored.privacyConfirmed) patch.privacyConfirmed = true
   return patch
 }
+
+/** The form once a site was saved on its own: every other edit kept, the site taken from the store,
+ *  so the next Save does not send it again. */
+export function withSavedSite(form: SettingsForm, saved: Settings): SettingsForm {
+  return { ...form, moodleSite: saved.moodleSite ?? '' }
+}

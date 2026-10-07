@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { choiceForSite, choosesNoSite, MOODLE_SITE_PRESETS, OTHER_SITE } from './moodleSites'
+import {
+  accountView,
+  choiceForSite,
+  choosesNoSite,
+  MOODLE_SITE_PRESETS,
+  OTHER_SITE,
+} from './moodleSites'
 
 describe('choiceForSite', () => {
   it('preselects nothing when no site is stored', () => {
@@ -36,5 +42,25 @@ describe('choosesNoSite', () => {
 
   it('never reads a preset as no university', () => {
     expect(choosesNoSite('biu', '')).toBe(false)
+  })
+})
+
+describe('accountView', () => {
+  const site = 'https://lemida.biu.ac.il'
+  it('offers Connect once the form holds the saved site', () => {
+    expect(accountView(site, site)).toBe('connect')
+    // A choice still being probed leaves the saved site's account in place.
+    expect(accountView(site, null)).toBe('connect')
+  })
+
+  it('asks for a university while none is saved', () => {
+    expect(accountView(null, '')).toBe('choose')
+    expect(accountView(null, null)).toBe('choose')
+  })
+
+  it('holds Connect while the form holds an unsaved site', () => {
+    expect(accountView(null, site)).toBe('save')
+    expect(accountView(site, 'https://moodle.bgu.ac.il/moodle')).toBe('save')
+    expect(accountView(site, '')).toBe('save')
   })
 })

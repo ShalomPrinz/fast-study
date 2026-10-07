@@ -3,7 +3,6 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import {
   fetchConfigOptions,
   fetchSettings,
-  saveSettings,
   type AutoRun,
   type ConfigOptions,
   type Settings,
@@ -22,6 +21,7 @@ import ConfirmModal from '@/shared/components/ConfirmModal'
 import ApiKeyField from './components/ApiKeyField'
 import BrowserPrereqField from './components/BrowserPrereqField'
 import { useBrowserPrereq } from './hooks/useBrowserPrereq'
+import { useSiteSave } from './hooks/useSiteSave'
 import DataRootField from './components/DataRootField'
 import DriveFields from './components/DriveFields'
 import ErrorReportsField from './components/ErrorReportsField'
@@ -29,7 +29,13 @@ import LanguageField from './components/LanguageField'
 import MoodleAccountField from './components/MoodleAccountField'
 import MoodleSiteField from './components/MoodleSiteField'
 import SecureStorageNotice from './components/SecureStorageNotice'
-import { buildPatch, formFromStore, withOptions, type SettingsForm } from './utils/patch'
+import {
+  buildPatch,
+  formFromStore,
+  withOptions,
+  withSavedSite,
+  type SettingsForm,
+} from './utils/patch'
 import { missingEntries } from './utils/required'
 import { runsAtRisk } from './utils/dataRootGuard'
 import { privacyAnswer, restartNotice } from './utils/privacy'
@@ -65,6 +71,29 @@ export default function SettingsView() {
   // The switch state some part of the app takes only after a restart, from the last save.
   const [reportsRestart, setReportsRestart] = useState<'on' | 'off' | null>(null)
   const [loadFailed, setLoadFailed] = useState(false)
+  const site = useSiteSave({
+    storedSite: stored?.moodleSite ?? '',
+    accountConnected: !!account?.connected && !account.expired,
+    // Only the site: the rest of the form keeps its unsaved edits.
+    onSaved: (saved) => {
+      setStored(saved)
+      setSettings(saved)
+      setForm((f) => f && withSavedSite(f, saved))
+      void refreshAccount()
+      toast('info', t`University saved`)
+    },
+    onFailed: (err) => saveFailed(err),
+  })
+
+  // The http client already toasts a connection error, but that toast is deduped per service and
+  // reads as ambient noise — a save that went nowhere still owes its own verdict.
+  function saveFailed(err: unknown) {
+    if (isConnectionError(err)) {
+      toast('error', t`Couldn't save all settings. Restart the app and try again.`)
+    } else {
+      toastFailure(err)
+    }
+  }
 
   // Fetches whichever of the store and the options is still missing; rerun on notify (docs/SETTINGS.md).
   async function loadMissing() {
@@ -138,7 +167,7 @@ export default function SettingsView() {
     setSaving(true)
     setPending(null)
     try {
-      const saved = await saveSettings(next)
+      const saved = await site.save(next)
       // Only a save of the switch answers about it; any other save leaves the notice standing.
       if (next.errorReports !== undefined) setReportsRestart(restartNotice(saved))
       setStored(saved)
@@ -150,13 +179,7 @@ export default function SettingsView() {
       if (next.moodleSite !== undefined) void refreshAccount()
       toast('info', t`Settings saved`)
     } catch (err) {
-      // The http client already toasts a connection error, but that toast is deduped per service and
-      // reads as ambient noise — a save that went nowhere still owes its own verdict.
-      if (isConnectionError(err)) {
-        toast('error', t`Couldn't save all settings. Restart the app and try again.`)
-      } else {
-        toastFailure(err)
-      }
+      saveFailed(err)
     } finally {
       setSaving(false)
     }
@@ -173,6 +196,22 @@ export default function SettingsView() {
     const runs = runsAtRisk(next, status)
     if (runs) setPending({ guard: 'dataRoot', patch: next, runs })
     else void commit(next)
+  }
+
+  // A blank site is "no university": it drops the account just the same, with nothing to connect to.
+  function siteSwitchModal(next: string, onConfirm: () => void, onCancel: () => void) {
+    return (
+      <ConfirmModal
+        message={next ? t`Switch to another university?` : t`Remove your university?`}
+        warning={
+          next
+            ? t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`
+            : t`This disconnects your current account, and recordings can no longer be found on its Moodle site.`
+        }
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />
+    )
   }
 
   const provider = (id: string) => options?.providers.find((p) => p.id === id)
@@ -279,16 +318,17 @@ export default function SettingsView() {
               <Trans>Downloading recordings</Trans>
             </h2>
             <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
+            {/* A confirmed site, or no university, saves at once; an unverified one waits for Save. */}
             <MoodleSiteField
+              key={site.revision}
               value={form.moodleSite}
               // Functional: the probe answers after other fields may have changed.
               onChange={(v) => setForm((f) => f && { ...f, moodleSite: v })}
+              onSupported={site.pick}
+              onNoSite={() => site.pick('')}
               onChecking={setSiteChecking}
             />
-            <MoodleAccountField
-              site={stored.moodleSite}
-              switching={form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')}
-            />
+            <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
           </section>
 
           <section className="settings-section">
@@ -396,24 +436,20 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {pending?.guard === 'site' && (
-        <ConfirmModal
-          // A blank site is "no university": it drops the account just the same, with nothing to connect to.
-          message={
-            pending.patch.moodleSite ? t`Switch to another university?` : t`Remove your university?`
-          }
-          warning={
-            pending.patch.moodleSite
-              ? t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`
-              : t`This disconnects your current account, and recordings can no longer be found on its Moodle site.`
-          }
-          onConfirm={() => {
+      {pending?.guard === 'site' &&
+        siteSwitchModal(
+          pending.patch.moodleSite ?? '',
+          () => {
             setPending(null)
             guardDataRoot(pending.patch)
-          }}
-          onCancel={() => setPending(null)}
-        />
-      )}
+          },
+          () => setPending(null),
+        )}
+      {site.asking !== null &&
+        siteSwitchModal(site.asking, site.confirm, () => {
+          site.cancel()
+          setForm((f) => f && withSavedSite(f, stored))
+        })}
       {pending?.guard === 'dataRoot' && (
         <ConfirmModal
           message={t`Change the data folder while lectures are being processed?`}

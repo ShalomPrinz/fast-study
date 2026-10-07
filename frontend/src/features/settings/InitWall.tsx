@@ -261,12 +261,7 @@ export default function InitWall({ stored: initial, onDone }: Props) {
               {/* The wall renders outside `Layout`, so it brings its own provider — the account
                   chip is the only consumer that gets this far. */}
               <AuthStatusProvider>
-                <MoodleAccountField
-                  site={stored.moodleSite}
-                  switching={
-                    form.moodleSite !== null && form.moodleSite !== (stored.moodleSite ?? '')
-                  }
-                />
+                <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
               </AuthStatusProvider>
             </section>
 

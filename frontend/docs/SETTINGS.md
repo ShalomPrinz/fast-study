@@ -163,14 +163,19 @@ is the backstop. What is saved is always the probe's canonical root, never the t
 
 **No university is a choice too.** The "Choose your university…" entry, or "Other…" with no address
 (`choosesNoSite`), hands the form `''`, which `buildPatch` sends and every store and auto's `/config`
-read as cleared — the wall at once, `/settings` on Save behind the same confirm as a switch.
+read as cleared. The wall saves either at once; `/settings` saves only the "Choose…" entry at once
+(`onNoSite`), since a blank "Other…" there is usually a switch half typed, and leaves that one to Save.
 
-**The wall saves a confirmed site at once**: a `supported` answer, or no university, writes `moodle_site` alone through
-`saveSettings` (store, then auto's `/config`), chained so a quicker second pick never lands first, which
-makes Connect live on the wall; the rest of the form saves on submit as before.
+**Both screens save a confirmed site at once**: a `supported` answer, or no university, writes `moodle_site` alone
+through `saveSettings` (store, then auto's `/config`), chained so a quicker second pick never lands first,
+which makes Connect live without a Save. The rest of the form keeps its unsaved edits (`withSavedSite`) and
+saves on submit. `unverified` waits for the submit on both. `/settings` does it in `hooks/useSiteSave.ts`, whose chain
+its Save joins too, so a pick and a Save always land in the order made.
 
-**Switching sites drops the account.** The auto-downloader resets auth on a new site, so `/settings` raises
-an advisory `ConfirmModal` first while an account is connected, and re-probes the chip after the save.
+**Switching sites drops the account.** The auto-downloader resets auth on a new site, so while an account is
+connected `/settings` raises an advisory `ConfirmModal` first — at the pick for a site saved at once, on Save
+for one that waits. Cancelling a pick remounts the picker (keyed on a revision) on the stored site; either
+save re-probes the chip.
 
 ## Prerequisites and accounts
 
@@ -187,9 +192,9 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   says missing (then keeps it, so **Check again** answers in place); `/settings` always shows it.
 - **University account** (`MoodleAccountField`) — the downloads page's `AccountStatus`
   ([DOWNLOADS.md](DOWNLOADS.md)), with `--danger` retoned to neutral: red belongs on the page the session
-  actually blocks; the login finishes by itself with no button (the chip follows the pushed state); its unverified state, panel and retry button (bot challenge after login) show here too, the control row wrapping for it. The hint names the saved site's host. It belongs to the saved site only, so with none
-  saved — or another one chosen but unsaved — it shows a "save first" hint instead of a Connect that would
-  sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall shows it
+  actually blocks; the login finishes by itself with no button (the chip follows the pushed state); its unverified state, panel and retry button (bot challenge after login) show here too, the control row wrapping for it. The hint names the saved site's host. It belongs to the saved site only (`accountView`), so with none
+  saved it asks for a university, and with another one chosen but unsaved it shows a "save first" hint, instead
+  of a Connect that would sign in to the wrong site; the chip is keyed on the site, so a new one re-probes. It is what makes a settings screen call `/auth/status`; the wall shows it
   under the university picker and, outside `Layout`, brings its own `AuthStatusProvider`. A down auto-downloader shows one toast, deduped with the
   browser check's.
 - **Google account** (`DriveConnection`, over `services/drive.ts`) — rendered only while Drive is on.

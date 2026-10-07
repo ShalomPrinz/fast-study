@@ -32,3 +32,13 @@ export function choiceForSite(site: string | null): string {
 export function choosesNoSite(choice: string, typed: string): boolean {
   return choice === '' || (choice === OTHER_SITE && !typed.trim())
 }
+
+/** What the account field offers: Connect for the saved site, or a hint to choose one first or to
+ *  save the one the form holds — an account always belongs to the saved site, never an unsaved choice. */
+export function accountView(
+  storedSite: string | null,
+  formSite: string | null,
+): 'connect' | 'choose' | 'save' {
+  if (formSite !== null && formSite !== (storedSite ?? '')) return 'save'
+  return storedSite ? 'connect' : 'choose'
+}

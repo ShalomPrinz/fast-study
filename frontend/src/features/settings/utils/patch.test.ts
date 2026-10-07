@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { storeBody, type ConfigOptions, type Settings } from '@/services/settings'
-import { buildPatch, formFromStore, withOptions, type SettingsForm } from './patch'
+import { buildPatch, formFromStore, withOptions, withSavedSite, type SettingsForm } from './patch'
 
 const STORED: Settings = {
   dataRoot: '/data',
@@ -180,5 +180,26 @@ describe('the form without options', () => {
     })
     const listed = formFromStore({ ...STORED, geminiModel: 'gemini-3.5-pro' }, null)
     expect(withOptions(listed, STORED, OPTIONS)).toBe(listed)
+  })
+})
+
+describe('withSavedSite', () => {
+  it('keeps every other unsaved edit, and the next Save no longer sends the site', () => {
+    const edited = {
+      ...UNCHANGED,
+      dataRoot: '/elsewhere',
+      nightlyHour: 5,
+      moodleSite: 'https://moodle.bgu.ac.il/moodle',
+    }
+    const saved = { ...STORED, moodleSite: 'https://moodle.bgu.ac.il/moodle' }
+    expect(buildPatch(withSavedSite(edited, saved), saved)).toEqual({
+      dataRoot: '/elsewhere',
+      nightlyHour: 5,
+    })
+  })
+
+  it('reverts the site to the store, for a cancelled switch', () => {
+    const picked = { ...UNCHANGED, geminiModel: 'other', moodleSite: '' }
+    expect(withSavedSite(picked, STORED)).toEqual({ ...picked, moodleSite: STORED.moodleSite })
   })
 })

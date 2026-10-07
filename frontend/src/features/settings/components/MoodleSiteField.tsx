@@ -14,6 +14,9 @@ interface Props {
   onChange: (site: string | null) => void
   // Told of each site the probe confirms, before any save — the wall stores it right away.
   onSupported?: (site: string) => void
+  // Told when the "Choose your university…" entry is picked — "no university" as a deliberate choice,
+  // unlike an "Other…" whose address is still blank.
+  onNoSite?: () => void
   // Told when a probe starts and stops: an answer still in flight holds the save, a blank site never does.
   onChecking: (checking: boolean) => void
 }
@@ -26,7 +29,13 @@ const TONE: Record<string, string> = {
 
 // The university's Moodle site: a preset or any pasted address, probed before it can be saved.
 // See docs/SETTINGS.md.
-export default function MoodleSiteField({ value, onChange, onSupported, onChecking }: Props) {
+export default function MoodleSiteField({
+  value,
+  onChange,
+  onSupported,
+  onNoSite,
+  onChecking,
+}: Props) {
   const { t } = useLingui()
   const [choice, setChoice] = useState(() => choiceForSite(value || null))
   const [typed, setTyped] = useState(() => (choice === OTHER_SITE ? (value ?? '') : ''))
@@ -62,6 +71,7 @@ export default function MoodleSiteField({ value, onChange, onSupported, onChecki
     forget(next, '')
     const preset = MOODLE_SITE_PRESETS.find((p) => p.id === next)
     if (preset) void prober.probe(preset.url)
+    else if (next === '') onNoSite?.()
   }
 
   const message = () => {
