@@ -19,7 +19,8 @@
    more.
 7. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
    that: a renderer that loaded first would build its service clients at module scope against URLs
-   that do not exist yet.
+   that do not exist yet. The load is not awaited; when it finishes main logs `[main] app loaded
+   app://bundle/` (or `app load failed app://bundle/: <reason>`), which `delivery/smoke/` times boot by.
 8. Main then sends `auto` a fire-and-forget `POST /warmup`, so Playwright loads in the background
    rather than on the user's first browser action; its result is one log line and a failure surfaces
    nowhere, since `auto` loads on demand anyway.

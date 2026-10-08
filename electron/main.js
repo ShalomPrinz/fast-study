@@ -401,9 +401,13 @@ async function runBoot() {
   booting = true;
   try {
     serviceUrls = await boot();
-    // The site root, never `/index.html`: the router matches on the path, and `/index.html` is not
-    // one of its routes, so the app would mount and render nothing once the wall is behind it.
-    mainWindow.loadURL(`${APP_ORIGIN}/`);
+    // The site root, never `/index.html`, which no route matches. Not awaited, to stay off the boot
+    // path; the `app loaded` line is what delivery/smoke times boot by.
+    const appUrl = `${APP_ORIGIN}/`;
+    mainWindow
+      .loadURL(appUrl)
+      .then(() => log('main', `app loaded ${appUrl}`))
+      .catch((error) => log('main', `app load failed ${appUrl}: ${error.message}`));
     // After the window navigates, never before, so it stays off the path that decides whether the
     // app comes up — see docs/UPDATES.md.
     startUpdater(log);
