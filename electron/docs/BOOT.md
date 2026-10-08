@@ -12,9 +12,11 @@
    sit inline in the boot path, so each has to be cheap — no network, no spawn, no real disk work —
    and their duration is logged to catch one that stops being so.
 5. The `BrowserWindow` is created and loads the launch screen, `boot.html` — see below.
-6. The four children start **in dependency order** — `database → backend → auto → server` — one at a
-   time. Each is spawned, its port read off stdout, and its `/health` waited on before the next
-   starts.
+6. The four children start **in dependency order** on two tracks: `database → backend`, and `auto`
+   alongside them because it calls no peer. `server` starts once all three are healthy. Each child is
+   spawned, its port read off stdout, and its `/health` waited on before anything that needs it
+   starts. The first failure on either track fails the boot, and the other track spawns nothing
+   more.
 7. All four healthy, the window navigates to `app://bundle/`. The frontend does not load before
    that: a renderer that loaded first would build its service clients at module scope against URLs
    that do not exist yet.
@@ -58,9 +60,10 @@ The page's test ids are a contract held for `delivery/smoke/`: each row's `data-
 `database/` calls nobody, `auto/` calls nobody, `backend/` calls `database/`, `server/` calls all
 three. Every peer is therefore knowable before the service that needs it starts, so a peer's URL is
 just an env var at spawn — `DATABASE_URL`, `BACKEND_URL`, `AUTODL_URL`, the same names the services
-read in dev. No `/peers` route, no peers file, no post-boot exchange. Main accumulates the URLs as
-children come up and hands each new child everything already running; the ordering is what makes
-that correct, and it survives only while the call graph stays acyclic (root `CLAUDE.md`).
+read in dev. No `/peers` route, no peers file, no post-boot exchange. Each child gets exactly the
+peers it calls — `backend` gets `DATABASE_URL`, `server` all three, `database` and `auto` none — so
+nothing waits on a service it never calls. That survives only while the call graph stays acyclic
+(root `CLAUDE.md`).
 
 ## The port handshake
 
@@ -81,7 +84,7 @@ Every child gets `FASTSTUDY_PORT=0`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, 
 `development`, main's own too), `FASTSTUDY_SENTRY_DSN` (main's resolved DSN, empty when there is none),
 `FASTSTUDY_ERROR_REPORTS` (`1` when the stored switch is on, else `0` — never absent, so a value in
 main's own env is not inherited past the switch),
-the peers already running, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
+the peers it calls, and the settings store's contents as the env vars each owning service reads (`DATA_ROOT`,
 `GEMINI_MODEL`, `GDRIVE_ROOT_FOLDER`, `AUTO_RUN`, `MOODLE_SITE`, `DRIVE_ENABLED`, `GEMINI_API_KEY`,
 `GROQ_API_KEY`). Packaged, it also gets `FASTSTUDY_BIN_DIR` and `TECTONIC_CACHE_DIR`.
 

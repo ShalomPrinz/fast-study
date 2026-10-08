@@ -21,7 +21,7 @@ Read `electron/CLAUDE.md`, `docs/BOOT.md` and `docs/RENDERER.md` before changing
 
 - This package is CommonJS on purpose — a sandboxed preload cannot be an ES module. `require`, never `import`; `eslint.config.js` gives `electron/**/*.js` its own `sourceType: 'commonjs'` block and `boot.js` a browser-globals one.
 - The launch-contract names (`FASTSTUDY_PORT`, `FASTSTUDY_SECRET`, `FASTSTUDY_STATE_DIR`, `FASTSTUDY_BIN_DIR`, `X-FastStudy-Secret`, `secret`, `app://bundle`, `^FASTSTUDY_PORT=(\d+)$`) are what `lib/runtime/` implements on the service side. Changing a name or a rule is not an `electron/` decision — surface it and wait.
-- Keep main a launcher: no product logic, no path or course/lecture rules, no second writer of `DATA_ROOT`, no HTTP surface of its own. Spawn order stays `database → backend → auto → server`, and every peer stays a plain env var at spawn — both hold only while the call graph is acyclic.
+- Keep main a launcher: no product logic, no path or course/lecture rules, no second writer of `DATA_ROOT`, no HTTP surface of its own. Spawn order stays `database → backend` with `auto` alongside, then `server`, and every peer stays a plain env var at spawn — both hold only while the call graph is acyclic.
 - The kill must keep reaching every exit path (`will-quit`, `process.on('exit')`, `SIGINT`/`SIGTERM`, a failed boot before its retry, an uncaught exception) and the child's whole process group, or an orphaned service keeps a port and keeps writing `DATA_ROOT`.
 - `safeStorage.isEncryptionAvailable()` is false on WSL, so the store refuses an API-key write there and `secureStorage: false` is the expected local result, not a bug.
 - Do not commit, stage, or touch git state; the main session commits your work once you report.

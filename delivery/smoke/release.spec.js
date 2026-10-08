@@ -320,9 +320,21 @@ test('3. boot', async () => {
   // Main navigates only once all four answered /health, and the launch screen is gone by then, so
   // the navigation plus main's four ready lines are what "every row reached ready" is.
   expect(page.url()).toMatch(/^app:\/\/bundle\//);
+  // Auto starts beside the database → backend track, so only database-before-backend and server-last hold.
   await expect
     .poll(() => readyPorts(readLaunchLog()).map((ready) => ready.service))
-    .toEqual(['database', 'backend', 'auto', 'server']);
+    .toHaveLength(4);
+  const order = readyPorts(readLaunchLog()).map((ready) => ready.service);
+  expect([...order].sort(), `ready lines: ${order.join(', ')}`).toEqual([
+    'auto',
+    'backend',
+    'database',
+    'server',
+  ]);
+  expect(order.indexOf('database'), `ready lines: ${order.join(', ')}`).toBeLessThan(
+    order.indexOf('backend'),
+  );
+  expect(order.at(-1), `ready lines: ${order.join(', ')}`).toBe('server');
 
   const health = await waitFor(
     async () => {

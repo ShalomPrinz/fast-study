@@ -23,7 +23,7 @@ Beyond that, `downloader/` also calls `backend/` to record download durations in
 
 ## Service call graph
 
-The graph must stay acyclic: `frontend/` and `downloader/` call `backend/` and `database/`, `backend/` calls `database/`, and `database/` calls nobody. The packaged build binds every service to `127.0.0.1:0` and spawns them in order `database → backend → auto → server`, handing each peer's port to the next as a plain env var — a cycle would have no valid spawn order and would force a post-boot port exchange.
+The graph must stay acyclic: `frontend/` and `downloader/` call `backend/` and `database/`, `backend/` calls `database/`, and `database/` calls nobody. The packaged build binds every service to `127.0.0.1:0` and spawns `database → backend` with `auto` alongside them (it calls no peer), then `server` once all three are healthy, handing each service the ports of the peers it calls as plain env vars — a cycle would have no valid spawn order and would force a post-boot port exchange.
 
 So never add an outbound call from `database/` to a peer, and treat a proposal to add one as a packaging blocker, not a style preference. If `database/` needs to tell a peer something, either the peer calls in or the fact rides the existing SSE `/events` channel peers already subscribe to.
 

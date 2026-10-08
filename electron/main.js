@@ -154,8 +154,8 @@ function exe(name) {
   return process.platform === 'win32' ? `${name}.exe` : name;
 }
 
-/** The four children in dependency order. `peerVar` is the env var later children get this one
- *  under; `bridgeKey` its name in `window.faststudy.urls`. cwd branches too — see docs/BOOT.md. */
+/** The four children, in launch-screen order. `bridgeKey` is each one's name in
+ *  `window.faststudy.urls`; cwd branches with the command — see docs/BOOT.md. */
 function childSpecs() {
   const dev = !app.isPackaged;
   const services = path.join(process.resourcesPath, 'services', exe('services'));
@@ -179,25 +179,21 @@ function childSpecs() {
   return [
     {
       name: 'database',
-      peerVar: 'DATABASE_URL',
       bridgeKey: 'database',
       ...python('database', 'database_main.py', 'database'),
     },
     {
       name: 'backend',
-      peerVar: 'BACKEND_URL',
       bridgeKey: 'backend',
       ...python('backend', 'backend_main.py', 'backend'),
     },
     {
       name: 'auto',
-      peerVar: 'AUTODL_URL',
       bridgeKey: 'autoDownloader',
       ...node('auto', 'app.js'),
     },
     {
       name: 'server',
-      peerVar: null,
       bridgeKey: 'downloadServer',
       ...node('server', path.join('src', 'index.js')),
     },
@@ -315,9 +311,10 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Wait until a child answers `/health`, the one route exempt from the secret check. Polled
  *  because a booting child has no channel back to main: its stdout carries the port line alone. */
-async function waitForHealth(spec, url) {
+async function waitForHealth(spec, url, live) {
   const deadline = Date.now() + HEALTH_TIMEOUT_MS;
   for (;;) {
+    live();
     try {
       const response = await fetch(`${url}/health`);
       if (response.ok) return await response.json();
@@ -333,8 +330,8 @@ async function waitForHealth(spec, url) {
   }
 }
 
-/** Start all four in dependency order, handing each the peers already running — plain env vars,
- *  valid only while the call graph stays acyclic (docs/BOOT.md). */
+/** Start the four, each handed only the peers it calls as plain env vars — valid only while the
+ *  call graph stays acyclic (docs/BOOT.md). `auto` calls nobody, so it starts alongside `database`. */
 async function boot() {
   const specs = childSpecs();
   bootState = {
@@ -345,23 +342,44 @@ async function boot() {
   };
   publishBoot();
   const shared = sharedEnv();
-  const peers = {};
   const urls = {};
-  for (const spec of specs) {
-    setService(spec.name, { state: 'starting' });
+  // Set on the first failure, so the other track spawns nothing more and stops touching bootState.
+  let failed = false;
+  const live = () => {
+    if (failed) throw new Error('boot abandoned');
+  };
+  const up = async (name, env) => {
+    const spec = specs.find((candidate) => candidate.name === name);
+    live();
+    setService(name, { state: 'starting' });
+    try {
+      const port = await startChild(spec, { ...shared, ...env });
+      const url = `http://127.0.0.1:${port}`;
+      const health = await waitForHealth(spec, url, live);
+      live();
+      log('main', `${name} ready on ${url} — ${JSON.stringify(health)}`);
+      // The boot-time tool probe, which the launch screen renders: a service is ready with a missing
+      // binary, and that costs one feature rather than the launch.
+      setService(name, { state: 'ready', tools: health.tools ?? null });
+      urls[spec.bridgeKey] = url;
+      return url;
+    } catch (error) {
+      // Synchronous, so no other track resumes past a `live()` before the boot is abandoned.
+      failed = true;
+      error.service ??= name;
+      throw error;
+    }
+  };
+  await Promise.all([
+    up('database', {}).then((database) => up('backend', { DATABASE_URL: database })),
     // Only `auto` gets the token key, so no other service can read the token it protects.
-    const env =
-      spec.name === 'auto' ? { ...shared, ...peers, ...tokenKeyEnv() } : { ...shared, ...peers };
-    const port = await startChild(spec, env);
-    const url = `http://127.0.0.1:${port}`;
-    const health = await waitForHealth(spec, url);
-    log('main', `${spec.name} ready on ${url} — ${JSON.stringify(health)}`);
-    // The boot-time tool probe, which the launch screen renders: a service is ready with a missing
-    // binary, and that costs one feature rather than the launch.
-    setService(spec.name, { state: 'ready', tools: health.tools ?? null });
-    urls[spec.bridgeKey] = url;
-    if (spec.peerVar) peers[spec.peerVar] = url;
-  }
+    up('auto', tokenKeyEnv()),
+  ]);
+  await up('server', {
+    DATABASE_URL: urls.database,
+    BACKEND_URL: urls.backend,
+    AUTODL_URL: urls.autoDownloader,
+  });
   return urls;
 }
 
@@ -382,7 +400,7 @@ async function runBoot() {
     log('main', `boot failed: ${error.stack ?? error.message}`);
     // A retry re-spawns all four, so a surviving child would hold a port and a second DATA_ROOT writer.
     await stopChildren();
-    const failing = bootState.services.find((service) => service.state === 'starting');
+    const failing = bootState.services.find((service) => service.name === error.service);
     // Nothing is running any more, so no row may still read ready.
     for (const service of bootState.services) {
       service.state = service === failing ? 'failed' : 'pending';
