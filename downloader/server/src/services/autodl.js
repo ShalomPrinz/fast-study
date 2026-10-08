@@ -52,16 +52,17 @@ export function resolved(status) {
 }
 
 /**
- * Resolver edge to auto/: a discovery `ref` → `{ media, targets }`. A non-2xx is RETURNED, never
- * thrown, so `/download-item` can forward auto's status and body verbatim.
+ * Resolver edge to auto/: a discovery `ref`, or a pasted `url` in its place, → `{ media, targets }`.
+ * A non-2xx is RETURNED, never thrown, so the routes can forward auto's status and body verbatim.
  * `wait` marks this server's own calls, which queue for the Moodle lock; a user's button press
  * leaves it off and gets auto's 429 `moodle_busy` back to forward.
- * @param {{ ref: string, course: string, name: string, kind: string,
+ * @param {{ ref?: string, url?: string, course: string, name: string, kind: string,
  *           only?: boolean, forceCapture?: boolean, wait?: boolean, signal?: AbortSignal }} args
  * @returns {Promise<{ status: number, body: object|null }>} status 0 = unreachable
  */
 export async function resolve({
   ref,
+  url,
   course,
   name,
   kind,
@@ -76,7 +77,7 @@ export async function resolve({
     const res = await postJson(
       `${AUTODL_URL}/resolve`,
       peerHeaders(headers),
-      JSON.stringify({ ref, course, name, kind, only, forceCapture }),
+      JSON.stringify({ ref, url, course, name, kind, only, forceCapture }),
       signal,
     );
     let body = null;

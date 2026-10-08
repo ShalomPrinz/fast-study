@@ -27,7 +27,7 @@ alone seeds and self-updates the writable yt-dlp copy ([DOWNLOAD.md](docs/DOWNLO
 | `FRONTEND_URL`            | `http://localhost:5173` | frontend CORS origin; `app://bundle` always, and any `http://localhost:<port>` in dev, beside it |
 | `DATABASE_URL`            | `http://localhost:8001` | database base URL                                                                        |
 | `BACKEND_URL`             | `http://localhost:8000` | backend base URL — timing samples and the video-arrived report                          |
-| `AUTODL_URL`              | `http://localhost:3053` | auto/ base URL — `POST /resolve`, for `/download-item` and silent re-resolve, and the Moodle files auto/ streams |
+| `AUTODL_URL`              | `http://localhost:3053` | auto/ base URL — `POST /resolve`, for `/download-item`, `/download-url` and silent re-resolve, and the Moodle files auto/ streams |
 
 `DOWNLOADER_EXTENSION_ID` has no default, so a packaged build allowlists no `chrome-extension://`
 origin. The extension is dev-only — it hardcodes `http://localhost:3052` and has no way to receive
@@ -40,8 +40,8 @@ and writable copy live) — comes from [`@faststudy/runtime`](../../lib/runtime/
 `peerHeaders` goes on calls to our own services only, never on `services/probe.js`'s fetch of an
 external lecture host.
 
-auto/ holds one Moodle lock ([auto GATE.md](../auto/docs/GATE.md)). A user's `/download-item` goes to
-auto/ unmarked, so a busy lock comes back `429 moodle_busy` and is forwarded; every call this server
+auto/ holds one Moodle lock ([auto GATE.md](../auto/docs/GATE.md)). A user's `/download-item` or `/download-url`
+goes to auto/ unmarked, so a busy lock comes back `429 moodle_busy` and is forwarded; every call this server
 makes on its own — a section run's rows, a silent re-resolve, a Moodle file fetch — sends
 `X-FastStudy-Moodle-Wait: 1` and queues instead, for as long as auto/ holds it: `/resolve` goes over
 `node:http`, not `fetch`, whose 300s headers timeout would kill a row queued behind a login. A file
@@ -68,7 +68,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 | `POST /download`                          | curl header-replay capture; 200 at once with a `jobId`, runs in the background                                    |
 | `POST /download-file`                     | plain-URL capture added to the lecture's materials; 200 at once with a `jobId`                                    |
 | `POST /download-youtube`                  | yt-dlp capture (YouTube + public Google Drive file links); 200 at once with a `jobId`                             |
-| `POST /download-url`                      | plain yt-dlp on any http(s) URL (the Downloads page's manual entry); no credentials, no fallback; 200 with a `jobId` |
+| `POST /download-url`                      | any http(s) URL (the Downloads page's manual entry) → auto/ `/resolve`, then one job: plain yt-dlp off the Moodle site, curl on auto's proxy on it; auto's refusals forwarded verbatim; 200 with a `jobId` ([DOWNLOAD.md](docs/DOWNLOAD.md)) |
 | `POST /download-item`                     | `{ref, course, name, kind}` → auto/ `/resolve`, then a job per target; `{media, jobIds, renames}` (auto's 4xx forwarded verbatim, `429 moodle_busy` included) |
 | `POST /download-section`                  | `{sectionId, course, targets}` → `{runId, renames}`; drives or joins that section's bulk run                      |
 | `POST /runs/:id/resume`                   | continue a run parked at a passcode gate; `{skip:true}` gives up on the gated row                                 |

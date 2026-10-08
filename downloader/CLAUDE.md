@@ -47,9 +47,9 @@ The extension has two pieces; the server they hand off to is covered separately 
 
 ## Service edges
 
-The graph is acyclic: `server/` → **auto/** (3053) to resolve a discovery row into download
-targets (and to re-resolve one whose cached token went stale), → **database** (8001) for every
-file it saves, and → **backend** (8000) both to announce a stored video (`POST /video-arrived`,
+The graph is acyclic: `server/` → **auto/** (3053) to resolve a discovery row, or a link pasted
+into the manual form, into download targets (and to re-resolve one whose cached token went
+stale), → **database** (8001) for every file it saves, and → **backend** (8000) both to announce a stored video (`POST /video-arrived`,
 which is where auto-run is decided) and for download duration samples (`POST /timing`, per-tool
 ETA buckets — [JOBS.md](server/docs/JOBS.md)). `server/` also fetches every Moodle-hosted file from
 auto/'s `/moodle/file/:id`, because auto/ alone talks to Moodle, one request at a time

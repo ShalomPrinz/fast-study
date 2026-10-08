@@ -46,9 +46,16 @@ default home may be read-only. Packaged, `--ffmpeg-location` names the bundled f
 on PATH: without it yt-dlp skips the merge yet exits 0, leaving only `video.fNNN.*` and no
 `video.mp4` to upload.
 
-`/download-youtube` gates on `YTDLP_HOST_RE`; `/download-url` runs the same descriptor on any
-http(s) URL with no cookies or headers. yt-dlp's generic extractor rarely knows a size, so the probe
-usually reports unknown, and a host's 401/403 lands as `download_auth_failed` like any other source.
+`/download-youtube` gates on `YTDLP_HOST_RE`. `/download-url` (the manual form) takes any http(s)
+URL but first asks auto/'s `/resolve` with it, unmarked: a link off the configured Moodle site comes
+back as this descriptor with no cookies or headers, one on it as a `curl` target on auto's
+`/moodle/file/<id>`, so auto stays the only process that talks to Moodle
+([GATE.md](../../auto/docs/GATE.md#files)). auto's refusals (`429 moodle_busy`, `422
+link_not_a_video`, …) are forwarded verbatim, and an unreachable auto fails the click `502
+autodl_unreachable` whatever the link. The job has no ref; a proxied target whose id auto forgot (a restart) re-resolves once from the
+same url, waiting its turn at the lock, like a row's silent re-resolve ([JOBS.md](JOBS.md)). yt-dlp's generic
+extractor rarely knows a size, so the probe usually reports unknown, and a host's 401/403 lands as
+`download_auth_failed` like any other source.
 
 ### The JS runtime
 

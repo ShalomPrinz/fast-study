@@ -40,11 +40,12 @@ function recaptureFailed(detail) {
 
 // Re-resolve ONE target fresh → `{downloader, input}` or `{error}`. `only`+`forceCapture` makes
 // the cap fresh (non-cached), which is what stops a second retry — see docs/JOBS.md. Nobody pressed
-// anything, so it waits its turn at the Moodle lock.
-function makeReresolve({ ref, course, name, kind }) {
+// anything, so it waits its turn at the Moodle lock. A pasted link passes `url` in place of `ref`.
+function makeReresolve({ ref, url, course, name, kind }) {
   return async () => {
     const { status, body } = await resolve({
       ref,
+      url,
       course,
       name,
       kind,
@@ -95,18 +96,7 @@ export async function downloadItem({
   });
   // The caller gave up (a cancelled run): its answer is read by nobody, and nothing may start.
   if (signal?.aborted) return { status: 0, body: null };
-  if (!resolved(status)) {
-    // auto's own body — code included — is forwarded verbatim; the fallback is for a non-2xx it
-    // answered with nothing parseable.
-    return {
-      status: status || 502,
-      body: body ?? {
-        error: 'auto-downloader unreachable',
-        code: 'autodl_unreachable',
-        params: { detail: `HTTP ${status}` },
-      },
-    };
-  }
+  if (!resolved(status)) return refusal(status, body);
 
   const targets = body?.targets ?? [];
   const runs = targets.map(toRun);
@@ -130,6 +120,45 @@ export async function downloadItem({
     }),
   );
   return { status: 200, body: { media: body.media, jobIds, renames } };
+}
+
+// The non-2xx `/download-item` and `/download-url` answer when auto refused: auto's own body, code
+// included, verbatim; the fallback is for a non-2xx it answered with nothing parseable.
+function refusal(status, body) {
+  return {
+    status: status || 502,
+    body: body ?? {
+      error: 'auto-downloader unreachable',
+      code: 'autodl_unreachable',
+      params: { detail: `HTTP ${status}` },
+    },
+  };
+}
+
+// A pasted link → one job; auto decides if it is Moodle traffic. The click is unmarked, so a busy
+// lock refuses it 429; a proxied target re-resolves from the same url if auto forgot its id.
+export async function downloadUrl({ url, course, lecture, kind }) {
+  const { status, body } = await resolve({ url, course, name: lecture, kind });
+  if (!resolved(status)) return refusal(status, body);
+  const target = body?.targets?.[0];
+  const run = target && toRun(target);
+  if (!run) {
+    return {
+      status: 502,
+      body: { error: 'auto returned no usable target', code: 'autodl_no_target', params: {} },
+    };
+  }
+  const jobId = startJob(run.downloader, run.input, {
+    course,
+    lecture,
+    kind,
+    fromCache: target.fromCache === true,
+    reresolve: makeReresolve({ url, course, name: lecture, kind }),
+  });
+  return {
+    status: 200,
+    body: { status: 'Downloading in background...', target: `${course}/${lecture}`, jobId },
+  };
 }
 
 router.post('/download-item', async (req, res) => {
@@ -157,6 +186,31 @@ router.post('/download-item', async (req, res) => {
     only: only === true,
     forceCapture: forceCapture === true,
   });
+  res.status(status).json(body);
+});
+
+// Any http(s) URL, as the manual form's entry: auto resolves it first (see downloadUrl), and a
+// failure is the job's error, never a fallback to another downloader.
+router.post('/download-url', async (req, res) => {
+  const { url, course, lecture, kind = 'lecture' } = req.body ?? {};
+  if (typeof url !== 'string' || !/^https?:\/\//.test(url)) {
+    return res.status(400).json(invalidRequest('url', 'valid url required'));
+  }
+  const names = { course: storedName(course), lecture: storedName(lecture) };
+  if (!names.course || !names.lecture) {
+    return res
+      .status(400)
+      .json(
+        invalidRequest(
+          names.course ? 'lecture' : 'course',
+          'course and lecture with a legal character are required',
+        ),
+      );
+  }
+  const kindErr = validateKind(kind);
+  if (kindErr) return res.status(400).json(kindErr);
+
+  const { status, body } = await downloadUrl({ url, ...names, kind });
   res.status(status).json(body);
 });
 

@@ -260,6 +260,11 @@ other failure; they previously fell through to the bare status line.
 | `routes/downloadItem.js`  | job        | `recapture_unsupported`     | `detail`                   | user  |
 | `routes/downloadItem.js`  | job        | `recapture_failed`          | `detail`                   | user  |
 
+`/download-item` and `/download-url` forward auto's `/resolve` refusal body verbatim, so a manual URL on
+the Moodle site can answer auto's `moodle_busy`, `link_not_a_video`, `link_dead` or
+`link_probe_inconclusive`; `autodl_unreachable` reaches `/download-url` for any URL, since only auto
+can say which URLs are Moodle's.
+
 `services/database.js` forwards the database's own `code`/`params` (`name_reserved`, `file_locked`, …)
 on both channels unchanged, so `database_store_failed` is only the fallback for a failure with no code
 — a network error on the job path, or a non-JSON body. `/upload-pdf` keeps answering 502 either way.
