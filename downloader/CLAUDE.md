@@ -51,7 +51,9 @@ The graph is acyclic: `server/` → **auto/** (3053) to resolve a discovery row 
 targets (and to re-resolve one whose cached token went stale), → **database** (8001) for every
 file it saves, and → **backend** (8000) both to announce a stored video (`POST /video-arrived`,
 which is where auto-run is decided) and for download duration samples (`POST /timing`, per-tool
-ETA buckets — [JOBS.md](server/docs/JOBS.md)). `auto/` calls nothing of ours. From outside, the extension
+ETA buckets — [JOBS.md](server/docs/JOBS.md)). `server/` also fetches every Moodle-hosted file from
+auto/'s `/moodle/file/:id`, because auto/ alone talks to Moodle, one request at a time
+([GATE.md](auto/docs/GATE.md)). `auto/` calls nothing of ours. From outside, the extension
 popup calls `server/`, and the frontend calls `server/` for every download (start, job and run events,
 resync) and `auto/` for listing, auth and passcodes.
 
@@ -64,7 +66,7 @@ text from outside this repo (yt-dlp, curl, undici, Playwright, Moodle, the datab
 rides as the reserved `detail` param. `error`/`message` stays English: it is the developer-facing
 description and the frontend's fallback for a code it has no sentence for.
 
-`auto/`'s four typed refusals keep their `status` and `message` on top of that, so the frontend's
+`auto/`'s five typed refusals keep their `status` and `message` on top of that, so the frontend's
 existing branch on `status` is untouched. The full vocabulary is in the repo-root
 [`docs/ERROR-CODES.md`](../docs/ERROR-CODES.md); a request-validation body carries `invalid_request`
 with the offending `field` and deliberately has no catalog row.

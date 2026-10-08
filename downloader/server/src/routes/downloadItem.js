@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { downloaders } from '../downloaders/index.js';
 import { invalidRequest, storedName, validateKind } from '../validate.js';
-import { resolve, resolved } from '../services/autodl.js';
+import { resolve, resolved, targetUrl } from '../services/autodl.js';
 import { startJob } from './download.js';
 
 const router = Router();
@@ -11,10 +11,10 @@ const router = Router();
 function toRun(target) {
   const downloader = downloaders[target?.tool];
   if (!downloader) return null;
+  const url = targetUrl(target.url);
   return {
     downloader,
-    input:
-      target.tool === 'curl' ? { url: target.url, headers: target.headers } : { url: target.url },
+    input: target.tool === 'curl' ? { url, headers: target.headers } : { url },
   };
 }
 
@@ -39,7 +39,8 @@ function recaptureFailed(detail) {
 }
 
 // Re-resolve ONE target fresh → `{downloader, input}` or `{error}`. `only`+`forceCapture` makes
-// the cap fresh (non-cached), which is what stops a second retry — see docs/JOBS.md.
+// the cap fresh (non-cached), which is what stops a second retry — see docs/JOBS.md. Nobody pressed
+// anything, so it waits its turn at the Moodle lock.
 function makeReresolve({ ref, course, name, kind }) {
   return async () => {
     const { status, body } = await resolve({
@@ -49,6 +50,7 @@ function makeReresolve({ ref, course, name, kind }) {
       kind,
       only: true,
       forceCapture: true,
+      wait: true,
     });
     if (!resolved(status)) return { failure: reresolveFailure(status, body) };
     const fresh = body?.targets?.find((t) => t.name === name) ?? body?.targets?.[0];
@@ -64,6 +66,8 @@ function makeReresolve({ ref, course, name, kind }) {
  * Download one discovery row: auto/ resolves the ref, this server runs a job per target. Returns
  * `{status, body}`, never throws: auto's 401/409/422 bodies are both callers' contract, verbatim.
  * `only`/`forceCapture` pass through to auto untouched (a per-clip zoom retry needs `only`).
+ * `wait` is a section run's: it queues at the Moodle lock, where a button press is refused 429.
+ * `signal` abandons it — the request leaves auto's queue and no job starts.
  * @returns {Promise<{status: number, body: object}>} 200 → `{media, jobIds, renames}`
  */
 export async function downloadItem({
@@ -73,11 +77,24 @@ export async function downloadItem({
   kind,
   only = false,
   forceCapture = false,
+  wait = false,
+  signal,
 }) {
   const course = storedName(rawCourse);
   const name = storedName(rawName);
   const renames = name === rawName ? [] : [{ ref, name }];
-  const { status, body } = await resolve({ ref, course, name, kind, only, forceCapture });
+  const { status, body } = await resolve({
+    ref,
+    course,
+    name,
+    kind,
+    only,
+    forceCapture,
+    wait,
+    signal,
+  });
+  // The caller gave up (a cancelled run): its answer is read by nobody, and nothing may start.
+  if (signal?.aborted) return { status: 0, body: null };
   if (!resolved(status)) {
     // auto's own body — code included — is forwarded verbatim; the fallback is for a non-2xx it
     // answered with nothing parseable.

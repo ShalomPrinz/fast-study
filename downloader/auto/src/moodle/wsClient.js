@@ -1,6 +1,13 @@
 // Thin fetch wrapper over Moodle's Web-Services REST API; a wstoken authenticates every call —
 // no browser, no cookies. Protocol reference: docs/MOODLE.md.
 import { CodedError } from '../lib/errors.js';
+import { enterMoodle } from './gate.js';
+
+// Every request to a Moodle goes through here: the gate first, then the network (docs/GATE.md).
+async function moodleFetch(url, init) {
+  await enterMoodle(String(url).split('?')[0]);
+  return fetch(url, init);
+}
 
 /** A Moodle WS exception body ({ exception, errorcode, message }) surfaced as an Error. */
 export class WsError extends CodedError {
@@ -77,7 +84,7 @@ async function callWs(site, token, fn, params = {}, { post = false } = {}) {
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
   }
 
-  const body = await jsonOrBlocked(await fetch(url, init));
+  const body = await jsonOrBlocked(await moodleFetch(url, init));
   if (body && body.exception) throw new WsError(body.errorcode, body.message);
   return body;
 }
@@ -122,7 +129,7 @@ export async function getPublicConfig(root, { timeoutMs = 10_000 } = {}) {
   const methodname = 'tool_mobile_get_public_config';
   const url = `${root}/lib/ajax/service-nologin.php?info=${methodname}`;
   // Manual, so the caller sees the redirect: a POST fetch follows would arrive as a GET.
-  const res = await fetch(url, {
+  const res = await moodleFetch(url, {
     method: 'POST',
     redirect: 'manual',
     headers: { 'User-Agent': APP_USER_AGENT, 'Content-Type': 'application/json' },
@@ -176,25 +183,85 @@ export function pluginfileUrl(fileurl, token) {
   return u.toString();
 }
 
-// Preflight a tokened pluginfile URL: a dead token and a bot challenge both answer HTTP 200, and
-// server/'s job would save either as the PDF. The last point to report them. See docs/MOODLE.md.
-export async function assertPluginfileReadable(url) {
-  const res = await fetch(url, {
-    headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT },
-  });
+// Why a pluginfile answer is not the file, or null when it is: a dead token and a bot challenge
+// both answer HTTP 200, and either would be saved as the PDF. See docs/MOODLE.md.
+async function pluginfileFault(res, url) {
   if (res.status >= 300 && res.status < 400)
-    throw new WsBlockedError(`pluginfile: HTTP ${res.status} redirect`);
+    return new WsBlockedError(`pluginfile: HTTP ${res.status} redirect`);
   const type = res.headers.get('content-type') ?? '';
   if (type.includes('text/html'))
-    throw new WsBlockedError(`pluginfile: HTTP ${res.status}, ${type}`);
-  if (!type.includes('application/json')) return;
+    return new WsBlockedError(`pluginfile: HTTP ${res.status}, ${type}`);
+  if (!type.includes('application/json')) return null;
   const body = await res.json().catch(() => null);
-  if (body?.errorcode) throw new WsError(body.errorcode, body.message);
-  throw new CodedError(
+  if (body?.errorcode) return new WsError(body.errorcode, body.message);
+  return new CodedError(
     'moodle_file_unreadable',
     { url },
     `pluginfile served JSON, not a file: ${url}`,
   );
+}
+
+// The file's full size from a ranged answer's Content-Range, else a whole answer's Content-Length.
+function totalSize(res) {
+  const range = /\/(\d+)\s*$/.exec(res.headers.get('content-range') ?? '');
+  if (range) return Number(range[1]);
+  const len = res.status === 200 ? res.headers.get('content-length') : null;
+  return len ? Number(len) : null;
+}
+
+// Preflight a tokened pluginfile URL — the last point to report a dead token or a challenge before
+// server/ fetches it. → the file's size in bytes, or null when the answer did not say.
+export async function assertPluginfileReadable(url) {
+  const res = await moodleFetch(url, {
+    headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT },
+  });
+  const fault = await pluginfileFault(res, url);
+  await res.body?.cancel().catch(() => {});
+  if (fault) throw fault;
+  return totalSize(res);
+}
+
+// Open a tokened pluginfile URL for streaming, `range` passed through → the Response, its body
+// unread. Throws as assertPluginfileReadable does when the answer is not the file.
+export async function openPluginfile(url, { range, signal } = {}) {
+  const headers = { 'User-Agent': APP_USER_AGENT };
+  if (range) headers.Range = range;
+  const res = await moodleFetch(url, { headers, signal });
+  const fault = await pluginfileFault(res, url);
+  if (fault) {
+    await res.body?.cancel().catch(() => {});
+    throw fault;
+  }
+  return res;
+}
+
+// Captured headers never replayed to the host: a range or validator would cut the body at the wrong
+// offset, and the rest are per-connection.
+const UNREPLAYED = new Set([
+  'range',
+  'if-range',
+  'if-none-match',
+  'if-modified-since',
+  'host',
+  'content-length',
+]);
+
+// Open a non-pluginfile file on the Moodle host for streaming — a media link, a videostream capture —
+// with its captured `[{name, value}]` headers (cookies included) and `range` → the Response, body
+// unread. An HTML answer where a file was due is the bot challenge.
+export async function openMoodleFile(url, { headers = [], range, signal } = {}) {
+  const sent = {};
+  for (const { name, value } of headers) {
+    if (!name.startsWith(':') && !UNREPLAYED.has(name.toLowerCase())) sent[name] = value;
+  }
+  if (range) sent.Range = range;
+  const res = await moodleFetch(url, { headers: sent, signal });
+  const type = res.headers.get('content-type') ?? '';
+  if (res.ok && type.includes('text/html')) {
+    await res.body?.cancel().catch(() => {});
+    throw new WsBlockedError(`HTTP ${res.status}, ${type}`);
+  }
+  return res;
 }
 
 // Parse the numeric course id from a Moodle course URL (…/course/view.php?id=109063).

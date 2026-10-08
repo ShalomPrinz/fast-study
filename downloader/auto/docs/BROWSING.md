@@ -48,7 +48,7 @@ slide deck costs the material. Non-PDF files stay unclaimed.
 ## The `Item` / `ref` contract
 
 The frontend never sees the mechanism. `/list` and `/list/expand` return
-`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording }`:
+`Item = { ref, title, kind, media, resolvedMedia?, expandable, section, likelyRecording, moodle }`:
 
 - `media` — which file lands (`'video'` = `video.mp4`, `'material'` = a lecture PDF), never how it is
   fetched. `'unknown'` for every `google-drive` and `direct-url` row: the WS payload names no file
@@ -62,6 +62,13 @@ The frontend never sees the mechanism. `/list` and `/list/expand` return
 - `section` — the Moodle section heading, `''` when unnamed; display metadata the frontend groups by.
 - `likelyRecording` — the keyword hint; `false` only for a `url` module that reads like a stray link.
   Every other strategy is unambiguously a recording.
+- `moodle` — whether acting on the row (expanding, resolving, downloading) reaches the Moodle site,
+  so the frontend disables only those rows while `moodleBusy` is true. Each extractor answers it with
+  `reachesMoodle(recording)` — the base class throws, and a test fails for any registered extractor
+  that does not override it. `moodle-file` and `videostream` are always `true`; `zoom`,
+  `youtube-playlist` (its expanded children too) and `google-drive` always `false`; `direct-url` is
+  `true` when its link is on the Moodle host or the probe cache saw it redirect there. Advisory:
+  [GATE.md](GATE.md#state-on-the-wire).
 
 Expanded playlist children inherit their parent's `section` and `likelyRecording` — one video title
 says nothing on its own.
@@ -75,7 +82,7 @@ its credential, so it takes one explicitly (`resolveMoodleFile`'s required `wsto
 ones resolve exactly one target, so `only` doesn't apply; all share the replay cache and stamp
 `fromCache`. Each returns targets (`core/targets.js`), and `toolFor` picks `server/`'s downloader:
 `curl` replays captured headers, `ytdlp` resolves a YouTube/Drive/direct video page, `fetch` takes a
-plain tokened URL.
+plain URL (for a Moodle file, a path on auto).
 
 Only `kind` (`lecture`/`recitation`) picks the folder; the database names the file, so a second PDF
 into one lecture appends (`material.2.pdf`).
@@ -128,11 +135,18 @@ default), a refusal that can pass (`403` wall, `429`, `5xx`), or bare `applicati
 no name — is a plain `500` `link_probe_inconclusive {url}` "try again" and is **not cached**: a 422 disables the row for the session, which must not be the price
 of one bad moment on the network.
 
+A link on the Moodle host — or one whose redirects (followed by hand, each hop checked) end there —
+is Moodle traffic: its probe runs under the gate, and a usable one
+resolves to a path on auto that streams it (a video as a `curl` target, since yt-dlp has nothing to
+add to one plain file), sized from the probe's own answer ([GATE.md](GATE.md#files)).
+
 ## Moodle files
 
-Browserless: `/resolve` finds the university from the ref's `fileurl`, appends the WS token via
-`pluginfileUrl`, and returns a `fetch` target — a tracked job, so a PDF gets the same progress, retry
+Browserless: `/resolve` finds the university from the ref's `fileurl`, preflights it with the WS token,
+and returns a `fetch` target whose url is `/moodle/file/<id>` on auto, which streams the bytes under
+the Moodle lock ([GATE.md](GATE.md#files)) — a tracked job, so a PDF gets the same progress, retry
 and `ref` grouping as a video. A missing token is `401`. A _dead_ one needs the one-byte preflight
 `assertPluginfileReadable`, because pluginfile answers it with HTTP 200 + a JSON exception body that
-`server/`'s job would save as the material ([MOODLE.md](MOODLE.md)). The cap is cached like any other,
-so `fromCache` lets `server/` re-resolve silently once the token has expired.
+`server/`'s job would save as the material ([MOODLE.md](MOODLE.md)). The target always says
+`fromCache:true`: its id lives in auto's memory, so a failed fetch (an expired token, an auto restart)
+is always worth `server/`'s one silent re-resolve.

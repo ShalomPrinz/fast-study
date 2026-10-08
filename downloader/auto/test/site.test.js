@@ -15,6 +15,7 @@ process.on('exit', () => fs.rmSync(STATE_DIR, { recursive: true, force: true }))
 import { candidateRoots, currentSite, setCurrentSite, underSite } from '../src/moodle/site.js';
 import { probeSite } from '../src/moodle/probe.js';
 import { handleAuthStatus, handleConfig, handleList, handleSiteProbe } from '../src/http/server.js';
+import { gated } from './gated.js';
 
 // Enough of an Express response for the handlers' send(): records the status and the body.
 function fakeRes() {
@@ -29,6 +30,7 @@ function fakeRes() {
       res.body = body;
       return res;
     },
+    on() {},
   };
   return res;
 }
@@ -107,7 +109,7 @@ test('a Moodle with the mobile service on is supported, at its own wwwroot', asy
   const asked = stubFetch(t, (root) =>
     root === 'https://x.ac.il/moodle' ? config(MOODLE) : NOT_FOUND,
   );
-  assert.deepEqual(await probeSite('https://x.ac.il/moodle/course/view.php?id=5'), {
+  assert.deepEqual(await gated(() => probeSite('https://x.ac.il/moodle/course/view.php?id=5')), {
     status: 'supported',
     site: 'https://x.ac.il/moodle',
   });
@@ -116,14 +118,17 @@ test('a Moodle with the mobile service on is supported, at its own wwwroot', asy
 
 test('the mobile service off, and maintenance, are unsupported with their reason', async (t) => {
   stubFetch(t, () => config({ ...MOODLE, enablemobilewebservice: 0 }));
-  assert.deepEqual(await probeSite('https://x.ac.il/moodle'), {
+  assert.deepEqual(await gated(() => probeSite('https://x.ac.il/moodle')), {
     status: 'unsupported',
     site: 'https://x.ac.il/moodle',
     code: 'moodle_site_unsupported',
     params: { site: 'https://x.ac.il/moodle', reason: 'mobile_service_off' },
   });
   globalThis.fetch = async () => config({ ...MOODLE, maintenanceenabled: 1 });
-  assert.equal((await probeSite('https://x.ac.il/moodle')).params.reason, 'maintenance');
+  assert.equal(
+    (await gated(() => probeSite('https://x.ac.il/moodle'))).params.reason,
+    'maintenance',
+  );
 });
 
 test('a Moodle exception envelope reads as the mobile service off', async (t) => {
@@ -132,14 +137,17 @@ test('a Moodle exception envelope reads as the mobile service off', async (t) =>
       { error: true, exception: { errorcode: 'servicenotavailable', message: 'x' } },
     ]),
   );
-  assert.equal((await probeSite('https://x.ac.il')).params.reason, 'mobile_service_off');
+  assert.equal(
+    (await gated(() => probeSite('https://x.ac.il'))).params.reason,
+    'mobile_service_off',
+  );
 });
 
 test('every root answering without Moodle JSON is not_moodle', async (t) => {
   stubFetch(t, (root) =>
     root === 'https://x.ac.il' ? NOT_FOUND : reply(200, 'application/json', { hello: 1 }),
   );
-  assert.deepEqual(await probeSite('https://x.ac.il/m/course/view.php?id=1'), {
+  assert.deepEqual(await gated(() => probeSite('https://x.ac.il/m/course/view.php?id=1')), {
     status: 'unsupported',
     site: 'https://x.ac.il',
     code: 'moodle_site_unsupported',
@@ -149,7 +157,7 @@ test('every root answering without Moodle JSON is not_moodle', async (t) => {
 
 test('an HTML bot wall is unverified, never not_moodle', async (t) => {
   stubFetch(t, () => BOT_WALL);
-  assert.deepEqual(await probeSite('https://x.ac.il'), {
+  assert.deepEqual(await gated(() => probeSite('https://x.ac.il')), {
     status: 'unverified',
     site: 'https://x.ac.il',
     params: { site: 'https://x.ac.il', detail: 'site_blocked' },
@@ -157,21 +165,24 @@ test('an HTML bot wall is unverified, never not_moodle', async (t) => {
   // One unreachable root is enough: "none is Moodle" can no longer be proved.
   globalThis.fetch = async (url) =>
     String(url).startsWith('https://x.ac.il/m/') ? BOT_WALL : NOT_FOUND;
-  assert.equal((await probeSite('https://x.ac.il/m/course/view.php')).status, 'unverified');
+  assert.equal(
+    (await gated(() => probeSite('https://x.ac.il/m/course/view.php'))).status,
+    'unverified',
+  );
 });
 
 test('a network failure or a timeout is unverified with what failed', async (t) => {
   stubFetch(t, () => {
     throw new TypeError('fetch failed');
   });
-  assert.deepEqual((await probeSite('https://x.ac.il')).params, {
+  assert.deepEqual((await gated(() => probeSite('https://x.ac.il'))).params, {
     site: 'https://x.ac.il',
     detail: 'network',
   });
   globalThis.fetch = async () => {
     throw new DOMException('timed out', 'TimeoutError');
   };
-  assert.equal((await probeSite('https://x.ac.il')).params.detail, 'timeout');
+  assert.equal((await gated(() => probeSite('https://x.ac.il'))).params.detail, 'timeout');
 });
 
 // A 3xx carrying `location` and `type`, with `body` as its JSON (Ariel's 302 carries Moodle's own).
@@ -193,7 +204,7 @@ test('a redirect to a Moodle is followed once, and the target decides', async (t
         )
       : config({ ...MOODLE, wwwroot: 'https://moodle26.technion.ac.il' }),
   );
-  assert.deepEqual(await probeSite('https://moodle.technion.ac.il'), {
+  assert.deepEqual(await gated(() => probeSite('https://moodle.technion.ac.il')), {
     status: 'supported',
     site: 'https://moodle26.technion.ac.il',
   });
@@ -208,7 +219,7 @@ test('a redirect to a Moodle is followed once, and the target decides', async (t
           error: 'x',
           errorcode: 'redirecterrordetected',
         });
-  assert.deepEqual(await probeSite('https://moodle.ariel.ac.il'), {
+  assert.deepEqual(await gated(() => probeSite('https://moodle.ariel.ac.il')), {
     status: 'unsupported',
     site: target,
     code: 'moodle_site_unsupported',
@@ -220,13 +231,13 @@ test('a redirect to a relative Location resolves against the request', async (t)
   const asked = stubFetch(t, (root) =>
     root === 'https://x.ac.il' ? redirect(302, '/moodle/') : config(MOODLE),
   );
-  assert.equal((await probeSite('https://x.ac.il')).site, 'https://x.ac.il/moodle');
+  assert.equal((await gated(() => probeSite('https://x.ac.il'))).site, 'https://x.ac.il/moodle');
   assert.deepEqual(asked, ['https://x.ac.il', 'https://x.ac.il/moodle']);
 });
 
 test('a second redirect, or a redirect to HTML, stays unverified', async (t) => {
   const asked = stubFetch(t, (root) => redirect(302, `${root}/next`));
-  assert.deepEqual(await probeSite('https://x.ac.il'), {
+  assert.deepEqual(await gated(() => probeSite('https://x.ac.il')), {
     status: 'unverified',
     site: 'https://x.ac.il',
     params: { site: 'https://x.ac.il', detail: 'site_blocked' },
@@ -235,11 +246,11 @@ test('a second redirect, or a redirect to HTML, stays unverified', async (t) => 
 
   globalThis.fetch = async (url) =>
     String(url).startsWith('https://x.ac.il/') ? redirect(302, 'https://wall.example/') : BOT_WALL;
-  assert.equal((await probeSite('https://x.ac.il')).params.detail, 'site_blocked');
+  assert.equal((await gated(() => probeSite('https://x.ac.il'))).params.detail, 'site_blocked');
   // A redirect's target that answers 404 is no proof either: the redirect itself was the answer.
   globalThis.fetch = async (url) =>
     String(url).startsWith('https://x.ac.il/') ? redirect(302, 'https://y.ac.il/') : NOT_FOUND;
-  assert.equal((await probeSite('https://x.ac.il')).status, 'unverified');
+  assert.equal((await gated(() => probeSite('https://x.ac.il'))).status, 'unverified');
 });
 
 test('POST /site/probe answers the verdict, and 400 without a URL', async (t) => {

@@ -26,6 +26,16 @@ export function setCurrentSite(site) {
   current = site || null;
 }
 
+/** True when `url` is on the configured site's host — any path there is Moodle traffic to the gate. */
+export function onMoodleHost(url) {
+  if (!current) return false;
+  try {
+    return new URL(url).origin === new URL(current).origin;
+  } catch {
+    return false;
+  }
+}
+
 /** True when `url` lives under `site`: same origin, and its path is the site's prefix or below it. */
 export function underSite(url, site) {
   let u;

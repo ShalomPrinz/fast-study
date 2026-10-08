@@ -96,6 +96,16 @@ const EXTRACTORS = [
   new DirectUrlExtractor(), // modType 'url' (last)    → any other off-site link → probed on download
 ];
 
+/** Every registered extractor, in routing order. */
+export function extractors() {
+  return [...EXTRACTORS];
+}
+
+/** Whether acting on a recording reaches Moodle — its own extractor's answer, never a guess here. */
+export function reachesMoodle(recording) {
+  return resolveExtractorForRecording(recording).reachesMoodle(recording);
+}
+
 /**
  * Route a recording echoed back from the frontend to its extractor by strategy
  * (the download phase can't re-parse the course to recover the extractor).

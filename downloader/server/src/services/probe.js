@@ -1,3 +1,5 @@
+import { onAutodl } from './autodl.js';
+
 // A replayed Range/conditional header makes the CDN return a partial body missing the offset-0
 // MP4 header. Stripped wherever captured headers are reused (probe + curl). See docs/DOWNLOAD.md.
 export const SKIP_HEADERS = new Set([
@@ -44,6 +46,8 @@ export async function probeContentLength(url, headers) {
     const len = head.headers.get('content-length');
     if (head.status < 400 && len) return +len;
   }
+  // auto answers HEAD from what it learned at resolve; a ranged GET would cost a turn of its lock.
+  if (onAutodl(url)) return null;
   const ranged = await requestFinal(url, headers, 'GET', { Range: 'bytes=0-0' });
   if (ranged) {
     // Cancel rather than drain: a server that ignores Range answers 200 with the whole

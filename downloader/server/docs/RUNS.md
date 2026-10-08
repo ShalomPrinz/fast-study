@@ -30,6 +30,11 @@ than restart or error, and two drivers over one section would re-trigger every r
 the caller's `skipped` verdicts were computed against a tree that hasn't refreshed yet. A run in a
 terminal status is replaced.
 
+**Every row waits its turn at auto's Moodle lock** (`wait: true` → `X-FastStudy-Moodle-Wait: 1`,
+[auto GATE.md](../../auto/docs/GATE.md)): nobody pressed a button for it, so it queues rather than
+being refused `429 moodle_busy` as a button press is. A cancelled or replaced run aborts that request
+(`run.stop`), so auto drops it from the queue and `downloadItem` starts no job for it.
+
 The driver holds its own reference to the run and re-checks the registry around every await, so a
 run cancelled or replaced mid-flight stops where it is and writes nothing further.
 

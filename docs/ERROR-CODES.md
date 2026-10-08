@@ -298,6 +298,9 @@ emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.
 | `auth/moodleToken.js`           | `moodle_login_not_pending`    | —                        | user  |
 | `moodle/wsClient.js`            | `moodle_file_unreadable`      | `url`                    | uncertain |
 | `moodle/wsClient.js` `WsError`  | `moodle_ws_error`             | `errorcode`, `detail`    | user  |
+| `moodle/gate.js`                | `moodle_busy`                 | —                        | user  |
+| `http/server.js` `/moodle/file` | `moodle_file_unknown`         | —                        | dev   |
+| `moodle/gate.js`                | `moodle_call_ungated`         | `target`                 | dev   |
 | `app.js` backstop               | `internal_error`              | `detail`                 | user  |
 | `http/server.js`, request checks| `invalid_request`             | `field`                  | dev   |
 

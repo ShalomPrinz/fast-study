@@ -46,6 +46,11 @@ export class ZoomExtractor extends VideoExtractor {
     return activity.modType === 'zoom';
   }
 
+  // A zoom share is fetched from zoom alone; Moodle only listed it.
+  reachesMoodle() {
+    return false;
+  }
+
   /**
    * One Recording per share link; the passcode is NOT carried in the ref — it's
    * looked up per course/lecture at the gate (server.js → passcodes.js, docs/ZOOM.md).

@@ -1,12 +1,13 @@
 // Session-scoped, in-memory probe verdicts under an opaque per-strategy PROBE KEY: the Drive file
 // id (stable across ref re-encoding) or the normalized URL. `forceCapture` re-probes.
 
-const entries = new Map(); // probeKey -> { media, filename, reason }
+const entries = new Map(); // probeKey -> { media, filename, reason, finalUrl }
 
 // `media` null = it can't land here: a named file (a .zip) or, with `reason:'unshared'`, one the
 // host serves no name for — both remembered exactly like a usable one.
-export function cacheProbe(probeKey, media, filename, reason) {
-  entries.set(probeKey, { media, filename, reason });
+// `finalUrl` is where the link's redirects ended, so a cached verdict still knows its host.
+export function cacheProbe(probeKey, media, filename, reason, finalUrl) {
+  entries.set(probeKey, { media, filename, reason, finalUrl });
 }
 
 /**

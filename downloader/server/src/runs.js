@@ -42,6 +42,9 @@ export function createRun({ sectionId, course, targets }) {
     status: 'running',
     paused: null,
   };
+  // Not on the wire: aborts the row in flight, which may sit in auto's Moodle queue indefinitely.
+  Object.defineProperty(run, 'stop', { value: new AbortController() });
+  runs.get(sectionId)?.stop.abort();
   runs.set(sectionId, run);
   broadcastRuns();
   return run;
@@ -84,6 +87,7 @@ export function cancelRun(id) {
   if (!run) return UNKNOWN_RUN;
   run.status = 'cancelled';
   run.paused = null;
+  run.stop.abort();
   broadcastRuns();
   return null;
 }
@@ -115,11 +119,14 @@ export async function drive(run, from, trigger = downloadItem) {
       let outcome = { disposition: 'queue-failed' };
       let body = null;
       try {
+        // The run walks on its own, so each row waits its turn at auto's Moodle lock.
         const res = await trigger({
           ref: target.ref,
           course: run.course,
           name: target.name,
           kind: target.kind,
+          wait: true,
+          signal: run.stop.signal,
         });
         body = res.body;
         outcome = outcomeFor(res.status);

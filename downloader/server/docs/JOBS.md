@@ -48,6 +48,10 @@ denied/expired-token phrasing — the curl `--fail` / yt-dlp signatures):
   with no usable target included) → `recapture_failed {detail}`.
 - **otherwise** → finalized as-is; a fresh-capture auth failure reads "authentication failed".
 
+A target on auto/ (any file on the Moodle host) always says `fromCache:true`: its url is an id in auto/'s memory, which a
+restart forgets (auto answers `401 moodle_file_unknown`), so a failed fetch is always worth the one
+re-resolve. The re-resolve waits its turn at auto's Moodle lock rather than being refused.
+
 **No-loop invariant:** the re-run's input is freshly captured, so it runs with `fromCache:false` and
 no closure — a second auth failure lands in "otherwise". Exactly one silent recovery per job.
 

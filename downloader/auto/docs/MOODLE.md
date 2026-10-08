@@ -150,9 +150,11 @@ Moodle-hosted files download statelessly with the wstoken in the query — no co
 `pluginfileUrl` sets it with `searchParams.set`, because `fileurl` may already carry
 `?forcedownload=1` and string concatenation would produce a broken double query.
 
-`assertPluginfileReadable` probes one byte (`Range: bytes=0-0`) before the URL is handed over, since
-`server/`'s download is fire-and-forget and this is the last point a failure can be reported instead
-of written to disk:
+The tokened URL never leaves auto: `server/` fetches the file from auto's `/moodle/file/:id`, which
+streams it under the Moodle lock ([GATE.md](GATE.md#files)). `assertPluginfileReadable` probes one
+byte (`Range: bytes=0-0`) at `/resolve`, since `server/`'s download is fire-and-forget and this is
+the last point a failure can be reported instead of written to disk; its `Content-Range` total is
+the size `HEAD` answers. `openPluginfile` applies the same checks when the stream starts:
 
 - a dead token answers HTTP 200 + the JSON exception body → `WsError`, which `invalidToken` recognizes;
 - a bot-protection challenge is HTTP 200 too, and `curl --fail` would save the captcha page as the

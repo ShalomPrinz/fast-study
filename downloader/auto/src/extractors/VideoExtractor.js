@@ -59,6 +59,17 @@ export class VideoExtractor {
   }
 
   /**
+   * Does acting on this recording — expanding, resolving, downloading it — reach the Moodle site?
+   * Every extractor must answer: the frontend gates exactly these rows on the Moodle lock
+   * (docs/GATE.md). Advisory only; the outbound gate still enforces. Sync, no network.
+   * @param {Recording} _recording
+   * @returns {boolean}
+   */
+  reachesMoodle(_recording) {
+    throw new Error(`${this.constructor.name} does not say whether it reaches Moodle`);
+  }
+
+  /**
    * DOWNLOAD PHASE template method (do NOT override; subclasses implement `_captureVideo`):
    * resolve one Recording to a downloadable video, then ALWAYS stop leftover playback.
    * @param {import('playwright').Page} page

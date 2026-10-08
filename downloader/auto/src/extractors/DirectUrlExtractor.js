@@ -1,5 +1,8 @@
 import { VideoExtractor } from './VideoExtractor.js';
 import { isRecording } from '../discovery/moodleCourse.js';
+import { getProbe } from '../core/probeCache.js';
+import { probeKeyForUrl } from '../lib/probeUrl.js';
+import { onMoodleHost } from '../moodle/site.js';
 
 /**
  * Is this an absolute http(s) target? Anything else (mailto:, a relative fragment,
@@ -34,6 +37,13 @@ export class DirectUrlExtractor extends VideoExtractor {
    */
   canHandle(activity) {
     return activity.modType === 'url' && isHttpUrl(activity.externalUrl);
+  }
+
+  // Only a link on the Moodle host, or one the probe saw redirect there, is Moodle traffic. Before
+  // any probe an off-site link that redirects to Moodle reads false — the gate still catches it.
+  reachesMoodle(recording) {
+    const finalUrl = getProbe(probeKeyForUrl(recording.pageUrl))?.finalUrl;
+    return onMoodleHost(recording.pageUrl) || Boolean(finalUrl && onMoodleHost(finalUrl));
   }
 
   /**

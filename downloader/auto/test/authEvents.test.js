@@ -16,6 +16,7 @@ import { requireSecret } from '@faststudy/runtime';
 import { setCurrentSite } from '../src/moodle/site.js';
 import { writeTokenFile } from '../src/auth/tokenStore.js';
 import { handleAuthEvents, handleAuthComplete } from '../src/http/server.js';
+import { moodleGate } from '../src/moodle/gate.js';
 
 const SITE = 'https://moodle.test';
 const TOKEN_FILE = path.join(STATE_DIR, 'auth', 'moodle-token.json');
@@ -61,6 +62,7 @@ function reader(res) {
 test('the stream sends the state on subscribe and on every change, and needs the secret', async (t) => {
   setCurrentSite(SITE);
   t.after(() => setCurrentSite(null));
+  moodleGate.cooldownMs = 20; // a real cooldown, short: the false frame must follow its timer
   const base = await serve(t);
 
   assert.equal((await fetch(`${base}/auth/events`)).status, 401);
@@ -77,6 +79,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     connected: false,
     expired: false,
     unverified: false,
+    moodleBusy: false,
   });
 
   // The header works too, for a non-browser caller.
@@ -103,22 +106,30 @@ test('the stream sends the state on subscribe and on every change, and needs the
     (await local(`${base}/auth/complete`, { method: 'POST', headers: hdr() })).status,
     401,
   );
+  // The lock is taken at the site-info call, the failure lands under it, then the lock frees.
+  assert.equal((await next()).moodleBusy, true);
   const dead = await next();
   assert.equal(dead.phase, 'idle');
+  assert.equal(dead.moodleBusy, true);
   assert.deepEqual(dead.error, { code: 'moodle_reconnect_required', params: {} });
+  const freed = await next();
+  assert.deepEqual([freed.moodleBusy, freed.error?.code], [false, 'moodle_reconnect_required']);
 
   writeTokenFile(TOKEN_FILE, { site: SITE, wstoken: 'w', userid: null, unverified: true });
   assert.equal(
     (await local(`${base}/auth/complete`, { method: 'POST', headers: hdr() })).status,
     200,
   );
+  assert.equal((await next()).moodleBusy, true);
   const done = await next();
   assert.deepEqual(done, {
     phase: 'connected',
     connected: true,
     expired: false,
     unverified: false,
+    moodleBusy: true,
   });
+  assert.equal((await next()).moodleBusy, false);
 });
 
 function hdr() {

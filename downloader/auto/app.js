@@ -23,6 +23,8 @@ import {
   handleResolve,
   handleZoomPasscode,
   handleClose,
+  handleMoodleFileHead,
+  handleMoodleFile,
 } from './src/http/server.js';
 
 const app = express();
@@ -62,6 +64,9 @@ app.post('/list/expand', handleListExpand);
 app.post('/resolve', handleResolve);
 app.post('/zoom/passcode', handleZoomPasscode);
 app.post('/close', handleClose);
+// HEAD first: express would otherwise answer it with the GET handler, a full turn of the lock.
+app.head('/moodle/file/:id', handleMoodleFileHead);
+app.get('/moodle/file/:id', handleMoodleFile);
 
 // Captures a 5xx-bound error, then hands it on unchanged to the backstop below; a no-op without a DSN.
 Sentry.setupExpressErrorHandler(app);

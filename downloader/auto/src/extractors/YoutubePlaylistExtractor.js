@@ -55,6 +55,11 @@ export class YoutubePlaylistExtractor extends VideoExtractor {
     return activity.modType === 'url' && YOUTUBE_HOSTS.has(safeHost(activity.externalUrl));
   }
 
+  // YouTube, through yt-dlp, for the playlist and every expanded child alike.
+  reachesMoodle() {
+    return false;
+  }
+
   /**
    * List as ONE unexpanded entry — the playlist expands at download time. `pageUrl` is
    * the direct external target (contents[].fileurl), so expand runs yt-dlp straight on it.

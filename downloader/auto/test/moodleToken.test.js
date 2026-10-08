@@ -7,6 +7,8 @@ import path from 'node:path';
 import { EventEmitter } from 'node:events';
 import { MoodleToken, CAPTURE_TIMEOUT_MS } from '../src/auth/moodleToken.js';
 import { readTokenFile, writeTokenFile } from '../src/auth/tokenStore.js';
+import { gated } from './gated.js';
+import { moodleGate } from '../src/moodle/gate.js';
 
 const SITE = 'https://moodle.test';
 
@@ -87,7 +89,7 @@ test('closing the login window before a token ends the login as abandoned', asyn
     site: SITE,
     launch,
   });
-  await auth.connect();
+  await gated(() => auth.connect());
   assert.equal(auth.state().phase, 'pending');
 
   context.pages()[0].close();
@@ -105,7 +107,7 @@ test('closing the login window before a token ends the login as abandoned', asyn
     seen.map((s) => s.phase),
     ['pending', 'idle'],
   );
-  const err = await auth.complete().catch((e) => e);
+  const err = await gated(() => auth.complete()).catch((e) => e);
   assert.equal(err.code, 'moodle_login_not_pending');
 });
 
@@ -116,7 +118,7 @@ test('disconnect() during a login ends it with no error and no later event', asy
     site: SITE,
     launch,
   });
-  await auth.connect();
+  await gated(() => auth.connect());
   await auth.disconnect();
   await new Promise((r) => setImmediate(r));
 
@@ -133,11 +135,11 @@ test('disconnect() during a login ends it with no error and no later event', asy
 test('a new connect() clears the last failure', async () => {
   const { context, launch } = fakeBrowser();
   const auth = new MoodleToken({ tokenPath: tokenPathIn('moodle-clear-'), site: SITE, launch });
-  await auth.connect();
+  await gated(() => auth.connect());
   context.pages()[0].close();
   await settle(auth);
   assert.equal(auth.state().error.code, 'moodle_login_abandoned');
-  await auth.connect();
+  await gated(() => auth.connect());
   assert.equal(auth.state().error, undefined);
   await auth.disconnect();
 });
@@ -145,7 +147,7 @@ test('a new connect() clears the last failure', async () => {
 test('a login popup keeps the login pending until its last window closes', async () => {
   const { browser, context, launch } = fakeBrowser();
   const auth = new MoodleToken({ tokenPath: tokenPathIn('moodle-popup-'), site: SITE, launch });
-  await auth.connect();
+  await gated(() => auth.connect());
   const popup = await context.newPage();
 
   context.pages()[0].close();
@@ -159,7 +161,7 @@ test('a login times out after CAPTURE_TIMEOUT_MS with no token and closes the wi
   t.mock.timers.enable({ apis: ['setTimeout'] });
   const { browser, launch } = fakeBrowser();
   const auth = new MoodleToken({ tokenPath: tokenPathIn('moodle-timeout-'), site: SITE, launch });
-  await auth.connect();
+  await gated(() => auth.connect());
 
   t.mock.timers.tick(CAPTURE_TIMEOUT_MS - 1);
   await new Promise((r) => setImmediate(r));
@@ -196,7 +198,7 @@ async function capturedLogin(dir) {
   const { context, launch } = fakeBrowser();
   const tokenPath = tokenPathIn(dir);
   const auth = new MoodleToken({ tokenPath, site: SITE, launch });
-  await auth.connect();
+  await gated(() => auth.connect());
   context.pages()[0].emit('framenavigated', { url: () => `moodlemobile://token=${APPTOKEN}` });
   await settle(auth);
   return { auth, tokenPath };
@@ -227,7 +229,7 @@ test('a login announces pending then connected', async (t) => {
     site: SITE,
     launch,
   });
-  await auth.connect();
+  await gated(() => auth.connect());
   context.pages()[0].emit('framenavigated', { url: () => `moodlemobile://token=${APPTOKEN}` });
   await settle(auth);
   assert.deepEqual(
@@ -387,7 +389,7 @@ async function captured(t, dir) {
   const rec = recordingLaunch();
   const tokenPath = tokenPathIn(dir);
   const auth = new MoodleToken({ tokenPath, site: SITE, launch: rec.launch });
-  await auth.connect();
+  await gated(() => auth.connect());
   rec.opened.length = 0;
   // Reach the login page through the fake: emit the token redirect on the first page.
   return { auth, tokenPath, rec };
@@ -411,8 +413,8 @@ test('a block keeps the token unverified, opens the site root; the next complete
   assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: true });
   assert.equal(JSON.parse(fs.readFileSync(tokenPath, 'utf8')).userid, null);
 
-  const window = auth._challenge;
-  const record = await auth.complete();
+  const window = auth._challenge.browser;
+  const record = await gated(() => auth.complete());
   assert.equal(record.userid, 7);
   assert.equal(auth.state().phase, 'connected');
   assert.equal(auth.state().error, undefined);
@@ -426,8 +428,9 @@ test('a second block reuses the open challenge window', async (t) => {
   stubSequence(t, challengeRes(), challengeRes());
   const { auth, rec } = await captured(t, 'blk2-');
   await loginAndCapture(auth);
-  await auth.complete().catch(() => {});
+  await gated(() => auth.complete()).catch(() => {});
   assert.deepEqual(rec.opened, [SITE]);
+  await auth.disconnect(); // the open window holds the Moodle lock
 });
 
 test('verifiedToken() verifies an unverified token before first use, once for concurrent callers', async (t) => {
@@ -436,7 +439,10 @@ test('verifiedToken() verifies an unverified token before first use, once for co
   const tokenPath = tokenPathIn('lazy-');
   writeTokenFile(tokenPath, { site: SITE, wstoken: 'w', userid: null, unverified: true });
   const auth = new MoodleToken({ tokenPath, site: SITE });
-  const [a, b] = await Promise.all([auth.verifiedToken(), auth.verifiedToken()]);
+  const [a, b] = await Promise.all([
+    gated(() => auth.verifiedToken()),
+    gated(() => auth.verifiedToken()),
+  ]);
   assert.equal(a.userid, 7);
   assert.equal(b.userid, 7);
   assert.equal(calls.length, 1);
@@ -446,7 +452,7 @@ test('verifiedToken() verifies an unverified token before first use, once for co
 test('complete() with no unverified token stored is not_pending', async (t) => {
   withKey(t, undefined);
   const auth = new MoodleToken({ tokenPath: tokenPathIn('none-'), site: SITE });
-  const err = await auth.complete().catch((e) => e);
+  const err = await gated(() => auth.complete()).catch((e) => e);
   assert.equal(err.code, 'moodle_login_not_pending');
 });
 
@@ -463,7 +469,7 @@ test('invalidtoken revokes the stored token', async (t) => {
   withKey(t, undefined);
   stubSequence(t, jsonRes({ exception: 'x', errorcode: 'invalidtoken', message: 'bad' }));
   const { auth, tokenPath } = await unverifiedAuth('rev-inv-');
-  const err = await auth.complete().catch((e) => e);
+  const err = await gated(() => auth.complete()).catch((e) => e);
   assert.equal(err.errorcode, 'invalidtoken');
   assert.equal(fs.existsSync(tokenPath), false);
 });
@@ -472,7 +478,7 @@ test('an unsupported site revokes the stored token', async (t) => {
   withKey(t, undefined);
   stubSequence(t, jsonRes({ userid: 7, downloadfiles: 0, functions: FULL }));
   const { auth, tokenPath } = await unverifiedAuth('rev-unsup-');
-  const err = await auth.complete().catch((e) => e);
+  const err = await gated(() => auth.complete()).catch((e) => e);
   assert.equal(err.code, 'moodle_site_unsupported');
   assert.equal(fs.existsSync(tokenPath), false);
 });
@@ -481,19 +487,20 @@ test('a block or a network failure never revokes', async (t) => {
   withKey(t, undefined);
   stubSequence(t, challengeRes(), new TypeError('fetch failed'));
   const { auth, tokenPath } = await unverifiedAuth('keep-');
-  assert.equal((await auth.complete().catch((e) => e)).code, 'site_blocked');
-  assert.equal((await auth.complete().catch((e) => e)).name, 'TypeError');
+  assert.equal((await gated(() => auth.complete()).catch((e) => e)).code, 'site_blocked');
+  assert.equal((await gated(() => auth.complete()).catch((e) => e)).name, 'TypeError');
   assert.equal(fs.existsSync(tokenPath), true);
   assert.equal(auth.status().unverified, true);
+  await auth.disconnect(); // the open window holds the Moodle lock
 });
 
 test('disconnect and a new connect() close the challenge window', async (t) => {
   withKey(t, undefined);
   stubSequence(t, challengeRes(), challengeRes());
   const { auth } = await unverifiedAuth('close-');
-  await auth.complete().catch(() => {});
-  const first = auth._challenge;
-  await auth.connect();
+  await gated(() => auth.complete()).catch(() => {});
+  const first = auth._challenge.browser;
+  await gated(() => auth.connect());
   assert.equal(first.connected, false);
   await auth.disconnect();
 });
@@ -513,7 +520,7 @@ async function loginOverStored(dir) {
   const tokenPath = tokenPathIn(dir);
   writeTokenFile(tokenPath, { site: SITE, wstoken: 'old', userid: 3 });
   const auth = new MoodleToken({ tokenPath, site: SITE, launch });
-  await auth.connect();
+  await gated(() => auth.connect());
   context.pages()[0].emit('framenavigated', { url: () => `moodlemobile://token=${APPTOKEN}` });
   await settle(auth);
   return { auth, tokenPath };
@@ -546,6 +553,7 @@ test('a blocked new login replaces the stored token with an unverified one', asy
   assert.equal(stored.wstoken, 'harness-wstoken');
   assert.equal(stored.unverified, true);
   assert.equal(auth.state().phase, 'unverified');
+  await auth.disconnect(); // the open window holds the Moodle lock
 });
 
 test('a verified new login replaces the stored token', async (t) => {
@@ -560,17 +568,20 @@ test('a verified new login replaces the stored token', async (t) => {
 
 test('disconnect() while the browser is still launching closes it and starts no login', async () => {
   const { browser, launch } = fakeBrowser();
-  let release;
+  let release, launching;
   const held = new Promise((r) => (release = r));
+  const started = new Promise((r) => (launching = r));
   const { auth, seen } = recordStates({
     tokenPath: tokenPathIn('moodle-launchrace-'),
     site: SITE,
     launch: async () => {
+      launching();
       await held;
       return launch();
     },
   });
-  const connecting = auth.connect();
+  const connecting = gated(() => auth.connect());
+  await started;
   await auth.disconnect();
   const before = seen.length;
   let drove = false;
@@ -585,4 +596,41 @@ test('disconnect() while the browser is still launching closes it and starts no 
   assert.equal(auth._pending, null);
   assert.equal(auth.state().phase, 'idle');
   assert.equal(seen.length, before);
+});
+
+// ── The Moodle gate's refusals are never auth state ─────────────────────────
+
+test('a busy lock on an unverified token is a refusal, never the auth error', async (t) => {
+  withKey(t, undefined);
+  stubSequence(t, jsonRes(GOOD));
+  const tokenPath = tokenPathIn('gate-busy-');
+  writeTokenFile(tokenPath, { site: SITE, wstoken: 'w', userid: null, unverified: true });
+  const auth = new MoodleToken({ tokenPath, site: SITE });
+  let lease;
+  await moodleGate.run({}, async () => {
+    lease = await moodleGate.hold();
+  });
+  const err = await moodleGate.run({}, () => auth.verifiedToken()).catch((e) => e);
+  assert.equal(err.code, 'moodle_busy');
+  assert.equal(auth.state().error, undefined);
+  lease.release();
+});
+
+test('a waiting caller that joined a refused verification verifies again as itself', async (t) => {
+  withKey(t, undefined);
+  const calls = stubSequence(t, jsonRes(GOOD));
+  const tokenPath = tokenPathIn('gate-join-');
+  writeTokenFile(tokenPath, { site: SITE, wstoken: 'w', userid: null, unverified: true });
+  const auth = new MoodleToken({ tokenPath, site: SITE });
+  let lease;
+  await moodleGate.run({}, async () => {
+    lease = await moodleGate.hold();
+  });
+  const pressed = moodleGate.run({}, () => auth.verifiedToken()); // starts the shared call
+  const queued = moodleGate.run({ wait: true }, () => auth.verifiedToken()); // joins it
+  assert.equal((await pressed.catch((e) => e)).code, 'moodle_busy');
+  lease.release();
+  assert.equal((await queued).userid, 7);
+  assert.equal(calls.length, 1);
+  assert.equal(auth.state().error, undefined);
 });

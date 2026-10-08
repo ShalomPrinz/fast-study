@@ -9,6 +9,7 @@ const Sentry = await import('@sentry/node');
 await import('../instrument.js');
 const { handleSiteProbe } = await import('../src/http/server.js');
 const { reportUnsupportedSite } = await import('../siteReport.js');
+await import('./gated.js'); // no cooldown between the probes below
 
 const events = [];
 const client = Sentry.getClient();
@@ -17,7 +18,7 @@ client.on('beforeEnvelope', (envelope) => {
 });
 client.getTransport().send = async () => ({});
 
-const res = () => ({ status: () => ({ json: () => {} }) });
+const res = () => ({ status: () => ({ json: () => {} }), on: () => {} });
 const reply = (status, type, body) => ({
   status,
   headers: { get: (h) => (h.toLowerCase() === 'content-type' ? type : null) },

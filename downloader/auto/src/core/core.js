@@ -9,6 +9,8 @@ import { CodedError, UnsupportedError } from '../lib/errors.js';
 import { splitName } from '../lib/naming.js';
 import { cacheCap, getCap } from './replayCache.js';
 import { stripTags } from '../lib/html.js';
+import { proxyCap } from '../moodle/files.js';
+import { onMoodleHost } from '../moodle/site.js';
 
 // Flatten the WS section tree into activities: one per module, except a `resource`, which yields
 // one per file. Names arrive as HTML and are flattened first. See docs/BROWSING.md.
@@ -90,7 +92,8 @@ async function captureTargets(page, recording, extractor, { name, course, kind, 
     targets = caps.map((cap, i) => ({ name: names[i], cap }));
   } else {
     const cap = await extractor.captureVideo(page, recording);
-    targets = [{ name, cap }];
+    // A .mp4 on the Moodle host streams through auto, its captured cookies staying here.
+    targets = [{ name, cap: onMoodleHost(cap.url) ? proxyCap(cap) : cap }];
   }
   for (const t of targets) cacheCap(course, t.name, kind, 'video', t.cap, ref);
   return targets;
@@ -116,8 +119,8 @@ function cachedTargets(recording, course, name, kind) {
 }
 
 /**
- * RESOLVE PATH (HTTP), no browser: the WS token turns the Moodle fileurl into a plain URL
- * server/ fetches as a lecture material. Takes its credential explicitly. See docs/BROWSING.md.
+ * RESOLVE PATH (HTTP), no browser: preflight the Moodle file with the WS token, then hand server/
+ * a path on auto that streams it (`GET /moodle/file/:id`), never the tokened URL. See docs/GATE.md.
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, wstoken: string,
  *           ref?: string|null, forceCapture?: boolean }} args
@@ -138,9 +141,8 @@ export async function resolveMoodleFile({
   let cap = forceCapture ? null : getCap(course, name, kind, 'material')?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
-    const url = pluginfileUrl(recording.fileurl, wstoken);
-    await assertPluginfileReadable(url);
-    cap = { url };
+    const size = await assertPluginfileReadable(pluginfileUrl(recording.fileurl, wstoken));
+    cap = proxyCap({ fileurl: recording.fileurl, size });
     cacheCap(course, name, kind, 'material', cap, ref);
   }
   return [toTarget({ name, cap, tool: toolFor(recording.strategy), fromCache })];
@@ -222,7 +224,9 @@ export async function resolveDirectUrl({
   forceCapture = false,
 }) {
   const url = recording.pageUrl;
-  const { media, filename, certain, reason } = await probeUrl(url, { force: forceCapture });
+  const { media, filename, certain, reason, size, finalUrl } = await probeUrl(url, {
+    force: forceCapture,
+  });
   if (!media) {
     if (!certain)
       throw new CodedError(
@@ -250,10 +254,14 @@ export async function resolveDirectUrl({
   let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {
-    cap = { url };
+    // A file on the Moodle host, or one a redirect lands there, is Moodle traffic: auto streams it
+    // (docs/GATE.md), following the same redirects under the lock.
+    const moodle = onMoodleHost(url) || (finalUrl && onMoodleHost(finalUrl));
+    cap = moodle ? proxyCap({ url, size }) : { url };
     cacheCap(course, name, kind, media, cap, ref);
   }
-  const tool = toolFor(recording.strategy, media);
+  // A proxied video is one plain file on auto, which curl fetches; yt-dlp has no use for it.
+  const tool = cap.proxied && media === 'video' ? 'curl' : toolFor(recording.strategy, media);
   return { targets: [toTarget({ name, cap, tool, fromCache })], media };
 }
 

@@ -2,6 +2,8 @@
 // caller decides what a verdict means, and only a CERTAIN one is remembered (see `certain` below).
 import { NAMED_FILE, classifyFilename, filenameFromDisposition } from './fileMedia.js';
 import { cacheProbe, getProbe } from '../core/probeCache.js';
+import { enterMoodle, gateError } from '../moodle/gate.js';
+import { onMoodleHost } from '../moodle/site.js';
 
 // Node's fetch has no default timeout, and `server/` walks a section queue through /resolve one
 // row at a time — a hung host would stall the whole bulk run. Generous for a slow CDN.
@@ -55,21 +57,39 @@ function classifyContentType(header) {
 // 429, 5xx) may pass next time, so those stay uncertain.
 const DEAD_STATUSES = new Set([404, 410]);
 
+const MAX_REDIRECTS = 10;
+
+// Follow redirects by hand, so a hop onto the Moodle host — the link itself, or an off-site link
+// that redirects there — goes through the gate first. → { res, url } with the final hop's URL.
+async function fetchFollowing(url, init) {
+  let at = url;
+  for (let hop = 0; ; hop++) {
+    // A probe is Moodle traffic the moment it reaches the Moodle host.
+    if (onMoodleHost(at)) await enterMoodle(at);
+    const res = await fetch(at, {
+      ...init,
+      redirect: 'manual',
+      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
+    });
+    const location = res.status >= 300 && res.status < 400 ? res.headers.get('location') : null;
+    if (!location || hop === MAX_REDIRECTS) return { res, url: at };
+    await res.body?.cancel().catch(() => {});
+    at = new URL(location, at).toString();
+  }
+}
+
 // Headers without the body: HEAD, then a one-byte ranged GET for hosts that reject HEAD. `'dead'`
 // when the host says the link is gone; null when nothing was learned at all.
 async function fetchHeaders(url) {
   let dead = false;
   for (const init of [{ method: 'HEAD' }, { method: 'GET', headers: { Range: 'bytes=0-0' } }]) {
     try {
-      const res = await fetch(url, {
-        ...init,
-        redirect: 'follow',
-        signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-      });
-      await res.body?.cancel().catch(() => {});
-      if (res.ok) return res;
-      if (DEAD_STATUSES.has(res.status)) dead = true;
-    } catch {
+      const answer = await fetchFollowing(url, init);
+      await answer.res.body?.cancel().catch(() => {});
+      if (answer.res.ok) return answer;
+      if (DEAD_STATUSES.has(answer.res.status)) dead = true;
+    } catch (e) {
+      if (gateError(e)) throw e; // never a verdict about the link
       // fall through to the next attempt, then to the verdict the statuses so far support
     }
   }
@@ -87,7 +107,8 @@ function isNamedFile(name) {
  * @param {string} url
  * @param {{ force?: boolean }} [opts] force = ignore the cached verdict and probe fresh.
  * @returns {Promise<{ probeKey: string, media: 'video'|'material'|null, filename: string|null,
- *                     certain: boolean, reason?: string }>} media null = this service can't use
+ *                     certain: boolean, reason?: string, size?: number|null, finalUrl?: string }>}
+ *   finalUrl is where the redirects ended. media null = this service can't use
  *   the link; reason names why when the link itself is the problem.
  */
 export async function probeUrl(url, { force = false } = {}) {
@@ -101,19 +122,21 @@ export async function probeUrl(url, { force = false } = {}) {
       filename: cached.filename ?? null,
       certain: true,
       reason: cached.reason,
+      finalUrl: cached.finalUrl,
     };
 
-  const res = await fetchHeaders(url);
-  if (res === 'dead') {
+  const answer = await fetchHeaders(url);
+  if (answer === 'dead') {
     cacheProbe(probeKey, null, null, 'missing');
     return { probeKey, media: null, filename: null, certain: true, reason: 'missing' };
   }
-  if (!res) return { probeKey, media: null, filename: null, certain: false };
+  if (!answer) return { probeKey, media: null, filename: null, certain: false };
+  const { res, url: finalUrl } = answer;
 
   const stated = filenameFromDisposition(res.headers.get('content-disposition'));
   // The redirect target names the file more often than the link does — a share URL resolves to the
   // CDN path — so prefer it, and fall back to the original link when it is opaque.
-  const guessed = pathFilename(res.url) || pathFilename(url) || null;
+  const guessed = pathFilename(finalUrl) || pathFilename(url) || null;
   const byType = classifyContentType(res.headers.get('content-type'));
 
   let media = null;
@@ -124,6 +147,14 @@ export async function probeUrl(url, { force = false } = {}) {
   else certain = false;
 
   const filename = stated || guessed;
-  if (certain) cacheProbe(probeKey, media, filename);
-  return { probeKey, media, filename, certain };
+  if (certain) cacheProbe(probeKey, media, filename, undefined, finalUrl);
+  return { probeKey, media, filename, certain, size: sizeOf(res), finalUrl };
+}
+
+// The file's full size from a ranged answer's Content-Range, else a whole answer's Content-Length.
+function sizeOf(res) {
+  const range = /\/(\d+)\s*$/.exec(res.headers.get('content-range') ?? '');
+  if (range) return Number(range[1]);
+  const len = res.status === 200 ? res.headers.get('content-length') : null;
+  return len ? Number(len) : null;
 }

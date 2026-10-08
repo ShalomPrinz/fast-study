@@ -5,6 +5,7 @@ import {
   authEvents,
   authState,
   resolveExtractorForRecording,
+  reachesMoodle,
 } from '../core/registry.js';
 import { normalizeSite } from '../moodle/site.js';
 import { probeSite } from '../moodle/probe.js';
@@ -32,7 +33,14 @@ import {
   getAutologinKey,
   invalidToken,
   blocked,
+  openPluginfile,
+  openMoodleFile,
+  pluginfileUrl,
 } from '../moodle/wsClient.js';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { moodleGate, enterMoodle, MoodleBusyError, WAIT_HEADER } from '../moodle/gate.js';
+import { fileById } from '../moodle/files.js';
 
 // Strategies whose row type is only knowable from a download-time probe — the WS payload names
 // no file for an off-site link, so 'unknown' is the honest stamp until one runs.
@@ -72,6 +80,7 @@ function toItem(recording) {
     media: mediaOf(recording),
     ...(resolvedMedia ? { resolvedMedia } : {}),
     likelyRecording: recording.likelyRecording !== false,
+    moodle: reachesMoodle(recording),
     expandable: recording.strategy === 'youtube-playlist' && !recording.url,
     section: recording.section ?? '',
   };
@@ -138,6 +147,37 @@ export function sendPasscode(res, err, { course, name }) {
   });
 }
 
+// Distinct "another Moodle request holds the lock" signal (docs/GATE.md): nothing was sent to the
+// site; retry once `moodleBusy` on /auth/events reads false.
+function sendBusy(res, err) {
+  send(res, 429, { status: 'busy', error: err.message, code: err.code, params: err.params });
+}
+
+/**
+ * Run a route as one gated request (docs/GATE.md): its first Moodle call takes the lock. A caller
+ * sending WAIT_HEADER: 1 (server/'s own calls) queues for it; any other is refused 429 moodle_busy.
+ * A caller that hangs up leaves the queue.
+ */
+function gated(route, handler) {
+  return async (req, res) => {
+    const gone = new AbortController();
+    res.on('close', () => {
+      if (!res.writableFinished) gone.abort();
+    });
+    const wait = req.headers?.[WAIT_HEADER.toLowerCase()] === '1';
+    try {
+      await moodleGate.run({ wait, signal: gone.signal }, () => handler(req, res));
+    } catch (e) {
+      if (e instanceof MoodleBusyError && !res.headersSent) {
+        logResult(route, 'busy (429)');
+        return sendBusy(res, e);
+      }
+      if (gone.signal.aborted) return; // the caller is gone; nobody is left to answer
+      throw e;
+    }
+  };
+}
+
 // Reject an empty or multi-segment name — the traversal half of server/'s
 // validate.js::storedName, which owns the full canonicalization.
 function isSafeName(name) {
@@ -194,7 +234,7 @@ export async function handleConfig(req, res) {
 }
 
 // The pre-login check (docs/MOODLE.md § Checking a site): always 200, the verdict is the answer.
-export async function handleSiteProbe(req, res) {
+export const handleSiteProbe = gated('/site/probe', async (req, res) => {
   const { url } = req.body ?? {};
   logReq('POST', '/site/probe', url);
   const result = typeof url === 'string' ? await probeSite(url) : null;
@@ -208,7 +248,7 @@ export async function handleSiteProbe(req, res) {
     reportUnsupportedSite({ site: result.site, stage: 'probe', reason: result.params.reason });
   }
   send(res, 200, result);
-}
+});
 
 // ── Auth endpoints ──────────────────────────────────────────────────────────
 
@@ -226,20 +266,27 @@ export function handleAuthEvents(req, res) {
     Connection: 'keep-alive',
   });
   res.flushHeaders();
-  const push = () => res.write(`data: ${JSON.stringify(authState())}\n\n`);
+  const push = () =>
+    res.write(`data: ${JSON.stringify({ ...authState(), moodleBusy: moodleGate.busy() })}\n\n`);
   authEvents.on('change', push);
-  req.on('close', () => authEvents.off('change', push));
+  moodleGate.on('change', push);
+  req.on('close', () => {
+    authEvents.off('change', push);
+    moodleGate.off('change', push);
+  });
   push();
 }
 
-export async function handleAuthConnect(req, res) {
+// The login outlives this request: connect() takes a lease on the lock that its background run
+// releases when the login ends, however it ends.
+export const handleAuthConnect = gated('/auth/connect', async (req, res) => {
   logReq('POST', '/auth/connect');
   const found = siteOr(res);
   if (!found) return;
   // The token module builds its own launch.php URL and drives the login itself from here on.
   await found.auth.connect();
   send(res, 200, { status: 'pending' });
-}
+});
 
 // The verified stored token, or null after answering: 401 reconnect (none, or a dead one), 422 for
 // a refused site, 503 for a bot-protection block. One path for every WS caller.
@@ -264,7 +311,7 @@ async function tokenOr(res, auth, route) {
   return null;
 }
 
-export async function handleAuthComplete(req, res) {
+export const handleAuthComplete = gated('/auth/complete', async (req, res) => {
   logReq('POST', '/auth/complete');
   const found = siteOr(res);
   if (!found) return;
@@ -286,7 +333,7 @@ export async function handleAuthComplete(req, res) {
     throw e;
   }
   send(res, 200, { connected: true });
-}
+});
 
 export async function handleAuthDisconnect(req, res) {
   logReq('POST', '/auth/disconnect');
@@ -329,7 +376,7 @@ export async function handleBrowserPrereq(req, res) {
 
 // ── Browsing endpoints ──────────────────────────────────────────────────────
 
-export async function handleList(req, res) {
+export const handleList = gated('/list', async (req, res) => {
   const { courseUrl } = req.body;
   logReq('POST', '/list', courseUrl);
   if (typeof courseUrl !== 'string' || !/^https?:\/\//.test(courseUrl)) {
@@ -369,11 +416,11 @@ export async function handleList(req, res) {
   const recordings = listRecordings(sections);
   logResult('/list', `${recordings.length} items`);
   send(res, 200, { items: recordings.map(toItem) });
-}
+});
 
 // Resolve ONE expandable item (a YouTube playlist) into its downloadable children by
-// running yt-dlp on the direct external URL in the ref — no browser, no auth, no gate.
-export async function handleListExpand(req, res) {
+// running yt-dlp on the direct external URL in the ref — no browser, no auth, never the lock.
+export const handleListExpand = gated('/list/expand', async (req, res) => {
   logReq('POST', '/list/expand', '(expanding)');
   const { ref } = req.body;
   const recording = decodeRef(ref);
@@ -406,11 +453,11 @@ export async function handleListExpand(req, res) {
   );
   logResult('/list/expand', `${items.length} items`);
   send(res, 200, { items });
-}
+});
 
 // Symmetric with /list/expand: an unsupported ref on the resolve path surfaces as
 // 422, not a 500. Other errors rethrow to the centralized handler.
-export async function handleResolve(req, res) {
+export const handleResolve = gated('/resolve', async (req, res) => {
   try {
     await resolveItem(req, res);
   } catch (e) {
@@ -425,7 +472,7 @@ export async function handleResolve(req, res) {
     }
     throw e;
   }
-}
+});
 
 async function resolveItem(req, res) {
   const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body;
@@ -570,15 +617,20 @@ async function resolveItem(req, res) {
   let targets;
   try {
     targets = await session.withLock(async () => {
-      await ensureAutologin(session, site, token);
-      return resolveRecording(session.page, {
-        recording,
-        course,
-        name,
-        kind,
-        ref: rowRef,
-        ...opts,
-      });
+      try {
+        await ensureAutologin(session, site, token);
+        return await resolveRecording(session.page, {
+          recording,
+          course,
+          name,
+          kind,
+          ref: rowRef,
+          ...opts,
+        });
+      } finally {
+        // Off the Moodle page before the lock frees, so the idle session sends the site nothing.
+        await session.page?.goto('about:blank').catch(() => {});
+      }
     });
   } catch (e) {
     // getAutologinKey surfaces a dead token (→ 401) or a challenge (→ 503); other
@@ -616,9 +668,89 @@ async function ensureAutologin(session, site, token) {
   const u = new URL(autologinurl);
   u.searchParams.set('userid', userid);
   u.searchParams.set('key', key);
+  await enterMoodle(autologinurl);
   await session.goto(u.toString());
   session.markAuthed(AUTOLOGIN_TTL_MS);
 }
+
+// HEAD of a resolved Moodle file, answered from the size its resolve learned — no Moodle call, so
+// server/'s size probe never spends a turn of the lock. 401 for an id this process never minted.
+export function handleMoodleFileHead(req, res) {
+  const file = fileById(req.params.id);
+  if (!file) return res.status(401).end();
+  res.set('Accept-Ranges', 'bytes');
+  if (file.size != null) res.set('Content-Length', String(file.size));
+  res.status(200).end();
+}
+
+// Headers relayed from Moodle's answer; everything else (cookies, caching) stays behind.
+const FILE_HEADERS = [
+  'content-type',
+  'content-length',
+  'content-range',
+  'accept-ranges',
+  'content-disposition',
+];
+
+// Open the upstream answer for a proxied file: a pluginfile with the WS token added now, anything
+// else with the headers its capture recorded. null after answering (no token, a refused site).
+async function openProxied(file, res, { range, signal }) {
+  if (!file.pluginfile) return openMoodleFile(file.url, { headers: file.headers, range, signal });
+  const found = siteOr(res, file.fileurl);
+  if (!found) return null;
+  const stored = await tokenOr(res, found.auth, '/moodle/file');
+  if (!stored) return null;
+  return openPluginfile(pluginfileUrl(file.fileurl, stored.wstoken), { range, signal });
+}
+
+// Stream a resolved Moodle-host file to server/ under the lock, Range passed through for a resume.
+// An unknown id (auto restarted) is 401, which server/ answers with its one silent re-resolve.
+export const handleMoodleFile = gated('/moodle/file', async (req, res) => {
+  const file = fileById(req.params.id);
+  if (!file) {
+    logResult('/moodle/file', 'unknown id (401)');
+    return send(res, 401, {
+      error: 'unknown file id — resolve the row again',
+      code: 'moodle_file_unknown',
+      params: {},
+    });
+  }
+  const gone = new AbortController();
+  res.on('close', () => gone.abort());
+  let upstream;
+  try {
+    upstream = await openProxied(file, res, { range: req.headers.range, signal: gone.signal });
+    if (!upstream) return;
+  } catch (e) {
+    if (gone.signal.aborted) return;
+    if (invalidToken(e)) {
+      siteAuth().auth.markExpired();
+      logResult('/moodle/file', 'reconnect (401)');
+      return sendReconnect(res);
+    }
+    if (blocked(e)) {
+      logResult('/moodle/file', `blocked (503): ${e.message}`);
+      return sendBlocked(res, e);
+    }
+    throw e;
+  }
+  res.status(upstream.status);
+  // fetch hands over a decoded body, so an encoded answer's Content-Length would be the wrong one.
+  const decoded = upstream.headers.has('content-encoding');
+  for (const name of FILE_HEADERS) {
+    const value = upstream.headers.get(name);
+    if (value && !(decoded && name === 'content-length')) res.set(name, value);
+  }
+  try {
+    await pipeline(Readable.fromWeb(upstream.body), res);
+    logResult('/moodle/file', `streamed (${upstream.status})`);
+  } catch (e) {
+    // The caller hung up or Moodle dropped mid-body: the half-sent answer cannot become an error
+    // body, so the socket is cut and curl sees a short read.
+    logResult('/moodle/file', `stream ended early: ${e.message}`);
+    res.destroy();
+  }
+});
 
 // Persist a zoom passcode for a course (default) or a single lecture (override). The
 // sibling frontend prompt calls this after a 409 `passcode`, then retries the download.

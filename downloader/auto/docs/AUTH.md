@@ -40,7 +40,8 @@ sent to the wrong host.
   `moodle_reconnect_required`), cleared by the next `connect()`. The stream (`core/registry.js`'s
   `authEvents`, one emitter whichever site is set) sends `state()` as an unnamed `data:` frame on
   subscribe and again on every change (`connect`, run end, retry, lazy verification, `markExpired`,
-  `disconnect`, a site switch; idle when no site is set). No replay and no heartbeat. `EventSource`
+  `disconnect`, a site switch; idle when no site is set). Every frame also carries `moodleBusy`, the
+  Moodle lock's state, and the lock's own changes send one too ([GATE.md](GATE.md)). No replay and no heartbeat. `EventSource`
   cannot set a header, so the launch secret rides as `?secret=`, which `requireSecret` honours.
 - `complete()` — re-verifies the stored `unverified` token now (a block on the last try, the
   challenge since solved) and answers as a WS call would; its outcome is also announced on the stream.
@@ -49,7 +50,8 @@ sent to the wrong host.
   it (a fresh capture is simply discarded); a bot-protection block (`site_blocked`), timeout or network failure never do. A block keeps
   the token, opens one headed browser (`launchBrowser`) on the site root so the user can solve the
   bot manager's challenge (reused while open) and adds `params.challengeWindow:true` to the 503
-  (`false` if no browser could launch). The window closes on successful verification,
+  (`false` if no browser could launch). The window holds the Moodle lock while it is open
+  ([GATE.md](GATE.md#holds-that-outlive-the-request)) and closes on successful verification,
   `disconnect()` or a new `connect()`. A block ends the login's run with phase `unverified` and the `site_blocked` error. Once a human solves it, Node requests from that IP pass again.
 - Lazy verification: every WS caller (`/list`, both `/resolve` paths) gets its token from
   `verifiedToken()` (`tokenOr` in `http/server.js`), which verifies an unverified token first

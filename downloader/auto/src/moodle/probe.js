@@ -8,6 +8,7 @@ import {
   getPublicConfig,
 } from './wsClient.js';
 import { candidateRoots, normalizeSite } from './site.js';
+import { gateError } from './gate.js';
 
 const unsupported = (site, reason) => ({
   status: 'unsupported',
@@ -68,6 +69,7 @@ export async function probeSite(url, { timeoutMs } = {}) {
     try {
       answer = await askRoot(candidate, timeoutMs);
     } catch (err) {
+      if (gateError(err)) throw err;
       if (err instanceof NotMoodleError) continue;
       unreachable ??= failureDetail(err);
       continue;

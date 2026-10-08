@@ -142,6 +142,11 @@ export class GoogleDriveExtractor extends VideoExtractor {
     return activity.modType === 'url' && isDriveFileUrl(activity.externalUrl);
   }
 
+  // The filename probe and the download both go to Google Drive.
+  reachesMoodle() {
+    return false;
+  }
+
   /**
    * One directly-downloadable recording — `pageUrl` is the Drive file URL yt-dlp resolves.
    * @param {import('./VideoExtractor.js').Activity} activity

@@ -31,6 +31,7 @@ export function toTarget({ name, cap, tool, fromCache }) {
     tool,
     url: cap.url,
     ...(tool === 'curl' ? { headers: cap.headers ?? [] } : {}),
-    fromCache: Boolean(fromCache),
+    // A proxied cap is an id in auto's memory, which a restart forgets: always worth a re-resolve.
+    fromCache: Boolean(fromCache || cap.proxied),
   };
 }

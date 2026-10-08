@@ -18,6 +18,8 @@ Errors go to Sentry only when the launcher sets `FASTSTUDY_SENTRY_DSN`: `instrum
 
 ## HTTP surface
 
+**One Moodle request at a time** ([GATE.md](docs/GATE.md)): every route that can reach the site takes a global lock at its first Moodle call and frees it 3s after it ends. A caller sending `X-FastStudy-Moodle-Wait: 1` (only `server/`'s own calls) queues; any other is refused `429 {status:'busy'}`, `moodle_busy`, before anything reaches Moodle.
+
 Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose download mechanism hides inside an opaque `ref` (base64url `Recording`); `/resolve` takes `{ ref, … }`. The `Item` fields and their meaning are in [BROWSING.md](docs/BROWSING.md).
 
 | Endpoint                | Body                                                | Returns                                                                     |
@@ -27,26 +29,28 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose down
 | `POST /config`          | `{ moodle_site?, error_reports? }`                  | `{ status:'ok', applied }` — a different site resets auth ([AUTH.md](docs/AUTH.md)); blank clears it; `error_reports` toggles Sentry sending live |
 | `POST /site/probe`      | `{ url }`                                           | `{ status:'supported'\|'unsupported'\|'unverified', site, code?, params? }` — always 200 ([MOODLE.md](docs/MOODLE.md)) |
 | `GET /auth/status`      | —                                                   | `{ connected, expired, unverified }` — `unverified`: persisted after a block, site info not yet checked |
-| `GET /auth/events`      | — (SSE; `?secret=` for `EventSource`)               | `data:` frame with the auth state on subscribe and on every change ([AUTH.md](docs/AUTH.md#connect--events--complete--status--disconnect)) |
+| `GET /auth/events`      | — (SSE; `?secret=` for `EventSource`)               | `data:` frame with the auth state plus `moodleBusy` on subscribe and on every change ([AUTH.md](docs/AUTH.md#connect--events--complete--status--disconnect)) |
 | `POST /auth/connect`    | `{}`                                                | `{ status:'pending' }` — opens the headed window; the service then runs the login to its end itself and reports on `/auth/events` |
 | `POST /auth/complete`   | —                                                   | `{ connected:true }` — re-verifies the stored `unverified` token now (not needed after a normal login); 503/422/401 as below, `moodle_login_not_pending` with none stored |
 | `POST /auth/disconnect` | —                                                   | `{ connected:false }` (deletes the local token; no server-side revoke)      |
-| `POST /list`            | `{ courseUrl }`                                     | `{ items }`                                                                 |
+| `POST /list`            | `{ courseUrl }`                                     | `{ items }` — each Item's `moodle` says whether acting on it reaches Moodle ([BROWSING.md](docs/BROWSING.md)) |
 | `POST /list/expand`     | `{ ref }`                                           | `{ items }` (one expandable item → children)                                |
 | `POST /resolve`         | `{ ref, course, name, kind, only?, forceCapture? }` | `{ media, targets }`                                                        |
 | `POST /zoom/passcode`   | `{ course, name?, passcode, scope }`                | `{}` (`scope:'course'\|'lecture'`)                                          |
 | `POST /close`           | —                                                   | `{}` (close every persistent browser)                                       |
+| `GET /moodle/file/:id`  | — (`Range` passed through)                          | a resolved file on the Moodle host (a PDF, a link, a videostream capture), streamed under the lock; `HEAD` answers its size without Moodle; `401 moodle_file_unknown` for an id this process never minted ([GATE.md](docs/GATE.md#files)) |
 
-`/resolve` returns targets, never a download: `targets` is `[{ name, tool, url, headers?, fromCache }]`, one per file that will land (a zoom before/after-break pair yields `<base>.1`/`<base>.2`). `tool` (`'curl'`|`'fetch'`|`'ytdlp'`) is the key of the `server/` downloader that can fetch it; `headers` rides only with `curl`. `media` (`'video'`|`'material'`) is what actually lands — a probed row only learns it here. auto keeps no job state; `server/` creates a job per target and owns it from there ([server JOBS.md](../server/docs/JOBS.md)).
+`/resolve` returns targets, never a download: `targets` is `[{ name, tool, url, headers?, fromCache }]` (a file on the Moodle host has a path on auto as its `url`, `/moodle/file/<id>`), one per file that will land (a zoom before/after-break pair yields `<base>.1`/`<base>.2`). `tool` (`'curl'`|`'fetch'`|`'ytdlp'`) is the key of the `server/` downloader that can fetch it; `headers` rides only with `curl`. `media` (`'video'`|`'material'`) is what actually lands — a probed row only learns it here. auto keeps no job state; `server/` creates a job per target and owns it from there ([server JOBS.md](../server/docs/JOBS.md)).
 
 **Session replay cache** (`src/core/replayCache.js`). Every resolved cap is kept in memory keyed by its final `(course, lecture, kind, media)` target, so a retry replays it without re-capturing — never logged (caps hold cookies/tokens), unbounded (session-small). `only:true` acts on just the one named target (a zoom split name included); `forceCapture:true` bypasses the cache (and every probe cache). `fromCache` on each target tells `server/` whether an auth failure is worth one silent re-resolve. `only`+`forceCapture` re-sniffs the whole share (one zoom share yields both clips) and returns just the matching cap.
 
-Error statuses, each a distinct signal the frontend branches on. All four carry `code` and `params`
+Error statuses, each a distinct signal the frontend branches on. All five carry `code` and `params`
 beside the fields below, as every non-2xx body here does ([downloader CLAUDE.md](../CLAUDE.md)):
 
 - `401 {status:'reconnect'}`, `moodle_reconnect_required` — the Moodle WS token is missing or answered `invalidtoken` ([AUTH.md](docs/AUTH.md)).
 - `409 {status:'passcode', reason, course, name}`, `zoom_passcode_required {reason, course, name}` — zoom passcode `missing` or `incorrect`; save one via `/zoom/passcode` and retry ([ZOOM.md](docs/ZOOM.md)).
 - `422 {status:'unsupported', message}` — the source can never be handled here (a link that probes as a non-video, non-PDF file, a web page, a dead link, an unshared Drive file). The code is the thrower's own (`link_not_a_video`, `link_dead`, `drive_not_shared`, `drive_link_malformed`, `expand_unsupported_host`), never one flat "unsupported". Memoized per probe key, so `/list` stamps `resolvedMedia:'unsupported'` ([BROWSING.md](docs/BROWSING.md)).
+- `429 {status:'busy', error}`, `moodle_busy` — another Moodle request holds the lock; nothing was sent to the site. Retry once `moodleBusy` reads false ([GATE.md](docs/GATE.md)).
 - `503 {status:'blocked', message}`, `site_blocked {detail}` — the Moodle site served a bot-protection challenge; transient, never retried here ([MOODLE.md](docs/MOODLE.md)). From `/auth/complete` (or the first WS call on an unverified token) the token is kept and `params.challengeWindow:true` says a headed window is open on the site root for the user to solve the challenge; then call `/auth/complete` again ([AUTH.md](docs/AUTH.md#connect--events--complete--status--disconnect)).
 
 Two more site refusals carry no `status`: `409 moodle_site_not_configured` from `/auth/*`, `/list` and `/resolve` when no site is set, and `400 course_url_unsupported_site {url, site}` for a URL outside it. The login (and `/auth/complete`) refuses a site the post-login check rejects as `422 {status:'unsupported'}`, `moodle_site_unsupported {site, reason}` (a stored token deleted; a fresh login's capture is discarded and the stored one kept), and `/auth/complete` answers a token Moodle calls `invalidtoken` with `401 reconnect` (token deleted); the login reports the same as `moodle_reconnect_required` on the stream.
@@ -63,6 +67,7 @@ A throw carries its code up to the route through `CodedError` (`src/lib/errors.j
 | [ZOOM.md](docs/ZOOM.md)              | why zoom needs a headed, stealthed, hidden Chrome/Edge; passcode gate; before/after-break split |
 | [BROWSING.md](docs/BROWSING.md)      | listing (parsers, routing, `Item`/`ref` contract), expansion, and the per-strategy resolve + probes |
 | [AUTH.md](docs/AUTH.md)              | how the token provider is wired into the endpoints; expiry; on-demand autologin               |
+| [GATE.md](docs/GATE.md)              | the one Moodle lock: tickets, refuse vs wait, login and challenge holds, the file proxy, `moodleBusy` |
 | [MOODLE.md](docs/MOODLE.md)          | the configured site, its pre- and post-login checks, and the Moodle WS protocol: token grab, REST calls, error shapes, bot protection, pluginfile, autologin |
 
 Dev stack: the root `npm run dev` runs this as the `AutoDL` (cyan) `concurrently` process.

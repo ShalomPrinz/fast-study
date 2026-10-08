@@ -29,6 +29,7 @@ import {
   sendUnsupported,
 } from '../src/http/server.js';
 import { encodeRef } from '../src/lib/ref.js';
+import { gated } from './gated.js';
 
 // Imports are hoisted past any env write, so the configured site is set through its module.
 setCurrentSite('https://lemida.biu.ac.il');
@@ -62,6 +63,7 @@ function fakeRes() {
       res.body = body;
       return res;
     },
+    on() {},
   };
   return res;
 }
@@ -133,7 +135,9 @@ test("a WS fault carries Moodle's errorcode, a challenge the shape it served", a
     json: async () => ({ exception: 'moodle_exception', errorcode: 'invalidtoken', message: 'x' }),
   }));
   assert.deepEqual(
-    codeOf(await thrown(() => getCourseContents('https://lemida.biu.ac.il', 'tok', '1'))),
+    codeOf(
+      await thrown(() => gated(() => getCourseContents('https://lemida.biu.ac.il', 'tok', '1'))),
+    ),
     {
       code: 'moodle_ws_error',
       params: { errorcode: 'invalidtoken', detail: 'x' },
@@ -146,7 +150,9 @@ test("a WS fault carries Moodle's errorcode, a challenge the shape it served", a
     json: async () => null,
   });
   assert.deepEqual(
-    codeOf(await thrown(() => getCourseContents('https://lemida.biu.ac.il', 'tok', '1'))),
+    codeOf(
+      await thrown(() => gated(() => getCourseContents('https://lemida.biu.ac.il', 'tok', '1'))),
+    ),
     {
       code: 'site_blocked',
       params: { detail: 'HTTP 200, text/html; charset=utf-8' },
@@ -162,7 +168,7 @@ test('a pluginfile that serves JSON instead of the file', async (t) => {
   }));
   const { assertPluginfileReadable } = await import('../src/moodle/wsClient.js');
   const url = pluginfileUrl('https://lemida.biu.ac.il/webservice/pluginfile.php/1/x.pdf', 't');
-  assert.deepEqual(codeOf(await thrown(() => assertPluginfileReadable(url))), {
+  assert.deepEqual(codeOf(await thrown(() => gated(() => assertPluginfileReadable(url)))), {
     code: 'moodle_file_unreadable',
     params: { url },
   });

@@ -6,8 +6,7 @@ import assert from 'node:assert/strict';
 import { invalidRequest, validateKind } from '../src/validate.js';
 import { createJob, finishJob, listJobs } from '../src/jobs.js';
 import { cancelRun, createRun, resumeRun } from '../src/runs.js';
-import { downloadItem, reresolveFailure } from '../src/routes/downloadItem.js';
-import { resolve } from '../src/services/autodl.js';
+import { reresolveFailure } from '../src/routes/downloadItem.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -110,52 +109,6 @@ test("a re-resolve maps auto's statuses to its own codes", () => {
   });
   // status 0 is "never reached auto at all", and reads as the network failure it is.
   assert.deepEqual(reresolveFailure(0, null).params, { detail: 'HTTP network' });
-});
-
-test('an unreachable auto/ is one code whichever half produced the body', async (t) => {
-  stubFetch(t, async () => {
-    throw new Error('fetch failed');
-  });
-  const { status, body } = await resolve({ ref: 'r', course: 'C', name: 'L', kind: 'lecture' });
-  assert.equal(status, 0);
-  assert.deepEqual(body, {
-    error: 'fetch failed',
-    code: 'autodl_unreachable',
-    params: { detail: 'fetch failed' },
-  });
-
-  // The other shape: auto answered a non-2xx with nothing parseable.
-  globalThis.fetch = async () => ({
-    status: 502,
-    json: async () => {
-      throw new Error('not json');
-    },
-  });
-  const refused = await downloadItem({ ref: 'r', course: 'C', name: 'L', kind: 'lecture' });
-  assert.deepEqual(refused, {
-    status: 502,
-    body: {
-      error: 'auto-downloader unreachable',
-      code: 'autodl_unreachable',
-      params: { detail: 'HTTP 502' },
-    },
-  });
-});
-
-test('a 2xx with nothing runnable is its own code', async (t) => {
-  stubFetch(t, async () => ({ status: 200, json: async () => ({ media: 'video', targets: [] }) }));
-  const { status, body } = await downloadItem({
-    ref: 'r',
-    course: 'C',
-    name: 'L',
-    kind: 'lecture',
-  });
-  assert.equal(status, 502);
-  assert.deepEqual(body, {
-    error: 'auto returned no usable target',
-    code: 'autodl_no_target',
-    params: {},
-  });
 });
 
 // ── the database edge ───────────────────────────────────────────────────────

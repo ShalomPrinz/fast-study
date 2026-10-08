@@ -27,8 +27,10 @@ fetch, and replaying its `Range:` saves a partial body missing the MP4 header at
 Flags: `-L --fail --compressed --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors`.
 `--retry-all-errors` covers CDNs that close TLS without `close_notify` mid-stream (OpenSSL 3 →
 `SSL_read: unexpected eof`). `--silent` because the server renders progress; `--show-error` still
-writes a failure reason for the stderr tail. `fetch` is the same curl with no header replay — its URL
-authenticates by its own query-string token.
+writes a failure reason for the stderr tail. `fetch` is the same curl with no header replay. A target on auto/ (any file on the Moodle host,
+`fetch` or `curl`) carries no captured headers — auto/ keeps them — only the launch secret and the
+Moodle wait marker, from a `-H @file` in the temp dir, never argv. auto/ answers its `HEAD` from
+memory and the probe skips the ranged fallback there, so sizing costs no turn of the Moodle lock.
 
 ## yt-dlp (YouTube, Drive and direct video links)
 

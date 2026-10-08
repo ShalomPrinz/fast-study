@@ -3,7 +3,7 @@
 // `drive` takes its trigger, so nothing here touches auto/ or the network.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRun, drive, listRuns, outcomeFor, startRun } from '../src/runs.js';
+import { cancelRun, createRun, drive, listRuns, outcomeFor, startRun } from '../src/runs.js';
 
 test('a 2xx queues the target', () => {
   assert.deepEqual(outcomeFor(200), { disposition: 'queued' });
@@ -135,4 +135,36 @@ test('a different section keeps its own run', () => {
     .filter((r) => r.sectionId.startsWith('c:video:'))
     .map((r) => r.sectionId);
   assert.ok(ids.includes('c:video:one') && ids.includes('c:video:two'));
+});
+
+// Nobody pressed a button for a run's rows, so each one queues at auto's Moodle lock.
+test('a run triggers every row as a waiting call', async () => {
+  const run = createRun({ sectionId: 'c:video:wait', course: 'c', targets: [target('a')] });
+  const seen = [];
+  await drive(run, 0, async (args) => {
+    seen.push(args.wait);
+    return { status: 200, body: {} };
+  });
+  assert.deepEqual(seen, [true]);
+});
+
+// A row can sit in auto's Moodle queue for minutes; cancelling the run must abandon it there.
+test('cancelling a run aborts the row it is waiting on, and the run triggers nothing more', async () => {
+  const run = createRun({
+    sectionId: 'c:video:cancel',
+    course: 'c',
+    targets: [target('a'), target('b')],
+  });
+  const triggered = [];
+  const driving = drive(run, 0, ({ name, signal }) => {
+    triggered.push(name);
+    return new Promise((resolve) =>
+      signal.addEventListener('abort', () => resolve({ status: 0, body: null })),
+    );
+  });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(cancelRun(run.id), null);
+  await driving;
+  assert.deepEqual(triggered, ['a']);
+  assert.equal(run.status, 'cancelled');
 });

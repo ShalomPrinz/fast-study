@@ -1,5 +1,6 @@
 import { VideoExtractor } from './VideoExtractor.js';
 import { CodedError } from '../lib/errors.js';
+import { enterMoodle } from '../moodle/gate.js';
 
 /** Path ends in .mp4, ignoring query/hash — mirrors background.js's capture filter. */
 function endsWithMp4(url) {
@@ -11,6 +12,24 @@ function endsWithMp4(url) {
 }
 
 const MP4_WAIT_MS = 20000;
+// The player's own answer names the file's size; no extra request is spent learning it.
+const SIZE_WAIT_MS = 5000;
+
+// The .mp4's full size from the player's response (Content-Range total, or a whole Content-Length),
+// or null when it did not arrive in time or did not say.
+async function sizeOf(request) {
+  let timer;
+  const timeout = new Promise((r) => (timer = setTimeout(() => r(null), SIZE_WAIT_MS)));
+  const response = await Promise.race([request.response().catch(() => null), timeout]);
+  clearTimeout(timer);
+  if (!response) return null;
+  const headers = response.headers();
+  const range = /\/(\d+)\s*$/.exec(headers['content-range'] ?? '');
+  if (range) return Number(range[1]);
+  return response.status() === 200 && headers['content-length']
+    ? Number(headers['content-length'])
+    : null;
+}
 
 /**
  * Moodle `videostream` plugin module: an in-site recorded lecture behind its own view.php page.
@@ -28,6 +47,11 @@ export class VideostreamExtractor extends VideoExtractor {
    */
   canHandle(activity) {
     return activity.modType === 'videostream';
+  }
+
+  // The module page, the autologin and the .mp4 sniff all run on Moodle.
+  reachesMoodle() {
+    return true;
   }
 
   /**
@@ -54,6 +78,8 @@ export class VideostreamExtractor extends VideoExtractor {
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
    */
   async _captureVideo(page, rec) {
+    // The view page is on the Moodle site; the gate goes first, before the listener is armed.
+    await enterMoodle(rec.pageUrl);
     // Register the listener BEFORE navigating so an autoplay .mp4 firing during
     // load isn't missed (mirrors background.js's onSendHeaders capture).
     const mp4Request = page
@@ -92,6 +118,7 @@ export class VideostreamExtractor extends VideoExtractor {
       title: rec.title,
       url: request.url(),
       headers: Object.entries(request.headers()).map(([name, value]) => ({ name, value })),
+      size: await sizeOf(request),
       kind: rec.kind,
       strategy: 'videostream',
     };

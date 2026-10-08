@@ -25,6 +25,8 @@ export function wrapFetchError(method, url, error) {
 
 /** One request; a non-2xx is an error naming the method, the route and the body it answered. */
 export async function call(url, { method = 'GET', body, headers = {}, expect = true } = {}) {
+  // auto's Moodle lock refuses back-to-back unmarked calls; the harness queues like server/ does.
+  if (url.startsWith(AUTO)) headers = { 'X-FastStudy-Moodle-Wait': '1', ...headers };
   const response = await fetch(url, {
     method,
     headers,

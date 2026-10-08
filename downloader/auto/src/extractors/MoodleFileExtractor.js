@@ -20,6 +20,11 @@ export class MoodleFileExtractor extends VideoExtractor {
     return activity.modType === 'resource' && activity.mimetype === 'application/pdf';
   }
 
+  // A course file: the preflight and every byte come from Moodle.
+  reachesMoodle() {
+    return true;
+  }
+
   /**
    * One downloadable file. `fileurl` rides along in the ref so /resolve rebuilds the
    * tokened URL from the ref alone, with no course re-listing.
