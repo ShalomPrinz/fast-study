@@ -212,3 +212,23 @@ class TestTools:
             asyncio.run(cancel_one_waiter(probe))
             release.set()
             assert probe.result(timeout=5) == {"ffmpeg": "ok"}
+
+
+def test_status_keeps_a_step_error_on_a_lecture_without_a_video():
+    """A transcript-only lecture whose summarize failed still shows that error on GET /status."""
+    skey = backend_main.runner._skey("C1", "L1", "lecture")
+    tree = [
+        {
+            "name": "C1",
+            "lectures": [{"name": "L1", "files": {"transcript.txt": {"exists": True}}}],
+        }
+    ]
+    backend_main.runner._errors[skey] = backend_main.runner._error_record(
+        "summarize", "boom", code="x"
+    )
+    try:
+        with patch.object(backend_main.runner.db_client, "get_tree", return_value=tree):
+            body = client.get("/status").json()
+        assert body["errors"][skey]["step"] == "summarize"
+    finally:
+        backend_main.runner._errors.clear()

@@ -160,9 +160,8 @@ def get_status() -> dict:
 
 
 def prune_stale_errors() -> None:
-    """Drop errors whose lecture no longer exists or has no video.mp4: a rename or delete never
-    reaches the runner, so a recycled name must not inherit the old lecture's failure. A failed
-    step needs the video, so a video-less lecture cannot own one."""
+    """Drop errors whose lecture no longer exists: a rename or delete never reaches the runner.
+    Any existing lecture keeps its error whatever files it has, since a step may run off any of them."""
 
     if not _errors:
         return
@@ -175,7 +174,6 @@ def prune_stale_errors() -> None:
         for c in tree
         for kind, key in (("lecture", "lectures"), ("recitation", "recitations"))
         for lec in c.get(key) or []
-        if ((lec.get("files") or {}).get("video.mp4") or {}).get("exists")
     }
     for skey in [k for k in _errors if k not in live and k not in _in_flight]:
         del _errors[skey]

@@ -1661,13 +1661,11 @@ def test_exec_pdf_plain_failure_writes_no_dotfiles():
 # ---- prune_stale_errors ----
 
 
-def test_prune_stale_errors_drops_renamed_and_recreated_lectures():
+def test_prune_stale_errors_drops_renamed_and_deleted_lectures():
     """A rename or delete never reaches the runner; the old name's error must not survive it,
-    and an empty lecture recreated under that name must not inherit it."""
+    so a lecture later recreated under that name starts clean."""
     old = runner._skey("C1", "L1", "lecture")
     keep = runner._skey("C1", "L2", "lecture")
-    runner._errors[old] = runner._error_record("transcribe", "boom", code="x")
-    runner._errors[keep] = runner._error_record("transcribe", "boom", code="x")
     renamed = [
         {
             "name": "C1",
@@ -1676,6 +1674,9 @@ def test_prune_stale_errors_drops_renamed_and_recreated_lectures():
                 {"name": "L2", "files": _files(video=True)},
             ],
         }
+    ]
+    deleted = [
+        {"name": "C1", "lectures": [{"name": "L2", "files": _files(video=True)}]}
     ]
     recreated = [
         {
@@ -1687,10 +1688,36 @@ def test_prune_stale_errors_drops_renamed_and_recreated_lectures():
         }
     ]
     try:
-        for tree in (renamed, recreated):
+        for tree in (renamed, deleted):
+            runner._errors[keep] = runner._error_record("transcribe", "boom", code="x")
             runner._errors[old] = runner._error_record("transcribe", "boom", code="x")
             with patch.object(runner.db_client, "get_tree", return_value=tree):
                 runner.prune_stale_errors()
             assert list(runner._errors) == [keep]
+        # The delete's poll already dropped it, so the recreated name has nothing to inherit.
+        with patch.object(runner.db_client, "get_tree", return_value=recreated):
+            runner.prune_stale_errors()
+        assert list(runner._errors) == [keep]
+    finally:
+        runner._errors.clear()
+
+
+def test_prune_stale_errors_keeps_an_existing_lecture_without_a_video():
+    """Summarize runs off transcript.txt alone, so a video-less lecture's failure must survive."""
+    skey = runner._skey("C1", "L1", "lecture")
+    rkey = runner._skey("C1", "R1", "recitation")
+    tree = [
+        {
+            "name": "C1",
+            "lectures": [{"name": "L1", "files": _files(transcript=True)}],
+            "recitations": [{"name": "R1", "files": _files()}],
+        }
+    ]
+    try:
+        runner._errors[skey] = runner._error_record("summarize", "boom", code="x")
+        runner._errors[rkey] = runner._error_record("summarize", "boom", code="x")
+        with patch.object(runner.db_client, "get_tree", return_value=tree):
+            runner.prune_stale_errors()
+        assert set(runner._errors) == {skey, rkey}
     finally:
         runner._errors.clear()
