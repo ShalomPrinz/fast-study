@@ -43,9 +43,8 @@ app.use(express.json({ limit: '5mb' }));
 // so /health reports on the same binary this run's downloads spawn.
 seedYtdlp();
 
-// Probed once at startup, never per request: the boot screen polls /health, and re-spawning per
-// poll costs more than the answer is worth. A tool installed later is seen on the next launch.
-// /health awaits this one promise, so the launcher never reads tools before the probe settles.
+// Probed once at startup, not per /health poll (re-spawning costs more than the answer); a tool
+// installed later is seen next launch. /health awaits this promise, so tools are never read unsettled.
 const toolProbe = checkTools(['yt-dlp', 'curl']);
 
 // Liveness plus the boot-time tool probe: what the launcher waits on before opening the window,
