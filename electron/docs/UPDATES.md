@@ -3,6 +3,8 @@
 `updater.js` is the whole update surface: electron-updater against GitHub Releases on the public
 `ShalomPrinz/fast-study`, one `latest` channel. Its configuration is the `publish` block in
 `package.json`, which is also what writes `app-update.yml` into the package at build time.
+`disableWebInstaller` makes it refuse web-installer packages, since the app ships only the full
+`nsis` installer.
 
 ## The sidebar row and the launch screen's failure view
 

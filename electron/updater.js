@@ -40,6 +40,8 @@ function startUpdater(log, onPhase) {
   autoUpdater.autoDownload = true;
   // Runs on `quit`, after main's `will-quit` kill — load-bearing, see docs/UPDATES.md.
   autoUpdater.autoInstallOnAppQuit = true;
+  // The app ships only the full `nsis` installer, never `nsis-web`.
+  autoUpdater.disableWebInstaller = true;
 
   // The launch screen's phases describe the launch check only; once a recheck has run they freeze.
   let rechecked = false;
