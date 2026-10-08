@@ -15,7 +15,7 @@ npm --prefix downloader/server test    # node --test, pure logic only (no networ
 
 A dev run needs `yt-dlp` and `curl` on PATH. Both resolve through
 [`@faststudy/tools`](../../lib/tools/CLAUDE.md), are probed once at startup and reported on
-`/health` as `tools`; a missing one fails only the downloads that need it. Packaged, this service
+`/health` as `tools`, which answers only once that probe settles; a missing one fails only the downloads that need it. Packaged, this service
 alone seeds and self-updates the writable yt-dlp copy ([DOWNLOAD.md](docs/DOWNLOAD.md)).
 
 ## Config (repo-root `.env`; all optional)
@@ -60,7 +60,7 @@ Sending also needs the user's error-reports switch: `FASTSTUDY_ERROR_REPORTS=1` 
 
 | Method + path                             | Purpose                                                                                                           |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `GET  /health`                            | `{status:'ok', tools}` — what the launcher waits on                                                               |
+| `GET  /health`                            | `{status:'ok', tools}` once the boot probe settles — what the launcher waits on                                   |
 | `POST /config`                            | `{error_reports?}` → `{status:'ok', applied}`; 400 `invalid_request` on a non-boolean — the launcher's live switch |
 | `GET  /courses`                           | database `/tree` reshaped to name arrays, archived dropped                                                        |
 | `POST /probe-size`                        | `{url, headers}` → `{bytes}` (HEAD → ranged GET)                                                                  |

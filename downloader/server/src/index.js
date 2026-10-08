@@ -39,14 +39,18 @@ app.use(requireSecret);
 // JSON for probe/download; /upload-pdf parses its own raw body per-route.
 app.use(express.json({ limit: '5mb' }));
 
+// Synchronous and before the probe: the copy it seeds is what toolPath resolves to from here on,
+// so /health reports on the same binary this run's downloads spawn.
+seedYtdlp();
+
 // Probed once at startup, never per request: the boot screen polls /health, and re-spawning per
 // poll costs more than the answer is worth. A tool installed later is seen on the next launch.
-const TOOLS = ['yt-dlp', 'curl'];
-let toolStatus = {};
+// /health awaits this one promise, so the launcher never reads tools before the probe settles.
+const toolProbe = checkTools(['yt-dlp', 'curl']);
 
 // Liveness plus the boot-time tool probe: what the launcher waits on before opening the window,
 // and what its boot screen renders a missing binary from.
-app.get('/health', (req, res) => res.json({ status: 'ok', tools: toolStatus }));
+app.get('/health', async (req, res) => res.json({ status: 'ok', tools: await toolProbe }));
 
 app.use(coursesRouter);
 app.use(probeRouter);
@@ -67,12 +71,7 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error, code: 'internal_error', params: { detail: error } });
 });
 
-// Synchronous and before the probe: the copy it seeds is what toolPath resolves to from here on,
-// so /health reports on the same binary this run's downloads spawn.
-seedYtdlp();
-
-checkTools(TOOLS).then((status) => {
-  toolStatus = status;
+toolProbe.then((status) => {
   // A probe answers 'ok' or a {state, params} record; the boot line wants its state.
   for (const [name, probe] of Object.entries(status)) {
     if (probe !== 'ok')

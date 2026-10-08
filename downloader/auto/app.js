@@ -44,12 +44,12 @@ app.use(express.json()); // an empty body parses to req.body = {}
 
 // Probed once at startup, never per request: the boot screen polls /health, and re-spawning per
 // poll costs more than the answer is worth. A tool installed later is seen on the next launch.
-const TOOLS = ['yt-dlp'];
-let toolStatus = {};
+// /health awaits this one promise, so the launcher never reads tools before the probe settles.
+const toolProbe = checkTools(['yt-dlp']);
 
 // Liveness plus the boot-time tool probe: what the launcher waits on before opening the window,
 // and what its boot screen renders a missing binary from.
-app.get('/health', (req, res) => res.json({ status: 'ok', tools: toolStatus }));
+app.get('/health', async (req, res) => res.json({ status: 'ok', tools: await toolProbe }));
 
 app.get('/prereqs/browser', handleBrowserPrereq);
 app.post('/config', handleConfig);
@@ -88,8 +88,7 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-checkTools(TOOLS).then((status) => {
-  toolStatus = status;
+toolProbe.then((status) => {
   // A probe answers 'ok' or a {state, params} record; the boot line wants its state.
   for (const [name, probe] of Object.entries(status)) {
     if (probe !== 'ok')
