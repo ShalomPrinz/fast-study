@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import json
+from concurrent.futures import wait
 from unittest.mock import patch
 
 import backend_main
@@ -52,6 +53,8 @@ def reload_main(monkeypatch):
         """Reload the module so its module-level init runs again; boot-time events are dropped."""
 
         importlib.reload(backend_main)
+        # The tool probe logs an ERROR per missing tool off-thread; let it finish so those drop too.
+        wait([backend_main._tool_probe])
         reload.transport.envelopes.clear()
         return calls
 
@@ -67,6 +70,7 @@ def reload_main(monkeypatch):
     monkeypatch.delenv("FASTSTUDY_SENTRY_DSN", raising=False)
     monkeypatch.undo()
     importlib.reload(backend_main)
+    wait([backend_main._tool_probe])
 
 
 def test_no_dsn_skips_init(reload_main, monkeypatch):
