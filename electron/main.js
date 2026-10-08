@@ -129,9 +129,17 @@ function withScrubEnv(fn) {
   }
 }
 
+/** Writes one `launch.log` line, stamped with the local date and time to the millisecond so a
+ *  service's boot cost and a bug's moment read straight off the log. */
 function log(source, line) {
-  logStream?.write(`[${source}] ${line}\n`);
-  if (!app.isPackaged) console.log(`[${source}] ${line}`);
+  const now = new Date();
+  const pad = (n, width = 2) => String(n).padStart(width, '0');
+  const stamp =
+    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
+    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}.${pad(now.getMilliseconds(), 3)}`;
+  const text = `${stamp} [${source}] ${line}`;
+  logStream?.write(`${text}\n`);
+  if (!app.isPackaged) console.log(text);
 }
 
 // Truncated per launch: the log is what a bug report carries, and one launch's four children are

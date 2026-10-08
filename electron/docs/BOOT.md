@@ -154,7 +154,8 @@ The `will-quit` kill also has to stay where it is for a packaged update to insta
 ## The log
 
 Everything both streams of every child print, plus main's own boot lines, is written to
-`<state root>/logs/launch.log`, each line tagged with the child that wrote it. It is truncated at
+`<state root>/logs/launch.log`, each line stamped with the local date and time and tagged with the
+child that wrote it — `2026-10-08 12:04:31.207 [auto] ...`. It is truncated at
 each launch: one launch's four children are the whole story a bug report needs, and appending would
 grow without bound.
 
