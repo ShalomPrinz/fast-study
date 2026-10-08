@@ -48,8 +48,11 @@ export default function SearchView() {
   const { t } = useLingui()
   const { courses, loaded, loadFailed } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
-  // Only a tree that actually loaded can say "no courses": not while booting, not after a failed fetch.
-  const noCourses = loaded && !loadFailed && active.length === 0
+  // No picker without options, whatever the reason; only a tree that loaded can say "no courses".
+  const hasCourses = active.length > 0
+  const noCourses = loaded && !loadFailed && !hasCourses
+  // Whenever the latest course load failed and there are no courses to show.
+  const coursesFailed = loadFailed && !hasCourses
 
   const [chosen, setChosen] = useState(() => localStorage.getItem(COURSE_STORAGE_KEY))
   const [query, setQuery] = useState('')
@@ -137,7 +140,7 @@ export default function SearchView() {
     return keys
   }, [courses, course])
 
-  const searched = !noCourses && !loading && !error && query.trim().length > 0
+  const searched = hasCourses && !loading && !error && query.trim().length > 0
 
   return (
     <main className="main-view main-view--page">
@@ -166,7 +169,7 @@ export default function SearchView() {
               dir="auto"
               autoFocus
             />
-            {!noCourses && (
+            {hasCourses && (
               <>
                 <span className="search-field-divider" />
                 <span className="search-course">
@@ -223,6 +226,11 @@ export default function SearchView() {
           {noCourses && (
             <div className="search-status">
               <Trans>Add a course to search its summaries.</Trans>
+            </div>
+          )}
+          {coursesFailed && (
+            <div className="search-status search-status--error">
+              <Trans>Courses failed to load.</Trans>
             </div>
           )}
 

@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:248
+#: src/features/search/SearchView.tsx:256
 msgid " — showing {shownFindings}"
 msgstr " — מוצגות {shownFindings}"
 
@@ -69,7 +69,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {תרגול אחד} two {# תרגולים} other {# תרגולים}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:246
+#: src/features/search/SearchView.tsx:254
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {תוצאה אחת} two {# תוצאות} other {# תוצאות}}"
 
@@ -197,7 +197,7 @@ msgstr "{leaves, plural, one {פריט אחד} two {# פריטים} other {# פ�
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} כבר קיים ב{course}. להוריד שוב ולדרוס?"
 
-#: src/features/search/SearchView.tsx:247
+#: src/features/search/SearchView.tsx:255
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {בהרצאה אחת} two {ב-# הרצאות} other {ב-# הרצאות}}"
 
@@ -337,7 +337,7 @@ msgstr "יחידה ממתינה לקוד גישה"
 msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "נפתח חלון באתר האוניברסיטה. אשר שם שאינך רובוט, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
-#: src/features/search/SearchView.tsx:225
+#: src/features/search/SearchView.tsx:228
 msgid "Add a course to search its summaries."
 msgstr "הוסף קורס כדי לחפש בסיכומים שלו."
 
@@ -701,7 +701,7 @@ msgid "Couldn't work out where to download this from. Try again."
 msgstr "לא הצלחנו לזהות מאיפה להוריד את הקובץ. נסה שוב."
 
 #: src/features/downloads/components/ManualDownload.tsx:186
-#: src/features/search/SearchView.tsx:179
+#: src/features/search/SearchView.tsx:182
 msgid "Course"
 msgstr "קורס"
 
@@ -721,6 +721,10 @@ msgstr "סקירת קורס"
 #: src/features/downloads/DownloadsView.tsx:86
 msgid "Course sources"
 msgstr "מקורות קורסים"
+
+#: src/features/search/SearchView.tsx:233
+msgid "Courses failed to load."
+msgstr "לא הצלחנו לטעון את הקורסים."
 
 #: src/features/downloads/components/AddCourseRow.tsx:73
 msgid "Create"
@@ -1155,7 +1159,7 @@ msgstr "שם ההרצאה"
 msgid "Lecture name…"
 msgstr "שם ההרצאה…"
 
-#: src/features/search/SearchView.tsx:202
+#: src/features/search/SearchView.tsx:205
 #: src/shared/sidebar/Sidebar.tsx:75
 msgid "Lectures"
 msgstr "הרצאות"
@@ -1182,7 +1186,7 @@ msgstr "טעינת הקלטות"
 msgid "Loaded"
 msgstr "הקלטות נטענו"
 
-#: src/features/search/SearchView.tsx:233
+#: src/features/search/SearchView.tsx:241
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
@@ -1195,7 +1199,7 @@ msgstr "טוען…"
 msgid "Manual download"
 msgstr "הורדה ידנית"
 
-#: src/features/search/SearchView.tsx:217
+#: src/features/search/SearchView.tsx:220
 msgid "Match whole word"
 msgstr "התאמת מילה שלמה"
 
@@ -1346,7 +1350,7 @@ msgstr "לא בתור"
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "שים לב: הפעולה הזו תמחק את השמע, התמלול, הסיכום וה-PDF של ההרצאה. החומרים יישמרו."
 
-#: src/features/search/SearchView.tsx:260
+#: src/features/search/SearchView.tsx:268
 msgid "Nothing matched this search"
 msgstr "לא נמצאו תוצאות לחיפוש הזה"
 
@@ -1526,7 +1530,7 @@ msgid "Recitation name…"
 msgstr "שם התרגול…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:210
+#: src/features/search/SearchView.tsx:213
 msgid "Recitations"
 msgstr "תרגולים"
 
@@ -1586,7 +1590,7 @@ msgstr "הפעלה מחדש"
 msgid "Restore original"
 msgstr "שחזור המקור"
 
-#: src/features/search/SearchView.tsx:241
+#: src/features/search/SearchView.tsx:249
 msgid "Results"
 msgstr "תוצאות"
 
@@ -1663,15 +1667,15 @@ msgstr "גלול עד הסוף כדי לאשר."
 msgid "Search"
 msgstr "חיפוש"
 
-#: src/features/search/SearchView.tsx:145
+#: src/features/search/SearchView.tsx:148
 msgid "Search summaries"
 msgstr "חיפוש בסיכומים"
 
-#: src/features/search/SearchView.tsx:165
+#: src/features/search/SearchView.tsx:168
 msgid "Search this course's summaries…"
 msgstr "חפש בסיכומים של הקורס…"
 
-#: src/features/search/SearchView.tsx:148
+#: src/features/search/SearchView.tsx:151
 msgid "Searches the summaries of the course picked in the field"
 msgstr "מחפש בסיכומים של הקורס שנבחר בשדה"
 
@@ -1706,7 +1710,7 @@ msgstr "ההגדרות נשמרו"
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "כמה הקלטות יורדו לאותה הרצאה ({names}). שנה את השמות והרץ שוב."
 
-#: src/features/search/SearchView.tsx:290
+#: src/features/search/SearchView.tsx:298
 msgid "Show more"
 msgstr "הצג עוד"
 
@@ -2191,7 +2195,7 @@ msgstr "כשמשהו נכשל, FastStudy שולחת דיווח ל-Sentry. הוא
 msgid "Where to keep everything"
 msgstr "איפה לשמור הכול"
 
-#: src/features/search/SearchView.tsx:219
+#: src/features/search/SearchView.tsx:222
 msgid "Whole word only"
 msgstr "מילה שלמה בלבד"
 
