@@ -19,7 +19,10 @@ When `FASTSTUDY_SECRET` is set, every request but `GET /health` must carry it; t
 ## Health
 
 `GET /health`
-`{"status": "ok", "tools": {...}}` — liveness plus the boot-time probe of `ffmpeg`, `pandoc` and `tectonic` ([lib/tools](../../lib/tools/CLAUDE.md)), so the launcher's boot screen can render a missing binary. Nothing else on purpose: paths, config and key-set flags stay on routes that can be refused.
+`{"status": "ok"}` — liveness only, answered without waiting on anything; everything else sits on routes that can be refused.
+
+`GET /tools`
+`{"tools": {name: "ok" | {code, state, params}}}` for `ffmpeg`, `pandoc` and `tectonic` — the record is [lib/tools](../../lib/tools/CLAUDE.md)'s, relayed unchanged. The probe runs once per process on a background thread started at import, so it never delays startup; a call before it settles waits for it. The frontend calls it once after the window opens.
 
 ## Per-lecture
 

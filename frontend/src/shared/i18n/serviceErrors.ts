@@ -164,6 +164,23 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message: "Couldn't work out where to download this from. Try again.",
   }),
 
+  // lib/tools — the boot probe each service reports on `GET /tools`; no exit code: it means nothing to the user.
+  tool_missing: msg({
+    message:
+      '{tool} is missing, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this.',
+  }),
+  tool_timed_out: msg({
+    message:
+      "{tool} didn't respond within {seconds} seconds, so the parts of FastStudy that need it may fail.",
+  }),
+  tool_exited: msg({
+    message:
+      "{tool} doesn't run correctly, so the parts of FastStudy that need it will fail. Reinstall FastStudy to fix this.",
+  }),
+  tool_unusable: msg({
+    message: "{tool} can't be started, so the parts of FastStudy that need it will fail.",
+  }),
+
   // downloader/auto
   moodle_reconnect_required: msg({
     message: 'The Moodle session expired. Reconnect the account and try again.',

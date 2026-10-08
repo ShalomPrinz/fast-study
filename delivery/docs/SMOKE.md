@@ -10,10 +10,11 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
 ## Rules
 
 - **`resources/bin/` is one set with what the services probe** — compared exactly against the tool
-  names `/health` reports minus `curl`, since a binary nothing spawns installs cleanly and shows up
+  names `GET /tools` reports minus `curl`, since a binary nothing spawns installs cleanly and shows up
   only as installer size.
-- **No service boots reporting an unusable tool.** `/health`'s `tools` maps a usable tool to the
-  bare string `ok` and an unusable one to `{state, params}`; the failure names each offender's
+- **No service boots reporting an unusable tool.** Each service's secret-guarded `GET /tools` (all
+  but `database/`) answers once its boot probe settles, mapping a usable tool to the bare string
+  `ok` and an unusable one to `{code, state, params}`; the failure names each offender's `code` and
   `state` ([`lib/tools/CLAUDE.md`](../../lib/tools/CLAUDE.md)).
 - **A clean machine, read statically.** Every installed `.exe`/`.dll`/`.pyd`/`.node` may import,
   normally or delay-loaded, only DLLs the install ships, API sets, or System32 DLLs that are not a

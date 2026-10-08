@@ -40,16 +40,17 @@ app.use(requireSecret);
 app.use(express.json({ limit: '5mb' }));
 
 // Synchronous and before the probe: the copy it seeds is what toolPath resolves to from here on,
-// so /health reports on the same binary this run's downloads spawn.
+// so /tools reports on the same binary this run's downloads spawn.
 seedYtdlp();
 
-// Probed once at startup, not per /health poll (re-spawning costs more than the answer); a tool
-// installed later is seen next launch. /health awaits this promise, so tools are never read unsettled.
+// Probed once at boot, never per request; a tool installed later is seen next launch.
+// /tools awaits it so the answer is never unsettled, while /health stays instant.
 const toolProbe = checkTools(['yt-dlp', 'curl']);
 
-// Liveness plus the boot-time tool probe: what the launcher waits on before opening the window,
-// and what its boot screen renders a missing binary from.
-app.get('/health', async (req, res) => res.json({ status: 'ok', tools: await toolProbe }));
+// Pure liveness, what the launcher waits on before opening the window.
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// The boot probe, which the frontend reads once after the window opens to warn about broken tools.
+app.get('/tools', async (req, res) => res.json({ tools: await toolProbe }));
 
 app.use(coursesRouter);
 app.use(probeRouter);
@@ -71,13 +72,13 @@ app.use((err, req, res, _next) => {
 });
 
 toolProbe.then((status) => {
-  // A probe answers 'ok' or a {state, params} record; the boot line wants its state.
+  // A probe answers 'ok' or a {code, state, params} record; the boot line wants its state.
   for (const [name, probe] of Object.entries(status)) {
     if (probe !== 'ok')
       console.error(`❌ ${name} is ${probe.state} — the downloads that need it will fail`);
   }
   // Fire-and-forget, but only after the probe: `-U` swaps the exe in place, and a probe landing in
-  // that window would pin /health at `yt-dlp: missing` for the whole session.
+  // that window would pin /tools at `yt-dlp: missing` for the whole session.
   updateYtdlp();
 });
 

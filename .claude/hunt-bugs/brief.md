@@ -19,8 +19,8 @@ page for your flow. Never read the repo-root `.env`.
 1. `hb set AUTO_RUN=off`. The stack boots with `AUTO_RUN=full`, which queues a pipeline run for
    every downloaded video, each reaching the Drive step. Turn it back to `full` only for an
    auto-run test.
-2. Read the tools each service found: `curl -s "$(hb url backend)/health"`, then `server` and
-   `auto` the same way. A tool reported `missing` explains a failure later; name it under
+2. Read the tools each service found: `curl -s "$(hb url backend)/tools"`, then `server` and
+   `auto` the same way. A tool reported `tool_missing` explains a failure later; name it under
    **Not covered** rather than report it as a bug.
 
 ## Your flow

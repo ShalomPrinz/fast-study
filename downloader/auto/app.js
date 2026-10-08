@@ -43,13 +43,14 @@ app.use(
 app.use(requireSecret);
 app.use(express.json()); // an empty body parses to req.body = {}
 
-// Probed once at startup, not per /health poll (re-spawning costs more than the answer); a tool
-// installed later is seen next launch. /health awaits this promise, so tools are never read unsettled.
+// Probed once at boot, never per request; a tool installed later is seen next launch.
+// /tools awaits it so the answer is never unsettled, while /health stays instant.
 const toolProbe = checkTools(['yt-dlp']);
 
-// Liveness plus the boot-time tool probe: what the launcher waits on before opening the window,
-// and what its boot screen renders a missing binary from.
-app.get('/health', async (req, res) => res.json({ status: 'ok', tools: await toolProbe }));
+// Pure liveness, what the launcher waits on before opening the window.
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// The boot probe, which the frontend reads once after the window opens to warn about broken tools.
+app.get('/tools', async (req, res) => res.json({ tools: await toolProbe }));
 
 app.get('/prereqs/browser', handleBrowserPrereq);
 app.post('/warmup', handleWarmup);
@@ -90,7 +91,7 @@ for (const sig of ['SIGINT', 'SIGTERM']) {
 }
 
 toolProbe.then((status) => {
-  // A probe answers 'ok' or a {state, params} record; the boot line wants its state.
+  // A probe answers 'ok' or a {code, state, params} record; the boot line wants its state.
   for (const [name, probe] of Object.entries(status)) {
     if (probe !== 'ok')
       console.error(`❌ ${name} is ${probe.state} — playlist expansion will fail`);

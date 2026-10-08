@@ -27,7 +27,7 @@ wording; `failureNode` is the same thing for a call site that shows it in place 
 
 ## `backend.ts` → FastAPI (:8000)
 
-Pipeline triggers, runner status, timing stats and the course-overview endpoints. The wire is
+Pipeline triggers, runner status, timing stats, the tool probe and the course-overview endpoints. The wire is
 `snake_case`; camelCase normalization happens here and nowhere else.
 
 ## `database.ts` → database service (:8001)

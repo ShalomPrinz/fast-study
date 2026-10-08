@@ -189,3 +189,7 @@ export type OverviewMeta = Record<
   string /* slug */,
   { lectures: OverviewRange; recitations: OverviewRange; generatedAt: string }
 >
+
+// One external binary as a service's `GET /tools` reports it: usable, or why not (docs/ERROR-CODES.md §lib/tools).
+export type ToolStatus = 'ok' | { code: string; state: string; params: ErrorParams }
+export type ToolReport = Record<string, ToolStatus>

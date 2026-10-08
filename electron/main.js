@@ -317,7 +317,7 @@ async function waitForHealth(spec, url, live) {
     live();
     try {
       const response = await fetch(`${url}/health`);
-      if (response.ok) return await response.json();
+      if (response.ok) return;
     } catch {
       // Not yet serving; the child is alive or its exit already rejected the boot.
     }
@@ -355,12 +355,10 @@ async function boot() {
     try {
       const port = await startChild(spec, { ...shared, ...env });
       const url = `http://127.0.0.1:${port}`;
-      const health = await waitForHealth(spec, url, live);
+      await waitForHealth(spec, url, live);
       live();
-      log('main', `${name} ready on ${url} — ${JSON.stringify(health)}`);
-      // The boot-time tool probe, which the launch screen renders: a service is ready with a missing
-      // binary, and that costs one feature rather than the launch.
-      setService(name, { state: 'ready', tools: health.tools ?? null });
+      log('main', `${name} ready on ${url}`);
+      setService(name, { state: 'ready' });
       urls[spec.bridgeKey] = url;
       return url;
     } catch (error) {
@@ -420,7 +418,6 @@ async function runBoot() {
     // Nothing is running any more, so no row may still read ready.
     for (const service of bootState.services) {
       service.state = service === failing ? 'failed' : 'pending';
-      service.tools = null;
     }
     bootState.error = error.message;
     bootState.update = null;

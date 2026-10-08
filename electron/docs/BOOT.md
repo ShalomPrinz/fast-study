@@ -27,13 +27,12 @@
 
 ## The launch screen
 
-`boot.html` and `boot.js`: one row per child, its state, and — once a child is up — anything its
-`/health` tool probe could not run, one `<tool> <reason>` per unusable tool off the probe record's
-`state` ([ERROR-CODES.md](../../docs/ERROR-CODES.md)). It is a plain `file://` page rather than
-part of the frontend bundle, for the same reason the window cannot open on the frontend: the bundle
-resolves the service URLs at module scope and none of them exist while it renders. It is English
-only: the frontend's locale wiring does not reach it, and this is the only place in the app a tool
-probe is shown.
+`boot.html` and `boot.js`: one row per child and its state. A boot either succeeds or fails; a tool
+a service cannot run is not a boot outcome and never shows here — it reaches the user as an in-app
+toast, which the frontend raises off each service's `GET /tools` once the window is open. It is a
+plain `file://` page rather than part of the frontend bundle, for the same reason the window cannot
+open on the frontend: the bundle resolves the service URLs at module scope and none of them exist
+while it renders. It is English only: the frontend's locale wiring does not reach it.
 
 Main pushes the whole state on `faststudy:boot` at every change, and the page reads one snapshot
 over `faststudy:boot-state` when it loads — which closes the race with main's first push reaching a
@@ -76,7 +75,7 @@ service side, including why the line comes only after `listen()`, is
 [`lib/runtime`](../../lib/runtime/CLAUDE.md). Every other line on either stream is log output, and a
 child that exits before reporting a port fails the boot with what it exited on.
 
-`/health` is then polled until it answers — the one place the repo's push-over-poll preference does
+`/health` is then polled until it answers, as liveness only — its body is not read — the one place the repo's push-over-poll preference does
 not apply, since a booting child's only channel back to main is the port line it already sent.
 `/health` is the one route exempt from the secret check, so the answer tells a wrong secret from a
 dead child.

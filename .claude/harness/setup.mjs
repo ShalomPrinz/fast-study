@@ -281,9 +281,9 @@ function reportTools() {
       ['downloader server', PORTS.server],
       ['auto-downloader', PORTS.auto],
     ].map(async ([name, port]) => {
-      const { body: health } = await call(`http://127.0.0.1:${port}/health`);
-      const tools = Object.entries(health.tools ?? {})
-        .map(([tool, state]) => `${tool}=${state}`)
+      const { body } = await call(`http://127.0.0.1:${port}/tools`);
+      const tools = Object.entries(body.tools ?? {})
+        .map(([tool, state]) => `${tool}=${state === 'ok' ? 'ok' : state.code}`)
         .join(' ');
       return `  ${name}: ${tools || 'no tools'}`;
     }),

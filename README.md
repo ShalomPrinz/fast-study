@@ -34,7 +34,7 @@ Lectures live at `{DATA_ROOT}/{course}/{lecture}/`, recitations at
 - Google OAuth client at `backend/credentials.json` — Drive upload
 
 Hebrew fonts ship in `backend/assets/fonts/`. A missing binary disables only the feature that needs it;
-each service reports its tools on `/health`.
+each service reports its tools on `GET /tools`, and the app warns about a broken one after it loads.
 
 ## Configuration
 

@@ -20,6 +20,7 @@ import {
   healthOf,
   NETWORK_FAILURE,
   NOT_A_NETWORK_FAILURE,
+  toolsOf,
 } from './lib/services.js';
 import { pointUpdaterAt } from './lib/updateServer.js';
 import { delay, waitFor } from './lib/wait.js';
@@ -87,6 +88,7 @@ async function start(env) {
   const reached = await bridge(session.page);
   services = {
     urls: reached.urls,
+    secret: reached.secret,
     db: database(reached),
     api: backend(reached),
     dl: downloader(reached),
@@ -339,29 +341,22 @@ test('3. boot', async () => {
   );
   expect(order.at(-1), `ready lines: ${order.join(', ')}`).toBe('server');
 
-  const health = await waitFor(
-    async () => {
-      const answers = await healthOf(services.urls);
-      const probed = Object.entries(answers).every(
-        ([name, answer]) => name === 'database' || Object.keys(answer.tools ?? {}).length > 0,
-      );
-      return probed ? answers : null;
-    },
-    { timeoutMs: 60_000, message: 'a service never finished its boot-time tool probe' },
-  );
-  for (const [name, answer] of Object.entries(health)) {
+  for (const [name, answer] of Object.entries(await healthOf(services.urls))) {
     expect(answer.status, `${name} /health`).toBe('ok');
-    // A usable tool is the bare string `ok`, an unusable one a {state, params} object, so the
-    // offenders are rendered rather than printed raw: `state` is the reason the probe failed.
-    const unusable = Object.entries(answer.tools ?? {})
+  }
+  const tools = await toolsOf(services);
+  for (const [name, probed] of Object.entries(tools)) {
+    // A usable tool is the bare string `ok`, an unusable one a {code, state, params} object, so the
+    // offenders are rendered rather than printed raw: `code`/`state` say why the probe failed.
+    const unusable = Object.entries(probed ?? {})
       .filter(([, result]) => result !== 'ok')
-      .map(([tool, result]) => `${tool}: ${result?.state ?? result}`);
+      .map(([tool, result]) => `${tool}: ${result?.code ?? result} (${result?.state})`);
     expect(unusable, `${name} reports tools it cannot run`).toEqual([]);
   }
 
   // What the services probe is what bin/ ships: a tool dropped from one side and left on the other
   // is either dead weight in the installer or a feature that only fails on a user's machine.
-  const probedTools = Object.values(health).flatMap((answer) => Object.keys(answer.tools ?? {}));
+  const probedTools = Object.values(tools).flatMap((probed) => Object.keys(probed ?? {}));
   expect(
     [...new Set(probedTools)].filter((tool) => !PATH_TOOLS.includes(tool)).sort(),
     'the services probe a different set of tools than resources/bin/ ships',

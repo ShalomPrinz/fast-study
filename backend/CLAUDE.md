@@ -61,7 +61,7 @@ This environment is also what the frozen bundle is built from, for both Python s
 
 - `FASTSTUDY_SECRET` enforces the launch secret on inbound requests, and `db_client` forwards it to `database/` ([docs/API.md](docs/API.md)).
 - `runtime.serve` binds the socket and prints the port handshake; `backend_main.py` is the packaged entry.
-- `ffmpeg`, `pandoc` and `tectonic` are spawned through `tool_path(name)`, never by bare name. `backend_main.py` probes them once at startup and reports the result on `/health`; a missing one fails only the steps that need it. A dev machine needs all three to run the pipeline end to end.
+- `ffmpeg`, `pandoc` and `tectonic` are spawned through `tool_path(name)`, never by bare name. `backend_main.py` probes them once per process on a background thread and reports the result on `/tools`; a missing one fails only the steps that need it. A dev machine needs all three to run the pipeline end to end.
 - `runtime.state_path` locates everything written outside `DATA_ROOT` — `timing.db` and the Google token — and each caller mkdirs its own parent.
 - With `FASTSTUDY_SENTRY_DSN` set, `backend_main.py` inits Sentry at import under the [lib/sentry](../lib/sentry/CLAUDE.md) policy, before the app exists on both run paths; unset, nothing inits. Its transport is `sentry_policy.gated(HttpTransport)`: nothing is sent unless `FASTSTUDY_ERROR_REPORTS=1` at launch or `POST /config {error_reports: true}` since, and switching off never closes or re-inits the SDK. Every ERROR log becomes an event (so an escaped route error and a failed step do), and overview phase failures, which log nothing, are captured in `course/runner.py`. The auto-enabled GoogleGenAI integration is disabled, so retried 429s never become events.
 

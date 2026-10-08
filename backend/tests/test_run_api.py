@@ -1,3 +1,6 @@
+import asyncio
+import threading
+from concurrent.futures import Future
 from unittest.mock import patch
 
 import backend_main
@@ -156,14 +159,56 @@ class TestRunAll:
 
 
 class TestHealth:
+    def test_health_is_liveness_only(self):
+        assert client.get("/health").json() == {"status": "ok"}
+
+
+def _settled(status) -> Future:
+    probe = Future()
+    probe.set_result(status)
+    return probe
+
+
+class TestTools:
     def test_a_failed_tool_probe_passes_through_unchanged(self):
-        """The probe record is lib/tools' to shape; /health relays it and re-words nothing."""
+        """The probe record is lib/tools' to shape; /tools relays it and re-words nothing."""
 
         record = {
+            "code": "tool_missing",
             "state": "missing",
             "params": {"tool": "tectonic"},
         }
         tools = {"ffmpeg": "ok", "tectonic": record}
-        with patch.object(backend_main, "tool_status", tools):
-            body = client.get("/health").json()
-        assert body == {"status": "ok", "tools": tools}
+        with patch.object(backend_main, "_tool_probe", _settled(tools)):
+            body = client.get("/tools").json()
+        assert body == {"tools": tools}
+
+    def test_waits_for_a_probe_still_running(self):
+        """A call before the probe settles waits for it rather than answering a partial result."""
+
+        probe = Future()
+        threading.Timer(0.2, probe.set_result, args=({"ffmpeg": "ok"},)).start()
+        with patch.object(backend_main, "_tool_probe", probe):
+            body = client.get("/tools").json()
+        assert body == {"tools": {"ffmpeg": "ok"}}
+
+    def test_a_cancelled_waiter_leaves_the_probe_intact(self):
+        """A request cancelled mid-probe must not cancel the shared Future for every later call."""
+
+        release = threading.Event()
+
+        def slow_check(_names):
+            release.wait(5)
+            return {"ffmpeg": "ok"}
+
+        async def cancel_one_waiter(probe):
+            waiter = asyncio.ensure_future(asyncio.wrap_future(probe))
+            await asyncio.sleep(0)
+            waiter.cancel()
+            await asyncio.sleep(0)
+
+        with patch.object(backend_main, "check_tools", slow_check):
+            probe = backend_main._start_tool_probe()
+            asyncio.run(cancel_one_waiter(probe))
+            release.set()
+            assert probe.result(timeout=5) == {"ffmpeg": "ok"}

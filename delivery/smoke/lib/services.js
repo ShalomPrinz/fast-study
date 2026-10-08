@@ -184,3 +184,15 @@ export async function healthOf(urls) {
   }
   return answers;
 }
+
+/** `GET /tools` of every service that probes tools — all but `database/` — which answers only once
+ *  that service's boot probe settled, so one bounded request per service replaces any polling. */
+export async function toolsOf({ urls, secret }, { timeoutMs = 60_000 } = {}) {
+  const answers = {};
+  for (const [key, url] of Object.entries(urls)) {
+    if (key === 'database') continue;
+    const signal = AbortSignal.timeout(timeoutMs);
+    answers[key] = (await (await call(url, secret, 'GET', '/tools', { signal })).json()).tools;
+  }
+  return answers;
+}

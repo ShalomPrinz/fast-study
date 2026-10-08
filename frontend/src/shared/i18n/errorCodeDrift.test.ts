@@ -19,9 +19,15 @@ import { serviceErrorRow } from './serviceErrors'
 
 const REPO = resolve(fileURLToPath(new URL('.', import.meta.url)), '../../../..')
 
-// Service source only. `lib/` is absent because the tool probe no longer carries a code, and
-// `downloader/extension/` because the popup is not the SPA — both are "Excluded, and why".
-const SERVICE_ROOTS = ['backend', 'database', 'downloader/server/src', 'downloader/auto/src']
+// Service source, plus the one `lib/` module that emits codes: the tool probe every service reports.
+// `downloader/extension/` is absent because the popup is not the SPA — "Excluded, and why".
+const SERVICE_ROOTS = [
+  'backend',
+  'database',
+  'downloader/server/src',
+  'downloader/auto/src',
+  'lib/tools',
+]
 
 // Tests are deliberately out: a fixture is a stand-in for a service's output, not an emission, so
 // it may legitimately name a stale or invented code.
@@ -87,6 +93,12 @@ const CALLS: Array<{ pattern: RegExp; arg: number }> = [
   { pattern: /\bsuper\s*\(/g, arg: 0 }, // js: a subclass naming its one code
 ]
 
+// The tool probe spells the code first in both halves — js `failure(code, …)`, python
+// `_failure(code, …)` — so its files take these alone; the service shapes would read `state` as a code.
+const LIB_TOOLS_CALLS: Array<{ pattern: RegExp; arg: number }> = [
+  { pattern: /\b_?failure\s*\(/g, arg: 0 },
+]
+
 // `code = "x"` (a python class attribute or keyword), `"code": "x"` and `code: 'x'` (a body literal).
 const ASSIGNMENTS = [
   /\bcode\s*=\s*(['"])([a-z][a-z0-9_]*)\1/g,
@@ -96,9 +108,9 @@ const ASSIGNMENTS = [
 
 // Every code literal in one file. A forwarded code (`e.code`, `result.get("code")`, `err.code`) is a
 // pass-through whose origin is a literal somewhere else, so nothing here tries to resolve one.
-function emittedIn(src: string): string[] {
+function emittedIn(src: string, calls = CALLS): string[] {
   const found: string[] = []
-  for (const { pattern, arg } of CALLS) {
+  for (const { pattern, arg } of calls) {
     pattern.lastIndex = 0
     for (const m of src.matchAll(pattern)) {
       const literal = callArgs(src, m.index + m[0].length - 1)[arg]?.trim()
@@ -142,8 +154,10 @@ function documented(): Map<string, Set<string>> {
 }
 
 const emitted = new Set(
-  SERVICE_ROOTS.flatMap((root) => sourceFiles(join(REPO, root))).flatMap((f) =>
-    emittedIn(readFileSync(f, 'utf8')),
+  SERVICE_ROOTS.flatMap((root) =>
+    sourceFiles(join(REPO, root)).flatMap((f) =>
+      emittedIn(readFileSync(f, 'utf8'), root === 'lib/tools' ? LIB_TOOLS_CALLS : CALLS),
+    ),
   ),
 )
 
@@ -164,6 +178,12 @@ describe('error-code drift', () => {
     expect(emitted.size).toBeGreaterThan(50)
     expect(docs.size).toBeGreaterThan(50)
     expect([...resolved].filter((code) => serviceErrorRow(code) === null)).toEqual([])
+  })
+
+  it('reads the tool probe in lib/tools', () => {
+    for (const code of ['tool_missing', 'tool_timed_out', 'tool_exited', 'tool_unusable']) {
+      expect(emitted, code).toContain(code)
+    }
   })
 
   it('documents every code a service emits', () => {

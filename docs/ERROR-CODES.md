@@ -27,7 +27,7 @@ already had.
 | Runner crash    | `runner.last_error` — `{message, code, params}` or `null`                   | `backend/pipeline/runner.py`                                 |
 | Overview status | `{status, phase, message, code, params, started_at}` per extractor          | `backend/course/runner.py`                                   |
 | Download job    | `{…, message, code, params}` per job on `GET /jobs`                        | `downloader/server/src/jobs.js`                              |
-| Tool probe      | `tools[name]` — `"ok"`, or `{state, params}`                                | `lib/tools/`, reported on each service's `/health`           |
+| Tool probe      | `tools[name]` — `"ok"`, or `{code, state, params}`                          | `lib/tools/`, reported on each service's `GET /tools`        |
 | Data-root probe | `{ok: false, error, code, params}` at `200`                                 | `database/` `POST /settings/data-root/probe` (`data_root_*`) |
 
 Every field is additive. `error`/`message` keep today's text and today's meaning, so a consumer that
@@ -268,6 +268,19 @@ The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live
 `console` wrappers; `services/database.js` logs the emoji line and returns the bare error, so nothing
 emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.
 
+### `lib/tools/` — tool probe
+
+A tool record on `GET /tools` of `backend/` and both downloader services. The frontend fetches each
+once after the window opens and toasts one warning per broken tool, deduplicated by `tool` across
+services; `state` stays as the developer-facing reason.
+
+| origin          | code             | params              | reach |
+| --------------- | ---------------- | ------------------- | ----- |
+| `tools` probe   | `tool_missing`   | `tool`              | user  |
+| `tools` probe   | `tool_timed_out` | `tool`, `seconds`   | user  |
+| `tools` probe   | `tool_exited`    | `tool`, `exit_code` | user  |
+| `tools` probe   | `tool_unusable`  | `tool`, `detail`    | user  |
+
 ### `downloader/auto/`
 
 | origin                          | code                          | params                   | reach |
@@ -344,16 +357,6 @@ server's `invalid_request` row is `user`. Its one catalog row names the problem 
 message, an `OSError` string — these are often the only string that identifies the failure, and no
 protocol can translate them. They render verbatim, direction-isolated, beneath a translated headline
 naming what failed.
-
-**The tool probe carries no code.** `lib/tools/`'s boot-time probe reports a usable tool as the
-bare string `"ok"` and an unusable one as `{state, params}` — `state` is the one-line
-developer-facing reason (`missing`, `exited 3`), `params` the values a sentence would need. There is
-no code because nothing would resolve one: the frontend never reads `/health`, and the probe's only
-user-facing render is `electron/boot.js`, the launch screen, which has no catalogs and prints
-English. A code nothing resolves is a field nothing checks. `params` stays, because it is what a
-localized launch screen would key its own sentence off. Success stays a bare string on purpose:
-every consumer compares `!= "ok"`, and an object is never equal to it, so `backend/`, both
-downloader services, `electron/` and the release smoke suite all keep their meaning.
 
 **Out of scope by decision:** the `downloader/extension/` popup, which is not the SPA; the date and
 duration gap in `frontend/src/shared/utils/format.ts`; a third locale; and sending the user's locale

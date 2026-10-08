@@ -12,6 +12,7 @@ import type {
   CoursePhase,
   CourseExtractorState,
   CourseStatus,
+  ToolReport,
 } from '@/types'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import {
@@ -62,6 +63,11 @@ export async function reportVideoArrived(
   kind?: Kind,
 ): Promise<void> {
   await backend.post(`${lectureBase(course, lecture)}/video-arrived${kindQuery(kind)}`)
+}
+
+// Waits for the backend's boot probe of ffmpeg, pandoc and tectonic, so it may take a second or more.
+export async function fetchBackendTools(): Promise<ToolReport> {
+  return (await backend.get<{ tools: ToolReport }>('/tools')).tools
 }
 
 export async function fetchTimingStats(

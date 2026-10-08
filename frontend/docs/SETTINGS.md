@@ -207,6 +207,11 @@ blocks**: they reach neither `missingEntries` nor `isInitialized`.
   by its caller. Failures fill the status slot, since the wall renders outside the toast container. A
   lecture with no token still finishes as a local PDF.
 
+**Bundled tools** have no control: `app/toolWarnings.ts`, run once per page load from `Layout` (so never over
+the wall), reads `GET /tools` on the backend and both downloader services concurrently and toasts one
+auto-closing warning per broken tool, merged by name so a yt-dlp both downloaders report warns once; a service
+that does not answer is skipped, its client having toasted the connection already.
+
 Stable hooks: `#moodle-site` / `.moodle-site--{status}`, `#browser-prereq` / `.browser-prereq--{state}` /
 `#browser-prereq-status`, `#moodle-account`,
 `#drive-connection` / `.drive-connection--{state}`.

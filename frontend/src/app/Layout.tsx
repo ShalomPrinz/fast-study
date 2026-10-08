@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { SnapshotProvider } from '@/shared/contexts/SnapshotProvider'
 import { DownloadJobsProvider } from '@/features/downloads/contexts/DownloadJobsContext'
@@ -7,9 +8,14 @@ import { SectionRunsProvider } from '@/features/downloads/contexts/SectionRunsCo
 import { toast } from '@/services/toaster'
 import Sidebar from '@/shared/sidebar'
 import DriveConsentPrompt from './DriveConsentPrompt'
+import { warnBrokenTools } from './toolWarnings'
 import './Layout.css'
 
 export default function Layout() {
+  // Here, not above the gate: the warning is about features the app shell offers, not the first-run wall.
+  useEffect(() => {
+    void warnBrokenTools()
+  }, [])
   return (
     <SnapshotProvider sendUpdate={toast}>
       <DownloadJobsProvider>

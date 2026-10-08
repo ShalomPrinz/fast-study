@@ -1,5 +1,7 @@
 import asyncio
 import logging
+import threading
+from concurrent.futures import Future
 from contextlib import asynccontextmanager
 from typing import Literal
 
@@ -35,18 +37,43 @@ if sentry_policy.enabled():
     )
     sentry_sdk.set_tags(sentry_policy.tags("backend"))
 
-# Probed once at startup, never per request: the boot screen polls /health, and re-spawning three
-# binaries per poll costs more than the answer. A tool installed later is seen on the next launch.
+# Probed once per process, never per request: re-spawning three binaries per call costs more than
+# the answer. A tool installed later is seen on the next launch.
 TOOLS = ("ffmpeg", "pandoc", "tectonic")
 
 # The dev port, and the fallback the packaged launcher gets when FASTSTUDY_PORT is unset. Read by
 # `delivery/entry.py` too, so the frozen dispatcher and the `__main__` path below cannot diverge.
 DEFAULT_PORT = 8000
-tool_status = check_tools(TOOLS)
-for _name, _state in tool_status.items():
-    if _state != "ok":
-        # A usable tool is the bare string "ok"; a failure is a {state, params} record.
-        log.error(f"{_name} is {_state['state']} — the steps that need it will fail")
+
+
+def _probe_tools(probe: Future):
+    """Run the tool probe off the startup path, log each unusable tool and settle `probe`."""
+
+    try:
+        status = check_tools(TOOLS)
+    except Exception as e:
+        probe.set_exception(e)
+        raise
+    for name, state in status.items():
+        if state != "ok":
+            log.error(f"{name} is {state['state']} — the steps that need it will fail")
+    probe.set_result(status)
+
+
+def _start_tool_probe() -> Future:
+    """Start the probe on a daemon thread; the Future settles with {name: 'ok' | {code, state, params}}."""
+
+    probe = Future()
+    # Marked running so a cancelled /tools waiter cannot cancel it and poison every later call.
+    probe.set_running_or_notify_cancel()
+    threading.Thread(
+        target=_probe_tools, args=(probe,), name="tool-probe", daemon=True
+    ).start()
+    return probe
+
+
+# At import, so the dev uvicorn path, the frozen entry and TestClient all probe.
+_tool_probe = _start_tool_probe()
 
 
 @asynccontextmanager
@@ -100,10 +127,16 @@ app.add_middleware(
 
 @app.get("/health")
 def health():
-    """Liveness plus the boot-time tool probe, and nothing else on purpose: paths, config and
-    key-set flags stay on routes that can be refused."""
+    """Liveness only, answered without waiting on anything: everything else sits behind the secret."""
 
-    return {"status": "ok", "tools": tool_status}
+    return {"status": "ok"}
+
+
+@app.get("/tools")
+async def tools_status():
+    """The startup tool probe's result, waiting for it to settle if it is still running."""
+
+    return {"tools": await asyncio.wrap_future(_tool_probe)}
 
 
 # Per step: the file it reads, the step that produces it, and that step's display label. The id

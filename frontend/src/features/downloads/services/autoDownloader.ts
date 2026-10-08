@@ -1,7 +1,7 @@
 import type { Client } from '@/services/http'
 import { createClient, failureError, RequestError } from '@/services/http'
 import { AUTO_DOWNLOADER_URL, withSecretParam } from '@/services/runtime'
-import type { Kind } from '@/types'
+import type { Kind, ToolReport } from '@/types'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
 
 // Feature-local boundary for the auto-downloader service (Moodle discovery and capture).
@@ -177,6 +177,11 @@ export async function saveZoomPasscode({
   await autoDownloader.post<void>('/zoom/passcode', {
     json: { course, name, passcode, scope },
   })
+}
+
+// yt-dlp as the auto-downloader's boot probe found it; answers once that probe settles.
+export async function fetchAutoDownloaderTools(): Promise<ToolReport> {
+  return (await autoDownloader.get<{ tools: ToolReport }>('/tools')).tools
 }
 
 // A 409 `moodle_site_not_configured` is an answer, not a failure: there is simply no site yet.

@@ -16,20 +16,10 @@ const elements = {
   actions: document.getElementById('actions'),
 };
 
-// A tool the boot probe could not run costs one feature, never the launch. A usable tool is the
-// bare string 'ok'; anything else is lib/tools' {state, params}, whose `state` is the reason.
-function unusableTools(tools) {
-  return Object.entries(tools ?? {})
-    .filter(([, result]) => result !== 'ok')
-    .map(([name, result]) => `${name} ${result?.state ?? result}`);
-}
-
 function detailFor(service) {
-  if (service.state === 'failed') return { text: service.error ?? 'failed' };
-  if (service.state === 'starting') return { text: 'starting…' };
-  if (service.state !== 'ready') return { text: '' };
-  const broken = unusableTools(service.tools);
-  return broken.length ? { text: broken.join(', '), warn: true } : { text: 'ready' };
+  if (service.state === 'failed') return service.error ?? 'failed';
+  if (service.state === 'starting') return 'starting…';
+  return service.state === 'ready' ? 'ready' : '';
 }
 
 // The failure view's update row; `icon` is a spinner while work is in flight, a mark when done.
@@ -77,10 +67,9 @@ function render(snapshot) {
       const label = document.createElement('span');
       label.className = 'label';
       label.textContent = LABELS[service.name] ?? service.name;
-      const { text, warn } = detailFor(service);
       const detail = document.createElement('span');
-      detail.className = warn ? 'detail warn' : 'detail';
-      detail.textContent = text;
+      detail.className = 'detail';
+      detail.textContent = detailFor(service);
       row.append(dot, label, detail);
       return row;
     }),

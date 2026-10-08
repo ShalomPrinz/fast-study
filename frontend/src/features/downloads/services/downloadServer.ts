@@ -1,6 +1,6 @@
 import { createClient, httpError } from '@/services/http'
 import { DOWNLOAD_SERVER_URL, secretHeaders, withSecretParam } from '@/services/runtime'
-import type { DownloadOperation, Kind } from '@/types'
+import type { DownloadOperation, Kind, ToolReport } from '@/types'
 import type { ErrorParams } from '@/shared/i18n/serviceErrors'
 import type { Media, PasscodeError, ProbedMedia } from './autoDownloader'
 import { postReconnectAware } from './autoDownloader'
@@ -75,6 +75,11 @@ export interface DownloadJob {
 export interface JobsSnapshot {
   boot: string | null
   jobs: DownloadJob[]
+}
+
+// yt-dlp and curl as the server's boot probe found them; answers once that probe settles.
+export async function fetchDownloadServerTools(): Promise<ToolReport> {
+  return (await downloadServer.get<{ tools: ToolReport }>('/tools')).tools
 }
 
 // Every non-evicted job plus the server's per-process `boot` id (null from an older server), the source

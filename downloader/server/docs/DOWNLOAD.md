@@ -77,7 +77,7 @@ the cache flag and none of these.
 Packaged, yt-dlp runs from a writable copy under the state root rather than the shipped binary,
 because an app update replaces the install directory and would reset a self-updated yt-dlp;
 `toolPath('yt-dlp')` resolves to the copy when it exists ([`@faststudy/tools`](../../../lib/tools/CLAUDE.md)),
-so every spawn site and the `/health` probe follow it unaware.
+so every spawn site and the `/tools` probe follow it unaware.
 
 `services/ytdlpUpdate.js` owns the copy, at startup and only when `FASTSTUDY_BIN_DIR` is set. A dev run
 does nothing, so a state copy can never shadow the developer's own PATH yt-dlp.
@@ -91,7 +91,7 @@ does nothing, so a state copy can never shadow the developer's own PATH yt-dlp.
   will. A missing shipped binary (quarantined, half-installed) seeds nothing and says so in one line;
   an existing copy still works and still updates.
 - **Then `<copy> -U`**, unawaited, `stdio:'ignore'`. Boot waits on nothing, but `-U` is sequenced after
-  the tool probe: it swaps the exe in place, and a probe landing in that window would pin `/health` at
+  the tool probe: it swaps the exe in place, and a probe landing in that window would pin `/tools` at
   `yt-dlp: missing` for the session. The child stays in the process group (never `detached`) so the
   launcher's kill on quit reaches it; yt-dlp renames the new binary over itself, so a kill before the
   rename leaves the copy intact.
