@@ -1,4 +1,3 @@
-import { chromium } from 'playwright';
 import { resolveBrowserChannel } from './browserChannel.js';
 
 // Shared by EVERY browser this service spawns. --mute-audio: recordings autoplay, and nobody is
@@ -13,6 +12,7 @@ export const COMMON_LAUNCH_ARGS = ['--mute-audio'];
  */
 export async function launchBrowser(opts) {
   const args = [...COMMON_LAUNCH_ARGS, ...(opts.args ?? [])];
+  const { chromium } = await import('playwright');
   let channelErr;
   try {
     const { channel } = await resolveBrowserChannel();

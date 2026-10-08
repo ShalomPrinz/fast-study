@@ -1,4 +1,3 @@
-import { chromium } from 'playwright';
 import { CodedError } from '../lib/errors.js';
 
 // Most preferred first; both proven against the zoom player. A packaged install ships no browser,
@@ -16,6 +15,7 @@ let pending = null;
 // Is this channel installed? A real headless launch: Playwright has no API that resolves a
 // channel's executable, and a missing one rejects in milliseconds naming the path it tried.
 async function probe(channel) {
+  const { chromium } = await import('playwright');
   const browser = await chromium.launch({ channel, headless: true });
   await browser.close();
 }

@@ -4,17 +4,29 @@ import fs from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { COMMON_LAUNCH_ARGS } from './browserLaunch.js';
 import { resolveBrowserChannel } from './browserChannel.js';
 import { CodedError } from '../lib/errors.js';
 
-// Stealth minus its 'user-agent-override' evasion (a rewritten UA desyncs from Client-Hints),
-// registered ONLY on playwright-extra's chromium so plain launches stay clean. See docs/ZOOM.md.
-const stealth = StealthPlugin();
-stealth.enabledEvasions.delete('user-agent-override');
-chromium.use(stealth);
+// Stealth minus 'user-agent-override' on playwright-extra's chromium only, loaded and registered
+// once on the first zoom launch; a failed load is not cached. See docs/ZOOM.md.
+let stealthChromium = null;
+function loadStealthChromium() {
+  stealthChromium ??= (async () => {
+    const [{ chromium }, { default: StealthPlugin }] = await Promise.all([
+      import('playwright-extra'),
+      import('puppeteer-extra-plugin-stealth'),
+    ]);
+    const stealth = StealthPlugin();
+    stealth.enabledEvasions.delete('user-agent-override');
+    chromium.use(stealth);
+    return chromium;
+  })().catch((err) => {
+    stealthChromium = null;
+    throw err;
+  });
+  return stealthChromium;
+}
 
 // Managed Xvfb virtual display, Linux only (Windows parks the window off-screen, so this stays
 // null there). Spawned lazily on the first zoom launch; killed on session close / process exit.
@@ -148,6 +160,7 @@ export async function launchZoomBrowser() {
   }
 
   const { channel } = await resolveBrowserChannel();
+  const chromium = await loadStealthChromium();
   const opts = {
     headless: false,
     channel,
