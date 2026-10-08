@@ -37,7 +37,7 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose down
 | `POST /auth/disconnect` | —                                                   | `{ connected:false }` (deletes the local token; no server-side revoke)      |
 | `POST /list`            | `{ courseUrl }`                                     | `{ items }` — each Item's `moodle` says whether acting on it reaches Moodle ([BROWSING.md](docs/BROWSING.md)) |
 | `POST /list/expand`     | `{ ref }`                                           | `{ items }` (one expandable item → children)                                |
-| `POST /resolve`         | `{ ref, course, name, kind, only?, forceCapture? }` | `{ media, targets }`                                                        |
+| `POST /resolve`         | `{ ref, course, name, kind, only?, forceCapture? }`, or `{ url, course, name, kind }` for a pasted link | `{ media, targets }` — a pasted link is always one video target ([GATE.md](docs/GATE.md#files)) |
 | `POST /zoom/passcode`   | `{ course, name?, passcode, scope }`                | `{}` (`scope:'course'\|'lecture'`)                                          |
 | `POST /close`           | —                                                   | `{}` (close every persistent browser)                                       |
 | `GET /moodle/file/:id`  | — (`Range` passed through)                          | a resolved file on the Moodle host (a PDF, a link, a videostream capture), streamed under the lock; `HEAD` answers its size without Moodle; `401 moodle_file_unknown` for an id this process never minted ([GATE.md](docs/GATE.md#files)) |

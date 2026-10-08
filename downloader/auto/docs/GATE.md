@@ -33,8 +33,10 @@ is sent — the catch for a call that escaped its route. It is a bug, so it land
 ## Refuse or wait
 
 A ticket without `X-FastStudy-Moodle-Wait: 1` belongs to a button press: a taken lock refuses it
-`429 {status:'busy', error, code:'moodle_busy', params:{}}` before any Moodle call. `server/` sends
-the header on the calls it makes on its own — a section run's rows, a job's silent re-resolve, every
+`429 {status:'busy', error, code:'moodle_busy', params:{}}` before any Moodle call. A manual-form
+click (`server/`'s `/download-url`) on a Moodle-host link is one too, refused while the lock is
+taken, but its job's `/moodle/file` fetch waits; a pasted off-site link never takes the lock.
+`server/` sends the header on the calls it makes on its own — a section run's rows, a job's silent re-resolve, every
 `/moodle/file` fetch — and those queue FIFO; on cooldown end the lock passes straight to the next one.
 CORS never allows the header, so a browser cannot claim to be a waiting caller. A queued caller that
 hangs up leaves the queue.
@@ -60,6 +62,11 @@ random id. Three kinds land there:
 - a `moodle-file` PDF — `{ fileurl, size }`; the WS token is added at stream time, never handed out;
 - a `direct-url` link on the Moodle host, or one whose redirects end there — `{ url, size }`, fetched
   as it is, redirects and all, under the lock (a video goes as `curl`);
+- a link pasted into the manual form (`/resolve` with `{url}` and no `ref`) on the Moodle host —
+  probed fresh, then the same `{ url, size }` as a `curl` target, never put in the replay cache (a
+  pasted URL is keyed by nothing stable). Only a video passes; anything else is `422
+  link_not_a_video`. A pasted link off the host is a `ytdlp` target on the URL itself with no
+  network call at all — one that only redirects onto the host is not caught;
 - a videostream `.mp4` capture on the Moodle host — `{ url, headers, size }`, its captured cookies
   replayed from here (minus `Range`, validators and `Host`). A capture on another host (a separate
   streaming server) is not Moodle traffic and stays a plain `curl` target with its headers.

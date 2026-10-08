@@ -77,9 +77,11 @@ says nothing on its own.
 
 `core/core.js` exports one function per resolve shape: `resolveRecording(page, …)` (browser capture:
 `videostream`, `zoom`), and the browserless `resolveMoodleFile`, `resolveYtDlp`, `resolveDriveFile`,
-`resolveDirectUrl`. The split is by _needs a browser_: a browserless strategy has no page to carry
+`resolveDirectUrl`, plus `resolvePastedLink` for the manual form's `{url}` body, which shares
+`resolveDirectUrl`'s probe and refusals but never the replay cache ([GATE.md](GATE.md#files)).
+The split is by _needs a browser_: a browserless strategy has no page to carry
 its credential, so it takes one explicitly (`resolveMoodleFile`'s required `wstoken`). The browserless
-ones resolve exactly one target, so `only` doesn't apply; all share the replay cache and stamp
+ones resolve exactly one target, so `only` doesn't apply; all but the pasted link share the replay cache and stamp
 `fromCache`. Each returns targets (`core/targets.js`), and `toolFor` picks `server/`'s downloader:
 `curl` replays captured headers, `ytdlp` resolves a YouTube/Drive/direct video page, `fetch` takes a
 plain URL (for a Moodle file, a path on auto).

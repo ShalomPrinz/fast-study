@@ -206,6 +206,51 @@ export async function resolveDriveFile({
   return { targets: [toTarget({ name, cap, tool, fromCache })], media };
 }
 
+// `probeUrl`'s verdict on a link, or its coded refusal when the link is no file → { media, size,
+// finalUrl }. Shared by a listed link and a pasted one, so both refuse with the same codes.
+async function probeLink(url, force) {
+  const { media, filename, certain, reason, size, finalUrl } = await probeUrl(url, { force });
+  if (media) return { media, filename, size, finalUrl };
+  if (!certain)
+    throw new CodedError(
+      'link_probe_inconclusive',
+      { url },
+      `couldn't read what ${url} is — the host didn't answer usefully`,
+    );
+  if (reason === 'missing')
+    throw new UnsupportedError(
+      'link_dead',
+      { url },
+      `${url} no longer exists — the host says the link is dead. Check the course page for a new one.`,
+    );
+  throw notAVideo(url, filename);
+}
+
+// `link_not_a_video` for a link whose file (or page) isn't a video. A CDN path can name the file
+// without an extension ('…/asset'), so slice only on a real dot.
+function notAVideo(url, filename) {
+  const ext = extOf(filename);
+  const what = ext ? `a ${ext} file, not a video` : 'a web page, not a file';
+  return new UnsupportedError(
+    'link_not_a_video',
+    { source: 'link', url, ext },
+    `${url} is ${what}. Open it in a browser and download manually.`,
+  );
+}
+
+// A manual-form link → one video target: off the Moodle host yt-dlp with no network call, on it a
+// fresh probe and a proxied curl target. Never the replay cache — nothing stable keys it (GATE.md).
+export async function resolvePastedLink({ url, name }) {
+  if (!onMoodleHost(url))
+    return [
+      toTarget({ name, cap: { url }, tool: toolFor('direct-url', 'video'), fromCache: false }),
+    ];
+  const { media, filename, size } = await probeLink(url, true);
+  // The manual form is video-only; a PDF or page here is refused rather than saved as a material.
+  if (media !== 'video') throw notAVideo(url, filename);
+  return [toTarget({ name, cap: proxyCap({ url, size }), tool: 'curl', fromCache: false })];
+}
+
 /**
  * RESOLVE PATH (HTTP), no browser: any other off-site link, routed by `probeUrl`. An uncertain
  * verdict is a plain Error (500, row stays clickable), never a 422. See docs/BROWSING.md.
@@ -224,33 +269,7 @@ export async function resolveDirectUrl({
   forceCapture = false,
 }) {
   const url = recording.pageUrl;
-  const { media, filename, certain, reason, size, finalUrl } = await probeUrl(url, {
-    force: forceCapture,
-  });
-  if (!media) {
-    if (!certain)
-      throw new CodedError(
-        'link_probe_inconclusive',
-        { url },
-        `couldn't read what ${url} is — the host didn't answer usefully`,
-      );
-    if (reason === 'missing')
-      throw new UnsupportedError(
-        'link_dead',
-        { url },
-        `${url} no longer exists — the host says the link is dead. Check the course page for a new one.`,
-      );
-    // A CDN path can name the file without an extension ('…/asset'), so slice only on a real dot —
-    // otherwise the message would invent one out of the last character.
-    const dot = filename ? filename.lastIndexOf('.') : -1;
-    const what =
-      dot > 0 ? `a ${filename.slice(dot + 1)} file, not a video` : 'a web page, not a file';
-    throw new UnsupportedError(
-      'link_not_a_video',
-      { source: 'link', url, ext: extOf(filename) },
-      `${url} is ${what}. Open it in a browser and download manually.`,
-    );
-  }
+  const { media, size, finalUrl } = await probeLink(url, forceCapture);
   let cap = forceCapture ? null : getCap(course, name, kind, media)?.cap;
   const fromCache = Boolean(cap);
   if (!cap) {

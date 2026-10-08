@@ -21,6 +21,7 @@ import {
   resolveYtDlp,
   resolveDriveFile,
   resolveDirectUrl,
+  resolvePastedLink,
 } from '../core/core.js';
 import { driveFileId } from '../extractors/GoogleDriveExtractor.js';
 import { getProbedMedia } from '../core/probeCache.js';
@@ -486,23 +487,40 @@ export const handleResolve = gated('/resolve', async (req, res) => {
   }
 });
 
+// The 400 body for a course/name/kind no target can land under, or null when all three are usable.
+function targetError(course, name, kind) {
+  if (!isSafeName(course) || !isSafeName(name))
+    return invalid(isSafeName(course) ? 'name' : 'course', 'course and name are required');
+  if (kind !== 'lecture' && kind !== 'recitation') return invalid('kind', `invalid kind: ${kind}`);
+  return null;
+}
+
+// A pasted link → one video target. Only a link on the Moodle host is probed (under the lock);
+// any other goes straight to yt-dlp, as the manual form always did.
+async function resolvePasted(res, { url, course, name, kind }) {
+  if (typeof url !== 'string' || !/^https?:\/\//.test(url))
+    return send(res, 400, invalid('url', 'valid url required'));
+  const bad = targetError(course, name, kind);
+  if (bad) return send(res, 400, bad);
+  const targets = await resolvePastedLink({ url, name });
+  logResult('/resolve', `ok (pasted link, ${targets[0].tool})`);
+  send(res, 200, { media: 'video', targets });
+}
+
 async function resolveItem(req, res) {
-  const { ref, course, name, kind = 'lecture', only, forceCapture } = req.body;
+  const { ref, url, course, name, kind = 'lecture', only, forceCapture } = req.body;
   logReq('POST', '/resolve', `${course}/${name} (${kind})`);
+  // No ref but a url: a link pasted into the manual form (docs/GATE.md § Files).
+  if (ref === undefined && url !== undefined)
+    return resolvePasted(res, { url, course, name, kind });
   // The discovery row's ref groups every server/ job spawned from this resolve (incl. a zoom
   // split pair); it is also the key each cap is memoized under in the replay cache.
   const rowRef = typeof ref === 'string' ? ref : null;
   const recording = decodeRef(ref);
   if (!recording || typeof recording !== 'object')
     return send(res, 400, invalid('ref', 'valid ref required'));
-  if (!isSafeName(course) || !isSafeName(name))
-    return send(
-      res,
-      400,
-      invalid(isSafeName(course) ? 'name' : 'course', 'course and name are required'),
-    );
-  if (kind !== 'lecture' && kind !== 'recitation')
-    return send(res, 400, invalid('kind', `invalid kind: ${kind}`));
+  const bad = targetError(course, name, kind);
+  if (bad) return send(res, 400, bad);
 
   // only = act on just this one (course,name,kind) target (a no-op for the single-target
   // browserless strategies); forceCapture = bypass the replay and probe caches
