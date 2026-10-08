@@ -46,8 +46,10 @@ function takeGroups(groups: MatchGroup[], limit: number): MatchGroup[] {
 // Client-side search over one course's summaries. See docs/SEARCH.md.
 export default function SearchView() {
   const { t } = useLingui()
-  const { courses } = useCourseTreeContext()
+  const { courses, loaded, loadFailed } = useCourseTreeContext()
   const active = courses.filter((c) => !c.archived)
+  // Only a tree that actually loaded can say "no courses": not while booting, not after a failed fetch.
+  const noCourses = loaded && !loadFailed && active.length === 0
 
   const [chosen, setChosen] = useState(() => localStorage.getItem(COURSE_STORAGE_KEY))
   const [query, setQuery] = useState('')
@@ -135,7 +137,7 @@ export default function SearchView() {
     return keys
   }, [courses, course])
 
-  const searched = !loading && !error && query.trim().length > 0
+  const searched = !noCourses && !loading && !error && query.trim().length > 0
 
   return (
     <main className="main-view main-view--page">
@@ -164,26 +166,30 @@ export default function SearchView() {
               dir="auto"
               autoFocus
             />
-            <span className="search-field-divider" />
-            <span className="search-course">
-              {/* The select keeps the page's direction so its reserved padding-inline-end and the
+            {!noCourses && (
+              <>
+                <span className="search-field-divider" />
+                <span className="search-course">
+                  {/* The select keeps the page's direction so its reserved padding-inline-end and the
                   chevron's inset-inline-end land on the same edge; `dir="auto"` per option instead. */}
-              <select
-                className="search-course-select"
-                value={course ?? ''}
-                onChange={(e) => selectCourse(e.target.value)}
-                aria-label={t`Course`}
-              >
-                {active.map((c) => (
-                  <option key={c.name} value={c.name} dir="auto">
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <span className="search-course-chevron" aria-hidden="true">
-                ▾
-              </span>
-            </span>
+                  <select
+                    className="search-course-select"
+                    value={course ?? ''}
+                    onChange={(e) => selectCourse(e.target.value)}
+                    aria-label={t`Course`}
+                  >
+                    {active.map((c) => (
+                      <option key={c.name} value={c.name} dir="auto">
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="search-course-chevron" aria-hidden="true">
+                    ▾
+                  </span>
+                </span>
+              </>
+            )}
           </div>
 
           <div className="search-pills">
@@ -213,6 +219,12 @@ export default function SearchView() {
               <Trans>Whole word only</Trans>
             </button>
           </div>
+
+          {noCourses && (
+            <div className="search-status">
+              <Trans>Add a course to search its summaries.</Trans>
+            </div>
+          )}
 
           {/* Only while a query is waiting on the corpus — switching course with an empty box is
               nothing the user is waiting for. */}

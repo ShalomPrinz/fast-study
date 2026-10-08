@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:236
+#: src/features/search/SearchView.tsx:248
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -69,7 +69,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:234
+#: src/features/search/SearchView.tsx:246
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
@@ -189,7 +189,7 @@ msgstr "{file} was not found."
 msgid "{generated} of {0} generated"
 msgstr "{generated} of {0} generated"
 
-#: src/features/downloads/components/SectionGroup.tsx:279
+#: src/features/downloads/components/SectionGroup.tsx:280
 msgid "{leaves, plural, one {# item} other {# items}}"
 msgstr "{leaves, plural, one {# item} other {# items}}"
 
@@ -197,11 +197,11 @@ msgstr "{leaves, plural, one {# item} other {# items}}"
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
-#: src/features/search/SearchView.tsx:235
+#: src/features/search/SearchView.tsx:247
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
-#: src/features/downloads/components/RecordingRow.tsx:284
+#: src/features/downloads/components/RecordingRow.tsx:283
 msgid "{materialCount, plural, one {# material} other {# materials}}"
 msgstr "{materialCount, plural, one {# material} other {# materials}}"
 
@@ -221,7 +221,7 @@ msgstr "{name} was used"
 msgid "{name} will be used"
 msgstr "{name} will be used"
 
-#: src/features/downloads/components/SectionGroup.tsx:320
+#: src/features/downloads/components/SectionGroup.tsx:321
 msgid "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 msgstr "{notStarted, plural, one {# recording never started — {stoppedBecause}} other {# recordings never started — {stoppedBecause}}}"
 
@@ -273,7 +273,7 @@ msgstr "{scope, select, daily {Gemini's daily quota is used up. It resets at mid
 msgid "{stage} · step {stepNumber} of {stepCount}"
 msgstr "{stage} · step {stepNumber} of {stepCount}"
 
-#: src/features/downloads/components/SectionGroup.tsx:329
+#: src/features/downloads/components/SectionGroup.tsx:330
 msgid "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 msgstr "{stalled, plural, one {Couldn't confirm # download — the lecture may have been deleted or renamed, or the file saved under a different name.} other {Couldn't confirm # downloads — the lecture may have been deleted or renamed, or the file saved under a different name.}}"
 
@@ -337,6 +337,10 @@ msgstr "A section is waiting for a passcode"
 msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 
+#: src/features/search/SearchView.tsx:225
+msgid "Add a course to search its summaries."
+msgstr "Add a course to search its summaries."
+
 #: src/features/lectures/sidebar/tree/CourseHeader.tsx:151
 msgid "Add lecture"
 msgstr "Add lecture"
@@ -397,7 +401,7 @@ msgstr "Archived ({archivedCount})"
 msgid "Are you sure you want to re-generate?"
 msgstr "Are you sure you want to re-generate?"
 
-#: src/features/downloads/components/RecordingRow.tsx:272
+#: src/features/downloads/components/RecordingRow.tsx:271
 msgid "Attach material to"
 msgstr "Attach material to"
 
@@ -493,7 +497,7 @@ msgstr "checking the connection"
 
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
-#: src/features/settings/components/MoodleSiteField.tsx:86
+#: src/features/settings/components/MoodleSiteField.tsx:87
 msgid "Checking…"
 msgstr "Checking…"
 
@@ -518,7 +522,7 @@ msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 msgid "Choose your university in Settings first"
 msgstr "Choose your university in Settings first"
 
-#: src/features/settings/components/MoodleSiteField.tsx:119
+#: src/features/settings/components/MoodleSiteField.tsx:120
 msgid "Choose your university…"
 msgstr "Choose your university…"
 
@@ -697,7 +701,7 @@ msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
 #: src/features/downloads/components/ManualDownload.tsx:186
-#: src/features/search/SearchView.tsx:175
+#: src/features/search/SearchView.tsx:179
 msgid "Course"
 msgstr "Course"
 
@@ -777,37 +781,37 @@ msgid "Done"
 msgstr "Done"
 
 #: src/features/downloads/components/ManualDownload.tsx:236
-#: src/features/downloads/components/RecordingRow.tsx:336
+#: src/features/downloads/components/RecordingRow.tsx:335
 msgid "Download"
 msgstr "Download"
 
+#: src/features/downloads/components/RecordingRow.tsx:309
 #: src/features/downloads/components/RecordingRow.tsx:310
-#: src/features/downloads/components/RecordingRow.tsx:311
 msgid "Download again"
 msgstr "Download again"
 
-#: src/features/downloads/components/SectionGroup.tsx:311
+#: src/features/downloads/components/SectionGroup.tsx:312
 msgid "Download all {leaves}"
 msgstr "Download all {leaves}"
 
 #: src/features/downloads/components/ManualDownload.tsx:321
-#: src/features/downloads/components/RecordingRow.tsx:291
-#: src/features/downloads/components/RecordingRow.tsx:334
+#: src/features/downloads/components/RecordingRow.tsx:290
+#: src/features/downloads/components/RecordingRow.tsx:333
 msgid "Downloaded ✓"
 msgstr "Downloaded ✓"
 
 #: src/features/downloads/components/ManualDownload.tsx:316
-#: src/features/downloads/components/RecordingRow.tsx:296
+#: src/features/downloads/components/RecordingRow.tsx:295
 msgid "Downloading"
 msgstr "Downloading"
 
 #. placeholder {0}: run.at
 #. placeholder {1}: run.total
-#: src/features/downloads/components/SectionGroup.tsx:283
+#: src/features/downloads/components/SectionGroup.tsx:284
 msgid "Downloading {0}/{1}…"
 msgstr "Downloading {0}/{1}…"
 
-#: src/features/downloads/components/SectionGroup.tsx:290
+#: src/features/downloads/components/SectionGroup.tsx:291
 msgid "Downloading {active} more…"
 msgstr "Downloading {active} more…"
 
@@ -820,8 +824,8 @@ msgstr "Downloading recordings"
 msgid "Downloading update…"
 msgstr "Downloading update…"
 
-#: src/features/downloads/components/RecordingRow.tsx:291
-#: src/features/downloads/components/SectionGroup.tsx:311
+#: src/features/downloads/components/RecordingRow.tsx:290
+#: src/features/downloads/components/SectionGroup.tsx:312
 msgid "Downloading…"
 msgstr "Downloading…"
 
@@ -896,7 +900,7 @@ msgstr "Exam Hints"
 msgid "Expand"
 msgstr "Expand"
 
-#: src/features/downloads/components/SectionGroup.tsx:305
+#: src/features/downloads/components/SectionGroup.tsx:306
 msgid "Expand every playlist in this section first"
 msgstr "Expand every playlist in this section first"
 
@@ -930,7 +934,7 @@ msgstr "Extracting audio"
 msgid "failed"
 msgstr "failed"
 
-#: src/features/downloads/components/RecordingRow.tsx:291
+#: src/features/downloads/components/RecordingRow.tsx:290
 msgid "Failed ✗"
 msgstr "Failed ✗"
 
@@ -951,7 +955,7 @@ msgstr "Failed to save summary"
 msgid "FastStudy couldn't reach your files. Try again."
 msgstr "FastStudy couldn't reach your files. Try again."
 
-#: src/features/settings/components/MoodleSiteField.tsx:155
+#: src/features/settings/components/MoodleSiteField.tsx:156
 msgid "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 msgstr "FastStudy finds your recordings on your university's Moodle site. If it isn't listed, choose \"Other…\" and paste the address of its Moodle."
 
@@ -979,7 +983,7 @@ msgstr "FastStudy uses Google Chrome or Microsoft Edge to fetch recordings from 
 msgid "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 msgstr "FastStudy uses two free services: one turns the recording into text, the other writes the summary. Both need a key of your own, and both are free to create."
 
-#: src/features/downloads/components/RecordingRow.tsx:238
+#: src/features/downloads/components/RecordingRow.tsx:237
 msgid "File type"
 msgstr "File type"
 
@@ -1000,7 +1004,7 @@ msgid "Finish signing in to Google in the browser tab that opened."
 msgstr "Finish signing in to Google in the browser tab that opened."
 
 #. placeholder {0}: status.site
-#: src/features/settings/components/MoodleSiteField.tsx:89
+#: src/features/settings/components/MoodleSiteField.tsx:90
 msgid "Found your university's Moodle: <0>{0}</0>"
 msgstr "Found your university's Moodle: <0>{0}</0>"
 
@@ -1091,7 +1095,7 @@ msgstr "How do I get a key?"
 msgid "I confirmed, try again"
 msgstr "I confirmed, try again"
 
-#: src/features/downloads/components/RecordingRow.tsx:304
+#: src/features/downloads/components/RecordingRow.tsx:303
 msgid "In course"
 msgstr "In course"
 
@@ -1129,7 +1133,7 @@ msgid "lecture"
 msgstr "lecture"
 
 #: src/features/downloads/components/ManualDownload.tsx:213
-#: src/features/downloads/components/RecordingRow.tsx:254
+#: src/features/downloads/components/RecordingRow.tsx:253
 msgid "Lecture"
 msgstr "Lecture"
 
@@ -1143,7 +1147,7 @@ msgstr "Lecture"
 msgid "Lecture {0}"
 msgstr "Lecture {0}"
 
-#: src/features/downloads/components/RecordingRow.tsx:272
+#: src/features/downloads/components/RecordingRow.tsx:271
 msgid "Lecture name"
 msgstr "Lecture name"
 
@@ -1151,7 +1155,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:196
+#: src/features/search/SearchView.tsx:202
 #: src/shared/sidebar/Sidebar.tsx:75
 msgid "Lectures"
 msgstr "Lectures"
@@ -1178,7 +1182,7 @@ msgstr "Load recordings"
 msgid "Loaded"
 msgstr "Loaded"
 
-#: src/features/search/SearchView.tsx:221
+#: src/features/search/SearchView.tsx:233
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
@@ -1191,7 +1195,7 @@ msgstr "Loading…"
 msgid "Manual download"
 msgstr "Manual download"
 
-#: src/features/search/SearchView.tsx:211
+#: src/features/search/SearchView.tsx:217
 msgid "Match whole word"
 msgstr "Match whole word"
 
@@ -1342,7 +1346,7 @@ msgstr "Not queued"
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 
-#: src/features/search/SearchView.tsx:248
+#: src/features/search/SearchView.tsx:260
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
@@ -1406,7 +1410,7 @@ msgstr "Open the sign-in page"
 msgid "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
 
-#: src/features/settings/components/MoodleSiteField.tsx:130
+#: src/features/settings/components/MoodleSiteField.tsx:131
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 msgstr "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
 
@@ -1423,7 +1427,7 @@ msgstr "Other"
 msgid "Other links"
 msgstr "Other links"
 
-#: src/features/settings/components/MoodleSiteField.tsx:125
+#: src/features/settings/components/MoodleSiteField.tsx:126
 msgid "Other…"
 msgstr "Other…"
 
@@ -1503,7 +1507,7 @@ msgid "recitation"
 msgstr "recitation"
 
 #: src/features/downloads/components/ManualDownload.tsx:219
-#: src/features/downloads/components/RecordingRow.tsx:260
+#: src/features/downloads/components/RecordingRow.tsx:259
 msgid "Recitation"
 msgstr "Recitation"
 
@@ -1522,7 +1526,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:204
+#: src/features/search/SearchView.tsx:210
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -1582,7 +1586,7 @@ msgstr "Restart now"
 msgid "Restore original"
 msgstr "Restore original"
 
-#: src/features/search/SearchView.tsx:229
+#: src/features/search/SearchView.tsx:241
 msgid "Results"
 msgstr "Results"
 
@@ -1592,7 +1596,7 @@ msgstr "Retry"
 
 #: src/features/downloads/components/ManualDownload.tsx:330
 #: src/features/downloads/components/RecordingJobList.tsx:50
-#: src/features/downloads/components/RecordingRow.tsx:332
+#: src/features/downloads/components/RecordingRow.tsx:331
 msgid "Retry ✗"
 msgstr "Retry ✗"
 
@@ -1635,7 +1639,7 @@ msgstr "Save"
 msgid "Save & update PDF"
 msgstr "Save & update PDF"
 
-#: src/features/downloads/components/RecordingRow.tsx:246
+#: src/features/downloads/components/RecordingRow.tsx:245
 msgid "Save as"
 msgstr "Save as"
 
@@ -1659,15 +1663,15 @@ msgstr "Scroll to the end to confirm."
 msgid "Search"
 msgstr "Search"
 
-#: src/features/search/SearchView.tsx:143
+#: src/features/search/SearchView.tsx:145
 msgid "Search summaries"
 msgstr "Search summaries"
 
-#: src/features/search/SearchView.tsx:163
+#: src/features/search/SearchView.tsx:165
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
 
-#: src/features/search/SearchView.tsx:146
+#: src/features/search/SearchView.tsx:148
 msgid "Searches the summaries of the course picked in the field"
 msgstr "Searches the summaries of the course picked in the field"
 
@@ -1698,11 +1702,11 @@ msgstr "Settings"
 msgid "Settings saved"
 msgstr "Settings saved"
 
-#: src/features/downloads/components/SectionGroup.tsx:186
+#: src/features/downloads/components/SectionGroup.tsx:187
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "Several rows would download into the same lecture ({names}). Rename them, then run again."
 
-#: src/features/search/SearchView.tsx:278
+#: src/features/search/SearchView.tsx:290
 msgid "Show more"
 msgstr "Show more"
 
@@ -1876,7 +1880,7 @@ msgstr "The download was refused — the session has expired. Reconnect the acco
 msgid "The downloaded file could not be stored."
 msgstr "The downloaded file could not be stored."
 
-#: src/features/downloads/components/RecordingRow.tsx:323
+#: src/features/downloads/components/RecordingRow.tsx:322
 msgid "The downloader can't fetch this file"
 msgstr "The downloader can't fetch this file"
 
@@ -1929,7 +1933,7 @@ msgstr "The PDF is older than an earlier step's output. Re-generate it."
 msgid "The PDF is older than the summary. Re-generate it."
 msgstr "The PDF is older than the summary. Re-generate it."
 
-#: src/features/downloads/components/SectionGroup.tsx:259
+#: src/features/downloads/components/SectionGroup.tsx:260
 msgid "the run stopped early. Run the section again to pick them up."
 msgstr "the run stopped early. Run the section again to pick them up."
 
@@ -1937,7 +1941,7 @@ msgstr "the run stopped early. Run the section again to pick them up."
 msgid "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 msgstr "The run stopped unexpectedly on \"{course}\" / \"{lecture}\"."
 
-#: src/features/downloads/components/SectionGroup.tsx:258
+#: src/features/downloads/components/SectionGroup.tsx:259
 msgid "the run was cancelled. Run the section again to pick them up."
 msgstr "the run was cancelled. Run the section again to pick them up."
 
@@ -1957,7 +1961,7 @@ msgstr "The summary is empty"
 msgid "The university is checking the connection."
 msgstr "The university is checking the connection."
 
-#: src/features/downloads/components/SectionGroup.tsx:256
+#: src/features/downloads/components/SectionGroup.tsx:257
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "the university session expired. Reconnect, then run the section again."
 
@@ -2086,7 +2090,7 @@ msgstr "Type any name (for example FastStudy) and click \"Submit\"."
 msgid "Unarchive course"
 msgstr "Unarchive course"
 
-#: src/features/settings/components/MoodleSiteField.tsx:109
+#: src/features/settings/components/MoodleSiteField.tsx:110
 msgid "University"
 msgstr "University"
 
@@ -2171,7 +2175,7 @@ msgstr "We couldn't check right now."
 msgid "We couldn't check this key right now. You can still save it."
 msgstr "We couldn't check this key right now. You can still save it."
 
-#: src/features/settings/components/MoodleSiteField.tsx:96
+#: src/features/settings/components/MoodleSiteField.tsx:97
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "We couldn't check this site right now. You can still save it."
 
@@ -2187,7 +2191,7 @@ msgstr "When something fails, FastStudy sends a report to Sentry. It contains th
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
-#: src/features/search/SearchView.tsx:213
+#: src/features/search/SearchView.tsx:219
 msgid "Whole word only"
 msgstr "Whole word only"
 
@@ -2235,7 +2239,7 @@ msgstr "Your university"
 msgid "Your university session expired. Reconnect your account."
 msgstr "Your university session expired. Reconnect your account."
 
-#: src/features/settings/components/MoodleSiteField.tsx:141
+#: src/features/settings/components/MoodleSiteField.tsx:142
 msgid "Your university's Moodle address"
 msgstr "Your university's Moodle address"
 
