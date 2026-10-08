@@ -22,3 +22,6 @@ dist/
 
 # The resources tree the release workflow assembles for electron-builder.
 delivery/stage/
+
+# boot-timing.mjs's local store of every smoke run's boot timings, rebuilt by its collect stage.
+delivery/boot-timing.local.json*

@@ -13,7 +13,7 @@ runs at runtime, and no dev command touches it. Owned by `delivery-dev`, togethe
 | `cache-supplement.txt`              | Cache files the sink does not pull, added by name                            |
 | `tectonic-cache-filelist-linux.txt` | A sink-only primed cache's contents, kept as a diff baseline                 |
 | `smoke/`                            | The release smoke suite and its fixtures, with its own `package.json` + lock |
-| `boot-timing.mjs`                   | Graphs every Release's `boot-timing.json` into one HTML chart, on demand     |
+| `boot-timing.mjs`                   | Collects main's boot timings into a git-ignored store and serves their chart |
 
 ## Commands
 
@@ -22,7 +22,7 @@ cd backend && uv run --with pyinstaller pyinstaller ../delivery/services.spec   
 cd backend && uv run python ../delivery/prime_cache.py <out-dir> [--filelist f] # prime
 node delivery/stage.mjs delivery/stage                                          # stage
 cd delivery/smoke && npm ci && npx playwright test --list                       # parse the suite
-node delivery/boot-timing.mjs [--from <dir>] [--out <file>]                    # boot-time graph
+node delivery/boot-timing.mjs [collect|view] [--repo owner/name]               # boot-time chart
 ```
 
 Only `.github/workflows/build.yml` on `windows-latest` produces an installer: neither PyInstaller nor

@@ -46,11 +46,25 @@ and smoke-tests a fresh one.
 
 ## Boot timing
 
-Artifacts expire and Release assets do not, so each Release carries its smoke run's
-`boot-timing.json` ([SMOKE.md](SMOKE.md#boot-timing)); electron-updater reads only `latest.yml`, so the
-extra asset is invisible to it. `node delivery/boot-timing.mjs` lists the Releases through `gh`,
-fetches each one's file and writes a self-contained HTML chart (default `$TMPDIR/faststudy-boot-timing.html`,
-or `--out`); `--from <dir>` graphs a local dir of the files instead, and `--repo owner/name` picks another repo.
+Each build.yml run uploads its smoke run's `boot-timing.json` ([SMOKE.md](SMOKE.md#boot-timing)) as
+the `boot-timing` artifact, which expires after 90 days; publish.yml attaches the same file to the
+Release, where it does not expire. electron-updater reads only `latest.yml`, so the extra asset is
+invisible to it.
+
+`node delivery/boot-timing.mjs` runs two stages, or one when named (`collect` / `view`; `--repo owner/name`
+picks another repo):
+
+- **`collect`** grows `delivery/boot-timing.local.json` (git-ignored) through `gh`: one entry per
+  completed build.yml run on `main`, keyed by run id, holding its `boot-timing.json` plus
+  `created_at`, `head_sha` and `release` (tag or `null`). A Release maps to its run through the
+  asset's `run_id`, never the sha; when that run's artifact has expired the asset becomes the entry,
+  dated by the run's API record or, once that is gone too, by the Release's `created_at`. Two
+  cursors make it incremental: runs stop one second short of the oldest unfinished run, so that run
+  is listed again next time, and releases at the newest `published_at` seen. Runs and Releases
+  without the file are skipped with a line. It fails naming why when `gh` is missing or logged out.
+- **`view`** serves the chart on `127.0.0.1` at an ephemeral port, rebuilding the page from the
+  store on every request, so a refresh after a `collect` shows new data. It needs no `gh`; with both
+  stages, a failed `collect` still views what is stored.
 
 ## Versions
 
