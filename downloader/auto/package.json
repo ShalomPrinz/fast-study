@@ -6,7 +6,7 @@
   "description": "Headless-browser auto-downloader",
   "scripts": {
     "start": "node app.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test --import ./test/stderrConsole.js test/*.test.js"
   },
   "dependencies": {
     "@faststudy/runtime": "file:../../lib/runtime/js",
