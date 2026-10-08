@@ -5,6 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, expect, test } from '@playwright/test';
 import { abandon, bridge, launch, quit, readLaunchLog, readyPorts, waitForApp } from './lib/app.js';
+import { recordBoot } from './lib/bootTiming.js';
 import { completeInitWall, PLACEHOLDER_KEYS } from './lib/firstRun.js';
 import { dashFixture, streamKinds, toneVideo } from './lib/media.js';
 import { serveFiles } from './lib/fileServer.js';
@@ -316,6 +317,8 @@ test('2. every shipped binary imports only what ships or what Windows has', () =
 test('3. boot', async () => {
   await start();
   const { page } = session;
+  // The fresh install's first launch is one of the two boots every run records.
+  await recordBoot('fresh_install', session, paths.candidate().version);
 
   // Main navigates only once all four answered /health, and the launch screen is gone by then, so
   // the navigation plus main's four ready lines are what "every row reached ready" is.
@@ -774,6 +777,7 @@ test('14. an in-place update', async () => {
 
   await test.step(`${candidate.version} launches with its keys and yt-dlp copy intact`, async () => {
     const { page } = await start();
+    await recordBoot('after_update', session, candidate.version);
     expect(readLaunchLog().split('\n')[0], 'launch.log names the wrong version').toContain(
       `FastStudy ${candidate.version} `,
     );

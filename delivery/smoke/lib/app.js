@@ -10,9 +10,11 @@ const ASSUMPTION_ELECTRON =
   "assumption unproven: Playwright's _electron drives the packaged exe on a windows-latest runner, window and all";
 
 /** Launch the installed app the way a user's shortcut does, plus `--lang=en-US` so a failure
- *  screenshot is readable, with `env` over the runner's. Answers `{ app, page, n }`; the trace records until `quit`. */
+ *  screenshot is readable, with `env` over the runner's. Answers `{ app, page, n, launchedAt }`; the trace records until `quit`. */
 export async function launch(env = {}) {
   const n = ++launches;
+  // Wall-clock marks for boot timing: this launch's start here, the navigation in `waitForApp`.
+  const launchedAt = Date.now();
   let app;
   try {
     app = await electron.launch({
@@ -34,7 +36,7 @@ export async function launch(env = {}) {
       `the app opened no window Playwright could see (${ASSUMPTION_ELECTRON}): ${error.message}`,
     );
   }
-  return { app, page, n };
+  return { app, page, n, launchedAt };
 }
 
 /** Wait for the launch screen to hand over to `app://bundle`. A boot that fails stays on the launch
@@ -57,6 +59,7 @@ export async function waitForApp(session) {
     const service = (await rows.count()) ? await rows.first().getAttribute('data-service') : '?';
     throw new Error(`boot failed on ${service}: ${await failed.textContent()} — see launch.log`);
   }
+  session.appAt = Date.now();
 }
 
 /** The bridge's service URLs and launch secret — how the suite reaches the services as the app does. */

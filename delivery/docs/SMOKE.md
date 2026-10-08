@@ -64,6 +64,16 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
   a layout-dependent control works in both branches — test 8 clicks `lecture-actions-menu` only if present.
 - **Launched with `--lang=en-US`**, so a failure screenshot is readable.
 
+## Boot timing
+
+Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 14's last
+step (the candidate's first after the update). `lib/bootTiming.js` writes them to
+`test-results/boot-timing.json` — `launch_to_app_ms` (`electron.launch` → `waitForApp` seeing
+`app://bundle`), `log_to_app_ms` (main's first `launch.log` line → that navigation) and each
+service's `ready_ms` from that first line, plus version, commit and run ids. Numbers only, since it
+becomes a public Release asset ([RELEASE.md](RELEASE.md#boot-timing)). Report only: no threshold, and a
+value it cannot read is `null` with a warning, never a failure.
+
 ## Unproven until a Windows run
 
 Each assumption only the runner can prove — the silent per-user install, Playwright attaching to the

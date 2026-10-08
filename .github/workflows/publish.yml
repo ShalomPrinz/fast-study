@@ -63,6 +63,12 @@ jobs:
           for file in "${files[@]}"; do
             [ -f "$file" ] || { echo "::error::build.yml run $run's installer artifact has no ${file#installer/}"; ls -l installer; exit 1; }
           done
+          # The smoke job's boot timings, for the cross-version graph; optional, since older runs have none.
+          if gh run download "$run" -n boot-timing -D boot-timing && [ -f boot-timing/boot-timing.json ]; then
+            files+=(boot-timing/boot-timing.json)
+          else
+            echo "::notice::build.yml run $run has no boot-timing artifact; releasing without boot-timing.json"
+          fi
 
           gh release create "$tag" "${files[@]}" --target "$GITHUB_SHA" --title "$tag" --notes "" --latest
           echo "published $tag at $GITHUB_SHA from build.yml run $run"

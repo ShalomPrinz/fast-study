@@ -23,12 +23,14 @@ Two workflows, neither taking an input.
   Actions. It fails if the shipped `app-update.yml` does not name this repo's GitHub Releases — the
   smoke job rewrites that file, so it cannot check it. The smoke job installs the artifact on a fresh runner and runs
   `smoke/`; on failure it uploads `smoke-logs` (per-launch `launch.log`s, the state root's own, the
-  failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB). The run is
+  failing test's DOM snapshot, ~60KB) and `smoke-traces` (Playwright traces, ~11MB), and whatever
+  the outcome `boot-timing` (90 days). The run is
   green only when both jobs pass. It writes nothing to Releases.
 - **`publish.yml`**, dispatched by hand on the commit to release, builds nothing. It takes the
   `installer` artifact of `build.yml`'s newest green run for that commit, reads the version off its
   `latest.yml`, refuses if Release or tag `v<version>` exists, checks all three files are there and
-  creates Release `v<version>`, published and targeted at that commit. It ends by dispatching
+  creates Release `v<version>`, published and targeted at that commit, with the same run's
+  `boot-timing.json` attached when it has one — a notice, not a failure, when it does not. It ends by dispatching
   `pages.yml` to refresh the landing page's version line: a `release: published` trigger cannot, as
   an event `GITHUB_TOKEN` raises starts no workflow except a dispatch
   ([docs](https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/triggering-a-workflow)).
@@ -41,6 +43,14 @@ and smoke-tests a fresh one.
 
 `.claude/skills/debug-ci/` reads both smoke artifacts by name and inner layout from outside
 `delivery/`; nothing here fails when a rename breaks it, so change it in the same pass.
+
+## Boot timing
+
+Artifacts expire and Release assets do not, so each Release carries its smoke run's
+`boot-timing.json` ([SMOKE.md](SMOKE.md#boot-timing)); electron-updater reads only `latest.yml`, so the
+extra asset is invisible to it. `node delivery/boot-timing.mjs` lists the Releases through `gh`,
+fetches each one's file and writes a self-contained HTML chart (default `$TMPDIR/faststudy-boot-timing.html`,
+or `--out`); `--from <dir>` graphs a local dir of the files instead, and `--repo owner/name` picks another repo.
 
 ## Versions
 

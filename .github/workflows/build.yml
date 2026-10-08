@@ -262,6 +262,16 @@ jobs:
           SMOKE_PREVIOUS_DIR: ${{ runner.temp }}/installer-previous
         run: npx playwright test
 
+      # The two boots the suite timed; publish.yml attaches it to the Release. Uploaded whatever the
+      # outcome, so a failed run's partial timings are readable too; kept as long as the installer.
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: boot-timing
+          path: delivery/smoke/test-results/boot-timing.json
+          if-no-files-found: ignore
+          retention-days: 90
+
       # The suite copies each launch's launch.log as it quits; this catches the one a crash left.
       - name: Collect the state root's logs
         if: failure()
