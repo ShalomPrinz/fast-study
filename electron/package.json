@@ -48,7 +48,8 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "shortcutName": "FastStudy",
-      "artifactName": "FastStudy-Setup.${ext}"
+      "artifactName": "FastStudy-Setup.${ext}",
+      "include": "assets/installer.nsh"
     }
   },
   "dependencies": {

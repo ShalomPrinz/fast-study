@@ -137,3 +137,6 @@ the `build` block in `package.json`.
   `buildResources` directory: that default is `build/`, and the repo's root `.gitignore` ignores
   `build/` wholesale as PyInstaller's output. The output directory stays the default `dist/`, which
   the same file already covers.
+- **`assets/installer.nsh` (`nsis.include`) recreates a missing Start menu shortcut on every install
+  and update**, since a one-click reinstall keeps shortcuts and never recreates a lost one; the
+  Desktop shortcut keeps electron-builder's behavior, so a user's deliberate deletion stands.
