@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { isConnectionError, RequestError } from '@/services/http'
+import { isConnectionError, isMoodleBusyError, RequestError } from '@/services/http'
 import {
   completeAuth,
+  connectAuth,
+  expandItem,
   fetchAuthStatus,
   listRecordings,
   isBlockedError,
@@ -180,5 +182,29 @@ describe('subscribeAuth', () => {
     expect(es.url).toContain('/auth/events')
     expect(seen).toEqual([{ phase: 'pending', connected: false, expired: false }])
     expect(es.close).toHaveBeenCalled()
+  })
+})
+
+describe('the busy lock', () => {
+  const BUSY = { status: 'busy', error: 'lock taken', code: 'moodle_busy', params: {} }
+
+  it('turns a 429 moodle_busy into a MoodleBusyError on every Moodle route', async () => {
+    for (const call of [
+      () => listRecordings('https://lemida.example/course/1'),
+      () => expandItem('ref-1'),
+      () => completeAuth(),
+      () => connectAuth(),
+    ]) {
+      stubFetch(withBody(429, BUSY))
+      expect(isMoodleBusyError(await call().catch((e) => e))).toBe(true)
+    }
+  })
+
+  it('leaves any other coded refusal a plain RequestError', async () => {
+    stubFetch(withBody(409, { error: 'no site', code: 'moodle_site_not_configured' }))
+
+    const err = await listRecordings('https://lemida.example/course/1').catch((e) => e)
+
+    expect(isMoodleBusyError(err)).toBe(false)
   })
 })

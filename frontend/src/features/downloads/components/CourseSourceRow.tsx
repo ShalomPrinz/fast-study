@@ -6,6 +6,9 @@ import { openExternalUrl } from '@/services/open'
 import { useInlineEdit } from '@/features/lectures/hooks/useInlineEdit'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
+import { useMoodleLockState } from '@/features/downloads/contexts/MoodleLockContext'
+import { moodleLocked } from '@/features/downloads/utils/moodleLock'
+import { moodleBusyMessage } from '@/features/downloads/utils/downloadErrors'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import Icon from '@/shared/components/Icon'
 import '@/styles/source-row.css'
@@ -30,6 +33,7 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
   // Only a probe that came back "not connected" bars discovery. A probe still in flight or one that
   // failed says nothing, and guessing "disconnected" there would lock a working session out.
   const disconnected = status?.connected === false
+  const locked = moodleLocked(useMoodleLockState())
   const [editing, setEditing] = useState(false)
   // A const, not the prop: the click handler below closes over it, and TS narrows only a const.
   const sourceUrl = course.source_url
@@ -95,13 +99,15 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
               <button
                 className="btn btn--ghost"
                 onClick={onDiscover}
-                disabled={discovering || disconnected}
+                disabled={discovering || disconnected || locked}
                 title={
                   status?.unconfigured
                     ? t`Choose your university in Settings first`
                     : disconnected
                       ? t`Connect your university account first`
-                      : undefined
+                      : locked
+                        ? moodleBusyMessage()
+                        : undefined
                 }
               >
                 {discovering ? t`Loading…` : t`Load recordings`}

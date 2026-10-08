@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { probeMoodleSite } from '@/services/settings'
 import ServiceError from '@/shared/components/ServiceError'
+import { useWithMoodleLock } from '@/features/downloads/contexts/MoodleLockContext'
 import { choiceForSite, choosesNoSite, MOODLE_SITE_PRESETS, OTHER_SITE } from '../utils/moodleSites'
 import { savableSite, siteProber, type SiteStatus } from '../utils/siteStatus'
 import '@/styles/settings-form.css'
@@ -45,15 +46,21 @@ export default function MoodleSiteField({
   report.current = { onChange, onSupported, onChecking }
   const latest = useRef(typed)
   latest.current = typed
+  const withMoodleLock = useWithMoodleLock()
+  // Nobody pressed a button for this, so it waits for a busy Moodle lock instead of failing; a probe a
+  // newer one superseded drops out before it is sent.
   const prober = useMemo(
     () =>
-      siteProber(probeMoodleSite, (next) => {
-        setStatus(next)
-        report.current.onChecking(next?.kind === 'checking')
-        report.current.onChange(savableSite(next))
-        if (next?.kind === 'supported') report.current.onSupported?.(next.site)
-      }),
-    [],
+      siteProber(
+        (url, stale) => withMoodleLock(() => probeMoodleSite(url), { wait: true, stale }),
+        (next) => {
+          setStatus(next)
+          report.current.onChecking(next?.kind === 'checking')
+          report.current.onChange(savableSite(next))
+          if (next?.kind === 'supported') report.current.onSupported?.(next.site)
+        },
+      ),
+    [withMoodleLock],
   )
 
   // Any edit forgets the last answer; a choice that means no university says so at once, any other

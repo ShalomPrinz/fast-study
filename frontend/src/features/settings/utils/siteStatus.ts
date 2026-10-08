@@ -43,7 +43,8 @@ export function savableSite(status: SiteStatus): string | null {
 /** Runs site probes in order: a value already probed is skipped, and a slower earlier answer never
  *  overwrites a newer one. `reset` is an edit, which invalidates both memories. */
 export function siteProber(
-  probe: (url: string) => Promise<SiteProbe>,
+  // `stale` turns true once a newer probe or an edit supersedes this one, so a queued call can drop out.
+  probe: (url: string, stale: () => boolean) => Promise<SiteProbe>,
   onStatus: (status: SiteStatus) => void,
 ) {
   let seq = 0
@@ -55,7 +56,14 @@ export function siteProber(
       probed = value
       const id = ++seq
       onStatus({ kind: 'checking' })
-      const answer = await probe(value)
+      let answer: SiteProbe
+      try {
+        answer = await probe(value, () => id !== seq)
+      } catch (err) {
+        // A superseded probe's failure (an abandoned wait included) answers nothing.
+        if (id !== seq) return
+        throw err
+      }
       if (id === seq) onStatus(toSiteStatus(answer, value))
     },
     reset() {

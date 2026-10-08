@@ -7,12 +7,22 @@ import {
   isReconnectError,
 } from '@/features/downloads/services/autoDownloader'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
+import {
+  useMoodleLockState,
+  useWithMoodleLock,
+} from '@/features/downloads/contexts/MoodleLockContext'
+import { moodleLocked } from '@/features/downloads/utils/moodleLock'
+import { isMoodleBusyError } from '@/services/http'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
 import { toastFailure } from '@/shared/utils/failure'
 import { toast } from '@/services/toaster'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
-import { blockedMessage, loginFailure } from '@/features/downloads/utils/downloadErrors'
+import {
+  blockedMessage,
+  loginFailure,
+  moodleBusyMessage,
+} from '@/features/downloads/utils/downloadErrors'
 import {
   accountView,
   loginToast,
@@ -32,6 +42,8 @@ export default function AccountStatus() {
   const { status, refresh } = useAuthStatus()
   const [phase, setPhase] = useState<LoginPhase>('loading')
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
+  const withMoodleLock = useWithMoodleLock()
+  const lock = useMoodleLockState()
 
   // Probing from here rather than from the provider is what keeps the `reconnectKey` remount
   // meaningful: it re-runs this effect, and the shared status is replaced by a fresh answer.
@@ -47,7 +59,7 @@ export default function AccountStatus() {
       toast('error', blockedMessage())
     } else if (toastKind) {
       toast('error', serviceErrorNode(toastKind.failure))
-    } else if (err !== undefined) {
+    } else if (err !== undefined && !isMoodleBusyError(err)) {
       const failure = loginFailure(err)
       if (typeof failure === 'string') toast('error', failure)
       else if (failure) toast('error', serviceErrorNode(failure))
@@ -65,9 +77,10 @@ export default function AccountStatus() {
   async function handleConnect() {
     setPhase('connecting')
     try {
-      await connectAuth()
+      await withMoodleLock(connectAuth)
     } catch (err) {
-      toastFailure(err)
+      // A 429 only raced the push that disables this button.
+      if (!isMoodleBusyError(err)) toastFailure(err)
     }
     setPhase('idle')
   }
@@ -75,7 +88,7 @@ export default function AccountStatus() {
   async function handleVerify() {
     setPhase('verifying')
     try {
-      await completeAuth()
+      await withMoodleLock(completeAuth)
     } catch (err) {
       toastLogin(null, err)
     }
@@ -103,6 +116,9 @@ export default function AccountStatus() {
   )
 
   const view = accountView(phase, status)
+  // An open challenge window holds the lock itself, and Complete (or a new Connect) is what it waits for.
+  const locked = moodleLocked(lock, view.panel === 'window')
+  const lockedTitle = locked ? moodleBusyMessage() : undefined
 
   if (view.chip === 'checking') {
     return (
@@ -135,7 +151,12 @@ export default function AccountStatus() {
         <span className="chip chip--warn" data-account="unverified">
           <Trans>checking the connection</Trans>
         </span>
-        <button className="btn btn--ghost" onClick={handleVerify} disabled={phase === 'verifying'}>
+        <button
+          className="btn btn--ghost"
+          onClick={handleVerify}
+          disabled={phase === 'verifying' || locked}
+          title={lockedTitle}
+        >
           <Trans>I confirmed, try again</Trans>
         </button>
         <button className="btn btn--ghost" onClick={() => setConfirmDisconnect(true)}>
@@ -172,7 +193,12 @@ export default function AccountStatus() {
       <span className={expired ? 'chip chip--warn' : 'chip chip--danger'}>
         {expired ? t`session expired` : t`not connected`}
       </span>
-      <button className="btn btn--ghost" onClick={handleConnect}>
+      <button
+        className="btn btn--ghost"
+        onClick={handleConnect}
+        disabled={locked}
+        title={lockedTitle}
+      >
         {expired ? t`Reconnect` : t`Connect`}
       </button>
     </>

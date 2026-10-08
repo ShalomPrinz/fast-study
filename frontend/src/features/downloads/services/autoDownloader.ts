@@ -26,6 +26,8 @@ export interface AuthStatus {
   unconfigured?: boolean
   // A token kept after a bot challenge blocked the post-login check: connected, site not yet verified.
   unverified?: boolean
+  // The global Moodle lock (a request, its 3 s cooldown, a login or an open challenge window); pushed only.
+  moodleBusy?: boolean
 }
 
 // Which file the item lands on disk as; the destination is derived server-side from `ref`.
@@ -47,6 +49,9 @@ export interface Item {
   expandable: boolean
   section: string
   likelyRecording?: boolean
+  // Auto's verdict that downloading this row reaches the Moodle host, so it waits out the Moodle lock.
+  // Advisory: the gate still enforces, and a wrong `false` is only the quiet 429.
+  moodle: boolean
 }
 
 // HTTP 401 { status: 'reconnect' }: the stored Moodle session is gone. Distinct type so the UI

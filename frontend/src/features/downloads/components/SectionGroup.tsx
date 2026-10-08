@@ -28,6 +28,11 @@ import {
 } from '@/features/downloads/contexts/RowExpansionsContext'
 import { useSectionRun } from '@/features/downloads/contexts/SectionRunsContext'
 import {
+  useMoodleLockState,
+  useWithMoodleLock,
+} from '@/features/downloads/contexts/MoodleLockContext'
+import { moodleLocked } from '@/features/downloads/utils/moodleLock'
+import {
   expandSection,
   toggleSection,
   useSectionOpen,
@@ -47,7 +52,11 @@ import {
   summarize,
   unverifiedCount,
 } from '@/features/downloads/utils/runStatus'
-import { expandErrorText, toastDownloadError } from '@/features/downloads/utils/downloadErrors'
+import {
+  expandErrorText,
+  moodleBusyMessage,
+  toastDownloadError,
+} from '@/features/downloads/utils/downloadErrors'
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { leafCount, sectionTitle } from '@/features/downloads/utils/sections'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
@@ -93,6 +102,8 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
   const [saving, setSaving] = useState(false)
   // Refs whose resolved type has already been reported upward (below).
   const reported = useRef<Set<string>>(new Set())
+  const withMoodleLock = useWithMoodleLock()
+  const locked = moodleLocked(useMoodleLockState())
 
   const targets = run?.targets ?? NO_TARGETS
   const paused = run?.status === 'paused' ? run.paused : null
@@ -119,6 +130,7 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
       }
       patchExpansion(item.ref, { expanding: true, error: null })
       try {
+        // Not gated: a playlist's children are YouTube, never Moodle.
         const children = await expandItem(item.ref)
         patchExpansion(item.ref, { children, expanded: true, expanding: false })
       } catch (err) {
@@ -177,7 +189,9 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
       return
     }
     try {
-      const renames = await startSectionRun({ sectionId: id, course, targets })
+      const renames = await withMoodleLock(() =>
+        startSectionRun({ sectionId: id, course, targets }),
+      )
       applyRenames(renames, targets, setName)
     } catch (err) {
       toastDownloadError(label, err)
@@ -286,8 +300,14 @@ export default function SectionGroup({ section, collapseKey, items, course, onRe
           <button
             className="btn btn--ghost recordings-section-run"
             onClick={() => void startAll()}
-            disabled={busy || !allExpanded}
-            title={allExpanded ? undefined : t`Expand every playlist in this section first`}
+            disabled={busy || !allExpanded || locked}
+            title={
+              !allExpanded
+                ? t`Expand every playlist in this section first`
+                : locked && !busy
+                  ? moodleBusyMessage()
+                  : undefined
+            }
           >
             {busy ? t`Downloading…` : t`Download all ${leaves}`}
           </button>

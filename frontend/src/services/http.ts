@@ -17,6 +17,19 @@ export class RequestError extends Error implements ServiceFailure {
   }
 }
 
+// 429 `moodle_busy`: another request holds the Moodle lock, so nothing reached the site. The one
+// refusal callers swallow — the button raced the `moodleBusy` push that would have disabled it.
+export class MoodleBusyError extends RequestError {
+  constructor(message: string) {
+    super(message, 'moodle_busy', {})
+    this.name = 'MoodleBusyError'
+  }
+}
+
+export function isMoodleBusyError(err: unknown): err is MoodleBusyError {
+  return err instanceof MoodleBusyError
+}
+
 export function httpError(res: Response): RequestError {
   return new RequestError(`${res.status} ${res.statusText}`)
 }
@@ -29,6 +42,7 @@ export async function failureError(res: Response): Promise<RequestError> {
     const message = body?.error
     if (typeof message === 'string' && message) {
       const code = typeof body?.code === 'string' ? body.code : null
+      if (code === 'moodle_busy') return new MoodleBusyError(message)
       const params = body?.params && typeof body.params === 'object' ? body.params : null
       return new RequestError(message, code, params)
     }

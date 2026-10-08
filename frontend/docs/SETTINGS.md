@@ -152,7 +152,9 @@ and a plain-words hint on copying the address from the browser.
 Picking a preset or blurring the input calls `probeMoodleSite` (`POST /site/probe` on the auto-downloader),
 with `ApiKeyField`'s sequence-number and last-probed-value discipline (`utils/siteStatus.ts`). The status
 slot reads `supported` (the canonical site), `unsupported` (the `moodle_site_unsupported` sentence for its
-`reason`) or `unverified` ("couldn't check").
+`reason`) or `unverified` ("couldn't check"). Nobody pressed a button, so the probe runs through the Moodle
+lock's `wait` mode ([DOWNLOADS.md](DOWNLOADS.md#the-moodle-lock)) and reads "Checking…" until the lock frees;
+`probeMoodleSite` rethrows a 429 `moodle_busy` rather than calling it `unverified`.
 
 **The save rule is the opposite of a key's.** A key the provider rejects might still be right; a site that
 definitively isn't a usable Moodle can never work. So `unsupported` saves nothing — the field hands the form

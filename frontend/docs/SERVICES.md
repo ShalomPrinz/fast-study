@@ -14,7 +14,8 @@ A refused request throws a `RequestError` carrying the body's `{error, code, par
 shape every service sends — falling back to the status line when there is no body to read. The prose is the
 developer-facing fallback; the sentence the user reads comes from the code
 ([../../docs/ERROR-CODES.md](../../docs/ERROR-CODES.md), rendered per [I18N.md](I18N.md)). No status is
-special-cased here: a `423` is `file_locked` like any other code, which is what lets the same lock read the
+special-cased here — except `moodle_busy`, thrown as its `MoodleBusyError` subclass so every caller can
+swallow it ([DOWNLOADS.md](DOWNLOADS.md#the-moodle-lock)): a `423` is `file_locked` like any other code, which is what lets the same lock read the
 same way when `backend/` relays it through a pipeline error and the status is gone.
 
 **Connection errors are handled once, here.** Only a network failure rejects as a `TypeError` (aborts are

@@ -20,7 +20,8 @@ export function JobProgressBar({
 }: {
   job: JobState
   showTitle: boolean
-  retry?: { onRetry: () => void; busy: boolean }
+  // `locked` is why the button is disabled while the Moodle lock is busy, undefined when it is free.
+  retry?: { onRetry: () => void; busy: boolean; locked?: string }
 }) {
   const { t } = useLingui()
   const sized = job.expectedBytes != null
@@ -40,7 +41,8 @@ export function JobProgressBar({
         <button
           className="btn btn--ghost recording-job-btn"
           onClick={retry.onRetry}
-          disabled={retry.busy}
+          disabled={retry.busy || retry.locked !== undefined}
+          title={retry.locked}
         >
           {retry.busy ? (
             <span className="recording-spinner" />
@@ -72,11 +74,13 @@ export default function RecordingJobList({
   jobs,
   split,
   retryingId,
+  lockedTitle,
   onClipAction,
 }: {
   jobs: readonly JobProgress[]
   split: boolean
   retryingId: string | null
+  lockedTitle?: string
   onClipAction: (job: JobProgress) => void
 }) {
   if (!(jobs.length > 1 || jobs.some((j) => j.status === 'running'))) return null
@@ -88,7 +92,13 @@ export default function RecordingJobList({
           job={job}
           showTitle={jobs.length > 1}
           retry={
-            split ? { onRetry: () => onClipAction(job), busy: retryingId === job.id } : undefined
+            split
+              ? {
+                  onRetry: () => onClipAction(job),
+                  busy: retryingId === job.id,
+                  locked: lockedTitle,
+                }
+              : undefined
           }
         />
       ))}

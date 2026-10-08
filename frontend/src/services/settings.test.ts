@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
+import { isMoodleBusyError } from './http'
 import { storeBody, ownerBodies, saveSettings, pickBacking, probeMoodleSite } from './settings'
 
 const STORED = {
@@ -156,6 +157,20 @@ describe('saveSettings with a site', () => {
 })
 
 describe('probeMoodleSite', () => {
+  it('rethrows a busy Moodle lock instead of reading it as unverified', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        Response.json(
+          { status: 'busy', error: 'lock taken', code: 'moodle_busy', params: {} },
+          { status: 429 },
+        ),
+      ),
+    )
+    const err = await probeMoodleSite('https://x.ac.il').catch((e) => e)
+    expect(isMoodleBusyError(err)).toBe(true)
+  })
+
   it('carries an unsupported answer as a coded failure', async () => {
     vi.stubGlobal(
       'fetch',

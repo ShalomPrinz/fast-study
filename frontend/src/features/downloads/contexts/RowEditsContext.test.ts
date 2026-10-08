@@ -29,7 +29,7 @@ const COURSES: Course[] = [
 ]
 
 function item(media: Media, title = 'slides'): Item {
-  return { ref: 'r1', title, kind: 'lecture', media, expandable: false, section: '' }
+  return { ref: 'r1', title, kind: 'lecture', media, expandable: false, section: '', moodle: true }
 }
 
 describe('resolveRow', () => {

@@ -2,12 +2,13 @@ import { createContext, useCallback, useContext, useMemo, useRef, useState } fro
 import { t } from '@lingui/core/macro'
 import type { ReactNode } from 'react'
 import type { Course, Kind } from '@/types'
-import { isConnectionError } from '@/services/http'
+import { isConnectionError, isMoodleBusyError } from '@/services/http'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import { failureOf } from '@/shared/utils/failure'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
 import { blockedMessage } from '../utils/downloadErrors'
+import { useWithMoodleLock } from './MoodleLockContext'
 import { clearExpansions } from './RowExpansionsContext'
 import { clearSectionCollapse } from './SectionCollapseContext'
 import type { RowEdit, RowEditsDispatch } from './RowEditsContext'
@@ -52,6 +53,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   // Keyed by item ref and living above the media toggle, so a typed name, a kind toggle and a
   // playlist's cached children all survive a segment switch.
   const [edits, setEdits] = useState<Record<string, RowEdit>>({})
+  const withMoodleLock = useWithMoodleLock()
 
   const sendUpdateRef = useRef(sendUpdate)
   sendUpdateRef.current = sendUpdate
@@ -98,7 +100,8 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
       const id = ++discoveryId.current
       setPending(course.name)
       try {
-        const found = await listRecordings(course.source_url)
+        const url = course.source_url
+        const found = await withMoodleLock(() => listRecordings(url))
         if (id !== discoveryId.current) return
         clear()
         setItems(found)
@@ -111,8 +114,9 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
           return
         }
         if (id !== discoveryId.current) return
-        // The client already toasted an unreachable service; a second toast would restate it.
-        if (isConnectionError(err)) return
+        // The client already toasted an unreachable service; a second toast would restate it. A busy
+        // lock only raced the push that disables Load recordings.
+        if (isConnectionError(err) || isMoodleBusyError(err)) return
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.
         if (isBlockedError(err)) {
@@ -133,7 +137,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         if (id === discoveryId.current) setPending(null)
       }
     },
-    [clear, reconnectHint],
+    [clear, reconnectHint, withMoodleLock],
   )
 
   const close = useCallback(() => {

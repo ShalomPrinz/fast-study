@@ -8,6 +8,7 @@ import {
   useDownloadsActions,
   useDownloadsSession,
 } from './DownloadsSessionContext'
+import { MoodleLockProvider } from './MoodleLockContext'
 
 const { toastConnectionError } = vi.hoisted(() => ({ toastConnectionError: vi.fn() }))
 vi.mock('@/services/toaster', () => ({ toast: vi.fn(), toastConnectionError }))
@@ -19,7 +20,11 @@ const CALCULUS = { name: 'Calculus', source_url: 'https://lemida.example/course/
 const ITEM = { ref: 'r1', title: 'Lecture 1', kind: 'lecture', media: 'video', section: 'Week 1' }
 
 function wrapper({ children }: { children: ReactNode }) {
-  return createElement(DownloadsSessionProvider, { sendUpdate, children })
+  return createElement(
+    MoodleLockProvider,
+    { frame: null, children: null },
+    createElement(DownloadsSessionProvider, { sendUpdate, children }),
+  )
 }
 
 function render() {
@@ -129,5 +134,23 @@ describe('a successful discovery', () => {
 
     expect(result.current.state.selected).toBe('Algebra')
     expect(result.current.state.items).toHaveLength(1)
+  })
+})
+
+describe('a discovery refused by a busy Moodle lock', () => {
+  it('stays quiet and leaves the page as it was: the button only raced the push', async () => {
+    stubFetch(
+      Response.json(
+        { status: 'busy', error: 'lock taken', code: 'moodle_busy', params: {} },
+        { status: 429 },
+      ),
+    )
+    const { result } = render()
+
+    await act(() => result.current.actions.discover(ALGEBRA))
+
+    expect(sendUpdate).not.toHaveBeenCalled()
+    expect(result.current.state.selected).toBeNull()
+    expect(result.current.state.pending).toBeNull()
   })
 })

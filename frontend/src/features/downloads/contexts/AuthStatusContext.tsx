@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react'
 import type { AuthStatus } from '../services/autoDownloader'
 import { fetchAuthStatus, subscribeAuth } from '../services/autoDownloader'
+import { MoodleLockProvider } from './MoodleLockContext'
 
 interface AuthStatusValue {
   // null means "unknown", never "disconnected": nothing has landed yet, or the one-shot read failed.
@@ -13,7 +14,8 @@ const AuthStatusContext = createContext<AuthStatusValue | null>(null)
 
 // The university account, one answer for every chip and gate: the service's pushed state, with `refresh`'s
 // one-shot read kept for what the stream cannot say — no site configured reads as idle there. The stream
-// never toasts, so a route with no account control never reports the auto-downloader as down.
+// never toasts, so a route with no account control never reports the auto-downloader as down. The same
+// stream's `moodleBusy` feeds the Moodle lock, so every account consumer has one too.
 export function AuthStatusProvider({ children }: { children: ReactNode }) {
   const [pushed, setPushed] = useState<AuthStatus | null>(null)
   const [probed, setProbed] = useState<AuthStatus | null>(null)
@@ -37,7 +39,11 @@ export function AuthStatusProvider({ children }: { children: ReactNode }) {
   }, [pushed, probed])
 
   const value = useMemo(() => ({ status, refresh }), [status, refresh])
-  return <AuthStatusContext.Provider value={value}>{children}</AuthStatusContext.Provider>
+  return (
+    <AuthStatusContext.Provider value={value}>
+      <MoodleLockProvider frame={pushed}>{children}</MoodleLockProvider>
+    </AuthStatusContext.Provider>
+  )
 }
 
 export function useAuthStatus(): AuthStatusValue {

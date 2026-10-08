@@ -80,6 +80,30 @@ its `reason`'s sentence.
 `Load recordings` disables only on `connected: false`; unknown leaves it enabled, since guessing
 "disconnected" from an unanswered probe would lock a working session out.
 
+## The Moodle lock
+
+auto talks to Moodle one request at a time and holds one global lock for each request plus 3 s after it
+(and for a whole login, or while a challenge window is open) — `downloader/auto/docs/GATE.md`. Every
+frontend call that can reach Moodle goes through `withMoodleLock(fn)` (`useWithMoodleLock`, from
+`MoodleLockProvider`, which `AuthStatusProvider` renders): Connect, Complete, Load recordings,
+"Download all", the settings site probe, and a row's Download, Download again and clip retry — but only on
+a row whose `moodle` flag auto set (`rowLocked`); a Zoom, YouTube or Drive row calls directly and stays
+enabled. The flag is the only source: the frontend infers nothing from kind or URL, and a wrong `false` is
+the quiet 429 below. A playlist's expand is not gated — its children are YouTube. The
+store is `utils/moodleLock.ts`: its state is the pushed `moodleBusy` (every `/auth/events` frame) OR a
+call of this tab in flight — counted on call, so a double click can't send two before the frame lands.
+There is no local timer; the push says when the cooldown ends.
+
+While `moodleLocked(state)` holds, every one of those buttons is disabled with the `moodleBusyMessage()` tooltip.
+The exemption is an open challenge window (`accountView`'s `panel === 'window'`): it holds the lock itself
+and is waiting for Complete, so Complete and Connect stay enabled unless this tab's own call is in flight.
+A button that still races the push gets 429 `moodle_busy` → `MoodleBusyError`, which every caller swallows:
+no toast, no "Retry ✗", no row error. A call nobody pressed passes `{ wait: true }`: it waits for the lock
+to free and asks again after a 429 — woken by any frame, since a reconnected stream repeats `false`
+rather than flipping — so it never fails on busy; its `stale()` drops it before it is sent once its caller
+moved on (a superseded site probe). A section run and a job's re-resolve queue
+inside `server/` instead, so they never see the 429.
+
 ## The page session
 
 `DownloadsSessionProvider` (in `Layout`) holds everything the page accumulates — `selected`/`pending`,

@@ -27,6 +27,9 @@ import {
 } from '@/features/downloads/utils/existingItems'
 import { useRecordingDownload } from '@/features/downloads/hooks/useRecordingDownload'
 import { rowAction } from '@/features/downloads/utils/rowAction'
+import { useMoodleLockState } from '@/features/downloads/contexts/MoodleLockContext'
+import { rowLocked } from '@/features/downloads/utils/moodleLock'
+import { moodleBusyMessage } from '@/features/downloads/utils/downloadErrors'
 import '@/styles/source-row.css'
 import '@/styles/button.css'
 import '@/styles/chip.css'
@@ -131,6 +134,9 @@ const RecordingRow = memo(function RecordingRow({
     isLectureRenameLocked(runner, course, n, kind),
   )
   const busyTitle = t`Can't download while this lecture is being processed or waiting in line`
+  // Download, Download again and clip retry wait out the lock only on a row auto flagged `moodle`.
+  const locked = rowLocked(item.moodle, useMoodleLockState())
+  const lockedTitle = locked ? moodleBusyMessage() : undefined
 
   // Pending overwrite confirm: `message` is what the modal shows, `run` is what a Yes replays
   // (the whole-row download or one clip's retry). Null means no modal.
@@ -299,9 +305,9 @@ const RecordingRow = memo(function RecordingRow({
             <button
               className="pipeline-icon-btn"
               onClick={onDownloadClick}
-              disabled={pending || inPipeline}
+              disabled={pending || inPipeline || locked}
               aria-label={t`Download again`}
-              title={inPipeline ? busyTitle : t`Download again`}
+              title={inPipeline ? busyTitle : (lockedTitle ?? t`Download again`)}
             >
               <Icon icon="rotate" />
             </button>
@@ -310,13 +316,13 @@ const RecordingRow = memo(function RecordingRow({
           <button
             className="btn btn--ghost recording-download-btn"
             onClick={onDownloadClick}
-            disabled={pending || unsupported || inPipeline}
+            disabled={pending || unsupported || inPipeline || locked}
             title={
               unsupported
                 ? t`The downloader can't fetch this file`
                 : inPipeline
                   ? busyTitle
-                  : undefined
+                  : lockedTitle
             }
           >
             {action === 'pending' ? (
@@ -336,6 +342,7 @@ const RecordingRow = memo(function RecordingRow({
         jobs={jobs}
         split={split}
         retryingId={retryingId}
+        lockedTitle={lockedTitle}
         onClipAction={onClipAction}
       />
 

@@ -20,7 +20,16 @@ function item(
   media: Media = 'video',
   resolvedMedia?: ResolvedMedia,
 ): Item {
-  return { ref, title: ref, kind: 'lecture', media, resolvedMedia, expandable: false, section }
+  return {
+    ref,
+    title: ref,
+    kind: 'lecture',
+    media,
+    resolvedMedia,
+    expandable: false,
+    section,
+    moodle: true,
+  }
 }
 
 // A row the keyword hint says is not a lecture recording.

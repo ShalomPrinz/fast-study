@@ -11,6 +11,11 @@ import {
 import type { JobProgress } from '@/features/downloads/contexts/DownloadJobsContext'
 import { ResolvedMediaContext } from '@/features/downloads/contexts/ResolvedMediaContext'
 import { RowEditsDispatchContext } from '@/features/downloads/contexts/RowEditsContext'
+import {
+  MoodleLockProvider,
+  useMoodleLockState,
+} from '@/features/downloads/contexts/MoodleLockContext'
+import { MoodleBusyError } from '@/services/http'
 import { useRecordingDownload } from './useRecordingDownload'
 
 const { downloadItem, saveZoomPasscode, toastDownloadError, toastLectureBusy, runner } = vi.hoisted(
@@ -54,9 +59,13 @@ const JOB = {
 
 function wrapper({ children }: { children: ReactNode }) {
   return createElement(
-    ResolvedMediaContext.Provider,
-    { value: resolveMedia },
-    createElement(RowEditsDispatchContext.Provider, { value: { setName, setKind } }, children),
+    MoodleLockProvider,
+    { frame: null, children: null },
+    createElement(
+      ResolvedMediaContext.Provider,
+      { value: resolveMedia },
+      createElement(RowEditsDispatchContext.Provider, { value: { setName, setKind } }, children),
+    ),
   )
 }
 
@@ -80,7 +89,82 @@ beforeEach(() => {
   runner.status = null
 })
 
+// Under a busy pushed lock: whether this row's download takes the lock is the row's `moodle` flag alone.
+function renderUnderBusyLock(moodle: boolean) {
+  const busyWrapper = ({ children }: { children: ReactNode }) =>
+    createElement(
+      MoodleLockProvider,
+      { frame: { moodleBusy: true }, children: null },
+      createElement(
+        ResolvedMediaContext.Provider,
+        { value: resolveMedia },
+        createElement(RowEditsDispatchContext.Provider, { value: { setName, setKind } }, children),
+      ),
+    )
+  return renderHook(
+    () => ({
+      row: useRecordingDownload({
+        item: { ...ITEM, moodle },
+        course: 'Algebra',
+        name: 'Lecture 3',
+        kind: 'lecture',
+        siblings: [],
+        onReconnect,
+      }),
+      lock: useMoodleLockState(),
+    }),
+    { wrapper: busyWrapper },
+  )
+}
+
+describe('a row under a busy Moodle lock', () => {
+  it('sends a Moodle row through the lock, claiming it while in flight', async () => {
+    let finish!: (v: unknown) => void
+    downloadItem.mockReturnValueOnce(new Promise((res) => (finish = res)))
+    const { result } = renderUnderBusyLock(true)
+
+    let done!: Promise<void>
+    act(() => {
+      done = result.current.row.download()
+    })
+    expect(result.current.lock).toEqual({ busy: true, claimed: true })
+    await act(async () => {
+      finish({ media: 'material', jobIds: ['j'], renames: [] })
+      await done
+    })
+    expect(result.current.lock.claimed).toBe(false)
+  })
+
+  it('sends a non-Moodle row straight out, never touching the lock', async () => {
+    let finish!: (v: unknown) => void
+    downloadItem.mockReturnValueOnce(new Promise((res) => (finish = res)))
+    const { result } = renderUnderBusyLock(false)
+
+    let done!: Promise<void>
+    act(() => {
+      done = result.current.row.download()
+    })
+    expect(downloadItem).toHaveBeenCalledOnce()
+    expect(result.current.lock).toEqual({ busy: true, claimed: false })
+    await act(async () => {
+      finish({ media: 'video', jobIds: ['j'], renames: [] })
+      await done
+    })
+  })
+})
+
 describe('useRecordingDownload', () => {
+  it('leaves the row as it was, untoasted, when a busy Moodle lock refuses it', async () => {
+    downloadItem.mockRejectedValueOnce(new MoodleBusyError('lock taken'))
+    const { result } = render()
+
+    await act(() => result.current.download())
+
+    expect(toastDownloadError).not.toHaveBeenCalled()
+    expect(result.current.failed).toBe(false)
+    expect(result.current.pending).toBe(false)
+  })
+
   it('refuses to start while the pipeline runs or queues the target lecture', async () => {
     runner.status = {
       inFlight: [],

@@ -172,6 +172,9 @@ const MESSAGES: Record<string, MessageDescriptor> = {
     message:
       'The university site is temporarily refusing automated requests. Wait a few minutes and try again.',
   }),
+  moodle_busy: msg({
+    message: 'The university site is busy with another request. Try again in a moment.',
+  }),
   zoom_passcode_required: msg({
     message:
       '{reason, select, incorrect {The Zoom passcode is wrong. Enter it again.} other {This Zoom recording needs a passcode.}}',

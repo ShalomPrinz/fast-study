@@ -120,6 +120,26 @@ describe('siteProber', () => {
     expect(calls).toHaveLength(2)
   })
 
+  it('marks a probe stale once a newer one supersedes it, and swallows its abandonment', async () => {
+    const stales: (() => boolean)[] = []
+    const seen: SiteStatus[] = []
+    const prober = siteProber(
+      (_url, stale) => {
+        stales.push(stale)
+        return stales.length === 1
+          ? Promise.reject(new Error('abandoned'))
+          : Promise.resolve(SUPPORTED)
+      },
+      (s) => seen.push(s),
+    )
+    const first = prober.probe('https://example.com')
+    expect(stales[0]()).toBe(false)
+    await prober.probe('https://lemida.biu.ac.il')
+    expect(stales[0]()).toBe(true)
+    await expect(first).resolves.toBeUndefined()
+    expect(seen.at(-1)).toEqual({ kind: 'supported', site: SUPPORTED.site })
+  })
+
   it('never probes a blank value', async () => {
     const { probe, calls } = manualProbe()
     void siteProber(probe, () => {}).probe('   ')

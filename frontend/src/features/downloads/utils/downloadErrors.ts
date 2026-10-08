@@ -1,6 +1,6 @@
 import { t } from '@lingui/core/macro'
 import { toast } from '@/services/toaster'
-import { isConnectionError } from '@/services/http'
+import { isConnectionError, isMoodleBusyError } from '@/services/http'
 import {
   isBlockedError,
   isReconnectError,
@@ -16,15 +16,21 @@ export function blockedMessage(): string {
   return t`The university site is temporarily refusing automated requests. Wait a few minutes and try again.`
 }
 
+// Why a Moodle button is disabled: another request holds the lock, which frees by itself.
+export function moodleBusyMessage(): string {
+  return t`The university site is busy with another request. Try again in a moment.`
+}
+
 // A download refused before it starts: the pipeline is running or queued on the lecture it would replace.
 export function toastLectureBusy(name: string): void {
   toast('error', t`Can't download ${name} while it's being processed or waiting in line`)
 }
 
 // A coded failure says why in the service's words; `blocked` gets its own copy and a codeless
-// failure the generic one. A ConnectionError was already toasted by the client.
+// failure the generic one. A ConnectionError was already toasted by the client, and a busy lock only
+// raced the push that disables the button, so neither toasts.
 export function toastDownloadError(name: string, err?: unknown): void {
-  if (isConnectionError(err)) return
+  if (isConnectionError(err) || isMoodleBusyError(err)) return
   if (isUnsupportedError(err)) {
     toast('error', serviceErrorNode(err))
     return
@@ -41,9 +47,10 @@ export function toastDownloadError(name: string, err?: unknown): void {
 }
 
 // A playlist row's failure to expand, shown in the row; null for a reconnect, which the account chip
-// reports instead. Unsupported and coded failures read in the service's words.
+// reports instead, and for a busy lock, which is no failure. Unsupported and coded failures read in the
+// service's words.
 export function expandErrorText(err: unknown): string | null {
-  if (isReconnectError(err)) return null
+  if (isReconnectError(err) || isMoodleBusyError(err)) return null
   if (isUnsupportedError(err)) return serviceErrorText(err)
   const failure = failureOf(err)
   return failure.code ? serviceErrorText(failure) : t`Couldn't load entries. Try again.`

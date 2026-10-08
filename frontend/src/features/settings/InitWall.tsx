@@ -248,19 +248,19 @@ export default function InitWall({ stored: initial, onDone }: Props) {
               <SectionTitle mark="optional">
                 <Trans>Your university</Trans>
               </SectionTitle>
-              <MoodleSiteField
-                value={form.moodleSite}
-                // Functional: the probe answers after other fields may have changed.
-                onChange={(v) => {
-                  setForm((f) => ({ ...f, moodleSite: v }))
-                  if (v === '') saveSite('')
-                }}
-                onSupported={saveSite}
-                onChecking={setSiteChecking}
-              />
               {/* The wall renders outside `Layout`, so it brings its own provider — the account
-                  chip is the only consumer that gets this far. */}
+                  chip and the site probe's Moodle lock are the only consumers that get this far. */}
               <AuthStatusProvider>
+                <MoodleSiteField
+                  value={form.moodleSite}
+                  // Functional: the probe answers after other fields may have changed.
+                  onChange={(v) => {
+                    setForm((f) => ({ ...f, moodleSite: v }))
+                    if (v === '') saveSite('')
+                  }}
+                  onSupported={saveSite}
+                  onChecking={setSiteChecking}
+                />
                 <MoodleAccountField site={stored.moodleSite} choice={form.moodleSite} />
               </AuthStatusProvider>
             </section>

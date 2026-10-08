@@ -14,6 +14,8 @@ import { toastDownloadError, toastLectureBusy } from '@/features/downloads/utils
 import { applyRenames } from '@/features/downloads/utils/renames'
 import { useResolveMedia } from '@/features/downloads/contexts/ResolvedMediaContext'
 import { useRowEditsDispatch } from '@/features/downloads/contexts/RowEditsContext'
+import { useWithMoodleLock } from '@/features/downloads/contexts/MoodleLockContext'
+import { isMoodleBusyError } from '@/services/http'
 import { useRunnerStatus } from '@/shared/contexts/RunnerStatusContext'
 import { isLectureRenameLocked } from '@/features/lectures/utils/renameLock'
 
@@ -42,6 +44,7 @@ export function useRecordingDownload({
   const resolveMedia = useResolveMedia()
   // The server's canonical spelling replaces the row's name, so the row compares against disk.
   const { setName } = useRowEditsDispatch()
+  const withMoodleLock = useWithMoodleLock()
   // Latest runner status by ref: a confirm or passcode replay runs a closure from an earlier render.
   const { status } = useRunnerStatus()
   const statusRef = useRef(status)
@@ -77,12 +80,16 @@ export function useRecordingDownload({
       return
     }
     try {
-      const { media, renames } = await downloadItem(args)
+      // The row's `moodle` flag decides, as it does the row's disabled state (`rowLocked`).
+      const send = () => downloadItem(args)
+      const { media, renames } = await (item.moodle ? withMoodleLock(send) : send())
       resolveMedia(args.ref, media)
       applyRenames(renames, [args], setName)
     } catch (err) {
       // Reconnect and passcode steer the UI elsewhere, so only the fallthrough toasts.
       if (isReconnectError(err)) onReconnect()
+      // Raced the push that disables the button: nothing was sent, so the row stays as it was.
+      else if (isMoodleBusyError(err)) return
       else if (isPasscodeError(err)) {
         passcodeResume.current = { name, run: resume }
         setPasscodeReason(err.reason)

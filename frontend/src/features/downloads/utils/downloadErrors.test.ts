@@ -4,7 +4,7 @@ import {
   ReconnectError,
   UnsupportedError,
 } from '@/features/downloads/services/autoDownloader'
-import { ConnectionError, RequestError } from '@/services/http'
+import { ConnectionError, MoodleBusyError, RequestError } from '@/services/http'
 import { expandErrorText, manualFailureHeadline, toastDownloadError } from './downloadErrors'
 
 // The toaster is the boundary under observation: what reaches it is the whole assertion.
@@ -102,5 +102,17 @@ describe('manualFailureHeadline', () => {
     expect(
       manualFailureHeadline({ message: 'x', code: 'download_tool_failed', params: detail }),
     ).toBeUndefined()
+  })
+})
+
+describe('a busy Moodle lock', () => {
+  it('never toasts: the button only raced the push that disables it', () => {
+    toastDownloadError('Lecture 3', new MoodleBusyError('lock taken'))
+
+    expect(toast).not.toHaveBeenCalled()
+  })
+
+  it('leaves a playlist row without an error', () => {
+    expect(expandErrorText(new MoodleBusyError('lock taken'))).toBeNull()
   })
 })

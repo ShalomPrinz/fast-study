@@ -3,7 +3,15 @@ import type { Item } from '../services/autoDownloader'
 import { IDLE_EXPAND, clearExpansions, expansionOf, patchExpansion } from './RowExpansionsContext'
 
 function child(ref: string): Item {
-  return { ref, title: ref, kind: 'lecture', media: 'video', expandable: false, section: '' }
+  return {
+    ref,
+    title: ref,
+    kind: 'lecture',
+    media: 'video',
+    expandable: false,
+    section: '',
+    moodle: true,
+  }
 }
 
 describe('the row expansions store', () => {

@@ -1,4 +1,4 @@
-import { createClient } from './http'
+import { createClient, isMoodleBusyError } from './http'
 import { AUTO_DOWNLOADER_URL, BACKEND_URL, DATABASE_URL, runtimeBridge } from './runtime'
 import { applyErrorReports } from './sentry'
 import type { ErrorParams, ServiceFailure } from '@/shared/i18n/serviceErrors'
@@ -324,7 +324,9 @@ export async function probeMoodleSite(url: string): Promise<SiteProbe> {
           }
         : null,
     }
-  } catch {
+  } catch (err) {
+    // A busy Moodle lock is no answer about the site; the caller waits it out and asks again.
+    if (isMoodleBusyError(err)) throw err
     return { status: 'unverified', site: null, failure: null }
   }
 }
