@@ -383,6 +383,17 @@ async function boot() {
   return urls;
 }
 
+/** Ask `auto` to load Playwright now, so the first browser action skips that cost. Fire and forget:
+ *  a failure only means the load happens on demand, so it is logged and never surfaced. */
+function warmBrowser() {
+  fetch(`${serviceUrls.autoDownloader}/warmup`, {
+    method: 'POST',
+    headers: { 'X-FastStudy-Secret': SECRET },
+  })
+    .then((response) => log('main', `auto warmup answered ${response.status}`))
+    .catch((error) => log('main', `auto warmup failed: ${error.message}`));
+}
+
 /** Boot, then swap the launch screen for the app. A failure stays on the launch screen with the
  *  reason on the child that did not come up, and Try again re-runs this from a clean slate. */
 async function runBoot() {
@@ -396,6 +407,7 @@ async function runBoot() {
     // After the window navigates, never before, so it stays off the path that decides whether the
     // app comes up — see docs/UPDATES.md.
     startUpdater(log);
+    warmBrowser();
   } catch (error) {
     log('main', `boot failed: ${error.stack ?? error.message}`);
     // A retry re-spawns all four, so a surviving child would hold a port and a second DATA_ROOT writer.

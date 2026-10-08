@@ -18,6 +18,7 @@ import {
   handleAuthComplete,
   handleAuthDisconnect,
   handleBrowserPrereq,
+  handleWarmup,
   handleList,
   handleListExpand,
   handleResolve,
@@ -51,6 +52,7 @@ const toolProbe = checkTools(['yt-dlp']);
 app.get('/health', async (req, res) => res.json({ status: 'ok', tools: await toolProbe }));
 
 app.get('/prereqs/browser', handleBrowserPrereq);
+app.post('/warmup', handleWarmup);
 app.post('/config', handleConfig);
 app.post('/site/probe', handleSiteProbe);
 app.get('/auth/status', handleAuthStatus);

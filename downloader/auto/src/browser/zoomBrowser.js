@@ -9,9 +9,9 @@ import { resolveBrowserChannel } from './browserChannel.js';
 import { CodedError } from '../lib/errors.js';
 
 // Stealth minus 'user-agent-override' on playwright-extra's chromium only, loaded and registered
-// once on the first zoom launch; a failed load is not cached. See docs/ZOOM.md.
+// once on first use (`/warmup` or a zoom launch); a failed load is not cached. See docs/ZOOM.md.
 let stealthChromium = null;
-function loadStealthChromium() {
+export function loadStealthChromium() {
   stealthChromium ??= (async () => {
     const [{ chromium }, { default: StealthPlugin }] = await Promise.all([
       import('playwright-extra'),

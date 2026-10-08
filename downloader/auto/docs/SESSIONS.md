@@ -28,6 +28,7 @@ Every launch passes `--mute-audio`: recordings autoplay, and nobody is watching.
 
 `playwright`, `playwright-extra` and the stealth plugin load by dynamic `import()` on first browser
 use, never at startup: they are over a second of auto's boot, more on Windows where Defender scans each file.
+`POST /warmup` starts those loads without awaiting them; the launcher calls it once every service is healthy, so the user's first browser action skips the load.
 
 ## Which browser (`browser/browserChannel.js`)
 
@@ -37,8 +38,8 @@ Both launchers build their own options — only the zoom one is forbidden a bund
 
 Playwright has no public API that resolves a channel's executable — `chromium.executablePath()` takes
 no channel and returns the _bundled_ path even for a channel that doesn't exist — so the probe is a
-real headless launch, closed at once: ~500ms when installed, milliseconds when missing. The first
-probe also pays Playwright's load (~1s), so the first `GET /prereqs/browser` takes ~1.5s.
+real headless launch, closed at once: ~500ms when installed, milliseconds when missing. Without a prior
+`/warmup`, the first probe also pays Playwright's load (~1s), so the first `GET /prereqs/browser` takes ~1.5s.
 
 A **success is cached for the process** (re-probing per launch would cost ~0.7–1.2s); a **failure
 never is**, so `GET /prereqs/browser` (always 200 — "no browser" is an answer) can be re-run after the

@@ -20,7 +20,7 @@ _rewritten_ UA. Edge launches in ~1.2s against Chrome's ~0.7s.
 Hard constraints, each load-bearing:
 
 - **Do NOT override the UA** — including stealth's `user-agent-override` evasion, deleted when
-  stealth is loaded on the first zoom launch. A rewritten UA desyncs from the browser's Sec-CH-UA Client-Hints and zoom flags the
+  stealth is loaded on first use (`/warmup` or a zoom launch). A rewritten UA desyncs from the browser's Sec-CH-UA Client-Hints and zoom flags the
   mismatch. Stealth is registered only on playwright-extra's `chromium`, so plain launches stay clean.
 - **Do NOT add `--use-angle=vulkan`** — no hardware Vulkan here, so it falls back to SwiftShader.
 - **No bundled-Chromium fallback**, unlike the plain launcher: Playwright's Chromium is untested

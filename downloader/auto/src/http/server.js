@@ -13,6 +13,7 @@ import { reportUnsupportedSite } from '../../siteReport.js';
 import { setReporting } from '@faststudy/sentry';
 import { getSession, closeAllSessions } from '../browser/browserSession.js';
 import { resolveBrowserChannel } from '../browser/browserChannel.js';
+import { loadStealthChromium } from '../browser/zoomBrowser.js';
 import {
   listRecordings,
   resolveRecording,
@@ -372,6 +373,17 @@ export async function handleBrowserPrereq(req, res) {
       params,
     });
   }
+}
+
+// Starts the Playwright and stealth loads the real launch paths share, answering before they finish;
+// never launches a browser. A failed load is only logged, and the next real use retries it.
+export function handleWarmup(req, res) {
+  logReq('POST', '/warmup');
+  Promise.all([import('playwright'), loadStealthChromium()]).then(
+    () => logResult('/warmup', 'browser modules loaded'),
+    (e) => logResult('/warmup', `load failed: ${e.message}`),
+  );
+  send(res, 202, { status: 'warming' });
 }
 
 // ── Browsing endpoints ──────────────────────────────────────────────────────

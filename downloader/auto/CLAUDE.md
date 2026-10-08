@@ -26,6 +26,7 @@ Mechanism-agnostic: `/list` and `/list/expand` return uniform `Item`s whose down
 | ----------------------- | --------------------------------------------------- | --------------------------------------------------------------------------- |
 | `GET /health`           | —                                                   | `{ status:'ok', tools }` once the boot probe settles — the launcher's wait  |
 | `GET /prereqs/browser`  | —                                                   | `{ available, channel, browser, detail }` — always 200                      |
+| `POST /warmup`          | —                                                   | `202 { status:'warming' }` at once — starts loading Playwright and stealth, never a browser; the launcher calls it once all four services are healthy ([SESSIONS.md](docs/SESSIONS.md)) |
 | `POST /config`          | `{ moodle_site?, error_reports? }`                  | `{ status:'ok', applied }` — a different site resets auth ([AUTH.md](docs/AUTH.md)); blank clears it; `error_reports` toggles Sentry sending live |
 | `POST /site/probe`      | `{ url }`                                           | `{ status:'supported'\|'unsupported'\|'unverified', site, code?, params? }` — always 200 ([MOODLE.md](docs/MOODLE.md)) |
 | `GET /auth/status`      | —                                                   | `{ connected, expired, unverified }` — `unverified`: persisted after a block, site info not yet checked |
