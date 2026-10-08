@@ -183,14 +183,14 @@ function childSpecs() {
       ...python('database', 'database_main.py', 'database'),
     },
     {
-      name: 'backend',
-      bridgeKey: 'backend',
-      ...python('backend', 'backend_main.py', 'backend'),
-    },
-    {
       name: 'auto',
       bridgeKey: 'autoDownloader',
       ...node('auto', 'app.js'),
+    },
+    {
+      name: 'backend',
+      bridgeKey: 'backend',
+      ...python('backend', 'backend_main.py', 'backend'),
     },
     {
       name: 'server',
