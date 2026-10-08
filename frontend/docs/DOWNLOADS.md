@@ -26,8 +26,9 @@ touch-reachable, routed into the overwrite confirm), faded for `unsupported`.
 
 A collapsible section above the course sources (`ManualDownload`): paste a video link, type a course
 (the active ones are suggestions; any other name is created first, an archived one answers `name_taken`),
-kind and name, and `POST /download-url` queues it through yt-dlp with no credentials — so it
-never gates on the account or the university. Collapsed by default, its open state is per-viewer
+kind and name, and `POST /download-url` queues it. auto decides the route: a link on the configured
+Moodle site's origin is proxied through auto under the Moodle lock (below), any other runs yt-dlp; both
+fetch with no session or cookies, so the link must open without signing in. Collapsed by default, its open state is per-viewer
 `localStorage` like the media segment. The name is `suggestName`'s next free one, also skipping names
 this session's manual downloads already claimed (`suggestManualName`), since an in-flight one is not in
 the tree yet; replacing a stored video confirms first. The link is never cleared for the user, whether
@@ -88,8 +89,10 @@ frontend call that can reach Moodle goes through `withMoodleLock(fn)` (`useWithM
 `MoodleLockProvider`, which `AuthStatusProvider` renders): Connect, Complete, Load recordings,
 "Download all", the settings site probe, and a row's Download, Download again and clip retry — but only on
 a row whose `moodle` flag auto set (`rowLocked`); a Zoom, YouTube or Drive row calls directly and stays
-enabled. The flag is the only source: the frontend infers nothing from kind or URL, and a wrong `false` is
-the quiet 429 below. A playlist's expand is not gated — its children are YouTube. The
+enabled. The flag is the only source for a row: the frontend infers nothing from kind or URL, and a wrong
+`false` is the quiet 429 below. The manual form's Download and Retry have no flag, so they apply auto's own
+test — the link's origin equals the configured `moodleSite`'s (`onMoodleSite`, in `useManualStart`); a
+YouTube link stays enabled through a long section run. A playlist's expand is not gated — its children are YouTube. The
 store is `utils/moodleLock.ts`: its state is the pushed `moodleBusy` (every `/auth/events` frame) OR a
 call of this tab in flight — counted on call, so a double click can't send two before the frame lands.
 There is no local timer; the push says when the cooldown ends.

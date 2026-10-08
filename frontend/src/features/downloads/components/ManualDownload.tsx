@@ -5,8 +5,6 @@ import Chevron from '@/shared/components/Chevron'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import ServiceError from '@/shared/components/ServiceError'
 import { createCourse } from '@/services/database'
-import { downloadUrl } from '@/features/downloads/services/downloadServer'
-import type { UrlDownload } from '@/features/downloads/services/downloadServer'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { jobState, useJobById } from '@/features/downloads/contexts/DownloadJobsContext'
 import type { ManualEntry } from '@/features/downloads/contexts/ManualDownloadsContext'
@@ -21,13 +19,14 @@ import { hasResource, overwritesVideo } from '@/features/downloads/utils/existin
 import {
   manualStatus,
   matchCourse,
-  parseTarget,
   suggestManualName,
 } from '@/features/downloads/utils/manualDownload'
 import {
   manualFailureHeadline,
+  moodleBusyMessage,
   toastDownloadError,
 } from '@/features/downloads/utils/downloadErrors'
+import { useManualStart } from '@/features/downloads/hooks/useManualStart'
 import { JobProgressBar } from './RecordingJobList'
 import '@/styles/pipeline-card.css'
 import '@/styles/source-row.css'
@@ -57,17 +56,8 @@ function writeOpen(open: boolean) {
   }
 }
 
-// Posts one manual download; the stored spelling comes back in `target`, the typed one otherwise.
-async function start(request: UrlDownload) {
-  const { jobId, target } = await downloadUrl(request)
-  return {
-    jobId,
-    target: parseTarget(target) ?? { course: request.course, lecture: request.lecture },
-  }
-}
-
-// A collapsible "paste a link" form: any video URL reachable without credentials, through yt-dlp,
-// with no university account involved. See docs/DOWNLOADS.md.
+// A collapsible "paste a link" form: any video URL reachable without credentials. A link on the Moodle
+// site is proxied through auto under the Moodle lock; any other runs yt-dlp. See docs/DOWNLOADS.md.
 export default function ManualDownload() {
   const [open, setOpen] = useState(readOpen)
   const bodyId = useId()
@@ -125,13 +115,15 @@ function ManualForm() {
   const { url, course: typed, kind, name } = useManualDraft()
   const [pending, setPending] = useState(false)
   const [confirm, setConfirm] = useState(false)
+  const { locked: lockedFor, start } = useManualStart()
 
   const courseText = typed ?? active[0]?.name ?? ''
   const existing = matchCourse(active, courseText)
   const course = existing ?? courseText.trim()
   const claimed = entries.map((e) => ({ ...e.target, kind: e.request.kind }))
   const lecture = name ?? (course ? suggestManualName(courses, course, kind, claimed) : '')
-  const ready = !!url.trim() && !!course && !!lecture.trim() && !pending
+  const locked = lockedFor(url)
+  const ready = !!url.trim() && !!course && !!lecture.trim() && !pending && !locked
 
   async function submit() {
     const request = { url: url.trim(), course, lecture: lecture.trim(), kind }
@@ -232,7 +224,12 @@ function ManualForm() {
           dir="auto"
         />
       </div>
-      <button className="btn btn--primary" onClick={onDownload} disabled={!ready}>
+      <button
+        className="btn btn--primary"
+        onClick={onDownload}
+        disabled={!ready}
+        title={locked ? moodleBusyMessage() : undefined}
+      >
         {pending ? <span className="recording-spinner" /> : t`Download`}
       </button>
 
@@ -268,6 +265,8 @@ function ManualJobRow({ entry }: { entry: ManualEntry }) {
   const { courses } = useCourseTreeContext()
   const job = useJobById(entry.jobId)
   const [retrying, setRetrying] = useState(false)
+  const { locked: lockedFor, start } = useManualStart()
+  const locked = lockedFor(entry.request.url)
   const { course, lecture } = entry.target
   const kind = entry.request.kind
   const landed = hasResource({ media: 'video' }, lecture, kind, courses, course)
@@ -325,7 +324,8 @@ function ManualJobRow({ entry }: { entry: ManualEntry }) {
           <button
             className="btn btn--ghost recording-download-btn"
             onClick={() => void retry()}
-            disabled={retrying}
+            disabled={retrying || locked}
+            title={locked ? moodleBusyMessage() : undefined}
           >
             {retrying ? <span className="recording-spinner" /> : t`Retry ✗`}
           </button>

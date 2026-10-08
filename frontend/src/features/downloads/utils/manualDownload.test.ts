@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, Lecture } from '@/types'
 import type { DownloadJob } from '@/features/downloads/services/downloadServer'
-import { manualStatus, matchCourse, parseTarget, suggestManualName } from './manualDownload'
+import {
+  manualStatus,
+  matchCourse,
+  onMoodleSite,
+  parseTarget,
+  suggestManualName,
+} from './manualDownload'
 
 function job(status: DownloadJob['status']): DownloadJob {
   return {
@@ -93,5 +99,28 @@ describe('matchCourse', () => {
   it('answers null for a name no active course has, which makes it a new course', () => {
     expect(matchCourse(active, 'Algo 2')).toBeNull()
     expect(matchCourse([], 'Algo')).toBeNull()
+  })
+})
+
+describe('onMoodleSite', () => {
+  const SITE = 'https://moodle.example.ac.il'
+
+  it('is true for any link on the configured site, path and query aside', () => {
+    expect(onMoodleSite('https://moodle.example.ac.il/pluginfile.php/1/v.mp4?x=1', SITE)).toBe(true)
+    expect(onMoodleSite('  https://MOODLE.example.ac.il/mod/url/view.php  ', `${SITE}/`)).toBe(true)
+  })
+
+  it('compares origins, so a sibling host, another scheme or port is not the site', () => {
+    expect(onMoodleSite('https://www.youtube.com/watch?v=x', SITE)).toBe(false)
+    expect(onMoodleSite('https://cdn.moodle.example.ac.il/v.mp4', SITE)).toBe(false)
+    expect(onMoodleSite('http://moodle.example.ac.il/v.mp4', SITE)).toBe(false)
+    expect(onMoodleSite('https://moodle.example.ac.il:8443/v.mp4', SITE)).toBe(false)
+  })
+
+  it('is false with no configured site or an unparseable link', () => {
+    expect(onMoodleSite('https://moodle.example.ac.il/v.mp4', null)).toBe(false)
+    expect(onMoodleSite('https://moodle.example.ac.il/v.mp4', '')).toBe(false)
+    expect(onMoodleSite('moodle.example.ac.il/v.mp4', SITE)).toBe(false)
+    expect(onMoodleSite('', SITE)).toBe(false)
   })
 })

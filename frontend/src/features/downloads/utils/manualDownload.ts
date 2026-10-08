@@ -60,3 +60,14 @@ export function suggestManualName(
   })
   return suggestName(augmented, course, kind)
 }
+
+// Whether a pasted link is on the configured Moodle site — auto's own test (same origin), so the form
+// gates exactly the links auto routes through the Moodle lock. Unparseable or no site is not Moodle.
+export function onMoodleSite(url: string, site: string | null | undefined): boolean {
+  if (!site) return false
+  try {
+    return new URL(url.trim()).origin === new URL(site).origin
+  } catch {
+    return false
+  }
+}

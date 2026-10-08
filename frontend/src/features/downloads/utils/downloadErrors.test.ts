@@ -5,6 +5,8 @@ import {
   UnsupportedError,
 } from '@/features/downloads/services/autoDownloader'
 import { ConnectionError, MoodleBusyError, RequestError } from '@/services/http'
+import { serviceErrorText } from '@/shared/i18n/serviceErrors'
+import { failureOf } from '@/shared/utils/failure'
 import { expandErrorText, manualFailureHeadline, toastDownloadError } from './downloadErrors'
 
 // The toaster is the boundary under observation: what reaches it is the whole assertion.
@@ -114,5 +116,22 @@ describe('a busy Moodle lock', () => {
 
   it('leaves a playlist row without an error', () => {
     expect(expandErrorText(new MoodleBusyError('lock taken'))).toBeNull()
+  })
+})
+
+// The coded refusals `/download-url` forwards from auto for a Moodle-site link, as the manual form toasts them.
+describe('a manual download refused by auto', () => {
+  const URL_ = 'https://moodle.example.ac.il/mod/url/view.php?id=1'
+  it.each([
+    ['link_not_a_video', { source: 'link', url: URL_, ext: null }, `${URL_} is a web page`],
+    ['link_not_a_video', { source: 'link', url: URL_, ext: 'pdf' }, `${URL_} is a pdf file`],
+    ['link_dead', { url: URL_ }, `${URL_} no longer exists`],
+    ['link_probe_inconclusive', { url: URL_ }, `Could not tell what ${URL_} is`],
+    ['autodl_unreachable', { detail: 'HTTP 0' }, "isn't responding"],
+  ])('renders %s in its catalog sentence', (code, params, expected) => {
+    const failure = failureOf(new RequestError('english prose', code, params))
+    const text = serviceErrorText(failure)
+    expect(text).toContain(expected)
+    expect(text).not.toContain('english prose')
   })
 })
