@@ -64,7 +64,11 @@ def test_a_working_tool_reports_ok(bin_dir):
 
 def test_an_absent_tool_reports_missing(bin_dir):
     assert check_tools(["faketool"]) == {
-        "faketool": {"state": "missing", "params": {"tool": "faketool"}}
+        "faketool": {
+            "code": "tool_missing",
+            "state": "missing",
+            "params": {"tool": "faketool"},
+        }
     }
 
 
@@ -72,6 +76,7 @@ def test_a_failing_tool_reports_its_exit_code(bin_dir):
     write_tool("faketool", 3)
     assert check_tools(["faketool"]) == {
         "faketool": {
+            "code": "tool_exited",
             "state": "exited 3",
             "params": {"tool": "faketool", "exit_code": 3},
         }
@@ -83,14 +88,15 @@ def test_an_unusable_tool_carries_the_os_text_as_detail(bin_dir):
     # pins the param names, never the wording.
     Path(tool_path("faketool")).mkdir()
     result = check_tools(["faketool"])["faketool"]
+    assert result["code"] == "tool_unusable"
     assert result["params"]["tool"] == "faketool"
     assert result["params"]["detail"]
     assert result["state"] == f"unusable: {result['params']['detail']}"
 
 
-def test_a_failure_record_carries_only_state_and_params(bin_dir):
-    # Nothing resolves a machine code, so the record stays the two fields a consumer reads.
-    assert set(check_tools(["faketool"])["faketool"]) == {"state", "params"}
+def test_a_failure_record_carries_code_state_and_params(bin_dir):
+    # The frontend renders by `code`; `state` is the developer line, `params` the code's values.
+    assert set(check_tools(["faketool"])["faketool"]) == {"code", "state", "params"}
 
 
 def test_every_name_is_reported(bin_dir):

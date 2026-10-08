@@ -26,10 +26,10 @@ def tool_path(name: str) -> str:
     return str(Path(bin_dir) / f"{name}{_EXE_SUFFIX}")
 
 
-def _failure(state: str, **params) -> dict:
-    """One probe failure: the developer-facing reason plus the named values a render would need."""
+def _failure(code: str, state: str, **params) -> dict:
+    """One probe failure: the machine code, the developer-facing reason, and the code's params."""
 
-    return {"state": state, "params": params}
+    return {"code": code, "state": state, "params": params}
 
 
 def _check_one(name: str) -> str | dict:
@@ -42,12 +42,15 @@ def _check_one(name: str) -> str | dict:
             timeout=_VERSION_TIMEOUT_SECONDS,
         )
     except FileNotFoundError:
-        return _failure("missing", tool=name)
+        return _failure("tool_missing", "missing", tool=name)
     except OSError as e:  # a directory, a non-executable file, a bad interpreter
         detail = e.strerror or str(e)
-        return _failure(f"unusable: {detail}", tool=name, detail=detail)
+        return _failure(
+            "tool_unusable", f"unusable: {detail}", tool=name, detail=detail
+        )
     except subprocess.TimeoutExpired:
         return _failure(
+            "tool_timed_out",
             f"timed out after {_VERSION_TIMEOUT_SECONDS}s",
             tool=name,
             seconds=_VERSION_TIMEOUT_SECONDS,
@@ -55,6 +58,7 @@ def _check_one(name: str) -> str | dict:
     if run.returncode == 0:
         return "ok"
     return _failure(
+        "tool_exited",
         f"exited {run.returncode}",
         tool=name,
         exit_code=run.returncode,
@@ -62,7 +66,7 @@ def _check_one(name: str) -> str | dict:
 
 
 def check_tools(names) -> dict[str, str | dict]:
-    """Every name mapped to "ok" or a {state, params} record saying why it is not usable.
+    """Every name mapped to "ok" or a {code, state, params} record saying why it is not usable.
     Never raises: a missing tool disables one feature, so the caller reports it and keeps serving
     rather than refusing to start. Success stays the bare string, so `!= "ok"` keeps its meaning."""
 
