@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Plural, Trans, useLingui } from '@lingui/react/macro'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import Icon from '@/shared/components/Icon'
@@ -41,6 +41,20 @@ function takeGroups(groups: MatchGroup[], limit: number): MatchGroup[] {
     n += group.matches.length
   }
   return out
+}
+
+// The page's centered nothing-to-show card; `error` marks it with the danger palette, title unchanged.
+function EmptyCard({ error = false, children }: { error?: boolean; children: ReactNode }) {
+  return (
+    <div className="search-empty">
+      <div className={error ? 'empty-state search-empty-card--error' : 'empty-state'}>
+        <span className="empty-state-icon">
+          <Icon icon="search" />
+        </span>
+        <p className="empty-state-title">{children}</p>
+      </div>
+    </div>
+  )
 }
 
 // Client-side search over one course's summaries. See docs/SEARCH.md.
@@ -224,14 +238,14 @@ export default function SearchView() {
           </div>
 
           {noCourses && (
-            <div className="search-status">
+            <EmptyCard>
               <Trans>Add a course to search its summaries.</Trans>
-            </div>
+            </EmptyCard>
           )}
           {coursesFailed && (
-            <div className="search-status search-status--error">
+            <EmptyCard error>
               <Trans>Courses failed to load.</Trans>
-            </div>
+            </EmptyCard>
           )}
 
           {/* Only while a query is waiting on the corpus — switching course with an empty box is
@@ -259,16 +273,9 @@ export default function SearchView() {
           )}
 
           {searched && matches.length === 0 && (
-            <div className="search-empty">
-              <div className="empty-state">
-                <span className="empty-state-icon">
-                  <Icon icon="search" />
-                </span>
-                <p className="empty-state-title">
-                  <Trans>Nothing matched this search</Trans>
-                </p>
-              </div>
-            </div>
+            <EmptyCard>
+              <Trans>Nothing matched this search</Trans>
+            </EmptyCard>
           )}
 
           <div className="search-results">

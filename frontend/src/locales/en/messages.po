@@ -13,7 +13,7 @@ msgstr ""
 "Language-Team: \n"
 "Plural-Forms: \n"
 
-#: src/features/search/SearchView.tsx:256
+#: src/features/search/SearchView.tsx:270
 msgid " — showing {shownFindings}"
 msgstr " — showing {shownFindings}"
 
@@ -69,7 +69,7 @@ msgid "{0, plural, one {# recitation} other {# recitations}}"
 msgstr "{0, plural, one {# recitation} other {# recitations}}"
 
 #. placeholder {0}: matches.length
-#: src/features/search/SearchView.tsx:254
+#: src/features/search/SearchView.tsx:268
 msgid "{0, plural, one {# result} other {# results}}"
 msgstr "{0, plural, one {# result} other {# results}}"
 
@@ -197,7 +197,7 @@ msgstr "{leaves, plural, one {# item} other {# items}}"
 msgid "{lecture} already exists in {course}. Download again and overwrite?"
 msgstr "{lecture} already exists in {course}. Download again and overwrite?"
 
-#: src/features/search/SearchView.tsx:255
+#: src/features/search/SearchView.tsx:269
 msgid "{lectures, plural, one {in # lecture} other {in # lectures}}"
 msgstr "{lectures, plural, one {in # lecture} other {in # lectures}}"
 
@@ -337,7 +337,7 @@ msgstr "A section is waiting for a passcode"
 msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 msgstr "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
 
-#: src/features/search/SearchView.tsx:228
+#: src/features/search/SearchView.tsx:242
 msgid "Add a course to search its summaries."
 msgstr "Add a course to search its summaries."
 
@@ -701,7 +701,7 @@ msgid "Couldn't work out where to download this from. Try again."
 msgstr "Couldn't work out where to download this from. Try again."
 
 #: src/features/downloads/components/ManualDownload.tsx:186
-#: src/features/search/SearchView.tsx:182
+#: src/features/search/SearchView.tsx:196
 msgid "Course"
 msgstr "Course"
 
@@ -722,7 +722,7 @@ msgstr "Course overview"
 msgid "Course sources"
 msgstr "Course sources"
 
-#: src/features/search/SearchView.tsx:233
+#: src/features/search/SearchView.tsx:247
 msgid "Courses failed to load."
 msgstr "Courses failed to load."
 
@@ -1159,7 +1159,7 @@ msgstr "Lecture name"
 msgid "Lecture name…"
 msgstr "Lecture name…"
 
-#: src/features/search/SearchView.tsx:205
+#: src/features/search/SearchView.tsx:219
 #: src/shared/sidebar/Sidebar.tsx:75
 msgid "Lectures"
 msgstr "Lectures"
@@ -1186,7 +1186,7 @@ msgstr "Load recordings"
 msgid "Loaded"
 msgstr "Loaded"
 
-#: src/features/search/SearchView.tsx:241
+#: src/features/search/SearchView.tsx:255
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
@@ -1199,7 +1199,7 @@ msgstr "Loading…"
 msgid "Manual download"
 msgstr "Manual download"
 
-#: src/features/search/SearchView.tsx:220
+#: src/features/search/SearchView.tsx:234
 msgid "Match whole word"
 msgstr "Match whole word"
 
@@ -1350,7 +1350,7 @@ msgstr "Not queued"
 msgid "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 msgstr "Note: This deletes the lecture's audio, transcript, summary and PDF. Materials are kept."
 
-#: src/features/search/SearchView.tsx:268
+#: src/features/search/SearchView.tsx:277
 msgid "Nothing matched this search"
 msgstr "Nothing matched this search"
 
@@ -1530,7 +1530,7 @@ msgid "Recitation name…"
 msgstr "Recitation name…"
 
 #: src/features/lectures/sidebar/tree/RecitationsGroup.tsx:32
-#: src/features/search/SearchView.tsx:213
+#: src/features/search/SearchView.tsx:227
 msgid "Recitations"
 msgstr "Recitations"
 
@@ -1590,7 +1590,7 @@ msgstr "Restart now"
 msgid "Restore original"
 msgstr "Restore original"
 
-#: src/features/search/SearchView.tsx:249
+#: src/features/search/SearchView.tsx:263
 msgid "Results"
 msgstr "Results"
 
@@ -1667,15 +1667,15 @@ msgstr "Scroll to the end to confirm."
 msgid "Search"
 msgstr "Search"
 
-#: src/features/search/SearchView.tsx:148
+#: src/features/search/SearchView.tsx:162
 msgid "Search summaries"
 msgstr "Search summaries"
 
-#: src/features/search/SearchView.tsx:168
+#: src/features/search/SearchView.tsx:182
 msgid "Search this course's summaries…"
 msgstr "Search this course's summaries…"
 
-#: src/features/search/SearchView.tsx:151
+#: src/features/search/SearchView.tsx:165
 msgid "Searches the summaries of the course picked in the field"
 msgstr "Searches the summaries of the course picked in the field"
 
@@ -1710,7 +1710,7 @@ msgstr "Settings saved"
 msgid "Several rows would download into the same lecture ({names}). Rename them, then run again."
 msgstr "Several rows would download into the same lecture ({names}). Rename them, then run again."
 
-#: src/features/search/SearchView.tsx:298
+#: src/features/search/SearchView.tsx:305
 msgid "Show more"
 msgstr "Show more"
 
@@ -2195,7 +2195,7 @@ msgstr "When something fails, FastStudy sends a report to Sentry. It contains th
 msgid "Where to keep everything"
 msgstr "Where to keep everything"
 
-#: src/features/search/SearchView.tsx:222
+#: src/features/search/SearchView.tsx:236
 msgid "Whole word only"
 msgstr "Whole word only"
 

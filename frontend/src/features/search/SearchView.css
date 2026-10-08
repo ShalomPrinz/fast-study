@@ -122,6 +122,16 @@
   padding-block: var(--space-7);
 }
 
+/* Compound selector so it beats .empty-state's border whatever order the stylesheets load in. */
+.empty-state.search-empty-card--error {
+  border-color: var(--danger);
+}
+
+.search-empty-card--error .empty-state-icon {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 .search-results {
   display: flex;
   flex-direction: column;
