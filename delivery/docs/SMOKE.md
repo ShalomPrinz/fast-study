@@ -68,9 +68,10 @@ only `npx playwright test --list` works — it is never "passed" from WSL.
 
 Two boots are timed, never an extra launch: test 3's (the fresh install's first) and test 14's last
 step (the candidate's first after the update). `lib/bootTiming.js` writes them to
-`test-results/boot-timing.json` — `launch_to_app_ms` (`electron.launch` → `waitForApp` seeing
-`app://bundle`), `log_to_app_ms` (main's first `launch.log` line → that navigation) and each
-service's `ready_ms` from that first line, plus version, commit and run ids. Numbers only, since it
+`test-results/boot-timing.json` — `launch_to_app_ms` (`electron.launch` → main's `app loaded`
+`launch.log` line, the launcher's own mark of `app://bundle` finishing its load; same machine, same
+clock), `log_to_app_ms` (main's first `launch.log` line → that line) and each service's `ready_ms`
+from that first line, plus version, commit and run ids. Numbers only, since it
 becomes a public Release asset ([RELEASE.md](RELEASE.md#boot-timing)). Report only: no threshold, and a
 value it cannot read is `null` with a warning, never a failure.
 

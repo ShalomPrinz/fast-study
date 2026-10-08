@@ -13,7 +13,7 @@ const ASSUMPTION_ELECTRON =
  *  screenshot is readable, with `env` over the runner's. Answers `{ app, page, n, launchedAt }`; the trace records until `quit`. */
 export async function launch(env = {}) {
   const n = ++launches;
-  // Wall-clock marks for boot timing: this launch's start here, the navigation in `waitForApp`.
+  // Boot timing's start mark; the end is main's `app loaded` line in launch.log, on this same clock.
   const launchedAt = Date.now();
   let app;
   try {
@@ -59,7 +59,6 @@ export async function waitForApp(session) {
     const service = (await rows.count()) ? await rows.first().getAttribute('data-service') : '?';
     throw new Error(`boot failed on ${service}: ${await failed.textContent()} — see launch.log`);
   }
-  session.appAt = Date.now();
 }
 
 /** The bridge's service URLs and launch secret — how the suite reaches the services as the app does. */
