@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "start": "node src/index.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test --import ./test/stderrConsole.js test/*.test.js"
   },
   "dependencies": {
     "@faststudy/runtime": "file:../../lib/runtime/js",
