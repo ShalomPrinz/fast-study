@@ -59,15 +59,21 @@ A `ReconnectError` anywhere toasts a hint and bumps `reconnectKey`, the `key` on
 remounting re-runs the probe, since the cached status predates the 401. That is why the probe lives in
 the component, not the never-remounting provider. A `BlockedError` (the site's bot protection answering
 a burst with a captcha) is deliberately not that path: it says nothing about the token, so it toasts
-`blockedMessage()` and leaves the chip alone.
+`blockedMessage(challengeWindow)` and leaves the chip alone. `challengeWindow` (`challengeWindowOf`) is
+`'captcha'` (solve it in the window, then repeat), `'ready'` (just repeat), `false` (no browser could open:
+wait) or `null` (a path the window can't carry: the generic wait). The wording is `site_blocked`'s catalog
+row, a `select` on that param, so a job failure carrying it reads the same. Nothing retries or resumes by
+itself, a section run included.
 
 **Unverified is its own state.** `unverified: true` (a token kept after a bot challenge blocked the
 post-login check) is neither connected nor not: `accountView` (`utils/accountView.ts`, the one decision of
 chip and panel) gives it a `data-account="unverified"` warn chip with "I confirmed, try again" (the only
 button that finishes a login; it calls `/auth/complete`, which re-verifies the stored token) and
 Disconnect, and an inline `.account-panel` saying the university is checking, what to confirm and to press
-that button. The panel reads "a window opened" or "open the site in your browser" from the state's
-`site_blocked` error (`params.challengeWindow`), and a hedged line when it carries none. A refused
+that button. The panel reads "a window opened" (`'captcha'`), "the window passed the check" (`'ready'`) or
+"open the site in your browser" (`false`) from the state's `site_blocked` error, and a hedged line when it
+carries none. The pushed `challenge: { open, captcha }` corrects it live: a captcha on screen now is the
+window panel, and a recorded captcha the frame no longer shows reads as passed. A refused
 `/auth/complete` toasts from its own rejection (`BlockedError`, `UnsupportedError`; a 401 `reconnect` means
 the token is gone, so "sign in again"), and the outcome also arrives on the stream. The same component
 serves the first-run wall ([SETTINGS.md](SETTINGS.md)).
@@ -117,7 +123,7 @@ identity.
 
 `discover` sets `pending` (the row's `Loading…`) and promotes the course to `selected` only once
 `listRecordings` resolves, so every failure leaves the page as it was — the open course included — and
-toasts once: the reconnect hint, `blockedMessage()`, the client's connection toast, the service's reason for a
+toasts once: the reconnect hint, `blockedMessage(challengeWindow)`, the client's connection toast, the service's reason for a
 coded refusal, or a generic "couldn't load" line. Each discovery takes a ticket; `close` or
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.

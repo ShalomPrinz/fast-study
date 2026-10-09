@@ -5,7 +5,10 @@ import type { AuthStatus } from '../services/autoDownloader'
 const ok: AuthStatus = { connected: true, expired: false, phase: 'connected' }
 const pending: AuthStatus = { connected: false, expired: false, phase: 'pending' }
 const idle: AuthStatus = { connected: false, expired: false, phase: 'idle' }
-const blocked = (challengeWindow?: boolean): AuthStatus => ({
+const blocked = (
+  challengeWindow?: 'captcha' | 'ready' | false,
+  challenge?: AuthStatus['challenge'],
+): AuthStatus => ({
   connected: true,
   expired: false,
   unverified: true,
@@ -14,6 +17,7 @@ const blocked = (challengeWindow?: boolean): AuthStatus => ({
     code: 'site_blocked',
     params: { detail: 'x', challengeWindow: challengeWindow ?? null },
   },
+  ...(challenge ? { challenge } : {}),
 })
 
 describe('accountView', () => {
@@ -24,9 +28,28 @@ describe('accountView', () => {
     )
   })
 
-  it('words the panel by whether the service opened a challenge window', () => {
-    expect(accountView('idle', blocked(true)).panel).toBe('window')
+  it('words the panel by what the challenge window did', () => {
+    expect(accountView('idle', blocked('captcha')).panel).toBe('window')
+    expect(accountView('idle', blocked('ready')).panel).toBe('ready')
     expect(accountView('idle', blocked(false)).panel).toBe('own-browser')
+  })
+
+  it('follows the live challenge frame over the recorded block', () => {
+    expect(accountView('idle', blocked('captcha', { open: true, captcha: true })).panel).toBe(
+      'window',
+    )
+    expect(accountView('idle', blocked('captcha', { open: true, captcha: false })).panel).toBe(
+      'ready',
+    )
+    expect(accountView('idle', blocked('captcha', { open: false, captcha: false })).panel).toBe(
+      'ready',
+    )
+    expect(accountView('idle', blocked('ready', { open: true, captcha: true })).panel).toBe(
+      'window',
+    )
+    expect(accountView('idle', blocked(false, { open: false, captcha: false })).panel).toBe(
+      'own-browser',
+    )
   })
 
   it('shows a login running on the host from the pushed phase, even after a reload', () => {
@@ -52,7 +75,11 @@ describe('loginToast', () => {
       kind: 'failure',
       failure: expect.objectContaining({ code: 'moodle_login_abandoned' }),
     })
-    expect(loginToast(pending, blocked(true))).toEqual({ kind: 'blocked' })
+    expect(loginToast(pending, blocked('captcha'))).toEqual({
+      kind: 'blocked',
+      challengeWindow: 'captcha',
+    })
+    expect(loginToast(pending, blocked())).toEqual({ kind: 'blocked', challengeWindow: null })
     expect(loginToast(pending, failed('moodle_reconnect_required'))).toEqual({ kind: 'reconnect' })
   })
 

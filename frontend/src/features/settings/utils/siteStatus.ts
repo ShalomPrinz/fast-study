@@ -7,7 +7,7 @@ export type SiteStatus =
   | { kind: 'checking' }
   | { kind: 'supported'; site: string }
   | { kind: 'unsupported'; failure: ServiceFailure }
-  | { kind: 'unverified'; site: string }
+  | { kind: 'unverified'; site: string; captcha: boolean }
   | null
 
 // What a probe answer means for the field. An unverified answer keeps the probe's root, or failing
@@ -21,7 +21,7 @@ export function toSiteStatus(probe: SiteProbe, url: string): SiteStatus {
       failure: probe.failure ?? { message: 'This Moodle site cannot be used.' },
     }
   }
-  return { kind: 'unverified', site: probe.site ?? originOf(url) }
+  return { kind: 'unverified', site: probe.site ?? originOf(url), captcha: probe.captcha }
 }
 
 function originOf(url: string): string {

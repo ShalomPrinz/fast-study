@@ -28,6 +28,17 @@ export interface AuthStatus {
   unverified?: boolean
   // The global Moodle lock (a request, its 3 s cooldown, a login or an open challenge window); pushed only.
   moodleBusy?: boolean
+  // Block mode's challenge window: up, and on screen waiting for a captcha; pushed only.
+  challenge?: { open: boolean; captcha: boolean }
+}
+
+// What a `site_blocked` says about the challenge window: on screen with a captcha to solve, opened
+// hidden with its clearance still valid, unable to launch (`false`), or none for this path (`null`).
+export type ChallengeWindow = 'captcha' | 'ready' | false | null
+
+export function challengeWindowOf(params: ErrorParams | null | undefined): ChallengeWindow {
+  const value = params?.challengeWindow
+  return value === 'captcha' || value === 'ready' || value === false ? value : null
 }
 
 // Which file the item lands on disk as; the destination is derived server-side from `ref`.
@@ -86,9 +97,9 @@ export function isUnsupportedError(err: unknown): err is UnsupportedError {
 
 // 503 `blocked`: a transient bot-protection challenge, never a reconnect. The body's `message` is a
 // log line, so the UI writes its own copy (`utils/downloadErrors`).
-// `challengeWindow` is only on a refused `/auth/complete`: a browser is open on the site to solve it in.
+// `challengeWindow` is only on a block from a call the challenge window can carry (`ChallengeWindow`).
 export class BlockedError extends Error {
-  constructor(public challengeWindow: boolean | null = null) {
+  constructor(public challengeWindow: ChallengeWindow = null) {
     super('The site is refusing automated requests — bot-protection challenge.')
     this.name = 'BlockedError'
   }
@@ -137,9 +148,7 @@ export async function postReconnectAware<T>(
       )
     }
     if (res.status === 503 && data?.status === 'blocked')
-      throw new BlockedError(
-        typeof data.params?.challengeWindow === 'boolean' ? data.params.challengeWindow : null,
-      )
+      throw new BlockedError(challengeWindowOf(data.params))
     if (res.status === 409 && data?.status === 'passcode') {
       throw new PasscodeError(data.reason, { course: data.course, lecture: data.name })
     }

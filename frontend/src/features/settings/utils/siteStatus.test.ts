@@ -6,6 +6,7 @@ const SUPPORTED: SiteProbe = {
   status: 'supported',
   site: 'https://lemida.biu.ac.il',
   failure: null,
+  captcha: false,
 }
 const NOT_MOODLE: SiteProbe = {
   status: 'unsupported',
@@ -15,6 +16,7 @@ const NOT_MOODLE: SiteProbe = {
     code: 'moodle_site_unsupported',
     params: { site: 'https://example.com', reason: 'not_moodle' },
   },
+  captcha: false,
 }
 
 // A probe whose answers the test releases by hand, in any order.
@@ -45,12 +47,36 @@ describe('toSiteStatus', () => {
   })
 
   it('falls back to the typed origin when an unverified answer names no site', () => {
-    const unverified: SiteProbe = { status: 'unverified', site: null, failure: null }
+    const unverified: SiteProbe = {
+      status: 'unverified',
+      site: null,
+      failure: null,
+      captcha: false,
+    }
     expect(toSiteStatus(unverified, 'https://x.ac.il/moodle/course/view.php?id=3')).toEqual({
       kind: 'unverified',
       site: 'https://x.ac.il',
+      captcha: false,
     })
-    expect(toSiteStatus(unverified, 'not an address')).toEqual({ kind: 'unverified', site: '' })
+    expect(toSiteStatus(unverified, 'not an address')).toEqual({
+      kind: 'unverified',
+      site: '',
+      captcha: false,
+    })
+  })
+
+  it('keeps that a captcha waits in the challenge window', () => {
+    const blocked: SiteProbe = {
+      status: 'unverified',
+      site: 'https://x',
+      failure: null,
+      captcha: true,
+    }
+    expect(toSiteStatus(blocked, 'https://x')).toEqual({
+      kind: 'unverified',
+      site: 'https://x',
+      captcha: true,
+    })
   })
 })
 
@@ -66,12 +92,12 @@ describe('savableSite', () => {
 
   it('lets a supported or unverified site be saved', () => {
     expect(savableSite({ kind: 'supported', site: 'https://a' })).toBe('https://a')
-    expect(savableSite({ kind: 'unverified', site: 'https://b' })).toBe('https://b')
+    expect(savableSite({ kind: 'unverified', site: 'https://b', captcha: false })).toBe('https://b')
   })
 
   // `''` is the form's "no university", which clears the stored site — never what a probe means.
   it('holds the save on an unverified answer with no address to keep', () => {
-    expect(savableSite({ kind: 'unverified', site: '' })).toBeNull()
+    expect(savableSite({ kind: 'unverified', site: '', captcha: false })).toBeNull()
   })
 })
 

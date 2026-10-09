@@ -204,7 +204,28 @@ describe('probeMoodleSite', () => {
       status: 'unverified',
       site: 'https://x.ac.il',
       failure: null,
+      captcha: false,
     })
+  })
+
+  it('reads a captcha waiting in the challenge window off a blocked probe', async () => {
+    for (const [challengeWindow, captcha] of [
+      ['captcha', true],
+      ['ready', false],
+      [false, false],
+    ] as const) {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () =>
+          ok({
+            status: 'unverified',
+            site: 'https://x',
+            params: { detail: 'site_blocked', challengeWindow },
+          }),
+        ),
+      )
+      expect((await probeMoodleSite('https://x')).captcha).toBe(captcha)
+    }
   })
 
   it('reads a failed request as unverified, never unsupported', async () => {
@@ -218,6 +239,7 @@ describe('probeMoodleSite', () => {
       status: 'unverified',
       site: null,
       failure: null,
+      captcha: false,
     })
   })
 })

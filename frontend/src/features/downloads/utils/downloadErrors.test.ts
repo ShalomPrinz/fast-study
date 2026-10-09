@@ -7,7 +7,12 @@ import {
 import { ConnectionError, MoodleBusyError, RequestError } from '@/services/http'
 import { serviceErrorText } from '@/shared/i18n/serviceErrors'
 import { failureOf } from '@/shared/utils/failure'
-import { expandErrorText, manualFailureHeadline, toastDownloadError } from './downloadErrors'
+import {
+  blockedMessage,
+  expandErrorText,
+  manualFailureHeadline,
+  toastDownloadError,
+} from './downloadErrors'
 
 // The toaster is the boundary under observation: what reaches it is the whole assertion.
 // `vi.hoisted` because the mock factory is lifted above the imports it feeds.
@@ -26,6 +31,20 @@ describe('toastDownloadError', () => {
     toastDownloadError('Lecture 3', new BlockedError())
 
     expect(toast).toHaveBeenCalledWith('error', BLOCKED_COPY)
+  })
+
+  it('words a block by what the challenge window did, as a job failure carrying it reads', () => {
+    const values = ['captcha', 'ready', false, null] as const
+    const messages = values.map((challengeWindow) => blockedMessage(challengeWindow))
+    expect(new Set(messages).size).toBe(values.length)
+    expect(blockedMessage(null)).toBe(BLOCKED_COPY)
+    values.forEach((challengeWindow, i) => {
+      const failure = { message: 'x', code: 'site_blocked', params: { challengeWindow } }
+      expect(serviceErrorText(failure)).toBe(messages[i])
+    })
+
+    toastDownloadError('Lecture 3', new BlockedError('captcha'))
+    expect(toast).toHaveBeenCalledWith('error', blockedMessage('captcha'))
   })
 
   it('routes an unsupported source through the resolver, so its own code names it', () => {

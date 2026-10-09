@@ -295,10 +295,12 @@ export async function fetchBrowserPrereq(): Promise<BrowserPrereq> {
 
 // The pre-login check of a pasted address: `supported` carries the canonical root to store,
 // `unsupported` a coded reason, `unverified` anything short of a verdict (network, bot wall).
+// `captcha`: the bot wall opened a challenge window on screen waiting to be solved.
 export interface SiteProbe {
   status: 'supported' | 'unsupported' | 'unverified'
   site: string | null
   failure: ServiceFailure | null
+  captcha: boolean
 }
 
 /** Asks the auto-downloader whether `url` is a Moodle site FastStudy can use. A failed request is
@@ -323,10 +325,11 @@ export async function probeMoodleSite(url: string): Promise<SiteProbe> {
             params: raw.params ?? null,
           }
         : null,
+      captcha: raw.params?.challengeWindow === 'captcha',
     }
   } catch (err) {
     // A busy Moodle lock is no answer about the site; the caller waits it out and asks again.
     if (isMoodleBusyError(err)) throw err
-    return { status: 'unverified', site: null, failure: null }
+    return { status: 'unverified', site: null, failure: null, captcha: false }
   }
 }

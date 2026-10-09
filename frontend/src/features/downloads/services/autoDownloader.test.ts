@@ -48,18 +48,25 @@ describe('the blocked discriminator', () => {
     expect(isReconnectError(err)).toBe(false)
   })
 
-  it('carries whether a challenge window opened on a refused completion', async () => {
-    stubFetch(
-      withBody(503, {
-        status: 'blocked',
-        code: 'site_blocked',
-        params: { challengeWindow: false },
-      }),
-    )
-
-    const err = await completeAuth().catch((e) => e)
-
-    expect(isBlockedError(err) && err.challengeWindow).toBe(false)
+  it('carries what the challenge window did, on a completion or a listing alike', async () => {
+    for (const [sent, read] of [
+      ['captcha', 'captcha'],
+      ['ready', 'ready'],
+      [false, false],
+      [undefined, null],
+      [true, null],
+      ['other', null],
+    ] as const) {
+      const params = sent === undefined ? { detail: 'x' } : { challengeWindow: sent }
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async () => withBody(503, { status: 'blocked', code: 'site_blocked', params })),
+      )
+      const completed = await completeAuth().catch((e) => e)
+      expect(isBlockedError(completed) && completed.challengeWindow).toBe(read)
+      const listed = await listRecordings('https://lemida.example/course/1').catch((e) => e)
+      expect(isBlockedError(listed) && listed.challengeWindow).toBe(read)
+    }
   })
 
   it('leaves a 503 that is not the blocked body as a generic failure', async () => {

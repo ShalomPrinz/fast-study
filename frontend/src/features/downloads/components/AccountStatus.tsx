@@ -56,7 +56,7 @@ export default function AccountStatus() {
     if (toastKind?.kind === 'reconnect') {
       toast('error', t`The login didn't finish. Press Connect and sign in again.`)
     } else if (toastKind?.kind === 'blocked') {
-      toast('error', blockedMessage())
+      toast('error', blockedMessage(toastKind.challengeWindow))
     } else if (toastKind) {
       toast('error', serviceErrorNode(toastKind.failure))
     } else if (err !== undefined && !isMoodleBusyError(err)) {
@@ -217,6 +217,11 @@ function BlockedPanel({ panel }: { panel: AccountPanel }) {
           <Trans>
             A window opened on the university site. Confirm there that you are not a bot, then press
             “I confirmed, try again”.
+          </Trans>
+        )}
+        {panel === 'ready' && (
+          <Trans>
+            The window on the university site passed the check. Press “I confirmed, try again”.
           </Trans>
         )}
         {panel === 'own-browser' && (

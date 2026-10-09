@@ -120,7 +120,7 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.
         if (isBlockedError(err)) {
-          sendUpdateRef.current?.('error', blockedMessage())
+          sendUpdateRef.current?.('error', blockedMessage(err.challengeWindow))
           return
         }
         // A coded refusal says why in the service's words, led by the course name so it never reads

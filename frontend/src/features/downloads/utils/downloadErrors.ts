@@ -5,15 +5,21 @@ import {
   isBlockedError,
   isReconnectError,
   isUnsupportedError,
+  type ChallengeWindow,
 } from '@/features/downloads/services/autoDownloader'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
-import { serviceErrorText, type ServiceFailure } from '@/shared/i18n/serviceErrors'
+import {
+  resolveServiceError,
+  serviceErrorText,
+  type ServiceFailure,
+} from '@/shared/i18n/serviceErrors'
 import { failureOf } from '@/shared/utils/failure'
 
-// The one wording for a bot-protection challenge: it names the wait, never the account, so it does
-// not read as something reconnecting would fix.
-export function blockedMessage(): string {
-  return t`The university site is temporarily refusing automated requests. Wait a few minutes and try again.`
+// The one wording for a bot-protection challenge, `site_blocked`'s catalog row: the next step the
+// challenge window allows, never the account, so it does not read as something reconnecting would fix.
+export function blockedMessage(challengeWindow: ChallengeWindow): string {
+  return resolveServiceError({ message: '', code: 'site_blocked', params: { challengeWindow } })
+    .headline
 }
 
 // Why a Moodle button is disabled: another request holds the lock, which frees by itself.
@@ -42,7 +48,9 @@ export function toastDownloadError(name: string, err?: unknown): void {
   }
   toast(
     'error',
-    isBlockedError(err) ? blockedMessage() : t`Couldn't download "${name}". Try again.`,
+    isBlockedError(err)
+      ? blockedMessage(err.challengeWindow)
+      : t`Couldn't download "${name}". Try again.`,
   )
 }
 
@@ -82,6 +90,6 @@ export function manualFailureHeadline(failure: ServiceFailure): string | undefin
 // in the service's reason, a bot challenge as the wait; null leaves it to the generic funnel.
 export function loginFailure(err: unknown): ServiceFailure | string | null {
   if (isUnsupportedError(err)) return err
-  if (isBlockedError(err)) return blockedMessage()
+  if (isBlockedError(err)) return blockedMessage(err.challengeWindow)
   return null
 }
