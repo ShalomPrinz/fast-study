@@ -18,9 +18,9 @@ context's work ends (`finally`, so a throw, an aborted stream or a cancelled log
 
 | Call site                                   | What it reaches                                      |
 | ------------------------------------------- | ---------------------------------------------------- |
-| `wsClient.js` `moodleFetch`                 | every WS call (`callWs`), `getPublicConfig`, `assertPluginfileReadable`, `openPluginfile` |
+| `wsClient.js` `moodleFetch`                 | every WS call (`callWs`), `getPublicConfig`, `assertPluginfileReadable`, `openPluginfile`, `openMoodleFile` — from Node, or in block mode from the challenge window's page (never `openMoodleFile`) ([MOODLE.md](MOODLE.md#the-rest-api)) |
 | `moodleToken.js` `_openLogin`               | the headed `launch.php` login window                 |
-| `moodleToken.js` `_openChallenge`           | the headed challenge window on the site root         |
+| `challenge.js` `land`                       | the challenge window loading the site root           |
 | `http/server.js` `ensureAutologin`          | the autologin navigation of the plain session        |
 | `VideostreamExtractor._captureVideo`        | the module's view page                               |
 | `lib/probeUrl.js` `fetchFollowing`          | any hop of a link probe on the Moodle host — redirects are followed by hand so an off-site link that lands there is caught too |
@@ -49,9 +49,17 @@ hangs up leaves the queue.
 - **Login.** `connect()` takes a lease before the window opens and releases it when `_drive` ends —
   token, failure, timeout or abandon — or at once on `disconnect()`. The user's clicks inside the
   window are not gated; they happen under this lease.
-- **Challenge window.** While it is open, it holds the lock, so nothing automated reaches a site that
-  is challenging us. `complete()` verifies as the window's request (`lease.run`), and a new `connect()`
-  takes the window's hold over; closing the window, success or `disconnect()` releases it.
+- **Captcha.** While block mode's window shows a captcha, the request that opened it holds an
+  **admitting** lease (`hold(target, { admit: true })`): queued callers (`server/`'s, a section run's
+  rows) wait, but one button press at a time runs on top of it — the user's retry, whatever route it
+  is (`/auth/complete`, `/list`, `/resolve`, a new `connect()`). `moodleBusy` reads false while only
+  that lease holds the lock, so the frontend's buttons stay live. The retry keeps the lock until it
+  ends. The page landing back on the site (the user solved it) or the first call through the window
+  that passes releases the lease, so a retry that never reaches Moodle (a replay-cache hit) cannot
+  strand the queue; the lock then cools down as usual. A captcha raised again during a retry puts its
+  lease on the lock's owner, never on the retry, so the next retry is still admitted. A window that lands straight on the site holds nothing beyond its navigation, and
+  every call through it takes the lock and its 3s cooldown like a Node call: a burst from the browser
+  could get the browser itself challenged. Closing the window releases the lease too.
 
 ## Files
 

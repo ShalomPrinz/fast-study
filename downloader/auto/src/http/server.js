@@ -7,7 +7,13 @@ import {
   resolveExtractorForRecording,
   reachesMoodle,
 } from '../core/registry.js';
-import { normalizeSite } from '../moodle/site.js';
+import { normalizeSite, currentSite } from '../moodle/site.js';
+import {
+  reportBlock,
+  openChallenge,
+  challengeState,
+  challengeEvents,
+} from '../moodle/challenge.js';
 import { probeSite } from '../moodle/probe.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
 import { setReporting } from '@faststudy/sentry';
@@ -129,9 +135,11 @@ export function sendUnsupported(res, err) {
   });
 }
 
-// Distinct "the site served a bot-protection challenge" signal, so the page can say to wait.
-// 503: the site is refusing us for now; nothing about the request is wrong.
-function sendBlocked(res, err) {
+// Distinct "the site served a bot-protection challenge" signal. 503: the site is refusing us for
+// now; nothing about the request is wrong. Block mode goes on first, so `params.challengeWindow`
+// says whether a captcha waits on screen (docs/MOODLE.md § Bot protection).
+async function sendBlocked(res, err) {
+  await reportBlock(err, currentSite());
   send(res, 503, { status: 'blocked', message: err.message, code: err.code, params: err.params });
 }
 
@@ -241,6 +249,10 @@ export const handleSiteProbe = gated('/site/probe', async (req, res) => {
   logReq('POST', '/site/probe', url);
   const result = typeof url === 'string' ? await probeSite(url) : null;
   if (!result) return send(res, 400, invalid('url', 'a site URL is required'));
+  // A wall on the probe turns block mode on for the site it was asking, as any 503 does.
+  if (result.status === 'unverified' && result.params.detail === 'site_blocked') {
+    result.params.challengeWindow = await openChallenge(result.site);
+  }
   logResult(
     '/site/probe',
     `${result.status}${result.params?.reason ? ` (${result.params.reason})` : ''}`,
@@ -268,13 +280,17 @@ export function handleAuthEvents(req, res) {
     Connection: 'keep-alive',
   });
   res.flushHeaders();
-  const push = () =>
-    res.write(`data: ${JSON.stringify({ ...authState(), moodleBusy: moodleGate.busy() })}\n\n`);
+  const push = () => {
+    const frame = { ...authState(), moodleBusy: moodleGate.busy(), challenge: challengeState() };
+    res.write(`data: ${JSON.stringify(frame)}\n\n`);
+  };
   authEvents.on('change', push);
   moodleGate.on('change', push);
+  challengeEvents.on('change', push);
   req.on('close', () => {
     authEvents.off('change', push);
     moodleGate.off('change', push);
+    challengeEvents.off('change', push);
   });
   push();
 }
@@ -307,7 +323,7 @@ async function tokenOr(res, auth, route) {
       sendUnsupported(res, e);
     } else if (blocked(e)) {
       logResult(route, `blocked (503): ${e.message}`);
-      sendBlocked(res, e);
+      await sendBlocked(res, e);
     } else throw e;
   }
   return null;

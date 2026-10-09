@@ -355,7 +355,8 @@ test('503 carries what the site served instead of an answer', async (t) => {
   assert.equal(res.body.status, 'blocked');
   assert.deepEqual(
     { code: res.body.code, params: res.body.params },
-    { code: 'site_blocked', params: { detail: 'HTTP 200, text/html' } },
+    // No browser could launch here, so block mode reports no window.
+    { code: 'site_blocked', params: { detail: 'HTTP 200, text/html', challengeWindow: false } },
   );
 });
 

@@ -8,6 +8,7 @@ import { UnsupportedError, failureOf } from './src/lib/errors.js';
 import { serve, requireSecret } from '@faststudy/runtime';
 import { checkTools } from '@faststudy/tools';
 import { closeAllSessions } from './src/browser/browserSession.js';
+import { closeChallenge } from './src/moodle/challenge.js';
 import {
   sendUnsupported,
   handleConfig,
@@ -82,11 +83,11 @@ app.use((err, req, res, _next) => {
   res.status(500).json(failureOf(err));
 });
 
-// Close every session (and the managed Xvfb) on shutdown so no browser or virtual
-// display is orphaned.
+// Close every session, the challenge window (and the managed Xvfb) on shutdown so no browser or
+// virtual display is orphaned.
 for (const sig of ['SIGINT', 'SIGTERM']) {
   process.on(sig, () => {
-    closeAllSessions().finally(() => process.exit(0));
+    Promise.allSettled([closeAllSessions(), closeChallenge()]).finally(() => process.exit(0));
   });
 }
 

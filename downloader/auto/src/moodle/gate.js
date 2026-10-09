@@ -44,9 +44,14 @@ export class MoodleGate extends EventEmitter {
     this._lastBusy = false;
   }
 
-  /** Locked: a request holds it, or its cooldown has not elapsed. */
+  /** Locked: a request holds it, or its cooldown has not elapsed — unless it is admitting a retry. */
   busy() {
-    return this._owner !== null || this._cooling;
+    return this._cooling || (this._owner !== null && !this._admitting());
+  }
+
+  // The owner holds an admitting lease (a captcha on screen) and no retry is running on it.
+  _admitting() {
+    return this._owner !== null && this._owner.admits > 0 && !this._owner.guest;
   }
 
   /**
@@ -55,7 +60,16 @@ export class MoodleGate extends EventEmitter {
    * settles and every lease it took is released.
    */
   run({ wait = false, signal } = {}, fn) {
-    const ticket = { wait, signal, acquired: false, holds: 1, closed: false };
+    // `admits`: admitting leases on it; `guest`: the retry running on it; `host`: the one it runs on.
+    const ticket = {
+      wait,
+      signal,
+      acquired: false,
+      holds: 1,
+      closed: false,
+      admits: 0,
+      guest: null,
+    };
     return this._als.run(ticket, async () => {
       try {
         return await fn();
@@ -73,7 +87,8 @@ export class MoodleGate extends EventEmitter {
       throw new UngatedMoodleCallError(target);
     }
     if (ticket.acquired) return;
-    if (!this.busy()) return this._grant(ticket);
+    if (this._owner === null && !this._cooling) return this._grant(ticket);
+    if (!ticket.wait && this._admitting()) return this._admit(ticket);
     if (!ticket.wait) throw new MoodleBusyError();
     ticket.signal?.throwIfAborted();
     await new Promise((resolve, reject) => {
@@ -94,18 +109,28 @@ export class MoodleGate extends EventEmitter {
 
   /**
    * Keep the current request's lock past its own end (a login, a challenge window) until the lease
-   * is released. `lease.run(fn)` runs `fn` as that same request, so its calls reuse the lock.
+   * is released. `lease.run(fn)` runs `fn` as that same request, so its calls reuse the lock. With
+   * `admit`, the lock lets one button press at a time run on top of it: the user's retry after a captcha.
    */
-  async hold(target = 'moodle hold') {
+  async hold(target = 'moodle hold', { admit = false } = {}) {
     await this.enter(target);
     const ticket = this._als.getStore();
-    ticket.holds++;
+    // An admitting lease taken during a retry sits on the lock's owner, never on the retry, so the
+    // retry still ends and the next one is admitted.
+    const holder = admit ? (ticket.host ?? ticket) : ticket;
+    holder.holds++;
+    if (admit) {
+      holder.admits++;
+      this._publish();
+    }
     let released = false;
     return {
       release: () => {
         if (released) return;
         released = true;
-        this._drop(ticket);
+        if (admit) holder.admits--;
+        this._publish();
+        this._drop(holder);
       },
       run: (fn) => this._als.run(ticket, fn),
     };
@@ -117,11 +142,27 @@ export class MoodleGate extends EventEmitter {
     this._publish();
   }
 
+  // A button press run on top of an admitting owner: it keeps the owner held until it ends.
+  _admit(ticket) {
+    ticket.acquired = true;
+    ticket.host = this._owner;
+    this._owner.holds++;
+    this._owner.guest = ticket;
+    this._publish();
+  }
+
   _drop(ticket) {
     if (--ticket.holds > 0) return;
     ticket.closed = true;
     if (!ticket.acquired) return;
     ticket.acquired = false;
+    const host = ticket.host;
+    if (host) {
+      ticket.host = null;
+      if (host.guest === ticket) host.guest = null;
+      this._publish();
+      return this._drop(host);
+    }
     this._owner = null;
     this._cooling = true;
     const free = () => {

@@ -42,7 +42,8 @@ call came back as a Moodle exception envelope) or `maintenance` (retry later). `
 _every_ root to have answered without Moodle JSON — a `404`/`405`/`410` page, or JSON of another
 shape. A bot wall (a `200` HTML page, a `403`), a timeout or a network failure on any
 root makes that unprovable, so the answer is `unverified` with `params.detail` `site_blocked`,
-`timeout` or `network`: a challenge must never read as "not Moodle". A non-Moodle server that answers
+`timeout` or `network`: a challenge must never read as "not Moodle". A `site_blocked` answer turns
+block mode on for that root and carries `params.challengeWindow` as a 503 does ([below](#the-rest-api)). A non-Moodle server that answers
 every path with a `200` HTML page therefore also reads `unverified`, and the post-login check is its
 backstop.
 
@@ -96,9 +97,10 @@ only autologin.
 ## The REST API
 
 Every call goes to `{site}/webservice/rest/server.php?wstoken=…&moodlewsrestformat=json&wsfunction=<fn>`,
-GET with params in the query — except `tool_mobile_get_autologin_key` (below). Every call sends
-`User-Agent: MoodleMobile 4.4.0 (44000)`: Moodle gates app-only functions on
-`core_useragent::is_moodle_app()`, which substring-matches `MoodleMobile` in the UA.
+GET with params in the query — except `tool_mobile_get_autologin_key` (below). Every call from Node
+sends `User-Agent: MoodleMobile 4.4.0 (44000)`: Moodle gates app-only functions on
+`core_useragent::is_moodle_app()`, which substring-matches `MoodleMobile` in the UA. In block mode
+(below) calls carry the browser's own UA instead; every function this package calls works with it.
 
 **Error shape.** A _failed_ call — a dead token included — answers **HTTP 200** with
 `{ exception, errorcode, message }`, never an HTTP error. `callWs` throws a `WsError` carrying
@@ -106,18 +108,46 @@ GET with params in the query — except `tool_mobile_get_autologin_key` (below).
 "Reconnect" signal. Any other errorcode is a real fault.
 
 **Bot protection.** A site may sit behind a bot manager; BIU's `lemida.biu.ac.il` is behind Radware
-Bot Manager, and the rest of this paragraph is its behaviour. When it decides a client is
-automated — a burst of calls is enough — `server.php` stops speaking the WS protocol for minutes: it
-serves a captcha page (**HTTP 200, `text/html`**, ~15 KB, `__uzma`…`__uzmd` cookies) or a **302** to
-one, for any client and any UA. So `callWs` checks status and content-type _before_ parsing and throws
-`WsBlockedError` (`blocked(err)`); parsing first would report only `SyntaxError: Unexpected token '<'`,
-naming the symptom and hiding the cause. `/list` and `/resolve` map it to `503 {status:'blocked'}`,
-code `site_blocked` with the shape it served as `detail` —
-no retry and no throttling: the wait is minutes long, and retrying is what deepens the block. It never
-marks the token expired or deletes it, so the UI must not steer to Reconnect on it; at login the
-token is kept and a headed window on the site root lets the user solve the challenge
-([AUTH.md](AUTH.md#connect--events--complete--status--disconnect)). This is also why no change is
-ever verified by a live request to any university's site.
+Bot Manager, and the rest of this paragraph is its behaviour ([evidence below](#bot-protection-what-was-learned)).
+When it decides a client is automated — a burst of calls is enough — `server.php` stops speaking the
+WS protocol for well over 15 minutes: it serves a captcha page (**HTTP 200, `text/html`**) or a **302**
+to one, to every non-browser client whatever UA or cookies it sends. So `callWs` checks status and
+content-type _before_ parsing and throws `WsBlockedError` (`blocked(err)`); parsing first would report
+only `SyntaxError: Unexpected token '<'`. Every route maps it to `503 {status:'blocked'}`, code
+`site_blocked` with the shape it served as `detail` — no retry, no throttling, never marking the token
+expired. This is also why no change is ever verified by a live request to any university's site.
+
+**Block mode** (`src/moodle/challenge.js`). The clearance a human earns by solving the captcha belongs
+to the browser that solved it and cannot be copied to Node, so during a block the only calls that pass
+are made from inside that browser:
+
+- **On.** The first `site_blocked` from a routed call (below) — through `sendBlocked`, the login's
+  verification or a `site_blocked` probe — opens one headed persistent Chrome on `statePath('moodle-profile')` — the
+  `launchBrowser` channel chain, no UA override, always launched with
+  `--window-position=-32000,-32000` — and loads the site root. Landing on the site means the profile's
+  clearance still holds: it stays off-screen and the 503's `params.challengeWindow` is `'ready'` (repeat
+  the action). Landing anywhere else is the captcha: the window moves on screen (CDP
+  `Browser.setWindowBounds`), comes to the front, holds the Moodle lock for the user's retry
+  ([GATE.md](GATE.md#holds-that-outlive-the-request)) and the 503 says `'captcha'`. `false`: no browser
+  could launch. A block while it is up reuses it (Chrome locks the profile, so a second launch would
+  fail), reloading its root when the page itself was challenged.
+- **The route.** While it is open, `moodleFetch` sends every call on its site — WS calls, the public
+  config, the pluginfile preflight and stream — as a page `fetch` (`redirect:'manual'`,
+  `credentials:'include'`, `cache:'no-store'`, no `User-Agent`, `Range` passed through, form bodies
+  serialized) and rebuilds a Node `Response`, so the wall checks run unchanged: the page's unreadable
+  `opaqueredirect` reads as a 302, and the body crosses back in 4 MB base64 slices. A page still on
+  the captcha sends nothing and throws `WsBlockedError`. The page landing back on the site (the
+  solve), or the first call through it that is not wall-shaped, moves the window back off-screen
+  and lets the lock go. A window closed mid-call fails that call as an unrouted `site_blocked`
+  (no window reopens; the user's repeat goes out on Node). Not routed, so still
+  `site_blocked` during a block: the videostream capture and its autologin navigation (headless),
+  `openMoodleFile` (it replays captured cookies, which a page cannot set) and `lib/probeUrl.js`. A
+  block there opens no window and its 503 carries no `challengeWindow` (`WsBlockedError.routed` is
+  false; `reportBlock` skips it).
+- **Off.** Block mode ends when the browser closes: the user closing it, `disconnect()` (which then
+  deletes the profile), a new `connect()`, or 10 minutes with no call through it. The next call goes
+  out on Node again; if it is blocked the window reopens, usually hidden with no new captcha.
+- `/auth/events` carries `challenge: { open, captcha }` ([AUTH.md](AUTH.md#connect--events--complete--status--disconnect)).
 
 ### `core_webservice_get_site_info`
 
@@ -161,7 +191,7 @@ the size `HEAD` answers. `openPluginfile` applies the same checks when the strea
   PDF → an HTML (or redirected) answer is `WsBlockedError`. Keying on HTML is safe because only files
   the WS declared `application/pdf` are routed here (`MoodleFileExtractor.canHandle`).
 
-## Autologin (the only browser use besides zoom)
+## Autologin
 
 A `videostream` `.mp4` is short-lived and token-gated _in the page_, so it still has to be sniffed in a
 logged-in browser — but instead of keeping a cookie session, the `privatetoken` mints a one-shot
@@ -177,6 +207,73 @@ navigate to module.url and sniff the .mp4
 
 Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**; the
 cookie's freshness is cached ~20 min so back-to-back downloads don't trip the limit ([AUTH.md](AUTH.md)).
+
+## Bot protection: what was learned
+
+Two diagnostic runs on Windows (2026-10-09) against BIU, with the block active throughout. The scripts
+live outside the repo, on the user's machine: `C:\Users\shalo\fast_study\radware\` (run 1) and
+`…\radware-window\` (run 2 and the flag check); reuse them if a live check is ever needed again.
+
+**How BIU's Radware behaves.** A blocked request gets a 302 to `validate.perfdrive.com/<id>/?ssa=…` or
+a 200 `text/html` captcha page; the challenge is an interactive hCaptcha. Cookies: `__uzma` (visitor
+id), `__uzmb` (first seen), `__uzmc` (request counter), `__uzmd` (last access), `__uzme`, `__uzmf`,
+`uzmx`, plus `__ssds`, `__ssuzjsr0` and `…j0` variants after a solve — 10-year cookies bound to neither
+IP nor UA; the verdict lives in Radware's cloud, keyed to visitor id, UA and IP (ShieldSquare's own
+connector, `shieldsquare-connectors` `classes/ShieldSquare/API.php`). A burst of automated calls
+triggers a block that outlasts 15 minutes (Node stayed blocked through 14-minute runs three times the
+same day). Every non-browser client is blocked whatever it sends; the user's normal browser and the
+solved window are not, so the block is not per-IP.
+
+**Run 1 — where clearance works** (60 s between calls):
+
+| Call                                                                         | Result                    |
+| ---------------------------------------------------------------------------- | ------------------------- |
+| Node 24.20.0 `fetch`, MoodleMobile UA, no cookies (control ×3)               | BLOCKED 302               |
+| page `fetch` inside the headed Chrome where the user solved, browser's UA    | **PASS**                  |
+| same page `fetch`, UA overridden to MoodleMobile via CDP                     | BLOCKED (opaqueredirect)  |
+| Playwright `context.request` (Node TLS + the browser's live cookies), MM UA  | BLOCKED 302               |
+| Node and Electron-as-Node, solved cookies + MM UA, or + browser UA, or none  | BLOCKED 302 (all)         |
+| headed Chrome relaunched on the same persistent profile, page fetch          | **PASS**                  |
+| headless Chrome relaunched on the same profile (`HeadlessChrome` UA)         | BLOCKED                   |
+
+So clearance only works inside the browser: what Node cannot copy is its TLS/HTTP fingerprint or other
+state, and `context.request` / `APIRequestContext` sends through Node's `https` sharing only the cookie
+jar — never use it as the route. It is tied to the browser's own UA (a page fetch cannot set one anyway:
+Chrome drops it). System Node and Electron's Node get the same verdicts, so dev predicts the packaged
+app. It survives a headed relaunch on the same profile (`MoodleSessionprod` is dropped, the `__uzm*`
+clearance kept); headless never passes.
+
+**Run 2 — window state** (Chrome 154 via `launchPersistentContext`, headed, `viewport:null`):
+
+| Step                                                                     | Bounds (CDP)                 | Result   |
+| ------------------------------------------------------------------------ | ---------------------------- | -------- |
+| page fetch, visible, after the solve                                     | `normal@350,31`              | **PASS** |
+| page fetch, minimized via `setWindowBounds {windowState:'minimized'}`    | `minimized`                  | **PASS** |
+| page fetch, moved to `{left:-32000, top:-32000}`                         | `normal@-13107,-13107`       | **PASS** |
+| user clicks the taskbar icon, then a fetch                               | stays `normal@-13107,-13107` | **PASS** |
+| user closes the window; next call from Node                              | —                            | BLOCKED  |
+| relaunch on the same profile, root navigation                            | lands on the site, no captcha | **PASS** |
+| page fetch in the relaunch, then again off-screen                        | `-1022,0`, then `-13107`     | **PASS** |
+
+**Launch-flag check** (`about:blank` only), relaunching a profile whose saved position is…
+
+| Saved position      | Relaunch args                     | Relaunch bounds          | On screen?               |
+| ------------------- | --------------------------------- | ------------------------ | ------------------------ |
+| off-screen (-13107) | `--window-position=-32000,-32000` | `normal@-13107,-13107`   | no, and no flash         |
+| on-screen (100,100) | `--window-position=-32000,-32000` | `normal@-13107,-13107`   | no                       |
+| off-screen (-13107) | none                              | `normal@-1021,0` (w 1052) | **yes, a ~31 px strip** |
+
+A minimized or off-screen window keeps passing (the page reports `visibilityState=visible` and
+`hasFocus()=true` throughout, likely Playwright's focus emulation). Off-screen beats minimized: a
+taskbar click restores a minimized window but leaves an off-screen one where it is. Chrome clamps
+every off-screen request to -13107, which is still far off-screen. `--window-position` wins over the
+profile's saved position, while without it Chrome pulls a saved off-screen window back to a visible
+strip, hence the flag on every launch. A closed window reopened on the profile needs no new captcha
+while the clearance lasts.
+
+**History.** On 2026-09-07 the app worked again some time after the user solved a captcha in a WSL
+browser; nothing committed then touched the WS transport, so the block most likely expired by itself.
+An uncommitted attempt that routed every WS call through a Chrome page parked on the site was dropped.
 
 ## Constraints
 

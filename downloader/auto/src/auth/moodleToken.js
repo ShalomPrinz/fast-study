@@ -6,6 +6,7 @@ import { readTokenFile, writeTokenFile } from './tokenStore.js';
 import { CodedError, UnsupportedError, failureOf } from '../lib/errors.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
 import { moodleGate, enterMoodle, gateError } from '../moodle/gate.js';
+import { reportBlock, closeChallenge } from '../moodle/challenge.js';
 
 const SERVICE = 'moodle_mobile_app';
 const URLSCHEME = 'moodlemobile';
@@ -67,9 +68,6 @@ export class MoodleToken extends AuthProvider {
     // Runtime "known invalid" flag: set by a caller when wsClient.invalidToken fires (a
     // server-side token kill the token file can't reveal), cleared by the next complete().
     this._invalidated = false;
-    // `{ browser, lease }`: the headed window opened on the site root for the user to solve a
-    // bot-protection challenge, and its hold on the Moodle lock (docs/GATE.md).
-    this._challenge = null;
     // The running login's hold on the Moodle lock; disconnect() drops it without waiting for the run.
     this._loginLease = null;
     // The in-flight verification, shared so concurrent callers make one site-info call.
@@ -129,7 +127,8 @@ export class MoodleToken extends AuthProvider {
 
   /**
    * Forget the token locally: delete the file (ENOENT is success — already disconnected), clear the
-   * runtime invalidated flag so a reconnect starts clean, and close any headed login left in flight.
+   * runtime invalidated flag so a reconnect starts clean, and close any headed login left in flight
+   * and the challenge window, deleting its profile.
    * Deliberately no server-side revoke: it could fail after the local delete and desync the two.
    */
   async disconnect() {
@@ -140,7 +139,7 @@ export class MoodleToken extends AuthProvider {
     this._error = null;
     this._loginLease?.release();
     this._loginLease = null;
-    await this._closeChallenge();
+    await closeChallenge({ forget: true });
     const pending = this._pending;
     this._pending = null;
     if (pending) await pending.browser.close().catch(() => {});
@@ -157,12 +156,10 @@ export class MoodleToken extends AuthProvider {
     const gen = ++this._gen;
     this._driving = true;
     // The login holds the Moodle lock from here to its end (a busy lock throws moodle_busy before
-    // any window opens); one started from an open challenge window takes over that window's hold.
+    // any window opens); one started while a captcha is on screen runs as its admitted retry.
     let lease;
     try {
-      lease = await (this._challenge
-        ? this._challenge.lease.run(() => moodleGate.hold('login'))
-        : moodleGate.hold('login'));
+      lease = await moodleGate.hold('login');
     } catch (err) {
       if (gen === this._gen) this._driving = false;
       throw err;
@@ -170,7 +167,8 @@ export class MoodleToken extends AuthProvider {
     // A disconnect or site switch while waiting superseded this login.
     if (gen !== this._gen) return lease.release();
     this._error = null;
-    await this._closeChallenge();
+    // A new login ends block mode; the window's profile, and its clearance, is kept.
+    await closeChallenge();
     let pending;
     try {
       pending = await lease.run(() => this._openLogin());
@@ -312,8 +310,6 @@ export class MoodleToken extends AuthProvider {
     if (!this.status().unverified) {
       throw new CodedError('moodle_login_not_pending', {}, 'no unverified token to verify');
     }
-    // An open challenge window holds the lock, and verifying is how it ends: run as its request.
-    if (this._challenge) return this._challenge.lease.run(() => this._verifyReporting());
     return this._verifyReporting();
   }
 
@@ -365,7 +361,7 @@ export class MoodleToken extends AuthProvider {
   // outcome is known. Deletes the stored file only for a not-good-token answer (invalidtoken or a
   // refused site) on the stored token: a refused candidate leaves the existing token untouched.
   // A candidate replaces the file when verified, or unverified on a block, timeout or network
-  // failure (nothing says it is bad, and re-capturing costs an MFA); a block opens the challenge window.
+  // failure (nothing says it is bad, and re-capturing costs an MFA); a block turns block mode on.
   async _verifyOnce(candidate = null, gen = this._gen) {
     const tok = candidate ?? this.loadToken();
     if (!tok) throw new CodedError('moodle_login_not_pending', {}, 'no token to verify');
@@ -383,9 +379,7 @@ export class MoodleToken extends AuthProvider {
       } else if (refused) {
         fs.rmSync(this.tokenPath, { force: true });
       }
-      if (blocked(err) && (!candidate || gen === this._gen)) {
-        err.params = { ...err.params, challengeWindow: await this._openChallenge() };
-      }
+      if (blocked(err) && (!candidate || gen === this._gen)) await reportBlock(err, this.site);
       throw err;
     }
     // A disconnect or a newer login while the call was out wins over this result.
@@ -394,44 +388,7 @@ export class MoodleToken extends AuthProvider {
     delete record.unverified;
     writeTokenFile(this.tokenPath, record);
     this._invalidated = false;
-    await this._closeChallenge();
     return record;
-  }
-
-  // Headed browser on the site root so the bot manager shows its challenge to a human; reused while
-  // open. Returns whether a window is up (false when no browser could be launched).
-  // The window holds the Moodle lock until it closes, so nothing automated reaches the site while
-  // the user is solving its challenge.
-  async _openChallenge() {
-    if (this._challenge) return true;
-    const lease = await moodleGate.hold('challenge window');
-    let browser;
-    try {
-      browser = await this._launch({ headless: false });
-      const page = await (await browser.newContext()).newPage();
-      const challenge = { browser, lease };
-      this._challenge = challenge;
-      browser.on('disconnected', () => {
-        if (this._challenge === challenge) this._challenge = null;
-        lease.release();
-      });
-      await enterMoodle(this.site);
-      await page.goto(this.site, { waitUntil: 'load' }).catch(() => {});
-      return true;
-    } catch {
-      await browser?.close().catch(() => {});
-      this._challenge = null;
-      lease.release();
-      return false;
-    }
-  }
-
-  async _closeChallenge() {
-    const challenge = this._challenge;
-    this._challenge = null;
-    if (!challenge) return;
-    await challenge.browser.close().catch(() => {});
-    challenge.lease.release();
   }
 
   // The post-login check: refuse a site whose token service can't list a course or serve its

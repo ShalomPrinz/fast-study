@@ -9,6 +9,8 @@ import { MoodleToken, CAPTURE_TIMEOUT_MS } from '../src/auth/moodleToken.js';
 import { readTokenFile, writeTokenFile } from '../src/auth/tokenStore.js';
 import { gated } from './gated.js';
 import { moodleGate } from '../src/moodle/gate.js';
+import { challengeState } from '../src/moodle/challenge.js';
+import { fakeProfile } from './fakeProfile.js';
 
 const SITE = 'https://moodle.test';
 
@@ -361,6 +363,10 @@ const jsonRes = (body) => ({
   json: async () => body,
 });
 const challengeRes = () => ({ status: 200, headers: { get: () => 'text/html' } });
+// What the window's page fetch sees: real Responses, since the in-page code reads them whole.
+const pageJson = (body) =>
+  new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json' } });
+const pageHtml = () => new Response('<html></html>', { headers: { 'content-type': 'text/html' } });
 const GOOD = { userid: 7, downloadfiles: 1, functions: FULL };
 
 // A fake launch that records each browser it opens and the pages it navigated to.
@@ -401,36 +407,38 @@ async function loginAndCapture(auth) {
   await settle(auth);
 }
 
-test('a block keeps the token unverified, opens the site root; the next complete() verifies it', async (t) => {
+test('a block keeps the token unverified and turns block mode on; complete() verifies through the window', async (t) => {
   withKey(t, undefined);
-  stubSequence(t, challengeRes(), jsonRes(GOOD));
-  const { auth, tokenPath, rec } = await captured(t, 'blk-');
+  const profile = fakeProfile(t);
+  // The Node call meets the wall; the retry goes out from the window's page.
+  stubSequence(t, challengeRes(), pageJson(GOOD));
+  const { auth, tokenPath } = await captured(t, 'blk-');
   await loginAndCapture(auth);
   assert.equal(auth.state().phase, 'unverified');
   assert.equal(auth.state().error.code, 'site_blocked');
-  assert.equal(auth.state().error.params.challengeWindow, true);
-  assert.deepEqual(rec.opened, [SITE]);
+  assert.equal(auth.state().error.params.challengeWindow, 'ready');
+  assert.deepEqual(profile.launches[0].visited, [SITE]);
   assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: true });
   assert.equal(JSON.parse(fs.readFileSync(tokenPath, 'utf8')).userid, null);
 
-  const window = auth._challenge.browser;
   const record = await gated(() => auth.complete());
   assert.equal(record.userid, 7);
   assert.equal(auth.state().phase, 'connected');
   assert.equal(auth.state().error, undefined);
-  assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: false });
-  assert.equal(window.connected, false);
-  assert.equal(auth._challenge, null);
+  // Verifying ends nothing: the window stays up as the transport.
+  assert.deepEqual(challengeState(), { open: true, captcha: false });
 });
 
-test('a second block reuses the open challenge window', async (t) => {
+test('a second block reuses the open challenge window and reloads its root', async (t) => {
   withKey(t, undefined);
-  stubSequence(t, challengeRes(), challengeRes());
-  const { auth, rec } = await captured(t, 'blk2-');
+  const profile = fakeProfile(t);
+  stubSequence(t, challengeRes(), pageHtml());
+  const { auth } = await captured(t, 'blk2-');
   await loginAndCapture(auth);
-  await gated(() => auth.complete()).catch(() => {});
-  assert.deepEqual(rec.opened, [SITE]);
-  await auth.disconnect(); // the open window holds the Moodle lock
+  const err = await gated(() => auth.complete()).catch((e) => e);
+  assert.equal(err.code, 'site_blocked');
+  assert.equal(profile.launches.length, 1);
+  assert.deepEqual(profile.launches[0].visited, [SITE, SITE]);
 });
 
 test('verifiedToken() verifies an unverified token before first use, once for concurrent callers', async (t) => {
@@ -487,22 +495,27 @@ test('a block or a network failure never revokes', async (t) => {
   withKey(t, undefined);
   stubSequence(t, challengeRes(), new TypeError('fetch failed'));
   const { auth, tokenPath } = await unverifiedAuth('keep-');
-  assert.equal((await gated(() => auth.complete()).catch((e) => e)).code, 'site_blocked');
+  const blockedErr = await gated(() => auth.complete()).catch((e) => e);
+  assert.equal(blockedErr.code, 'site_blocked');
+  assert.equal(blockedErr.params.challengeWindow, false); // no browser in tests
   assert.equal((await gated(() => auth.complete()).catch((e) => e)).name, 'TypeError');
   assert.equal(fs.existsSync(tokenPath), true);
   assert.equal(auth.status().unverified, true);
-  await auth.disconnect(); // the open window holds the Moodle lock
 });
 
-test('disconnect and a new connect() close the challenge window', async (t) => {
+test('a new connect() closes the challenge window and keeps its profile; disconnect deletes it', async (t) => {
   withKey(t, undefined);
-  stubSequence(t, challengeRes(), challengeRes());
+  const profile = fakeProfile(t);
+  stubSequence(t, challengeRes());
   const { auth } = await unverifiedAuth('close-');
   await gated(() => auth.complete()).catch(() => {});
-  const first = auth._challenge.browser;
+  const first = profile.launches[0];
   await gated(() => auth.connect());
-  assert.equal(first.connected, false);
+  assert.equal(first.closed, true);
+  assert.equal(fs.existsSync(first.dir), true);
+  assert.deepEqual(challengeState(), { open: false, captcha: false });
   await auth.disconnect();
+  assert.equal(fs.existsSync(first.dir), false);
 });
 
 test('a dead token during the login ends it as a reconnect', async (t) => {

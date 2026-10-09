@@ -80,6 +80,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     expired: false,
     unverified: false,
     moodleBusy: false,
+    challenge: { open: false, captcha: false },
   });
 
   // The header works too, for a non-browser caller.
@@ -128,6 +129,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     expired: false,
     unverified: false,
     moodleBusy: true,
+    challenge: { open: false, captcha: false },
   });
   assert.equal((await next()).moodleBusy, false);
 });

@@ -28,3 +28,27 @@ export async function launchBrowser(opts) {
     throw channelErr;
   }
 }
+
+/**
+ * launchBrowser's channel chain, as a persistent context on the profile at `dir` — the Moodle
+ * challenge window, whose bot-manager clearance lives in that profile (docs/MOODLE.md).
+ * @param {string} dir
+ * @param {{ headless: boolean, args?: string[], viewport?: null }} opts
+ * @returns {Promise<import('playwright').BrowserContext>}
+ */
+export async function launchPersistentBrowser(dir, opts) {
+  const args = [...COMMON_LAUNCH_ARGS, ...(opts.args ?? [])];
+  const { chromium } = await import('playwright');
+  let channelErr;
+  try {
+    const { channel } = await resolveBrowserChannel();
+    return await chromium.launchPersistentContext(dir, { ...opts, channel, args });
+  } catch (err) {
+    channelErr = err;
+  }
+  try {
+    return await chromium.launchPersistentContext(dir, { ...opts, args });
+  } catch {
+    throw channelErr;
+  }
+}

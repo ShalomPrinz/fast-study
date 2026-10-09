@@ -23,6 +23,7 @@ request. Model in `src/browser/browserSession.js`.
 | `'plain'` — videostream sniff (`browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth  | none (headless)                            | no                 |
 | `'zoom'` — `ZoomExtractor` (`browser/zoomBrowser.js`)    | resolved channel + stealth, `headless:false`, no fallback            | Xvfb (Linux) / off-screen window (Windows) | no                 |
 | Token grab (`MoodleToken.connect()`)                     | resolved channel → bundled Chromium on launch failure                | real desktop                               | **yes — MFA once** |
+| Challenge window (`moodle/challenge.js`)                 | resolved channel → bundled Chromium, persistent profile `moodle-profile` under the state root | real desktop, launched off-screen | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
 
 Every launch passes `--mute-audio`: recordings autoplay, and nobody is watching.
 

@@ -335,7 +335,13 @@ of `/prereqs/browser` and the 500 backstop — and is one code in both.
 `mobile_service_off` and `maintenance` come from `POST /site/probe` (a 200 verdict, not an error body;
 `maintenance` is retry-later), `missing_function` (with `function`) and `downloads_disabled` from
 `/auth/complete`'s 422. An `unverified` probe carries no code — only `params.detail` (`site_blocked`,
-`timeout`, `network`).
+`timeout`, `network`), plus `challengeWindow` beside a `site_blocked`.
+
+`site_blocked`'s `challengeWindow` is present only on a block from a call the challenge window can
+carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showing a captcha, `'ready'`
+when it opened hidden with its clearance still valid so the user only repeats the action, `false`
+when no browser could launch. A block from any other path (videostream, a pasted link, a link probe)
+leaves it absent.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

@@ -54,7 +54,10 @@ Login involves MFA, which can't be automated — but you only do it once:
 
 The state root — `.state/` at the repo root, or wherever `FASTSTUDY_STATE_DIR`
 points — holds your live token (and any zoom passcodes) and is gitignored; treat
-it as a secret.
+it as a secret. If the university's bot protection blocks the app, a Chrome
+window opens on the site (on screen only when there is a captcha to solve) and
+Moodle calls go through it until it closes; its profile lives there too, as
+`moodle-profile/`, and Disconnect deletes it.
 
 ## More
 

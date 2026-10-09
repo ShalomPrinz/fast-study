@@ -1,12 +1,38 @@
 // Thin fetch wrapper over Moodle's Web-Services REST API; a wstoken authenticates every call —
-// no browser, no cookies. Protocol reference: docs/MOODLE.md.
+// no cookies. Protocol reference: docs/MOODLE.md.
 import { CodedError } from '../lib/errors.js';
 import { enterMoodle } from './gate.js';
+import { challengeRoute } from './challenge.js';
 
-// Every request to a Moodle goes through here: the gate first, then the network (docs/GATE.md).
-async function moodleFetch(url, init) {
+// An answer shaped like the bot wall: a redirect, or a page where a WS body or a file was due.
+function wallShaped(res) {
+  return (
+    (res.status >= 300 && res.status < 400) ||
+    (res.headers.get('content-type') ?? '').includes('text/html')
+  );
+}
+
+// Every request to a Moodle goes through here: the gate first, then the network (docs/GATE.md) —
+// Node's fetch, or in block mode the challenge window's page (docs/MOODLE.md § Bot protection).
+// `route:false` keeps a call on Node: one replaying captured cookies, which a page cannot set.
+async function moodleFetch(url, init, { route = true } = {}) {
   await enterMoodle(String(url).split('?')[0]);
-  return fetch(url, init);
+  const window = route ? challengeRoute(url) : null;
+  if (!window) return fetch(url, init);
+  // Still on the captcha: nothing is sent, and the 503 tells the user to solve it first.
+  if (!window.onSite())
+    throw new WsBlockedError('the challenge window is still on the captcha', ROUTED);
+  // Closed mid-call (head or body): block mode is over, so the user's repeat goes out on Node.
+  const closed = () => new WsBlockedError('the challenge window was closed');
+  let res;
+  try {
+    res = await window.fetch(url, init, { lost: closed });
+  } catch (err) {
+    if (window.gone(err)) throw closed();
+    throw err;
+  }
+  if (!wallShaped(res)) await window.passed();
+  return res;
 }
 
 /** A Moodle WS exception body ({ exception, errorcode, message }) surfaced as an Error. */
@@ -25,7 +51,8 @@ export class WsError extends CodedError {
  * from a WS fault and never a JSON parse bug.
  */
 export class WsBlockedError extends CodedError {
-  constructor(detail) {
+  // `routed`: thrown by a call the challenge window can carry, so only it turns block mode on.
+  constructor(detail, { routed = false } = {}) {
     super(
       'site_blocked',
       { detail },
@@ -33,8 +60,11 @@ export class WsBlockedError extends CodedError {
         `instead of a valid response (${detail}); wait a few minutes and retry`,
     );
     this.name = 'WsBlockedError';
+    this.routed = routed;
   }
 }
+
+const ROUTED = { routed: true };
 
 /** @returns {boolean} true when a thrown error is the site's bot-protection challenge. */
 export function blocked(err) {
@@ -58,10 +88,10 @@ const APP_USER_AGENT = 'MoodleMobile 4.4.0 (44000)';
 // SyntaxError, hiding the real cause. Check before touching the body.
 async function jsonOrBlocked(res) {
   if (res.status >= 300 && res.status < 400)
-    throw new WsBlockedError(`HTTP ${res.status} redirect`);
+    throw new WsBlockedError(`HTTP ${res.status} redirect`, ROUTED);
   const type = res.headers.get('content-type') ?? '';
   if (!type.includes('json'))
-    throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`);
+    throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`, ROUTED);
   return res.json();
 }
 
@@ -100,7 +130,7 @@ export class NotMoodleError extends Error {
 /** A 3xx where a WS body was due; `location` is the absolute http(s) target, or null when there is none. */
 export class WsRedirectError extends WsBlockedError {
   constructor(status, location) {
-    super(`HTTP ${status} redirect`);
+    super(`HTTP ${status} redirect`, ROUTED);
     this.name = 'WsRedirectError';
     this.location = location;
   }
@@ -187,10 +217,10 @@ export function pluginfileUrl(fileurl, token) {
 // both answer HTTP 200, and either would be saved as the PDF. See docs/MOODLE.md.
 async function pluginfileFault(res, url) {
   if (res.status >= 300 && res.status < 400)
-    return new WsBlockedError(`pluginfile: HTTP ${res.status} redirect`);
+    return new WsBlockedError(`pluginfile: HTTP ${res.status} redirect`, ROUTED);
   const type = res.headers.get('content-type') ?? '';
   if (type.includes('text/html'))
-    return new WsBlockedError(`pluginfile: HTTP ${res.status}, ${type}`);
+    return new WsBlockedError(`pluginfile: HTTP ${res.status}, ${type}`, ROUTED);
   if (!type.includes('application/json')) return null;
   const body = await res.json().catch(() => null);
   if (body?.errorcode) return new WsError(body.errorcode, body.message);
@@ -255,7 +285,7 @@ export async function openMoodleFile(url, { headers = [], range, signal } = {}) 
     if (!name.startsWith(':') && !UNREPLAYED.has(name.toLowerCase())) sent[name] = value;
   }
   if (range) sent.Range = range;
-  const res = await moodleFetch(url, { headers: sent, signal });
+  const res = await moodleFetch(url, { headers: sent, signal }, { route: false });
   const type = res.headers.get('content-type') ?? '';
   if (res.ok && type.includes('text/html')) {
     await res.body?.cancel().catch(() => {});

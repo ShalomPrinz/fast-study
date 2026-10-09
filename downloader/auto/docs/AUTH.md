@@ -25,7 +25,7 @@ sent to the wrong host.
   window throws. The run (`_drive`) waits (bounded by `CAPTURE_TIMEOUT_MS`, 10 minutes) for the
   captured token, **holds it in memory** and verifies it: a
   `core_webservice_get_site_info` call and the post-login site check
-  ([MOODLE.md](MOODLE.md#checking-a-site-before-and-after-login)); success persists it with `userid` and closes any challenge window. The captured token replaces the
+  ([MOODLE.md](MOODLE.md#checking-a-site-before-and-after-login)); success persists it with `userid`. The captured token replaces the
   stored one only when verified, or persisted `{ …, userid:null, unverified:true }` on a block, timeout
   or network failure; a refused or `invalidtoken` capture leaves an existing stored token untouched. The window closes itself the instant the
   `moodlemobile://token` redirect is captured, so the user never sits on a dead tab or Chromium's
@@ -41,18 +41,21 @@ sent to the wrong host.
   `authEvents`, one emitter whichever site is set) sends `state()` as an unnamed `data:` frame on
   subscribe and again on every change (`connect`, run end, retry, lazy verification, `markExpired`,
   `disconnect`, a site switch; idle when no site is set). Every frame also carries `moodleBusy`, the
-  Moodle lock's state, and the lock's own changes send one too ([GATE.md](GATE.md)). No replay and no heartbeat. `EventSource`
+  Moodle lock's state ([GATE.md](GATE.md)), and `challenge: { open, captcha }`, block mode's window
+  — up, and on screen showing a captcha until the page lands back on the site
+  ([MOODLE.md](MOODLE.md#the-rest-api)); changes to either send a frame too. No replay and no heartbeat. `EventSource`
   cannot set a header, so the launch secret rides as `?secret=`, which `requireSecret` honours.
 - `complete()` — re-verifies the stored `unverified` token now (a block on the last try, the
   challenge since solved) and answers as a WS call would; its outcome is also announced on the stream.
   Throws `moodle_login_not_pending` when no unverified token is stored. A normal login never needs it.
 - Verification outcomes: `invalidtoken` or a refused site (`moodle_site_unsupported`) on the **stored** token **delete**
   it (a fresh capture is simply discarded); a bot-protection block (`site_blocked`), timeout or network failure never do. A block keeps
-  the token, opens one headed browser (`launchBrowser`) on the site root so the user can solve the
-  bot manager's challenge (reused while open) and adds `params.challengeWindow:true` to the 503
-  (`false` if no browser could launch). The window holds the Moodle lock while it is open
-  ([GATE.md](GATE.md#holds-that-outlive-the-request)) and closes on successful verification,
-  `disconnect()` or a new `connect()`. A block ends the login's run with phase `unverified` and the `site_blocked` error. Once a human solves it, Node requests from that IP pass again.
+  the token and turns block mode on, adding `params.challengeWindow` (`'captcha'`, `'ready'` or
+  `false`) as every routed call's `site_blocked` does ([MOODLE.md](MOODLE.md#the-rest-api)), and ends the login's
+  run with phase `unverified` and the `site_blocked` error. Solving the captcha does not clear Node:
+  the clearance belongs to the window's browser, so the retry passes only because it goes out from
+  that window. A successful verification leaves the window open as the transport; a new `connect()`
+  closes it (keeping its profile) and `disconnect()` closes it and deletes the profile.
 - Lazy verification: every WS caller (`/list`, both `/resolve` paths) gets its token from
   `verifiedToken()` (`tokenOr` in `http/server.js`), which verifies an unverified token first
   (concurrent callers share one call) and maps its failure like any WS error.
@@ -62,8 +65,9 @@ sent to the wrong host.
   with no key) reads as absent; a legacy plaintext one is read and rewritten encrypted. A
   malformed key throws on write.
 - `status()` — no browser, no API call: `{ connected: a token for this site exists, expired: markExpired flag, unverified: the token awaits verification }`.
-- `disconnect()` — deletes the token file, clears the flag and the last error, and cancels a login in
-  flight (window closed, no failure reported); a missing token is success. It never calls Moodle's revoke: a server-side revoke can fail _after_
+- `disconnect()` — deletes the token file, clears the flag and the last error, cancels a login in
+  flight (window closed, no failure reported), and closes block mode's window, then deletes its
+  profile (`statePath('moodle-profile')`); a missing token is success. It never calls Moodle's revoke: a server-side revoke can fail _after_
   the local delete, leaving the two out of sync with no way to reconcile them.
 
 ## Expiry is only knowable at call time

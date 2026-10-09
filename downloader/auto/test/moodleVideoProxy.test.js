@@ -118,5 +118,8 @@ test('a video whose full GET is a bot challenge is 503 site_blocked, never the H
   assert.equal(streamed.status, 503);
   const text = await streamed.text();
   assert.equal(text.includes('verify you are human'), false);
-  assert.equal(JSON.parse(text).code, 'site_blocked');
+  const blocked = JSON.parse(text);
+  assert.equal(blocked.code, 'site_blocked');
+  // A replayed-cookie file is never routed through the challenge window, so it opens none.
+  assert.equal('challengeWindow' in blocked.params, false);
 });
