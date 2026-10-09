@@ -96,18 +96,17 @@ jobs:
           ls -l "$STAGE/bin"
 
       # The one build input that is not committed: it is gitignored so the client secret never
-      # faces GitHub's secret scanning. A build without the secret still has to produce a bundle —
-      # services.spec ships it conditionally — it just ships without Drive consent.
+      # faces GitHub's secret scanning. Required — an installer without it cannot connect Drive.
       - name: Write credentials.json
         env:
           CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
         run: |
-          if [ -n "$CREDENTIALS" ]; then
-            printf '%s' "$CREDENTIALS" > backend/credentials.json
-            echo "credentials.json written"
-          else
-            echo "no GOOGLE_CREDENTIALS_JSON secret — building without Drive consent"
+          if [ -z "$CREDENTIALS" ]; then
+            echo "::error::GOOGLE_CREDENTIALS_JSON secret is empty or unset — set it to the Google OAuth client JSON; a build without it cannot connect Google Drive"
+            exit 1
           fi
+          printf '%s' "$CREDENTIALS" > backend/credentials.json
+          echo "credentials.json written"
 
       # One one-dir bundle holding both Python services, selected by argv[1]. Built out of
       # backend/'s environment, which works only because database/'s dependencies are a strict

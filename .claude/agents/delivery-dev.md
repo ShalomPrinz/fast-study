@@ -19,7 +19,7 @@ Read `delivery/CLAUDE.md`, its `docs/` and `electron/docs/BOOT.md` before changi
 
 ## Agent rules
 
-- The build is reproducible from committed content only. Anything a workflow reads must be tracked, `backend/credentials.json` alone excepted: it arrives as the `GOOGLE_CREDENTIALS_JSON` secret, and a build without it must still produce an installer.
+- The build is reproducible from committed content only. Anything a workflow reads must be tracked, `backend/credentials.json` alone excepted: it arrives as the `GOOGLE_CREDENTIALS_JSON` secret, and a build without it fails rather than ship an installer that cannot connect Drive.
 - The pinned versions are measured claims, not conveniences: tectonic 0.17.0 (the cache and the glyph comparison), pandoc 2.9.2.1 (`text_direction.lua` and the stock template move together), ffmpeg 9.0.2. yt-dlp stays unpinned. Moving a pin re-opens what it was measured against — surface it and wait.
 - Published bytes are exactly the bytes the smoke job tested. `publish.yml` never builds, takes no input, and only releases the `installer` artifact of build.yml's green run for the dispatched commit; a build step that runs after the smoke job, or a publish path that rebuilds, breaks that.
 - The smoke suite never reaches Groq or Gemini and never fakes them: provider steps run and must fail on the network, enforced by per-program outbound firewall rules, not by an override variable in production code. Selectors are `data-testid` only — never visible text — and the suite reaches disk through `database/`'s routes with the secret off `window.faststudy`, never by spelling the `DATA_ROOT` layout.

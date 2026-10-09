@@ -13,11 +13,12 @@ _DATABASE = _REPO / "database"
 # and template, and the prompt instructions.
 datas = [(str(_BACKEND / "assets"), "assets")]
 
-# Conditional because it is the one build input that is not committed — it arrives as an Actions
-# secret written to disk in the workflow, and a build without it must still produce a bundle.
+# Required though uncommitted: the Google OAuth client arrives as an Actions secret written to disk
+# in the workflow, and a bundle without it ships an app whose Drive connect cannot work.
 _credentials = _BACKEND / "credentials.json"
-if _credentials.exists():
-    datas.append((str(_credentials), "."))
+if not _credentials.is_file():
+    raise SystemExit(f"{_credentials} is missing: the Google OAuth client is required to freeze")
+datas.append((str(_credentials), "."))
 
 # Data files no import reaches: certifi's CA bundle, and googleapiclient's API discovery JSON, cut
 # to the one document the app reads by the prune below.

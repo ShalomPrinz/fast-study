@@ -27,14 +27,16 @@ node delivery/boot-timing.mjs [collect|view] [--repo owner/name]               #
 
 Only `.github/workflows/build.yml` on `windows-latest` produces an installer: neither PyInstaller nor
 electron-builder's NSIS target cross-compiles, so WSL can freeze a Linux bundle, prime and stage, but
-never build or run the release. A Linux freeze is checked by running `services database|backend`
-with `FASTSTUDY_PORT=0` for the port line and `/health`.
+never build or run the release. A freeze needs `backend/credentials.json` on disk; a Linux freeze
+is checked by running `services database|backend` with `FASTSTUDY_PORT=0` for the port line and
+`/health`.
 
 ## Rules
 
 - **Reproducible from committed content.** Everything a workflow reads is tracked, except
-  `backend/credentials.json`, which arrives as the `GOOGLE_CREDENTIALS_JSON` secret; a build without
-  it still produces an installer, one that cannot do Drive consent. The Sentry secrets
+  `backend/credentials.json`, which arrives as the `GOOGLE_CREDENTIALS_JSON` secret and is required:
+  without it the workflow and `services.spec` both fail rather than ship an installer that cannot
+  connect Drive. The Sentry secrets
   (`FASTSTUDY_SENTRY_DSN`, `SENTRY_AUTH_TOKEN`) are inputs of the same kind: without them the
   installer reports nothing and no source maps upload ([RELEASE.md](docs/RELEASE.md#error-reporting)).
 - **Published bytes are the bytes the smoke job tested.** `publish.yml` never builds and takes no

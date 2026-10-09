@@ -262,6 +262,8 @@ test('1. fresh install', async () => {
       // The one Google API discovery document services.spec keeps, under PyInstaller's one-dir
       // contents directory. Missing, Drive upload fails on a user's machine and nowhere earlier.
       'services/_internal/googleapiclient/discovery_cache/documents/drive.v3.json',
+      // The Google OAuth client, the one uncommitted build input; missing, Drive connect fails.
+      'services/_internal/credentials.json',
       'auto/app.js',
       'server/src/index.js',
       'frontend/index.html',
