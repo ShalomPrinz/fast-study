@@ -303,6 +303,16 @@ no window to finish and no button to press; the outcome arrives on `/auth/events
 `blocked_ws`, the token is kept unverified and a second window opens on the site root; switch the site
 back to `ok` and press the unverified state's button to verify.
 
+`blocked` and `blocked_ws` challenge every client alike. `radware` is the real shape: any request
+without the `harness_clearance` cookie is sent with a 302 to a captcha page on
+`validate.perfdrive.com` (served by the fake, so the shim maps it), and only a browser that solves it
+gets the cookie. Node never does, so Node's calls stay blocked while auto/'s challenge window (its
+persistent profile, launched through `launchPersistentContext`, patched like `launch`) passes. Nothing
+can click in that window, so the captcha page polls the site: `/control {"solve":true}` arms one solve,
+the page takes it, visits `/__harness/clear` for the cookie and lands on the site root. The cookie
+lives in `$FASTSTUDY_STATE_DIR/moodle-profile`, so a reopened window passes hidden until Disconnect
+deletes the profile.
+
 Videostream capture launches through the same patch, so its browser is offline, but it has nothing
 to run against: the fake course lists no `videostream` activity, and the site serves neither
 `autologin.php` nor a `view.php` page whose `<video>` requests an `.mp4`. Those three are what adding it takes.
@@ -358,7 +368,8 @@ curl -s $P/control -d '{"gemini":"invalidkey"}'  # gemini also: invalidkey
 curl -s $P/control -d '{"gemini":{"mode":"429","match":"hb-fail/שיעור 4","times":1}}'
 curl -s $P/control -d '{"groq":{"mode":"slow","ms":20000,"match":"hb-pipeline/שיעור 4"}}'  # held, then ok
 curl -s $P/control -d '{"reset":true}'     # every provider back to ok
-curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | blocked_ws | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled
+curl -s $S/control -d '{"mode":"blocked"}' # ok | blocked | blocked_ws | radware | invalidtoken | not_moodle | mobile_service_off | missing_function | downloads_disabled
+curl -s $S/control -d '{"solve":true}'     # radware: the open captcha page solves itself
 curl -s $S/control -d '{"downloadMs":60000}' # how long each download takes (3000)
 curl -s $S/control -d '{"reset":true}'     # mode ok, 3000 ms, every /die/ re-armed
 ```

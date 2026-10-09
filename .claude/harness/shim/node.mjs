@@ -26,6 +26,7 @@ if (HARNESS) {
     '*.zoom.us',
     'drive.google.com',
     'docs.google.com',
+    'validate.perfdrive.com',
   ];
   const isServed = (host) => {
     const name = String(host).toLowerCase();
@@ -99,7 +100,8 @@ if (HARNESS) {
 
   // auto/'s browsers are processes of their own, out of the socket patch's reach, so every launch is
   // rewritten: headless, the harness's chromium, served hosts mapped to the fake site's TLS port
-  // and every other name unresolvable. One prototype patch covers the plain, probe and zoom launches.
+  // and every other name unresolvable. One prototype patch covers the plain, probe, zoom and
+  // challenge-profile launches.
   if (process.env.HARNESS_SERVICE === 'downloader-auto') {
     const { createRequire } = await import('node:module');
     const { installedChromium } = await import('../lib/browser.mjs');
@@ -113,34 +115,44 @@ if (HARNESS) {
       'EXCLUDE localhost',
       'EXCLUDE 127.0.0.1',
     ].join(', ');
+    const offline = ({ channel: _channel, ...options } = {}) => ({
+      ...options,
+      headless: true,
+      executablePath: installedChromium(),
+      args: [
+        ...(options.args ?? []),
+        `--host-resolver-rules=${rules}`,
+        '--ignore-certificate-errors',
+      ],
+    });
+    // The browser cannot write network.log, so a name it failed to resolve is logged from here.
+    // moodlemobile:// fails by design — it is how the login token arrives.
+    const logRefusals = (context) =>
+      context.on('requestfailed', (request) => {
+        const url = new URL(request.url());
+        if (!/^https?:$/.test(url.protocol)) return;
+        if (request.failure()?.errorText !== 'net::ERR_NAME_NOT_RESOLVED') return;
+        const port = url.port || (url.protocol === 'https:' ? 443 : 80);
+        note(`REFUSED ${url.hostname}:${port} (browser)`);
+      });
     const browserType = Object.getPrototypeOf(chromium);
     const originalLaunch = browserType.launch;
-    browserType.launch = async function launch({ channel: _channel, ...options } = {}) {
-      const browser = await originalLaunch.call(this, {
-        ...options,
-        headless: true,
-        executablePath: installedChromium(),
-        args: [
-          ...(options.args ?? []),
-          `--host-resolver-rules=${rules}`,
-          '--ignore-certificate-errors',
-        ],
-      });
-      // The browser cannot write network.log, so a name it failed to resolve is logged from here.
-      // moodlemobile:// fails by design — it is how the login token arrives.
+    browserType.launch = async function launch(options) {
+      const browser = await originalLaunch.call(this, offline(options));
       const originalNewContext = browser.newContext;
       browser.newContext = async function newContext(...args) {
         const context = await originalNewContext.apply(this, args);
-        context.on('requestfailed', (request) => {
-          const url = new URL(request.url());
-          if (!/^https?:$/.test(url.protocol)) return;
-          if (request.failure()?.errorText !== 'net::ERR_NAME_NOT_RESOLVED') return;
-          const port = url.port || (url.protocol === 'https:' ? 443 : 80);
-          note(`REFUSED ${url.hostname}:${port} (browser)`);
-        });
+        logRefusals(context);
         return context;
       };
       return browser;
+    };
+    // The challenge window's persistent profile launches here instead of through `launch`.
+    const originalPersistent = browserType.launchPersistentContext;
+    browserType.launchPersistentContext = async function launchPersistentContext(dir, options) {
+      const context = await originalPersistent.call(this, dir, offline(options));
+      logRefusals(context);
+      return context;
     };
   }
 

@@ -57,6 +57,23 @@ describe('control', () => {
   });
 });
 
+describe('solve', () => {
+  test('an armed solve is taken once', () => {
+    const site = createSiteControl();
+    assert.equal(site.takeSolve(), false);
+    site.control({ solve: true });
+    assert.equal(site.takeSolve(), true);
+    assert.equal(site.takeSolve(), false);
+  });
+
+  test('reset disarms it', () => {
+    const site = createSiteControl();
+    site.control({ solve: true });
+    site.control({ reset: true });
+    assert.equal(site.takeSolve(), false);
+  });
+});
+
 describe('tool', () => {
   test('a /die/ URL dies once, then downloads', () => {
     const site = createSiteControl();

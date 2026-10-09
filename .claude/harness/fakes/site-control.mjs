@@ -4,12 +4,14 @@ import { DEFAULT_DOWNLOAD_MS } from '../lib/env.mjs';
 
 // 'blocked' (bot-protection challenge on every route), 'blocked_ws' (the same challenge on the
 // web-service API only, so the browser login passes and Node's calls are refused, as for a real
-// user) and 'invalidtoken' are the upstream refusals the downloader has typed errors for; the other four are a site it must refuse — `not_moodle` and
+// user), 'radware' (the challenge for any request without the clearance cookie only a solved
+// browser holds — Radware's real shape) and 'invalidtoken' are the upstream refusals the downloader has typed errors for; the other four are a site it must refuse — `not_moodle` and
 // `mobile_service_off` at the pre-login probe, `missing_function` and `downloads_disabled` at login.
 export const MODES = [
   'ok',
   'blocked',
   'blocked_ws',
+  'radware',
   'invalidtoken',
   'not_moodle',
   'mobile_service_off',
@@ -20,6 +22,7 @@ export const MODES = [
 /** The site's mode and the fake tool's download speed, with the one-time drop per /die/ URL. */
 export function createSiteControl() {
   const state = { mode: 'ok', downloadMs: DEFAULT_DOWNLOAD_MS };
+  let solveArmed = false;
   const died = new Set();
   return {
     state,
@@ -29,6 +32,7 @@ export function createSiteControl() {
       if (body.reset) {
         state.mode = 'ok';
         state.downloadMs = DEFAULT_DOWNLOAD_MS;
+        solveArmed = false;
         died.clear();
       }
       if (body.mode) {
@@ -40,7 +44,15 @@ export function createSiteControl() {
         if (!Number.isFinite(ms) || ms < 0) throw new Error('downloadMs: ms ≥ 0');
         state.downloadMs = ms;
       }
+      // Arms one solve: the next captcha page that asks clears its browser.
+      if (body.solve) solveArmed = true;
       return { mode: state.mode, downloadMs: state.downloadMs };
+    },
+    // Asked by an open captcha page; true once per armed solve.
+    takeSolve() {
+      const solved = solveArmed;
+      solveArmed = false;
+      return solved;
     },
     // Asked by the fake tool once per download: how long to take, and whether to drop halfway.
     tool(target) {

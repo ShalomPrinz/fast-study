@@ -114,6 +114,40 @@ function challenge(res) {
   res.end(body);
 }
 
+// Radware's real shape in 'radware' mode: a request without the clearance cookie is sent to the
+// captcha host, and only a browser that solved it there ever holds the cookie — Node never does.
+// Long-lived like `__uzma`, so it outlives a relaunch of the persistent profile.
+const CLEARANCE = 'harness_clearance=1';
+const CAPTCHA_HOST = 'validate.perfdrive.com';
+
+function hasClearance(req) {
+  return (req.headers.cookie ?? '').split(/;\s*/).includes(CLEARANCE);
+}
+
+function toCaptcha(res) {
+  res.writeHead(302, { location: `https://${CAPTCHA_HOST}/harness/?ssa=1` });
+  res.end();
+}
+
+// The captcha page polls for a solve armed through `/control {"solve":true}` (or takes a click on
+// its button), then visits the site's clearance route, which sets the cookie and lands on the root.
+function captchaPage(res) {
+  const body = `<!doctype html><meta charset="utf-8"><title>harness captcha</title>
+<p>harness: pretending to be Radware's captcha.</p><button id="solve">I am human</button>
+<script>
+const go = () => { location.href = '${SITE}/__harness/clear'; };
+document.getElementById('solve').onclick = go;
+setInterval(async () => {
+  try { if ((await (await fetch('/harness/solved')).json()).solved) go(); } catch {}
+}, 300);
+</script>`;
+  res.writeHead(200, {
+    'content-type': 'text/html; charset=utf-8',
+    'content-length': Buffer.byteLength(body),
+  });
+  res.end(body);
+}
+
 // A file, with the Range support the size probe needs: HEAD for content-length, then a one-byte
 // GET whose content-range carries the total.
 function serveFile(req, res, file, type) {
@@ -163,6 +197,20 @@ function handle(req, res) {
     return json(res, { status: 'ok', mode: state.mode, downloadMs: state.downloadMs });
   }
   if (route === '/tool') return json(res, site.tool(url.searchParams.get('url') ?? ''));
+
+  const host = (req.headers.host ?? '').split(':')[0];
+  if (host === CAPTCHA_HOST) {
+    if (route === '/harness/solved') return json(res, { solved: site.takeSolve() });
+    return captchaPage(res);
+  }
+  if (route === '/__harness/clear') {
+    res.writeHead(302, {
+      'set-cookie': `${CLEARANCE}; Path=/; Secure; Max-Age=315360000`,
+      location: `${SITE}/`,
+    });
+    return res.end();
+  }
+  if (state.mode === 'radware' && !hasClearance(req)) return toCaptcha(res);
 
   if (state.mode === 'blocked') return challenge(res);
   if (state.mode === 'blocked_ws' && route.startsWith('/webservice/')) return challenge(res);
@@ -271,6 +319,14 @@ function handle(req, res) {
   if (route.startsWith('/page/')) {
     const body =
       '<!doctype html><meta charset="utf-8"><h1>harness: an ordinary web page, not a recording.';
+    res.writeHead(200, {
+      'content-type': 'text/html; charset=utf-8',
+      'content-length': Buffer.byteLength(body),
+    });
+    return res.end(body);
+  }
+  if (route === '/') {
+    const body = '<!doctype html><meta charset="utf-8"><h1>harness Moodle';
     res.writeHead(200, {
       'content-type': 'text/html; charset=utf-8',
       'content-length': Buffer.byteLength(body),
