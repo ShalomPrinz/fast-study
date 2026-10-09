@@ -55,7 +55,10 @@ therefore starts only once all four services are dead and hold nothing under `re
 Moving the kill to a later hook would leave a service holding files NSIS is about to replace, and no
 dev run would show it: dev does not update.
 
-**Restart now kills first, then calls `quitAndInstall(true, true)`** (silent, relaunch). Unlike the
+**Restart now kills first, then calls `quitAndInstall(false, true)`** — non-silent, because the
+one-click NSIS progress window is the only thing on screen for the minute it spends replacing
+`resources/`. Non-silent, electron-updater ignores the second arg; `autoRunAppAfterInstall` (left at
+`true`) still passes `--force-run`, and a non-silent one-click install relaunches anyway. Unlike the
 quit-time install, `quitAndInstall` spawns NSIS synchronously and only then calls `app.quit()`, so
 `will-quit` would come too late. `restartToUpdate()` therefore awaits main's own `stopChildren()` —
 the same kill, not a copy — before installing; the later `will-quit` finds no children and is a

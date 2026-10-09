@@ -114,7 +114,7 @@ function restartToUpdate(stop, recover, log) {
     try {
       await stop();
       autoUpdater.on('error', onError);
-      autoUpdater.quitAndInstall(true, true);
+      autoUpdater.quitAndInstall(false, true);
     } catch (error) {
       failure = error;
     } finally {

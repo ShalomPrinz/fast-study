@@ -134,7 +134,7 @@ test('restart stops the services before it installs, once for two clicks', async
     restartToUpdate(stop, never, log),
     restartToUpdate(stop, never, log),
   ]);
-  assert.deepEqual(order, ['stopped', 'install true true']);
+  assert.deepEqual(order, ['stopped', 'install false true']);
   assert.deepEqual(a, { ok: true });
   assert.equal(a, b);
 });
