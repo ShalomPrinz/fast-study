@@ -5,7 +5,7 @@ import os
 
 # Curated: a model id the free tier does not serve fails minutes into a run, so the
 # frontend picks from this list instead of accepting free text.
-GEMINI_MODELS = ["gemini-3.5-flash"]
+GEMINI_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash"]
 
 # How much of the pipeline an automatic trigger may run. A ceiling, not a schedule: it caps
 # both a new video's arrival and the nightly cron, and never the user's own run.
