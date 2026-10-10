@@ -152,7 +152,7 @@ and a plain-words hint on copying the address from the browser.
 Picking a preset or blurring the input calls `probeMoodleSite` (`POST /site/probe` on the auto-downloader),
 with `ApiKeyField`'s sequence-number and last-probed-value discipline (`utils/siteStatus.ts`). The status
 slot reads `supported` (the canonical site), `unsupported` (the `moodle_site_unsupported` sentence for its
-`reason`) or `unverified` ("couldn't check", or "confirm in the window that opened" when the probe's
+`reason`) or `unverified` ("couldn't check", or "solve the captcha in the window that opened" when the probe's
 `challengeWindow` is `'captcha'`). Nobody pressed a button, so the probe runs through the Moodle
 lock's `wait` mode ([DOWNLOADS.md](DOWNLOADS.md#the-moodle-lock)) and reads "Checking…" until the lock frees;
 `probeMoodleSite` rethrows a 429 `moodle_busy` rather than calling it `unverified`.

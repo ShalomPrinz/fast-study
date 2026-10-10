@@ -18,35 +18,50 @@ export type AccountChip =
   | 'expired'
   | 'disconnected'
 
-// Which explanation sits beside an unverified chip: a captcha waits in a window, the window passed the
-// check (just retry), none could open (use your own browser), or nothing is known about one.
-export type AccountPanel = 'window' | 'ready' | 'own-browser' | 'unknown'
+// Which explanation sits beside an unverified chip: a captcha waits, was just solved, was closed unsolved, the
+// window passed with none (just retry), none could open (use your own browser), or nothing is known.
+export type AccountPanel = 'window' | 'solved' | 'closed' | 'ready' | 'own-browser' | 'unknown'
 
 export interface AccountView {
   chip: AccountChip
   panel: AccountPanel | null
 }
 
-// The one decision behind the account chip and its panel: the local phase and the pushed status in, what to
-// show out. A token kept after a block is its own state, neither connected nor not, and the service's
-// `site_blocked` error says what the challenge window did.
-export function accountView(phase: LoginPhase, status: AuthStatus | null): AccountView {
+// The one decision behind the account chip and its panel; an unverified token is its own state, and
+// `captchaSeen` (from `captchaSeen()`) tells a solved captcha from a window still loading one.
+export function accountView(
+  phase: LoginPhase,
+  status: AuthStatus | null,
+  captchaSeen = false,
+): AccountView {
   if (phase === 'loading') return { chip: 'checking', panel: null }
   if (phase === 'connecting' || status?.phase === 'pending')
     return { chip: 'finishing', panel: null }
   if (status?.unconfigured) return { chip: 'unconfigured', panel: null }
-  if (status?.unverified) return { chip: 'unverified', panel: unverifiedPanel(status) }
+  if (status?.unverified) return { chip: 'unverified', panel: unverifiedPanel(status, captchaSeen) }
   if (status?.connected && !status.expired) return { chip: 'connected', panel: null }
   return { chip: status?.expired ? 'expired' : 'disconnected', panel: null }
 }
 
-// The block's `challengeWindow` as recorded, corrected by the live `challenge` frame when it has one: a
-// captcha on screen now is the window panel, and a recorded captcha the window no longer shows is past.
-function unverifiedPanel(status: AuthStatus): AccountPanel {
+// Whether the open challenge window has shown a captcha since it opened: a window that just opened shows
+// none yet either, and only one that showed it and stopped was solved. Fold it over the pushed frames.
+export function captchaSeen(prev: boolean, status: AuthStatus | null): boolean {
+  if (status?.challenge?.captcha) return true
+  return Boolean(status?.challenge?.open) && prev
+}
+
+// The block's `challengeWindow` as recorded, corrected by the live `challenge` frame when it has one. A
+// recorded captcha gone from a still-open window was solved, and abandoned once the window closed.
+function unverifiedPanel(status: AuthStatus, seen: boolean): AccountPanel {
   const recorded =
     status.error?.code === 'site_blocked' ? challengeWindowOf(status.error.params) : null
-  if (status.challenge?.captcha) return 'window'
-  if (recorded === 'captcha') return status.challenge ? 'ready' : 'window'
+  const challenge = status.challenge
+  if (challenge?.captcha) return 'window'
+  if (recorded === 'captcha') {
+    if (!challenge) return 'window'
+    if (!challenge.open) return 'closed'
+    return seen ? 'solved' : 'window'
+  }
   if (recorded === 'ready') return 'ready'
   return recorded === false ? 'own-browser' : 'unknown'
 }

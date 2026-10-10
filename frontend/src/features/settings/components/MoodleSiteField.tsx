@@ -95,7 +95,7 @@ export default function MoodleSiteField({
         return <ServiceError failure={status.failure} />
       case 'unverified':
         return status.captcha
-          ? t`The university site wants to confirm you are not a bot. Confirm it in the window that opened. You can still save the site.`
+          ? t`The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site.`
           : t`We couldn't check this site right now. You can still save it.`
       default:
         return ''

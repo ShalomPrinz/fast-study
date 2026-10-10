@@ -12,6 +12,7 @@ import {
   expandErrorText,
   manualFailureHeadline,
   toastDownloadError,
+  toastJobError,
 } from './downloadErrors'
 
 // The toaster is the boundary under observation: what reaches it is the whole assertion.
@@ -42,9 +43,27 @@ describe('toastDownloadError', () => {
       const failure = { message: 'x', code: 'site_blocked', params: { challengeWindow } }
       expect(serviceErrorText(failure)).toBe(messages[i])
     })
+  })
 
+  it('toasts a block that is an instruction as info, and a wall nothing gets past as an error', () => {
     toastDownloadError('Lecture 3', new BlockedError('captcha'))
-    expect(toast).toHaveBeenCalledWith('error', blockedMessage('captcha'))
+    expect(toast).toHaveBeenLastCalledWith('info', blockedMessage('captcha'))
+    toastDownloadError('Lecture 3', new BlockedError('ready'))
+    expect(toast).toHaveBeenLastCalledWith('info', blockedMessage('ready'))
+    toastDownloadError('Lecture 3', new BlockedError(false))
+    expect(toast).toHaveBeenLastCalledWith('error', blockedMessage(false))
+    toastDownloadError('Lecture 3', new BlockedError(null))
+    expect(toast).toHaveBeenLastCalledWith('error', blockedMessage(null))
+
+    const job = (challengeWindow: 'captcha' | false) => ({
+      message: 'x',
+      code: 'site_blocked',
+      params: { challengeWindow },
+    })
+    toastJobError('Lecture 3', job('captcha'))
+    expect(toast.mock.lastCall?.[0]).toBe('info')
+    toastJobError('Lecture 3', job(false))
+    expect(toast.mock.lastCall?.[0]).toBe('error')
   })
 
   it('routes an unsupported source through the resolver, so its own code names it', () => {

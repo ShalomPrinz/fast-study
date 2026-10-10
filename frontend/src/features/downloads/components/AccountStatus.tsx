@@ -4,6 +4,7 @@ import {
   connectAuth,
   completeAuth,
   disconnectAuth,
+  isBlockedError,
   isReconnectError,
 } from '@/features/downloads/services/autoDownloader'
 import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
@@ -19,12 +20,13 @@ import { toastFailure } from '@/shared/utils/failure'
 import { toast } from '@/services/toaster'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import {
-  blockedMessage,
   loginFailure,
   moodleBusyMessage,
+  toastBlocked,
 } from '@/features/downloads/utils/downloadErrors'
 import {
   accountView,
+  captchaSeen,
   loginToast,
   type AccountPanel,
   type LoginPhase,
@@ -56,12 +58,12 @@ export default function AccountStatus() {
     if (toastKind?.kind === 'reconnect') {
       toast('error', t`The login didn't finish. Press Connect and sign in again.`)
     } else if (toastKind?.kind === 'blocked') {
-      toast('error', blockedMessage(toastKind.challengeWindow))
+      toastBlocked(toastKind.challengeWindow)
     } else if (toastKind) {
       toast('error', serviceErrorNode(toastKind.failure))
     } else if (err !== undefined && !isMoodleBusyError(err)) {
       const failure = loginFailure(err)
-      if (typeof failure === 'string') toast('error', failure)
+      if (isBlockedError(err)) toastBlocked(err.challengeWindow)
       else if (failure) toast('error', serviceErrorNode(failure))
       else if (isReconnectError(err)) toastLogin({ kind: 'reconnect' })
       else toastFailure(err)
@@ -115,7 +117,11 @@ export default function AccountStatus() {
     />
   )
 
-  const view = accountView(phase, status)
+  // Folded during render (React's adjust-state-on-prop-change), so the frame that drops the captcha reads it.
+  const [seenCaptcha, setSeenCaptcha] = useState(false)
+  const seenNow = captchaSeen(seenCaptcha, status)
+  if (seenNow !== seenCaptcha) setSeenCaptcha(seenNow)
+  const view = accountView(phase, status, seenNow)
   // An open challenge window holds the lock itself, and Complete (or a new Connect) is what it waits for.
   const locked = moodleLocked(lock, view.panel === 'window')
   const lockedTitle = locked ? moodleBusyMessage() : undefined
@@ -149,16 +155,18 @@ export default function AccountStatus() {
     return (
       <>
         <span className="chip chip--warn" data-account="unverified">
-          <Trans>checking the connection</Trans>
+          <Trans>waiting for you to solve the captcha</Trans>
         </span>
-        <button
-          className="btn btn--ghost"
-          onClick={handleVerify}
-          disabled={phase === 'verifying' || locked}
-          title={lockedTitle}
-        >
-          <Trans>I confirmed, try again</Trans>
-        </button>
+        {view.panel !== 'solved' && (
+          <button
+            className="btn btn--ghost"
+            onClick={handleVerify}
+            disabled={phase === 'verifying' || locked}
+            title={lockedTitle}
+          >
+            {verifyLabel(view.panel)}
+          </button>
+        )}
         <button className="btn btn--ghost" onClick={() => setConfirmDisconnect(true)}>
           <Trans>Disconnect</Trans>
         </button>
@@ -205,6 +213,14 @@ export default function AccountStatus() {
   )
 }
 
+// The verify button's label: a captcha on screen is solved, a closed one reopened, a passed window retried.
+function verifyLabel(panel: AccountPanel | null) {
+  if (panel === 'window') return <Trans>I solved the captcha</Trans>
+  if (panel === 'closed') return <Trans>Open the captcha again</Trans>
+  if (panel === 'ready') return <Trans>Try again</Trans>
+  return <Trans>I confirmed, try again</Trans>
+}
+
 // Why the account is not verified yet and what finishes it; the toast says the same in a line, this stays.
 function BlockedPanel({ panel }: { panel: AccountPanel }) {
   return (
@@ -215,25 +231,32 @@ function BlockedPanel({ panel }: { panel: AccountPanel }) {
       <p>
         {panel === 'window' && (
           <Trans>
-            A window opened on the university site. Confirm there that you are not a bot, then press
-            “I confirmed, try again”.
+            A window opened on the university site. Solve the captcha there, and the connection
+            finishes by itself.
+          </Trans>
+        )}
+        {panel === 'solved' && <Trans>The captcha is solved. Finishing the connection…</Trans>}
+        {panel === 'closed' && (
+          <Trans>
+            The window was closed before the captcha was solved. Press “Open the captcha again” to
+            bring it back.
           </Trans>
         )}
         {panel === 'ready' && (
           <Trans>
-            The window on the university site passed the check. Press “I confirmed, try again”.
+            The window on the university site passed, with no captcha to solve. Press “Try again”.
           </Trans>
         )}
         {panel === 'own-browser' && (
           <Trans>
-            Open the university site in your browser and confirm there that you are not a bot, then
-            press “I confirmed, try again”.
+            Open the university site in your browser and solve the captcha there, then press “I
+            confirmed, try again”.
           </Trans>
         )}
         {panel === 'unknown' && (
           <Trans>
             Use the window that opened on the university site, or open the site in your browser, and
-            confirm there that you are not a bot. Then press “I confirmed, try again”.
+            solve the captcha there. Then press “I confirmed, try again”.
           </Trans>
         )}
       </p>

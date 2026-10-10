@@ -159,9 +159,17 @@ describe('a login the site refuses', () => {
     expect(loginFailure(err)).toMatchObject({ code: 'moodle_site_unsupported', params })
   })
 
-  it('reports a bot challenge during login as the wait, and leaves the rest to the generic path', async () => {
-    stubFetch(withBody(503, { status: 'blocked', message: 'challenge' }))
-    expect(typeof loginFailure(await completeAuth().catch((e) => e))).toBe('string')
+  it('throws a bot challenge during login as a block, and leaves it and the rest to the caller', async () => {
+    stubFetch(
+      withBody(503, {
+        status: 'blocked',
+        message: 'challenge',
+        params: { challengeWindow: 'captcha' },
+      }),
+    )
+    const err = await completeAuth().catch((e) => e)
+    expect(err).toMatchObject({ name: 'BlockedError', challengeWindow: 'captcha' })
+    expect(loginFailure(err)).toBeNull()
     expect(loginFailure(new RequestError('timed out', 'moodle_login_timeout'))).toBeNull()
   })
 })

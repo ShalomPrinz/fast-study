@@ -129,8 +129,8 @@ msgid "{0} video"
 msgstr "{0} video"
 
 #: src/shared/i18n/serviceErrors.ts:189
-msgid "{challengeWindow, select, captcha {The university site wants to confirm you are not a bot. Confirm it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
-msgstr "{challengeWindow, select, captcha {The university site wants to confirm you are not a bot. Confirm it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
+msgid "{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
+msgstr "{challengeWindow, select, captcha {The university site wants you to solve a captcha. Solve it in the window that opened, then try again.} ready {The university site checked the connection, and it passed. Try again.} false {The university site is refusing automated requests, and no browser window could open to get past it. Wait a few minutes and try again.} other {The university site is temporarily refusing automated requests. Wait a few minutes and try again.}}"
 
 #: src/features/lectures/utils/materialIndicator.ts:33
 msgid "{count, plural, other {# materials were used}}"
@@ -353,9 +353,9 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/downloads/components/AccountStatus.tsx:217
-msgid "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
-msgstr "A window opened on the university site. Confirm there that you are not a bot, then press “I confirmed, try again”."
+#: src/features/downloads/components/AccountStatus.tsx:233
+msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
+msgstr "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 
 #: src/features/search/SearchView.tsx:242
 msgid "Add a course to search its summaries."
@@ -469,7 +469,7 @@ msgstr "Browser for downloading recordings"
 msgid "Building the PDF took too long and was stopped after {seconds} seconds."
 msgstr "Building the PDF took too long and was stopped after {seconds} seconds."
 
-#: src/features/downloads/utils/downloadErrors.ts:32
+#: src/features/downloads/utils/downloadErrors.ts:43
 msgid "Can't download {name} while it's being processed or waiting in line"
 msgstr "Can't download {name} while it's being processed or waiting in line"
 
@@ -503,17 +503,13 @@ msgstr "Change the data folder while lectures are being processed?"
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:126
+#: src/features/downloads/components/AccountStatus.tsx:132
 msgid "checking account…"
 msgstr "checking account…"
 
 #: src/features/settings/components/DriveConnection.tsx:98
 msgid "checking Drive…"
 msgstr "checking Drive…"
-
-#: src/features/downloads/components/AccountStatus.tsx:152
-msgid "checking the connection"
-msgstr "checking the connection"
 
 #: src/features/settings/components/ApiKeyField.tsx:123
 #: src/features/settings/components/BrowserPrereqField.tsx:33
@@ -600,7 +596,7 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "Confirmed ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:202
+#: src/features/downloads/components/AccountStatus.tsx:210
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
@@ -613,7 +609,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:112
+#: src/features/downloads/components/AccountStatus.tsx:114
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "Connecting again needs a full login in a browser window, including two-step verification."
 
@@ -687,16 +683,16 @@ msgstr "Could not tell what {url} is — the site didn't answer usefully."
 msgid "Couldn't download \"{lecture}\". Try again."
 msgstr "Couldn't download \"{lecture}\". Try again."
 
-#: src/features/downloads/utils/downloadErrors.ts:53
-#: src/features/downloads/utils/downloadErrors.ts:72
+#: src/features/downloads/utils/downloadErrors.ts:62
+#: src/features/downloads/utils/downloadErrors.ts:81
 msgid "Couldn't download \"{name}\". Try again."
 msgstr "Couldn't download \"{name}\". Try again."
 
-#: src/features/downloads/utils/downloadErrors.ts:64
+#: src/features/downloads/utils/downloadErrors.ts:73
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:134
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:137
 msgid "Couldn't load recordings for \"{name}\". Try again."
 msgstr "Couldn't load recordings for \"{name}\". Try again."
 
@@ -780,17 +776,17 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:163
-#: src/features/downloads/components/AccountStatus.tsx:184
+#: src/features/downloads/components/AccountStatus.tsx:171
+#: src/features/downloads/components/AccountStatus.tsx:192
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:111
+#: src/features/downloads/components/AccountStatus.tsx:113
 msgid "Disconnect the university account?"
 msgstr "Disconnect the university account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:184
+#: src/features/downloads/components/AccountStatus.tsx:192
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -1015,7 +1011,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:134
+#: src/features/downloads/components/AccountStatus.tsx:140
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -1115,9 +1111,13 @@ msgstr "Home"
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
-#: src/features/downloads/components/AccountStatus.tsx:160
+#: src/features/downloads/components/AccountStatus.tsx:221
 msgid "I confirmed, try again"
 msgstr "I confirmed, try again"
+
+#: src/features/downloads/components/AccountStatus.tsx:218
+msgid "I solved the captcha"
+msgstr "I solved the captcha"
 
 #: src/features/downloads/components/RecordingRow.tsx:303
 msgid "In course"
@@ -1324,7 +1324,7 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/components/AccountStatus.tsx:143
+#: src/features/downloads/components/AccountStatus.tsx:149
 msgid "no university chosen"
 msgstr "no university chosen"
 
@@ -1349,7 +1349,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "Not confirmed yet"
 
-#: src/features/downloads/components/AccountStatus.tsx:194
+#: src/features/downloads/components/AccountStatus.tsx:202
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1426,13 +1426,17 @@ msgstr "Open material"
 msgid "Open PDF"
 msgstr "Open PDF"
 
+#: src/features/downloads/components/AccountStatus.tsx:219
+msgid "Open the captcha again"
+msgstr "Open the captcha again"
+
 #: src/features/settings/components/DriveConnection.tsx:107
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
 
-#: src/features/downloads/components/AccountStatus.tsx:228
-msgid "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
-msgstr "Open the university site in your browser and confirm there that you are not a bot, then press “I confirmed, try again”."
+#: src/features/downloads/components/AccountStatus.tsx:249
+msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
+msgstr "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 
 #: src/features/settings/components/MoodleSiteField.tsx:133
 msgid "Open your university's Moodle (the site with your courses and lecture recordings) in the browser, copy the address from the bar at the top, and paste it here."
@@ -1560,7 +1564,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:202
+#: src/features/downloads/components/AccountStatus.tsx:210
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1712,7 +1716,7 @@ msgstr "Select a lecture to get started"
 msgid "Send error reports"
 msgstr "Send error reports"
 
-#: src/features/downloads/components/AccountStatus.tsx:194
+#: src/features/downloads/components/AccountStatus.tsx:202
 msgid "session expired"
 msgstr "session expired"
 
@@ -1876,6 +1880,10 @@ msgstr "That step is turned off in settings."
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "The API keys and the summary model aren't available right now. They'll come back here on their own."
 
+#: src/features/downloads/components/AccountStatus.tsx:238
+msgid "The captcha is solved. Finishing the connection…"
+msgstr "The captcha is solved. Finishing the connection…"
+
 #: src/shared/i18n/serviceErrors.ts:34
 msgid "The course \"{course}\" was not found."
 msgstr "The course \"{course}\" was not found."
@@ -1920,7 +1928,7 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
-#: src/features/downloads/components/AccountStatus.tsx:57
+#: src/features/downloads/components/AccountStatus.tsx:59
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
@@ -1973,7 +1981,7 @@ msgstr "the run was cancelled. Run the section again to pick them up."
 msgid "the runner takes these in order"
 msgstr "the runner takes these in order"
 
-#: src/features/downloads/utils/downloadErrors.ts:85
+#: src/features/downloads/utils/downloadErrors.ts:93
 msgid "The site refused the download. This link needs a login, so it can't be downloaded here."
 msgstr "The site refused the download. This link needs a login, so it can't be downloaded here."
 
@@ -1981,7 +1989,7 @@ msgstr "The site refused the download. This link needs a login, so it can't be d
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
-#: src/features/downloads/components/AccountStatus.tsx:213
+#: src/features/downloads/components/AccountStatus.tsx:229
 msgid "The university is checking the connection."
 msgstr "The university is checking the connection."
 
@@ -1989,18 +1997,22 @@ msgstr "The university is checking the connection."
 msgid "the university session expired. Reconnect, then run the section again."
 msgstr "the university session expired. Reconnect, then run the section again."
 
-#: src/features/downloads/utils/downloadErrors.ts:27
+#: src/features/downloads/utils/downloadErrors.ts:38
 #: src/shared/i18n/serviceErrors.ts:193
 msgid "The university site is busy with another request. Try again in a moment."
 msgstr "The university site is busy with another request. Try again in a moment."
 
 #: src/features/settings/components/MoodleSiteField.tsx:98
-msgid "The university site wants to confirm you are not a bot. Confirm it in the window that opened. You can still save the site."
-msgstr "The university site wants to confirm you are not a bot. Confirm it in the window that opened. You can still save the site."
+msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
+msgstr "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 
-#: src/features/downloads/components/AccountStatus.tsx:223
-msgid "The window on the university site passed the check. Press “I confirmed, try again”."
-msgstr "The window on the university site passed the check. Press “I confirmed, try again”."
+#: src/features/downloads/components/AccountStatus.tsx:246
+msgid "The window on the university site passed, with no captcha to solve. Press “Try again”."
+msgstr "The window on the university site passed, with no captcha to solve. Press “Try again”."
+
+#: src/features/downloads/components/AccountStatus.tsx:240
+msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
+msgstr "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 
 #. placeholder {0}: rotateTarget.file
 #: src/features/lectures/MainView.tsx:424
@@ -2105,6 +2117,10 @@ msgstr "Transcribing the audio failed."
 msgid "Transcript"
 msgstr "Transcript"
 
+#: src/features/downloads/components/AccountStatus.tsx:220
+msgid "Try again"
+msgstr "Try again"
+
 #: src/features/downloads/components/ManualDownload.tsx:198
 msgid "Type"
 msgstr "Type"
@@ -2125,7 +2141,7 @@ msgstr "University"
 msgid "University account"
 msgstr "University account"
 
-#: src/features/downloads/components/AccountStatus.tsx:177
+#: src/features/downloads/components/AccountStatus.tsx:185
 msgid "University account connected"
 msgstr "University account connected"
 
@@ -2177,9 +2193,9 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/AccountStatus.tsx:234
-msgid "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
-msgstr "Use the window that opened on the university site, or open the site in your browser, and confirm there that you are not a bot. Then press “I confirmed, try again”."
+#: src/features/downloads/components/AccountStatus.tsx:255
+msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
+msgstr "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 
 #: src/features/downloads/components/RecordingRow.tsx:54
 #: src/features/lectures/constants/pipeline.ts:18
@@ -2193,6 +2209,10 @@ msgstr "Video link"
 #: src/features/downloads/DownloadsView.tsx:44
 msgid "Videos"
 msgstr "Videos"
+
+#: src/features/downloads/components/AccountStatus.tsx:158
+msgid "waiting for you to solve the captcha"
+msgstr "waiting for you to solve the captcha"
 
 #: src/features/settings/components/BrowserPrereqField.tsx:39
 msgid "We couldn't check right now."

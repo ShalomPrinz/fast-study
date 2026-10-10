@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { accountView, loginToast } from './accountView'
+import { accountView, captchaSeen, loginToast } from './accountView'
 import type { AuthStatus } from '../services/autoDownloader'
 
 const ok: AuthStatus = { connected: true, expired: false, phase: 'connected' }
@@ -30,25 +30,42 @@ describe('accountView', () => {
 
   it('words the panel by what the challenge window did', () => {
     expect(accountView('idle', blocked('captcha')).panel).toBe('window')
-    expect(accountView('idle', blocked('ready')).panel).toBe('ready')
     expect(accountView('idle', blocked(false)).panel).toBe('own-browser')
-  })
-
-  it('follows the live challenge frame over the recorded block', () => {
-    expect(accountView('idle', blocked('captcha', { open: true, captcha: true })).panel).toBe(
-      'window',
-    )
-    expect(accountView('idle', blocked('captcha', { open: true, captcha: false })).panel).toBe(
+    // A check walled inside the window that reloaded onto the site: no captcha to solve, just retry.
+    expect(accountView('idle', blocked('ready')).panel).toBe('ready')
+    expect(accountView('idle', blocked('ready', { open: true, captcha: false })).panel).toBe(
       'ready',
     )
-    expect(accountView('idle', blocked('captcha', { open: false, captcha: false })).panel).toBe(
+    expect(accountView('idle', blocked('ready', { open: false, captcha: false })).panel).toBe(
       'ready',
     )
     expect(accountView('idle', blocked('ready', { open: true, captcha: true })).panel).toBe(
       'window',
     )
+  })
+
+  it('follows the live challenge frame over the recorded block', () => {
+    // A captcha on screen, whatever was recorded.
+    expect(accountView('idle', blocked('captcha', { open: true, captcha: true })).panel).toBe(
+      'window',
+    )
+    expect(accountView('idle', blocked(undefined, { open: true, captcha: true })).panel).toBe(
+      'window',
+    )
+    // Solved: the window showed a captcha and is still up while auto verifies, so nothing asks for a press.
+    const solved = blocked('captcha', { open: true, captcha: false })
+    expect(accountView('idle', solved, true).panel).toBe('solved')
+    // A window reopening shows no captcha yet either; it is not solved until one was on screen.
+    expect(accountView('idle', solved, false).panel).toBe('window')
+    // Closed before it was solved: never reported as passed.
+    expect(accountView('idle', blocked('captcha', { open: false, captcha: false })).panel).toBe(
+      'closed',
+    )
     expect(accountView('idle', blocked(false, { open: false, captcha: false })).panel).toBe(
       'own-browser',
+    )
+    expect(accountView('idle', blocked(undefined, { open: false, captcha: false })).panel).toBe(
+      'unknown',
     )
   })
 
@@ -64,6 +81,20 @@ describe('accountView', () => {
     expect(accountView('idle', ok).chip).toBe('connected')
     expect(accountView('idle', idle).chip).toBe('disconnected')
     expect(accountView('idle', null).chip).toBe('disconnected')
+  })
+})
+
+describe('captchaSeen', () => {
+  it('remembers a captcha while its window stays open, and forgets it when the window closes', () => {
+    const frame = (open: boolean, captcha: boolean): AuthStatus => ({
+      ...blocked('captcha'),
+      challenge: { open, captcha },
+    })
+    expect(captchaSeen(false, frame(true, false))).toBe(false)
+    expect(captchaSeen(false, frame(true, true))).toBe(true)
+    expect(captchaSeen(true, frame(true, false))).toBe(true)
+    expect(captchaSeen(true, frame(false, false))).toBe(false)
+    expect(captchaSeen(true, null)).toBe(false)
   })
 })
 

@@ -7,7 +7,7 @@ import { serviceErrorNode } from '@/shared/components/ServiceError'
 import { failureOf } from '@/shared/utils/failure'
 import type { Item, ResolvedMedia } from '../services/autoDownloader'
 import { isBlockedError, isReconnectError, listRecordings } from '../services/autoDownloader'
-import { blockedMessage } from '../utils/downloadErrors'
+import { blockedMessage, blockedToastKind } from '../utils/downloadErrors'
 import { useWithMoodleLock } from './MoodleLockContext'
 import { clearExpansions } from './RowExpansionsContext'
 import { clearSectionCollapse } from './SectionCollapseContext'
@@ -120,7 +120,10 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
         // Bot protection is the site's, not the account's: no chip moves, and unlike the reconnect
         // hint it stays behind the ticket guard.
         if (isBlockedError(err)) {
-          sendUpdateRef.current?.('error', blockedMessage(err.challengeWindow))
+          sendUpdateRef.current?.(
+            blockedToastKind(err.challengeWindow),
+            blockedMessage(err.challengeWindow),
+          )
           return
         }
         // A coded refusal says why in the service's words, led by the course name so it never reads

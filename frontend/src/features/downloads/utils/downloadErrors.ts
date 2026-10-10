@@ -2,6 +2,7 @@ import { t } from '@lingui/core/macro'
 import { toast } from '@/services/toaster'
 import { isConnectionError, isMoodleBusyError } from '@/services/http'
 import {
+  challengeWindowOf,
   isBlockedError,
   isReconnectError,
   isUnsupportedError,
@@ -20,6 +21,16 @@ import { failureOf } from '@/shared/utils/failure'
 export function blockedMessage(challengeWindow: ChallengeWindow): string {
   return resolveServiceError({ message: '', code: 'site_blocked', params: { challengeWindow } })
     .headline
+}
+
+// An instruction (solve the captcha, or just repeat) is info; a wall nothing can get past yet is an error.
+export function blockedToastKind(challengeWindow: ChallengeWindow): 'info' | 'error' {
+  return challengeWindow === 'captcha' || challengeWindow === 'ready' ? 'info' : 'error'
+}
+
+// A block as a toast, in the kind its wording calls for.
+export function toastBlocked(challengeWindow: ChallengeWindow): void {
+  toast(blockedToastKind(challengeWindow), blockedMessage(challengeWindow))
 }
 
 // Why a Moodle button is disabled: another request holds the lock, which frees by itself.
@@ -41,16 +52,14 @@ export function toastDownloadError(name: string, err?: unknown): void {
     toast('error', serviceErrorNode(err))
     return
   }
-  const failure = failureOf(err)
-  if (failure.code) {
-    toast('error', serviceErrorNode(failure, name))
+  if (isBlockedError(err)) {
+    toastBlocked(err.challengeWindow)
     return
   }
+  const failure = failureOf(err)
   toast(
     'error',
-    isBlockedError(err)
-      ? blockedMessage(err.challengeWindow)
-      : t`Couldn't download "${name}". Try again.`,
+    failure.code ? serviceErrorNode(failure, name) : t`Couldn't download "${name}". Try again.`,
   )
 }
 
@@ -72,10 +81,9 @@ export function toastJobError(name: string, failure: ServiceFailure | null, manu
     toast('error', t`Couldn't download "${name}". Try again.`)
     return
   }
-  toast(
-    'error',
-    serviceErrorNode(failure, name, manual ? manualFailureHeadline(failure) : undefined),
-  )
+  const kind =
+    failure.code === 'site_blocked' ? blockedToastKind(challengeWindowOf(failure.params)) : 'error'
+  toast(kind, serviceErrorNode(failure, name, manual ? manualFailureHeadline(failure) : undefined))
 }
 
 // A manual job's headline where the shared sentence would mislead, else undefined: a link answering
@@ -86,10 +94,8 @@ export function manualFailureHeadline(failure: ServiceFailure): string | undefin
     : undefined
 }
 
-// A failed login's failure in the words the user reads: a refused site (`moodle_site_unsupported`)
-// in the service's reason, a bot challenge as the wait; null leaves it to the generic funnel.
-export function loginFailure(err: unknown): ServiceFailure | string | null {
-  if (isUnsupportedError(err)) return err
-  if (isBlockedError(err)) return blockedMessage(err.challengeWindow)
-  return null
+// A failed login's refused site (`moodle_site_unsupported`) in the service's reason; null leaves it to the
+// caller, which toasts a block through `toastBlocked` and the rest through the generic funnel.
+export function loginFailure(err: unknown): ServiceFailure | null {
+  return isUnsupportedError(err) ? err : null
 }
