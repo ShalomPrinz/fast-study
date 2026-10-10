@@ -1,23 +1,17 @@
 import { MATERIAL_TEMP_FILENAME } from '../config.js';
 import { probeContentLength } from '../services/probe.js';
 import { uploadMaterial } from '../services/database.js';
-import { autodlCurlArgs, autodlHeaderList } from '../services/autodl.js';
+import { curlTransferArgs, autodlHeaderList, readAutodlRefusal } from '../services/autodl.js';
 
 // No captured-header replay: the URL authenticates by its own query-string token, or is a file on
-// auto. --retry-all-errors covers CDNs that drop TLS mid-stream.
+// auto. curlTransferArgs picks the failure and retry flags per host.
 function buildFetchArgs(url, tempDir) {
   return [
-    ...autodlCurlArgs(url, tempDir),
+    ...curlTransferArgs(url, tempDir),
     '-L',
-    '--fail',
     '--compressed',
     '--silent',
     '--show-error',
-    '--retry',
-    '3',
-    '--retry-delay',
-    '2',
-    '--retry-all-errors',
     '--output',
     MATERIAL_TEMP_FILENAME,
     url,
@@ -32,5 +26,6 @@ export const fetchFile = {
   measure: 'dir',
   upload: uploadMaterial, // not uploadVideo: the material upload must not wipe derived artifacts
   probeSize: ({ url }) => probeContentLength(url, autodlHeaderList(url)),
+  refusal: (tempDir) => readAutodlRefusal(tempDir, MATERIAL_TEMP_FILENAME),
   buildCommand: ({ url }, tempDir) => ({ command: 'curl', args: buildFetchArgs(url, tempDir) }),
 };

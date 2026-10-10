@@ -29,6 +29,8 @@ const { downloadItem } = await import('../src/routes/downloadItem.js');
 const { fetchFile } = await import('../src/downloaders/fetch.js');
 const { listJobs } = await import('../src/jobs.js');
 const { curl } = await import('../src/downloaders/curl.js');
+const { finalStatus, autodlRefusal, readAutodlRefusal } = await import('../src/services/autodl.js');
+const { exitFailure, recovery } = await import('../src/downloaders/runner.js');
 
 const json = (status, body) => (req, res) => {
   res.writeHead(status, { 'Content-Type': 'application/json' });
@@ -151,6 +153,22 @@ for (const [label, downloader] of [
     assert.equal(fs.readFileSync(path.join(dir, 'request-headers.txt'), 'utf8'), HEADER_LINES);
   });
 
+  test(`${label} never retries auto and keeps its refusal body; any other host keeps its retries`, (t) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fetch-retry-'));
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+    const onAuto = downloader.buildCommand(
+      { url: targetUrl('/moodle/file/abc'), headers: [] },
+      dir,
+    );
+    for (const flag of ['--fail', '--retry', '--retry-all-errors'])
+      assert.equal(onAuto.args.includes(flag), false, flag);
+    assert.equal(onAuto.args.includes('--dump-header'), true);
+    const other = downloader.buildCommand({ url: 'https://cdn.test/a.mp4', headers: [] }, dir);
+    for (const flag of ['--fail', '--retry', '--retry-all-errors'])
+      assert.equal(other.args.includes(flag), true, flag);
+    assert.equal(other.args.includes('--dump-header'), false);
+  });
+
   test(`${label} sends any other URL none of auto's headers`, (t) => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fetch-plain-'));
     t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
@@ -159,3 +177,106 @@ for (const [label, downloader] of [
     assert.deepEqual(fs.readdirSync(dir), []);
   });
 }
+
+const BLOCKED = {
+  status: 'blocked',
+  message: 'Moodle answered a bot challenge',
+  code: 'site_blocked',
+  params: { detail: 'radware', challengeWindow: 'captcha' },
+};
+
+test('the final status of a header dump is the last of a redirect chain', () => {
+  assert.equal(
+    finalStatus('HTTP/1.1 302 Found\r\nLocation: /x\r\n\r\nHTTP/1.1 503 Service Unavailable\r\n'),
+    503,
+  );
+  assert.equal(finalStatus('HTTP/2 200\r\n'), 200);
+  assert.equal(finalStatus(''), null);
+});
+
+test("auto's refusal carries its own code and params; a body that is not its envelope has none", () => {
+  assert.deepEqual(autodlRefusal(503, JSON.stringify(BLOCKED)), {
+    status: 503,
+    error: BLOCKED.message,
+    code: 'site_blocked',
+    params: BLOCKED.params,
+  });
+  assert.deepEqual(autodlRefusal(502, 'Bad Gateway'), {
+    status: 502,
+    error: 'auto answered HTTP 502',
+    code: null,
+    params: null,
+  });
+});
+
+test('a refusal is read off the temp dir only for a non-2xx answer from auto', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fetch-refusal-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  assert.equal(readAutodlRefusal(dir, 'out'), null, 'no header dump: another host');
+  fs.writeFileSync(path.join(dir, 'out'), JSON.stringify(BLOCKED));
+  fs.writeFileSync(path.join(dir, 'response-headers.txt'), 'HTTP/1.1 200 OK\r\n');
+  assert.equal(readAutodlRefusal(dir, 'out'), null);
+  fs.writeFileSync(path.join(dir, 'response-headers.txt'), 'HTTP/1.1 503 Service Unavailable\r\n');
+  assert.equal(readAutodlRefusal(dir, 'out').code, 'site_blocked');
+});
+
+test("a job refused by auto ends with auto's code; otherwise with the exit's", () => {
+  const blocked = autodlRefusal(503, JSON.stringify(BLOCKED));
+  assert.deepEqual(exitFailure('fetch', 0, '', blocked), {
+    auth: false,
+    message: BLOCKED.message,
+    code: 'site_blocked',
+    params: BLOCKED.params,
+  });
+  const unknown = autodlRefusal(
+    401,
+    JSON.stringify({ error: 'x', code: 'moodle_file_unknown', params: {} }),
+  );
+  assert.equal(
+    exitFailure('fetch', 0, '', unknown).auth,
+    true,
+    'a 401 still drives the re-resolve',
+  );
+  assert.deepEqual(exitFailure('fetch', 0, '', autodlRefusal(502, '')).params, {
+    tool: 'fetch',
+    exit_code: 0,
+    detail: 'auto answered HTTP 502',
+  });
+  assert.equal(exitFailure('curl', 0, '', null), null);
+  assert.equal(
+    exitFailure('curl', 22, 'curl: (22) The requested URL returned error: 403', null).code,
+    'download_auth_failed',
+  );
+  assert.equal(
+    exitFailure('curl', 6, 'curl: (6) Could not resolve host', null).code,
+    'download_tool_failed',
+  );
+});
+
+test('a job gets at most one cut-short re-run and one re-resolve, in either order', () => {
+  const onAuto = targetUrl('/moodle/file/abc');
+  const reresolve = () => {};
+  const blocked = autodlRefusal(503, JSON.stringify(BLOCKED));
+  const start = { fromCache: true, reresolve, rerun: false };
+  for (const exit of [18, 52, 56])
+    assert.equal(recovery(start, onAuto, exit, null, false).step, 'rerun');
+  assert.equal(recovery(start, onAuto, 7, null, false), null, 'auto down');
+  assert.equal(recovery(start, onAuto, 56, blocked, false), null, 'a refusal is never re-run');
+  assert.equal(
+    recovery(start, 'https://cdn.test/a.pdf', 18, null, false),
+    null,
+    'curl retries its own',
+  );
+
+  // cut short → re-run → 401 → re-resolve → cut short again: the third run ends the job.
+  const afterRerun = recovery(start, onAuto, 56, null, false).next;
+  const afterResolve = recovery(afterRerun, onAuto, 0, null, true);
+  assert.deepEqual(afterResolve, { step: 'reresolve', next: { rerun: true } });
+  assert.equal(recovery(afterResolve.next, onAuto, 18, null, false), null);
+
+  // 401 → re-resolve → cut short → re-run → 401: no second re-resolve.
+  const resolved = recovery(start, onAuto, 0, null, true).next;
+  const rerunAfter = recovery(resolved, onAuto, 18, null, false);
+  assert.equal(rerunAfter.step, 'rerun');
+  assert.equal(recovery(rerunAfter.next, onAuto, 0, null, true), null);
+});

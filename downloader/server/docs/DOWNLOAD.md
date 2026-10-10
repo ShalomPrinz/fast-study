@@ -26,11 +26,19 @@ fetch, and replaying its `Range:` saves a partial body missing the MP4 header at
 
 Flags: `-L --fail --compressed --silent --show-error --retry 3 --retry-delay 2 --retry-all-errors`.
 `--retry-all-errors` covers CDNs that close TLS without `close_notify` mid-stream (OpenSSL 3 →
-`SSL_read: unexpected eof`). `--silent` because the server renders progress; `--show-error` still
-writes a failure reason for the stderr tail. `fetch` is the same curl with no header replay. A target on auto/ (any file on the Moodle host,
-`fetch` or `curl`) carries no captured headers — auto/ keeps them — only the launch secret and the
-Moodle wait marker, from a `-H @file` in the temp dir, never argv. auto/ answers its `HEAD` from
-memory and the probe skips the ranged fallback there, so sizing costs no turn of the Moodle lock.
+`SSL_read: unexpected eof`). `--silent` because the server renders progress; `--show-error` still writes a failure reason for the
+stderr tail. `fetch` is the same curl with no header replay.
+
+A target on auto/ (any file on the Moodle host, `fetch` or `curl`) carries no captured headers —
+auto/ keeps them — only the launch secret and the Moodle wait marker, from a `-H @file` in the temp
+dir, never argv. auto/ answers its `HEAD` from memory and the probe skips the ranged fallback there,
+so sizing costs no turn of the Moodle lock.
+
+A URL on auto/ takes none of `--fail`/`--retry*`: its refusal (a `503 site_blocked`, a `401`) is a
+typed answer a re-send cannot fix, and each re-send would queue on its gate and hit Moodle again.
+curl dumps auto's headers to `response-headers.txt` and keeps its JSON body in the output file, and
+the runner ends the job with auto's own `code`/`params` (`readAutodlRefusal`). A fetch from auto cut
+short with no refusal (curl exit 18, 52 or 56) is re-run once in a fresh temp dir (`recovery`).
 
 ## yt-dlp (YouTube, Drive and direct video links)
 

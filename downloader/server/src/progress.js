@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { VIDEO_FILENAME } from './config.js';
-import { HEADER_FILE } from './services/autodl.js';
+import { AUTODL_FILES } from './services/autodl.js';
 
 // Mirrors popup.js::formatSize (duplicated to keep the two decoupled).
 export function formatBytes(bytes) {
@@ -35,13 +35,13 @@ export function deregisterDownload(key) {
 }
 
 // yt-dlp writes separate audio+video temp files pre-merge, so sum the dir; curl
-// writes the lone video.mp4, so stat it. The dir sum leaves out curl's header file for auto.
+// writes the lone video.mp4, so stat it. The dir sum leaves out curl's header files for auto.
 export function measureBytes(entry) {
   try {
     if (entry.measure === 'dir') {
       let sum = 0;
       for (const name of fs.readdirSync(entry.tempDir)) {
-        if (name === HEADER_FILE) continue;
+        if (AUTODL_FILES.has(name)) continue;
         try {
           sum += fs.statSync(path.join(entry.tempDir, name)).size;
         } catch {}

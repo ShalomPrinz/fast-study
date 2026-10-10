@@ -12,6 +12,7 @@ import {
   formatBytes,
 } from '../progress.js';
 import { recordDownloadTiming } from '../services/timing.js';
+import { onAutodl } from '../services/autodl.js';
 import { setExpectedBytes, startJob, freezeJobBytes, finishJob } from '../jobs.js';
 
 function makeTempDir() {
@@ -35,12 +36,46 @@ function isAuthError(message) {
   );
 }
 
+/**
+ * A finished child's failure as `{ auth, message, code, params }`, or null for a clean exit. A
+ * refusal from auto (`downloader.refusal`) is its own code; else the exit code and stderr tail.
+ */
+export function exitFailure(tool, exitCode, detail, refusal) {
+  if (!refusal && exitCode === 0) return null;
+  const auth = refusal ? refusal.status === 401 || refusal.status === 403 : isAuthError(detail);
+  if (refusal?.code)
+    return { auth, message: refusal.error, code: refusal.code, params: refusal.params };
+  if (refusal) detail = refusal.error;
+  const message = `exited with code ${exitCode}${detail ? `\n${detail}` : ''}`;
+  return {
+    auth,
+    message: auth ? `authentication failed\n${message}` : message,
+    code: auth ? 'download_auth_failed' : 'download_tool_failed',
+    params: { tool, exit_code: exitCode, detail: detail || null },
+  };
+}
+
+// curl's exits for a transfer cut short (18 partial body, 52 empty reply, 56 recv failure); 7 is
+// auto down, which a re-run can't fix.
+const CUT_SHORT = new Set([18, 52, 56]);
+
+/**
+ * The one recovery a failed run gets, or null: `{ step: 'rerun'|'reresolve', next }`, `next` being the
+ * following run's `{fromCache, reresolve, rerun}`. `rerun` rides through both, so each fires once a job.
+ */
+export function recovery({ fromCache, reresolve, rerun }, url, exitCode, refusal, auth) {
+  if (!rerun && onAutodl(url) && CUT_SHORT.has(exitCode) && !refusal)
+    return { step: 'rerun', next: { fromCache, reresolve, rerun: true } };
+  if (auth && fromCache && reresolve) return { step: 'reresolve', next: { rerun } };
+  return null;
+}
+
 // Source-agnostic runner (docs/DOWNLOAD.md). Every exit path must terminate `jobId`; `reresolve`
 // (null without a ref) drives the one silent auth recovery (docs/JOBS.md).
 export async function runDownloadJob(
   downloader,
   input,
-  { course, lecture, kind, jobId, fromCache = false, reresolve = null },
+  { course, lecture, kind, jobId, fromCache = false, reresolve = null, rerun = false },
 ) {
   const label = `${course}/${lecture}`;
   const tempDir = makeTempDir();
@@ -90,14 +125,27 @@ export async function runDownloadJob(
     child.on('close', async (code) => {
       deregisterDownload(tempDir);
       const finalBytes = freezeJobBytes(jobId); // last measurement before the upload deletes the temp dir
-      if (code !== 0) {
-        const detail = tail();
-        const message = `exited with code ${code}${detail ? `\n${detail}` : ''}`;
+      const refusal = downloader.refusal?.(tempDir) ?? null;
+      const failure = exitFailure(downloader.tool, code, code !== 0 ? tail() : '', refusal);
+      if (failure) {
         removeTempDir(tempDir);
 
-        // A cached cap's token went stale: re-resolve it fresh and re-run the SAME job. The
-        // fresh input is fromCache:false, so a second auth failure can't loop back here.
-        if (isAuthError(detail) && fromCache && reresolve) {
+        // Moodle dropped mid-body or auto restarted: one re-run in a fresh temp dir, keeping
+        // fromCache so a restarted auto's 401 still reaches the re-resolve. A cached cap's token
+        // went stale: re-resolve it fresh and re-run the SAME job with fromCache:false.
+        const next = recovery(
+          { fromCache, reresolve, rerun },
+          input.url,
+          code,
+          refusal,
+          failure.auth,
+        );
+        if (next?.step === 'rerun') {
+          emitError(`♻️  ${downloader.tool} cut short (exit ${code}) — fetching from auto again`);
+          runDownloadJob(downloader, input, { course, lecture, kind, jobId, ...next.next });
+          return;
+        }
+        if (next?.step === 'reresolve') {
           emitError(`♻️  ${downloader.tool} auth failed on a cached token — re-capturing fresh`);
           const fresh = await reresolve();
           if (fresh.failure) {
@@ -105,20 +153,19 @@ export async function runDownloadJob(
             finishJob(jobId, 'error', error, code, params);
             return;
           }
-          runDownloadJob(fresh.downloader, fresh.input, { course, lecture, kind, jobId });
+          runDownloadJob(fresh.downloader, fresh.input, {
+            course,
+            lecture,
+            kind,
+            jobId,
+            ...next.next,
+          });
           return;
         }
 
         // Non-auth error, a fresh-capture auth failure, or no re-resolve → finalize as-is.
-        emitError(`❌ ${downloader.tool} failed: ${message}`);
-        const auth = isAuthError(detail);
-        finishJob(
-          jobId,
-          'error',
-          auth ? `authentication failed\n${message}` : message,
-          auth ? 'download_auth_failed' : 'download_tool_failed',
-          { tool: downloader.tool, exit_code: code, detail: detail || null },
-        );
+        emitError(`❌ ${downloader.tool} failed: ${failure.message}`);
+        finishJob(jobId, 'error', failure.message, failure.code, failure.params);
         return;
       }
       // Timing sample only after a clean exit — a truncated download is not a valid duration

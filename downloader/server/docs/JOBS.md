@@ -36,7 +36,8 @@ the runner a `reresolve` closure for that one target; an extension-started job h
 gets `null`.
 
 On a non-zero exit the runner classifies the stderr tail with `isAuthError` (HTTP 401/403 or
-denied/expired-token phrasing — the curl `--fail` / yt-dlp signatures):
+denied/expired-token phrasing — the curl `--fail` / yt-dlp signatures); a fetch from auto/, which
+exits 0 on a refusal, is classified by the 401/403 status curl dumped instead (`exitFailure`):
 
 - **auth error AND `fromCache` AND a closure** → the replayed token went stale. `reresolve()` asks
   auto/ for this one target fresh (`only:true, forceCapture:true`, `services/autodl.js`) and answers
@@ -46,14 +47,17 @@ denied/expired-token phrasing — the curl `--fail` / yt-dlp signatures):
   resolver edge's knowledge, not the source-agnostic runner's: 401 → `recapture_reconnect_required`,
   409 → `recapture_passcode_required`, 422 → `recapture_unsupported {detail}`, anything else (a 2xx
   with no usable target included) → `recapture_failed {detail}`.
-- **otherwise** → finalized as-is; a fresh-capture auth failure reads "authentication failed".
+- **otherwise** → finalized as-is; a fresh-capture auth failure reads "authentication failed", and a
+  refusal from auto/ keeps auto's own `code`/`params`.
 
 A target on auto/ (any file on the Moodle host) always says `fromCache:true`: its url is an id in auto/'s memory, which a
 restart forgets (auto answers `401 moodle_file_unknown`), so a failed fetch is always worth the one
 re-resolve. The re-resolve waits its turn at auto's Moodle lock rather than being refused.
 
-**No-loop invariant:** the re-run's input is freshly captured, so it runs with `fromCache:false` and
-no closure — a second auth failure lands in "otherwise". Exactly one silent recovery per job.
+**No-loop invariant:** a job gets at most one silent re-resolve and at most one cut-short re-run
+([DOWNLOAD.md](DOWNLOAD.md)), in either order. The re-resolved input runs with `fromCache:false` and no
+closure, so a second auth failure lands in "otherwise"; `rerun` rides through both, so a second cut
+short fails. At most three runs (`recovery`): the first, the re-run and the re-resolved one, in either order.
 
 ## Events
 
@@ -102,6 +106,7 @@ params }`. `operation` (`'download:curl'|'download:ytdlp'|null`) derives from `t
 | `download_failed`             | `tool`, `detail`             | the probe or command build threw                 |
 | `database_store_failed`       | `detail`                     | the bytes never reached the database             |
 | the database's own code      | as the database sent them    | the database refused the store (`docs/DATABASE.md`) |
+| auto's own code               | as auto sent them            | auto refused a file fetch (`site_blocked` with `challengeWindow`, …); a non-envelope body is `download_tool_failed`, a 401/403 `download_auth_failed` |
 | `recapture_*`                 | see above                    | the one silent re-resolve failed                 |
 
 ## Timing samples

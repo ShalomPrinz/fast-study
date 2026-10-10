@@ -30,14 +30,64 @@ export function autodlHeaderList(url) {
 
 // Kept in a file curl reads (`-H @file`), not on argv, where any local process could read the secret.
 export const HEADER_FILE = 'request-headers.txt';
+// auto's response headers, dumped by curl so the runner can read the status of a refusal.
+export const RESPONSE_FILE = 'response-headers.txt';
+// The temp-dir files that are not the download, which a byte count leaves out.
+export const AUTODL_FILES = new Set([HEADER_FILE, RESPONSE_FILE]);
 
-/** curl args carrying autodlHeaders through a file in `tempDir`; [] for any other host. */
-export function autodlCurlArgs(url, tempDir) {
+// curl's failure and retry flags for `url`; auto's take none, so its refusal stays typed
+// (docs/DOWNLOAD.md). Writes autodlHeaders to a file in `tempDir` for auto.
+export function curlTransferArgs(url, tempDir) {
   const headers = Object.entries(autodlHeaders(url));
-  if (!headers.length) return [];
+  if (!headers.length)
+    return ['--fail', '--retry', '3', '--retry-delay', '2', '--retry-all-errors'];
   const lines = headers.map(([name, value]) => `${name}: ${value}\n`).join('');
   fs.writeFileSync(path.join(tempDir, HEADER_FILE), lines, { mode: 0o600 });
-  return ['-H', `@${HEADER_FILE}`];
+  return ['-H', `@${HEADER_FILE}`, '--dump-header', RESPONSE_FILE];
+}
+
+/** The final HTTP status in a curl header dump (the last of a -L chain); null with none. */
+export function finalStatus(headerText) {
+  const statuses = [...headerText.matchAll(/^HTTP\/\S+\s+(\d{3})/gm)];
+  return statuses.length ? Number(statuses.at(-1)[1]) : null;
+}
+
+/**
+ * auto's non-2xx answer as `{ status, error, code, params }` from its JSON body; code and params
+ * are null when the body is not auto's `{code, params}` envelope.
+ */
+export function autodlRefusal(status, bodyText) {
+  let body = null;
+  try {
+    body = JSON.parse(bodyText);
+  } catch {}
+  if (body && typeof body.code === 'string')
+    return {
+      status,
+      error: body.message ?? body.error ?? `auto answered HTTP ${status}`,
+      code: body.code,
+      params: body.params ?? {},
+    };
+  return { status, error: `auto answered HTTP ${status}`, code: null, params: null };
+}
+
+/**
+ * A finished curl's refusal from auto, read off `tempDir` (`output` holds the body); null for a
+ * 2xx, any other host, or no answer at all (a transport failure keeps curl's own exit).
+ */
+export function readAutodlRefusal(tempDir, output) {
+  let status;
+  try {
+    status = finalStatus(fs.readFileSync(path.join(tempDir, RESPONSE_FILE), 'utf8'));
+  } catch {
+    return null;
+  }
+  if (status === null || resolved(status)) return null;
+  let body = '';
+  try {
+    body = fs.readFileSync(path.join(tempDir, output), 'utf8');
+  } catch {}
+  return autodlRefusal(status, body);
 }
 
 /** A target's url as a fetchable one: auto hands its own files out as paths relative to itself. */

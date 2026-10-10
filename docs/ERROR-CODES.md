@@ -269,6 +269,11 @@ can say which URLs are Moodle's.
 on both channels unchanged, so `database_store_failed` is only the fallback for a failure with no code
 — a network error on the job path, or a non-JSON body. `/upload-pdf` keeps answering 502 either way.
 
+`downloaders/runner.js` likewise ends a job whose file on auto was refused with auto's own
+`code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_reconnect_required`,
+`moodle_file_unknown`); a body that is not auto's envelope falls back to `download_tool_failed` /
+`download_auth_failed`.
+
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s
 `console` wrappers; `services/database.js` logs the emoji line and returns the bare error, so nothing
 emoji-prefixed ever reaches the SPA and no Hebrew sentence inherits one.

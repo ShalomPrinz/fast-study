@@ -2,25 +2,19 @@ import { VIDEO_FILENAME } from '../config.js';
 import { SKIP_HEADERS, probeContentLength } from '../services/probe.js';
 import { toolPath } from '@faststudy/tools';
 import { uploadVideo } from '../services/database.js';
-import { autodlCurlArgs, autodlHeaderList } from '../services/autodl.js';
+import { curlTransferArgs, autodlHeaderList, readAutodlRefusal } from '../services/autodl.js';
 
 // Replay the captured headers (minus SKIP_HEADERS) so short-lived tokens + Referer/Origin checks
-// pass. See docs/DOWNLOAD.md for SKIP_HEADERS and --retry-all-errors.
+// pass. See docs/DOWNLOAD.md for SKIP_HEADERS and the per-host retry flags.
 // A capture auto proxies (one off the Moodle host) carries no captured headers here — auto keeps
 // them — only auto's own secret and wait marker, from a file.
 function buildCurlArgs(url, headers, tempDir) {
   const args = [
-    ...autodlCurlArgs(url, tempDir),
+    ...curlTransferArgs(url, tempDir),
     '-L',
-    '--fail',
     '--compressed',
     '--silent',
     '--show-error',
-    '--retry',
-    '3',
-    '--retry-delay',
-    '2',
-    '--retry-all-errors',
     '--output',
     VIDEO_FILENAME,
   ];
@@ -39,6 +33,7 @@ export const curl = {
   upload: uploadVideo,
   probeSize: ({ url, headers }) =>
     probeContentLength(url, [...(headers ?? []), ...autodlHeaderList(url)]),
+  refusal: (tempDir) => readAutodlRefusal(tempDir, VIDEO_FILENAME),
   buildCommand: ({ url, headers }, tempDir) => ({
     command: toolPath('curl'),
     args: buildCurlArgs(url, headers, tempDir),
