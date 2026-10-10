@@ -3,6 +3,7 @@
 // the lock only while a captcha waits. A fake profile stands in for Chrome (test/fakeProfile.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import { statePath } from '@faststudy/runtime';
 import { gated } from './gated.js';
@@ -11,6 +12,7 @@ import { moodleGate } from '../src/moodle/gate.js';
 import { setCurrentSite } from '../src/moodle/site.js';
 import { writeTokenFile } from '../src/auth/tokenStore.js';
 import { handleList } from '../src/http/server.js';
+import { siteAuth, authState, authEvents } from '../src/core/registry.js';
 import {
   openChallenge,
   closeChallenge,
@@ -298,12 +300,67 @@ test('the user closing the window ends block mode; the next block relaunches on 
   assert.equal(profile.launches[1].dir, profile.launches[0].dir);
 });
 
-test('ten idle minutes (shortened here) close the window', async (t) => {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+test('a minute with no call through it (shortened here) closes the window, keeping the profile', async (t) => {
   const profile = fakeProfile(t, { idleMs: 20 });
   await gated(() => openChallenge(SITE));
-  await new Promise((r) => setTimeout(r, 60));
+  await sleep(60);
   assert.equal(profile.launches[0].closed, true);
+  assert.equal(fs.existsSync(profile.launches[0].dir), true);
   assert.deepEqual(challengeState(), { open: false, captcha: false });
+});
+
+test('a captcha on screen gets the longer timeout; solving it starts the short one', async (t) => {
+  const profile = fakeProfile(t, { lands: 'captcha', idleMs: 20, captchaMs: 10_000 });
+  await moodleGate.run({}, () => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  await sleep(60);
+  assert.equal(ctx.closed, false);
+  ctx.solve(SITE);
+  await sleep(60);
+  assert.equal(ctx.closed, true);
+});
+
+test('a body paused mid-read holds off the short close until it is cancelled', async (t) => {
+  const profile = fakeProfile(t, { idleMs: 20, captchaMs: 10_000 });
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  const bytes = new Uint8Array(9 * 1024 * 1024);
+  stubFetch(t, () => new Response(bytes, { headers: { 'content-type': 'application/pdf' } }));
+  const res = await gated(() => openPluginfile(`${SITE}/pluginfile.php/1/a.pdf?token=t`));
+  const reader = res.body.getReader();
+  await reader.read(); // one slice, then the reader pauses
+  await sleep(60);
+  assert.equal(ctx.closed, false);
+  await reader.cancel();
+  await sleep(60);
+  assert.equal(ctx.closed, true);
+});
+
+test('a walled answer through the page leaves the short idle close in effect', async (t) => {
+  const profile = fakeProfile(t, { idleMs: 20, captchaMs: 10_000 });
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  stubFetch(t, () => html());
+  const err = await gated(() => getCourseContents(SITE, 'tok', '1')).catch((e) => e);
+  assert.ok(err instanceof WsBlockedError);
+  await sleep(60);
+  assert.equal(ctx.closed, true);
+});
+
+test('a call still running through the window holds off the idle close', async (t) => {
+  const profile = fakeProfile(t, { idleMs: 20 });
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  stubFetch(t, async () => {
+    await sleep(80);
+    return json([{ id: 1 }]);
+  });
+  assert.deepEqual(await gated(() => getCourseContents(SITE, 'tok', '1')), [{ id: 1 }]);
+  assert.equal(ctx.closed, false);
+  await sleep(60);
+  assert.equal(ctx.closed, true);
 });
 
 // ── Every site_blocked 503 carries the window's state ───────────────────────
@@ -369,4 +426,91 @@ test('a page that navigated away and dropped the body fails the stream as site_b
   const err = await res.arrayBuffer().catch((e) => e);
   assert.ok(err instanceof WsBlockedError);
   assert.equal(err.routed, false);
+});
+
+// ── A wall on Node retries through the window ───────────────────────────────
+
+function onSite(t) {
+  setCurrentSite(SITE);
+  t.after(() => setCurrentSite(null));
+}
+
+test('a walled Node call reopens the window hidden and is resent through it, unseen by the caller', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t);
+  const calls = stubFetch(t, (url, init) =>
+    fromPage(init) ? json({ key: 'k', autologinurl: `${SITE}/a`, warnings: [] }) : html(),
+  );
+  const out = await gated(() => getAutologinKey(SITE, 'tok', 'priv'));
+  assert.equal(out.key, 'k');
+  assert.equal(profile.launches.length, 1);
+  assert.deepEqual(challengeState(), { open: true, captcha: false });
+  // The same form body went out twice: once on Node, once from the page.
+  assert.equal(calls.length, 2);
+  assert.equal(fromPage(calls[0].init), false);
+  assert.equal(String(calls[0].init.body), 'privatetoken=priv');
+  assert.ok(fromPage(calls[1].init));
+  assert.equal(calls[1].init.body, 'privatetoken=priv');
+});
+
+test('a blocked /list after the window closed passes with no 503', async (t) => {
+  onSite(t);
+  writeTokenFile(statePath('auth', 'moodle-token.json'), { site: SITE, wstoken: 'w', userid: 7 });
+  const profile = fakeProfile(t);
+  stubFetch(t, (url, init) => (fromPage(init) ? json([]) : html()));
+  await gated(() => openChallenge(SITE));
+  await profile.launches[0].close();
+  const res = fakeRes();
+  await handleList({ body: { courseUrl: `${SITE}/course/view.php?id=5` } }, res);
+  assert.equal(res.code, 200);
+  assert.equal(profile.launches.length, 2);
+});
+
+test('a walled Node call that lands on a captcha throws once, the window opened once', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  stubFetch(t, () => html());
+  const err = await moodleGate
+    .run({}, async () => {
+      const e = await getCourseContents(SITE, 'tok', '1').catch((x) => x);
+      await reportBlock(e, SITE);
+      return e;
+    })
+    .catch((e) => e);
+  assert.equal(err.code, 'site_blocked');
+  assert.equal(err.params.challengeWindow, 'captcha');
+  assert.equal(err.params.detail, 'HTTP 200, text/html');
+  assert.deepEqual(profile.launches[0].visited, [SITE]);
+});
+
+test('solving the captcha verifies the unverified token by itself, announced on authEvents', async (t) => {
+  onSite(t);
+  writeTokenFile(statePath('auth', 'moodle-token.json'), {
+    site: SITE,
+    wstoken: 'w',
+    userid: null,
+    unverified: true,
+  });
+  const profile = fakeProfile(t, { lands: 'captcha' });
+  const GOOD = {
+    userid: 7,
+    downloadfiles: 1,
+    functions: [{ name: 'core_course_get_contents' }, { name: 'tool_mobile_get_autologin_key' }],
+  };
+  stubFetch(t, (url, init) => (fromPage(init) ? json(GOOD) : html()));
+  const { auth } = siteAuth();
+  const err = await moodleGate.run({}, () => auth.complete()).catch((e) => e);
+  assert.equal(err.params.challengeWindow, 'captcha');
+  assert.equal(authState().phase, 'unverified');
+
+  const connected = new Promise((resolve) => {
+    const on = () => authState().phase === 'connected' && resolve(authState());
+    authEvents.on('change', on);
+    t.after(() => authEvents.off('change', on));
+  });
+  profile.launches[0].solve(SITE);
+  const state = await connected;
+  assert.equal(state.error, undefined);
+  assert.equal(auth.loadToken().userid, 7);
+  await auth.disconnect();
 });

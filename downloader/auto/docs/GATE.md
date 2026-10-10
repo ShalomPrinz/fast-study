@@ -56,7 +56,8 @@ hangs up leaves the queue.
   that lease holds the lock, so the frontend's buttons stay live. The retry keeps the lock until it
   ends. The page landing back on the site (the user solved it) or the first call through the window
   that passes releases the lease, so a retry that never reaches Moodle (a replay-cache hit) cannot
-  strand the queue; the lock then cools down as usual. A captcha raised again during a retry puts its
+  strand the queue; the lock then cools down as usual, and the solve's own token verification
+  ([AUTH.md](AUTH.md)) queues for it as a waiting request. A captcha raised again during a retry puts its
   lease on the lock's owner, never on the retry, so the next retry is still admitted. A window that lands straight on the site holds nothing beyond its navigation, and
   every call through it takes the lock and its 3s cooldown like a Node call: a burst from the browser
   could get the browser itself challenged. Closing the window releases the lease too.

@@ -11,6 +11,7 @@ import { gated } from './gated.js';
 import { moodleGate } from '../src/moodle/gate.js';
 import { challengeState } from '../src/moodle/challenge.js';
 import { fakeProfile } from './fakeProfile.js';
+import { setCurrentSite } from '../src/moodle/site.js';
 
 const SITE = 'https://moodle.test';
 
@@ -407,26 +408,34 @@ async function loginAndCapture(auth) {
   await settle(auth);
 }
 
-test('a block keeps the token unverified and turns block mode on; complete() verifies through the window', async (t) => {
+test('a blocked login verification reopens the window and passes through it, no retry needed', async (t) => {
   withKey(t, undefined);
+  setCurrentSite(SITE);
+  t.after(() => setCurrentSite(null));
   const profile = fakeProfile(t);
-  // The Node call meets the wall; the retry goes out from the window's page.
+  // The Node call meets the wall; the window opens 'ready' and the same call goes out from its page.
   stubSequence(t, challengeRes(), pageJson(GOOD));
   const { auth, tokenPath } = await captured(t, 'blk-');
   await loginAndCapture(auth);
-  assert.equal(auth.state().phase, 'unverified');
-  assert.equal(auth.state().error.code, 'site_blocked');
-  assert.equal(auth.state().error.params.challengeWindow, 'ready');
-  assert.deepEqual(profile.launches[0].visited, [SITE]);
-  assert.deepEqual(auth.status(), { connected: true, expired: false, unverified: true });
-  assert.equal(JSON.parse(fs.readFileSync(tokenPath, 'utf8')).userid, null);
-
-  const record = await gated(() => auth.complete());
-  assert.equal(record.userid, 7);
   assert.equal(auth.state().phase, 'connected');
   assert.equal(auth.state().error, undefined);
+  assert.deepEqual(profile.launches[0].visited, [SITE]);
+  assert.equal(JSON.parse(fs.readFileSync(tokenPath, 'utf8')).userid, 7);
   // Verifying ends nothing: the window stays up as the transport.
   assert.deepEqual(challengeState(), { open: true, captcha: false });
+});
+
+test('with no site configured a block keeps the token unverified; complete() verifies through the window', async (t) => {
+  withKey(t, undefined);
+  const profile = fakeProfile(t);
+  stubSequence(t, challengeRes(), pageJson(GOOD));
+  const { auth } = await captured(t, 'blk-none-');
+  await loginAndCapture(auth);
+  assert.equal(auth.state().phase, 'unverified');
+  assert.equal(auth.state().error.params.challengeWindow, 'ready');
+  assert.equal((await gated(() => auth.complete())).userid, 7);
+  assert.equal(auth.state().phase, 'connected');
+  assert.equal(profile.launches.length, 1);
 });
 
 test('a second block reuses the open challenge window and reloads its root', async (t) => {

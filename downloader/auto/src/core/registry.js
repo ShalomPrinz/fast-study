@@ -5,6 +5,7 @@ import { statePath } from '@faststudy/runtime';
 import { CodedError } from '../lib/errors.js';
 import { MoodleToken } from '../auth/moodleToken.js';
 import { currentSite, setCurrentSite, underSite } from '../moodle/site.js';
+import { challengeEvents } from '../moodle/challenge.js';
 import { getSession } from '../browser/browserSession.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
@@ -30,6 +31,11 @@ export function authState() {
   if (!site) return { phase: 'idle', connected: false, expired: false, unverified: false };
   return siteAuth().auth.state();
 }
+
+// The user solving the window's captcha verifies the token a blocked login left unverified.
+challengeEvents.on('solved', (site) => {
+  if (cached?.site === site) void cached.auth.verifyAfterSolve();
+});
 
 /**
  * The configured site and its token auth; throws moodle_site_not_configured when there is none.

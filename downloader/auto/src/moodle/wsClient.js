@@ -2,7 +2,8 @@
 // no cookies. Protocol reference: docs/MOODLE.md.
 import { CodedError } from '../lib/errors.js';
 import { enterMoodle } from './gate.js';
-import { challengeRoute } from './challenge.js';
+import { challengeRoute, openChallenge } from './challenge.js';
+import { currentSite, underSite } from './site.js';
 
 // An answer shaped like the bot wall: a redirect, or a page where a WS body or a file was due.
 function wallShaped(res) {
@@ -12,13 +13,25 @@ function wallShaped(res) {
   );
 }
 
-// Every request to a Moodle goes through here: the gate first, then the network (docs/GATE.md) —
-// Node's fetch, or in block mode the challenge window's page (docs/MOODLE.md § Bot protection).
-// `route:false` keeps a call on Node: one replaying captured cookies, which a page cannot set.
-async function moodleFetch(url, init, { route = true } = {}) {
+// Every Moodle request: the gate, then Node's fetch or the challenge window's page, resending a Node
+// wall through a window that opens 'ready' (docs/MOODLE.md § Bot protection; `route`/`reopen` there).
+async function moodleFetch(url, init, { route = true, reopen = route, label = '' } = {}) {
   await enterMoodle(String(url).split('?')[0]);
   const window = route ? challengeRoute(url) : null;
-  if (!window) return fetch(url, init);
+  if (window) return windowFetch(window, url, init);
+  const res = await fetch(url, init);
+  const site = currentSite();
+  if (!reopen || !wallShaped(res) || !site || !underSite(String(url), site)) return res;
+  await res.body?.cancel().catch(() => {});
+  const err = new WsBlockedError(`${label}${wallDetail(res)}`, ROUTED);
+  const state = await openChallenge(site);
+  const reopened = state === 'ready' ? challengeRoute(url) : null;
+  if (reopened) return windowFetch(reopened, url, init);
+  err.params = { ...err.params, challengeWindow: state };
+  throw err;
+}
+
+async function windowFetch(window, url, init) {
   // Still on the captcha: nothing is sent, and the 503 tells the user to solve it first.
   if (!window.onSite())
     throw new WsBlockedError('the challenge window is still on the captcha', ROUTED);
@@ -34,6 +47,11 @@ async function moodleFetch(url, init, { route = true } = {}) {
   if (!wallShaped(res)) await window.passed();
   return res;
 }
+
+const wallDetail = (res) =>
+  res.status >= 300 && res.status < 400
+    ? `HTTP ${res.status} redirect`
+    : `HTTP ${res.status}, ${res.headers.get('content-type') || 'no content-type'}`;
 
 /** A Moodle WS exception body ({ exception, errorcode, message }) surfaced as an Error. */
 export class WsError extends CodedError {
@@ -80,6 +98,9 @@ export function invalidToken(err) {
   return err instanceof WsError && INVALID_TOKEN_CODES.has(err.errorcode);
 }
 
+// Drop a body nobody will read: a window's page keeps it until read or cancelled (challenge.js).
+const discard = (res) => res.body?.cancel().catch(() => {});
+
 // The token is minted as the mobile app's, and Moodle's is_moodle_app() gates app-only functions
 // on `MoodleMobile` in the UA.
 const APP_USER_AGENT = 'MoodleMobile 4.4.0 (44000)';
@@ -87,12 +108,12 @@ const APP_USER_AGENT = 'MoodleMobile 4.4.0 (44000)';
 // A challenge answers 302 or 200 text/html; parsing either as JSON would only report a
 // SyntaxError, hiding the real cause. Check before touching the body.
 async function jsonOrBlocked(res) {
-  if (res.status >= 300 && res.status < 400)
-    throw new WsBlockedError(`HTTP ${res.status} redirect`, ROUTED);
   const type = res.headers.get('content-type') ?? '';
-  if (!type.includes('json'))
-    throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`, ROUTED);
-  return res.json();
+  const redirect = res.status >= 300 && res.status < 400;
+  if (!redirect && type.includes('json')) return res.json();
+  await discard(res);
+  if (redirect) throw new WsBlockedError(`HTTP ${res.status} redirect`, ROUTED);
+  throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`, ROUTED);
 }
 
 // One WS call against `site`. With `post`, the extra params move to a form-encoded body. An
@@ -159,18 +180,24 @@ export async function getPublicConfig(root, { timeoutMs = 10_000 } = {}) {
   const methodname = 'tool_mobile_get_public_config';
   const url = `${root}/lib/ajax/service-nologin.php?info=${methodname}`;
   // Manual, so the caller sees the redirect: a POST fetch follows would arrive as a GET.
-  const res = await moodleFetch(url, {
-    method: 'POST',
-    redirect: 'manual',
-    headers: { 'User-Agent': APP_USER_AGENT, 'Content-Type': 'application/json' },
-    body: JSON.stringify([{ index: 0, methodname, args: {} }]),
-    signal: AbortSignal.timeout(timeoutMs),
-  });
+  const res = await moodleFetch(
+    url,
+    {
+      method: 'POST',
+      redirect: 'manual',
+      headers: { 'User-Agent': APP_USER_AGENT, 'Content-Type': 'application/json' },
+      body: JSON.stringify([{ index: 0, methodname, args: {} }]),
+      signal: AbortSignal.timeout(timeoutMs),
+    },
+    { reopen: false },
+  );
   if (res.status >= 300 && res.status < 400) {
+    await discard(res);
     throw new WsRedirectError(res.status, redirectTarget(res.headers.get('location'), url));
   }
   const type = res.headers.get('content-type') ?? '';
   if (NO_SUCH_PATH.has(res.status) && !type.includes('json')) {
+    await discard(res);
     throw new NotMoodleError(`HTTP ${res.status}`);
   }
   const body = await jsonOrBlocked(res).catch((e) => {
@@ -242,9 +269,11 @@ function totalSize(res) {
 // Preflight a tokened pluginfile URL — the last point to report a dead token or a challenge before
 // server/ fetches it. → the file's size in bytes, or null when the answer did not say.
 export async function assertPluginfileReadable(url) {
-  const res = await moodleFetch(url, {
-    headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT },
-  });
+  const res = await moodleFetch(
+    url,
+    { headers: { Range: 'bytes=0-0', 'User-Agent': APP_USER_AGENT } },
+    { label: 'pluginfile: ' },
+  );
   const fault = await pluginfileFault(res, url);
   await res.body?.cancel().catch(() => {});
   if (fault) throw fault;
@@ -256,7 +285,7 @@ export async function assertPluginfileReadable(url) {
 export async function openPluginfile(url, { range, signal } = {}) {
   const headers = { 'User-Agent': APP_USER_AGENT };
   if (range) headers.Range = range;
-  const res = await moodleFetch(url, { headers, signal });
+  const res = await moodleFetch(url, { headers, signal }, { label: 'pluginfile: ' });
   const fault = await pluginfileFault(res, url);
   if (fault) {
     await res.body?.cancel().catch(() => {});

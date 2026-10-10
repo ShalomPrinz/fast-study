@@ -15,16 +15,20 @@ const LAUNCH_ARGS = [`--window-position=${OFF_SCREEN.left},${OFF_SCREEN.top}`];
 const CHUNK = 4 * 1024 * 1024;
 const NULL_BODY = new Set([101, 204, 205, 304]);
 
-const deps = { launch: launchPersistentBrowser, idleMs: 10 * 60_000 };
+// Closed after idleMs with no call through it; a captcha on screen gets captchaMs for the user's solve.
+const deps = { launch: launchPersistentBrowser, idleMs: 60_000, captchaMs: 10 * 60_000 };
 let win = null;
 let opening = null;
 let closing = Promise.resolve();
 
-/** 'change' whenever `challengeState()` may have changed; /auth/events subscribes. */
+/**
+ * 'change' whenever `challengeState()` may have changed (/auth/events subscribes); 'solved' (site)
+ * when the page lands back on the site after a captcha (the registry verifies an unverified token).
+ */
 export const challengeEvents = new EventEmitter();
 const publish = () => challengeEvents.emit('change');
 
-/** Tests swap the launcher and the idle timeout; → a function restoring the previous ones. */
+/** Tests swap the launcher and the idle timeouts; → a function restoring the previous ones. */
 export function configureChallenge(overrides) {
   const prev = { ...deps };
   Object.assign(deps, overrides);
@@ -123,13 +127,19 @@ class ChallengeWindow {
     this.captcha = false;
     this.lease = null;
     this.timer = null;
+    // Page calls in flight: the idle close waits for them, since closing would cut them off.
+    this.busy = 0;
+    // Bodies a reader has not finished or cancelled: they stretch the idle close to captchaMs.
+    this.bodies = 0;
     this.ended = false;
     this.closed = new Promise((resolve) => context.once('close', resolve));
     this.closed.then(() => this._ended());
     // The user solving the captcha lands the page back on the site: the lock is theirs no longer,
     // even if their retry never reaches Moodle (a replay-cache hit).
     page.on?.('framenavigated', () => {
-      if (this.captcha && this.onSite()) void this.passed();
+      if (!this.captcha || !this.onSite()) return;
+      void this.passed();
+      challengeEvents.emit('solved', this.site);
     });
   }
 
@@ -152,14 +162,14 @@ class ChallengeWindow {
     init = {},
     { lost = () => new Error('the challenge window lost the body') } = {},
   ) {
-    this.touch();
-    const head = await abortable(
-      this.page.evaluate(pageFetch, {
+    const head = await this._evaluate(
+      pageFetch,
+      {
         url: String(url),
         method: init.method ?? 'GET',
         headers: pageHeaders(init.headers),
         body: pageBody(init.body),
-      }),
+      },
       init.signal,
     );
     const headers = new Headers();
@@ -172,25 +182,57 @@ class ChallengeWindow {
     return new Response(this._body(head, init.signal, lost), { status: head.status, headers });
   }
 
+  // One page call, counted as activity from start to end so the idle close never cuts it off.
+  async _evaluate(fn, arg, signal) {
+    this.busy++;
+    this.touch();
+    try {
+      return await abortable(this.page.evaluate(fn, arg), signal);
+    } finally {
+      this.busy--;
+      this.touch();
+    }
+  }
+
   _body({ id, size }, signal, lost) {
     if (!id || size === 0) {
       if (id) this.page.evaluate(pageDrop, id).catch(() => {});
       return '';
     }
     let offset = 0;
+    let open = true;
+    const done = () => {
+      if (!open) return;
+      open = false;
+      this.bodies--;
+      this.touch();
+    };
+    this.bodies++;
+    this.touch();
     return new ReadableStream({
       pull: async (ctl) => {
-        signal?.throwIfAborted();
-        const b64 = await this.page
-          .evaluate(pageChunk, { id, offset, length: CHUNK })
-          .catch(() => null);
-        if (b64 == null) throw lost();
-        const bytes = Buffer.from(b64, 'base64');
-        offset += bytes.length;
-        ctl.enqueue(new Uint8Array(bytes));
-        if (offset >= size) ctl.close();
+        try {
+          signal?.throwIfAborted();
+          const b64 = await this._evaluate(pageChunk, { id, offset, length: CHUNK }).catch(
+            () => null,
+          );
+          if (b64 == null) throw lost();
+          const bytes = Buffer.from(b64, 'base64');
+          offset += bytes.length;
+          ctl.enqueue(new Uint8Array(bytes));
+          if (offset >= size) {
+            ctl.close();
+            done();
+          }
+        } catch (err) {
+          done();
+          throw err;
+        }
       },
-      cancel: () => this.page.evaluate(pageDrop, id).catch(() => {}),
+      cancel: () => {
+        done();
+        return this.page.evaluate(pageDrop, id).catch(() => {});
+      },
     });
   }
 
@@ -199,6 +241,7 @@ class ChallengeWindow {
     if (!this.captcha) return;
     this.captcha = false;
     this._release();
+    this.touch();
     publish();
     await this._bounds(OFF_SCREEN);
   }
@@ -219,18 +262,26 @@ class ChallengeWindow {
     }
     if (!this.lease) this.lease = await moodleGate.hold('challenge window', { admit: true });
     this.captcha = true;
+    this.touch();
     publish();
     await this._bounds(ON_SCREEN);
     await this.page.bringToFront().catch(() => {});
     return 'captcha';
   }
 
-  // Block mode ends after this long with no Moodle call through the window.
+  // Block mode ends once the window sits idle: no call through it for idleMs, or captchaMs while a
+  // captcha waits or a body is half-read (bounding one never read). A running page call defers it.
   touch() {
     clearTimeout(this.timer);
-    this.timer = setTimeout(() => {
-      if (win === this) void closeChallenge();
-    }, deps.idleMs);
+    if (this.ended) return;
+    this.timer = setTimeout(
+      () => {
+        if (win !== this) return;
+        if (this.busy > 0) return this.touch();
+        void closeChallenge();
+      },
+      this.captcha || this.bodies > 0 ? deps.captchaMs : deps.idleMs,
+    );
     this.timer.unref?.();
   }
 

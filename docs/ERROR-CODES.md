@@ -338,10 +338,11 @@ of `/prereqs/browser` and the 500 backstop — and is one code in both.
 `timeout`, `network`), plus `challengeWindow` beside a `site_blocked`.
 
 `site_blocked`'s `challengeWindow` is present only on a block from a call the challenge window can
-carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showing a captcha, `'ready'`
-when it opened hidden with its clearance still valid so the user only repeats the action, `false`
-when no browser could launch. A block from any other path (videostream, a pasted link, a link probe)
-leaves it absent.
+carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showing a captcha, `false`
+when no browser could launch. A window that opens hidden with its clearance still valid carries the
+call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
+`/site/probe` or from a call already going through the window whose reload landed on the site. A block
+from any other path (videostream, a pasted link, a link probe) leaves it absent.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

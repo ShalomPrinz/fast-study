@@ -155,7 +155,8 @@ test("a WS fault carries Moodle's errorcode, a challenge the shape it served", a
     ),
     {
       code: 'site_blocked',
-      params: { detail: 'HTTP 200, text/html; charset=utf-8' },
+      // The wall opened block mode at once; no browser launches in tests.
+      params: { detail: 'HTTP 200, text/html; charset=utf-8', challengeWindow: false },
     },
   );
 });

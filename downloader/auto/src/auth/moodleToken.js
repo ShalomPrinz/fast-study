@@ -314,6 +314,15 @@ export class MoodleToken extends AuthProvider {
   }
 
   /**
+   * The captcha was just solved: verify a stored unverified token now, through the window, as its own
+   * waiting request — the outcome reaches /auth/events as a complete() would. A login running reports itself.
+   */
+  verifyAfterSolve() {
+    if (this._driving || !this.status().unverified) return Promise.resolve();
+    return moodleGate.run({ wait: true }, () => this._verifyReporting()).catch(() => {});
+  }
+
+  /**
    * The stored token, verified first when it is still unverified; null when there is none. Every
    * WS caller goes through this, so an unverified token is checked before its first use.
    */

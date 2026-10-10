@@ -7,7 +7,7 @@ import { configureChallenge, closeChallenge } from '../src/moodle/challenge.js';
 
 export const CAPTCHA_URL = 'https://validate.perfdrive.com/abc/?ssa=1';
 
-export function fakeProfile(t, { lands = 'site', idleMs } = {}) {
+export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
   const launches = [];
   const state = { lands };
   const launch = async (dir, opts) => {
@@ -56,7 +56,11 @@ export function fakeProfile(t, { lands = 'site', idleMs } = {}) {
     launches.push(context);
     return context;
   };
-  const restore = configureChallenge({ launch, ...(idleMs ? { idleMs } : {}) });
+  const restore = configureChallenge({
+    launch,
+    ...(idleMs ? { idleMs } : {}),
+    ...(captchaMs ? { captchaMs } : {}),
+  });
   t.after(async () => {
     await closeChallenge();
     restore();

@@ -45,16 +45,18 @@ sent to the wrong host.
   — up, and on screen showing a captcha until the page lands back on the site
   ([MOODLE.md](MOODLE.md#the-rest-api)); changes to either send a frame too. No replay and no heartbeat. `EventSource`
   cannot set a header, so the launch secret rides as `?secret=`, which `requireSecret` honours.
-- `complete()` — re-verifies the stored `unverified` token now (a block on the last try, the
-  challenge since solved) and answers as a WS call would; its outcome is also announced on the stream.
-  Throws `moodle_login_not_pending` when no unverified token is stored. A normal login never needs it.
+- `complete()` — re-verifies the stored `unverified` token now and answers as a WS call would; its
+  outcome is also announced on the stream. Throws `moodle_login_not_pending` when no unverified token
+  is stored. A fallback: a normal login never needs it, and solving the captcha runs the same
+  verification by itself (`verifyAfterSolve`, a waiting request of its own, skipped while a login runs).
 - Verification outcomes: `invalidtoken` or a refused site (`moodle_site_unsupported`) on the **stored** token **delete**
   it (a fresh capture is simply discarded); a bot-protection block (`site_blocked`), timeout or network failure never do. A block keeps
   the token and turns block mode on, adding `params.challengeWindow` (`'captcha'`, `'ready'` or
-  `false`) as every routed call's `site_blocked` does ([MOODLE.md](MOODLE.md#the-rest-api)), and ends the login's
-  run with phase `unverified` and the `site_blocked` error. Solving the captcha does not clear Node:
-  the clearance belongs to the window's browser, so the retry passes only because it goes out from
-  that window. A successful verification leaves the window open as the transport; a new `connect()`
+  `false`) as every routed call's `site_blocked` does ([MOODLE.md](MOODLE.md#the-rest-api)). A window that
+  opens `'ready'` carries the verification through at once, so the login connects; on `'captcha'` or
+  `false` the run ends with phase `unverified` and the `site_blocked` error, and the user solving the
+  captcha verifies it. Solving the captcha does not clear Node: the clearance belongs to the window's
+  browser, so the verification passes only because it goes out from that window. A successful verification leaves the window open as the transport; a new `connect()`
   closes it (keeping its profile) and `disconnect()` closes it and deletes the profile.
 - Lazy verification: every WS caller (`/list`, both `/resolve` paths) gets its token from
   `verifiedToken()` (`tokenOr` in `http/server.js`), which verifies an unverified token first
