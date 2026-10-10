@@ -30,9 +30,11 @@ DEFAULT_NIGHTLY_HOUR = 3
 
 
 def gemini_model() -> str:
-    """The model every Gemini call uses: GEMINI_MODEL, else the first curated entry."""
+    """The model every Gemini call uses: GEMINI_MODEL when it is a curated entry, else the first
+    one, so a model Google retired that an older install still has saved never reaches the API."""
 
-    return os.environ.get("GEMINI_MODEL") or GEMINI_MODELS[0]
+    model = os.environ.get("GEMINI_MODEL", "").strip()
+    return model if model in GEMINI_MODELS else GEMINI_MODELS[0]
 
 
 def auto_run() -> str:

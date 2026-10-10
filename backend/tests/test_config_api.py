@@ -40,9 +40,9 @@ class TestPostConfig:
         monkeypatch.setattr(schedule, "_scheduler", AsyncIOScheduler())
 
     def test_applies_only_the_fields_sent(self):
-        body = client.post("/config", json={"gemini_model": "gemini-x"}).json()
+        body = client.post("/config", json={"gemini_model": "gemini-3.6-flash"}).json()
         assert body == {"status": "ok", "applied": ["gemini_model"]}
-        assert settings.gemini_model() == "gemini-x"
+        assert settings.gemini_model() == "gemini-3.6-flash"
         assert os.environ["GEMINI_API_KEY"] == "before"
 
     def test_a_key_is_never_echoed_back(self):

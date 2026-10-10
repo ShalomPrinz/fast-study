@@ -9,9 +9,13 @@ class TestGeminiModel:
         monkeypatch.delenv("GEMINI_MODEL", raising=False)
         assert settings.gemini_model() == settings.GEMINI_MODELS[0]
 
-    def test_environment_wins(self, monkeypatch):
-        monkeypatch.setenv("GEMINI_MODEL", "gemini-x")
-        assert settings.gemini_model() == "gemini-x"
+    def test_a_listed_model_is_kept(self, monkeypatch):
+        monkeypatch.setenv("GEMINI_MODEL", "gemini-3.6-flash")
+        assert settings.gemini_model() == "gemini-3.6-flash"
+
+    def test_an_unlisted_model_falls_back(self, monkeypatch):
+        monkeypatch.setenv("GEMINI_MODEL", "gemini-3.5-flash")
+        assert settings.gemini_model() == settings.GEMINI_MODELS[0]
 
     def test_blank_is_treated_as_unset(self, monkeypatch):
         monkeypatch.setenv("GEMINI_MODEL", "")
@@ -105,6 +109,6 @@ class TestApplyConfig:
         assert settings.nightly_hour() == 21
 
     def test_none_and_unknown_fields_are_ignored(self, monkeypatch):
-        monkeypatch.setenv("GEMINI_MODEL", "kept")
+        monkeypatch.setenv("GEMINI_MODEL", "gemini-3.6-flash")
         assert settings.apply_config({"gemini_model": None, "nope": "x"}) == []
-        assert settings.gemini_model() == "kept"
+        assert settings.gemini_model() == "gemini-3.6-flash"
