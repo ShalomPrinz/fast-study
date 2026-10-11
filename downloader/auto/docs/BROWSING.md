@@ -84,7 +84,8 @@ its credential, so it takes one explicitly (`resolveMoodleFile`'s required `wsto
 ones resolve exactly one target, so `only` doesn't apply; all but the pasted link share the replay cache and stamp
 `fromCache`. Each returns targets (`core/targets.js`), and `toolFor` picks `server/`'s downloader:
 `curl` replays captured headers, `ytdlp` resolves a YouTube/Drive/direct video page, `fetch` takes a
-plain URL (for a Moodle file, a path on auto).
+plain URL (for a Moodle file, a path on auto). A row none of these takes is refused `422`
+`recording_strategy_unsupported {strategy}`, never sent to videostream's autologin.
 
 Only `kind` (`lecture`/`recitation`) picks the folder; the database names the file, so a second PDF
 into one lecture appends (`material.2.pdf`).

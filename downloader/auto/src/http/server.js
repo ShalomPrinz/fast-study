@@ -525,14 +525,22 @@ async function resolvePasted(res, { url, course, name, kind }) {
 
 async function resolveItem(req, res) {
   const { ref, url, course, name, kind = 'lecture', only, forceCapture } = req.body;
-  logReq('POST', '/resolve', `${course}/${name} (${kind})`);
   // No ref but a url: a link pasted into the manual form (docs/GATE.md § Files).
-  if (ref === undefined && url !== undefined)
+  if (ref === undefined && url !== undefined) {
+    logReq('POST', '/resolve', `${course}/${name} (${kind})`);
     return resolvePasted(res, { url, course, name, kind });
+  }
   // The discovery row's ref groups every server/ job spawned from this resolve (incl. a zoom
   // split pair); it is also the key each cap is memoized under in the replay cache.
   const rowRef = typeof ref === 'string' ? ref : null;
   const recording = decodeRef(ref);
+  // The row's identity: which module, resolved by which strategy.
+  const row = recording && typeof recording === 'object' ? recording : {};
+  logReq(
+    'POST',
+    '/resolve',
+    `${course}/${name} (${kind}) ${row.strategy ?? '?'} ${row.pageUrl ?? row.fileurl ?? row.url ?? '-'}`,
+  );
   if (!recording || typeof recording !== 'object')
     return send(res, 400, invalid('ref', 'valid ref required'));
   const bad = targetError(course, name, kind);
@@ -621,6 +629,16 @@ async function resolveItem(req, res) {
     logResult('/resolve', `ok (${targets.length} target, video)`);
     return send(res, 200, { media: 'video', targets });
   }
+  // Strict: only zoom and videostream remain, so any other row (an unexpanded playlist, a strategy
+  // this build does not know) is refused here rather than falling into videostream's autologin.
+  if (recording.strategy !== 'zoom' && recording.strategy !== 'videostream') {
+    const strategy = typeof recording.strategy === 'string' ? recording.strategy : null;
+    throw new UnsupportedError(
+      'recording_strategy_unsupported',
+      { strategy },
+      `no resolver for recording strategy ${strategy ?? '(none)'}`,
+    );
+  }
   if (!recording.pageUrl) return send(res, 400, invalid('ref', 'ref is not downloadable'));
 
   // The extractor picks its own browser profile (DI): videostream runs on the plain
@@ -679,8 +697,8 @@ async function resolveItem(req, res) {
       }
     });
   } catch (e) {
-    // getAutologinKey surfaces a dead token (→ 401) or a challenge (→ 503); other
-    // faults (rate-limit lockout, no .mp4) fall to 500.
+    // getAutologinKey surfaces a dead token (→ 401) or a challenge on Node (→ 503, no window: it
+    // never routes through one); other faults (rate-limit lockout, no .mp4) fall to 500.
     if (invalidToken(e)) {
       auth.markExpired();
       logResult('/resolve', 'reconnect (401)');

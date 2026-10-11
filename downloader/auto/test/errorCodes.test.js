@@ -29,6 +29,7 @@ import {
   sendUnsupported,
 } from '../src/http/server.js';
 import { encodeRef } from '../src/lib/ref.js';
+import { getSession } from '../src/browser/browserSession.js';
 import { gated } from './gated.js';
 
 // Imports are hoisted past any env write, so the configured site is set through its module.
@@ -397,4 +398,73 @@ test('409 fills in the course and lecture the gate itself never knew', () => {
     code: 'zoom_passcode_required',
     params: { reason: 'incorrect', course: 'C', name: 'L1' },
   });
+});
+
+// ── strict capture routing ──────────────────────────────────────────────────
+
+const MODULE_URL = 'https://lemida.biu.ac.il/mod/url/view.php?id=7';
+
+test('a row no branch handles is 422 recording_strategy_unsupported, never autologin', async (t) => {
+  const calls = [];
+  stubFetch(t, async (url) => {
+    calls.push(url);
+    throw new Error('no request expected');
+  });
+  const log = t.mock.method(console, 'log', () => {});
+  // An unexpanded playlist (no `url`) and a strategy this build does not know.
+  for (const strategy of ['youtube-playlist', 'mystery', undefined]) {
+    const res = fakeRes();
+    const ref = encodeRef({ strategy, pageUrl: MODULE_URL });
+    await handleResolve({ body: { ref, course: 'C', name: 'L' } }, res);
+    assert.equal(res.code, 422);
+    assert.equal(res.body.status, 'unsupported');
+    assert.deepEqual(
+      { code: res.body.code, params: res.body.params },
+      { code: 'recording_strategy_unsupported', params: { strategy: strategy ?? null } },
+    );
+  }
+  assert.deepEqual(calls, []);
+  // The arrival line names the module and the strategy.
+  const lines = log.mock.calls.map((c) => c.arguments.join(' '));
+  assert.ok(lines.includes(`→ POST /resolve  C/L (lecture) mystery ${MODULE_URL}`));
+});
+
+test('a walled videostream autologin is 503 site_blocked with no window, never a 500', async (t) => {
+  fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
+  fs.writeFileSync(
+    TOKEN_FILE,
+    JSON.stringify({
+      site: 'https://lemida.biu.ac.il',
+      wstoken: 'tok',
+      privatetoken: 'p',
+      userid: 7,
+    }),
+  );
+  t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
+  // A stand-in page, so the plain session never launches a browser.
+  const session = getSession('plain');
+  t.mock.method(session, 'open', async () => {
+    session.page = { goto: async () => {} };
+  });
+  t.after(() => {
+    session.page = null;
+  });
+  stubFetch(t, async () => ({
+    status: 200,
+    headers: { get: () => 'text/html' },
+    json: async () => null,
+    body: { cancel: async () => {} },
+  }));
+  const res = fakeRes();
+  const ref = encodeRef({
+    strategy: 'videostream',
+    pageUrl: 'https://lemida.biu.ac.il/mod/videostream/view.php?id=3031600',
+  });
+  await handleResolve({ body: { ref, course: 'C', name: 'L' } }, res);
+  assert.equal(res.code, 503);
+  assert.equal(res.body.status, 'blocked');
+  assert.deepEqual(
+    { code: res.body.code, params: res.body.params },
+    { code: 'site_blocked', params: { detail: 'HTTP 200, text/html' } },
+  );
 });

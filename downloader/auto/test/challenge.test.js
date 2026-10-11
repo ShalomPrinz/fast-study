@@ -19,6 +19,7 @@ import {
   reportBlock,
   challengeState,
   challengeEvents,
+  challengeRoute,
 } from '../src/moodle/challenge.js';
 import {
   getCourseContents,
@@ -130,8 +131,13 @@ test('in block mode a WS call goes out from the page, without the MoodleMobile U
 test('a form-encoded POST crosses into the page as a string body', async (t) => {
   fakeProfile(t);
   await gated(() => openChallenge(SITE));
-  const calls = stubFetch(t, () => json({ key: 'k', autologinurl: `${SITE}/a`, warnings: [] }));
-  await gated(() => getAutologinKey(SITE, 'tok', 'priv'));
+  const calls = stubFetch(t, () => json({}));
+  const res = await challengeRoute(`${SITE}/x`).fetch(`${SITE}/x`, {
+    method: 'POST',
+    body: new URLSearchParams({ privatetoken: 'priv' }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
+  await res.body?.cancel();
   const { init } = calls[0];
   assert.equal(init.method, 'POST');
   assert.equal(init.body, 'privatetoken=priv');
@@ -438,19 +444,55 @@ function onSite(t) {
 test('a walled Node call reopens the window hidden and is resent through it, unseen by the caller', async (t) => {
   onSite(t);
   const profile = fakeProfile(t);
-  const calls = stubFetch(t, (url, init) =>
-    fromPage(init) ? json({ key: 'k', autologinurl: `${SITE}/a`, warnings: [] }) : html(),
-  );
-  const out = await gated(() => getAutologinKey(SITE, 'tok', 'priv'));
-  assert.equal(out.key, 'k');
+  const calls = stubFetch(t, (url, init) => (fromPage(init) ? json([{ id: 1 }]) : html()));
+  assert.deepEqual(await gated(() => getCourseContents(SITE, 'tok', '5')), [{ id: 1 }]);
   assert.equal(profile.launches.length, 1);
   assert.deepEqual(challengeState(), { open: true, captcha: false });
-  // The same form body went out twice: once on Node, once from the page.
+  // The same call went out twice: once on Node, once from the page.
   assert.equal(calls.length, 2);
   assert.equal(fromPage(calls[0].init), false);
-  assert.equal(String(calls[0].init.body), 'privatetoken=priv');
   assert.ok(fromPage(calls[1].init));
-  assert.equal(calls[1].init.body, 'privatetoken=priv');
+});
+
+test('a WS fault answered through the window logs the window route', async (t) => {
+  onSite(t);
+  fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  stubFetch(t, () => json({ exception: 'x', errorcode: 'nopermissions', message: 'no' }));
+  const warn = t.mock.method(console, 'warn', () => {});
+  const err = await gated(() => getCourseContents(SITE, 'tok', '5')).catch((e) => e);
+  assert.equal(err.params.errorcode, 'nopermissions');
+  assert.match(warn.mock.calls[0].arguments[0], /nopermissions via window/);
+});
+
+// tool_mobile_get_autologin_key needs a MoodleMobile UA, which the window's browser never sends.
+test('the autologin key stays on Node while the window is open', async (t) => {
+  onSite(t);
+  fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const calls = stubFetch(t, () => json({ key: 'k', autologinurl: `${SITE}/a`, warnings: [] }));
+  assert.equal((await gated(() => getAutologinKey(SITE, 'tok', 'priv'))).key, 'k');
+  assert.equal(calls.length, 1);
+  assert.equal(fromPage(calls[0].init), false);
+  assert.equal(calls[0].init.headers['User-Agent'], 'MoodleMobile 4.4.0 (44000)');
+  assert.equal(String(calls[0].init.body), 'privatetoken=priv');
+});
+
+test('a walled autologin key is an unrouted site_blocked that opens no window', async (t) => {
+  onSite(t);
+  const profile = fakeProfile(t);
+  const calls = stubFetch(t, () => html());
+  const err = await gated(() => getAutologinKey(SITE, 'tok', 'priv')).then(
+    () => null,
+    (e) => e,
+  );
+  assert.ok(err instanceof WsBlockedError);
+  assert.equal(err.code, 'site_blocked');
+  assert.equal(err.routed, false);
+  assert.equal(calls.length, 1);
+  await reportBlock(err, SITE);
+  assert.equal(profile.launches.length, 0);
+  assert.equal('challengeWindow' in err.params, false);
 });
 
 test('a blocked /list after the window closed passes with no 503', async (t) => {

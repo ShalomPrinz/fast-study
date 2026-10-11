@@ -100,12 +100,16 @@ Every call goes to `{site}/webservice/rest/server.php?wstoken=…&moodlewsrestfo
 GET with params in the query — except `tool_mobile_get_autologin_key` (below). Every call from Node
 sends `User-Agent: MoodleMobile 4.4.0 (44000)`: Moodle gates app-only functions on
 `core_useragent::is_moodle_app()`, which substring-matches `MoodleMobile` in the UA. In block mode
-(below) calls carry the browser's own UA instead; every function this package calls works with it.
+(below) calls carry the browser's own UA instead, which every function this package calls accepts except
+`tool_mobile_get_autologin_key` — so that one never goes through the window (§ Autologin).
 
 **Error shape.** A _failed_ call — a dead token included — answers **HTTP 200** with
 `{ exception, errorcode, message }`, never an HTTP error. `callWs` throws a `WsError` carrying
 `errorcode`; `invalidToken(err)` keys on `errorcode ∈ { invalidtoken, accessexception }`, the
-"Reconnect" signal. Any other errorcode is a real fault.
+"Reconnect" signal. Any other errorcode is a real fault. Each `WsError` logs one line with the
+function, `errorcode`, the route (`node`/`window`) and `debuginfo` when Moodle sent one (the request's
+tokens blanked: it can echo a rejected param), and its message ends `(<errorcode>)` because Sentry
+sees the message, never `params`, and Moodle's own text is localized.
 
 **Bot protection.** A site may sit behind a bot manager; BIU's `lemida.biu.ac.il` is behind Radware
 Bot Manager, and the rest of this paragraph is its behaviour ([evidence below](#bot-protection-what-was-learned)).
@@ -146,7 +150,7 @@ are made from inside that browser:
   A call through the page that still meets the wall reloads the root (`reportBlock`), so the
   page itself may land on a captcha and the 503 says `'captcha'` or `'ready'` (repeat the action). A window closed mid-call fails that call as an unrouted `site_blocked`
   (no window reopens; the user's repeat goes out on Node). Not routed, so still
-  `site_blocked` during a block: the videostream capture and its autologin navigation (headless),
+  `site_blocked` during a block: the videostream capture, its autologin key and navigation (headless),
   `openMoodleFile` (it replays captured cookies, which a page cannot set) and `lib/probeUrl.js`. A
   block there opens no window and its 503 carries no `challengeWindow` (`WsBlockedError.routed` is
   false; `reportBlock` skips it).
@@ -217,6 +221,16 @@ navigate to module.url and sniff the .mp4
 
 Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**; the
 cookie's freshness is cached ~20 min so back-to-back downloads don't trip the limit ([AUTH.md](AUTH.md)).
+
+The key call always goes out on Node, never through the challenge window: Moodle answers it only to a
+`MoodleMobile` UA (`is_moodle_app()`, else `apprequired`), and the window's solved browser keeps the
+UA it was cleared under. So during a block it fails as an unrouted `503 site_blocked` with no
+`challengeWindow`, and opens no window.
+
+Only a `videostream` row reaches autologin: `/resolve` refuses any row its earlier branches did not
+take and that is not `zoom` or `videostream` (an unexpanded playlist, a strategy this build does not
+know) as `422 {status:'unsupported'}`, `recording_strategy_unsupported {strategy}`, before any Moodle
+call.
 
 ## Bot protection: what was learned
 

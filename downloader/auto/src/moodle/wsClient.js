@@ -20,6 +20,7 @@ async function moodleFetch(url, init, { route = true, reopen = route, label = ''
   const window = route ? challengeRoute(url) : null;
   if (window) return windowFetch(window, url, init);
   const res = await fetch(url, init);
+  ROUTE.set(res, 'node');
   const site = currentSite();
   if (!reopen || !wallShaped(res) || !site || !underSite(String(url), site)) return res;
   await res.body?.cancel().catch(() => {});
@@ -44,9 +45,13 @@ async function windowFetch(window, url, init) {
     if (window.gone(err)) throw closed();
     throw err;
   }
+  ROUTE.set(res, 'window');
   if (!wallShaped(res)) await window.passed();
   return res;
 }
+
+// Which transport answered each Response ('node' | 'window'), for the WsError log line.
+const ROUTE = new WeakMap();
 
 const wallDetail = (res) =>
   res.status >= 300 && res.status < 400
@@ -56,10 +61,30 @@ const wallDetail = (res) =>
 /** A Moodle WS exception body ({ exception, errorcode, message }) surfaced as an Error. */
 export class WsError extends CodedError {
   constructor(errorcode, message) {
-    super('moodle_ws_error', { errorcode, detail: message ?? null }, message || errorcode);
+    // errorcode in the message too: Sentry gets the message, never `params`, and Moodle's is localized.
+    super(
+      'moodle_ws_error',
+      { errorcode, detail: message ?? null },
+      message ? `${message} (${errorcode})` : errorcode,
+    );
     this.name = 'WsError';
     this.errorcode = errorcode;
   }
+}
+
+// Build the WsError for a Moodle exception body `res` answered, logging its errorcode, debuginfo and
+// route. `secrets` are blanked from debuginfo, which can echo a rejected param's value verbatim.
+function wsFault(body, res, label, secrets = []) {
+  const err = new WsError(body.errorcode, body.message);
+  let debug = typeof body.debuginfo === 'string' ? body.debuginfo : '';
+  // A short value would blank unrelated text; real tokens are 32 and 64 chars.
+  for (const s of secrets)
+    if (String(s ?? '').length >= 8) debug = debug.split(String(s)).join('<redacted>');
+  console.warn(
+    `moodle ${label}: ${body.errorcode} via ${(res && ROUTE.get(res)) ?? 'node'}` +
+      (debug ? `, debuginfo: ${debug.slice(0, 500)}` : ''),
+  );
+  return err;
 }
 
 /**
@@ -107,18 +132,20 @@ const APP_USER_AGENT = 'MoodleMobile 4.4.0 (44000)';
 
 // A challenge answers 302 or 200 text/html; parsing either as JSON would only report a
 // SyntaxError, hiding the real cause. Check before touching the body.
-async function jsonOrBlocked(res) {
+// `routed:false` for a call the window must not carry, so its wall opens no window.
+async function jsonOrBlocked(res, { routed = true } = {}) {
   const type = res.headers.get('content-type') ?? '';
   const redirect = res.status >= 300 && res.status < 400;
   if (!redirect && type.includes('json')) return res.json();
   await discard(res);
-  if (redirect) throw new WsBlockedError(`HTTP ${res.status} redirect`, ROUTED);
-  throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`, ROUTED);
+  if (redirect) throw new WsBlockedError(`HTTP ${res.status} redirect`, { routed });
+  throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`, { routed });
 }
 
-// One WS call against `site`. With `post`, the extra params move to a form-encoded body. An
-// `.exception` body (under HTTP 200) throws WsError; a non-JSON answer is the challenge → WsBlockedError.
-async function callWs(site, token, fn, params = {}, { post = false } = {}) {
+// One WS call against `site`. With `post`, the extra params move to a form-encoded body; `route:false`
+// keeps it on Node. An `.exception` body (under HTTP 200) throws WsError; a non-JSON answer is the
+// challenge → WsBlockedError.
+async function callWs(site, token, fn, params = {}, { post = false, route = true } = {}) {
   const url = new URL(`${site}/webservice/rest/server.php`);
   url.searchParams.set('wstoken', token);
   url.searchParams.set('moodlewsrestformat', 'json');
@@ -135,8 +162,9 @@ async function callWs(site, token, fn, params = {}, { post = false } = {}) {
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
   }
 
-  const body = await jsonOrBlocked(await moodleFetch(url, init));
-  if (body && body.exception) throw new WsError(body.errorcode, body.message);
+  const res = await moodleFetch(url, init, { route });
+  const body = await jsonOrBlocked(res, { routed: route });
+  if (body && body.exception) throw wsFault(body, res, fn, [token, ...Object.values(params)]);
   return body;
 }
 
@@ -210,7 +238,7 @@ export async function getPublicConfig(root, { timeoutMs = 10_000 } = {}) {
   if (first?.error === false && first.data && typeof first.data === 'object') return first.data;
   const exception = first?.error === true ? first.exception : body;
   if (exception && typeof exception === 'object' && typeof exception.errorcode === 'string') {
-    throw new WsError(exception.errorcode, exception.message);
+    throw wsFault(exception, res, methodname);
   }
   throw new NotMoodleError('JSON, not a Moodle envelope');
 }
@@ -226,10 +254,17 @@ export function getCourseContents(site, token, courseId) {
 }
 
 // Mint a one-shot no-MFA browser login; rate-limited (~1/user/6 min) and IP-bound. POST only:
-// Moodle rejects the privatetoken in a query string (invalidprivatetoken). See docs/MOODLE.md.
+// Moodle rejects the privatetoken in a query string (invalidprivatetoken). Node only: the function
+// needs a MoodleMobile UA, which the challenge window's browser never sends. See docs/MOODLE.md.
 /** @returns {Promise<{ key: string, autologinurl: string, warnings: unknown[] }>} */
 export function getAutologinKey(site, wstoken, privatetoken) {
-  return callWs(site, wstoken, 'tool_mobile_get_autologin_key', { privatetoken }, { post: true });
+  return callWs(
+    site,
+    wstoken,
+    'tool_mobile_get_autologin_key',
+    { privatetoken },
+    { post: true, route: false },
+  );
 }
 
 // Pluginfile authenticates by a query-string token. Set via the URL API: fileurl may already
@@ -250,7 +285,8 @@ async function pluginfileFault(res, url) {
     return new WsBlockedError(`pluginfile: HTTP ${res.status}, ${type}`, ROUTED);
   if (!type.includes('application/json')) return null;
   const body = await res.json().catch(() => null);
-  if (body?.errorcode) return new WsError(body.errorcode, body.message);
+  if (body?.errorcode)
+    return wsFault(body, res, 'pluginfile', [new URL(url).searchParams.get('token')]);
   return new CodedError(
     'moodle_file_unreadable',
     { url },

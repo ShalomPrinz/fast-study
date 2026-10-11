@@ -313,7 +313,7 @@ msgstr "{withSource} courses with a source"
 msgid "+ Add a course source URL"
 msgstr "+ Add a course source URL"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:83
+#: src/features/downloads/components/CourseSourceRow.tsx:91
 msgid "+ add source URL"
 msgstr "+ add source URL"
 
@@ -534,7 +534,7 @@ msgstr "Choose your university above to connect its account."
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "Choose your university in <0>Settings</0> to download from Moodle."
 
-#: src/features/downloads/components/CourseSourceRow.tsx:105
+#: src/features/downloads/components/CourseSourceRow.tsx:113
 msgid "Choose your university in Settings first"
 msgstr "Choose your university in Settings first"
 
@@ -605,7 +605,7 @@ msgstr "Connect"
 msgid "Connect Google Drive now?"
 msgstr "Connect Google Drive now?"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:107
+#: src/features/downloads/components/CourseSourceRow.tsx:115
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
@@ -692,7 +692,7 @@ msgstr "Couldn't download \"{name}\". Try again."
 msgid "Couldn't load entries. Try again."
 msgstr "Couldn't load entries. Try again."
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:137
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:141
 msgid "Couldn't load recordings for \"{name}\". Try again."
 msgstr "Couldn't load recordings for \"{name}\". Try again."
 
@@ -708,7 +708,7 @@ msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
-#: src/shared/i18n/serviceErrors.ts:241
+#: src/shared/i18n/serviceErrors.ts:242
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "Couldn't start capturing the Zoom recording. Try again."
 
@@ -874,7 +874,7 @@ msgstr "Each service handles the data under its own privacy policy, and your API
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "Each time it starts, FastStudy checks GitHub for a new version."
 
-#: src/features/downloads/components/CourseSourceRow.tsx:88
+#: src/features/downloads/components/CourseSourceRow.tsx:96
 msgid "Edit source URL"
 msgstr "Edit source URL"
 
@@ -1198,11 +1198,11 @@ msgstr "Let's set things up"
 msgid "Load new version"
 msgstr "Load new version"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:113
+#: src/features/downloads/components/CourseSourceRow.tsx:121
 msgid "Load recordings"
 msgstr "Load recordings"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:95
+#: src/features/downloads/components/CourseSourceRow.tsx:103
 msgid "Loaded"
 msgstr "Loaded"
 
@@ -1210,7 +1210,7 @@ msgstr "Loaded"
 msgid "Loading summaries…"
 msgstr "Loading summaries…"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:113
+#: src/features/downloads/components/CourseSourceRow.tsx:121
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "Loading…"
@@ -1232,7 +1232,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:250
+#: src/shared/i18n/serviceErrors.ts:251
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1288,7 +1288,7 @@ msgstr "No Lectures"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
-#: src/shared/i18n/serviceErrors.ts:249
+#: src/shared/i18n/serviceErrors.ts:250
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
@@ -1434,7 +1434,7 @@ msgstr "Open the captcha again"
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
 
-#: src/features/downloads/components/AccountStatus.tsx:249
+#: src/features/downloads/components/AccountStatus.tsx:251
 msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 msgstr "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 
@@ -1932,11 +1932,11 @@ msgstr "The following files will be re-generated:"
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
-#: src/shared/i18n/serviceErrors.ts:246
+#: src/shared/i18n/serviceErrors.ts:247
 msgid "The login window was closed before login finished. Connect again."
 msgstr "The login window was closed before login finished. Connect again."
 
-#: src/shared/i18n/serviceErrors.ts:245
+#: src/shared/i18n/serviceErrors.ts:246
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
 
@@ -2073,7 +2073,7 @@ msgstr "This error was reported automatically. Reference: <0>{eventId}</0>"
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 
-#: src/shared/i18n/serviceErrors.ts:242
+#: src/shared/i18n/serviceErrors.ts:243
 msgid "This Moodle connection can't download these recordings. Reconnect the account."
 msgstr "This Moodle connection can't download these recordings. Reconnect the account."
 
@@ -2088,6 +2088,10 @@ msgstr "This only needs to be done once."
 #: src/shared/i18n/serviceErrors.ts:161
 msgid "This recording needs a passcode."
 msgstr "This recording needs a passcode."
+
+#: src/shared/i18n/serviceErrors.ts:241
+msgid "This recording type can't be downloaded."
+msgstr "This recording type can't be downloaded."
 
 #: src/shared/i18n/serviceErrors.ts:162
 msgid "This source can't be downloaded automatically."
@@ -2193,7 +2197,7 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/AccountStatus.tsx:255
+#: src/features/downloads/components/AccountStatus.tsx:257
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 

@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   assertPluginfileReadable,
   getCourseContents,
+  getAutologinKey,
   blocked,
   invalidToken,
   WsError,
@@ -128,4 +129,41 @@ test('a dead token on the pluginfile preflight still raises WsError, not blocked
   assert.ok(err instanceof WsError);
   assert.equal(invalidToken(err), true);
   assert.equal(blocked(err), false);
+});
+
+// A WsError is logged with its errorcode, debuginfo and route; Sentry sees only the message, so the
+// errorcode rides there too. debuginfo can echo a rejected param verbatim, so secrets are blanked.
+test('a WS fault logs errorcode, redacted debuginfo and route, and names the errorcode', async (t) => {
+  const PRIV = 'p'.repeat(64);
+  const TOK = 'w'.repeat(32);
+  stubFetch(t, {
+    body: JSON.stringify({
+      exception: 'invalid_parameter_exception',
+      errorcode: 'invalidparameter',
+      message: 'ערך פרמטר לא חוקי',
+      debuginfo: `privatetoken => the value is "${PRIV}" (wstoken ${TOK})`,
+    }),
+  });
+  const warn = t.mock.method(console, 'warn', () => {});
+  const err = await gated(() => getAutologinKey(SITE, TOK, PRIV)).then(
+    () => null,
+    (e) => e,
+  );
+  assert.ok(err instanceof WsError);
+  assert.equal(err.params.errorcode, 'invalidparameter');
+  assert.match(err.message, /\(invalidparameter\)$/);
+  const line = warn.mock.calls.map((c) => c.arguments.join(' ')).join('\n');
+  assert.match(line, /tool_mobile_get_autologin_key: invalidparameter via node/);
+  assert.match(line, /debuginfo: privatetoken => the value is "<redacted>" \(wstoken <redacted>\)/);
+  assert.equal(line.includes(PRIV), false);
+});
+
+test('a WS fault without debuginfo logs no debuginfo', async (t) => {
+  stubFetch(t, {
+    body: JSON.stringify({ exception: 'x', errorcode: 'invalidtoken', message: 'bad' }),
+  });
+  const warn = t.mock.method(console, 'warn', () => {});
+  await gated(() => getCourseContents(SITE, 'tok', '1')).catch(() => {});
+  const [line] = warn.mock.calls[0].arguments;
+  assert.equal(line, 'moodle core_course_get_contents: invalidtoken via node');
 });

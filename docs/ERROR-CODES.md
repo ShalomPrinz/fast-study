@@ -272,7 +272,8 @@ on both channels unchanged, so `database_store_failed` is only the fallback for 
 `downloaders/runner.js` likewise ends a job whose file on auto was refused with auto's own
 `code`/`params` (`site_blocked` with its `challengeWindow`, `moodle_reconnect_required`,
 `moodle_file_unknown`); a body that is not auto's envelope falls back to `download_tool_failed` /
-`download_auth_failed`.
+`download_auth_failed`. A re-resolve that auto answers `503 site_blocked` likewise ends the job with
+that code and params, never `recapture_failed`.
 
 The `❌` / `📥` / `♻️` / `✅` prefixes are not in any of this. They live only in `progress.js`'s
 `console` wrappers; `services/database.js` logs the emoji line and returns the bare error, so nothing
@@ -316,6 +317,7 @@ services; `state` stays as the developer-facing reason.
 | `extractors/ZoomExtractor.js`   | `zoom_no_media_request`       | `url`                    | user  |
 | `browser/zoomBrowser.js`        | `xvfb_unavailable`            | `detail`                 | user  |
 | `http/server.js`                | `moodle_token_no_privatetoken`| —                        | user  |
+| `http/server.js` `resolveItem`  | `recording_strategy_unsupported` | `strategy`            | user  |
 | `auth/moodleToken.js`           | `moodle_login_timeout`        | —                        | user  |
 | `auth/moodleToken.js`           | `moodle_login_abandoned`      | —                        | user  |
 | `auth/moodleToken.js`           | `moodle_login_not_pending`    | —                        | user  |
@@ -347,7 +349,8 @@ carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showin
 when no browser could launch. A window that opens hidden with its clearance still valid carries the
 call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
 `/site/probe` or from a call already going through the window whose reload landed on the site. A block
-from any other path (videostream, a pasted link, a link probe) leaves it absent.
+from any other path (videostream, its autologin key included, a pasted link, a link probe) leaves it
+absent.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`

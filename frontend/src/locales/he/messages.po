@@ -313,7 +313,7 @@ msgstr "{withSource} קורסים עם מקור"
 msgid "+ Add a course source URL"
 msgstr "+ הוספת כתובת מקור לקורס"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:83
+#: src/features/downloads/components/CourseSourceRow.tsx:91
 msgid "+ add source URL"
 msgstr "+ הוספת כתובת מקור"
 
@@ -534,7 +534,7 @@ msgstr "בחר את האוניברסיטה שלך למעלה כדי לחבר א�
 msgid "Choose your university in <0>Settings</0> to download from Moodle."
 msgstr "בחר את האוניברסיטה שלך ב<0>הגדרות</0> כדי להוריד מ-Moodle."
 
-#: src/features/downloads/components/CourseSourceRow.tsx:105
+#: src/features/downloads/components/CourseSourceRow.tsx:113
 msgid "Choose your university in Settings first"
 msgstr "יש לבחור תחילה אוניברסיטה בהגדרות"
 
@@ -605,7 +605,7 @@ msgstr "התחברות"
 msgid "Connect Google Drive now?"
 msgstr "לחבר את Google Drive עכשיו?"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:107
+#: src/features/downloads/components/CourseSourceRow.tsx:115
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
@@ -692,7 +692,7 @@ msgstr "לא ניתן להוריד את \"{name}\". נסה שוב."
 msgid "Couldn't load entries. Try again."
 msgstr "לא ניתן לטעון את הפריטים. נסה שוב."
 
-#: src/features/downloads/contexts/DownloadsSessionContext.tsx:137
+#: src/features/downloads/contexts/DownloadsSessionContext.tsx:141
 msgid "Couldn't load recordings for \"{name}\". Try again."
 msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה שוב."
 
@@ -708,7 +708,7 @@ msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastS
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
-#: src/shared/i18n/serviceErrors.ts:241
+#: src/shared/i18n/serviceErrors.ts:242
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "לא ניתן היה להתחיל בהורדת הקלטת ה-Zoom. נסה שוב."
 
@@ -874,7 +874,7 @@ msgstr "כל שירות מטפל במידע לפי מדיניות הפרטיות
 msgid "Each time it starts, FastStudy checks GitHub for a new version."
 msgstr "בכל הפעלה, FastStudy בודקת ב-GitHub אם יש גרסה חדשה."
 
-#: src/features/downloads/components/CourseSourceRow.tsx:88
+#: src/features/downloads/components/CourseSourceRow.tsx:96
 msgid "Edit source URL"
 msgstr "עריכת כתובת מקור"
 
@@ -1198,11 +1198,11 @@ msgstr "בוא נגדיר כמה דברים"
 msgid "Load new version"
 msgstr "טעינת הגרסה החדשה"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:113
+#: src/features/downloads/components/CourseSourceRow.tsx:121
 msgid "Load recordings"
 msgstr "טעינת הקלטות"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:95
+#: src/features/downloads/components/CourseSourceRow.tsx:103
 msgid "Loaded"
 msgstr "הקלטות נטענו"
 
@@ -1210,7 +1210,7 @@ msgstr "הקלטות נטענו"
 msgid "Loading summaries…"
 msgstr "טוען סיכומים…"
 
-#: src/features/downloads/components/CourseSourceRow.tsx:113
+#: src/features/downloads/components/CourseSourceRow.tsx:121
 #: src/shared/sidebar/UpdateRow.tsx:46
 msgid "Loading…"
 msgstr "טוען…"
@@ -1232,7 +1232,7 @@ msgstr "חומר"
 msgid "Materials"
 msgstr "חומרים"
 
-#: src/shared/i18n/serviceErrors.ts:250
+#: src/shared/i18n/serviceErrors.ts:251
 msgid "Moodle refused the request."
 msgstr "Moodle דחה את הבקשה."
 
@@ -1288,7 +1288,7 @@ msgstr "אין הרצאות"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "עדיין אין הרצאות. הוסף הרצאה דרך \"הורדות\", או הוסף קורס ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:249
+#: src/shared/i18n/serviceErrors.ts:250
 msgid "No login is in progress. Connect again."
 msgstr "לא מתבצעת כרגע התחברות. התחבר שוב."
 
@@ -1434,7 +1434,7 @@ msgstr "פתיחת החידה מחדש"
 msgid "Open the sign-in page"
 msgstr "פתיחת דף ההתחברות"
 
-#: src/features/downloads/components/AccountStatus.tsx:249
+#: src/features/downloads/components/AccountStatus.tsx:251
 msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ופתור שם את החידה, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
@@ -1932,11 +1932,11 @@ msgstr "הקבצים הבאים ייווצרו מחדש:"
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:246
+#: src/shared/i18n/serviceErrors.ts:247
 msgid "The login window was closed before login finished. Connect again."
 msgstr "חלון ההתחברות נסגר לפני שההתחברות הושלמה. התחבר שוב."
 
-#: src/shared/i18n/serviceErrors.ts:245
+#: src/shared/i18n/serviceErrors.ts:246
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "ההתחברות ל-Moodle לא הושלמה בזמן. נסה להתחבר שוב."
 
@@ -2073,7 +2073,7 @@ msgstr "השגיאה דווחה אוטומטית. מזהה: <0>{eventId}</0>"
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "הקובץ הזה ב-Google Drive אינו משותף לכולם, או שהוסר. פתח אותו בדפדפן והורד ידנית."
 
-#: src/shared/i18n/serviceErrors.ts:242
+#: src/shared/i18n/serviceErrors.ts:243
 msgid "This Moodle connection can't download these recordings. Reconnect the account."
 msgstr "החיבור הזה ל-Moodle לא מאפשר להוריד את ההקלטות האלה. חבר מחדש את החשבון."
 
@@ -2088,6 +2088,10 @@ msgstr "צריך לעשות את זה רק פעם אחת."
 #: src/shared/i18n/serviceErrors.ts:161
 msgid "This recording needs a passcode."
 msgstr "ההקלטה הזו דורשת קוד גישה."
+
+#: src/shared/i18n/serviceErrors.ts:241
+msgid "This recording type can't be downloaded."
+msgstr "לא ניתן להוריד הקלטה מהסוג הזה."
 
 #: src/shared/i18n/serviceErrors.ts:162
 msgid "This source can't be downloaded automatically."
@@ -2193,7 +2197,7 @@ msgstr "ההעלאה ל-Google Drive נכשלה."
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/AccountStatus.tsx:255
+#: src/features/downloads/components/AccountStatus.tsx:257
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ופתור שם את החידה. ואז לחץ על \"אישרתי, לנסות שוב\"."
 
