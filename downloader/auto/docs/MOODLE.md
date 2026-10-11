@@ -220,8 +220,8 @@ the size `HEAD` answers. `openPluginfile` applies the same checks when the strea
 ## Autologin
 
 A `videostream` `.mp4` URL is in no WS response — `mod_videostream` (openapp1) has no WS functions and
-no `db/mobile.php` — so only the module page, loaded logged in, reveals it, and it is sniffed there. The capture reuses the saved Moodle session, and only when that is dead does the
-`privatetoken` mint a one-shot login with **no MFA**:
+no `db/mobile.php` — so only the module page, loaded logged in, reveals it, and it is sniffed there. The capture reuses the saved Moodle session; when none is saved, or it is dead, the
+`privatetoken` mints a one-shot login with **no MFA**:
 
 ```
 POST tool_mobile_get_autologin_key   (privatetoken in a form-encoded body — as a GET param
@@ -238,8 +238,9 @@ rate limit. The key is bound to the requesting IP (`classes/api.php`). `autologi
 navigation, checks no UA; only the key call does.
 
 Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**, so it
-runs only when the module page lands on `/login/`: once, its session cookies saved, then the capture
-is retried once; still on the login is `videostream_login_required {url}`
+runs at most once per resolve, its session cookies saved. With no saved session it runs before the
+capture, which then runs once; on a saved session it runs only when the module page lands on
+`/login/`, then the capture is retried once. Still on the login is `videostream_login_required {url}`
 ([AUTH.md](AUTH.md#videostream-reuses-the-moodle-session)).
 
 `captureVideostream` (`http/server.js`) captures — and logs in when it must — in the Moodle browser, the
@@ -310,7 +311,7 @@ it, and it adds an installer binary. Switching the UA mid-session: walled (run 1
 `.mp4` through the page: it is public and off-site, so Node fetches it directly.
 
 **Prior art.** moodle-dl (C0D3D3V/Moodle-DL) has no `videostream` or Radware support; the saved
-session with autologin only when it is dead, and a browser UA with `MoodleMobile` appended, come from
+session with autologin only when it is missing or dead, and a browser UA with `MoodleMobile` appended, come from
 it.
 
 **Live checks.** Only the user runs them, on Windows, never this repo's tests (they stub `fetch` and

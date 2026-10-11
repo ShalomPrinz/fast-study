@@ -92,7 +92,7 @@ signal: it says nothing about the token, so it leaves the flag alone and answers
 
 Discovery is stateless WS calls with no browser. Only sniffing a `videostream` `.mp4` needs a
 logged-in browser, and it reuses the Moodle session the way moodle-dl does, autologin only when it is
-dead ([MOODLE.md](MOODLE.md#autologin)):
+missing or dead ([MOODLE.md](MOODLE.md#autologin)):
 
 - **Saved session.** `MoodleSessionprod` and the site's other session cookies (`block-fcl_*` on BIU) die with the browser
   (a relaunch comes back logged out), so after a successful autologin `auth/sessionCookies.js` saves
@@ -103,13 +103,17 @@ dead ([MOODLE.md](MOODLE.md#autologin)):
   Cookie values are never logged.
 - **Restore.** The challenge window gets them with `context.addCookies` at every launch, before its
   first page; the plain session before each capture it stands in for.
-- **Dead session.** The module page landing on `/login/` (`videostream_login_required`) means the
-  session is dead: `autologin` (`http/server.js`) mints a key from the `privatetoken` and the stored
-  `userid`, navigates it in the challenge window (or the plain session without one), saves the
-  cookies, and the capture is retried once. Landing on the login again answers
-  `500 videostream_login_required {url}`. Autologin is rate-limited (~1/user/6 min) and IP-bound, so
-  it never runs while the saved session is alive. A token with no `privatetoken` still captures on a
-  saved session; without one it is `moodle_token_no_privatetoken`.
+- **No saved session.** `autologin` (`http/server.js`) mints a key from the `privatetoken` and the
+  stored `userid`, navigates it in the challenge window (or the plain session without one), saves the
+  cookies, and the module is captured once. It runs before the first capture because a site that
+  logs anonymous visitors in as guest (BIU) never lands on `/login/`, so a blind capture would only
+  time out as `videostream_no_media_request`.
+- **Dead session.** A saved session is captured on first; the module page landing on `/login/`
+  (`videostream_login_required`) means it is dead, so `autologin` runs and the capture is retried
+  once. Landing on the login after an autologin answers `500 videostream_login_required {url}`.
+  Autologin is rate-limited (~1/user/6 min) and IP-bound, so it runs at most once per resolve and
+  never while the saved session is alive. A token with no `privatetoken` still captures on a saved
+  session; without one it is `moodle_token_no_privatetoken`.
 - **Lifetime.** Deleted with the window's profile on `disconnect()` and on a `connect()` to a site
   other than the stored token's, and on its own at any other `connect()` (which keeps the profile),
   since the new login may be another account; kept across a site switch (it is restored only on its

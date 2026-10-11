@@ -633,7 +633,7 @@ function videostreamResolve(t, token = { privatetoken: 'p' }) {
 
 const LOGIN_URL = `${SITE}/login/index.php`;
 
-test('with no saved session the capture lands on the login, autologins once and retries', async (t) => {
+test('with no saved session the autologin runs first and the module is captured once', async (t) => {
   const profile = fakeProfile(t);
   const plain = stubPlainSession(t);
   const calls = stubFetch(t, (url, init) => (fromPage(init) ? AUTOLOGIN_KEY() : html()));
@@ -644,15 +644,12 @@ test('with no saved session the capture lands on the login, autologins once and 
   // Opened before the key, so the key went out from its page.
   assert.equal(calls.length, 1);
   assert.ok(fromPage(calls[0].init));
-  // The root page took the autologin and stays there; each module load ran in a second page, closed.
+  // The root page took the autologin and stays there; the one module load ran in a second page, closed.
   assert.deepEqual(ctx.visited, [SITE, AUTOLOGIN_URL]);
   assert.equal(ctx.page.url(), AUTOLOGIN_URL);
   assert.deepEqual(
     ctx.capturePages.map((p) => [p.visited, p.url(), p.closed]),
-    [
-      [[VIDEOSTREAM_URL], LOGIN_URL, true],
-      [[VIDEOSTREAM_URL], VIDEOSTREAM_URL, true],
-    ],
+    [[[VIDEOSTREAM_URL], VIDEOSTREAM_URL, true]],
   );
   assert.equal(plain.opened, false);
   assert.deepEqual(challengeState(), { open: true, captcha: false });
@@ -697,6 +694,20 @@ test('a session saved by an earlier process captures with no autologin key', asy
   assert.equal(calls.length, 0);
   assert.deepEqual(profile.launches[0].added, [SESSION_COOKIE]);
   assert.equal(profile.launches[0].capturePages.length, 1);
+});
+
+test('a dead saved session is captured on first, then autologins once and retries', async (t) => {
+  const profile = fakeProfile(t);
+  stubPlainSession(t);
+  const calls = stubFetch(t, (url, init) => (fromPage(init) ? AUTOLOGIN_KEY() : html()));
+  const { run } = videostreamResolve(t);
+  saveSessionCookies(SITE, [{ ...SESSION_COOKIE, name: 'other' }]);
+  assert.equal((await run()).code, 200);
+  assert.equal(keyCalls(calls).length, 1);
+  assert.deepEqual(
+    profile.launches[0].capturePages.map((p) => p.url()),
+    [LOGIN_URL, VIDEOSTREAM_URL],
+  );
 });
 
 test('a saved session captures even for a token with no privatetoken', async (t) => {
@@ -748,7 +759,7 @@ test('still on the login after the autologin is videostream_login_required, one 
   assert.equal(err?.code, 'videostream_login_required');
   assert.deepEqual(err.params, { url: VIDEOSTREAM_URL });
   assert.equal(keyCalls(calls).length, 1);
-  assert.equal(ctx.capturePages.length, 2);
+  assert.equal(ctx.capturePages.length, 1);
 });
 
 test('a replay-cache hit answers with no window launch and no autologin key', async (t) => {
@@ -851,7 +862,7 @@ test('a window closed under the capture leaves it to the plain session with the 
   assert.equal(plain.visited[0], VIDEOSTREAM_URL);
 });
 
-test('a plain session with nothing saved autologins from Node once the window is gone', async (t) => {
+test('a window closed under the capture after the autologin hands the plain session its cookies', async (t) => {
   const profile = fakeProfile(t);
   const plain = stubPlainSession(t);
   const calls = stubFetch(t, () => AUTOLOGIN_KEY());
@@ -864,15 +875,11 @@ test('a plain session with nothing saved autologins from Node once the window is
   };
   const res = await run();
   assert.equal(res.code, 200);
+  // One key, spent in the window; the plain session captures once on the cookies it saved.
   assert.equal(keyCalls(calls).length, 1);
-  assert.ok(!fromPage(calls[0].init));
-  assert.deepEqual(plain.visited, [
-    VIDEOSTREAM_URL,
-    'about:blank',
-    AUTOLOGIN_URL,
-    VIDEOSTREAM_URL,
-    'about:blank',
-  ]);
+  assert.ok(fromPage(calls[0].init));
+  assert.deepEqual(plain.added, [SESSION_COOKIE]);
+  assert.deepEqual(plain.visited, [VIDEOSTREAM_URL, 'about:blank']);
 });
 
 test('a failed autologin navigation in the window throws and saves no session', async (t) => {
@@ -891,7 +898,7 @@ test('a failed autologin navigation in the window throws and saves no session', 
     (e) => e,
   );
   assert.match(String(err?.message), /Timeout/);
-  assert.equal(ctx.capturePages.length, 1);
+  assert.equal(ctx.capturePages.length, 0);
   assert.equal(plain.opened, false);
   assert.equal(loadSessionCookies(SITE), null);
   // Nothing was saved, so the next capture asks for a key again.

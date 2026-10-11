@@ -673,7 +673,7 @@ async function resolveItem(req, res) {
   }
 
   // videostream: sniff the in-site .mp4 in a browser holding the saved Moodle session, autologin
-  // (privatetoken → one-shot cookie, no MFA) only when it is dead. See docs/MOODLE.md § Autologin.
+  // (privatetoken → one-shot cookie, no MFA) only when it is missing or dead. See docs/MOODLE.md § Autologin.
   const found = siteOr(res, recording.pageUrl);
   if (!found) return;
   const { site, auth } = found;
@@ -777,13 +777,14 @@ async function captureOnce(site, useWindow, args, loginUrl) {
   });
 }
 
-// Capture on the saved Moodle session; a module page that lands on the login means it is dead, so
-// autologin once and retry once (autologin is rate-limited ~1/6 min). See docs/AUTH.md.
+// Capture on the saved session, autologin and retry once if it lands on the login; with none saved,
+// autologin first and capture once, since a guest landing never hits the login. See docs/AUTH.md.
 async function captureVideostream(site, token, profile, args) {
   // A replay-cache hit needs no browser: no window opens and no key is spent.
   const replayed = replayRecording(args);
   if (replayed) return replayed;
-  if (!token?.privatetoken && !loadSessionCookies(site)) throw noPrivatetoken();
+  const hasSession = !!loadSessionCookies(site);
+  if (!token?.privatetoken && !hasSession) throw noPrivatetoken();
   const useWindow = profile === 'moodle';
   if (useWindow) {
     // The window opens first, so a captcha there costs no key. An open window already on the site is
@@ -791,13 +792,17 @@ async function captureVideostream(site, token, profile, args) {
     const opened = challengeRoute(site)?.onSite() ? 'ready' : await openChallenge(site);
     if (opened === 'captcha') throw captchaBlock('the Moodle browser is on the captcha');
   }
-  try {
-    return await captureOnce(site, useWindow, args);
-  } catch (err) {
-    if (!loggedOut(err)) throw err;
+  if (hasSession) {
+    try {
+      return await captureOnce(site, useWindow, args);
+    } catch (err) {
+      if (!loggedOut(err)) throw err;
+    }
+    if (!token?.privatetoken) throw noPrivatetoken();
+    logResult('/resolve', 'Moodle session dead, autologin');
+  } else {
+    logResult('/resolve', 'no saved Moodle session, autologin');
   }
-  if (!token?.privatetoken) throw noPrivatetoken();
-  logResult('/resolve', 'Moodle session dead, autologin');
   const loginUrl = await autologin(site, token);
   return captureOnce(site, useWindow, args, loginUrl);
 }
