@@ -429,7 +429,8 @@ test('a row no branch handles is 422 recording_strategy_unsupported, never autol
   assert.ok(lines.includes(`→ POST /resolve  C/L (lecture) mystery ${MODULE_URL}`));
 });
 
-test('a walled videostream autologin is 503 site_blocked with no window, never a 500', async (t) => {
+// No browser to open (the sandbox's): the plain session logs in itself, and its walled key says so.
+test('a walled videostream autologin with no browser is 503 site_blocked, never a 500', async (t) => {
   fs.mkdirSync(path.dirname(TOKEN_FILE), { recursive: true });
   fs.writeFileSync(
     TOKEN_FILE,
@@ -465,6 +466,6 @@ test('a walled videostream autologin is 503 site_blocked with no window, never a
   assert.equal(res.body.status, 'blocked');
   assert.deepEqual(
     { code: res.body.code, params: res.body.params },
-    { code: 'site_blocked', params: { detail: 'HTTP 200, text/html' } },
+    { code: 'site_blocked', params: { detail: 'HTTP 200, text/html', challengeWindow: false } },
   );
 });

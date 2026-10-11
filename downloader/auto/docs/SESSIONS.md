@@ -7,7 +7,9 @@ request. Model in `src/browser/browserSession.js`.
   `getSession(profile)` lazily builds one browser+context+page per profile, each with its own idle
   timer; an extractor's `browserProfile` picks the profile (`'plain'` default, `ZoomExtractor` →
   `'zoom'`).
-- **No cookies are injected.** The `'plain'` profile authenticates on demand via Moodle autologin
+- **Cookies only from the autologin.** The `'plain'` profile authenticates on demand: the Moodle
+  autologin runs in the challenge window and its site cookies are added to the plain context, or,
+  with no window (none could launch, or it closed after the key), runs in the plain session itself
   ([AUTH.md](AUTH.md)); the `'zoom'` profile is passcode-gated, never Moodle-auth.
 - **`withLock(fn)`** serializes only the quick navigate+sniff, so one call's navigation can't abort
   another's; the heavy download runs afterward in `server/`, so downloads still overlap. `open()` is
@@ -23,7 +25,7 @@ request. Model in `src/browser/browserSession.js`.
 | `'plain'` — videostream sniff (`browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth  | none (headless)                            | no                 |
 | `'zoom'` — `ZoomExtractor` (`browser/zoomBrowser.js`)    | resolved channel + stealth, `headless:false`, no fallback            | Xvfb (Linux) / off-screen window (Windows) | no                 |
 | Token grab (`MoodleToken.connect()`)                     | resolved channel → bundled Chromium on launch failure                | real desktop                               | **yes — MFA once** |
-| Challenge window (`moodle/challenge.js`)                 | resolved channel, persistent profile `moodle-profile` under the state root, UA = the probe's + ` MoodleMobile`; no installed channel (no UA) → no launch; bundled Chromium only when the probe worked and the channel's persistent launch failed, still with that UA | real desktop, launched off-screen | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
+| Challenge window (`moodle/challenge.js`)                 | resolved channel, persistent profile `moodle-profile` under the state root, UA = the probe's + ` MoodleMobile`; no installed channel (no UA) → no launch; bundled Chromium only when the probe worked and the channel's persistent launch failed, still with that UA | real desktop, launched off-screen; opened by a wall or a videostream autologin | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
 
 Every launch passes `--mute-audio`: recordings autoplay, and nobody is watching.
 

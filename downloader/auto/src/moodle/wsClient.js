@@ -132,20 +132,18 @@ const APP_USER_AGENT = 'MoodleMobile 4.4.0 (44000)';
 
 // A challenge answers 302 or 200 text/html; parsing either as JSON would only report a
 // SyntaxError, hiding the real cause. Check before touching the body.
-// `routed:false` for a call the window must not carry, so its wall opens no window.
-async function jsonOrBlocked(res, { routed = true } = {}) {
+async function jsonOrBlocked(res) {
   const type = res.headers.get('content-type') ?? '';
   const redirect = res.status >= 300 && res.status < 400;
   if (!redirect && type.includes('json')) return res.json();
   await discard(res);
-  if (redirect) throw new WsBlockedError(`HTTP ${res.status} redirect`, { routed });
-  throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`, { routed });
+  if (redirect) throw new WsBlockedError(`HTTP ${res.status} redirect`, ROUTED);
+  throw new WsBlockedError(`HTTP ${res.status}, ${type || 'no content-type'}`, ROUTED);
 }
 
-// One WS call against `site`. With `post`, the extra params move to a form-encoded body; `route:false`
-// keeps it on Node. An `.exception` body (under HTTP 200) throws WsError; a non-JSON answer is the
+// One WS call against `site`. With `post`, the extra params move to a form-encoded body. An `.exception` body (under HTTP 200) throws WsError; a non-JSON answer is the
 // challenge → WsBlockedError.
-async function callWs(site, token, fn, params = {}, { post = false, route = true } = {}) {
+async function callWs(site, token, fn, params = {}, { post = false } = {}) {
   const url = new URL(`${site}/webservice/rest/server.php`);
   url.searchParams.set('wstoken', token);
   url.searchParams.set('moodlewsrestformat', 'json');
@@ -162,8 +160,8 @@ async function callWs(site, token, fn, params = {}, { post = false, route = true
     for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
   }
 
-  const res = await moodleFetch(url, init, { route });
-  const body = await jsonOrBlocked(res, { routed: route });
+  const res = await moodleFetch(url, init);
+  const body = await jsonOrBlocked(res);
   if (body && body.exception) throw wsFault(body, res, fn, [token, ...Object.values(params)]);
   return body;
 }
@@ -254,17 +252,11 @@ export function getCourseContents(site, token, courseId) {
 }
 
 // Mint a one-shot no-MFA browser login; rate-limited (~1/user/6 min) and IP-bound. POST only:
-// Moodle rejects the privatetoken in a query string (invalidprivatetoken). Node only: the function
-// needs a MoodleMobile UA, which the challenge window's browser never sends. See docs/MOODLE.md.
+// Moodle rejects the privatetoken in a query string (invalidprivatetoken). It needs a MoodleMobile
+// UA, which both Node and the challenge window send. See docs/MOODLE.md.
 /** @returns {Promise<{ key: string, autologinurl: string, warnings: unknown[] }>} */
 export function getAutologinKey(site, wstoken, privatetoken) {
-  return callWs(
-    site,
-    wstoken,
-    'tool_mobile_get_autologin_key',
-    { privatetoken },
-    { post: true, route: false },
-  );
+  return callWs(site, wstoken, 'tool_mobile_get_autologin_key', { privatetoken }, { post: true });
 }
 
 // Pluginfile authenticates by a query-string token. Set via the URL API: fileurl may already

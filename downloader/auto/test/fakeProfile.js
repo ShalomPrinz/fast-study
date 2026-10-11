@@ -1,6 +1,6 @@
 // A stand-in for the challenge window's persistent Chrome: the page "lands" on the site or on a
-// captcha host, runs page.evaluate in Node (so the in-page fetch code runs against the stubbed
-// globalThis.fetch), and records every window move. Installed through configureChallenge.
+// captcha host, runs page.evaluate in Node against a stand-in document whose iframes' fetch is the
+// stubbed globalThis.fetch, and records every window move. Installed through configureChallenge.
 import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { configureChallenge, closeChallenge } from '../src/moodle/challenge.js';
@@ -8,6 +8,31 @@ import { configureChallenge, closeChallenge } from '../src/moodle/challenge.js';
 export const CAPTCHA_URL = 'https://validate.perfdrive.com/abc/?ssa=1';
 export const CHROME_UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36';
+
+// Just the DOM pageFetch touches; each navigation gets a fresh one, dropping its iframes.
+function fakeDocument() {
+  const byId = new Map();
+  const doc = {
+    frames: 0,
+    getElementById: (id) => byId.get(id) ?? null,
+    createElement: () => ({ style: {}, contentWindow: null }),
+    documentElement: {
+      appendChild: (el) => {
+        el.contentWindow = { fetch: (...args) => globalThis.fetch(...args) };
+        byId.set(el.id, el);
+        doc.frames++;
+      },
+    },
+  };
+  return doc;
+}
+
+export const SESSION_COOKIE = {
+  name: 'MoodleSessionprod',
+  value: 's',
+  domain: 'moodle.test',
+  path: '/',
+};
 
 export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
   const launches = [];
@@ -21,8 +46,12 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       goto: async (u) => {
         context.visited.push(u);
         url = state.lands === 'site' ? u : CAPTCHA_URL;
+        context.document = fakeDocument();
       },
-      evaluate: async (fn, arg) => fn(arg),
+      evaluate: async (fn, arg) => {
+        globalThis.document = context.document;
+        return fn(arg);
+      },
       bringToFront: async () => {
         context.fronted++;
       },
@@ -31,6 +60,12 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       dir,
       opts,
       page,
+      document: fakeDocument(),
+      cookieQueries: [],
+      cookies: async (u) => {
+        context.cookieQueries.push(u);
+        return [SESSION_COOKIE];
+      },
       visited: [],
       bounds: [],
       fronted: 0,
@@ -67,6 +102,7 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
   t.after(async () => {
     await closeChallenge();
     restore();
+    delete globalThis.document;
   });
   return { launches, state };
 }

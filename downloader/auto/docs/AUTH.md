@@ -85,6 +85,7 @@ signal: it says nothing about the token, so it leaves the flag alone and answers
 
 Discovery is stateless WS calls with no browser. Only sniffing a `videostream` `.mp4` needs a
 logged-in browser: `ensureAutologin` mints a one-shot no-MFA login from the `privatetoken` and the
-stored `userid`. Autologin
+stored `userid`, navigates it in the challenge window and copies the window's cookies into the plain
+session ([MOODLE.md](MOODLE.md#autologin)). Autologin
 is rate-limited (~1/user/6 min), so the cookie is treated as fresh for ~20 min via the session's
 `isAuthed()` / `markAuthed()`, reset on `close()`.

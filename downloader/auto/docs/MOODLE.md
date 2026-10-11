@@ -100,8 +100,8 @@ Every call goes to `{site}/webservice/rest/server.php?wstoken=…&moodlewsrestfo
 GET with params in the query — except `tool_mobile_get_autologin_key` (below). Every call from Node
 sends `User-Agent: MoodleMobile 4.4.0 (44000)`: Moodle gates app-only functions on
 `core_useragent::is_moodle_app()`, which substring-matches `MoodleMobile` in the UA. In block mode
-(below) calls carry the window's launch UA instead — the browser's real UA plus ` MoodleMobile` — but
-`tool_mobile_get_autologin_key` still never goes through the window (§ Autologin).
+(below) calls carry the window's launch UA instead — the browser's real UA plus ` MoodleMobile` — so
+app-only functions, `tool_mobile_get_autologin_key` included, pass through it too.
 
 **Error shape.** A _failed_ call — a dead token included — answers **HTTP 200** with
 `{ exception, errorcode, message }`, never an HTTP error. `callWs` throws a `WsError` carrying
@@ -145,7 +145,10 @@ are made from inside that browser:
   opens the window itself and reports `challengeWindow`, `'ready'` included. A block while it is up reuses it (Chrome locks the profile, so a second launch would
   fail), reloading its root when the page itself was challenged.
 - **The route.** While it is open, `moodleFetch` sends every call on its site — WS calls, the public
-  config, the pluginfile preflight and stream — as a page `fetch` (`redirect:'manual'`,
+  config, the pluginfile preflight and stream — as a `fetch` from the page. The site's own scripts
+  (from `cdn.jsdelivr.net`, `js.nagich.co.il`) replace the page's `fetch` and
+  `XMLHttpRequest.prototype.send`, so it is the native `fetch` of a hidden same-origin `about:blank`
+  iframe the call adds once per document (again after a navigation) (`redirect:'manual'`,
   `credentials:'include'`, `cache:'no-store'`, no `User-Agent`, `Range` passed through, form bodies
   serialized) and rebuilds a Node `Response`, so the wall checks run unchanged: the page's unreadable
   `opaqueredirect` reads as a 302, and the body crosses back in 4 MB base64 slices. A page still on
@@ -156,7 +159,7 @@ are made from inside that browser:
   A call through the page that still meets the wall reloads the root (`reportBlock`), so the
   page itself may land on a captcha and the 503 says `'captcha'` or `'ready'` (repeat the action). A window closed mid-call fails that call as an unrouted `site_blocked`
   (no window reopens; the user's repeat goes out on Node). Not routed, so still
-  `site_blocked` during a block: the videostream capture, its autologin key and navigation (headless),
+  `site_blocked` during a block: the videostream capture's module page (headless),
   `openMoodleFile` (it replays captured cookies, which a page cannot set) and `lib/probeUrl.js`. A
   block there opens no window and its 503 carries no `challengeWindow` (`WsBlockedError.routed` is
   false; `reportBlock` skips it).
@@ -225,15 +228,21 @@ navigate to {autologinurl}?userid=<userid>&key=<key>   → sets the Moodle sessi
 navigate to module.url and sniff the .mp4
 ```
 
+`autologin.php` checks no UA; only the key call does.
+
 Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**; the
 cookie's freshness is cached ~20 min so back-to-back downloads don't trip the limit ([AUTH.md](AUTH.md)).
 
-The key call always goes out on Node, never through the challenge window. Moodle answers it only to a
-`MoodleMobile` UA (`is_moodle_app()`, else `apprequired`), which the window carries, but the site's
-scripts replace the page's `fetch`, and the window still sends through that replaced one. A key call
-through the window has failed `invalidparameter`; the hook altering the POST is the likely cause —
-inferred, not proven — so the call stays on Node until the window sends through a native `fetch`. So during a block it fails as an unrouted `503 site_blocked` with no
-`challengeWindow`, and opens no window.
+`ensureAutologin` (`http/server.js`) runs the login in the Moodle browser — the challenge window —
+opening it hidden first, block or not, so a captcha there (`503 site_blocked`, `challengeWindow:'captcha'`)
+costs no rate-limited key. The key call is an ordinary routed WS call: through the window while it is
+up, else Node with the window on a wall. Moodle answers it only to a `MoodleMobile` UA
+(`is_moodle_app()`, else `apprequired`), which both carry; a key Node mints is valid in the window,
+since both share the machine's IP. The navigation then runs in the window, and the plain session the
+capture still sniffs in takes the window's cookies for the site (`context.addCookies`). With no window
+(`false`: no browser could launch), or one closed between the key and the navigation, the plain
+session spends the key itself. A navigation that fails any other way throws, never marking the
+session logged in.
 
 Only a `videostream` row reaches autologin: `/resolve` refuses any row its earlier branches did not
 take and that is not `zoom` or `videostream` (an unexpanded playlist, a strategy this build does not

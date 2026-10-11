@@ -66,9 +66,18 @@ export function challengeRoute(url) {
   return win && originOf(String(url)) === win.origin ? win : null;
 }
 
-// Runs in the page. Keeps the body there and hands back its head; Node pulls the body in slices.
+// Runs in the page; Node pulls the kept body in slices. Sent through a hidden about:blank iframe's
+// native fetch, since the site's scripts replace the page's (docs/MOODLE.md § Bot protection).
 async function pageFetch({ url, method, headers, body }) {
-  const r = await fetch(url, {
+  let frame = document.getElementById('__fastStudyFetch');
+  if (!frame?.contentWindow) {
+    frame = document.createElement('iframe');
+    frame.id = '__fastStudyFetch';
+    frame.src = 'about:blank';
+    frame.style.display = 'none';
+    document.documentElement.appendChild(frame);
+  }
+  const r = await frame.contentWindow.fetch(url, {
     method,
     headers,
     body,
@@ -255,6 +264,24 @@ class ChallengeWindow {
     this.touch();
     publish();
     await this._bounds(OFF_SCREEN);
+  }
+
+  /**
+   * Navigate the page to `url` on the site (under the caller's Moodle lock) → settle()'s state, or
+   * false when the window went away under it; any other navigation failure throws.
+   */
+  async visit(url) {
+    this.busy++;
+    this.touch();
+    try {
+      await this.page.goto(url, { waitUntil: 'load' });
+    } catch (err) {
+      if (this.gone(err)) return false;
+      throw err;
+    } finally {
+      this.busy--;
+    }
+    return this.settle();
   }
 
   // Load the site root (under the caller's Moodle lock) and show the window only on a captcha.

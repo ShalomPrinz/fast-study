@@ -21,7 +21,7 @@ context's work ends (`finally`, so a throw, an aborted stream or a cancelled log
 | `wsClient.js` `moodleFetch`                 | every WS call (`callWs`), `getPublicConfig`, `assertPluginfileReadable`, `openPluginfile`, `openMoodleFile` — from Node, or in block mode from the challenge window's page (never `openMoodleFile`) ([MOODLE.md](MOODLE.md#the-rest-api)) |
 | `moodleToken.js` `_openLogin`               | the headed `launch.php` login window                 |
 | `challenge.js` `land`                       | the challenge window loading the site root           |
-| `http/server.js` `ensureAutologin`          | the autologin navigation of the plain session        |
+| `http/server.js` `ensureAutologin`          | the autologin navigation, in the challenge window (the plain session with none) |
 | `VideostreamExtractor._captureVideo`        | the module's view page                               |
 | `lib/probeUrl.js` `fetchFollowing`          | any hop of a link probe on the Moodle host — redirects are followed by hand so an off-site link that lands there is caught too |
 

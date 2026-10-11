@@ -7,11 +7,13 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { statePath } from '@faststudy/runtime';
 import { gated } from './gated.js';
-import { fakeProfile, CAPTCHA_URL, CHROME_UA } from './fakeProfile.js';
+import { fakeProfile, CAPTCHA_URL, CHROME_UA, SESSION_COOKIE } from './fakeProfile.js';
 import { moodleGate } from '../src/moodle/gate.js';
 import { setCurrentSite } from '../src/moodle/site.js';
 import { writeTokenFile } from '../src/auth/tokenStore.js';
-import { handleList } from '../src/http/server.js';
+import { handleList, handleResolve } from '../src/http/server.js';
+import { getSession } from '../src/browser/browserSession.js';
+import { encodeRef } from '../src/lib/ref.js';
 import { siteAuth, authState, authEvents } from '../src/core/registry.js';
 import {
   openChallenge,
@@ -488,34 +490,197 @@ test('a WS fault answered through the window logs the window route', async (t) =
   assert.match(warn.mock.calls[0].arguments[0], /nopermissions via window/);
 });
 
-// tool_mobile_get_autologin_key needs a MoodleMobile UA, which the window's browser never sends.
-test('the autologin key stays on Node while the window is open', async (t) => {
+test('the autologin key goes out from the window while it is open, as a form POST', async (t) => {
   onSite(t);
   fakeProfile(t);
   await gated(() => openChallenge(SITE));
   const calls = stubFetch(t, () => json({ key: 'k', autologinurl: `${SITE}/a`, warnings: [] }));
   assert.equal((await gated(() => getAutologinKey(SITE, 'tok', 'priv'))).key, 'k');
   assert.equal(calls.length, 1);
-  assert.equal(fromPage(calls[0].init), false);
-  assert.equal(calls[0].init.headers['User-Agent'], 'MoodleMobile 4.4.0 (44000)');
-  assert.equal(String(calls[0].init.body), 'privatetoken=priv');
+  assert.ok(fromPage(calls[0].init));
+  assert.equal(calls[0].init.method, 'POST');
+  assert.equal(calls[0].init.body, 'privatetoken=priv');
 });
 
-test('a walled autologin key is an unrouted site_blocked that opens no window', async (t) => {
+test('a walled autologin key reopens the window hidden and is resent through it', async (t) => {
   onSite(t);
   const profile = fakeProfile(t);
-  const calls = stubFetch(t, () => html());
-  const err = await gated(() => getAutologinKey(SITE, 'tok', 'priv')).then(
+  const calls = stubFetch(t, (url, init) =>
+    fromPage(init) ? json({ key: 'k', autologinurl: `${SITE}/a`, warnings: [] }) : html(),
+  );
+  assert.equal((await gated(() => getAutologinKey(SITE, 'tok', 'priv'))).key, 'k');
+  assert.equal(profile.launches.length, 1);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].init.headers['User-Agent'], 'MoodleMobile 4.4.0 (44000)');
+  assert.ok(fromPage(calls[1].init));
+});
+
+// ── The page's own fetch is replaced by the site's scripts ──────────────────
+
+test("a page call uses a hidden iframe's native fetch, made once per document", async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  // The page's fetch is the site's replacement; only the iframe's is native.
+  const hooked = stubFetch(t, () => {
+    throw new Error("the page's replaced fetch");
+  });
+  const native = [];
+  const doc = ctx.document;
+  const append = doc.documentElement.appendChild;
+  doc.documentElement.appendChild = (el) => {
+    append(el);
+    el.contentWindow = {
+      fetch: async (url) => {
+        native.push(url);
+        return json({});
+      },
+    };
+  };
+  const win = challengeRoute(`${SITE}/x`);
+  for (const path of ['/x', '/y']) await (await win.fetch(`${SITE}${path}`)).body?.cancel();
+  assert.deepEqual(native, [`${SITE}/x`, `${SITE}/y`]);
+  assert.equal(hooked.length, 0);
+  assert.equal(doc.frames, 1);
+});
+
+test('a page that navigated gets a new iframe on its next call', async (t) => {
+  const profile = fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  stubFetch(t, () => json({}));
+  const win = challengeRoute(`${SITE}/x`);
+  await (await win.fetch(`${SITE}/x`)).body?.cancel();
+  const before = ctx.document;
+  await ctx.page.goto(`${SITE}/my/`);
+  await (await win.fetch(`${SITE}/x`)).body?.cancel();
+  assert.equal(before.frames, 1);
+  assert.notEqual(ctx.document, before);
+  assert.equal(ctx.document.frames, 1);
+});
+
+// ── A videostream capture logs in through the Moodle browser ────────────────
+
+const VIDEOSTREAM_URL = `${SITE}/mod/videostream/view.php?id=3031600`;
+const MP4_URL = 'https://bucket.objectstorage.test/lecture.mp4';
+
+// The plain session with a stand-in page that sees the player's .mp4 request, so no browser launches.
+function stubPlainSession(t) {
+  const session = getSession('plain');
+  const added = [];
+  const visited = [];
+  t.mock.method(session, 'open', async () => {
+    session.context = { addCookies: async (cookies) => added.push(...cookies) };
+    session.page = {
+      goto: async (u) => visited.push(u),
+      url: () => visited.at(-1) ?? 'about:blank',
+      evaluate: async () => {},
+      waitForRequest: async () => ({
+        url: () => MP4_URL,
+        headers: () => ({ referer: VIDEOSTREAM_URL }),
+        response: async () => null,
+      }),
+    };
+  });
+  t.after(() => session.close());
+  return { added, visited };
+}
+
+function videostreamResolve(t) {
+  onSite(t);
+  writeTokenFile(statePath('auth', 'moodle-token.json'), {
+    site: SITE,
+    wstoken: 'w',
+    privatetoken: 'p',
+    userid: 7,
+  });
+  t.mock.method(console, 'log', () => {});
+  const res = fakeRes();
+  const ref = encodeRef({ strategy: 'videostream', pageUrl: VIDEOSTREAM_URL });
+  return { res, run: () => handleResolve({ body: { ref, course: 'C', name: 'L' } }, res) };
+}
+
+test('a videostream autologin runs in the Moodle browser and hands its cookie to the capture', async (t) => {
+  const profile = fakeProfile(t);
+  const plain = stubPlainSession(t);
+  const calls = stubFetch(t, (url, init) =>
+    fromPage(init)
+      ? json({ key: 'k', autologinurl: `${SITE}/admin/tool/mobile/autologin.php`, warnings: [] })
+      : html(),
+  );
+  const { res, run } = videostreamResolve(t);
+  await run();
+  assert.equal(res.code, 200);
+  const [ctx] = profile.launches;
+  // Opened before the key, so the key went out from its page.
+  assert.equal(calls.length, 1);
+  assert.ok(fromPage(calls[0].init));
+  assert.deepEqual(ctx.visited, [SITE, `${SITE}/admin/tool/mobile/autologin.php?userid=7&key=k`]);
+  assert.deepEqual(ctx.cookieQueries, [SITE]);
+  assert.deepEqual(plain.added, [SESSION_COOKIE]);
+  // The plain session never navigated the autologin URL itself, only the module page.
+  assert.equal(plain.visited[0], VIDEOSTREAM_URL);
+  assert.equal(res.body.targets[0].url, MP4_URL);
+});
+
+const AUTOLOGIN_KEY = () =>
+  json({ key: 'k', autologinurl: `${SITE}/admin/tool/mobile/autologin.php`, warnings: [] });
+const AUTOLOGIN_URL = `${SITE}/admin/tool/mobile/autologin.php?userid=7&key=k`;
+
+test('a window closed under the autologin navigation hands the key to the plain session', async (t) => {
+  const profile = fakeProfile(t);
+  const plain = stubPlainSession(t);
+  stubFetch(t, () => AUTOLOGIN_KEY());
+  const { res, run } = videostreamResolve(t);
+  // Open before the key, then gone as its navigation starts.
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  ctx.page.goto = async () => {
+    await ctx.close();
+    throw Object.assign(new Error('Target page, context or browser has been closed'), {
+      name: 'TargetClosedError',
+    });
+  };
+  await run();
+  assert.equal(res.code, 200);
+  // The plain session spent the key itself (the capture then replays from the session cache).
+  assert.equal(plain.visited[0], AUTOLOGIN_URL);
+  assert.deepEqual(plain.added, []);
+});
+
+test('a failed autologin navigation in the window throws and leaves the session logged out', async (t) => {
+  const profile = fakeProfile(t);
+  const plain = stubPlainSession(t);
+  stubFetch(t, () => AUTOLOGIN_KEY());
+  const { res, run } = videostreamResolve(t);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  ctx.page.goto = async () => {
+    throw new Error('page.goto: Timeout 30000ms exceeded');
+  };
+  const err = await run().then(
     () => null,
     (e) => e,
   );
-  assert.ok(err instanceof WsBlockedError);
-  assert.equal(err.code, 'site_blocked');
-  assert.equal(err.routed, false);
-  assert.equal(calls.length, 1);
-  await reportBlock(err, SITE);
-  assert.equal(profile.launches.length, 0);
-  assert.equal('challengeWindow' in err.params, false);
+  assert.match(String(err?.message), /Timeout/);
+  assert.notEqual(res.code, 200);
+  assert.deepEqual(plain.added, []);
+  // Only the lock's own step back to about:blank: no autologin, no capture.
+  assert.deepEqual(plain.visited, ['about:blank']);
+  assert.equal(getSession('plain').isAuthed(), false);
+});
+
+test('a Moodle browser on the captcha answers 503 captcha and spends no autologin key', async (t) => {
+  fakeProfile(t, { lands: 'captcha' });
+  const plain = stubPlainSession(t);
+  const calls = stubFetch(t, () => json({ key: 'k', autologinurl: `${SITE}/a`, warnings: [] }));
+  const { res, run } = videostreamResolve(t);
+  await run();
+  assert.equal(res.code, 503);
+  assert.equal(res.body.code, 'site_blocked');
+  assert.equal(res.body.params.challengeWindow, 'captcha');
+  assert.equal(calls.length, 0);
+  assert.deepEqual(plain.added, []);
 });
 
 test('a blocked /list after the window closed passes with no 503', async (t) => {

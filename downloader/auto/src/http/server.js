@@ -11,6 +11,7 @@ import { normalizeSite, currentSite } from '../moodle/site.js';
 import {
   reportBlock,
   openChallenge,
+  challengeRoute,
   challengeState,
   challengeEvents,
 } from '../moodle/challenge.js';
@@ -41,6 +42,7 @@ import {
   getAutologinKey,
   invalidToken,
   blocked,
+  WsBlockedError,
   openPluginfile,
   openMoodleFile,
   pluginfileUrl,
@@ -669,8 +671,8 @@ async function resolveItem(req, res) {
     return send(res, 200, { media: 'video', targets });
   }
 
-  // videostream: sniff the in-site .mp4 in a headless browser logged in via Moodle
-  // autologin (privatetoken → one-shot cookie, no MFA). See docs/MOODLE.md.
+  // videostream: sniff the in-site .mp4 in a headless browser holding the cookie of a Moodle
+  // autologin (privatetoken → one-shot cookie, no MFA) run in the Moodle browser. See docs/MOODLE.md.
   const found = siteOr(res, recording.pageUrl);
   if (!found) return;
   const { site, auth } = found;
@@ -697,8 +699,8 @@ async function resolveItem(req, res) {
       }
     });
   } catch (e) {
-    // getAutologinKey surfaces a dead token (→ 401) or a challenge on Node (→ 503, no window: it
-    // never routes through one); other faults (rate-limit lockout, no .mp4) fall to 500.
+    // The autologin surfaces a dead token (→ 401) or a wall the Moodle browser could not pass (→ 503,
+    // with its challengeWindow); other faults (rate-limit lockout, no .mp4) fall to 500.
     if (invalidToken(e)) {
       auth.markExpired();
       logResult('/resolve', 'reconnect (401)');
@@ -714,8 +716,15 @@ async function resolveItem(req, res) {
   send(res, 200, { media: 'video', targets });
 }
 
-// Log the shared plain session into Moodle via a one-shot autologin key, unless a prior cookie is
-// still fresh. MUST run inside the session lock (navigates the shared page).
+// A routed site_blocked for a Moodle browser left on the captcha: the user solves it and repeats.
+function captchaBlock(detail) {
+  const err = new WsBlockedError(detail, { routed: true });
+  err.params = { ...err.params, challengeWindow: 'captcha' };
+  return err;
+}
+
+// Autologin unless a prior cookie is still fresh, in the Moodle browser (else the plain session); see
+// docs/MOODLE.md § Autologin. MUST run inside the session lock (navigates the shared page).
 async function ensureAutologin(session, site, token) {
   if (session.isAuthed()) return;
   if (!token?.privatetoken) {
@@ -725,15 +734,29 @@ async function ensureAutologin(session, site, token) {
       'token has no privatetoken; Reconnect to enable videostream capture',
     );
   }
+  // The window opens first, so a captcha there costs no key: the key is rate-limited (~1/6 min).
+  // An open window already on the site is used as is: openChallenge would reload its root.
+  const opened = challengeRoute(site)?.onSite() ? 'ready' : await openChallenge(site);
+  if (opened === 'captcha') throw captchaBlock('the Moodle browser is on the captcha');
   // userid was stored at login, from the same site info the post-login check read.
   const { userid } = token;
+  // Through the window while it is up; the key is IP-bound, and Node and the window share the IP.
   const { key, autologinurl } = await getAutologinKey(site, token.wstoken, token.privatetoken);
   // autologinurl is a bare endpoint; add userid+key via the URL API (it may already carry a query).
   const u = new URL(autologinurl);
   u.searchParams.set('userid', userid);
   u.searchParams.set('key', key);
   await enterMoodle(autologinurl);
-  await session.goto(u.toString());
+  const win = challengeRoute(site);
+  const landed = win ? await win.visit(u.toString()) : false;
+  if (landed === 'captcha') throw captchaBlock('the autologin landed on the captcha');
+  if (landed === 'ready') {
+    // The capture still runs in the plain session, so it takes the window's session cookie.
+    await session.context.addCookies(await win.context.cookies(site));
+  } else {
+    // No window, or it closed after the key: the key is IP-bound, so the plain session can spend it.
+    await session.goto(u.toString());
+  }
   session.markAuthed(AUTOLOGIN_TTL_MS);
 }
 
