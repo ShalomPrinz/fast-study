@@ -87,7 +87,7 @@ A failure after the store write leaves the service behind until a retry, so the 
 A saved key shows an "a key is saved" placeholder; a blank key field is never sent, since empty would
 clear the stored key. The language applies the moment it is picked and reaches no save.
 
-**The data folder and the university are guarded** (the university below). For the folder,
+**The data folder is guarded**:
 `utils/dataRootGuard.ts` reads the SSE-fed `RunnerStatusContext` and raises a `ConfirmModal` naming runs in flight, since a mid-run change splits a lecture across two roots.
 Advisory only; the route also warns that a change re-points and never moves data. A key or a model cannot
 corrupt anything, so nothing else is checked.
@@ -175,10 +175,10 @@ which makes Connect live without a Save. The rest of the form keeps its unsaved 
 saves on submit. `unverified` waits for the submit on both. `/settings` does it in `hooks/useSiteSave.ts`, whose chain
 its Save joins too, so a pick and a Save always land in the order made.
 
-**Switching sites drops the account.** The auto-downloader resets auth on a new site, so while an account is
-connected `/settings` raises an advisory `ConfirmModal` first — at the pick for a site saved at once, on Save
-for one that waits. Cancelling a pick remounts the picker (keyed on a revision) on the stored site; either
-save re-probes the chip.
+**Switching sites keeps the account.** The auto-downloader holds one session and keeps it across a switch:
+the chip reads not connected on any other site and connected again once its own site is picked back, with
+no confirm and no reconnect. Only Connect on another site (or Disconnect) replaces it. The chip follows
+auto's `/auth/events`, and either save re-probes it.
 
 ## Prerequisites and accounts
 

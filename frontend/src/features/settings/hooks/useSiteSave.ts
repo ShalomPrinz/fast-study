@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import {
   saveSettings,
   type SavedSettings,
@@ -9,25 +9,19 @@ import {
 interface Options {
   // The site the store held when the page loaded, `''` for none.
   storedSite: string
-  // A connected, unexpired account: a switch would drop it, so it waits for a confirm.
-  accountConnected: boolean
   onSaved: (saved: Settings) => void
   onFailed: (err: unknown) => void
 }
 
 // `/settings`' picked site, saved alone the moment it is chosen, so its account can be connected
 // without a Save. Every save of the page runs on one chain, so none lands out of order. See docs/SETTINGS.md.
-export function useSiteSave({ storedSite, accountConnected, onSaved, onFailed }: Options) {
+export function useSiteSave({ storedSite, onSaved, onFailed }: Options) {
   const saves = useRef<Promise<unknown>>(Promise.resolve())
   // The site the store holds as of the last landed save, and the one it will once the chain drains;
   // `null` until this page writes one.
   const savedSite = useRef<string | null>(null)
   const queuedSite = useRef<string | null>(null)
   const lastTask = useRef(0)
-  // The pick waiting on the switch confirm.
-  const [asking, setAsking] = useState<string | null>(null)
-  // Bumped on a cancelled switch: the picker's key, so it remounts on the stored site.
-  const [revision, setRevision] = useState(0)
   const latest = useRef({ storedSite, onSaved, onFailed })
   latest.current = { storedSite, onSaved, onFailed }
 
@@ -70,20 +64,8 @@ export function useSiteSave({ storedSite, accountConnected, onSaved, onFailed }:
   }
 
   function pick(site: string) {
-    if (site === queued()) return
-    if (accountConnected) setAsking(site)
-    else write(site)
+    if (site !== queued()) write(site)
   }
 
-  function confirm() {
-    if (asking !== null) write(asking)
-    setAsking(null)
-  }
-
-  function cancel() {
-    setAsking(null)
-    setRevision((r) => r + 1)
-  }
-
-  return { pick, asking, confirm, cancel, revision, save }
+  return { pick, save }
 }

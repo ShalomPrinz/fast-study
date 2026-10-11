@@ -345,7 +345,7 @@ msgstr "חסר גופן שה-PDF זקוק לו."
 msgid "A key is saved — type to replace it"
 msgstr "יש מפתח שמור — הקלד כדי להחליף אותו"
 
-#: src/features/settings/SettingsView.tsx:456
+#: src/features/settings/SettingsView.tsx:418
 msgid "A lecture running now would save some files in the old folder and the rest in the new one."
 msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים בתיקייה הישנה ואת השאר בחדשה."
 
@@ -401,11 +401,11 @@ msgstr "ניתוח"
 msgid "Analyzing the collected passages failed."
 msgstr "ניתוח הקטעים שנאספו נכשל."
 
-#: src/features/settings/SettingsView.tsx:239
+#: src/features/settings/SettingsView.tsx:216
 msgid "API keys"
 msgstr "מפתחות API"
 
-#: src/features/settings/SettingsView.tsx:336
+#: src/features/settings/SettingsView.tsx:312
 msgid "Appearance and behaviour"
 msgstr "מראה והעדפות"
 
@@ -495,7 +495,7 @@ msgstr "אי אפשר להחליף את הווידאו בזמן עיבוד או 
 msgid "Cancel"
 msgstr "ביטול"
 
-#: src/features/settings/SettingsView.tsx:455
+#: src/features/settings/SettingsView.tsx:417
 msgid "Change the data folder while lectures are being processed?"
 msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מעובדות?"
 
@@ -700,11 +700,11 @@ msgstr "לא ניתן לטעון את ההקלטות של \"{name}\". נסה ש�
 msgid "Couldn't load summaries for {course}."
 msgstr "לא ניתן לטעון את הסיכומים של {course}."
 
-#: src/features/settings/SettingsView.tsx:135
+#: src/features/settings/SettingsView.tsx:134
 msgid "Couldn't load your settings. Part of FastStudy isn't responding."
 msgstr "לא הצלחנו לטעון את ההגדרות שלך. חלק מ-FastStudy לא מגיב."
 
-#: src/features/settings/SettingsView.tsx:92
+#: src/features/settings/SettingsView.tsx:91
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "לא ניתן לשמור את כל ההגדרות. הפעל מחדש את האפליקציה ונסה שוב."
 
@@ -754,7 +754,7 @@ msgstr "יוצר…"
 msgid "Current PDF"
 msgstr "ה-PDF הנוכחי"
 
-#: src/features/settings/SettingsView.tsx:378
+#: src/features/settings/SettingsView.tsx:354
 msgid "Daily run time"
 msgstr "שעת ההרצה היומית"
 
@@ -791,7 +791,7 @@ msgstr "לנתק את חשבון האוניברסיטה?"
 msgid "disconnecting…"
 msgstr "מתנתק…"
 
-#: src/features/settings/SettingsView.tsx:353
+#: src/features/settings/SettingsView.tsx:329
 msgid "Do nothing — I'll start runs myself"
 msgstr "לא לעשות דבר — אתחיל הרצות בעצמי"
 
@@ -836,7 +836,7 @@ msgid "Downloading {active} more…"
 msgstr "מוריד עוד {active}…"
 
 #: src/features/settings/InitWall.tsx:308
-#: src/features/settings/SettingsView.tsx:318
+#: src/features/settings/SettingsView.tsx:295
 msgid "Downloading recordings"
 msgstr "הורדת הקלטות"
 
@@ -888,15 +888,15 @@ msgstr "הזן את קוד הגישה של Zoom להקלטה הזו"
 
 #: src/features/settings/components/PrivacyPolicyModal.tsx:122
 #: src/features/settings/InitWall.tsx:285
-#: src/features/settings/SettingsView.tsx:406
+#: src/features/settings/SettingsView.tsx:382
 msgid "Error reports"
 msgstr "דיווחי שגיאות"
 
-#: src/features/settings/SettingsView.tsx:425
+#: src/features/settings/SettingsView.tsx:401
 msgid "Error reports are now off. Some parts of FastStudy will stop sending them only after you restart the app."
 msgstr "דיווחי השגיאות כבויים עכשיו. חלקים מ-FastStudy יפסיקו לשלוח אותם רק אחרי שתפעיל מחדש את האפליקציה."
 
-#: src/features/settings/SettingsView.tsx:420
+#: src/features/settings/SettingsView.tsx:396
 msgid "Error reports are now on. Some parts of FastStudy will start sending them only after you restart the app."
 msgstr "דיווחי השגיאות מופעלים עכשיו. חלקים מ-FastStudy יתחילו לשלוח אותם רק אחרי שתפעיל מחדש את האפליקציה."
 
@@ -941,7 +941,7 @@ msgstr "חילוץ"
 msgid "Extract Audio"
 msgstr "חילוץ שמע"
 
-#: src/features/settings/SettingsView.tsx:352
+#: src/features/settings/SettingsView.tsx:328
 msgid "Extract the audio only"
 msgstr "לחלץ רק את השמע"
 
@@ -1070,7 +1070,7 @@ msgid "Google account"
 msgstr "חשבון Google"
 
 #: src/features/settings/InitWall.tsx:271
-#: src/features/settings/SettingsView.tsx:305
+#: src/features/settings/SettingsView.tsx:282
 msgid "Google Drive"
 msgstr "Google Drive"
 
@@ -1576,10 +1576,6 @@ msgstr "הקלטות · {selected}"
 msgid "Reload"
 msgstr "רענון"
 
-#: src/features/settings/SettingsView.tsx:205
-msgid "Remove your university?"
-msgstr "להסיר את האוניברסיטה?"
-
 #: src/features/downloads/utils/renames.ts:30
 msgid "Renamed \"{before}\" to \"{name}\" — some characters can't be used in a folder name."
 msgstr "השם שונה מ-\"{before}\" ל-\"{name}\" — יש תווים שאי אפשר להשתמש בהם בשם תיקייה."
@@ -1618,7 +1614,7 @@ msgstr "שחזור המקור"
 msgid "Results"
 msgstr "תוצאות"
 
-#: src/features/settings/SettingsView.tsx:138
+#: src/features/settings/SettingsView.tsx:137
 msgid "Retry"
 msgstr "ניסיון חוזר"
 
@@ -1636,7 +1632,7 @@ msgstr "יצירה מחדש של {file}"
 msgid "Run Remaining"
 msgstr "הרצת השלבים הנותרים"
 
-#: src/features/settings/SettingsView.tsx:351
+#: src/features/settings/SettingsView.tsx:327
 msgid "Run the whole pipeline"
 msgstr "להריץ את כל השלבים"
 
@@ -1644,7 +1640,7 @@ msgstr "להריץ את כל השלבים"
 msgid "Run these now"
 msgstr "הרצה עכשיו"
 
-#: src/features/settings/SettingsView.tsx:372
+#: src/features/settings/SettingsView.tsx:348
 msgid "Run unfinished lectures daily"
 msgstr "להריץ מדי יום הרצאות שלא הסתיימו"
 
@@ -1659,7 +1655,7 @@ msgstr "בעיבוד · הרצאה {0} מתוך {1}"
 msgid "Running pipelines"
 msgstr "עיבוד הרצאות"
 
-#: src/features/settings/SettingsView.tsx:231
+#: src/features/settings/SettingsView.tsx:208
 msgid "Save"
 msgstr "שמירה"
 
@@ -1720,13 +1716,13 @@ msgstr "שליחת דיווחי שגיאות"
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
-#: src/features/settings/SettingsView.tsx:129
-#: src/features/settings/SettingsView.tsx:224
+#: src/features/settings/SettingsView.tsx:128
+#: src/features/settings/SettingsView.tsx:201
 #: src/shared/sidebar/Sidebar.tsx:87
 msgid "Settings"
 msgstr "הגדרות"
 
-#: src/features/settings/SettingsView.tsx:180
+#: src/features/settings/SettingsView.tsx:179
 msgid "Settings saved"
 msgstr "ההגדרות נשמרו"
 
@@ -1778,7 +1774,7 @@ msgstr "שלב {0} מתוך {1}"
 msgid "Step already running"
 msgstr "השלב כבר רץ"
 
-#: src/features/settings/SettingsView.tsx:295
+#: src/features/settings/SettingsView.tsx:272
 msgid "Storage"
 msgstr "אחסון"
 
@@ -1818,13 +1814,9 @@ msgstr "הסיכום לא השתמש ב-{name}"
 msgid "summary did not use any material"
 msgstr "הסיכום לא השתמש באף חומר"
 
-#: src/features/settings/SettingsView.tsx:273
+#: src/features/settings/SettingsView.tsx:250
 msgid "Summary model"
 msgstr "מודל הסיכום"
-
-#: src/features/settings/SettingsView.tsx:205
-msgid "Switch to another university?"
-msgstr "לעבור לאוניברסיטה אחרת?"
 
 #. placeholder {0}: formatDuration(elapsed)
 #. placeholder {1}: formatDuration(longest)
@@ -1876,7 +1868,7 @@ msgstr "ההגדרה הזו לא יכולה להכיל גרשיים או מעב�
 msgid "That step is turned off in settings."
 msgstr "השלב הזה כבוי בהגדרות."
 
-#: src/features/settings/SettingsView.tsx:246
+#: src/features/settings/SettingsView.tsx:223
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "מפתחות ה-API ומודל הסיכום לא זמינים כרגע. הם יחזרו לכאן מעצמם."
 
@@ -1888,7 +1880,7 @@ msgstr "החידה נפתרה. משלימים את החיבור…"
 msgid "The course \"{course}\" was not found."
 msgstr "הקורס \"{course}\" לא נמצא."
 
-#: src/features/settings/SettingsView.tsx:395
+#: src/features/settings/SettingsView.tsx:371
 msgid "The daily run also follows the setting above: if it's set to do nothing, the daily run does nothing either."
 msgstr "גם ההרצה היומית פועלת לפי ההגדרה שלמעלה: אם היא מוגדרת לא לעשות דבר, גם ההרצה היומית לא תעשה דבר."
 
@@ -2035,7 +2027,7 @@ msgstr "הן לא יתחילו עד שתריץ אותן."
 msgid "Third-party services"
 msgstr "שירותי צד שלישי"
 
-#: src/features/settings/SettingsView.tsx:356
+#: src/features/settings/SettingsView.tsx:332
 msgid "This applies only to work that starts on its own: a video you drop in, a video that finishes downloading, and the daily run. Runs you start yourself are not affected."
 msgstr "זה חל רק על עבודה שמתחילה מעצמה: וידאו שגררת, וידאו שסיים לרדת וההרצה היומית. הרצות שאתה מתחיל בעצמך לא מושפעות."
 
@@ -2050,14 +2042,6 @@ msgstr "המחשב הזה לא יכול לשמור מפתחות API בבטחה, 
 #: src/shared/i18n/serviceErrors.ts:106
 msgid "This course has no summaries yet."
 msgstr "אין עדיין סיכומים בקורס הזה."
-
-#: src/features/settings/SettingsView.tsx:209
-msgid "This disconnects your current account, and recordings can no longer be found on its Moodle site."
-msgstr "החשבון המחובר כעת ינותק, ולא יהיה אפשר עוד למצוא הקלטות באתר ה-Moodle שלה."
-
-#: src/features/settings/SettingsView.tsx:208
-msgid "This disconnects your current account. Connecting to the new site needs a full login in a browser window."
-msgstr "החשבון המחובר כעת ינותק. חיבור לאתר החדש דורש התחברות מלאה בחלון דפדפן."
 
 #. placeholder {0}: provider.displayName
 #. placeholder {1}: provider.keyPrefix
@@ -2153,7 +2137,7 @@ msgstr "חשבון האוניברסיטה"
 msgid "University account connected"
 msgstr "חשבון האוניברסיטה מחובר"
 
-#: src/features/settings/SettingsView.tsx:83
+#: src/features/settings/SettingsView.tsx:82
 msgid "University saved"
 msgstr "האוניברסיטה נשמרה"
 
@@ -2234,7 +2218,7 @@ msgstr "לא הצלחנו לבדוק את המפתח כרגע. אפשר לשמו
 msgid "We couldn't check this site right now. You can still save it."
 msgstr "לא הצלחנו לבדוק את האתר כרגע. אפשר לשמור אותו בכל זאת."
 
-#: src/features/settings/SettingsView.tsx:342
+#: src/features/settings/SettingsView.tsx:318
 msgid "When a new video arrives"
 msgstr "כשמגיע וידאו חדש"
 

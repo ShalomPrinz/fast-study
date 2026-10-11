@@ -12,10 +12,10 @@ const BIU = 'https://lemida.biu.ac.il'
 const BGU = 'https://moodle.bgu.ac.il/moodle'
 const stored = (moodleSite: string | null) => ({ moodleSite }) as Settings
 
-function render(storedSite: string, accountConnected: boolean) {
+function render(storedSite: string) {
   const onSaved = vi.fn()
   const onFailed = vi.fn()
-  const hook = renderHook(() => useSiteSave({ storedSite, accountConnected, onSaved, onFailed }))
+  const hook = renderHook(() => useSiteSave({ storedSite, onSaved, onFailed }))
   return { hook, onSaved, onFailed }
 }
 
@@ -35,7 +35,7 @@ function deferred<T>() {
 
 describe('useSiteSave', () => {
   it('saves a confirmed site at once with nothing saved, so Connect shows without a Save', async () => {
-    const { hook, onSaved } = render('', false)
+    const { hook, onSaved } = render('')
     act(() => hook.result.current.pick(BIU))
     await settle()
     expect(saveSettings).toHaveBeenCalledWith({ moodleSite: BIU })
@@ -44,7 +44,7 @@ describe('useSiteSave', () => {
   })
 
   it('never resends the stored site, and lands quick picks in order', async () => {
-    const { hook } = render(BIU, false)
+    const { hook } = render(BIU)
     act(() => hook.result.current.pick(BIU))
     act(() => {
       hook.result.current.pick(BGU)
@@ -54,32 +54,17 @@ describe('useSiteSave', () => {
     expect(saveSettings.mock.calls).toEqual([[{ moodleSite: BGU }]])
   })
 
-  it('asks before dropping a connected account; a cancel saves nothing and remounts the picker', async () => {
-    const { hook } = render(BIU, true)
-    act(() => hook.result.current.pick(BGU))
-    expect(hook.result.current.asking).toBe(BGU)
-    const before = hook.result.current.revision
-    act(() => hook.result.current.cancel())
-    await settle()
-    expect(hook.result.current.asking).toBeNull()
-    expect(hook.result.current.revision).not.toBe(before)
-    expect(saveSettings).not.toHaveBeenCalled()
-  })
-
-  it('saves the switch, or the removal, once confirmed', async () => {
-    const { hook, onSaved } = render(BIU, true)
+  it('saves a switch, or a removal, at once', async () => {
+    const { hook, onSaved } = render(BIU)
     act(() => hook.result.current.pick(''))
-    expect(hook.result.current.asking).toBe('')
-    act(() => hook.result.current.confirm())
     await settle()
     expect(saveSettings).toHaveBeenCalledWith({ moodleSite: '' })
     expect(onSaved).toHaveBeenCalledTimes(1)
-    expect(hook.result.current.asking).toBeNull()
   })
 
   it('reports a failed save', async () => {
     saveSettings.mockRejectedValueOnce(new Error('down'))
-    const { hook, onFailed, onSaved } = render('', false)
+    const { hook, onFailed, onSaved } = render('')
     act(() => hook.result.current.pick(BIU))
     await settle()
     expect(onFailed).toHaveBeenCalledTimes(1)
@@ -89,7 +74,7 @@ describe('useSiteSave', () => {
   it('saves a pick back to the stored site while a switch away is still in flight', async () => {
     const away = deferred<Settings>()
     saveSettings.mockImplementationOnce(() => away.promise)
-    const { hook, onSaved } = render(BIU, false)
+    const { hook, onSaved } = render(BIU)
     act(() => hook.result.current.pick(BGU))
     act(() => hook.result.current.pick(BIU))
     await act(async () => away.resolve(stored(BGU)))
@@ -101,7 +86,7 @@ describe('useSiteSave', () => {
   it("runs a pick after a Save already in flight, so the Save's answer never lands last", async () => {
     const form = deferred<Settings>()
     saveSettings.mockImplementationOnce(() => form.promise)
-    const { hook, onSaved } = render(BIU, false)
+    const { hook, onSaved } = render(BIU)
     let landed: Settings | undefined
     act(() => {
       void hook.result.current.save({ nightlyHour: 5 }).then((s) => (landed = s))
@@ -124,7 +109,7 @@ describe('useSiteSave', () => {
       .mockImplementationOnce(async () => stored(BIU))
       .mockImplementationOnce(async () => stored(BGU))
       .mockImplementationOnce(() => last.promise)
-    const { hook } = render(C, false)
+    const { hook } = render(C)
     act(() => {
       hook.result.current.pick(BIU)
       hook.result.current.pick(BGU)

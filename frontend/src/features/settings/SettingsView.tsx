@@ -49,18 +49,18 @@ import './SettingsView.css'
 // store rejects a JSON string — while the label is a clock time, which reads the same in every locale.
 const NIGHTLY_HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 
-// A save held back by an advisory guard: a site switch that drops the connected account, or a data
-// root change that would split the runs in flight.
-type Pending =
-  | { guard: 'site'; patch: SettingsPatch }
-  | { guard: 'dataRoot'; patch: SettingsPatch; runs: string[] }
+// A save held back by the advisory guard: a data root change that would split the runs in flight.
+interface Pending {
+  patch: SettingsPatch
+  runs: string[]
+}
 
 // Every setting the app has, in one place. See docs/SETTINGS.md.
 export default function SettingsView() {
   const { t } = useLingui()
   const { status } = useRunnerStatus()
   const { setSettings } = useSettingsContext()
-  const { status: account, refresh: refreshAccount } = useAuthStatus()
+  const { refresh: refreshAccount } = useAuthStatus()
   const browser = useBrowserPrereq()
   const [stored, setStored] = useState<Settings | null>(null)
   const [options, setOptions] = useState<ConfigOptions | null>(null)
@@ -73,7 +73,6 @@ export default function SettingsView() {
   const [loadFailed, setLoadFailed] = useState(false)
   const site = useSiteSave({
     storedSite: stored?.moodleSite ?? '',
-    accountConnected: !!account?.connected && !account.expired,
     // Only the site: the rest of the form keeps its unsaved edits.
     onSaved: (saved) => {
       setStored(saved)
@@ -175,7 +174,7 @@ export default function SettingsView() {
       // The whole form takes the store's answer: keys return to their placeholder, the data root to its
       // normalized spelling, and a field another writer changed since load stops reading as an edit.
       setForm(formFromStore(saved, currentOptions))
-      // The auto-downloader dropped the old site's account, so every chip needs a fresh answer.
+      // The chip follows auto's stream; the one-shot read re-answers what it cannot say (no site).
       if (next.moodleSite !== undefined) void refreshAccount()
       toast('info', t`Settings saved`)
     } catch (err) {
@@ -187,31 +186,9 @@ export default function SettingsView() {
 
   function save() {
     const next = patch()
-    if (next.moodleSite !== undefined && account?.connected && !account.expired) {
-      setPending({ guard: 'site', patch: next })
-    } else guardDataRoot(next)
-  }
-
-  function guardDataRoot(next: SettingsPatch) {
     const runs = runsAtRisk(next, status)
-    if (runs) setPending({ guard: 'dataRoot', patch: next, runs })
+    if (runs) setPending({ patch: next, runs })
     else void commit(next)
-  }
-
-  // A blank site is "no university": it drops the account just the same, with nothing to connect to.
-  function siteSwitchModal(next: string, onConfirm: () => void, onCancel: () => void) {
-    return (
-      <ConfirmModal
-        message={next ? t`Switch to another university?` : t`Remove your university?`}
-        warning={
-          next
-            ? t`This disconnects your current account. Connecting to the new site needs a full login in a browser window.`
-            : t`This disconnects your current account, and recordings can no longer be found on its Moodle site.`
-        }
-        onConfirm={onConfirm}
-        onCancel={onCancel}
-      />
-    )
   }
 
   const provider = (id: string) => options?.providers.find((p) => p.id === id)
@@ -320,7 +297,6 @@ export default function SettingsView() {
             <BrowserPrereqField state={browser.state} onRecheck={() => void browser.check()} />
             {/* A confirmed site, or no university, saves at once; an unverified one waits for Save. */}
             <MoodleSiteField
-              key={site.revision}
               value={form.moodleSite}
               // Functional: the probe answers after other fields may have changed.
               onChange={(v) => setForm((f) => f && { ...f, moodleSite: v })}
@@ -436,21 +412,7 @@ export default function SettingsView() {
         </div>
       </div>
 
-      {pending?.guard === 'site' &&
-        siteSwitchModal(
-          pending.patch.moodleSite ?? '',
-          () => {
-            setPending(null)
-            guardDataRoot(pending.patch)
-          },
-          () => setPending(null),
-        )}
-      {site.asking !== null &&
-        siteSwitchModal(site.asking, site.confirm, () => {
-          site.cancel()
-          setForm((f) => f && withSavedSite(f, stored))
-        })}
-      {pending?.guard === 'dataRoot' && (
+      {pending && (
         <ConfirmModal
           message={t`Change the data folder while lectures are being processed?`}
           warning={t`A lecture running now would save some files in the old folder and the rest in the new one.`}
