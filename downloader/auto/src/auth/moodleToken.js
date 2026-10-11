@@ -17,10 +17,11 @@ export const CAPTURE_TIMEOUT_MS = 600_000;
 const REQUIRED_FUNCTION = 'core_course_get_contents';
 const AUTOLOGIN_FUNCTION = 'tool_mobile_get_autologin_key';
 
-// The apptoken arrives as raw base64 in a moodlemobile://token=<b64> redirect.
-// Decode it to Moodle's ':::'-joined payload.
+// The apptoken arrives as base64 in a moodlemobile://token=<b64> redirect, possibly percent-encoded.
+// Decode it to Moodle's ':::'-joined payload. URI-decoded first: Node's lenient base64 reads a raw
+// `%3D` as data and leaves a garbage char on privatetoken.
 export function decodeApptoken(raw) {
-  for (const candidate of [raw, safeURIDecode(raw)]) {
+  for (const candidate of [safeURIDecode(raw), raw]) {
     const decoded = Buffer.from(candidate, 'base64').toString('utf8');
     if (decoded.includes(':::')) return decoded;
   }

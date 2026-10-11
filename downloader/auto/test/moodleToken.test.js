@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
-import { MoodleToken, CAPTURE_TIMEOUT_MS } from '../src/auth/moodleToken.js';
+import { MoodleToken, CAPTURE_TIMEOUT_MS, decodeApptoken } from '../src/auth/moodleToken.js';
 import { readTokenFile, writeTokenFile } from '../src/auth/tokenStore.js';
 import { gated } from './gated.js';
 import { moodleGate } from '../src/moodle/gate.js';
@@ -655,4 +655,13 @@ test('a waiting caller that joined a refused verification verifies again as itse
   assert.equal((await queued).userid, 7);
   assert.equal(calls.length, 1);
   assert.equal(auth.state().error, undefined);
+});
+
+// Node's lenient base64 reads a raw `%3D` as data, so the URI-decoded form must be tried first.
+test('a percent-encoded apptoken decodes without corrupting privatetoken', () => {
+  const payload = `hash:::${'w'.repeat(32)}:::${'P'.repeat(64)}`;
+  const b64 = Buffer.from(payload).toString('base64');
+  assert.ok(b64.endsWith('='));
+  assert.equal(decodeApptoken(encodeURIComponent(b64)), payload);
+  assert.equal(decodeApptoken(b64), payload);
 });
