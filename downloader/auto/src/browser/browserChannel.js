@@ -11,19 +11,41 @@ const CHANNELS = [
 // a browser. `pending` dedupes probes racing on startup. See docs/SESSIONS.md.
 let resolved = null;
 let pending = null;
+const deps = { chromium: async () => (await import('playwright')).chromium };
+
+/** Tests swap Playwright's chromium and start from an empty cache; → a function restoring both. */
+export function configureBrowserChannel(overrides) {
+  const prev = { ...deps };
+  Object.assign(deps, overrides);
+  resolved = null;
+  return () => {
+    Object.assign(deps, prev);
+    resolved = null;
+  };
+}
 
 // Is this channel installed? A real headless launch: Playwright has no API that resolves a
 // channel's executable, and a missing one rejects in milliseconds naming the path it tried.
+// → the channel's UA as a headed launch sends it, or null when the page could not report it.
 async function probe(channel) {
-  const { chromium } = await import('playwright');
+  const chromium = await deps.chromium();
   const browser = await chromium.launch({ channel, headless: true });
-  await browser.close();
+  try {
+    const page = await browser.newPage();
+    const ua = await page.evaluate(() => navigator.userAgent);
+    return ua.replace('HeadlessChrome', 'Chrome');
+  } catch {
+    return null;
+  } finally {
+    await browser.close();
+  }
 }
 
 /**
- * The first installed browser in the chain, `{ channel, browser }`. Throws naming every path
- * tried — the error worth surfacing over any bundled-Chromium failure after it.
- * @returns {Promise<{ channel: string, browser: string }>}
+ * The first installed browser in the chain, `{ channel, browser, userAgent }` — `userAgent` null
+ * when the probe's page could not read it. Throws naming every path tried — the error worth
+ * surfacing over any bundled-Chromium failure after it.
+ * @returns {Promise<{ channel: string, browser: string, userAgent: string|null }>}
  */
 export function resolveBrowserChannel() {
   if (resolved) return Promise.resolve(resolved);
@@ -35,13 +57,26 @@ export function resolveBrowserChannel() {
   return pending;
 }
 
+/**
+ * The resolved channel's UA, re-probing that channel while it is unknown: a null UA from one failed
+ * page read stays out of the cache, so it never disables the challenge window until a restart.
+ * @returns {Promise<string|null>}
+ */
+export async function resolveUserAgent() {
+  const r = await resolveBrowserChannel();
+  if (r.userAgent) return r.userAgent;
+  const userAgent = await probe(r.channel);
+  if (userAgent && resolved === r) resolved = { ...r, userAgent };
+  return userAgent;
+}
+
 async function probeChain() {
   const failures = [];
   for (const candidate of CHANNELS) {
     try {
-      await probe(candidate.channel);
-      resolved = candidate;
-      return candidate;
+      const userAgent = await probe(candidate.channel);
+      resolved = { ...candidate, userAgent };
+      return resolved;
     } catch (err) {
       failures.push(`${candidate.channel}: ${firstLine(err)}`);
     }

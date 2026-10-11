@@ -1,13 +1,13 @@
 // Block mode: a blocked Moodle call opens one headed persistent window on the site; while it is up,
-// Moodle calls go out from its page with the browser's own UA, and the window is on screen holding
-// the lock only while a captcha waits. A fake profile stands in for Chrome (test/fakeProfile.js).
+// Moodle calls go out from its page with its launch UA (the real Chrome UA plus MoodleMobile), and
+// the window is on screen holding the lock only while a captcha waits. A fake profile stands in for Chrome (test/fakeProfile.js).
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { statePath } from '@faststudy/runtime';
 import { gated } from './gated.js';
-import { fakeProfile, CAPTCHA_URL } from './fakeProfile.js';
+import { fakeProfile, CAPTCHA_URL, CHROME_UA } from './fakeProfile.js';
 import { moodleGate } from '../src/moodle/gate.js';
 import { setCurrentSite } from '../src/moodle/site.js';
 import { writeTokenFile } from '../src/auth/tokenStore.js';
@@ -20,6 +20,7 @@ import {
   challengeState,
   challengeEvents,
   challengeRoute,
+  configureChallenge,
 } from '../src/moodle/challenge.js';
 import {
   getCourseContents,
@@ -77,6 +78,8 @@ test('the window launches headed on the persistent profile, always off-screen', 
   assert.equal(ctx.opts.headless, false);
   assert.equal(ctx.opts.viewport, null);
   assert.ok(ctx.opts.args.includes('--window-position=-32000,-32000'));
+  // The real Chrome UA plus MoodleMobile, from the first visit: switching it later is walled.
+  assert.equal(ctx.opts.userAgent, `${CHROME_UA} MoodleMobile`);
   // Landing on the site: the clearance holds, so it stays hidden and holds no lock.
   assert.deepEqual(ctx.visited, [SITE]);
   assert.deepEqual(ctx.bounds, []);
@@ -104,15 +107,24 @@ test('landing on a captcha brings the window on screen and in front', async (t) 
   assert.deepEqual(seen.at(-1), { open: false, captcha: false });
 });
 
-test('no browser launching reports false and leaves block mode off', async () => {
+test('no browser launching reports false and leaves block mode off', async (t) => {
   // The sandbox launcher throws, as a machine with no Chrome, Edge or Chromium does.
+  t.after(configureChallenge({ userAgent: async () => CHROME_UA }));
   assert.equal(await gated(() => openChallenge(SITE)), false);
+  assert.deepEqual(challengeState(), { open: false, captcha: false });
+});
+
+test('an unknown browser UA launches no window: a clearance under a non-app UA is no use', async (t) => {
+  const profile = fakeProfile(t);
+  t.after(configureChallenge({ userAgent: async () => null }));
+  assert.equal(await gated(() => openChallenge(SITE)), false);
+  assert.equal(profile.launches.length, 0);
   assert.deepEqual(challengeState(), { open: false, captcha: false });
 });
 
 // ── The transport switch ────────────────────────────────────────────────────
 
-test('in block mode a WS call goes out from the page, without the MoodleMobile UA', async (t) => {
+test('in block mode a WS call goes out from the page, carrying no UA header of its own', async (t) => {
   fakeProfile(t);
   await gated(() => openChallenge(SITE));
   const calls = stubFetch(t, () => json([{ id: 1 }]));
@@ -126,6 +138,17 @@ test('in block mode a WS call goes out from the page, without the MoodleMobile U
     init.headers.some(([name]) => name === 'user-agent'),
     false,
   );
+});
+
+test('a page fetch drops any User-Agent, so the window context UA applies', async (t) => {
+  fakeProfile(t);
+  await gated(() => openChallenge(SITE));
+  const calls = stubFetch(t, () => json({}));
+  const res = await challengeRoute(`${SITE}/x`).fetch(`${SITE}/x`, {
+    headers: { 'User-Agent': 'MoodleMobile 4.4.0 (44000)', Accept: 'application/json' },
+  });
+  await res.body?.cancel();
+  assert.deepEqual(calls[0].init.headers, [['accept', 'application/json']]);
 });
 
 test('a form-encoded POST crosses into the page as a string body', async (t) => {

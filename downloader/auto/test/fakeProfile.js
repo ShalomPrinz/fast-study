@@ -6,6 +6,8 @@ import { EventEmitter } from 'node:events';
 import { configureChallenge, closeChallenge } from '../src/moodle/challenge.js';
 
 export const CAPTCHA_URL = 'https://validate.perfdrive.com/abc/?ssa=1';
+export const CHROME_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36';
 
 export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
   const launches = [];
@@ -58,6 +60,7 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
   };
   const restore = configureChallenge({
     launch,
+    userAgent: async () => CHROME_UA,
     ...(idleMs ? { idleMs } : {}),
     ...(captchaMs ? { captchaMs } : {}),
   });

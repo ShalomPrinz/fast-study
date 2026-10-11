@@ -23,7 +23,7 @@ request. Model in `src/browser/browserSession.js`.
 | `'plain'` — videostream sniff (`browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth  | none (headless)                            | no                 |
 | `'zoom'` — `ZoomExtractor` (`browser/zoomBrowser.js`)    | resolved channel + stealth, `headless:false`, no fallback            | Xvfb (Linux) / off-screen window (Windows) | no                 |
 | Token grab (`MoodleToken.connect()`)                     | resolved channel → bundled Chromium on launch failure                | real desktop                               | **yes — MFA once** |
-| Challenge window (`moodle/challenge.js`)                 | resolved channel → bundled Chromium, persistent profile `moodle-profile` under the state root | real desktop, launched off-screen | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
+| Challenge window (`moodle/challenge.js`)                 | resolved channel, persistent profile `moodle-profile` under the state root, UA = the probe's + ` MoodleMobile`; no installed channel (no UA) → no launch; bundled Chromium only when the probe worked and the channel's persistent launch failed, still with that UA | real desktop, launched off-screen | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
 
 Every launch passes `--mute-audio`: recordings autoplay, and nobody is watching.
 
@@ -35,7 +35,11 @@ use, never at startup: they are over a second of auto's boot, more on Windows wh
 
 Both launchers build their own options — only the zoom one is forbidden a bundled-Chromium fallback
 ([ZOOM.md](ZOOM.md)) — but share one answer to "which browser": `resolveBrowserChannel()` tries
-`channel:'chrome'`, then `'msedge'`, and returns the first that launches as `{ channel, browser }`.
+`channel:'chrome'`, then `'msedge'`, and returns the first that launches as `{ channel, browser, userAgent }`.
+`userAgent` is read off a page in the same headless launch with `HeadlessChrome` → `Chrome` — the UA a
+headed launch sends, which the challenge window extends ([MOODLE.md](MOODLE.md#the-rest-api)) — or
+null when the page could not report it. A null UA is not cached: `resolveUserAgent()` re-probes the
+resolved channel for it on each ask, leaving the cached channel alone.
 
 Playwright has no public API that resolves a channel's executable — `chromium.executablePath()` takes
 no channel and returns the _bundled_ path even for a channel that doesn't exist — so the probe is a

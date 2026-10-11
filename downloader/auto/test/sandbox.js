@@ -11,6 +11,7 @@ process.env.FASTSTUDY_STATE_DIR = stateDir;
 process.on('exit', () => fs.rmSync(stateDir, { recursive: true, force: true }));
 
 configureChallenge({
+  userAgent: async () => null,
   launch: async () => {
     throw new Error('no real browser in tests');
   },

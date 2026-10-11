@@ -100,8 +100,8 @@ Every call goes to `{site}/webservice/rest/server.php?wstoken=…&moodlewsrestfo
 GET with params in the query — except `tool_mobile_get_autologin_key` (below). Every call from Node
 sends `User-Agent: MoodleMobile 4.4.0 (44000)`: Moodle gates app-only functions on
 `core_useragent::is_moodle_app()`, which substring-matches `MoodleMobile` in the UA. In block mode
-(below) calls carry the browser's own UA instead, which every function this package calls accepts except
-`tool_mobile_get_autologin_key` — so that one never goes through the window (§ Autologin).
+(below) calls carry the window's launch UA instead — the browser's real UA plus ` MoodleMobile` — but
+`tool_mobile_get_autologin_key` still never goes through the window (§ Autologin).
 
 **Error shape.** A _failed_ call — a dead token included — answers **HTTP 200** with
 `{ exception, errorcode, message }`, never an HTTP error. `callWs` throws a `WsError` carrying
@@ -127,8 +127,14 @@ are made from inside that browser:
 
 - **On.** A wall on a routed call (below) made from Node — or a `site_blocked` probe — opens one
   headed persistent Chrome on `statePath('moodle-profile')` — the
-  `launchBrowser` channel chain, no UA override, always launched with
-  `--window-position=-32000,-32000` — and loads the site root. Landing on the site means the profile's
+  `launchBrowser` channel chain, always launched with `--window-position=-32000,-32000` and
+  `userAgent` set to the channel's real UA plus ` MoodleMobile` — and loads the site root. The UA is
+  fixed for the browser's life: Radware ties the clearance to it and walls a switch after the solve.
+  It comes from the channel probe (`HeadlessChrome` → `Chrome`, [SESSIONS.md](SESSIONS.md#which-browser-browserbrowserchanneljs));
+  with none known (no installed Chrome or Edge, or a probe whose page read failed — re-probed on the
+  next open, never cached) no window opens (`false`), rather than one cleared
+  under a UA Moodle's app-only calls refuse. A profile cleared under an earlier, plain UA meets one
+  captcha on its first launch with this one. Landing on the site means the profile's
   clearance still holds: it stays off-screen and `moodleFetch` resends the same call through it once
   (the wall means Moodle never processed it; bodies are strings or forms, so they send twice), so
   the caller never sees the block. Landing anywhere else is the captcha: the window moves on screen
@@ -222,9 +228,11 @@ navigate to module.url and sniff the .mp4
 Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**; the
 cookie's freshness is cached ~20 min so back-to-back downloads don't trip the limit ([AUTH.md](AUTH.md)).
 
-The key call always goes out on Node, never through the challenge window: Moodle answers it only to a
-`MoodleMobile` UA (`is_moodle_app()`, else `apprequired`), and the window's solved browser keeps the
-UA it was cleared under. So during a block it fails as an unrouted `503 site_blocked` with no
+The key call always goes out on Node, never through the challenge window. Moodle answers it only to a
+`MoodleMobile` UA (`is_moodle_app()`, else `apprequired`), which the window carries, but the site's
+scripts replace the page's `fetch`, and the window still sends through that replaced one. A key call
+through the window has failed `invalidparameter`; the hook altering the POST is the likely cause —
+inferred, not proven — so the call stays on Node until the window sends through a native `fetch`. So during a block it fails as an unrouted `503 site_blocked` with no
 `challengeWindow`, and opens no window.
 
 Only a `videostream` row reaches autologin: `/resolve` refuses any row its earlier branches did not
@@ -262,10 +270,11 @@ solved window are not, so the block is not per-IP.
 
 So clearance only works inside the browser: what Node cannot copy is its TLS/HTTP fingerprint or other
 state, and `context.request` / `APIRequestContext` sends through Node's `https` sharing only the cookie
-jar — never use it as the route. It is tied to the browser's own UA (a page fetch cannot set one anyway:
+jar — never use it as the route. It is tied to the UA it was solved under (a page fetch cannot set one anyway:
 Chrome drops it). System Node and Electron's Node get the same verdicts, so dev predicts the packaged
 app. It survives a headed relaunch on the same profile (`MoodleSessionprod` is dropped, the `__uzm*`
-clearance kept); headless never passes.
+clearance kept); headless never passes. A UA set at launch to the real UA plus ` MoodleMobile` passes
+(2026-10-11, Chrome 154: one captcha, then every page call reached Moodle), so the window launches with it.
 
 **Run 2 — window state** (Chrome 154 via `launchPersistentContext`, headed, `viewport:null`):
 

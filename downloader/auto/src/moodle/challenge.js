@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import { EventEmitter } from 'node:events';
 import { statePath } from '@faststudy/runtime';
 import { launchPersistentBrowser } from '../browser/browserLaunch.js';
+import { resolveUserAgent } from '../browser/browserChannel.js';
 import { moodleGate, enterMoodle } from './gate.js';
 
 // Chrome clamps it to about -13107, still far off-screen; the flag beats the profile's saved position.
@@ -15,8 +16,17 @@ const LAUNCH_ARGS = [`--window-position=${OFF_SCREEN.left},${OFF_SCREEN.top}`];
 const CHUNK = 4 * 1024 * 1024;
 const NULL_BODY = new Set([101, 204, 205, 304]);
 
+// Moodle answers app-only calls to a UA containing it (is_moodle_app()); see docs/MOODLE.md § Bot protection.
+const MOODLE_APP_UA = ' MoodleMobile';
+
 // Closed after idleMs with no call through it; a captcha on screen gets captchaMs for the user's solve.
-const deps = { launch: launchPersistentBrowser, idleMs: 60_000, captchaMs: 10 * 60_000 };
+// userAgent: the installed channel's real UA, or null when unknown.
+const deps = {
+  launch: launchPersistentBrowser,
+  userAgent: resolveUserAgent,
+  idleMs: 60_000,
+  captchaMs: 10 * 60_000,
+};
 let win = null;
 let opening = null;
 let closing = Promise.resolve();
@@ -91,7 +101,8 @@ function pageDrop(id) {
   globalThis.__fastStudyBodies?.delete(id);
 }
 
-// A page fetch cannot set User-Agent (Chrome drops it), and the clearance is tied to the browser's own.
+// A page fetch cannot set User-Agent (Chrome drops it), and the clearance is tied to the UA the
+// window launched with, so the context's MoodleMobile UA is the one every call carries.
 function pageHeaders(init) {
   const headers = new Headers(init);
   headers.delete('user-agent');
@@ -154,7 +165,7 @@ class ChallengeWindow {
   }
 
   /**
-   * `url` fetched by the page, as a Node Response: redirects unfollowed, the browser's own UA. A body
+   * `url` fetched by the page, as a Node Response: redirects unfollowed, the window's launch UA. A body
    * slice the page can no longer hand over (closed, or navigated away) errors the body with `lost()`.
    */
   async fetch(
@@ -340,10 +351,16 @@ async function openOnce(site) {
   await closing;
   let context;
   try {
+    // The UA is fixed at launch: Radware ties the clearance to it, and switching it later is walled.
+    // Unknown (no installed channel, or its probe could not read one) → no window, rather than a
+    // clearance earned under a UA Moodle's app-only calls refuse.
+    const ua = await deps.userAgent().catch(() => null);
+    if (!ua) return false;
     context = await deps.launch(profileDir(), {
       headless: false,
       viewport: null,
       args: LAUNCH_ARGS,
+      userAgent: ua + MOODLE_APP_UA,
     });
     const page = context.pages()[0] ?? (await context.newPage());
     const w = new ChallengeWindow(site, context, page);
