@@ -17,7 +17,8 @@ cookie cannot carry across sites. The same site is a no-op, and a blank one leav
 There is one token slot: the record names its `site`, and `loadToken()` treats a record for any other
 site as absent, so it is never sent to the wrong host and setting its site back makes it valid again
 with no login. The token, the challenge window's profile and the saved Moodle session are deleted only
-by `disconnect()` or by a `connect()` on a site other than the stored token's, which replaces it.
+by `disconnect()` or by a `connect()` on a site other than the stored token's, which replaces it; the
+auth state's `storedSite` names that site beforehand so the frontend can confirm.
 
 ## connect / events / complete / status / disconnect
 
@@ -37,8 +38,10 @@ by `disconnect()` or by a `connect()` on a site other than the stored token's, w
   end a Playwright-launched browser, so the user closing every login window before a token arrives
   closes the browser itself, which ends the login as `moodle_login_abandoned`.
 - State and `GET /auth/events` — `MoodleToken.state()` is `{ phase, connected, expired, unverified,
-  error? }`: `phase` is `pending` while a login runs (capture and verification), else `unverified`,
-  `connected` or `idle`; `error` is `{ code, params }` of the last failed attempt (`moodle_login_abandoned`,
+  storedSite, error? }`: `phase` is `pending` while a login runs (capture and verification), else `unverified`,
+  `connected` or `idle`; `storedSite` is the stored token's site when it holds a `wstoken` for a site
+  other than the selected one (no site set included) — the token a Connect would delete, so the
+  frontend can confirm first — else `null`; `error` is `{ code, params }` of the last failed attempt (`moodle_login_abandoned`,
   `moodle_login_timeout`, `moodle_site_unsupported`, `site_blocked` with `challengeWindow`,
   `moodle_reconnect_required`), cleared by the next `connect()`. The stream (`core/registry.js`'s
   `authEvents`, one emitter whichever site is set) sends `state()` as an unnamed `data:` frame on

@@ -36,6 +36,11 @@ function failureOfAttempt(err) {
     : failureOf(err);
 }
 
+// The site of a stored token minted for a site other than `site` — what a Connect there would replace.
+export function storedSiteOf(raw, site) {
+  return raw?.wstoken && raw.site && raw.site !== site ? raw.site : null;
+}
+
 function safeURIDecode(s) {
   try {
     return decodeURIComponent(s);
@@ -100,7 +105,12 @@ export class MoodleToken extends AuthProvider {
    * @returns {{ connected: boolean, expired: boolean, unverified: boolean }}
    */
   status() {
-    const tok = this.loadToken();
+    return this._status(readTokenFile(this.tokenPath));
+  }
+
+  // status() of an already-read token file, so state() reads it once.
+  _status(raw) {
+    const tok = raw?.site === this.site ? raw : null;
     const connected = !!(tok && tok.wstoken);
     return {
       connected,
@@ -110,12 +120,14 @@ export class MoodleToken extends AuthProvider {
   }
 
   /**
-   * What the frontend renders: `status()` plus the login `phase` and the last attempt's failure.
+   * What the frontend renders: `status()` plus the login `phase`, the last attempt's failure, and
+   * `storedSite`, the site of a stored token for another site (a Connect here deletes it), else null.
    * `pending` covers the whole background login, including its verification.
-   * @returns {{ phase: 'idle'|'pending'|'connected'|'unverified', connected: boolean, expired: boolean, unverified: boolean, error?: { code: string, params: object } }}
+   * @returns {{ phase: 'idle'|'pending'|'connected'|'unverified', connected: boolean, expired: boolean, unverified: boolean, storedSite: string|null, error?: { code: string, params: object } }}
    */
   state() {
-    const status = this.status();
+    const raw = readTokenFile(this.tokenPath);
+    const status = this._status(raw);
     const phase = this._driving
       ? 'pending'
       : status.unverified
@@ -124,7 +136,8 @@ export class MoodleToken extends AuthProvider {
           ? 'connected'
           : 'idle';
     const error = this._error ? { code: this._error.code, params: this._error.params } : null;
-    return { phase, ...status, ...(error ? { error } : {}) };
+    const storedSite = storedSiteOf(raw, this.site);
+    return { phase, ...status, storedSite, ...(error ? { error } : {}) };
   }
 
   /**
@@ -179,6 +192,7 @@ export class MoodleToken extends AuthProvider {
     const foreign = readTokenFile(this.tokenPath);
     if (foreign && foreign.site !== this.site) {
       fs.rmSync(this.tokenPath, { force: true });
+      this._onChange(); // storedSite clears now, not only once the window opens
       await closeChallenge({ forget: true });
     }
     // A new login ends block mode; the window's profile, and its clearance, is kept, but the saved

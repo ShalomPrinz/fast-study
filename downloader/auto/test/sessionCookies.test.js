@@ -12,7 +12,7 @@ import {
   loadSessionCookies,
   forgetSessionCookies,
 } from '../src/auth/sessionCookies.js';
-import { setSite, siteAuth } from '../src/core/registry.js';
+import { setSite, siteAuth, authState, authEvents } from '../src/core/registry.js';
 import { handleClose } from '../src/http/server.js';
 import { MoodleToken } from '../src/auth/moodleToken.js';
 import { gated } from './gated.js';
@@ -100,18 +100,28 @@ test('disconnect deletes the saved session with the profile', async (t) => {
   await setSite(SITE);
   t.after(() => setSite(null));
   saveSessionCookies(SITE, [SESSION]);
+  await setSite('https://other.test');
+  assert.equal(authState().storedSite, SITE);
   await siteAuth().auth.disconnect();
   assert.equal(fs.existsSync(FILE), false);
+  assert.equal(authState().storedSite, null);
 });
 
 test('switching to another site and back keeps the token and the saved session', async (t) => {
   await setSite(SITE);
   t.after(() => setSite(null));
   saveSessionCookies(SITE, [SESSION]);
+  const frames = [];
+  const onChange = () => frames.push(authState().storedSite);
+  authEvents.on('change', onChange);
+  t.after(() => authEvents.off('change', onChange));
   await setSite('https://other.test');
   assert.equal(siteAuth().auth.status().connected, false);
+  await setSite(null);
   await setSite(SITE);
   assert.equal(siteAuth().auth.status().connected, true);
+  // Each switch announces the stored token's site while it differs, idle (no site) included.
+  assert.deepEqual(frames, [SITE, SITE, null]);
   assert.ok(loadSessionCookies(SITE));
 });
 

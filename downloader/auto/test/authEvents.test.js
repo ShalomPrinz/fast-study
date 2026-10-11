@@ -79,6 +79,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     connected: false,
     expired: false,
     unverified: false,
+    storedSite: null,
     moodleBusy: false,
     challenge: { open: false, captcha: false },
   });
@@ -128,6 +129,7 @@ test('the stream sends the state on subscribe and on every change, and needs the
     connected: true,
     expired: false,
     unverified: false,
+    storedSite: null,
     moodleBusy: true,
     challenge: { open: false, captcha: false },
   });

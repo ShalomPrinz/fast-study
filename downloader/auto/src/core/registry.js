@@ -1,9 +1,9 @@
 // Two concerns, matched at different granularities: auth for the one configured Moodle site,
 // extraction per activity (modType + target).
 import { EventEmitter } from 'node:events';
-import { tokenPath } from '../auth/tokenStore.js';
+import { tokenPath, readTokenFile } from '../auth/tokenStore.js';
 import { CodedError } from '../lib/errors.js';
-import { MoodleToken } from '../auth/moodleToken.js';
+import { MoodleToken, storedSiteOf } from '../auth/moodleToken.js';
 import { currentSite, setCurrentSite, underSite } from '../moodle/site.js';
 import { challengeEvents, closeChallenge } from '../moodle/challenge.js';
 import { getSession } from '../browser/browserSession.js';
@@ -28,7 +28,10 @@ const publish = () => authEvents.emit('change');
 /** The configured site's auth state, or the idle one when no site is set. */
 export function authState() {
   const site = currentSite();
-  if (!site) return { phase: 'idle', connected: false, expired: false, unverified: false };
+  if (!site) {
+    const storedSite = storedSiteOf(readTokenFile(TOKEN_PATH()), null);
+    return { phase: 'idle', connected: false, expired: false, unverified: false, storedSite };
+  }
   return siteAuth().auth.state();
 }
 

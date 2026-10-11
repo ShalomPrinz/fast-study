@@ -104,6 +104,7 @@ test('closing the login window before a token ends the login as abandoned', asyn
     connected: false,
     expired: false,
     unverified: false,
+    storedSite: null,
     error: { code: 'moodle_login_abandoned', params: {} },
   });
   assert.deepEqual(
@@ -221,6 +222,7 @@ test('a login persists the site and userid beside the token', async (t) => {
     connected: true,
     expired: false,
     unverified: false,
+    storedSite: null,
   });
 });
 
@@ -281,6 +283,36 @@ test('a token minted for another site reads as not connected', () => {
     expired: false,
     unverified: false,
   });
+});
+
+test("storedSite names a stored token's site only while another site is selected", () => {
+  const tokenPath = tokenPathIn('moodle-storedsite-');
+  assert.equal(new MoodleToken({ tokenPath, site: SITE }).state().storedSite, null);
+  fs.mkdirSync(path.dirname(tokenPath), { recursive: true });
+  fs.writeFileSync(tokenPath, JSON.stringify({ site: 'https://other.test', wstoken: 'abc' }));
+  assert.equal(new MoodleToken({ tokenPath, site: SITE }).state().storedSite, 'https://other.test');
+  const own = new MoodleToken({ tokenPath, site: 'https://other.test' }).state();
+  assert.equal(own.storedSite, null);
+  assert.equal(own.connected, true);
+  // A legacy record with no site is never used, so there is nothing to warn about.
+  fs.writeFileSync(tokenPath, JSON.stringify({ wstoken: 'abc' }));
+  assert.equal(new MoodleToken({ tokenPath, site: SITE }).state().storedSite, null);
+});
+
+test('a login on another site clears storedSite and announces it', async () => {
+  const tokenPath = tokenPathIn('moodle-storedsite-connect-');
+  fs.mkdirSync(path.dirname(tokenPath), { recursive: true });
+  fs.writeFileSync(tokenPath, JSON.stringify({ site: 'https://other.test', wstoken: 'abc' }));
+  const { auth, seen } = recordStates({
+    tokenPath,
+    site: SITE,
+    launch: async () => {
+      throw new Error('no browser in tests');
+    },
+  });
+  await gated(() => auth.connect()).catch(() => {});
+  assert.equal(seen[0].storedSite, null);
+  assert.equal(auth.state().storedSite, null);
 });
 
 // ── Encrypted token file ────────────────────────────────────────────────────
