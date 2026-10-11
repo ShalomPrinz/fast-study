@@ -88,7 +88,7 @@ Discovery is stateless WS calls with no browser. Only sniffing a `videostream` `
 logged-in browser, and it reuses the Moodle session the way moodle-dl does, autologin only when it is
 dead ([MOODLE.md](MOODLE.md#autologin)):
 
-- **Saved session.** `MoodleSessionprod` and the site's other session cookies die with the browser
+- **Saved session.** `MoodleSessionprod` and the site's other session cookies (`block-fcl_*` on BIU) die with the browser
   (a relaunch comes back logged out), so after a successful autologin `auth/sessionCookies.js` saves
   the site's cookies with no expiry (name, value, domain, path, `secure`, `httpOnly`, `sameSite`) to
   `statePath('auth', 'moodle-session.json')`, encrypted as the token is (`auth/tokenStore.js`) and

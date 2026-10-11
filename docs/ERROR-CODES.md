@@ -350,8 +350,9 @@ carry (a WS call, a Moodle PDF): `'captcha'` when the window is on screen showin
 when no browser could launch. A window that opens hidden with its clearance still valid carries the
 call itself, so no 503 is sent; `'ready'` (the user only repeats the action) reaches a client only from
 `/site/probe` or from a call already going through the window whose reload landed on the site. A block
-from any other path (a videostream module page, a pasted link, a link probe) leaves it absent;
-videostream's autologin runs in the window, so its block carries it.
+from any other path (a pasted link, a link probe) leaves it absent; videostream's autologin runs in
+the window, so its block carries it, while a wall on its module page is not detected and surfaces as
+`videostream_no_media_request`.
 
 Three details of the params. `link_not_a_video`'s `ext` has no leading dot (`pptx`), though the
 English prose still prints `.pptx`; `ext: null` means a web page. `zoom_passcode_required`'s `course`
