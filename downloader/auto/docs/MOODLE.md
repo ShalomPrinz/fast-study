@@ -167,7 +167,7 @@ are made from inside that browser:
   is a navigation, not a fetch, and nothing checks it for a wall: one there sniffs no `.mp4` and ends
   as `videostream_no_media_request`.
 - **Off.** Block mode ends when the browser closes: the user closing it, `disconnect()` (which then
-  deletes the profile), a new `connect()`, or 60 s with no call through it — 10 minutes while a
+  deletes the profile), a new `connect()`, a site switch, or 60 s with no call through it — 10 minutes while a
   captcha is on screen (a user mid-solve) or a body is open, unfinished and uncancelled (a paused
   `/moodle/file` reader; every answer `wsClient.js` throws on without reading is cancelled first, so
   only a reader's pause stretches it). A page call still running defers it. The

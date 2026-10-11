@@ -216,7 +216,8 @@ function siteOr(res, url) {
 // ── Site endpoints ──────────────────────────────────────────────────────────
 
 // Apply settings to the running process; omitted fields are left alone. `moodle_site` is stored
-// as given (the frontend saves the probe's canonical site); a different one resets auth fully.
+// as given (the frontend saves the probe's canonical site); a different one ends a pending login
+// and deletes nothing — the token is replaced only by a Connect on the new site.
 export async function handleConfig(req, res) {
   const body = req.body ?? {};
   logReq('POST', '/config', Object.keys(body).join(','));
@@ -233,7 +234,7 @@ export async function handleConfig(req, res) {
       return send(res, 400, invalid('moodle_site', 'moodle_site must be an http(s) URL or blank'));
     }
     if (await setSite(site)) {
-      logResult('/config', `moodle site → ${site ?? '(none)'}; auth reset`);
+      logResult('/config', `moodle site → ${site ?? '(none)'}`);
     }
     applied.push('moodle_site');
   }

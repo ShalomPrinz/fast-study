@@ -1,6 +1,6 @@
 // The saved Moodle session: only session cookies, encrypted like the token, scoped to one site, and
-// tied to the stored token's user, gone with the Moodle browser's profile (disconnect, a site change)
-// and on a new login, but kept across POST /close.
+// tied to the stored token's user, gone with the Moodle browser's profile (disconnect, a login
+// replacing another site's token) and on a new login, but kept across POST /close and a site switch.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
@@ -16,6 +16,7 @@ import { setSite, siteAuth } from '../src/core/registry.js';
 import { handleClose } from '../src/http/server.js';
 import { MoodleToken } from '../src/auth/moodleToken.js';
 import { gated } from './gated.js';
+import { profileDir } from '../src/moodle/challenge.js';
 
 const SITE = 'https://moodle.test';
 const FILE = statePath('auth', 'moodle-session.json');
@@ -103,10 +104,46 @@ test('disconnect deletes the saved session with the profile', async (t) => {
   assert.equal(fs.existsSync(FILE), false);
 });
 
-test('a site change deletes the saved session', async (t) => {
+test('switching to another site and back keeps the token and the saved session', async (t) => {
   await setSite(SITE);
   t.after(() => setSite(null));
   saveSessionCookies(SITE, [SESSION]);
   await setSite('https://other.test');
+  assert.equal(siteAuth().auth.status().connected, false);
+  await setSite(SITE);
+  assert.equal(siteAuth().auth.status().connected, true);
+  assert.ok(loadSessionCookies(SITE));
+});
+
+test("a login on another site deletes the stored site's token, session and profile", async (t) => {
+  await setSite(SITE);
+  t.after(() => setSite(null));
+  saveSessionCookies(SITE, [SESSION]);
+  fs.mkdirSync(profileDir(), { recursive: true });
+  const auth = new MoodleToken({
+    tokenPath: tokenPath(),
+    site: 'https://other.test',
+    launch: async () => {
+      throw new Error('no browser in tests');
+    },
+  });
+  await gated(() => auth.connect()).catch(() => {});
+  assert.equal(fs.existsSync(tokenPath()), false);
   assert.equal(fs.existsSync(FILE), false);
+  assert.equal(fs.existsSync(profileDir()), false);
+});
+
+test("a login on the stored token's site keeps the token and the profile", async (t) => {
+  fs.mkdirSync(profileDir(), { recursive: true });
+  t.after(() => fs.rmSync(profileDir(), { recursive: true, force: true }));
+  const auth = new MoodleToken({
+    tokenPath: tokenPath(),
+    site: SITE,
+    launch: async () => {
+      throw new Error('no browser in tests');
+    },
+  });
+  await gated(() => auth.connect()).catch(() => {});
+  assert.equal(fs.existsSync(tokenPath()), true);
+  assert.equal(fs.existsSync(profileDir()), true);
 });

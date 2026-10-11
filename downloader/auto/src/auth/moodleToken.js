@@ -84,7 +84,7 @@ export class MoodleToken extends AuthProvider {
 
   /**
    * The stored token, or null when there is none or it was minted for another site — a token is
-   * only good on the site that issued it, so a leftover from before a site switch reads as absent.
+   * only good on the site that issued it, so one kept across a site switch reads as absent here.
    * @returns {{ site: string, wstoken: string, privatetoken: string|null, userid: number, savedAt: string }|null}
    */
   loadToken() {
@@ -129,23 +129,28 @@ export class MoodleToken extends AuthProvider {
 
   /**
    * Forget the token locally: delete the file (ENOENT is success — already disconnected), clear the
-   * runtime invalidated flag so a reconnect starts clean, and close any headed login left in flight
-   * and the challenge window, deleting its profile.
+   * runtime invalidated flag so a reconnect starts clean, end any login in flight and close the
+   * challenge window, deleting its profile.
    * Deliberately no server-side revoke: it could fail after the local delete and desync the two.
    */
   async disconnect() {
     fs.rmSync(this.tokenPath, { force: true });
     this._invalidated = false;
+    await this.abandonLogin();
+    await closeChallenge({ forget: true });
+    this._onChange();
+  }
+
+  /** End the login in flight, if any — release its lease and close its headed window — deleting nothing. */
+  async abandonLogin() {
     this._gen++; // the run in flight ends quietly: its abandoned/failed outcome is not reported
     this._driving = false;
     this._error = null;
     this._loginLease?.release();
     this._loginLease = null;
-    await closeChallenge({ forget: true });
     const pending = this._pending;
     this._pending = null;
     if (pending) await pending.browser.close().catch(() => {});
-    this._onChange();
   }
 
   /**
@@ -169,6 +174,13 @@ export class MoodleToken extends AuthProvider {
     // A disconnect or site switch while waiting superseded this login.
     if (gen !== this._gen) return lease.release();
     this._error = null;
+    // A token stored for another site is replaced by this login, so it goes with that site's
+    // challenge profile and saved session, as on disconnect.
+    const foreign = readTokenFile(this.tokenPath);
+    if (foreign && foreign.site !== this.site) {
+      fs.rmSync(this.tokenPath, { force: true });
+      await closeChallenge({ forget: true });
+    }
     // A new login ends block mode; the window's profile, and its clearance, is kept, but the saved
     // Moodle session goes, since the login may be another account.
     await closeChallenge();

@@ -294,7 +294,7 @@ test('with no site configured, auth and listing answer moodle_site_not_configure
   assert.equal(list.body.code, 'moodle_site_not_configured');
 });
 
-test('the same site is a no-op; another one forgets the token', async () => {
+test('the same site is a no-op; another one keeps the token for switching back', async () => {
   const A = 'https://a.ac.il';
   setCurrentSite(A);
   plantToken(A);
@@ -310,7 +310,7 @@ test('the same site is a no-op; another one forgets the token', async () => {
   await handleConfig({ body: { moodle_site: 'https://b.ac.il/moodle' } }, other);
   assert.equal(other.code, 200);
   assert.equal(currentSite(), 'https://b.ac.il/moodle');
-  assert.equal(fs.existsSync(TOKEN_FILE), false);
+  assert.equal(fs.existsSync(TOKEN_FILE), true);
   const after = fakeRes();
   handleAuthStatus({}, after);
   assert.deepEqual(after.body, { connected: false, expired: false, unverified: false });
@@ -326,6 +326,12 @@ test('the same site is a no-op; another one forgets the token', async () => {
       params: { url: `${A}/course/view.php?id=1`, site: 'https://b.ac.il/moodle' },
     },
   );
+
+  // Back on the first site, its token is connected again with no login.
+  await handleConfig({ body: { moodle_site: A } }, fakeRes());
+  const back = fakeRes();
+  handleAuthStatus({}, back);
+  assert.deepEqual(back.body, { connected: true, expired: false, unverified: false });
 });
 
 test('POST /config leaves an omitted site alone and refuses a non-URL', async () => {

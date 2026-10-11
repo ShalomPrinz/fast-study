@@ -153,7 +153,7 @@ work started. Both shims write it: `<time> <service> REFUSED host:port` for a re
 auto/'s browsers) and, from Node, `REDIRECT` for a connection sent to the fake site.
 
 `set` writes the store with `PUT /settings`, then the owner's `POST /config` (`MOODLE_SITE` goes to
-the auto-downloader, which forgets its token when the site changes), so the running service applies
+the auto-downloader, which keeps its token across a site change and drops it on Disconnect or a Connect to another site), so the running service applies
 it at once. Settings are global: `AUTO_RUN=off` (`off | audio | full`) stops every video
 arrival from queuing a run, for every agent on this stack, so an agent sharing a stack sets it once
 for everyone rather than for itself.

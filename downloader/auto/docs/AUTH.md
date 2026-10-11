@@ -10,17 +10,19 @@ the location; the saved Moodle session reads the token's user from there too. `s
 
 ## Switching site
 
-`POST /config {moodle_site}` with a different site (`setSite`) resets auth fully: it disconnects the
-old instance (the token file goes, a pending headed login closes, the challenge window's profile and
-the saved Moodle session go), drops the cached instance, and closes the plain browser session under
-its lock, so a session cookie cannot carry across sites.
-The same site is a no-op, and a blank one leaves no site configured. The token record names its
-`site`, and `loadToken()` treats a record for any other site as absent, so a leftover can never be
-sent to the wrong host.
+`POST /config {moodle_site}` with a different site (`setSite`) deletes nothing: it ends the old
+instance's pending login (its headed window closes, its Moodle lock is released), drops the cached
+instance, and closes the challenge window and the plain browser session under its lock, so a session
+cookie cannot carry across sites. The same site is a no-op, and a blank one leaves no site configured.
+There is one token slot: the record names its `site`, and `loadToken()` treats a record for any other
+site as absent, so it is never sent to the wrong host and setting its site back makes it valid again
+with no login. The token, the challenge window's profile and the saved Moodle session are deleted only
+by `disconnect()` or by a `connect()` on a site other than the stored token's, which replaces it.
 
 ## connect / events / complete / status / disconnect
 
-- `connect()` — builds its own `launch.php` URL, opens the **headed** browser (MFA by hand, once) and
+- `connect()` — deletes a stored token for another site with the challenge profile and saved session
+  first, then builds its own `launch.php` URL, opens the **headed** browser (MFA by hand, once) and
   returns; the login then runs to its end **in the background**, independent of any HTTP request, so
   a reload or unmount cannot kill it mid-MFA. Idempotent while one runs. Only a failure to open the
   window throws. The run (`_drive`) waits (bounded by `CAPTURE_TIMEOUT_MS`, 10 minutes) for the
@@ -58,7 +60,8 @@ sent to the wrong host.
   `false` the run ends with phase `unverified` and the `site_blocked` error, and the user solving the
   captcha verifies it. Solving the captcha does not clear Node: the clearance belongs to the window's
   browser, so the verification passes only because it goes out from that window. A successful verification leaves the window open as the transport; a new `connect()`
-  closes it (keeping its profile) and `disconnect()` closes it and deletes the profile.
+  or a site switch closes it (keeping its profile) and `disconnect()`, or a `connect()` replacing
+  another site's token, closes it and deletes the profile.
 - Lazy verification: every WS caller (`/list`, both `/resolve` paths) gets its token from
   `verifiedToken()` (`tokenOr` in `http/server.js`), which verifies an unverified token first
   (concurrent callers share one call) and maps its failure like any WS error.
@@ -104,6 +107,7 @@ dead ([MOODLE.md](MOODLE.md#autologin)):
   `500 videostream_login_required {url}`. Autologin is rate-limited (~1/user/6 min) and IP-bound, so
   it never runs while the saved session is alive. A token with no `privatetoken` still captures on a
   saved session; without one it is `moodle_token_no_privatetoken`.
-- **Lifetime.** Deleted with the window's profile on `disconnect()` and on a site change, and on its
-  own at a new `connect()` (which keeps the profile), since the new login may be another account;
-  kept across `POST /close` and a restart, which is what it is for.
+- **Lifetime.** Deleted with the window's profile on `disconnect()` and on a `connect()` to a site
+  other than the stored token's, and on its own at any other `connect()` (which keeps the profile),
+  since the new login may be another account; kept across a site switch (it is restored only on its
+  own site), `POST /close` and a restart, which is what it is for.

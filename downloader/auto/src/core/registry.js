@@ -5,7 +5,7 @@ import { tokenPath } from '../auth/tokenStore.js';
 import { CodedError } from '../lib/errors.js';
 import { MoodleToken } from '../auth/moodleToken.js';
 import { currentSite, setCurrentSite, underSite } from '../moodle/site.js';
-import { challengeEvents } from '../moodle/challenge.js';
+import { challengeEvents, closeChallenge } from '../moodle/challenge.js';
 import { getSession } from '../browser/browserSession.js';
 import { VideostreamExtractor } from '../extractors/VideostreamExtractor.js';
 import { YoutubePlaylistExtractor } from '../extractors/YoutubePlaylistExtractor.js';
@@ -18,7 +18,7 @@ import { DirectUrlExtractor } from '../extractors/DirectUrlExtractor.js';
 const TOKEN_PATH = tokenPath;
 
 // The configured site's auth, reused across requests so connect()/complete() share one headed
-// browser. Rebuilt only when the site changes (setSite).
+// browser. Rebuilt when the site changes (setSite); the token file it reads is kept across that.
 let cached = null;
 
 // One stream of auth-state changes whichever site is configured; /auth/events subscribes here.
@@ -72,20 +72,19 @@ export function siteAuthFor(url) {
 }
 
 /**
- * Switch to another site (null clears it): forget the old site's token and pending login, and close
- * the plain browser so its autologin cookie cannot carry across. The same site is a no-op.
+ * Switch to another site (null clears it), deleting nothing: the stored token reads as absent until
+ * its site is set again. The old site's pending login ends, and the challenge window and the plain
+ * browser close so no session cookie carries across. The same site is a no-op.
  * @returns {Promise<boolean>}  whether anything changed
  */
 export async function setSite(site) {
   const old = currentSite();
   if ((site || null) === old) return false;
-  const auth =
-    cached?.auth ?? (old ? new MoodleToken({ tokenPath: TOKEN_PATH(), site: old }) : null);
+  const auth = cached?.auth;
   cached = null;
   setCurrentSite(site);
-  if (auth) await auth.disconnect();
-  // Stale leftovers (a token from a site set before this process) go too; loadToken ignores them anyway.
-  else await new MoodleToken({ tokenPath: TOKEN_PATH(), site: site ?? '' }).disconnect();
+  if (auth) await auth.abandonLogin();
+  await closeChallenge();
   publish();
   const session = getSession('plain');
   await session.withLock(() => session.close());
