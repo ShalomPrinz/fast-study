@@ -42,3 +42,19 @@ export function accountView(
   if (formSite !== null && formSite !== (storedSite ?? '')) return 'save'
   return storedSite ? 'connect' : 'choose'
 }
+
+/** How to name the site a Connect would log out of: its preset's name, else its host; null when the
+ *  stored token is this site's or there is none, so Connect needs no confirm. */
+export function foreignSiteName(
+  tokenSite: string | null | undefined,
+): MessageDescriptor | string | null {
+  if (!tokenSite) return null
+  const bare = tokenSite.replace(/\/+$/, '')
+  const preset = MOODLE_SITE_PRESETS.find((p) => p.url === bare)
+  if (preset) return preset.name
+  try {
+    return new URL(bare).host
+  } catch {
+    return bare
+  }
+}

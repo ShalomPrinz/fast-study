@@ -51,7 +51,9 @@ browser window" (no button) from the stream, and a reload mid-login shows it aga
 Success arrives as `connected`. A failed attempt arrives as the state's `error`; `loginToast` toasts it
 once, on the frame that ends a run this tab watched (previous frame `pending`, this one not), so a replayed
 state after a resubscribe or reload never re-toasts the leftover error. Disconnect sits behind a
-`ConfirmModal`, since getting the token back is another MFA round-trip. Both settings screens reuse
+`ConfirmModal`, since getting the token back is another MFA round-trip. Connect sits behind one too while the frame's
+`storedSite` (renamed `tokenSite` past `subscribeAuth`, so it never reads as the configured site) names
+another university's token, which that Connect deletes; `foreignSiteName` names it by its preset, else its host. Both settings screens reuse
 `AccountStatus` with the `--danger` tone retoned ([SETTINGS.md](SETTINGS.md)) — only this page is blocked
 by a missing session.
 

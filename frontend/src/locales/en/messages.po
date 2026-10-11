@@ -353,7 +353,7 @@ msgstr "A lecture running now would save some files in the old folder and the re
 msgid "A section is waiting for a passcode"
 msgstr "A section is waiting for a passcode"
 
-#: src/features/downloads/components/AccountStatus.tsx:233
+#: src/features/downloads/components/AccountStatus.tsx:252
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 
@@ -503,7 +503,7 @@ msgstr "Change the data folder while lectures are being processed?"
 msgid "Check again"
 msgstr "Check again"
 
-#: src/features/downloads/components/AccountStatus.tsx:132
+#: src/features/downloads/components/AccountStatus.tsx:143
 msgid "checking account…"
 msgstr "checking account…"
 
@@ -596,10 +596,14 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "Confirmed ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:210
+#: src/features/downloads/components/AccountStatus.tsx:221
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "Connect"
+
+#: src/features/downloads/components/AccountStatus.tsx:226
+msgid "Connect anyway?"
+msgstr "Connect anyway?"
 
 #: src/app/DriveConsentPrompt.tsx:52
 msgid "Connect Google Drive now?"
@@ -609,7 +613,7 @@ msgstr "Connect Google Drive now?"
 msgid "Connect your university account first"
 msgstr "Connect your university account first"
 
-#: src/features/downloads/components/AccountStatus.tsx:114
+#: src/features/downloads/components/AccountStatus.tsx:122
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "Connecting again needs a full login in a browser window, including two-step verification."
 
@@ -776,17 +780,17 @@ msgstr "Delete {0}"
 msgid "Discard all edits"
 msgstr "Discard all edits"
 
-#: src/features/downloads/components/AccountStatus.tsx:171
-#: src/features/downloads/components/AccountStatus.tsx:192
+#: src/features/downloads/components/AccountStatus.tsx:182
+#: src/features/downloads/components/AccountStatus.tsx:203
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "Disconnect"
 
-#: src/features/downloads/components/AccountStatus.tsx:113
+#: src/features/downloads/components/AccountStatus.tsx:121
 msgid "Disconnect the university account?"
 msgstr "Disconnect the university account?"
 
-#: src/features/downloads/components/AccountStatus.tsx:192
+#: src/features/downloads/components/AccountStatus.tsx:203
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "disconnecting…"
@@ -1011,7 +1015,7 @@ msgstr "File type"
 msgid "Fill in the fields above to continue."
 msgstr "Fill in the fields above to continue."
 
-#: src/features/downloads/components/AccountStatus.tsx:140
+#: src/features/downloads/components/AccountStatus.tsx:151
 msgid "finish login in the browser window"
 msgstr "finish login in the browser window"
 
@@ -1111,11 +1115,11 @@ msgstr "Home"
 msgid "How do I get a key?"
 msgstr "How do I get a key?"
 
-#: src/features/downloads/components/AccountStatus.tsx:221
+#: src/features/downloads/components/AccountStatus.tsx:240
 msgid "I confirmed, try again"
 msgstr "I confirmed, try again"
 
-#: src/features/downloads/components/AccountStatus.tsx:218
+#: src/features/downloads/components/AccountStatus.tsx:237
 msgid "I solved the captcha"
 msgstr "I solved the captcha"
 
@@ -1324,7 +1328,7 @@ msgstr "No Recitations"
 msgid "No recordings found."
 msgstr "No recordings found."
 
-#: src/features/downloads/components/AccountStatus.tsx:149
+#: src/features/downloads/components/AccountStatus.tsx:160
 msgid "no university chosen"
 msgstr "no university chosen"
 
@@ -1349,7 +1353,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "Not confirmed yet"
 
-#: src/features/downloads/components/AccountStatus.tsx:202
+#: src/features/downloads/components/AccountStatus.tsx:213
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "not connected"
@@ -1426,7 +1430,7 @@ msgstr "Open material"
 msgid "Open PDF"
 msgstr "Open PDF"
 
-#: src/features/downloads/components/AccountStatus.tsx:219
+#: src/features/downloads/components/AccountStatus.tsx:238
 msgid "Open the captcha again"
 msgstr "Open the captcha again"
 
@@ -1434,7 +1438,7 @@ msgstr "Open the captcha again"
 msgid "Open the sign-in page"
 msgstr "Open the sign-in page"
 
-#: src/features/downloads/components/AccountStatus.tsx:251
+#: src/features/downloads/components/AccountStatus.tsx:270
 msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 msgstr "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 
@@ -1564,7 +1568,7 @@ msgstr "Recitations"
 msgid "Recitations {0}-{1}"
 msgstr "Recitations {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:210
+#: src/features/downloads/components/AccountStatus.tsx:221
 msgid "Reconnect"
 msgstr "Reconnect"
 
@@ -1712,7 +1716,7 @@ msgstr "Select a lecture to get started"
 msgid "Send error reports"
 msgstr "Send error reports"
 
-#: src/features/downloads/components/AccountStatus.tsx:202
+#: src/features/downloads/components/AccountStatus.tsx:213
 msgid "session expired"
 msgstr "session expired"
 
@@ -1872,7 +1876,7 @@ msgstr "That step is turned off in settings."
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "The API keys and the summary model aren't available right now. They'll come back here on their own."
 
-#: src/features/downloads/components/AccountStatus.tsx:238
+#: src/features/downloads/components/AccountStatus.tsx:257
 msgid "The captcha is solved. Finishing the connection…"
 msgstr "The captcha is solved. Finishing the connection…"
 
@@ -1924,7 +1928,7 @@ msgstr "The following files will be re-generated:"
 msgid "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
 msgstr "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
 
-#: src/features/downloads/components/AccountStatus.tsx:59
+#: src/features/downloads/components/AccountStatus.tsx:62
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
@@ -1985,7 +1989,7 @@ msgstr "The site refused the download. This link needs a login, so it can't be d
 msgid "The summary is empty"
 msgstr "The summary is empty"
 
-#: src/features/downloads/components/AccountStatus.tsx:229
+#: src/features/downloads/components/AccountStatus.tsx:248
 msgid "The university is checking the connection."
 msgstr "The university is checking the connection."
 
@@ -2002,11 +2006,11 @@ msgstr "The university site is busy with another request. Try again in a moment.
 msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 msgstr "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 
-#: src/features/downloads/components/AccountStatus.tsx:246
+#: src/features/downloads/components/AccountStatus.tsx:265
 msgid "The window on the university site passed, with no captcha to solve. Press “Try again”."
 msgstr "The window on the university site passed, with no captcha to solve. Press “Try again”."
 
-#: src/features/downloads/components/AccountStatus.tsx:240
+#: src/features/downloads/components/AccountStatus.tsx:259
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 
@@ -2109,7 +2113,7 @@ msgstr "Transcribing the audio failed."
 msgid "Transcript"
 msgstr "Transcript"
 
-#: src/features/downloads/components/AccountStatus.tsx:220
+#: src/features/downloads/components/AccountStatus.tsx:239
 msgid "Try again"
 msgstr "Try again"
 
@@ -2133,7 +2137,7 @@ msgstr "University"
 msgid "University account"
 msgstr "University account"
 
-#: src/features/downloads/components/AccountStatus.tsx:185
+#: src/features/downloads/components/AccountStatus.tsx:196
 msgid "University account connected"
 msgstr "University account connected"
 
@@ -2185,7 +2189,7 @@ msgstr "Uploading to Google Drive failed."
 msgid "Uploading video…"
 msgstr "Uploading video…"
 
-#: src/features/downloads/components/AccountStatus.tsx:257
+#: src/features/downloads/components/AccountStatus.tsx:276
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 
@@ -2202,7 +2206,7 @@ msgstr "Video link"
 msgid "Videos"
 msgstr "Videos"
 
-#: src/features/downloads/components/AccountStatus.tsx:158
+#: src/features/downloads/components/AccountStatus.tsx:169
 msgid "waiting for you to solve the captcha"
 msgstr "waiting for you to solve the captcha"
 
@@ -2261,6 +2265,10 @@ msgstr "You can connect the account once your university is saved."
 #: src/features/settings/InitWall.tsx:295
 msgid "You must read the privacy policy before you continue."
 msgstr "You must read the privacy policy before you continue."
+
+#: src/features/downloads/components/AccountStatus.tsx:225
+msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
+msgstr "You're logged in to {foreignName}. Connecting here logs you out of it."
 
 #: src/features/settings/InitWall.tsx:220
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { accountView, captchaSeen, loginToast } from './accountView'
+import { accountView, captchaSeen, connectConfirmOpen, loginToast } from './accountView'
 import type { AuthStatus } from '../services/autoDownloader'
 
 const ok: AuthStatus = { connected: true, expired: false, phase: 'connected' }
@@ -123,5 +123,19 @@ describe('loginToast', () => {
   it('stays quiet while the run goes on and when it succeeds', () => {
     expect(loginToast(pending, pending)).toBeNull()
     expect(loginToast(pending, ok)).toBeNull()
+  })
+})
+
+describe('connectConfirmOpen', () => {
+  it('stays up while Connect shows and a foreign token remains', () => {
+    expect(connectConfirmOpen(true, 'disconnected', true)).toBe(true)
+    expect(connectConfirmOpen(true, 'expired', true)).toBe(true)
+  })
+
+  it('closes once the foreign token is gone or Connect leaves the screen', () => {
+    expect(connectConfirmOpen(true, 'disconnected', false)).toBe(false)
+    expect(connectConfirmOpen(true, 'connected', true)).toBe(false)
+    expect(connectConfirmOpen(true, 'finishing', true)).toBe(false)
+    expect(connectConfirmOpen(false, 'disconnected', true)).toBe(false)
   })
 })

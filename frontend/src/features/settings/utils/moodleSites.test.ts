@@ -3,6 +3,7 @@ import {
   accountView,
   choiceForSite,
   choosesNoSite,
+  foreignSiteName,
   MOODLE_SITE_PRESETS,
   OTHER_SITE,
 } from './moodleSites'
@@ -62,5 +63,24 @@ describe('accountView', () => {
     expect(accountView(null, site)).toBe('save')
     expect(accountView(site, 'https://moodle.bgu.ac.il/moodle')).toBe('save')
     expect(accountView(site, '')).toBe('save')
+  })
+})
+
+describe('foreignSiteName', () => {
+  it('asks no confirm without a foreign token', () => {
+    expect(foreignSiteName(null)).toBeNull()
+    expect(foreignSiteName(undefined)).toBeNull()
+    expect(foreignSiteName('')).toBeNull()
+  })
+
+  it('names a preset by its display name', () => {
+    expect(foreignSiteName('https://lemida.biu.ac.il')).toBe(MOODLE_SITE_PRESETS[0].name)
+    expect(foreignSiteName('https://moodle.bgu.ac.il/moodle/')).toBe(
+      MOODLE_SITE_PRESETS.find((p) => p.id === 'bgu')!.name,
+    )
+  })
+
+  it('names any other site by its host', () => {
+    expect(foreignSiteName('https://x.ac.il/moodle')).toBe('x.ac.il')
   })
 })

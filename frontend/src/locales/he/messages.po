@@ -353,7 +353,7 @@ msgstr "הרצאה שנמצאת בעיבוד תשמור חלק מהקבצים ב
 msgid "A section is waiting for a passcode"
 msgstr "יחידה ממתינה לקוד גישה"
 
-#: src/features/downloads/components/AccountStatus.tsx:233
+#: src/features/downloads/components/AccountStatus.tsx:252
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "נפתח חלון באתר האוניברסיטה. פתור שם את החידה, והחיבור יושלם מעצמו."
 
@@ -503,7 +503,7 @@ msgstr "לשנות את תיקיית הנתונים בזמן שהרצאות מע
 msgid "Check again"
 msgstr "בדיקה חוזרת"
 
-#: src/features/downloads/components/AccountStatus.tsx:132
+#: src/features/downloads/components/AccountStatus.tsx:143
 msgid "checking account…"
 msgstr "בודק חשבון…"
 
@@ -596,10 +596,14 @@ msgctxt "privacy policy"
 msgid "Confirmed ✓"
 msgstr "אושרה ✓"
 
-#: src/features/downloads/components/AccountStatus.tsx:210
+#: src/features/downloads/components/AccountStatus.tsx:221
 #: src/features/settings/components/DriveConnection.tsx:129
 msgid "Connect"
 msgstr "התחברות"
+
+#: src/features/downloads/components/AccountStatus.tsx:226
+msgid "Connect anyway?"
+msgstr "להתחבר בכל זאת?"
 
 #: src/app/DriveConsentPrompt.tsx:52
 msgid "Connect Google Drive now?"
@@ -609,7 +613,7 @@ msgstr "לחבר את Google Drive עכשיו?"
 msgid "Connect your university account first"
 msgstr "יש לחבר תחילה את חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:114
+#: src/features/downloads/components/AccountStatus.tsx:122
 msgid "Connecting again needs a full login in a browser window, including two-step verification."
 msgstr "חיבור מחדש דורש התחברות מלאה בחלון דפדפן, כולל אימות דו-שלבי."
 
@@ -776,17 +780,17 @@ msgstr "מחיקת {0}"
 msgid "Discard all edits"
 msgstr "ביטול כל השינויים"
 
-#: src/features/downloads/components/AccountStatus.tsx:171
-#: src/features/downloads/components/AccountStatus.tsx:192
+#: src/features/downloads/components/AccountStatus.tsx:182
+#: src/features/downloads/components/AccountStatus.tsx:203
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "Disconnect"
 msgstr "התנתקות"
 
-#: src/features/downloads/components/AccountStatus.tsx:113
+#: src/features/downloads/components/AccountStatus.tsx:121
 msgid "Disconnect the university account?"
 msgstr "לנתק את חשבון האוניברסיטה?"
 
-#: src/features/downloads/components/AccountStatus.tsx:192
+#: src/features/downloads/components/AccountStatus.tsx:203
 #: src/features/settings/components/DriveConnection.tsx:119
 msgid "disconnecting…"
 msgstr "מתנתק…"
@@ -1011,7 +1015,7 @@ msgstr "סוג קובץ"
 msgid "Fill in the fields above to continue."
 msgstr "מלא את השדות שלמעלה כדי להמשיך."
 
-#: src/features/downloads/components/AccountStatus.tsx:140
+#: src/features/downloads/components/AccountStatus.tsx:151
 msgid "finish login in the browser window"
 msgstr "השלם את ההתחברות בחלון הדפדפן"
 
@@ -1111,11 +1115,11 @@ msgstr "דף הבית"
 msgid "How do I get a key?"
 msgstr "איך משיגים מפתח?"
 
-#: src/features/downloads/components/AccountStatus.tsx:221
+#: src/features/downloads/components/AccountStatus.tsx:240
 msgid "I confirmed, try again"
 msgstr "אישרתי, לנסות שוב"
 
-#: src/features/downloads/components/AccountStatus.tsx:218
+#: src/features/downloads/components/AccountStatus.tsx:237
 msgid "I solved the captcha"
 msgstr "פתרתי את החידה"
 
@@ -1324,7 +1328,7 @@ msgstr "אין תרגולים"
 msgid "No recordings found."
 msgstr "לא נמצאו הקלטות."
 
-#: src/features/downloads/components/AccountStatus.tsx:149
+#: src/features/downloads/components/AccountStatus.tsx:160
 msgid "no university chosen"
 msgstr "לא נבחרה אוניברסיטה"
 
@@ -1349,7 +1353,7 @@ msgctxt "privacy policy"
 msgid "Not confirmed yet"
 msgstr "עוד לא אושרה"
 
-#: src/features/downloads/components/AccountStatus.tsx:202
+#: src/features/downloads/components/AccountStatus.tsx:213
 #: src/features/settings/components/DriveConnection.tsx:126
 msgid "not connected"
 msgstr "לא מחובר"
@@ -1426,7 +1430,7 @@ msgstr "פתיחת החומר"
 msgid "Open PDF"
 msgstr "פתיחת ה-PDF"
 
-#: src/features/downloads/components/AccountStatus.tsx:219
+#: src/features/downloads/components/AccountStatus.tsx:238
 msgid "Open the captcha again"
 msgstr "פתיחת החידה מחדש"
 
@@ -1434,7 +1438,7 @@ msgstr "פתיחת החידה מחדש"
 msgid "Open the sign-in page"
 msgstr "פתיחת דף ההתחברות"
 
-#: src/features/downloads/components/AccountStatus.tsx:251
+#: src/features/downloads/components/AccountStatus.tsx:270
 msgid "Open the university site in your browser and solve the captcha there, then press “I confirmed, try again”."
 msgstr "פתח את אתר האוניברסיטה בדפדפן שלך ופתור שם את החידה, ואז לחץ על \"אישרתי, לנסות שוב\"."
 
@@ -1564,7 +1568,7 @@ msgstr "תרגולים"
 msgid "Recitations {0}-{1}"
 msgstr "תרגולים {0}-{1}"
 
-#: src/features/downloads/components/AccountStatus.tsx:210
+#: src/features/downloads/components/AccountStatus.tsx:221
 msgid "Reconnect"
 msgstr "התחברות מחדש"
 
@@ -1712,7 +1716,7 @@ msgstr "בחר הרצאה כדי להתחיל"
 msgid "Send error reports"
 msgstr "שליחת דיווחי שגיאות"
 
-#: src/features/downloads/components/AccountStatus.tsx:202
+#: src/features/downloads/components/AccountStatus.tsx:213
 msgid "session expired"
 msgstr "תוקף החיבור פג"
 
@@ -1872,7 +1876,7 @@ msgstr "השלב הזה כבוי בהגדרות."
 msgid "The API keys and the summary model aren't available right now. They'll come back here on their own."
 msgstr "מפתחות ה-API ומודל הסיכום לא זמינים כרגע. הם יחזרו לכאן מעצמם."
 
-#: src/features/downloads/components/AccountStatus.tsx:238
+#: src/features/downloads/components/AccountStatus.tsx:257
 msgid "The captcha is solved. Finishing the connection…"
 msgstr "החידה נפתרה. משלימים את החיבור…"
 
@@ -1924,7 +1928,7 @@ msgstr "הקבצים הבאים ייווצרו מחדש:"
 msgid "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
 msgstr "עמוד ההרצאה עדיין מבקש להתחבר ל-Moodle, גם אחרי התחברות אוטומטית. נסה שוב מאוחר יותר, או חבר מחדש את Moodle."
 
-#: src/features/downloads/components/AccountStatus.tsx:59
+#: src/features/downloads/components/AccountStatus.tsx:62
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "ההתחברות לא הושלמה. לחץ על \"התחברות\" והתחבר שוב."
 
@@ -1985,7 +1989,7 @@ msgstr "האתר סירב להורדה. הקישור הזה דורש התחבר�
 msgid "The summary is empty"
 msgstr "הסיכום ריק"
 
-#: src/features/downloads/components/AccountStatus.tsx:229
+#: src/features/downloads/components/AccountStatus.tsx:248
 msgid "The university is checking the connection."
 msgstr "האוניברסיטה בודקת את החיבור."
 
@@ -2002,11 +2006,11 @@ msgstr "אתר האוניברסיטה עסוק בבקשה אחרת. נסה שו�
 msgid "The university site wants you to solve a captcha. Solve it in the window that opened. You can still save the site."
 msgstr "אתר האוניברסיטה מבקש ממך לפתור חידה. פתור אותה בחלון שנפתח. אפשר לשמור את האתר בכל זאת."
 
-#: src/features/downloads/components/AccountStatus.tsx:246
+#: src/features/downloads/components/AccountStatus.tsx:265
 msgid "The window on the university site passed, with no captcha to solve. Press “Try again”."
 msgstr "החלון באתר האוניברסיטה עבר את הבדיקה, ואין חידה לפתור. לחץ על \"לנסות שוב\"."
 
-#: src/features/downloads/components/AccountStatus.tsx:240
+#: src/features/downloads/components/AccountStatus.tsx:259
 msgid "The window was closed before the captcha was solved. Press “Open the captcha again” to bring it back."
 msgstr "החלון נסגר לפני שהחידה נפתרה. לחץ על \"פתיחת החידה מחדש\" כדי להחזיר אותה."
 
@@ -2109,7 +2113,7 @@ msgstr "תמלול השמע נכשל."
 msgid "Transcript"
 msgstr "תמלול"
 
-#: src/features/downloads/components/AccountStatus.tsx:220
+#: src/features/downloads/components/AccountStatus.tsx:239
 msgid "Try again"
 msgstr "לנסות שוב"
 
@@ -2133,7 +2137,7 @@ msgstr "אוניברסיטה"
 msgid "University account"
 msgstr "חשבון האוניברסיטה"
 
-#: src/features/downloads/components/AccountStatus.tsx:185
+#: src/features/downloads/components/AccountStatus.tsx:196
 msgid "University account connected"
 msgstr "חשבון האוניברסיטה מחובר"
 
@@ -2185,7 +2189,7 @@ msgstr "ההעלאה ל-Google Drive נכשלה."
 msgid "Uploading video…"
 msgstr "מעלה וידאו…"
 
-#: src/features/downloads/components/AccountStatus.tsx:257
+#: src/features/downloads/components/AccountStatus.tsx:276
 msgid "Use the window that opened on the university site, or open the site in your browser, and solve the captcha there. Then press “I confirmed, try again”."
 msgstr "השתמש בחלון שנפתח באתר האוניברסיטה, או פתח את האתר בדפדפן שלך, ופתור שם את החידה. ואז לחץ על \"אישרתי, לנסות שוב\"."
 
@@ -2202,7 +2206,7 @@ msgstr "קישור לווידאו"
 msgid "Videos"
 msgstr "וידאו"
 
-#: src/features/downloads/components/AccountStatus.tsx:158
+#: src/features/downloads/components/AccountStatus.tsx:169
 msgid "waiting for you to solve the captcha"
 msgstr "ממתין שתפתור את החידה"
 
@@ -2261,6 +2265,10 @@ msgstr "אפשר לחבר את החשבון אחרי שמירת האוניברס
 #: src/features/settings/InitWall.tsx:295
 msgid "You must read the privacy policy before you continue."
 msgstr "עליך לקרוא את מדיניות הפרטיות לפני שתמשיך."
+
+#: src/features/downloads/components/AccountStatus.tsx:225
+msgid "You're logged in to {foreignName}. Connecting here logs you out of it."
+msgstr "אתה מחובר לחשבון ב-{foreignName}. התחברות כאן תנתק אותך ממנו."
 
 #: src/features/settings/InitWall.tsx:220
 msgid "Your keys are kept only on this computer, encrypted by Windows. FastStudy has no servers of its own — each key is sent only to the service it belongs to."

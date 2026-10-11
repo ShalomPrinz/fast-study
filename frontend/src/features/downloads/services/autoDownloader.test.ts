@@ -192,10 +192,14 @@ describe('subscribeAuth', () => {
 
     es.onmessage?.({ data: '{"phase":"pending","connected":false,"expired":false}' })
     es.onmessage?.({ data: 'not json' })
+    es.onmessage?.({ data: '{"connected":false,"expired":false,"storedSite":"https://a.ac.il"}' })
     stop()
 
     expect(es.url).toContain('/auth/events')
-    expect(seen).toEqual([{ phase: 'pending', connected: false, expired: false }])
+    expect(seen).toEqual([
+      { phase: 'pending', connected: false, expired: false },
+      { connected: false, expired: false, tokenSite: 'https://a.ac.il' },
+    ])
     expect(es.close).toHaveBeenCalled()
   })
 })

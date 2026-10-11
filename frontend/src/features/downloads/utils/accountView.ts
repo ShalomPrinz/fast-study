@@ -82,3 +82,13 @@ export function loginToast(prev: AuthStatus | null, next: AuthStatus | null): Lo
   if (code === 'moodle_reconnect_required') return { kind: 'reconnect' }
   return { kind: 'failure', failure: { message: String(params?.detail ?? code), code, params } }
 }
+
+// Whether the Connect confirm stays up: only while Connect is on screen and a foreign token is still there,
+// so a frame that clears either closes it instead of leaving it to reappear later.
+export function connectConfirmOpen(
+  open: boolean,
+  chip: AccountChip,
+  hasForeignToken: boolean,
+): boolean {
+  return open && hasForeignToken && (chip === 'disconnected' || chip === 'expired')
+}

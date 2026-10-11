@@ -13,6 +13,7 @@ import {
   useWithMoodleLock,
 } from '@/features/downloads/contexts/MoodleLockContext'
 import { moodleLocked } from '@/features/downloads/utils/moodleLock'
+import { foreignSiteName } from '@/features/settings/utils/moodleSites'
 import { isMoodleBusyError } from '@/services/http'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import Icon from '@/shared/components/Icon'
@@ -27,6 +28,7 @@ import {
 import {
   accountView,
   captchaSeen,
+  connectConfirmOpen,
   loginToast,
   type AccountPanel,
   type LoginPhase,
@@ -44,6 +46,7 @@ export default function AccountStatus() {
   const { status, refresh } = useAuthStatus()
   const [phase, setPhase] = useState<LoginPhase>('loading')
   const [confirmDisconnect, setConfirmDisconnect] = useState(false)
+  const [confirmConnect, setConfirmConnect] = useState(false)
   const withMoodleLock = useWithMoodleLock()
   const lock = useMoodleLockState()
 
@@ -76,7 +79,12 @@ export default function AccountStatus() {
     seen.current = status
   }, [status])
 
+  // A token for another university is deleted by this Connect, so that one asks first.
+  const foreign = foreignSiteName(status?.tokenSite)
+  const foreignName = typeof foreign === 'string' ? foreign : foreign && t(foreign)
+
   async function handleConnect() {
+    setConfirmConnect(false)
     setPhase('connecting')
     try {
       await withMoodleLock(connectAuth)
@@ -122,6 +130,9 @@ export default function AccountStatus() {
   const seenNow = captchaSeen(seenCaptcha, status)
   if (seenNow !== seenCaptcha) setSeenCaptcha(seenNow)
   const view = accountView(phase, status, seenNow)
+  // Folded the same way, so a frame that clears the foreign token or leaves Connect drops the confirm for good.
+  const confirmNow = connectConfirmOpen(confirmConnect, view.chip, foreignName !== null)
+  if (confirmNow !== confirmConnect) setConfirmConnect(confirmNow)
   // An open challenge window holds the lock itself, and Complete (or a new Connect) is what it waits for.
   const locked = moodleLocked(lock, view.panel === 'window')
   const lockedTitle = locked ? moodleBusyMessage() : undefined
@@ -203,12 +214,20 @@ export default function AccountStatus() {
       </span>
       <button
         className="btn btn--ghost"
-        onClick={handleConnect}
+        onClick={() => (foreignName ? setConfirmConnect(true) : void handleConnect())}
         disabled={locked}
         title={lockedTitle}
       >
         {expired ? t`Reconnect` : t`Connect`}
       </button>
+      {confirmNow && foreignName && (
+        <ConfirmModal
+          message={t`You're logged in to ${foreignName}. Connecting here logs you out of it.`}
+          postMessage={t`Connect anyway?`}
+          onConfirm={handleConnect}
+          onCancel={() => setConfirmConnect(false)}
+        />
+      )}
     </>
   )
 }

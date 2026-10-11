@@ -30,7 +30,13 @@ export interface AuthStatus {
   moodleBusy?: boolean
   // Block mode's challenge window: up, and on screen waiting for a captcha; pushed only.
   challenge?: { open: boolean; captcha: boolean }
+  // The stored token's site URL when it belongs to another site than the selected one, which a Connect
+  // here would delete; pushed only, as the wire's `storedSite`.
+  tokenSite?: string | null
 }
+
+// A `/auth/events` frame as sent; `storedSite` is renamed so it never reads as the configured site.
+type AuthFrame = Omit<AuthStatus, 'tokenSite'> & { storedSite?: string | null }
 
 // What a `site_blocked` says about the challenge window: on screen with a captcha to solve, opened
 // hidden with its clearance still valid, unable to launch (`false`), or none for this path (`null`).
@@ -212,7 +218,8 @@ export function subscribeAuth(onState: (state: AuthStatus) => void): () => void 
   const es = new EventSource(withSecretParam(autoDownloader.url('/auth/events')))
   es.onmessage = (e) => {
     try {
-      onState(JSON.parse(e.data) as AuthStatus)
+      const { storedSite, ...frame } = JSON.parse(e.data) as AuthFrame
+      onState({ ...frame, tokenSite: storedSite })
     } catch {
       // A frame that is not JSON carries no state.
     }

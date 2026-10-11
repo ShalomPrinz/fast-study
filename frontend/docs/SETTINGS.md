@@ -177,7 +177,8 @@ its Save joins too, so a pick and a Save always land in the order made.
 
 **Switching sites keeps the account.** The auto-downloader holds one session and keeps it across a switch:
 the chip reads not connected on any other site and connected again once its own site is picked back, with
-no confirm and no reconnect. Only Connect on another site (or Disconnect) replaces it. The chip follows
+no confirm and no reconnect. Only Connect on another site (or Disconnect) replaces it, and that Connect first confirms, naming the
+university it logs out of ([DOWNLOADS.md](DOWNLOADS.md) §Auth). The chip follows
 auto's `/auth/events`, and either save re-probes it.
 
 ## Prerequisites and accounts
