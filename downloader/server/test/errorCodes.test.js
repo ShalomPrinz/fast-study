@@ -107,6 +107,12 @@ test("a re-resolve maps auto's statuses to its own codes", () => {
     code: 'recapture_failed',
     params: { detail: 'boom' },
   });
+  // A block keeps auto's own code and params, which a 503 body carries beside `message`.
+  const params = { detail: 'HTTP 200, text/html' };
+  assert.deepEqual(
+    reresolveFailure(503, { status: 'blocked', message: 'walled', code: 'site_blocked', params }),
+    { error: 'walled', code: 'site_blocked', params },
+  );
   // status 0 is "never reached auto at all", and reads as the network failure it is.
   assert.deepEqual(reresolveFailure(0, null).params, { detail: 'HTTP network' });
 });

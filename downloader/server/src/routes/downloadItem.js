@@ -31,6 +31,9 @@ export function reresolveFailure(status, body) {
       code: 'recapture_unsupported',
       params: { detail: body?.message ?? null },
     };
+  // A block is auto's own refusal, relayed as the runner relays one from /moodle/file.
+  if (status === 503 && body?.code === 'site_blocked')
+    return { error: body.message ?? 'site blocked', code: body.code, params: body.params ?? {} };
   return recaptureFailed(body?.error ?? `HTTP ${status || 'network'}`);
 }
 
