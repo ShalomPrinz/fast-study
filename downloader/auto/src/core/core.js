@@ -84,14 +84,19 @@ function baseName(name) {
 
 // Capture the whole recording fresh → [{ name, cap }], caching each. `name` is the BASE name:
 // a zoom share with a distinct second .mp4 yields `<name>.1`/`<name>.2`, anything else one.
-async function captureTargets(page, recording, extractor, { name, course, kind, passcode, ref }) {
+async function captureTargets(
+  page,
+  recording,
+  extractor,
+  { name, course, kind, passcode, userid, ref },
+) {
   let targets;
   if (recording.strategy === 'zoom') {
     const caps = await extractor.captureVideo(page, recording, { passcode });
     const names = caps.length === 2 ? [splitName(name, 1), splitName(name, 2)] : [name];
     targets = caps.map((cap, i) => ({ name: names[i], cap }));
   } else {
-    const cap = await extractor.captureVideo(page, recording);
+    const cap = await extractor.captureVideo(page, recording, { userid });
     // A .mp4 on the Moodle host streams through auto, its captured cookies staying here.
     targets = [{ name, cap: onMoodleHost(cap.url) ? proxyCap(cap) : cap }];
   }
@@ -290,8 +295,9 @@ export async function resolveDirectUrl({
  * @param {import('playwright').Page} page  live shared page
  * @param {{ recording: import('../extractors/VideoExtractor.js').Recording,
  *           course: string, name: string, kind: string, passcode?: string|null,
- *           ref?: string|null, only?: boolean, forceCapture?: boolean }} args
+ *           userid?: number, ref?: string|null, only?: boolean, forceCapture?: boolean }} args
  *   passcode is looked up per course/lecture upstream; only the zoom path consumes it.
+ *   userid is the stored token's user; videostream reads a page rendered for anyone else as logged out.
  *   ref is the discovery-row id that spawned this download — cached with every cap so a zoom
  *   before/after-break split pair groups under the one parent row.
  *   only = operate on just the single (course,name,kind) target (name may be a zoom split
@@ -301,7 +307,7 @@ export async function resolveDirectUrl({
  */
 export async function resolveRecording(
   page,
-  { recording, course, name, kind, passcode, ref, only = false, forceCapture = false },
+  { recording, course, name, kind, passcode, userid, ref, only = false, forceCapture = false },
 ) {
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
@@ -318,6 +324,7 @@ export async function resolveRecording(
       course,
       kind,
       passcode,
+      userid,
       ref,
     });
     const chosen =
@@ -333,6 +340,7 @@ export async function resolveRecording(
     course,
     kind,
     passcode,
+    userid,
     ref,
   });
   return targets.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache: false }));

@@ -684,6 +684,7 @@ async function resolveItem(req, res) {
   try {
     targets = await captureVideostream(site, token, profile, {
       recording,
+      userid: token.userid,
       course,
       name,
       kind,
@@ -723,7 +724,7 @@ const noPrivatetoken = () =>
     'token has no privatetoken; Reconnect to enable videostream capture',
   );
 
-// The module page landed on the login: the browser's Moodle session is dead.
+// The module page landed on the login or as guest: the browser's Moodle session is dead.
 const loggedOut = (err) => err?.code === 'videostream_login_required';
 
 // Autologin, navigated in the Moodle browser, its session cookies saved → null once logged in there,
@@ -777,8 +778,8 @@ async function captureOnce(site, useWindow, args, loginUrl) {
   });
 }
 
-// Capture on the saved session, autologin and retry once if it lands on the login; with none saved,
-// autologin first and capture once, since a guest landing never hits the login. See docs/AUTH.md.
+// Capture on the saved session, autologin and retry once if it lands logged out; with none saved,
+// autologin first and capture once, sparing a load that could only land logged out. See docs/AUTH.md.
 async function captureVideostream(site, token, profile, args) {
   // A replay-cache hit needs no browser: no window opens and no key is spent.
   const replayed = replayRecording(args);

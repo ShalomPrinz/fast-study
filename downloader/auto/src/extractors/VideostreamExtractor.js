@@ -20,6 +20,21 @@ export function onLoginPage(url) {
   }
 }
 
+/**
+ * A page Moodle rendered for someone other than the token's user: anonymous (`M.cfg.userId` 0) or
+ * guest. `pageUser` is null when unread, which says nothing.
+ */
+export function notTheUser(pageUser, userid) {
+  if (pageUser == null) return false;
+  return pageUser === 0 || (userid != null && pageUser !== Number(userid));
+}
+
+// The user the page was rendered for: core puts `$USER->id` in every page's M.cfg, theme or not.
+async function renderedUserId(page) {
+  const id = await page.evaluate(() => globalThis.M?.cfg?.userId).catch(() => null);
+  return Number.isInteger(id) ? id : null;
+}
+
 const MP4_WAIT_MS = 20000;
 // The player's own answer names the file's size; no extra request is spent learning it.
 const SIZE_WAIT_MS = 5000;
@@ -89,9 +104,10 @@ export class VideostreamExtractor extends VideoExtractor {
    * live headers (Referer/Origin/token) are what server/'s curl replays.
    * @param {import('playwright').Page} page
    * @param {import('./VideoExtractor.js').Recording} rec
+   * @param {{ userid?: number }} [opts]  the stored token's user, whom the page must be rendered for
    * @returns {Promise<import('./VideoExtractor.js').VideoCapture>}
    */
-  async _captureVideo(page, rec) {
+  async _captureVideo(page, rec, opts) {
     // The view page is on the Moodle site; the gate goes first, before the listener is armed.
     await enterMoodle(rec.pageUrl);
     // Register the listener BEFORE navigating so an autoplay .mp4 firing during
@@ -101,12 +117,13 @@ export class VideostreamExtractor extends VideoExtractor {
       .catch(() => null);
 
     await page.goto(rec.pageUrl, { waitUntil: 'load' });
-    // The route autologins on this and retries once; a second one reaches the client.
-    if (onLoginPage(page.url())) {
+    // The login, or a guest page (BIU logs anonymous visitors in as guest): the route autologins
+    // and retries once; a second one reaches the client.
+    if (onLoginPage(page.url()) || notTheUser(await renderedUserId(page), opts?.userid)) {
       throw new CodedError(
         'videostream_login_required',
         { url: rec.pageUrl },
-        `${rec.pageUrl} redirected to the Moodle login`,
+        `${rec.pageUrl} landed logged out (the login or a guest page)`,
       );
     }
 

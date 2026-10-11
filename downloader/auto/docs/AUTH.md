@@ -105,12 +105,17 @@ missing or dead ([MOODLE.md](MOODLE.md#autologin)):
   first page; the plain session before each capture it stands in for.
 - **No saved session.** `autologin` (`http/server.js`) mints a key from the `privatetoken` and the
   stored `userid`, navigates it in the challenge window (or the plain session without one), saves the
-  cookies, and the module is captured once. It runs before the first capture because a site that
-  logs anonymous visitors in as guest (BIU) never lands on `/login/`, so a blind capture would only
-  time out as `videostream_no_media_request`.
-- **Dead session.** A saved session is captured on first; the module page landing on `/login/`
+  cookies, and the module is captured once. It runs before the first capture, which could only land
+  logged out.
+- **Dead session.** A saved session is captured on first; a module page that lands logged out
   (`videostream_login_required`) means it is dead, so `autologin` runs and the capture is retried
-  once. Landing on the login after an autologin answers `500 videostream_login_required {url}`.
+  once. Logged out is a landing on `/login/`, or a page whose `M.cfg.userId` is not the stored token's
+  `userid` — a site that logs anonymous visitors in as guest (BIU) never redirects to the login.
+  Core writes `$USER->id` there on every page (`get_config_for_javascript`,
+  `lib/classes/output/requirements/page_requirements_manager.php`, MOODLE_405_STABLE), and the body's
+  `notloggedin` class misses a guest (`isloggedin()` is true for one, `lib/accesslib.php`). It is
+  checked right after the load, before the `.mp4` wait; an unreadable `M.cfg` reads as logged in.
+  Still logged out after an autologin answers `500 videostream_login_required {url}`.
   Autologin is rate-limited (~1/user/6 min) and IP-bound, so it runs at most once per resolve and
   never while the saved session is alive. A token with no `privatetoken` still captures on a saved
   session; without one it is `moodle_token_no_privatetoken`.

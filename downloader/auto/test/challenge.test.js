@@ -710,6 +710,42 @@ test('a dead saved session is captured on first, then autologins once and retrie
   );
 });
 
+test('a dead saved session landing as guest autologins once and retries', async (t) => {
+  const profile = fakeProfile(t);
+  stubPlainSession(t);
+  const calls = stubFetch(t, (url, init) => (fromPage(init) ? AUTOLOGIN_KEY() : html()));
+  const { run } = videostreamResolve(t);
+  saveSessionCookies(SITE, [{ ...SESSION_COOKIE, name: 'other' }]);
+  await gated(() => openChallenge(SITE));
+  const [ctx] = profile.launches;
+  // A site that logs anonymous visitors in as guest: the module page renders, for the guest (id 1).
+  const newPage = ctx.newPage;
+  ctx.newPage = async () => {
+    const page = await newPage();
+    page.goto = async (u) => {
+      page.visited.push(u);
+      page.landed = u;
+    };
+    page.evaluate = async (fn) => {
+      globalThis.M = { cfg: { userId: ctx.loggedIn ? 7 : 1 } };
+      try {
+        return fn();
+      } catch {
+        return undefined;
+      } finally {
+        delete globalThis.M;
+      }
+    };
+    return page;
+  };
+  assert.equal((await run()).code, 200);
+  assert.equal(keyCalls(calls).length, 1);
+  assert.deepEqual(
+    ctx.capturePages.map((p) => p.url()),
+    [VIDEOSTREAM_URL, VIDEOSTREAM_URL],
+  );
+});
+
 test('a saved session captures even for a token with no privatetoken', async (t) => {
   fakeProfile(t);
   stubPlainSession(t);

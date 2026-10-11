@@ -239,9 +239,9 @@ navigation, checks no UA; only the key call does.
 
 Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**, so it
 runs at most once per resolve, its session cookies saved. With no saved session it runs before the
-capture, which then runs once; on a saved session it runs only when the module page lands on
-`/login/`, then the capture is retried once. Still on the login is `videostream_login_required {url}`
-([AUTH.md](AUTH.md#videostream-reuses-the-moodle-session)).
+capture, which then runs once; on a saved session it runs only when the module page lands logged out
+— on `/login/`, or rendered for a guest or anonymous — then the capture is retried once. Still logged
+out is `videostream_login_required {url}` ([AUTH.md](AUTH.md#videostream-reuses-the-moodle-session)).
 
 `captureVideostream` (`http/server.js`) captures — and logs in when it must — in the Moodle browser, the
 challenge window, opening it hidden first, block or not (a replay-cache hit answers before any of it: no window, no key), so a captcha there (`503 site_blocked`, `challengeWindow:'captcha'`)
@@ -362,7 +362,7 @@ An uncommitted attempt that routed every WS call through a Chrome page parked on
 
 ## Left out deliberately
 
-- **A session liveness probe** (moodle-dl GETs the root): the module page landing on `/login/` already
+- **A session liveness probe** (moodle-dl GETs the root): the module page landing logged out already
   says so. Add one if a dead session starts costing a visible extra page load.
 - **Matching Node's UA to the window's**: Radware never clears Node anyway. Revisit if an unblocked
   Node call fails on its UA.
