@@ -17,7 +17,6 @@ export class BrowserSession {
     this.page = null;
     this._lock = Promise.resolve(); // tail of the mutex chain
     this._idleTimer = null;
-    this._authedUntil = 0; // when the Moodle autologin cookie is treated as still fresh
   }
 
   isOpen() {
@@ -26,8 +25,8 @@ export class BrowserSession {
 
   /**
    * Lazily launch the browser (via the injected launcher) + a blank context. No-op if
-   * already open. No cookies are injected — the plain profile authenticates on demand via
-   * Moodle autologin (docs/MOODLE.md); the zoom profile is passcode-gated, never Moodle-auth.
+   * already open. No cookies are injected here — the plain profile takes the autologin's when it
+   * stands in for the Moodle browser (docs/MOODLE.md); the zoom profile is passcode-gated.
    */
   async open() {
     if (this.page) return;
@@ -44,16 +43,6 @@ export class BrowserSession {
     return this.page.url();
   }
 
-  // Autologin is rate-limited (~1/user/6 min), so cache its cookie's freshness: skip a
-  // re-login while an earlier one is still within ttl. Reset on close (context/cookie gone).
-  isAuthed() {
-    return Date.now() < this._authedUntil;
-  }
-
-  markAuthed(ttlMs) {
-    this._authedUntil = Date.now() + ttlMs;
-  }
-
   // Async mutex: one page op at a time, or two calls on the shared page abort each other's
   // navigation. Only the quick navigate+sniff; downloads run later in server/ and overlap.
   withLock(fn) {
@@ -67,7 +56,6 @@ export class BrowserSession {
 
   async close() {
     this._clearIdle();
-    this._authedUntil = 0; // context (and its autologin cookie) is gone → re-auth next open
     const b = this.browser;
     this.browser = this.context = this.page = null;
     if (b) await b.close().catch(() => {});

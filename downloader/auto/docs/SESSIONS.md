@@ -6,11 +6,13 @@ request. Model in `src/browser/browserSession.js`.
 - **Per-profile DI.** `BrowserSession` takes an injected launcher and never hardcodes one.
   `getSession(profile)` lazily builds one browser+context+page per profile, each with its own idle
   timer; an extractor's `browserProfile` picks the profile (`'plain'` default, `ZoomExtractor` →
-  `'zoom'`).
-- **Cookies only from the autologin.** The `'plain'` profile authenticates on demand: the Moodle
-  autologin runs in the challenge window and its site cookies are added to the plain context, or,
-  with no window (none could launch, or it closed after the key), runs in the plain session itself
-  ([AUTH.md](AUTH.md)); the `'zoom'` profile is passcode-gated, never Moodle-auth.
+  `'zoom'`). `VideostreamExtractor` → `'moodle'` is no `BrowserSession`: it is the challenge window
+  (`moodle/challenge.js`), and the capture runs in a second page of it (`withPage`), closed after,
+  so the root page stays on the site and the idle close waits for it.
+- **Cookies only from the autologin.** Neither profile carries cookies of its own: the autologin's
+  site cookies are kept in memory and added to whichever browser captures — the challenge window,
+  or the `'plain'` session when there is none ([AUTH.md](AUTH.md)); the `'zoom'` profile is
+  passcode-gated, never Moodle-auth.
 - **`withLock(fn)`** serializes only the quick navigate+sniff, so one call's navigation can't abort
   another's; the heavy download runs afterward in `server/`, so downloads still overlap. `open()` is
   deliberately outside the lock — a no-op once open, and a shared lock risks deadlock.
@@ -22,10 +24,10 @@ request. Model in `src/browser/browserSession.js`.
 
 | Profile / path                                           | Browser                                                              | Display                                    | Visible            |
 | -------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ | ------------------ |
-| `'plain'` — videostream sniff (`browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth  | none (headless)                            | no                 |
+| `'plain'` — videostream sniff with no challenge window (`browser/browserLaunch.js`) | resolved channel → bundled Chromium on launch failure, no stealth  | none (headless)                            | no                 |
 | `'zoom'` — `ZoomExtractor` (`browser/zoomBrowser.js`)    | resolved channel + stealth, `headless:false`, no fallback            | Xvfb (Linux) / off-screen window (Windows) | no                 |
 | Token grab (`MoodleToken.connect()`)                     | resolved channel → bundled Chromium on launch failure                | real desktop                               | **yes — MFA once** |
-| Challenge window (`moodle/challenge.js`)                 | resolved channel, persistent profile `moodle-profile` under the state root, UA = the probe's + ` MoodleMobile`; no installed channel (no UA) → no launch; bundled Chromium only when the probe worked and the channel's persistent launch failed, still with that UA | real desktop, launched off-screen; opened by a wall or a videostream autologin | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
+| Challenge window (`moodle/challenge.js`)                 | resolved channel, persistent profile `moodle-profile` under the state root, UA = the probe's + ` MoodleMobile`; no installed channel (no UA) → no launch; bundled Chromium only when the probe worked and the channel's persistent launch failed, still with that UA | real desktop, launched off-screen; opened by a wall or a videostream capture, which sniffs in a second off-screen page of it | only on a captcha ([MOODLE.md](MOODLE.md#the-rest-api)) |
 
 Every launch passes `--mute-audio`: recordings autoplay, and nobody is watching.
 

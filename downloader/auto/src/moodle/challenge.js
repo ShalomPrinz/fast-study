@@ -284,6 +284,25 @@ class ChallengeWindow {
     return this.settle();
   }
 
+  /**
+   * `fn(page)` on a second page of the window, off-screen and closed after (also on a throw), so the
+   * root page stays put; counted busy throughout, so the idle close never cuts it off.
+   */
+  async withPage(fn) {
+    this.busy++;
+    this.touch();
+    let page;
+    try {
+      page = await this.context.newPage();
+      await this._bounds(OFF_SCREEN, page);
+      return await fn(page);
+    } finally {
+      await page?.close().catch(() => {});
+      this.busy--;
+      this.touch();
+    }
+  }
+
   // Load the site root (under the caller's Moodle lock) and show the window only on a captcha.
   async land() {
     await enterMoodle(this.site);
@@ -337,9 +356,9 @@ class ChallengeWindow {
   }
 
   // Window position through CDP; cosmetic, so a failure never fails the call.
-  async _bounds(bounds) {
+  async _bounds(bounds, page = this.page) {
     try {
-      const cdp = await this.context.newCDPSession(this.page);
+      const cdp = await this.context.newCDPSession(page);
       const { windowId } = await cdp.send('Browser.getWindowForTarget');
       await cdp.send('Browser.setWindowBounds', { windowId, bounds: { windowState: 'normal' } });
       await cdp.send('Browser.setWindowBounds', { windowId, bounds });

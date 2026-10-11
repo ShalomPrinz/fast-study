@@ -41,6 +41,11 @@ export class VideostreamExtractor extends VideoExtractor {
     return 'videostream';
   }
 
+  /** The Moodle browser (the challenge window), where the autologin left its session. */
+  get browserProfile() {
+    return 'moodle';
+  }
+
   /**
    * @param {import('./VideoExtractor.js').Activity} activity
    * @returns {boolean}

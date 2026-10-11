@@ -306,15 +306,11 @@ export async function resolveRecording(
   const extractor = resolveExtractorForRecording(recording);
   if (!extractor) throw new Error(`no extractor for strategy ${recording.strategy}`);
 
+  const replayed = replayRecording({ recording, course, name, kind, only, forceCapture });
+  if (replayed) return replayed;
   const tool = toolFor(recording.strategy);
 
-  // `only`: operate on just the one requested (course,name,kind) target (name may be a zoom
-  // split name). A cache hit is keyed directly by that name — no splitting needed.
   if (only) {
-    if (!forceCapture) {
-      const hit = getCap(course, name, kind, 'video');
-      if (hit) return [toTarget({ name, cap: hit.cap, tool, fromCache: true })];
-    }
     // Miss/force: one zoom share sniffs BOTH clips, so re-capture the whole recording (using
     // the inverted base name so the split matches) and keep only the cap for the request.
     const captured = await captureTargets(page, recording, extractor, {
@@ -331,11 +327,38 @@ export async function resolveRecording(
     return [toTarget({ name: chosen.name, cap: chosen.cap, tool, fromCache: false })];
   }
 
-  // Whole recording. Replay from the cache when every resulting target is cached, else capture.
-  const cached = forceCapture ? null : cachedTargets(recording, course, name, kind);
-  const targets =
-    cached ??
-    (await captureTargets(page, recording, extractor, { name, course, kind, passcode, ref }));
-  const fromCache = Boolean(cached);
-  return targets.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache }));
+  // Whole recording, not fully cached: capture it.
+  const targets = await captureTargets(page, recording, extractor, {
+    name,
+    course,
+    kind,
+    passcode,
+    ref,
+  });
+  return targets.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache: false }));
+}
+
+/**
+ * A browser-capture recording's targets from the replay cache, or null when it must be captured, so a
+ * caller can answer a hit before opening any browser. `only`: just the one named target (a zoom split
+ * name keys the cache directly); else the whole recording, every target cached.
+ */
+export function replayRecording({
+  recording,
+  course,
+  name,
+  kind,
+  only = false,
+  forceCapture = false,
+}) {
+  if (forceCapture) return null;
+  const tool = toolFor(recording.strategy);
+  if (only) {
+    const hit = getCap(course, name, kind, 'video');
+    return hit ? [toTarget({ name, cap: hit.cap, tool, fromCache: true })] : null;
+  }
+  const cached = cachedTargets(recording, course, name, kind);
+  return cached
+    ? cached.map((t) => toTarget({ name: t.name, cap: t.cap, tool, fromCache: true }))
+    : null;
 }

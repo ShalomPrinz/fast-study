@@ -12,7 +12,8 @@ the location. `siteAuthFor(url)` is the same, for a URL that must live under the
 
 `POST /config {moodle_site}` with a different site (`setSite`) resets auth fully: it disconnects the
 old instance (the token file goes, a pending headed login closes), drops the cached instance, and
-closes the plain browser session under its lock, so an autologin cookie cannot carry across sites.
+closes the plain browser session under its lock and drops the kept autologin, so an autologin cookie
+cannot carry across sites.
 The same site is a no-op, and a blank one leaves no site configured. The token record names its
 `site`, and `loadToken()` treats a record for any other site as absent, so a leftover can never be
 sent to the wrong host.
@@ -84,8 +85,8 @@ signal: it says nothing about the token, so it leaves the flag alone and answers
 ## Videostream authenticates on demand
 
 Discovery is stateless WS calls with no browser. Only sniffing a `videostream` `.mp4` needs a
-logged-in browser: `ensureAutologin` mints a one-shot no-MFA login from the `privatetoken` and the
-stored `userid`, navigates it in the challenge window and copies the window's cookies into the plain
-session ([MOODLE.md](MOODLE.md#autologin)). Autologin
-is rate-limited (~1/user/6 min), so the cookie is treated as fresh for ~20 min via the session's
-`isAuthed()` / `markAuthed()`, reset on `close()`.
+logged-in browser: `autologin` (`http/server.js`) mints a one-shot no-MFA login from the
+`privatetoken` and the stored `userid` and navigates it in the challenge window, where the capture
+then runs ([MOODLE.md](MOODLE.md#autologin)). Autologin is rate-limited (~1/user/6 min), so its site
+cookies are kept in memory for ~20 min and added to the next capture's browser — the window's own
+session cookies die when it idles closed. A site change, `/auth/disconnect` and `POST /close` drop them.

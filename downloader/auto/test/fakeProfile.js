@@ -27,6 +27,40 @@ function fakeDocument() {
   return doc;
 }
 
+export const MP4_URL = 'https://bucket.objectstorage.test/lecture.mp4';
+
+// A second page of the window, as a capture opens one: it sees the player's .mp4 request on load.
+function fakeCapturePage(context) {
+  const page = {
+    visited: [],
+    closed: false,
+    url: () => page.visited.at(-1) ?? 'about:blank',
+    goto: async (u) => {
+      if (context.closed) throw closedError();
+      page.visited.push(u);
+    },
+    evaluate: async () => {},
+    waitForRequest: async () =>
+      context.closed
+        ? null
+        : {
+            url: () => MP4_URL,
+            headers: () => ({ referer: page.url(), 'user-agent': context.opts.userAgent }),
+            response: async () => null,
+          },
+    close: async () => {
+      page.closed = true;
+    },
+  };
+  context.capturePages.push(page);
+  return page;
+}
+
+export const closedError = () =>
+  Object.assign(new Error('Target page, context or browser has been closed'), {
+    name: 'TargetClosedError',
+  });
+
 export const SESSION_COOKIE = {
   name: 'MoodleSessionprod',
   value: 's',
@@ -62,6 +96,13 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       page,
       document: fakeDocument(),
       cookieQueries: [],
+      added: [],
+      capturePages: [],
+      addCookies: async (cookies) => context.added.push(...cookies),
+      newPage: async () => {
+        if (context.closed) throw closedError();
+        return fakeCapturePage(context);
+      },
       cookies: async (u) => {
         context.cookieQueries.push(u);
         return [SESSION_COOKIE];

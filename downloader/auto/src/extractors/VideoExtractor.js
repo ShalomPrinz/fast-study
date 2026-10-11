@@ -32,7 +32,8 @@ export class VideoExtractor {
   /**
    * Which browser profile this extractor's captureVideo needs (dependency injection
    * for the session registry). Default 'plain' = headless Chrome; the zoom player needs
-   * 'zoom' (headed chrome+stealth, hidden per platform). @returns {'plain'|'zoom'}
+   * 'zoom' (headed chrome+stealth, hidden per platform); videostream 'moodle' (the challenge
+   * window, docs/SESSIONS.md). @returns {'plain'|'zoom'|'moodle'}
    */
   get browserProfile() {
     return 'plain';

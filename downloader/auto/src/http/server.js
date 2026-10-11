@@ -24,6 +24,7 @@ import { loadStealthChromium } from '../browser/zoomBrowser.js';
 import {
   listRecordings,
   resolveRecording,
+  replayRecording,
   resolveMoodleFile,
   resolveYtDlp,
   resolveDriveFile,
@@ -99,6 +100,11 @@ function toItem(recording) {
 // Autologin is rate-limited (~1/user/6 min), so its cookie is reused for this long — well under
 // the Moodle session lifetime, so it stays valid within the window.
 const AUTOLOGIN_TTL_MS = 20 * 60 * 1000;
+
+// The last autologin's site cookies, re-added to whichever browser captures next while fresh: the
+// window's session cookies die with it (60 s idle), and a new key is rate-limited (~1/user/6 min).
+// Dropped on a site change, a disconnect and POST /close.
+let login = null;
 
 // Thin wrapper over Express's res.status().json() so the handler call sites stay
 // send(res, status, body) — no manual writeHead / JSON.stringify.
@@ -234,7 +240,10 @@ export async function handleConfig(req, res) {
     if ((raw !== null && typeof raw !== 'string') || (raw && !site)) {
       return send(res, 400, invalid('moodle_site', 'moodle_site must be an http(s) URL or blank'));
     }
-    if (await setSite(site)) logResult('/config', `moodle site → ${site ?? '(none)'}; auth reset`);
+    if (await setSite(site)) {
+      login = null;
+      logResult('/config', `moodle site → ${site ?? '(none)'}; auth reset`);
+    }
     applied.push('moodle_site');
   }
   if ('error_reports' in body) {
@@ -360,6 +369,7 @@ export async function handleAuthDisconnect(req, res) {
   const found = siteOr(res);
   if (!found) return;
   await found.auth.disconnect();
+  login = null;
   send(res, 200, { connected: false });
 }
 
@@ -643,14 +653,14 @@ async function resolveItem(req, res) {
   }
   if (!recording.pageUrl) return send(res, 400, invalid('ref', 'ref is not downloadable'));
 
-  // The extractor picks its own browser profile (DI): videostream runs on the plain
-  // headless session; zoom runs on the headed chrome+stealth session.
+  // The extractor picks its own browser profile (DI): zoom runs on the headed chrome+stealth
+  // session, videostream in the Moodle browser (the plain headless session when there is none).
   const profile = resolveExtractorForRecording(recording)?.browserProfile ?? 'plain';
-  const session = getSession(profile);
 
   // Zoom shares are gated by a passcode, not the Moodle login — no university and no login; captureVideo
   // clears the gate on a blank session. See docs/ZOOM.md.
   if (recording.strategy === 'zoom') {
+    const session = getSession(profile);
     // Per-course default with an optional per-lecture override; null → the gate throws
     // PasscodeError('missing') so the page can prompt. See docs/ZOOM.md.
     const passcode = passcodes.lookup(course, name);
@@ -671,32 +681,23 @@ async function resolveItem(req, res) {
     return send(res, 200, { media: 'video', targets });
   }
 
-  // videostream: sniff the in-site .mp4 in a headless browser holding the cookie of a Moodle
-  // autologin (privatetoken → one-shot cookie, no MFA) run in the Moodle browser. See docs/MOODLE.md.
+  // videostream: sniff the in-site .mp4 in a browser holding the cookie of a Moodle autologin
+  // (privatetoken → one-shot cookie, no MFA). See docs/MOODLE.md § Autologin.
   const found = siteOr(res, recording.pageUrl);
   if (!found) return;
   const { site, auth } = found;
   const token = await tokenOr(res, auth, '/resolve');
   if (!token) return;
 
-  await session.open();
   let targets;
   try {
-    targets = await session.withLock(async () => {
-      try {
-        await ensureAutologin(session, site, token);
-        return await resolveRecording(session.page, {
-          recording,
-          course,
-          name,
-          kind,
-          ref: rowRef,
-          ...opts,
-        });
-      } finally {
-        // Off the Moodle page before the lock frees, so the idle session sends the site nothing.
-        await session.page?.goto('about:blank').catch(() => {});
-      }
+    targets = await captureVideostream(site, token, profile, {
+      recording,
+      course,
+      name,
+      kind,
+      ref: rowRef,
+      ...opts,
     });
   } catch (e) {
     // The autologin surfaces a dead token (→ 401) or a wall the Moodle browser could not pass (→ 503,
@@ -723,21 +724,18 @@ function captchaBlock(detail) {
   return err;
 }
 
-// Autologin unless a prior cookie is still fresh, in the Moodle browser (else the plain session); see
-// docs/MOODLE.md § Autologin. MUST run inside the session lock (navigates the shared page).
-async function ensureAutologin(session, site, token) {
-  if (session.isAuthed()) return;
-  if (!token?.privatetoken) {
-    throw new CodedError(
-      'moodle_token_no_privatetoken',
-      {},
-      'token has no privatetoken; Reconnect to enable videostream capture',
-    );
-  }
-  // The window opens first, so a captcha there costs no key: the key is rate-limited (~1/6 min).
-  // An open window already on the site is used as is: openChallenge would reload its root.
-  const opened = challengeRoute(site)?.onSite() ? 'ready' : await openChallenge(site);
-  if (opened === 'captcha') throw captchaBlock('the Moodle browser is on the captcha');
+const keptLogin = (site) => (login?.site === site && Date.now() < login.until ? login : null);
+
+async function rememberLogin(site, context) {
+  login = { site, cookies: await context.cookies(site), until: Date.now() + AUTOLOGIN_TTL_MS };
+  return { cookies: login.cookies };
+}
+
+// Autologin unless a kept one is fresh, navigated in the Moodle browser → `{ cookies }` once logged in,
+// or `{ url }` for the plain session to spend (no window, or it closed after the key).
+async function autologin(site, token) {
+  const kept = keptLogin(site);
+  if (kept) return { cookies: kept.cookies };
   // userid was stored at login, from the same site info the post-login check read.
   const { userid } = token;
   // Through the window while it is up; the key is IP-bound, and Node and the window share the IP.
@@ -750,14 +748,59 @@ async function ensureAutologin(session, site, token) {
   const win = challengeRoute(site);
   const landed = win ? await win.visit(u.toString()) : false;
   if (landed === 'captcha') throw captchaBlock('the autologin landed on the captcha');
-  if (landed === 'ready') {
-    // The capture still runs in the plain session, so it takes the window's session cookie.
-    await session.context.addCookies(await win.context.cookies(site));
-  } else {
-    // No window, or it closed after the key: the key is IP-bound, so the plain session can spend it.
-    await session.goto(u.toString());
+  if (landed !== 'ready') return { url: u.toString() };
+  return rememberLogin(site, win.context);
+}
+
+// Log in, then capture in a second page of the Moodle browser, or in the plain session with no window
+// (none could launch, or it closed under the login or the capture). See docs/MOODLE.md § Autologin.
+async function captureVideostream(site, token, profile, args) {
+  // A replay-cache hit needs no browser: no window opens and no key is spent.
+  const replayed = replayRecording(args);
+  if (replayed) return replayed;
+  if (!keptLogin(site) && !token?.privatetoken) {
+    throw new CodedError(
+      'moodle_token_no_privatetoken',
+      {},
+      'token has no privatetoken; Reconnect to enable videostream capture',
+    );
   }
-  session.markAuthed(AUTOLOGIN_TTL_MS);
+  if (profile === 'moodle') {
+    // The window opens first, so a captcha there costs no key: the key is rate-limited (~1/6 min).
+    // An open window already on the site is used as is: openChallenge would reload its root.
+    const opened = challengeRoute(site)?.onSite() ? 'ready' : await openChallenge(site);
+    if (opened === 'captcha') throw captchaBlock('the Moodle browser is on the captcha');
+  }
+  const done = await autologin(site, token);
+  const win = profile === 'moodle' && done.cookies ? challengeRoute(site) : null;
+  if (win) {
+    try {
+      return await win.withPage(async (page) => {
+        await win.context.addCookies(done.cookies);
+        return resolveRecording(page, args);
+      });
+    } catch (err) {
+      // Closed under the capture: the plain session carries the kept login instead.
+      if (!win.gone(err)) throw err;
+    }
+  }
+  const session = getSession('plain');
+  await session.open();
+  return session.withLock(async () => {
+    try {
+      // The key is IP-bound, and the plain session shares the window's IP, so it can spend it.
+      if (done.url) {
+        await session.goto(done.url);
+        await rememberLogin(site, session.context);
+      } else {
+        await session.context.addCookies(done.cookies);
+      }
+      return await resolveRecording(session.page, args);
+    } finally {
+      // Off the Moodle page before the lock frees, so the idle session sends the site nothing.
+      await session.page?.goto('about:blank').catch(() => {});
+    }
+  });
 }
 
 // HEAD of a resolved Moodle file, answered from the size its resolve learned — no Moodle call, so
@@ -859,5 +902,6 @@ export function handleZoomPasscode(req, res) {
 export async function handleClose(req, res) {
   logReq('POST', '/close');
   await closeAllSessions();
+  login = null;
   send(res, 200, {});
 }
