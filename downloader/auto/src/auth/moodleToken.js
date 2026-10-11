@@ -7,6 +7,7 @@ import { CodedError, UnsupportedError, failureOf } from '../lib/errors.js';
 import { reportUnsupportedSite } from '../../siteReport.js';
 import { moodleGate, enterMoodle, gateError } from '../moodle/gate.js';
 import { reportBlock, closeChallenge } from '../moodle/challenge.js';
+import { forgetSessionCookies } from './sessionCookies.js';
 
 const SERVICE = 'moodle_mobile_app';
 const URLSCHEME = 'moodlemobile';
@@ -168,8 +169,10 @@ export class MoodleToken extends AuthProvider {
     // A disconnect or site switch while waiting superseded this login.
     if (gen !== this._gen) return lease.release();
     this._error = null;
-    // A new login ends block mode; the window's profile, and its clearance, is kept.
+    // A new login ends block mode; the window's profile, and its clearance, is kept, but the saved
+    // Moodle session goes, since the login may be another account.
     await closeChallenge();
+    forgetSessionCookies();
     let pending;
     try {
       pending = await lease.run(() => this._openLogin());

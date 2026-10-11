@@ -5,15 +5,15 @@ grab, the WS API, autologin) is [MOODLE.md](MOODLE.md).
 
 `MoodleToken` (`src/auth/moodleToken.js`) is the provider, for **one site at a time** — the configured
 one ([MOODLE.md](MOODLE.md#the-configured-site)). `siteAuth()` in `core/registry.js` caches the
-instance for that site, so every request and the background login share one instance, and hands it `statePath('auth', 'moodle-token.json')`, so one place decides
-the location. `siteAuthFor(url)` is the same, for a URL that must live under the site.
+instance for that site, so every request and the background login share one instance, and hands it `tokenPath()` (`auth/tokenStore.js`), so one place decides
+the location; the saved Moodle session reads the token's user from there too. `siteAuthFor(url)` is the same, for a URL that must live under the site.
 
 ## Switching site
 
 `POST /config {moodle_site}` with a different site (`setSite`) resets auth fully: it disconnects the
-old instance (the token file goes, a pending headed login closes), drops the cached instance, and
-closes the plain browser session under its lock and drops the kept autologin, so an autologin cookie
-cannot carry across sites.
+old instance (the token file goes, a pending headed login closes, the challenge window's profile and
+the saved Moodle session go), drops the cached instance, and closes the plain browser session under
+its lock, so a session cookie cannot carry across sites.
 The same site is a no-op, and a blank one leaves no site configured. The token record names its
 `site`, and `loadToken()` treats a record for any other site as absent, so a leftover can never be
 sent to the wrong host.
@@ -70,7 +70,7 @@ sent to the wrong host.
 - `status()` — no browser, no API call: `{ connected: a token for this site exists, expired: markExpired flag, unverified: the token awaits verification }`.
 - `disconnect()` — deletes the token file, clears the flag and the last error, cancels a login in
   flight (window closed, no failure reported), and closes block mode's window, then deletes its
-  profile (`statePath('moodle-profile')`); a missing token is success. It never calls Moodle's revoke: a server-side revoke can fail _after_
+  profile (`statePath('moodle-profile')`) and the saved Moodle session; a missing token is success. It never calls Moodle's revoke: a server-side revoke can fail _after_
   the local delete, leaving the two out of sync with no way to reconcile them.
 
 ## Expiry is only knowable at call time
@@ -82,11 +82,28 @@ and the videostream resolve map (`invalidToken(err)`) to `markExpired()` + `401 
 A fresh login or a successful verification clears the flag. A bot-protection challenge (`blocked(err)`) is deliberately _not_ that
 signal: it says nothing about the token, so it leaves the flag alone and answers `503`.
 
-## Videostream authenticates on demand
+## Videostream reuses the Moodle session
 
 Discovery is stateless WS calls with no browser. Only sniffing a `videostream` `.mp4` needs a
-logged-in browser: `autologin` (`http/server.js`) mints a one-shot no-MFA login from the
-`privatetoken` and the stored `userid` and navigates it in the challenge window, where the capture
-then runs ([MOODLE.md](MOODLE.md#autologin)). Autologin is rate-limited (~1/user/6 min), so its site
-cookies are kept in memory for ~20 min and added to the next capture's browser — the window's own
-session cookies die when it idles closed. A site change, `/auth/disconnect` and `POST /close` drop them.
+logged-in browser, and it reuses the Moodle session the way moodle-dl does, autologin only when it is
+dead ([MOODLE.md](MOODLE.md#autologin)):
+
+- **Saved session.** `MoodleSessionprod` and the site's other session cookies die with the browser
+  (a relaunch comes back logged out), so after a successful autologin `auth/sessionCookies.js` saves
+  the site's cookies with no expiry (name, value, domain, path, `secure`, `httpOnly`, `sameSite`) to
+  `statePath('auth', 'moodle-session.json')`, encrypted as the token is (`auth/tokenStore.js`) and
+  tied to the site and the stored token's `userid` — another user, or a token with no `userid`, reads
+  as no saved session. Persistent cookies (Radware's clearance) are left to the window's profile.
+  Cookie values are never logged.
+- **Restore.** The challenge window gets them with `context.addCookies` at every launch, before its
+  first page; the plain session before each capture it stands in for.
+- **Dead session.** The module page landing on `/login/` (`videostream_login_required`) means the
+  session is dead: `autologin` (`http/server.js`) mints a key from the `privatetoken` and the stored
+  `userid`, navigates it in the challenge window (or the plain session without one), saves the
+  cookies, and the capture is retried once. Landing on the login again answers
+  `500 videostream_login_required {url}`. Autologin is rate-limited (~1/user/6 min) and IP-bound, so
+  it never runs while the saved session is alive. A token with no `privatetoken` still captures on a
+  saved session; without one it is `moodle_token_no_privatetoken`.
+- **Lifetime.** Deleted with the window's profile on `disconnect()` and on a site change, and on its
+  own at a new `connect()` (which keeps the profile), since the new login may be another account;
+  kept across `POST /close` and a restart, which is what it is for.

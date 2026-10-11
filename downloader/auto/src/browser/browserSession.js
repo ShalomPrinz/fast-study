@@ -25,8 +25,8 @@ export class BrowserSession {
 
   /**
    * Lazily launch the browser (via the injected launcher) + a blank context. No-op if
-   * already open. No cookies are injected here — the plain profile takes the autologin's when it
-   * stands in for the Moodle browser (docs/MOODLE.md); the zoom profile is passcode-gated.
+   * already open. No cookies are injected here — the plain profile takes the saved Moodle session when
+   * it stands in for the Moodle browser (docs/AUTH.md); the zoom profile is passcode-gated.
    */
   async open() {
     if (this.page) return;

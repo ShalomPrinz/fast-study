@@ -314,6 +314,7 @@ services; `state` stays as the developer-facing reason.
 | `extractors/YoutubePlaylistExtractor.js` | `playlist_list_failed` | `detail`              | user  |
 | `extractors/YoutubePlaylistExtractor.js` | `playlist_empty`     | `url`                    | user  |
 | `extractors/VideostreamExtractor.js` | `videostream_no_media_request` | `url`              | user  |
+| `extractors/VideostreamExtractor.js` | `videostream_login_required` | `url`               | user  |
 | `extractors/ZoomExtractor.js`   | `zoom_no_media_request`       | `url`                    | user  |
 | `browser/zoomBrowser.js`        | `xvfb_unavailable`            | `detail`                 | user  |
 | `http/server.js`                | `moodle_token_no_privatetoken`| —                        | user  |

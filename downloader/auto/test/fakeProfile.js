@@ -29,15 +29,24 @@ function fakeDocument() {
 
 export const MP4_URL = 'https://bucket.objectstorage.test/lecture.mp4';
 
-// A second page of the window, as a capture opens one: it sees the player's .mp4 request on load.
+// Where Moodle sends a page load with no live session, and how a fake browser gets one: an autologin
+// navigation, or the session cookie put back.
+export const loginUrlOf = (u) => `${new URL(u).origin}/login/index.php`;
+export const isAutologin = (u) => u.includes('/autologin.php');
+export const hasSession = (cookies) => cookies.some((c) => c.name === 'MoodleSessionprod');
+
+// A second page of the window, as a capture opens one: it sees the player's .mp4 request on load,
+// or lands on the login when the browser holds no Moodle session.
 function fakeCapturePage(context) {
   const page = {
     visited: [],
+    landed: null,
     closed: false,
-    url: () => page.visited.at(-1) ?? 'about:blank',
+    url: () => page.landed ?? 'about:blank',
     goto: async (u) => {
       if (context.closed) throw closedError();
       page.visited.push(u);
+      page.landed = context.loggedIn ? u : loginUrlOf(u);
     },
     evaluate: async () => {},
     waitForRequest: async () =>
@@ -80,6 +89,7 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       goto: async (u) => {
         context.visited.push(u);
         url = state.lands === 'site' ? u : CAPTCHA_URL;
+        if (state.lands === 'site' && isAutologin(u)) context.loggedIn = true;
         context.document = fakeDocument();
       },
       evaluate: async (fn, arg) => {
@@ -98,7 +108,12 @@ export function fakeProfile(t, { lands = 'site', idleMs, captchaMs } = {}) {
       cookieQueries: [],
       added: [],
       capturePages: [],
-      addCookies: async (cookies) => context.added.push(...cookies),
+      loggedIn: false,
+      addCookies: async (cookies) => {
+        context.addedBeforeVisit ??= context.visited.length === 0;
+        context.added.push(...cookies);
+        if (hasSession(cookies)) context.loggedIn = true;
+      },
       newPage: async () => {
         if (context.closed) throw closedError();
         return fakeCapturePage(context);

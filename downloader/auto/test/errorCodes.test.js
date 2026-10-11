@@ -444,11 +444,18 @@ test('a walled videostream autologin with no browser is 503 site_blocked, never 
   t.after(() => fs.rmSync(TOKEN_FILE, { force: true }));
   // A stand-in page, so the plain session never launches a browser.
   const session = getSession('plain');
+  // It holds no Moodle session, so the module page lands on the login and the autologin runs.
   t.mock.method(session, 'open', async () => {
-    session.page = { goto: async () => {} };
+    session.context = { addCookies: async () => {}, cookies: async () => [] };
+    session.page = {
+      goto: async () => {},
+      url: () => 'https://lemida.biu.ac.il/login/index.php',
+      waitForRequest: async () => null,
+      evaluate: async () => {},
+    };
   });
   t.after(() => {
-    session.page = null;
+    session.page = session.context = null;
   });
   stubFetch(t, async () => ({
     status: 200,

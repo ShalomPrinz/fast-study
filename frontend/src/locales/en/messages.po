@@ -708,7 +708,7 @@ msgstr "Couldn't load your settings. Part of FastStudy isn't responding."
 msgid "Couldn't save all settings. Restart the app and try again."
 msgstr "Couldn't save all settings. Restart the app and try again."
 
-#: src/shared/i18n/serviceErrors.ts:242
+#: src/shared/i18n/serviceErrors.ts:246
 msgid "Couldn't start capturing the Zoom recording. Try again."
 msgstr "Couldn't start capturing the Zoom recording. Try again."
 
@@ -1232,7 +1232,7 @@ msgstr "Material"
 msgid "Materials"
 msgstr "Materials"
 
-#: src/shared/i18n/serviceErrors.ts:251
+#: src/shared/i18n/serviceErrors.ts:255
 msgid "Moodle refused the request."
 msgstr "Moodle refused the request."
 
@@ -1288,7 +1288,7 @@ msgstr "No Lectures"
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
-#: src/shared/i18n/serviceErrors.ts:250
+#: src/shared/i18n/serviceErrors.ts:254
 msgid "No login is in progress. Connect again."
 msgstr "No login is in progress. Connect again."
 
@@ -1336,7 +1336,7 @@ msgstr "No university is chosen yet. Choose yours in Settings."
 msgid "No video was captured on that page. Play it once by hand and try again."
 msgstr "No video was captured on that page. Play it once by hand and try again."
 
-#: src/shared/i18n/serviceErrors.ts:237
+#: src/shared/i18n/serviceErrors.ts:241
 msgid "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 msgstr "No video was captured on that Zoom page. The passcode or the player may need a manual start."
 
@@ -1928,15 +1928,19 @@ msgstr "The following files will be deleted:"
 msgid "The following files will be re-generated:"
 msgstr "The following files will be re-generated:"
 
+#: src/shared/i18n/serviceErrors.ts:237
+msgid "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
+msgstr "The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle."
+
 #: src/features/downloads/components/AccountStatus.tsx:59
 msgid "The login didn't finish. Press Connect and sign in again."
 msgstr "The login didn't finish. Press Connect and sign in again."
 
-#: src/shared/i18n/serviceErrors.ts:247
+#: src/shared/i18n/serviceErrors.ts:251
 msgid "The login window was closed before login finished. Connect again."
 msgstr "The login window was closed before login finished. Connect again."
 
-#: src/shared/i18n/serviceErrors.ts:246
+#: src/shared/i18n/serviceErrors.ts:250
 msgid "The Moodle login timed out. Try connecting again."
 msgstr "The Moodle login timed out. Try connecting again."
 
@@ -2073,7 +2077,7 @@ msgstr "This error was reported automatically. Reference: <0>{eventId}</0>"
 msgid "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 msgstr "This Google Drive file is not shared publicly, or was removed. Open it in a browser and download it yourself."
 
-#: src/shared/i18n/serviceErrors.ts:243
+#: src/shared/i18n/serviceErrors.ts:247
 msgid "This Moodle connection can't download these recordings. Reconnect the account."
 msgstr "This Moodle connection can't download these recordings. Reconnect the account."
 
@@ -2089,7 +2093,7 @@ msgstr "This only needs to be done once."
 msgid "This recording needs a passcode."
 msgstr "This recording needs a passcode."
 
-#: src/shared/i18n/serviceErrors.ts:241
+#: src/shared/i18n/serviceErrors.ts:245
 msgid "This recording type can't be downloaded."
 msgstr "This recording type can't be downloaded."
 

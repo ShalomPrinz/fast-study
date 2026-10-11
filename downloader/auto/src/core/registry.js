@@ -1,7 +1,7 @@
 // Two concerns, matched at different granularities: auth for the one configured Moodle site,
 // extraction per activity (modType + target).
 import { EventEmitter } from 'node:events';
-import { statePath } from '@faststudy/runtime';
+import { tokenPath } from '../auth/tokenStore.js';
 import { CodedError } from '../lib/errors.js';
 import { MoodleToken } from '../auth/moodleToken.js';
 import { currentSite, setCurrentSite, underSite } from '../moodle/site.js';
@@ -15,7 +15,7 @@ import { MoodleFileExtractor } from '../extractors/MoodleFileExtractor.js';
 import { DirectUrlExtractor } from '../extractors/DirectUrlExtractor.js';
 
 // One token file whatever the site: the record names its site, and one for another reads as absent.
-const TOKEN_PATH = () => statePath('auth', 'moodle-token.json');
+const TOKEN_PATH = tokenPath;
 
 // The configured site's auth, reused across requests so connect()/complete() share one headed
 // browser. Rebuilt only when the site changes (setSite).

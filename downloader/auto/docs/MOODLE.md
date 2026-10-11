@@ -217,8 +217,8 @@ the size `HEAD` answers. `openPluginfile` applies the same checks when the strea
 ## Autologin
 
 A `videostream` `.mp4` is short-lived and token-gated _in the page_, so it still has to be sniffed in a
-logged-in browser — but instead of keeping a cookie session, the `privatetoken` mints a one-shot
-login with **no MFA**:
+logged-in browser. The capture reuses the saved Moodle session, and only when that is dead does the
+`privatetoken` mint a one-shot login with **no MFA**:
 
 ```
 POST tool_mobile_get_autologin_key   (privatetoken in a form-encoded body — as a GET param
@@ -230,23 +230,24 @@ navigate to module.url and sniff the .mp4
 
 `autologin.php` checks no UA; only the key call does.
 
-Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**; the
-cookie's freshness is cached ~20 min so back-to-back downloads don't trip the limit ([AUTH.md](AUTH.md)).
+Autologin is **rate-limited (~1 per 6 minutes per user)** and **bound to the requesting IP**, so it
+runs only when the module page lands on `/login/`: once, its session cookies saved, then the capture
+is retried once; still on the login is `videostream_login_required {url}`
+([AUTH.md](AUTH.md#videostream-reuses-the-moodle-session)).
 
-`captureVideostream` (`http/server.js`) logs in and captures in the Moodle browser — the challenge
-window — opening it hidden first, block or not (a replay-cache hit answers before any of it: no window, no key), so a captcha there (`503 site_blocked`, `challengeWindow:'captcha'`)
+`captureVideostream` (`http/server.js`) captures — and logs in when it must — in the Moodle browser, the
+challenge window, opening it hidden first, block or not (a replay-cache hit answers before any of it: no window, no key), so a captcha there (`503 site_blocked`, `challengeWindow:'captcha'`)
 costs no rate-limited key. The key call is an ordinary routed WS call: through the window while it is
 up, else Node with the window on a wall. Moodle answers it only to a `MoodleMobile` UA
 (`is_moodle_app()`, else `apprequired`), which both carry; a key Node mints is valid in the window,
 since both share the machine's IP. The navigation then runs in the window's root page, and the module
 page loads in a second, off-screen page of the window, closed after, where the `.mp4` request is
 sniffed. That file is off-site (BIU serves it from Oracle object storage, public, no cookies), so it
-stays a plain `curl` target with the request's headers ([GATE.md](GATE.md#files)). The login's site
-cookies are kept and re-added to a relaunched window ([AUTH.md](AUTH.md#videostream-authenticates-on-demand)).
+stays a plain `curl` target with the request's headers ([GATE.md](GATE.md#files)).
 With no window (`false`: no browser could launch), or one closed between the key and the navigation,
 the plain headless session spends the key and captures; a window closed under the capture leaves it
-to the plain session with the kept cookies. A navigation that fails any other way throws and keeps no
-login.
+to the plain session with the saved cookies. A navigation that fails any other way throws and saves
+nothing.
 
 Only a `videostream` row reaches autologin: `/resolve` refuses any row its earlier branches did not
 take and that is not `zoom` or `videostream` (an unexpanded playlist, a strategy this build does not

@@ -3,8 +3,12 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { statePath } from '@faststudy/runtime';
 
 const VERSION = 1;
+
+/** Where the Moodle token lives — the one place that decides it. */
+export const tokenPath = () => statePath('auth', 'moodle-token.json');
 
 // The key, null when unset; a set-but-malformed key throws rather than silently writing plaintext.
 function tokenKey() {

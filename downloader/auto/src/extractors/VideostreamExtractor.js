@@ -11,6 +11,15 @@ function endsWithMp4(url) {
   }
 }
 
+/** A landing on Moodle's login page: the browser holds no live session for the site. */
+export function onLoginPage(url) {
+  try {
+    return new URL(url).pathname.includes('/login/');
+  } catch {
+    return false;
+  }
+}
+
 const MP4_WAIT_MS = 20000;
 // The player's own answer names the file's size; no extra request is spent learning it.
 const SIZE_WAIT_MS = 5000;
@@ -92,6 +101,14 @@ export class VideostreamExtractor extends VideoExtractor {
       .catch(() => null);
 
     await page.goto(rec.pageUrl, { waitUntil: 'load' });
+    // The route autologins on this and retries once; a second one reaches the client.
+    if (onLoginPage(page.url())) {
+      throw new CodedError(
+        'videostream_login_required',
+        { url: rec.pageUrl },
+        `${rec.pageUrl} redirected to the Moodle login`,
+      );
+    }
 
     let request = await mp4Request;
     if (!request) {

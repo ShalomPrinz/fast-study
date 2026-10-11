@@ -234,6 +234,10 @@ const MESSAGES: Record<string, MessageDescriptor> = {
   videostream_no_media_request: msg({
     message: 'No video was captured on that page. Play it once by hand and try again.',
   }),
+  videostream_login_required: msg({
+    message:
+      'The lecture page still asks for a Moodle sign-in, even after signing in automatically. Try again later, or reconnect Moodle.',
+  }),
   zoom_no_media_request: msg({
     message:
       'No video was captured on that Zoom page. The passcode or the player may need a manual start.',

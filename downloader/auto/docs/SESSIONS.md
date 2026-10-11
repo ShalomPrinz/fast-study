@@ -9,10 +9,10 @@ request. Model in `src/browser/browserSession.js`.
   `'zoom'`). `VideostreamExtractor` → `'moodle'` is no `BrowserSession`: it is the challenge window
   (`moodle/challenge.js`), and the capture runs in a second page of it (`withPage`), closed after,
   so the root page stays on the site and the idle close waits for it.
-- **Cookies only from the autologin.** Neither profile carries cookies of its own: the autologin's
-  site cookies are kept in memory and added to whichever browser captures — the challenge window,
-  or the `'plain'` session when there is none ([AUTH.md](AUTH.md)); the `'zoom'` profile is
-  passcode-gated, never Moodle-auth.
+- **Moodle session cookies from the saved session.** The challenge window gets the saved Moodle
+  session cookies at launch, before its first page, and the `'plain'` session before each capture
+  it stands in for ([AUTH.md](AUTH.md#videostream-reuses-the-moodle-session)); the `'zoom'` profile
+  is passcode-gated, never Moodle-auth.
 - **`withLock(fn)`** serializes only the quick navigate+sniff, so one call's navigation can't abort
   another's; the heavy download runs afterward in `server/`, so downloads still overlap. `open()` is
   deliberately outside the lock — a no-op once open, and a shared lock risks deadlock.
