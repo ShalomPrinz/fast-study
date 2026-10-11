@@ -19,10 +19,13 @@ const ALGEBRA = { name: 'Algebra', source_url: 'https://lemida.example/course/1'
 const CALCULUS = { name: 'Calculus', source_url: 'https://lemida.example/course/2' } as Course
 const ITEM = { ref: 'r1', title: 'Lecture 1', kind: 'lecture', media: 'video', section: 'Week 1' }
 
+// The last `/auth/events` frame the lock saw; a test reassigns it and rerenders to push one.
+let frame: { moodleBusy?: boolean } | null = null
+
 function wrapper({ children }: { children: ReactNode }) {
   return createElement(
     MoodleLockProvider,
-    { frame: null, children: null },
+    { frame, children: null },
     createElement(DownloadsSessionProvider, { sendUpdate, children }),
   )
 }
@@ -47,6 +50,7 @@ const listed = () => Response.json({ items: [ITEM] })
 const refused = () => new Response('{}', { status: 500, statusText: 'Internal Server Error' })
 
 beforeEach(() => {
+  frame = null
   sendUpdate.mockClear()
   toastConnectionError.mockClear()
 })
@@ -152,5 +156,32 @@ describe('a discovery refused by a busy Moodle lock', () => {
     expect(sendUpdate).not.toHaveBeenCalled()
     expect(result.current.state.selected).toBeNull()
     expect(result.current.state.pending).toBeNull()
+  })
+})
+
+describe('a waiting discovery', () => {
+  it('asks again once the lock frees instead of failing on busy', async () => {
+    stubFetch(
+      Response.json(
+        { status: 'busy', error: 'lock taken', code: 'moodle_busy', params: {} },
+        { status: 429 },
+      ),
+      listed(),
+    )
+    const { result, rerender } = render()
+
+    let done!: Promise<void>
+    act(() => {
+      done = result.current.actions.discover(ALGEBRA, { wait: true })
+    })
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0))
+      frame = { moodleBusy: false }
+      rerender()
+    })
+    await act(() => done)
+
+    expect(sendUpdate).not.toHaveBeenCalled()
+    expect(result.current.state.selected).toBe('Algebra')
   })
 })

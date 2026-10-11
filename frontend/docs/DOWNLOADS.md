@@ -133,6 +133,10 @@ coded refusal, or a generic "couldn't load" line. Each discovery takes a ticket;
 another course bumps it, so an answer the user walked away from writes nothing. The reconnect hint is
 the exception — an expired session is true whichever discovery found it.
 
+Saving a new source URL on the course `selected` or `pending` closes the panel and, unless the URL was
+cleared, rediscovers from the new one (`sourceChangeAction`, called from `CourseSourceRow`) with
+`{ wait: true }`, since nobody pressed it; a failed reload leaves the panel closed with discovery's usual toast. Other courses' edits touch nothing.
+
 ## Discovery
 
 `listRecordings(sourceUrl)` returns a flat `Item[]` in page order. `media` is `'video'` (lands as

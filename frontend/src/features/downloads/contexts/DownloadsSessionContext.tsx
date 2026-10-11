@@ -25,7 +25,7 @@ interface DownloadsSessionState {
 }
 
 interface DownloadsSessionActions {
-  discover: (course: Course) => Promise<void>
+  discover: (course: Course, opts?: { wait?: boolean }) => Promise<void>
   close: () => void
   reconnectHint: () => void
   resolveMedia: ResolveMedia
@@ -95,13 +95,17 @@ export function DownloadsSessionProvider({ sendUpdate, children }: ProviderProps
   // Promoted to `selected` only with items in hand, so every failure leaves the page as it was and
   // says so in a toast.
   const discover = useCallback(
-    async (course: Course) => {
+    async (course: Course, { wait = false }: { wait?: boolean } = {}) => {
       if (!course.source_url) return
       const id = ++discoveryId.current
       setPending(course.name)
       try {
         const url = course.source_url
-        const found = await withMoodleLock(() => listRecordings(url))
+        // `wait` is a reload nobody pressed (a source-URL edit): it waits out the lock instead of failing.
+        const found = await withMoodleLock(() => listRecordings(url), {
+          wait,
+          stale: () => id !== discoveryId.current,
+        })
         if (id !== discoveryId.current) return
         clear()
         setItems(found)

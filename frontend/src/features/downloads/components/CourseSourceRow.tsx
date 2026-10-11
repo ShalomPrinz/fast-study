@@ -9,6 +9,8 @@ import { useAuthStatus } from '@/features/downloads/contexts/AuthStatusContext'
 import { useMoodleLockState } from '@/features/downloads/contexts/MoodleLockContext'
 import { moodleLocked } from '@/features/downloads/utils/moodleLock'
 import { moodleBusyMessage } from '@/features/downloads/utils/downloadErrors'
+import { sourceChangeAction } from '@/features/downloads/utils/sourceChange'
+import { useDownloadsActions } from '@/features/downloads/contexts/DownloadsSessionContext'
 import InlineEditInput from '@/features/lectures/components/InlineEditInput'
 import Icon from '@/shared/components/Icon'
 import '@/styles/source-row.css'
@@ -29,6 +31,8 @@ interface Props {
 export default function CourseSourceRow({ course, onDiscover, selected, discovering }: Props) {
   const { t } = useLingui()
   const { refreshCourses } = useCourseTreeContext()
+  // The actions bag is identity-stable, so reading it costs the row no re-renders.
+  const { discover, close } = useDownloadsActions()
   const { status } = useAuthStatus()
   // Only a probe that came back "not connected" bars discovery. A probe still in flight or one that
   // failed says nothing, and guessing "disconnected" there would lock a working session out.
@@ -46,9 +50,13 @@ export default function CourseSourceRow({ course, onDiscover, selected, discover
 
   async function commit() {
     const url = edit.value.trim()
+    const oldUrl = course.source_url ?? ''
     setEditing(false)
-    if (url === (course.source_url ?? '')) return
+    if (url === oldUrl) return
     await setCourseSourceUrl(course.name, url)
+    const action = sourceChangeAction(!!selected, !!discovering, oldUrl, url)
+    if (action !== 'none') close()
+    if (action === 'reload') void discover({ ...course, source_url: url }, { wait: true })
     await refreshCourses()
   }
 
