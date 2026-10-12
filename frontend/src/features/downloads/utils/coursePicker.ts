@@ -1,7 +1,7 @@
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 import { failureOf } from '@/shared/utils/failure'
 import type { AuthStatus, EnrolledCourse } from '../services/autoDownloader'
-import { isBlockedError, isReconnectError, isUnsupportedError } from '../services/autoDownloader'
+import { isBlockedError, isReconnectError } from '../services/autoDownloader'
 
 // The picker's course list: still fetching, the account's courses, or none to offer (the site's
 // list is closed to the Moodle app, or the fetch failed).
@@ -46,8 +46,8 @@ export function addFormDraft(name: string, url: string): AddFormDraft {
   return { name, url, urlFixed: url !== '' }
 }
 
-// Why a pasted URL's check failed, as a failure the catalog can say. The typed refusals carry their
-// meaning in the error's class, so they are given their protocol code back; a busy lock is a coded one.
+// Why a pasted URL's check failed, as a failure the catalog can say. Reconnect and blocked carry their
+// meaning in the error's class, so they are given their protocol code back; the rest carry their own.
 export function checkFailure(err: unknown): ServiceFailure {
   if (isReconnectError(err)) return { message: err.message, code: 'moodle_reconnect_required' }
   if (isBlockedError(err)) {
@@ -57,6 +57,5 @@ export function checkFailure(err: unknown): ServiceFailure {
       params: { challengeWindow: err.challengeWindow },
     }
   }
-  if (isUnsupportedError(err)) return err
   return failureOf(err)
 }

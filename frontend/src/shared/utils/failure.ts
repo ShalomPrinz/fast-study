@@ -4,13 +4,19 @@ import { isConnectionError, RequestError } from '@/services/http'
 import { serviceErrorNode } from '@/shared/components/ServiceError'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
 
-// Any thrown value in the protocol's failure shape: a refused request carries its own code and
-// params, anything else has prose only and resolves through the fallback.
+// Any thrown value in the protocol's failure shape: a refused request, or any error carrying a string
+// `code` (a feature's typed refusal), keeps its code and params; anything else resolves through the fallback.
 export function failureOf(err: unknown): ServiceFailure {
   if (err instanceof RequestError) {
     return { message: err.message, code: err.code, params: err.params }
   }
+  if (carriesCode(err)) return { message: err.message, code: err.code, params: err.params ?? null }
   return { message: err instanceof Error ? err.message : String(err) }
+}
+
+// Duck-typed so `shared/` needs no import from a feature's error classes.
+function carriesCode(err: unknown): err is Error & ServiceFailure & { code: string } {
+  return err instanceof Error && typeof (err as { code?: unknown }).code === 'string'
 }
 
 // The one funnel for a refused request's wording. A ConnectionError is skipped — the client already

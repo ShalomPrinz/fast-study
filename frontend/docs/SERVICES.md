@@ -24,6 +24,8 @@ URL — a downed service shows one toast, not a stack — and rethrows. Call sit
 of their own; they ignore the throw or check `isConnectionError`. `shared/utils/failure.ts`'s
 `toastFailure` is that check plus the resolved sentence, and is the single funnel for a refused request's
 wording; `failureNode` is the same thing for a call site that shows it in place instead of toasting.
+Both read code and params through `failureOf`, which takes them off a `RequestError` or any error with a
+string `code` (a feature's typed refusal, e.g. `UnsupportedError`), so no caller special-cases one.
 
 ## `backend.ts` → FastAPI (:8000)
 

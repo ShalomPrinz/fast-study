@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { ConnectionError, RequestError } from '@/services/http'
+import { UnsupportedError } from '@/features/downloads/services/autoDownloader'
 import { failureOf, toastFailure } from './failure'
 
 // The toaster is the boundary under observation: that it fired at all is the whole assertion —
@@ -24,6 +25,17 @@ describe('failureOf', () => {
       code: 'file_not_found',
       params: { file: 'summary.md' },
     })
+  })
+
+  it("carries a typed refusal's code and params through, not only a RequestError's", () => {
+    const params = { site: 'moodle.example.ac.il', reason: 'not_moodle' }
+    const failure = failureOf(new UnsupportedError('not Moodle', 'moodle_site_unsupported', params))
+
+    expect(failure).toEqual({ message: 'not Moodle', code: 'moodle_site_unsupported', params })
+  })
+
+  it('leaves a codeless typed refusal with prose only', () => {
+    expect(failureOf(new UnsupportedError('not Moodle'))).toEqual({ message: 'not Moodle' })
   })
 
   it('leaves a plain error with prose only, so it falls back to it', () => {

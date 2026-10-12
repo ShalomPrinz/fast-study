@@ -106,6 +106,25 @@ describe("a failed discovery's toast", () => {
     expect(sendUpdate.mock.calls[0][1].props.lead).toBe('Algebra')
   })
 
+  it("renders an unsupported site's refusal in its own code, not the generic line", async () => {
+    const params = { site: 'lemida.example', reason: 'not_moodle' }
+    stubFetch(
+      Response.json(
+        { status: 'unsupported', message: 'not Moodle', code: 'moodle_site_unsupported', params },
+        { status: 422 },
+      ),
+    )
+    const { result } = render()
+
+    await act(() => result.current.actions.discover(ALGEBRA))
+
+    expect(sendUpdate).toHaveBeenCalledTimes(1)
+    expect(sendUpdate.mock.calls[0][1].props.failure).toMatchObject({
+      code: 'moodle_site_unsupported',
+      params,
+    })
+  })
+
   it('falls back to the generic line for a codeless refusal', async () => {
     stubFetch(refused())
     const { result } = render()
