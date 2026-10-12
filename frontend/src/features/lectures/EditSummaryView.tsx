@@ -19,7 +19,7 @@ import { isConnectionError } from '@/services/http'
 import { failureOf } from '@/shared/utils/failure'
 import ServiceError, { serviceErrorNode } from '@/shared/components/ServiceError'
 import type { ServiceFailure } from '@/shared/i18n/serviceErrors'
-import { lectureNotFound } from '@/shared/utils/notFound'
+import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import { lectureRoute } from '@/shared/utils/url'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
@@ -45,7 +45,7 @@ export default function EditSummaryView() {
   const { course, lecture, kind, files } = useLectureRoute()
   const navigate = useNavigate()
   const { getError, getInFlight, isInFlight } = useRunnerStatus()
-  const { courses, loaded: treeLoaded } = useCourseTreeContext()
+  const { courses, loaded: treeLoaded, loadFailed } = useCourseTreeContext()
   const lectureError: ServiceFailure | null = getError(course, lecture, kind)
 
   const [content, setContent] = useState('')
@@ -220,8 +220,8 @@ export default function EditSummaryView() {
   if (!course || !lecture) return null
 
   if (treeLoaded) {
-    const missing = lectureNotFound(courses, course, lecture, kind)
-    if (missing) return <NotFoundPanel message={missing} />
+    const miss = routeMiss(lectureNotFound(courses, course, lecture, kind), loadFailed)
+    if (miss) return <NotFoundPanel {...miss} />
   }
 
   const pdfUrl = cacheBustedUrl(

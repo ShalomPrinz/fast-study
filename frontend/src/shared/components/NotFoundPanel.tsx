@@ -4,10 +4,21 @@ import Icon from '@/shared/components/Icon'
 import '@/styles/panel.css'
 import './NotFoundPanel.css'
 
-export default function NotFoundPanel({ message }: { message: string }) {
+// A route target that isn't in the tree; `failed` says the tree itself failed to load, in the danger palette.
+export default function NotFoundPanel({
+  message,
+  failed = false,
+}: {
+  message: string
+  failed?: boolean
+}) {
   return (
-    <main className="main-view main-view--empty">
-      <div className="empty-state">
+    <main
+      className={
+        failed ? 'main-view main-view--empty main-view--failed' : 'main-view main-view--empty'
+      }
+    >
+      <div className={failed ? 'empty-state empty-state--error' : 'empty-state'}>
         <span className="empty-state-icon">
           <Icon icon="lecture" />
         </span>

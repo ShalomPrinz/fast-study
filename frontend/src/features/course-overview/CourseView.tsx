@@ -6,7 +6,7 @@ import { routeParam } from '@/shared/utils/routes'
 import { useReportOnce } from '@/shared/hooks/useReportOnce'
 import { useCourseTreeContext } from '@/shared/contexts/CourseTreeContext'
 import { useDriveEnabled } from '@/shared/contexts/SettingsContext'
-import { courseNotFound } from '@/shared/utils/notFound'
+import { courseNotFound, routeMiss } from '@/shared/utils/notFound'
 import { isLectureComplete } from '@/features/lectures/utils/lectureProgress'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
@@ -125,7 +125,7 @@ function CourseOverviewBody() {
 
 export default function CourseView() {
   const course = routeParam(useParams().course)
-  const { courses, loaded } = useCourseTreeContext()
+  const { courses, loaded, loadFailed } = useCourseTreeContext()
 
   if (!course) return null
 
@@ -138,8 +138,8 @@ export default function CourseView() {
   }
 
   // Guarded before the provider mounts, so a course that doesn't exist fires no overview requests.
-  const missing = courseNotFound(courses, course)
-  if (missing) return <NotFoundPanel message={missing} />
+  const miss = routeMiss(courseNotFound(courses, course), loadFailed)
+  if (miss) return <NotFoundPanel {...miss} />
 
   return (
     <CourseOverviewProvider course={course}>

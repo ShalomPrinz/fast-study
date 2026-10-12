@@ -117,6 +117,10 @@ The home route `/` is an `EmptyCard` asking to pick a lecture. With no active co
 (`shared/utils/`, shared with Search) swaps it for a hint to add one (`.main-view--no-courses`) once a load
 succeeds, or the danger-bordered "Courses failed to load." (`.main-view--failed`) whenever the latest load failed.
 
+A course, lecture or editor route whose target the tree lacks renders `NotFoundPanel`; `routeMiss`
+(`shared/utils/notFound.ts`) turns it into the same danger-bordered "Courses failed to load." (`.main-view--failed`)
+when the latest load failed, since a stale or empty tree can't prove the target is gone.
+
 `utils/lectureProgress.ts`: `isLectureComplete` (the last pipeline output exists, mirroring the backend's
 `final_output()`, whatever earlier file is gone) colours each lecture's dot and reads `Complete` on its page; `courseProgress` gives the header's `N/M`, `0/0` for an
 archived course so the badge stays off.

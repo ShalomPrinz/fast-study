@@ -769,6 +769,7 @@ msgstr "כתובת הקורס"
 #: src/features/downloads/DownloadsView.tsx:94
 #: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:236
+#: src/shared/utils/notFound.ts:35
 msgid "Courses failed to load."
 msgstr "לא הצלחנו לטעון את הקורסים."
 
@@ -1141,7 +1142,7 @@ msgid "Hide past courses"
 msgstr "הסתרת קורסים קודמים"
 
 #: src/app/ErrorBoundary.tsx:108
-#: src/shared/components/NotFoundPanel.tsx:18
+#: src/shared/components/NotFoundPanel.tsx:29
 msgid "Home"
 msgstr "דף הבית"
 

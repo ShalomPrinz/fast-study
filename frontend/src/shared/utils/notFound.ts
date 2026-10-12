@@ -23,3 +23,15 @@ export function lectureNotFound(
     ? t`"${course}" has no recitation named "${lecture}".`
     : t`"${course}" has no lecture named "${lecture}".`
 }
+
+// A target missing from a tree whose newest load failed is judged against a stale or empty tree, so
+// the honest message is the failed load; a target the held tree still has renders normally.
+export function routeMiss(
+  missing: string | null,
+  loadFailed: boolean,
+): { message: string; failed: boolean } | null {
+  if (!missing) return null
+  return loadFailed
+    ? { message: t`Courses failed to load.`, failed: true }
+    : { message: missing, failed: false }
+}

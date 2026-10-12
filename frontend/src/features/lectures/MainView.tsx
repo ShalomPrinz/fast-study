@@ -24,7 +24,7 @@ import { pdfBadge } from '@/features/lectures/utils/pdfBadge'
 import { stepState } from '@/features/lectures/utils/stepState'
 import { materialIndicator } from '@/features/lectures/utils/materialIndicator'
 import { canRunRemaining, filesComplete } from '@/features/lectures/utils/lectureProgress'
-import { lectureNotFound } from '@/shared/utils/notFound'
+import { lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 import NotFoundPanel from '@/shared/components/NotFoundPanel'
 import ConfirmModal from '@/shared/components/ConfirmModal'
 import PageHeader, { PageHeaderDot } from '@/shared/components/PageHeader'
@@ -73,7 +73,7 @@ function MaterialIndicator({
 export default function MainView() {
   const { t } = useLingui()
   const { course, lecture, kind, files, materials, transcribePartial } = useLectureRoute()
-  const { courses, loaded, refreshCourses } = useCourseTreeContext()
+  const { courses, loaded, loadFailed, refreshCourses } = useCourseTreeContext()
   const driveEnabled = useDriveEnabled()
   const compactActions = useCompactHeaderActions()
   const navigate = useNavigate()
@@ -95,8 +95,8 @@ export default function MainView() {
     )
   }
 
-  const missing = lectureNotFound(courses, course, lecture, kind)
-  if (missing) return <NotFoundPanel message={missing} />
+  const miss = routeMiss(lectureNotFound(courses, course, lecture, kind), loadFailed)
+  if (miss) return <NotFoundPanel {...miss} />
 
   // The tree has this lecture, so files is set; the guard is for the type only.
   if (!files) return null

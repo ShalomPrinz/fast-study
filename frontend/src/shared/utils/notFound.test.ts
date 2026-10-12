@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Course, Lecture } from '@/types'
-import { courseNotFound, lectureNotFound } from '@/shared/utils/notFound'
+import { courseNotFound, lectureNotFound, routeMiss } from '@/shared/utils/notFound'
 
 const lecture = (name: string) => ({ name }) as Lecture
 
@@ -49,5 +49,20 @@ describe('lectureNotFound', () => {
     expect(lectureNotFound(courses, 'Operating Systems', 'Lecture 1', 'recitation')).toBe(
       `"Operating Systems" has no recitation named "Lecture 1".`,
     )
+  })
+})
+
+describe('routeMiss', () => {
+  it('renders the page when the target is in the tree, failed refresh or not', () => {
+    expect(routeMiss(null, false)).toBeNull()
+    expect(routeMiss(null, true)).toBeNull()
+  })
+
+  it('keeps the not-found message after a good load', () => {
+    expect(routeMiss('gone', false)).toEqual({ message: 'gone', failed: false })
+  })
+
+  it('blames the failed load, not the target, when the newest load failed', () => {
+    expect(routeMiss('gone', true)).toEqual({ message: 'Courses failed to load.', failed: true })
   })
 })
