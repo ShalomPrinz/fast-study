@@ -366,7 +366,7 @@ msgstr "A section is waiting for a passcode"
 msgid "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 msgstr "A window opened on the university site. Solve the captcha there, and the connection finishes by itself."
 
-#: src/App.tsx:31
+#: src/App.tsx:35
 msgid "Add a course from Downloads or New course to get started"
 msgstr "Add a course from Downloads or New course to get started"
 
@@ -765,7 +765,8 @@ msgstr "Course sources"
 msgid "Course URL"
 msgstr "Course URL"
 
-#: src/App.tsx:33
+#: src/App.tsx:37
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:44
 #: src/features/search/SearchView.tsx:236
 msgid "Courses failed to load."
 msgstr "Courses failed to load."
@@ -1328,7 +1329,7 @@ msgstr "No Google Drive folder is set. Choose one in Settings."
 msgid "No Lectures"
 msgstr "No Lectures"
 
-#: src/features/lectures/sidebar/LecturesTreePane.tsx:44
+#: src/features/lectures/sidebar/LecturesTreePane.tsx:48
 msgid "No lectures yet. Add one from Downloads, or add a course manually."
 msgstr "No lectures yet. Add one from Downloads, or add a course manually."
 
@@ -1757,7 +1758,7 @@ msgstr "Searches the summaries of the course picked in the field"
 msgid "Section {0} is waiting for a passcode"
 msgstr "Section {0} is waiting for a passcode"
 
-#: src/App.tsx:35
+#: src/App.tsx:39
 msgid "Select a lecture to get started"
 msgstr "Select a lecture to get started"
 

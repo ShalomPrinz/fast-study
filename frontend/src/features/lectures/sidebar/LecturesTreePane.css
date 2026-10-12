@@ -34,3 +34,12 @@
   color: var(--sidebar-muted);
   font-size: var(--fs-body);
 }
+
+/* Bordered on --danger-soft: --danger text straight on the dark pane is under 3:1. */
+.tree-pane-empty.tree-pane-empty--failed {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--danger);
+  border-radius: var(--r-sm);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
