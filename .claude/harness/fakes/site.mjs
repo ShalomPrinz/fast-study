@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import https from 'node:https';
 import path from 'node:path';
-import { FAILURE_ROWS, FAKE_MOODLE_SITE } from '../lib/env.mjs';
+import { FAILURE_ROWS, FAKE_COURSE_URL, FAKE_MOODLE_SITE } from '../lib/env.mjs';
 import { createSiteControl } from './site-control.mjs';
 
 const HARNESS = process.env.HARNESS_DIR;
@@ -19,11 +19,12 @@ const PDF = path.join(HARNESS, 'fixtures', 'handout.pdf');
 const site = createSiteControl();
 
 const SITE = FAKE_MOODLE_SITE;
+const COURSE_ID = Number(new URL(FAKE_COURSE_URL).searchParams.get('id'));
 
 // One course, shaped exactly like core_course_get_contents: sections of modules, names as HTML.
-// It carries a row per path the downloader can take — direct mp4, YouTube, PDF resource, a plain
-// web page (unsupported), a dead link, a 403 and a mid-download drop — plus Hebrew names and one
-// multi-file resource.
+// It carries a row per path the downloader can take — direct mp4, an in-site videostream, YouTube, a
+// PDF resource, a plain web page (unsupported), a dead link, a 403 and a mid-download drop — plus
+// Hebrew names and one multi-file resource.
 function courseContents() {
   return [
     {
@@ -34,6 +35,7 @@ function courseContents() {
         mod('url', 'הקלטה 1 — מבוא', `${SITE}/media/lecture-01.mp4`),
         mod('url', 'הקלטה 2 — סיבוכיות', `${SITE}/media/lecture-02.mp4`),
         mod('url', 'הקלטה 3 — עצים', `${SITE}/media/הרצאה-03.mp4`),
+        videostream(VIDEOSTREAM_NAME),
         mod('url', 'הקלטות הקורס ביוטיוב', 'https://www.youtube.com/playlist?list=huntbugs'),
         mod('url', 'קישור לסילבוס', `${SITE}/page/syllabus.html`),
         mod('url', FAILURE_ROWS.gone, `${SITE}/gone/lecture-09.mp4`),
@@ -72,6 +74,52 @@ function mod(modname, name, fileurl) {
   };
 }
 
+// A videostream activity lists no contents: its .mp4 is named only by tool_mobile_get_content.
+const VIDEOSTREAM_NAME = 'הקלטה 4 — גרפים';
+const VIDEOSTREAM_CMID = Math.abs(hash(VIDEOSTREAM_NAME));
+
+function videostream(name) {
+  const id = Math.abs(hash(name));
+  return { id, modname: 'videostream', name, url: `${SITE}/mod/videostream/view.php?id=${id}` };
+}
+
+// mod_videostream's Moodle-app page, shaped like the real reply: the template's <video> names the
+// .mp4 in a <source>, served from /media/ like the course's direct recordings.
+function videostreamContent() {
+  const html = `<div class="mod-videostream-mobile">
+    <video id="my-player" controls preload="auto" poster="${SITE}/local/video_directory/thumb.php?id=4">
+    <source src="${SITE}/media/videostream-04.mp4" type="video/mp4" />
+    <track kind="subtitles" srclang="he" src="${SITE}/local/video_directory/subs.php?video_id=4&amp;language=he" default />
+    </video>
+</div>`;
+  return {
+    templates: [{ id: 'main', html }],
+    javascript: '',
+    otherdata: [],
+    files: [],
+    restrict: [],
+    disabled: false,
+  };
+}
+
+// The POSTed form of a WS call: its params arrive in the body, not the query.
+function formBody(req) {
+  return new Promise((resolve) => {
+    const parts = [];
+    req.on('data', (part) => parts.push(part));
+    req.on('end', () => resolve(new URLSearchParams(Buffer.concat(parts).toString('utf8'))));
+  });
+}
+
+// The `args[i][name]`/`args[i][value]` pairs of tool_mobile_get_content, as one object.
+function contentArgs(form) {
+  const args = {};
+  for (let i = 0; form.has(`args[${i}][name]`); i++) {
+    args[form.get(`args[${i}][name]`)] = form.get(`args[${i}][value]`);
+  }
+  return args;
+}
+
 function resource(name, files) {
   return {
     id: Math.abs(hash(name)),
@@ -91,6 +139,15 @@ function hash(value) {
   let out = 0;
   for (const char of value) out = (out * 31 + char.codePointAt(0)) | 0;
   return out;
+}
+
+// Moodle's answer to a record that does not exist, under HTTP 200 like every WS fault.
+function invalidRecord(table) {
+  return {
+    exception: 'dml_missing_record_exception',
+    errorcode: 'invalidrecord',
+    message: `Can't find data record in database table ${table}.`,
+  };
 }
 
 function json(res, body, status = 200) {
@@ -286,7 +343,8 @@ function handle(req, res) {
       const functions = [
         'core_webservice_get_site_info',
         'core_course_get_contents',
-        'tool_mobile_get_autologin_key',
+        'core_course_get_course_module',
+        'tool_mobile_get_content',
       ].filter((name) => state.mode !== 'missing_function' || name !== 'core_course_get_contents');
       return json(res, {
         sitename: 'harness Moodle',
@@ -299,11 +357,26 @@ function handle(req, res) {
       });
     }
     if (fn === 'core_course_get_contents') return json(res, courseContents());
-    if (fn === 'tool_mobile_get_autologin_key') {
+    if (fn === 'core_course_get_course_module') {
+      const cmid = Number(url.searchParams.get('cmid'));
+      if (cmid !== VIDEOSTREAM_CMID) return json(res, invalidRecord('course_modules'));
       return json(res, {
-        key: 'hunt-autologin',
-        autologinurl: `${SITE}/admin/tool/mobile/autologin.php`,
+        cm: { id: cmid, course: COURSE_ID, modname: 'videostream', name: VIDEOSTREAM_NAME },
         warnings: [],
+      });
+    }
+    // The real handler answers only the app's exact call: POST, this component and method, and the
+    // module's own course and cmid among the args.
+    if (fn === 'tool_mobile_get_content') {
+      if (req.method !== 'POST') return json(res, invalidRecord('course_modules'));
+      return formBody(req).then((form) => {
+        const args = contentArgs(form);
+        const ours =
+          form.get('component') === 'mod_videostream' &&
+          form.get('method') === 'view_videostream' &&
+          Number(args.cmid) === VIDEOSTREAM_CMID &&
+          Number(args.courseid) === COURSE_ID;
+        json(res, ours ? videostreamContent() : invalidRecord('course_modules'));
       });
     }
     return json(res, {

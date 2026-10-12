@@ -286,7 +286,7 @@ friends as ESM named bindings, which a module-object patch cannot reach.
 
 The browsers `downloader-auto` launches are processes of their own, out of the socket patch's reach,
 so in that service alone the shim also patches `BrowserType.launch` in auto/'s `playwright-core`.
-That one prototype covers every launch — `launchBrowser` (the login and videostream capture), the
+That one prototype covers every launch — `launchBrowser` (the login and the plain capture session), the
 channel probe, the zoom launcher — and rewrites each: always headless, always the chromium
 `browser.mjs` picks (`channel` dropped, so the run does not depend on the box's Chrome),
 `--ignore-certificate-errors` for the fake's self-signed cert, and `--host-resolver-rules` mapping
@@ -313,9 +313,12 @@ the page takes it, visits `/__harness/clear` for the cookie and lands on the sit
 lives in `$FASTSTUDY_STATE_DIR/moodle-profile`, so a reopened window passes hidden until Disconnect
 deletes the profile.
 
-Videostream capture launches through the same patch, so its browser is offline, but it has nothing
-to run against: the fake course lists no `videostream` activity, and the site serves neither
-`autologin.php` nor a `view.php` page whose `<video>` requests an `.mp4`. Those three are what adding it takes.
+A videostream recording needs no browser. The fake course lists one `videostream` activity
+(`הקלטה 4 — גרפים`), and the site answers its `tool_mobile_get_content` call — a POST naming
+`mod_videostream`/`view_videostream` with the course's and module's ids among the args, anything else
+`invalidrecord` — with an app template whose `<source>` names `/media/videostream-04.mp4` on the
+site itself, so auto/ resolves it to its own gated proxy. `core_course_get_course_module` answers for
+that cmid too, for a resolve that arrives without the course id. Site info lists both functions.
 
 ## The guarantees, each proved before handover
 
@@ -429,4 +432,4 @@ Open the PNG to check the Hebrew RTL layout by eye; `get_text()` returns the log
 
 The Electron shell and the installer (this is the dev stack), real provider behaviour and real
 quota accounting, a real site's SSO and MFA pages (the fake `launch.php` redirects at once), the
-zoom login, zoom capture (it needs a real browser), videostream capture (see below), and Google Drive's own semantics beyond create/update.
+zoom login, zoom capture (it needs a real browser), an off-site videostream `.mp4` (the fake serves it from the Moodle host), and Google Drive's own semantics beyond create/update.
